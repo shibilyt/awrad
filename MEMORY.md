@@ -57,3 +57,10 @@ Use this format:
 - Change: Added root orientation, structure, workflow, contract, command, test, decision, and memory guidance with scoped platform instructions.
 - Evidence: `AGENTS.md`, `STRUCTURE.md`, `LOOPS.md`, `CONTRACTS.md`
 - Commit: uncommitted
+
+### 2026-07-12 — Added progressive documentation map
+
+- Area: Documentation
+- Change: Reduced root agent guidance to a compact map with hard invariants and added `docs/index.md` for progressive project and subsystem navigation.
+- Evidence: `AGENTS.md`, `docs/index.md`, `README.md`
+- Commit: uncommitted

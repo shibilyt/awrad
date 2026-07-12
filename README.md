@@ -30,6 +30,8 @@ For developers:
 
 ## Documentation
 
+The progressive documentation map is [`docs/index.md`](docs/index.md). It routes agents from the compact root instructions to the deeper project and subsystem sources.
+
 | Document | Purpose |
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | Repository-wide rules and subsystem routing |
