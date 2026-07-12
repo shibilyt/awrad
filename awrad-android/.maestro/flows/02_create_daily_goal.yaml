@@ -1,0 +1,27 @@
+appId: app.awrad.awrad_dhikrgoalstracker
+---
+# Precondition: onboarding already completed (run 01_onboarding.yaml first).
+- launchApp
+
+# ── Open CreateGoal via FAB ───────────────────────────────────────────────────
+- tapOn: "Create Goal"
+
+# ── Screen 1: Select Dhikr ───────────────────────────────────────────────────
+- assertVisible: "Select Dhikr"
+
+# Tap the dhikr card directly — no search, to avoid text conflict with the
+# search field. "La ilaha illallah" only appears in the card's transliteration.
+- tapOn: "La ilaha illallah"
+
+# ── Screen 2: Configure Goal ─────────────────────────────────────────────────
+- assertVisible: "Configure Goal"
+- assertVisible: "Goal type"
+- assertVisible: "Daily"
+- assertVisible: "Target count"
+
+# Create the goal with default values (Daily, 33x)
+- tapOn: "Create Goal"
+
+# ── Verify: navigated back to Goals screen ───────────────────────────────────
+- assertVisible: "Goals"
+- assertVisible: "La ilaha illallah"

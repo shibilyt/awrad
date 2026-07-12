@@ -1,0 +1,31 @@
+# macOS
+.DS_Store
+
+# Android / Gradle
+.gradle/
+**/build/
+**/.idea/
+**/local.properties
+**/.externalNativeBuild/
+**/.cxx/
+**/captures/
+**/keystore.properties
+**/keystore/
+awrad-android/opensrc/
+
+# iOS / Xcode
+**/DerivedData/
+**/xcuserdata/
+**/*.xcuserstate
+**/.build/
+**/Pods/
+
+# Local tooling and agent state
+**/.claude/
+**/.codex/
+**/.agents/
+**/.omc/
+**/.kotlin/
+
+# The API remains its own Git repository for now.
+awrad_api/

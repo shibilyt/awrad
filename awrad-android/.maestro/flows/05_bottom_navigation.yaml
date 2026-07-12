@@ -1,0 +1,29 @@
+appId: app.awrad.awrad_dhikrgoalstracker
+---
+# Smoke test: navigate to each bottom nav tab and verify key screen content.
+# Precondition: onboarding completed.
+- launchApp
+
+# ── Home tab ─────────────────────────────────────────────────────────────────
+- tapOn: "Home"
+- assertVisible: "Home"
+# The Explore section is always visible on the Home screen
+- assertVisible: "Explore"
+
+# ── Goals tab ────────────────────────────────────────────────────────────────
+- tapOn: "Goals"
+- assertVisible: "Goals"
+
+# ── Library tab ──────────────────────────────────────────────────────────────
+- tapOn: "Library"
+- assertVisible: "Library"
+
+# ── Settings tab ─────────────────────────────────────────────────────────────
+- tapOn: "Settings"
+- assertVisible: "Settings"
+- assertVisible: "Profile"
+- assertVisible: "Counting Preferences"
+
+# ── Back to Home ─────────────────────────────────────────────────────────────
+- tapOn: "Home"
+- assertVisible: "Explore"

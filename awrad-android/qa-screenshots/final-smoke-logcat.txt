@@ -1,0 +1,207 @@
+--------- beginning of main
+05-30 13:27:10.711   664  1643 I system_server: AssetManager2(0xb400007c666b8e58) locale list changing from [] to [en-US]
+05-30 13:27:10.712   664  1643 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@d80de05a does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+05-30 13:27:10.717   504   766 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+05-30 13:27:10.719   915  1017 I ndroid.systemui: AssetManager2(0xb400007c666b01b8) locale list changing from [] to [en-US]
+05-30 13:27:10.721  1056  1056 W SplitSelectStateCtor: Missing session instanceIds
+05-30 13:27:10.721  1056  1056 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+05-30 13:27:10.730   504   504 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+--------- beginning of system
+05-30 13:27:10.730  6461  6556 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+05-30 13:27:10.735  6461  6461 I ikrgoalstracker: AssetManager2(0xb400007c6669e558) locale list changing from [] to [en-US]
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.739   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.740   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.741   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 13:27:10.741   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 13:27:10.742   583  3639 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:10.745   915  1018 W HWUI    : Image decoding logging dropped!
+05-30 13:27:10.767  6461  6461 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+05-30 13:27:10.770  6461  6461 I ikrgoalstracker: AssetManager2(0xb400007c666a3cd8) locale list changing from [] to [en-US]
+05-30 13:27:10.889   664   687 V WindowManager: Sent Transition (#27) createdAt=05-30 13:27:10.714 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=152 effectiveUid=10214 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=app.awrad.awrad_dhikrgoalstracker/.MainActivity } baseActivity=ComponentInfo{app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity} topActivity=ComponentInfo{app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity} origActivity=null realActivity=ComponentInfo{app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity} numActivities=1 lastActiveTime=13125854 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{15682f Task{b01af55 #152 type=standard A=10214:app.awrad.awrad_dhikrgoalstracker}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 144 - 0, 0) topActivityInfo=ActivityInfo{235de3c app.awrad.awrad_dhikrgoalstracker.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=Rect(362, 870 - 1079, 2310) capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=-9 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false eligibleForLetterboxEducation= false isLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(0, 0 - 1440, 3120) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null cameraCompatTaskInfo=CameraCompatTaskInfo { freeformCameraCompatMode=inactive}} topActivityMainWindowFrame=null}, pipChange = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 27 }
+05-30 13:27:10.889   664   687 V WindowManager:     startWCT=WindowContainerTransaction { changes= {} hops= [] errorCallbackToken=null taskFragmentOrganizer=null }
+05-30 13:27:10.889   664   687 V WindowManager:     info={id=27 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[
+05-30 13:27:10.889   664   687 V WindowManager:         {WCT{RemoteToken{15682f Task{b01af55 #152 type=standard A=10214:app.awrad.awrad_dhikrgoalstracker}}} m=OPEN f=NONE leash=Surface(name=Task=152)/@0xbce4409 sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},
+05-30 13:27:10.889   664   687 V WindowManager:         {WCT{RemoteToken{55bff11 Task{6ea4201 #1 type=home}}} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x4792e4c sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},
+05-30 13:27:10.889   664   687 V WindowManager:         {m=TO_BACK f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{a3c375b showWhenLocked=false})/@0xab2ae7f sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0}
+05-30 13:27:10.889   664   687 V WindowManager:     ]}
+05-30 13:27:10.889   915  6534 V WindowManagerShell: onTransitionReady(transaction=2851858286123)
+05-30 13:27:10.891   915   961 V WindowManagerShell: onTransitionReady (#27) android.os.BinderProxy@517637: {id=27 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[
+05-30 13:27:10.891   915   961 V WindowManagerShell:         {m=OPEN f=NONE leash=Surface(name=Task=152)/@0xc0a3f1b sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},
+05-30 13:27:10.891   915   961 V WindowManagerShell:         {m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x97948b8 sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},
+05-30 13:27:10.891   915   961 V WindowManagerShell:         {m=TO_BACK f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{a3c375b showWhenLocked=false})/@0x31c3691 sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0}
+05-30 13:27:10.891   915   961 V WindowManagerShell:     ]}
+05-30 13:27:10.891   915   961 V WindowManagerShell: Playing animation for (#27) android.os.BinderProxy@517637@0
+05-30 13:27:10.893   915   961 V ShellRecents: RecentsTransitionHandler.startAnimation: no controller found
+05-30 13:27:10.894   915   961 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=27 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{m=OPEN f=NONE leash=Surface(name=Task=152)/@0xc0a3f1b sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},{m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x97948b8 sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},{m=TO_BACK f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{a3c375b showWhenLocked=false})/@0x31c3691 sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0}]}
+05-30 13:27:10.895   915   961 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=undefined independent=true modes=[CLOSE,TO_BACK] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=null launchCookie=null taskFragmentToken=android.os.BinderProxy@cec1c60 windowingMode=undefined}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@36d8519, appThread = android.app.IApplicationThread$Stub$Proxy@e8579de, debugName = overlayBackTransition }}
+05-30 13:27:10.895   915   961 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=dream independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined},{atype=home independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@9aab7bf, appThread = android.app.IApplicationThread$Stub$Proxy@e669e8c, debugName = LauncherToDream }}
+05-30 13:27:10.895   915   961 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=TOP topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null windowingMode=undefined},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined},{NOT atype=undefined independent=true modes=[] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null customAnim=true windowingMode=undefined}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@24859d5, appThread = android.app.IApplicationThread$Stub$Proxy@3eb55ea, debugName = QuickstepLaunchHome }}
+05-30 13:27:10.895   915   961 V WindowManagerShell:  Delegate animation for (#27) to null
+05-30 13:27:10.896   915   961 V WindowManagerShell: start default transition animation, info = {id=27 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{m=OPEN f=NONE leash=Surface(name=Task=152)/@0xc0a3f1b sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},{m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x97948b8 sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},{m=TO_BACK f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{a3c375b showWhenLocked=false})/@0x31c3691 sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0}]}
+05-30 13:27:10.897   915   961 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@6d63864 animAttr=0x13 type=OPEN isEntrance=false
+05-30 13:27:10.897   915   961 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@af076d0 animAttr=0x12 type=OPEN isEntrance=true
+05-30 13:27:10.898   915   961 V WindowManagerShell:  animated by com.android.wm.shell.transition.DefaultTransitionHandler@fb50a2e
+05-30 13:27:10.907  6461  6556 I EGL_emulation: Opening libGLESv1_CM_emulation.so
+05-30 13:27:10.908  6461  6556 I EGL_emulation: Opening libGLESv2_emulation.so
+05-30 13:27:10.909  6461  6461 D CompatChangeReporter: Compat change id reported: 377864165; UID 10214; state: ENABLED
+05-30 13:27:10.911  6461  6461 D DesktopModeFlags: Toggle override initialized to: OVERRIDE_UNSET
+05-30 13:27:11.061   664   998 W ActivityTaskManager: takeTaskSnapshot: taskId=96 not found or not visible
+05-30 13:27:11.076  6461  6556 W HWUI    : Failed to choose config with EGL_SWAP_BEHAVIOR_PRESERVED, retrying without...
+05-30 13:27:11.077  6461  6556 W HWUI    : Failed to initialize 101010-2 format, error = EGL_SUCCESS
+05-30 13:27:11.200   915   961 V WindowManagerShell: Transition animation finished (aborted=false), notifying core (#27) android.os.BinderProxy@517637@0
+05-30 13:27:11.206   664   687 V WindowManager: Finish Transition (#27): created at 05-30 13:27:10.714 collect-started=0.021ms request-sent=5.005ms started=6.594ms ready=25.289ms sent=170.514ms commit=39.649ms finished=491.499ms
+05-30 13:27:11.207  1056  1056 D VRI[NexusLauncherActivity]: visibilityChanged oldVisibility=true newVisibility=false
+05-30 13:27:11.209   915   961 V WindowManagerShell: Track 0 became idle
+05-30 13:27:11.209   915   961 V WindowManagerShell: All active transition animations finished
+05-30 13:27:11.214  1056  1056 D NexusLauncherModelDelegate: notifySmartspaceEvent: SmartspaceTargetEvent{mSmartspaceTarget=null, mSmartspaceActionId='null', mEventType=7}
+05-30 13:27:11.242  6461  6461 I ikrgoalstracker: hiddenapi: Accessing hidden method Landroid/view/ViewGroup;->makeOptionalFitsSystemWindows()V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/appcompat/widget/ViewUtils; (domain=app) using reflection: allowed
+05-30 13:27:11.307  6461  6461 W HWUI    : Unknown dataspace 0
+05-30 13:27:11.334   664   998 D CoreBackPreview: Window{e134179 u0 app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@fb6bb1f, mPriority=-1, mIsAnimationCallback=false, mOverrideBehavior=0}
+05-30 13:27:11.647  6461  6461 I ikrgoalstracker: hiddenapi: Accessing hidden method Landroid/os/SystemProperties;->addChangeCallback(Ljava/lang/Runnable;)V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/compose/ui/platform/AndroidComposeView$Companion; (domain=app) using reflection: allowed
+05-30 13:27:11.874   664   687 I ActivityTaskManager: Displayed app.awrad.awrad_dhikrgoalstracker/.MainActivity for user 0: +1s151ms
+05-30 13:27:11.889  1221  1232 I FontLog : (REDACTED) Received query %s, URI %s
+05-30 13:27:11.889  1221  1232 I FontLog : (REDACTED) Query [%s] resolved to %s
+05-30 13:27:11.892  1221  1232 I FontLog : (REDACTED) Fetch %s end status %s
+05-30 13:27:11.900  1221  1232 I FontLog : (REDACTED) Pulling font file for id = %d, cache size = %d
+05-30 13:27:11.909  1221  1232 I FontLog : (REDACTED) Pulling font file for id = %d, cache size = %d
+05-30 13:27:11.952  6461  6482 I ikrgoalstracker: Compiler allocated 5111KB to compile void android.view.ViewRootImpl.performTraversals()
+05-30 13:27:12.125  6461  6483 I ikrgoalstracker: Background concurrent mark compact GC freed 4257KB AllocSpace bytes, 0(0B) LOS objects, 49% free, 5240KB/10MB, paused 704us,857us total 104.349ms
+05-30 13:27:12.243   583   655 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:12.271  1056  1056 D BaseDepthController: setSurface:
+05-30 13:27:12.271  1056  1056 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+05-30 13:27:12.271  1056  1056 D BaseDepthController: 	mBaseSurface: null
+05-30 13:27:12.272  1056  1056 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+05-30 13:27:12.272  1056  1056 D StateManager: goToState - fromState: Normal, toState: Normal, partial trace:
+05-30 13:27:12.272  1056  1056 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(go/retraceme ee19ec8c009da7af1d458e7d1683a6f5bf3b93b44f6674aa108e1a3e78584fe0:4)
+05-30 13:27:12.272  1056  1056 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(go/retraceme ee19ec8c009da7af1d458e7d1683a6f5bf3b93b44f6674aa108e1a3e78584fe0:1)
+05-30 13:27:12.272  1056  1056 D StateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(go/retraceme ee19ec8c009da7af1d458e7d1683a6f5bf3b93b44f6674aa108e1a3e78584fe0:34)
+05-30 13:27:12.273  1056  1056 D StatsLog: LAUNCHER_ONSTOP
+05-30 13:27:12.273  1056  1056 D StatsLog: LAUNCHER_GOOGLE_SEARCH_RESTORE_LIST_SIZE_AFTER_ACTIVITY_RESTART
+05-30 13:27:12.287   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 13:27:12.321  1056  1080 W s.nexuslauncher: Reducing the number of considered missed Gc histogram windows from 160 to 100
+05-30 13:27:12.324  1056  1082 W System  : A resource failed to call release. 
+05-30 13:27:12.324  1056  1082 W System  : A resource failed to call release. 
+05-30 13:27:12.324  1056  1082 W System  : A resource failed to call release. 
+05-30 13:27:12.325  1056  1082 W System  : A resource failed to call release. 
+05-30 13:27:12.325  1056  1082 W System  : A resource failed to call release. 
+05-30 13:27:12.325  1056  1082 W System  : A resource failed to call release. 
+05-30 13:27:12.496  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:12.550  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:12.578  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:12.631  6461  6461 I Choreographer: Skipped 41 frames!  The application may be doing too much work on its main thread.
+05-30 13:27:12.682  6461  6489 I HWUI    : Davey! duration=800ms; Flags=0, FrameTimelineVsyncId=74949, IntendedVsync=13127015094663, Vsync=13127015094663, InputEventId=0, HandleInputStart=13127025958633, AnimationStart=13127025960258, PerformTraversalsStart=13127078178133, DrawStart=13127733318342, FrameDeadline=13127031761329, FrameStartTime=13127025950258, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=13127754014383, SyncStart=13127754121467, IssueDrawCommandsStart=13127754204467, SwapBuffers=13127811550717, FrameCompleted=13127815451425, DequeueBufferDuration=3583, QueueBufferDuration=220625, GpuCompleted=13127815451425, SwapBuffersCompleted=13127814108467, DisplayPresentTime=0, CommandSubmissionCompleted=13127811550717, 
+05-30 13:27:12.699   664   779 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:132e0fb4: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+05-30 13:27:12.706  1372  1372 I GoogleInputMethodService: GoogleInputMethodService.onFinishInput():2259 
+05-30 13:27:12.707   664   899 I ImeTracker: system_server:8a6898d3: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+05-30 13:27:12.707  1372  1372 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():103 repeatCheckTimes = 0, locked = false
+05-30 13:27:12.707   664   690 I ImeTracker: system_server:8a6898d3: onCancelled at PHASE_SERVER_SHOULD_HIDE
+05-30 13:27:12.707  1372  1372 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1446 onStartInput(EditorInfo{EditorInfo{packageName=app.awrad.awrad_dhikrgoalstracker, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+05-30 13:27:12.707  1372  1372 I AndroidIME: LatinIMEBase.updateInputViewCoverNavigation():322 Update input view padding, isNavbarOverInputWindow=true, bottom inset=84
+05-30 13:27:12.708  1372  1372 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():103 repeatCheckTimes = 1, locked = false
+05-30 13:27:12.709   664   899 W PackageConfigPersister: App-specific configuration not found for packageName: app.awrad.awrad_dhikrgoalstracker and userId: 0
+05-30 13:27:12.733  6461  6488 I HWUI    : Davey! duration=783ms; Flags=0, FrameTimelineVsyncId=75002, IntendedVsync=13127081761327, Vsync=13127765094633, InputEventId=0, HandleInputStart=13127767155550, AnimationStart=13127767156925, PerformTraversalsStart=13127813355425, DrawStart=13127826648925, FrameDeadline=13127848427963, FrameStartTime=13127766928050, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=13127832698342, SyncStart=13127832916758, IssueDrawCommandsStart=13127832972383, SwapBuffers=13127852468925, FrameCompleted=13127865517425, DequeueBufferDuration=2959, QueueBufferDuration=313458, GpuCompleted=13127865517425, SwapBuffersCompleted=13127854923383, DisplayPresentTime=0, CommandSubmissionCompleted=13127852468925, 
+05-30 13:27:12.858  6461  6461 D InsetsController: hide(ime(), fromIme=false)
+05-30 13:27:12.858  6461  6461 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:132e0fb4: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 13:27:13.026  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:13.045  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:13.123   664   690 W ProcessStats: Tracking association SourceState{5570888 com.google.android.apps.nexuslauncher/10180 BFgs #4282} whose proc state 4 is better than process ProcessState{cb8a7c0 com.google.android.apps.wellbeing/10148 pkg=com.google.android.apps.wellbeing} proc state 14 (9 skipped)
+05-30 13:27:13.411  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 13:27:13.411   664   899 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:13.673  1501  1664 I AiAiTranslate: C2T - not in a conversation
+05-30 13:27:13.673   915   915 I ClipboardListener: Clipboard overlay suppressed.
+05-30 13:27:14.119  1339  1344 W ssioncontroller: Reducing the number of considered missed Gc histogram windows from 461 to 100
+05-30 13:27:14.414   664   761 D ActivityManager: freezing 3314 com.android.vending:background
+05-30 13:27:14.415   664   761 D ActivityManager: freezing 2324 com.android.vending
+05-30 13:27:14.463   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-30 13:27:14.464   664   815 D InetDiagMessage: Destroyed 2 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-30 13:27:14.464   664   815 D InetDiagMessage: Destroyed live tcp sockets for uids={10146} in 1ms
+05-30 13:27:14.716  6461  6570 D ProfileInstaller: Installing profile for app.awrad.awrad_dhikrgoalstracker
+05-30 13:27:15.243   664   998 D CoreBackPreview: Window{e134179 u0 app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@9a9a41e, mPriority=0, mIsAnimationCallback=true, mOverrideBehavior=0}
+05-30 13:27:16.806  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:16.822  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:16.836  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:19.810   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-30 13:27:19.810   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-30 13:27:19.810   664   815 D InetDiagMessage: Destroyed live tcp sockets for uids={10148} in 1ms
+05-30 13:27:19.810   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-30 13:27:19.810   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-30 13:27:19.810   664   815 D InetDiagMessage: Destroyed live tcp sockets for uids={20148} in 0ms
+05-30 13:27:20.942   915   961 D ShellBackPreview: Finishing gesture with event action: 1
+05-30 13:27:20.942   915   961 D ShellBackPreview: onGestureFinished called while no gesture is started
+05-30 13:27:21.824  1435  1435 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.feedback.internal.IFeedbackService dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+05-30 13:27:23.410  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 13:27:23.411   664  1925 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 13:27:23.475   915   961 D ShellBackPreview: Finishing gesture with event action: 1
+05-30 13:27:23.475   915   961 D ShellBackPreview: onGestureFinished called while no gesture is started
+05-30 13:27:24.117   664   761 D ActivityManager: freezing 1339 com.google.android.permissioncontroller
+05-30 13:27:24.118   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-30 13:27:24.118   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-30 13:27:24.118   664   815 D InetDiagMessage: Destroyed live tcp sockets for uids={10198} in 1ms
+05-30 13:27:25.296  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:25.311  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:25.324  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:25.723   664   752 D ActivityManager: sync unfroze 2324 com.android.vending for 6
+05-30 13:27:25.725   664   752 D ActivityManager: sync unfroze 3314 com.android.vending:background for 6
+05-30 13:27:25.732   664  1925 W ProcessStats: Tracking association SourceState{9a93668 com.android.vending/10146 ImpBg #4303} whose proc state 6 is better than process ProcessState{9e3612c com.android.vending:background/10146 pkg=com.android.vending} proc state 14 (0 skipped)
+05-30 13:27:25.733  2324  2324 I Finsky  : [2] SCH: job service start with id 9571.
+05-30 13:27:25.738  2324  6477 I Finsky  : [223] SCH: Satisfied jobs for 9571 are: 12-1
+05-30 13:27:25.739  2324  6571 I Finsky  : [230] SCH: Job 12-1 starting
+05-30 13:27:25.739  2324  2324 I Finsky  : [2] WM::SCH: Logging work start for 12-1
+05-30 13:27:25.741  2324  2324 I Finsky  : [2] [ContentSync] job started
+05-30 13:27:25.773  2324  6572 I Finsky  : [231] App states replicator found 26 unowned apps
+05-30 13:27:25.774  2324  2448 I Finsky  : [61] Completed 0 account content syncs with 0 successful.
+05-30 13:27:25.774  2324  2324 I Finsky  : [2] [ContentSync] Installation state replication succeeded.
+05-30 13:27:25.774  2324  2324 I Finsky  : [2] SCH: jobFinished: 12-1. TimeElapsed: 35ms.
+05-30 13:27:25.774  2324  2324 I Finsky  : [2] WM::SCH: Logging work end for 12-1
+05-30 13:27:25.791  2324  2448 I Finsky  : [61] SCH: Scheduling phonesky job Id: 1-1337, CT: 1780122724889, Constraints: [{ L: 43115185, D: 86315185, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+05-30 13:27:25.793  2324  2439 I Finsky  : [55] SCH: Scheduling 1 system job(s)
+05-30 13:27:25.793  2324  2439 I Finsky  : [55] SCH: Scheduling system job Id: 9574, L: 37994281, D: 81194281, C: false, I: false, N: 1
+05-30 13:27:25.798  2324  6571 I Finsky  : [230] SCH: job service finished with id 9571.
+05-30 13:27:25.801  2324  2324 I Finsky  : [2] Memory trim requested to level 40
+05-30 13:27:25.801  2324  2324 I Finsky  : [2] Flushing in-memory image cache
+05-30 13:27:25.801  3314  3314 I Finsky:background: [2] Memory trim requested to level 40
+05-30 13:27:27.788  6461  6461 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@c897562
+05-30 13:27:27.789   664  1925 D CoreBackPreview: Window{e134179 u0 app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@e4011ed, mPriority=-1, mIsAnimationCallback=false, mOverrideBehavior=0}
+05-30 13:27:27.832  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:27.859  6461  6461 W HWUI    : Image decoding logging dropped!
+05-30 13:27:31.671   664  1925 D CoreBackPreview: Window{e134179 u0 app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@d06846e, mPriority=0, mIsAnimationCallback=true, mOverrideBehavior=0}

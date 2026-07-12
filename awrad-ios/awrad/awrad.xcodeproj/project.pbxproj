@@ -1,0 +1,755 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		ABCD00102FCB900000000010 /* AwradWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = ABCD00012FCB900000000001 /* AwradWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		18AB84AF2FCB03F600C439B3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 18AB84992FCB03F400C439B3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 18AB84A02FCB03F400C439B3;
+			remoteInfo = awrad;
+		};
+		18AB84B92FCB03F600C439B3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 18AB84992FCB03F400C439B3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 18AB84A02FCB03F400C439B3;
+			remoteInfo = awrad;
+		};
+		ABCD00132FCB900000000013 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 18AB84992FCB03F400C439B3 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = ABCD00032FCB900000000003;
+			remoteInfo = AwradWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		ABCD00112FCB900000000011 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				ABCD00102FCB900000000010 /* AwradWidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		18AB84A12FCB03F400C439B3 /* awrad.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = awrad.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		18AB84AE2FCB03F600C439B3 /* awradTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = awradTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		18AB84B82FCB03F600C439B3 /* awradUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = awradUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		ABCD00012FCB900000000001 /* AwradWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AwradWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		ABCD00142FCB900000000014 /* Exceptions for "AwradWidgetExtension" folder in "AwradWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = ABCD00032FCB900000000003 /* AwradWidgetExtension */;
+		};
+		ABCD00152FCB900000000015 /* Exceptions for "awrad" folder in "awrad" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 18AB84A02FCB03F400C439B3 /* awrad */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		18AB84A32FCB03F400C439B3 /* awrad */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				ABCD00152FCB900000000015 /* Exceptions for "awrad" folder in "awrad" target */,
+			);
+			path = awrad;
+			sourceTree = "<group>";
+		};
+		18AB84B12FCB03F600C439B3 /* awradTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = awradTests;
+			sourceTree = "<group>";
+		};
+		18AB84BB2FCB03F600C439B3 /* awradUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = awradUITests;
+			sourceTree = "<group>";
+		};
+		ABCD00022FCB900000000002 /* AwradWidgetExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				ABCD00142FCB900000000014 /* Exceptions for "AwradWidgetExtension" folder in "AwradWidgetExtension" target */,
+			);
+			path = AwradWidgetExtension;
+			sourceTree = "<group>";
+		};
+		ABCD00202FCB910000000020 /* Shared */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		18AB849E2FCB03F400C439B3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		18AB84AB2FCB03F600C439B3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		18AB84B52FCB03F600C439B3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ABCD00052FCB900000000005 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		18AB84982FCB03F400C439B3 = {
+			isa = PBXGroup;
+			children = (
+				18AB84A32FCB03F400C439B3 /* awrad */,
+				ABCD00202FCB910000000020 /* Shared */,
+				ABCD00022FCB900000000002 /* AwradWidgetExtension */,
+				18AB84B12FCB03F600C439B3 /* awradTests */,
+				18AB84BB2FCB03F600C439B3 /* awradUITests */,
+				18AB84A22FCB03F400C439B3 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		18AB84A22FCB03F400C439B3 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				18AB84A12FCB03F400C439B3 /* awrad.app */,
+				ABCD00012FCB900000000001 /* AwradWidgetExtension.appex */,
+				18AB84AE2FCB03F600C439B3 /* awradTests.xctest */,
+				18AB84B82FCB03F600C439B3 /* awradUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		18AB84A02FCB03F400C439B3 /* awrad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 18AB84C22FCB03F600C439B3 /* Build configuration list for PBXNativeTarget "awrad" */;
+			buildPhases = (
+				18AB849D2FCB03F400C439B3 /* Sources */,
+				18AB849E2FCB03F400C439B3 /* Frameworks */,
+				18AB849F2FCB03F400C439B3 /* Resources */,
+				ABCD00112FCB900000000011 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				ABCD00122FCB900000000012 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				18AB84A32FCB03F400C439B3 /* awrad */,
+				ABCD00202FCB910000000020 /* Shared */,
+			);
+			name = awrad;
+			packageProductDependencies = (
+			);
+			productName = awrad;
+			productReference = 18AB84A12FCB03F400C439B3 /* awrad.app */;
+			productType = "com.apple.product-type.application";
+		};
+		18AB84AD2FCB03F600C439B3 /* awradTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 18AB84C52FCB03F600C439B3 /* Build configuration list for PBXNativeTarget "awradTests" */;
+			buildPhases = (
+				18AB84AA2FCB03F600C439B3 /* Sources */,
+				18AB84AB2FCB03F600C439B3 /* Frameworks */,
+				18AB84AC2FCB03F600C439B3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				18AB84B02FCB03F600C439B3 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				18AB84B12FCB03F600C439B3 /* awradTests */,
+			);
+			name = awradTests;
+			packageProductDependencies = (
+			);
+			productName = awradTests;
+			productReference = 18AB84AE2FCB03F600C439B3 /* awradTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		18AB84B72FCB03F600C439B3 /* awradUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 18AB84C82FCB03F600C439B3 /* Build configuration list for PBXNativeTarget "awradUITests" */;
+			buildPhases = (
+				18AB84B42FCB03F600C439B3 /* Sources */,
+				18AB84B52FCB03F600C439B3 /* Frameworks */,
+				18AB84B62FCB03F600C439B3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				18AB84BA2FCB03F600C439B3 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				18AB84BB2FCB03F600C439B3 /* awradUITests */,
+			);
+			name = awradUITests;
+			packageProductDependencies = (
+			);
+			productName = awradUITests;
+			productReference = 18AB84B82FCB03F600C439B3 /* awradUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		ABCD00032FCB900000000003 /* AwradWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = ABCD00072FCB900000000007 /* Build configuration list for PBXNativeTarget "AwradWidgetExtension" */;
+			buildPhases = (
+				ABCD00042FCB900000000004 /* Sources */,
+				ABCD00052FCB900000000005 /* Frameworks */,
+				ABCD00062FCB900000000006 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				ABCD00022FCB900000000002 /* AwradWidgetExtension */,
+				ABCD00202FCB910000000020 /* Shared */,
+			);
+			name = AwradWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = AwradWidgetExtension;
+			productReference = ABCD00012FCB900000000001 /* AwradWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		18AB84992FCB03F400C439B3 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2620;
+				LastUpgradeCheck = 2620;
+				TargetAttributes = {
+					18AB84A02FCB03F400C439B3 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+					18AB84AD2FCB03F600C439B3 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 18AB84A02FCB03F400C439B3;
+					};
+					18AB84B72FCB03F600C439B3 = {
+						CreatedOnToolsVersion = 26.2;
+						TestTargetID = 18AB84A02FCB03F400C439B3;
+					};
+					ABCD00032FCB900000000003 = {
+						CreatedOnToolsVersion = 26.2;
+					};
+				};
+			};
+			buildConfigurationList = 18AB849C2FCB03F400C439B3 /* Build configuration list for PBXProject "awrad" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				ar,
+				ml,
+				Base,
+			);
+			mainGroup = 18AB84982FCB03F400C439B3;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 18AB84A22FCB03F400C439B3 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				18AB84A02FCB03F400C439B3 /* awrad */,
+				ABCD00032FCB900000000003 /* AwradWidgetExtension */,
+				18AB84AD2FCB03F600C439B3 /* awradTests */,
+				18AB84B72FCB03F600C439B3 /* awradUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		18AB849F2FCB03F400C439B3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		18AB84AC2FCB03F600C439B3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		18AB84B62FCB03F600C439B3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ABCD00062FCB900000000006 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		18AB849D2FCB03F400C439B3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		18AB84AA2FCB03F600C439B3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		18AB84B42FCB03F600C439B3 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ABCD00042FCB900000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		18AB84B02FCB03F600C439B3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 18AB84A02FCB03F400C439B3 /* awrad */;
+			targetProxy = 18AB84AF2FCB03F600C439B3 /* PBXContainerItemProxy */;
+		};
+		18AB84BA2FCB03F600C439B3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 18AB84A02FCB03F400C439B3 /* awrad */;
+			targetProxy = 18AB84B92FCB03F600C439B3 /* PBXContainerItemProxy */;
+		};
+		ABCD00122FCB900000000012 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = ABCD00032FCB900000000003 /* AwradWidgetExtension */;
+			targetProxy = ABCD00132FCB900000000013 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		18AB84C02FCB03F600C439B3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		18AB84C12FCB03F600C439B3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		18AB84C32FCB03F600C439B3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = awrad/awrad.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = awrad/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.awrad.awrad;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		18AB84C42FCB03F600C439B3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = awrad/awrad.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = awrad/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.awrad.awrad;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		18AB84C62FCB03F600C439B3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.awrad.awradTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/awrad.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/awrad";
+			};
+			name = Debug;
+		};
+		18AB84C72FCB03F600C439B3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.awrad.awradTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/awrad.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/awrad";
+			};
+			name = Release;
+		};
+		18AB84C92FCB03F600C439B3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.awrad.awradUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = awrad;
+			};
+			name = Debug;
+		};
+		18AB84CA2FCB03F600C439B3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.awrad.awradUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = awrad;
+			};
+			name = Release;
+		};
+		ABCD00082FCB900000000008 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = AwradWidgetExtension/AwradWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AwradWidgetExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.awrad.awrad.AwradWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		ABCD00092FCB900000000009 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = AwradWidgetExtension/AwradWidgetExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = AwradWidgetExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.awrad.awrad.AwradWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		18AB849C2FCB03F400C439B3 /* Build configuration list for PBXProject "awrad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				18AB84C02FCB03F600C439B3 /* Debug */,
+				18AB84C12FCB03F600C439B3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		18AB84C22FCB03F600C439B3 /* Build configuration list for PBXNativeTarget "awrad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				18AB84C32FCB03F600C439B3 /* Debug */,
+				18AB84C42FCB03F600C439B3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		18AB84C52FCB03F600C439B3 /* Build configuration list for PBXNativeTarget "awradTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				18AB84C62FCB03F600C439B3 /* Debug */,
+				18AB84C72FCB03F600C439B3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		18AB84C82FCB03F600C439B3 /* Build configuration list for PBXNativeTarget "awradUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				18AB84C92FCB03F600C439B3 /* Debug */,
+				18AB84CA2FCB03F600C439B3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		ABCD00072FCB900000000007 /* Build configuration list for PBXNativeTarget "AwradWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				ABCD00082FCB900000000008 /* Debug */,
+				ABCD00092FCB900000000009 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 18AB84992FCB03F400C439B3 /* Project object */;
+}

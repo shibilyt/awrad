@@ -1,0 +1,656 @@
+--------- beginning of system
+05-30 14:31:15.521   664  1925 W ActivityTaskManager: callingPackage for (uid=2000, pid=6832) has no WPC
+--------- beginning of main
+05-30 14:31:15.523   664  1925 I system_server: AssetManager2(0xb400007c6672b8b8) locale list changing from [] to [en-US]
+05-30 14:31:15.524   664  1925 V GrammaticalInflectionUtils: AttributionSource: android.content.AttributionSource@d80de05a does not have READ_SYSTEM_GRAMMATICAL_GENDER permission.
+05-30 14:31:15.525   664  1925 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_OVERRIDE
+05-30 14:31:15.525   664  1925 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_USER_ASPECT_RATIO_FULLSCREEN_OVERRIDE
+05-30 14:31:15.526   664  1925 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_RESIZEABLE_ACTIVITY_OVERRIDES
+05-30 14:31:15.528   664  1925 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_MIN_ASPECT_RATIO_OVERRIDE
+05-30 14:31:15.556   664  1925 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ALLOW_ORIENTATION_OVERRIDE
+05-30 14:31:15.560   504   617 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+05-30 14:31:15.573   664  1925 I ActivityTaskManager: START u0 {flg=0x10000000 xflg=0x5 cmp=app.awrad.awrad_dhikrgoalstracker/.MainActivity} with LAUNCH_MULTIPLE from uid 2000 (BAL_ALLOW_PERMISSION) result code=0
+05-30 14:31:15.582  1056  1056 W SplitSelectStateCtor: Missing session instanceIds
+05-30 14:31:15.582  1056  1056 D StatsLog: LAUNCHER_SPLIT_SELECTION_EXIT_INTERRUPTED
+05-30 14:31:15.706   915  1017 I ndroid.systemui: AssetManager2(0xb400007c666adc38) locale list changing from [] to [en-US]
+05-30 14:31:15.707   915   961 D WindowManagerShell: setLauncherKeepClearAreaHeight: visible=false, height=704
+05-30 14:31:15.708   664  1925 D CompatChangeReporter: Compat change id reported: 377864165; UID 10214; state: ENABLED
+05-30 14:31:15.718   664   900 W OptProp : Cannot read opt property android.window.PROPERTY_COMPAT_ENABLE_FAKE_FOCUS
+05-30 14:31:15.789  6750  6836 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+05-30 14:31:15.795   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 14:31:15.795   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.817   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.818   915   961 V WindowManagerShell: Transition requested (#29): android.os.BinderProxy@e44236c TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=153 effectiveUid=10214 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=app.awrad.awrad_dhikrgoalstracker/.MainActivity } baseActivity=ComponentInfo{app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity} topActivity=ComponentInfo{app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity} origActivity=null realActivity=ComponentInfo{app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity} numActivities=1 lastActiveTime=14192631 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{android.window.IWindowContainerToken$Stub$Proxy@7562d35} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 144 - 0, 0) topActivityInfo=ActivityInfo{d7595ca app.awrad.awrad_dhikrgoalstracker.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=Rect(362, 870 - 1079, 2310) capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=-9 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false eligibleForLetterboxEducation= false isLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(0, 0 - 1440, 3120) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null cameraCompatTaskInfo=CameraCompatTaskInfo { freeformCameraCompatMode=inactive}} topActivityMainWindowFrame=null}, pipChange = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 29 }
+05-30 14:31:15.818   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.819   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:15.848   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 14:31:15.848   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 14:31:15.873   664   690 W ProcessStats: Tracking association SourceState{5570888 com.google.android.apps.nexuslauncher/10180 BTop #4804} whose proc state 2 is better than process ProcessState{cb8a7c0 com.google.android.apps.wellbeing/10148 pkg=com.google.android.apps.wellbeing} proc state 14 (6 skipped)
+05-30 14:31:15.946  6750  6750 I ikrgoalstracker: AssetManager2(0xb400007c666a3698) locale list changing from [] to [en-US]
+05-30 14:31:15.950   664   687 W Looper  : Slow delivery took 230ms android.fg app=system_server main=false group=FOREGROUND h=android.os.Handler c=<recycled PooledLambda@583a0b> m=0
+05-30 14:31:15.954   915   961 D ShellSplitScreen: logExit: no-op, mLoggerSessionId is null
+05-30 14:31:15.992   504   504 I BpBinder: onLastStrongRef automatically unlinking death recipients: 
+05-30 14:31:16.006   664   687 W Looper  : Drained
+05-30 14:31:16.034   583  3639 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:16.099   664   761 D ActivityManager: freezing 3314 com.android.vending:background
+05-30 14:31:16.100   664   761 D ActivityManager: freezing 2324 com.android.vending
+05-30 14:31:16.107   915  1018 W HWUI    : Image decoding logging dropped!
+05-30 14:31:16.117   664  1931 W ActivityTaskManager: takeTaskSnapshot: taskId=96 not found or not visible
+05-30 14:31:16.474  6750  6750 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+05-30 14:31:16.475   587   587 D installd: Device /data has 457125888 free; requested 622811544; needed 165685656
+05-30 14:31:16.475   587   587 W installd: Failed to find storage mount for /data/media
+05-30 14:31:16.489  6750  6750 I ikrgoalstracker: AssetManager2(0xb400007c6669fb38) locale list changing from [] to [en-US]
+05-30 14:31:16.557  6750  6836 I EGL_emulation: Opening libGLESv1_CM_emulation.so
+05-30 14:31:16.558  6750  6836 I EGL_emulation: Opening libGLESv2_emulation.so
+05-30 14:31:16.601   587   587 D installd: Active ratio 3101 isn't over quota, and defy not requested
+05-30 14:31:16.620   587   587 E installd: Failed to free up 622811544 on /data; final free space 457125888: Success
+05-30 14:31:16.621   664   825 W PackageManager: Not removing package com.google.android.trichromelibrary hosting lib com.google.android.trichromelibrary version 772713733 used by [VersionedPackage[com.android.chrome/772713733]] for user 0
+05-30 14:31:16.638   587   587 D installd: Device /data has 457125888 free; requested 622811544; needed 165685656
+05-30 14:31:16.639   587   587 W installd: Failed to find storage mount for /data/media
+05-30 14:31:16.696   915  6533 V WindowManagerShell: onTransitionReady(transaction=2851858286190)
+05-30 14:31:16.699   915   961 V WindowManagerShell: onTransitionReady (#29) android.os.BinderProxy@e44236c: {id=29 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[
+05-30 14:31:16.699   915   961 V WindowManagerShell:         {m=OPEN f=NONE leash=Surface(name=Task=153)/@0xf4d3f9c sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},
+05-30 14:31:16.699   915   961 V WindowManagerShell:         {m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0xbedcda5 sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},
+05-30 14:31:16.699   915   961 V WindowManagerShell:         {m=TO_BACK f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{a3c375b showWhenLocked=false})/@0xb87057a sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0}
+05-30 14:31:16.699   915   961 V WindowManagerShell:     ]}
+05-30 14:31:16.701   915   961 V WindowManagerShell: Playing animation for (#29) android.os.BinderProxy@e44236c@0
+05-30 14:31:16.701   915   961 V ShellRecents: RecentsTransitionHandler.startAnimation: no controller found
+05-30 14:31:16.701   915   961 V WindowManagerShell: Transition doesn't have explicit remote, search filters for match for {id=29 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{m=OPEN f=NONE leash=Surface(name=Task=153)/@0xf4d3f9c sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},{m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0xbedcda5 sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},{m=TO_BACK f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{a3c375b showWhenLocked=false})/@0xb87057a sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0}]}
+05-30 14:31:16.701   915   961 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=undefined independent=true modes=[CLOSE,TO_BACK] flags=IN_TASK_WITH_EMBEDDED_ACTIVITY mustBeTask=false order=ANY topActivity=null launchCookie=null taskFragmentToken=android.os.BinderProxy@cec1c60 windowingMode=undefined}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@36d8519, appThread = android.app.IApplicationThread$Stub$Proxy@e8579de, debugName = overlayBackTransition }}
+05-30 14:31:16.703   915   961 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x0 checks=[{atype=dream independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined},{atype=home independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@9aab7bf, appThread = android.app.IApplicationThread$Stub$Proxy@e669e8c, debugName = LauncherToDream }}
+05-30 14:31:16.703   915   961 V WindowManagerShell:  Checking filter Pair{{types=[] flags=0x0] notFlags=0x100 checks=[{atype=home independent=true modes=[OPEN,TO_FRONT] flags=NONE mustBeTask=false order=TOP topActivity=ComponentInfo{com.google.android.apps.nexuslauncher/com.google.android.apps.nexuslauncher.NexusLauncherActivity} launchCookie=null windowingMode=undefined},{atype=standard independent=true modes=[CLOSE,TO_BACK] flags=NONE mustBeTask=false order=ANY topActivity=null launchCookie=null windowingMode=undefined},{NOT atype=undefined independent=true modes=[] flags=NONE mustBeTask=true order=ANY topActivity=null launchCookie=null customAnim=true windowingMode=undefined}]} RemoteTransition { remoteTransition = android.window.IRemoteTransition$Stub$Proxy@24859d5, appThread = android.app.IApplicationThread$Stub$Proxy@3eb55ea, debugName = QuickstepLaunchHome }}
+05-30 14:31:16.703   915   961 V WindowManagerShell:  Delegate animation for (#29) to null
+05-30 14:31:16.703   915   961 V WindowManagerShell: start default transition animation, info = {id=29 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[{m=OPEN f=NONE leash=Surface(name=Task=153)/@0xf4d3f9c sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},{m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0xbedcda5 sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},{m=TO_BACK f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{a3c375b showWhenLocked=false})/@0xb87057a sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0}]}
+05-30 14:31:16.704   915   961 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@2bcb988 animAttr=0x13 type=OPEN isEntrance=false
+05-30 14:31:16.707   915   961 V WindowManagerShell: loadAnimation: anim=android.view.animation.AnimationSet@2efff46 animAttr=0x12 type=OPEN isEntrance=true
+05-30 14:31:16.712   915   961 V WindowManagerShell:  animated by com.android.wm.shell.transition.DefaultTransitionHandler@fb50a2e
+05-30 14:31:16.726   664   687 V WindowManager: Sent Transition (#29) createdAt=05-30 14:31:15.530 via request=TransitionRequestInfo { type = OPEN, triggerTask = TaskInfo{userId=0 taskId=153 effectiveUid=10214 displayId=0 isRunning=true baseIntent=Intent { flg=0x10000000 cmp=app.awrad.awrad_dhikrgoalstracker/.MainActivity } baseActivity=ComponentInfo{app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity} topActivity=ComponentInfo{app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity} origActivity=null realActivity=ComponentInfo{app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity} numActivities=1 lastActiveTime=14192631 supportsMultiWindow=true resizeMode=1 isResizeable=true minWidth=-1 minHeight=-1 defaultMinSize=220 token=WCT{RemoteToken{38bdf83 Task{ddd47d0 #153 type=standard A=10214:app.awrad.awrad_dhikrgoalstracker}}} topActivityType=1 pictureInPictureParams=null shouldDockBigOverlays=false launchIntoPipHostTaskId=-1 lastParentTaskIdBeforePip=-1 displayCutoutSafeInsets=Rect(0, 144 - 0, 0) topActivityInfo=ActivityInfo{2fa4500 app.awrad.awrad_dhikrgoalstracker.MainActivity} launchCookies=[] positionInParent=Point(0, 0) parentTaskId=-1 isFocused=false isVisible=false isVisibleRequested=false isTopActivityNoDisplay=false isSleeping=false locusId=null displayAreaFeatureId=1 isTopActivityTransparent=false isActivityStackTransparent=false lastNonFullscreenBounds=Rect(362, 870 - 1079, 2310) capturedLink=null capturedLinkTimestamp=0 requestedVisibleTypes=-9 topActivityRequestOpenInBrowserEducationTimestamp=0 appCompatTaskInfo=AppCompatTaskInfo { topActivityInSizeCompat=false eligibleForLetterboxEducation= false isLetterboxEducationEnabled= true isLetterboxDoubleTapEnabled= false eligibleForUserAspectRatioButton= false topActivityBoundsLetterboxed= false isFromLetterboxDoubleTap= false topActivityLetterboxVerticalPosition= -1 topActivityLetterboxHorizontalPosition= -1 topActivityLetterboxWidth=-1 topActivityLetterboxHeight=-1 topActivityAppBounds=Rect(0, 0 - 1440, 3120) isUserFullscreenOverrideEnabled=false isSystemFullscreenOverrideEnabled=false hasMinAspectRatioOverride=false topActivityLetterboxBounds=null cameraCompatTaskInfo=CameraCompatTaskInfo { freeformCameraCompatMode=inactive}} topActivityMainWindowFrame=null}, pipChange = null, remoteTransition = null, displayChange = null, flags = 0, debugId = 29 }
+05-30 14:31:16.730   664   687 V WindowManager:     startWCT=WindowContainerTransaction { changes= {} hops= [] errorCallbackToken=null taskFragmentOrganizer=null }
+05-30 14:31:16.730   664   687 V WindowManager:     info={id=29 t=OPEN f=0x0 trk=0 r=[0@Point(0, 0)] c=[
+05-30 14:31:16.730   664   687 V WindowManager:         {WCT{RemoteToken{38bdf83 Task{ddd47d0 #153 type=standard A=10214:app.awrad.awrad_dhikrgoalstracker}}} m=OPEN f=NONE leash=Surface(name=Task=153)/@0x61d4e3d sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},
+05-30 14:31:16.730   664   687 V WindowManager:         {WCT{RemoteToken{55bff11 Task{6ea4201 #1 type=home}}} m=TO_BACK f=SHOW_WALLPAPER leash=Surface(name=Task=1)/@0x4792e4c sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0 taskParent=-1},
+05-30 14:31:16.730   664   687 V WindowManager:         {m=TO_BACK f=IS_WALLPAPER leash=Surface(name=WallpaperWindowToken{a3c375b showWhenLocked=false})/@0xab2ae7f sb=Rect(0, 0 - 1440, 3120) eb=Rect(0, 0 - 1440, 3120) epz=Point(1440, 3120) d=0}
+05-30 14:31:16.730   664   687 V WindowManager:     ]}
+05-30 14:31:16.731   587   587 D installd: Purging /data/data/com.google.android.gms/cache/android:/com.google.android.gms/managed/common/shared/cgal.mdi.sync.moonlander.autofill-domain-predictions-prod-spanner/infinite_data_cache size=32768 mod=1780131668 from UID=10147 used=5181440 quota=55267993 ratio=937
+05-30 14:31:16.731   587   587 D installd: Purging /data/data/com.google.android.gms/cache/android:/com.google.android.gms/managed/common/shared/cgal.mdi.sync.moonlander.autofill-domain-predictions-prod-spanner size=8192 mod=1780131668 from UID=10147 used=5148672 quota=55267993 ratio=931
+05-30 14:31:16.732   587   587 D installd: Purging /data/data/com.google.android.gms/cache/android:/com.google.android.gms/managed/common/shared size=8192 mod=1780131668 from UID=10147 used=5140480 quota=55267993 ratio=930
+05-30 14:31:16.732   587   587 D installd: Purging /data/data/com.google.android.gms/cache/android:/com.google.android.gms/managed/common size=8192 mod=1780131668 from UID=10147 used=5132288 quota=55267993 ratio=928
+05-30 14:31:16.732   587   587 D installd: Purging /data/data/com.google.android.gms/cache/android:/com.google.android.gms/managed size=8192 mod=1780131668 from UID=10147 used=5124096 quota=55267993 ratio=927
+05-30 14:31:16.732   587   587 D installd: Purging /data/data/com.google.android.gms/cache/android:/com.google.android.gms size=8192 mod=1780131668 from UID=10147 used=5115904 quota=55267993 ratio=925
+05-30 14:31:16.732   587   587 D installd: Purging /data/data/com.google.android.gms/cache/android: size=8192 mod=1780131668 from UID=10147 used=5107712 quota=55267993 ratio=924
+05-30 14:31:16.737   587   587 D installd: Purging /data/data/com.android.vending/cache/logs_background/null_account.metalog/logs_upload_attempt.log size=4096 mod=1780131663 from UID=10146 used=151552 quota=55267993 ratio=27
+05-30 14:31:16.737   587   587 D installd: Purging /data/data/com.android.vending/cache/logs_background/null_account.metalog/play_metalog.log size=8192 mod=1780131663 from UID=10146 used=147456 quota=55267993 ratio=26
+05-30 14:31:16.737   587   587 D installd: Purging /data/data/com.android.vending/cache/logs/null_account.metalog/logs_upload_attempt.log size=4096 mod=1780131663 from UID=10146 used=139264 quota=55267993 ratio=25
+05-30 14:31:16.737   587   587 D installd: Purging /data/data/com.android.vending/cache/logs/null_account.metalog/play_metalog.log size=8192 mod=1780131663 from UID=10146 used=135168 quota=55267993 ratio=24
+05-30 14:31:16.737   587   587 D installd: Purging /data/data/com.android.vending/cache/logs/null_account.metalog size=8192 mod=1780131663 from UID=10146 used=126976 quota=55267993 ratio=22
+05-30 14:31:16.737   587   587 D installd: Purging /data/data/com.android.vending/cache/logs_background/null_account.metalog size=8192 mod=1780131663 from UID=10146 used=118784 quota=55267993 ratio=21
+05-30 14:31:16.737   587   587 D installd: Purging /data/data/com.android.vending/cache/logs size=8192 mod=1780131663 from UID=10146 used=110592 quota=55267993 ratio=20
+05-30 14:31:16.737   587   587 D installd: Purging /data/data/com.android.vending/cache/logs_background size=8192 mod=1780131663 from UID=10146 used=102400 quota=55267993 ratio=18
+05-30 14:31:16.737   587   587 D installd: Purging /data/data/com.android.vending/cache/data-loader-logs/null_account.metalog/logs_upload_attempt.log size=8192 mod=1780131664 from UID=10146 used=94208 quota=55267993 ratio=17
+05-30 14:31:16.740   587   587 D installd: Purging /data/data/com.android.vending/cache/data-loader-logs/null_account.metalog/play_metalog.log size=8192 mod=1780131664 from UID=10146 used=86016 quota=55267993 ratio=15
+05-30 14:31:16.740   587   587 D installd: Purging /data/data/com.android.vending/cache/data-loader-logs/null_account.metalog size=8192 mod=1780131664 from UID=10146 used=77824 quota=55267993 ratio=14
+05-30 14:31:16.740   587   587 D installd: Purging /data/data/com.android.vending/cache/data-loader-logs size=8192 mod=1780131664 from UID=10146 used=69632 quota=55267993 ratio=12
+05-30 14:31:16.741   587   587 D installd: Purging /data/data/app.awrad.awrad_dhikrgoalstracker/cache/data/user/0/app.awrad.awrad_dhikrgoalstracker/no_backup/androidx.work.workdb.lck size=4096 mod=1780131671 from UID=10214 used=81920 quota=79193109 ratio=10
+05-30 14:31:16.741   587   587 D installd: Purging /data/data/app.awrad.awrad_dhikrgoalstracker/cache/data/user/0/app.awrad.awrad_dhikrgoalstracker/no_backup size=8192 mod=1780131671 from UID=10214 used=77824 quota=79193109 ratio=9
+05-30 14:31:16.741   587   587 D installd: Purging /data/data/app.awrad.awrad_dhikrgoalstracker/cache/data/user/0/app.awrad.awrad_dhikrgoalstracker size=8192 mod=1780131671 from UID=10214 used=69632 quota=79193109 ratio=8
+05-30 14:31:16.741   587   587 D installd: Purging /data/data/app.awrad.awrad_dhikrgoalstracker/cache/data/user/0 size=8192 mod=1780131671 from UID=10214 used=61440 quota=79193109 ratio=7
+05-30 14:31:16.742   587   587 D installd: Purging /data/data/app.awrad.awrad_dhikrgoalstracker/cache/data/user size=8192 mod=1780131671 from UID=10214 used=53248 quota=79193109 ratio=6
+05-30 14:31:16.742   587   587 D installd: Purging /data/data/app.awrad.awrad_dhikrgoalstracker/cache/awrad_database.lck size=4096 mod=1780131671 from UID=10214 used=45056 quota=79193109 ratio=5
+05-30 14:31:16.742   587   587 D installd: Purging /data/data/app.awrad.awrad_dhikrgoalstracker/cache/data size=8192 mod=1780131671 from UID=10214 used=40960 quota=79193109 ratio=5
+05-30 14:31:16.785  6750  6836 W HWUI    : Failed to choose config with EGL_SWAP_BEHAVIOR_PRESERVED, retrying without...
+05-30 14:31:16.790  6750  6836 W HWUI    : Failed to initialize 101010-2 format, error = EGL_SUCCESS
+05-30 14:31:16.826  6750  6750 D CompatChangeReporter: Compat change id reported: 377864165; UID 10214; state: ENABLED
+05-30 14:31:16.841  6750  6750 D DesktopModeFlags: Toggle override initialized to: OVERRIDE_UNSET
+05-30 14:31:16.882   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-30 14:31:16.892   587   587 E installd: Failed to free up 622811544 on /data; final free space 457240576: Success
+05-30 14:31:16.900  1482  1669 I ExternalStorageServiceImpl: Free cache requested for 165570968 bytes
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: java.io.IOException: Failed to free 622811544 on storage device at /data
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.FreeStorageHelper.freeStorage(FreeStorageHelper.java:182)
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.PackageManagerService.freeStorage(PackageManagerService.java:2937)
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.PackageManagerInternalBase.freeStorage(PackageManagerInternalBase.java:571)
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService.checkLow(DeviceStorageMonitorService.java:194)
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService.-$$Nest$mcheckLow(DeviceStorageMonitorService.java:0)
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService$1.handleMessage(DeviceStorageMonitorService.java:297)
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: 	at android.os.Looper.loopOnce(Looper.java:248)
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: 	at android.os.Looper.loop(Looper.java:338)
+05-30 14:31:16.914   664   825 W DeviceStorageMonitorService: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+05-30 14:31:16.981   664   815 D InetDiagMessage: Destroyed 2 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-30 14:31:16.981   664   815 D InetDiagMessage: Destroyed live tcp sockets for uids={10146} in 99ms
+05-30 14:31:17.034   915   961 V WindowManagerShell: Transition animation finished (aborted=false), notifying core (#29) android.os.BinderProxy@e44236c@0
+05-30 14:31:17.099   915   961 V WindowManagerShell: Track 0 became idle
+05-30 14:31:17.099   915   961 V WindowManagerShell: All active transition animations finished
+05-30 14:31:17.161   664   687 V WindowManager: Finish Transition (#29): created at 05-30 14:31:15.530 collect-started=15.464ms request-sent=36.162ms started=436.288ms ready=436.268ms sent=1085.96ms commit=98.119ms finished=1518.335ms
+05-30 14:31:17.162   664   687 W Looper  : Slow dispatch took 102ms android.fg app=system_server main=false group=FOREGROUND h=android.os.Handler c=com.android.server.wm.Transition$$ExternalSyntheticLambda5@ff398a m=0
+05-30 14:31:17.167  1056  1056 D VRI[NexusLauncherActivity]: visibilityChanged oldVisibility=true newVisibility=false
+05-30 14:31:17.187  1056  1056 D NexusLauncherModelDelegate: notifySmartspaceEvent: SmartspaceTargetEvent{mSmartspaceTarget=null, mSmartspaceActionId='null', mEventType=7}
+05-30 14:31:17.625  6750  6750 I ikrgoalstracker: hiddenapi: Accessing hidden method Landroid/view/ViewGroup;->makeOptionalFitsSystemWindows()V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/appcompat/widget/ViewUtils; (domain=app) using reflection: allowed
+05-30 14:31:17.832  6750  6750 W HWUI    : Unknown dataspace 0
+05-30 14:31:18.353  6750  6750 I Choreographer: Skipped 30 frames!  The application may be doing too much work on its main thread.
+05-30 14:31:18.531   664   900 D CoreBackPreview: Window{773af73 u0 app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@6a03aa9, mPriority=-1, mIsAnimationCallback=false, mOverrideBehavior=0}
+05-30 14:31:18.614  6750  6842 D ProfileInstaller: Installing profile for app.awrad.awrad_dhikrgoalstracker
+05-30 14:31:18.662   915  1275 I HWUI    : Davey! duration=709ms; Flags=0, FrameTimelineVsyncId=85876, IntendedVsync=14194898385281, Vsync=14194898385281, InputEventId=0, HandleInputStart=14194903741472, AnimationStart=14194903742556, PerformTraversalsStart=14194903742806, DrawStart=14194903788514, FrameDeadline=14194931718613, FrameStartTime=14194903735931, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14194903965139, SyncStart=14194904661847, IssueDrawCommandsStart=14194904763722, SwapBuffers=14194906023847, FrameCompleted=14195608369848, DequeueBufferDuration=696354875, QueueBufferDuration=219167, GpuCompleted=14195523398056, SwapBuffersCompleted=14195608369848, DisplayPresentTime=0, CommandSubmissionCompleted=14194906023847, 
+05-30 14:31:19.105  6750  6750 I ikrgoalstracker: hiddenapi: Accessing hidden method Landroid/os/SystemProperties;->addChangeCallback(Ljava/lang/Runnable;)V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/compose/ui/platform/AndroidComposeView$Companion; (domain=app) using reflection: allowed
+05-30 14:31:20.098  6750  6759 I ikrgoalstracker: Background concurrent mark compact GC freed 3633KB AllocSpace bytes, 0(0B) LOS objects, 49% free, 4111KB/8223KB, paused 1.726ms,2.494ms total 127.642ms
+05-30 14:31:20.178   664   687 I ActivityTaskManager: Displayed app.awrad.awrad_dhikrgoalstracker/.MainActivity for user 0: +4s652ms
+05-30 14:31:20.225  6750  6750 I Choreographer: Skipped 94 frames!  The application may be doing too much work on its main thread.
+05-30 14:31:20.233  6750  6843 I HWUI    : Davey! duration=2336ms; Flags=1, FrameTimelineVsyncId=85891, IntendedVsync=14194915051947, Vsync=14195415051927, InputEventId=0, HandleInputStart=14195530120556, AnimationStart=14195530123181, PerformTraversalsStart=14195530124139, DrawStart=14197154595765, FrameDeadline=14194931718613, FrameStartTime=14195418132598, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14197165932099, SyncStart=14197168427307, IssueDrawCommandsStart=14197171022640, SwapBuffers=14197174150307, FrameCompleted=14197254174224, DequeueBufferDuration=4250, QueueBufferDuration=605708, GpuCompleted=14197254174224, SwapBuffersCompleted=14197233312349, DisplayPresentTime=0, CommandSubmissionCompleted=14197174150307, 
+05-30 14:31:20.264  1221  2393 I FontLog : (REDACTED) Received query %s, URI %s
+05-30 14:31:20.264  1221  2393 I FontLog : (REDACTED) Query [%s] resolved to %s
+05-30 14:31:20.327  1221  2393 I FontLog : (REDACTED) Fetch %s end status %s
+05-30 14:31:20.388   664   779 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:be9442ec: onRequestHide at ORIGIN_SERVER reason HIDE_UNSPECIFIED_WINDOW fromUser false
+05-30 14:31:20.453  1221  2393 I FontLog : (REDACTED) Pulling font file for id = %d, cache size = %d
+05-30 14:31:20.456  1372  1372 I GoogleInputMethodService: GoogleInputMethodService.onFinishInput():2259 
+05-30 14:31:20.471  1221  1232 I FontLog : (REDACTED) Pulling font file for id = %d, cache size = %d
+05-30 14:31:20.487  1372  1372 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():103 repeatCheckTimes = 0, locked = false
+05-30 14:31:20.488  1372  1372 W NotificationCenter: NotificationCenter$NotificationQueue.notifyPendingNotificationsOnExecutor():877 Heavy notify work detected on UI thread: [nlw->laj, nlw->laj, nlw->mwa, nlw->laj, nlw->laj, nlw->laj, nlw->laj, nlw->laj, nlw->huf, nlw->laj, nlw->ilu, nlw->kxr, nlw->laj, nlw->peq, nlw->laj, nlw->lde, nlw->gsc, nlw->gvb, nlw->laj, nlw->pua, nlw->nko, nlw->laj, nlw->laj, nlw->laj, nlw->mkk, nlw->nkx] takes 31ms
+05-30 14:31:20.488  1372  1372 I GoogleInputMethodService: GoogleInputMethodService.onStartInput():1446 onStartInput(EditorInfo{EditorInfo{packageName=app.awrad.awrad_dhikrgoalstracker, inputType=0, inputTypeString=NULL, enableLearning=false, autoCorrection=false, autoComplete=false, imeOptions=0, privateImeOptions=null, actionName=UNSPECIFIED, actionLabel=null, initialSelStart=-1, initialSelEnd=-1, initialCapsMode=0, label=null, fieldId=0, fieldName=null, extras=null, hintText=null, hintLocales=[]}}, false)
+05-30 14:31:20.488  1372  1372 I AndroidIME: LatinIMEBase.updateInputViewCoverNavigation():322 Update input view padding, isNavbarOverInputWindow=true, bottom inset=84
+05-30 14:31:20.489  1372  1372 I Module  : DeviceLockedStatusModuleProvider$Module.updateDeviceLockedStatus():103 repeatCheckTimes = 1, locked = false
+05-30 14:31:20.490   664   735 I ImeTracker: system_server:6c672583: onRequestHide at ORIGIN_SERVER reason IME_REQUESTED_CHANGED_LISTENER fromUser false
+05-30 14:31:20.491   664   690 I ImeTracker: system_server:6c672583: onCancelled at PHASE_SERVER_SHOULD_HIDE
+05-30 14:31:20.524   664   735 W PackageConfigPersister: App-specific configuration not found for packageName: app.awrad.awrad_dhikrgoalstracker and userId: 0
+05-30 14:31:20.664   583  3639 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:20.939  6750  6750 W ikrgoalstracker: Verification of void androidx.navigation.compose.NavHostKt.NavHost(androidx.navigation.NavHostController, androidx.navigation.NavGraph, androidx.compose.ui.Modifier, androidx.compose.ui.Alignment, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function1, androidx.compose.runtime.Composer, int, int) took 141.809ms (15577.27 bytecodes/s) (0B arena alloc)
+05-30 14:31:20.992  1056  1056 D BaseDepthController: setSurface:
+05-30 14:31:20.992  1056  1056 D BaseDepthController: 	mWaitingOnSurfaceValidity: false
+05-30 14:31:20.992  1056  1056 D BaseDepthController: 	mBaseSurface: null
+05-30 14:31:20.993  1056  1056 D BaseDepthController: mSurface is null and mCurrentBlur is: 0
+05-30 14:31:21.017  1056  1056 D StateManager: goToState - fromState: Normal, toState: Normal, partial trace:
+05-30 14:31:21.017  1056  1056 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(go/retraceme ee19ec8c009da7af1d458e7d1683a6f5bf3b93b44f6674aa108e1a3e78584fe0:4)
+05-30 14:31:21.017  1056  1056 D StateManager: 	at com.android.launcher3.statemanager.StateManager.moveToRestState(go/retraceme ee19ec8c009da7af1d458e7d1683a6f5bf3b93b44f6674aa108e1a3e78584fe0:1)
+05-30 14:31:21.017  1056  1056 D StateManager: 	at com.android.launcher3.statemanager.StatefulActivity.onStop(go/retraceme ee19ec8c009da7af1d458e7d1683a6f5bf3b93b44f6674aa108e1a3e78584fe0:34)
+05-30 14:31:21.026  1056  1056 D StatsLog: LAUNCHER_ONSTOP
+05-30 14:31:21.027  1056  1056 D StatsLog: LAUNCHER_GOOGLE_SEARCH_RESTORE_LIST_SIZE_AFTER_ACTIVITY_RESTART
+05-30 14:31:21.109   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 14:31:21.120   664  1179 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:21.155   664  1179 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:21.192   664   752 D ActivityManager: sync unfroze 2324 com.android.vending for 6
+05-30 14:31:21.195   664   752 D ActivityManager: sync unfroze 3314 com.android.vending:background for 6
+05-30 14:31:21.214  3314  3314 I Finsky:background: [2] Memory trim requested to level 40
+05-30 14:31:21.224  2324  2324 I Finsky  : [2] Memory trim requested to level 40
+05-30 14:31:21.224  2324  2324 I Finsky  : [2] Flushing in-memory image cache
+05-30 14:31:21.274  2324  2324 I Finsky  : [2] SCH: job service start with id 9574.
+05-30 14:31:21.357  2324  6762 I Finsky  : [235] SCH: Satisfied jobs for 9574 are: 12-1
+05-30 14:31:21.368  2324  6850 I Finsky  : [242] SCH: Job 12-1 starting
+05-30 14:31:21.371  2324  2324 I Finsky  : [2] WM::SCH: Logging work start for 12-1
+05-30 14:31:21.372  2324  2324 I Finsky  : [2] [ContentSync] job started
+05-30 14:31:21.647  6750  6758 I ikrgoalstracker: Compiler allocated 5111KB to compile void android.view.ViewRootImpl.performTraversals()
+05-30 14:31:21.792  2324  6851 I Finsky  : [243] App states replicator found 26 unowned apps
+05-30 14:31:21.806  2324  2444 I Finsky  : [57] Completed 0 account content syncs with 0 successful.
+05-30 14:31:21.808  2324  2324 I Finsky  : [2] [ContentSync] Installation state replication succeeded.
+05-30 14:31:21.808  2324  2324 I Finsky  : [2] SCH: jobFinished: 12-1. TimeElapsed: 438ms.
+05-30 14:31:21.808  2324  2324 I Finsky  : [2] WM::SCH: Logging work end for 12-1
+05-30 14:31:21.881  1435  1435 D BoundBrokerSvc: onUnbind: Intent { act=com.google.android.gms.feedback.internal.IFeedbackService dat=chimera-action:/... xflg=0x4 cmp=com.google.android.gms/.chimera.GmsBoundBrokerService }
+05-30 14:31:22.025  2324  2443 I Finsky  : [56] SCH: Scheduling phonesky job Id: 1-1337, CT: 1780122724889, Constraints: [{ L: 43115185, D: 86315185, C: CHARGING_NONE, I: IDLE_NONE, N: NET_ANY, B: BATTERY_ANY }]
+05-30 14:31:22.058  2324  2439 I Finsky  : [55] SCH: Scheduling 1 system job(s)
+05-30 14:31:22.059  2324  2439 I Finsky  : [55] SCH: Scheduling system job Id: 9577, L: 34158016, D: 77358016, C: false, I: false, N: 1
+05-30 14:31:22.100  2324  6850 I Finsky  : [242] SCH: job service finished with id 9574.
+05-30 14:31:22.107  2324  2324 I Finsky  : [2] Memory trim requested to level 40
+05-30 14:31:22.107  2324  2324 I Finsky  : [2] Flushing in-memory image cache
+05-30 14:31:22.108  3314  3314 I Finsky:background: [2] Memory trim requested to level 40
+05-30 14:31:22.280   664  1179 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:22.283  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:31:22.678  6750  6750 W HWUI    : Image decoding logging dropped!
+05-30 14:31:22.855  6750  6750 W HWUI    : Image decoding logging dropped!
+05-30 14:31:23.041  6750  6750 W HWUI    : Image decoding logging dropped!
+05-30 14:31:23.382  6750  6750 D InsetsController: hide(ime(), fromIme=false)
+05-30 14:31:23.382  6750  6750 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:be9442ec: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 14:31:23.383  6750  6750 I Choreographer: Skipped 160 frames!  The application may be doing too much work on its main thread.
+05-30 14:31:24.232   664   761 D ActivityManager: freezing 1339 com.google.android.permissioncontroller
+05-30 14:31:24.234   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-30 14:31:24.235   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-30 14:31:24.235   664   815 D InetDiagMessage: Destroyed live tcp sockets for uids={10198} in 1ms
+05-30 14:31:24.239  6750  6849 I HWUI    : Davey! duration=3874ms; Flags=0, FrameTimelineVsyncId=86008, IntendedVsync=14197381718515, Vsync=14197415051847, InputEventId=0, HandleInputStart=14197430768932, AnimationStart=14197430770807, PerformTraversalsStart=14197805013807, DrawStart=14200352743433, FrameDeadline=14197398385181, FrameStartTime=14197430758599, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14200445264017, SyncStart=14200445804142, IssueDrawCommandsStart=14200446255558, SwapBuffers=14201209171017, FrameCompleted=14201257106059, DequeueBufferDuration=4041, QueueBufferDuration=806417, GpuCompleted=14201257106059, SwapBuffersCompleted=14201223019184, DisplayPresentTime=0, CommandSubmissionCompleted=14201209171017, 
+05-30 14:31:24.265  6750  6750 I Choreographer: Skipped 44 frames!  The application may be doing too much work on its main thread.
+05-30 14:31:24.424  6750  6759 I ikrgoalstracker: Background concurrent mark compact GC freed 1743KB AllocSpace bytes, 0(0B) LOS objects, 49% free, 6480KB/12MB, paused 628us,4.777ms total 218.585ms
+05-30 14:31:24.562  6750  6848 I HWUI    : Davey! duration=3655ms; Flags=0, FrameTimelineVsyncId=86087, IntendedVsync=14197781718499, Vsync=14200448385059, InputEventId=0, HandleInputStart=14200449058767, AnimationStart=14200449060100, PerformTraversalsStart=14200889377475, DrawStart=14201015396309, FrameDeadline=14201281718359, FrameStartTime=14200448855183, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14201081023809, SyncStart=14201226794767, IssueDrawCommandsStart=14201226923725, SwapBuffers=14201563711017, FrameCompleted=14201582580392, DequeueBufferDuration=3750, QueueBufferDuration=267292, GpuCompleted=14201582580392, SwapBuffersCompleted=14201580670892, DisplayPresentTime=0, CommandSubmissionCompleted=14201563711017, 
+05-30 14:31:24.808  6750  6750 W HWUI    : Image decoding logging dropped!
+05-30 14:31:24.877  6750  6750 W HWUI    : Image decoding logging dropped!
+05-30 14:31:25.258   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-30 14:31:25.259   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-30 14:31:25.259   664   815 D InetDiagMessage: Destroyed live tcp sockets for uids={10148} in 1ms
+05-30 14:31:25.284   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-30 14:31:25.285   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-30 14:31:25.285   664   815 D InetDiagMessage: Destroyed live tcp sockets for uids={20148} in 26ms
+05-30 14:31:25.314  6750  6750 W HWUI    : Image decoding logging dropped!
+05-30 14:31:25.588   664   690 W ActivityTaskManager: Launch timeout has expired, giving up wake lock!
+05-30 14:31:25.725   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:25.758  6750  6750 I Choreographer: Skipped 81 frames!  The application may be doing too much work on its main thread.
+05-30 14:31:26.540  6750  6848 I HWUI    : Davey! duration=2987ms; Flags=0, FrameTimelineVsyncId=86208, IntendedVsync=14200581718387, Vsync=14201315051691, InputEventId=0, HandleInputStart=14201331215476, AnimationStart=14201331217392, PerformTraversalsStart=14201729475601, DrawStart=14201729956226, FrameDeadline=14201615051679, FrameStartTime=14201330853309, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14202714651976, SyncStart=14202722639226, IssueDrawCommandsStart=14202722813851, SwapBuffers=14203547551435, FrameCompleted=14203576935143, DequeueBufferDuration=4042, QueueBufferDuration=690833, GpuCompleted=14203576935143, SwapBuffersCompleted=14203556472518, DisplayPresentTime=0, CommandSubmissionCompleted=14203547551435, 
+05-30 14:31:26.571  6750  6848 I HWUI    : Davey! duration=1688ms; Flags=0, FrameTimelineVsyncId=86224, IntendedVsync=14201465051685, Vsync=14202815051631, InputEventId=0, HandleInputStart=14202999141143, AnimationStart=14202999144226, PerformTraversalsStart=14203104246226, DrawStart=14203104341935, FrameDeadline=14203598384933, FrameStartTime=14202823401935, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14203104694851, SyncStart=14203556523893, IssueDrawCommandsStart=14203556649143, SwapBuffers=14203577300435, FrameCompleted=14203605445393, DequeueBufferDuration=17238167, QueueBufferDuration=181708, GpuCompleted=14203604801310, SwapBuffersCompleted=14203605445393, DisplayPresentTime=0, CommandSubmissionCompleted=14203577300435, 
+05-30 14:31:26.650   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.650   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.650   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.650   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.655   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.666   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.666   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.666   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.666   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.666   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.673   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.674   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.675   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.675   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.675   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.675   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.676   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.676   664   690 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:26.772  6750  6848 I HWUI    : Davey! duration=702ms; Flags=0, FrameTimelineVsyncId=86240, IntendedVsync=14203115051619, Vsync=14203565051601, InputEventId=0, HandleInputStart=14203572852518, AnimationStart=14203572854852, PerformTraversalsStart=14203623082893, DrawStart=14203623182060, FrameDeadline=14203631718265, FrameStartTime=14203571620102, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14203636990060, SyncStart=14203638550518, IssueDrawCommandsStart=14203638793102, SwapBuffers=14203802277602, FrameCompleted=14203818677560, DequeueBufferDuration=4834, QueueBufferDuration=259917, GpuCompleted=14203818677560, SwapBuffersCompleted=14203808669185, DisplayPresentTime=0, CommandSubmissionCompleted=14203802277602, 
+05-30 14:31:26.948  6750  6750 W HWUI    : Image decoding logging dropped!
+05-30 14:31:27.036  6750  6750 W HWUI    : Image decoding logging dropped!
+05-30 14:31:27.418  6750  6750 I Choreographer: Skipped 33 frames!  The application may be doing too much work on its main thread.
+05-30 14:31:32.134   664   761 D ActivityManager: freezing 2324 com.android.vending
+05-30 14:31:32.141   664   761 D ActivityManager: freezing 3314 com.android.vending:background
+05-30 14:31:32.272  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:31:32.274   664   996 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:32.353   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-30 14:31:32.353   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-30 14:31:32.353   664   815 D InetDiagMessage: Destroyed live tcp sockets for uids={10146} in 2ms
+05-30 14:31:33.845   664   761 D ActivityManager: freezing 1435 com.google.android.gms
+05-30 14:31:36.212  6864  6864 W screencap: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: SurfaceFlingerAIDL
+05-30 14:31:36.213  6864  6864 W BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+05-30 14:31:36.214  6864  6864 W ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+05-30 14:31:36.224   504   617 E HwcComposer: getLuts failed Status(-8, EX_SERVICE_SPECIFIC): '8: '
+05-30 14:31:36.225   504   617 E HWComposer: getLuts: getLuts failed for display 4619827259835644672: UNSUPPORTED (8)
+05-30 14:31:41.298   664   761 D ActivityManager: freezing 1684 com.android.keychain
+05-30 14:31:41.300   664   761 D ActivityManager: freezing 1146 com.android.settings
+05-30 14:31:41.301   664   761 D ActivityManager: freezing 2673 com.android.dynsystem:dynsystem
+05-30 14:31:41.301   664   761 D ActivityManager: freezing 2654 com.android.dynsystem
+05-30 14:31:41.301   664   761 D ActivityManager: freezing 1944 com.android.localtransport
+05-30 14:31:42.271  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:31:42.275   664   996 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:31:49.050   664   996 D CoreBackPreview: Window{773af73 u0 app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@cc599d5, mPriority=0, mIsAnimationCallback=true, mOverrideBehavior=0}
+05-30 14:31:50.100   664   761 D ActivityManager: freezing 1883 com.google.android.apps.wellbeing
+05-30 14:31:50.102   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET, states=14
+05-30 14:31:50.102   664   815 D InetDiagMessage: Destroyed 0 sockets, proto=IPPROTO_TCP, family=AF_INET6, states=14
+05-30 14:31:50.102   664   815 D InetDiagMessage: Destroyed live tcp sockets for uids={10148} in 1ms
+05-30 14:31:50.319  6873  6873 W screencap: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: SurfaceFlingerAIDL
+05-30 14:31:50.320  6873  6873 W BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+05-30 14:31:50.321  6873  6873 W ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+05-30 14:31:50.328   504   549 E HwcComposer: getLuts failed Status(-8, EX_SERVICE_SPECIFIC): '8: '
+05-30 14:31:50.329   504   549 E HWComposer: getLuts: getLuts failed for display 4619827259835644672: UNSUPPORTED (8)
+05-30 14:31:52.269  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:31:52.269   664   996 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:32:02.269  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:32:02.271   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:32:11.034  6882  6882 W screencap: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: SurfaceFlingerAIDL
+05-30 14:32:11.034  6882  6882 W BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+05-30 14:32:11.036  6882  6882 W ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+05-30 14:32:11.040   504   617 E HwcComposer: getLuts failed Status(-8, EX_SERVICE_SPECIFIC): '8: '
+05-30 14:32:11.040   504   617 E HWComposer: getLuts: getLuts failed for display 4619827259835644672: UNSUPPORTED (8)
+05-30 14:32:12.273   664   996 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:32:12.284  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:32:17.016   587   587 D installd: Device /data has 457232384 free; requested 622811544; needed 165579160
+05-30 14:32:17.016   587   587 W installd: Failed to find storage mount for /data/media
+05-30 14:32:17.029   587   587 D installd: Active ratio 3101 isn't over quota, and defy not requested
+05-30 14:32:17.030   587   587 E installd: Failed to free up 622811544 on /data; final free space 457232384: Success
+05-30 14:32:17.031   664   825 W PackageManager: Not removing package com.google.android.trichromelibrary hosting lib com.google.android.trichromelibrary version 772713733 used by [VersionedPackage[com.android.chrome/772713733]] for user 0
+05-30 14:32:17.032   587   587 D installd: Device /data has 457232384 free; requested 622811544; needed 165579160
+05-30 14:32:17.032   587   587 W installd: Failed to find storage mount for /data/media
+05-30 14:32:17.117   587   587 E installd: Failed to free up 622811544 on /data; final free space 457232384: Success
+05-30 14:32:17.126  1482  1669 I ExternalStorageServiceImpl: Free cache requested for 165579160 bytes
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: java.io.IOException: Failed to free 622811544 on storage device at /data
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.FreeStorageHelper.freeStorage(FreeStorageHelper.java:182)
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.PackageManagerService.freeStorage(PackageManagerService.java:2937)
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.PackageManagerInternalBase.freeStorage(PackageManagerInternalBase.java:571)
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService.checkLow(DeviceStorageMonitorService.java:194)
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService.-$$Nest$mcheckLow(DeviceStorageMonitorService.java:0)
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService$1.handleMessage(DeviceStorageMonitorService.java:297)
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: 	at android.os.Looper.loopOnce(Looper.java:248)
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: 	at android.os.Looper.loop(Looper.java:338)
+05-30 14:32:17.128   664   825 W DeviceStorageMonitorService: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+05-30 14:32:22.274   664   996 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:32:22.280  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:32:26.069  6750  6759 W ikrgoalstracker: Suspending all threads took: 56.619ms
+05-30 14:32:26.249  6750  6759 I ikrgoalstracker: Background concurrent mark compact GC freed 4584KB AllocSpace bytes, 6(132KB) LOS objects, 49% free, 8229KB/16MB, paused 57.239ms,4.389ms total 602.363ms
+05-30 14:32:26.298  6750  6750 I Choreographer: Skipped 72 frames!  The application may be doing too much work on its main thread.
+05-30 14:32:26.311  6750  6849 I HWUI    : Davey! duration=1360ms; Flags=0, FrameTimelineVsyncId=86524, IntendedVsync=14261965049265, Vsync=14262031715929, InputEventId=0, HandleInputStart=14262044969004, AnimationStart=14262044970296, PerformTraversalsStart=14262555793088, DrawStart=14262555886421, FrameDeadline=14262148382591, FrameStartTime=14262044950754, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14263283730755, SyncStart=14263290756880, IssueDrawCommandsStart=14263291053630, SwapBuffers=14263295809297, FrameCompleted=14263332740838, DequeueBufferDuration=3958, QueueBufferDuration=345125, GpuCompleted=14263332740838, SwapBuffersCompleted=14263329191547, DisplayPresentTime=0, CommandSubmissionCompleted=14263295809297, 
+05-30 14:32:26.415  6891  6891 W screencap: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: SurfaceFlingerAIDL
+05-30 14:32:26.415  6891  6891 W BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+05-30 14:32:26.416  6891  6891 W ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+05-30 14:32:26.440   504   617 E HwcComposer: getLuts failed Status(-8, EX_SERVICE_SPECIFIC): '8: '
+05-30 14:32:26.441   504   617 E HWComposer: getLuts: getLuts failed for display 4619827259835644672: UNSUPPORTED (8)
+05-30 14:32:26.513  6750  6849 I HWUI    : Davey! duration=1407ms; Flags=0, FrameTimelineVsyncId=86533, IntendedVsync=14262148382591, Vsync=14263348382543, InputEventId=0, HandleInputStart=14263368422213, AnimationStart=14263368424838, PerformTraversalsStart=14263439714797, DrawStart=14263439831547, FrameDeadline=14263365049209, FrameStartTime=14263363780588, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14263487711172, SyncStart=14263487986172, IssueDrawCommandsStart=14263488740338, SwapBuffers=14263527691922, FrameCompleted=14263556476505, DequeueBufferDuration=5167, QueueBufferDuration=1091750, GpuCompleted=14263556476505, SwapBuffersCompleted=14263540461922, DisplayPresentTime=0, CommandSubmissionCompleted=14263527691922, 
+05-30 14:32:32.271  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:32:32.271   664   996 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:32:42.272  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:32:42.273   664   996 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:32:48.569   664   900 D WifiNl80211Manager: Scan result ready event
+05-30 14:32:48.569   664   900 D WifiNative: Scan result ready event
+05-30 14:32:48.572  1221  2393 I WifiScanner: onFullResults
+05-30 14:32:48.572  1221  1232 I WifiScanner: onFullResults
+05-30 14:32:48.583   664   809 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]
+05-30 14:32:52.273  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:32:52.274   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:33:01.554  6900  6900 W screencap: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: SurfaceFlingerAIDL
+05-30 14:33:01.555  6900  6900 W BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+05-30 14:33:01.557  6900  6900 W ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+05-30 14:33:01.562   504   617 E HwcComposer: getLuts failed Status(-8, EX_SERVICE_SPECIFIC): '8: '
+05-30 14:33:01.562   504   617 E HWComposer: getLuts: getLuts failed for display 4619827259835644672: UNSUPPORTED (8)
+05-30 14:33:02.278   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:33:02.279  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:33:12.276  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:33:12.277   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:33:17.186   587   587 D installd: Device /data has 457228288 free; requested 622811544; needed 165583256
+05-30 14:33:17.186   587   587 W installd: Failed to find storage mount for /data/media
+05-30 14:33:17.199   587   587 D installd: Active ratio 3101 isn't over quota, and defy not requested
+05-30 14:33:17.199   587   587 E installd: Failed to free up 622811544 on /data; final free space 457228288: Success
+05-30 14:33:17.201   664   825 W PackageManager: Not removing package com.google.android.trichromelibrary hosting lib com.google.android.trichromelibrary version 772713733 used by [VersionedPackage[com.android.chrome/772713733]] for user 0
+05-30 14:33:17.201   587   587 D installd: Device /data has 457228288 free; requested 622811544; needed 165583256
+05-30 14:33:17.201   587   587 W installd: Failed to find storage mount for /data/media
+05-30 14:33:17.255   587   587 E installd: Failed to free up 622811544 on /data; final free space 457228288: Success
+05-30 14:33:17.258  1482  1669 I ExternalStorageServiceImpl: Free cache requested for 165583256 bytes
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: java.io.IOException: Failed to free 622811544 on storage device at /data
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.FreeStorageHelper.freeStorage(FreeStorageHelper.java:182)
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.PackageManagerService.freeStorage(PackageManagerService.java:2937)
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.PackageManagerInternalBase.freeStorage(PackageManagerInternalBase.java:571)
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService.checkLow(DeviceStorageMonitorService.java:194)
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService.-$$Nest$mcheckLow(DeviceStorageMonitorService.java:0)
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService$1.handleMessage(DeviceStorageMonitorService.java:297)
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: 	at android.os.Looper.loopOnce(Looper.java:248)
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: 	at android.os.Looper.loop(Looper.java:338)
+05-30 14:33:17.260   664   825 W DeviceStorageMonitorService: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+05-30 14:33:22.275  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:33:22.276   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:33:28.266  6750  6750 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@43cb65e
+05-30 14:33:28.268   664   900 D CoreBackPreview: Window{773af73 u0 app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@bfaed54, mPriority=-1, mIsAnimationCallback=false, mOverrideBehavior=0}
+05-30 14:33:31.395  6750  6750 W HWUI    : Image decoding logging dropped!
+05-30 14:33:32.379   664   996 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:33:32.384  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:33:32.850  6750  6750 W HWUI    : Image decoding logging dropped!
+05-30 14:33:33.479   664   770 I InputDispatcher: 773af73 app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity spent 2324ms processing MotionEvent
+05-30 14:33:33.488  6750  6766 I HWUI    : Davey! duration=5121ms; Flags=0, FrameTimelineVsyncId=86645, IntendedVsync=14325331713397, Vsync=14325365046729, InputEventId=0, HandleInputStart=14325379125035, AnimationStart=14325379126535, PerformTraversalsStart=14325605927993, DrawStart=14325606072201, FrameDeadline=14325448380059, FrameStartTime=14325379117410, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14330387008370, SyncStart=14330387583829, IssueDrawCommandsStart=14330387731620, SwapBuffers=14330401282162, FrameCompleted=14330454053537, DequeueBufferDuration=4500, QueueBufferDuration=551334, GpuCompleted=14330454053537, SwapBuffersCompleted=14330444634329, DisplayPresentTime=0, CommandSubmissionCompleted=14330401282162, 
+05-30 14:33:33.594  6750  6750 I Choreographer: Skipped 315 frames!  The application may be doing too much work on its main thread.
+05-30 14:33:34.121  6750  6766 I HWUI    : Davey! duration=5699ms; Flags=0, FrameTimelineVsyncId=86653, IntendedVsync=14325398380061, Vsync=14330648379851, InputEventId=-825465724, HandleInputStart=14330660810496, AnimationStart=14330660812871, PerformTraversalsStart=14330884890912, DrawStart=14330884987912, FrameDeadline=14330481713191, FrameStartTime=14330659120746, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14330936666621, SyncStart=14330941339037, IssueDrawCommandsStart=14330941577829, SwapBuffers=14331032390371, FrameCompleted=14331102658954, DequeueBufferDuration=6000, QueueBufferDuration=5116833, GpuCompleted=14331102658954, SwapBuffersCompleted=14331066558829, DisplayPresentTime=0, CommandSubmissionCompleted=14331032390371, 
+05-30 14:33:34.759  6750  6766 I HWUI    : Davey! duration=908ms; Flags=0, FrameTimelineVsyncId=86669, IntendedVsync=14330681713183, Vsync=14331081713167, InputEventId=0, HandleInputStart=14331098702121, AnimationStart=14331098704621, PerformTraversalsStart=14331451888996, DrawStart=14331451974996, FrameDeadline=14331131713165, FrameStartTime=14331093824287, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14331515610413, SyncStart=14331516970454, IssueDrawCommandsStart=14331517145079, SwapBuffers=14331559217663, FrameCompleted=14331591351954, DequeueBufferDuration=4041, QueueBufferDuration=264583, GpuCompleted=14331591351954, SwapBuffersCompleted=14331574120829, DisplayPresentTime=0, CommandSubmissionCompleted=14331559217663, 
+05-30 14:33:35.038  6750  6766 I HWUI    : Davey! duration=789ms; Flags=0, FrameTimelineVsyncId=86684, IntendedVsync=14331198379829, Vsync=14331581713147, InputEventId=0, HandleInputStart=14331593551038, AnimationStart=14331593553329, PerformTraversalsStart=14331858200579, DrawStart=14331858302954, FrameDeadline=14331615046479, FrameStartTime=14331590835038, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14331887369204, SyncStart=14331890343913, IssueDrawCommandsStart=14331890597579, SwapBuffers=14331918335746, FrameCompleted=14331990380163, DequeueBufferDuration=10583, QueueBufferDuration=743375, GpuCompleted=14331990380163, SwapBuffersCompleted=14331941075371, DisplayPresentTime=0, CommandSubmissionCompleted=14331918335746, 
+05-30 14:33:35.451  6920  6920 W screencap: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: SurfaceFlingerAIDL
+05-30 14:33:35.452  6920  6920 W BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+05-30 14:33:35.452  6920  6920 W ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+05-30 14:33:35.461   504  1141 E HwcComposer: getLuts failed Status(-8, EX_SERVICE_SPECIFIC): '8: '
+05-30 14:33:35.461   504  1141 E HWComposer: getLuts: getLuts failed for display 4619827259835644672: UNSUPPORTED (8)
+05-30 14:33:42.302  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:33:42.304   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:33:52.298  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:33:52.300   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:33:59.653   664   721 W PackageManager: Not removing package com.google.android.trichromelibrary hosting lib com.google.android.trichromelibrary version 772713733 used by [VersionedPackage[com.android.chrome/772713733]] for user 0
+05-30 14:34:02.300  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:34:02.300   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:34:12.301  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:34:12.301   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:34:16.033   664   900 D CoreBackPreview: Window{773af73 u0 app.awrad.awrad_dhikrgoalstracker/app.awrad.awrad_dhikrgoalstracker.MainActivity}: Setting back callback OnBackInvokedCallbackInfo{mCallback=android.window.IOnBackInvokedCallback$Stub$Proxy@ab692ec, mPriority=0, mIsAnimationCallback=true, mOverrideBehavior=0}
+05-30 14:34:16.147  6750  6750 D AudioSystem: onNewService: media.audio_policy service obtained 0xb400007c86700b30
+05-30 14:34:16.148  6750  6750 D AudioSystem: getService: checking for service media.audio_policy: 0xb400007c86700b30
+05-30 14:34:16.149  6750  6750 D AudioSystem: onNewServiceWithAdapter: media.audio_flinger service obtained 0xb400007d566e7190
+05-30 14:34:16.153  6750  6750 D AudioSystem: getService: checking for service media.audio_flinger: 0xb400007c866fe290
+05-30 14:34:16.157   498  1031 D NativePermissionController: checkPermission: missing 1 for 10214
+05-30 14:34:16.157   498  1031 D NativePermissionController: checkPermission: missing 3 for 10214
+05-30 14:34:16.157   498  1031 D NativePermissionController: checkPermission: missing 5 for 10214
+05-30 14:34:16.164   498  1031 W AudioFlinger: createTrack_l(): mismatch between requested flags (00000004) and output flags (00000002)
+05-30 14:34:16.165   498  1031 D AudioFlinger: Client defaulted notificationFrames to 960 for frameCount 4360
+05-30 14:34:16.165   498  1031 I AF::PthrPatchRecord: creating track with enforcement level 0
+05-30 14:34:16.757  6750  6750 I Choreographer: Skipped 40 frames!  The application may be doing too much work on its main thread.
+05-30 14:34:16.893  6750  6766 I HWUI    : Davey! duration=828ms; Flags=0, FrameTimelineVsyncId=86781, IntendedVsync=14373098378153, Vsync=14373131711485, InputEventId=0, HandleInputStart=14373134871016, AnimationStart=14373134872849, PerformTraversalsStart=14373307839349, DrawStart=14373307914349, FrameDeadline=14373798378125, FrameStartTime=14373134863057, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14373760803058, SyncStart=14373765758891, IssueDrawCommandsStart=14373766400224, SwapBuffers=14373903036766, FrameCompleted=14373931401016, DequeueBufferDuration=3875, QueueBufferDuration=288500, GpuCompleted=14373931401016, SwapBuffersCompleted=14373911163683, DisplayPresentTime=0, CommandSubmissionCompleted=14373903036766, 
+05-30 14:34:16.914  6750  6766 I HWUI    : Davey! duration=789ms; Flags=0, FrameTimelineVsyncId=86789, IntendedVsync=14373148378151, Vsync=14373815044791, InputEventId=0, HandleInputStart=14373823260016, AnimationStart=14373823261724, PerformTraversalsStart=14373869653183, DrawStart=14373869765558, FrameDeadline=14373948378119, FrameStartTime=14373822924349, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=14373888691766, SyncStart=14373911470016, IssueDrawCommandsStart=14373911621308, SwapBuffers=14373912650474, FrameCompleted=14373960390349, DequeueBufferDuration=12931917, QueueBufferDuration=322500, GpuCompleted=14373960390349, SwapBuffersCompleted=14373956424766, DisplayPresentTime=0, CommandSubmissionCompleted=14373912650474, 
+05-30 14:34:17.275   587   587 D installd: Device /data has 457228288 free; requested 622811544; needed 165583256
+05-30 14:34:17.276   587   587 W installd: Failed to find storage mount for /data/media
+05-30 14:34:17.337   587   587 D installd: Active ratio 3101 isn't over quota, and defy not requested
+05-30 14:34:17.345   587   587 E installd: Failed to free up 622811544 on /data; final free space 457228288: Success
+05-30 14:34:17.346   664   825 W PackageManager: Not removing package com.google.android.trichromelibrary hosting lib com.google.android.trichromelibrary version 772713733 used by [VersionedPackage[com.android.chrome/772713733]] for user 0
+05-30 14:34:17.347   587   587 D installd: Device /data has 457228288 free; requested 622811544; needed 165583256
+05-30 14:34:17.347   587   587 W installd: Failed to find storage mount for /data/media
+05-30 14:34:17.472   587   587 E installd: Failed to free up 622811544 on /data; final free space 457228288: Success
+05-30 14:34:17.474  1482  1669 I ExternalStorageServiceImpl: Free cache requested for 165583256 bytes
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: java.io.IOException: Failed to free 622811544 on storage device at /data
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.FreeStorageHelper.freeStorage(FreeStorageHelper.java:182)
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.PackageManagerService.freeStorage(PackageManagerService.java:2937)
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.PackageManagerInternalBase.freeStorage(PackageManagerInternalBase.java:571)
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService.checkLow(DeviceStorageMonitorService.java:194)
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService.-$$Nest$mcheckLow(DeviceStorageMonitorService.java:0)
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService$1.handleMessage(DeviceStorageMonitorService.java:297)
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: 	at android.os.Looper.loopOnce(Looper.java:248)
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: 	at android.os.Looper.loop(Looper.java:338)
+05-30 14:34:17.486   664   825 W DeviceStorageMonitorService: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+05-30 14:34:17.529  6930  6930 W screencap: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: SurfaceFlingerAIDL
+05-30 14:34:17.530  6930  6930 W BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+05-30 14:34:17.538  6930  6930 W ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+05-30 14:34:17.543   504  1141 E HwcComposer: getLuts failed Status(-8, EX_SERVICE_SPECIFIC): '8: '
+05-30 14:34:17.543   504  1141 E HWComposer: getLuts: getLuts failed for display 4619827259835644672: UNSUPPORTED (8)
+05-30 14:34:18.382  6750  6750 I Choreographer: Skipped 30 frames!  The application may be doing too much work on its main thread.
+05-30 14:34:18.525   664  1179 I ActivityManager: Background started FGS: Allowed [callingPackage: app.awrad.awrad_dhikrgoalstracker; callingUid: 10214; uidState: TOP ; uidBFSL: [BFSL]; intent: Intent { xflg=0x4 cmp=app.awrad.awrad_dhikrgoalstracker/.service.DhikrCountingService }; code:PROC_STATE_TOP; tempAllowListReason:<null>; allowWiu:12; targetSdkVersion:36; callerTargetSdkVersion:36; startForegroundCount:0; bindFromPackage:null: isBindService:true]
+05-30 14:34:18.533   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 14:34:18.789   664   664 W NotificationHistory: Attempted to add notif for locked/gone/disabled user 0
+05-30 14:34:18.790   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 14:34:18.793  1501  1985 W AiAiEcho: LyftNotificationParser Ridesharing ETA not enabled
+05-30 14:34:18.794  1501  1985 I AiAiEcho: SmartspaceNotificationPredictor no parser can handle this notification or notification is invalid
+05-30 14:34:18.976  1056  1056 I NotificationListener: received notification posted event - app.awrad.awrad_dhikrgoalstracker#UserHandle{0},category=-1
+05-30 14:34:18.999   915  1284 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+05-30 14:34:19.014   915  1284 D LocalImageResolver: Couldn't use ImageDecoder for drawable, falling back to non-resized load.
+05-30 14:34:22.300  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:34:22.301   664  1179 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:34:32.300   664  1179 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:34:32.301  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:34:39.174   664  1179 W AppOps  : Noting op not finished: uid 10147 pkg com.google.android.gms code 113 startTime of in progress event=1780131464347
+05-30 14:34:39.182   664   900 W AppOps  : Noting op not finished: uid 10147 pkg com.google.android.gms code 79 startTime of in progress event=1780131464347
+05-30 14:34:39.247  1221  2102 I ActivityScheduler: nextTriggerTime: 14634410, in 238100ms, detectorType: 39, FULL_TYPE alarmWindowMillis: 80000
+05-30 14:34:40.178   664  1925 W AppOps  : Noting op not finished: uid 10147 pkg com.google.android.gms code 113 startTime of in progress event=1780131464347
+05-30 14:34:42.299  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:34:42.300   664  1925 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: Cannot acquire BluetoothActivityEnergyInfo
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: java.util.concurrent.ExecutionException: java.lang.RuntimeException: error: 11
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at java.util.concurrent.CompletableFuture.reportGet(CompletableFuture.java:372)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at java.util.concurrent.CompletableFuture.get(CompletableFuture.java:2072)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at com.android.server.power.stats.BluetoothPowerStatsCollector.collectBluetoothActivityInfo(BluetoothPowerStatsCollector.java:192)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at com.android.server.power.stats.BluetoothPowerStatsCollector.collectStats(BluetoothPowerStatsCollector.java:155)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at com.android.server.power.stats.PowerStatsCollector.collectAndDeliverStats(PowerStatsCollector.java:176)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at com.android.server.power.stats.PowerStatsCollector$$ExternalSyntheticLambda0.run(R8$$SyntheticClass:0)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.os.Handler.handleCallback(Handler.java:995)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.os.Handler.dispatchMessage(Handler.java:103)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.os.Looper.loopOnce(Looper.java:248)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.os.Looper.loop(Looper.java:338)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: Caused by: java.lang.RuntimeException: error: 11
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at com.android.server.power.stats.BluetoothPowerStatsCollector$1.onBluetoothActivityEnergyInfoError(BluetoothPowerStatsCollector.java:181)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.bluetooth.BluetoothAdapter$OnBluetoothActivityEnergyInfoProxy.lambda$onBluetoothActivityEnergyInfoAvailable$0(BluetoothAdapter.java:1037)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.bluetooth.BluetoothAdapter$OnBluetoothActivityEnergyInfoProxy$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.bluetooth.BluetoothUtils.lambda$executeFromBinder$0(BluetoothUtils.java:343)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.bluetooth.BluetoothUtils$$ExternalSyntheticLambda1.run(D8$$SyntheticClass:0)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at com.android.server.SystemServerInitThreadPool$$ExternalSyntheticLambda0.execute(R8$$SyntheticClass:0)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.bluetooth.BluetoothUtils.executeFromBinder(BluetoothUtils.java:343)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.bluetooth.BluetoothAdapter$OnBluetoothActivityEnergyInfoProxy.onBluetoothActivityEnergyInfoAvailable(BluetoothAdapter.java:1035)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.bluetooth.IBluetoothActivityEnergyInfoListener$Stub.onTransact(IBluetoothActivityEnergyInfoListener.java:98)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.os.Binder.execTransactInternal(Binder.java:1426)
+05-30 14:34:43.050   664   706 E BluetoothPowerStatsCollector: 	at android.os.Binder.execTransact(Binder.java:1365)
+05-30 14:34:43.065   664   900 D TelephonyManager: requestModemActivityInfo: Sending result to app: ModemActivityInfo{ mTimestamp=14400123 mSleepTimeMs=1596 mIdleTimeMs=532 mActivityStatsTechSpecificInfo=[{mRat=UNKNOWN,mFrequencyRange=UNKNOWN,mTxTimeMs[]=[38, 114, 228, 304, 342],mRxTimeMs=342}]}
+05-30 14:34:52.303  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:34:52.305   664  1925 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:34:54.498   664   751 I UsageStatsService: User[0] Flushing usage stats to disk
+05-30 14:34:54.572   664   869 D BackgroundInstallControlService: Package event received: 0
+05-30 14:34:57.054  6939  6939 W screencap: Thread Pool max thread count is 0. Cannot cache binder as linkToDeath cannot be implemented. serviceName: SurfaceFlingerAIDL
+05-30 14:34:57.055  6939  6939 W BpBinder: Linking to death on android.gui.ISurfaceComposer but there are no threads (yet?) listening to incoming transactions. See ProcessState::startThreadPool and ProcessState::setThreadPoolMaxThreadCount. Generally you should setup the binder threadpool before other initialization steps.
+05-30 14:34:57.057  6939  6939 W ProcessState: Extra binder thread started, but 0 threads requested. Do not use *startThreadPool when zero threads are requested.
+05-30 14:34:57.073   504   549 E HwcComposer: getLuts failed Status(-8, EX_SERVICE_SPECIFIC): '8: '
+05-30 14:34:57.073   504   549 E HWComposer: getLuts: getLuts failed for display 4619827259835644672: UNSUPPORTED (8)
+05-30 14:34:59.616  1547  6943 W BugleRcsEngine: Unable to send diagnostic log [CONTEXT thread_id=78 ]
+05-30 14:35:02.299  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:35:02.305   664  1925 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:35:02.716  1501  1664 I AiAiStatsd: No op: the most recent atoms from the date 2026-05-29 have been uploaded.
+05-30 14:35:04.967   915  1069 D ControlsListingControllerImpl: Subscribing callback, service count: 0
+05-30 14:35:04.974   915  1069 D ControlsListingControllerImpl: Unsubscribing callback
+05-30 14:35:05.158   915  1069 I QuickAccessWalletTile: QAW service is unavailable, recreating the wallet client.
+05-30 14:35:05.948   664   900 D FileUtils: Rounded bytes from 3120066560 to 4000000000
+05-30 14:35:05.955  1528  2749 W dlyd    : (REDACTED) Error reading proc %s
+05-30 14:35:05.955  1528  2749 W dlyd    : java.io.FileNotFoundException: /proc/1528/dmabuf_rss: open failed: ENOENT (No such file or directory)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.IoBridge.open(IoBridge.java:574)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.io.FileInputStream.<init>(FileInputStream.java:179)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at fcfz.a(PG:10)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at dmim.f(PG:43)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at dmim.b(PG:200)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at dmid.apply(PG:19)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at fdlk.c(PG:3)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at fdlm.run(PG:47)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:348)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at dlya.run(PG:12)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.lang.Thread.run(Thread.java:1119)
+05-30 14:35:05.955  1528  2749 W dlyd    : Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.Linux.open(Native Method)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:8953)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.IoBridge.open(IoBridge.java:560)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	... 14 more
+05-30 14:35:05.955  1528  2749 W dlyd    : (REDACTED) Error reading proc %s
+05-30 14:35:05.955  1528  2749 W dlyd    : java.io.FileNotFoundException: /proc/1528/dmabuf_rss_hwm: open failed: ENOENT (No such file or directory)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.IoBridge.open(IoBridge.java:574)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.io.FileInputStream.<init>(FileInputStream.java:179)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at fcfz.a(PG:10)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at dmim.f(PG:43)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at dmim.b(PG:214)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at dmid.apply(PG:19)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at fdlk.c(PG:3)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at fdlm.run(PG:47)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:348)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at dlya.run(PG:12)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at java.lang.Thread.run(Thread.java:1119)
+05-30 14:35:05.955  1528  2749 W dlyd    : Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.Linux.open(Native Method)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:8953)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	at libcore.io.IoBridge.open(IoBridge.java:560)
+05-30 14:35:05.955  1528  2749 W dlyd    : 	... 14 more
+05-30 14:35:05.956  1528  2749 W dlyd    : (REDACTED) Error reading proc %s
+05-30 14:35:05.956  1528  2749 W dlyd    : java.io.FileNotFoundException: /proc/1528/dmabuf_pss: open failed: ENOENT (No such file or directory)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at libcore.io.IoBridge.open(IoBridge.java:574)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at java.io.FileInputStream.<init>(FileInputStream.java:179)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at fcfz.a(PG:10)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at dmim.f(PG:43)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at dmim.b(PG:228)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at dmid.apply(PG:19)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at fdlk.c(PG:3)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at fdlm.run(PG:47)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:524)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at java.util.concurrent.FutureTask.run(FutureTask.java:317)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:348)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1156)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:651)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at dlya.run(PG:12)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at java.lang.Thread.run(Thread.java:1119)
+05-30 14:35:05.956  1528  2749 W dlyd    : Caused by: android.system.ErrnoException: open failed: ENOENT (No such file or directory)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at libcore.io.Linux.open(Native Method)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at libcore.io.BlockGuardOs.open(BlockGuardOs.java:274)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at libcore.io.ForwardingOs.open(ForwardingOs.java:568)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at android.app.ActivityThread$AndroidOs.open(ActivityThread.java:8953)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	at libcore.io.IoBridge.open(IoBridge.java:560)
+05-30 14:35:05.956  1528  2749 W dlyd    : 	... 14 more
+05-30 14:35:05.999  1528  1561 V ClearcutMetricXmitter: Transmission is done.
+05-30 14:35:06.079  1528  1536 W hbox:interactor: Reducing the number of considered missed Gc histogram windows from 631 to 100
+05-30 14:35:06.117  1528  1561 V ClearcutMetricXmitter: Transmission is done.
+05-30 14:35:12.302   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:35:12.303  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:35:17.587   587   587 D installd: Device /data has 457203712 free; requested 622811544; needed 165607832
+05-30 14:35:17.587   587   587 W installd: Failed to find storage mount for /data/media
+05-30 14:35:17.597   587   587 D installd: Active ratio 3101 isn't over quota, and defy not requested
+05-30 14:35:17.597   587   587 E installd: Failed to free up 622811544 on /data; final free space 457203712: Success
+05-30 14:35:17.599   664   825 W PackageManager: Not removing package com.google.android.trichromelibrary hosting lib com.google.android.trichromelibrary version 772713733 used by [VersionedPackage[com.android.chrome/772713733]] for user 0
+05-30 14:35:17.601   587   587 D installd: Device /data has 457203712 free; requested 622811544; needed 165607832
+05-30 14:35:17.601   587   587 W installd: Failed to find storage mount for /data/media
+05-30 14:35:17.681   587   587 E installd: Failed to free up 622811544 on /data; final free space 457203712: Success
+05-30 14:35:17.687  1482  1669 I ExternalStorageServiceImpl: Free cache requested for 165607832 bytes
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: java.io.IOException: Failed to free 622811544 on storage device at /data
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.FreeStorageHelper.freeStorage(FreeStorageHelper.java:182)
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.PackageManagerService.freeStorage(PackageManagerService.java:2937)
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: 	at com.android.server.pm.PackageManagerInternalBase.freeStorage(PackageManagerInternalBase.java:571)
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService.checkLow(DeviceStorageMonitorService.java:194)
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService.-$$Nest$mcheckLow(DeviceStorageMonitorService.java:0)
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: 	at com.android.server.storage.DeviceStorageMonitorService$1.handleMessage(DeviceStorageMonitorService.java:297)
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: 	at android.os.Handler.dispatchMessage(Handler.java:110)
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: 	at android.os.Looper.loopOnce(Looper.java:248)
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: 	at android.os.Looper.loop(Looper.java:338)
+05-30 14:35:17.688   664   825 W DeviceStorageMonitorService: 	at android.os.HandlerThread.run(HandlerThread.java:85)
+05-30 14:35:22.304  1046  1266 D SatelliteController: iisInCarrierRoamingNbIotNtn: satellite is disabled
+05-30 14:35:22.304   664   900 W IPCThreadState: Sending oneway calls to frozen process.
+05-30 14:35:28.572   664  1925 D WifiNl80211Manager: Scan result ready event
+05-30 14:35:28.572   664  1925 D WifiNative: Scan result ready event
+05-30 14:35:28.581  1221  2063 I WifiScanner: onFullResults
+05-30 14:35:28.581  1221  2393 I WifiScanner: onFullResults
+05-30 14:35:28.596   664   809 I HalDevMgr: bestIfaceCreationProposal is null, requestIface=STA, existingIface=[name=wlan0 type=STA]

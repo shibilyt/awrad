@@ -1,0 +1,56 @@
+--------- beginning of main
+05-30 16:45:29.490  9301  9301 I ikrgoalstracker: Late-enabling -Xcheck:jni
+05-30 16:45:29.517  9301  9301 I ikrgoalstracker: Using CollectorTypeCMC GC.
+05-30 16:45:29.529  9301  9301 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+05-30 16:45:30.208  9301  9301 D nativeloader: Configuring clns-9 for other apk /data/app/~~RZZEA5V4fxEL-JTJdOKqCA==/app.awrad.awrad_dhikrgoalstracker-HG1NGghPlg4BoiqNOWyL-w==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~RZZEA5V4fxEL-JTJdOKqCA==/app.awrad.awrad_dhikrgoalstracker-HG1NGghPlg4BoiqNOWyL-w==/lib/arm64:/data/app/~~RZZEA5V4fxEL-JTJdOKqCA==/app.awrad.awrad_dhikrgoalstracker-HG1NGghPlg4BoiqNOWyL-w==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/app.awrad.awrad_dhikrgoalstracker
+05-30 16:45:30.215  9301  9301 I ikrgoalstracker: AssetManager2(0xb400007c666a5f38) locale list changing from [] to [en-US]
+05-30 16:45:30.221  9301  9301 V GraphicsEnvironment: Currently set values for:
+05-30 16:45:30.222  9301  9301 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+05-30 16:45:30.222  9301  9301 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+05-30 16:45:30.222  9301  9301 V GraphicsEnvironment: app.awrad.awrad_dhikrgoalstracker is not listed in per-application setting
+05-30 16:45:30.222  9301  9301 V GraphicsEnvironment: ANGLE allowlist from config: 
+05-30 16:45:30.222  9301  9301 V GraphicsEnvironment: app.awrad.awrad_dhikrgoalstracker is not listed in ANGLE allowlist or settings, returning default
+05-30 16:45:30.222  9301  9301 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+05-30 16:45:30.391  9301  9301 D WM-PackageManagerHelper: Skipping component enablement for androidx.work.impl.background.systemjob.SystemJobService
+05-30 16:45:30.391  9301  9301 D WM-Schedulers: Created SystemJobScheduler and enabled SystemJobService
+05-30 16:45:30.399  9301  9318 D WM-ForceStopRunnable: The default process name was not specified.
+05-30 16:45:30.399  9301  9318 D WM-ForceStopRunnable: Performing cleanup operations.
+05-30 16:45:30.411  9301  9301 D ReminderScheduler: Watchdog initialized (next run in 449min)
+05-30 16:45:30.411  9301  9318 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+05-30 16:45:30.418  9301  9301 D BootRescheduleReceiver: Received system event: android.intent.action.LOCKED_BOOT_COMPLETED — rescheduling all alarms
+05-30 16:45:30.418  9301  9319 D ReminderScheduler: Rescheduling all alarms
+05-30 16:45:30.422  9301  9321 D ReminderScheduler: Rescheduling all alarms
+--------- beginning of system
+05-30 16:45:30.426  9301  9324 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+05-30 16:45:30.428  9301  9301 I ikrgoalstracker: AssetManager2(0xb400007c666a1438) locale list changing from [] to [en-US]
+05-30 16:45:30.446  9301  9318 D WM-SystemJobScheduler: Reconciling jobs
+05-30 16:45:30.459  9301  9324 I EGL_emulation: Opening libGLESv1_CM_emulation.so
+05-30 16:45:30.459  9301  9324 I EGL_emulation: Opening libGLESv2_emulation.so
+05-30 16:45:30.465  9301  9318 D WM-ForceStopRunnable: Application was force-stopped, rescheduling.
+05-30 16:45:30.467  9301  9324 W HWUI    : Failed to choose config with EGL_SWAP_BEHAVIOR_PRESERVED, retrying without...
+05-30 16:45:30.467  9301  9324 W HWUI    : Failed to initialize 101010-2 format, error = EGL_SUCCESS
+05-30 16:45:30.480  9301  9301 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+05-30 16:45:30.481  9301  9301 I ikrgoalstracker: AssetManager2(0xb400007c6669f4f8) locale list changing from [] to [en-US]
+05-30 16:45:30.490  9301  9318 D WM-SystemJobScheduler: Scheduling work ID 8602349d-95c2-43f0-bb0d-20aeaafd65f1Job ID 0
+05-30 16:45:30.496  9301  9301 D CompatChangeReporter: Compat change id reported: 377864165; UID 10217; state: ENABLED
+05-30 16:45:30.498  9301  9301 D DesktopModeFlags: Toggle override initialized to: OVERRIDE_UNSET
+05-30 16:45:30.520  9301  9326 D WM-PackageManagerHelper: Skipping component enablement for androidx.work.impl.background.systemalarm.RescheduleReceiver
+05-30 16:45:30.556  9301  9301 I ikrgoalstracker: hiddenapi: Accessing hidden method Landroid/view/ViewGroup;->makeOptionalFitsSystemWindows()V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/appcompat/widget/ViewUtils; (domain=app) using reflection: allowed
+05-30 16:45:30.581  9301  9301 W HWUI    : Unknown dataspace 0
+05-30 16:45:30.603  9301  9301 D BootRescheduleReceiver: Received system event: android.intent.action.BOOT_COMPLETED — rescheduling all alarms
+05-30 16:45:30.606  9301  9319 D ReminderScheduler: Rescheduling all alarms
+05-30 16:45:30.873  9301  9301 I ikrgoalstracker: hiddenapi: Accessing hidden method Landroid/os/SystemProperties;->addChangeCallback(Ljava/lang/Runnable;)V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/compose/ui/platform/AndroidComposeView$Companion; (domain=app) using reflection: allowed
+05-30 16:45:31.042  9301  9301 D WM-RescheduleReceiver: Received intent Intent { act=android.intent.action.BOOT_COMPLETED flg=0x9000030 pkg=app.awrad.awrad_dhikrgoalstracker cmp=app.awrad.awrad_dhikrgoalstracker/androidx.work.impl.background.systemalarm.RescheduleReceiver (has extras) }
+05-30 16:45:31.085  9301  9306 I ikrgoalstracker: Compiler allocated 5111KB to compile void android.view.ViewRootImpl.performTraversals()
+05-30 16:45:31.568  9301  9301 W HWUI    : Image decoding logging dropped!
+05-30 16:45:31.630  9301  9301 W HWUI    : Image decoding logging dropped!
+05-30 16:45:31.647  9301  9301 W HWUI    : Image decoding logging dropped!
+05-30 16:45:31.691  9301  9301 I Choreographer: Skipped 36 frames!  The application may be doing too much work on its main thread.
+05-30 16:45:31.787  9301  9315 I HWUI    : Davey! duration=711ms; Flags=0, FrameTimelineVsyncId=239369, IntendedVsync=22248131396485, Vsync=22248131396485, InputEventId=0, HandleInputStart=22248135370604, AnimationStart=22248135371729, PerformTraversalsStart=22248159041521, DrawStart=22248731988896, FrameDeadline=22248148063151, FrameStartTime=22248135367646, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=22248754844104, SyncStart=22248754998021, IssueDrawCommandsStart=22248755068813, SwapBuffers=22248840152771, FrameCompleted=22248843095021, DequeueBufferDuration=3083, QueueBufferDuration=576375, GpuCompleted=22248843010230, SwapBuffersCompleted=22248843095021, DisplayPresentTime=0, CommandSubmissionCompleted=22248840152771, 
+05-30 16:45:31.869  9301  9301 D InsetsController: hide(ime(), fromIme=false)
+05-30 16:45:31.869  9301  9301 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:d4b1ad14: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 16:45:31.874  9301  9312 I HWUI    : Davey! duration=784ms; Flags=0, FrameTimelineVsyncId=239391, IntendedVsync=22248148063151, Vsync=22248748063127, InputEventId=0, HandleInputStart=22248756475813, AnimationStart=22248756476479, PerformTraversalsStart=22248865058021, DrawStart=22248887982105, FrameDeadline=22248864729789, FrameStartTime=22248756328521, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=22248896573313, SyncStart=22248896731105, IssueDrawCommandsStart=22248896788813, SwapBuffers=22248925996938, FrameCompleted=22248933010313, DequeueBufferDuration=2875, QueueBufferDuration=535375, GpuCompleted=22248933010313, SwapBuffersCompleted=22248928750855, DisplayPresentTime=0, CommandSubmissionCompleted=22248925996938, 
+05-30 16:45:32.111  9301  9301 W HWUI    : Image decoding logging dropped!
+05-30 16:45:32.128  9301  9301 W HWUI    : Image decoding logging dropped!
+05-30 16:45:35.798  9301  9344 D ProfileInstaller: Installing profile for app.awrad.awrad_dhikrgoalstracker
+05-30 16:46:00.354  9301  9307 I ikrgoalstracker: Background concurrent mark compact GC freed 6023KB AllocSpace bytes, 6(132KB) LOS objects, 49% free, 7029KB/13MB, paused 335us,3.550ms total 280.354ms

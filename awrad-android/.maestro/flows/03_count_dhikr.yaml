@@ -1,0 +1,33 @@
+appId: app.awrad.awrad_dhikrgoalstracker
+---
+# Precondition: a "La ilaha illallah" daily goal exists (run 02_create_daily_goal.yaml first).
+- launchApp
+
+# ── Navigate to Goals ────────────────────────────────────────────────────────
+- tapOn: "Goals"
+- assertVisible: "Goals"
+- assertVisible: "La ilaha illallah"
+
+# ── Open the counting screen for the La ilaha illallah goal ────────────────────────
+- tapOn: "La ilaha illallah"
+
+# ── Counting Screen ──────────────────────────────────────────────────────────
+- assertVisible: "Count"
+
+# Tap Count 5 times
+- tapOn: "Count"
+- tapOn: "Count"
+- tapOn: "Count"
+- tapOn: "Count"
+- tapOn: "Count"
+
+# View history
+- tapOn: "View History"
+- assertVisible: "History"
+
+# Dismiss the history sheet via back gesture
+- back
+
+# Navigate back
+- tapOn: "Back"
+- assertVisible: "Goals"

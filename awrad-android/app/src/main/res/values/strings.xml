@@ -1,0 +1,1388 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Awrad</string>
+
+    <!-- Bottom navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_goals">Goals</string>
+    <string name="nav_library">Library</string>
+    <string name="nav_community">Community</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Common actions -->
+    <string name="action_back">Back</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_count_now">Count now</string>
+    <string name="action_ok">OK</string>
+    <string name="action_close">Close</string>
+    <string name="action_done">Done</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete Goal</string>
+    <string name="action_archive">Archive Goal</string>
+    <string name="action_reset">Reset</string>
+    <string name="action_add">Add</string>
+    <string name="action_added">Added</string>
+    <string name="action_move_up">Move up</string>
+    <string name="action_move_down">Move down</string>
+    <string name="action_remove_session">Remove session</string>
+    <string name="action_select_all">Select all</string>
+    <string name="action_deselect_all">Deselect all</string>
+    <string name="action_create_goal_short">Goal</string>
+    <string name="action_create_goal">Create Goal</string>
+    <string name="edit">Edit</string>
+    <string name="done">Done</string>
+    <string name="action_add_goal">Add Goal</string>
+    <string name="action_download">Download</string>
+
+    <string name="error_audio_load">Audio could not be loaded. Download it from the Library first.</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_play">Play</string>
+    <string name="cd_pause">Pause</string>
+    <string name="cd_clear_search">Clear search</string>
+    <string name="cd_edit_name">Edit name</string>
+    <string name="cd_downloaded">Downloaded</string>
+    <string name="cd_download_audio">Download audio</string>
+    <string name="cd_goal_added">Goal added</string>
+    <string name="cd_decrease_speed">Decrease speed</string>
+    <string name="cd_increase_speed">Increase speed</string>
+    <string name="cd_day_completed">Completed</string>
+    <string name="cd_create_goal">Create Goal</string>
+    <string name="cd_decrease_count">Decrease count</string>
+    <string name="cd_increase_count">Increase count</string>
+
+    <!-- Greetings -->
+    <string name="greeting_morning">Good Morning</string>
+    <string name="greeting_afternoon">Good Afternoon</string>
+    <string name="greeting_evening">Good Evening</string>
+
+    <!-- Home screen -->
+    <string name="home_today">Today</string>
+    <string name="home_jump_back_in">Resume Counting</string>
+    <string name="home_explore">Collections</string>
+    <string name="home_remaining">%d remaining</string>
+    <string name="home_view_all">View all</string>
+    <string name="home_streak_title">%d Day Streak!</string>
+    <string name="home_prayer_rhythm">Prayer times</string>
+    <string name="home_next_prayer">Next prayer</string>
+    <string name="home_all_prayers_complete">All prayers complete</string>
+    <string name="home_todays_goals">Today\'s goals</string>
+    <string name="home_dhikr_label">Dhikr</string>
+    <string name="goal_streak_days">%d day streak</string>
+    <string name="home_no_goals_title">Begin a daily practice</string>
+    <string name="home_no_goals_body">Choose a dhikr and set a simple goal for today.</string>
+    <string name="home_continue_goal">Continue %1$s</string>
+    <string name="home_left_today">%1$d left today</string>
+    <string name="home_count_today">%1$d today</string>
+    <string name="home_enable_prayer_title">Enable prayer times</string>
+    <string name="home_enable_prayer_body">Set your location to see today\'s prayer times.</string>
+    <string name="home_on_fire_named">You\'re on fire, %s.</string>
+    <string name="home_on_fire">You\'re on fire!</string>
+    <string name="home_day_mon">M</string>
+    <string name="home_day_tue">T</string>
+    <string name="home_day_wed">W</string>
+    <string name="home_day_thu">T</string>
+    <string name="home_day_fri">F</string>
+    <string name="home_day_sat">S</string>
+    <string name="home_day_sun">S</string>
+
+    <!-- Dhikr categories -->
+    <string name="category_morning">Morning</string>
+    <string name="category_evening">Evening</string>
+    <string name="category_after_salah">After Salah</string>
+    <string name="category_forgiveness">Forgiveness</string>
+    <string name="category_praise">Praise</string>
+    <string name="category_protection">Protection</string>
+    <string name="category_general">General</string>
+    <string name="category_swalaths">Swalaths</string>
+    <string name="category_ramadan">Ramadan</string>
+    <string name="category_quran">Quran</string>
+
+    <!-- Goals screen -->
+    <string name="goals_title">My Goals</string>
+    <string name="goals_section_active">Active</string>
+    <string name="goals_section_completed">Completed</string>
+    <string name="goals_total_count">%d goals</string>
+    <string name="goals_empty_title">No goals yet</string>
+    <string name="goals_empty_hint">Tap + to create your first dhikr goal</string>
+
+    <!-- Create Goal screen -->
+    <string name="create_goal_select_dhikr">Select Dhikr</string>
+    <string name="create_goal_choose_template_appbar">New Goal</string>
+
+    <!-- Simple goal flow: shape screen + target screen -->
+    <string name="create_goal_shape_appbar">New goal</string>
+    <string name="create_goal_simple_appbar">Set your goal</string>
+    <string name="create_goal_advanced_appbar">Advanced goal</string>
+    <string name="create_goal_shape_title">What kind of goal?</string>
+    <string name="create_goal_shape_subtitle">Pick a shape — you can fine-tune later.</string>
+    <string name="goal_shape_daily_title">Every day</string>
+    <string name="goal_shape_daily_desc">A number to reach each day.</string>
+    <string name="goal_shape_onetime_title">One time</string>
+    <string name="goal_shape_onetime_desc">Work toward a total, once.</string>
+    <string name="goal_shape_notarget_title">No target</string>
+    <string name="goal_shape_notarget_desc">Just count — no goal number.</string>
+    <string name="goal_shape_advanced_title">Advanced</string>
+    <string name="goal_shape_advanced_desc">Schedule, prayer timing, counting rules, duration &amp; reminders.</string>
+    <string name="goal_shape_or">or</string>
+    <string name="simple_target_daily_label">How many, each day?</string>
+    <string name="simple_target_onetime_label">How many, in total?</string>
+    <string name="simple_target_dhikr_placeholder">your dhikr</string>
+    <string name="create_goal_review_appbar">Review Goal</string>
+    <string name="create_goal_choose_template_title">Choose a goal shape</string>
+    <string name="create_goal_choose_template_subtitle">Start with a practical pattern. You can adjust the details on the next screen.</string>
+    <string name="create_goal_custom_template">Custom</string>
+    <string name="create_goal_review_button">Review goal</string>
+    <string name="create_goal_sentence_title">Create this goal</string>
+    <string name="create_goal_more_schedule_options">More schedule options</string>
+    <string name="create_goal_configure">Configure Goal</string>
+    <string name="create_goal_search_hint">Search dhikr\u2026</string>
+    <string name="create_goal_goal_type">Goal type</string>
+    <string name="create_goal_target_count">Target count</string>
+    <string name="create_goal_set_duration">Set a duration</string>
+    <string name="create_goal_days_label">Days</string>
+    <string name="create_goal_days_placeholder">e.g., 40</string>
+    <string name="create_goal_daily_reminder">Daily reminder</string>
+    <string name="create_goal_prayer_reminder">Prayer reminders</string>
+    <string name="create_goal_session_reminder">Session reminders</string>
+    <string name="create_goal_reminder_time">Reminder time</string>
+    <string name="create_goal_creating">Creating\u2026</string>
+    <string name="create_goal_select_time">Select time</string>
+    <string name="create_goal_timing">Timing</string>
+    <string name="create_goal_prayers">Prayers</string>
+    <string name="create_goal_same_count">Same count for all</string>
+    <string name="create_goal_count_per_prayer">Count per prayer</string>
+    <string name="create_goal_prayer_count_label">%s count</string>
+    <string name="create_goal_schedule_days">Schedule days</string>
+    <string name="create_goal_every_day">Every day</string>
+    <string name="create_goal_specific_days">Specific days</string>
+    <string name="create_goal_min_streak">Minimum for streak</string>
+    <string name="create_goal_min_streak_hint">Minimum count to maintain streak</string>
+    <string name="create_goal_quick_presets">Quick presets</string>
+    <string name="create_goal_advanced">Advanced</string>
+    <string name="create_goal_quick_title">Quick create</string>
+    <string name="create_goal_choose_goal_type">Choose goal type</string>
+    <string name="create_goal_quick_subtitle">Start with the goal shape. Targets come after the slots are clear.</string>
+    <string name="create_goal_validation_review">Review the highlighted fields before creating this goal.</string>
+    <string name="create_goal_advanced_subtitle">Configure schedule, slots, reminders, duration, and streak rules.</string>
+    <string name="create_goal_daily_target_count">Daily target count</string>
+    <string name="create_goal_total_target_count">Total target count</string>
+    <string name="create_goal_period_target_count">Period target count</string>
+    <string name="create_goal_no_target_summary">This tracker has no target. Every count is recorded without a denominator.</string>
+    <!-- Goal Composer (redesigned create flow) -->
+    <string name="composer_your_goal">Your goal</string>
+    <string name="composer_type_question">What kind of goal?</string>
+    <string name="composer_type_daily_title">Daily</string>
+    <string name="composer_type_daily_desc">A count to repeat each day</string>
+    <string name="composer_type_prayer_title">Prayer-based</string>
+    <string name="composer_type_prayer_desc">Tie it to your daily prayers</string>
+    <string name="composer_type_onetime_title">One-time</string>
+    <string name="composer_type_onetime_desc">A total to reach over time</string>
+    <string name="composer_type_tracker_title">Tracker</string>
+    <string name="composer_type_tracker_desc">Count freely, no target</string>
+    <string name="composer_type_advanced_title">Advanced</string>
+    <string name="composer_type_advanced_desc">Repeat on a schedule</string>
+    <string name="composer_advanced_basis">What is this goal based on?</string>
+    <string name="composer_advanced_prayers">Your prayers</string>
+    <string name="composer_advanced_schedule">A schedule</string>
+    <string name="composer_count_each_time">How many each time?</string>
+    <string name="composer_prayers_all">All prayers</string>
+    <string name="composer_count_daily">How many each day?</string>
+    <string name="composer_count_total">Total to reach</string>
+    <string name="composer_count_each_prayer">How many after each prayer?</string>
+    <string name="composer_prayer_which">Which prayers?</string>
+    <string name="composer_prayer_when">When?</string>
+    <string name="composer_tracker_note">Just count — no fixed target. Perfect for building a steady habit.</string>
+    <string name="composer_customize">More options: per-prayer counts, custom sessions &amp; rules</string>
+    <string name="composer_change_dhikr">Change</string>
+    <string name="composer_finetune">Fine-tune</string>
+    <string name="composer_schedule_season">Islamic season</string>
+    <string name="composer_reminder_auto_note">We\'ll remind you around each prayer or session time.</string>
+    <string name="composer_reminder_prayer_note">We\'ll remind you around each prayer in your schedule.</string>
+    <string name="composer_reminder_session_note">We\'ll remind you at the start of each session.</string>
+    <string name="composer_reminder_at">Remind me at</string>
+    <string name="composer_duration_days_hint">Ends after this many days</string>
+    <string name="composer_specific_hint">Enter dates like 2026-06-15, separated by commas</string>
+    <string name="composer_per_prayer">Different count per prayer</string>
+    <string name="composer_timing_morning_evening">Morning &amp; evening</string>
+    <string name="composer_timing_custom">Custom sessions</string>
+    <string name="composer_morning">Morning</string>
+    <string name="composer_evening">Evening</string>
+    <string name="composer_add_session">Add session</string>
+    <string name="composer_session">Session %1$d</string>
+    <string name="composer_starts_at">Starts</string>
+    <string name="composer_length">Length</string>
+    <string name="composer_remove">Remove</string>
+    <string name="composer_count">Count</string>
+    <string name="composer_counting_rule">Counting rule</string>
+    <string name="composer_rule_target">Reach a target</string>
+    <string name="composer_rule_minimum">At least</string>
+    <string name="composer_rule_exact">Exactly</string>
+    <string name="composer_rule_stretch">At least, aim higher</string>
+    <string name="composer_rule_range">Within a range</string>
+    <string name="composer_rule_target_desc">Count up to your goal — reaching it completes the day.</string>
+    <string name="composer_rule_minimum_desc">Reach at least this many. Going over is welcome.</string>
+    <string name="composer_rule_stretch_desc">Aim for a higher target, but the minimum still keeps your streak.</string>
+    <string name="composer_rule_exact_desc">Finish on an exact number — no more, no less.</string>
+    <string name="composer_rule_range_desc">Stay between a minimum and a maximum count.</string>
+    <string name="composer_rule_minimum_label">Minimum</string>
+    <string name="composer_rule_target_label">Target</string>
+    <string name="composer_rule_max_label">Maximum</string>
+    <string name="composer_cap_behavior">When the target is reached</string>
+    <string name="composer_cap_allow">Keep counting</string>
+    <string name="composer_cap_warn">Warn, but allow</string>
+    <string name="composer_cap_block_target">Stop at target</string>
+    <string name="composer_cap_block_max">Stop at maximum</string>
+    <string name="composer_calendar_gregorian">Gregorian</string>
+    <string name="composer_calendar_hijri">Hijri</string>
+    <string name="composer_schedule_yearly">Yearly</string>
+
+    <!-- Advanced schedule picker: trailing example hints -->
+    <string name="schedule_example_weekly">e.g. Fridays</string>
+    <string name="schedule_example_interval">e.g. every 3 days</string>
+    <string name="schedule_example_monthly">e.g. 1st &amp; 15th</string>
+    <string name="schedule_example_yearly">e.g. 27 Ramadan</string>
+    <string name="schedule_example_season">e.g. all of Ramadan</string>
+    <string name="schedule_example_dates">e.g. 12 Apr, 3 May</string>
+
+    <string name="composer_lead_before">Minutes before each prayer</string>
+    <string name="composer_slot_policy">Counting across sessions</string>
+    <string name="composer_month">Month</string>
+    <string name="composer_days_of_week">Days of the week</string>
+    <string name="composer_pick_time">Set time</string>
+    <string name="create_goal_when_count">When will you count?</string>
+    <string name="create_goal_when_count_subtitle">Choose the slots first. Each slot can then carry its own target.</string>
+    <string name="create_goal_configure_slots">Configure slots</string>
+    <string name="create_goal_configure_slots_subtitle">Set the target inside each slot.</string>
+    <string name="quick_timing_anytime_title">Anytime</string>
+    <string name="quick_timing_anytime_description">One flexible slot.</string>
+    <string name="quick_timing_prayer_slots_title">Prayer slots</string>
+    <string name="quick_timing_prayer_slots_description">Around prayers.</string>
+    <string name="quick_timing_time_slots_title">Time slots</string>
+    <string name="quick_timing_time_slots_description">Custom windows.</string>
+    <string name="create_goal_preview_title">Preview</string>
+    <string name="create_goal_daily_anytime_preview">Recite %1$s %2$s times every day.</string>
+    <string name="create_goal_daily_prayer_preview">Create %1$d prayer slots for %2$s, each with its own target.</string>
+    <string name="create_goal_daily_time_preview">Create %1$d time slots for %2$s, each with its own target.</string>
+    <string name="create_goal_total_preview">Complete %1$s recitations of %2$s.</string>
+    <string name="create_goal_tracker_preview">Track every time you recite %1$s.</string>
+    <string name="create_goal_create_target">Create Target</string>
+    <string name="create_goal_create_tracker">Create Tracker</string>
+    <string name="create_goal_slot_target_title">%1$s target</string>
+    <string name="create_goal_prayer_slot_target">%1$s target</string>
+    <string name="create_goal_slot_name">Session name</string>
+    <string name="create_goal_window_label">Window</string>
+    <string name="create_goal_start_hour">Start hour</string>
+    <string name="create_goal_start_minute">Start minute</string>
+    <string name="create_goal_duration_minutes">Duration minutes</string>
+    <string name="create_goal_add_time_slot">Add Time Slot</string>
+    <string name="create_goal_remove_time_slot">Remove</string>
+    <string name="create_goal_select_one_prayer">Select at least one prayer.</string>
+    <string name="create_goal_target_policy">Target policy</string>
+    <string name="quick_goal_daily_title">Daily Goal</string>
+    <string name="quick_goal_daily_description">Set a count to repeat every day.</string>
+    <string name="quick_goal_total_title">One time target</string>
+    <string name="quick_goal_total_description">Set one cumulative target across days.</string>
+    <string name="quick_goal_tracker_title">No target</string>
+    <string name="quick_goal_tracker_description">Track each recitation without a target.</string>
+    <string name="preset_daily">Daily</string>
+    <string name="preset_prayer_based">Prayers</string>
+    <string name="preset_one_time">Once</string>
+    <string name="preset_total_goal">Total</string>
+    <string name="preset_tracker">Tracker</string>
+    <string name="preset_weekly">Weekly</string>
+    <string name="preset_islamic_season">Season</string>
+    <string name="preset_morning_evening">Morning/evening</string>
+    <string name="preset_monthly_gregorian">Monthly</string>
+    <string name="preset_monthly_hijri">Monthly (Hijri)</string>
+    <string name="preset_interval">Every X days</string>
+    <string name="preset_yearly_gregorian">Yearly</string>
+    <string name="preset_yearly_hijri">Yearly (Hijri)</string>
+    <string name="preset_specific_dates">Specific dates</string>
+    <string name="template_daily_title">Daily Count</string>
+    <string name="template_daily_example">100 times every day</string>
+    <string name="template_daily_meta">Daily - Anytime - Targeted</string>
+    <string name="template_prayer_title">After Prayers</string>
+    <string name="template_prayer_example">33 times after each prayer</string>
+    <string name="template_prayer_meta">Daily - Prayer slots - Targeted</string>
+    <string name="template_total_title">Total Milestone</string>
+    <string name="template_total_example">70,000 across days</string>
+    <string name="template_total_meta">Cumulative - Anytime - Auto-complete</string>
+    <string name="template_weekly_title">Weekly practice</string>
+    <string name="template_weekly_example">1,000 times each week</string>
+    <string name="template_weekly_meta">Weekly - Period total - Flexible</string>
+    <string name="template_season_title">Islamic season</string>
+    <string name="template_season_example">10,000 during Ramadan</string>
+    <string name="template_season_meta">Hijri season - Period total</string>
+    <string name="template_morning_evening_title">Morning/evening</string>
+    <string name="template_morning_evening_example">Split a daily target into two windows</string>
+    <string name="template_morning_evening_meta">Daily - Time windows - Reminders</string>
+    <string name="template_tracker_title">Tracker</string>
+    <string name="template_tracker_example">Record each practice without a target</string>
+    <string name="template_tracker_meta">Daily - No denominator - Check-in</string>
+    <string name="template_custom_title">Custom Practice</string>
+    <string name="template_custom_example">Build from target, schedule, slots, and reminders</string>
+    <string name="template_custom_meta">Full composer - Flexible - Advanced</string>
+    <string name="review_section_target">Target</string>
+    <string name="review_section_schedule">Schedule</string>
+    <string name="review_section_slots">Slots</string>
+    <string name="review_section_reminders">Reminders</string>
+    <string name="review_section_duration">Duration &amp; Streak</string>
+    <string name="schedule_daily">Daily</string>
+    <string name="schedule_weekly">Weekly</string>
+    <string name="schedule_monthly_gregorian">Monthly</string>
+    <string name="schedule_monthly_hijri">Monthly Hijri</string>
+    <string name="schedule_interval">Interval</string>
+    <string name="schedule_yearly_hijri">Yearly Hijri</string>
+    <string name="schedule_season">Season</string>
+    <string name="schedule_specific_dates">Specific dates</string>
+    <string name="specific_dates_label">Specific dates</string>
+    <string name="specific_dates_hint">Use YYYY-MM-DD dates separated by commas.</string>
+    <string name="slots_anytime_desc">Counts are grouped under one anytime slot. Prayer and time windows are only reminders and organization aids.</string>
+    <string name="slots_time_window_desc">Counts are grouped around a time window, but counting remains allowed outside the window.</string>
+    <string name="reminder_hour_label">Hour</string>
+    <string name="reminder_minute_label">Minute</string>
+    <string name="before_prayer_lead_overrides">Before-prayer lead windows</string>
+    <string name="before_prayer_lead_for">%1$s lead minutes</string>
+    <string name="before_prayer_lead_blank_default">Blank uses the global default.</string>
+    <string name="timing_anytime">Anytime</string>
+    <string name="timing_anytime_desc">No specific time — practice whenever feels right</string>
+    <string name="timing_prayer_based">Around prayers</string>
+    <string name="timing_prayer_desc">Before or after your daily prayers</string>
+    <string name="timing_time_based">At a specific time</string>
+    <string name="timing_time_desc">Set a specific time of day</string>
+    <string name="create_goal_pick_days_week">Pick days</string>
+    <string name="create_goal_pick_days_month">Pick days of the month</string>
+    <string name="create_goal_pick_month">Pick month</string>
+    <string name="create_goal_interval_label">Repeat every</string>
+    <string name="create_goal_interval_suffix">days</string>
+
+    <!-- Goal types -->
+    <string name="goal_type_daily">Daily</string>
+    <string name="goal_type_prayer_based">Prayer-based</string>
+    <string name="goal_type_one_time">One-time</string>
+    <string name="goal_type_advanced">Advanced</string>
+
+    <!-- Prayer timing -->
+    <string name="prayer_timing_before">Before</string>
+    <string name="prayer_timing_after">After</string>
+    <string name="prayer_timing_both">Both</string>
+
+    <!-- Prayer names -->
+    <string name="prayer_fajr">Fajr</string>
+    <string name="prayer_dhuhr">Dhuhr</string>
+    <string name="prayer_jumuah">Jumuʿah</string>
+    <string name="prayer_asr">Asr</string>
+    <string name="prayer_maghrib">Maghrib</string>
+    <string name="prayer_isha">Isha</string>
+
+    <!-- Prayer slot display names -->
+    <string name="slot_anytime">Anytime</string>
+    <string name="slot_before_fajr">Before Fajr</string>
+    <string name="slot_after_fajr">After Fajr</string>
+    <string name="slot_before_dhuhr">Before Dhuhr</string>
+    <string name="slot_after_dhuhr">After Dhuhr</string>
+    <string name="slot_before_asr">Before Asr</string>
+    <string name="slot_after_asr">After Asr</string>
+    <string name="slot_before_maghrib">Before Maghrib</string>
+    <string name="slot_after_maghrib">After Maghrib</string>
+    <string name="slot_before_isha">Before Isha</string>
+    <string name="slot_after_isha">After Isha</string>
+
+    <!-- Counting screen -->
+    <string name="counting_stop_audio">Stop Audio Count</string>
+    <string name="counting_start_audio">Start Audio Count</string>
+    <string name="counting_view_history">View History</string>
+    <string name="counting_count_button">COUNT</string>
+    <string name="counting_progress_of">of %s</string>
+    <string name="counting_tap_circle_to_count">Tap the circle to count</string>
+    <string name="counting_tap_session_to_count">Tap the circle to count this session</string>
+    <string name="slot_not_started_title">Session time has not started</string>
+    <string name="slot_not_started_body">This session starts at %1$s. Count it now anyway?</string>
+    <string name="counting_of_target">of %d</string>
+    <string name="counting_tap_hint">Tap to increment</string>
+    <string name="counting_slot_complete">Session complete!</string>
+    <string name="counting_select_next_slot">Select another session to continue</string>
+    <string name="counting_slots_title">Sessions</string>
+    <string name="counting_slots_overall_today">Overall today: %1$d / %2$d</string>
+    <string name="counting_slots_overall_today_no_target">Overall today: %1$d</string>
+    <string name="counting_slot_active">Active</string>
+    <string name="counting_slot_recommended">Recommended</string>
+    <string name="counting_slot_status_active_now">Active now</string>
+    <string name="counting_slot_status_upcoming">Upcoming</string>
+    <string name="counting_slot_status_ended">Ended</string>
+    <string name="counting_slot_status_complete">Complete</string>
+    <string name="counting_slot_status_unknown">Timing unavailable</string>
+    <string name="counting_session_begins_at">Begins at %1$s</string>
+    <string name="counting_session_ends_at">Ends at %1$s</string>
+    <string name="counting_session_began_ends">Began at %1$s · ends %2$s</string>
+    <string name="counting_session_ended_at">Ended at %1$s</string>
+    <string name="counting_next_slot">Next: %1$s</string>
+    <string name="counting_all_slots_complete">All sessions complete today</string>
+    <string name="counting_no_slots_left_today">No active sessions left today</string>
+    <string name="slot_ended_title">%1$s ended</string>
+    <string name="slot_ended_body">%1$s ended at %2$s. Keep counting in this session?</string>
+    <string name="slot_ended_body_with_switch">%1$s ended at %2$s. The meaningful session now is %3$s.</string>
+    <string name="slot_ended_switch_action">Switch to %1$s</string>
+    <string name="slot_ended_keep_counting">Keep counting here</string>
+    <string name="slot_count_blocked_outside_active">This session is outside its active time.</string>
+    <string name="count_over_target_warning">This will go over the target. Repeat the action to continue.</string>
+    <string name="count_hard_cap_reached">This goal has reached its counting limit.</string>
+    <string name="counting_see_full">see full</string>
+    <string name="counting_read_full_quran">Read full</string>
+    <string name="counting_show_less">show less</string>
+    <string name="counting_set_session_target">Set session target</string>
+    <string name="counting_session_target">Session Target</string>
+    <string name="counting_session_description">A mini-goal for this sitting. Won\'t affect your overall progress.</string>
+    <string name="counting_session_count_tab">Count</string>
+    <string name="counting_session_timer_tab">Timer</string>
+    <string name="counting_session_count_label">Target count</string>
+    <string name="counting_session_count_limit">Enter %1$d or less.</string>
+    <string name="counting_start_session">Start Session</string>
+    <string name="counting_session_overall">%1$d / %2$d overall</string>
+    <string name="counting_session_complete_title">Session Complete!</string>
+    <string name="counting_session_complete_body">You counted %d times</string>
+    <string name="counting_session_complete_body_timer">You counted %1$d times in %2$s</string>
+    <string name="counting_another_session">Another Session</string>
+    <string name="counting_session_done">Done</string>
+    <string name="counting_session_active">Session in progress</string>
+    <string name="counting_end_session">End Session</string>
+    <string name="counting_minutes_short">%d min</string>
+    <string name="counting_min_for_streak">Minimum: %d</string>
+    <string name="counting_today_count">+%d today</string>
+    <string name="goal_reached_title">Goal Reached!</string>
+    <string name="goal_reached_body">You\'ve completed %d counts.</string>
+    <string name="history_title">History</string>
+    <string name="history_today">Today</string>
+    <string name="history_no_history">No history yet</string>
+    <string name="history_total">Total: %d</string>
+    <string name="history_yesterday">Yesterday</string>
+    <string name="playback_speed_title">Playback Speed</string>
+    <string name="eta_mins_secs">%1$dm %2$ds remaining</string>
+    <string name="eta_secs">%ds remaining</string>
+    <string name="eta_hours_mins">%1$dh %2$dm remaining</string>
+    <string name="eta_mins">%dm remaining</string>
+    <string name="estimates_title">Estimates</string>
+    <string name="estimates_by_count">By Count</string>
+    <string name="estimates_by_time">By Time</string>
+    <string name="estimates_audio_rate">Based on audio at %s speed</string>
+    <string name="estimates_manual_rate">Based on manual counting (~30/min)</string>
+    <string name="estimates_approx_time">≈ %s</string>
+    <string name="estimates_approx_counts">≈ %s counts</string>
+    <string name="estimates_hour_short">%d hr</string>
+    <string name="cd_more_options">More options</string>
+
+    <!-- Library screen -->
+    <string name="library_title">Library</string>
+    <string name="library_subtitle">Explore beautiful dhikrs\nfrom the Qur’an &amp; Sunnah</string>
+    <string name="library_search_hint">Search dhikrs\u2026</string>
+    <string name="library_filter_all">All</string>
+    <string name="library_no_match">No dhikrs match your search</string>
+    <string name="library_no_dhikrs">No dhikrs found</string>
+    <string name="featured_collections">Featured collections</string>
+    <string name="all_dhikrs">All dhikrs</string>
+    <string name="collection_daily_essentials">Daily Essentials</string>
+    <string name="collection_swalaths">Swalaths</string>
+    <string name="collection_dhikrs">Dhikrs</string>
+    <string name="collection_evening_dhikrs">Evening Dhikrs</string>
+    <string name="collection_after_prayer">After Prayer</string>
+    <string name="collection_count">%d Dhikrs</string>
+
+    <!-- Create Dhikr screen -->
+    <string name="create_dhikr_title">Add Dhikr</string>
+    <string name="create_dhikr_arabic_label">Arabic text</string>
+    <string name="create_dhikr_arabic_hint">Enter the Arabic text</string>
+    <string name="create_dhikr_title_label">Title</string>
+    <string name="create_dhikr_title_hint">e.g., Tahleel</string>
+    <string name="create_dhikr_transliteration_label">Transliteration</string>
+    <string name="create_dhikr_transliteration_hint">e.g., La ilaha illallah</string>
+    <string name="create_dhikr_translation_label">Translation</string>
+    <string name="create_dhikr_translation_hint">English meaning</string>
+    <string name="create_dhikr_category_label">Category</string>
+    <string name="create_dhikr_save">Save</string>
+    <string name="create_dhikr_saving">Saving\u2026</string>
+
+    <!-- Category screen -->
+    <string name="category_no_dhikrs">No dhikrs in this category yet</string>
+    <string name="recitation_label">RECITATION</string>
+
+    <!-- Dhikr Detail screen -->
+    <string name="dhikr_not_found">Dhikr not found</string>
+    <string name="benefits_title">Benefits &amp; Virtues</string>
+    <string name="suggested_goals_title">Suggested Goals</string>
+    <string name="add_goal_dialog_title">Add Goal</string>
+    <string name="add_goal_confirm_msg">Add this goal for %s?</string>
+    <string name="goal_info_per_day">per day</string>
+    <string name="goal_info_per_prayer">per prayer</string>
+    <string name="goal_info_total">total</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_subtitle">Adjust reminders, appearance, and library preferences.</string>
+    <string name="settings_profile">Profile</string>
+    <string name="settings_name_label">Name</string>
+    <string name="settings_name_not_set">Not set</string>
+    <string name="settings_counting_prefs">Counting Preferences</string>
+    <string name="settings_vibrate">Vibrate on Count</string>
+    <string name="settings_vibrate_sub">Haptic feedback when counting</string>
+    <string name="settings_screen_on">Keep Screen On</string>
+    <string name="settings_screen_on_sub">Prevent screen from sleeping while counting</string>
+    <string name="settings_sound">Sound on Count</string>
+    <string name="settings_sound_sub">Play a click sound when counting</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_daily_reminder">Daily Reminder</string>
+    <string name="settings_daily_reminder_sub">Get a daily reminder to complete your dhikr</string>
+    <string name="settings_reminder_time">Reminder Time</string>
+    <string name="settings_prayer_slot_lead">Before-prayer lead window</string>
+    <string name="settings_prayer_slot_lead_sub">Default minutes before prayer when before-prayer slots become active.</string>
+    <string name="settings_exact_alarm_status">Exact alarm access</string>
+    <string name="settings_exact_alarm_allowed_sub">Awrad can schedule precise reminder alarms.</string>
+    <string name="settings_exact_alarm_needs_attention_sub">Allow exact alarms so prayer and goal reminders can arrive on time.</string>
+    <string name="settings_battery_optimization_status">Battery optimization</string>
+    <string name="settings_battery_unrestricted_sub">Android is not limiting Awrad in the background.</string>
+    <string name="settings_battery_optimized_sub">Disable optimization so reminders are less likely to be delayed.</string>
+    <string name="settings_status_allowed">Allowed</string>
+    <string name="settings_status_needs_attention">Needs attention</string>
+    <string name="settings_status_unrestricted">Unrestricted</string>
+    <string name="settings_status_optimized">Optimized</string>
+    <string name="settings_oem_battery_guide_title">%s reminder guide</string>
+    <string name="settings_oem_battery_guide_sub">Some phones need one more battery setting for dependable reminders.</string>
+    <string name="settings_oem_battery_dialog_title">%s battery guide</string>
+    <string name="settings_oem_battery_step">%1$d. %2$s</string>
+    <string name="settings_oem_battery_open_guide">Open detailed guide</string>
+    <string name="settings_oem_samsung">Samsung</string>
+    <string name="settings_oem_xiaomi">Xiaomi</string>
+    <string name="settings_oem_huawei">Huawei</string>
+    <string name="settings_oem_oppo_oneplus_realme">OPPO / OnePlus / Realme</string>
+    <string name="settings_oem_vivo">Vivo</string>
+    <string name="settings_oem_samsung_issue">Samsung can put apps to sleep after a few days without foreground use, which can stop reminders.</string>
+    <string name="settings_oem_samsung_step_1">Open Settings &gt; Battery &gt; Background usage limits.</string>
+    <string name="settings_oem_samsung_step_2">Tap Never sleeping apps.</string>
+    <string name="settings_oem_samsung_step_3">Add Awrad to the list.</string>
+    <string name="settings_oem_xiaomi_issue">Xiaomi and Redmi phones often require Autostart and a no-restrictions battery mode.</string>
+    <string name="settings_oem_xiaomi_step_1">Open Settings &gt; Apps &gt; Manage apps &gt; Awrad.</string>
+    <string name="settings_oem_xiaomi_step_2">Enable Autostart.</string>
+    <string name="settings_oem_xiaomi_step_3">Set Battery saver to No restrictions.</string>
+    <string name="settings_oem_huawei_issue">Huawei and Honor power management can block background activity for apps that are not allowed manually.</string>
+    <string name="settings_oem_huawei_step_1">Open Settings &gt; Apps &gt; Awrad &gt; Battery.</string>
+    <string name="settings_oem_huawei_step_2">Disable Manage automatically.</string>
+    <string name="settings_oem_huawei_step_3">Enable Allow activity in background.</string>
+    <string name="settings_oem_oppo_oneplus_realme_issue">ColorOS and related battery modes can freeze apps during standby hours.</string>
+    <string name="settings_oem_oppo_oneplus_realme_step_1">Open Settings &gt; Battery &gt; More settings.</string>
+    <string name="settings_oem_oppo_oneplus_realme_step_2">Disable Sleep standby optimization.</string>
+    <string name="settings_oem_oppo_oneplus_realme_step_3">Open Settings &gt; Apps &gt; Awrad &gt; Battery.</string>
+    <string name="settings_oem_oppo_oneplus_realme_step_4">Set Awrad to allow background activity.</string>
+    <string name="settings_oem_vivo_issue">Vivo battery management can freeze apps through AI sleep or background power limits.</string>
+    <string name="settings_oem_vivo_step_1">Open Settings &gt; Battery &gt; Background power consumption management.</string>
+    <string name="settings_oem_vivo_step_2">Set Awrad to not restrict background power usage.</string>
+    <string name="settings_audio_library">Audio Library</string>
+    <string name="settings_all_downloaded">All audio files downloaded</string>
+    <string name="settings_downloading">Downloading %1$d/%2$d\u2026</string>
+    <string name="settings_available_downloads">%d audio files available to download</string>
+    <string name="settings_download_library">Download Library</string>
+    <string name="settings_no_audio">No audio files available yet</string>
+    <string name="settings_no_audio_sub">Audio files will appear here when available.</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_app_theme">App Theme</string>
+    <string name="settings_app_theme_sub">Switch between light, dark, or follow system appearance.</string>
+    <string name="settings_dark_mode">Dark Mode</string>
+    <string name="settings_dark_mode_on">Dark</string>
+    <string name="settings_dark_mode_off">Light</string>
+    <string name="settings_dark_mode_system">System</string>
+    <string name="settings_dark_mode_light_theme">Light Theme</string>
+    <string name="settings_dark_mode_dark_theme">Dark Theme</string>
+    <string name="settings_dark_mode_follow_system">Follow System</string>
+    <string name="settings_language_sub">Choose the language used across the app.</string>
+    <string name="settings_prayer_times">Prayer Times</string>
+    <string name="settings_location">Location</string>
+    <string name="settings_calculation_method">Calculation Method</string>
+    <string name="settings_calculation_method_sub">Choose the prayer time calculation method.</string>
+    <string name="settings_madhab">Madhab (Asr Calculation)</string>
+    <string name="settings_madhab_sub">Choose how Asr time should be calculated.</string>
+    <string name="settings_data_management">Data Management</string>
+    <string name="settings_reset_progress">Reset All Progress</string>
+    <string name="settings_reset_progress_desc">Resets all counting progress but keeps your goals.</string>
+    <string name="settings_delete_goals">Delete All Goals</string>
+    <string name="settings_delete_goals_desc">Permanently deletes all goals and progress data.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_version">Version %s</string>
+    <string name="settings_date_calendar">Date &amp; Calendar</string>
+    <string name="settings_day_reset">Day Reset Time</string>
+    <string name="settings_day_reset_desc">When does a new counting day begin?</string>
+    <string name="settings_day_reset_midnight">Midnight</string>
+    <string name="settings_day_reset_maghrib">Maghrib</string>
+    <string name="settings_calendar_system">Calendar System</string>
+    <string name="settings_calendar_system_desc">Choose which calendar to display dates in.</string>
+    <string name="settings_calendar_gregorian">Gregorian</string>
+    <string name="settings_calendar_hijri">Hijri</string>
+    <string name="settings_language">Language</string>
+    <string name="dialog_reset_title">Reset All Progress?</string>
+    <string name="dialog_reset_body">This will reset all counting progress to zero. Your goals will be kept but all daily progress will be cleared. This cannot be undone.</string>
+    <string name="dialog_delete_title">Delete All Goals?</string>
+    <string name="dialog_delete_body">This will permanently delete all goals and all progress data. This cannot be undone.</string>
+    <string name="dialog_set_reminder_time">Set Reminder Time</string>
+    <string name="dialog_change_location">Change Location</string>
+    <string name="settings_search_city">Search city</string>
+    <string name="settings_use_current_location">Use current location</string>
+
+    <!-- Language names (always shown in native script) -->
+    <string name="lang_english">English</string>
+    <string name="lang_arabic">العربية</string>
+    <string name="lang_malayalam">മലയാളം</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_counting_name">Dhikr Counting</string>
+    <string name="notif_counting_public_title">Awrad session active</string>
+    <string name="notif_counting_public_body">Open Awrad to view your session.</string>
+    <string name="notif_channel_reminders_name">Goal Reminders</string>
+    <string name="notif_channel_reminders_desc">Reminders for your dhikr goals</string>
+    <string name="notif_title_reminder">Time for %s</string>
+    <string name="notif_title_followup">Reminder: %s</string>
+    <string name="notif_title_prayer">Time for %1$s after %2$s</string>
+    <string name="notif_title_slot">Time for %1$s: %2$s</string>
+    <string name="notif_body_remaining">%1$d remaining \u2022 %2$d/%3$d today</string>
+    <string name="notif_body_slot_remaining">%1$s \u2022 %2$d remaining</string>
+    <string name="notif_body_followup">Still %1$d remaining for today</string>
+    <string name="notif_body_tracker">Open Awrad to log this practice</string>
+    <string name="notif_expanded_goal">You have counted %2$d of %3$d today. %1$d remaining.</string>
+    <string name="notif_expanded_slot">%1$s: %3$d of %4$d counted today. %2$d remaining.</string>
+    <string name="notif_expanded_followup">Still %1$d remaining today. Open Awrad to continue from %2$d/%3$d.</string>
+    <string name="notif_expanded_tracker">Open Awrad and record this practice when you complete it.</string>
+    <string name="notif_dhikr_fallback">your dhikr</string>
+    <string name="notif_action_start">Count now</string>
+    <string name="notif_action_dismiss">Dismiss</string>
+    <string name="notif_public_title">Awrad reminder</string>
+    <string name="notif_public_body">Open Awrad to view your reminder.</string>
+    <string name="notif_channel_global_name">Daily Dhikr Reminder</string>
+    <string name="notif_channel_global_desc">General daily reminders to do dhikr</string>
+    <string name="notif_global_title">Time for Dhikr</string>
+    <string name="notif_global_body">Take a moment to remember Allah and count your daily dhikr</string>
+    <string name="notif_global_expanded_body">Take a quiet moment to remember Allah and continue your daily dhikr in Awrad.</string>
+
+    <!-- Daily remembrance -->
+    <string name="remembrance_overline">Daily remembrance</string>
+    <string name="remembrance_begin_button">Begin today\'s dhikr</string>
+    <string name="notif_channel_daily_remembrance_name">Daily remembrance</string>
+    <string name="notif_channel_daily_remembrance_desc">A daily verse or hadith about remembrance of Allah</string>
+    <string name="settings_daily_remembrance">Daily remembrance notification</string>
+    <string name="settings_daily_remembrance_sub">Receive one daily verse or hadith about dhikr</string>
+    <!-- Appended to reminder bodies: quote — source -->
+    <string name="remembrance_notif_line">“%1$s” — %2$s</string>
+    <bool name="remembrance_show_translation">true</bool>
+    <string-array name="remembrance_arabic" translatable="false">
+        <item>أَلَا بِذِكْرِ ٱللَّهِ تَطْمَئِنُّ ٱلْقُلُوبُ</item>
+        <item>فَٱذْكُرُونِىٓ أَذْكُرْكُمْ</item>
+        <item>يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُوا۟ ٱذْكُرُوا۟ ٱللَّهَ ذِكْرًۭا كَثِيرًۭا وَسَبِّحُوهُ بُكْرَةًۭ وَأَصِيلًا</item>
+        <item>وَلَذِكْرُ ٱللَّهِ أَكْبَرُ</item>
+        <item>ٱلَّذِينَ يَذْكُرُونَ ٱللَّهَ قِيَٰمًۭا وَقُعُودًۭا وَعَلَىٰ جُنُوبِهِمْ</item>
+        <item>وَٱذْكُر رَّبَّكَ فِى نَفْسِكَ تَضَرُّعًۭا وَخِيفَةًۭ بِٱلْغُدُوِّ وَٱلْءَاصَالِ</item>
+        <item>وَٱذْكُرُوا۟ ٱللَّهَ كَثِيرًۭا لَّعَلَّكُمْ تُفْلِحُونَ</item>
+        <item>مَثَلُ الَّذِي يَذْكُرُ رَبَّهُ وَالَّذِي لَا يَذْكُرُ رَبَّهُ مَثَلُ الْحَيِّ وَالْمَيِّتِ</item>
+        <item>أَنَا عِنْدَ ظَنِّ عَبْدِي بِي وَأَنَا مَعَهُ إِذَا ذَكَرَنِي</item>
+        <item>أَلَا أُنَبِّئُكُمْ بِخَيْرِ أَعْمَالِكُمْ... ذِكْرُ اللَّهِ</item>
+        <item>سَبَقَ الْمُفَرِّدُونَ... الذَّاكِرُونَ اللَّهَ كَثِيرًا وَالذَّاكِرَاتُ</item>
+        <item>كَلِمَتَانِ خَفِيفَتَانِ عَلَى اللِّسَانِ ثَقِيلَتَانِ فِي الْمِيزَانِ حَبِيبَتَانِ إِلَى الرَّحْمَنِ: سُبْحَانَ اللَّهِ وَبِحَمْدِهِ، سُبْحَانَ اللَّهِ الْعَظِيمِ</item>
+        <item>لَأَنْ أَقُولَ سُبْحَانَ اللَّهِ وَالْحَمْدُ لِلَّهِ وَلَا إِلَهَ إِلَّا اللَّهُ وَاللَّهُ أَكْبَرُ أَحَبُّ إِلَيَّ مِمَّا طَلَعَتْ عَلَيْهِ الشَّمْسُ</item>
+        <item>لَا يَزَالُ لِسَانُكَ رَطْبًا مِنْ ذِكْرِ اللَّهِ</item>
+    </string-array>
+    <string-array name="remembrance_translation">
+        <item>Verily, in the remembrance of Allah do hearts find rest.</item>
+        <item>Remember Me; I will remember you.</item>
+        <item>O you who believe, remember Allah with much remembrance, and glorify Him morning and evening.</item>
+        <item>And the remembrance of Allah is greater.</item>
+        <item>Those who remember Allah standing, sitting, and lying on their sides.</item>
+        <item>Remember your Lord within yourself, humbly and in awe, in the mornings and the evenings.</item>
+        <item>Remember Allah often, that you may succeed.</item>
+        <item>The example of the one who remembers his Lord and the one who does not is like the living and the dead.</item>
+        <item>I am as My servant thinks of Me, and I am with him when he remembers Me.</item>
+        <item>Shall I not tell you of the best of your deeds, the purest in the sight of your King — the remembrance of Allah.</item>
+        <item>The mufarridun have gone ahead — those men and women who remember Allah abundantly.</item>
+        <item>Two phrases, light on the tongue, heavy on the scale, beloved to the Most Merciful: SubhanAllahi wa bihamdih, SubhanAllahil-\'Azim.</item>
+        <item>That I say SubhanAllah, alhamdulillah, la ilaha illallah, Allahu akbar is dearer to me than all the sun rises upon.</item>
+        <item>Let your tongue remain ever moist with the remembrance of Allah.</item>
+    </string-array>
+    <string-array name="remembrance_source">
+        <item>Ar-Ra\'d 13:28</item>
+        <item>Al-Baqarah 2:152</item>
+        <item>Al-Ahzab 33:41–42</item>
+        <item>Al-\'Ankabut 29:45</item>
+        <item>Aal \'Imran 3:191</item>
+        <item>Al-A\'raf 7:205</item>
+        <item>Al-Jumu\'ah 62:10</item>
+        <item>Sahih al-Bukhari 6407</item>
+        <item>Sahih al-Bukhari 7405</item>
+        <item>Jami\' at-Tirmidhi 3377</item>
+        <item>Sahih Muslim 2676</item>
+        <item>Sahih al-Bukhari 6682</item>
+        <item>Sahih Muslim 2695</item>
+        <item>Jami\' at-Tirmidhi 3375</item>
+    </string-array>
+    <string name="audio_playing_back_title">Stop Audio Counting?</string>
+    <string name="audio_playing_back_message">Audio counting is in progress. Going back will stop the playback.</string>
+    <string name="action_stop_and_go_back">Stop &amp; Go Back</string>
+    <string name="action_keep_counting">Keep Counting</string>
+    <string name="adjust_count">Adjust Count</string>
+    <string name="adjust_count_hint">Enter count</string>
+    <string name="action_add_count">Add</string>
+    <string name="action_subtract_count">Subtract</string>
+    <string name="subtract_warning">This will reduce your count by %d. Are you sure?</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_app_tagline">Your Daily Dhikr Companion</string>
+    <!-- Opening scene -->
+    <string name="onboarding_bismillah" translatable="false">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</string>
+    <string name="onboarding_bismillah_translation">In the name of Allah, the Most Compassionate, the Most Merciful</string>
+    <string name="onboarding_welcome_salam">As-salamu alaykum</string>
+    <string name="onboarding_welcome_headline">Welcome to Awrad</string>
+    <string name="onboarding_begin">Begin</string>
+    <!-- Language scene -->
+    <string name="onboarding_language_title">Choose your language</string>
+    <string name="onboarding_language_subtitle">You can change this anytime in Settings.</string>
+    <!-- Account scene -->
+    <string name="onboarding_account_eyebrow">Your account</string>
+    <string name="onboarding_account_title">Keep your progress safe</string>
+    <string name="onboarding_account_subtitle">Sign in to sync goals and streaks across your devices.</string>
+    <string name="onboarding_account_google">Continue with Google</string>
+    <string name="onboarding_account_email">Continue with email</string>
+    <string name="onboarding_account_guest">Continue as guest</string>
+    <string name="onboarding_account_signed_in_title">You\'re signed in</string>
+    <string name="onboarding_auth_sign_in_title">Welcome back</string>
+    <string name="onboarding_auth_create_title">Create your account</string>
+    <string name="onboarding_auth_subtitle">Your goals and streaks will follow you to any device.</string>
+    <string name="onboarding_auth_email_hint">Email</string>
+    <string name="onboarding_auth_password_hint">Password</string>
+    <string name="onboarding_auth_toggle_password">Toggle password visibility</string>
+    <string name="onboarding_auth_sign_in_action">Sign in</string>
+    <string name="onboarding_auth_create_action">Create account</string>
+    <string name="onboarding_auth_switch_to_create">New to Awrad? Create an account</string>
+    <string name="onboarding_auth_switch_to_sign_in">Already have an account? Sign in</string>
+    <string name="onboarding_auth_error_fields">Enter your email and password to continue.</string>
+    <!-- Name scene -->
+    <string name="onboarding_name_title">What should we call you?</string>
+    <string name="onboarding_name_subtitle">We\'ll use your name to personalize your experience.</string>
+    <string name="onboarding_name_hint">Your name</string>
+    <string name="onboarding_name_quote">Remembrance of Allah is the greatest deed.</string>
+    <!-- First goal scenes -->
+    <string name="onboarding_goalintro_eyebrow">A prophetic practice</string>
+    <string name="onboarding_goalintro_lead">Even the most beloved of Allah ﷺ sought forgiveness every single day.</string>
+    <string name="onboarding_goalintro_hadith_arabic" translatable="false">وَاللَّهِ إِنِّي لَأَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ فِي الْيَوْمِ أَكْثَرَ مِنْ سَبْعِينَ مَرَّةً</string>
+    <string name="onboarding_goalintro_hadith_translation">“By Allah, I seek Allah\'s forgiveness and turn to Him in repentance more than seventy times a day.”</string>
+    <string name="onboarding_goalintro_hadith_ref">Sahih al-Bukhari · 6307</string>
+    <string name="onboarding_goalintro_close">Begin where he began — with istighfar.</string>
+    <string name="onboarding_goal_title">Your first dhikr goal</string>
+    <string name="onboarding_goal_subtitle">One tap, and the Prophet\'s ﷺ daily practice becomes yours too.</string>
+    <string name="onboarding_goal_hadith_note">Seventy istighfar a day — the number the Prophet ﷺ himself named. Keep it, or set your own pace.</string>
+    <string name="onboarding_goal_preset_istighfar_name">Istighfar</string>
+    <string name="onboarding_goal_preset_istighfar_meaning">Seeking Allah\'s forgiveness</string>
+    <string name="onboarding_goal_count_label">Daily count</string>
+    <string name="onboarding_goal_decrease">Decrease count</string>
+    <string name="onboarding_goal_increase">Increase count</string>
+    <!-- Audio scene -->
+    <string name="onboarding_audio_item_ready">Ready</string>
+    <string name="onboarding_audio_item_pending">Pending</string>
+    <string name="onboarding_audio_item_failed">Failed</string>
+    <string name="onboarding_begin_counting">Begin counting</string>
+    <!-- Counting coach marks -->
+    <string name="coach_skip">Skip</string>
+    <string name="coach_next">Next</string>
+    <string name="coach_done">Got it</string>
+    <string name="coach_tap_title">Tap to count</string>
+    <string name="coach_tap_body">Tap the circle once for each dhikr — your taps count for real. Try three to continue.</string>
+    <string name="coach_count_progress">%1$d of %2$d</string>
+    <string name="coach_progress_title">Watch your progress</string>
+    <string name="coach_progress_body">This fills as you go, so you always know how close you are to your daily goal.</string>
+    <string name="coach_session_title">Set a session target</string>
+    <string name="coach_session_body">Aim for a smaller goal in one sitting — a quick win on the way to your daily total.</string>
+    <string name="coach_history_title">Review your history</string>
+    <string name="coach_history_body">Tap here anytime to see today\'s progress and past days.</string>
+    <string name="coach_audio_title">Or let audio count</string>
+    <string name="coach_audio_body">Tap the highlighted button and Awrad counts each repetition for you. Listen to three to finish.</string>
+    <string name="onboarding_audio_title">Prepare guided audio</string>
+    <string name="onboarding_audio_subtitle">Download recitations now so guided counting works offline.</string>
+    <string name="onboarding_audio_available_label">Available</string>
+    <string name="onboarding_audio_downloaded_label">Ready</string>
+    <string name="onboarding_audio_pending_label">Pending</string>
+    <string name="onboarding_audio_idle_title">Download guided recitations</string>
+    <string name="onboarding_audio_idle_desc">Save audio now so counting starts without waiting for the network.</string>
+    <string name="onboarding_audio_download_all">Download audio</string>
+    <string name="onboarding_audio_later">Not now</string>
+    <string name="onboarding_audio_downloading">Downloading audio</string>
+    <string name="onboarding_audio_downloading_desc">Saving recitations for offline guided counting.</string>
+    <string name="onboarding_audio_progress">Ready: %1$d/%2$d</string>
+    <string name="onboarding_audio_complete">Audio ready</string>
+    <string name="onboarding_audio_complete_desc">Guided counting can use these recitations offline.</string>
+    <string name="onboarding_audio_empty_title">No audio to download</string>
+    <string name="onboarding_audio_empty_desc">You can continue setup and add audio later from Settings.</string>
+    <string name="onboarding_audio_failed_title">Some audio needs another try</string>
+    <string name="onboarding_audio_failed_desc">Most files may still be ready. Retry now or continue setup.</string>
+    <string name="onboarding_audio_failed_count">Failed downloads: %d</string>
+    <string name="onboarding_audio_retry">Retry download</string>
+    <string name="onboarding_audio_continue">Continue</string>
+    <string name="onboarding_location_title">Prayer Times</string>
+    <string name="onboarding_location_subtitle">Set your location for accurate prayer times.</string>
+    <string name="onboarding_location_gps">Use current location</string>
+    <string name="onboarding_location_or">or</string>
+    <string name="onboarding_location_search">Search city name</string>
+    <string name="onboarding_location_set">Location set</string>
+    <!-- Prayer calculation -->
+    <string name="onboarding_prayer_preview_title">Today\'s prayer times</string>
+    <string name="onboarding_prayer_adjust">Adjust</string>
+    <string name="onboarding_prayer_config_title">Prayer calculation</string>
+    <string name="onboarding_prayer_config_hint">Different regions time Fajr and Isha slightly differently. We\'ve picked a common default — if your local mosque follows another convention, choose it here.</string>
+    <string name="onboarding_prayer_config_method">Calculation method</string>
+    <string name="onboarding_prayer_config_madhab">Asr time</string>
+    <string name="onboarding_prayer_config_done">Done</string>
+    <string name="onboarding_method_desc_karachi">Common across India, Pakistan &amp; Bangladesh</string>
+    <string name="onboarding_method_desc_north_america">ISNA — common in North America</string>
+    <string name="onboarding_method_desc_mwl">Widely used in Europe &amp; the Far East</string>
+    <string name="onboarding_method_desc_egypt">Egypt &amp; much of Africa</string>
+    <string name="onboarding_method_desc_umm_al_qura">Saudi Arabia — Makkah &amp; Madinah</string>
+    <string name="onboarding_method_desc_moon_sighting">Worldwide, based on moonsighting data</string>
+    <string name="onboarding_method_desc_dubai">United Arab Emirates</string>
+    <string name="onboarding_method_desc_kuwait">Kuwait</string>
+    <string name="onboarding_method_desc_qatar">Qatar</string>
+    <string name="onboarding_method_desc_singapore">Singapore, Malaysia &amp; Indonesia</string>
+    <string name="onboarding_madhab_shafi_desc">Earlier Asr — Shafi, Maliki &amp; Hanbali</string>
+    <string name="onboarding_madhab_hanafi_desc">Later Asr — Hanafi</string>
+    <!-- Notifications scene -->
+    <string name="onboarding_notifications_title">Never miss a moment of dhikr</string>
+    <string name="onboarding_notifications_subtitle">Gentle reminders at the times you choose help daily awrad become habit.</string>
+    <string name="onboarding_notifications_enable">Enable notifications</string>
+    <string name="onboarding_notifications_hint">You choose the moments — Awrad only reminds, never nags.</string>
+    <string name="onboarding_notifications_ready_title">Notifications are on</string>
+    <string name="onboarding_notifications_ready_desc">We\'ll only nudge you at the times you pick next.</string>
+    <string name="onboarding_reliability_exact_action">Allow exact alarms</string>
+    <string name="onboarding_reliability_battery_action">Disable optimization</string>
+    <string name="onboarding_reliability_oem_action">View phone guide</string>
+    <string name="onboarding_reliability_ready_title">Reminder setup is ready</string>
+    <string name="onboarding_reliability_ready_desc">Your phone already allows timely reminders.</string>
+    <!-- Reminder presets scene -->
+    <string name="onboarding_reminders_title">When should we remind you?</string>
+    <string name="onboarding_reminders_subtitle">Choose the moments for your daily dhikr — pick as many as you like.</string>
+    <string name="onboarding_reminder_after_fajr">After Fajr</string>
+    <string name="onboarding_reminder_after_fajr_desc">30 minutes after the dawn prayer</string>
+    <string name="onboarding_reminder_morning">Morning</string>
+    <string name="onboarding_reminder_morning_desc">A bright start to the day</string>
+    <string name="onboarding_reminder_after_asr">After Asr</string>
+    <string name="onboarding_reminder_after_asr_desc">30 minutes after the afternoon prayer</string>
+    <string name="onboarding_reminder_after_maghrib">After Maghrib</string>
+    <string name="onboarding_reminder_after_maghrib_desc">As the day closes</string>
+    <string name="onboarding_reminders_hint">These become reminders on your first goal — edit or remove them anytime.</string>
+    <!-- Controls -->
+    <string name="onboarding_next">Next</string>
+    <string name="onboarding_back">Back</string>
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+
+    <!-- Wird / Collections -->
+    <string name="wird_list_title">Wirds</string>
+    <string name="library_segment_dhikrs">Dhikrs</string>
+    <string name="library_segment_wirds">Wirds</string>
+    <string name="wird_sections">sections</string>
+    <string name="wird_sections_complete">sections complete</string>
+    <string name="wird_items">items</string>
+    <string name="wird_section_complete">Complete</string>
+    <string name="wird_continue_reading">Continue Reading</string>
+    <string name="wird_start_reading">Start Reading</string>
+    <string name="wird_prev_section">Previous</string>
+    <string name="wird_next_section">Next</string>
+    <string name="wird_mark_complete">Mark Complete</string>
+    <string name="wird_repeat_count">Repeat %dx</string>
+    <string name="wird_tap_to_count">Tap to count</string>
+    <string name="wird_tap_to_complete">Tap to mark as read</string>
+    <string name="wird_completion_message">You have completed this section. May Allah accept your recitation.</string>
+    <string name="home_wirds">Wirds</string>
+
+    <!-- Wird v2 (re-architected) -->
+    <string name="wird_your_wirds">Your wirds</string>
+    <string name="wird_library">Library</string>
+    <string name="wird_today">Today</string>
+    <string name="wird_today_section_title">Today\'s Wird</string>
+    <string name="wird_done_today">Done today</string>
+    <string name="wird_remind_me">Remind me</string>
+    <string name="wird_progress_count">%1$d / %2$d</string>
+    <string name="wird_page_count">%1$d / %2$d</string>
+    <string name="wird_streak_days">%d day streak</string>
+    <string name="wird_source_by">by %s</string>
+    <string name="wird_empty">No wirds yet.</string>
+    <string name="wird_recite">Recite</string>
+    <string name="wird_recited">Recited</string>
+    <string name="wird_mark_recited">Mark as recited</string>
+    <string name="wird_continue">Continue</string>
+    <string name="wird_section_complete_title">Section Complete</string>
+    <string name="wird_done">Done</string>
+    <string name="wird_read_again">Read again</string>
+    <string name="wird_contents">Contents</string>
+    <string name="wird_continue_next_part">Continue: %1$s</string>
+    <string name="wird_previous_page">Previous</string>
+    <string name="wird_next_page">Next</string>
+    <!-- Reader tap-to-flow -->
+    <string name="wird_section_counter">%1$d of %2$d sections</string>
+    <string name="wird_font_size_label">A</string>
+    <string name="wird_scroll_to_continue">Scroll to continue</string>
+    <string name="wird_count_progress_tap">%1$d of %2$d — tap anywhere</string>
+    <string name="wird_complete_title">Wird complete</string>
+    <string name="wird_tap_to_finish">Tap to finish</string>
+    <string name="wird_hint_tap_to_recite">Tap anywhere to count</string>
+    <string name="wird_complete_count_to_continue">Complete the count to continue</string>
+    <string name="wird_step_back">Previous line</string>
+    <!-- Home Wirds section -->
+    <string name="wird_section_title">Wirds</string>
+    <string name="wird_tab_today">Today\'s Wirds</string>
+    <string name="wird_tab_featured">Featured Wirds</string>
+    <string name="wird_read">Read</string>
+    <string name="wird_none_today">No wirds scheduled for today.</string>
+    <string name="wird_browse_featured">Browse featured</string>
+    <!-- Detail screen -->
+    <string name="wird_begin_recitation">Begin recitation</string>
+    <string name="wird_stat_to_recite">to recite</string>
+    <string name="wird_stat_day_streak">day streak</string>
+    <string name="wird_stat_minutes">%1$dm</string>
+    <string name="wird_today_progress">%1$d / %2$d today</string>
+    <string name="wird_recitations_count">%1$d recitations</string>
+    <string name="wird_reminder_turn_off">Turn off reminder</string>
+    <!-- Occasions -->
+    <string name="wird_occasion_anytime">Anytime</string>
+    <string name="wird_occasion_morning">Morning</string>
+    <string name="wird_occasion_evening">Evening</string>
+    <string name="wird_occasion_before_sleep">Before sleep</string>
+    <string name="wird_occasion_after_prayer">After %s</string>
+    <string name="wird_occasion_time_window">Timed</string>
+    <!-- Wird catalog card -->
+    <string name="wird_minutes_short">%1$d min</string>
+    <plurals name="wird_section_count">
+        <item quantity="one">%1$d section</item>
+        <item quantity="other">%1$d sections</item>
+    </plurals>
+    <string name="wird_tag_salawat">Ṣalawāt</string>
+    <string name="wird_tag_protection">Protection</string>
+    <string name="wird_tag_quran">Qur\'an</string>
+    <string name="wird_tag_forgiveness">Forgiveness</string>
+    <string name="wird_tag_praise">Praise</string>
+    <string name="wird_tag_general">General</string>
+    <!-- Cadence -->
+    <string name="wird_cadence_every_day">Every day</string>
+    <string name="wird_cadence_rotation">Rotating sections</string>
+    <string name="wird_cadence_specific_days">Specific days</string>
+    <string name="wird_cadence_interval">Every %d days</string>
+    <string name="wird_cadence_parts_by_weekday">Weekday sections</string>
+    <!-- Editor -->
+    <string name="wird_create_title">New Wird</string>
+    <string name="wird_edit_title">Edit Wird</string>
+    <string name="wird_save">Save</string>
+    <string name="wird_delete">Delete</string>
+    <string name="wird_edit">Edit</string>
+    <string name="wird_add">Add</string>
+    <string name="wird_details">Details</string>
+    <string name="wird_name_en">Name (English)</string>
+    <string name="wird_name_ar">Name (Arabic)</string>
+    <string name="wird_description_label">Description</string>
+    <string name="wird_source_label">Source</string>
+    <string name="wird_schedule">Schedule</string>
+    <string name="wird_repeats">Repeats</string>
+    <string name="wird_season">Season</string>
+    <string name="wird_season_all">All year</string>
+    <string name="wird_season_ramadan">Ramadan only</string>
+    <string name="wird_season_last_ten">Last ten nights</string>
+    <string name="wird_default_time">Default time</string>
+    <string name="wird_sections_label">Sections</string>
+    <string name="wird_add_section">Add section</string>
+    <string name="wird_part_title">Section title</string>
+    <string name="wird_part_subtitle">Subtitle</string>
+    <string name="wird_custom_time">Custom time for this section</string>
+    <string name="wird_block_repeat">Repeat section %dx</string>
+    <string name="wird_items_label">Items</string>
+    <string name="wird_add_item">Add item</string>
+    <string name="wird_kind">Type</string>
+    <string name="wird_kind_dhikr">Dhikr</string>
+    <string name="wird_kind_dua">Dua</string>
+    <string name="wird_kind_salah">Salawat</string>
+    <string name="wird_kind_quran">Qur\'an</string>
+    <string name="wird_kind_heading">Heading</string>
+    <string name="wird_kind_instruction">Instruction</string>
+    <string name="wird_arabic">Arabic</string>
+    <string name="wird_transliteration_label">Transliteration</string>
+    <string name="wird_translation_label">Translation</string>
+    <string name="wird_benefit">Benefit</string>
+    <string name="wird_text_label">Text</string>
+    <string name="wird_repetitions">Repetitions</string>
+    <string name="wird_use_range">Use a range</string>
+    <string name="wird_min">Min</string>
+    <string name="wird_max">Max</string>
+    <string name="wird_reminders">Reminders</string>
+    <string name="wird_add_reminder">Add reminder</string>
+    <string name="wird_reminder_fixed">Fixed time</string>
+    <string name="wird_reminder_prayer">After prayer</string>
+    <string name="wird_offset_min">Offset (min)</string>
+    <string name="wird_hour_short">Hour</string>
+    <string name="wird_minute_short">Minute</string>
+    <string name="wird_no_items">No items yet</string>
+    <string name="wird_delete_confirm">Delete this wird?</string>
+    <string name="wird_reminder_body">Time for %s.</string>
+    <string name="wird_home_subtitle">Daily devotional routines</string>
+    <string name="wird_no_reminders">No reminders</string>
+    <string name="wird_reminder_time">Time</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Goal creation redesign -->
+    <string name="create_goal">Create Goal</string>
+    <string name="how_would_you_practice">How would you like to practice this?</string>
+    <string name="how_many_each_day">How many times each day?</string>
+    <string name="how_many_each_week">How many times each week?</string>
+    <string name="how_many_this_season">How many times this season?</string>
+    <string name="times_per_prayer">Times per prayer</string>
+    <string name="total_count">Total count to complete</string>
+    <string name="no_target_message">Just counting — no target set.\nYour count will be recorded each session.</string>
+    <string name="customize_goal">Customize this goal</string>
+    <string name="wizard_back">Back</string>
+    <string name="wizard_continue">Continue</string>
+    <string name="customize_title">Customize Goal</string>
+    <string name="step_n_of_m">Step %1$d of %2$d</string>
+
+    <!-- Wizard step titles and labels -->
+    <string name="frequency_step_title">How often?</string>
+    <string name="frequency_step_subtitle">Choose the rhythm for this dhikr</string>
+    <string name="timing_step_title">When during the day?</string>
+    <string name="timing_step_subtitle">Set a time anchor, or practice whenever feels right</string>
+    <string name="target_step_title">Your daily target</string>
+    <string name="which_prayers_title">Which prayers?</string>
+    <string name="which_prayers_subtitle">Select when you\'d like to do this dhikr</string>
+    <string name="deadline_step_title">Set an end date?</string>
+    <string name="deadline_step_subtitle">Give yourself a gentle deadline, or leave it open-ended</string>
+    <string name="extras_step_title">Additional settings</string>
+    <string name="set_deadline">Set a deadline</string>
+    <string name="set_duration">Set duration</string>
+    <string name="min_streak">Minimum streak count</string>
+    <string name="notifications">Notifications</string>
+    <string name="notification_time_display">Reminder at %1$s</string>
+    <string name="select_days">Select days</string>
+    <string name="select_days_of_month">Select days of the month</string>
+    <string name="every_n_days">Repeat every N days</string>
+    <string name="interval_days_label">Days</string>
+    <string name="select_month_and_days">Select month and days</string>
+    <string name="daily_no_config">Every day — no additional configuration needed</string>
+    <string name="duration_days_label">Number of days</string>
+    <string name="min_streak_count_label">Minimum count for streak</string>
+
+    <!-- Community / Auth -->
+    <string name="community_title">Community</string>
+    <string name="community_subtitle">Keep your practice connected and steady.</string>
+    <string name="community_join_title">Join the Community</string>
+    <string name="community_join_subtitle">Connect with fellow practitioners, share your progress, and stay inspired together.</string>
+    <string name="auth_login">Log In</string>
+    <string name="auth_signup">Sign Up</string>
+    <string name="auth_logout">Log Out</string>
+    <string name="auth_email">Email</string>
+    <string name="auth_password">Password</string>
+    <string name="auth_login_title">Welcome Back</string>
+    <string name="auth_login_subtitle">Log in to your account</string>
+    <string name="auth_signup_title">Create Account</string>
+    <string name="auth_signup_subtitle">Join the Awrad community</string>
+    <string name="auth_no_account">Don\'t have an account?</string>
+    <string name="auth_have_account">Already have an account?</string>
+    <string name="auth_password_hint">Min 10 chars, uppercase, lowercase, digit or symbol</string>
+    <string name="auth_logging_in">Logging in\u2026</string>
+    <string name="auth_signing_up">Creating account\u2026</string>
+    <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_forgot_title">Reset Password</string>
+    <string name="auth_forgot_subtitle">Enter your email and we\'ll send you a link to reset your password.</string>
+    <string name="auth_send_reset_link">Send Reset Link</string>
+    <string name="auth_forgot_email_sent_title">Check Your Email</string>
+    <string name="auth_forgot_email_sent_subtitle">We\'ve sent a password reset link to your email address. Please check your inbox.</string>
+    <string name="auth_back_to_login">Back to Login</string>
+    <string name="community_coming_soon">Community features coming soon!</string>
+    <string name="community_logged_in_as">Logged in as %s</string>
+
+    <!-- Localized goal draft summaries and validation -->
+    <string name="cd_see_more">See more</string>
+    <string name="suggested_card_title">Suggested For You</string>
+    <string name="action_start_counting">Start Counting</string>
+    <string name="action_choose">Choose</string>
+    <string name="create_goal_choose_dhikr_title">Choose the dhikr</string>
+    <string name="create_goal_choose_dhikr_subtitle">Start with the words, then shape the practice around them.</string>
+    <string name="create_goal_no_dhikr_found">No dhikr found</string>
+    <string name="create_goal_no_dhikr_found_body">Try a different Arabic phrase, title, or transliteration.</string>
+    <string name="create_goal_schedule_preview">Schedule preview</string>
+    <string name="goal_validation_select_dhikr">Select a dhikr.</string>
+    <string name="goal_validation_choose_template">Choose a goal template.</string>
+    <string name="goal_validation_positive_total_target">Enter a positive total target.</string>
+    <string name="goal_validation_positive_slot_target">Enter a positive target for each slot.</string>
+    <string name="goal_validation_positive_minimum_count">Enter a positive minimum count.</string>
+    <string name="goal_validation_positive_exact_count">Enter a positive exact count.</string>
+    <string name="goal_validation_positive_maximum_count">Enter a positive maximum count.</string>
+    <string name="goal_validation_target_above_minimum">Target count must be greater than the minimum.</string>
+    <string name="goal_validation_bounded_counts_ordered">Keep the counts ordered: minimum, target, then maximum.</string>
+    <string name="goal_validation_tracker_no_target">Trackers cannot have a target.</string>
+    <string name="goal_validation_select_weekday">Select at least one weekday.</string>
+    <string name="goal_validation_select_month_day">Select at least one day of the month.</string>
+    <string name="goal_validation_select_year_day">Select at least one day of the year.</string>
+    <string name="goal_validation_add_date">Add at least one date.</string>
+    <string name="goal_validation_select_season">Select a season.</string>
+    <string name="goal_validation_positive_interval">Interval must be at least 1 day.</string>
+    <string name="goal_validation_add_slot">Add at least one slot.</string>
+    <string name="goal_validation_select_prayer">Select at least one prayer.</string>
+    <string name="goal_validation_add_time_slot">Add at least one time slot.</string>
+    <string name="goal_validation_invalid_time_window">Time windows need a valid start and end.</string>
+    <string name="goal_validation_invalid_prayer_slot">Prayer slots need a prayer and timing.</string>
+    <string name="goal_validation_invalid_reminder_time">Use a valid reminder time.</string>
+    <string name="goal_validation_positive_duration">Duration must be at least 1 day.</string>
+    <string name="goal_validation_positive_minimum_streak">Minimum streak count must be positive.</string>
+    <string name="goal_sentence_choose_template">Choose a template for %1$s.</string>
+    <string name="goal_sentence_prayer_based">Recite %1$s: %2$s, %3$s.</string>
+    <string name="goal_sentence_one_time">Complete %1$s of %2$s.</string>
+    <string name="goal_sentence_weekly">Recite %1$s: %2$s, %3$s.</string>
+    <string name="goal_sentence_season">Recite %1$s: %2$s during %3$s.</string>
+    <string name="goal_sentence_tracker">Track every time you recite %1$s.</string>
+    <string name="goal_sentence_morning_evening">Recite %1$s: %2$s in the morning and evening.</string>
+    <string name="goal_sentence_default">Recite %1$s: %2$s, %3$s.</string>
+    <string name="goal_sentence_default_timed">Recite %1$s: %2$s, %3$s, %4$s.</string>
+    <string name="goal_summary_no_target">No target</string>
+    <string name="goal_summary_target_total">%1$s total</string>
+    <string name="goal_summary_target_period">%1$s per period</string>
+    <string name="goal_summary_target_times">%1$s times</string>
+    <string name="goal_summary_target_per_prayer_count">%1$s per prayer</string>
+    <string name="goal_summary_target_per_prayer">Per-prayer targets</string>
+    <string name="goal_summary_minimum_count">Minimum %1$s</string>
+    <string name="goal_summary_stretch_count">Minimum %1$s, target %2$s</string>
+    <string name="goal_summary_exact_count">Exactly %1$s</string>
+    <string name="goal_summary_bounded_count">Minimum %1$s, target %2$s, maximum %3$s</string>
+    <string name="goal_summary_schedule_daily">Every day</string>
+    <string name="goal_summary_schedule_weekly_every">Every %1$s</string>
+    <string name="goal_summary_schedule_no_weekdays">No weekdays selected</string>
+    <string name="goal_summary_schedule_monthly">%1$s monthly</string>
+    <string name="goal_summary_schedule_monthly_on">%1$s monthly on %2$s</string>
+    <string name="goal_summary_schedule_interval">Every %1$s days</string>
+    <string name="goal_summary_schedule_yearly">%1$s month %2$d, days %3$s</string>
+    <string name="goal_summary_not_set">not set</string>
+    <string name="goal_summary_schedule_no_dates">No dates added</string>
+    <string name="goal_summary_slots_anytime">Anytime</string>
+    <string name="goal_summary_slots_morning_evening">Morning and evening windows</string>
+    <plurals name="goal_summary_slots_time_count">
+        <item quantity="one">%1$d time slot</item>
+        <item quantity="other">%1$d time slots</item>
+    </plurals>
+    <string name="goal_summary_slots_prayer_not_configured">Prayer slots not configured</string>
+    <string name="goal_summary_slots_each_prayer">each prayer</string>
+    <string name="goal_summary_slots_prayer">%1$s %2$s</string>
+    <string name="goal_summary_off">Off</string>
+    <string name="goal_summary_reminders_prayer">10 min after prayer times</string>
+    <string name="goal_summary_reminders_window_start">At window start</string>
+    <string name="goal_summary_reminders_time">At %1$s</string>
+    <string name="goal_summary_reminders_with_slot_policy">%1$s \u2022 %2$s</string>
+    <string name="goal_summary_duration_days">%1$s days</string>
+    <string name="goal_summary_duration_ongoing">Ongoing</string>
+    <string name="goal_summary_duration_with_streak">%1$s, streak minimum %2$s</string>
+
+    <!-- Goal details screen -->
+    <string name="goal_details_title">Goal Details</string>
+    <string name="goal_details_missing">This goal could not be found.</string>
+    <string name="goal_details_setup_section">Goal setup</string>
+    <string name="goal_details_schedule">Schedule</string>
+    <string name="goal_details_progress_scope">Progress scope</string>
+    <string name="goal_details_timing">Timing</string>
+    <string name="goal_details_count_rule">Count rule</string>
+    <string name="goal_details_cap_behavior">Cap behavior</string>
+    <string name="goal_details_completion">Completion</string>
+    <string name="goal_details_duration">Duration</string>
+    <string name="goal_details_slot_policy">Session policy</string>
+    <string name="goal_details_slots_section">Sessions</string>
+    <string name="goal_details_no_slot_progress">Counts are tracked without a session split.</string>
+    <string name="goal_details_reminders_section">Reminders</string>
+    <string name="goal_details_reminders">Reminders</string>
+    <string name="goal_details_reminder_number">Reminder %1$d</string>
+    <string name="goal_details_goal_fallback">Dhikr goal</string>
+    <string name="goal_details_progress_fraction">%1$d / %2$d</string>
+    <string name="goal_details_progress_count_only">%1$d counted</string>
+    <string name="goal_details_count_action">Count</string>
+    <string name="goal_details_edit_action">Edit</string>
+    <string name="goal_details_reminders_edit_action">Reminders</string>
+    <string name="goal_details_scope_due_date">Each due date</string>
+    <string name="goal_details_scope_lifetime">Lifetime total</string>
+    <string name="goal_details_scope_period">Current period</string>
+    <plurals name="goal_details_timing_prayer_slots">
+        <item quantity="one">%1$d prayer session</item>
+        <item quantity="other">%1$d prayer sessions</item>
+    </plurals>
+    <plurals name="goal_details_timing_mixed_slots">
+        <item quantity="one">%1$d mixed session</item>
+        <item quantity="other">%1$d mixed sessions</item>
+    </plurals>
+    <string name="goal_details_no_slot_target">No session target</string>
+    <string name="goal_details_maximum_count">Maximum %1$d</string>
+    <string name="goal_details_cap_allow">Allow counting over target</string>
+    <string name="goal_details_cap_warn">Warn before counting over target</string>
+    <string name="goal_details_cap_block_target">Block at target</string>
+    <string name="goal_details_cap_block_maximum">Block at maximum</string>
+    <string name="goal_details_completion_target">Completes when the target is reached</string>
+    <string name="goal_details_completion_manual">Stays active until manually changed</string>
+    <string name="goal_details_duration_until">Until %1$s</string>
+    <string name="goal_details_slot_policy_warn">Warn outside active session time</string>
+    <string name="goal_details_slot_policy_strict">Only count during active session time</string>
+    <string name="goal_details_slot_policy_flexible">Allow flexible session counting</string>
+    <string name="goal_details_slot_number">Session %1$d</string>
+    <string name="goal_details_reminder_prayer_offset">Prayer offset: %1$d min</string>
+    <string name="goal_details_reminder_window_offset">Window start offset: %1$d min</string>
+    <string name="goal_details_reminder_prayer_offset_all">%1$d min after prayer sessions</string>
+    <string name="goal_details_reminder_prayer_offset_slot">%2$d min after %1$s</string>
+    <string name="goal_details_reminder_window_start_all">Session start</string>
+    <string name="goal_details_reminder_window_start_slot">Session start: %1$s</string>
+    <string name="goal_details_continue_counting">Continue counting</string>
+    <string name="goal_details_edit_goal_action">Edit goal</string>
+    <string name="goal_details_more_options">More options</string>
+    <string name="goal_details_advanced">Advanced</string>
+    <string name="goal_details_today_label">today</string>
+    <string name="goal_details_remaining_count">%1$d left</string>
+    <string name="goal_details_complete_label">Complete</string>
+    <string name="goal_details_overview_section">Overview</string>
+    <string name="goal_details_ring_of">of %1$s</string>
+    <string name="goal_details_counting_section">Counting</string>
+    <string name="goal_details_schedule_section">Schedule</string>
+    <string name="goal_details_repeats">Repeats</string>
+    <string name="goal_edit_title">Edit Goal</string>
+    <string name="goal_edit_count_rule">Count rule</string>
+    <string name="goal_edit_current_progress">%1$d counted so far</string>
+    <string name="goal_edit_rule_tracker">Tracker</string>
+    <string name="goal_edit_rule_minimum">Minimum</string>
+    <string name="goal_edit_rule_target">Target</string>
+    <string name="goal_edit_rule_stretch">Stretch</string>
+    <string name="goal_edit_rule_exact">Exact</string>
+    <string name="goal_edit_rule_bounded">Bounded</string>
+    <string name="goal_edit_minimum">Minimum</string>
+    <string name="goal_edit_target">Target</string>
+    <string name="goal_edit_maximum">Maximum</string>
+    <string name="goal_edit_exact_count">Exact count</string>
+    <string name="goal_edit_limit">Limit</string>
+    <string name="goal_edit_cap_allow">Allow over</string>
+    <string name="goal_edit_cap_warn">Warn over</string>
+    <string name="goal_edit_cap_block_target">Block at target</string>
+    <string name="goal_edit_cap_block_maximum">Block at max</string>
+    <string name="goal_edit_tracker_hint">Every count is recorded without a required total.</string>
+    <string name="goal_edit_multi_session_hint">Set the count rule for each existing session below.</string>
+    <string name="goal_edit_auto_complete_title">Complete when target is reached</string>
+    <string name="goal_edit_auto_complete_body">For lifetime goals, move this goal to completed once the total reaches the target.</string>
+    <string name="goal_edit_sessions_title">Sessions</string>
+    <string name="goal_edit_session_current">%1$d counted</string>
+    <string name="goal_edit_total_minimum">Total minimum: %1$d</string>
+    <string name="goal_edit_total_target">Total target: %1$d</string>
+    <string name="goal_edit_total_target_max">Total target: %1$d, max: %2$d</string>
+    <string name="goal_edit_warning_progress_above_max">Current progress is %1$d, above the new maximum %2$d. History will stay unchanged; future counts will stop at the limit.</string>
+    <string name="goal_edit_warning_slot_above_max">A session already has %1$d counts, above the new maximum %2$d. History will stay unchanged.</string>
+    <string name="goal_edit_error_generic">This goal could not be updated.</string>
+    <string name="goal_edit_error_count_policy">Check the count rule. Counts must be positive and ordered correctly.</string>
+    <string name="goal_edit_error_slot_policy">Check the session counts. Each existing session needs a valid count rule.</string>
+    <string name="goal_edit_error_reminder">Check the reminders. Each reminder needs a valid, non-duplicate time.</string>
+    <string name="goal_schedule_edit_error_schedule">Check the schedule. Select at least one valid day or date.</string>
+    <string name="goal_schedule_edit_error_timing">Check the sessions. Each session needs valid timing.</string>
+    <string name="goal_schedule_edit_error_duplicate_slot">Each prayer session can only appear once.</string>
+    <string name="goal_schedule_edit_error_last_slot">A goal needs at least one active session.</string>
+    <string name="goal_schedule_edit_title">Schedule &amp; Sessions</string>
+    <string name="goal_schedule_edit_subtitle">Adjust when this goal repeats and where counts are assigned.</string>
+    <string name="goal_schedule_edit_schedule">Schedule</string>
+    <string name="goal_schedule_edit_timing">Timing</string>
+    <string name="goal_schedule_edit_sessions">Sessions</string>
+    <string name="goal_schedule_edit_prayer_slots">Prayer slots</string>
+    <string name="goal_schedule_edit_time_windows">Time windows</string>
+    <string name="goal_schedule_edit_days_of_month">Days of month</string>
+    <string name="goal_schedule_edit_interval_days">Every N days</string>
+    <string name="goal_schedule_edit_month">Month</string>
+    <string name="goal_schedule_edit_specific_dates">Specific dates</string>
+    <string name="goal_schedule_edit_specific_dates_hint">Use YYYY-MM-DD, one date per line or separated by commas.</string>
+    <string name="goal_schedule_edit_anytime_hint">Counts can be added at any time for this goal.</string>
+    <string name="goal_schedule_edit_add_session">Add session</string>
+    <string name="goal_schedule_edit_session_number">Session %1$d</string>
+    <string name="goal_schedule_edit_session_label">Session label</string>
+    <string name="goal_schedule_edit_before_lead">Lead minutes before prayer</string>
+    <string name="goal_schedule_edit_start_time">Start</string>
+    <string name="goal_schedule_edit_end_time">End</string>
+    <string name="goal_schedule_edit_save_failed">Schedule changes could not be saved.</string>
+    <string name="goal_schedule_edit_discard_title">Discard changes?</string>
+    <string name="goal_schedule_edit_discard_body">Your schedule and session changes have not been saved.</string>
+    <string name="goal_details_schedule_edit_action">Schedule</string>
+    <string name="goal_details_archived_slots_section">Archived sessions</string>
+    <string name="goal_reminders_edit_title">Reminders</string>
+    <string name="goal_reminders_edit_subtitle">Choose when this goal should remind you.</string>
+    <string name="goal_reminders_edit_add_title">Add reminder</string>
+    <string name="goal_reminders_edit_add_fixed">Fixed time</string>
+    <string name="goal_reminders_edit_add_prayer">Prayer offset</string>
+    <string name="goal_reminders_edit_add_window">Session start</string>
+    <string name="goal_reminders_edit_empty">No reminders yet.</string>
+    <string name="goal_reminders_edit_fixed_time">Fixed time</string>
+    <string name="goal_reminders_edit_prayer_offset">Prayer offset</string>
+    <string name="goal_reminders_edit_window_start">Session start</string>
+    <string name="goal_reminders_edit_target">Target</string>
+    <string name="goal_reminders_edit_all_prayer">All prayer sessions</string>
+    <string name="goal_reminders_edit_all_windows">All time windows</string>
+    <string name="goal_reminders_edit_hour">Hour</string>
+    <string name="goal_reminders_edit_minute">Minute</string>
+    <string name="goal_reminders_edit_offset_minutes">Minutes after prayer</string>
+    <string name="goal_reminders_edit_window_start_hint">Fires at the session start.</string>
+    <string name="goal_reminders_edit_exact_alarm_warning">Exact alarm permission is off. Reminders may be delayed until it is enabled in Settings.</string>
+    <string name="goal_reminders_edit_error_invalid">Check reminder times and targets. Archived sessions cannot receive reminders.</string>
+    <string name="goal_reminders_edit_error_duplicate">Remove duplicate reminders with the same type, target, time, and offset.</string>
+    <string name="goal_reminders_edit_save_failed">Reminder changes could not be saved.</string>
+    <string name="goal_reminders_edit_discard_title">Discard changes?</string>
+    <string name="goal_reminders_edit_discard_body">Your reminder changes have not been saved.</string>
+    <string name="goal_edit_save_failed">Could not save the goal changes.</string>
+    <string name="goal_edit_saving">Saving...</string>
+    <string name="goal_edit_discard_title">Discard changes?</string>
+    <string name="goal_edit_discard_body">Your count rule changes have not been saved.</string>
+    <string name="goal_edit_discard_confirm">Discard</string>
+    <string name="goal_slot_prayer_title">%1$s %2$s</string>
+    <string name="goal_slot_prayer_slots">%1$s slots</string>
+    <string name="goal_slot_time_slot">Session</string>
+    <string name="goal_slot_target_suffix"> · %1$d</string>
+    <string name="goal_slot_flexible">Flexible%1$s</string>
+    <string name="goal_slot_prayer_value">%1$s%2$s</string>
+    <string name="goal_slot_time_window_value">%1$s-%2$s%3$s</string>
+    <string name="prayer_relation_before">Before</string>
+    <string name="prayer_relation_after">After</string>
+    <string name="prayer_timing_before_prayer">Before prayer</string>
+    <string name="prayer_timing_after_prayer">After prayer</string>
+    <string name="prayer_timing_before_and_after">Before and after</string>
+    <string name="prayer_timing_before_desc">Starts before the selected prayer time</string>
+    <string name="prayer_timing_after_desc">Starts when the selected prayer time begins</string>
+    <string name="prayer_timing_both_desc">Creates two slots around each selected prayer</string>
+    <string name="weekday_mon_short">Mon</string>
+    <string name="weekday_tue_short">Tue</string>
+    <string name="weekday_wed_short">Wed</string>
+    <string name="weekday_thu_short">Thu</string>
+    <string name="weekday_fri_short">Fri</string>
+    <string name="weekday_sat_short">Sat</string>
+    <string name="weekday_sun_short">Sun</string>
+    <string name="weekday_mon_full">Monday</string>
+    <string name="weekday_tue_full">Tuesday</string>
+    <string name="weekday_wed_full">Wednesday</string>
+    <string name="weekday_thu_full">Thursday</string>
+    <string name="weekday_fri_full">Friday</string>
+    <string name="weekday_sat_full">Saturday</string>
+    <string name="weekday_sun_full">Sunday</string>
+    <string name="season_ramadan">Ramadan</string>
+    <string name="season_ramadan_last_10">Ramadan last 10</string>
+    <string name="season_dhul_hijjah_1_10">Dhul Hijjah 1-10</string>
+    <string name="season_white_days">White days</string>
+    <string name="season_ashura">Ashura</string>
+    <string name="season_arafah">Arafah</string>
+    <string name="review_edit_target">Edit target</string>
+    <string name="review_edit_schedule">Edit schedule</string>
+    <string name="review_edit_slots">Edit slots</string>
+    <string name="review_edit_reminders">Edit reminders</string>
+    <string name="review_edit_duration">Edit duration and streak</string>
+    <string name="review_section_template">Template</string>
+    <string name="slot_policy_section_title">Slot counting behavior</string>
+    <string name="slot_policy_warn_title">Warn before counting outside active slot</string>
+    <string name="slot_policy_warn_description">Default to the current slot and ask before make-up counts.</string>
+    <string name="slot_policy_warn_summary">Warn outside slot</string>
+    <string name="slot_policy_strict_title">Only count active slot</string>
+    <string name="slot_policy_strict_description">Block positive counts when the selected slot is not active.</string>
+    <string name="slot_policy_strict_summary">Active slot only</string>
+    <string name="slot_policy_silent_title">Allow make-up counts without warning</string>
+    <string name="slot_policy_silent_description">Use time-aware defaults and labels, but do not warn.</string>
+    <string name="slot_policy_silent_summary">Flexible make-up counts</string>
+    <string name="policy_daily_target">Daily target</string>
+    <string name="policy_one_total_target">One total target</string>
+    <string name="policy_period_target">Period target</string>
+    <string name="policy_daily_target_desc">Each due day has its own target.</string>
+    <string name="policy_one_total_target_desc">Progress accumulates until the total is done.</string>
+    <string name="policy_period_target_desc">Each week, season, or configured period has a target.</string>
+    <string name="policy_no_target_desc">Track every count without a denominator.</string>
+</resources>

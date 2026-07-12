@@ -1,0 +1,143 @@
+{
+  "slug": "dalail-al-khayrat",
+  "version": 2,
+  "sortOrder": 0,
+  "name": { "en": "Dalail al-Khayrat", "ar": "دلائل الخيرات" },
+  "description": {
+    "en": "A renowned collection of prayers and blessings upon the Prophet Muhammad ﷺ, compiled by Imam Muhammad ibn Sulayman al-Jazuli.",
+    "ar": "مجموعة مشهورة من الصلوات والبركات على النبي محمد ﷺ، جمعها الإمام محمد بن سليمان الجزولي."
+  },
+  "author": "Imam al-Jazuli",
+  "sourceAttribution": "Imam Muhammad ibn Sulayman al-Jazuli",
+  "tags": ["salawat"],
+  "estimatedMinutes": 20,
+  "schedule": { "cadence": "ROTATION", "defaultOccasion": { "type": "ANYTIME" } },
+  "parts": [
+    {
+      "title": { "en": "First Hizb", "ar": "الحزب الأول" },
+      "subtitle": { "en": "Monday", "ar": "الإثنين" },
+      "segments": [
+        {
+          "kind": "salah",
+          "arabic": "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ\nالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ وَالصَّلَاةُ وَالسَّلَامُ عَلَى أَشْرَفِ الْمُرْسَلِينَ سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِهِ وَصَحْبِهِ أَجْمَعِينَ",
+          "transliteration": { "en": "Bismillahir Rahmanir Raheem. Alhamdulillahi Rabbil 'Aalameen, was-salatu was-salamu 'ala ashrafil mursaleen, sayyidina Muhammadin wa 'ala aalihi wa sahbihi ajma'een." },
+          "translation": { "en": "In the name of Allah, the Most Gracious, the Most Merciful. All praise is due to Allah, Lord of the worlds, and blessings and peace upon the noblest of messengers, our master Muhammad, and upon his family and all his companions." },
+          "repeat": { "count": 1 }
+        },
+        {
+          "kind": "salah",
+          "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ كَمَا صَلَّيْتَ عَلَى سَيِّدِنَا إِبْرَاهِيمَ وَعَلَى آلِ سَيِّدِنَا إِبْرَاهِيمَ وَبَارِكْ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ كَمَا بَارَكْتَ عَلَى سَيِّدِنَا إِبْرَاهِيمَ وَعَلَى آلِ سَيِّدِنَا إِبْرَاهِيمَ فِي الْعَالَمِينَ إِنَّكَ حَمِيدٌ مَجِيدٌ",
+          "transliteration": { "en": "Allahumma salli 'ala sayyidina Muhammadin wa 'ala aali sayyidina Muhammad, kama sallayta 'ala sayyidina Ibrahima wa 'ala aali sayyidina Ibrahim. Wa barik 'ala sayyidina Muhammadin wa 'ala aali sayyidina Muhammad, kama barakta 'ala sayyidina Ibrahima wa 'ala aali sayyidina Ibrahima fil 'aalameen, innaka Hameedun Majeed." },
+          "translation": { "en": "O Allah, send blessings upon our master Muhammad and upon the family of our master Muhammad, as You sent blessings upon our master Ibrahim and upon the family of our master Ibrahim. And bless our master Muhammad and the family of our master Muhammad, as You blessed our master Ibrahim and the family of our master Ibrahim in the worlds. Indeed, You are Praiseworthy, Glorious." },
+          "repeat": { "count": 1 }
+        },
+        {
+          "kind": "salah",
+          "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ النَّبِيِّ الْأُمِّيِّ وَعَلَى آلِهِ وَصَحْبِهِ وَسَلِّمْ",
+          "transliteration": { "en": "Allahumma salli 'ala sayyidina Muhammadin-in-Nabiyyil-Ummiyyi wa 'ala aalihi wa sahbihi wa sallim." },
+          "translation": { "en": "O Allah, send blessings and peace upon our master Muhammad, the unlettered Prophet, and upon his family and companions." },
+          "repeat": { "count": 3 }
+        }
+      ]
+    },
+    {
+      "title": { "en": "Second Hizb", "ar": "الحزب الثاني" },
+      "subtitle": { "en": "Tuesday", "ar": "الثلاثاء" },
+      "segments": [
+        {
+          "kind": "salah",
+          "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِهِ عَدَدَ مَنْ صَلَّى عَلَيْهِ وَعَدَدَ مَنْ لَمْ يُصَلِّ عَلَيْهِ وَعَدَدَ كُلِّ قَطْرَةٍ نَزَلَتْ مِنْ سَمَائِكَ إِلَى يَوْمِ الْقِيَامَةِ فِي كُلِّ يَوْمٍ أَلْفَ مَرَّةٍ",
+          "transliteration": { "en": "Allahumma salli 'ala sayyidina Muhammadin wa 'ala aalihi 'adada man salla 'alayhi wa 'adada man lam yusalli 'alayhi wa 'adada kulli qatratin nazalat min samaa'ika ila yawmil qiyamati fi kulli yawmin alfa marrah." },
+          "translation": { "en": "O Allah, send blessings upon our master Muhammad and upon his family, as many times as those who have sent blessings upon him, and as many times as those who have not, and as many as every drop that has descended from Your heavens until the Day of Judgment, a thousand times every day." },
+          "repeat": { "count": 1 }
+        },
+        {
+          "kind": "salah",
+          "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِهِ عَدَدَ كُلِّ ذَرَّةٍ أَلْفَ مَرَّةٍ",
+          "transliteration": { "en": "Allahumma salli 'ala sayyidina Muhammadin wa 'ala aalihi 'adada kulli dharratin alfa marrah." },
+          "translation": { "en": "O Allah, send blessings upon our master Muhammad and upon his family, as many as every atom, a thousand times." },
+          "repeat": { "count": 1 }
+        }
+      ]
+    },
+    {
+      "title": { "en": "Third Hizb", "ar": "الحزب الثالث" },
+      "subtitle": { "en": "Wednesday", "ar": "الأربعاء" },
+      "segments": [
+        {
+          "kind": "salah",
+          "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ كَمَا أَمَرْتَنَا أَنْ نُصَلِّيَ عَلَيْهِ",
+          "transliteration": { "en": "Allahumma salli 'ala sayyidina Muhammadin kama amartana an nusalliya 'alayh." },
+          "translation": { "en": "O Allah, send blessings upon our master Muhammad as You have commanded us to send blessings upon him." },
+          "repeat": { "count": 1 }
+        }
+      ]
+    },
+    {
+      "title": { "en": "Fourth Hizb", "ar": "الحزب الرابع" },
+      "subtitle": { "en": "Thursday", "ar": "الخميس" },
+      "segments": [
+        {
+          "kind": "salah",
+          "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ صَلَاةً تُنْجِينَا بِهَا مِنْ جَمِيعِ الْأَهْوَالِ وَالْآفَاتِ وَتَقْضِي لَنَا بِهَا جَمِيعَ الْحَاجَاتِ وَتُطَهِّرُنَا بِهَا مِنْ جَمِيعِ السَّيِّئَاتِ وَتَرْفَعُنَا بِهَا عِنْدَكَ أَعْلَى الدَّرَجَاتِ وَتُبَلِّغُنَا بِهَا أَقْصَى الْغَايَاتِ مِنْ جَمِيعِ الْخَيْرَاتِ فِي الْحَيَاةِ وَبَعْدَ الْمَمَاتِ",
+          "transliteration": { "en": "Allahumma salli 'ala sayyidina Muhammadin salatan tunjeena biha min jami'il ahwali wal-aafaat, wa taqdhi lana biha jami'al hajaat, wa tutahhiruna biha min jami'is sayyi'aat, wa tarfa'una biha 'indaka a'lad darajaat, wa tuballighuna biha aqsal ghayaat min jami'il khayraati fil hayati wa ba'dal mamaat." },
+          "translation": { "en": "O Allah, send blessings upon our master Muhammad, blessings by which You save us from all fears and calamities, fulfill all our needs, purify us from all sins, raise us to the highest ranks in Your presence, and by which You cause us to reach the furthest goals of all goodness in life and after death." },
+          "repeat": { "count": 1 }
+        }
+      ]
+    },
+    {
+      "title": { "en": "Fifth Hizb", "ar": "الحزب الخامس" },
+      "subtitle": { "en": "Friday", "ar": "الجمعة" },
+      "segments": [
+        {
+          "kind": "salah",
+          "arabic": "اللَّهُمَّ صَلِّ وَسَلِّمْ وَبَارِكْ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِهِ بِعَدَدِ حَسَنَاتِ الْخَلْقِ أَجْمَعِينَ",
+          "transliteration": { "en": "Allahumma salli wa sallim wa barik 'ala sayyidina Muhammadin wa 'ala aalihi bi 'adadi hasanaatil khalqi ajma'een." },
+          "translation": { "en": "O Allah, send blessings, peace, and grace upon our master Muhammad and upon his family, as many as the good deeds of all creation." },
+          "repeat": { "count": 1 }
+        }
+      ]
+    },
+    {
+      "title": { "en": "Sixth Hizb", "ar": "الحزب السادس" },
+      "subtitle": { "en": "Saturday", "ar": "السبت" },
+      "segments": [
+        {
+          "kind": "salah",
+          "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ النَّبِيِّ وَأَزْوَاجِهِ أُمَّهَاتِ الْمُؤْمِنِينَ وَذُرِّيَّتِهِ وَأَهْلِ بَيْتِهِ كَمَا صَلَّيْتَ عَلَى سَيِّدِنَا إِبْرَاهِيمَ إِنَّكَ حَمِيدٌ مَجِيدٌ",
+          "transliteration": { "en": "Allahumma salli 'ala sayyidina Muhammadin-in-Nabiyyi wa azwajihi ummahaatil mu'mineena wa dhurriyyatihi wa ahli baytihi kama sallayta 'ala sayyidina Ibrahima innaka Hameedun Majeed." },
+          "translation": { "en": "O Allah, send blessings upon our master Muhammad the Prophet, his wives the mothers of the believers, his descendants, and the people of his household, as You sent blessings upon our master Ibrahim. Indeed, You are Praiseworthy, Glorious." },
+          "repeat": { "count": 1 }
+        }
+      ]
+    },
+    {
+      "title": { "en": "Seventh Hizb", "ar": "الحزب السابع" },
+      "subtitle": { "en": "Sunday", "ar": "الأحد" },
+      "segments": [
+        {
+          "kind": "salah",
+          "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِ سَيِّدِنَا مُحَمَّدٍ فِي كُلِّ لَمْحَةٍ وَنَفَسٍ بِعَدَدِ كُلِّ مَعْلُومٍ لَكَ",
+          "transliteration": { "en": "Allahumma salli 'ala sayyidina Muhammadin wa 'ala aali sayyidina Muhammadin fi kulli lamhatin wa nafasin bi 'adadi kulli ma'loomin lak." },
+          "translation": { "en": "O Allah, send blessings upon our master Muhammad and upon the family of our master Muhammad in every glance and every breath, as many as everything known to You." },
+          "repeat": { "count": 1 }
+        },
+        {
+          "kind": "salah",
+          "arabic": "اللَّهُمَّ صَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ مَا ذَكَرَهُ الذَّاكِرُونَ وَصَلِّ عَلَى سَيِّدِنَا مُحَمَّدٍ مَا غَفَلَ عَنْ ذِكْرِهِ الْغَافِلُونَ",
+          "transliteration": { "en": "Allahumma salli 'ala sayyidina Muhammadin ma dhakarahudh-dhaakiroon, wa salli 'ala sayyidina Muhammadin ma ghafala 'an dhikrihil ghaafiloon." },
+          "translation": { "en": "O Allah, send blessings upon our master Muhammad as many times as those who remember him mention him, and send blessings upon our master Muhammad as many times as the heedless neglect his remembrance." },
+          "repeat": { "count": 1 }
+        },
+        {
+          "kind": "salah",
+          "arabic": "وَصَلَّى اللَّهُ عَلَى سَيِّدِنَا مُحَمَّدٍ وَعَلَى آلِهِ وَصَحْبِهِ وَسَلَّمَ تَسْلِيمًا كَثِيرًا وَالْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+          "transliteration": { "en": "Wa sallallahu 'ala sayyidina Muhammadin wa 'ala aalihi wa sahbihi wa sallama tasleeman katheeran. Walhamdulillahi Rabbil 'aalameen." },
+          "translation": { "en": "And may Allah send abundant blessings and peace upon our master Muhammad, his family, and his companions. All praise is due to Allah, Lord of the worlds." },
+          "repeat": { "count": 1 }
+        }
+      ]
+    }
+  ]
+}

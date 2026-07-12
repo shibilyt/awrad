@@ -1,0 +1,34 @@
+appId: app.awrad.awrad_dhikrgoalstracker
+---
+# Simulate fresh install by clearing all app data
+- launchApp:
+    clearState: true
+
+# ── Step 0: Welcome ──────────────────────────────────────────────────────────
+- assertVisible: "Awrad"
+- assertVisible: "Your Daily Dhikr Companion"
+- tapOn: "Next"
+
+# ── Step 1: Enter Name ───────────────────────────────────────────────────────
+- assertVisible: "What should we call you?"
+- tapOn: "Your name"
+- inputText: "Test User"
+- tapOn: "Next"
+
+# ── Step 2: Audio Library ────────────────────────────────────────────────────
+- assertVisible: "Audio Library"
+# Skip downloading audio during automated tests
+- tapOn: "Skip"
+
+# ── Step 3: First Goal ───────────────────────────────────────────────────────
+- assertVisible: "Set Your First Goal"
+# Skip setting up a first goal
+- tapOn: "Skip"
+
+# ── Step 4: Done ─────────────────────────────────────────────────────────────
+- assertVisible: "You're All Set!"
+- assertVisible: "Welcome, Test User!"
+- tapOn: "Get Started"
+
+# ── Post-onboarding: Home screen ─────────────────────────────────────────────
+- assertVisible: "Home"

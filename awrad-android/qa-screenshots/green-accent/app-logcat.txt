@@ -1,0 +1,278 @@
+--------- beginning of main
+05-30 15:29:34.573  7559  7559 I ikrgoalstracker: Late-enabling -Xcheck:jni
+05-30 15:29:34.846  7559  7559 I ikrgoalstracker: Using CollectorTypeCMC GC.
+05-30 15:29:35.135  7559  7559 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+05-30 15:29:37.496  7559  7559 D nativeloader: Configuring clns-9 for other apk /data/app/~~NAi4_C8g-6onnbJYkplpxg==/app.awrad.awrad_dhikrgoalstracker-2O18w-OtvfrnnGV-y5yarA==/base.apk. target_sdk_version=36, uses_libraries=, library_path=/data/app/~~NAi4_C8g-6onnbJYkplpxg==/app.awrad.awrad_dhikrgoalstracker-2O18w-OtvfrnnGV-y5yarA==/lib/arm64:/data/app/~~NAi4_C8g-6onnbJYkplpxg==/app.awrad.awrad_dhikrgoalstracker-2O18w-OtvfrnnGV-y5yarA==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/app.awrad.awrad_dhikrgoalstracker
+05-30 15:29:37.513  7559  7559 I ikrgoalstracker: AssetManager2(0xb400007c666a5f38) locale list changing from [] to [en-US]
+05-30 15:29:37.532  7559  7559 V GraphicsEnvironment: Currently set values for:
+05-30 15:29:37.532  7559  7559 V GraphicsEnvironment:   angle_gl_driver_selection_pkgs=[]
+05-30 15:29:37.532  7559  7559 V GraphicsEnvironment:   angle_gl_driver_selection_values=[]
+05-30 15:29:37.532  7559  7559 V GraphicsEnvironment: app.awrad.awrad_dhikrgoalstracker is not listed in per-application setting
+05-30 15:29:37.535  7559  7559 V GraphicsEnvironment: ANGLE allowlist from config: 
+05-30 15:29:37.535  7559  7559 V GraphicsEnvironment: app.awrad.awrad_dhikrgoalstracker is not listed in ANGLE allowlist or settings, returning default
+05-30 15:29:37.536  7559  7559 V GraphicsEnvironment: Neither updatable production driver nor prerelease driver is supported.
+05-30 15:29:38.222  7559  7559 D WM-PackageManagerHelper: androidx.work.impl.background.systemjob.SystemJobService enabled
+05-30 15:29:38.225  7559  7559 D WM-Schedulers: Created SystemJobScheduler and enabled SystemJobService
+05-30 15:29:38.250  7559  7574 D WM-ForceStopRunnable: The default process name was not specified.
+05-30 15:29:38.254  7559  7574 D WM-ForceStopRunnable: Performing cleanup operations.
+05-30 15:29:38.296  7559  7574 E ashmem  : Pinning is deprecated since Android Q. Please use trim or other methods.
+05-30 15:29:38.313  7559  7559 D ReminderScheduler: Watchdog initialized (next run in 525min)
+05-30 15:29:38.337  7559  7575 D ReminderScheduler: Rescheduling all alarms
+05-30 15:29:38.351  7559  7559 I Choreographer: Skipped 38 frames!  The application may be doing too much work on its main thread.
+05-30 15:29:38.408  7559  7559 I ikrgoalstracker: AssetManager2(0xb400007c6669d298) locale list changing from [] to [en-US]
+--------- beginning of system
+05-30 15:29:38.410  7559  7579 I DisplayManager: Choreographer implicitly registered for the refresh rate.
+05-30 15:29:38.573  7559  7559 D AppCompatDelegate: Checking for metadata for AppLocalesMetadataHolderService : Service not found
+05-30 15:29:38.584  7559  7579 I EGL_emulation: Opening libGLESv1_CM_emulation.so
+05-30 15:29:38.584  7559  7579 I EGL_emulation: Opening libGLESv2_emulation.so
+05-30 15:29:38.598  7559  7559 I ikrgoalstracker: AssetManager2(0xb400007c666a7518) locale list changing from [] to [en-US]
+05-30 15:29:38.644  7559  7579 W HWUI    : Failed to choose config with EGL_SWAP_BEHAVIOR_PRESERVED, retrying without...
+05-30 15:29:38.645  7559  7579 W HWUI    : Failed to initialize 101010-2 format, error = EGL_SUCCESS
+05-30 15:29:38.689  7559  7559 D CompatChangeReporter: Compat change id reported: 377864165; UID 10216; state: ENABLED
+05-30 15:29:38.692  7559  7559 D DesktopModeFlags: Toggle override initialized to: OVERRIDE_UNSET
+05-30 15:29:39.037  7559  7575 W ikrgoalstracker: Verification of int kotlinx.coroutines.flow.internal.SafeCollector_commonKt.checkContext$lambda$0(kotlinx.coroutines.flow.internal.SafeCollector, int, kotlin.coroutines.CoroutineContext$Element) took 139.298ms (681.99 bytecodes/s) (0B arena alloc)
+05-30 15:29:39.037  7559  7582 W ikrgoalstracker: Verification of androidx.work.impl.model.WorkGenerationalId androidx.work.impl.model.WorkGenerationalId.copy$default(androidx.work.impl.model.WorkGenerationalId, java.lang.String, int, int, java.lang.Object) took 138.935ms (122.36 bytecodes/s) (0B arena alloc)
+05-30 15:29:39.068  7559  7582 D WM-SystemJobScheduler: Scheduling work ID 13718021-4ade-4a25-b801-9f3b980cc6f4Job ID 0
+05-30 15:29:39.196  7559  7581 D WM-PackageManagerHelper: androidx.work.impl.background.systemalarm.RescheduleReceiver enabled
+05-30 15:29:39.235  7559  7559 I ikrgoalstracker: hiddenapi: Accessing hidden method Landroid/view/ViewGroup;->makeOptionalFitsSystemWindows()V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/appcompat/widget/ViewUtils; (domain=app) using reflection: allowed
+05-30 15:29:39.302  7559  7559 W HWUI    : Unknown dataspace 0
+05-30 15:29:40.002  7559  7559 W ikrgoalstracker: Verification of androidx.compose.runtime.external.kotlinx.collections.immutable.ImmutableSet androidx.compose.runtime.external.kotlinx.collections.immutable.implementations.immutableMap.PersistentHashMap.getKeys() took 188.131ms (42.52 bytecodes/s) (0B arena alloc)
+05-30 15:29:42.211  7559  7559 W ikrgoalstracker: Verification of androidx.compose.runtime.external.kotlinx.collections.immutable.ImmutableCollection androidx.compose.runtime.external.kotlinx.collections.immutable.implementations.immutableMap.PersistentHashMap.getValues() took 2.208s (3.62 bytecodes/s) (0B arena alloc)
+05-30 15:29:42.542  7559  7559 W ikrgoalstracker: Verification of androidx.compose.runtime.tooling.CompositionObserverHandle androidx.compose.runtime.Recomposer$RecomposerInfoImpl.observe(androidx.compose.runtime.tooling.CompositionRegistrationObserver) took 276.296ms (25.34 bytecodes/s) (0B arena alloc)
+05-30 15:29:42.808  7559  7559 W ikrgoalstracker: Verification of java.lang.Object kotlinx.coroutines.internal.FastServiceLoader.use(java.util.jar.JarFile, kotlin.jvm.functions.Function1) took 173.819ms (172.59 bytecodes/s) (0B arena alloc)
+05-30 15:29:43.032  7559  7559 W ikrgoalstracker: Verification of java.util.List kotlinx.coroutines.internal.FastServiceLoader.loadMainDispatcherFactory$kotlinx_coroutines_core() took 222.988ms (600.93 bytecodes/s) (0B arena alloc)
+05-30 15:29:43.847  7559  7559 W ikrgoalstracker: Verification of void androidx.compose.ui.platform.AndroidComposeView.updatePositionCacheAndDispatch() took 149.858ms (1034.31 bytecodes/s) (0B arena alloc)
+05-30 15:29:44.420  7559  7559 I ikrgoalstracker: hiddenapi: Accessing hidden method Landroid/os/SystemProperties;->addChangeCallback(Ljava/lang/Runnable;)V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/compose/ui/platform/AndroidComposeView$Companion; (domain=app) using reflection: allowed
+05-30 15:29:45.296  7559  7571 I HWUI    : Davey! duration=5775ms; Flags=1, FrameTimelineVsyncId=107019, IntendedVsync=17696514911883, Vsync=17696631578545, InputEventId=0, HandleInputStart=17696683888767, AnimationStart=17696683893809, PerformTraversalsStart=17696683896267, DrawStart=17702173833228, FrameDeadline=17696531578549, FrameStartTime=17696637057517, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=17702178625312, SyncStart=17702193294978, IssueDrawCommandsStart=17702195938853, SwapBuffers=17702221938228, FrameCompleted=17702305437645, DequeueBufferDuration=4959, QueueBufferDuration=1085500, GpuCompleted=17702305437645, SwapBuffersCompleted=17702288639937, DisplayPresentTime=0, CommandSubmissionCompleted=17702221938228, 
+05-30 15:29:45.428  7559  7559 W ikrgoalstracker: Verification of java.lang.Object kotlinx.coroutines.flow.internal.CombineKt.combineInternal(kotlinx.coroutines.flow.FlowCollector, kotlinx.coroutines.flow.Flow[], kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function3, kotlin.coroutines.Continuation) took 142.440ms (182.53 bytecodes/s) (0B arena alloc)
+05-30 15:29:45.598  7559  7601 W ikrgoalstracker: Verification of java.util.List androidx.core.provider.FontRequestWorker$$ExternalSyntheticBackport1.m(java.lang.Object[]) took 292.116ms (92.43 bytecodes/s) (0B arena alloc)
+05-30 15:29:45.613  7559  7559 I Choreographer: Skipped 131 frames!  The application may be doing too much work on its main thread.
+05-30 15:29:45.706  7559  7603 D ProfileInstaller: Installing profile for app.awrad.awrad_dhikrgoalstracker
+05-30 15:29:47.422  7559  7565 I ikrgoalstracker: Background concurrent mark compact GC freed 3382KB AllocSpace bytes, 0(0B) LOS objects, 49% free, 4403KB/8807KB, paused 1.854ms,2.228ms total 117.259ms
+05-30 15:29:48.269  7559  7559 I Choreographer: Skipped 57 frames!  The application may be doing too much work on its main thread.
+05-30 15:29:48.431  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:29:48.599  7559  7571 I HWUI    : Davey! duration=2768ms; Flags=0, FrameTimelineVsyncId=107282, IntendedVsync=17702848244963, Vsync=17703131578285, InputEventId=0, HandleInputStart=17703138733812, AnimationStart=17703138737104, PerformTraversalsStart=17704421985063, DrawStart=17705306862355, FrameDeadline=17702864911629, FrameStartTime=17703138466020, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=17705332889855, SyncStart=17705333520688, IssueDrawCommandsStart=17705333615688, SwapBuffers=17705583085188, FrameCompleted=17705617050730, DequeueBufferDuration=3541, QueueBufferDuration=333375, GpuCompleted=17705617050730, SwapBuffersCompleted=17705607277563, DisplayPresentTime=0, CommandSubmissionCompleted=17705583085188, 
+05-30 15:29:49.146  7559  7559 I Choreographer: Skipped 48 frames!  The application may be doing too much work on its main thread.
+05-30 15:29:49.378  7559  7594 I HWUI    : Davey! duration=1954ms; Flags=0, FrameTimelineVsyncId=107674, IntendedVsync=17704381578235, Vsync=17705331578197, InputEventId=0, HandleInputStart=17705334992396, AnimationStart=17705334993563, PerformTraversalsStart=17705758729938, DrawStart=17705759708855, FrameDeadline=17705648244851, FrameStartTime=17705334672146, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=17706177002980, SyncStart=17706177223480, IssueDrawCommandsStart=17706177505563, SwapBuffers=17706328178522, FrameCompleted=17706336226647, DequeueBufferDuration=28125, QueueBufferDuration=712584, GpuCompleted=17706334992313, SwapBuffersCompleted=17706336226647, DisplayPresentTime=0, CommandSubmissionCompleted=17706328178522, 
+05-30 15:29:49.386  7559  7569 I HWUI    : Davey! duration=981ms; Flags=0, FrameTimelineVsyncId=107697, IntendedVsync=17705398244861, Vsync=17706198244829, InputEventId=0, HandleInputStart=17706228629272, AnimationStart=17706228632522, PerformTraversalsStart=17706261569605, DrawStart=17706262052813, FrameDeadline=17706364911489, FrameStartTime=17706211383272, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=17706297139147, SyncStart=17706336295313, IssueDrawCommandsStart=17706336469522, SwapBuffers=17706362445563, FrameCompleted=17706418778189, DequeueBufferDuration=43805709, QueueBufferDuration=373208, GpuCompleted=17706413969939, SwapBuffersCompleted=17706418778189, DisplayPresentTime=0, CommandSubmissionCompleted=17706362445563, 
+05-30 15:29:49.656  7559  7564 I ikrgoalstracker: Compiler allocated 5111KB to compile void android.view.ViewRootImpl.performTraversals()
+05-30 15:30:34.997  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:30:34.997  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:63fc79f: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:30:38.250  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:30:38.251  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:ab56f8c9: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT_BY_INSETS_API fromUser false
+05-30 15:30:38.252  7559  7559 D InsetsController: Setting requestedVisibleTypes to -1 (was -9)
+05-30 15:30:38.273  7559  7559 I AssistStructure: Flattened final assist data: 952 bytes, containing 1 windows, 5 views
+05-30 15:30:38.297  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:588eff98: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+05-30 15:30:38.297  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:30:38.298  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:588eff98: onCancelled at PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+05-30 15:30:38.298  7559  7559 W RemoteInputConnectionImpl: requestCursorUpdates on inactive InputConnection
+05-30 15:30:38.317  7559  7559 D Autofill Status: Autofill popup isn't shown because autofill is not available.
+05-30 15:30:38.317  7559  7559 D Autofill Status: 
+05-30 15:30:38.317  7559  7559 D Autofill Status: Did you set up autofill?
+05-30 15:30:38.317  7559  7559 D Autofill Status: 1. Go to Settings > System > Languages&input > Advanced > Autofill Service
+05-30 15:30:38.317  7559  7559 D Autofill Status: 2. Pick a service
+05-30 15:30:38.317  7559  7559 D Autofill Status: 
+05-30 15:30:38.317  7559  7559 D Autofill Status: Did you add an account?
+05-30 15:30:38.317  7559  7559 D Autofill Status: 1. Go to Settings > System > Languages&input > Advanced
+05-30 15:30:38.317  7559  7559 D Autofill Status: 2. Click on the settings icon next to the Autofill Service
+05-30 15:30:38.317  7559  7559 D Autofill Status: 3. Add your account
+05-30 15:30:38.538  7559  7559 W InteractionJankMonitor: Initializing without READ_DEVICE_CONFIG permission. enabled=false, interval=1, missedFrameThreshold=3, frameTimeThreshold=64, package=app.awrad.awrad_dhikrgoalstracker
+05-30 15:30:38.752  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:ab56f8c9: onShown
+05-30 15:30:40.445  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:30:40.445  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:d170eaf7: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT_BY_INSETS_API fromUser false
+05-30 15:30:40.446  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:d170eaf7: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+05-30 15:30:40.453  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:316d3811: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+05-30 15:30:40.453  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:30:40.453  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:316d3811: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+05-30 15:30:58.549  7559  7559 I AssistStructure: Flattened final assist data: 1120 bytes, containing 1 windows, 6 views
+05-30 15:30:58.569  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:30:58.569  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:26f51b7d: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT_BY_INSETS_API fromUser false
+05-30 15:30:58.570  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:26f51b7d: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+05-30 15:30:58.588  7559  7559 D Autofill Status: Autofill popup isn't shown because autofill is not available.
+05-30 15:30:58.588  7559  7559 D Autofill Status: 
+05-30 15:30:58.588  7559  7559 D Autofill Status: Did you set up autofill?
+05-30 15:30:58.588  7559  7559 D Autofill Status: 1. Go to Settings > System > Languages&input > Advanced > Autofill Service
+05-30 15:30:58.588  7559  7559 D Autofill Status: 2. Pick a service
+05-30 15:30:58.588  7559  7559 D Autofill Status: 
+05-30 15:30:58.588  7559  7559 D Autofill Status: Did you add an account?
+05-30 15:30:58.588  7559  7559 D Autofill Status: 1. Go to Settings > System > Languages&input > Advanced
+05-30 15:30:58.588  7559  7559 D Autofill Status: 2. Click on the settings icon next to the Autofill Service
+05-30 15:30:58.588  7559  7559 D Autofill Status: 3. Add your account
+05-30 15:30:58.592  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:a996fa39: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+05-30 15:30:58.592  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:30:58.592  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:a996fa39: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+05-30 15:31:01.231  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:31:01.232  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:8770ca97: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT_BY_INSETS_API fromUser false
+05-30 15:31:01.232  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ImeBackAnimationController@4fbfdad
+05-30 15:31:01.232  7559  7559 D InsetsController: Setting requestedVisibleTypes to -9 (was -1)
+05-30 15:31:01.507  7559  7559 I ImeTracker: system_server:b7e28123: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+05-30 15:31:04.212  7559  7559 I NavController: Ignoring popBackStack to route onboarding as it was not found on the current back stack
+05-30 15:31:04.337  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:04.355  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:04.372  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:05.621  7559  7559 I ikrgoalstracker: hiddenapi: Accessing hidden method Landroid/view/ViewTreeObserver;->dispatchOnScrollChanged()V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/compose/ui/platform/AndroidComposeView$Companion; (domain=app) using reflection: allowed
+05-30 15:31:14.995  7559  7559 D AudioSystem: onNewService: media.audio_policy service obtained 0xb400007c866fcfd0
+05-30 15:31:14.996  7559  7559 D AudioSystem: getService: checking for service media.audio_policy: 0xb400007c866fcfd0
+05-30 15:31:14.997  7559  7559 D AudioSystem: onNewServiceWithAdapter: media.audio_flinger service obtained 0xb400007d567143a0
+05-30 15:31:14.998  7559  7559 D AudioSystem: getService: checking for service media.audio_flinger: 0xb400007c866f78f0
+05-30 15:31:17.360  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:17.375  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:17.391  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:17.507  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:17.524  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:34.912  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:34.937  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:34.959  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:34.973  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:34.986  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:42.105  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:31:42.105  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:1db44619: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:31:43.109  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@c81b6be
+05-30 15:31:43.120  7559  7579 D HWUI    : endAllActiveAnimators on 0xb400007b667cd560 (UnprojectedRipple) with handle 0xb400007d56703420
+05-30 15:31:43.173  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:31:43.173  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:259f9c9a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:31:48.556  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:31:48.556  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:c9e38226: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:31:49.204  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@990193e
+05-30 15:31:49.211  7559  7579 D HWUI    : endAllActiveAnimators on 0xb400007b66792980 (UnprojectedRipple) with handle 0xb400007d566fd810
+05-30 15:31:49.271  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:31:49.272  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:8440128a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:31:51.019  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:51.033  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:51.046  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:53.574  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:31:53.598  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:32:17.102  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:32:17.220  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:33:05.763  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:05.763  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:583aea10: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:06.656  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.compose.ui.window.Api33Impl$$ExternalSyntheticLambda0@179f8b0
+05-30 15:33:06.658  7559  7579 D HWUI    : endAllActiveAnimators on 0xb400007b6677a0d0 (UnprojectedRipple) with handle 0xb400007d56750940
+05-30 15:33:06.665  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:06.665  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:57b67c67: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:08.225  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:33:08.225  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:4ab0362a: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT_BY_INSETS_API fromUser false
+05-30 15:33:08.225  7559  7559 D InsetsController: Setting requestedVisibleTypes to -1 (was -9)
+05-30 15:33:08.234  7559  7559 I AssistStructure: Flattened final assist data: 1176 bytes, containing 2 windows, 7 views
+05-30 15:33:08.238  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:ff67febb: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+05-30 15:33:08.238  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:33:08.238  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:ff67febb: onCancelled at PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+05-30 15:33:08.238  7559  7559 W RemoteInputConnectionImpl: requestCursorUpdates on inactive InputConnection
+05-30 15:33:08.551  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:4ab0362a: onShown
+05-30 15:33:10.469  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ImeBackAnimationController@1455de3
+05-30 15:33:10.470  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@2c7bc76
+05-30 15:33:10.474  7559  7579 D HWUI    : endAllActiveAnimators on 0xb400007b66718480 (UnprojectedRipple) with handle 0xb400007d5674c860
+05-30 15:33:10.493  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:cd4025aa: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false
+05-30 15:33:10.493  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:cd4025aa: onFailed at PHASE_CLIENT_VIEW_SERVED
+05-30 15:33:10.493  7559  7559 D CompatChangeReporter: Compat change id reported: 395521150; UID 10216; state: ENABLED
+05-30 15:33:10.522  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:10.522  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:305033c2: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:10.526  7559  7559 W RemoteInputConnectionImpl: requestCursorUpdates on inactive InputConnection
+05-30 15:33:10.526  7559  7559 E ImeBackDispatcher: Ime callback not found. Ignoring unregisterReceivedCallback. callbackId: 4686174
+05-30 15:33:10.548  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ImeBackAnimationController@4fbfdad
+05-30 15:33:12.872  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:12.872  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:1b863519: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:13.787  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.compose.ui.window.Api33Impl$$ExternalSyntheticLambda0@df97591
+05-30 15:33:13.788  7559  7579 D HWUI    : endAllActiveAnimators on 0xb400007b66748290 (UnprojectedRipple) with handle 0xb400007d56749ce0
+05-30 15:33:13.795  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:13.796  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:5d349cdd: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:14.477  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:33:14.479  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:c432b292: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT_BY_INSETS_API fromUser false
+05-30 15:33:14.479  7559  7559 D InsetsController: Setting requestedVisibleTypes to -1 (was -9)
+05-30 15:33:14.486  7559  7559 I AssistStructure: Flattened final assist data: 1176 bytes, containing 2 windows, 7 views
+05-30 15:33:14.489  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:9e34a639: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+05-30 15:33:14.489  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:33:14.489  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:9e34a639: onCancelled at PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+05-30 15:33:14.490  7559  7559 W RemoteInputConnectionImpl: requestCursorUpdates on inactive InputConnection
+05-30 15:33:14.786  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:c432b292: onShown
+05-30 15:33:18.055  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ImeBackAnimationController@41de7cd
+05-30 15:33:18.056  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@16ca928
+05-30 15:33:18.060  7559  7579 D HWUI    : endAllActiveAnimators on 0xb400007b66762500 (UnprojectedRipple) with handle 0xb400007d5674a190
+05-30 15:33:18.080  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:dc52a061: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false
+05-30 15:33:18.080  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:dc52a061: onFailed at PHASE_CLIENT_VIEW_SERVED
+05-30 15:33:18.106  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:18.106  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:653eba1b: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:18.121  7559  7559 W RemoteInputConnectionImpl: requestCursorUpdates on inactive InputConnection
+05-30 15:33:18.121  7559  7559 E ImeBackDispatcher: Ime callback not found. Ignoring unregisterReceivedCallback. callbackId: 4686174
+05-30 15:33:18.129  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ImeBackAnimationController@4fbfdad
+05-30 15:33:23.474  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:23.474  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:a95a4dc: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:24.357  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:24.357  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:f0af785a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:24.372  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.compose.ui.window.Api33Impl$$ExternalSyntheticLambda0@9a15189
+05-30 15:33:24.373  7559  7579 D HWUI    : endAllActiveAnimators on 0xb400007b6673ae20 (UnprojectedRipple) with handle 0xb400007d56741d00
+05-30 15:33:25.241  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:33:25.242  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:f962fb58: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT_BY_INSETS_API fromUser false
+05-30 15:33:25.242  7559  7559 D InsetsController: Setting requestedVisibleTypes to -1 (was -9)
+05-30 15:33:25.249  7559  7559 I AssistStructure: Flattened final assist data: 1176 bytes, containing 2 windows, 7 views
+05-30 15:33:25.254  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:45d1e507: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false
+05-30 15:33:25.254  7559  7559 D InsetsController: show(ime(), fromIme=false)
+05-30 15:33:25.254  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:45d1e507: onCancelled at PHASE_CLIENT_REPORT_REQUESTED_VISIBLE_TYPES
+05-30 15:33:25.254  7559  7559 W RemoteInputConnectionImpl: requestCursorUpdates on inactive InputConnection
+05-30 15:33:25.536  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:f962fb58: onShown
+05-30 15:33:31.212  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ImeBackAnimationController@bb54b45
+05-30 15:33:31.212  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@e78c800
+05-30 15:33:31.216  7559  7579 D HWUI    : endAllActiveAnimators on 0xb400007b66792980 (UnprojectedRipple) with handle 0xb400007d5673bbe0
+05-30 15:33:31.248  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:4f1483cc: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false
+05-30 15:33:31.248  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:4f1483cc: onFailed at PHASE_CLIENT_VIEW_SERVED
+05-30 15:33:31.305  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:31.305  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:5d026ec2: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:31.306  7559  7559 E ImeBackDispatcher: Ime callback not found. Ignoring unregisterReceivedCallback. callbackId: 4686174
+05-30 15:33:31.306  7559  7559 W RemoteInputConnectionImpl: requestCursorUpdates on inactive InputConnection
+05-30 15:33:31.322  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=android.view.ImeBackAnimationController@4fbfdad
+05-30 15:33:31.327  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:31.327  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:9998915f: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:31.337  7559  7559 I ImeTracker: system_server:55cdf4e: onCancelled at PHASE_CLIENT_ANIMATION_CANCEL
+05-30 15:33:31.355  7559  7559 I ImeTracker: system_server:9781f801: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+05-30 15:33:32.727  7559  7565 W ikrgoalstracker: Cleared Reference was only reachable from finalizer (only reported once)
+05-30 15:33:33.124  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@49f2f47
+05-30 15:33:33.126  7559  7579 D HWUI    : endAllActiveAnimators on 0xb400007b6679fdf0 (UnprojectedRipple) with handle 0xb400007d567374d0
+05-30 15:33:33.177  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:33:33.177  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:5e1b94e0: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:33:38.845  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:33:38.870  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:33:40.238  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:33:40.314  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:33:40.336  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:33:55.212  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:33:55.237  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:33:56.610  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:33:56.631  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:33:56.647  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:34:11.881  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:34:11.916  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:34:15.322  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:34:15.347  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:34:15.366  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:34:21.848  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:34:22.028  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:35:10.446  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:35:10.462  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:35:10.476  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:35:18.056  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:35:18.056  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:8ae14b9a: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:35:19.070  7559  7559 W WindowOnBackDispatcher: sendCancelIfRunning: isInProgress=false callback=androidx.navigationevent.OnBackInvokedInput$createOnBackAnimationCallback$1@f55274e
+05-30 15:35:19.072  7559  7579 D HWUI    : endAllActiveAnimators on 0xb400007b6686a400 (UnprojectedRipple) with handle 0xb400007d5675e440
+05-30 15:35:19.105  7559  7559 D InsetsController: hide(ime(), fromIme=false)
+05-30 15:35:19.105  7559  7559 I ImeTracker: app.awrad.awrad_dhikrgoalstracker:7dcb2dce: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+05-30 15:39:21.186  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:39:21.231  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:39:21.286  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:39:21.517  7559  7559 I Choreographer: Skipped 30 frames!  The application may be doing too much work on its main thread.
+05-30 15:41:55.974  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:42:07.738  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:42:15.581  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:42:15.627  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:42:45.543  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:42:45.715  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:42:45.734  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:42:47.120  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:42:47.196  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:43:29.619  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:43:29.637  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:43:29.652  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:45:12.857  7559  7559 W HWUI    : Image decoding logging dropped!
+05-30 15:47:25.727  7559  7559 I Choreographer: Skipped 56 frames!  The application may be doing too much work on its main thread.
+05-30 15:47:27.384  7559  7629 I HWUI    : Davey! duration=1936ms; Flags=0, FrameTimelineVsyncId=213394, IntendedVsync=18761814869271, Vsync=18761848202603, InputEventId=0, HandleInputStart=18761859818983, AnimationStart=18761859824900, PerformTraversalsStart=18761859825733, DrawStart=18761859953025, FrameDeadline=18761931535933, FrameStartTime=18761859807692, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=18761860967650, SyncStart=18761902110233, IssueDrawCommandsStart=18761902373400, SwapBuffers=18761931797984, FrameCompleted=18763792148401, DequeueBufferDuration=1432017625, QueueBufferDuration=422899667, GpuCompleted=18762359930359, SwapBuffersCompleted=18763792148401, DisplayPresentTime=0, CommandSubmissionCompleted=18761931797984, 
+05-30 15:47:27.408  7559  7629 I HWUI    : Davey! duration=1912ms; Flags=0, FrameTimelineVsyncId=213401, IntendedVsync=18761848202603, Vsync=18762781535899, InputEventId=0, HandleInputStart=18763103019817, AnimationStart=18763103022817, PerformTraversalsStart=18763214301067, DrawStart=18763214412484, FrameDeadline=18762381535915, FrameStartTime=18762792399776, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=18763222758651, SyncStart=18763792288734, IssueDrawCommandsStart=18763792800943, SwapBuffers=18763843112068, FrameCompleted=18764329892443, DequeueBufferDuration=261441333, QueueBufferDuration=158975209, GpuCompleted=18764068342110, SwapBuffersCompleted=18764329892443, DisplayPresentTime=0, CommandSubmissionCompleted=18763843112068, 
+05-30 15:47:27.410  7559  7629 I HWUI    : Davey! duration=921ms; Flags=0, FrameTimelineVsyncId=213417, IntendedVsync=18763314869211, Vsync=18763781535859, InputEventId=0, HandleInputStart=18764093378401, AnimationStart=18764093380485, PerformTraversalsStart=18764093381485, DrawStart=18764093475901, FrameDeadline=18764098202513, FrameStartTime=18763797679401, FrameInterval=16666666, WorkloadTarget=16666666, SyncQueued=18764101295443, SyncStart=18764330028568, IssueDrawCommandsStart=18764330130776, SwapBuffers=18764336303193, FrameCompleted=18764464932693, DequeueBufferDuration=21008583, QueueBufferDuration=103440292, GpuCompleted=18764443823318, SwapBuffersCompleted=18764464932693, DisplayPresentTime=0, CommandSubmissionCompleted=18764336303193, 

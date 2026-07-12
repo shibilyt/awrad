@@ -1,0 +1,48 @@
+appId: app.awrad.awrad_dhikrgoalstracker
+---
+# Test creating a Prayer-based goal with per-prayer slot tracking.
+# Precondition: onboarding completed.
+- launchApp
+
+# ── Open CreateGoal via FAB ───────────────────────────────────────────────────
+- tapOn: "Create Goal"
+
+# ── Screen 1: Select Dhikr ───────────────────────────────────────────────────
+- assertVisible: "Select Dhikr"
+
+# Tap dhikr card directly (no search to avoid text conflict)
+- tapOn: "La ilaha illallah"
+
+# ── Screen 2: Configure Goal ─────────────────────────────────────────────────
+- assertVisible: "Configure Goal"
+
+# Switch to Prayer-based goal type
+- tapOn: "Prayer-based"
+- assertVisible: "Timing"
+
+# All 5 prayer chips should be visible and selected
+- assertVisible: "Fajr"
+- assertVisible: "Dhuhr"
+- assertVisible: "Asr"
+- assertVisible: "Maghrib"
+- assertVisible: "Isha"
+
+# "Same count for all" toggle and count field
+- assertVisible: "Same count for all"
+- assertVisible: "Count per prayer"
+
+# Tap the count field and set to 33
+- tapOn: "Count per prayer"
+- eraseText: 10
+- inputText: "33"
+
+# Dismiss keyboard, then scroll down to the Create Goal button
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Create Goal"
+- tapOn: "Create Goal"
+
+# ── Verify: back on Goals screen ─────────────────────────────────────────────
+- assertVisible: "Goals"
+- assertVisible: "La ilaha illallah"

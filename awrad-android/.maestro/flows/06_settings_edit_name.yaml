@@ -1,0 +1,27 @@
+appId: app.awrad.awrad_dhikrgoalstracker
+---
+# Test editing the user profile name in Settings.
+# Precondition: onboarding completed.
+- launchApp
+
+# ── Navigate to Settings ──────────────────────────────────────────────────────
+- tapOn: "Settings"
+- assertVisible: "Settings"
+- assertVisible: "Profile"
+
+# Tap the edit pencil icon (contentDescription = "Edit name")
+- tapOn: "Edit name"
+
+# The inline OutlinedTextField with label "Name" is now visible
+- assertVisible: "Name"
+
+# Long press opens the "Select all" context menu
+- longPressOn: "Name"
+- tapOn: "Select all"
+- inputText: "Abdullah"
+
+# Save
+- tapOn: "Save"
+
+# Verify the new name is displayed in the profile card
+- assertVisible: "Abdullah"
