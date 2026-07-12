@@ -26,6 +26,3 @@ awrad-android/opensrc/
 **/.agents/
 **/.omc/
 **/.kotlin/
-
-# The API remains its own Git repository for now.
-awrad_api/

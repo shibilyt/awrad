@@ -1,0 +1,31 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="mx-auto max-w-sm space-y-4">
+    <div class="text-center">
+      <.header>
+        Forgot your password?
+        <:subtitle>We'll send a password reset link to your email address.</:subtitle>
+      </.header>
+    </div>
+
+    <.form :let={f} for={%{}} as={:user} action={~p"/users/reset-password"}>
+      <.input
+        field={f[:email]}
+        type="email"
+        label="Email"
+        autocomplete="username"
+        spellcheck="false"
+        required
+        phx-mounted={JS.focus()}
+      />
+      <.button class="btn btn-primary w-full">
+        Send reset instructions <span aria-hidden="true">→</span>
+      </.button>
+    </.form>
+
+    <p class="text-center text-sm">
+      <.link navigate={~p"/users/log-in"} class="font-semibold text-brand hover:underline">
+        Back to log in
+      </.link>
+    </p>
+  </div>
+</Layouts.app>
