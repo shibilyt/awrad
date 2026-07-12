@@ -73,6 +73,8 @@ scope "/api/auth", AwradApiWeb.Api do
   post "/register",  AuthController, :register
   post "/login",     AuthController, :login
   post "/refresh",   AuthController, :refresh
+  post "/forgot-password", AuthController, :forgot_password
+  post "/reset-password",  AuthController, :reset_password
 end
 
 # Protected endpoints

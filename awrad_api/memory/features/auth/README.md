@@ -5,7 +5,7 @@
 The auth system provides identity management for two clients:
 
 - **Web app** (Phoenix LiveView): session + cookie based, with magic link and password login
-- **Mobile app** (Android): JWT access token + rotating refresh token over REST API
+- **Mobile apps** (Android and iOS): JWT access token + rotating refresh token over REST API
 
 Both share a single `User` schema and `Accounts` context.
 
@@ -14,7 +14,7 @@ Both share a single `User` schema and `Accounts` context.
 ```mermaid
 graph TB
     subgraph Clients
-        Mobile["Awrad Mobile App<br/>(Android / Kotlin)"]
+        Mobile["Awrad Mobile Apps<br/>(Android + iOS)"]
         Web["Awrad Web App<br/>(Phoenix LiveView)"]
     end
 
@@ -55,6 +55,8 @@ graph TB
 | API registration | `POST /api/auth/register` with email + password | `auth_controller.ex` |
 | API login | `POST /api/auth/login` returns token pair | `auth_controller.ex` |
 | Token refresh | `POST /api/auth/refresh` with rotation | [token-design.md](token-design.md) |
+| API forgot password | `POST /api/auth/forgot-password` sends reset instructions without revealing account existence | `auth_controller.ex` |
+| API reset password | `POST /api/auth/reset-password` consumes a reset token and new password | `auth_controller.ex` |
 | API logout | `DELETE /api/auth/logout` revokes tokens | `auth_controller.ex` |
 
 ## Password Rules

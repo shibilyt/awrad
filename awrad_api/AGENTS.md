@@ -1,3 +1,17 @@
+# API agent instructions
+
+These instructions apply inside `awrad_api/` and extend the repository-wide rules in [`../AGENTS.md`](../AGENTS.md). This is the Phoenix web application and JSON API for the umbrella repository.
+
+Before changing API routes, JSON fields, token behavior, identifiers, or ownership rules:
+
+- Read [`../CONTRACTS.md`](../CONTRACTS.md) and the live router/controller.
+- Review both mobile consumers: Android `AwradApiService`/`AuthRepository` and iOS `AuthService`.
+- Keep backward compatibility explicit for released clients.
+- Update server tests and any affected client DTO/tests.
+- Use [`memory/README.md`](memory/README.md) as the API documentation index, while treating executable code and tests as authoritative when a memory page has drifted.
+
+Phoenix session authentication and mobile JWT authentication are separate surfaces. Preserve the router pipeline boundary and do not expose Ecto schemas directly as accidental JSON contracts.
+
 This is a web application written using the Phoenix web framework.
 
 ## Project guidelines
