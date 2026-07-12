@@ -34,7 +34,9 @@ class AuthTokenManagerTest {
 
         val manager = AuthTokenManager(dataStore, storage)
 
-        assertEquals("legacy-access", manager.accessToken.first())
+        assertEquals("legacy-refresh", manager.refreshToken.first())
+        assertNull(manager.accessToken.first())
+        assertNull(storage.getString(AuthTokenManager.ACCESS_TOKEN_KEY))
         assertEquals("legacy-refresh", storage.getString(AuthTokenManager.REFRESH_TOKEN_KEY))
         assertEquals("user@example.com", storage.getString(AuthTokenManager.USER_EMAIL_KEY))
         assertNull(dataStore.data.first()[stringPreferencesKey(AuthTokenManager.ACCESS_TOKEN_KEY)])

@@ -39,6 +39,7 @@ defmodule AwradApi.MixProject do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:argon2_elixir, "~> 4.1"},
       {:bcrypt_elixir, "~> 3.0"},
       {:phoenix, "~> 1.8.5"},
       {:phoenix_ecto, "~> 4.5"},

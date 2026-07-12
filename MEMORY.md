@@ -16,10 +16,11 @@ This file stores durable repository facts and a concise append-only change log. 
 
 ## Implemented cross-project capabilities
 
-- API registration and login return mobile token data.
-- API access uses bearer JWTs; refresh tokens are database-backed and rotated.
+- Mobile registration is verification-first and creates a revocable device session only after email verification.
+- API access JWTs are bound to active device sessions; refresh rotation is transactional and detects replay.
 - Forgot-password requests are implemented for both mobile clients and the API.
 - Authenticated logout is implemented by the API and both mobile clients.
+- Android credentials use an Android Keystore-backed AES-GCM store and refresh is serialized across concurrent failures.
 - Android debug builds default to the emulator host API address; release builds require an explicit HTTPS API URL.
 - iOS `AuthService` defaults to a loopback development API URL and supports dependency injection of another base URL.
 

@@ -33,6 +33,32 @@ Platform-local choices should remain in the owning platform's decision system.
 - Superseded: retained for history and linked to its replacement.
 - Rejected: considered and deliberately not chosen.
 
+## ADR-2026-07-12: Verified mobile accounts and revocable device sessions
+
+Status: Accepted
+
+### Context
+
+The original mobile flow issued tokens before email verification, rotated refresh tokens with a delete-then-create race, and allowed parallel Android refresh failures to clear valid credentials.
+
+### Decision
+
+Phoenix remains the identity owner. Mobile registration is atomic and verification-first. Access JWTs are short-lived and bound to an active server-side device session. Refresh tokens rotate transactionally with request-id retry support and family replay detection. Android serializes refresh, preserves credentials during transient failures, and stores secrets with a non-exportable Android Keystore key. Protected online routes use the verified-email API pipeline.
+
+### Consequences
+
+Both mobile clients understand verification and session-bearing responses. Legacy refresh calls remain temporarily compatible but lack idempotent retry guarantees. Future MFA or passkeys can raise assurance on the same session model.
+
+### Evidence
+
+- `awrad_api/lib/awrad_api/accounts/token.ex`
+- `awrad_api/lib/awrad_api_web/controllers/api/auth_controller.ex`
+- `awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/network/TokenAuthenticator.kt`
+
+### Supersedes
+
+The mobile-token portions of `awrad_api/memory/decisions/dual-auth.md` and `refresh-token-rotation.md`; browser sessions remain unchanged.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

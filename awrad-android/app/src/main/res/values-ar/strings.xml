@@ -891,7 +891,7 @@
     <string name="auth_signup_subtitle">انضم إلى مجتمع أوراد</string>
     <string name="auth_no_account">ليس لديك حساب؟</string>
     <string name="auth_have_account">لديك حساب بالفعل؟</string>
-    <string name="auth_password_hint">10 أحرف على الأقل، حرف كبير وصغير، رقم أو رمز</string>
+    <string name="auth_password_hint">من 15 إلى 128 حرفًا؛ تجنّب كلمات المرور الشائعة أو المسرّبة</string>
     <string name="auth_logging_in">جارٍ تسجيل الدخول\u2026</string>
     <string name="auth_signing_up">جارٍ إنشاء الحساب\u2026</string>
     <string name="auth_forgot_password">نسيت كلمة المرور؟</string>
@@ -903,6 +903,10 @@
     <string name="auth_back_to_login">العودة لتسجيل الدخول</string>
     <string name="community_coming_soon">ميزات المجتمع قريبًا!</string>
     <string name="community_logged_in_as">مسجّل الدخول كـ %s</string>
+    <string name="community_verify_email_title">تحقق من بريدك الإلكتروني</string>
+    <string name="community_verify_email_body">أرسلنا رابط تحقق إلى %s. افتحه لتأمين حسابك.</string>
+    <string name="community_active_devices">الأجهزة النشطة</string>
+    <string name="community_revoke_device">إلغاء</string>
 
     <!-- Localized goal draft summaries and validation -->
     <string name="cd_see_more">عرض المزيد</string>

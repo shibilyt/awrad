@@ -80,14 +80,31 @@ defmodule AwradApi.Accounts.User do
     |> validate_password(opts)
   end
 
+  def password_registration_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :password])
+    |> validate_email(opts)
+    |> validate_confirmation(:password, message: "does not match password")
+    |> validate_password(opts)
+  end
+
   defp validate_password(changeset, opts) do
     changeset
     |> validate_required([:password])
-    |> validate_length(:password, min: 10, max: 72)
-    |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
-    |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
-    |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
+    |> validate_length(:password, min: 15, max: 128)
+    |> validate_password_blocklist()
     |> maybe_hash_password(opts)
+  end
+
+  @blocked_passwords MapSet.new(
+                       ~w(password password123 123456789 1234567890 qwerty123 letmein123 iloveyou123 admin123 welcome123 awrad123)
+                     )
+
+  defp validate_password_blocklist(changeset) do
+    validate_change(changeset, :password, fn :password, password ->
+      normalized = password |> String.normalize(:nfkc) |> String.downcase()
+      if MapSet.member?(@blocked_passwords, normalized), do: [password: "is too common"], else: []
+    end)
   end
 
   defp maybe_hash_password(changeset, opts) do
@@ -96,11 +113,7 @@ defmodule AwradApi.Accounts.User do
 
     if hash_password? && password && changeset.valid? do
       changeset
-      # If using Bcrypt, then further validate it is at most 72 bytes long
-      |> validate_length(:password, max: 72, count: :bytes)
-      # Hashing could be done with `Ecto.Changeset.prepare_changes/2`, but that
-      # would keep the database transaction open longer and hurt performance.
-      |> put_change(:hashed_password, Bcrypt.hash_pwd_salt(password))
+      |> put_change(:hashed_password, Argon2.hash_pwd_salt(password))
       |> delete_change(:password)
     else
       changeset
@@ -123,11 +136,21 @@ defmodule AwradApi.Accounts.User do
   """
   def valid_password?(%AwradApi.Accounts.User{hashed_password: hashed_password}, password)
       when is_binary(hashed_password) and byte_size(password) > 0 do
-    Bcrypt.verify_pass(password, hashed_password)
+    verify_hash(password, hashed_password)
   end
 
   def valid_password?(_, _) do
-    Bcrypt.no_user_verify()
+    Argon2.no_user_verify()
     false
   end
+
+  def password_needs_rehash?(%__MODULE__{hashed_password: "$2" <> _}), do: true
+
+  def password_needs_rehash?(%__MODULE__{hashed_password: hash}) when is_binary(hash),
+    do: false
+
+  def password_needs_rehash?(_), do: false
+
+  defp verify_hash(password, "$2" <> _ = hash), do: Bcrypt.verify_pass(password, hash)
+  defp verify_hash(password, hash), do: Argon2.verify_pass(password, hash)
 end

@@ -23,6 +23,8 @@ data class AuthUiState(
 class AuthViewModel @Inject constructor(
     private val authRepository: AuthRepository,
 ) : ViewModel() {
+    private val _sessions = MutableStateFlow<List<app.awrad.awrad_dhikrgoalstracker.data.network.AuthSession>>(emptyList())
+    val sessions: StateFlow<List<app.awrad.awrad_dhikrgoalstracker.data.network.AuthSession>> = _sessions.asStateFlow()
 
     private val _uiState = MutableStateFlow(AuthUiState())
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
@@ -32,6 +34,12 @@ class AuthViewModel @Inject constructor(
 
     val userEmail: StateFlow<String?> = authRepository.userEmail
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val pendingVerificationEmail: StateFlow<String?> = authRepository.pendingVerificationEmail
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val isEmailVerified: StateFlow<Boolean> = authRepository.isEmailVerified
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun login(email: String, password: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
@@ -80,6 +88,21 @@ class AuthViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()
+        }
+    }
+
+    fun loadSessions() {
+        viewModelScope.launch {
+            when (val result = authRepository.sessions()) {
+                is AuthResult.Success -> _sessions.value = result.data
+                is AuthResult.Error -> Unit
+            }
+        }
+    }
+
+    fun revokeSession(id: String) {
+        viewModelScope.launch {
+            if (authRepository.revokeSession(id) is AuthResult.Success) loadSessions()
         }
     }
 

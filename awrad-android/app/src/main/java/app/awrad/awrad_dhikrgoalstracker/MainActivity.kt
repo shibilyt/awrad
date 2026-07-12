@@ -22,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -34,9 +35,14 @@ import app.awrad.awrad_dhikrgoalstracker.ui.navigation.AwradNavGraph
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.AwradDhikrGoalsTrackerTheme
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+import app.awrad.awrad_dhikrgoalstracker.data.repository.AuthRepository
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    @Inject lateinit var authRepository: AuthRepository
 
     private val mainViewModel: MainViewModel by viewModels()
 
@@ -64,6 +70,12 @@ class MainActivity : AppCompatActivity() {
         }
         // awrad:// deep links — awrad://wirds and awrad://todays-wird (both open the wird list).
         intent.data?.let { uri ->
+            if (uri.scheme == "https" && uri.pathSegments.take(2) == listOf("auth", "verify-email")) {
+                uri.lastPathSegment?.takeIf { it.isNotBlank() }?.let { token ->
+                    lifecycleScope.launch { authRepository.verifyEmail(token) }
+                }
+                return
+            }
             if (uri.scheme == "awrad" && uri.host in setOf("wirds", "todays-wird", "today-wird")) {
                 mainViewModel.onWirdDeepLink(null)
                 return

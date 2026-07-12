@@ -8,16 +8,17 @@ defmodule AwradApiWeb.Plugs.ApiAuth do
 
   import Plug.Conn
 
-  alias AwradApi.Accounts.{Scope, Token, User}
+  alias AwradApi.Accounts.{Scope, Token}
 
   def init(opts), do: opts
 
   def call(conn, _opts) do
     with {:ok, token} <- extract_bearer_token(conn),
          {:ok, claims} <- Token.verify_access_token(token),
-         %User{} = user <- AwradApi.Repo.get(User, claims["sub"]) do
+         {:ok, user, session} <- Token.fetch_active_identity(claims) do
       conn
       |> assign(:current_user, user)
+      |> assign(:current_session, session)
       |> assign(:current_scope, Scope.for_user(user))
     else
       _ -> unauthorized(conn)

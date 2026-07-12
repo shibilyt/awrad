@@ -10,6 +10,7 @@ defmodule AwradApi.Accounts.UserToken do
   # since someone with access to the email may take over the account.
   @magic_link_validity_in_minutes 15
   @reset_password_validity_in_minutes 30
+  @email_verification_validity_in_minutes 30
   @change_email_validity_in_days 7
   @session_validity_in_days 14
 
@@ -158,6 +159,29 @@ defmodule AwradApi.Accounts.UserToken do
   """
   def build_reset_password_token(user) do
     build_hashed_token(user, "reset_password", user.email)
+  end
+
+  def build_email_verification_token(user) do
+    build_hashed_token(user, "verify_email", user.email)
+  end
+
+  def verify_email_verification_token_query(token) do
+    case Base.url_decode64(token, padding: false) do
+      {:ok, decoded_token} ->
+        hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
+
+        query =
+          from token in by_token_and_context_query(hashed_token, "verify_email"),
+            join: user in assoc(token, :user),
+            where: token.inserted_at > ago(^@email_verification_validity_in_minutes, "minute"),
+            where: token.sent_to == user.email,
+            select: {user, token}
+
+        {:ok, query}
+
+      :error ->
+        :error
+    end
   end
 
   @doc """

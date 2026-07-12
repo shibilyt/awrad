@@ -85,6 +85,23 @@ defmodule AwradApi.Accounts.UserNotifier do
     """)
   end
 
+  def deliver_email_verification_instructions(user, url) do
+    deliver(user.email, "Verify your Awrad account", """
+
+    ==============================
+
+    Hi #{user.email},
+
+    Verify your account by visiting the URL below:
+
+    #{url}
+
+    This link expires in 30 minutes. If you didn't create this account, ignore this email.
+
+    ==============================
+    """)
+  end
+
   defp deliver_confirmation_instructions(user, url) do
     deliver(user.email, "Confirmation instructions", """
 

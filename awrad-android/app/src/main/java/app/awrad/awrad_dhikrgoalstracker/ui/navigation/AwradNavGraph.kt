@@ -106,8 +106,11 @@ fun AwradNavGraph(
         composable(AwradDestination.Goals.route) {
             WrappedAwradDestination(navController) {
                 GoalsScreen(
-                    onNavigateToGoal = { goalId ->
+                    onNavigateToCounting = { goalId ->
                         navController.navigateSafely(AwradDestination.Counting.createRoute(goalId))
+                    },
+                    onNavigateToGoalDetail = { goalId ->
+                        navController.navigateSafely(AwradDestination.GoalDetail.createRoute(goalId))
                     },
                     onNavigateToCreateGoal = {
                         navController.navigateSafely(AwradDestination.CreateGoal.createRoute())

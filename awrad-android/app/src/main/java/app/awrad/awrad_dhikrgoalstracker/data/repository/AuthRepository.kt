@@ -2,10 +2,12 @@ package app.awrad.awrad_dhikrgoalstracker.data.repository
 
 import app.awrad.awrad_dhikrgoalstracker.data.network.AwradApiService
 import app.awrad.awrad_dhikrgoalstracker.data.network.ErrorResponse
+import app.awrad.awrad_dhikrgoalstracker.data.network.DeviceRequest
 import app.awrad.awrad_dhikrgoalstracker.data.network.LoginRequest
 import app.awrad.awrad_dhikrgoalstracker.data.network.ForgotPasswordRequest
 import app.awrad.awrad_dhikrgoalstracker.data.network.LogoutRequest
 import app.awrad.awrad_dhikrgoalstracker.data.network.RegisterRequest
+import app.awrad.awrad_dhikrgoalstracker.data.network.AuthSession
 import app.awrad.awrad_dhikrgoalstracker.data.preferences.AuthTokenManager
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
@@ -25,14 +27,14 @@ class AuthRepository @Inject constructor(
 ) {
     val isLoggedIn: Flow<Boolean> = tokenManager.isLoggedIn
     val userEmail: Flow<String?> = tokenManager.userEmail
+    val pendingVerificationEmail: Flow<String?> = tokenManager.pendingVerificationEmail
+    val isEmailVerified: Flow<Boolean> = tokenManager.isEmailVerified
 
     suspend fun register(email: String, password: String): AuthResult<Unit> {
         return try {
             val response = api.register(RegisterRequest(email, password))
             if (response.isSuccessful) {
-                val body = response.body()!!
-                tokenManager.saveTokens(body.access_token, body.refresh_token)
-                tokenManager.saveUser(body.user.id, body.user.email)
+                tokenManager.savePendingVerification(email)
                 AuthResult.Success(Unit)
             } else {
                 AuthResult.Error(parseError(response.errorBody()?.string()))
@@ -44,11 +46,12 @@ class AuthRepository @Inject constructor(
 
     suspend fun login(email: String, password: String): AuthResult<Unit> {
         return try {
-            val response = api.login(LoginRequest(email, password))
+            val device = DeviceRequest(tokenManager.installationId())
+            val response = api.login(LoginRequest(email, password, device))
             if (response.isSuccessful) {
                 val body = response.body()!!
                 tokenManager.saveTokens(body.access_token, body.refresh_token)
-                tokenManager.saveUser(body.user.id, body.user.email)
+                tokenManager.saveUser(body.user.id, body.user.email, body.user.emailVerified, body.session.id)
                 AuthResult.Success(Unit)
             } else {
                 AuthResult.Error(parseError(response.errorBody()?.string()))
@@ -69,6 +72,43 @@ class AuthRepository @Inject constructor(
         } catch (e: Exception) {
             AuthResult.Error(e.message ?: "Network error")
         }
+    }
+
+    suspend fun verifyEmail(token: String): AuthResult<Unit> {
+        return try {
+            val device = DeviceRequest(tokenManager.installationId())
+            val response = api.verifyEmail(mapOf("token" to token, "device" to device))
+            if (response.isSuccessful) {
+                val body = response.body()!!
+                tokenManager.saveTokens(body.access_token, body.refresh_token)
+                tokenManager.saveUser(body.user.id, body.user.email, body.user.emailVerified, body.session.id)
+                AuthResult.Success(Unit)
+            } else {
+                AuthResult.Error(parseError(response.errorBody()?.string()))
+            }
+        } catch (e: Exception) {
+            AuthResult.Error(e.message ?: "Network error")
+        }
+    }
+
+    suspend fun sessions(): AuthResult<List<AuthSession>> = try {
+        val response = api.sessions()
+        if (response.isSuccessful) AuthResult.Success(response.body()?.sessions.orEmpty())
+        else AuthResult.Error(parseError(response.errorBody()?.string()))
+    } catch (e: Exception) {
+        AuthResult.Error(e.message ?: "Network error")
+    }
+
+    suspend fun revokeSession(id: String): AuthResult<Unit> = try {
+        val response = api.revokeSession(id)
+        if (response.isSuccessful) {
+            if (tokenManager.sessionId.first() == id) tokenManager.clearTokens()
+            AuthResult.Success(Unit)
+        } else {
+            AuthResult.Error(parseError(response.errorBody()?.string()))
+        }
+    } catch (e: Exception) {
+        AuthResult.Error(e.message ?: "Network error")
     }
 
     suspend fun logout() {

@@ -53,7 +53,11 @@ config :awrad_api, AwradApiWeb.Endpoint,
 
 # JWT signing secret for API access tokens
 config :awrad_api, AwradApi.Accounts.Token,
-  signing_secret: "dev-only-jwt-secret-do-not-use-in-prod-32chars!"
+  signing_secret: "dev-only-jwt-secret-do-not-use-in-prod-32chars!",
+  refresh_retry_secret: "dev-only-refresh-retry-secret-at-least-32chars!"
+
+config :awrad_api, AwradApi.Accounts.AuthRateLimiter,
+  pepper: "dev-only-rate-limit-pepper-at-least-32chars!"
 
 # Enable dev routes for dashboard and mailbox
 config :awrad_api, dev_routes: true

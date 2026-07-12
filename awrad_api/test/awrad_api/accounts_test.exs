@@ -191,13 +191,13 @@ defmodule AwradApi.AccountsTest do
         Accounts.change_user_password(
           %User{},
           %{
-            "password" => "NewValid1pwd!"
+            "password" => "NewValidSecure1pwd!"
           },
           hash_password: false
         )
 
       assert changeset.valid?
-      assert get_change(changeset, :password) == "NewValid1pwd!"
+      assert get_change(changeset, :password) == "NewValidSecure1pwd!"
       assert is_nil(get_change(changeset, :hashed_password))
     end
   end
@@ -215,9 +215,7 @@ defmodule AwradApi.AccountsTest do
         })
 
       errors = errors_on(changeset)
-      assert "should be at least 10 character(s)" in errors.password
-      assert "at least one upper case character" in errors.password
-      assert "at least one digit or punctuation character" in errors.password
+      assert "should be at least 15 character(s)" in errors.password
       assert "does not match password" in errors.password_confirmation
     end
 
@@ -227,18 +225,18 @@ defmodule AwradApi.AccountsTest do
       {:error, changeset} =
         Accounts.update_user_password(user, %{password: too_long})
 
-      assert "should be at most 72 character(s)" in errors_on(changeset).password
+      assert "should be at most 128 character(s)" in errors_on(changeset).password
     end
 
     test "updates the password", %{user: user} do
       {:ok, {user, expired_tokens}} =
         Accounts.update_user_password(user, %{
-          password: "NewValid1pwd!"
+          password: "NewValidSecure1pwd!"
         })
 
       assert expired_tokens == []
       assert is_nil(user.password)
-      assert Accounts.get_user_by_email_and_password(user.email, "NewValid1pwd!")
+      assert Accounts.get_user_by_email_and_password(user.email, "NewValidSecure1pwd!")
     end
 
     test "deletes all tokens for the given user", %{user: user} do
@@ -246,7 +244,7 @@ defmodule AwradApi.AccountsTest do
 
       {:ok, {_, _}} =
         Accounts.update_user_password(user, %{
-          password: "NewValid1pwd!"
+          password: "NewValidSecure1pwd!"
         })
 
       refute Repo.get_by(UserToken, user_id: user.id)

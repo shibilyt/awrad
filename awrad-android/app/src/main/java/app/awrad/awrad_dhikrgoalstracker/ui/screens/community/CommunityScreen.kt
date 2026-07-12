@@ -29,6 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -52,6 +53,12 @@ fun CommunityScreen(
 ) {
     val isLoggedIn by viewModel.isLoggedIn.collectAsState()
     val userEmail by viewModel.userEmail.collectAsState()
+    val pendingVerificationEmail by viewModel.pendingVerificationEmail.collectAsState()
+    val isEmailVerified by viewModel.isEmailVerified.collectAsState()
+    val sessions by viewModel.sessions.collectAsState()
+    LaunchedEffect(isLoggedIn, isEmailVerified) {
+        if (isLoggedIn && isEmailVerified) viewModel.loadSessions()
+    }
     val density = LocalDensity.current
     val statusBarTopPadding = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
 
@@ -79,9 +86,16 @@ fun CommunityScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            if (isLoggedIn) {
+            if (pendingVerificationEmail != null) {
+                VerificationRequiredContent(
+                    email = pendingVerificationEmail,
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                )
+            } else if (isLoggedIn && isEmailVerified) {
                 LoggedInContent(
                     userEmail = userEmail,
+                    sessions = sessions,
+                    onRevokeSession = viewModel::revokeSession,
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
             } else {
@@ -91,6 +105,32 @@ fun CommunityScreen(
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun VerificationRequiredContent(email: String?, modifier: Modifier = Modifier) {
+    RitualCard(modifier = modifier.fillMaxWidth(), shape = RoundedCornerShape(30.dp)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 30.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            CommunityMark()
+            Spacer(Modifier.height(22.dp))
+            Text(
+                text = stringResource(R.string.community_verify_email_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(12.dp))
+            Text(
+                text = stringResource(R.string.community_verify_email_body, email.orEmpty()),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
@@ -201,6 +241,8 @@ private fun GuestContent(
 @Composable
 private fun LoggedInContent(
     userEmail: String?,
+    sessions: List<app.awrad.awrad_dhikrgoalstracker.data.network.AuthSession>,
+    onRevokeSession: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     RitualCard(
@@ -233,6 +275,18 @@ private fun LoggedInContent(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
+            }
+            if (sessions.isNotEmpty()) {
+                Spacer(Modifier.height(20.dp))
+                Text(stringResource(R.string.community_active_devices), fontWeight = FontWeight.SemiBold)
+                sessions.forEach { session ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(session.deviceName, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { onRevokeSession(session.id) }) {
+                            Text(stringResource(R.string.community_revoke_device))
+                        }
+                    }
+                }
             }
         }
     }

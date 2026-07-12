@@ -11,11 +11,16 @@ The authoritative route declarations are in `awrad_api/lib/awrad_api_web/router.
 | `POST` | `/api/auth/register` | Public | Android, iOS |
 | `POST` | `/api/auth/login` | Public | Android, iOS |
 | `POST` | `/api/auth/refresh` | Public; refresh token in JSON body | Android automatic token authenticator |
+| `POST` | `/api/auth/verify-email` | Public; one-time verification token | Android, iOS |
+| `POST` | `/api/auth/verify-email/resend` | Public; generic response | Android, iOS |
 | `POST` | `/api/auth/forgot-password` | Public | Android, iOS |
 | `POST` | `/api/auth/reset-password` | Public; reset token and new password | Reset flow/API surface |
 | `DELETE` | `/api/auth/logout` | Bearer access token; refresh token in JSON body | Android, iOS |
+| `GET` | `/api/auth/sessions` | Bearer access token | Mobile account security |
+| `DELETE` | `/api/auth/sessions/:id` | Bearer access token; owned session only | Mobile account security |
+| `DELETE` | `/api/auth/sessions` | Bearer access token | Mobile account security |
 
-Registration and login return a user object plus `access_token` and `refresh_token`. Refresh returns a replacement token pair. JSON uses snake_case fields, which is reflected in both mobile DTO sets.
+Registration returns a generic `202` and never issues credentials. Email verification creates the initial device session. Successful verification, verified-user login, and refresh return a user, device session, access token, and refresh token. JSON uses snake_case fields.
 
 Contract owners:
 
@@ -28,9 +33,11 @@ Any request/response or status-code change requires server tests and review of b
 ## Token lifecycle
 
 - Browser authentication uses Phoenix session cookies and `current_scope`.
-- Mobile authentication uses short-lived bearer JWT access tokens and rotating database-backed refresh tokens.
-- Refresh rotation invalidates the consumed refresh token and returns a new pair.
-- Logout revokes the supplied refresh token; the API may also revoke all refresh tokens for the authenticated user when no token is supplied.
+- Mobile authentication uses 15-minute, session-bound bearer JWTs and rotating database-backed refresh tokens.
+- Refresh rotation is transactional. Repeating the same request ID briefly returns the same successor; reuse with another request ID revokes the device session.
+- Device sessions expire after 30 idle days or 180 absolute days and can be revoked individually or together.
+- Password registration uses Argon2id and email verification. Existing bcrypt hashes upgrade after successful password login.
+- Logout revokes the bearer token's current session and cannot revoke another user's session.
 - Secrets and production token configuration belong in runtime environment configuration, never in clients or committed files.
 
 Android automatically refreshes after an authentication failure through its OkHttp authenticator. iOS currently stores and sends tokens but does not implement the same automatic refresh retry path; do not claim parity until code and tests establish it.

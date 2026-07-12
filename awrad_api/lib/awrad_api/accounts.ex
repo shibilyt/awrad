@@ -40,8 +40,22 @@ defmodule AwradApi.Accounts do
   """
   def get_user_by_email_and_password(email, password)
       when is_binary(email) and is_binary(password) do
+    case authenticate_password_user(email, password) do
+      {:ok, user} -> user
+      {:error, :invalid_credentials} -> nil
+    end
+  end
+
+  def authenticate_password_user(email, password)
+      when is_binary(email) and is_binary(password) do
     user = Repo.get_by(User, email: email)
-    if User.valid_password?(user, password), do: user
+
+    if User.valid_password?(user, password) do
+      user = maybe_rehash_password(user, password)
+      {:ok, user}
+    else
+      {:error, :invalid_credentials}
+    end
   end
 
   @doc """
@@ -78,6 +92,45 @@ defmodule AwradApi.Accounts do
     %User{}
     |> User.email_changeset(attrs)
     |> Repo.insert()
+  end
+
+  def register_password_user(attrs) do
+    %User{}
+    |> User.password_registration_changeset(attrs)
+    |> Repo.insert()
+  end
+
+  def deliver_user_verification_instructions(%User{} = user, verification_url_fun)
+      when is_function(verification_url_fun, 1) do
+    Repo.delete_all(
+      from(t in UserToken, where: t.user_id == ^user.id and t.context == "verify_email")
+    )
+
+    {encoded_token, user_token} = UserToken.build_email_verification_token(user)
+    Repo.insert!(user_token)
+
+    UserNotifier.deliver_email_verification_instructions(
+      user,
+      verification_url_fun.(encoded_token)
+    )
+  end
+
+  def verify_user_email(token) do
+    with {:ok, query} <- UserToken.verify_email_verification_token_query(token),
+         {%User{} = user, %UserToken{} = user_token} <- Repo.one(query) do
+      Repo.transact(fn ->
+        with {:ok, confirmed_user} <- user |> User.confirm_changeset() |> Repo.update(),
+             {:ok, _deleted} <- Repo.delete(user_token) do
+          Repo.delete_all(
+            from(t in UserToken, where: t.user_id == ^user.id and t.context == "verify_email")
+          )
+
+          {:ok, confirmed_user}
+        end
+      end)
+    else
+      _ -> {:error, :invalid_token}
+    end
   end
 
   ## Settings
@@ -326,5 +379,15 @@ defmodule AwradApi.Accounts do
         {:ok, {user, tokens_to_expire}}
       end
     end)
+  end
+
+  defp maybe_rehash_password(%User{} = user, password) do
+    if User.password_needs_rehash?(user) do
+      user
+      |> Ecto.Changeset.change(hashed_password: Argon2.hash_pwd_salt(password))
+      |> Repo.update!()
+    else
+      user
+    end
   end
 end

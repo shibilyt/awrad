@@ -22,11 +22,18 @@ defmodule AwradApiWeb.Router do
     plug AwradApiWeb.Plugs.ApiAuth
   end
 
+  pipeline :api_auth_verified do
+    plug :accepts, ["json"]
+    plug AwradApiWeb.Plugs.ApiAuth
+    plug AwradApiWeb.Plugs.RequireVerifiedEmail
+  end
+
   # LiveView web app
   scope "/", AwradApiWeb do
     pipe_through :browser
 
     live "/", HomeLive
+    get "/auth/verify-email/:token", EmailVerificationController, :verify
   end
 
   # Mobile API - public auth endpoints
@@ -36,6 +43,8 @@ defmodule AwradApiWeb.Router do
     post "/register", AuthController, :register
     post "/login", AuthController, :login
     post "/refresh", AuthController, :refresh
+    post "/verify-email", AuthController, :verify_email
+    post "/verify-email/resend", AuthController, :resend_verification
     post "/forgot-password", AuthController, :forgot_password
     post "/reset-password", AuthController, :reset_password
   end
@@ -45,6 +54,9 @@ defmodule AwradApiWeb.Router do
     pipe_through :api_auth
 
     delete "/auth/logout", AuthController, :logout
+    get "/auth/sessions", AuthController, :sessions
+    delete "/auth/sessions/:id", AuthController, :revoke_session
+    delete "/auth/sessions", AuthController, :revoke_all_sessions
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

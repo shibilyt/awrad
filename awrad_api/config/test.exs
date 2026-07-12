@@ -2,6 +2,7 @@ import Config
 
 # Only in tests, remove the complexity from the password hashing algorithm
 config :bcrypt_elixir, :log_rounds, 1
+config :argon2_elixir, t_cost: 1, m_cost: 8
 
 # Configure your database
 #
@@ -25,7 +26,11 @@ config :awrad_api, AwradApiWeb.Endpoint,
 
 # JWT signing secret for tests
 config :awrad_api, AwradApi.Accounts.Token,
-  signing_secret: "test-only-jwt-secret-at-least-32-characters!"
+  signing_secret: "test-only-jwt-secret-at-least-32-characters!",
+  refresh_retry_secret: "test-only-refresh-retry-secret-32-characters!"
+
+config :awrad_api, AwradApi.Accounts.AuthRateLimiter,
+  pepper: "test-only-rate-limit-pepper-32-characters!"
 
 # In test we don't send emails
 config :awrad_api, AwradApi.Mailer, adapter: Swoosh.Adapters.Test

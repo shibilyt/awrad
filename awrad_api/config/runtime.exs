@@ -62,7 +62,27 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  config :awrad_api, AwradApi.Accounts.Token, signing_secret: jwt_secret
+  refresh_retry_secret =
+    System.get_env("REFRESH_RETRY_SECRET") ||
+      raise "environment variable REFRESH_RETRY_SECRET is missing"
+
+  rate_limit_pepper =
+    System.get_env("AUTH_RATE_LIMIT_PEPPER") ||
+      raise "environment variable AUTH_RATE_LIMIT_PEPPER is missing"
+
+  for {name, secret} <- [
+        {"JWT_SIGNING_SECRET", jwt_secret},
+        {"REFRESH_RETRY_SECRET", refresh_retry_secret},
+        {"AUTH_RATE_LIMIT_PEPPER", rate_limit_pepper}
+      ] do
+    if byte_size(secret) < 32, do: raise("#{name} must be at least 32 bytes")
+  end
+
+  config :awrad_api, AwradApi.Accounts.Token,
+    signing_secret: jwt_secret,
+    refresh_retry_secret: refresh_retry_secret
+
+  config :awrad_api, AwradApi.Accounts.AuthRateLimiter, pepper: rate_limit_pepper
 
   config :awrad_api, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 

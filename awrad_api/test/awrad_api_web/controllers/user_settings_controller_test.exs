@@ -35,8 +35,8 @@ defmodule AwradApiWeb.UserSettingsControllerTest do
         put(conn, ~p"/users/settings", %{
           "action" => "update_password",
           "user" => %{
-            "password" => "NewValid1pwd!",
-            "password_confirmation" => "NewValid1pwd!"
+            "password" => "NewValidSecure1pwd!",
+            "password_confirmation" => "NewValidSecure1pwd!"
           }
         })
 
@@ -47,7 +47,7 @@ defmodule AwradApiWeb.UserSettingsControllerTest do
       assert Phoenix.Flash.get(new_password_conn.assigns.flash, :info) =~
                "Password updated successfully"
 
-      assert Accounts.get_user_by_email_and_password(user.email, "NewValid1pwd!")
+      assert Accounts.get_user_by_email_and_password(user.email, "NewValidSecure1pwd!")
     end
 
     test "does not update password on invalid data", %{conn: conn} do
@@ -62,7 +62,7 @@ defmodule AwradApiWeb.UserSettingsControllerTest do
 
       response = html_response(old_password_conn, 200)
       assert response =~ "Settings"
-      assert response =~ "should be at least 10 character(s)"
+      assert response =~ "should be at least 15 character(s)"
       assert response =~ "does not match password"
 
       assert get_session(old_password_conn, :user_token) == get_session(conn, :user_token)

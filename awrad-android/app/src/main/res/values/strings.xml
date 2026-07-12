@@ -1080,7 +1080,7 @@
     <string name="auth_signup_subtitle">Join the Awrad community</string>
     <string name="auth_no_account">Don\'t have an account?</string>
     <string name="auth_have_account">Already have an account?</string>
-    <string name="auth_password_hint">Min 10 chars, uppercase, lowercase, digit or symbol</string>
+    <string name="auth_password_hint">15–128 characters; avoid common or compromised passwords</string>
     <string name="auth_logging_in">Logging in\u2026</string>
     <string name="auth_signing_up">Creating account\u2026</string>
     <string name="auth_forgot_password">Forgot password?</string>
@@ -1092,6 +1092,10 @@
     <string name="auth_back_to_login">Back to Login</string>
     <string name="community_coming_soon">Community features coming soon!</string>
     <string name="community_logged_in_as">Logged in as %s</string>
+    <string name="community_verify_email_title">Verify your email</string>
+    <string name="community_verify_email_body">We sent a verification link to %s. Open it to secure your account.</string>
+    <string name="community_active_devices">Active devices</string>
+    <string name="community_revoke_device">Revoke</string>
 
     <!-- Localized goal draft summaries and validation -->
     <string name="cd_see_more">See more</string>

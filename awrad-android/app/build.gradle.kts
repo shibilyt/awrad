@@ -129,9 +129,11 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "API_BASE_URL", debugApiBaseUrl.toBuildConfigString())
+            manifestPlaceholders["awradAppLinkHost"] = "10.0.2.2"
         }
         release {
             buildConfigField("String", "API_BASE_URL", normalizedReleaseApiBaseUrl.toBuildConfigString())
+            manifestPlaceholders["awradAppLinkHost"] = URI(normalizedReleaseApiBaseUrl).host
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -194,7 +196,6 @@ dependencies {
 
     // DataStore
     implementation(libs.datastore.preferences)
-    implementation(libs.androidx.security.crypto)
 
     // Gson
     implementation(libs.gson)
