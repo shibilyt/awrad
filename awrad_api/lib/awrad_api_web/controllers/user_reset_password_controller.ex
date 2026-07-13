@@ -2,22 +2,30 @@ defmodule AwradApiWeb.UserResetPasswordController do
   use AwradApiWeb, :controller
 
   alias AwradApi.Accounts
+  alias AwradApiWeb.BrowserAuthProtection
 
   def new(conn, _params) do
     render(conn, :new)
   end
 
   def create(conn, %{"user" => %{"email" => email}}) do
-    if user = Accounts.get_user_by_email(email) do
-      Accounts.deliver_user_reset_password_instructions(
-        user,
-        &url(~p"/users/reset-password/#{&1}")
-      )
-    end
+    with :ok <- BrowserAuthProtection.allow?(conn, "password_reset", email, 5, 5, 3600) do
+      if user = Accounts.get_user_by_email(email) do
+        Accounts.deliver_user_reset_password_instructions(
+          user,
+          &url(~p"/users/reset-password/#{&1}")
+        )
+      end
 
-    conn
-    |> put_flash(:info, "If your email is in our system, you will receive reset instructions shortly.")
-    |> redirect(to: ~p"/users/log-in")
+      conn
+      |> put_flash(
+        :info,
+        "If your email is in our system, you will receive reset instructions shortly."
+      )
+      |> redirect(to: ~p"/users/log-in")
+    else
+      {:error, retry_after} -> BrowserAuthProtection.rate_limited(conn, retry_after)
+    end
   end
 
   def edit(conn, %{"token" => token}) do
@@ -31,7 +39,13 @@ defmodule AwradApiWeb.UserResetPasswordController do
     end
   end
 
-  def update(conn, %{"user" => %{"token" => token, "password" => password, "password_confirmation" => password_confirmation}}) do
+  def update(conn, %{
+        "user" => %{
+          "token" => token,
+          "password" => password,
+          "password_confirmation" => password_confirmation
+        }
+      }) do
     case Accounts.get_user_by_reset_password_token(token) do
       nil ->
         conn
@@ -39,7 +53,10 @@ defmodule AwradApiWeb.UserResetPasswordController do
         |> redirect(to: ~p"/users/reset-password")
 
       user ->
-        case Accounts.reset_user_password(user, %{password: password, password_confirmation: password_confirmation}) do
+        case Accounts.reset_user_password(user, %{
+               password: password,
+               password_confirmation: password_confirmation
+             }) do
           {:ok, _} ->
             conn
             |> put_flash(:info, "Password reset successfully. You can now log in.")

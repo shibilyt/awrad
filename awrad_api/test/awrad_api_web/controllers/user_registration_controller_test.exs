@@ -32,8 +32,43 @@ defmodule AwradApiWeb.UserRegistrationControllerTest do
       refute get_session(conn, :user_token)
       assert redirected_to(conn) == ~p"/users/log-in"
 
-      assert conn.assigns.flash["info"] =~
-               ~r/An email was sent to .*, please access it to confirm your account/
+      assert conn.assigns.flash["info"] ==
+               "If the address can be registered, instructions will arrive shortly."
+    end
+
+    @tag :capture_log
+    test "returns the same generic redirect for an existing email", %{conn: conn} do
+      user = user_fixture()
+
+      conn =
+        post(conn, ~p"/users/register", %{
+          "user" => %{"email" => user.email}
+        })
+
+      assert redirected_to(conn) == ~p"/users/log-in"
+
+      assert conn.assigns.flash["info"] ==
+               "If the address can be registered, instructions will arrive shortly."
+    end
+
+    @tag :capture_log
+    test "rate limits repeated registrations from one IP", %{conn: conn} do
+      for _ <- 1..5 do
+        request_conn =
+          post(conn, ~p"/users/register", %{
+            "user" => valid_user_attributes()
+          })
+
+        assert redirected_to(request_conn) == ~p"/users/log-in"
+      end
+
+      conn =
+        post(conn, ~p"/users/register", %{
+          "user" => valid_user_attributes()
+        })
+
+      assert response(conn, 429) == "Too many requests. Please try again later."
+      assert get_resp_header(conn, "retry-after") != []
     end
 
     test "render errors for invalid data", %{conn: conn} do

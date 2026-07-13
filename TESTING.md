@@ -47,6 +47,8 @@ Do not hard-code an old simulator UUID in repository guidance. Discover availabl
 
 Router/auth changes require explicit checks for public versus protected pipeline placement, success JSON, validation/error JSON, invalid/expired credentials, and token revocation/rotation behavior.
 
+Security-sensitive API changes also require focused checks for generic account responses, per-IP and per-account rate-limit thresholds, replay/concurrency behavior, ownership swaps using another user's valid ID, cookie/CSRF behavior, and absence of secrets in responses or logs. Run `mix hex.audit` during release preparation and dependency changes; treat external WAF or mail-provider quotas as defense in depth rather than test substitutes.
+
 ## Cross-project acceptance
 
 For a changed contract, record all of the following in the handoff:

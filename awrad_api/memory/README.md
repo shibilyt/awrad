@@ -12,6 +12,7 @@ Awrad API is a Phoenix 1.8.5 application that serves the Awrad Android and iOS a
 | Adding a new LiveView page | [patterns/liveview.md](patterns/liveview.md), [patterns/router.md](patterns/router.md) |
 | Database schema change | [patterns/database.md](patterns/database.md) |
 | Writing a test | [patterns/testing.md](patterns/testing.md) |
+| Security invariants / endpoint review | [security.md](security.md) |
 | Auth (web or API) | [patterns/auth.md](patterns/auth.md), [features/auth/README.md](features/auth/README.md) |
 | Token design / refresh flow | [features/auth/token-design.md](features/auth/token-design.md) |
 | Understanding the router | [patterns/router.md](patterns/router.md) |
@@ -107,6 +108,8 @@ test/
 [features/auth/README.md](features/auth/README.md) — Authentication system: dual auth (web session + API tokens), user registration, login flows.
 
 ### cross-cutting/
+
+[security.md](security.md) — Security boundaries, authentication and abuse-control invariants, production proxy requirements, and the endpoint review checklist.
 
 | Doc | Description |
 |---|---|

@@ -12,6 +12,8 @@ Before changing API routes, JSON fields, token behavior, identifiers, or ownersh
 
 Phoenix session authentication and mobile JWT authentication are separate surfaces. Preserve the router pipeline boundary and do not expose Ecto schemas directly as accidental JSON contracts.
 
+Read [`memory/security.md`](memory/security.md) before adding or changing an Internet-facing route, authentication/recovery flow, user-owned query, external side effect, upload/import, or production proxy setting. Public auth actions must have repository-owned IP/account abuse limits and generic identity responses; derive ownership from the authenticated scope and set ownership fields server-side.
+
 This is a web application written using the Phoenix web framework.
 
 ## Project guidelines

@@ -18,6 +18,7 @@ This file stores durable repository facts and a concise append-only change log. 
 
 - Mobile registration is verification-first and creates a revocable device session only after email verification.
 - API access JWTs are bound to active device sessions; refresh rotation is transactional and detects replay.
+- API JSON and browser registration, password-login, magic-link, and password-reset routes have explicit repository-owned IP/account abuse limits; browser registration returns a generic response for existing and unused emails.
 - Forgot-password requests are implemented for both mobile clients and the API.
 - Authenticated logout is implemented by the API and both mobile clients.
 - Android credentials use an Android Keystore-backed AES-GCM store and refresh is serialized across concurrent failures.
@@ -31,6 +32,7 @@ This file stores durable repository facts and a concise append-only change log. 
 - The iOS client stores auth tokens in `UserDefaults`; treat security-storage changes as a deliberate migration, not a documentation-only cleanup.
 - Some API memory documents and Android plans are historical snapshots. Verify current routes and behavior in code before relying on them.
 - Full API tests require PostgreSQL. Android instrumentation requires an emulator/device. iOS UI/runtime validation requires an available simulator.
+- Production TLS correctness depends on origin isolation and trusted forwarding-header overwrite. Keep the load-balancer/origin ACL and proxy-header contract documented with deployment configuration.
 
 ## Maintenance rules
 
@@ -64,4 +66,11 @@ Use this format:
 - Area: Documentation
 - Change: Reduced root agent guidance to a compact map with hard invariants and added `docs/index.md` for progressive project and subsystem navigation.
 - Evidence: `AGENTS.md`, `docs/index.md`, `README.md`
+- Commit: uncommitted
+
+### 2026-07-13 — Added API security baseline
+
+- Area: API | Documentation
+- Change: Documented API trust boundaries, authentication/session invariants, public-auth abuse controls, authorization rules, production proxy requirements, endpoint review steps, and current security follow-up items; implemented shared browser-auth abuse limits and generic registration responses.
+- Evidence: `awrad_api/memory/security.md`, `awrad_api/lib/awrad_api_web/browser_auth_protection.ex`, browser-auth controller tests, `TESTING.md`
 - Commit: uncommitted

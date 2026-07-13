@@ -136,6 +136,27 @@ defmodule AwradApiWeb.UserSessionControllerTest do
       assert response =~ "Log in"
       assert response =~ "Invalid email or password"
     end
+
+    test "rate limits repeated password attempts for one account", %{conn: conn, user: user} do
+      user = set_password(user)
+
+      for _ <- 1..10 do
+        request_conn =
+          post(conn, ~p"/users/log-in?mode=password", %{
+            "user" => %{"email" => user.email, "password" => "invalid_password"}
+          })
+
+        assert html_response(request_conn, 200) =~ "Invalid email or password"
+      end
+
+      conn =
+        post(conn, ~p"/users/log-in?mode=password", %{
+          "user" => %{"email" => user.email, "password" => "invalid_password"}
+        })
+
+      assert response(conn, 429) == "Too many requests. Please try again later."
+      assert get_resp_header(conn, "retry-after") != []
+    end
   end
 
   describe "POST /users/log-in - magic link" do
@@ -147,6 +168,32 @@ defmodule AwradApiWeb.UserSessionControllerTest do
 
       assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "If your email is in our system"
       assert AwradApi.Repo.get_by!(Accounts.UserToken, user_id: user.id).context == "login"
+    end
+
+    test "rate limits repeated magic-link requests for one account", %{conn: conn, user: user} do
+      for _ <- 1..4 do
+        request_conn =
+          post(conn, ~p"/users/log-in", %{
+            "user" => %{"email" => user.email}
+          })
+
+        assert redirected_to(request_conn) == ~p"/users/log-in"
+      end
+
+      request_conn =
+        post(conn, ~p"/users/log-in", %{
+          "user" => %{"email" => String.upcase(user.email)}
+        })
+
+      assert redirected_to(request_conn) == ~p"/users/log-in"
+
+      conn =
+        post(conn, ~p"/users/log-in", %{
+          "user" => %{"email" => user.email}
+        })
+
+      assert response(conn, 429) == "Too many requests. Please try again later."
+      assert get_resp_header(conn, "retry-after") != []
     end
 
     test "logs the user in", %{conn: conn, user: user} do
