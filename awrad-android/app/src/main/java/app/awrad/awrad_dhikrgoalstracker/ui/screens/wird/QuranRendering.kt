@@ -288,6 +288,7 @@ internal fun SurahHeader(ref: QuranRef, fontScale: Float, modifier: Modifier = M
 internal fun QuranBodyText(
     arabic: String,
     fontScale: Float,
+    lineSpacing: Float = 1f,
     modifier: Modifier = Modifier,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
@@ -307,7 +308,7 @@ internal fun QuranBodyText(
         style = MaterialTheme.typography.headlineMedium.copy(
             fontFamily = NotoNaskhArabicFontFamily,
             fontSize = 26.sp * fontScale,
-            lineHeight = 54.sp * fontScale,
+            lineHeight = 54.sp * fontScale * lineSpacing,
         ),
         // Long passages justify like a mushaf page; short ones stay centered.
         textAlign = if (annotated.length > 120) TextAlign.Justify else TextAlign.Center,

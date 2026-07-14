@@ -84,8 +84,10 @@
 
     <!-- Goals screen -->
     <string name="goals_title">أهدافي</string>
-    <string name="goals_section_active">نشطة</string>
-    <string name="goals_section_completed">مكتملة</string>
+    <string name="goals_section_today">أهداف اليوم</string>
+    <string name="goals_section_upcoming">الأهداف القادمة</string>
+    <string name="goals_section_completed">الأهداف المكتملة</string>
+    <string name="goals_section_other">أهداف أخرى</string>
     <string name="goals_total_count">%d هدف</string>
     <string name="goals_empty_title">لا توجد أهداف بعد</string>
     <string name="goals_empty_hint">اضغط + لإنشاء هدفك الأول</string>
@@ -323,6 +325,16 @@
     <string name="count_over_target_warning">تم تجاوز الهدف. سيستمر العد.</string>
     <string name="count_hard_cap_reached">وصل هذا الهدف إلى حد العد.</string>
     <string name="counting_see_full">اقرأ المزيد</string>
+    <string name="counting_adjust_text_size">ضبط حجم النص</string>
+    <string name="counting_text_size_button">ع</string>
+    <string name="counting_text_size_title">حجم النص</string>
+    <string name="counting_text_size_description">اضبط حجم نص الذكر</string>
+    <string name="counting_decrease_text_size">تصغير النص</string>
+    <string name="counting_increase_text_size">تكبير النص</string>
+    <string name="counting_text_size_percentage">%1$d%%</string>
+    <string name="counting_line_spacing_title">التباعد</string>
+    <string name="counting_decrease_line_spacing">تقليل تباعد الأسطر</string>
+    <string name="counting_increase_line_spacing">زيادة تباعد الأسطر</string>
     <string name="counting_show_less">اقرأ أقل</string>
     <string name="counting_today_count">+%d اليوم</string>
     <string name="goal_reached_title">تم الوصول للهدف!</string>
@@ -957,12 +969,21 @@
     <string name="goal_summary_target_total">%1$s إجماليًا</string>
     <string name="goal_summary_target_period">%1$s لكل فترة</string>
     <string name="goal_summary_target_times">%1$s مرة</string>
+    <string name="goal_summary_target_times_daily">%1$s مرة يوميًا</string>
     <string name="goal_summary_target_per_prayer_count">%1$s لكل صلاة</string>
     <string name="goal_summary_target_per_prayer">أهداف لكل صلاة</string>
     <string name="goal_summary_minimum_count">الحد الأدنى %1$s</string>
+    <string name="goal_summary_minimum_count_daily">الحد الأدنى %1$s يوميًا</string>
     <string name="goal_summary_stretch_count">الحد الأدنى %1$s، الهدف %2$s</string>
+    <string name="goal_summary_stretch_count_daily">الحد الأدنى %1$s، الهدف %2$s يوميًا</string>
     <string name="goal_summary_exact_count">بالضبط %1$s</string>
+    <string name="goal_summary_exact_count_daily">بالضبط %1$s يوميًا</string>
     <string name="goal_summary_bounded_count">الحد الأدنى %1$s، الهدف %2$s، الحد الأقصى %3$s</string>
+    <string name="goal_summary_bounded_count_daily">الحد الأدنى %1$s، الهدف %2$s، الحد الأقصى %3$s يوميًا</string>
+    <string name="goal_summary_schedule_weekly">أسبوعيًا</string>
+    <string name="goal_summary_schedule_yearly_short">سنويًا</string>
+    <string name="goal_summary_schedule_season_short">موسمي</string>
+    <string name="goal_summary_schedule_dates_short">تواريخ محددة</string>
     <string name="goal_summary_schedule_daily">كل يوم</string>
     <string name="goal_summary_schedule_weekly_every">كل %1$s</string>
     <string name="goal_summary_schedule_no_weekdays">لم يتم اختيار أيام الأسبوع</string>

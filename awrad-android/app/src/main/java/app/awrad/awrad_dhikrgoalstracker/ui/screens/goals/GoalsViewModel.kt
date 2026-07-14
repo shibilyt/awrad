@@ -23,8 +23,10 @@ import java.time.LocalDate
 import javax.inject.Inject
 
 data class GoalsUiState(
-    val activeGoals: List<GoalDisplayItem> = emptyList(),
+    val todayGoals: List<GoalDisplayItem> = emptyList(),
+    val upcomingGoals: List<GoalDisplayItem> = emptyList(),
     val completedGoals: List<GoalDisplayItem> = emptyList(),
+    val otherGoals: List<GoalDisplayItem> = emptyList(),
     val isLoading: Boolean = true,
 )
 
@@ -38,6 +40,34 @@ data class GoalDisplayItem(
     /** Consecutive scheduled days meeting the streak threshold, ending today or yesterday. */
     val streakDays: Int = 0,
 )
+
+internal data class ActiveGoalSections(
+    val today: List<GoalDisplayItem>,
+    val upcoming: List<GoalDisplayItem>,
+    val other: List<GoalDisplayItem>,
+)
+
+internal fun categorizeActiveGoals(
+    goals: List<GoalDisplayItem>,
+    today: LocalDate,
+): ActiveGoalSections {
+    val (todayGoals, notToday) = goals.partition { item ->
+        GoalProgressCalculator.isDueToday(item.goal, today)
+    }
+    val (unfinishedTodayGoals, finishedTodayGoals) = todayGoals.partition { item ->
+        item.overallProgress < 1f
+    }
+    val (upcomingGoals, otherGoals) = notToday.partition { item ->
+        (1L..7L).any { daysAhead ->
+            GoalProgressCalculator.isDueToday(item.goal, today.plusDays(daysAhead))
+        }
+    }
+    return ActiveGoalSections(
+        today = unfinishedTodayGoals + finishedTodayGoals,
+        upcoming = upcomingGoals,
+        other = otherGoals,
+    )
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -55,32 +85,37 @@ class GoalsViewModel @Inject constructor(
             goalRepository.getCompletedGoals(),
             dhikrRepository.getAllDhikrs(),
             goalRepository.getDailyCountsByGoal(),
-        ) { active, completed, dhikrs, dailyCountsByGoal ->
+        ) { active, completedOrInactive, dhikrs, dailyCountsByGoal ->
             val dhikrMap = dhikrs.associateBy { it.id }
             val effectiveDate = today.toLocalDateOr(LocalDate.now())
+            fun displayItem(goal: Goal): GoalDisplayItem {
+                val dhikr = dhikrMap[goal.dhikrId]
+                val dailyCounts = dailyCountsByGoal[goal.id].orEmpty()
+                val progressSummary = goalProgressUseCase.summarize(goal, dailyCounts, effectiveDate)
+                return GoalDisplayItem(
+                    goal = goal,
+                    dhikrName = dhikr?.title.orEmpty().ifBlank { dhikr?.transliteration.orEmpty() },
+                    targetDisplay = progressSummary.targetDisplay,
+                    todayCount = progressSummary.progressCount,
+                    dailyTarget = progressSummary.targetCount,
+                    overallProgress = progressSummary.progress,
+                    streakDays = GoalProgressCalculator.calculateStreakWithCounts(
+                        dailyCounts = dailyCounts,
+                        today = effectiveDate,
+                        dailyTarget = GoalProgressCalculator.getTargetCount(goal),
+                        minimumStreakCount = goal.minimumStreakCount,
+                        goal = goal,
+                    ).currentStreak,
+                )
+            }
+
+            val activeSections = categorizeActiveGoals(active.map(::displayItem), effectiveDate)
+            val (completedGoals, inactiveGoals) = completedOrInactive.partition { it.completedAt != null }
 
             GoalsUiState(
-                activeGoals = active.map { goal ->
-                    val dhikr = dhikrMap[goal.dhikrId]
-                    val dailyCounts = dailyCountsByGoal[goal.id].orEmpty()
-                    val progressSummary = goalProgressUseCase.summarize(goal, dailyCounts, effectiveDate)
-                    GoalDisplayItem(
-                        goal = goal,
-                        dhikrName = dhikr?.title.orEmpty().ifBlank { dhikr?.transliteration.orEmpty() },
-                        targetDisplay = progressSummary.targetDisplay,
-                        todayCount = progressSummary.progressCount,
-                        dailyTarget = progressSummary.targetCount,
-                        overallProgress = progressSummary.progress,
-                        streakDays = GoalProgressCalculator.calculateStreakWithCounts(
-                            dailyCounts = dailyCounts,
-                            today = effectiveDate,
-                            dailyTarget = GoalProgressCalculator.getTargetCount(goal),
-                            minimumStreakCount = goal.minimumStreakCount,
-                            goal = goal,
-                        ).currentStreak,
-                    )
-                },
-                completedGoals = completed.map { goal ->
+                todayGoals = activeSections.today,
+                upcomingGoals = activeSections.upcoming,
+                completedGoals = completedGoals.map { goal ->
                     val dhikr = dhikrMap[goal.dhikrId]
                     GoalDisplayItem(
                         goal = goal,
@@ -89,6 +124,7 @@ class GoalsViewModel @Inject constructor(
                         overallProgress = 1f,
                     )
                 },
+                otherGoals = activeSections.other + inactiveGoals.map(::displayItem),
                 isLoading = false,
             )
         }

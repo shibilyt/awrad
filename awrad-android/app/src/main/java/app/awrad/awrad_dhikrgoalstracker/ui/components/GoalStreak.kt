@@ -214,20 +214,69 @@ fun DayProgressRing(
     ringColor: Color,
     trackColor: Color,
     textColor: Color,
+    minimumTargetProgress: Float? = null,
+    minimumTargetColor: Color = ringColor,
     modifier: Modifier = Modifier,
     size: Dp = 54.dp,
     strokeWidth: Dp = 5.dp,
 ) {
     val clamped = progress.coerceIn(0f, 1f)
+    val minimumTarget = minimumTargetProgress?.coerceIn(0f, 1f)
     Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(
-            progress = { clamped },
-            modifier = Modifier.fillMaxSize(),
-            color = ringColor,
-            trackColor = trackColor,
-            strokeWidth = strokeWidth,
-            strokeCap = StrokeCap.Round,
-        )
+        if (minimumTarget != null && minimumTarget > 0f) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val strokePx = strokeWidth.toPx()
+                val stroke = Stroke(width = strokePx, cap = StrokeCap.Round)
+                val inset = strokePx / 2f
+                val arcSize = Size(this.size.width - strokePx, this.size.height - strokePx)
+                val topLeft = Offset(inset, inset)
+
+                drawArc(
+                    color = trackColor,
+                    startAngle = -90f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    topLeft = topLeft,
+                    size = arcSize,
+                    style = stroke,
+                )
+
+                val minimumAchieved = minOf(clamped, minimumTarget)
+                if (minimumAchieved > 0f) {
+                    drawArc(
+                        color = minimumTargetColor,
+                        startAngle = -90f,
+                        sweepAngle = 360f * minimumAchieved,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = stroke,
+                    )
+                }
+
+                val progressBeyondMinimum = (clamped - minimumTarget).coerceAtLeast(0f)
+                if (progressBeyondMinimum > 0f) {
+                    drawArc(
+                        color = ringColor,
+                        startAngle = -90f + (360f * minimumTarget),
+                        sweepAngle = 360f * progressBeyondMinimum,
+                        useCenter = false,
+                        topLeft = topLeft,
+                        size = arcSize,
+                        style = stroke,
+                    )
+                }
+            }
+        } else {
+            CircularProgressIndicator(
+                progress = { clamped },
+                modifier = Modifier.fillMaxSize(),
+                color = ringColor,
+                trackColor = trackColor,
+                strokeWidth = strokeWidth,
+                strokeCap = StrokeCap.Round,
+            )
+        }
         if (clamped >= 1f) {
             Icon(
                 imageVector = Icons.Filled.Check,
@@ -236,7 +285,7 @@ fun DayProgressRing(
                 modifier = Modifier.size(size * 0.42f),
             )
         } else {
-            val label = remember(count) { compactRingCount(count) }
+            val label = remember(count) { compactGoalCount(count) }
             Text(
                 text = label,
                 style = if (label.length <= 3) {
@@ -253,11 +302,11 @@ fun DayProgressRing(
 }
 
 /**
- * Formats a ring count so it never overflows the ring's inner space: exact up to 5 digits, then
+ * Formats a goal count so it stays compact in constrained UI: exact through 100,000, then
  * locale-aware compact notation ("125K", "1.2M"; Arabic gets its own abbreviation and digits).
  */
-private fun compactRingCount(count: Long): String {
-    if (count < 100_000) return count.toString()
+internal fun compactGoalCount(count: Long): String {
+    if (count <= 100_000) return count.toString()
     val format = CompactDecimalFormat.getInstance(
         Locale.getDefault(),
         CompactDecimalFormat.CompactStyle.SHORT,

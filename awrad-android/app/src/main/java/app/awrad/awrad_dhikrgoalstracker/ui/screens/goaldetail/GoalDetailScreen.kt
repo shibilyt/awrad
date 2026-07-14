@@ -911,6 +911,7 @@ private fun countRuleSummary(goal: Goal): String {
         target = target,
         maximum = goal.maximumCount,
         capBehavior = goal.capBehavior,
+        daily = goal.recurrence.frequency == RecurrenceFrequency.DAILY,
         fallbackNoTarget = stringResource(R.string.goal_summary_no_target),
     )
 }
@@ -931,17 +932,36 @@ private fun countRuleSummary(
     target: Int?,
     maximum: Int?,
     capBehavior: CountCapBehavior,
+    daily: Boolean = false,
     fallbackNoTarget: String,
 ): String =
     when {
         target != null && maximum != null && target == maximum && capBehavior == CountCapBehavior.BlockAtMaximum ->
-            stringResource(R.string.goal_summary_exact_count, target)
+            stringResource(
+                if (daily) R.string.goal_summary_exact_count_daily else R.string.goal_summary_exact_count,
+                target,
+            )
         minimum != null && target != null && maximum != null ->
-            stringResource(R.string.goal_summary_bounded_count, minimum, target, maximum)
+            stringResource(
+                if (daily) R.string.goal_summary_bounded_count_daily else R.string.goal_summary_bounded_count,
+                minimum,
+                target,
+                maximum,
+            )
         minimum != null && target != null ->
-            stringResource(R.string.goal_summary_stretch_count, minimum, target)
-        minimum != null -> stringResource(R.string.goal_summary_minimum_count, minimum)
-        target != null -> stringResource(R.string.goal_summary_target_times, target)
+            stringResource(
+                if (daily) R.string.goal_summary_stretch_count_daily else R.string.goal_summary_stretch_count,
+                minimum,
+                target,
+            )
+        minimum != null -> stringResource(
+            if (daily) R.string.goal_summary_minimum_count_daily else R.string.goal_summary_minimum_count,
+            minimum,
+        )
+        target != null -> stringResource(
+            if (daily) R.string.goal_summary_target_times_daily else R.string.goal_summary_target_times,
+            target,
+        )
         maximum != null -> stringResource(R.string.goal_details_maximum_count, maximum)
         else -> fallbackNoTarget
     }

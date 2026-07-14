@@ -76,8 +76,10 @@
 
     <!-- Goals screen -->
     <string name="goals_title">എന്റെ ലക്ഷ്യങ്ങൾ</string>
-    <string name="goals_section_active">സജീവം</string>
-    <string name="goals_section_completed">പൂർത്തിയായത്</string>
+    <string name="goals_section_today">ഇന്നത്തെ ലക്ഷ്യങ്ങൾ</string>
+    <string name="goals_section_upcoming">വരാനിരിക്കുന്ന ലക്ഷ്യങ്ങൾ</string>
+    <string name="goals_section_completed">പൂർത്തിയാക്കിയ ലക്ഷ്യങ്ങൾ</string>
+    <string name="goals_section_other">മറ്റ് ലക്ഷ്യങ്ങൾ</string>
     <string name="goals_total_count">%d ലക്ഷ്യങ്ങൾ</string>
     <string name="goals_empty_title">ഇതുവരെ ലക്ഷ്യങ്ങളൊന്നുമില്ല</string>
     <string name="goals_empty_hint">ആദ്യ ദിക്‌ർ ലക്ഷ്യം ഉണ്ടാക്കാൻ + അമർത്തുക</string>
@@ -199,6 +201,16 @@
     <string name="count_over_target_warning">ലക്ഷ്യം മറികടന്നു. എണ്ണൽ തുടരും.</string>
     <string name="count_hard_cap_reached">ഈ ലക്ഷ്യം അതിന്റെ എണ്ണൽ പരിധിയിലെത്തി.</string>
     <string name="counting_see_full">പൂർണ്ണം കാണുക</string>
+    <string name="counting_adjust_text_size">ടെക്സ്റ്റ് വലുപ്പം ക്രമീകരിക്കുക</string>
+    <string name="counting_text_size_button">Aa</string>
+    <string name="counting_text_size_title">ടെക്സ്റ്റ് വലുപ്പം</string>
+    <string name="counting_text_size_description">ദിക്ർ ടെക്സ്റ്റിന്റെ വലുപ്പം ക്രമീകരിക്കുക</string>
+    <string name="counting_decrease_text_size">ടെക്സ്റ്റ് ചെറുതാക്കുക</string>
+    <string name="counting_increase_text_size">ടെക്സ്റ്റ് വലുതാക്കുക</string>
+    <string name="counting_text_size_percentage">%1$d%%</string>
+    <string name="counting_line_spacing_title">വരി ഇടവിടം</string>
+    <string name="counting_decrease_line_spacing">വരി ഇടവിടം കുറയ്ക്കുക</string>
+    <string name="counting_increase_line_spacing">വരി ഇടവിടം കൂട്ടുക</string>
     <string name="counting_show_less">കുറച്ച് കാണുക</string>
     <string name="counting_today_count">+%d ഇന്ന്</string>
     <string name="goal_reached_title">ലക്ഷ്യം നേടി!</string>
@@ -607,12 +619,21 @@
     <string name="goal_summary_target_total">%1$s മൊത്തം</string>
     <string name="goal_summary_target_period">ഓരോ കാലയളവിലും %1$s</string>
     <string name="goal_summary_target_times">%1$s തവണ</string>
+    <string name="goal_summary_target_times_daily">%1$s തവണ ദിവസവും</string>
     <string name="goal_summary_target_per_prayer_count">ഓരോ നമസ്കാരത്തിനും %1$s</string>
     <string name="goal_summary_target_per_prayer">ഓരോ നമസ്കാരത്തിനുമുള്ള ലക്ഷ്യങ്ങൾ</string>
     <string name="goal_summary_minimum_count">കുറഞ്ഞത് %1$s</string>
+    <string name="goal_summary_minimum_count_daily">കുറഞ്ഞത് %1$s ദിവസവും</string>
     <string name="goal_summary_stretch_count">കുറഞ്ഞത് %1$s, ലക്ഷ്യം %2$s</string>
+    <string name="goal_summary_stretch_count_daily">കുറഞ്ഞത് %1$s, ലക്ഷ്യം %2$s ദിവസവും</string>
     <string name="goal_summary_exact_count">കൃത്യം %1$s</string>
+    <string name="goal_summary_exact_count_daily">കൃത്യം %1$s ദിവസവും</string>
     <string name="goal_summary_bounded_count">കുറഞ്ഞത് %1$s, ലക്ഷ്യം %2$s, പരമാവധി %3$s</string>
+    <string name="goal_summary_bounded_count_daily">കുറഞ്ഞത് %1$s, ലക്ഷ്യം %2$s, പരമാവധി %3$s ദിവസവും</string>
+    <string name="goal_summary_schedule_weekly">ആഴ്ചതോറും</string>
+    <string name="goal_summary_schedule_yearly_short">വർഷംതോറും</string>
+    <string name="goal_summary_schedule_season_short">കാലാനുസൃതം</string>
+    <string name="goal_summary_schedule_dates_short">നിശ്ചിത തീയതികൾ</string>
     <string name="goal_summary_schedule_daily">എല്ലാ ദിവസവും</string>
     <string name="goal_summary_schedule_no_weekdays">ആഴ്ചദിവസങ്ങൾ തിരഞ്ഞെടുത്തിട്ടില്ല</string>
     <string name="goal_summary_schedule_monthly">%1$s മാസത്തിൽ ഒരിക്കൽ</string>

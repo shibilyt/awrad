@@ -86,25 +86,41 @@ fun goalSentence(dhikrName: String, draft: GoalDraft?): String {
 fun targetSummary(draft: GoalDraft): String {
     val policy = GoalDraftMapper.targetPolicyFor(draft)
     if (policy == TargetPolicy.NONE) return stringResource(R.string.goal_summary_no_target)
+    val isDaily = draft.frequencyDraft is FrequencyDraft.Daily
     when (draft.countRule.mode) {
         CountRuleMode.Minimum -> {
             val minimum = draft.countRule.minimumCount.ifBlank { "0" }
-            return stringResource(R.string.goal_summary_minimum_count, minimum)
+            return stringResource(
+                if (isDaily) R.string.goal_summary_minimum_count_daily else R.string.goal_summary_minimum_count,
+                minimum,
+            )
         }
         CountRuleMode.Stretch -> {
             val minimum = draft.countRule.minimumCount.ifBlank { "0" }
             val target = draft.countRule.targetCount.ifBlank { "0" }
-            return stringResource(R.string.goal_summary_stretch_count, minimum, target)
+            return stringResource(
+                if (isDaily) R.string.goal_summary_stretch_count_daily else R.string.goal_summary_stretch_count,
+                minimum,
+                target,
+            )
         }
         CountRuleMode.Exact -> {
             val count = draft.countRule.maximumCount.ifBlank { "0" }
-            return stringResource(R.string.goal_summary_exact_count, count)
+            return stringResource(
+                if (isDaily) R.string.goal_summary_exact_count_daily else R.string.goal_summary_exact_count,
+                count,
+            )
         }
         CountRuleMode.Bounded -> {
             val minimum = draft.countRule.minimumCount.ifBlank { "0" }
             val target = draft.countRule.targetCount.ifBlank { "0" }
             val maximum = draft.countRule.maximumCount.ifBlank { "0" }
-            return stringResource(R.string.goal_summary_bounded_count, minimum, target, maximum)
+            return stringResource(
+                if (isDaily) R.string.goal_summary_bounded_count_daily else R.string.goal_summary_bounded_count,
+                minimum,
+                target,
+                maximum,
+            )
         }
         CountRuleMode.Tracker,
         CountRuleMode.Target -> Unit
@@ -116,7 +132,10 @@ fun targetSummary(draft: GoalDraft): String {
             when (policy) {
                 TargetPolicy.CUMULATIVE_TOTAL -> stringResource(R.string.goal_summary_target_total, count)
                 TargetPolicy.PERIOD_TOTAL -> stringResource(R.string.goal_summary_target_period, count)
-                TargetPolicy.PER_DUE_DATE -> stringResource(R.string.goal_summary_target_times, count)
+                TargetPolicy.PER_DUE_DATE -> stringResource(
+                    if (isDaily) R.string.goal_summary_target_times_daily else R.string.goal_summary_target_times,
+                    count,
+                )
                 TargetPolicy.NONE -> stringResource(R.string.goal_summary_no_target)
             }
         }
@@ -124,7 +143,10 @@ fun targetSummary(draft: GoalDraft): String {
             val singlePrayer = target.selectedPrayers.singleOrNull()
             if (singlePrayer != null) {
                 // Only one prayer — "per prayer" is meaningless, so read it as a plain count.
-                stringResource(R.string.goal_summary_target_times, target.countFor(singlePrayer).ifBlank { "0" })
+                stringResource(
+                    if (isDaily) R.string.goal_summary_target_times_daily else R.string.goal_summary_target_times,
+                    target.countFor(singlePrayer).ifBlank { "0" },
+                )
             } else {
                 val counts = target.selectedPrayers.map { target.countFor(it) }.filter { it.isNotBlank() }.distinct()
                 if (counts.size == 1) {

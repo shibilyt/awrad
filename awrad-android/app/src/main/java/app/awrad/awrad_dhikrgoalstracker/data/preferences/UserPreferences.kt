@@ -40,6 +40,8 @@ class UserPreferences @Inject constructor(
         private val KEY_CALENDAR_SYSTEM = stringPreferencesKey("calendar_system")
         private val KEY_PRAYER_SLOT_DEFAULT_LEAD_MINUTES = intPreferencesKey("prayer_slot_default_lead_minutes")
         private val KEY_READER_FONT_SCALE = floatPreferencesKey("wird_reader_font_scale")
+        private val KEY_COUNTING_DHIKR_TEXT_SCALE = floatPreferencesKey("counting_dhikr_text_scale")
+        private val KEY_COUNTING_DHIKR_LINE_SPACING = floatPreferencesKey("counting_dhikr_line_spacing")
         private val KEY_EARLY_SLOT_CONFIRMATIONS = stringSetPreferencesKey("early_slot_confirmations")
         private val KEY_ENDED_SLOT_CONFIRMATIONS = stringSetPreferencesKey("ended_slot_confirmations")
     }
@@ -64,6 +66,8 @@ class UserPreferences @Inject constructor(
     val calendarSystem: Flow<String> = dataStore.data.map { it[KEY_CALENDAR_SYSTEM] ?: "GREGORIAN" }
     val prayerSlotDefaultLeadMinutes: Flow<Int> = dataStore.data.map { it[KEY_PRAYER_SLOT_DEFAULT_LEAD_MINUTES] ?: 30 }
     val readerFontScale: Flow<Float> = dataStore.data.map { it[KEY_READER_FONT_SCALE] ?: 1f }
+    val countingDhikrTextScale: Flow<Float> = dataStore.data.map { it[KEY_COUNTING_DHIKR_TEXT_SCALE] ?: 1f }
+    val countingDhikrLineSpacing: Flow<Float> = dataStore.data.map { it[KEY_COUNTING_DHIKR_LINE_SPACING] ?: 1f }
 
     suspend fun setUserName(name: String) {
         dataStore.edit { it[KEY_USER_NAME] = name }
@@ -145,6 +149,14 @@ class UserPreferences @Inject constructor(
 
     suspend fun setReaderFontScale(scale: Float) {
         dataStore.edit { it[KEY_READER_FONT_SCALE] = scale }
+    }
+
+    suspend fun setCountingDhikrTextScale(scale: Float) {
+        dataStore.edit { it[KEY_COUNTING_DHIKR_TEXT_SCALE] = scale }
+    }
+
+    suspend fun setCountingDhikrLineSpacing(spacing: Float) {
+        dataStore.edit { it[KEY_COUNTING_DHIKR_LINE_SPACING] = spacing }
     }
 
     suspend fun hasEarlySlotConfirmation(goalId: AwradId, slotId: AwradId, date: String): Boolean {

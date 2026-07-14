@@ -97,6 +97,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.text.font.FontWeight
@@ -148,6 +150,7 @@ fun CountingScreen(
     var showHistory by remember { mutableStateOf(false) }
     var showSlots by remember { mutableStateOf(false) }
     var showSpeedSheet by remember { mutableStateOf(false) }
+    var showTextSizeSheet by remember { mutableStateOf(false) }
     var showFullDhikr by remember { mutableStateOf(false) }
     var showSessionSheet by remember { mutableStateOf(false) }
     var showEstimates by remember { mutableStateOf(false) }
@@ -169,6 +172,8 @@ fun CountingScreen(
     val vibrateOnCount by viewModel.vibrateOnCount.collectAsStateWithLifecycle()
     val keepScreenOn by viewModel.keepScreenOn.collectAsStateWithLifecycle()
     val soundOnCount by viewModel.soundOnCount.collectAsStateWithLifecycle()
+    val dhikrTextScale by viewModel.countingDhikrTextScale.collectAsStateWithLifecycle()
+    val dhikrLineSpacing by viewModel.countingDhikrLineSpacing.collectAsStateWithLifecycle()
 
     val haptic = LocalHapticFeedback.current
     val view = LocalView.current
@@ -518,16 +523,20 @@ fun CountingScreen(
                 QuranDhikrPreviewCard(
                     ref = quranRef,
                     arabic = countingState.dhikrArabic,
+                    textScale = dhikrTextScale,
                     isOverflowing = isArabicOverflowing,
                     onTextOverflowChanged = { isArabicOverflowing = it },
                     onShowFullDhikr = { showFullDhikr = true },
+                    onAdjustTextSize = { showTextSizeSheet = true },
                 )
             } else {
                 DhikrPreviewCard(
                     arabic = countingState.dhikrArabic,
+                    textScale = dhikrTextScale,
                     isOverflowing = isArabicOverflowing,
                     onTextOverflowChanged = { isArabicOverflowing = it },
                     onShowFullDhikr = { showFullDhikr = true },
+                    onAdjustTextSize = { showTextSizeSheet = true },
                 )
             }
 
@@ -737,6 +746,16 @@ fun CountingScreen(
         )
     }
 
+    if (showTextSizeSheet) {
+        DhikrTextSizeBottomSheet(
+            arabic = countingState.dhikrArabic,
+            textScale = dhikrTextScale,
+            onDecrease = viewModel::decreaseDhikrTextScale,
+            onIncrease = viewModel::increaseDhikrTextScale,
+            onDismiss = { showTextSizeSheet = false },
+        )
+    }
+
     if (showHistory) {
         val dailyCounts by viewModel.dailyCounts.collectAsStateWithLifecycle()
         HistoryBottomSheet(
@@ -772,8 +791,14 @@ fun CountingScreen(
         DhikrFullTextBottomSheet(
             arabic = countingState.dhikrArabic,
             quranRef = uiState.quranRef,
+            textScale = dhikrTextScale,
+            lineSpacing = dhikrLineSpacing,
             isAudioMode = countingState.isAudioMode,
             canManualCount = uiState.canManualCount,
+            onDecreaseTextSize = viewModel::decreaseDhikrTextScale,
+            onIncreaseTextSize = viewModel::increaseDhikrTextScale,
+            onDecreaseLineSpacing = viewModel::decreaseDhikrLineSpacing,
+            onIncreaseLineSpacing = viewModel::increaseDhikrLineSpacing,
             onCount = { viewModel.onManualTap() },
             onDismiss = { showFullDhikr = false },
         )
@@ -915,6 +940,22 @@ private fun CountingHeroPanel(
     canCount: Boolean,
 ) {
     val totalSessionSeconds = uiState.sessionTargetValue * 60L
+    val activeSlotPolicy = uiState.slots.firstOrNull { it.id == countingState.activeSlotId }
+    val minimumCount = if (activeSlotPolicy != null) activeSlotPolicy.minimumCount else uiState.minimumCount
+    val maximumCount = if (activeSlotPolicy != null) activeSlotPolicy.maximumCount else countingState.maximumCount
+    val ringUpperBound = countingRingUpperBound(
+        targetCount = countingState.targetCount,
+        maximumCount = maximumCount,
+    )
+    val dualRingProgress = if (
+        !uiState.hasSessionTarget &&
+        minimumCount != null && minimumCount > 0 &&
+        ringUpperBound != null && ringUpperBound >= minimumCount
+    ) {
+        countingRingProgress(countingState.currentCount, minimumCount, ringUpperBound)
+    } else {
+        null
+    }
     val progress = when {
         uiState.hasSessionTarget && uiState.sessionTargetType == SessionTargetType.TIMER ->
             if (totalSessionSeconds > 0) {
@@ -932,6 +973,16 @@ private fun CountingHeroPanel(
         animationSpec = tween(durationMillis = 260),
         label = "countingHeroProgress",
     )
+    val animatedMinimumProgress by animateFloatAsState(
+        targetValue = dualRingProgress?.minimum ?: 0f,
+        animationSpec = tween(durationMillis = 260),
+        label = "countingHeroMinimumProgress",
+    )
+    val animatedMaximumProgress by animateFloatAsState(
+        targetValue = dualRingProgress?.maximum ?: 0f,
+        animationSpec = tween(durationMillis = 260),
+        label = "countingHeroMaximumProgress",
+    )
     val primaryCount = when {
         uiState.hasSessionTarget && uiState.sessionTargetType == SessionTargetType.TIMER ->
             formatElapsed(uiState.sessionElapsedSeconds)
@@ -942,6 +993,7 @@ private fun CountingHeroPanel(
         uiState.hasSessionTarget && uiState.sessionTargetType == SessionTargetType.TIMER ->
             formatElapsed(totalSessionSeconds)
         uiState.hasSessionTarget -> "%,d".format(uiState.sessionTargetValue)
+        dualRingProgress != null -> "%,d".format(ringUpperBound)
         countingState.targetCount > 0 -> "%,d".format(countingState.targetCount)
         else -> null
     }
@@ -980,19 +1032,26 @@ private fun CountingHeroPanel(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(18.dp)
+                    .padding(if (dualRingProgress != null) 28.dp else 18.dp)
                     .background(
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f),
                         shape = CircleShape,
                     ),
             )
-            CircularProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier.fillMaxSize(),
-                color = CountRingAccent,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                strokeWidth = 10.dp,
-            )
+            if (dualRingProgress != null) {
+                DualCountingProgressRings(
+                    minimumProgress = animatedMinimumProgress,
+                    maximumProgress = animatedMaximumProgress,
+                )
+            } else {
+                CircularProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier = Modifier.fillMaxSize(),
+                    color = CountRingAccent,
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    strokeWidth = 10.dp,
+                )
+            }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = primaryCount,
@@ -1048,11 +1107,34 @@ private fun CountingHeroPanel(
                     }
                 }
             }
-            uiState.minimumCount != null -> {
-                HeroMetricChip(label = stringResource(R.string.counting_min_for_streak, uiState.minimumCount))
+            minimumCount != null -> {
+                HeroMetricChip(label = stringResource(R.string.counting_min_for_streak, minimumCount))
             }
         }
     }
+}
+
+@Composable
+private fun DualCountingProgressRings(
+    minimumProgress: Float,
+    maximumProgress: Float,
+) {
+    CircularProgressIndicator(
+        progress = { maximumProgress },
+        modifier = Modifier.fillMaxSize(),
+        color = CountRingAccent,
+        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        strokeWidth = 9.dp,
+    )
+    CircularProgressIndicator(
+        progress = { minimumProgress },
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(15.dp),
+        color = MaterialTheme.colorScheme.primary,
+        trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
+        strokeWidth = 9.dp,
+    )
 }
 
 @Composable
@@ -1067,6 +1149,22 @@ private fun SlotProgressCard(
     canCount: Boolean,
 ) {
     val totalSessionSeconds = uiState.sessionTargetValue * 60L
+    val activeSlotPolicy = uiState.slots.firstOrNull { it.id == countingState.activeSlotId }
+    val minimumCount = if (activeSlotPolicy != null) activeSlotPolicy.minimumCount else uiState.minimumCount
+    val maximumCount = if (activeSlotPolicy != null) activeSlotPolicy.maximumCount else countingState.maximumCount
+    val ringUpperBound = countingRingUpperBound(
+        targetCount = countingState.targetCount,
+        maximumCount = maximumCount,
+    )
+    val dualRingProgress = if (
+        !uiState.hasSessionTarget &&
+        minimumCount != null && minimumCount > 0 &&
+        ringUpperBound != null && ringUpperBound >= minimumCount
+    ) {
+        countingRingProgress(countingState.currentCount, minimumCount, ringUpperBound)
+    } else {
+        null
+    }
     val progress = when {
         uiState.hasSessionTarget && uiState.sessionTargetType == SessionTargetType.TIMER ->
             if (totalSessionSeconds > 0) {
@@ -1084,6 +1182,16 @@ private fun SlotProgressCard(
         animationSpec = tween(durationMillis = 260),
         label = "slotProgressCardProgress",
     )
+    val animatedMinimumProgress by animateFloatAsState(
+        targetValue = dualRingProgress?.minimum ?: 0f,
+        animationSpec = tween(durationMillis = 260),
+        label = "slotProgressCardMinimumProgress",
+    )
+    val animatedMaximumProgress by animateFloatAsState(
+        targetValue = dualRingProgress?.maximum ?: 0f,
+        animationSpec = tween(durationMillis = 260),
+        label = "slotProgressCardMaximumProgress",
+    )
     val primaryCount = when {
         uiState.hasSessionTarget && uiState.sessionTargetType == SessionTargetType.TIMER ->
             formatElapsed(uiState.sessionElapsedSeconds)
@@ -1094,6 +1202,7 @@ private fun SlotProgressCard(
         uiState.hasSessionTarget && uiState.sessionTargetType == SessionTargetType.TIMER ->
             formatElapsed(totalSessionSeconds)
         uiState.hasSessionTarget -> "%,d".format(uiState.sessionTargetValue)
+        dualRingProgress != null -> "%,d".format(ringUpperBound)
         countingState.targetCount > 0 -> "%,d".format(countingState.targetCount)
         else -> null
     }
@@ -1143,19 +1252,26 @@ private fun SlotProgressCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(18.dp)
+                    .padding(if (dualRingProgress != null) 28.dp else 18.dp)
                     .background(
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f),
                         shape = CircleShape,
                     ),
             )
-            CircularProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier.fillMaxSize(),
-                color = CountRingAccent,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                strokeWidth = 10.dp,
-            )
+            if (dualRingProgress != null) {
+                DualCountingProgressRings(
+                    minimumProgress = animatedMinimumProgress,
+                    maximumProgress = animatedMaximumProgress,
+                )
+            } else {
+                CircularProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier = Modifier.fillMaxSize(),
+                    color = CountRingAccent,
+                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    strokeWidth = 10.dp,
+                )
+            }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = primaryCount,
@@ -1211,8 +1327,8 @@ private fun SlotProgressCard(
                     }
                 }
             }
-            uiState.minimumCount != null -> {
-                HeroMetricChip(label = stringResource(R.string.counting_min_for_streak, uiState.minimumCount))
+            minimumCount != null -> {
+                HeroMetricChip(label = stringResource(R.string.counting_min_for_streak, minimumCount))
             }
         }
     }
@@ -1248,9 +1364,11 @@ internal fun shouldRenderFullQuranInline(ref: QuranRef, arabic: String): Boolean
 private fun QuranDhikrPreviewCard(
     ref: QuranRef,
     arabic: String,
+    textScale: Float,
     isOverflowing: Boolean,
     onTextOverflowChanged: (Boolean) -> Unit,
     onShowFullDhikr: () -> Unit,
+    onAdjustTextSize: () -> Unit,
 ) {
     val (bismillah, body) = remember(arabic) { splitBismillah(arabic) }
     val renderFully = remember(ref, arabic) { shouldRenderFullQuranInline(ref, arabic) }
@@ -1266,7 +1384,7 @@ private fun QuranDhikrPreviewCard(
                 .padding(horizontal = 18.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            SurahHeader(ref = ref, fontScale = 0.9f)
+            SurahHeader(ref = ref, fontScale = 0.9f * textScale)
             bismillah?.let {
                 Spacer(Modifier.height(10.dp))
                 Text(
@@ -1274,8 +1392,8 @@ private fun QuranDhikrPreviewCard(
                     color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleLarge.copy(
                         fontFamily = NotoNaskhArabicFontFamily,
-                        fontSize = 21.sp,
-                        lineHeight = 36.sp,
+                        fontSize = 21.sp * textScale,
+                        lineHeight = 36.sp * textScale,
                     ),
                     textAlign = TextAlign.Center,
                 )
@@ -1283,16 +1401,22 @@ private fun QuranDhikrPreviewCard(
             Spacer(Modifier.height(8.dp))
             QuranBodyText(
                 arabic = body,
-                fontScale = 0.72f,
+                fontScale = 0.72f * textScale,
                 maxLines = if (renderFully) Int.MAX_VALUE else 4,
                 overflow = if (renderFully) TextOverflow.Clip else TextOverflow.Ellipsis,
                 onTextLayout = { onTextOverflowChanged(!renderFully && it.hasVisualOverflow) },
             )
-            if (isOverflowing) {
-                Spacer(Modifier.height(8.dp))
-                TextButton(onClick = onShowFullDhikr) {
-                    Text(stringResource(R.string.counting_read_full_quran))
+            Spacer(Modifier.height(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (isOverflowing) {
+                    TextButton(onClick = onShowFullDhikr) {
+                        Text(stringResource(R.string.counting_read_full_quran))
+                    }
                 }
+                DhikrTextSizeButton(onClick = onAdjustTextSize)
             }
         }
     }
@@ -1301,9 +1425,11 @@ private fun QuranDhikrPreviewCard(
 @Composable
 private fun DhikrPreviewCard(
     arabic: String,
+    textScale: Float,
     isOverflowing: Boolean,
     onTextOverflowChanged: (Boolean) -> Unit,
     onShowFullDhikr: () -> Unit,
+    onAdjustTextSize: () -> Unit,
 ) {
     val cardShape = RoundedCornerShape(18.dp)
     Card(
@@ -1333,24 +1459,68 @@ private fun DhikrPreviewCard(
                 text = arabic,
                 style = MaterialTheme.typography.titleLarge.copy(
                     fontFamily = NotoNaskhArabicFontFamily,
+                    fontSize = MaterialTheme.typography.titleLarge.fontSize * textScale,
                 ),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
-                lineHeight = 34.sp,
+                lineHeight = 34.sp * textScale,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 onTextLayout = { onTextOverflowChanged(it.hasVisualOverflow) },
                 modifier = Modifier.fillMaxWidth(),
             )
-            if (isOverflowing) {
-                Spacer(modifier = Modifier.height(8.dp))
-                TextButton(onClick = onShowFullDhikr) {
-                    Text(
-                        text = stringResource(R.string.counting_see_full),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.secondary,
-                    )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (isOverflowing) {
+                    TextButton(onClick = onShowFullDhikr) {
+                        Text(
+                            text = stringResource(R.string.counting_see_full),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
+                    }
                 }
+                DhikrTextSizeButton(onClick = onAdjustTextSize)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DhikrTextSizeButton(
+    onClick: () -> Unit,
+    expanded: Boolean = false,
+) {
+    val accessibilityLabel = stringResource(R.string.counting_adjust_text_size)
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier
+            .size(48.dp)
+            .clearAndSetSemantics { contentDescription = accessibilityLabel },
+    ) {
+        Surface(
+            modifier = Modifier.size(32.dp),
+            shape = RoundedCornerShape(10.dp),
+            color = if (expanded) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.primaryContainer
+            },
+            contentColor = if (expanded) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            },
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(
+                    text = stringResource(R.string.counting_text_size_button),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         }
     }
@@ -1880,20 +2050,173 @@ private fun SessionTargetBottomSheet(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+private fun DhikrTextSizeBottomSheet(
+    arabic: String,
+    textScale: Float,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val minimumScale = COUNTING_DHIKR_TEXT_SCALES.first()
+    val maximumScale = COUNTING_DHIKR_TEXT_SCALES.last()
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.counting_text_size_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResource(R.string.counting_text_size_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+            ) {
+                Text(
+                    text = arabic,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontFamily = NotoNaskhArabicFontFamily,
+                        fontSize = MaterialTheme.typography.titleLarge.fontSize * textScale,
+                    ),
+                    lineHeight = 34.sp * textScale,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                OutlinedIconButton(
+                    onClick = onDecrease,
+                    enabled = textScale > minimumScale + 0.01f,
+                    modifier = Modifier.size(56.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Remove,
+                        contentDescription = stringResource(R.string.counting_decrease_text_size),
+                    )
+                }
+                Text(
+                    text = stringResource(
+                        R.string.counting_text_size_percentage,
+                        (textScale * 100).roundToInt(),
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                OutlinedIconButton(
+                    onClick = onIncrease,
+                    enabled = textScale < maximumScale - 0.01f,
+                    modifier = Modifier.size(56.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = stringResource(R.string.counting_increase_text_size),
+                    )
+                }
+            }
+
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+                shape = RoundedCornerShape(14.dp),
+            ) {
+                Text(stringResource(R.string.action_done))
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 private fun DhikrFullTextBottomSheet(
     arabic: String,
     quranRef: QuranRef?,
+    textScale: Float,
+    lineSpacing: Float,
     isAudioMode: Boolean,
     canManualCount: Boolean,
+    onDecreaseTextSize: () -> Unit,
+    onIncreaseTextSize: () -> Unit,
+    onDecreaseLineSpacing: () -> Unit,
+    onIncreaseLineSpacing: () -> Unit,
     onCount: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showTextControls by remember { mutableStateOf(false) }
+    val minimumTextScale = COUNTING_DHIKR_TEXT_SCALES.first()
+    val maximumTextScale = COUNTING_DHIKR_TEXT_SCALES.last()
+    val minimumLineSpacing = COUNTING_DHIKR_LINE_SPACINGS.first()
+    val maximumLineSpacing = COUNTING_DHIKR_LINE_SPACINGS.last()
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
     ) {
         Column(modifier = Modifier.fillMaxHeight(0.88f)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                DhikrTextSizeButton(
+                    onClick = { showTextControls = !showTextControls },
+                    expanded = showTextControls,
+                )
+            }
+
+            if (showTextControls) {
+                DhikrTextDisplayControls(
+                    textScale = textScale,
+                    lineSpacing = lineSpacing,
+                    onDecreaseTextSize = onDecreaseTextSize,
+                    onIncreaseTextSize = onIncreaseTextSize,
+                    onDecreaseLineSpacing = onDecreaseLineSpacing,
+                    onIncreaseLineSpacing = onIncreaseLineSpacing,
+                    canDecreaseTextSize = textScale > minimumTextScale + 0.01f,
+                    canIncreaseTextSize = textScale < maximumTextScale - 0.01f,
+                    canDecreaseLineSpacing = lineSpacing > minimumLineSpacing + 0.01f,
+                    canIncreaseLineSpacing = lineSpacing < maximumLineSpacing - 0.01f,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+                )
+            }
+
             // Scrollable Arabic text
             Column(
                 modifier = Modifier
@@ -1906,31 +2229,32 @@ private fun DhikrFullTextBottomSheet(
                 val validQuranRef = quranRef?.takeIf { it.isValid }
                 if (validQuranRef != null) {
                     val (bismillah, body) = remember(arabic) { splitBismillah(arabic) }
-                    SurahHeader(ref = validQuranRef, fontScale = 1f)
+                    SurahHeader(ref = validQuranRef, fontScale = textScale)
                     bismillah?.let {
                         Spacer(Modifier.height(16.dp))
                         Text(
                             text = it,
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontFamily = NotoNaskhArabicFontFamily,
-                                fontSize = 24.sp,
-                                lineHeight = 44.sp,
+                                fontSize = 24.sp * textScale,
+                                lineHeight = 44.sp * textScale * lineSpacing,
                             ),
                             color = MaterialTheme.colorScheme.onSurface,
                             textAlign = TextAlign.Center,
                         )
                     }
                     Spacer(Modifier.height(12.dp))
-                    QuranBodyText(arabic = body, fontScale = 1f)
+                    QuranBodyText(arabic = body, fontScale = textScale, lineSpacing = lineSpacing)
                 } else {
                     Text(
                         text = arabic,
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontFamily = NotoNaskhArabicFontFamily,
+                            fontSize = MaterialTheme.typography.headlineMedium.fontSize * textScale,
                         ),
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
-                        lineHeight = 52.sp,
+                        lineHeight = 52.sp * textScale * lineSpacing,
                     )
                 }
             }
@@ -1969,6 +2293,113 @@ private fun DhikrFullTextBottomSheet(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun DhikrTextDisplayControls(
+    textScale: Float,
+    lineSpacing: Float,
+    onDecreaseTextSize: () -> Unit,
+    onIncreaseTextSize: () -> Unit,
+    onDecreaseLineSpacing: () -> Unit,
+    onIncreaseLineSpacing: () -> Unit,
+    canDecreaseTextSize: Boolean,
+    canIncreaseTextSize: Boolean,
+    canDecreaseLineSpacing: Boolean,
+    canIncreaseLineSpacing: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            DhikrTextControlRow(
+                label = stringResource(R.string.counting_text_size_title),
+                value = stringResource(
+                    R.string.counting_text_size_percentage,
+                    (textScale * 100).roundToInt(),
+                ),
+                decreaseContentDescription = stringResource(R.string.counting_decrease_text_size),
+                increaseContentDescription = stringResource(R.string.counting_increase_text_size),
+                onDecrease = onDecreaseTextSize,
+                onIncrease = onIncreaseTextSize,
+                canDecrease = canDecreaseTextSize,
+                canIncrease = canIncreaseTextSize,
+            )
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f))
+            DhikrTextControlRow(
+                label = stringResource(R.string.counting_line_spacing_title),
+                value = stringResource(
+                    R.string.counting_text_size_percentage,
+                    (lineSpacing * 100).roundToInt(),
+                ),
+                decreaseContentDescription = stringResource(R.string.counting_decrease_line_spacing),
+                increaseContentDescription = stringResource(R.string.counting_increase_line_spacing),
+                onDecrease = onDecreaseLineSpacing,
+                onIncrease = onIncreaseLineSpacing,
+                canDecrease = canDecreaseLineSpacing,
+                canIncrease = canIncreaseLineSpacing,
+            )
+        }
+    }
+}
+
+@Composable
+private fun DhikrTextControlRow(
+    label: String,
+    value: String,
+    decreaseContentDescription: String,
+    increaseContentDescription: String,
+    onDecrease: () -> Unit,
+    onIncrease: () -> Unit,
+    canDecrease: Boolean,
+    canIncrease: Boolean,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        OutlinedIconButton(
+            onClick = onDecrease,
+            enabled = canDecrease,
+            modifier = Modifier.size(40.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Remove,
+                contentDescription = decreaseContentDescription,
+            )
+        }
+        OutlinedIconButton(
+            onClick = onIncrease,
+            enabled = canIncrease,
+            modifier = Modifier.size(40.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = increaseContentDescription,
+            )
         }
     }
 }

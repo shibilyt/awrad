@@ -39,6 +39,7 @@ import com.batoulapps.adhan.PrayerTimes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,11 +50,32 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import javax.inject.Inject
 
 enum class SessionTargetType { COUNT, TIMER }
+
+internal val COUNTING_DHIKR_TEXT_SCALES = listOf(0.85f, 1f, 1.15f, 1.3f)
+internal val COUNTING_DHIKR_LINE_SPACINGS = listOf(0.9f, 1f, 1.15f, 1.3f)
+
+internal fun nextCountingDhikrTextScale(current: Float): Float =
+    COUNTING_DHIKR_TEXT_SCALES.firstOrNull { it > current + 0.01f }
+        ?: COUNTING_DHIKR_TEXT_SCALES.last()
+
+internal fun previousCountingDhikrTextScale(current: Float): Float =
+    COUNTING_DHIKR_TEXT_SCALES.lastOrNull { it < current - 0.01f }
+        ?: COUNTING_DHIKR_TEXT_SCALES.first()
+
+internal fun nextCountingDhikrLineSpacing(current: Float): Float =
+    COUNTING_DHIKR_LINE_SPACINGS.firstOrNull { it > current + 0.01f }
+        ?: COUNTING_DHIKR_LINE_SPACINGS.last()
+
+internal fun previousCountingDhikrLineSpacing(current: Float): Float =
+    COUNTING_DHIKR_LINE_SPACINGS.lastOrNull { it < current - 0.01f }
+        ?: COUNTING_DHIKR_LINE_SPACINGS.first()
 
 // Rebuilt wholesale in the ViewModel combine (never mutated in place), so the unstable
 // List/Map fields it carries are safe to treat as immutable for Compose skipping.
@@ -145,6 +167,44 @@ class CountingViewModel @Inject constructor(
 
     val soundOnCount: StateFlow<Boolean> = userPreferences.soundOnCount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val countingDhikrTextScale: StateFlow<Float> = userPreferences.countingDhikrTextScale
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1f)
+
+    val countingDhikrLineSpacing: StateFlow<Float> = userPreferences.countingDhikrLineSpacing
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1f)
+
+    fun increaseDhikrTextScale() {
+        viewModelScope.launch {
+            userPreferences.setCountingDhikrTextScale(
+                nextCountingDhikrTextScale(countingDhikrTextScale.value),
+            )
+        }
+    }
+
+    fun decreaseDhikrTextScale() {
+        viewModelScope.launch {
+            userPreferences.setCountingDhikrTextScale(
+                previousCountingDhikrTextScale(countingDhikrTextScale.value),
+            )
+        }
+    }
+
+    fun increaseDhikrLineSpacing() {
+        viewModelScope.launch {
+            userPreferences.setCountingDhikrLineSpacing(
+                nextCountingDhikrLineSpacing(countingDhikrLineSpacing.value),
+            )
+        }
+    }
+
+    fun decreaseDhikrLineSpacing() {
+        viewModelScope.launch {
+            userPreferences.setCountingDhikrLineSpacing(
+                previousCountingDhikrLineSpacing(countingDhikrLineSpacing.value),
+            )
+        }
+    }
 
     // First-run counting guide. Initial null = "still loading"; don't flash the overlay.
     val hasSeenCountingGuide: StateFlow<Boolean?> = userPreferences.hasSeenCountingGuide
@@ -480,26 +540,6 @@ class CountingViewModel @Inject constructor(
                 },
             )
 
-            // Pre-load audio duration for estimates (before playback starts)
-            val preloadedDurationMs = audioUrl?.let { url ->
-                try {
-                    val retriever = MediaMetadataRetriever()
-                    try {
-                        if (url.startsWith("http")) {
-                            retriever.setDataSource(url, emptyMap())
-                        } else {
-                            retriever.setDataSource(url)
-                        }
-                        retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-                            ?.toLongOrNull() ?: 0L
-                    } finally {
-                        retriever.release()
-                    }
-                } catch (_: Exception) {
-                    0L
-                }
-            } ?: 0L
-
             val dailyTarget = GoalProgressCalculator.getTotalDailyTarget(goal)
 
             _goalInfo.value = GoalInfoHolder(
@@ -510,7 +550,7 @@ class CountingViewModel @Inject constructor(
                 isOneTime = isOneTime,
                 initialTodayCount = todayCount,
                 initialCurrentCount = currentCount,
-                audioDurationMs = preloadedDurationMs,
+                audioDurationMs = 0L,
                 audioCountPerPlay = dhikr.audioCountPerPlay,
                 goalStartDate = goal.startDate,
                 effectiveToday = todayDate,
@@ -518,6 +558,23 @@ class CountingViewModel @Inject constructor(
                 goal = goal,
                 dailyTarget = dailyTarget,
             )
+            // Opening the counting screen must not wait for media/network I/O. Remote
+            // sources expose their duration after playback starts; downloaded files can
+            // populate estimates independently while the rest of the screen initializes.
+            audioUrl
+                ?.takeUnless { it.startsWith("http", ignoreCase = true) }
+                ?.let { localAudioUrl ->
+                    launch {
+                        val durationMs = loadLocalAudioDuration(localAudioUrl)
+                        _goalInfo.update { current ->
+                            if (current.goal?.id == goalId) {
+                                current.copy(audioDurationMs = durationMs)
+                            } else {
+                                current
+                            }
+                        }
+                    }
+                }
             val slots = goal.activeSlots
             val isPrayerBased = goal.isPrayerBased
             val hasSlotProgress = slots.usesSlotProgress()
@@ -599,6 +656,22 @@ class CountingViewModel @Inject constructor(
             }
         }
     }
+
+    private suspend fun loadLocalAudioDuration(audioPath: String): Long =
+        withContext(Dispatchers.IO) {
+            try {
+                val retriever = MediaMetadataRetriever()
+                try {
+                    retriever.setDataSource(audioPath)
+                    retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+                        ?.toLongOrNull() ?: 0L
+                } finally {
+                    retriever.release()
+                }
+            } catch (_: Exception) {
+                0L
+            }
+        }
 
     fun onManualTap() {
         viewModelScope.launch {
