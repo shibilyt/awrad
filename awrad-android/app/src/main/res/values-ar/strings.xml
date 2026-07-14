@@ -293,6 +293,7 @@
     <!-- Counting screen -->
     <string name="counting_stop_audio">إيقاف العد الصوتي</string>
     <string name="counting_start_audio">بدء العد الصوتي</string>
+    <string name="counting_audio_unavailable">لا يتوفر صوت</string>
     <string name="counting_view_history">عرض السجل</string>
     <string name="counting_count_button">عدّ</string>
     <string name="slot_not_started_title">وقت الجلسة لم يبدأ بعد</string>

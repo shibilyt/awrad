@@ -169,6 +169,7 @@
     <!-- Counting screen -->
     <string name="counting_stop_audio">ഓഡിയോ കൌണ്ടിംഗ് നിർത്തുക</string>
     <string name="counting_start_audio">ഓഡിയോ കൌണ്ടിംഗ് തുടങ്ങുക</string>
+    <string name="counting_audio_unavailable">ഓഡിയോ ലഭ്യമല്ല</string>
     <string name="counting_view_history">ചരിത്രം കാണുക</string>
     <string name="counting_count_button">എണ്ണുക</string>
     <string name="slot_not_started_title">സെഷൻ സമയം തുടങ്ങിയിട്ടില്ല</string>
