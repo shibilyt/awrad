@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalPreset
 import app.awrad.awrad_dhikrgoalstracker.service.PreviewPlaybackState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
@@ -65,6 +66,7 @@ fun SimpleTargetPane(
     isCreating: Boolean,
     canChangeDhikr: Boolean,
     onTogglePlayback: () -> Unit,
+    onShowFullQuran: (AwradId) -> Unit,
     onChangeDhikr: () -> Unit,
     onTargetChange: (TargetDraft) -> Unit,
     onCreate: () -> Unit,
@@ -92,6 +94,7 @@ fun SimpleTargetPane(
                             dhikr = dhikr,
                             audioState = audioState,
                             onTogglePlayback = onTogglePlayback,
+                            onShowFullQuran = { onShowFullQuran(dhikr.id) },
                             collapsed = true,
                         )
                         if (canChangeDhikr) {

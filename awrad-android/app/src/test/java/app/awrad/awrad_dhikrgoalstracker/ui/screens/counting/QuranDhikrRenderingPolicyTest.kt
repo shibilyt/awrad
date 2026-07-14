@@ -4,6 +4,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.BuiltInDhikrs
 import app.awrad.awrad_dhikrgoalstracker.data.model.QuranRef
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.QuranToken
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.splitBismillah
+import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.shouldRenderFullQuranInline
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.tokenizeQuranText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

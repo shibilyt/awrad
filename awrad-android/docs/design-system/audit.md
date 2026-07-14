@@ -46,11 +46,12 @@ doc accuracy**. Nothing here is on fire; the fixes are cheap and high-leverage.
 | Component (`ui/components/`) | Documented | Notes |
 |---|---|---|
 | `GoalStreak` (`GoalStreakStrip`, `DayProgressRing`) | ✅ [goal-streak.md](components/goal-streak.md) | Exemplar |
+| `QuranDhikrTextPreview`, `QuranBodyText` | ✅ [quran-dhikr-text.md](components/quran-dhikr-text.md) | Shared preview and reader typography |
 | `AwradBottomBar`, `AwradPagerTabs`, `AwradShell` | ❌ | Shell/nav primitives — document next |
 | `DhikrCard`, `CategoryCard`, `SuggestedCard`, `CircularProgressCard` | ❌ | Card family — good candidate for one shared doc |
 | `SectionHeader`, `StreakSection`, `FeaturedCollections`, `RitualComponents`, `ReminderReliability` | ❌ | |
 
-14 reusable components; **1 documented (~7%)**. Coverage is the biggest documentation debt after spacing.
+15 reusable component families; **2 documented (~13%)**. Coverage is the biggest documentation debt after spacing.
 
 ## Priority actions
 

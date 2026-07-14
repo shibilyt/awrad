@@ -81,6 +81,7 @@ private fun goalModeDepth(mode: GoalCreationMode): Int = when (mode) {
 fun CreateGoalScreen(
     onGoalCreated: (AwradId) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToQuranReader: (AwradId) -> Unit = {},
     viewModel: CreateGoalViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -188,6 +189,7 @@ fun CreateGoalScreen(
                             isCreating = uiState.isCreating,
                             canChangeDhikr = !uiState.isDhikrLocked,
                             onTogglePlayback = viewModel::togglePlayback,
+                            onShowFullQuran = onNavigateToQuranReader,
                             onChangeDhikr = viewModel::openDhikrPicker,
                             onTargetChange = viewModel::updateTargetDraft,
                             onCreate = viewModel::createGoal,
@@ -204,6 +206,7 @@ fun CreateGoalScreen(
                             isCreating = uiState.isCreating,
                             canChangeDhikr = !uiState.isDhikrLocked,
                             onTogglePlayback = viewModel::togglePlayback,
+                            onShowFullQuran = onNavigateToQuranReader,
                             onChangeDhikr = viewModel::openDhikrPicker,
                             onSelectPreset = {},
                             onTargetChange = viewModel::updateTargetDraft,

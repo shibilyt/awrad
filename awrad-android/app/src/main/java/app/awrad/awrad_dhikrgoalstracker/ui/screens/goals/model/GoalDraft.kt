@@ -104,8 +104,8 @@ data class CountRuleDraft(
 fun CountRuleDraft.syncedWithTargetDraft(targetDraft: TargetDraft): CountRuleDraft =
     when (targetDraft) {
         TargetDraft.None -> copy(mode = CountRuleMode.Tracker)
-        is TargetDraft.Fixed -> CountRuleDraft.target(targetDraft.count)
-        is TargetDraft.PrayerBased -> CountRuleDraft.target(targetDraft.uniformCount)
+        is TargetDraft.Fixed -> CountRuleDraft.target(targetDraft.count).copy(capBehavior = capBehavior)
+        is TargetDraft.PrayerBased -> CountRuleDraft.target(targetDraft.uniformCount).copy(capBehavior = capBehavior)
     }
 
 /** A per-session/per-bucket counting rule (mode + thresholds), expressed as a [CountRuleDraft]. */
@@ -243,7 +243,7 @@ object GoalDraftDefaults {
                 timingType = TimingType.ANYTIME,
                 advancedTiming = GoalTimingDraft.Anytime,
                 targetDraft = TargetDraft.Fixed("100"),
-                countRule = CountRuleDraft.target("100"),
+                countRule = CountRuleDraft.target("100").copy(capBehavior = CapBehavior.BlockAtTarget),
                 slotTargetMode = SlotTargetMode.PerSlot,
                 timeSlots = defaultTimeSlots(targetCount = "100"),
             )
@@ -268,7 +268,7 @@ object GoalDraftDefaults {
                 timingType = TimingType.ANYTIME,
                 advancedTiming = GoalTimingDraft.Anytime,
                 targetDraft = TargetDraft.Fixed("70000"),
-                countRule = CountRuleDraft.target("70000"),
+                countRule = CountRuleDraft.target("70000").copy(capBehavior = CapBehavior.BlockAtTarget),
                 slotTargetMode = SlotTargetMode.Same,
                 customTargetPolicy = TargetPolicy.CUMULATIVE_TOTAL,
                 timeSlots = defaultTimeSlots(targetCount = "1000"),
@@ -880,6 +880,7 @@ object GoalDraftMapper {
                 streakThreshold = if (minimum != null) Threshold.Minimum else Threshold.Target,
                 reminderThreshold = Threshold.Target,
                 completionThreshold = Threshold.Target,
+                capBehavior = draft.countRule.capBehavior,
             )
             CountRuleMode.Tracker -> CountPolicy(
                 streakThreshold = Threshold.AnyPositive,

@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.service.PreviewPlaybackState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
+import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.QuranDhikrTextPreview
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.NotoNaskhArabicFontFamily
 
 @Composable
@@ -24,8 +25,9 @@ fun DhikrHeaderCard(
     dhikr: Dhikr,
     audioState: PreviewPlaybackState,
     onTogglePlayback: () -> Unit,
-    collapsed: Boolean = false,
     modifier: Modifier = Modifier,
+    collapsed: Boolean = false,
+    onShowFullQuran: () -> Unit = {},
 ) {
     val accentColor = MaterialTheme.colorScheme.primary
 
@@ -37,14 +39,24 @@ fun DhikrHeaderCard(
                     .padding(horizontal = 18.dp, vertical = if (collapsed) 12.dp else 18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = dhikr.arabic,
-                    fontFamily = NotoNaskhArabicFontFamily,
-                    fontSize = if (collapsed) 24.sp else 31.sp,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                val quranRef = dhikr.quranRef?.takeIf { it.isValid }
+                if (quranRef != null) {
+                    QuranDhikrTextPreview(
+                        arabic = dhikr.arabic,
+                        ref = quranRef,
+                        textScale = if (collapsed) 0.95f else 1.1f,
+                        onShowFull = onShowFullQuran,
+                    )
+                } else {
+                    Text(
+                        text = dhikr.arabic,
+                        fontFamily = NotoNaskhArabicFontFamily,
+                        fontSize = if (collapsed) 24.sp else 31.sp,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 if (!collapsed) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(

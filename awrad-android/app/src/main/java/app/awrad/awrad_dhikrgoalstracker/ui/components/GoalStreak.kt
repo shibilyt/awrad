@@ -214,6 +214,7 @@ fun DayProgressRing(
     ringColor: Color,
     trackColor: Color,
     textColor: Color,
+    showCompletionIcon: Boolean = true,
     minimumTargetProgress: Float? = null,
     minimumTargetColor: Color = ringColor,
     modifier: Modifier = Modifier,
@@ -277,7 +278,7 @@ fun DayProgressRing(
                 strokeCap = StrokeCap.Round,
             )
         }
-        if (clamped >= 1f) {
+        if (clamped >= 1f && showCompletionIcon) {
             Icon(
                 imageVector = Icons.Filled.Check,
                 contentDescription = null,

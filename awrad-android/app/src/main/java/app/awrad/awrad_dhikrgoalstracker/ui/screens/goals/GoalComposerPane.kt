@@ -85,6 +85,7 @@ import kotlinx.coroutines.launch
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalPreset
 import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
 import app.awrad.awrad_dhikrgoalstracker.data.model.SeasonTemplateCode
@@ -149,6 +150,7 @@ fun GoalComposerPane(
     isCreating: Boolean,
     canChangeDhikr: Boolean,
     onTogglePlayback: () -> Unit,
+    onShowFullQuran: (AwradId) -> Unit,
     onChangeDhikr: () -> Unit,
     onSelectPreset: (GoalPreset) -> Unit,
     onTargetChange: (TargetDraft) -> Unit,
@@ -192,6 +194,7 @@ fun GoalComposerPane(
                             dhikr = dhikr,
                             audioState = audioState,
                             onTogglePlayback = onTogglePlayback,
+                            onShowFullQuran = { onShowFullQuran(dhikr.id) },
                             collapsed = true,
                         )
                         if (canChangeDhikr) {

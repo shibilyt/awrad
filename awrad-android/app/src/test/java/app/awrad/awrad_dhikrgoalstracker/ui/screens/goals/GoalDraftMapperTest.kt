@@ -820,7 +820,10 @@ class GoalDraftMapperTest {
 
         assertEquals(ProgressScope.DueDate, command.progressScope)
         assertEquals(313, command.countPolicy.targetCount)
+        assertEquals(CapBehavior.BlockAtTarget, command.countPolicy.capBehavior)
         assertEquals(313, goal.slots.single().targetCount)
+        assertEquals(CountCapBehavior.BlockAtTarget, goal.capBehavior)
+        assertEquals(CountCapBehavior.BlockAtTarget, goal.slots.single().capBehavior)
     }
 
     @Test
@@ -835,6 +838,8 @@ class GoalDraftMapperTest {
         assertEquals(TargetPolicy.CUMULATIVE_TOTAL, goal.targetPolicy)
         assertTrue(goal.autoCompleteOnTarget)
         assertEquals(5000, goal.slots.single().targetCount)
+        assertEquals(CountCapBehavior.BlockAtTarget, goal.capBehavior)
+        assertEquals(CountCapBehavior.BlockAtTarget, goal.slots.single().capBehavior)
     }
 
     @Test

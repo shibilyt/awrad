@@ -434,6 +434,7 @@
     <string name="count_hard_cap_reached">This goal has reached its counting limit.</string>
     <string name="counting_see_full">see full</string>
     <string name="counting_read_full_quran">Read full</string>
+    <string name="quran_show_full">Show full</string>
     <string name="counting_adjust_text_size">Adjust text size</string>
     <string name="counting_text_size_button">Aa</string>
     <string name="counting_text_size_title">Text size</string>
@@ -1413,4 +1414,15 @@
     <string name="policy_one_total_target_desc">Progress accumulates until the total is done.</string>
     <string name="policy_period_target_desc">Each week, season, or configured period has a target.</string>
     <string name="policy_no_target_desc">Track every count without a denominator.</string>
+    <string name="goal_details_view_counting">View counting</string>
+    <string name="counting_target_reached_title">Target reached</string>
+    <string name="counting_target_value_reached">Target %1$s reached</string>
+    <string name="counting_additional_count">+%1$s additional</string>
+    <string name="counting_target_reached_blocked_body">Counting is paused because this goal stops at its target.</string>
+    <string name="counting_allow_past_target_action">Allow counting past target</string>
+    <string name="counting_allow_past_target_dialog_title">Allow counting past target?</string>
+    <string name="counting_allow_past_target_dialog_body">This permanently changes this goal’s cap to allow counts above the target. The goal will remain completed.</string>
+    <string name="counting_allow_past_target_confirm">Allow</string>
+    <string name="counting_allow_past_target_success">You can now continue counting past the target.</string>
+    <string name="counting_allow_past_target_error">Could not change the counting cap. Try again.</string>
 </resources>

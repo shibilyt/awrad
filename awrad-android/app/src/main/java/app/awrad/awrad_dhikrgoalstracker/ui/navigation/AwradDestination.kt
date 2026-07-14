@@ -34,6 +34,16 @@ sealed class AwradDestination(val route: String) {
     data object DhikrDetail : AwradDestination("dhikr_detail/{dhikrId}") {
         fun createRoute(dhikrId: AwradId) = "dhikr_detail/$dhikrId"
     }
+    data object QuranDhikrReader : AwradDestination("quran_reader/{dhikrId}?goalId={goalId}&slotId={slotId}") {
+        fun createRoute(dhikrId: AwradId, goalId: AwradId? = null, slotId: AwradId? = null): String {
+            val query = buildList {
+                goalId?.let { add("goalId=$it") }
+                slotId?.let { add("slotId=$it") }
+            }
+            return "quran_reader/$dhikrId" + query.takeIf { it.isNotEmpty() }
+                ?.joinToString(separator = "&", prefix = "?").orEmpty()
+        }
+    }
     data object WirdList : AwradDestination("wird_list")
     data object WirdDetail : AwradDestination("wird_detail/{wirdId}") {
         fun createRoute(wirdId: String) = "wird_detail/$wirdId"

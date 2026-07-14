@@ -202,6 +202,7 @@
     <string name="count_hard_cap_reached">ഈ ലക്ഷ്യം അതിന്റെ എണ്ണൽ പരിധിയിലെത്തി.</string>
     <string name="counting_see_full">പൂർണ്ണം കാണുക</string>
     <string name="counting_adjust_text_size">ടെക്സ്റ്റ് വലുപ്പം ക്രമീകരിക്കുക</string>
+    <string name="quran_show_full">പൂർണ്ണമായി കാണുക</string>
     <string name="counting_text_size_button">Aa</string>
     <string name="counting_text_size_title">ടെക്സ്റ്റ് വലുപ്പം</string>
     <string name="counting_text_size_description">ദിക്ർ ടെക്സ്റ്റിന്റെ വലുപ്പം ക്രമീകരിക്കുക</string>
@@ -744,4 +745,15 @@
     <string name="community_verify_email_body">%s എന്ന വിലാസത്തിലേക്ക് സ്ഥിരീകരണ ലിങ്ക് അയച്ചു. അക്കൗണ്ട് സുരക്ഷിതമാക്കാൻ അത് തുറക്കുക.</string>
     <string name="community_active_devices">സജീവ ഉപകരണങ്ങൾ</string>
     <string name="community_revoke_device">പിൻവലിക്കുക</string>
+    <string name="goal_details_view_counting">എണ്ണൽ പേജ് കാണുക</string>
+    <string name="counting_target_reached_title">ലക്ഷ്യം പൂർത്തിയായി</string>
+    <string name="counting_target_value_reached">ലക്ഷ്യം %1$s പൂർത്തിയായി</string>
+    <string name="counting_additional_count">+%1$s അധികം</string>
+    <string name="counting_target_reached_blocked_body">ഈ ലക്ഷ്യം ലക്ഷ്യസംഖ്യയിൽ നിർത്തുന്നതിനാൽ എണ്ണൽ താൽക്കാലികമായി നിർത്തിയിരിക്കുന്നു.</string>
+    <string name="counting_allow_past_target_action">ലക്ഷ്യത്തിന് ശേഷവും എണ്ണാൻ അനുവദിക്കുക</string>
+    <string name="counting_allow_past_target_dialog_title">ലക്ഷ്യത്തിന് ശേഷവും എണ്ണാൻ അനുവദിക്കണോ?</string>
+    <string name="counting_allow_past_target_dialog_body">ലക്ഷ്യത്തിന് മുകളിലുള്ള എണ്ണലുകൾ അനുവദിക്കുന്നതിന് ഈ ലക്ഷ്യത്തിന്റെ പരിധി ശാശ്വതമായി മാറ്റും. ലക്ഷ്യം പൂർത്തിയായതായി തന്നെ തുടരും.</string>
+    <string name="counting_allow_past_target_confirm">അനുവദിക്കുക</string>
+    <string name="counting_allow_past_target_success">ഇപ്പോൾ ലക്ഷ്യത്തിന് ശേഷവും എണ്ണൽ തുടരാം.</string>
+    <string name="counting_allow_past_target_error">എണ്ണൽ പരിധി മാറ്റാനായില്ല. വീണ്ടും ശ്രമിക്കുക.</string>
 </resources>

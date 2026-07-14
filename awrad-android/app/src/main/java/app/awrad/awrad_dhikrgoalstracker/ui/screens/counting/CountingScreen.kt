@@ -120,6 +120,7 @@ import app.awrad.awrad_dhikrgoalstracker.service.CountingState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradStatusBarStyle
 import app.awrad.awrad_dhikrgoalstracker.ui.components.StreakSection
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.QuranBodyText
+import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.QuranDhikrTextPreview
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.SurahHeader
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.splitBismillah
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
@@ -140,6 +141,7 @@ fun CountingScreen(
     initialSlotId: AwradId? = null,
     onNavigateBack: () -> Unit,
     onNavigateToGoalDetail: () -> Unit,
+    onNavigateToQuranReader: (dhikrId: AwradId, slotId: AwradId?) -> Unit = { _, _ -> },
     viewModel: CountingViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -147,6 +149,7 @@ fun CountingScreen(
     val historyItems by viewModel.historyItems.collectAsStateWithLifecycle()
     val earlySlotWarning by viewModel.earlySlotWarning.collectAsStateWithLifecycle()
     val endedSlotWarning by viewModel.endedSlotWarning.collectAsStateWithLifecycle()
+    val isUpdatingCap by viewModel.isUpdatingCap.collectAsStateWithLifecycle()
     var showHistory by remember { mutableStateOf(false) }
     var showSlots by remember { mutableStateOf(false) }
     var showSpeedSheet by remember { mutableStateOf(false) }
@@ -159,6 +162,9 @@ fun CountingScreen(
     var showStopAudioDialog by remember { mutableStateOf(false) }
     var showAdjustCountDialog by remember { mutableStateOf(false) }
     var showSubtractConfirm by remember { mutableStateOf<Int?>(null) }
+    var showAllowPastTargetDialog by remember { mutableStateOf(false) }
+    var showGoalReachedDialog by remember(goalId) { mutableStateOf(false) }
+    var previousCompletionBlock by remember(goalId) { mutableStateOf<Boolean?>(null) }
 
     // First-run counting coach marks
     val hasSeenCountingGuide by viewModel.hasSeenCountingGuide.collectAsStateWithLifecycle()
@@ -323,6 +329,35 @@ fun CountingScreen(
         )
     }
 
+    if (showAllowPastTargetDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                if (!isUpdatingCap) showAllowPastTargetDialog = false
+            },
+            title = { Text(stringResource(R.string.counting_allow_past_target_dialog_title)) },
+            text = { Text(stringResource(R.string.counting_allow_past_target_dialog_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showAllowPastTargetDialog = false
+                        viewModel.allowCountingPastTarget()
+                    },
+                    enabled = !isUpdatingCap,
+                ) {
+                    Text(stringResource(R.string.counting_allow_past_target_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showAllowPastTargetDialog = false },
+                    enabled = !isUpdatingCap,
+                ) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+
     earlySlotWarning?.let { warning ->
         AlertDialog(
             onDismissRequest = viewModel::cancelEarlySlotWarning,
@@ -394,6 +429,17 @@ fun CountingScreen(
         viewModel.bindAndStart(goalId, initialSlotId)
     }
 
+    val isCompletionBlocked =
+        uiState.areAllSlotsComplete && !uiState.sessionComplete && !uiState.canCountUnderCap
+    LaunchedEffect(uiState.isLoading, isCompletionBlocked) {
+        if (!uiState.isLoading) {
+            if (shouldShowGoalReachedDialog(previousCompletionBlock, isCompletionBlocked)) {
+                showGoalReachedDialog = true
+            }
+            previousCompletionBlock = isCompletionBlocked
+        }
+    }
+
     val slotTitles = uiState.slots.associate { it.id to slotDisplayTitle(it) }
     val slotSubtitles = uiState.slots.associate { it.id to slotDisplaySubtitle(it) }
     val slotUiModels = buildSlotCountingUiModels(
@@ -441,6 +487,20 @@ fun CountingScreen(
     LaunchedEffect(Unit) {
         viewModel.overTargetWarningMessage.collect {
             snackbarHostState.showSnackbar(overTargetWarningMessage)
+        }
+    }
+
+    val allowPastTargetSuccessMessage = stringResource(R.string.counting_allow_past_target_success)
+    LaunchedEffect(Unit) {
+        viewModel.allowPastTargetSucceeded.collect {
+            snackbarHostState.showSnackbar(allowPastTargetSuccessMessage)
+        }
+    }
+
+    val allowPastTargetFailedMessage = stringResource(R.string.counting_allow_past_target_error)
+    LaunchedEffect(Unit) {
+        viewModel.allowPastTargetFailed.collect {
+            snackbarHostState.showSnackbar(allowPastTargetFailedMessage)
         }
     }
 
@@ -524,9 +584,12 @@ fun CountingScreen(
                     ref = quranRef,
                     arabic = countingState.dhikrArabic,
                     textScale = dhikrTextScale,
-                    isOverflowing = isArabicOverflowing,
                     onTextOverflowChanged = { isArabicOverflowing = it },
-                    onShowFullDhikr = { showFullDhikr = true },
+                    onShowFullDhikr = {
+                        uiState.goal?.dhikrId?.let { dhikrId ->
+                            onNavigateToQuranReader(dhikrId, uiState.activeSlotId)
+                        }
+                    },
                     onAdjustTextSize = { showTextSizeSheet = true },
                 )
             } else {
@@ -622,6 +685,14 @@ fun CountingScreen(
                         modifier = Modifier.size(22.dp),
                     )
                 }
+            }
+
+            if (uiState.isBlockedAtTarget) {
+                Spacer(modifier = Modifier.height(12.dp))
+                TargetReachedCapCard(
+                    isUpdating = isUpdatingCap,
+                    onAllowPastTarget = { showAllowPastTargetDialog = true },
+                )
             }
 
             // Audio player row (below controls, only when audio counting is active)
@@ -862,17 +933,78 @@ fun CountingScreen(
         )
     }
 
-    if (uiState.areAllSlotsComplete && !uiState.sessionComplete && !uiState.canCountUnderCap) {
+    if (showGoalReachedDialog) {
         AlertDialog(
-            onDismissRequest = { /* Must tap Done */ },
+            onDismissRequest = { },
             title = { Text(stringResource(R.string.goal_reached_title)) },
             text = { Text(stringResource(R.string.goal_reached_body, countingState.targetCount)) },
             confirmButton = {
-                Button(onClick = onNavigateBack) {
+                Button(onClick = { showGoalReachedDialog = false }) {
                     Text(stringResource(R.string.action_done))
                 }
             },
         )
+    }
+}
+
+internal fun shouldShowGoalReachedDialog(
+    previousCompletionBlock: Boolean?,
+    isCompletionBlocked: Boolean,
+): Boolean = previousCompletionBlock == false && isCompletionBlocked
+
+@Composable
+private fun TargetReachedCapCard(
+    isUpdating: Boolean,
+    onAllowPastTarget: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        ),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.counting_target_reached_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Text(
+                text = stringResource(R.string.counting_target_reached_blocked_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
+            )
+            TextButton(
+                onClick = onAllowPastTarget,
+                enabled = !isUpdating,
+                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
+            ) {
+                if (isUpdating) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text(
+                    text = stringResource(
+                        if (isUpdating) {
+                            R.string.goal_edit_saving
+                        } else {
+                            R.string.counting_allow_past_target_action
+                        },
+                    ),
+                )
+            }
+        }
     }
 }
 
@@ -926,6 +1058,85 @@ private fun CountingTopBar(
                 content = actions,
             )
             }
+        }
+    }
+}
+
+internal data class CountingTargetMilestone(
+    val targetCount: Long,
+    val additionalCount: Long,
+)
+
+internal fun countingTargetMilestone(
+    currentCount: Long,
+    targetCount: Long,
+    hasSessionTarget: Boolean,
+    usesRangeProgress: Boolean,
+): CountingTargetMilestone? {
+    if (
+        targetCount <= 0 ||
+        currentCount < targetCount ||
+        hasSessionTarget ||
+        usesRangeProgress
+    ) {
+        return null
+    }
+
+    return CountingTargetMilestone(
+        targetCount = targetCount,
+        additionalCount = currentCount - targetCount,
+    )
+}
+
+@Composable
+private fun CountingProgressCaption(
+    denominator: String?,
+    targetMilestone: CountingTargetMilestone?,
+) {
+    when {
+        targetMilestone == null -> denominator?.let { target ->
+            Text(
+                text = stringResource(R.string.counting_progress_of, target),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+
+        targetMilestone.additionalCount == 0L -> Text(
+            text = stringResource(R.string.counting_target_reached_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        else -> {
+            Text(
+                text = stringResource(
+                    R.string.counting_target_value_reached,
+                    "%,d".format(targetMilestone.targetCount),
+                ),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = stringResource(
+                    R.string.counting_additional_count,
+                    "%,d".format(targetMilestone.additionalCount),
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -997,6 +1208,12 @@ private fun CountingHeroPanel(
         countingState.targetCount > 0 -> "%,d".format(countingState.targetCount)
         else -> null
     }
+    val targetMilestone = countingTargetMilestone(
+        currentCount = countingState.currentCount,
+        targetCount = countingState.targetCount.toLong(),
+        hasSessionTarget = uiState.hasSessionTarget,
+        usesRangeProgress = dualRingProgress != null,
+    )
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1060,16 +1277,10 @@ private fun CountingHeroPanel(
                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                     maxLines = 1,
                 )
-                denominator?.let {
-                    Text(
-                        text = stringResource(R.string.counting_progress_of, it),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+                CountingProgressCaption(
+                    denominator = denominator,
+                    targetMilestone = targetMilestone,
+                )
             }
         }
 
@@ -1206,6 +1417,12 @@ private fun SlotProgressCard(
         countingState.targetCount > 0 -> "%,d".format(countingState.targetCount)
         else -> null
     }
+    val targetMilestone = countingTargetMilestone(
+        currentCount = countingState.currentCount,
+        targetCount = countingState.targetCount.toLong(),
+        hasSessionTarget = uiState.hasSessionTarget,
+        usesRangeProgress = dualRingProgress != null,
+    )
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -1280,16 +1497,10 @@ private fun SlotProgressCard(
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                 )
-                denominator?.let {
-                    Text(
-                        text = stringResource(R.string.counting_progress_of, it),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+                CountingProgressCaption(
+                    denominator = denominator,
+                    targetMilestone = targetMilestone,
+                )
             }
         }
 
@@ -1357,21 +1568,15 @@ private fun HeroMetricChip(
     }
 }
 
-internal fun shouldRenderFullQuranInline(ref: QuranRef, arabic: String): Boolean =
-    ref.isValid && ref.ayahCount <= 10 && arabic.length <= 700
-
 @Composable
 private fun QuranDhikrPreviewCard(
     ref: QuranRef,
     arabic: String,
     textScale: Float,
-    isOverflowing: Boolean,
     onTextOverflowChanged: (Boolean) -> Unit,
     onShowFullDhikr: () -> Unit,
     onAdjustTextSize: () -> Unit,
 ) {
-    val (bismillah, body) = remember(arabic) { splitBismillah(arabic) }
-    val renderFully = remember(ref, arabic) { shouldRenderFullQuranInline(ref, arabic) }
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
@@ -1384,38 +1589,18 @@ private fun QuranDhikrPreviewCard(
                 .padding(horizontal = 18.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            SurahHeader(ref = ref, fontScale = 0.9f * textScale)
-            bismillah?.let {
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontFamily = NotoNaskhArabicFontFamily,
-                        fontSize = 21.sp * textScale,
-                        lineHeight = 36.sp * textScale,
-                    ),
-                    textAlign = TextAlign.Center,
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            QuranBodyText(
-                arabic = body,
-                fontScale = 0.72f * textScale,
-                maxLines = if (renderFully) Int.MAX_VALUE else 4,
-                overflow = if (renderFully) TextOverflow.Clip else TextOverflow.Ellipsis,
-                onTextLayout = { onTextOverflowChanged(!renderFully && it.hasVisualOverflow) },
+            QuranDhikrTextPreview(
+                arabic = arabic,
+                ref = ref,
+                textScale = textScale,
+                onShowFull = onShowFullDhikr,
+                onOverflowChanged = onTextOverflowChanged,
             )
             Spacer(Modifier.height(8.dp))
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                if (isOverflowing) {
-                    TextButton(onClick = onShowFullDhikr) {
-                        Text(stringResource(R.string.counting_read_full_quran))
-                    }
-                }
                 DhikrTextSizeButton(onClick = onAdjustTextSize)
             }
         }
@@ -2164,7 +2349,7 @@ private fun DhikrTextSizeBottomSheet(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DhikrFullTextBottomSheet(
+internal fun DhikrFullTextBottomSheet(
     arabic: String,
     quranRef: QuranRef?,
     textScale: Float,
@@ -2177,6 +2362,7 @@ private fun DhikrFullTextBottomSheet(
     onIncreaseLineSpacing: () -> Unit,
     onCount: () -> Unit,
     onDismiss: () -> Unit,
+    showCountButton: Boolean = true,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showTextControls by remember { mutableStateOf(false) }
@@ -2259,39 +2445,41 @@ private fun DhikrFullTextBottomSheet(
                 }
             }
 
-            // Fixed bottom: COUNT button
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.background)
-                    .padding(horizontal = 24.dp, vertical = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Button(
-                    onClick = onCount,
-                    enabled = !isAudioMode && canManualCount,
+            if (showCountButton) {
+                // Fixed bottom: COUNT button
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(64.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                    ),
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(horizontal = 24.dp, vertical = 20.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
+                    Button(
+                        onClick = onCount,
+                        enabled = !isAudioMode && canManualCount,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(64.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.counting_count_button),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 2.sp,
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = stringResource(R.string.counting_count_button),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp,
+                        text = stringResource(R.string.counting_tap_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.counting_tap_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
         }
     }

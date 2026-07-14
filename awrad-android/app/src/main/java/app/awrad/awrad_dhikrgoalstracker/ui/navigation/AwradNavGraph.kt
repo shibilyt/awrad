@@ -8,10 +8,13 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.hilt.navigation.compose.hiltViewModel
 import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradScreenWrapper
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.category.CategoryScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.CountingScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.CountingViewModel
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.dhikrdetail.DhikrDetailScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.dhikrdetail.QuranDhikrReaderScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goaldetail.EditGoalRemindersScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goaldetail.EditGoalScheduleScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goaldetail.EditGoalScreen
@@ -230,6 +233,9 @@ fun AwradNavGraph(
                     onNavigateBack = {
                         navController.popBackStack()
                     },
+                    onNavigateToQuranReader = { dhikrId ->
+                        navController.navigateSafely(AwradDestination.QuranDhikrReader.createRoute(dhikrId))
+                    },
                 )
             }
         }
@@ -274,6 +280,11 @@ fun AwradNavGraph(
                     },
                     onNavigateToGoalDetail = {
                         navController.navigateSafely(AwradDestination.GoalDetail.createRoute(goalId))
+                    },
+                    onNavigateToQuranReader = { dhikrId, slotId ->
+                        navController.navigateSafely(
+                            AwradDestination.QuranDhikrReader.createRoute(dhikrId, goalId, slotId),
+                        )
                     },
                 )
             }
@@ -356,6 +367,35 @@ fun AwradNavGraph(
                     onNavigateToCreateGoal = {
                         navController.navigateSafely(AwradDestination.CreateGoal.createRoute(dhikrId))
                     },
+                    onNavigateToQuranReader = { readerDhikrId ->
+                        navController.navigateSafely(AwradDestination.QuranDhikrReader.createRoute(readerDhikrId))
+                    },
+                )
+            }
+        }
+
+        composable(
+            route = AwradDestination.QuranDhikrReader.route,
+            arguments = listOf(
+                navArgument("dhikrId") { type = NavType.StringType },
+                navArgument("goalId") { type = NavType.StringType; nullable = true },
+                navArgument("slotId") { type = NavType.StringType; nullable = true },
+            ),
+        ) { backStackEntry ->
+            val goalId = backStackEntry.arguments?.getString("goalId")?.toAwradIdOrNull()
+            val slotId = backStackEntry.arguments?.getString("slotId")?.toAwradIdOrNull()
+            val countingEntry = navController.previousBackStackEntry
+                ?.takeIf { goalId != null && it.destination.route == AwradDestination.Counting.route }
+            val readerCountingViewModel = countingEntry?.let {
+                hiltViewModel<CountingViewModel>(it)
+            } ?: hiltViewModel(backStackEntry)
+            WrappedAwradDestination(navController) {
+                QuranDhikrReaderScreen(
+                    goalId = goalId,
+                    initialSlotId = slotId,
+                    onNavigateBack = { navController.popBackStack() },
+                    countingViewModel = readerCountingViewModel,
+                    bindCountingContext = countingEntry == null,
                 )
             }
         }

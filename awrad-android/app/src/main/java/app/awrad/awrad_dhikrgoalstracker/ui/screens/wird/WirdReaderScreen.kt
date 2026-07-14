@@ -127,8 +127,6 @@ private const val FLOOR_FRACTION = 0.85f
 /** Pause after a repeat line's count is finished before auto-advancing to the next line. */
 private const val ADVANCE_DELAY_MS = 500L
 
-private const val LONG_ARABIC_THRESHOLD = 600
-
 /** Theme-aware background for the immersive reader, mirroring [app.awrad.awrad_dhikrgoalstracker.ui.components.RitualScreen]. */
 @Composable
 private fun readerBackground(): Brush {
@@ -634,26 +632,16 @@ private fun ReaderLine(
         label = "lineAlpha",
     )
     val seg = page.segment
-    Row(
+    Box(
         Modifier
             .fillMaxWidth()
             .graphicsLayer { this.alpha = alpha }
-            .padding(horizontal = 12.dp, vertical = 12.dp),
+            .padding(vertical = 12.dp),
     ) {
-        // Margin indicator: check dot once done, live chip while a repeat line is in progress.
-        Box(
-            Modifier
-                .width(44.dp)
-                .padding(top = 8.dp),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            when {
-                (page.isCountable && page.isSegmentComplete) || (!page.isCountable && isPassed) -> CheckDot()
-                page.isRepeatLine -> RepChip(done = page.count, reps = page.effectiveTarget)
-            }
-        }
         Column(
-            Modifier.weight(1f),
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             when {
@@ -667,10 +655,10 @@ private fun ReaderLine(
                 seg.kind == SegmentKind.QURAN -> {
                     seg.quranRef?.let {
                         SurahHeader(ref = it, fontScale = fontScale)
-                        Spacer(Modifier.height(12.dp))
                     }
                     val (bismillah, body) = remember(seg.arabic) { splitBismillah(seg.arabic) }
                     if (bismillah != null) {
+                        Spacer(Modifier.height(16.dp))
                         Text(
                             text = bismillah,
                             color = MaterialTheme.colorScheme.onSurface,
@@ -681,8 +669,8 @@ private fun ReaderLine(
                             ),
                             textAlign = TextAlign.Center,
                         )
-                        Spacer(Modifier.height(8.dp))
                     }
+                    Spacer(Modifier.height(12.dp))
                     QuranBodyText(arabic = body, fontScale = fontScale)
                     ActiveLineExtras(page = page, lang = lang, isActive = isActive)
                 }
@@ -692,9 +680,6 @@ private fun ReaderLine(
                         Pill(text = it.displayText())
                         Spacer(Modifier.height(10.dp))
                     }
-                    // Long passages (name litanies, extended du'as) read better at a smaller,
-                    // denser setting than short dhikr lines built for glanceable repetition.
-                    val isLongText = seg.arabic.length > LONG_ARABIC_THRESHOLD
                     // Ornate ﴿…﴾ brackets mark embedded Quran quotes — tint them.
                     val quoteColor = MaterialTheme.colorScheme.primary
                     val display = remember(seg.arabic, quoteColor) {
@@ -713,26 +698,31 @@ private fun ReaderLine(
                     Text(
                         text = display,
                         color = MaterialTheme.colorScheme.onSurface,
-                        style = if (isLongText) {
-                            MaterialTheme.typography.titleLarge.copy(
-                                fontFamily = NotoNaskhArabicFontFamily,
-                                fontSize = 22.sp * fontScale,
-                                lineHeight = 40.sp * fontScale,
-                            )
-                        } else {
-                            MaterialTheme.typography.headlineMedium.copy(
-                                fontFamily = NotoNaskhArabicFontFamily,
-                                fontSize = 28.sp * fontScale,
-                                lineHeight = 52.sp * fontScale,
-                            )
-                        },
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontFamily = NotoNaskhArabicFontFamily,
+                            fontSize = MaterialTheme.typography.headlineMedium.fontSize * fontScale,
+                            lineHeight = 52.sp * fontScale,
+                        ),
                         textAlign = TextAlign.Center,
                     )
                     ActiveLineExtras(page = page, lang = lang, isActive = isActive)
                 }
             }
         }
-        Spacer(Modifier.width(44.dp))
+
+        // Keep progress in the margin without taking width away from the reading column.
+        Box(
+            Modifier
+                .align(Alignment.TopStart)
+                .width(44.dp)
+                .padding(top = 8.dp),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            when {
+                (page.isCountable && page.isSegmentComplete) || (!page.isCountable && isPassed) -> CheckDot()
+                page.isRepeatLine -> RepChip(done = page.count, reps = page.effectiveTarget)
+            }
+        }
     }
 }
 

@@ -65,8 +65,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.data.SuggestedGoal
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.FrequencyType
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
+import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.QuranDhikrTextPreview
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -74,6 +76,7 @@ import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 fun DhikrDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToCreateGoal: () -> Unit = {},
+    onNavigateToQuranReader: (AwradId) -> Unit = {},
     viewModel: DhikrDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -177,21 +180,28 @@ fun DhikrDetailScreen(
             // Arabic text box
             item {
                 RitualCard {
+                    val quranRef = dhikr.quranRef?.takeIf { it.isValid }
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 34.dp, horizontal = 22.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 34.dp, horizontal = 22.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = dhikr.arabic,
-                            style = MaterialTheme.typography.headlineLarge.copy(
-                                fontFamily = NotoNaskhArabicFontFamily,
-                            ),
-                            color = MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 48.sp,
-                        )
+                        if (quranRef != null) {
+                            QuranDhikrTextPreview(
+                                arabic = dhikr.arabic,
+                                ref = quranRef,
+                                onShowFull = { onNavigateToQuranReader(dhikr.id) },
+                            )
+                        } else {
+                            Text(
+                                text = dhikr.arabic,
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontFamily = NotoNaskhArabicFontFamily,
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = TextAlign.Center,
+                                lineHeight = 48.sp,
+                            )
+                        }
                     }
                 }
             }

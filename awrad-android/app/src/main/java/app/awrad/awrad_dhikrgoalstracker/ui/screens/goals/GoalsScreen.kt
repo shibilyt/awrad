@@ -134,7 +134,7 @@ fun GoalsScreen(
             items(uiState.completedGoals) { item ->
                 GoalListItem(
                     item = item,
-                    onClick = { onNavigateToGoalDetail(item.goal.id) },
+                    onClick = { onNavigateToCounting(item.goal.id) },
                     onDelete = { viewModel.deleteGoal(item.goal.id) },
                 )
             }
@@ -211,7 +211,7 @@ private fun GoalListItem(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (item.dailyTarget > 0) {
+            if (item.dailyTarget > 0 || item.goal.isCompleted) {
                 val minimumTargetProgress = item.goal.minimumStreakCount
                     ?.takeIf { it > 0 && it < item.dailyTarget }
                     ?.toFloat()
@@ -222,6 +222,7 @@ private fun GoalListItem(
                     ringColor = MaterialTheme.colorScheme.secondary,
                     trackColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.62f),
                     textColor = MaterialTheme.colorScheme.onSurface,
+                    showCompletionIcon = !item.goal.isCompleted,
                     minimumTargetProgress = minimumTargetProgress,
                     minimumTargetColor = MaterialTheme.colorScheme.tertiary,
                     size = 48.dp,

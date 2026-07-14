@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +44,8 @@ import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -54,6 +55,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -65,8 +67,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -95,6 +95,11 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressSummary
 import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradStatusBarStyle
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualPrimaryButton
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.DhikrFullTextBottomSheet
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.nextCountingDhikrLineSpacing
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.nextCountingDhikrTextScale
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.previousCountingDhikrLineSpacing
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.previousCountingDhikrTextScale
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.localizedName
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.localizedTitle
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.AwradDhikrGoalsTrackerTheme
@@ -182,7 +187,7 @@ private fun GoalDetailContent(
                         .fillMaxSize()
                         .padding(padding),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(22.dp),
+                    verticalArrangement = Arrangement.spacedBy(28.dp),
                 ) {
                     item {
                         GoalHeroCard(
@@ -195,11 +200,11 @@ private fun GoalDetailContent(
                     }
 
                     item {
-                        CountingSection(goal = goal, onEdit = onNavigateToEdit)
-                    }
-
-                    item {
-                        ScheduleSection(goal = goal, onEdit = onNavigateToEditSchedule)
+                        GoalOverviewSection(
+                            goal = goal,
+                            onEditCounting = onNavigateToEdit,
+                            onEditSchedule = onNavigateToEditSchedule,
+                        )
                     }
 
                     item {
@@ -275,164 +280,192 @@ private fun GoalHeroCard(
     val fraction = progress?.progress ?: 0f
     val isComplete = targetCount > 0 && fraction >= 1f
     val remaining = progress?.remainingCount ?: (targetCount - progressCount).coerceAtLeast(0L)
+    val displayTitle = dhikr?.transliteration?.ifBlank { dhikr.title }.orEmpty().ifBlank {
+        stringResource(R.string.goal_details_goal_fallback)
+    }
+    var showFullDhikr by remember { mutableStateOf(false) }
+    var isArabicOverflowing by remember { mutableStateOf(false) }
+    var textScale by remember { mutableStateOf(1f) }
+    var lineSpacing by remember { mutableStateOf(1f) }
 
-    Surface(
+    val animatedProgress by animateFloatAsState(
+        targetValue = fraction.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
+        label = "goalDetailProgress",
+    )
+
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
-        color = colorScheme.surfaceContainerLow,
-        border = BorderStroke(1.dp, colorScheme.primary.copy(alpha = 0.18f)),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = displayTitle,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = colorScheme.onSurface,
+            )
+            dhikr?.arabic?.takeIf { it.isNotBlank() }?.let { arabic ->
+                GoalDhikrPreview(
+                    arabic = arabic,
+                    isOverflowing = isArabicOverflowing,
+                    onTextOverflowChanged = { isArabicOverflowing = it },
+                    onShowFullDhikr = { showFullDhikr = true },
+                )
+            }
+            dhikr?.translation
+                ?.takeIf { it.isNotBlank() && !it.equals(displayTitle, ignoreCase = true) }
+                ?.let { translation ->
+                    Text(
+                        text = translation,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                }
+        }
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(22.dp),
+            color = colorScheme.primaryContainer.copy(alpha = if (isAwradDarkTheme()) 0.28f else 0.38f),
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 18.dp, vertical = 17.dp),
+                verticalArrangement = Arrangement.spacedBy(13.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                        Text(
+                            text = stringResource(R.string.goal_details_today_label),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            text = if (targetCount > 0) {
+                                stringResource(R.string.goal_details_progress_fraction, progressCount, targetCount)
+                            } else {
+                                stringResource(R.string.goal_details_progress_count_only, progressCount)
+                            },
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = colorScheme.onSurface,
+                        )
+                    }
+                    when {
+                        isComplete -> HeroStatusChip(
+                            text = stringResource(R.string.goal_details_complete_label),
+                            icon = Icons.Rounded.Check,
+                            emphasised = true,
+                        )
+                        targetCount > 0 && remaining > 0 -> HeroStatusChip(
+                            text = stringResource(R.string.goal_details_remaining_count, remaining),
+                            icon = null,
+                            emphasised = false,
+                        )
+                    }
+                }
+                if (targetCount > 0) {
+                    LinearProgressIndicator(
+                        progress = { animatedProgress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(12.dp)),
+                        color = colorScheme.primary,
+                        trackColor = colorScheme.primary.copy(alpha = 0.14f),
+                    )
+                }
+            }
+        }
+
+        RitualPrimaryButton(
+            text = stringResource(
+                if (canContinueCounting) {
+                    R.string.goal_details_continue_counting
+                } else {
+                    R.string.goal_details_view_counting
+                },
+            ),
+            onClick = onNavigateToCounting,
+            enabled = true,
+            leadingIcon = Icons.Rounded.PlayArrow,
+        )
+    }
+
+    if (showFullDhikr && dhikr != null) {
+        DhikrFullTextBottomSheet(
+            arabic = dhikr.arabic,
+            quranRef = dhikr.quranRef,
+            textScale = textScale,
+            lineSpacing = lineSpacing,
+            isAudioMode = false,
+            canManualCount = false,
+            onDecreaseTextSize = { textScale = previousCountingDhikrTextScale(textScale) },
+            onIncreaseTextSize = { textScale = nextCountingDhikrTextScale(textScale) },
+            onDecreaseLineSpacing = { lineSpacing = previousCountingDhikrLineSpacing(lineSpacing) },
+            onIncreaseLineSpacing = { lineSpacing = nextCountingDhikrLineSpacing(lineSpacing) },
+            onCount = {},
+            onDismiss = { showFullDhikr = false },
+            showCountButton = false,
+        )
+    }
+}
+
+@Composable
+private fun GoalDhikrPreview(
+    arabic: String,
+    isOverflowing: Boolean,
+    onTextOverflowChanged: (Boolean) -> Unit,
+    onShowFullDhikr: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            colorScheme.primary.copy(alpha = if (isAwradDarkTheme()) 0.16f else 0.10f),
-                            Color.Transparent,
+                    Brush.horizontalGradient(
+                        listOf(
+                            MaterialTheme.colorScheme.surface,
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.26f),
+                            MaterialTheme.colorScheme.surfaceContainer,
                         ),
                     ),
                 )
-                .padding(horizontal = 22.dp, vertical = 26.dp),
+                .padding(vertical = 14.dp, horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-        ) {
-            GoalProgressRing(
-                progress = fraction,
-                progressCount = progressCount,
-                targetCount = targetCount,
-            )
-
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(
-                    text = dhikr?.transliteration?.ifBlank { dhikr.title }.orEmpty().ifBlank {
-                        stringResource(R.string.goal_details_goal_fallback)
-                    },
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                )
-                dhikr?.arabic?.takeIf { it.isNotBlank() }?.let { arabic ->
-                    Text(
-                        text = arabic,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontFamily = NotoNaskhArabicFontFamily,
-                        ),
-                        color = colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                dhikr?.translation?.takeIf { it.isNotBlank() }?.let { translation ->
-                    Text(
-                        text = translation,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colorScheme.onSurfaceVariant.copy(alpha = 0.85f),
-                        textAlign = TextAlign.Center,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
-
-            if (isComplete) {
-                HeroStatusChip(
-                    text = stringResource(R.string.goal_details_complete_label),
-                    icon = Icons.Rounded.Check,
-                    emphasised = true,
-                )
-            } else if (targetCount > 0 && remaining > 0) {
-                HeroStatusChip(
-                    text = stringResource(R.string.goal_details_remaining_count, remaining),
-                    icon = null,
-                    emphasised = false,
-                )
-            }
-
-            RitualPrimaryButton(
-                text = stringResource(
-                    if (canContinueCounting) {
-                        R.string.goal_details_continue_counting
-                    } else {
-                        R.string.goal_details_counting_complete
-                    },
-                ),
-                onClick = onNavigateToCounting,
-                enabled = canContinueCounting,
-                leadingIcon = Icons.Rounded.PlayArrow,
-            )
-        }
-    }
-}
-
-@Composable
-private fun GoalProgressRing(
-    progress: Float,
-    progressCount: Long,
-    targetCount: Int,
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress.coerceIn(0f, 1f),
-        animationSpec = tween(durationMillis = 900, easing = FastOutSlowInEasing),
-        label = "goalDetailRing",
-    )
-    val trackColor = colorScheme.primary.copy(alpha = 0.14f)
-    val ringBrush = Brush.linearGradient(listOf(colorScheme.primary, colorScheme.secondary))
-
-    Box(
-        modifier = Modifier.size(150.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Canvas(modifier = Modifier.size(150.dp)) {
-            val stroke = 13.dp.toPx()
-            drawArc(
-                color = trackColor,
-                startAngle = -90f,
-                sweepAngle = 360f,
-                useCenter = false,
-                style = Stroke(width = stroke, cap = StrokeCap.Round),
-            )
-            if (animatedProgress > 0f) {
-                drawArc(
-                    brush = ringBrush,
-                    startAngle = -90f,
-                    sweepAngle = 360f * animatedProgress,
-                    useCenter = false,
-                    style = Stroke(width = stroke, cap = StrokeCap.Round),
-                )
-            }
-        }
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(0.dp),
         ) {
             Text(
-                text = "%,d".format(progressCount),
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
-                color = colorScheme.onSurface,
-                maxLines = 1,
+                text = arabic,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = NotoNaskhArabicFontFamily,
+                ),
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                lineHeight = 34.sp,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                onTextLayout = { onTextOverflowChanged(it.hasVisualOverflow) },
+                modifier = Modifier.fillMaxWidth(),
             )
-            if (targetCount > 0) {
-                Text(
-                    text = stringResource(R.string.goal_details_ring_of, "%,d".format(targetCount)),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.goal_details_today_label),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = colorScheme.onSurfaceVariant,
-                )
+            if (isOverflowing) {
+                TextButton(onClick = onShowFullDhikr) {
+                    Text(
+                        text = stringResource(R.string.counting_see_full),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
+                }
             }
         }
     }
@@ -475,7 +508,11 @@ private fun HeroStatusChip(
 }
 
 @Composable
-private fun CountingSection(goal: Goal, onEdit: () -> Unit) {
+private fun GoalOverviewSection(
+    goal: Goal,
+    onEditCounting: () -> Unit,
+    onEditSchedule: () -> Unit,
+) {
     val advancedItems = listOf(
         DetailItem(Icons.Outlined.TrackChanges, stringResource(R.string.goal_details_progress_scope), progressScopeSummary(goal.targetPolicy)),
         DetailItem(Icons.Outlined.Shield, stringResource(R.string.goal_details_cap_behavior), capBehaviorSummary(goal.capBehavior)),
@@ -483,9 +520,19 @@ private fun CountingSection(goal: Goal, onEdit: () -> Unit) {
         DetailItem(Icons.Outlined.Rule, stringResource(R.string.goal_details_slot_policy), slotPolicySummary(goal.slotCountingPolicy)),
     )
 
+    val scheduleItems = listOf(
+        DetailItem(Icons.Outlined.CalendarMonth, stringResource(R.string.goal_details_repeats), scheduleSummary(goal)),
+        DetailItem(Icons.Outlined.AccessTime, stringResource(R.string.goal_details_timing), timingSummary(goal)),
+        DetailItem(Icons.Outlined.Event, stringResource(R.string.goal_details_duration), durationSummary(goal)),
+    )
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionHeader(stringResource(R.string.goal_details_counting_section), onEdit = onEdit)
+        SectionLabel(stringResource(R.string.goal_details_overview_section))
         DetailCard {
+            DetailSubsectionHeader(
+                title = stringResource(R.string.goal_details_counting_section),
+                onEdit = onEditCounting,
+            )
             DetailInfoRow(
                 DetailItem(
                     icon = Icons.Outlined.Tune,
@@ -493,25 +540,42 @@ private fun CountingSection(goal: Goal, onEdit: () -> Unit) {
                     value = countRuleSummary(goal),
                 ),
             )
+            RowDivider()
+            DetailSubsectionHeader(
+                title = stringResource(R.string.goal_details_schedule_section),
+                onEdit = onEditSchedule,
+            )
+            scheduleItems.forEachIndexed { index, item ->
+                DetailInfoRow(item)
+                if (index != scheduleItems.lastIndex) RowDivider()
+            }
         }
         AdvancedDisclosure(items = advancedItems)
     }
 }
 
 @Composable
-private fun ScheduleSection(goal: Goal, onEdit: () -> Unit) {
-    val items = listOf(
-        DetailItem(Icons.Outlined.CalendarMonth, stringResource(R.string.goal_details_repeats), scheduleSummary(goal)),
-        DetailItem(Icons.Outlined.AccessTime, stringResource(R.string.goal_details_timing), timingSummary(goal)),
-        DetailItem(Icons.Outlined.Event, stringResource(R.string.goal_details_duration), durationSummary(goal)),
-    )
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionHeader(stringResource(R.string.goal_details_schedule_section), onEdit = onEdit)
-        DetailCard {
-            items.forEachIndexed { index, item ->
-                DetailInfoRow(item)
-                if (index != items.lastIndex) RowDivider()
-            }
+private fun DetailSubsectionHeader(title: String, onEdit: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 10.dp, top = 10.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        IconButton(onClick = onEdit, modifier = Modifier.size(40.dp)) {
+            Icon(
+                imageVector = Icons.Outlined.Edit,
+                contentDescription = stringResource(R.string.goal_details_edit_action),
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(19.dp),
+            )
         }
     }
 }

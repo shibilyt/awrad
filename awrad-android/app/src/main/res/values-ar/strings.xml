@@ -326,6 +326,7 @@
     <string name="count_hard_cap_reached">وصل هذا الهدف إلى حد العد.</string>
     <string name="counting_see_full">اقرأ المزيد</string>
     <string name="counting_adjust_text_size">ضبط حجم النص</string>
+    <string name="quran_show_full">عرض النص كاملًا</string>
     <string name="counting_text_size_button">ع</string>
     <string name="counting_text_size_title">حجم النص</string>
     <string name="counting_text_size_description">اضبط حجم نص الذكر</string>
@@ -1109,4 +1110,15 @@
     <string name="policy_one_total_target_desc">يتراكم التقدم حتى يكتمل الإجمالي.</string>
     <string name="policy_period_target_desc">لكل أسبوع أو موسم أو فترة مهيأة هدف.</string>
     <string name="policy_no_target_desc">تتبّع كل عدّ بدون مقام.</string>
+    <string name="goal_details_view_counting">عرض صفحة العد</string>
+    <string name="counting_target_reached_title">تم بلوغ الهدف</string>
+    <string name="counting_target_value_reached">تم بلوغ الهدف %1$s</string>
+    <string name="counting_additional_count">+%1$s إضافي</string>
+    <string name="counting_target_reached_blocked_body">تم إيقاف العد لأن هذا الهدف يتوقف عند العدد المستهدف.</string>
+    <string name="counting_allow_past_target_action">السماح بالعد بعد الهدف</string>
+    <string name="counting_allow_past_target_dialog_title">السماح بالعد بعد الهدف؟</string>
+    <string name="counting_allow_past_target_dialog_body">سيؤدي هذا إلى تغيير حد هذا الهدف بشكل دائم للسماح بالعد بعد الهدف. سيبقى الهدف مكتملاً.</string>
+    <string name="counting_allow_past_target_confirm">سماح</string>
+    <string name="counting_allow_past_target_success">يمكنك الآن متابعة العد بعد الهدف.</string>
+    <string name="counting_allow_past_target_error">تعذر تغيير حد العد. حاول مرة أخرى.</string>
 </resources>

@@ -69,6 +69,18 @@ internal fun categorizeActiveGoals(
     )
 }
 
+internal fun completedGoalDisplayItem(
+    goal: Goal,
+    dhikrName: String,
+): GoalDisplayItem = GoalDisplayItem(
+    goal = goal,
+    dhikrName = dhikrName,
+    targetDisplay = GoalProgressCalculator.getFormattedTarget(goal),
+    todayCount = goal.totalCompletedCount,
+    dailyTarget = GoalProgressCalculator.getTargetCount(goal),
+    overallProgress = 1f,
+)
+
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class GoalsViewModel @Inject constructor(
@@ -117,11 +129,9 @@ class GoalsViewModel @Inject constructor(
                 upcomingGoals = activeSections.upcoming,
                 completedGoals = completedGoals.map { goal ->
                     val dhikr = dhikrMap[goal.dhikrId]
-                    GoalDisplayItem(
+                    completedGoalDisplayItem(
                         goal = goal,
                         dhikrName = dhikr?.title.orEmpty().ifBlank { dhikr?.transliteration.orEmpty() },
-                        targetDisplay = GoalProgressCalculator.getFormattedTarget(goal),
-                        overallProgress = 1f,
                     )
                 },
                 otherGoals = activeSections.other + inactiveGoals.map(::displayItem),

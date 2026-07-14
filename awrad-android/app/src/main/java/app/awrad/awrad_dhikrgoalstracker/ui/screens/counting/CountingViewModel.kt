@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountEntry
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalculationMethodPref
+import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
@@ -23,6 +24,8 @@ import app.awrad.awrad_dhikrgoalstracker.data.preferences.UserPreferences
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.PrayerTimeRepository
+import app.awrad.awrad_dhikrgoalstracker.domain.usecase.AllowCountingPastTargetResult
+import app.awrad.awrad_dhikrgoalstracker.domain.usecase.AllowCountingPastTargetUseCase
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressUseCase
 import app.awrad.awrad_dhikrgoalstracker.service.AudioDownloadManager
 import app.awrad.awrad_dhikrgoalstracker.service.CountingState
@@ -125,7 +128,13 @@ data class CountingUiState(
     val canActiveCountUnderCap: Boolean = false,
     val canCountUnderCap: Boolean = false,
     val remainingCountLimit: Int? = null,
+    val isBlockedAtTarget: Boolean = false,
 )
+
+internal fun CountingState.isBlockedAtTargetCap(): Boolean =
+    capBehavior == CountCapBehavior.BlockAtTarget &&
+        targetCount > 0 &&
+        currentCount >= targetCount
 
 @Immutable
 data class EarlySlotWarningUiState(
@@ -157,6 +166,7 @@ class CountingViewModel @Inject constructor(
     private val userPreferences: UserPreferences,
     private val prayerTimeRepository: PrayerTimeRepository,
     private val goalProgressUseCase: GoalProgressUseCase,
+    private val allowCountingPastTargetUseCase: AllowCountingPastTargetUseCase,
 ) : ViewModel() {
 
     val vibrateOnCount: StateFlow<Boolean> = userPreferences.vibrateOnCount
@@ -255,6 +265,15 @@ class CountingViewModel @Inject constructor(
 
     private val _overTargetWarningMessage = Channel<Unit>(capacity = Channel.BUFFERED)
     val overTargetWarningMessage = _overTargetWarningMessage.receiveAsFlow()
+
+    private val _allowPastTargetSucceeded = Channel<Unit>(capacity = Channel.BUFFERED)
+    val allowPastTargetSucceeded = _allowPastTargetSucceeded.receiveAsFlow()
+
+    private val _allowPastTargetFailed = Channel<Unit>(capacity = Channel.BUFFERED)
+    val allowPastTargetFailed = _allowPastTargetFailed.receiveAsFlow()
+
+    private val _isUpdatingCap = MutableStateFlow(false)
+    val isUpdatingCap: StateFlow<Boolean> = _isUpdatingCap.asStateFlow()
 
     private val _countFeedbackEvents = Channel<Unit>(capacity = Channel.BUFFERED)
     val countFeedbackEvents = _countFeedbackEvents.receiveAsFlow()
@@ -417,6 +436,7 @@ class CountingViewModel @Inject constructor(
             canActiveCountUnderCap = capAllowsManualCount,
             canCountUnderCap = canCountUnderCap,
             remainingCountLimit = remainingCountLimit,
+            isBlockedAtTarget = !sessionComplete && countingState.isBlockedAtTargetCap(),
         )
     }.stateIn(
         scope = viewModelScope,
@@ -786,6 +806,38 @@ class CountingViewModel @Inject constructor(
         service?.setPlaybackSpeed(speed)
     }
 
+    fun allowCountingPastTarget() {
+        if (_isUpdatingCap.value) return
+        val current = _serviceState.value
+        val goalId = current.goalId ?: return
+        if (!current.isBlockedAtTargetCap()) return
+
+        viewModelScope.launch {
+            _isUpdatingCap.value = true
+            try {
+                when (
+                    val result = allowCountingPastTargetUseCase(
+                        goalId = goalId,
+                        activeSlotId = current.activeSlotId,
+                    )
+                ) {
+                    is AllowCountingPastTargetResult.Updated -> {
+                        refreshGoalConfiguration(result.goal)
+                        _allowPastTargetSucceeded.trySend(Unit)
+                    }
+                    AllowCountingPastTargetResult.GoalNotFound,
+                    AllowCountingPastTargetResult.NotBlockedAtTarget -> {
+                        _allowPastTargetFailed.trySend(Unit)
+                    }
+                }
+            } catch (_: Exception) {
+                _allowPastTargetFailed.trySend(Unit)
+            } finally {
+                _isUpdatingCap.value = false
+            }
+        }
+    }
+
     fun clearAudioError() {
         service?.clearAudioError()
     }
@@ -1131,6 +1183,43 @@ class CountingViewModel @Inject constructor(
                 correctionDelta = persistedDelta - optimisticAmount,
             )
         }
+    }
+
+    private fun refreshGoalConfiguration(goal: Goal) {
+        val current = _serviceState.value
+        if (current.goalId != goal.id) return
+
+        val slots = goal.activeSlots
+        val activeSlotId = current.activeSlotId?.takeIf { selectedId ->
+            slots.any { it.id == selectedId }
+        }
+        val dailyTarget = GoalProgressCalculator.getTotalDailyTarget(goal)
+        _goalInfo.update { info ->
+            if (info.goal?.id == goal.id) {
+                info.copy(
+                    goal = goal,
+                    goalLabel = GoalProgressCalculator.getFormattedTarget(goal),
+                    minimumCount = goal.minimumCount,
+                    dailyTarget = dailyTarget,
+                )
+            } else {
+                info
+            }
+        }
+        service?.startCounting(
+            goalId = goal.id,
+            targetCount = dailyTarget,
+            maximumCount = goal.maximumCount,
+            capBehavior = goal.capBehavior,
+            currentCount = current.currentCount,
+            dhikrArabic = current.dhikrArabic,
+            dhikrTransliteration = current.dhikrTransliteration,
+            audioCountPerPlay = current.audioCountPerPlay,
+            isPrayerBased = goal.isPrayerBased,
+            slots = slots,
+            slotCounts = current.slotCounts,
+            activeSlotId = activeSlotId,
+        )
     }
 
     private fun applyRepositoryCorrection(goalId: AwradId, slotId: AwradId?, correctionDelta: Long) {

@@ -10,10 +10,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -24,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.data.model.QuranRef
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.NotoNaskhArabicFontFamily
 
@@ -219,6 +222,9 @@ internal fun splitBismillah(raw: String): Pair<String?, String> {
     }
 }
 
+internal fun shouldRenderFullQuranInline(ref: QuranRef, arabic: String): Boolean =
+    ref.isValid && ref.ayahCount <= 10 && arabic.length <= 700
+
 /** Ranges (inclusive) of ornate `﴿…﴾` Quran quotations embedded in du'a/dhikr text. */
 internal fun quranQuoteRanges(text: String): List<IntRange> {
     val ranges = mutableListOf<IntRange>()
@@ -317,4 +323,55 @@ internal fun QuranBodyText(
         onTextLayout = onTextLayout,
         modifier = modifier.fillMaxWidth(),
     )
+}
+
+/**
+ * Shared Quran preview used by counting, goal creation, and dhikr details. Quran identity remains
+ * metadata; the card itself stays focused on the text and exposes the full reader only when the
+ * passage cannot be shown comfortably inline.
+ */
+@Composable
+fun QuranDhikrTextPreview(
+    arabic: String,
+    ref: QuranRef,
+    onShowFull: () -> Unit,
+    modifier: Modifier = Modifier,
+    textScale: Float = 1f,
+    onOverflowChanged: (Boolean) -> Unit = {},
+) {
+    val (bismillah, body) = remember(arabic) { splitBismillah(arabic) }
+    val renderFully = remember(ref, arabic) { shouldRenderFullQuranInline(ref, arabic) }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        bismillah?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontFamily = NotoNaskhArabicFontFamily,
+                    fontSize = 21.sp * textScale,
+                    lineHeight = 36.sp * textScale,
+                ),
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(8.dp))
+        }
+        QuranBodyText(
+            arabic = body,
+            fontScale = 0.72f * textScale,
+            maxLines = if (renderFully) Int.MAX_VALUE else 4,
+            overflow = if (renderFully) TextOverflow.Clip else TextOverflow.Ellipsis,
+            onTextLayout = { result ->
+                onOverflowChanged(!renderFully && result.hasVisualOverflow)
+            },
+        )
+        if (!renderFully) {
+            TextButton(onClick = onShowFull) {
+                Text(stringResource(R.string.quran_show_full))
+            }
+        }
+    }
 }
