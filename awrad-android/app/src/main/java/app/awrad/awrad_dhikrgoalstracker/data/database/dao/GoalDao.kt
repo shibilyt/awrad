@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.GoalEntity
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -20,19 +21,19 @@ interface GoalDao {
     fun getAllGoals(): Flow<List<GoalEntity>>
 
     @Query("SELECT * FROM goals WHERE id = :id")
-    suspend fun getGoalById(id: Long): GoalEntity?
+    suspend fun getGoalById(id: AwradId): GoalEntity?
 
     @Query("SELECT * FROM goals WHERE id = :id")
-    fun getGoalByIdFlow(id: Long): Flow<GoalEntity?>
+    fun getGoalByIdFlow(id: AwradId): Flow<GoalEntity?>
 
     @Insert
-    suspend fun insert(goal: GoalEntity): Long
+    suspend fun insert(goal: GoalEntity)
 
     @Update
     suspend fun update(goal: GoalEntity)
 
     @Query("DELETE FROM goals WHERE id = :id")
-    suspend fun deleteById(id: Long)
+    suspend fun deleteById(id: AwradId)
 
     @Query("""
         UPDATE goals SET totalCompletedCount = CASE
@@ -41,17 +42,17 @@ interface GoalDao {
         END, updatedAt = :updatedAt
         WHERE id = :goalId
     """)
-    suspend fun incrementTotalCount(goalId: Long, increment: Long, updatedAt: Long)
+    suspend fun incrementTotalCount(goalId: AwradId, increment: Long, updatedAt: Long)
 
     @Deprecated("Use incrementTotalCount(goalId, increment, updatedAt) so updatedAt stays accurate.")
     @Query("UPDATE goals SET totalCompletedCount = totalCompletedCount + :increment WHERE id = :goalId")
-    suspend fun incrementTotalCount(goalId: Long, increment: Long)
+    suspend fun incrementTotalCount(goalId: AwradId, increment: Long)
 
     @Query("UPDATE goals SET completedAt = :completedAt, isActive = 0, updatedAt = :completedAt WHERE id = :goalId")
-    suspend fun markCompleted(goalId: Long, completedAt: Long)
+    suspend fun markCompleted(goalId: AwradId, completedAt: Long)
 
     @Query("UPDATE goals SET completedAt = NULL, isActive = 1, updatedAt = :updatedAt WHERE id = :goalId")
-    suspend fun reopenGoal(goalId: Long, updatedAt: Long)
+    suspend fun reopenGoal(goalId: AwradId, updatedAt: Long)
 
     @Query("""
         SELECT DISTINCT goals.* FROM goals
@@ -67,5 +68,5 @@ interface GoalDao {
     suspend fun resetAllGoalProgress(updatedAt: Long)
 
     @Query("SELECT * FROM goals WHERE dhikrId = :dhikrId AND isActive = 1 ORDER BY createdAt DESC")
-    fun getActiveGoalsByDhikrId(dhikrId: Long): Flow<List<GoalEntity>>
+    fun getActiveGoalsByDhikrId(dhikrId: AwradId): Flow<List<GoalEntity>>
 }

@@ -3,6 +3,7 @@ package app.awrad.awrad_dhikrgoalstracker.util
 import app.awrad.awrad_dhikrgoalstracker.data.model.BuiltInSeasonTemplates
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalRecurrence
 import app.awrad.awrad_dhikrgoalstracker.data.model.RecurrenceFrequency
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
@@ -16,7 +17,7 @@ import java.time.temporal.ChronoUnit
 object GoalProgressCalculator {
 
     fun getTargetCount(goal: Goal): Int =
-        goal.slots.sumOf { it.targetCount ?: 0 }.coerceAtLeast(if (goal.targetPolicy == TargetPolicy.NONE) 0 else 1)
+        goal.activeSlots.sumOf { it.targetCount ?: 0 }.coerceAtLeast(if (goal.targetPolicy == TargetPolicy.NONE) 0 else 1)
 
     fun getTotalDailyTarget(goal: Goal): Int = getTargetCount(goal)
 
@@ -211,7 +212,7 @@ object GoalProgressCalculator {
             TargetPolicy.CUMULATIVE_TOTAL -> "$totalTarget total"
             TargetPolicy.PERIOD_TOTAL -> "$totalTarget${periodSuffix(goal.recurrence)}"
             TargetPolicy.PER_DUE_DATE -> {
-                if (goal.isPrayerBased) "${goal.slots.size} slots · $totalTarget total"
+                if (goal.isPrayerBased) "${goal.activeSlots.size} slots · $totalTarget total"
                 else "$totalTarget${dueDateSuffix(goal.recurrence)}"
             }
             TargetPolicy.NONE -> "Tracker"
@@ -292,12 +293,12 @@ object GoalProgressCalculator {
         dailyCounts: Map<LocalDate, Long>,
         today: LocalDate = LocalDate.now(),
         days: Int = STREAK_STRIP_DAYS,
-        dailySlotCounts: Map<LocalDate, Map<Long, Long>> = emptyMap(),
+        dailySlotCounts: Map<LocalDate, Map<AwradId, Long>> = emptyMap(),
     ): List<GoalDayActivity> {
         val target = getTargetCount(goal)
         // Historical days render against the current slot set — per-day slot history isn't
         // recorded, same approximation as target changes.
-        val activeSlots = goal.slots.filter { it.isActive }.sortedBy { it.sortOrder }
+        val activeSlots = goal.activeSlots.sortedBy { it.sortOrder }
         return (days - 1 downTo 0).map { offset ->
             val date = today.minusDays(offset.toLong())
             val count = dailyCounts[date] ?: 0L

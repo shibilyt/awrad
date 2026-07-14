@@ -15,11 +15,33 @@ enum DhikrDisplayContentRegistry {
         case .english:
             return DhikrDisplayContent(title: dhikr.title, translation: dhikr.translation)
         case .arabic:
-            return arabic[dhikr.seedSyncKey] ?? DhikrDisplayContent(title: dhikr.title, translation: dhikr.translation)
+            return dhikr.catalogKey
+                .flatMap { contentLookupKeyByCatalogKey[$0] }
+                .flatMap { arabic[$0] }
+                ?? DhikrDisplayContent(title: dhikr.title, translation: dhikr.translation)
         case .malayalam:
-            return malayalam[dhikr.seedSyncKey] ?? DhikrDisplayContent(title: dhikr.title, translation: dhikr.translation)
+            return dhikr.catalogKey
+                .flatMap { contentLookupKeyByCatalogKey[$0] }
+                .flatMap { malayalam[$0] }
+                ?? DhikrDisplayContent(title: dhikr.title, translation: dhikr.translation)
         }
     }
+
+    private static let contentLookupKeyByCatalogKey: [String: String] = [
+        "surah-ikhlas": "qul huwa allahu ahad",
+        "tahleel": "la ilaha illallah",
+        "ya-wahhabu": "ya wahhabu",
+        "isthighfar": "asthaghfirullahil azeem",
+        "swalath-al-fathimiyya": "allahumma swalli ala nnoori wa ahlihi",
+        "swalath": "swallallahu ala muhammad, swallallahu alayhi wa sallim",
+        "swalath-sayyidina": "allahumma swalli ala sayyidina muhammadin wa ala aalihi wa swahbihi wa sallim",
+        "swalath-al-fatih": "swalath al fatih",
+        "swalath-al-nariyya": "swalath al nariyya",
+        "swalath-for-debt": "allāhumma ṣalli ʿalā muḥammadin ʿabdika wa rasūlika wa ʿalā al-muʾminīna wa al-muslimīna wa lil-muʾmināti wa al-muslimāt.",
+        "ramadan-dhikr": "ash'hadu an la ilaha illallahu, asthaghfirullah, as'alukal jannatha wa au'dhu bika mina nnaar",
+        "ramadan-first-ten-nights": "allahummarhamni ya arhama rrahimin",
+        "ramadan-second-ten-nights": "allahummaghfirli dhunubi ya rabbal aalameen",
+    ]
 
     private static let arabic: [String: DhikrDisplayContent] = [
         "qul huwa allahu ahad": DhikrDisplayContent(

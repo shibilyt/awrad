@@ -11,6 +11,7 @@ import androidx.compose.ui.test.performClick
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalPreset
+import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 import app.awrad.awrad_dhikrgoalstracker.service.PreviewPlaybackState
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.GoalCreationMode
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.GoalDraft
@@ -112,7 +113,7 @@ class AdvancedGoalFlowPaneTest {
     }
 
     private val testDhikr = Dhikr(
-        id = 1,
+        id = newAwradId(),
         title = "SubhanAllah",
         arabic = "Subhan Allah",
         transliteration = "SubhanAllah",

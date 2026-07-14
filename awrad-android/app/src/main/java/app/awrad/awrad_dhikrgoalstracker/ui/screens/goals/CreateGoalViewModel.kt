@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalPreset
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetType
 import app.awrad.awrad_dhikrgoalstracker.data.model.TimingType
@@ -55,7 +56,7 @@ data class CreateGoalUiState(
      */
     val dhikrReturnMode: GoalCreationMode = GoalCreationMode.SelectShape,
     val isCreating: Boolean = false,
-    val createdGoalId: Long? = null,
+    val createdGoalId: AwradId? = null,
     val validation: GoalValidationResult = GoalValidationResult(
         mapOf(
             GoalDraftSection.Dhikr to GoalValidationMessage.SelectDhikr,
@@ -80,7 +81,8 @@ class CreateGoalViewModel @Inject constructor(
     val audioState: StateFlow<PreviewPlaybackState> = audioPlayer.state
 
     init {
-        val dhikrId = savedStateHandle.get<Long>("dhikrId")?.takeIf { it != -1L }
+        val dhikrId = savedStateHandle.get<String>("dhikrId")
+            ?.let { value -> runCatching { java.util.UUID.fromString(value) }.getOrNull() }
         if (dhikrId != null) {
             viewModelScope.launch {
                 val dhikr = dhikrRepository.getDhikrById(dhikrId)

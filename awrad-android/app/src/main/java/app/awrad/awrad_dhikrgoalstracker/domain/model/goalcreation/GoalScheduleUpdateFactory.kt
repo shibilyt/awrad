@@ -12,6 +12,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.PrayerRelation
 import app.awrad.awrad_dhikrgoalstracker.data.model.RecurrenceFrequency
 import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 
 object GoalScheduleUpdateFactory {
 
@@ -20,7 +21,7 @@ object GoalScheduleUpdateFactory {
         if (command.goalId != existingGoal.id) errors += GoalUpdateError.GoalIdMismatch
         if (!command.schedule.isValid()) errors += GoalUpdateError.InvalidSchedule
 
-        val activeById = existingGoal.slots.filter { it.id > 0 }.associateBy { it.id }
+        val activeById = existingGoal.activeSlots.associateBy { it.id }
         val activeSlots = command.timing.toActiveSlots(
             existingGoal = existingGoal,
             activeById = activeById,
@@ -33,9 +34,9 @@ object GoalScheduleUpdateFactory {
             return GoalUpdateResult.Invalid(errors.distinct())
         }
 
-        val retainedExistingIds = activeSlots.mapNotNull { it.id.takeIf { id -> id > 0 } }.toSet()
-        val newlyArchived = existingGoal.slots
-            .filter { it.id > 0 && it.id !in retainedExistingIds }
+        val retainedExistingIds = activeSlots.map { it.id }.toSet()
+        val newlyArchived = existingGoal.activeSlots
+            .filter { it.id !in retainedExistingIds }
             .map {
                 it.copy(
                     isActive = false,
@@ -45,7 +46,7 @@ object GoalScheduleUpdateFactory {
         val archivedSlots = (existingGoal.archivedSlots + newlyArchived)
             .distinctBy { it.id }
             .sortedWith(compareBy<GoalSlot> { it.archivedAt ?: Long.MAX_VALUE }.thenBy { it.sortOrder })
-        val activeSlotIds = activeSlots.mapNotNull { it.id.takeIf { id -> id > 0 } }.toSet()
+        val activeSlotIds = activeSlots.map { it.id }.toSet()
         val reminders = existingGoal.reminders.filter { reminder ->
             reminder.slotId == null ||
                 reminder.slotId in activeSlotIds ||
@@ -59,9 +60,8 @@ object GoalScheduleUpdateFactory {
         }
 
         val updatedGoal = existingGoal.copy(
-            recurrence = command.schedule.toRecurrence(existingGoal.startDate),
-            slots = activeSlots,
-            archivedSlots = archivedSlots,
+            recurrence = command.schedule.toRecurrence(existingGoal.id, existingGoal.startDate),
+            slots = activeSlots + archivedSlots,
             reminders = reminders,
             minimumStreakCount = activeSlots.aggregateMinimumCount(existingGoal.minimumStreakCount),
             maximumCount = activeSlots.aggregateMaximumCount(existingGoal.maximumCount),
@@ -83,35 +83,41 @@ object GoalScheduleUpdateFactory {
             is ScheduleSpec.SpecificDates -> dates.isNotEmpty()
         }
 
-    private fun ScheduleSpec.toRecurrence(startDate: java.time.LocalDate): GoalRecurrence =
+    private fun ScheduleSpec.toRecurrence(goalId: AwradId, startDate: java.time.LocalDate): GoalRecurrence =
         when (this) {
-            ScheduleSpec.Daily -> GoalRecurrence(frequency = RecurrenceFrequency.DAILY)
+            ScheduleSpec.Daily -> GoalRecurrence(goalId = goalId, frequency = RecurrenceFrequency.DAILY)
             is ScheduleSpec.Weekly -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.WEEKLY,
                 weekdays = weekdays,
             )
             is ScheduleSpec.Monthly -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.MONTHLY,
                 calendar = calendar,
                 monthDays = daysOfMonth,
             )
             is ScheduleSpec.Interval -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.INTERVAL,
                 intervalDays = intervalDays,
                 anchorDate = anchorDate ?: startDate,
             )
             is ScheduleSpec.Yearly -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.YEARLY,
                 calendar = calendar,
                 month = month,
                 monthDays = daysOfMonth,
             )
             is ScheduleSpec.Season -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.SEASON,
                 calendar = CalendarSystem.HIJRI,
                 seasonTemplateCode = templateCode,
             )
             is ScheduleSpec.SpecificDates -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.SPECIFIC_DATES,
                 specificDates = dates.map { GoalSpecificDate(date = it) }.toSet(),
             )
@@ -119,7 +125,7 @@ object GoalScheduleUpdateFactory {
 
     private fun ScheduleTimingUpdate.toActiveSlots(
         existingGoal: Goal,
-        activeById: Map<Long, GoalSlot>,
+        activeById: Map<AwradId, GoalSlot>,
         errors: MutableList<GoalUpdateError>,
     ): List<GoalSlot> {
         val requestedIds = requestedSlotIds()
@@ -132,7 +138,7 @@ object GoalScheduleUpdateFactory {
         return when (this) {
             is ScheduleTimingUpdate.Anytime -> {
                 val retained = slotId?.let { activeById[it] }
-                    ?: existingGoal.slots.firstOrNull { it.slotType == GoalSlotType.ANYTIME }
+                    ?: existingGoal.activeSlots.firstOrNull { it.slotType == GoalSlotType.ANYTIME }
                 listOf(
                     (retained ?: existingGoal.newSlotDefaults()).copy(
                         slotType = GoalSlotType.ANYTIME,
@@ -197,12 +203,12 @@ object GoalScheduleUpdateFactory {
         }
     }
 
-    private fun ScheduleTimingUpdate.requestedSlotIds(): List<Long> =
+    private fun ScheduleTimingUpdate.requestedSlotIds(): List<AwradId> =
         when (this) {
             is ScheduleTimingUpdate.Anytime -> listOfNotNull(slotId)
             is ScheduleTimingUpdate.PrayerBased -> slots.mapNotNull { it.slotId }
             is ScheduleTimingUpdate.TimeWindows -> windows.mapNotNull { it.slotId }
-        }.filter { it > 0 }
+        }
 
     private fun Goal.newSlotDefaults(): GoalSlot {
         val template = slots.maxByOrNull { it.sortOrder }

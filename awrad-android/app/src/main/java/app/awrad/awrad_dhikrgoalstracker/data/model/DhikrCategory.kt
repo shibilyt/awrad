@@ -9,6 +9,7 @@ enum class DhikrCategory {
     PROTECTION,
     GENERAL,
     SWALATHS,
+    ASMA_UL_HUSNA,
     RAMADAN,
     QURAN,
 }

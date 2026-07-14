@@ -31,6 +31,8 @@ import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdDetailScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdEditorScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdListScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdReaderScreen
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import java.util.UUID
 
 @Composable
 fun AwradNavGraph(
@@ -215,8 +217,8 @@ fun AwradNavGraph(
         composable(
             route = AwradDestination.CreateGoal.route,
             arguments = listOf(navArgument("dhikrId") {
-                type = NavType.LongType
-                defaultValue = -1L
+                type = NavType.StringType
+                nullable = true
             }),
         ) {
             WrappedAwradDestination(navController) {
@@ -254,15 +256,15 @@ fun AwradNavGraph(
         composable(
             route = AwradDestination.Counting.route,
             arguments = listOf(
-                navArgument("goalId") { type = NavType.LongType },
+                navArgument("goalId") { type = NavType.StringType },
                 navArgument("slotId") {
-                    type = NavType.LongType
-                    defaultValue = -1L
+                    type = NavType.StringType
+                    nullable = true
                 },
             ),
         ) { backStackEntry ->
-            val goalId = backStackEntry.arguments?.getLong("goalId") ?: return@composable
-            val slotId = backStackEntry.arguments?.getLong("slotId")?.takeIf { it > 0 }
+            val goalId = backStackEntry.arguments?.getString("goalId")?.toAwradIdOrNull() ?: return@composable
+            val slotId = backStackEntry.arguments?.getString("slotId")?.toAwradIdOrNull()
             WrappedAwradDestination(navController) {
                 CountingScreen(
                     goalId = goalId,
@@ -279,9 +281,9 @@ fun AwradNavGraph(
 
         composable(
             route = AwradDestination.GoalDetail.route,
-            arguments = listOf(navArgument("goalId") { type = NavType.LongType }),
+            arguments = listOf(navArgument("goalId") { type = NavType.StringType }),
         ) { backStackEntry ->
-            val goalId = backStackEntry.arguments?.getLong("goalId") ?: return@composable
+            val goalId = backStackEntry.arguments?.getString("goalId")?.toAwradIdOrNull() ?: return@composable
             WrappedAwradDestination(navController) {
                 GoalDetailScreen(
                     goalId = goalId,
@@ -304,9 +306,9 @@ fun AwradNavGraph(
 
         composable(
             route = AwradDestination.EditGoal.route,
-            arguments = listOf(navArgument("goalId") { type = NavType.LongType }),
+            arguments = listOf(navArgument("goalId") { type = NavType.StringType }),
         ) { backStackEntry ->
-            val goalId = backStackEntry.arguments?.getLong("goalId") ?: return@composable
+            val goalId = backStackEntry.arguments?.getString("goalId")?.toAwradIdOrNull() ?: return@composable
             WrappedAwradDestination(navController) {
                 EditGoalScreen(
                     goalId = goalId,
@@ -317,9 +319,9 @@ fun AwradNavGraph(
 
         composable(
             route = AwradDestination.EditGoalSchedule.route,
-            arguments = listOf(navArgument("goalId") { type = NavType.LongType }),
+            arguments = listOf(navArgument("goalId") { type = NavType.StringType }),
         ) { backStackEntry ->
-            val goalId = backStackEntry.arguments?.getLong("goalId") ?: return@composable
+            val goalId = backStackEntry.arguments?.getString("goalId")?.toAwradIdOrNull() ?: return@composable
             WrappedAwradDestination(navController) {
                 EditGoalScheduleScreen(
                     goalId = goalId,
@@ -330,9 +332,9 @@ fun AwradNavGraph(
 
         composable(
             route = AwradDestination.EditGoalReminders.route,
-            arguments = listOf(navArgument("goalId") { type = NavType.LongType }),
+            arguments = listOf(navArgument("goalId") { type = NavType.StringType }),
         ) { backStackEntry ->
-            val goalId = backStackEntry.arguments?.getLong("goalId") ?: return@composable
+            val goalId = backStackEntry.arguments?.getString("goalId")?.toAwradIdOrNull() ?: return@composable
             WrappedAwradDestination(navController) {
                 EditGoalRemindersScreen(
                     goalId = goalId,
@@ -343,9 +345,9 @@ fun AwradNavGraph(
 
         composable(
             route = AwradDestination.DhikrDetail.route,
-            arguments = listOf(navArgument("dhikrId") { type = NavType.LongType }),
+            arguments = listOf(navArgument("dhikrId") { type = NavType.StringType }),
         ) { backStackEntry ->
-            val dhikrId = backStackEntry.arguments?.getLong("dhikrId") ?: return@composable
+            val dhikrId = backStackEntry.arguments?.getString("dhikrId")?.toAwradIdOrNull() ?: return@composable
             WrappedAwradDestination(navController) {
                 DhikrDetailScreen(
                     onNavigateBack = {
@@ -453,11 +455,11 @@ private fun WrappedAwradDestination(
     )
 }
 
-private fun NavController.returnToCountingFromGoalDetail(goalId: Long) {
+private fun NavController.returnToCountingFromGoalDetail(goalId: AwradId) {
     val previousEntry = previousBackStackEntry
     val previousIsSameCountingGoal =
         previousEntry?.destination?.route == AwradDestination.Counting.route &&
-            previousEntry.arguments?.getLong("goalId") == goalId
+            previousEntry.arguments?.getString("goalId")?.toAwradIdOrNull() == goalId
 
     if (previousIsSameCountingGoal) {
         popBackStack()
@@ -469,3 +471,5 @@ private fun NavController.returnToCountingFromGoalDetail(goalId: Long) {
         }
     }
 }
+
+private fun String.toAwradIdOrNull(): AwradId? = runCatching(UUID::fromString).getOrNull()

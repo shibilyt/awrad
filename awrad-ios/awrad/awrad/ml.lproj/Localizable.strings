@@ -547,3 +547,7 @@
 "Searching…" = "തിരയുന്നു…";
 "Use my location" = "എന്റെ ലൊക്കേഷൻ ഉപയോഗിക്കുക";
 "Locating…" = "ലൊക്കേഷൻ കണ്ടെത്തുന്നു…";
+
+/* Dhikr categories */
+"category.asma_ul_husna" = "അസ്മാഉൽ ഹുസ്ന";
+"category.asma_ul_husna.description" = "അല്ലാഹുവിന്റെ മനോഹര നാമങ്ങൾ.";

@@ -79,6 +79,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
@@ -105,7 +106,7 @@ import java.time.LocalDate
 
 @Composable
 fun GoalDetailScreen(
-    goalId: Long,
+    goalId: AwradId,
     onNavigateBack: () -> Unit,
     onNavigateToCounting: () -> Unit,
     onNavigateToEdit: () -> Unit,
@@ -188,6 +189,7 @@ private fun GoalDetailContent(
                             goal = goal,
                             dhikr = uiState.dhikr,
                             progress = uiState.progress,
+                            canContinueCounting = uiState.canContinueCounting,
                             onNavigateToCounting = onNavigateToCounting,
                         )
                     }
@@ -264,6 +266,7 @@ private fun GoalHeroCard(
     goal: Goal,
     dhikr: Dhikr?,
     progress: GoalProgressSummary?,
+    canContinueCounting: Boolean,
     onNavigateToCounting: () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -352,8 +355,15 @@ private fun GoalHeroCard(
             }
 
             RitualPrimaryButton(
-                text = stringResource(R.string.goal_details_continue_counting),
+                text = stringResource(
+                    if (canContinueCounting) {
+                        R.string.goal_details_continue_counting
+                    } else {
+                        R.string.goal_details_counting_complete
+                    },
+                ),
                 onClick = onNavigateToCounting,
+                enabled = canContinueCounting,
                 leadingIcon = Icons.Rounded.PlayArrow,
             )
         }
@@ -559,13 +569,13 @@ private fun AdvancedDisclosure(items: List<DetailItem>) {
 @Composable
 private fun SessionsSection(
     goal: Goal,
-    slotCountsToday: Map<Long, Long>,
-    slotCountsAllTime: Map<Long, Long>,
+    slotCountsToday: Map<AwradId, Long>,
+    slotCountsAllTime: Map<AwradId, Long>,
     onEdit: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SectionHeader(stringResource(R.string.goal_details_slots_section), onEdit = onEdit)
-        if (goal.slots.isEmpty()) {
+        if (goal.activeSlots.isEmpty()) {
             DetailCard {
                 DetailInfoRow(
                     DetailItem(
@@ -577,7 +587,7 @@ private fun SessionsSection(
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                goal.slots.sortedBy { it.sortOrder }.forEach { slot ->
+                goal.activeSlots.sortedBy { it.sortOrder }.forEach { slot ->
                     SlotDetailCard(slot = slot, count = slotCountsToday[slot.id] ?: 0L)
                 }
             }
@@ -879,17 +889,19 @@ private fun progressScopeSummary(policy: TargetPolicy): String =
     }
 
 @Composable
-private fun timingSummary(goal: Goal): String =
-    when {
-        goal.slots.isEmpty() -> stringResource(R.string.goal_summary_slots_anytime)
-        goal.slots.size == 1 && goal.slots.single().slotType == GoalSlotType.ANYTIME ->
+private fun timingSummary(goal: Goal): String {
+    val slots = goal.activeSlots
+    return when {
+        slots.isEmpty() -> stringResource(R.string.goal_summary_slots_anytime)
+        slots.size == 1 && slots.single().slotType == GoalSlotType.ANYTIME ->
             stringResource(R.string.goal_summary_slots_anytime)
-        goal.slots.all { it.slotType == GoalSlotType.PRAYER } ->
-            pluralStringResource(R.plurals.goal_details_timing_prayer_slots, goal.slots.size, goal.slots.size)
-        goal.slots.all { it.slotType == GoalSlotType.TIME_WINDOW } ->
-            pluralStringResource(R.plurals.goal_summary_slots_time_count, goal.slots.size, goal.slots.size)
-        else -> pluralStringResource(R.plurals.goal_details_timing_mixed_slots, goal.slots.size, goal.slots.size)
+        slots.all { it.slotType == GoalSlotType.PRAYER } ->
+            pluralStringResource(R.plurals.goal_details_timing_prayer_slots, slots.size, slots.size)
+        slots.all { it.slotType == GoalSlotType.TIME_WINDOW } ->
+            pluralStringResource(R.plurals.goal_summary_slots_time_count, slots.size, slots.size)
+        else -> pluralStringResource(R.plurals.goal_details_timing_mixed_slots, slots.size, slots.size)
     }
+}
 
 @Composable
 private fun countRuleSummary(goal: Goal): String {
@@ -998,7 +1010,7 @@ private fun reminderSummary(reminder: GoalReminder, goal: Goal): String =
             "%02d:%02d".format(reminder.hour ?: 0, reminder.minute ?: 0),
         )
         ReminderType.PRAYER_OFFSET -> {
-            val targetSlot = reminder.slotId?.let { slotId -> goal.slots.firstOrNull { it.id == slotId } }
+            val targetSlot = reminder.slotId?.let { slotId -> goal.activeSlots.firstOrNull { it.id == slotId } }
             if (targetSlot == null) {
                 stringResource(R.string.goal_details_reminder_prayer_offset_all, reminder.offsetMinutes ?: 0)
             } else {
@@ -1010,7 +1022,7 @@ private fun reminderSummary(reminder: GoalReminder, goal: Goal): String =
             }
         }
         ReminderType.TIME_WINDOW_START -> {
-            val targetSlot = reminder.slotId?.let { slotId -> goal.slots.firstOrNull { it.id == slotId } }
+            val targetSlot = reminder.slotId?.let { slotId -> goal.activeSlots.firstOrNull { it.id == slotId } }
             if (targetSlot == null) {
                 stringResource(R.string.goal_details_reminder_window_start_all)
             } else {
@@ -1045,13 +1057,13 @@ private fun GoalDetailPreview() {
             uiState = GoalDetailUiState(
                 isLoading = false,
                 goal = Goal(
-                    id = 1,
-                    dhikrId = 1,
+                    id = java.util.UUID.randomUUID(),
+                    dhikrId = java.util.UUID.randomUUID(),
                     targetPolicy = TargetPolicy.PER_DUE_DATE,
                     slots = listOf(
                         GoalSlot(
-                            id = 1,
-                            goalId = 1,
+                            id = java.util.UUID.randomUUID(),
+                            goalId = java.util.UUID.randomUUID(),
                             slotType = GoalSlotType.ANYTIME,
                             targetCount = 100,
                         )
@@ -1059,7 +1071,7 @@ private fun GoalDetailPreview() {
                     startDate = LocalDate.parse("2026-05-27"),
                 ),
                 dhikr = Dhikr(
-                    id = 1,
+                    id = java.util.UUID.randomUUID(),
                     title = "Istighfar",
                     arabic = "أستغفر الله",
                     transliteration = "Astaghfirullah",

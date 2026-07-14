@@ -8,6 +8,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.GoalReminder
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.GoalReminderUpdate
@@ -53,9 +54,9 @@ data class EditGoalRemindersDraft(
 
 data class EditReminderDraft(
     val draftId: Long,
-    val reminderId: Long? = null,
+    val reminderId: AwradId? = null,
     val reminderType: ReminderType = ReminderType.FIXED_TIME,
-    val slotId: Long? = null,
+    val slotId: AwradId? = null,
     val hourText: String = "8",
     val minuteText: String = "00",
     val offsetText: String = DEFAULT_PRAYER_OFFSET_MINUTES.toString(),
@@ -71,7 +72,7 @@ class EditGoalRemindersViewModel @Inject constructor(
     private val reminderScheduler: ReminderSchedulingGateway,
 ) : ViewModel() {
 
-    private val goalId: Long = savedStateHandle["goalId"] ?: -1L
+    private val goalId: AwradId = java.util.UUID.fromString(checkNotNull(savedStateHandle.get<String>("goalId")))
     private var nextDraftId = -1L
 
     private val _uiState = MutableStateFlow(EditGoalRemindersUiState())
@@ -121,7 +122,7 @@ class EditGoalRemindersViewModel @Inject constructor(
         updateReminder(draftId) { it.copy(offsetText = value.onlyDigits().take(3)) }
     }
 
-    fun onTargetChange(draftId: Long, slotId: Long?) {
+    fun onTargetChange(draftId: Long, slotId: AwradId?) {
         updateReminder(draftId) { it.copy(slotId = slotId) }
     }
 
@@ -239,8 +240,8 @@ class EditGoalRemindersViewModel @Inject constructor(
 
     private fun GoalReminder.toDraft(): EditReminderDraft =
         EditReminderDraft(
-            draftId = id.takeIf { it > 0 } ?: nextTempId(),
-            reminderId = id.takeIf { it > 0 },
+            draftId = nextTempId(),
+            reminderId = id,
             reminderType = reminderType,
             slotId = slotId,
             hourText = (hour ?: 8).toString(),

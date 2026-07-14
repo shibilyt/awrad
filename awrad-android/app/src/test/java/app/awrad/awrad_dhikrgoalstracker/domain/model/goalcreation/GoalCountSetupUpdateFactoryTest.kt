@@ -1,5 +1,9 @@
 package app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation
 
+import java.util.UUID
+
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
@@ -80,8 +84,8 @@ class GoalCountSetupUpdateFactoryTest {
     fun `bounded multi slot update recalculates aggregate maximum`() {
         val existingGoal = goal(
             slots = listOf(
-                slot(id = 11, target = 10),
-                slot(id = 12, target = 20),
+                slot(id = testId(11), target = 10),
+                slot(id = testId(12), target = 20),
             )
         )
         val update = validUpdate(
@@ -90,7 +94,7 @@ class GoalCountSetupUpdateFactoryTest {
                 ruleMode = GoalCountRuleMode.Bounded,
                 slotPolicies = listOf(
                     GoalSlotCountPolicyUpdate(
-                        slotId = 11,
+                        slotId = testId(11),
                         countPolicy = GoalCountPolicyUpdate(
                             minimumCount = 5,
                             targetCount = 10,
@@ -99,7 +103,7 @@ class GoalCountSetupUpdateFactoryTest {
                         ),
                     ),
                     GoalSlotCountPolicyUpdate(
-                        slotId = 12,
+                        slotId = testId(12),
                         countPolicy = GoalCountPolicyUpdate(
                             minimumCount = 10,
                             targetCount = 20,
@@ -188,8 +192,8 @@ class GoalCountSetupUpdateFactoryTest {
     fun `missing multi slot policy is rejected`() {
         val existingGoal = goal(
             slots = listOf(
-                slot(id = 11, target = 10),
-                slot(id = 12, target = 20),
+                slot(id = testId(11), target = 10),
+                slot(id = testId(12), target = 20),
             )
         )
         val result = GoalCountSetupUpdateFactory.update(
@@ -197,7 +201,7 @@ class GoalCountSetupUpdateFactoryTest {
             command = command(
                 ruleMode = GoalCountRuleMode.Target,
                 slotPolicies = listOf(
-                    GoalSlotCountPolicyUpdate(11, GoalCountPolicyUpdate(targetCount = 10)),
+                    GoalSlotCountPolicyUpdate(testId(11), GoalCountPolicyUpdate(targetCount = 10)),
                 ),
             ),
         )
@@ -219,7 +223,7 @@ class GoalCountSetupUpdateFactoryTest {
         autoCompleteOnTarget: Boolean = false,
         currentProgressCount: Long = 0L,
     ) = UpdateGoalCountSetupCommand(
-        goalId = 1,
+        goalId = testId(1),
         ruleMode = ruleMode,
         countPolicy = countPolicy,
         slotPolicies = slotPolicies,
@@ -231,16 +235,16 @@ class GoalCountSetupUpdateFactoryTest {
         targetPolicy: TargetPolicy = TargetPolicy.PER_DUE_DATE,
         slots: List<GoalSlot> = listOf(slot()),
     ) = Goal(
-        id = 1,
-        dhikrId = 1,
+        id = testId(1),
+        dhikrId = testId(1),
         targetPolicy = targetPolicy,
         slots = slots,
         startDate = LocalDate.parse("2026-05-27"),
     )
 
-    private fun slot(id: Long = 10, target: Int? = 100) = GoalSlot(
+    private fun slot(id: UUID = testId(10), target: Int? = 100) = GoalSlot(
         id = id,
-        goalId = 1,
+        goalId = testId(1),
         slotType = GoalSlotType.ANYTIME,
         targetCount = target,
     )

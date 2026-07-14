@@ -2,19 +2,19 @@ package app.awrad.awrad_dhikrgoalstracker.ui.screens.onboarding
 
 import androidx.annotation.StringRes
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.database.BuiltInDhikrIds
 
 /**
  * Curated starter goals offered during onboarding. Each preset maps to a
- * built-in dhikr by its exact [builtInTitle] — dhikr IDs are auto-generated on
- * seed, so we resolve the real id at runtime instead of hardcoding it.
+ * built-in dhikr by its immutable [builtInCatalogKey]. Content and display text
+ * may evolve without changing this identity.
  *
- * The [builtInTitle] values MUST stay in sync with
- * [app.awrad.awrad_dhikrgoalstracker.data.database.BuiltInDhikrs]; this is
- * guarded by FirstGoalPresetsTest.
+ * The keys are sourced from [BuiltInDhikrIds] and guarded by
+ * `FirstGoalPresetsTest`.
  */
 data class FirstGoalPreset(
     val id: String,
-    val builtInTitle: String,
+    val builtInCatalogKey: String,
     val arabic: String,
     @StringRes val nameRes: Int,
     @StringRes val meaningRes: Int,
@@ -32,7 +32,7 @@ object FirstGoalPresets {
     val presets = listOf(
         FirstGoalPreset(
             id = "istighfar",
-            builtInTitle = "Isthighfar",
+            builtInCatalogKey = BuiltInDhikrIds.ISTHIGHFAR.catalogKey,
             arabic = "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
             nameRes = R.string.onboarding_goal_preset_istighfar_name,
             meaningRes = R.string.onboarding_goal_preset_istighfar_meaning,

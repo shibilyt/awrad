@@ -36,6 +36,36 @@ enum class CountCapBehavior {
     BlockAtMaximum,
 }
 
+typealias CapBehavior = CountCapBehavior
+
+/** Which configured count is used for a product threshold. */
+sealed class Threshold {
+    data object AnyPositive : Threshold()
+    data object Minimum : Threshold()
+    data object Target : Threshold()
+    data object Maximum : Threshold()
+    data class Custom(val count: Int) : Threshold()
+}
+
+data class CountPolicy(
+    val minimumCount: Int? = null,
+    val targetCount: Int? = null,
+    val maximumCount: Int? = null,
+    val streakThreshold: Threshold = Threshold.Target,
+    val reminderThreshold: Threshold = Threshold.Target,
+    val completionThreshold: Threshold = Threshold.Target,
+    val capBehavior: CountCapBehavior = CountCapBehavior.AllowOverTarget,
+) {
+    val hasAnyCount: Boolean get() = minimumCount != null || targetCount != null || maximumCount != null
+    val effectiveTargetCount: Int? get() = targetCount ?: minimumCount
+}
+
+enum class CompletionPolicy {
+    Never,
+    WhenTargetReached,
+    DurationEnded,
+}
+
 enum class PrayerRelation {
     BEFORE,
     AFTER,

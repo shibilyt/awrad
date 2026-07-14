@@ -15,7 +15,10 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.RecurrenceFrequency
 import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
 import app.awrad.awrad_dhikrgoalstracker.data.model.SeasonTemplateCode
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.Threshold
 import app.awrad.awrad_dhikrgoalstracker.data.model.TimingType
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.CapBehavior
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.CompletionPolicy
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.CountPolicy
@@ -26,7 +29,6 @@ import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.PrayerSlotSpe
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.ProgressScope
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.ReminderPolicy
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.ScheduleSpec
-import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.Threshold
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.TimeWindowSpec
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.TimingSpec
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.PrayerTiming
@@ -371,14 +373,14 @@ object GoalDraftMapper {
         }
     }
 
-    fun toGoal(dhikrId: Long, draft: GoalDraft, startDate: LocalDate): Goal {
+    fun toGoal(dhikrId: AwradId, draft: GoalDraft, startDate: LocalDate): Goal {
         return when (val result = GoalFactory.create(toCommand(dhikrId, draft, startDate))) {
             is GoalCreationResult.Valid -> result.validatedGoal.goal
             is GoalCreationResult.Invalid -> error("Invalid goal draft: ${result.errors}")
         }
     }
 
-    fun toCommand(dhikrId: Long, draft: GoalDraft, startDate: LocalDate): CreateGoalCommand {
+    fun toCommand(dhikrId: AwradId, draft: GoalDraft, startDate: LocalDate): CreateGoalCommand {
         val targetPolicy = targetPolicyFor(draft)
         return CreateGoalCommand(
             dhikrId = dhikrId,
@@ -496,34 +498,40 @@ object GoalDraftMapper {
         return GoalValidationResult(errors)
     }
 
-    fun buildRecurrence(draft: GoalDraft): GoalRecurrence {
+    fun buildRecurrence(draft: GoalDraft, goalId: AwradId = newAwradId()): GoalRecurrence {
         return when (val frequency = draft.frequencyDraft) {
-            FrequencyDraft.Daily -> GoalRecurrence(frequency = RecurrenceFrequency.DAILY)
+            FrequencyDraft.Daily -> GoalRecurrence(goalId = goalId, frequency = RecurrenceFrequency.DAILY)
             is FrequencyDraft.Weekly -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.WEEKLY,
                 weekdays = frequency.days,
             )
             is FrequencyDraft.Monthly -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.MONTHLY,
                 calendar = frequency.calendar.toCalendarSystem(),
                 monthDays = frequency.daysOfMonth,
             )
             is FrequencyDraft.Interval -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.INTERVAL,
                 intervalDays = frequency.intervalDays.toIntOrNull()?.coerceAtLeast(1),
             )
             is FrequencyDraft.Yearly -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.YEARLY,
                 calendar = frequency.calendar.toCalendarSystem(),
                 month = frequency.month,
                 monthDays = frequency.days,
             )
             is FrequencyDraft.Season -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.SEASON,
                 calendar = CalendarSystem.HIJRI,
                 seasonTemplateCode = frequency.seasonTemplateCode,
             )
             is FrequencyDraft.SpecificDates -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.SPECIFIC_DATES,
                 specificDates = parseSpecificDates(frequency.dateText)
                     .map { GoalSpecificDate(date = it) }
@@ -532,13 +540,13 @@ object GoalDraftMapper {
         }
     }
 
-    fun buildSlots(draft: GoalDraft): List<GoalSlot> {
+    fun buildSlots(draft: GoalDraft, goalId: AwradId = newAwradId()): List<GoalSlot> {
         val policy = targetPolicyFor(draft)
         return when (effectiveTiming(draft)) {
             GoalTimingDraft.Anytime -> {
                 val countPolicy = countPolicyFor(draft, policy)
                 listOf(GoalSlot(
-                    goalId = 0,
+                    goalId = goalId,
                     slotType = GoalSlotType.ANYTIME,
                     minimumCount = countPolicy.minimumCount,
                     targetCount = countPolicy.targetForSlotPersistence(policy),
@@ -548,10 +556,10 @@ object GoalDraftMapper {
             }
             GoalTimingDraft.PrayerBased -> {
                 val target = draft.targetDraft as? TargetDraft.PrayerBased ?: return emptyList()
-                buildPrayerSlots(draft, target, policy)
+                buildPrayerSlots(draft, target, policy, goalId)
             }
-            GoalTimingDraft.MorningEvening -> buildMorningEveningSlots(draft, policy)
-            GoalTimingDraft.CustomSlots -> buildCustomTimeSlots(draft, policy)
+            GoalTimingDraft.MorningEvening -> buildMorningEveningSlots(draft, policy, goalId)
+            GoalTimingDraft.CustomSlots -> buildCustomTimeSlots(draft, policy, goalId)
         }
     }
 
@@ -568,11 +576,12 @@ object GoalDraftMapper {
             GoalTimingDraft.CustomSlots -> draft.timeSlots.map { it.mode }
         }
 
-    fun buildReminders(draft: GoalDraft): List<GoalReminder> {
+    fun buildReminders(draft: GoalDraft, goalId: AwradId = newAwradId()): List<GoalReminder> {
         if (!draft.extras.notificationEnabled) return emptyList()
         return when (effectiveTiming(draft)) {
             GoalTimingDraft.PrayerBased -> listOf(
                 GoalReminder(
+                    goalId = goalId,
                     reminderType = ReminderType.PRAYER_OFFSET,
                     offsetMinutes = 10,
                     enabled = true,
@@ -581,6 +590,7 @@ object GoalDraftMapper {
             GoalTimingDraft.MorningEvening,
             GoalTimingDraft.CustomSlots -> listOf(
                 GoalReminder(
+                    goalId = goalId,
                     reminderType = ReminderType.TIME_WINDOW_START,
                     offsetMinutes = 0,
                     enabled = true,
@@ -588,6 +598,7 @@ object GoalDraftMapper {
             )
             GoalTimingDraft.Anytime -> listOf(
                 GoalReminder(
+                    goalId = goalId,
                     reminderType = ReminderType.FIXED_TIME,
                     hour = draft.extras.notificationHour,
                     minute = draft.extras.notificationMinute,
@@ -597,7 +608,7 @@ object GoalDraftMapper {
         }
     }
 
-    private fun buildMorningEveningSlots(draft: GoalDraft, policy: TargetPolicy): List<GoalSlot> {
+    private fun buildMorningEveningSlots(draft: GoalDraft, policy: TargetPolicy, goalId: AwradId): List<GoalSlot> {
         val sharedPolicy = countPolicyFor(draft, policy)
         val count = sharedPolicy.targetCount
         val morningPolicy = when {
@@ -630,7 +641,7 @@ object GoalDraftMapper {
         }
         return listOf(
             GoalSlot(
-                goalId = 0,
+                goalId = goalId,
                 slotType = GoalSlotType.TIME_WINDOW,
                 startMinute = 5 * 60,
                 endMinute = 11 * 60,
@@ -642,7 +653,7 @@ object GoalDraftMapper {
                 sortOrder = 0,
             ),
             GoalSlot(
-                goalId = 0,
+                goalId = goalId,
                 slotType = GoalSlotType.TIME_WINDOW,
                 startMinute = 17 * 60,
                 endMinute = 22 * 60,
@@ -656,7 +667,7 @@ object GoalDraftMapper {
         )
     }
 
-    private fun buildCustomTimeSlots(draft: GoalDraft, policy: TargetPolicy): List<GoalSlot> {
+    private fun buildCustomTimeSlots(draft: GoalDraft, policy: TargetPolicy, goalId: AwradId): List<GoalSlot> {
         val sharedPolicy = if (draft.slotTargetMode == SlotTargetMode.Same || !supportsPerSlotRules(draft)) {
             countPolicyFor(draft, policy)
         } else {
@@ -675,7 +686,7 @@ object GoalDraftMapper {
                 )
             }
             GoalSlot(
-                goalId = 0,
+                goalId = goalId,
                 slotType = GoalSlotType.TIME_WINDOW,
                 startMinute = slot.startMinuteOfDay,
                 endMinute = slot.endMinuteOfDay,
@@ -689,7 +700,12 @@ object GoalDraftMapper {
         }
     }
 
-    private fun buildPrayerSlots(draft: GoalDraft, target: TargetDraft.PrayerBased, policy: TargetPolicy): List<GoalSlot> {
+    private fun buildPrayerSlots(
+        draft: GoalDraft,
+        target: TargetDraft.PrayerBased,
+        policy: TargetPolicy,
+        goalId: AwradId,
+    ): List<GoalSlot> {
         val relations = when (target.timing) {
             PrayerTiming.BEFORE -> listOf(PrayerRelation.BEFORE)
             PrayerTiming.AFTER -> listOf(PrayerRelation.AFTER)
@@ -716,7 +732,7 @@ object GoalDraftMapper {
                         else -> sharedPolicy
                     }
                     GoalSlot(
-                        goalId = 0,
+                        goalId = goalId,
                         slotType = GoalSlotType.PRAYER,
                         prayerName = prayer,
                         prayerRelation = relation,

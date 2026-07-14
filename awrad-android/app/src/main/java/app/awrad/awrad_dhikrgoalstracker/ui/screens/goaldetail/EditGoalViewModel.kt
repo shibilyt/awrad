@@ -8,6 +8,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.GoalCountPolicyUpdate
@@ -39,7 +40,7 @@ data class EditGoalUiState(
     val goal: Goal? = null,
     val title: String = "",
     val progressCount: Long = 0L,
-    val slotCounts: Map<Long, Long> = emptyMap(),
+    val slotCounts: Map<AwradId, Long> = emptyMap(),
     val draft: EditGoalDraft = EditGoalDraft(),
     val originalDraft: EditGoalDraft = EditGoalDraft(),
     val validationErrors: List<GoalUpdateError> = emptyList(),
@@ -65,7 +66,7 @@ data class EditGoalDraft(
 )
 
 data class EditGoalSlotDraft(
-    val slotId: Long,
+    val slotId: AwradId,
     val title: String,
     val subtitle: String,
     val currentCount: Long,
@@ -85,7 +86,7 @@ class EditGoalViewModel @Inject constructor(
     private val updateGoalCountSetupUseCase: UpdateGoalCountSetupUseCase,
 ) : ViewModel() {
 
-    private val goalId: Long = savedStateHandle["goalId"] ?: -1L
+    private val goalId: AwradId = java.util.UUID.fromString(checkNotNull(savedStateHandle.get<String>("goalId")))
 
     private val _uiState = MutableStateFlow(EditGoalUiState())
     val uiState: StateFlow<EditGoalUiState> = _uiState.asStateFlow()
@@ -118,19 +119,19 @@ class EditGoalViewModel @Inject constructor(
         updateDraft { it.copy(autoCompleteOnTarget = enabled) }
     }
 
-    fun onSlotMinimumChange(slotId: Long, value: String) {
+    fun onSlotMinimumChange(slotId: AwradId, value: String) {
         updateSlot(slotId) { it.copy(minimumCount = value.onlyDigits()) }
     }
 
-    fun onSlotTargetChange(slotId: Long, value: String) {
+    fun onSlotTargetChange(slotId: AwradId, value: String) {
         updateSlot(slotId) { it.copy(targetCount = value.onlyDigits()) }
     }
 
-    fun onSlotMaximumChange(slotId: Long, value: String) {
+    fun onSlotMaximumChange(slotId: AwradId, value: String) {
         updateSlot(slotId) { it.copy(maximumCount = value.onlyDigits()) }
     }
 
-    fun onSlotCapBehaviorChange(slotId: Long, behavior: CountCapBehavior) {
+    fun onSlotCapBehaviorChange(slotId: AwradId, behavior: CountCapBehavior) {
         updateSlot(slotId) { it.copy(capBehavior = behavior) }
     }
 
@@ -198,7 +199,7 @@ class EditGoalViewModel @Inject constructor(
         }
     }
 
-    private fun updateSlot(slotId: Long, transform: (EditGoalSlotDraft) -> EditGoalSlotDraft) {
+    private fun updateSlot(slotId: AwradId, transform: (EditGoalSlotDraft) -> EditGoalSlotDraft) {
         updateDraft { draft ->
             draft.copy(
                 slots = draft.slots.map { slot ->
@@ -261,7 +262,7 @@ class EditGoalViewModel @Inject constructor(
             capBehavior = if (ruleMode == GoalCountRuleMode.Exact) CountCapBehavior.BlockAtMaximum else capBehavior,
         )
 
-    private fun Goal.toEditDraft(slotCounts: Map<Long, Long>): EditGoalDraft {
+    private fun Goal.toEditDraft(slotCounts: Map<AwradId, Long>): EditGoalDraft {
         val singleSlot = slots.singleOrNull()
         val minimum = singleSlot?.minimumCount ?: minimumStreakCount
         val target = singleSlot?.targetCount ?: slots.sumOf { it.targetCount ?: 0 }.takeIf { it > 0 }

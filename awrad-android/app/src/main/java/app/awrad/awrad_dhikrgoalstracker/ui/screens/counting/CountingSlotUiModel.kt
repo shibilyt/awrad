@@ -1,5 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.counting
 
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.SlotCountingPolicy
@@ -7,7 +9,7 @@ import app.awrad.awrad_dhikrgoalstracker.util.SlotTimeStatus
 import app.awrad.awrad_dhikrgoalstracker.util.SlotTimingInfo
 
 data class SlotCountingUiModel(
-    val id: Long,
+    val id: AwradId,
     val title: String,
     val subtitle: String,
     val count: Long,
@@ -34,11 +36,11 @@ internal fun List<GoalSlot>.hasSelectableSlots(): Boolean =
 internal fun List<GoalSlot>.totalSlotTarget(): Int =
     sumOf { it.targetCount ?: 0 }
 
-internal fun Map<Long, Long>.totalForSlots(slots: List<GoalSlot>): Long =
+internal fun Map<AwradId, Long>.totalForSlots(slots: List<GoalSlot>): Long =
     slots.sumOf { this[it.id] ?: 0L }
 
 data class DefaultSlotSelection(
-    val slotId: Long?,
+    val slotId: AwradId?,
     val source: SlotSelectionSource,
 )
 
@@ -54,10 +56,10 @@ enum class SlotSelectionSource {
 
 internal fun selectDefaultSlot(
     slots: List<GoalSlot>,
-    slotCounts: Map<Long, Long>,
-    timingInfoBySlotId: Map<Long, SlotTimingInfo>,
-    initialSlotId: Long?,
-    restoredSlotId: Long?,
+    slotCounts: Map<AwradId, Long>,
+    timingInfoBySlotId: Map<AwradId, SlotTimingInfo>,
+    initialSlotId: AwradId?,
+    restoredSlotId: AwradId?,
 ): DefaultSlotSelection {
     if (slots.isEmpty() || !slots.usesSlotProgress()) return DefaultSlotSelection(null, SlotSelectionSource.NONE)
 
@@ -121,10 +123,10 @@ internal fun selectDefaultSlot(
 
 internal fun buildSlotCountingUiModels(
     slots: List<GoalSlot>,
-    slotCounts: Map<Long, Long>,
-    activeSlotId: Long?,
-    timingInfoBySlotId: Map<Long, SlotTimingInfo> = emptyMap(),
-    recommendedSlotId: Long? = null,
+    slotCounts: Map<AwradId, Long>,
+    activeSlotId: AwradId?,
+    timingInfoBySlotId: Map<AwradId, SlotTimingInfo> = emptyMap(),
+    recommendedSlotId: AwradId? = null,
     slotCountingPolicy: SlotCountingPolicy = SlotCountingPolicy.WARN_AND_ALLOW,
     titleForSlot: (GoalSlot) -> String,
     subtitleForSlot: (GoalSlot) -> String,

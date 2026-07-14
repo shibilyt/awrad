@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "target_policies": ["per_due_date", "cumulative_total", "period_total", "none"],
+  "count_policy_presets": ["tracker", "minimum", "target", "stretch", "exact", "bounded"],
+  "thresholds": [
+    "any_positive",
+    "minimum",
+    "target",
+    "maximum",
+    { "type": "custom", "count": 73 }
+  ],
+  "cap_behaviors": ["allow_over_target", "warn_over_target", "block_at_target", "block_at_maximum"],
+  "completion_policies": ["never", "when_target_reached", "duration_ended"],
+  "slot_counting_policies": ["warn_and_allow", "strict_active_only", "silent_flexible"],
+  "recurrence_frequencies": ["daily", "weekly", "monthly", "interval", "yearly", "season", "specific_dates"],
+  "calendars": ["gregorian", "hijri"],
+  "slot_types": ["anytime", "prayer", "time_window"],
+  "reminder_types": ["fixed_time", "prayer_offset", "time_window_start"],
+  "dhikr_categories": ["morning", "evening", "after_salah", "forgiveness", "praise", "protection", "general", "swalaths", "asma_ul_husna", "ramadan", "quran"],
+  "lifecycle_states": [
+    { "name": "active", "is_active": true, "completed_at": null },
+    { "name": "paused", "is_active": false, "completed_at": null },
+    { "name": "completed", "is_active": false, "completed_at": "2026-07-13T10:15:30Z" }
+  ],
+  "slot_states": [
+    { "name": "active", "is_active": true, "archived_at": null },
+    { "name": "archived", "is_active": false, "archived_at": "2026-07-13T10:15:30Z" }
+  ],
+  "dhikr_cases": ["built_in_quran", "built_in_asma_ul_husna", "custom"],
+  "default_values": {
+    "dhikr.sort_order": 0,
+    "goal.target_policy": "per_due_date",
+    "goal.completion_policy": "never",
+    "goal.slot_counting_policy": "warn_and_allow",
+    "goal.is_active": true,
+    "recurrence.frequency": "daily",
+    "recurrence.calendar": "gregorian",
+    "count_policy.streak_threshold": "target",
+    "count_policy.reminder_threshold": "target",
+    "count_policy.completion_threshold": "target",
+    "count_policy.cap_behavior": "allow_over_target",
+    "goal_slot.slot_type": "anytime",
+    "goal_slot.sort_order": 0,
+    "goal_slot.is_active": true,
+    "goal_reminder.reminder_type": "fixed_time",
+    "goal_reminder.enabled": true,
+    "goal_reminder.sort_order": 0
+  },
+  "count_boundaries": [-9223372036854775808, 9223372036854775807]
+}

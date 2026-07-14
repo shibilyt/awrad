@@ -1,6 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation
 
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
 import app.awrad.awrad_dhikrgoalstracker.data.model.PrayerRelation
@@ -10,7 +11,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 
 data class CreateGoalCommand(
-    val dhikrId: Long,
+    val dhikrId: AwradId,
     val startDate: LocalDate,
     val schedule: ScheduleSpec = ScheduleSpec.Daily,
     val timing: TimingSpec = TimingSpec.Anytime,
@@ -60,44 +61,10 @@ data class TimeWindowSpec(
     val countPolicy: CountPolicy = CountPolicy(),
 )
 
-data class CountPolicy(
-    val minimumCount: Int? = null,
-    val targetCount: Int? = null,
-    val maximumCount: Int? = null,
-    val streakThreshold: Threshold = Threshold.Target,
-    val reminderThreshold: Threshold = Threshold.Target,
-    val completionThreshold: Threshold = Threshold.Target,
-    val capBehavior: CapBehavior = CapBehavior.AllowOverTarget,
-) {
-    val hasAnyCount: Boolean get() = minimumCount != null || targetCount != null || maximumCount != null
-    val effectiveTargetCount: Int? get() = targetCount ?: minimumCount
-}
-
-sealed class Threshold {
-    data object AnyPositive : Threshold()
-    data object Minimum : Threshold()
-    data object Target : Threshold()
-    data object Maximum : Threshold()
-    data class Custom(val count: Int) : Threshold()
-}
-
-enum class CapBehavior {
-    AllowOverTarget,
-    WarnOverTarget,
-    BlockAtTarget,
-    BlockAtMaximum,
-}
-
 enum class ProgressScope {
     DueDate,
     Period,
     Lifetime,
-}
-
-enum class CompletionPolicy {
-    Never,
-    WhenTargetReached,
-    DurationEnded,
 }
 
 sealed class ReminderPolicy {
@@ -110,7 +77,7 @@ sealed class ReminderPolicy {
 value class ValidatedGoal internal constructor(val goal: Goal)
 
 data class CreatedGoal(
-    val id: Long,
+    val id: AwradId,
     val goal: Goal,
 )
 

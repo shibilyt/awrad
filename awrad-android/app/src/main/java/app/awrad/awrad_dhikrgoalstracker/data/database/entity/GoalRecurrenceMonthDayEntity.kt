@@ -4,6 +4,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 
 @Entity(
     tableName = "goal_recurrence_month_days",
@@ -21,8 +23,7 @@ import androidx.room.PrimaryKey
     ]
 )
 data class GoalRecurrenceMonthDayEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val goalId: Long,
+    @PrimaryKey val id: AwradId = newAwradId(),
+    val goalId: AwradId,
     val dayOfMonth: Int,
 )
-

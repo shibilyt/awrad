@@ -59,7 +59,30 @@ Android and iOS own their local product state independently:
 - iOS uses Codable domain snapshots coordinated by `AwradStore`, with selected shared widget state/mutations.
 - The API uses Ecto/PostgreSQL for server-owned records.
 
-Matching names such as Goal, CountEntry, Dhikr, or Wird do not imply a stable wire format. Do not serialize local models directly into an API contract without defining ownership, IDs, versions, timestamps, and conflict behavior.
+Dhikr, Goal, GoalSlot, GoalReminder, GoalRecurrence, CountPolicy, and CountEntry now have a stable native-model contract in `contracts/progress-model/v1/`. Wird remains outside that contract. Do not serialize persistence records directly; use the versioned Android/iOS DTO mappers and authenticated API context boundary.
+
+## Progress model v1 and UUID identity
+
+`contracts/progress-model/v1/progress-model.schema.json` is the canonical JSON shape. `fixtures/progress-state.json` is the native round-trip golden state, `fixtures/coverage.json` exhausts enum, policy, lifecycle, archived-slot, dhikr, and signed 64-bit edge cases, and `field-ownership.json` classifies shared, local-only, and derived state.
+
+Identity and representation rules:
+
+- Dhikr, Goal, GoalSlot, GoalReminder, and CountEntry IDs are UUIDv4. Mobile clients assign IDs before persistence; the API validates client UUIDv4 IDs at its context boundary.
+- The 113 built-ins use the immutable catalog-key/UUID pairs in `builtin-dhikrs.json`: the original 13 dhikrs plus Allah and the traditional 99-name Asma-ul Husna sequence. Content is reconciled only by UUID or catalog key. Titles, Arabic, transliteration, sort order, and audio URLs are not identity. Retired keys and UUIDs remain reserved.
+- `asma-ul-husna.json` is the canonical ordered content source for the `asma_ul_husna` category. Its 100 native seeds are generated for Android and iOS, copied into Phoenix `priv`, and currently use the invocation variant (`Ya Allah`, `Ya Rahman`, and so on). `sort_order` is shared progress data and fixes category order independently of localized or alphabetical display. The seeds ship without audio metadata until audio is uploaded. Audio or collection-variant changes must retain the same catalog keys and UUIDs.
+- GoalSlot ownership and CountEntry slot ownership are non-null. GoalReminder slot ownership is optional.
+- A paused goal has `is_active=false` and no `completed_at`. A goal is completed only when `completed_at` is present.
+- Archived slots remain in the single `slots` collection with `is_active=false`; active and archived collections are derived views.
+- `total_completed_count` is derived from CountEntry records. The native apps may retain a transactionally refreshed cache, but it is local-only and never synchronization authority.
+- Dates use `YYYY-MM-DD`. Timestamps use UTC RFC3339. Counts use Android `Long`, iOS `Int64`, and PostgreSQL `bigint`.
+- Enum wire values are canonical snake_case. Threshold selectors are `any_positive`, `minimum`, `target`, `maximum`, or `{ "type": "custom", "count": n }`.
+- Canonical defaults are declared in the schema and `fixtures/coverage.json`: goals default to per-due-date, active, incomplete, `never` completion; recurrence defaults to daily Gregorian; count thresholds default to target with allow-over-target caps.
+
+Android stores UUIDs as Room `TEXT`; schema version 5 deliberately resets identity-dependent development product tables before reseeding canonical dhikrs, and version 6 adds persisted dhikr ordering. iOS snapshot version 5 resets pre-v5 development snapshots, decodes missing dhikr sort order as zero, and rejects pre-v5 backup imports while leaving Keychain authentication credentials alone. Phoenix retains `:binary_id` storage and advances through a forward migration; authenticated scope, not payload ownership fields, supplies `user_id`.
+
+There are no progress synchronization routes in v1. Outboxes, operation IDs, tombstones, ownership binding, reconciliation, and conflict resolution remain deferred.
+
+Run `./check-mobile-model-parity` at the root for schema/fixture validation, exact persisted-field classification, three-way built-in registry comparison, and the Android and iOS contract suites. A progress-model change is incomplete unless its schema, fixtures, native mappers, API representation, and tests change together.
 
 ## Product parity
 
@@ -76,4 +99,4 @@ High-risk parity areas include count caps, streak eligibility, day boundaries, r
 
 General account-bound synchronization and online-library imports are not implemented end to end. The intended direction is local-first: local records remain usable offline, server association is explicit, imported library content is a snapshot, and audio download/cache state is separate from logical content state.
 
-Before implementing sync, create a cross-project decision that locks identifier ownership, immutable account binding, revisions, tombstones/deletion, conflict policy, initial upload/download behavior, and compatibility with existing local data. Do not infer those rules from the current Ecto schemas alone.
+Stable UUIDv4 identity and the native progress model are now locked by ADR-2026-07-13. Before implementing routes, add a follow-up decision for immutable account binding, revisions, tombstones/deletion, conflict policy, initial upload/download behavior, and compatibility with existing local data. Do not infer those rules from the current Ecto schemas alone.

@@ -298,6 +298,9 @@ struct LibraryView: View {
             if $0.category != $1.category {
                 return $0.category.sortRank < $1.category.sortRank
             }
+            if $0.sortOrder != $1.sortOrder {
+                return $0.sortOrder < $1.sortOrder
+            }
             return $0.displayTitle(language: language).localizedCaseInsensitiveCompare($1.displayTitle(language: language)) == .orderedAscending
         }
     }
@@ -311,6 +314,7 @@ struct LibraryView: View {
 
 private struct FeaturedDhikrCollection: Identifiable {
     enum Tone {
+        case asmaUlHusna
         case daily
         case swalaths
         case dhikrs
@@ -332,6 +336,15 @@ private struct FeaturedDhikrCollection: Identifiable {
             : count(categoryCounts, categories: [.praise, .forgiveness, .quran])
 
         return [
+            FeaturedDhikrCollection(
+                title: String(
+                    localized: "category.asma_ul_husna",
+                    defaultValue: "Asma-ul Husna"
+                ),
+                category: .asmaUlHusna,
+                count: categoryCounts[.asmaUlHusna] ?? 0,
+                tone: .asmaUlHusna
+            ),
             FeaturedDhikrCollection(
                 title: "Daily Essentials",
                 category: dailyCategory,
@@ -425,6 +438,8 @@ private struct LibraryFeaturedCollectionCard: View {
     private var imageName: String {
         let suffix = isDark ? "dark" : "light"
         switch collection.tone {
+        case .asmaUlHusna:
+            return "collection_asma_ul_husna_\(suffix)"
         case .daily:
             return "collection_daily_essentials_\(suffix)"
         case .swalaths:
@@ -466,7 +481,12 @@ struct CategoryDhikrsView: View {
     private var categoryDhikrs: [Dhikr] {
         store.dhikrs
             .filter { $0.category == category }
-            .sorted { $0.displayTitle(language: language).localizedCaseInsensitiveCompare($1.displayTitle(language: language)) == .orderedAscending }
+            .sorted {
+                if $0.sortOrder != $1.sortOrder {
+                    return $0.sortOrder < $1.sortOrder
+                }
+                return $0.displayTitle(language: language).localizedCaseInsensitiveCompare($1.displayTitle(language: language)) == .orderedAscending
+            }
     }
 
     var body: some View {
@@ -1052,6 +1072,11 @@ private extension DhikrCategory {
             "General dhikrs for regular counting."
         case .swalaths:
             "Blessings and prayers upon the Prophet ﷺ."
+        case .asmaUlHusna:
+            String(
+                localized: "category.asma_ul_husna.description",
+                defaultValue: "The beautiful names of Allah."
+            )
         case .ramadan:
             "Seasonal remembrances for Ramadan."
         case .quran:

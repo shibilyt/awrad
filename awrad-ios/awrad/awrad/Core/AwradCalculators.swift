@@ -14,11 +14,11 @@ enum EffectiveDateProvider {
 }
 
 enum GoalProgressCalculator {
-    static func targetCount(for goal: Goal) -> Int {
-        goal.totalTarget
+    static func targetCount(for goal: Goal) -> Int64 {
+        Int64(goal.totalTarget)
     }
 
-    static func count(for goal: Goal, entries: [CountEntry], dateKey: String) -> Int {
+    static func count(for goal: Goal, entries: [CountEntry], dateKey: String) -> Int64 {
         if goal.targetPolicy == .cumulativeTotal {
             return entries.filter { $0.goalID == goal.id }.reduce(0) { $0 + $1.count }
         }
@@ -35,7 +35,7 @@ enum GoalProgressCalculator {
         return entries.filter { $0.goalID == goal.id && $0.dateKey == dateKey }.reduce(0) { $0 + $1.count }
     }
 
-    static func count(for goal: Goal, slotID: AwradID?, entries: [CountEntry], dateKey: String) -> Int {
+    static func count(for goal: Goal, slotID: AwradID?, entries: [CountEntry], dateKey: String) -> Int64 {
         if goal.targetPolicy == .cumulativeTotal {
             return entries
                 .filter { $0.goalID == goal.id && $0.slotID == slotID }
@@ -65,9 +65,11 @@ enum GoalProgressCalculator {
         return min(Double(count(for: goal, entries: entries, dateKey: dateKey)) / Double(target), 1)
     }
 
-    static func remaining(for goal: Goal, entries: [CountEntry], dateKey: String, slotID: AwradID? = nil) -> Int {
+    static func remaining(for goal: Goal, entries: [CountEntry], dateKey: String, slotID: AwradID? = nil) -> Int64 {
         if goal.targetPolicy == .none { return 0 }
-        let target = slotID.flatMap { id in goal.slots.first { $0.id == id }?.targetCount } ?? targetCount(for: goal)
+        let target = slotID
+            .flatMap { id in goal.activeSlots.first { $0.id == id }?.targetCount }
+            .map(Int64.init) ?? targetCount(for: goal)
         let current = slotID == nil
             ? count(for: goal, entries: entries, dateKey: dateKey)
             : count(for: goal, slotID: slotID, entries: entries, dateKey: dateKey)
@@ -112,7 +114,7 @@ enum GoalProgressCalculator {
     /// Goal-aware streak: a day counts only when its total for the goal meets the
     /// minimum-for-streak threshold (falling back to the target, then to any count > 0).
     static func streak(for goal: Goal, entries: [CountEntry], todayKey: String) -> Int {
-        let threshold = goal.minimumForStreak ?? (goal.targetPolicy == .none ? 1 : max(goal.totalTarget, 1))
+        let threshold = Int64(goal.minimumForStreak ?? (goal.targetPolicy == .none ? 1 : max(goal.totalTarget, 1)))
         let dailyTotals = Dictionary(
             grouping: entries.filter { $0.goalID == goal.id && $0.count > 0 },
             by: \.dateKey

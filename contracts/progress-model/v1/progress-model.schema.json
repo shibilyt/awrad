@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://awrad.app/contracts/progress-model/v1/progress-model.schema.json",
+  "title": "Awrad Progress Model v1",
+  "type": "object",
+  "required": ["schema_version", "dhikrs", "goals", "count_entries"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": 1 },
+    "dhikrs": { "type": "array", "items": { "$ref": "#/$defs/dhikr" } },
+    "goals": { "type": "array", "items": { "$ref": "#/$defs/goal" } },
+    "count_entries": { "type": "array", "items": { "$ref": "#/$defs/countEntry" } }
+  },
+  "$defs": {
+    "uuidV4": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "date": { "type": "string", "format": "date" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "threshold": {
+      "oneOf": [
+        { "type": "string", "enum": ["any_positive", "minimum", "target", "maximum"] },
+        {
+          "type": "object",
+          "required": ["type", "count"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "custom" },
+            "count": { "type": "integer", "minimum": 1 }
+          }
+        }
+      ]
+    },
+    "countPolicy": {
+      "type": "object",
+      "required": ["minimum_count", "target_count", "maximum_count", "streak_threshold", "reminder_threshold", "completion_threshold", "cap_behavior"],
+      "additionalProperties": false,
+      "properties": {
+        "minimum_count": { "type": ["integer", "null"], "minimum": 1, "default": null },
+        "target_count": { "type": ["integer", "null"], "minimum": 1, "default": null },
+        "maximum_count": { "type": ["integer", "null"], "minimum": 1, "default": null },
+        "streak_threshold": { "$ref": "#/$defs/threshold", "default": "target" },
+        "reminder_threshold": { "$ref": "#/$defs/threshold", "default": "target" },
+        "completion_threshold": { "$ref": "#/$defs/threshold", "default": "target" },
+        "cap_behavior": { "enum": ["allow_over_target", "warn_over_target", "block_at_target", "block_at_maximum"], "default": "allow_over_target" }
+      }
+    },
+    "quranRef": {
+      "type": ["object", "null"],
+      "required": ["surah", "ayah_start", "ayah_end"],
+      "additionalProperties": false,
+      "properties": {
+        "surah": { "type": "integer", "minimum": 1, "maximum": 114 },
+        "ayah_start": { "type": "integer", "minimum": 1 },
+        "ayah_end": { "type": ["integer", "null"], "minimum": 1 }
+      }
+    },
+    "dhikr": {
+      "type": "object",
+      "required": ["id", "catalog_key", "is_custom", "title", "arabic", "transliteration", "translation", "audio_url", "audio_file_name", "category", "audio_count_per_play", "sort_order", "quran_ref", "benefits"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/uuidV4" },
+        "catalog_key": { "type": ["string", "null"], "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$", "default": null },
+        "is_custom": { "type": "boolean", "default": false },
+        "title": { "type": "string" },
+        "arabic": { "type": "string" },
+        "transliteration": { "type": "string" },
+        "translation": { "type": "string" },
+        "audio_url": { "type": ["string", "null"], "format": "uri", "default": null },
+        "audio_file_name": { "type": ["string", "null"], "default": null },
+        "category": { "enum": ["morning", "evening", "after_salah", "forgiveness", "praise", "protection", "general", "swalaths", "asma_ul_husna", "ramadan", "quran"] },
+        "audio_count_per_play": { "type": "integer", "minimum": 1, "default": 1 },
+        "sort_order": { "type": "integer", "minimum": 0, "default": 0 },
+        "quran_ref": { "$ref": "#/$defs/quranRef", "default": null },
+        "benefits": { "type": "array", "items": { "type": "string" }, "default": [] }
+      }
+    },
+    "recurrence": {
+      "type": "object",
+      "required": ["frequency", "calendar", "interval_days", "anchor_date", "month", "season_code", "weekdays", "month_days", "specific_dates"],
+      "additionalProperties": false,
+      "properties": {
+        "frequency": { "enum": ["daily", "weekly", "monthly", "interval", "yearly", "season", "specific_dates"], "default": "daily" },
+        "calendar": { "enum": ["gregorian", "hijri"], "default": "gregorian" },
+        "interval_days": { "type": ["integer", "null"], "minimum": 1, "default": null },
+        "anchor_date": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }], "default": null },
+        "month": { "type": ["integer", "null"], "minimum": 1, "maximum": 12, "default": null },
+        "season_code": { "type": ["string", "null"], "default": null },
+        "weekdays": { "type": "array", "uniqueItems": true, "items": { "type": "integer", "minimum": 1, "maximum": 7 }, "default": [] },
+        "month_days": { "type": "array", "uniqueItems": true, "items": { "type": "integer", "minimum": 1, "maximum": 31 }, "default": [] },
+        "specific_dates": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/date" }, "default": [] }
+      }
+    },
+    "goalSlot": {
+      "type": "object",
+      "required": ["id", "goal_id", "slot_type", "count_policy", "prayer_name", "prayer_relation", "start_minute", "end_minute", "start_lead_minutes_override", "label", "sort_order", "is_active", "archived_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/uuidV4" },
+        "goal_id": { "$ref": "#/$defs/uuidV4" },
+        "slot_type": { "enum": ["anytime", "prayer", "time_window"], "default": "anytime" },
+        "count_policy": { "$ref": "#/$defs/countPolicy" },
+        "prayer_name": { "type": ["string", "null"], "default": null },
+        "prayer_relation": { "enum": ["before", "after", null], "default": null },
+        "start_minute": { "type": ["integer", "null"], "minimum": 0, "maximum": 1439, "default": null },
+        "end_minute": { "type": ["integer", "null"], "minimum": 0, "maximum": 1439, "default": null },
+        "start_lead_minutes_override": { "type": ["integer", "null"], "minimum": 0, "default": null },
+        "label": { "type": ["string", "null"], "default": null },
+        "sort_order": { "type": "integer", "minimum": 0, "default": 0 },
+        "is_active": { "type": "boolean", "default": true },
+        "archived_at": { "anyOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }], "default": null }
+      }
+    },
+    "goalReminder": {
+      "type": "object",
+      "required": ["id", "goal_id", "slot_id", "reminder_type", "hour", "minute", "offset_minutes", "enabled", "sort_order"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/uuidV4" },
+        "goal_id": { "$ref": "#/$defs/uuidV4" },
+        "slot_id": { "anyOf": [{ "$ref": "#/$defs/uuidV4" }, { "type": "null" }], "default": null },
+        "reminder_type": { "enum": ["fixed_time", "prayer_offset", "time_window_start"], "default": "fixed_time" },
+        "hour": { "type": ["integer", "null"], "minimum": 0, "maximum": 23, "default": null },
+        "minute": { "type": ["integer", "null"], "minimum": 0, "maximum": 59, "default": null },
+        "offset_minutes": { "type": ["integer", "null"], "default": null },
+        "enabled": { "type": "boolean", "default": true },
+        "sort_order": { "type": "integer", "minimum": 0, "default": 0 }
+      }
+    },
+    "goal": {
+      "type": "object",
+      "required": ["id", "dhikr_id", "target_policy", "count_policy", "completion_policy", "slot_counting_policy", "recurrence", "slots", "reminders", "start_date", "end_date", "duration_days", "is_active", "completed_at", "created_at", "updated_at"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/uuidV4" },
+        "dhikr_id": { "$ref": "#/$defs/uuidV4" },
+        "target_policy": { "enum": ["per_due_date", "cumulative_total", "period_total", "none"], "default": "per_due_date" },
+        "count_policy": { "$ref": "#/$defs/countPolicy" },
+        "completion_policy": { "enum": ["never", "when_target_reached", "duration_ended"], "default": "never" },
+        "slot_counting_policy": { "enum": ["warn_and_allow", "strict_active_only", "silent_flexible"], "default": "warn_and_allow" },
+        "recurrence": { "$ref": "#/$defs/recurrence" },
+        "slots": { "type": "array", "items": { "$ref": "#/$defs/goalSlot" }, "default": [] },
+        "reminders": { "type": "array", "items": { "$ref": "#/$defs/goalReminder" }, "default": [] },
+        "start_date": { "$ref": "#/$defs/date" },
+        "end_date": { "anyOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }], "default": null },
+        "duration_days": { "type": ["integer", "null"], "minimum": 1, "default": null },
+        "is_active": { "type": "boolean", "default": true },
+        "completed_at": { "anyOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }], "default": null },
+        "created_at": { "$ref": "#/$defs/timestamp" },
+        "updated_at": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "countEntry": {
+      "type": "object",
+      "required": ["id", "goal_id", "slot_id", "count", "date", "last_updated"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/uuidV4" },
+        "goal_id": { "$ref": "#/$defs/uuidV4" },
+        "slot_id": { "$ref": "#/$defs/uuidV4" },
+        "count": { "type": "integer", "minimum": -9223372036854775808, "maximum": 9223372036854775807 },
+        "date": { "$ref": "#/$defs/date" },
+        "last_updated": { "$ref": "#/$defs/timestamp" }
+      }
+    }
+  }
+}

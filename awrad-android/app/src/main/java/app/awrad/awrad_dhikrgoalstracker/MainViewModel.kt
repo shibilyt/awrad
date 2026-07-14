@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 
 sealed interface MainUiState {
     data object Loading : MainUiState
@@ -19,8 +20,8 @@ sealed interface MainUiState {
 }
 
 data class NotificationGoalEvent(
-    val goalId: Long,
-    val slotId: Long? = null,
+    val goalId: AwradId,
+    val slotId: AwradId? = null,
 )
 
 @HiltViewModel
@@ -42,7 +43,7 @@ class MainViewModel @Inject constructor(
     private val _notificationGoalEvents = Channel<NotificationGoalEvent>(capacity = Channel.BUFFERED)
     val notificationGoalEvents: Flow<NotificationGoalEvent> = _notificationGoalEvents.receiveAsFlow()
 
-    fun onNotificationGoalId(goalId: Long, slotId: Long? = null) {
+    fun onNotificationGoalId(goalId: AwradId, slotId: AwradId? = null) {
         _notificationGoalEvents.trySend(NotificationGoalEvent(goalId, slotId))
     }
 

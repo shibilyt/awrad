@@ -7,6 +7,10 @@ import androidx.room.PrimaryKey
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.data.model.SlotCountingPolicy
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.CompletionPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.Threshold
+import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 
 @Entity(
     tableName = "goals",
@@ -21,17 +25,22 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
     indices = [Index("dhikrId")]
 )
 data class GoalEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val dhikrId: Long,
+    @PrimaryKey val id: AwradId = newAwradId(),
+    val dhikrId: AwradId,
     val targetPolicy: TargetPolicy = TargetPolicy.PER_DUE_DATE,
     val slotCountingPolicy: SlotCountingPolicy = SlotCountingPolicy.WARN_AND_ALLOW,
     val startDate: String,
     val endDate: String? = null,
     val durationDays: Int? = null,
     val minimumStreakCount: Int? = null,
+    val targetCount: Int? = null,
     val maximumCount: Int? = null,
     val capBehavior: CountCapBehavior = CountCapBehavior.AllowOverTarget,
+    val streakThreshold: Threshold = Threshold.Target,
+    val reminderThreshold: Threshold = Threshold.Target,
+    val completionThreshold: Threshold = Threshold.Target,
     val autoCompleteOnTarget: Boolean = false,
+    val completionPolicy: CompletionPolicy = CompletionPolicy.Never,
     val totalCompletedCount: Long = 0,
     val isActive: Boolean = true,
     val completedAt: Long? = null,

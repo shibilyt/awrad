@@ -3,10 +3,13 @@ package app.awrad.awrad_dhikrgoalstracker.data.database.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 
-@Entity(tableName = "dhikrs")
+@Entity(tableName = "dhikrs", indices = [androidx.room.Index(value = ["catalogKey"], unique = true)])
 data class DhikrEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @PrimaryKey val id: AwradId = newAwradId(),
+    val catalogKey: String? = null,
     val title: String = "",
     val arabic: String,
     val transliteration: String,
@@ -15,8 +18,11 @@ data class DhikrEntity(
     val audioFileName: String?,
     val category: DhikrCategory,
     val isDownloaded: Boolean = false,
+    val isCustom: Boolean = false,
     val audioCountPerPlay: Int = 1,
+    val sortOrder: Int = 0,
     val quranSurah: Int? = null,
     val quranAyahStart: Int? = null,
     val quranAyahEnd: Int? = null,
+    val benefitsJson: String = "[]",
 )

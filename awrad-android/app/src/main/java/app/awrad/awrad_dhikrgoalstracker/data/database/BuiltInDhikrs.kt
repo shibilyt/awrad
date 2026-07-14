@@ -8,6 +8,8 @@ object BuiltInDhikrs {
     val dhikrs = listOf(
         // QURAN
         DhikrEntity(
+            id = BuiltInDhikrIds.SURAH_IKHLAS.id,
+            catalogKey = BuiltInDhikrIds.SURAH_IKHLAS.catalogKey,
             title = "Surah Ikhlas",
             arabic = "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ\nقُلۡ هُوَ ٱللَّهُ أَحَدٌ (1)\nٱللَّهُ ٱلصَّمَدُ (2)\nلَمۡ يَلِدۡ وَلَمۡ يُولَدۡ (3)\nوَلَمۡ يَكُن لَّهُۥ كُفُوًا أَحَدُۢ (4)",
             transliteration = "Qul huwa Allahu ahad",
@@ -22,6 +24,8 @@ object BuiltInDhikrs {
         ),
         // PRAISE
         DhikrEntity(
+            id = BuiltInDhikrIds.TAHLEEL.id,
+            catalogKey = BuiltInDhikrIds.TAHLEEL.catalogKey,
             title = "Tahleel",
             arabic = "لَا إِلٰهَ إِلَّا ٱللَّٰهُ",
             transliteration = "La ilaha illallah",
@@ -32,6 +36,8 @@ object BuiltInDhikrs {
             audioCountPerPlay = 2
         ),
         DhikrEntity(
+            id = BuiltInDhikrIds.YA_WAHHABU.id,
+            catalogKey = BuiltInDhikrIds.YA_WAHHABU.catalogKey,
             title = "Ya Wahhabu",
             arabic = "يَا وَهَّابُ",
             transliteration = "Ya Wahhabu",
@@ -44,6 +50,8 @@ object BuiltInDhikrs {
 
         // FORGIVENESS
         DhikrEntity(
+            id = BuiltInDhikrIds.ISTHIGHFAR.id,
+            catalogKey = BuiltInDhikrIds.ISTHIGHFAR.catalogKey,
             title = "Isthighfar",
             arabic = "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
             transliteration = "Asthaghfirullahil Azeem",
@@ -55,6 +63,8 @@ object BuiltInDhikrs {
 
         // SWALATHS
         DhikrEntity(
+            id = BuiltInDhikrIds.SWALATH_AL_FATHIMIYYA.id,
+            catalogKey = BuiltInDhikrIds.SWALATH_AL_FATHIMIYYA.catalogKey,
             title = "Swalath Al Fathimiyya",
             arabic = "اللَّهُمَّ صَلِّ عَلَى النُّورِ وَأَهْلِهِ",
             transliteration = "Allahumma swalli ala nnoori wa ahlihi",
@@ -64,6 +74,8 @@ object BuiltInDhikrs {
             category = DhikrCategory.SWALATHS
         ),
         DhikrEntity(
+            id = BuiltInDhikrIds.SWALATH.id,
+            catalogKey = BuiltInDhikrIds.SWALATH.catalogKey,
             title = "Swalath",
             arabic = "صَلَّى ٱللَّٰهُ عَلَىٰ مُحَمَّدٍ، صَلَّى ٱللَّٰهُ عَلَيْهِ وَسَلَّمَ",
             transliteration = "Swallallahu ala Muhammad, swallallahu alayhi wa sallim",
@@ -73,6 +85,8 @@ object BuiltInDhikrs {
             category = DhikrCategory.SWALATHS
         ),
         DhikrEntity(
+            id = BuiltInDhikrIds.SWALATH_SAYYIDINA.id,
+            catalogKey = BuiltInDhikrIds.SWALATH_SAYYIDINA.catalogKey,
             title = "Swalath 2",
             arabic = "اللَّهُمَّ صَلِّ عَلَىٰ سَيِّدِنَا مُحَمَّدٍ وَعَلَىٰ آلِهِ وَصَحْبِهِ وَسَلِّمْ",
             transliteration = "Allahumma swalli ala sayyidina Muhammadin wa ala aalihi wa swahbihi wa sallim",
@@ -82,6 +96,8 @@ object BuiltInDhikrs {
             category = DhikrCategory.SWALATHS
         ),
         DhikrEntity(
+            id = BuiltInDhikrIds.SWALATH_AL_FATIH.id,
+            catalogKey = BuiltInDhikrIds.SWALATH_AL_FATIH.catalogKey,
             title = "Swalath al Fatih",
             arabic = "اللَّهُمَّ صَلِّ عَلَىٰ سَيِّدِنَا مُحَمَّدٍ ❁ الْفَاتِحِ لِمَا أُغْلِقَ ❁ وَالْخَاتِمِ لِمَا سَبَقَ ❁ نَاصِرِ الْحَقِّ بِالْحَقِّ ❁ وَالْهَادِي إِلَىٰ صِرَاطِكَ الْمُسْتَقِيمِ ❁ وَعَلَىٰ آلِهِ حَقَّ قَدْرِهِ وَمِقْدَارِهِ الْعَظِيمِ",
             transliteration = "Swalath al Fatih",
@@ -91,6 +107,8 @@ object BuiltInDhikrs {
             category = DhikrCategory.SWALATHS
         ),
         DhikrEntity(
+            id = BuiltInDhikrIds.SWALATH_AL_NARIYYA.id,
+            catalogKey = BuiltInDhikrIds.SWALATH_AL_NARIYYA.catalogKey,
             title = "Swalath al Nariyya",
             arabic = "اللَّهُمَّ صَلِّ صَلَاةً كَامِلَةً وَسَلِّمْ سَلَامًا تَامًّا عَلَىٰ سَيِّدِنَا مُحَمَّدٍ الَّذِي تَنْحَلُّ بِهِ الْعُقَدُ وَتَنْفَرِجُ بِهِ الْكُرَبُ وَتُقْضَىٰ بِهِ الْحَوَائِجُ وَتُنَالُ بِهِ الرَّغَائِبُ وَحُسْنُ الْخَوَاتِمِ وَيُسْتَسْقَى الْغَمَامُ بِوَجْهِهِ الْكَرِيمِ وَعَلَىٰ آلِهِ وَصَحْبِهِ فِي كُلِّ لَمْحَةٍ وَنَفَسٍ بِعَدَدِ كُلِّ مَعْلُومٍ لَكَ",
             transliteration = "Swalath al Nariyya",
@@ -100,6 +118,8 @@ object BuiltInDhikrs {
             category = DhikrCategory.SWALATHS
         ),
         DhikrEntity(
+            id = BuiltInDhikrIds.SWALATH_FOR_DEBT.id,
+            catalogKey = BuiltInDhikrIds.SWALATH_FOR_DEBT.catalogKey,
             title = "Swalath for Debt",
             arabic = "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ عَبْدِكَ وَرَسُولِكَ وَعَلَى الْمُؤْمِنِينَ وَالْمُسْلِمِينَ وَلِلْمُؤْمِنَاتِ وَالْمُسْلِمَاتِ",
             transliteration = "Allāhumma ṣalli ʿalā Muḥammadin ʿabdika wa rasūlika wa ʿalā al-muʾminīna wa al-muslimīna wa lil-muʾmināti wa al-muslimāt.",
@@ -111,6 +131,8 @@ object BuiltInDhikrs {
 
         // RAMADAN
         DhikrEntity(
+            id = BuiltInDhikrIds.RAMADAN_DHIKR.id,
+            catalogKey = BuiltInDhikrIds.RAMADAN_DHIKR.catalogKey,
             title = "Ramadan Dhikr",
             arabic = "أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا ٱللَّٰهُ، أَسْتَغْفِرُ ٱللَّٰهَ، أَسْأَلُكَ ٱلْجَنَّةَ وَأَعُوذُ بِكَ مِنَ ٱلنَّارِ",
             transliteration = "Ash'hadu an la ilaha illallahu, asthaghfirullah, as'alukal jannatha wa au'dhu bika mina nnaar",
@@ -120,6 +142,8 @@ object BuiltInDhikrs {
             category = DhikrCategory.RAMADAN
         ),
         DhikrEntity(
+            id = BuiltInDhikrIds.RAMADAN_FIRST_TEN_NIGHTS.id,
+            catalogKey = BuiltInDhikrIds.RAMADAN_FIRST_TEN_NIGHTS.catalogKey,
             title = "First 10 Nights",
             arabic = "اللَّهُمَّ ٱرْحَمْنِي يَا أَرْحَمَ ٱلرَّاحِمِينَ",
             transliteration = "Allahummarhamni ya arhama rrahimin",
@@ -129,6 +153,8 @@ object BuiltInDhikrs {
             category = DhikrCategory.RAMADAN
         ),
         DhikrEntity(
+            id = BuiltInDhikrIds.RAMADAN_SECOND_TEN_NIGHTS.id,
+            catalogKey = BuiltInDhikrIds.RAMADAN_SECOND_TEN_NIGHTS.catalogKey,
             title = "Second 10 Nights",
             arabic = "اللَّهُمَّ ٱغْفِرْ لِي ذُنُوبِي يَا رَبَّ ٱلْعَالَمِينَ",
             transliteration = "Allahummaghfirli dhunubi ya rabbal aalameen",
@@ -137,5 +163,5 @@ object BuiltInDhikrs {
             audioFileName = "ramadan-second10.mp3",
             category = DhikrCategory.RAMADAN
         ),
-    )
+    ) + AsmaUlHusnaSeed.dhikrs
 }

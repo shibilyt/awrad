@@ -128,7 +128,9 @@ defmodule AwradApiWeb.CoreComponents do
   attr :type, :string, default: "text"
   attr :field, Phoenix.HTML.FormField, doc: "a form field struct"
   attr :errors, :list, default: []
-  attr :rest, :global, include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
+
+  attr :rest, :global,
+    include: ~w(accept autocomplete capture cols disabled form list max maxlength min minlength
     multiple pattern placeholder readonly required rows size spellcheck step)
 
   def input(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do

@@ -6,7 +6,9 @@ import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import app.awrad.awrad_dhikrgoalstracker.data.database.AwradDatabase
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrEntity
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
+import app.awrad.awrad_dhikrgoalstracker.data.model.Threshold
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalReminder
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
@@ -35,7 +37,6 @@ import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.CreateGoalCom
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.GoalFactory
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.ProgressScope
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.ScheduleSpec
-import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.Threshold
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.TimeWindowSpec
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.TimingSpec
 import app.awrad.awrad_dhikrgoalstracker.data.preferences.UserPreferences
@@ -65,7 +66,7 @@ class GoalRepositoryImplCountCapTest {
     private lateinit var dateProvider: DateProvider
     private lateinit var updateGoalCountSetupUseCase: UpdateGoalCountSetupUseCase
     private lateinit var updateGoalScheduleUseCase: UpdateGoalScheduleUseCase
-    private var dhikrId: Long = 0
+    private lateinit var dhikrId: AwradId
 
     @Before
     fun setUp() = runTest {
@@ -94,17 +95,17 @@ class GoalRepositoryImplCountCapTest {
             goalProgressUseCase = GoalProgressUseCase(),
         )
         updateGoalScheduleUseCase = UpdateGoalScheduleUseCase(goalRepository = repository)
-        dhikrId = database.dhikrDao().insert(
-            DhikrEntity(
-                title = "SubhanAllah",
-                arabic = "Subhan Allah",
-                transliteration = "SubhanAllah",
-                translation = "Glory be to Allah",
-                audioUrl = null,
-                audioFileName = null,
-                category = DhikrCategory.PRAISE,
-            )
+        val dhikr = DhikrEntity(
+            title = "SubhanAllah",
+            arabic = "Subhan Allah",
+            transliteration = "SubhanAllah",
+            translation = "Glory be to Allah",
+            audioUrl = null,
+            audioFileName = null,
+            category = DhikrCategory.PRAISE,
         )
+        dhikrId = dhikr.id
+        database.dhikrDao().insert(dhikr)
     }
 
     @After
@@ -554,7 +555,7 @@ class GoalRepositoryImplCountCapTest {
         timing: TimingSpec = TimingSpec.Anytime,
         progressScope: ProgressScope = ProgressScope.DueDate,
         completionPolicy: CompletionPolicy = CompletionPolicy.Never,
-    ): Long {
+    ): AwradId {
         val validated = GoalFactory.requireValid(
             CreateGoalCommand(
                 dhikrId = dhikrId,

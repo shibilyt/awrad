@@ -1,9 +1,9 @@
 package app.awrad.awrad_dhikrgoalstracker.data.model
 
 data class GoalReminder(
-    val id: Long = 0,
-    val goalId: Long = 0,
-    val slotId: Long? = null,
+    val id: AwradId = newAwradId(),
+    val goalId: AwradId,
+    val slotId: AwradId? = null,
     val reminderType: ReminderType = ReminderType.FIXED_TIME,
     val hour: Int? = null,
     val minute: Int? = null,

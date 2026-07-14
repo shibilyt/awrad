@@ -4,6 +4,8 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalReminder
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 
 object GoalReminderUpdateFactory {
 
@@ -11,19 +13,19 @@ object GoalReminderUpdateFactory {
         val errors = mutableListOf<GoalUpdateError>()
         if (command.goalId != existingGoal.id) errors += GoalUpdateError.GoalIdMismatch
 
-        val activeSlotIds = existingGoal.slots.map { it.id }.toSet()
-        val prayerSlotIds = existingGoal.slots
+        val activeSlotIds = existingGoal.activeSlots.map { it.id }.toSet()
+        val prayerSlotIds = existingGoal.activeSlots
             .filter { it.slotType == GoalSlotType.PRAYER }
             .map { it.id }
             .toSet()
-        val timeWindowSlotIds = existingGoal.slots
+        val timeWindowSlotIds = existingGoal.activeSlots
             .filter { it.slotType == GoalSlotType.TIME_WINDOW }
             .map { it.id }
             .toSet()
-        val existingReminderIds = existingGoal.reminders.map { it.id }.filter { it > 0 }.toSet()
+        val existingReminderIds = existingGoal.reminders.map { it.id }.toSet()
 
         command.reminders.forEach { reminder ->
-            if ((reminder.reminderId ?: 0L) > 0L && reminder.reminderId !in existingReminderIds) {
+            if (reminder.reminderId != null && reminder.reminderId !in existingReminderIds) {
                 errors += GoalUpdateError.InvalidReminder
             }
             if (!reminder.isValidFor(activeSlotIds, prayerSlotIds, timeWindowSlotIds)) {
@@ -45,7 +47,7 @@ object GoalReminderUpdateFactory {
 
         val updatedReminders = command.reminders.mapIndexed { index, reminder ->
             GoalReminder(
-                id = reminder.reminderId ?: 0L,
+                id = reminder.reminderId ?: newAwradId(),
                 goalId = existingGoal.id,
                 slotId = reminder.normalizedSlotId(),
                 reminderType = reminder.reminderType,
@@ -65,9 +67,9 @@ object GoalReminderUpdateFactory {
     }
 
     private fun GoalReminderUpdate.isValidFor(
-        activeSlotIds: Set<Long>,
-        prayerSlotIds: Set<Long>,
-        timeWindowSlotIds: Set<Long>,
+        activeSlotIds: Set<AwradId>,
+        prayerSlotIds: Set<AwradId>,
+        timeWindowSlotIds: Set<AwradId>,
     ): Boolean =
         when (reminderType) {
             ReminderType.FIXED_TIME ->
@@ -85,7 +87,7 @@ object GoalReminderUpdateFactory {
                     (slotId == null || slotId in activeSlotIds)
         }
 
-    private fun GoalReminderUpdate.normalizedSlotId(): Long? =
+    private fun GoalReminderUpdate.normalizedSlotId(): AwradId? =
         when (reminderType) {
             ReminderType.FIXED_TIME -> null
             ReminderType.PRAYER_OFFSET,
@@ -116,7 +118,7 @@ object GoalReminderUpdateFactory {
 
     private data class ReminderDuplicateKey(
         val type: ReminderType,
-        val slotId: Long?,
+        val slotId: AwradId?,
         val hour: Int?,
         val minute: Int?,
         val offsetMinutes: Int?,

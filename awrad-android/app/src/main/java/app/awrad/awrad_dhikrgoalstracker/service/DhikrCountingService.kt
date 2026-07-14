@@ -26,8 +26,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,6 +39,7 @@ import androidx.media3.common.PlaybackParameters
 import android.util.Log
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import kotlin.math.roundToInt
 import app.awrad.awrad_dhikrgoalstracker.util.CountCapCalculator
 
@@ -54,6 +58,9 @@ class DhikrCountingService : Service() {
 
     private val _countingState = MutableStateFlow(CountingState())
     val countingState: StateFlow<CountingState> = _countingState.asStateFlow()
+
+    private val _overTargetWarnings = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val overTargetWarnings: SharedFlow<Unit> = _overTargetWarnings.asSharedFlow()
 
     private var playsRemaining: Int = 0
     private var indefinitePlayback: Boolean = false
@@ -80,11 +87,11 @@ class DhikrCountingService : Service() {
         return START_NOT_STICKY
     }
 
-    fun isCountingGoal(goalId: Long): Boolean =
-        _countingState.value.goalId == goalId && goalId >= 0
+    fun isCountingGoal(goalId: AwradId): Boolean =
+        _countingState.value.goalId == goalId
 
     fun startCounting(
-        goalId: Long,
+        goalId: AwradId,
         targetCount: Int,
         maximumCount: Int? = null,
         capBehavior: CountCapBehavior = CountCapBehavior.AllowOverTarget,
@@ -94,8 +101,8 @@ class DhikrCountingService : Service() {
         audioCountPerPlay: Int = 1,
         isPrayerBased: Boolean = false,
         slots: List<GoalSlot> = emptyList(),
-        slotCounts: Map<Long, Long> = emptyMap(),
-        activeSlotId: Long? = null,
+        slotCounts: Map<AwradId, Long> = emptyMap(),
+        activeSlotId: AwradId? = null,
     ) {
         // If already counting this goal (e.g. reconnecting after Activity recreation),
         // refresh the goal configuration without resetting playback state. Slice 5
@@ -178,8 +185,8 @@ class DhikrCountingService : Service() {
         audioCountPerPlay: Int,
         isPrayerBased: Boolean,
         slots: List<GoalSlot>,
-        slotCounts: Map<Long, Long>,
-        activeSlotId: Long?,
+        slotCounts: Map<AwradId, Long>,
+        activeSlotId: AwradId?,
     ) {
         val refresh = _countingState.value.refreshedWithGoalConfiguration(
             targetCount = targetCount,
@@ -208,7 +215,7 @@ class DhikrCountingService : Service() {
         updateNotification()
     }
 
-    fun setActiveSlot(slotId: Long?) {
+    fun setActiveSlot(slotId: AwradId?) {
         val current = _countingState.value
         val newTarget = if (slotId != null) {
             current.slots.find { it.id == slotId }?.targetCount ?: current.targetCount
@@ -401,8 +408,11 @@ class DhikrCountingService : Service() {
         }
 
         _countingState.value = current.copy(currentCount = newCount, slotCounts = newSlotCounts)
+        if (capResult.wouldCrossTarget) {
+            _overTargetWarnings.tryEmit(Unit)
+        }
 
-        val goalId = current.goalId
+        val goalId = current.goalId ?: return
         val slotId = current.activeSlotId
         serviceScope.launch {
             val persistedDelta = runCatching {
@@ -417,27 +427,38 @@ class DhikrCountingService : Service() {
 
         updateNotification()
 
-        if (current.targetCount > 0 && newCount >= current.targetCount.toLong()) {
+        val transition = evaluateCountProgressTransition(
+            previousCount = current.currentCount,
+            newCount = newCount,
+            targetCount = current.targetCount,
+            maximumCount = current.maximumCount,
+            capBehavior = current.capBehavior,
+        )
+        if (transition.hardCapReached) {
             _countingState.value = _countingState.value.copy(
-                goalReached = true,
                 isPlaying = false,
                 isAudioMode = false,
             )
             positionJob?.cancel()
             player?.stop()
-            playGoalReachedSound()
+        }
+        if (transition.targetReached) {
+            _countingState.value = _countingState.value.copy(
+                goalReached = true,
+            )
+            if (transition.targetReachedNow) playGoalReachedSound()
             val allSlotsComplete = current.activeSlotId == null || current.slots.isEmpty() ||
                 current.slots.all { slot ->
                     val target = slot.targetCount ?: 0
                     target > 0 && (newSlotCounts[slot.id] ?: 0L) >= target
                 }
-            if (allSlotsComplete) {
-                scheduler.cancelForGoal(current.goalId)
+            if (transition.targetReachedNow && allSlotsComplete) {
+                current.goalId?.let(scheduler::cancelForGoal)
             }
         }
     }
 
-    private fun applyRepositoryCorrection(goalId: Long, slotId: Long?, correctionDelta: Long) {
+    private fun applyRepositoryCorrection(goalId: AwradId, slotId: AwradId?, correctionDelta: Long) {
         if (correctionDelta == 0L) return
         val current = _countingState.value
         if (current.goalId != goalId) return
@@ -521,7 +542,7 @@ class DhikrCountingService : Service() {
         val state = _countingState.value
 
         val openIntent = Intent(this, MainActivity::class.java).apply {
-            putExtra(EXTRA_GOAL_ID, state.goalId)
+            state.goalId?.let { putExtra(EXTRA_GOAL_ID, it.toString()) }
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val contentPendingIntent = PendingIntent.getActivity(
@@ -633,8 +654,8 @@ internal fun CountingState.refreshedWithGoalConfiguration(
     audioCountPerPlay: Int,
     isPrayerBased: Boolean,
     slots: List<GoalSlot>,
-    slotCounts: Map<Long, Long>,
-    activeSlotId: Long?,
+    slotCounts: Map<AwradId, Long>,
+    activeSlotId: AwradId?,
 ): CountingConfigurationRefresh {
     val effectiveActiveSlotId = activeSlotId
         ?.takeIf { requested -> slots.any { it.id == requested } }
@@ -678,8 +699,8 @@ private fun effectiveRuleFor(
     capBehavior: CountCapBehavior,
     currentCount: Long,
     slots: List<GoalSlot>,
-    slotCounts: Map<Long, Long>,
-    activeSlotId: Long?,
+    slotCounts: Map<AwradId, Long>,
+    activeSlotId: AwradId?,
 ): SlotEffectiveRule =
     if (activeSlotId != null) {
         val slot = slots.find { it.id == activeSlotId }

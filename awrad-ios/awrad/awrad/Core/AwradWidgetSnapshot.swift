@@ -18,9 +18,9 @@ struct AwradWidgetSnapshot: Codable, Hashable {
     var focusDeepLink: String?
     var focusGoalID: String?
     var focusSlotID: String?
-    var focusCount: Int
-    var focusTarget: Int
-    var focusRemaining: Int
+    var focusCount: Int64
+    var focusTarget: Int64
+    var focusRemaining: Int64
     var focusCanIncrement: Bool
     var wirdTitle: String
     var wirdSubtitle: String
@@ -80,7 +80,7 @@ struct AwradWidgetSnapshot: Codable, Hashable {
         let slot = focusSlot(for: goal, store: store)
         let count = store.count(for: goal, slotID: slot?.id)
         let remaining = store.remaining(for: goal, slotID: slot?.id)
-        let target = slot?.targetCount ?? goal.totalTarget
+        let target = Int64(slot?.targetCount ?? goal.totalTarget)
         return WidgetPayload(
             title: store.title(for: goal),
             subtitle: localized("Today's Awrad", language: language),
@@ -98,7 +98,7 @@ struct AwradWidgetSnapshot: Codable, Hashable {
     }
 
     private static func focusSlot(for goal: Goal, store: AwradStore) -> GoalSlot? {
-        let slots = goal.slots.sorted { $0.sortOrder < $1.sortOrder }
+        let slots = goal.activeSlots.sorted { $0.sortOrder < $1.sortOrder }
         return slots.first { store.remaining(for: goal, slotID: $0.id) > 0 } ?? slots.first
     }
 
@@ -210,8 +210,8 @@ private struct WidgetPayload {
     var deepLink: String?
     var goalID: AwradID?
     var slotID: AwradID?
-    var count: Int
-    var target: Int
-    var remaining: Int
+    var count: Int64
+    var target: Int64
+    var remaining: Int64
     var canIncrement: Bool
 }

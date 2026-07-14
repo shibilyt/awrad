@@ -25,6 +25,34 @@ enum class CountCapReason {
 
 object CountCapCalculator {
 
+    fun remainingCapacity(
+        currentCount: Long,
+        targetCount: Int?,
+        maximumCount: Int?,
+        capBehavior: CountCapBehavior,
+    ): Long? {
+        val cap = when (capBehavior) {
+            CountCapBehavior.AllowOverTarget,
+            CountCapBehavior.WarnOverTarget -> null
+            CountCapBehavior.BlockAtTarget -> targetCount?.toLong()
+            CountCapBehavior.BlockAtMaximum -> maximumCount?.toLong()
+        }
+        return cap?.minus(currentCount)?.coerceAtLeast(0L)
+    }
+
+    fun canApplyIncrement(
+        currentCount: Long,
+        targetCount: Int?,
+        maximumCount: Int?,
+        capBehavior: CountCapBehavior,
+    ): Boolean = applyDelta(
+        currentCount = currentCount,
+        requestedDelta = 1L,
+        targetCount = targetCount,
+        maximumCount = maximumCount,
+        capBehavior = capBehavior,
+    ).appliedDelta > 0L
+
     fun applyDelta(
         currentCount: Long,
         requestedDelta: Long,

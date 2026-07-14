@@ -16,10 +16,20 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.SlotCountingPolicy
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetType
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
 import app.awrad.awrad_dhikrgoalstracker.data.model.TimingType
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.CompletionPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.Threshold
 import app.awrad.awrad_dhikrgoalstracker.util.toLocalDateOrNull
 import java.time.LocalDate
+import java.util.UUID
 
 class Converters {
+
+    @TypeConverter
+    fun fromAwradId(value: AwradId?): String? = value?.toString()
+
+    @TypeConverter
+    fun toAwradId(value: String?): AwradId? = value?.let(UUID::fromString)
 
     @TypeConverter
     fun fromLocalDate(date: LocalDate?): String? = date?.toString()
@@ -78,6 +88,35 @@ class Converters {
     fun toCountCapBehavior(value: String?): CountCapBehavior =
         value?.let { runCatching { CountCapBehavior.valueOf(it) }.getOrNull() }
             ?: CountCapBehavior.AllowOverTarget
+
+    @TypeConverter
+    fun fromThreshold(value: Threshold): String = when (value) {
+        Threshold.AnyPositive -> "ANY_POSITIVE"
+        Threshold.Minimum -> "MINIMUM"
+        Threshold.Target -> "TARGET"
+        Threshold.Maximum -> "MAXIMUM"
+        is Threshold.Custom -> "CUSTOM:${value.count}"
+    }
+
+    @TypeConverter
+    fun toThreshold(value: String?): Threshold = when {
+        value == "ANY_POSITIVE" -> Threshold.AnyPositive
+        value == "MINIMUM" -> Threshold.Minimum
+        value == "MAXIMUM" -> Threshold.Maximum
+        value?.startsWith("CUSTOM:") == true -> value.substringAfter(':').toIntOrNull()
+            ?.takeIf { it > 0 }
+            ?.let(Threshold::Custom)
+            ?: Threshold.Target
+        else -> Threshold.Target
+    }
+
+    @TypeConverter
+    fun fromCompletionPolicy(value: CompletionPolicy): String = value.name
+
+    @TypeConverter
+    fun toCompletionPolicy(value: String?): CompletionPolicy =
+        value?.let { runCatching { CompletionPolicy.valueOf(it) }.getOrNull() }
+            ?: CompletionPolicy.Never
 
     @TypeConverter
     fun fromRecurrenceFrequency(value: RecurrenceFrequency): String = value.name

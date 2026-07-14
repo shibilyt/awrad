@@ -10,11 +10,11 @@ class FirstGoalPresetsTest {
 
     @Test
     fun `every preset maps to a seeded dhikr title`() {
-        val seededTitles = BuiltInDhikrs.dhikrs.map { it.title }.toSet()
+        val seededCatalogKeys = BuiltInDhikrs.dhikrs.mapNotNull { it.catalogKey }.toSet()
         FirstGoalPresets.presets.forEach { preset ->
             assertTrue(
-                "Preset '${preset.id}' references missing dhikr title '${preset.builtInTitle}'",
-                seededTitles.contains(preset.builtInTitle),
+                "Preset '${preset.id}' references missing dhikr catalog key '${preset.builtInCatalogKey}'",
+                seededCatalogKeys.contains(preset.builtInCatalogKey),
             )
         }
     }

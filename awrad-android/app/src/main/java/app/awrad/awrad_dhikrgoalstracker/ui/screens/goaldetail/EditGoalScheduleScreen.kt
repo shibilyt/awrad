@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.BuiltInSeasonTemplates
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
@@ -79,7 +80,7 @@ import java.time.DayOfWeek
 
 @Composable
 fun EditGoalScheduleScreen(
-    goalId: Long,
+    goalId: AwradId,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EditGoalScheduleViewModel = hiltViewModel(),

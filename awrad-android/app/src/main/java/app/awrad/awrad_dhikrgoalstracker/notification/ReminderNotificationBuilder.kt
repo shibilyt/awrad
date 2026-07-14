@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import app.awrad.awrad_dhikrgoalstracker.MainActivity
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.service.DhikrCountingService
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.util.RemembranceProvider
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
@@ -17,12 +18,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 data class GoalNotificationData(
-    val goalId: Long,
+    val goalId: AwradId,
     val dhikrName: String,
     val todayCount: Long,
     val dailyTarget: Long,
     val isFollowUp: Boolean = false,
-    val slotId: Long? = null,
+    val slotId: AwradId? = null,
     val slotLabel: String? = null,
     val isTracker: Boolean = false,
 )
@@ -60,7 +61,7 @@ class ReminderNotificationBuilder @Inject constructor(
         val body = buildBody(data, remaining)
         val expandedBody = withRemembrance(buildExpandedBody(data, remaining))
 
-        val notificationId = WorkerKeys.NOTIFICATION_BASE_ID + (data.goalId % 900).toInt()
+        val notificationId = AlarmRequestCodes.goalReminder(data.goalId)
 
         val contentIntent = buildContentIntent(data.goalId, data.slotId, notificationId)
         val startAction = buildStartCountingAction(data.goalId, data.slotId, notificationId)
@@ -176,26 +177,26 @@ class ReminderNotificationBuilder @Inject constructor(
         }
     }
 
-    private fun buildContentIntent(goalId: Long, slotId: Long?, notificationId: Int): PendingIntent {
+    private fun buildContentIntent(goalId: AwradId, slotId: AwradId?, notificationId: Int): PendingIntent {
         return PendingIntent.getActivity(
             context,
             notificationId,
             Intent(context, MainActivity::class.java).apply {
-                putExtra(DhikrCountingService.EXTRA_GOAL_ID, goalId)
-                slotId?.let { putExtra(DhikrCountingService.EXTRA_SLOT_ID, it) }
+                putExtra(DhikrCountingService.EXTRA_GOAL_ID, goalId.toString())
+                slotId?.let { putExtra(DhikrCountingService.EXTRA_SLOT_ID, it.toString()) }
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
     }
 
-    private fun buildStartCountingAction(goalId: Long, slotId: Long?, notificationId: Int): NotificationCompat.Action {
+    private fun buildStartCountingAction(goalId: AwradId, slotId: AwradId?, notificationId: Int): NotificationCompat.Action {
         val intent = PendingIntent.getActivity(
             context,
             notificationId + 50000,
             Intent(context, MainActivity::class.java).apply {
-                putExtra(DhikrCountingService.EXTRA_GOAL_ID, goalId)
-                slotId?.let { putExtra(DhikrCountingService.EXTRA_SLOT_ID, it) }
+                putExtra(DhikrCountingService.EXTRA_GOAL_ID, goalId.toString())
+                slotId?.let { putExtra(DhikrCountingService.EXTRA_SLOT_ID, it.toString()) }
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
             },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
@@ -207,14 +208,14 @@ class ReminderNotificationBuilder @Inject constructor(
         ).build()
     }
 
-    private fun buildDismissAction(goalId: Long, notificationId: Int): NotificationCompat.Action {
+    private fun buildDismissAction(goalId: AwradId, notificationId: Int): NotificationCompat.Action {
         val intent = PendingIntent.getBroadcast(
             context,
             notificationId + 60000,
             Intent(context, DismissNotificationReceiver::class.java).apply {
                 action = WorkerKeys.ACTION_DISMISS_NOTIFICATION
                 putExtra(WorkerKeys.EXTRA_NOTIFICATION_ID, notificationId)
-                putExtra(WorkerKeys.EXTRA_GOAL_ID, goalId)
+                putExtra(WorkerKeys.EXTRA_GOAL_ID, goalId.toString())
             },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )

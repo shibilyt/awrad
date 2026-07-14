@@ -21,6 +21,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.entity.GoalReminderEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.GoalSlotEntity
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountEntry
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalRecurrence
@@ -41,6 +42,8 @@ import app.awrad.awrad_dhikrgoalstracker.util.toLocalDateOrNull
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -65,33 +68,33 @@ class GoalRepositoryImpl @Inject constructor(
     override fun getAllGoals(): Flow<List<Goal>> =
         goalDao.getAllGoals().map { entities -> entities.withSlots() }
 
-    override fun getGoalByIdFlow(id: Long): Flow<Goal?> =
+    override fun getGoalByIdFlow(id: AwradId): Flow<Goal?> =
         goalDao.getGoalByIdFlow(id).map { entity ->
             entity ?: return@map null
             entity.toDomainWithChildren()
         }
 
-    override suspend fun getGoalById(id: Long): Goal? {
+    override suspend fun getGoalById(id: AwradId): Goal? {
         val entity = goalDao.getGoalById(id) ?: return null
         val dhikrEntity = dhikrDao.getDhikrById(entity.dhikrId)
         val dhikr = dhikrEntity?.toGoalDhikr()
         return entity.toDomainWithChildren(dhikr = dhikr)
     }
 
-    override suspend fun createGoal(validatedGoal: ValidatedGoal): Long = database.withTransaction {
+    override suspend fun createGoal(validatedGoal: ValidatedGoal): AwradId = database.withTransaction {
         val goal = validatedGoal.goal
         goal.requirePersistable()
-        val goalId = goalDao.insert(goal.toEntity())
+        val goalId = goal.id
+        goalDao.insert(goal.toEntity())
         replaceRecurrence(goalId, goal.recurrence)
         val slotEntities = goal.slots.map { it.toEntity(goalId) }
-        val slotIds = if (slotEntities.isNotEmpty()) goalSlotDao.insertAll(slotEntities) else emptyList()
+        if (slotEntities.isNotEmpty()) goalSlotDao.insertAll(slotEntities)
         val reminderEntities = goal.reminders.map { reminder ->
             reminder.toEntity(
                 goalId = goalId,
                 slotId = GoalPersistenceMapper.normalizedReminderSlotId(
                     reminder = reminder,
                     slots = goal.slots,
-                    persistedSlotIds = slotIds,
                 ),
             )
         }
@@ -129,30 +132,31 @@ class GoalRepositoryImpl @Inject constructor(
         goalDao.update(goal.toEntity())
         replaceRecurrence(goal.id, goal.recurrence)
 
-        val retainedSlotIds = (goal.slots + goal.archivedSlots).map { slot ->
-            if (slot.id > 0) {
+        val existingSlotIds = goalSlotDao.getSlotsForGoal(goal.id).mapTo(mutableSetOf()) { it.id }
+        val retainedSlotIds = goal.slots.map { slot ->
+            if (slot.id in existingSlotIds) {
                 goalSlotDao.update(slot.toEntity(goal.id))
-                slot.id
             } else {
                 goalSlotDao.insert(slot.toEntity(goal.id))
             }
+            slot.id
         }
 
+        val existingReminderIds = goalReminderDao.getRemindersForGoal(goal.id).mapTo(mutableSetOf()) { it.id }
         val retainedReminderIds = goal.reminders.map { reminder ->
             val entity = reminder.toEntity(
                 goalId = goal.id,
                 slotId = GoalPersistenceMapper.normalizedReminderSlotId(
                     reminder = reminder,
-                    slots = goal.slots + goal.archivedSlots,
-                    persistedSlotIds = retainedSlotIds,
+                    slots = goal.slots,
                 ),
             )
-            if (entity.id > 0) {
+            if (entity.id in existingReminderIds) {
                 goalReminderDao.update(entity)
-                entity.id
             } else {
                 goalReminderDao.insert(entity)
             }
+            entity.id
         }
         if (retainedReminderIds.isEmpty()) {
             goalReminderDao.deleteForGoal(goal.id)
@@ -167,7 +171,7 @@ class GoalRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun recomputeCompletionAfterCountSetupUpdate(goalId: Long) {
+    private suspend fun recomputeCompletionAfterCountSetupUpdate(goalId: AwradId) {
         val updatedGoal = getGoalById(goalId) ?: return
         val now = System.currentTimeMillis()
         if (updatedGoal.targetPolicy != TargetPolicy.CUMULATIVE_TOTAL) {
@@ -187,23 +191,19 @@ class GoalRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteGoal(id: Long) {
+    override suspend fun deleteGoal(id: AwradId) {
         goalDao.deleteById(id)
     }
 
-    override suspend fun addCount(goalId: Long, slotId: Long?, count: Long): Long = database.withTransaction {
+    override suspend fun addCount(goalId: AwradId, slotId: AwradId?, count: Long): Long = database.withTransaction {
         val today = dateProvider.getEffectiveToday()
         // Counting hot path: load only the goal fields + slots + recurrence the cap/completion
         // logic reads (no dhikr, no reminders), and load them exactly once per tap.
         val goal = loadGoalForCounting(goalId) ?: return@withTransaction 0L
         val normalizedSlotId = goal.normalizedCountSlotId(slotId)
-        val before = if (normalizedSlotId != null) {
-            countEntryDao.getCountValueForSlot(goalId, normalizedSlotId, today)
-        } else {
-            countEntryDao.getCountValueNoSlot(goalId, today)
-        } ?: 0L
+        val before = countEntryDao.getCountValueForSlot(goalId, normalizedSlotId, today) ?: 0L
         val appliedDelta = if (count > 0L) {
-            val slot = normalizedSlotId?.let { id -> goal.slots.firstOrNull { it.id == id } }
+            val slot = goal.slots.firstOrNull { it.id == normalizedSlotId }
             val currentForCap = currentCountForCap(goal, normalizedSlotId, before, today)
             val targetForCap = slot?.targetCount ?: GoalProgressCalculator.getTargetCount(goal).takeIf { it > 0 }
             val maximumForCap = slot?.maximumCount ?: goal.maximumCount
@@ -238,24 +238,24 @@ class GoalRepositoryImpl @Inject constructor(
         appliedDelta
     }
 
-    override fun getTotalCountForDate(goalId: Long, date: String): Flow<Long?> =
+    override fun getTotalCountForDate(goalId: AwradId, date: String): Flow<Long?> =
         countEntryDao.getTotalCountForDate(goalId, date)
 
-    override fun getTotalCount(goalId: Long): Flow<Long?> =
+    override fun getTotalCount(goalId: AwradId): Flow<Long?> =
         countEntryDao.getTotalCount(goalId)
 
-    override suspend fun getCountForSlotAndDate(goalId: Long, slotId: Long, date: String): Long =
+    override suspend fun getCountForSlotAndDate(goalId: AwradId, slotId: AwradId, date: String): Long =
         countEntryDao.getCountForSlotAndDate(goalId, slotId, date).first() ?: 0L
 
-    override fun getProgressMapForDate(date: String): Flow<Map<Long, Long>> =
+    override fun getProgressMapForDate(date: String): Flow<Map<AwradId, Long>> =
         countEntryDao.getProgressMapForDate(date).map { list ->
             list.associate { it.goalId to it.total }
         }
 
-    override fun getHistoryForGoal(goalId: Long): Flow<List<CountEntry>> =
+    override fun getHistoryForGoal(goalId: AwradId): Flow<List<CountEntry>> =
         countEntryDao.getHistoryForGoal(goalId).map { entities -> entities.map { it.toDomain() } }
 
-    override fun getDailyCountsByGoal(): Flow<Map<Long, Map<LocalDate, Long>>> =
+    override fun getDailyCountsByGoal(): Flow<Map<AwradId, Map<LocalDate, Long>>> =
         countEntryDao.getDailyCountsByGoal().map { rows ->
             rows.groupBy { it.goalId }.mapValues { (_, goalRows) ->
                 goalRows.mapNotNull { row ->
@@ -264,7 +264,7 @@ class GoalRepositoryImpl @Inject constructor(
             }
         }
 
-    override fun getDailySlotCountsByGoal(): Flow<Map<Long, Map<LocalDate, Map<Long, Long>>>> =
+    override fun getDailySlotCountsByGoal(): Flow<Map<AwradId, Map<LocalDate, Map<AwradId, Long>>>> =
         countEntryDao.getDailySlotCountsByGoal().map { rows ->
             rows.groupBy { it.goalId }.mapValues { (_, goalRows) ->
                 goalRows.groupBy { it.date }.mapNotNull { (dateString, dateRows) ->
@@ -275,7 +275,7 @@ class GoalRepositoryImpl @Inject constructor(
             }
         }
 
-    override fun getDailySlotCountsForGoal(goalId: Long): Flow<Map<LocalDate, Map<Long, Long>>> =
+    override fun getDailySlotCountsForGoal(goalId: AwradId): Flow<Map<LocalDate, Map<AwradId, Long>>> =
         countEntryDao.getDailySlotCountsForGoal(goalId).map { rows ->
             rows.groupBy { it.date }.mapNotNull { (dateString, dateRows) ->
                 dateString.toLocalDateOrNull()?.let { date ->
@@ -284,10 +284,10 @@ class GoalRepositoryImpl @Inject constructor(
             }.toMap()
         }
 
-    override suspend fun getSlotCountsForGoalAndDate(goalId: Long, date: String): Map<Long, Long> =
+    override suspend fun getSlotCountsForGoalAndDate(goalId: AwradId, date: String): Map<AwradId, Long> =
         countEntryDao.getSlotCountsForGoalAndDate(goalId, date).associate { it.slotId to it.total }
 
-    override suspend fun getTotalCountBetween(goalId: Long, startDate: String, endDate: String): Long =
+    override suspend fun getTotalCountBetween(goalId: AwradId, startDate: String, endDate: String): Long =
         countEntryDao.getTotalCountBetween(goalId, startDate, endDate) ?: 0L
 
     override suspend fun getActiveGoalsWithNotifications(): List<Goal> =
@@ -303,10 +303,10 @@ class GoalRepositoryImpl @Inject constructor(
         goalDao.deleteAllGoals()
     }
 
-    override fun getActiveGoalsByDhikrId(dhikrId: Long): Flow<List<Goal>> =
+    override fun getActiveGoalsByDhikrId(dhikrId: AwradId): Flow<List<Goal>> =
         goalDao.getActiveGoalsByDhikrId(dhikrId).map { entities -> entities.withSlots() }
 
-    override fun getDailyCountsForGoal(goalId: Long): Flow<Map<LocalDate, Long>> =
+    override fun getDailyCountsForGoal(goalId: AwradId): Flow<Map<LocalDate, Long>> =
         countEntryDao.getDailyCountsForGoal(goalId).map { list ->
             list.mapNotNull { dateCount ->
                 dateCount.date.toLocalDateOrNull()?.let { date -> date to dateCount.total }
@@ -341,8 +341,7 @@ class GoalRepositoryImpl @Inject constructor(
             val reminders = (remindersByGoal[entity.id] ?: emptyList()).map { it.toDomain() }
             entity.toDomain(
                 recurrence = recurrence,
-                slots = allSlots.filter { it.isActive },
-                archivedSlots = allSlots.filterNot { it.isActive },
+                slots = allSlots,
                 reminders = reminders,
             )
         }
@@ -359,8 +358,7 @@ class GoalRepositoryImpl @Inject constructor(
         return toDomain(
             dhikr = dhikr,
             recurrence = recurrence,
-            slots = allSlots.filter { it.isActive },
-            archivedSlots = allSlots.filterNot { it.isActive },
+            slots = allSlots,
             reminders = reminders,
         )
     }
@@ -370,7 +368,7 @@ class GoalRepositoryImpl @Inject constructor(
      * (for cap windows). Skips the dhikr lookup and reminder query that [getGoalById] performs,
      * keeping the per-tap hot path to a single lightweight fetch.
      */
-    private suspend fun loadGoalForCounting(goalId: Long): Goal? {
+    private suspend fun loadGoalForCounting(goalId: AwradId): Goal? {
         val entity = goalDao.getGoalById(goalId) ?: return null
         val recurrence = goalRecurrenceDao.getForGoal(entity.id).toDomain(
             weekdays = goalRecurrenceDao.getWeekdaysForGoal(entity.id),
@@ -380,8 +378,7 @@ class GoalRepositoryImpl @Inject constructor(
         val allSlots = goalSlotDao.getSlotsForGoal(entity.id).map { it.toDomain() }
         return entity.toDomain(
             recurrence = recurrence,
-            slots = allSlots.filter { it.isActive },
-            archivedSlots = allSlots.filterNot { it.isActive },
+            slots = allSlots,
         )
     }
 
@@ -389,11 +386,9 @@ class GoalRepositoryImpl @Inject constructor(
         dhikr: Dhikr? = null,
         recurrence: GoalRecurrence = GoalRecurrence(goalId = id),
         slots: List<GoalSlot> = emptyList(),
-        archivedSlots: List<GoalSlot> = emptyList(),
         reminders: List<GoalReminder> = emptyList(),
     ): Goal {
         val sanitizedSlots = slots.map { it.withReadableCapBehavior() }
-        val sanitizedArchivedSlots = archivedSlots.map { it.withReadableCapBehavior() }
         return Goal(
             id = id,
             dhikrId = dhikrId,
@@ -402,18 +397,22 @@ class GoalRepositoryImpl @Inject constructor(
             slotCountingPolicy = slotCountingPolicy,
             recurrence = recurrence,
             slots = sanitizedSlots,
-            archivedSlots = sanitizedArchivedSlots,
             reminders = reminders,
             startDate = startDate.toLocalDateOr(createdAt.toLocalDateFromEpochMillis()),
             endDate = endDate.toLocalDateOrNull(),
             durationDays = durationDays,
             minimumStreakCount = minimumStreakCount,
+            targetCount = targetCount,
             maximumCount = maximumCount,
             capBehavior = capBehavior.sanitizedFor(
                 targetCount = sanitizedSlots.sumOf { it.targetCount ?: 0 }.takeIf { it > 0 },
                 maximumCount = maximumCount,
             ),
+            streakThreshold = streakThreshold,
+            reminderThreshold = reminderThreshold,
+            completionThreshold = completionThreshold,
             autoCompleteOnTarget = autoCompleteOnTarget,
+            completionPolicy = completionPolicy,
             totalCompletedCount = totalCompletedCount,
             isActive = isActive,
             completedAt = completedAt,
@@ -431,9 +430,14 @@ class GoalRepositoryImpl @Inject constructor(
         endDate = endDate?.toString(),
         durationDays = durationDays,
         minimumStreakCount = minimumStreakCount,
+        targetCount = targetCount,
         maximumCount = maximumCount,
         capBehavior = capBehavior,
+        streakThreshold = streakThreshold,
+        reminderThreshold = reminderThreshold,
+        completionThreshold = completionThreshold,
         autoCompleteOnTarget = autoCompleteOnTarget,
+        completionPolicy = completionPolicy,
         totalCompletedCount = totalCompletedCount,
         isActive = isActive,
         completedAt = completedAt,
@@ -441,7 +445,7 @@ class GoalRepositoryImpl @Inject constructor(
         updatedAt = System.currentTimeMillis(),
     )
 
-    private suspend fun currentCountForCap(goal: Goal, slotId: Long?, currentEntryCount: Long, today: String): Long {
+    private suspend fun currentCountForCap(goal: Goal, slotId: AwradId?, currentEntryCount: Long, today: String): Long {
         val slot = slotId?.let { id -> goal.slots.firstOrNull { it.id == id } }
         if (slot != null && goal.slots.size > 1) return currentEntryCount
         if (slot != null && slot.slotType != GoalSlotType.ANYTIME) return currentEntryCount
@@ -458,7 +462,7 @@ class GoalRepositoryImpl @Inject constructor(
         }
     }
 
-    private suspend fun replaceRecurrence(goalId: Long, recurrence: GoalRecurrence) {
+    private suspend fun replaceRecurrence(goalId: AwradId, recurrence: GoalRecurrence) {
         goalRecurrenceDao.deleteWeekdaysForGoal(goalId)
         goalRecurrenceDao.deleteMonthDaysForGoal(goalId)
         goalRecurrenceDao.deleteDatesForGoal(goalId)
@@ -480,9 +484,9 @@ class GoalRepositoryImpl @Inject constructor(
         }.takeIf { it.isNotEmpty() }?.let { goalRecurrenceDao.insertDates(it) }
     }
 
-    private fun GoalSlot.toEntity(goalId: Long) = GoalPersistenceMapper.toEntity(this, goalId)
+    private fun GoalSlot.toEntity(goalId: AwradId) = GoalPersistenceMapper.toEntity(this, goalId)
 
-    private fun GoalReminder.toEntity(goalId: Long, slotId: Long?) =
+    private fun GoalReminder.toEntity(goalId: AwradId, slotId: AwradId?) =
         GoalPersistenceMapper.toEntity(this, goalId, slotId)
 
     private fun GoalSlotEntity.toDomain() = GoalSlot(
@@ -493,6 +497,9 @@ class GoalRepositoryImpl @Inject constructor(
         targetCount = targetCount,
         maximumCount = maximumCount,
         capBehavior = capBehavior,
+        streakThreshold = streakThreshold,
+        reminderThreshold = reminderThreshold,
+        completionThreshold = completionThreshold,
         prayerName = prayerName,
         prayerRelation = prayerRelation,
         startMinute = startMinute,
@@ -509,7 +516,7 @@ class GoalRepositoryImpl @Inject constructor(
         monthDays: List<GoalRecurrenceMonthDayEntity>,
         dates: List<GoalRecurrenceDateEntity>,
     ): GoalRecurrence {
-        val entity = this ?: return GoalRecurrence()
+        val entity = requireNotNull(this) { "Every persisted goal must have recurrence state" }
         return GoalRecurrence(
             goalId = entity.goalId,
             frequency = entity.frequency,
@@ -562,16 +569,16 @@ class GoalRepositoryImpl @Inject constructor(
         lastUpdated = lastUpdated,
     )
 
-    private fun Goal.normalizedCountSlotId(requestedSlotId: Long?): Long? {
+    private fun Goal.normalizedCountSlotId(requestedSlotId: AwradId?): AwradId {
         if (requestedSlotId != null) {
-            require(slots.any { it.id == requestedSlotId }) {
-                "Count slot $requestedSlotId does not belong to goal $id"
+            require(activeSlots.any { it.id == requestedSlotId }) {
+                "Count slot $requestedSlotId is not active for goal $id"
             }
             return requestedSlotId
         }
 
-        if (slots.isEmpty()) return null
-        val singleAnytimeSlot = slots.singleOrNull()?.takeIf { it.slotType == GoalSlotType.ANYTIME }
+        val countableSlots = activeSlots
+        val singleAnytimeSlot = countableSlots.singleOrNull()?.takeIf { it.slotType == GoalSlotType.ANYTIME }
         if (singleAnytimeSlot != null) return singleAnytimeSlot.id
 
         error("Goal $id requires an explicit slot for count writes")
@@ -593,15 +600,6 @@ class GoalRepositoryImpl @Inject constructor(
                 maximumCount = slot.maximumCount,
                 capBehavior = slot.capBehavior,
                 owner = "slot ${slot.id}",
-            )
-        }
-        archivedSlots.forEach { slot ->
-            requireCountRule(
-                minimumCount = slot.minimumCount,
-                targetCount = slot.targetCount,
-                maximumCount = slot.maximumCount,
-                capBehavior = slot.capBehavior,
-                owner = "archived slot ${slot.id}",
             )
         }
     }
@@ -647,6 +645,7 @@ class GoalRepositoryImpl @Inject constructor(
 
 internal fun DhikrEntity.toGoalDhikr(): Dhikr = Dhikr(
     id = id,
+    catalogKey = catalogKey,
     title = title,
     arabic = arabic,
     transliteration = transliteration,
@@ -655,16 +654,18 @@ internal fun DhikrEntity.toGoalDhikr(): Dhikr = Dhikr(
     audioFileName = audioFileName,
     category = category,
     isDownloaded = isDownloaded,
+    isCustom = isCustom,
     audioCountPerPlay = audioCountPerPlay,
     quranRef = if (quranSurah != null && quranAyahStart != null) {
         QuranRef(quranSurah, quranAyahStart, quranAyahEnd).takeIf { it.isValid }
     } else {
         null
     },
+    benefits = runCatching { Json.decodeFromString<List<String>>(benefitsJson) }.getOrDefault(emptyList()),
 )
 
 internal object GoalPersistenceMapper {
-    fun toEntity(slot: GoalSlot, goalId: Long) = GoalSlotEntity(
+    fun toEntity(slot: GoalSlot, goalId: AwradId) = GoalSlotEntity(
         id = slot.id,
         goalId = goalId,
         slotType = slot.slotType,
@@ -672,6 +673,9 @@ internal object GoalPersistenceMapper {
         targetCount = slot.targetCount,
         maximumCount = slot.maximumCount,
         capBehavior = slot.capBehavior,
+        streakThreshold = slot.streakThreshold,
+        reminderThreshold = slot.reminderThreshold,
+        completionThreshold = slot.completionThreshold,
         prayerName = slot.prayerName,
         prayerRelation = slot.prayerRelation,
         startMinute = slot.startMinute,
@@ -683,7 +687,7 @@ internal object GoalPersistenceMapper {
         archivedAt = slot.archivedAt,
     )
 
-    fun toEntity(reminder: GoalReminder, goalId: Long, slotId: Long?) = GoalReminderEntity(
+    fun toEntity(reminder: GoalReminder, goalId: AwradId, slotId: AwradId?) = GoalReminderEntity(
         id = reminder.id,
         goalId = goalId,
         slotId = slotId,
@@ -698,10 +702,8 @@ internal object GoalPersistenceMapper {
     fun normalizedReminderSlotId(
         reminder: GoalReminder,
         slots: List<GoalSlot>,
-        persistedSlotIds: List<Long>,
-    ): Long? {
+    ): AwradId? {
         val slotId = reminder.slotId ?: return null
-        val slotIndex = slots.indexOfFirst { it.id == slotId }
-        return slotIndex.takeIf { it >= 0 }?.let { persistedSlotIds.getOrNull(it) }
+        return slotId.takeIf { id -> slots.any { it.id == id } }
     }
 }

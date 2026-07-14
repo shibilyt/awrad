@@ -196,7 +196,7 @@ class HomeViewModel @Inject constructor(
                             minimumStreakCount = goal.minimumStreakCount,
                             goal = goal,
                         ).currentStreak,
-                        slots = goal.slots
+                        slots = goal.activeSlots
                             .filter { it.isActive }
                             .sortedBy { it.sortOrder }
                             .map { slot ->

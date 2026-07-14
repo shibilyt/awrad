@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performClick
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalPreset
+import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 import app.awrad.awrad_dhikrgoalstracker.service.PreviewPlaybackState
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.GoalDraft
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.GoalDraftDefaults
@@ -70,7 +71,7 @@ class QuickCreatePaneTest {
     }
 
     private val testDhikr = Dhikr(
-        id = 1,
+        id = newAwradId(),
         title = "SubhanAllah",
         arabic = "سبحان الله",
         transliteration = "SubhanAllah",

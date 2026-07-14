@@ -1,5 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.counting
 
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.SlotCountingPolicy
@@ -16,8 +18,8 @@ class CountingSlotUiModelTest {
     fun `single anytime slot keeps the non-slot counting path`() {
         val slots = listOf(
             GoalSlot(
-                id = 1,
-                goalId = 7,
+                id = testId(1),
+                goalId = testId(7),
                 slotType = GoalSlotType.ANYTIME,
                 targetCount = 100,
             ),
@@ -31,15 +33,15 @@ class CountingSlotUiModelTest {
     fun `multiple time window slots are selectable and expose progress`() {
         val slots = listOf(
             GoalSlot(
-                id = 1,
-                goalId = 7,
+                id = testId(1),
+                goalId = testId(7),
                 slotType = GoalSlotType.TIME_WINDOW,
                 targetCount = 50,
                 label = "Morning",
             ),
             GoalSlot(
-                id = 2,
-                goalId = 7,
+                id = testId(2),
+                goalId = testId(7),
                 slotType = GoalSlotType.TIME_WINDOW,
                 targetCount = 50,
                 label = "Evening",
@@ -48,8 +50,8 @@ class CountingSlotUiModelTest {
 
         val models = buildSlotCountingUiModels(
             slots = slots,
-            slotCounts = mapOf(1L to 50L, 2L to 22L),
-            activeSlotId = 2,
+            slotCounts = mapOf(testId(1) to 50L, testId(2) to 22L),
+            activeSlotId = testId(2),
             titleForSlot = { it.label.orEmpty() },
             subtitleForSlot = { "" },
         )
@@ -69,8 +71,8 @@ class CountingSlotUiModelTest {
     fun `single time window slot uses active slot progress without chips`() {
         val slots = listOf(
             GoalSlot(
-                id = 3,
-                goalId = 7,
+                id = testId(3),
+                goalId = testId(7),
                 slotType = GoalSlotType.TIME_WINDOW,
                 targetCount = 33,
                 label = "Night",
@@ -79,8 +81,8 @@ class CountingSlotUiModelTest {
 
         val model = buildSlotCountingUiModels(
             slots = slots,
-            slotCounts = mapOf(3L to 11L),
-            activeSlotId = 3,
+            slotCounts = mapOf(testId(3) to 11L),
+            activeSlotId = testId(3),
             titleForSlot = { it.label.orEmpty() },
             subtitleForSlot = { "" },
         ).single()
@@ -99,16 +101,16 @@ class CountingSlotUiModelTest {
 
         val selection = selectDefaultSlot(
             slots = slots,
-            slotCounts = mapOf(1L to 50L, 2L to 0L),
+            slotCounts = mapOf(testId(1) to 50L, testId(2) to 0L),
             timingInfoBySlotId = mapOf(
-                1L to SlotTimingInfo(timeStatus = SlotTimeStatus.ACTIVE, startsAtMillis = 1000),
-                2L to SlotTimingInfo(timeStatus = SlotTimeStatus.UPCOMING, startsAtMillis = 2000),
+                testId(1) to SlotTimingInfo(timeStatus = SlotTimeStatus.ACTIVE, startsAtMillis = 1000),
+                testId(2) to SlotTimingInfo(timeStatus = SlotTimeStatus.UPCOMING, startsAtMillis = 2000),
             ),
             initialSlotId = null,
             restoredSlotId = null,
         )
 
-        assertEquals(1L, selection.slotId)
+        assertEquals(testId(1), selection.slotId)
         assertEquals(SlotSelectionSource.ACTIVE_TIME, selection.source)
     }
 
@@ -119,12 +121,12 @@ class CountingSlotUiModelTest {
         val selection = selectDefaultSlot(
             slots = slots,
             slotCounts = emptyMap(),
-            timingInfoBySlotId = mapOf(1L to SlotTimingInfo(timeStatus = SlotTimeStatus.ACTIVE)),
+            timingInfoBySlotId = mapOf(testId(1) to SlotTimingInfo(timeStatus = SlotTimeStatus.ACTIVE)),
             initialSlotId = null,
-            restoredSlotId = 2L,
+            restoredSlotId = testId(2),
         )
 
-        assertEquals(2L, selection.slotId)
+        assertEquals(testId(2), selection.slotId)
         assertEquals(SlotSelectionSource.RESTORED, selection.source)
     }
 
@@ -134,16 +136,16 @@ class CountingSlotUiModelTest {
 
         val selection = selectDefaultSlot(
             slots = slots,
-            slotCounts = mapOf(1L to 10L, 2L to 0L),
+            slotCounts = mapOf(testId(1) to 10L, testId(2) to 0L),
             timingInfoBySlotId = mapOf(
-                1L to SlotTimingInfo(timeStatus = SlotTimeStatus.ENDED, startsAtMillis = 1000),
-                2L to SlotTimingInfo(timeStatus = SlotTimeStatus.UPCOMING, startsAtMillis = 2000),
+                testId(1) to SlotTimingInfo(timeStatus = SlotTimeStatus.ENDED, startsAtMillis = 1000),
+                testId(2) to SlotTimingInfo(timeStatus = SlotTimeStatus.UPCOMING, startsAtMillis = 2000),
             ),
             initialSlotId = null,
             restoredSlotId = null,
         )
 
-        assertEquals(1L, selection.slotId)
+        assertEquals(testId(1), selection.slotId)
         assertEquals(SlotSelectionSource.COUNTED_ENDED, selection.source)
     }
 
@@ -155,12 +157,12 @@ class CountingSlotUiModelTest {
             slots = slots,
             slotCounts = emptyMap(),
             timingInfoBySlotId = mapOf(
-                1L to SlotTimingInfo(
+                testId(1) to SlotTimingInfo(
                     timeStatus = SlotTimeStatus.ENDED,
                     startsAtMillis = 9 * 60 * 60_000L,
                     endsAtMillis = 10 * 60 * 60_000L,
                 ),
-                2L to SlotTimingInfo(
+                testId(2) to SlotTimingInfo(
                     timeStatus = SlotTimeStatus.ENDED,
                     startsAtMillis = 10 * 60 * 60_000L,
                     endsAtMillis = 11 * 60 * 60_000L,
@@ -170,7 +172,7 @@ class CountingSlotUiModelTest {
             restoredSlotId = null,
         )
 
-        assertEquals(2L, selection.slotId)
+        assertEquals(testId(2), selection.slotId)
         assertEquals(SlotSelectionSource.FALLBACK, selection.source)
     }
 
@@ -181,12 +183,12 @@ class CountingSlotUiModelTest {
         val selection = selectDefaultSlot(
             slots = slots,
             slotCounts = emptyMap(),
-            timingInfoBySlotId = mapOf(1L to SlotTimingInfo(timeStatus = SlotTimeStatus.ACTIVE)),
-            initialSlotId = 2L,
-            restoredSlotId = 1L,
+            timingInfoBySlotId = mapOf(testId(1) to SlotTimingInfo(timeStatus = SlotTimeStatus.ACTIVE)),
+            initialSlotId = testId(2),
+            restoredSlotId = testId(1),
         )
 
-        assertEquals(2L, selection.slotId)
+        assertEquals(testId(2), selection.slotId)
         assertEquals(SlotSelectionSource.INITIAL, selection.source)
     }
 
@@ -238,16 +240,16 @@ class CountingSlotUiModelTest {
 
     private fun timeSlots(): List<GoalSlot> = listOf(
         GoalSlot(
-            id = 1,
-            goalId = 7,
+            id = testId(1),
+            goalId = testId(7),
             slotType = GoalSlotType.TIME_WINDOW,
             targetCount = 50,
             label = "Morning",
             sortOrder = 0,
         ),
         GoalSlot(
-            id = 2,
-            goalId = 7,
+            id = testId(2),
+            goalId = testId(7),
             slotType = GoalSlotType.TIME_WINDOW,
             targetCount = 50,
             label = "Evening",

@@ -81,10 +81,10 @@ class MainActivity : AppCompatActivity() {
                 return
             }
         }
-        val goalId = intent.getLongExtra(DhikrCountingService.EXTRA_GOAL_ID, -1L)
-            .takeIf { it > 0 } ?: return
-        val slotId = intent.getLongExtra(DhikrCountingService.EXTRA_SLOT_ID, -1L)
-            .takeIf { it > 0 }
+        val goalId = intent.getStringExtra(DhikrCountingService.EXTRA_GOAL_ID)
+            ?.let { runCatching { java.util.UUID.fromString(it) }.getOrNull() } ?: return
+        val slotId = intent.getStringExtra(DhikrCountingService.EXTRA_SLOT_ID)
+            ?.let { runCatching { java.util.UUID.fromString(it) }.getOrNull() }
         mainViewModel.onNotificationGoalId(goalId, slotId)
     }
 }

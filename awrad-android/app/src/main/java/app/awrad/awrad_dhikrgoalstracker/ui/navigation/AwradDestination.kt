@@ -1,5 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.navigation
 
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+
 sealed class AwradDestination(val route: String) {
     data object Home : AwradDestination("home")
     data object Goals : AwradDestination("goals")
@@ -7,30 +9,30 @@ sealed class AwradDestination(val route: String) {
     data object Settings : AwradDestination("settings")
     data object Onboarding : AwradDestination("onboarding")
     data object CreateGoal : AwradDestination("create_goal?dhikrId={dhikrId}") {
-        fun createRoute(dhikrId: Long? = null) =
+        fun createRoute(dhikrId: AwradId? = null) =
             if (dhikrId != null) "create_goal?dhikrId=$dhikrId" else "create_goal"
     }
     data object Category : AwradDestination("category/{category}") {
         fun createRoute(category: String) = "category/$category"
     }
     data object Counting : AwradDestination("counting/{goalId}?slotId={slotId}") {
-        fun createRoute(goalId: Long, slotId: Long? = null) =
+        fun createRoute(goalId: AwradId, slotId: AwradId? = null) =
             if (slotId != null) "counting/$goalId?slotId=$slotId" else "counting/$goalId"
     }
     data object GoalDetail : AwradDestination("goal_detail/{goalId}") {
-        fun createRoute(goalId: Long) = "goal_detail/$goalId"
+        fun createRoute(goalId: AwradId) = "goal_detail/$goalId"
     }
     data object EditGoal : AwradDestination("edit_goal/{goalId}") {
-        fun createRoute(goalId: Long) = "edit_goal/$goalId"
+        fun createRoute(goalId: AwradId) = "edit_goal/$goalId"
     }
     data object EditGoalSchedule : AwradDestination("edit_goal_schedule/{goalId}") {
-        fun createRoute(goalId: Long) = "edit_goal_schedule/$goalId"
+        fun createRoute(goalId: AwradId) = "edit_goal_schedule/$goalId"
     }
     data object EditGoalReminders : AwradDestination("edit_goal_reminders/{goalId}") {
-        fun createRoute(goalId: Long) = "edit_goal_reminders/$goalId"
+        fun createRoute(goalId: AwradId) = "edit_goal_reminders/$goalId"
     }
     data object DhikrDetail : AwradDestination("dhikr_detail/{dhikrId}") {
-        fun createRoute(dhikrId: Long) = "dhikr_detail/$dhikrId"
+        fun createRoute(dhikrId: AwradId) = "dhikr_detail/$dhikrId"
     }
     data object WirdList : AwradDestination("wird_list")
     data object WirdDetail : AwradDestination("wird_detail/{wirdId}") {

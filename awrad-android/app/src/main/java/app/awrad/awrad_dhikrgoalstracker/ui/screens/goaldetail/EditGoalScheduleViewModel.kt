@@ -12,6 +12,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
 import app.awrad.awrad_dhikrgoalstracker.data.model.PrayerRelation
 import app.awrad.awrad_dhikrgoalstracker.data.model.RecurrenceFrequency
 import app.awrad.awrad_dhikrgoalstracker.data.model.SeasonTemplateCode
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.GoalScheduleUpdateFactory
@@ -83,7 +84,7 @@ data class EditGoalScheduleDraft(
 
 data class EditScheduleSessionDraft(
     val draftId: Long,
-    val slotId: Long? = null,
+    val slotId: AwradId? = null,
     val slotType: GoalSlotType = GoalSlotType.ANYTIME,
     val label: String = "",
     val prayer: Prayer = Prayer.FAJR,
@@ -93,7 +94,7 @@ data class EditScheduleSessionDraft(
     val endTime: String = "09:00",
 ) {
     companion object {
-        fun anytime(slotId: Long? = null, draftId: Long = slotId ?: -1L) =
+        fun anytime(slotId: AwradId? = null, draftId: Long = -1L) =
             EditScheduleSessionDraft(
                 draftId = draftId,
                 slotId = slotId,
@@ -112,7 +113,7 @@ class EditGoalScheduleViewModel @Inject constructor(
     private val reminderScheduler: ReminderScheduler,
 ) : ViewModel() {
 
-    private val goalId: Long = savedStateHandle["goalId"] ?: -1L
+    private val goalId: AwradId = java.util.UUID.fromString(checkNotNull(savedStateHandle.get<String>("goalId")))
     private var nextDraftId = -1L
 
     private val _uiState = MutableStateFlow(EditGoalScheduleUiState())
@@ -354,9 +355,9 @@ class EditGoalScheduleViewModel @Inject constructor(
 
     private fun GoalSlot.toSessionDraft(): EditScheduleSessionDraft =
         when (slotType) {
-            GoalSlotType.ANYTIME -> EditScheduleSessionDraft.anytime(slotId = id, draftId = id)
+            GoalSlotType.ANYTIME -> EditScheduleSessionDraft.anytime(slotId = id, draftId = nextTempId())
             GoalSlotType.PRAYER -> EditScheduleSessionDraft(
-                draftId = id,
+                draftId = nextTempId(),
                 slotId = id,
                 slotType = GoalSlotType.PRAYER,
                 label = label.orEmpty(),
@@ -365,7 +366,7 @@ class EditGoalScheduleViewModel @Inject constructor(
                 beforeLeadMinutes = (startLeadMinutesOverride ?: 30).toString(),
             )
             GoalSlotType.TIME_WINDOW -> EditScheduleSessionDraft(
-                draftId = id,
+                draftId = nextTempId(),
                 slotId = id,
                 slotType = GoalSlotType.TIME_WINDOW,
                 label = label ?: "Session ${sortOrder + 1}",

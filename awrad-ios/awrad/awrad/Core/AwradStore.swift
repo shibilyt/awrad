@@ -46,10 +46,14 @@ final class AwradStore {
     }
 
     func importBackupData(_ data: Data) throws {
-        let snapshot = try decoder.decode(AwradSnapshot.self, from: data)
-        guard snapshot.schemaVersion <= AwradSnapshot.currentSchemaVersion else {
-            throw AwradStoreError.unsupportedSnapshotVersion(snapshot.schemaVersion)
+        let version = try Self.snapshotSchemaVersion(in: data)
+        guard version >= AwradSnapshot.currentSchemaVersion else {
+            throw AwradStoreError.legacySnapshotVersion(version)
         }
+        guard version == AwradSnapshot.currentSchemaVersion else {
+            throw AwradStoreError.unsupportedSnapshotVersion(version)
+        }
+        let snapshot = try decoder.decode(AwradSnapshot.self, from: data)
         apply(snapshot)
         save()
         isReady = true
@@ -264,7 +268,8 @@ final class AwradStore {
         let slots = Self.normalizedSlots(
             requestedSlots,
             goalID: goalID,
-            targetPolicy: targetPolicy
+            targetPolicy: targetPolicy,
+            countPolicy: countPolicy
         )
         guard !slots.isEmpty else { return nil }
 
@@ -370,24 +375,26 @@ final class AwradStore {
     }
 
     struct CountApplyResult: Equatable {
-        var appliedDelta: Int
+        var appliedDelta: Int64
         var capEvent: CountCapEvent
     }
 
     @discardableResult
-    func addCount(goalID: AwradID, slotID: AwradID? = nil, amount: Int = 1) -> Int {
+    func addCount(goalID: AwradID, slotID: AwradID? = nil, amount: Int64 = 1) -> Int64 {
         applyCount(goalID: goalID, slotID: slotID, amount: amount).appliedDelta
     }
 
     /// Applies a count delta honoring the goal's/slot's `CapBehavior`, returning
     /// both the applied delta and any cap event the UI should surface.
     @discardableResult
-    func applyCount(goalID: AwradID, slotID: AwradID? = nil, amount: Int = 1) -> CountApplyResult {
+    func applyCount(goalID: AwradID, slotID: AwradID? = nil, amount: Int64 = 1) -> CountApplyResult {
         guard amount != 0, let goalIndex = goals.firstIndex(where: { $0.id == goalID }) else {
             return CountApplyResult(appliedDelta: 0, capEvent: .none)
         }
         let goal = goals[goalIndex]
-        let resolvedSlotID = Self.resolvedCountSlotID(for: goal, requestedSlotID: slotID)
+        guard let resolvedSlotID = Self.resolvedCountSlotID(for: goal, requestedSlotID: slotID) else {
+            return CountApplyResult(appliedDelta: 0, capEvent: .none)
+        }
         let dateKeyForEntry = goal.targetPolicy == .cumulativeTotal ? "all-time" : todayKey
 
         var appliedAmount = amount
@@ -406,7 +413,7 @@ final class AwradStore {
             }
         }
 
-        var actualDelta = 0
+        var actualDelta: Int64 = 0
 
         if let entryIndex = countEntries.firstIndex(where: {
             $0.goalID == goalID && $0.slotID == resolvedSlotID && $0.dateKey == dateKeyForEntry
@@ -429,7 +436,9 @@ final class AwradStore {
         }
 
         countEntries.removeAll { $0.count <= 0 }
-        goals[goalIndex].totalCompletedCount += max(actualDelta, 0)
+        goals[goalIndex].totalCompletedCount = countEntries
+            .filter { $0.goalID == goalID }
+            .reduce(0) { $0 + $1.count }
         goals[goalIndex].updatedAt = Date()
 
         if goals[goalIndex].completesOnTarget,
@@ -444,8 +453,8 @@ final class AwradStore {
     /// The effective (capBehavior, target, maximum) for a count context.
     private struct CapContext {
         var capBehavior: CapBehavior
-        var target: Int?
-        var maximum: Int?
+        var target: Int64?
+        var maximum: Int64?
     }
 
     private static func capContext(for goal: Goal, resolvedSlotID: AwradID?) -> CapContext {
@@ -455,22 +464,22 @@ final class AwradStore {
         if let slotID = resolvedSlotID, let slot = goal.slots.first(where: { $0.id == slotID }) {
             return CapContext(
                 capBehavior: slot.capBehavior,
-                target: slot.targetCount,
-                maximum: slot.maximumCount ?? goal.countPolicy.maximumCount
+                target: slot.targetCount.map(Int64.init),
+                maximum: (slot.maximumCount ?? goal.countPolicy.maximumCount).map(Int64.init)
             )
         }
         return CapContext(
             capBehavior: goal.countPolicy.capBehavior,
-            target: goal.totalTarget,
-            maximum: goal.countPolicy.maximumCount
+            target: Int64(goal.totalTarget),
+            maximum: goal.countPolicy.maximumCount.map(Int64.init)
         )
     }
 
     private static func applyCap(
-        amount: Int,
-        current: Int,
+        amount: Int64,
+        current: Int64,
         context: CapContext
-    ) -> (applied: Int, event: CountCapEvent) {
+    ) -> (applied: Int64, event: CountCapEvent) {
         switch context.capBehavior {
         case .allowOverTarget:
             return (amount, .none)
@@ -493,8 +502,12 @@ final class AwradStore {
     }
 
     private static func resolvedCountSlotID(for goal: Goal, requestedSlotID: AwradID?) -> AwradID? {
-        guard goal.slots.count > 1 else { return nil }
-        return requestedSlotID ?? goal.slots.sorted { $0.sortOrder < $1.sortOrder }.first?.id
+        let activeSlots = goal.activeSlots.sorted { $0.sortOrder < $1.sortOrder }
+        if let requestedSlotID,
+           activeSlots.contains(where: { $0.id == requestedSlotID }) {
+            return requestedSlotID
+        }
+        return activeSlots.first?.id
     }
 
     func resetToday(goalID: AwradID) {
@@ -502,11 +515,11 @@ final class AwradStore {
         save()
     }
 
-    func count(for goal: Goal) -> Int {
+    func count(for goal: Goal) -> Int64 {
         GoalProgressCalculator.count(for: goal, entries: countEntries, dateKey: todayKey)
     }
 
-    func count(for goal: Goal, slotID: AwradID?) -> Int {
+    func count(for goal: Goal, slotID: AwradID?) -> Int64 {
         GoalProgressCalculator.count(
             for: goal,
             slotID: Self.resolvedCountSlotID(for: goal, requestedSlotID: slotID),
@@ -519,7 +532,7 @@ final class AwradStore {
         GoalProgressCalculator.progress(for: goal, entries: countEntries, dateKey: todayKey)
     }
 
-    func remaining(for goal: Goal, slotID: AwradID? = nil) -> Int {
+    func remaining(for goal: Goal, slotID: AwradID? = nil) -> Int64 {
         GoalProgressCalculator.remaining(
             for: goal,
             entries: countEntries,
@@ -743,6 +756,10 @@ final class AwradStore {
               let data = try? Data(contentsOf: snapshotURL) else {
             return nil
         }
+        guard let version = try? Self.snapshotSchemaVersion(in: data),
+              version == AwradSnapshot.currentSchemaVersion else {
+            return nil
+        }
         return try? decoder.decode(AwradSnapshot.self, from: data)
     }
 
@@ -790,9 +807,10 @@ final class AwradStore {
         preferences.calendarSystem = .gregorian
         preferences.dayReset = .midnight
 
-        guard let dhikrID = dhikrs.first(where: { $0.title == "Swalath al Nariyya" })?.id ??
-                dhikrs.first(where: { $0.category == .swalaths })?.id ??
-                dhikrs.first?.id else {
+        guard let dhikrID = dhikrs.first(where: {
+            $0.id == BuiltInDhikrRegistry.swalathAlNariyya.id &&
+                $0.catalogKey == BuiltInDhikrRegistry.swalathAlNariyya.catalogKey
+        })?.id else {
             return
         }
 
@@ -869,6 +887,15 @@ final class AwradStore {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    private static func snapshotSchemaVersion(in data: Data) throws -> Int {
+        let object = try JSONSerialization.jsonObject(with: data)
+        guard let dictionary = object as? [String: Any],
+              let version = dictionary["schemaVersion"] as? Int else {
+            return 1
+        }
+        return version
+    }
+
     private static func distributedTargets(total: Int, count: Int) -> [Int] {
         guard count > 0 else { return [] }
         let base = total / count
@@ -881,7 +908,8 @@ final class AwradStore {
     private static func normalizedSlots(
         _ requestedSlots: [GoalSlot],
         goalID: AwradID,
-        targetPolicy: TargetPolicy
+        targetPolicy: TargetPolicy,
+        countPolicy: CountPolicy
     ) -> [GoalSlot] {
         let slots = requestedSlots.isEmpty
             ? [GoalSlot(slotType: .anytime, targetCount: targetPolicy == .none ? nil : 1)]
@@ -895,6 +923,20 @@ final class AwradStore {
                 slot.targetCount = nil
             } else if (slot.targetCount ?? 0) <= 0 {
                 slot.targetCount = 1
+            }
+            slot.minimumCount = slot.minimumCount ?? countPolicy.minimumCount
+            slot.maximumCount = slot.maximumCount ?? countPolicy.maximumCount
+            if slot.capBehavior == .allowOverTarget {
+                slot.capBehavior = countPolicy.capBehavior
+            }
+            if slot.streakThreshold == .target {
+                slot.streakThreshold = countPolicy.streakThreshold
+            }
+            if slot.reminderThreshold == .target {
+                slot.reminderThreshold = countPolicy.reminderThreshold
+            }
+            if slot.completionThreshold == .target {
+                slot.completionThreshold = countPolicy.completionThreshold
             }
             return slot
         }
@@ -918,10 +960,17 @@ final class AwradStore {
         var merged = saved
 
         for seed in seeded {
-            if let index = merged.firstIndex(where: { !$0.isCustom && $0.seedSyncKey == seed.seedSyncKey }) {
+            if let index = merged.firstIndex(where: {
+                !$0.isCustom && ($0.id == seed.id || $0.catalogKey == seed.catalogKey)
+            }) {
                 let persisted = merged[index]
+                guard persisted.id == seed.id, persisted.catalogKey == seed.catalogKey else {
+                    assertionFailure("Built-in dhikr key/UUID conflict for \(seed.catalogKey ?? "unknown")")
+                    merged.remove(at: index)
+                    merged.append(seed)
+                    continue
+                }
                 var updated = seed
-                updated.id = persisted.id
                 updated.isDownloaded = persisted.isDownloaded
                 updated.audioFileName = persisted.audioFileName ?? seed.audioFileName
                 merged[index] = updated
@@ -970,17 +1019,20 @@ private extension String {
 
 enum AwradStoreError: LocalizedError {
     case unsupportedSnapshotVersion(Int)
+    case legacySnapshotVersion(Int)
 
     var errorDescription: String? {
         switch self {
         case .unsupportedSnapshotVersion(let version):
             "This backup uses schema version \(version), which is newer than this app can read."
+        case .legacySnapshotVersion(let version):
+            "This backup uses schema version \(version). Awrad v5 requires stable UUID identities, so pre-v5 backups cannot be imported."
         }
     }
 }
 
 struct AwradSnapshot: Codable {
-    static let currentSchemaVersion = 4
+    static let currentSchemaVersion = 5
 
     var schemaVersion: Int
     var dhikrs: [Dhikr]

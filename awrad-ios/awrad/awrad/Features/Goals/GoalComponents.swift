@@ -18,7 +18,7 @@ struct GoalSummaryRow: View {
         return "Active"
     }
 
-    private var currentCount: Int {
+    private var currentCount: Int64 {
         store.count(for: goal)
     }
 

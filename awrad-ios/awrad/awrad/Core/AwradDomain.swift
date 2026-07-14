@@ -12,6 +12,7 @@ enum DhikrCategory: String, Codable, CaseIterable, Identifiable {
     case protection
     case general
     case swalaths
+    case asmaUlHusna
     case ramadan
     case quran
 
@@ -27,6 +28,7 @@ enum DhikrCategory: String, Codable, CaseIterable, Identifiable {
         case .protection: "Protection"
         case .general: "General"
         case .swalaths: "Swalaths"
+        case .asmaUlHusna: String(localized: "category.asma_ul_husna", defaultValue: "Asma-ul Husna")
         case .ramadan: "Ramadan"
         case .quran: "Quran"
         }
@@ -42,6 +44,7 @@ enum DhikrCategory: String, Codable, CaseIterable, Identifiable {
         case .protection: "shield.lefthalf.filled"
         case .general: "circle.grid.cross.fill"
         case .swalaths: "heart.text.square.fill"
+        case .asmaUlHusna: "sparkles"
         case .ramadan: "moon.fill"
         case .quran: "book.closed.fill"
         }
@@ -190,18 +193,18 @@ struct CountPolicy: Codable, Hashable {
     var minimumCount: Int?
     var targetCount: Int?
     var maximumCount: Int?
-    var streakThreshold: Int?
-    var reminderThreshold: Int?
-    var completionThreshold: Int?
+    var streakThreshold: ThresholdSelector
+    var reminderThreshold: ThresholdSelector
+    var completionThreshold: ThresholdSelector
     var capBehavior: CapBehavior = .allowOverTarget
 
     init(
         minimumCount: Int? = nil,
         targetCount: Int? = nil,
         maximumCount: Int? = nil,
-        streakThreshold: Int? = nil,
-        reminderThreshold: Int? = nil,
-        completionThreshold: Int? = nil,
+        streakThreshold: ThresholdSelector = .target,
+        reminderThreshold: ThresholdSelector = .target,
+        completionThreshold: ThresholdSelector = .target,
         capBehavior: CapBehavior = .allowOverTarget
     ) {
         self.minimumCount = minimumCount
@@ -211,6 +214,70 @@ struct CountPolicy: Codable, Hashable {
         self.reminderThreshold = reminderThreshold
         self.completionThreshold = completionThreshold
         self.capBehavior = capBehavior
+    }
+}
+
+/// Selects one of the configured policy counts, or an explicit custom count.
+/// The custom Codable implementation is also the canonical contract wire shape:
+/// a snake_case string, or `{ "type": "custom", "count": n }`.
+enum ThresholdSelector: Codable, Hashable {
+    case anyPositive
+    case minimum
+    case target
+    case maximum
+    case custom(Int)
+
+    private enum CodingKeys: String, CodingKey {
+        case type
+        case count
+    }
+
+    init(from decoder: Decoder) throws {
+        if let value = try? decoder.singleValueContainer().decode(String.self) {
+            switch value {
+            case "any_positive": self = .anyPositive
+            case "minimum": self = .minimum
+            case "target": self = .target
+            case "maximum": self = .maximum
+            default:
+                throw DecodingError.dataCorruptedError(
+                    in: try decoder.singleValueContainer(),
+                    debugDescription: "Unknown threshold selector: \(value)"
+                )
+            }
+            return
+        }
+
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        guard try container.decode(String.self, forKey: .type) == "custom" else {
+            throw DecodingError.dataCorruptedError(
+                forKey: .type,
+                in: container,
+                debugDescription: "Expected custom threshold selector"
+            )
+        }
+        self = .custom(try container.decode(Int.self, forKey: .count))
+    }
+
+    func encode(to encoder: Encoder) throws {
+        switch self {
+        case .anyPositive:
+            var container = encoder.singleValueContainer()
+            try container.encode("any_positive")
+        case .minimum:
+            var container = encoder.singleValueContainer()
+            try container.encode("minimum")
+        case .target:
+            var container = encoder.singleValueContainer()
+            try container.encode("target")
+        case .maximum:
+            var container = encoder.singleValueContainer()
+            try container.encode("maximum")
+        case .custom(let count):
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode("custom", forKey: .type)
+            try container.encode(count, forKey: .count)
+        }
     }
 }
 
@@ -463,6 +530,7 @@ enum AppRoute: Hashable, Codable {
 
 struct Dhikr: Identifiable, Codable, Hashable {
     var id: AwradID = UUID()
+    var catalogKey: String?
     var title: String
     var arabic: String
     var transliteration: String
@@ -473,10 +541,13 @@ struct Dhikr: Identifiable, Codable, Hashable {
     var isDownloaded: Bool = false
     var isCustom: Bool = false
     var audioCountPerPlay: Int = 1
+    var sortOrder: Int = 0
+    var quranRef: QuranRef?
     var benefits: [String] = []
 
     init(
         id: AwradID = UUID(),
+        catalogKey: String? = nil,
         title: String,
         arabic: String,
         transliteration: String,
@@ -487,9 +558,12 @@ struct Dhikr: Identifiable, Codable, Hashable {
         isDownloaded: Bool = false,
         isCustom: Bool = false,
         audioCountPerPlay: Int = 1,
+        sortOrder: Int = 0,
+        quranRef: QuranRef? = nil,
         benefits: [String] = []
     ) {
         self.id = id
+        self.catalogKey = catalogKey
         self.title = title
         self.arabic = arabic
         self.transliteration = transliteration
@@ -500,11 +574,14 @@ struct Dhikr: Identifiable, Codable, Hashable {
         self.isDownloaded = isDownloaded
         self.isCustom = isCustom
         self.audioCountPerPlay = audioCountPerPlay
+        self.sortOrder = sortOrder
+        self.quranRef = quranRef
         self.benefits = benefits
     }
 
     enum CodingKeys: String, CodingKey {
         case id
+        case catalogKey
         case title
         case arabic
         case transliteration
@@ -515,12 +592,15 @@ struct Dhikr: Identifiable, Codable, Hashable {
         case isDownloaded
         case isCustom
         case audioCountPerPlay
+        case sortOrder
+        case quranRef
         case benefits
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decodeIfPresent(AwradID.self, forKey: .id) ?? UUID()
+        catalogKey = try container.decodeIfPresent(String.self, forKey: .catalogKey)
         title = try container.decode(String.self, forKey: .title)
         arabic = try container.decode(String.self, forKey: .arabic)
         transliteration = try container.decodeIfPresent(String.self, forKey: .transliteration) ?? ""
@@ -531,15 +611,9 @@ struct Dhikr: Identifiable, Codable, Hashable {
         isDownloaded = try container.decodeIfPresent(Bool.self, forKey: .isDownloaded) ?? false
         isCustom = try container.decodeIfPresent(Bool.self, forKey: .isCustom) ?? false
         audioCountPerPlay = try container.decodeIfPresent(Int.self, forKey: .audioCountPerPlay) ?? 1
+        sortOrder = try container.decodeIfPresent(Int.self, forKey: .sortOrder) ?? 0
+        quranRef = try container.decodeIfPresent(QuranRef.self, forKey: .quranRef)
         benefits = try container.decodeIfPresent([String].self, forKey: .benefits) ?? []
-    }
-
-    var seedSyncKey: String {
-        let key = transliteration.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !key.isEmpty {
-            return key.lowercased()
-        }
-        return arabic.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }
 
@@ -557,12 +631,15 @@ struct GoalRecurrence: Codable, Hashable {
 
 struct GoalSlot: Identifiable, Codable, Hashable {
     var id: AwradID = UUID()
-    var goalID: AwradID?
+    var goalID: AwradID = UUID()
     var slotType: GoalSlotType = .anytime
     var targetCount: Int?
     var minimumCount: Int?
     var maximumCount: Int?
     var capBehavior: CapBehavior = .allowOverTarget
+    var streakThreshold: ThresholdSelector = .target
+    var reminderThreshold: ThresholdSelector = .target
+    var completionThreshold: ThresholdSelector = .target
     var prayerName: Prayer?
     var prayerRelation: PrayerRelation?
     var startMinute: Int?
@@ -572,6 +649,18 @@ struct GoalSlot: Identifiable, Codable, Hashable {
     var sortOrder: Int = 0
     var isActive: Bool = true
     var archivedAt: Date?
+
+    var countPolicy: CountPolicy {
+        CountPolicy(
+            minimumCount: minimumCount,
+            targetCount: targetCount,
+            maximumCount: maximumCount,
+            streakThreshold: streakThreshold,
+            reminderThreshold: reminderThreshold,
+            completionThreshold: completionThreshold,
+            capBehavior: capBehavior
+        )
+    }
 
     var displayLabel: String {
         displayLabel(language: .english)
@@ -606,7 +695,7 @@ struct GoalSlot: Identifiable, Codable, Hashable {
 
 struct GoalReminder: Identifiable, Codable, Hashable {
     var id: AwradID = UUID()
-    var goalID: AwradID?
+    var goalID: AwradID = UUID()
     var slotID: AwradID?
     var reminderType: ReminderType = .fixedTime
     var hour: Int?
@@ -625,13 +714,13 @@ struct Goal: Identifiable, Codable, Hashable {
     var reminders: [GoalReminder] = []
     var countPolicy: CountPolicy = CountPolicy()
     var slotCountingPolicy: SlotCountingPolicy = .warnAndAllow
-    var completionPolicy: CompletionPolicy = .whenTargetReached
+    var completionPolicy: CompletionPolicy = .never
     var startDate: String
     var endDate: String?
     var durationDays: Int?
     var minimumStreakCount: Int?
     var autoCompleteOnTarget: Bool = false
-    var totalCompletedCount: Int = 0
+    var totalCompletedCount: Int64 = 0
     var isActive: Bool = true
     var completedAt: Date?
     var createdAt: Date = Date()
@@ -639,8 +728,10 @@ struct Goal: Identifiable, Codable, Hashable {
 
     var isPaused: Bool { !isActive && completedAt == nil }
     var isCompleted: Bool { completedAt != nil }
-    var isPrayerBased: Bool { slots.contains { $0.slotType == .prayer } }
-    var totalTarget: Int { slots.reduce(0) { $0 + ($1.targetCount ?? 0) }.clampedMin(targetPolicy == .none ? 0 : 1) }
+    var activeSlots: [GoalSlot] { slots.filter(\.isActive) }
+    var archivedSlots: [GoalSlot] { slots.filter { !$0.isActive } }
+    var isPrayerBased: Bool { activeSlots.contains { $0.slotType == .prayer } }
+    var totalTarget: Int { activeSlots.reduce(0) { $0 + ($1.targetCount ?? 0) }.clampedMin(targetPolicy == .none ? 0 : 1) }
 
     /// Minimum-for-streak count, if configured (drives the `Minimum: N` chip and streak rule).
     var minimumForStreak: Int? {
@@ -658,8 +749,8 @@ struct Goal: Identifiable, Codable, Hashable {
 struct CountEntry: Identifiable, Codable, Hashable {
     var id: AwradID = UUID()
     var goalID: AwradID
-    var slotID: AwradID?
-    var count: Int
+    var slotID: AwradID
+    var count: Int64
     var dateKey: String
     var lastUpdated: Date
 }

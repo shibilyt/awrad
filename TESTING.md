@@ -17,7 +17,7 @@ Validate the smallest relevant surface first, then widen checks according to ris
 | iOS localization/resources | Build plus locale-key comparison | Runtime smoke in affected locales |
 | API context/schema | Focused context test and migration review | Full `mix test` |
 | API controller/router/auth | Focused controller/plug tests | Full `mix test` and mobile consumer review |
-| Cross-project JSON contract | API tests plus Android and iOS DTO review/tests | Local API integration on both clients |
+| Cross-project progress contract | `./check-mobile-model-parity` plus focused API context tests | Full native/API suites and migration checks |
 | Documentation only | Link/path audit and `git diff --check` | Verify documented task discovery commands |
 
 ## Android escalation
@@ -50,6 +50,8 @@ Router/auth changes require explicit checks for public versus protected pipeline
 Security-sensitive API changes also require focused checks for generic account responses, per-IP and per-account rate-limit thresholds, replay/concurrency behavior, ownership swaps using another user's valid ID, cookie/CSRF behavior, and absence of secrets in responses or logs. Run `mix hex.audit` during release preparation and dependency changes; treat external WAF or mail-provider quotas as defense in depth rather than test substitutes.
 
 ## Cross-project acceptance
+
+For progress model v1, the root parity command must pass. It validates the dependency-free schema rules and golden fixtures, exact 112-entry registry parity across Android/iOS/API, generated 99-name Asma-ul Husna content, enum/default/edge-case coverage, and exact persisted-field classification against Room schema, Swift Codable models, and Ecto schemas, then runs both native decode → model → encode suites. API schema/context tests remain separate because this slice deliberately exposes no sync route.
 
 For a changed contract, record all of the following in the handoff:
 

@@ -1,0 +1,570 @@
+{
+  "schema_version": 1,
+  "dhikrs": [
+    {
+      "catalog_key": "surah-ikhlas",
+      "id": "c88b9491-40ad-4b42-a5b8-e07c4b4d31ef",
+      "status": "active"
+    },
+    {
+      "catalog_key": "tahleel",
+      "id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+      "status": "active"
+    },
+    {
+      "catalog_key": "ya-wahhabu",
+      "id": "6abe90a8-abe2-4678-a4bf-3f14323c3e8d",
+      "status": "active"
+    },
+    {
+      "catalog_key": "isthighfar",
+      "id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+      "status": "active"
+    },
+    {
+      "catalog_key": "swalath-al-fathimiyya",
+      "id": "3daf6738-face-4afc-aeca-2ab62e57a5ea",
+      "status": "active"
+    },
+    {
+      "catalog_key": "swalath",
+      "id": "f2337cb6-6d46-45fb-a193-b9e231c97bbd",
+      "status": "active"
+    },
+    {
+      "catalog_key": "swalath-sayyidina",
+      "id": "2a65a361-c499-41ff-b441-fc487714eacf",
+      "status": "active"
+    },
+    {
+      "catalog_key": "swalath-al-fatih",
+      "id": "c94229d6-6b24-4280-ae7c-1e618fc4f1fc",
+      "status": "active"
+    },
+    {
+      "catalog_key": "swalath-al-nariyya",
+      "id": "c2a59b7e-7e64-4bfe-9b0c-2d493fe01537",
+      "status": "active"
+    },
+    {
+      "catalog_key": "swalath-for-debt",
+      "id": "9cbb04d9-fb07-4c8f-9235-49e2ce6fc818",
+      "status": "active"
+    },
+    {
+      "catalog_key": "ramadan-dhikr",
+      "id": "82f55daf-9f23-4d53-a10e-b60a5c90b3c8",
+      "status": "active"
+    },
+    {
+      "catalog_key": "ramadan-first-ten-nights",
+      "id": "cebda17e-2ed8-4bd6-b1f3-5dbbb29f9454",
+      "status": "active"
+    },
+    {
+      "catalog_key": "ramadan-second-ten-nights",
+      "id": "b2580d39-140f-463b-a157-697997129b13",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-allah",
+      "id": "a308aedc-2871-44ea-bb88-b2f3babacfcb",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-ar-rahman",
+      "id": "9185bbcd-8f37-4eaa-af4a-d8d78b3ee6bd",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-ar-raheem",
+      "id": "19c3001c-4b4a-48c0-800b-8098433798e6",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-malik",
+      "id": "1239cba4-376d-48ac-b1b7-a0bd15bc82b3",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-quddus",
+      "id": "5d2c7c45-f0a9-440a-af93-dc007a6c2e7f",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-as-salam",
+      "id": "b851de15-1a0d-45d9-b55f-ed1d2714696f",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-mumin",
+      "id": "aca52e41-0e6c-40cc-9b1a-e42eeadeec76",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muhaymin",
+      "id": "dae77984-f401-42e3-8a1e-393176c3cf82",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-aziz",
+      "id": "aeceafe3-a564-477b-a66c-b3f5ebf65fef",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-jabbar",
+      "id": "f9e56d90-200f-4a53-80f3-e4f21d76a0fa",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-mutakabbir",
+      "id": "4b7f2535-628c-45bc-880a-81ede715f8f7",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-khaliq",
+      "id": "b35386fa-7773-41be-a5be-5e41e68d140e",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-bari",
+      "id": "70b800b2-c7b4-48bf-89ac-bca0a0c20624",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-musawwir",
+      "id": "1094c202-a33c-44a1-8413-a011f9114c64",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-ghaffar",
+      "id": "6ac2de1b-4a59-45c8-88f3-4f7f67628336",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-qahhar",
+      "id": "adebd521-22a0-4004-92c7-4424c0049503",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-wahhab",
+      "id": "decc5cc8-34e7-4e07-b13d-b871c22bd866",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-ar-razzaq",
+      "id": "02fe9df2-58d8-48bd-af6f-e6ac074047d8",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-fattah",
+      "id": "eb2b3fc6-0b04-46b9-bcfd-06a26c16975e",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-alim",
+      "id": "26285e20-e411-42a7-b406-f260bf532655",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-qabid",
+      "id": "f1e4c8ca-af7e-4363-a0b5-903e5c1eb889",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-basit",
+      "id": "ef08e07c-ee48-42fa-8050-870f736d3223",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-khafid",
+      "id": "c61a8d2a-6a56-4e82-ace0-aa13fda979f8",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-ar-rafi",
+      "id": "0d89d53b-49a1-4c41-9db7-3d1e34a87189",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muizz",
+      "id": "d2eca4f6-62d4-4f4c-b04c-d6310ddf2fd2",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-mudhill",
+      "id": "ea793cb0-75e3-4ecc-a079-49648c55b8da",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-as-sami",
+      "id": "b625b726-944f-4c85-af35-bdbe4741b17a",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-basir",
+      "id": "5a94ea6b-ef84-484e-9d91-8a9346b6852a",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-hakam",
+      "id": "77945437-44ee-4ab7-b762-455d212e3dd6",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-adl",
+      "id": "77bd93a6-8912-4d47-9cf4-58b48641dc83",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-latif",
+      "id": "3eba257e-4ce0-4cda-aaeb-67d14fd01d6c",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-khabir",
+      "id": "38d239b4-33fa-4f7d-9619-777ef1cf39a1",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-halim",
+      "id": "9751de3a-9b29-4659-b458-7f6a2001ea3d",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-azim",
+      "id": "2c5d9d5a-f166-402c-af22-24603c1ebb55",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-ghafur",
+      "id": "a734681e-297d-4a91-ad0b-d8f7cb89271b",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-ash-shakur",
+      "id": "393cb962-e0b1-4992-a865-64aec10aaf4b",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-ali",
+      "id": "3e399089-fbbc-4404-8b51-39a9f9b05d49",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-kabir",
+      "id": "02a1e8c1-181e-47b6-9d6d-54a44a78e94d",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-hafiz",
+      "id": "2f62a0ef-761b-44db-a37b-a205b27ef919",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muqit",
+      "id": "2cc9f07a-7635-418d-b418-7f2eb97067cf",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-hasib",
+      "id": "155ffec7-0a60-41aa-8bb2-c232f44c5cb9",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-jalil",
+      "id": "60eafbf0-7b9d-4975-b9ef-313de5ee0540",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-karim",
+      "id": "5972900f-76c8-4827-b426-3823924ece61",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-ar-raqib",
+      "id": "6d18dade-55c0-499b-a38a-39e481fb360c",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-mujib",
+      "id": "30129e79-ba0d-4991-8b51-d312ddb0b11e",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-wasi",
+      "id": "ceee8a6c-d7a8-446f-90f1-7127b5fe4d4d",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-hakim",
+      "id": "5389d4f6-49c4-4afe-bd6d-2a3db475d48f",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-wadud",
+      "id": "cb5a3a28-e678-4829-94be-8e276c4b1d2d",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-majid",
+      "id": "a8ec166c-ea5a-42db-a08e-2030fa70eaf1",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-baith",
+      "id": "b6fd0053-fb95-4975-9b56-f642d3908992",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-ash-shahid",
+      "id": "2ed4d5c5-4fde-402b-9ca7-5b57acdac35e",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-haqq",
+      "id": "9fc51bc2-d111-4bc1-b74d-1186ba0de7cb",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-wakil",
+      "id": "fdde26ca-352e-4ec7-8958-6a3c17ceeeee",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-qawiyy",
+      "id": "e81344aa-1c07-4cf9-83d6-6d470e547d67",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-matin",
+      "id": "c52d68ed-21fb-4659-80f8-569fbb57bd4c",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-waliyy",
+      "id": "3e8429f5-cd08-4571-8010-ca9fc9617649",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-hamid",
+      "id": "c48b8b31-7b91-4ab7-8848-fe99328efff8",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muhsi",
+      "id": "4c8f1a9e-29c2-4e19-bd86-16a5c3aa48e5",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-mubdi",
+      "id": "d1b2ad72-5ff9-4196-b00b-0bc4ab4888ab",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muid",
+      "id": "c5c5d6ac-f38c-4055-b3fb-84e40c38ff44",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muhyi",
+      "id": "6dd67e41-9fdb-4164-96d0-882d5706853c",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-mumit",
+      "id": "b6b425e6-d1a0-4b5c-931a-9d79e3205f90",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-hayy",
+      "id": "54510029-5831-4320-b384-c95ebe854ea9",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-qayyum",
+      "id": "5b3acaef-9cbc-48ba-99b8-a02cf46141d9",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-wajid",
+      "id": "2258c162-64cb-4020-8200-1f5f834cba77",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-maajid",
+      "id": "eddafa30-65ef-4ad5-8c86-0e499832d521",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-wahid",
+      "id": "a0a9f0ba-00a1-4455-b8e1-73177d6e361a",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-ahad",
+      "id": "9e6b7d79-51ba-43b4-a4f1-043c9b588b44",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-as-samad",
+      "id": "cc32ae77-1eb8-4384-8f26-e05077570546",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-qadir",
+      "id": "bc40bdf3-4989-45eb-ad41-6baf83c85a2e",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muqtadir",
+      "id": "a967a075-d6b8-4610-8c91-517443efbf83",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muqaddim",
+      "id": "cc699d66-ff4f-4b65-98af-e675a91838e3",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muakhkhir",
+      "id": "fbcfcc00-90c4-4cb8-81ad-3e7afdfd270d",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-awwal",
+      "id": "12c85c47-e81c-4e63-9ae4-265ba8f05507",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-akhir",
+      "id": "19c12d1e-b0a5-40e0-94d7-c519c7ce7337",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-az-zahir",
+      "id": "8da95856-0add-4aa8-91d8-1938de9f49a7",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-batin",
+      "id": "9fb77ffe-e96a-48bd-a87f-79e920a49c5f",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-wali",
+      "id": "3ceb95e3-8431-480a-9c00-b64f74af3f30",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-mutaali",
+      "id": "12c4f1c5-486b-48d6-98bd-ca26e032c776",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-barr",
+      "id": "b2b50b8e-1955-4a32-bd6e-b3e7028fecdc",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-at-tawwab",
+      "id": "0cc6b5b0-7486-4de6-9ed1-3a47e125a463",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muntaqim",
+      "id": "2765df58-6f0c-48be-a5e4-cc2851157a6c",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-afuww",
+      "id": "d20e3f49-4794-44a2-849d-f55fe70f83b2",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-ar-rauf",
+      "id": "4c2bbf43-66d9-4302-98c6-91c42964c9b6",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-malik-ul-mulk",
+      "id": "f04c17c8-ee60-433b-a74a-7cd6a7fc5a29",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-dhul-jalali-wal-ikram",
+      "id": "f2e9602a-b761-434f-bc31-3a3ae8d706fd",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-muqsit",
+      "id": "e8a1a2bb-9cfb-40d0-80c8-466fbf861a91",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-jami",
+      "id": "4e9394ee-6b73-4431-bb47-0ba96ad74170",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-ghaniyy",
+      "id": "7ab3b8ef-79da-4d5a-995c-31a6f7f80224",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-mughni",
+      "id": "16bbc0a8-4230-422e-996c-13eade3c4142",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-mani",
+      "id": "6b2b55a9-0636-4858-af56-37fb4d50848b",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-ad-darr",
+      "id": "6f3e53d2-ff37-4142-ae7d-eed94554e38b",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-an-nafi",
+      "id": "850764ed-5257-41a3-bfad-f03586ce728e",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-an-nur",
+      "id": "3586ed77-4c65-4173-bfba-fb4cd6020905",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-hadi",
+      "id": "8ff25a4d-d7ff-4231-8c50-785d8a212314",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-badi",
+      "id": "61b49a97-0536-4d1a-afd2-7d4331af2e06",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-baqi",
+      "id": "d69c1581-1a1d-4134-ae3e-9b1eb2e7cb25",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-al-warith",
+      "id": "1d83af89-6afc-4ba7-9cdc-31c8e803fc4a",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-ar-rashid",
+      "id": "9209cb61-1129-4605-8055-2044864ca053",
+      "status": "active"
+    },
+    {
+      "catalog_key": "asma-ul-husna-as-sabur",
+      "id": "ef8503fe-6deb-4aa9-897a-39624438dda2",
+      "status": "active"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.notification
 
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalRecurrence
@@ -35,12 +37,12 @@ class ReminderOccurrenceResolverTest {
         val friday = LocalDate.parse("2026-05-29")
         val slot = dhuhrSlot()
         val goal = goal(
-            recurrence = GoalRecurrence(
+            recurrence = GoalRecurrence(goalId = testId(1),
                 frequency = RecurrenceFrequency.WEEKLY,
                 weekdays = setOf(DayOfWeek.FRIDAY),
             ),
             slots = listOf(slot),
-            reminders = listOf(GoalReminder(id = 20, reminderType = ReminderType.PRAYER_OFFSET, offsetMinutes = 10)),
+            reminders = listOf(GoalReminder(id = testId(20), goalId = testId(1), reminderType = ReminderType.PRAYER_OFFSET, offsetMinutes = 10)),
         )
         val now = LocalDate.parse("2026-05-27").atStartOfDay(zoneId).toInstant().toEpochMilli()
 
@@ -54,11 +56,11 @@ class ReminderOccurrenceResolverTest {
     @Test
     fun `fixed reminder skips non due days`() {
         val goal = goal(
-            recurrence = GoalRecurrence(
+            recurrence = GoalRecurrence(goalId = testId(1),
                 frequency = RecurrenceFrequency.WEEKLY,
                 weekdays = setOf(DayOfWeek.FRIDAY),
             ),
-            reminders = listOf(GoalReminder(id = 21, reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0)),
+            reminders = listOf(GoalReminder(id = testId(21), goalId = testId(1), reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0)),
         )
         val now = LocalDate.parse("2026-05-27").atStartOfDay(zoneId).toInstant().toEpochMilli()
 
@@ -71,8 +73,8 @@ class ReminderOccurrenceResolverTest {
     fun `time window reminder fires at window start`() {
         val date = LocalDate.parse("2026-05-27")
         val slot = GoalSlot(
-            id = 11,
-            goalId = 1,
+            id = testId(11),
+            goalId = testId(1),
             slotType = GoalSlotType.TIME_WINDOW,
             startMinute = 9 * 60,
             endMinute = 10 * 60,
@@ -80,7 +82,7 @@ class ReminderOccurrenceResolverTest {
         )
         val goal = goal(
             slots = listOf(slot),
-            reminders = listOf(GoalReminder(id = 22, reminderType = ReminderType.TIME_WINDOW_START)),
+            reminders = listOf(GoalReminder(id = testId(22), goalId = testId(1), reminderType = ReminderType.TIME_WINDOW_START)),
         )
         val now = date.atTime(LocalTime.of(8, 0)).atZone(zoneId).toInstant().toEpochMilli()
 
@@ -94,11 +96,11 @@ class ReminderOccurrenceResolverTest {
     fun `specific date reminder schedules only the selected date`() {
         val selectedDate = LocalDate.parse("2026-06-01")
         val goal = goal(
-            recurrence = GoalRecurrence(
+            recurrence = GoalRecurrence(goalId = testId(1),
                 frequency = RecurrenceFrequency.SPECIFIC_DATES,
                 specificDates = setOf(GoalSpecificDate(date = selectedDate, calendar = CalendarSystem.GREGORIAN)),
             ),
-            reminders = listOf(GoalReminder(id = 23, reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0)),
+            reminders = listOf(GoalReminder(id = testId(23), goalId = testId(1), reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0)),
         )
         val now = LocalDate.parse("2026-05-27").atStartOfDay(zoneId).toInstant().toEpochMilli()
 
@@ -112,7 +114,8 @@ class ReminderOccurrenceResolverTest {
         val goal = goal(
             reminders = listOf(
                 GoalReminder(
-                    id = 24,
+                    id = testId(24),
+                    goalId = testId(1),
                     reminderType = ReminderType.FIXED_TIME,
                     hour = 8,
                     minute = 0,
@@ -137,12 +140,12 @@ class ReminderOccurrenceResolverTest {
     }
 
     private fun goal(
-        recurrence: GoalRecurrence = GoalRecurrence(),
-        slots: List<GoalSlot> = listOf(GoalSlot(id = 1, goalId = 1, slotType = GoalSlotType.ANYTIME, targetCount = 100)),
+        recurrence: GoalRecurrence = GoalRecurrence(goalId = testId(1), ),
+        slots: List<GoalSlot> = listOf(GoalSlot(id = testId(1), goalId = testId(1), slotType = GoalSlotType.ANYTIME, targetCount = 100)),
         reminders: List<GoalReminder> = emptyList(),
     ): Goal = Goal(
-        id = 1,
-        dhikrId = 1,
+        id = testId(1),
+        dhikrId = testId(1),
         targetPolicy = TargetPolicy.PER_DUE_DATE,
         recurrence = recurrence,
         slots = slots,
@@ -151,8 +154,8 @@ class ReminderOccurrenceResolverTest {
     )
 
     private fun dhuhrSlot(target: Int = 100): GoalSlot = GoalSlot(
-        id = 10,
-        goalId = 1,
+        id = testId(10),
+        goalId = testId(1),
         slotType = GoalSlotType.PRAYER,
         prayerName = Prayer.DHUHR,
         prayerRelation = PrayerRelation.AFTER,

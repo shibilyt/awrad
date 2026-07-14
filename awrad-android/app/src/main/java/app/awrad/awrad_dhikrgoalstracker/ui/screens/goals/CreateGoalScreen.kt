@@ -59,6 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.content.ContextCompat
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualEmptyState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualIconTile
@@ -78,7 +79,7 @@ private fun goalModeDepth(mode: GoalCreationMode): Int = when (mode) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateGoalScreen(
-    onGoalCreated: (Long) -> Unit,
+    onGoalCreated: (AwradId) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: CreateGoalViewModel = hiltViewModel(),
 ) {

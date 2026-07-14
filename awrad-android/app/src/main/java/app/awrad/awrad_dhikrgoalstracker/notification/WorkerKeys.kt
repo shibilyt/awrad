@@ -1,6 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.notification
 
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 
 object WorkerKeys {
     // Unique work names
@@ -41,10 +42,10 @@ object WorkerKeys {
     const val EXTRA_NOTIFICATION_ID = "extra_notification_id"
     const val EXTRA_GOAL_ID = "extra_goal_id"
 
-    fun goalReminderName(goalId: Long) = "$GOAL_REMINDER_PREFIX$goalId"
-    fun goalFollowUpName(goalId: Long) = "$GOAL_FOLLOWUP_PREFIX$goalId"
-    fun prayerReminderName(goalId: Long, prayer: String) = "$PRAYER_REMINDER_PREFIX${goalId}_$prayer"
-    fun goalTag(goalId: Long) = "goal_$goalId"
+    fun goalReminderName(goalId: AwradId) = "$GOAL_REMINDER_PREFIX$goalId"
+    fun goalFollowUpName(goalId: AwradId) = "$GOAL_FOLLOWUP_PREFIX$goalId"
+    fun prayerReminderName(goalId: AwradId, prayer: String) = "$PRAYER_REMINDER_PREFIX${goalId}_$prayer"
+    fun goalTag(goalId: AwradId) = "goal_$goalId"
 }
 
 /**
@@ -63,13 +64,13 @@ object AlarmRequestCodes {
     fun wirdReminder(wirdId: String, reminderId: String): Int =
         stableCode(WIRD_BASE, "$wirdId:$reminderId")
 
-    fun goalReminder(goalId: Long): Int = GOAL_BASE + goalId.toInt()
-    fun prayerSlot(goalId: Long, slotIndex: Int): Int = PRAYER_BASE + (goalId * 10 + slotIndex).toInt()
-    fun goalFollowUp(goalId: Long, slotId: Long? = null): Int =
-        stableCode(FOLLOWUP_BASE, "$goalId:${slotId ?: 0}")
+    fun goalReminder(goalId: AwradId): Int = stableCode(GOAL_BASE, goalId.toString())
+    fun prayerSlot(goalId: AwradId, slotIndex: Int): Int = stableCode(PRAYER_BASE, "$goalId:$slotIndex")
+    fun goalFollowUp(goalId: AwradId, slotId: AwradId? = null): Int =
+        stableCode(FOLLOWUP_BASE, "$goalId:${slotId.orEmptyKey()}")
 
-    fun reminder(goalId: Long, reminderId: Long, slotId: Long?): Int =
-        stableCode(REMINDER_BASE, "$goalId:$reminderId:${slotId ?: 0}")
+    fun reminder(goalId: AwradId, reminderId: AwradId, slotId: AwradId?): Int =
+        stableCode(REMINDER_BASE, "$goalId:$reminderId:${slotId.orEmptyKey()}")
 
     fun codesToCancelBeforeReschedule(goals: List<Goal>): Set<Int> = buildSet {
         add(GLOBAL)
@@ -93,4 +94,6 @@ object AlarmRequestCodes {
 
     private fun stableCode(base: Int, key: String): Int =
         base + (key.hashCode() and Int.MAX_VALUE) % 800_000
+
+    private fun AwradId?.orEmptyKey(): String = this?.toString().orEmpty()
 }

@@ -4,6 +4,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 
 object GoalCountSetupUpdateFactory {
 
@@ -11,17 +12,18 @@ object GoalCountSetupUpdateFactory {
         val errors = mutableListOf<GoalUpdateError>()
         if (command.goalId != existingGoal.id) errors += GoalUpdateError.GoalIdMismatch
 
-        val requiresGoalPolicy = existingGoal.slots.size <= 1
+        val activeSlots = existingGoal.activeSlots
+        val requiresGoalPolicy = activeSlots.size <= 1
         val normalizedGoalPolicy = command.countPolicy.normalizedFor(command.ruleMode)
         if (requiresGoalPolicy && normalizedGoalPolicy == null) {
             errors += GoalUpdateError.InvalidCountPolicy
         }
         val goalPolicy = normalizedGoalPolicy ?: GoalCountPolicyUpdate()
-        val slotPolicies = if (existingGoal.slots.size > 1) {
+        val slotPolicies = if (activeSlots.size > 1) {
             command.slotPolicies.normalizedSlotPolicies(existingGoal, command.ruleMode, errors)
-        } else if (existingGoal.slots.size == 1) {
+        } else if (activeSlots.size == 1) {
             command.slotPolicies.normalizedSingleSlotPolicy(
-                slot = existingGoal.slots.single(),
+                slot = activeSlots.single(),
                 fallbackPolicy = goalPolicy,
                 ruleMode = command.ruleMode,
                 errors = errors,
@@ -35,7 +37,7 @@ object GoalCountSetupUpdateFactory {
         }
 
         val targetPolicy = existingGoal.updatedTargetPolicy(command.ruleMode)
-        val updatedSlots = existingGoal.slots.map { slot ->
+        val updatedSlots = activeSlots.map { slot ->
             val policy = slotPolicies[slot.id] ?: goalPolicy
             slot.withCountPolicy(policy, targetPolicy)
         }
@@ -47,7 +49,7 @@ object GoalCountSetupUpdateFactory {
             autoCompleteOnTarget = targetPolicy == TargetPolicy.CUMULATIVE_TOTAL &&
                 command.ruleMode != GoalCountRuleMode.Tracker &&
                 command.autoCompleteOnTarget,
-            slots = updatedSlots,
+            slots = updatedSlots + existingGoal.archivedSlots,
         )
         val warnings = updatedGoal.warningsFor(command)
         return GoalUpdateResult.Valid(ValidatedGoalUpdate(goal = updatedGoal, warnings = warnings))
@@ -66,8 +68,8 @@ object GoalCountSetupUpdateFactory {
         existingGoal: Goal,
         ruleMode: GoalCountRuleMode,
         errors: MutableList<GoalUpdateError>,
-    ): Map<Long, GoalCountPolicyUpdate>? {
-        val existingSlotIds = existingGoal.slots.map { it.id }.toSet()
+    ): Map<AwradId, GoalCountPolicyUpdate>? {
+        val existingSlotIds = existingGoal.activeSlots.map { it.id }.toSet()
         val requestedSlotIds = map { it.slotId }.toSet()
         if (requestedSlotIds.any { it !in existingSlotIds }) {
             errors += GoalUpdateError.UnknownSlotPolicy
@@ -91,7 +93,7 @@ object GoalCountSetupUpdateFactory {
         fallbackPolicy: GoalCountPolicyUpdate?,
         ruleMode: GoalCountRuleMode,
         errors: MutableList<GoalUpdateError>,
-    ): Map<Long, GoalCountPolicyUpdate>? {
+    ): Map<AwradId, GoalCountPolicyUpdate>? {
         if (isEmpty()) return fallbackPolicy?.let { mapOf(slot.id to it) }
         if (size != 1 || single().slotId != slot.id) {
             errors += if (any { it.slotId != slot.id }) {

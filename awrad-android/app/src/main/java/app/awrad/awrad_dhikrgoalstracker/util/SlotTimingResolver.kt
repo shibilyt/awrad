@@ -1,6 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.util
 
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
 import app.awrad.awrad_dhikrgoalstracker.data.model.PrayerRelation
@@ -117,7 +118,7 @@ object SlotTimingResolver {
         prayerTimes: PrayerTimes?,
         defaultPrayerLeadMinutes: Int,
         zoneId: ZoneId = ZoneId.systemDefault(),
-    ): Map<Long, SlotTimingInfo> =
+    ): Map<AwradId, SlotTimingInfo> =
         slots.associate { slot ->
             slot.id to timingInfo(slot, occurrenceDate, nowMillis, prayerTimes, defaultPrayerLeadMinutes, zoneId)
         }

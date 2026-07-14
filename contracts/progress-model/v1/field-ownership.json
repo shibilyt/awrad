@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "shared": [
+    "dhikr.id", "dhikr.catalog_key", "dhikr.is_custom", "dhikr.content", "dhikr.category", "dhikr.audio_metadata", "dhikr.audio_count_per_play", "dhikr.sort_order", "dhikr.quran_ref", "dhikr.benefits",
+    "goal.identity", "goal.policies", "goal.recurrence", "goal.slots", "goal.reminders", "goal.schedule", "goal.lifecycle", "goal.timestamps",
+    "count_entry.identity", "count_entry.owner_references", "count_entry.count", "count_entry.date", "count_entry.last_updated"
+  ],
+  "local_only": [
+    "android.dhikr.is_downloaded",
+    "android.goal.minimum_streak_count_compatibility",
+    "android.goal.auto_complete_on_target_compatibility",
+    "android.goal.total_completed_count_cache",
+    "ios.dhikr.is_downloaded",
+    "ios.goal.minimum_streak_count_compatibility",
+    "ios.goal.auto_complete_on_target_compatibility",
+    "ios.goal.total_completed_count_cache",
+    "ios.snapshot.wirds_and_preferences",
+    "notification.platform_schedule_handle",
+    "api.user_id_authenticated_ownership",
+    "api.timestamps.inserted_at_storage_name",
+    "api.goal.legacy_frequency_timing_target_duration_config",
+    "api.goal.notification_fields",
+    "api.goal.deleted_at",
+    "api.goal_slot.legacy_timing_fields",
+    "api.goal_slot.deleted_at",
+    "api.dhikr.repeat_count",
+    "dhikr.cached_audio_path"
+  ],
+  "derived": [
+    "goal.active_slots", "goal.archived_slots", "goal.is_completed", "goal.total_completed_count", "goal.progress", "goal.streak"
+  ],
+  "native_persisted_fields": {
+    "android": {
+      "shared": [
+        "dhikrs.id", "dhikrs.catalogKey", "dhikrs.title", "dhikrs.arabic", "dhikrs.transliteration", "dhikrs.translation", "dhikrs.audioUrl", "dhikrs.audioFileName", "dhikrs.category", "dhikrs.isCustom", "dhikrs.audioCountPerPlay", "dhikrs.sortOrder", "dhikrs.quranSurah", "dhikrs.quranAyahStart", "dhikrs.quranAyahEnd", "dhikrs.benefitsJson",
+        "goals.id", "goals.dhikrId", "goals.targetPolicy", "goals.slotCountingPolicy", "goals.startDate", "goals.endDate", "goals.durationDays", "goals.targetCount", "goals.maximumCount", "goals.capBehavior", "goals.streakThreshold", "goals.reminderThreshold", "goals.completionThreshold", "goals.completionPolicy", "goals.isActive", "goals.completedAt", "goals.createdAt", "goals.updatedAt",
+        "goal_recurrences.frequency", "goal_recurrences.calendar", "goal_recurrences.intervalDays", "goal_recurrences.anchorDate", "goal_recurrences.month", "goal_recurrences.seasonTemplateCode",
+        "goal_recurrence_weekdays.dayOfWeek", "goal_recurrence_month_days.dayOfMonth", "goal_recurrence_dates.date",
+        "goal_slots.id", "goal_slots.goalId", "goal_slots.slotType", "goal_slots.minimumCount", "goal_slots.targetCount", "goal_slots.maximumCount", "goal_slots.capBehavior", "goal_slots.streakThreshold", "goal_slots.reminderThreshold", "goal_slots.completionThreshold", "goal_slots.prayerName", "goal_slots.prayerRelation", "goal_slots.startMinute", "goal_slots.endMinute", "goal_slots.startLeadMinutesOverride", "goal_slots.label", "goal_slots.sortOrder", "goal_slots.isActive", "goal_slots.archivedAt",
+        "goal_reminders.id", "goal_reminders.goalId", "goal_reminders.slotId", "goal_reminders.reminderType", "goal_reminders.hour", "goal_reminders.minute", "goal_reminders.offsetMinutes", "goal_reminders.enabled", "goal_reminders.sortOrder",
+        "count_entries.id", "count_entries.goalId", "count_entries.slotId", "count_entries.count", "count_entries.date", "count_entries.lastUpdated"
+      ],
+      "local_only": [
+        "dhikrs.isDownloaded",
+        "goals.minimumStreakCount", "goals.autoCompleteOnTarget", "goals.totalCompletedCount",
+        "goal_recurrences.goalId",
+        "goal_recurrence_weekdays.id", "goal_recurrence_weekdays.goalId",
+        "goal_recurrence_month_days.id", "goal_recurrence_month_days.goalId",
+        "goal_recurrence_dates.id", "goal_recurrence_dates.goalId", "goal_recurrence_dates.calendar", "goal_recurrence_dates.month", "goal_recurrence_dates.dayOfMonth"
+      ]
+    },
+    "ios": {
+      "shared": [
+        "Dhikr.id", "Dhikr.catalogKey", "Dhikr.title", "Dhikr.arabic", "Dhikr.transliteration", "Dhikr.translation", "Dhikr.audioURL", "Dhikr.audioFileName", "Dhikr.category", "Dhikr.isCustom", "Dhikr.audioCountPerPlay", "Dhikr.sortOrder", "Dhikr.quranRef", "Dhikr.benefits",
+        "QuranRef.surah", "QuranRef.ayahStart", "QuranRef.ayahEnd",
+        "CountPolicy.minimumCount", "CountPolicy.targetCount", "CountPolicy.maximumCount", "CountPolicy.streakThreshold", "CountPolicy.reminderThreshold", "CountPolicy.completionThreshold", "CountPolicy.capBehavior",
+        "GoalRecurrence.frequency", "GoalRecurrence.calendar", "GoalRecurrence.intervalDays", "GoalRecurrence.anchorDate", "GoalRecurrence.month", "GoalRecurrence.weekdays", "GoalRecurrence.monthDays", "GoalRecurrence.specificDates", "GoalRecurrence.seasonCode",
+        "GoalSlot.id", "GoalSlot.goalID", "GoalSlot.slotType", "GoalSlot.targetCount", "GoalSlot.minimumCount", "GoalSlot.maximumCount", "GoalSlot.capBehavior", "GoalSlot.streakThreshold", "GoalSlot.reminderThreshold", "GoalSlot.completionThreshold", "GoalSlot.prayerName", "GoalSlot.prayerRelation", "GoalSlot.startMinute", "GoalSlot.endMinute", "GoalSlot.startLeadMinutesOverride", "GoalSlot.label", "GoalSlot.sortOrder", "GoalSlot.isActive", "GoalSlot.archivedAt",
+        "GoalReminder.id", "GoalReminder.goalID", "GoalReminder.slotID", "GoalReminder.reminderType", "GoalReminder.hour", "GoalReminder.minute", "GoalReminder.offsetMinutes", "GoalReminder.enabled", "GoalReminder.sortOrder",
+        "Goal.id", "Goal.dhikrID", "Goal.targetPolicy", "Goal.recurrence", "Goal.slots", "Goal.reminders", "Goal.countPolicy", "Goal.slotCountingPolicy", "Goal.completionPolicy", "Goal.startDate", "Goal.endDate", "Goal.durationDays", "Goal.isActive", "Goal.completedAt", "Goal.createdAt", "Goal.updatedAt",
+        "CountEntry.id", "CountEntry.goalID", "CountEntry.slotID", "CountEntry.count", "CountEntry.dateKey", "CountEntry.lastUpdated"
+      ],
+      "local_only": [
+        "Dhikr.isDownloaded", "Goal.minimumStreakCount", "Goal.autoCompleteOnTarget", "Goal.totalCompletedCount"
+      ]
+    },
+    "api": {
+      "shared": [
+        "Dhikr.id", "Dhikr.catalog_key", "Dhikr.is_custom", "Dhikr.arabic", "Dhikr.audio_url", "Dhikr.audio_file_name", "Dhikr.category", "Dhikr.audio_count_per_play", "Dhikr.sort_order", "Dhikr.quran_surah", "Dhikr.quran_ayah_start", "Dhikr.quran_ayah_end", "Dhikr.benefits",
+        "Goal.id", "Goal.dhikr_id", "Goal.target_policy", "Goal.minimum_count", "Goal.target_count", "Goal.maximum_count", "Goal.streak_threshold", "Goal.reminder_threshold", "Goal.completion_threshold", "Goal.cap_behavior", "Goal.completion_policy", "Goal.slot_counting_policy", "Goal.recurrence_frequency", "Goal.recurrence_calendar", "Goal.recurrence_interval_days", "Goal.recurrence_anchor_date", "Goal.recurrence_month", "Goal.recurrence_season_code", "Goal.recurrence_weekdays", "Goal.recurrence_month_days", "Goal.recurrence_specific_dates", "Goal.completed_at", "Goal.start_date", "Goal.end_date", "Goal.duration_days", "Goal.is_active", "Goal.inserted_at", "Goal.updated_at",
+        "GoalSlot.id", "GoalSlot.goal_id", "GoalSlot.minimum_count", "GoalSlot.target_count", "GoalSlot.maximum_count", "GoalSlot.streak_threshold", "GoalSlot.reminder_threshold", "GoalSlot.completion_threshold", "GoalSlot.cap_behavior", "GoalSlot.slot_type", "GoalSlot.prayer_name", "GoalSlot.prayer_relation", "GoalSlot.start_minute", "GoalSlot.end_minute", "GoalSlot.start_lead_minutes_override", "GoalSlot.is_active", "GoalSlot.archived_at", "GoalSlot.label", "GoalSlot.sort_order",
+        "GoalReminder.id", "GoalReminder.goal_id", "GoalReminder.slot_id", "GoalReminder.reminder_type", "GoalReminder.hour", "GoalReminder.minute", "GoalReminder.offset_minutes", "GoalReminder.enabled", "GoalReminder.sort_order",
+        "CountEntry.id", "CountEntry.goal_id", "CountEntry.slot_id", "CountEntry.count", "CountEntry.date", "CountEntry.updated_at"
+      ],
+      "local_only": [
+        "Dhikr.repeat_count", "Dhikr.inserted_at", "Dhikr.updated_at",
+        "Goal.user_id", "Goal.frequency_type", "Goal.timing_type", "Goal.target_type", "Goal.duration_type", "Goal.config", "Goal.notification_enabled", "Goal.notification_time", "Goal.deleted_at",
+        "GoalSlot.timing_type", "GoalSlot.timing_value", "GoalSlot.deleted_at", "GoalSlot.inserted_at", "GoalSlot.updated_at",
+        "GoalReminder.inserted_at", "GoalReminder.updated_at",
+        "CountEntry.user_id", "CountEntry.inserted_at"
+      ]
+    }
+  }
+}

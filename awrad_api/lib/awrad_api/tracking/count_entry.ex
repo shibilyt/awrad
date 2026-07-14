@@ -17,12 +17,18 @@ defmodule AwradApi.Tracking.CountEntry do
 
   def changeset(entry, attrs) do
     entry
-    |> cast(attrs, [:user_id, :goal_id, :slot_id, :count, :date])
-    |> validate_required([:user_id, :goal_id, :count, :date])
-    |> validate_number(:count, greater_than_or_equal_to: 0)
+    |> cast(attrs, [:goal_id, :slot_id, :count, :date])
+    |> AwradApi.Tracking.Identity.put_client_id(attrs)
+    |> validate_required([:user_id, :goal_id, :slot_id, :count, :date])
     |> foreign_key_constraint(:user_id)
     |> foreign_key_constraint(:goal_id)
     |> foreign_key_constraint(:slot_id)
     |> unique_constraint([:goal_id, :slot_id, :date])
+  end
+
+  def for_user_changeset(entry, attrs, user_id) do
+    entry
+    |> change(user_id: user_id)
+    |> changeset(attrs)
   end
 end

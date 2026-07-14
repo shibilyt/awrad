@@ -5,6 +5,8 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 
 @Entity(
     tableName = "goal_reminders",
@@ -28,9 +30,9 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
     ]
 )
 data class GoalReminderEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val goalId: Long,
-    val slotId: Long? = null,
+    @PrimaryKey val id: AwradId = newAwradId(),
+    val goalId: AwradId,
+    val slotId: AwradId? = null,
     val reminderType: ReminderType = ReminderType.FIXED_TIME,
     val hour: Int? = null,
     val minute: Int? = null,
@@ -38,4 +40,3 @@ data class GoalReminderEntity(
     val enabled: Boolean = true,
     val sortOrder: Int = 0,
 )
-

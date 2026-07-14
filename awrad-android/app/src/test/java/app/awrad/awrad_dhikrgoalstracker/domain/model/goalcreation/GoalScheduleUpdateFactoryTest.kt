@@ -1,5 +1,9 @@
 package app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation
 
+import java.util.UUID
+
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
@@ -66,7 +70,7 @@ class GoalScheduleUpdateFactoryTest {
         val existing = goal(
             slots = listOf(
                 slot(
-                    id = 10,
+                    id = testId(10),
                     slotType = GoalSlotType.TIME_WINDOW,
                     targetCount = 33,
                     maximumCount = 50,
@@ -89,11 +93,11 @@ class GoalScheduleUpdateFactoryTest {
             ),
         )
 
-        assertEquals(2, update.goal.slots.size)
-        assertTrue(update.goal.slots.all { it.slotType == GoalSlotType.PRAYER })
-        assertEquals(listOf(10L), update.goal.archivedSlots.map { it.id })
+        assertEquals(2, update.goal.activeSlots.size)
+        assertTrue(update.goal.activeSlots.all { it.slotType == GoalSlotType.PRAYER })
+        assertEquals(listOf(testId(10)), update.goal.archivedSlots.map { it.id })
         assertEquals(false, update.goal.archivedSlots.single().isActive)
-        assertEquals(66, update.goal.slots.sumOf { it.targetCount ?: 0 })
+        assertEquals(66, update.goal.activeSlots.sumOf { it.targetCount ?: 0 })
         assertEquals(100, update.goal.maximumCount)
     }
 
@@ -101,8 +105,8 @@ class GoalScheduleUpdateFactoryTest {
     fun `editing existing time windows preserves ids and count rules`() {
         val existing = goal(
             slots = listOf(
-                slot(id = 10, startMinute = 6 * 60, endMinute = 8 * 60, label = "Morning"),
-                slot(id = 11, startMinute = 18 * 60, endMinute = 20 * 60, label = "Evening"),
+                slot(id = testId(10), startMinute = 6 * 60, endMinute = 8 * 60, label = "Morning"),
+                slot(id = testId(11), startMinute = 18 * 60, endMinute = 20 * 60, label = "Evening"),
             )
         )
         val update = validUpdate(
@@ -110,16 +114,16 @@ class GoalScheduleUpdateFactoryTest {
             command = command(
                 timing = ScheduleTimingUpdate.TimeWindows(
                     listOf(
-                        TimeWindowSlotUpdate(slotId = 11, label = "Night", startMinute = 20 * 60, endMinute = 22 * 60),
-                        TimeWindowSlotUpdate(slotId = 10, label = "Morning", startMinute = 7 * 60, endMinute = 9 * 60),
+                        TimeWindowSlotUpdate(slotId = testId(11), label = "Night", startMinute = 20 * 60, endMinute = 22 * 60),
+                        TimeWindowSlotUpdate(slotId = testId(10), label = "Morning", startMinute = 7 * 60, endMinute = 9 * 60),
                     )
                 )
             ),
         )
 
-        assertEquals(listOf(11L, 10L), update.goal.slots.map { it.id })
-        assertEquals(listOf(0, 1), update.goal.slots.map { it.sortOrder })
-        assertEquals(listOf(100, 100), update.goal.slots.map { it.targetCount })
+        assertEquals(listOf(testId(11), testId(10)), update.goal.activeSlots.map { it.id })
+        assertEquals(listOf(0, 1), update.goal.activeSlots.map { it.sortOrder })
+        assertEquals(listOf(100, 100), update.goal.activeSlots.map { it.targetCount })
         assertTrue(update.goal.archivedSlots.isEmpty())
     }
 
@@ -128,7 +132,7 @@ class GoalScheduleUpdateFactoryTest {
         val existing = goal(
             slots = listOf(
                 slot(
-                    id = 10,
+                    id = testId(10),
                     targetCount = 100,
                     maximumCount = 150,
                     capBehavior = CountCapBehavior.WarnOverTarget,
@@ -138,7 +142,7 @@ class GoalScheduleUpdateFactoryTest {
                     sortOrder = 0,
                 ),
                 slot(
-                    id = 11,
+                    id = testId(11),
                     targetCount = 100,
                     maximumCount = 150,
                     capBehavior = CountCapBehavior.WarnOverTarget,
@@ -156,8 +160,8 @@ class GoalScheduleUpdateFactoryTest {
             command = command(
                 timing = ScheduleTimingUpdate.TimeWindows(
                     listOf(
-                        TimeWindowSlotUpdate(slotId = 10, label = "Morning", startMinute = 6 * 60, endMinute = 7 * 60),
-                        TimeWindowSlotUpdate(slotId = 11, label = "Midday", startMinute = 9 * 60, endMinute = 10 * 60),
+                        TimeWindowSlotUpdate(slotId = testId(10), label = "Morning", startMinute = 6 * 60, endMinute = 7 * 60),
+                        TimeWindowSlotUpdate(slotId = testId(11), label = "Midday", startMinute = 9 * 60, endMinute = 10 * 60),
                         TimeWindowSlotUpdate(label = "Afternoon", startMinute = 12 * 60, endMinute = 13 * 60),
                     )
                 )
@@ -201,21 +205,21 @@ class GoalScheduleUpdateFactoryTest {
     @Test
     fun `slot reminders tied to archived slots are removed while fixed reminders remain`() {
         val existing = goal(
-            slots = listOf(slot(id = 10), slot(id = 11, label = "Evening")),
+            slots = listOf(slot(id = testId(10)), slot(id = testId(11), label = "Evening")),
             reminders = listOf(
-                GoalReminder(id = 1, goalId = 1, reminderType = ReminderType.FIXED_TIME, hour = 6, minute = 0),
-                GoalReminder(id = 2, goalId = 1, slotId = 11, reminderType = ReminderType.TIME_WINDOW_START),
+                GoalReminder(id = testId(1), goalId = testId(1), reminderType = ReminderType.FIXED_TIME, hour = 6, minute = 0),
+                GoalReminder(id = testId(2), goalId = testId(1), slotId = testId(11), reminderType = ReminderType.TIME_WINDOW_START),
             ),
         )
         val update = validUpdate(
             existingGoal = existing,
             command = command(
-                timing = ScheduleTimingUpdate.Anytime(slotId = 10),
+                timing = ScheduleTimingUpdate.Anytime(slotId = testId(10)),
             ),
         )
 
-        assertEquals(listOf(1L), update.goal.reminders.map { it.id })
-        assertEquals(listOf(11L), update.goal.archivedSlots.map { it.id })
+        assertEquals(listOf(testId(1)), update.goal.reminders.map { it.id })
+        assertEquals(listOf(testId(11)), update.goal.archivedSlots.map { it.id })
     }
 
     private fun validUpdate(
@@ -226,22 +230,22 @@ class GoalScheduleUpdateFactoryTest {
 
     private fun command(
         schedule: ScheduleSpec = ScheduleSpec.Daily,
-        timing: ScheduleTimingUpdate = ScheduleTimingUpdate.Anytime(slotId = 10),
+        timing: ScheduleTimingUpdate = ScheduleTimingUpdate.Anytime(slotId = testId(10)),
     ) = UpdateGoalScheduleCommand(
-        goalId = 1,
+        goalId = testId(1),
         schedule = schedule,
         timing = timing,
         archivedAtMillis = 1234L,
     )
 
     private fun goal(
-        slots: List<GoalSlot> = listOf(slot(id = 10)),
+        slots: List<GoalSlot> = listOf(slot(id = testId(10))),
         reminders: List<GoalReminder> = emptyList(),
         maximumCount: Int? = null,
         capBehavior: CountCapBehavior = CountCapBehavior.AllowOverTarget,
     ) = Goal(
-        id = 1,
-        dhikrId = 1,
+        id = testId(1),
+        dhikrId = testId(1),
         slots = slots,
         reminders = reminders,
         startDate = LocalDate.parse("2026-05-27"),
@@ -250,7 +254,7 @@ class GoalScheduleUpdateFactoryTest {
     )
 
     private fun slot(
-        id: Long,
+        id: UUID,
         slotType: GoalSlotType = GoalSlotType.TIME_WINDOW,
         targetCount: Int? = 100,
         maximumCount: Int? = null,
@@ -261,7 +265,7 @@ class GoalScheduleUpdateFactoryTest {
         sortOrder: Int = 0,
     ) = GoalSlot(
         id = id,
-        goalId = 1,
+        goalId = testId(1),
         slotType = slotType,
         targetCount = targetCount,
         maximumCount = maximumCount,

@@ -3,6 +3,8 @@ import Foundation
 enum AwradSeedData {
     static let dhikrs: [Dhikr] = [
         Dhikr(
+            id: BuiltInDhikrRegistry.surahIkhlas.id,
+            catalogKey: BuiltInDhikrRegistry.surahIkhlas.catalogKey,
             title: "Surah Ikhlas",
             arabic: "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ\nقُلۡ هُوَ ٱللَّهُ أَحَدٌ\nٱللَّهُ ٱلصَّمَدُ\nلَمۡ يَلِدۡ وَلَمۡ يُولَدۡ\nوَلَمۡ يَكُن لَّهُۥ كُفُوًا أَحَدُۢ",
             transliteration: "Qul huwa Allahu ahad",
@@ -11,9 +13,12 @@ enum AwradSeedData {
             audioFileName: "ikhlas.mp3",
             category: .quran,
             audioCountPerPlay: 1,
+            quranRef: QuranRef(surah: 112, ayahStart: 1, ayahEnd: 4),
             benefits: ["Recited for protection, focus, and remembrance."]
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.tahleel.id,
+            catalogKey: BuiltInDhikrRegistry.tahleel.catalogKey,
             title: "Tahleel",
             arabic: "لَا إِلٰهَ إِلَّا ٱللَّٰهُ",
             transliteration: "La ilaha illallah",
@@ -25,6 +30,8 @@ enum AwradSeedData {
             benefits: ["The foundation phrase of tawhid.", "A strong daily remembrance for focus and renewal."]
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.yaWahhabu.id,
+            catalogKey: BuiltInDhikrRegistry.yaWahhabu.catalogKey,
             title: "Ya Wahhabu",
             arabic: "يَا وَهَّابُ",
             transliteration: "Ya Wahhabu",
@@ -35,6 +42,8 @@ enum AwradSeedData {
             audioCountPerPlay: 2
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.isthighfar.id,
+            catalogKey: BuiltInDhikrRegistry.isthighfar.catalogKey,
             title: "Isthighfar",
             arabic: "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
             transliteration: "Asthaghfirullahil Azeem",
@@ -45,6 +54,8 @@ enum AwradSeedData {
             benefits: ["A daily practice for repentance and humility."]
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.swalathAlFathimiyya.id,
+            catalogKey: BuiltInDhikrRegistry.swalathAlFathimiyya.catalogKey,
             title: "Swalath Al Fathimiyya",
             arabic: "اللَّهُمَّ صَلِّ عَلَى النُّورِ وَأَهْلِهِ",
             transliteration: "Allahumma swalli ala nnoori wa ahlihi",
@@ -54,6 +65,8 @@ enum AwradSeedData {
             category: .swalaths
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.swalath.id,
+            catalogKey: BuiltInDhikrRegistry.swalath.catalogKey,
             title: "Swalath",
             arabic: "صَلَّى ٱللَّٰهُ عَلَىٰ مُحَمَّدٍ، صَلَّى ٱللَّٰهُ عَلَيْهِ وَسَلَّمَ",
             transliteration: "Swallallahu ala Muhammad, swallallahu alayhi wa sallim",
@@ -63,6 +76,8 @@ enum AwradSeedData {
             category: .swalaths
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.swalathSayyidina.id,
+            catalogKey: BuiltInDhikrRegistry.swalathSayyidina.catalogKey,
             title: "Swalath 2",
             arabic: "اللَّهُمَّ صَلِّ عَلَىٰ سَيِّدِنَا مُحَمَّدٍ وَعَلَىٰ آلِهِ وَصَحْبِهِ وَسَلِّمْ",
             transliteration: "Allahumma swalli ala sayyidina Muhammadin wa ala aalihi wa swahbihi wa sallim",
@@ -72,6 +87,8 @@ enum AwradSeedData {
             category: .swalaths
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.swalathAlFatih.id,
+            catalogKey: BuiltInDhikrRegistry.swalathAlFatih.catalogKey,
             title: "Swalath al Fatih",
             arabic: "اللَّهُمَّ صَلِّ عَلَىٰ سَيِّدِنَا مُحَمَّدٍ ❁ الْفَاتِحِ لِمَا أُغْلِقَ ❁ وَالْخَاتِمِ لِمَا سَبَقَ ❁ نَاصِرِ الْحَقِّ بِالْحَقِّ ❁ وَالْهَادِي إِلَىٰ صِرَاطِكَ الْمُسْتَقِيمِ ❁ وَعَلَىٰ آلِهِ حَقَّ قَدْرِهِ وَمِقْدَارِهِ الْعَظِيمِ",
             transliteration: "Swalath al Fatih",
@@ -81,6 +98,8 @@ enum AwradSeedData {
             category: .swalaths
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.swalathAlNariyya.id,
+            catalogKey: BuiltInDhikrRegistry.swalathAlNariyya.catalogKey,
             title: "Swalath al Nariyya",
             arabic: "اللَّهُمَّ صَلِّ صَلَاةً كَامِلَةً وَسَلِّمْ سَلَامًا تَامًّا عَلَىٰ سَيِّدِنَا مُحَمَّدٍ الَّذِي تَنْحَلُّ بِهِ الْعُقَدُ وَتَنْفَرِجُ بِهِ الْكُرَبُ وَتُقْضَىٰ بِهِ الْحَوَائِجُ وَتُنَالُ بِهِ الرَّغَائِبُ وَحُسْنُ الْخَوَاتِمِ",
             transliteration: "Swalath al Nariyya",
@@ -90,6 +109,8 @@ enum AwradSeedData {
             category: .swalaths
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.swalathForDebt.id,
+            catalogKey: BuiltInDhikrRegistry.swalathForDebt.catalogKey,
             title: "Swalath for Debt",
             arabic: "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ عَبْدِكَ وَرَسُولِكَ وَعَلَى الْمُؤْمِنِينَ وَالْمُسْلِمِينَ وَلِلْمُؤْمِنَاتِ وَالْمُسْلِمَاتِ",
             transliteration: "Allāhumma ṣalli ʿalā Muḥammadin ʿabdika wa rasūlika wa ʿalā al-muʾminīna wa al-muslimīna wa lil-muʾmināti wa al-muslimāt.",
@@ -99,6 +120,8 @@ enum AwradSeedData {
             category: .swalaths
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.ramadanDhikr.id,
+            catalogKey: BuiltInDhikrRegistry.ramadanDhikr.catalogKey,
             title: "Ramadan Dhikr",
             arabic: "أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا ٱللَّٰهُ، أَسْتَغْفِرُ ٱللَّٰهَ، أَسْأَلُكَ ٱلْجَنَّةَ وَأَعُوذُ بِكَ مِنَ ٱلنَّارِ",
             transliteration: "Ash'hadu an la ilaha illallahu, asthaghfirullah, as'alukal jannatha wa au'dhu bika mina nnaar",
@@ -108,6 +131,8 @@ enum AwradSeedData {
             category: .ramadan
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.ramadanFirstTenNights.id,
+            catalogKey: BuiltInDhikrRegistry.ramadanFirstTenNights.catalogKey,
             title: "First 10 Nights",
             arabic: "اللَّهُمَّ ٱرْحَمْنِي يَا أَرْحَمَ ٱلرَّاحِمِينَ",
             transliteration: "Allahummarhamni ya arhama rrahimin",
@@ -117,6 +142,8 @@ enum AwradSeedData {
             category: .ramadan
         ),
         Dhikr(
+            id: BuiltInDhikrRegistry.ramadanSecondTenNights.id,
+            catalogKey: BuiltInDhikrRegistry.ramadanSecondTenNights.catalogKey,
             title: "Second 10 Nights",
             arabic: "اللَّهُمَّ ٱغْفِرْ لِي ذُنُوبِي يَا رَبَّ ٱلْعَالَمِينَ",
             transliteration: "Allahummaghfirli dhunubi ya rabbal aalameen",
@@ -125,7 +152,7 @@ enum AwradSeedData {
             audioFileName: "ramadan-second10.mp3",
             category: .ramadan
         )
-    ]
+    ] + AsmaUlHusnaSeed.dhikrs
 
     static func defaultWirds() -> [Wird] {
         if let imported = loadBundledWirds(), !imported.isEmpty {

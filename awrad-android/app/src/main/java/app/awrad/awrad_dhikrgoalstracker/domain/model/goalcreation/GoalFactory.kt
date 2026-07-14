@@ -13,6 +13,9 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.PrayerRelation
 import app.awrad.awrad_dhikrgoalstracker.data.model.RecurrenceFrequency
 import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.Threshold
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 
 object GoalFactory {
 
@@ -31,7 +34,6 @@ object GoalFactory {
 
     private fun validate(command: CreateGoalCommand): List<GoalCreationError> {
         val errors = mutableListOf<GoalCreationError>()
-        if (command.dhikrId <= 0) errors += GoalCreationError.InvalidDhikr
         if (command.durationDays != null && command.durationDays <= 0) errors += GoalCreationError.InvalidDuration
         if (!isValidSchedule(command.schedule)) errors += GoalCreationError.InvalidSchedule
         if (!isValidTiming(command)) errors += GoalCreationError.InvalidTiming
@@ -46,6 +48,7 @@ object GoalFactory {
     }
 
     private fun CreateGoalCommand.toGoal(): Goal {
+        val goalId = newAwradId()
         val hasTarget = hasPersistableTarget()
         val targetPolicy = when {
             !hasTarget -> TargetPolicy.NONE
@@ -53,20 +56,26 @@ object GoalFactory {
             progressScope == ProgressScope.Period -> TargetPolicy.PERIOD_TOTAL
             else -> TargetPolicy.PER_DUE_DATE
         }
-        val slots = timing.toSlots(targetPolicy, countPolicy)
+        val slots = timing.toSlots(goalId, targetPolicy, countPolicy)
         return Goal(
+            id = goalId,
             dhikrId = dhikrId,
             targetPolicy = targetPolicy,
             slotCountingPolicy = slotCountingPolicy,
-            recurrence = schedule.toRecurrence(startDate),
+            recurrence = schedule.toRecurrence(goalId, startDate),
             slots = slots,
-            reminders = reminders.mapIndexed { index, policy -> policy.toReminder(index) },
+            reminders = reminders.mapIndexed { index, policy -> policy.toReminder(goalId, index) },
             startDate = startDate,
             durationDays = durationDays,
             minimumStreakCount = countPolicy.minimumCount,
+            targetCount = countPolicy.targetCount,
             maximumCount = slots.aggregateMaximumCount(defaultMaximum = countPolicy.maximumCount),
             capBehavior = countPolicy.capBehavior.toDataCapBehavior(),
+            streakThreshold = countPolicy.streakThreshold,
+            reminderThreshold = countPolicy.reminderThreshold,
+            completionThreshold = countPolicy.completionThreshold,
             autoCompleteOnTarget = completionPolicy == CompletionPolicy.WhenTargetReached,
+            completionPolicy = completionPolicy,
         )
     }
 
@@ -76,56 +85,65 @@ object GoalFactory {
         return if (slotMaximums.size == size) slotMaximums.sum() else defaultMaximum
     }
 
-    private fun ScheduleSpec.toRecurrence(startDate: java.time.LocalDate): GoalRecurrence =
+    private fun ScheduleSpec.toRecurrence(goalId: AwradId, startDate: java.time.LocalDate): GoalRecurrence =
         when (this) {
-            ScheduleSpec.Daily -> GoalRecurrence(frequency = RecurrenceFrequency.DAILY)
+            ScheduleSpec.Daily -> GoalRecurrence(goalId = goalId, frequency = RecurrenceFrequency.DAILY)
             is ScheduleSpec.Weekly -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.WEEKLY,
                 weekdays = weekdays,
             )
             is ScheduleSpec.Monthly -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.MONTHLY,
                 calendar = calendar,
                 monthDays = daysOfMonth,
             )
             is ScheduleSpec.Interval -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.INTERVAL,
                 intervalDays = intervalDays,
                 anchorDate = anchorDate ?: startDate,
             )
             is ScheduleSpec.Yearly -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.YEARLY,
                 calendar = calendar,
                 month = month,
                 monthDays = daysOfMonth,
             )
             is ScheduleSpec.Season -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.SEASON,
                 calendar = CalendarSystem.HIJRI,
                 seasonTemplateCode = templateCode,
             )
             is ScheduleSpec.SpecificDates -> GoalRecurrence(
+                goalId = goalId,
                 frequency = RecurrenceFrequency.SPECIFIC_DATES,
                 specificDates = dates.map { GoalSpecificDate(date = it) }.toSet(),
             )
         }
 
-    private fun TimingSpec.toSlots(targetPolicy: TargetPolicy, defaultPolicy: CountPolicy): List<GoalSlot> =
+    private fun TimingSpec.toSlots(goalId: AwradId, targetPolicy: TargetPolicy, defaultPolicy: CountPolicy): List<GoalSlot> =
         when (this) {
             TimingSpec.Anytime -> listOf(
                 GoalSlot(
-                    goalId = 0,
+                    goalId = goalId,
                     slotType = GoalSlotType.ANYTIME,
                     minimumCount = defaultPolicy.minimumCount,
                     targetCount = defaultPolicy.targetForPersistence(targetPolicy),
                     maximumCount = defaultPolicy.maximumCount,
                     capBehavior = defaultPolicy.capBehavior.toDataCapBehavior(),
+                    streakThreshold = defaultPolicy.streakThreshold,
+                    reminderThreshold = defaultPolicy.reminderThreshold,
+                    completionThreshold = defaultPolicy.completionThreshold,
                 )
             )
             is TimingSpec.PrayerBased -> slots.mapIndexed { index, slot ->
                 val policy = slot.countPolicy.withFallback(defaultPolicy)
                 GoalSlot(
-                    goalId = 0,
+                    goalId = goalId,
                     slotType = GoalSlotType.PRAYER,
                     prayerName = slot.prayer,
                     prayerRelation = slot.relation,
@@ -135,13 +153,16 @@ object GoalFactory {
                     targetCount = policy.targetForPersistence(targetPolicy),
                     maximumCount = policy.maximumCount,
                     capBehavior = policy.capBehavior.toDataCapBehavior(),
+                    streakThreshold = policy.streakThreshold,
+                    reminderThreshold = policy.reminderThreshold,
+                    completionThreshold = policy.completionThreshold,
                     sortOrder = index,
                 )
             }
             is TimingSpec.TimeWindows -> windows.mapIndexed { index, window ->
                 val policy = window.countPolicy.withFallback(defaultPolicy)
                 GoalSlot(
-                    goalId = 0,
+                    goalId = goalId,
                     slotType = GoalSlotType.TIME_WINDOW,
                     startMinute = window.startMinute,
                     endMinute = window.endMinute,
@@ -150,14 +171,18 @@ object GoalFactory {
                     targetCount = policy.targetForPersistence(targetPolicy),
                     maximumCount = policy.maximumCount,
                     capBehavior = policy.capBehavior.toDataCapBehavior(),
+                    streakThreshold = policy.streakThreshold,
+                    reminderThreshold = policy.reminderThreshold,
+                    completionThreshold = policy.completionThreshold,
                     sortOrder = index,
                 )
             }
         }
 
-    private fun ReminderPolicy.toReminder(sortOrder: Int): GoalReminder =
+    private fun ReminderPolicy.toReminder(goalId: AwradId, sortOrder: Int): GoalReminder =
         when (this) {
             is ReminderPolicy.FixedTime -> GoalReminder(
+                goalId = goalId,
                 reminderType = ReminderType.FIXED_TIME,
                 hour = hour,
                 minute = minute,
@@ -165,12 +190,14 @@ object GoalFactory {
                 sortOrder = sortOrder,
             )
             is ReminderPolicy.PrayerOffset -> GoalReminder(
+                goalId = goalId,
                 reminderType = ReminderType.PRAYER_OFFSET,
                 offsetMinutes = offsetMinutes,
                 enabled = enabled,
                 sortOrder = sortOrder,
             )
             is ReminderPolicy.TimeWindowStart -> GoalReminder(
+                goalId = goalId,
                 reminderType = ReminderType.TIME_WINDOW_START,
                 offsetMinutes = offsetMinutes,
                 enabled = enabled,

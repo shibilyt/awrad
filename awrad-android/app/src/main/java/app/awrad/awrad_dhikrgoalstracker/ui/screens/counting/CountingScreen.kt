@@ -108,6 +108,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountEntry
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
@@ -133,8 +134,8 @@ private val CountRingAccent = Color(0xFFD9A72E)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CountingScreen(
-    goalId: Long,
-    initialSlotId: Long? = null,
+    goalId: AwradId,
+    initialSlotId: AwradId? = null,
     onNavigateBack: () -> Unit,
     onNavigateToGoalDetail: () -> Unit,
     viewModel: CountingViewModel = hiltViewModel(),
@@ -549,7 +550,7 @@ fun CountingScreen(
                             .weight(1f)
                             .height(48.dp)
                             .onGloballyPositioned { audioButtonRect = it.boundsInRoot() },
-                        enabled = countingState.isAudioMode || (!countingState.goalReached && !uiState.sessionComplete),
+                        enabled = countingState.isAudioMode || uiState.canManualCount,
                         shape = RoundedCornerShape(18.dp),
                         colors = if (countingState.isAudioMode) {
                             ButtonDefaults.buttonColors(
@@ -574,7 +575,7 @@ fun CountingScreen(
                 }
 
                 // Session target button
-                if (!uiState.hasSessionTarget && !countingState.goalReached) {
+                if (!uiState.hasSessionTarget && uiState.canActiveCountUnderCap) {
                     FilledTonalIconButton(
                         onClick = { showSessionSheet = true },
                         modifier = Modifier
@@ -780,11 +781,7 @@ fun CountingScreen(
 
     if (showSessionSheet) {
         SessionTargetBottomSheet(
-            remainingCountLimit = if (countingState.targetCount > 0) {
-                uiState.remaining.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
-            } else {
-                null
-            },
+            remainingCountLimit = uiState.remainingCountLimit,
             audioDurationMs = if (countingState.audioDurationMs > 0)
                 countingState.audioDurationMs else uiState.audioDurationMs,
             audioCountPerPlay = if (countingState.audioCountPerPlay > 0)
@@ -840,7 +837,7 @@ fun CountingScreen(
         )
     }
 
-    if (uiState.areAllSlotsComplete && !uiState.sessionComplete) {
+    if (uiState.areAllSlotsComplete && !uiState.sessionComplete && !uiState.canCountUnderCap) {
         AlertDialog(
             onDismissRequest = { /* Must tap Done */ },
             title = { Text(stringResource(R.string.goal_reached_title)) },

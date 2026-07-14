@@ -12,9 +12,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 
 data class PreviewPlaybackState(
-    val dhikrId: Long? = null,
+    val dhikrId: AwradId? = null,
     val isPlaying: Boolean = false,
     val currentPositionMs: Long = 0,
     val durationMs: Long = 0,
@@ -39,7 +40,7 @@ class AudioPreviewPlayer @Inject constructor(
     val state: StateFlow<PreviewPlaybackState> = _state.asStateFlow()
 
     private var player: ExoPlayer? = null
-    private var currentDhikrId: Long? = null
+    private var currentDhikrId: AwradId? = null
     private val handler = Handler(Looper.getMainLooper())
 
     private val progressRunnable = object : Runnable {
@@ -85,7 +86,7 @@ class AudioPreviewPlayer @Inject constructor(
         }
     }
 
-    fun toggle(dhikrId: Long, audioUrl: String?, audioFileName: String?) {
+    fun toggle(dhikrId: AwradId, audioUrl: String?, audioFileName: String?) {
         val p = player
 
         // Pause if currently playing this dhikr

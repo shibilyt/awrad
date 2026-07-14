@@ -78,6 +78,8 @@
     <string name="category_protection">التحصين</string>
     <string name="category_general">عام</string>
     <string name="category_swalaths">الصلاة على النبي ﷺ</string>
+    <string name="category_asma_ul_husna">الأسماء الحسنى</string>
+    <string name="category_asma_ul_husna_subtitle">أَسْمَاءُ اللَّهِ الْحُسْنَى</string>
     <string name="category_ramadan">رمضان</string>
 
     <!-- Goals screen -->
@@ -318,7 +320,7 @@
     <string name="slot_ended_switch_action">انتقل إلى %1$s</string>
     <string name="slot_ended_keep_counting">متابعة العد هنا</string>
     <string name="slot_count_blocked_outside_active">هذه الجلسة خارج وقتها النشط.</string>
-    <string name="count_over_target_warning">سيتجاوز هذا الهدف. كرر الإجراء للمتابعة.</string>
+    <string name="count_over_target_warning">تم تجاوز الهدف. سيستمر العد.</string>
     <string name="count_hard_cap_reached">وصل هذا الهدف إلى حد العد.</string>
     <string name="counting_see_full">اقرأ المزيد</string>
     <string name="counting_show_less">اقرأ أقل</string>
@@ -993,6 +995,7 @@
     <string name="goal_details_reminder_window_start_all">بداية الجلسة</string>
     <string name="goal_details_reminder_window_start_slot">بداية الجلسة: %1$s</string>
     <string name="goal_details_continue_counting">متابعة العدّ</string>
+    <string name="goal_details_counting_complete">اكتمل العدّ</string>
     <string name="goal_details_edit_goal_action">تعديل الهدف</string>
     <string name="goal_details_more_options">خيارات إضافية</string>
     <string name="goal_details_advanced">إعدادات متقدمة</string>

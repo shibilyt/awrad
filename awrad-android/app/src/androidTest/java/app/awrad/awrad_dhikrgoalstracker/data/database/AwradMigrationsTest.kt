@@ -102,7 +102,50 @@ class AwradMigrationsTest {
 
     @Test
     @Throws(IOException::class)
-    fun migrateAll1To4_appliesEveryMigration_andPreservesCoreData() {
+    fun migrate4To5_resetsIdentityDependentProductTables_andPreservesWirds() {
+        helper.createDatabase(TEST_DB, 4).apply {
+            seedDhikr(this, id = 1, title = "Legacy dhikr")
+            execSQL(
+                "INSERT INTO goals " +
+                    "(id, dhikrId, targetPolicy, slotCountingPolicy, startDate, capBehavior, autoCompleteOnTarget, totalCompletedCount, isActive, createdAt, updatedAt) " +
+                    "VALUES (1, 1, 'FIXED', 'SUM', '2026-01-01', 'ALLOW_OVERFLOW', 1, 70, 1, 0, 0)",
+            )
+            execSQL(
+                "INSERT INTO wirds (id, slug, isCustom, version, sortOrder, nameEn, nameAr, definitionJson) " +
+                    "VALUES ('w1', 'dalail', 0, 1, 0, 'Dalail', 'دلائل', '{}')",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 5, true, AwradMigrations.MIGRATION_4_5)
+        helper.closeWhenFinished(db)
+
+        assertEquals(0L, queryLong(db, "SELECT COUNT(*) FROM dhikrs"))
+        assertEquals(0L, queryLong(db, "SELECT COUNT(*) FROM goals"))
+        assertEquals("Dalail", queryString(db, "SELECT nameEn FROM wirds WHERE id = 'w1'"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate5To6_addsDhikrSortOrder_withoutChangingExistingDhikrs() {
+        helper.createDatabase(TEST_DB, 5).apply {
+            execSQL(
+                "INSERT INTO dhikrs " +
+                    "(id, catalogKey, title, arabic, transliteration, translation, category, isDownloaded, isCustom, audioCountPerPlay, benefitsJson) " +
+                    "VALUES ('d1', 'test-dhikr', 'Test', '', '', '', 'GENERAL', 0, 0, 1, '[]')",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 6, true, AwradMigrations.MIGRATION_5_6)
+        helper.closeWhenFinished(db)
+
+        assertEquals(0L, queryLong(db, "SELECT sortOrder FROM dhikrs WHERE id = 'd1'"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrateAll1To6_appliesEveryMigration_andEndsAtUuidSchema() {
         helper.createDatabase(TEST_DB, 1).apply {
             seedDhikr(this, id = 1, title = "Istighfar")
             execSQL(
@@ -117,14 +160,12 @@ class AwradMigrationsTest {
             close()
         }
 
-        val db = helper.runMigrationsAndValidate(TEST_DB, 4, true, *AwradMigrations.ALL_MIGRATIONS)
+        val db = helper.runMigrationsAndValidate(TEST_DB, 6, true, *AwradMigrations.ALL_MIGRATIONS)
         helper.closeWhenFinished(db)
 
-        // Core user data threaded through both migrations is intact.
-        assertEquals("Istighfar", queryString(db, "SELECT title FROM dhikrs WHERE id = 1"))
-        assertEquals(70L, queryLong(db, "SELECT count FROM count_entries WHERE id = 1"))
-        assertEquals(1L, queryLong(db, "SELECT COUNT(*) FROM goals WHERE id = 1"))
-        // Legacy wird tables are gone; the replacement table is present.
+        assertEquals(0L, queryLong(db, "SELECT COUNT(*) FROM dhikrs"))
+        assertEquals(0L, queryLong(db, "SELECT COUNT(*) FROM count_entries"))
+        assertEquals(0L, queryLong(db, "SELECT COUNT(*) FROM goals"))
         assertFalse(tableExists(db, "wird_collections"))
         assertTrue(tableExists(db, "wirds"))
     }

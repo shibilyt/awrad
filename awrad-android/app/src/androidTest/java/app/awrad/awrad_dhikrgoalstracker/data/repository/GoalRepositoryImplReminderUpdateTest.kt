@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import app.awrad.awrad_dhikrgoalstracker.data.database.AwradDatabase
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrEntity
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
 import app.awrad.awrad_dhikrgoalstracker.data.preferences.UserPreferences
@@ -44,7 +45,7 @@ class GoalRepositoryImplReminderUpdateTest {
     private lateinit var repository: GoalRepositoryImpl
     private lateinit var updateGoalRemindersUseCase: UpdateGoalRemindersUseCase
     private lateinit var updateGoalScheduleUseCase: UpdateGoalScheduleUseCase
-    private var dhikrId: Long = 0
+    private lateinit var dhikrId: AwradId
 
     @Before
     fun setUp() = runTest {
@@ -69,17 +70,17 @@ class GoalRepositoryImplReminderUpdateTest {
         )
         updateGoalRemindersUseCase = UpdateGoalRemindersUseCase(repository)
         updateGoalScheduleUseCase = UpdateGoalScheduleUseCase(repository)
-        dhikrId = database.dhikrDao().insert(
-            DhikrEntity(
-                title = "SubhanAllah",
-                arabic = "Subhan Allah",
-                transliteration = "SubhanAllah",
-                translation = "Glory be to Allah",
-                audioUrl = null,
-                audioFileName = null,
-                category = DhikrCategory.PRAISE,
-            )
+        val dhikr = DhikrEntity(
+            title = "SubhanAllah",
+            arabic = "Subhan Allah",
+            transliteration = "SubhanAllah",
+            translation = "Glory be to Allah",
+            audioUrl = null,
+            audioFileName = null,
+            category = DhikrCategory.PRAISE,
         )
+        dhikrId = dhikr.id
+        database.dhikrDao().insert(dhikr)
     }
 
     @After
@@ -213,7 +214,7 @@ class GoalRepositoryImplReminderUpdateTest {
         assertTrue(repository.getGoalById(goalId)?.reminders.orEmpty().isEmpty())
     }
 
-    private suspend fun createTimeWindowGoal(): Long {
+    private suspend fun createTimeWindowGoal(): AwradId {
         val validated = GoalFactory.requireValid(
             CreateGoalCommand(
                 dhikrId = dhikrId,

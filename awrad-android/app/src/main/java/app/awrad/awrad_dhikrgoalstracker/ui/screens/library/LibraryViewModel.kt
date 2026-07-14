@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.data.model.toStringResId
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
@@ -43,8 +44,8 @@ class LibraryViewModel @Inject constructor(
 
     val playerState: StateFlow<PreviewPlaybackState> = audioPlayer.state
 
-    private val _downloadingIds = MutableStateFlow<Set<Long>>(emptySet())
-    val downloadingIds: StateFlow<Set<Long>> = _downloadingIds.asStateFlow()
+    private val _downloadingIds = MutableStateFlow<Set<AwradId>>(emptySet())
+    val downloadingIds: StateFlow<Set<AwradId>> = _downloadingIds.asStateFlow()
 
     val uiState: StateFlow<LibraryUiState> = combine(
         _searchQuery,

@@ -5,11 +5,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressSummary
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressUseCase
 import app.awrad.awrad_dhikrgoalstracker.util.DateProvider
+import app.awrad.awrad_dhikrgoalstracker.util.GoalCountingEligibility
 import app.awrad.awrad_dhikrgoalstracker.util.toLocalDateOr
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
@@ -28,8 +30,9 @@ data class GoalDetailUiState(
     val dhikr: Dhikr? = null,
     val progress: GoalProgressSummary? = null,
     val effectiveToday: LocalDate = LocalDate.now(),
-    val slotCountsToday: Map<Long, Long> = emptyMap(),
-    val slotCountsAllTime: Map<Long, Long> = emptyMap(),
+    val slotCountsToday: Map<AwradId, Long> = emptyMap(),
+    val slotCountsAllTime: Map<AwradId, Long> = emptyMap(),
+    val canContinueCounting: Boolean = false,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -42,14 +45,10 @@ class GoalDetailViewModel @Inject constructor(
     private val goalProgressUseCase: GoalProgressUseCase,
 ) : ViewModel() {
 
-    private val goalId: Long = savedStateHandle["goalId"] ?: -1L
+    private val goalId: AwradId = java.util.UUID.fromString(checkNotNull(savedStateHandle.get<String>("goalId")))
 
     val uiState = dateProvider.effectiveToday.flatMapLatest { todayString ->
-        if (goalId <= 0) {
-            flowOf(GoalDetailUiState(isLoading = false))
-        } else {
-            goalRepository.getGoalByIdFlow(goalId).withDetailState(todayString)
-        }
+        goalRepository.getGoalByIdFlow(goalId).withDetailState(todayString)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
@@ -72,14 +71,20 @@ class GoalDetailViewModel @Inject constructor(
                 .flatMap { it.entries }
                 .groupingBy { it.key }
                 .fold(0L) { total, entry -> total + entry.value }
+            val progress = goalProgressUseCase.summarize(goal, dailyCounts, effectiveToday)
             GoalDetailUiState(
                 isLoading = false,
                 goal = goal,
                 dhikr = goal.dhikr ?: dhikrs.firstOrNull { it.id == goal.dhikrId },
-                progress = goalProgressUseCase.summarize(goal, dailyCounts, effectiveToday),
+                progress = progress,
                 effectiveToday = effectiveToday,
                 slotCountsToday = slotCountsToday,
                 slotCountsAllTime = slotCountsAllTime,
+                canContinueCounting = GoalCountingEligibility.canContinueCounting(
+                    goal = goal,
+                    progressCount = progress.progressCount,
+                    slotCounts = slotCountsToday,
+                ),
             )
         }
     }

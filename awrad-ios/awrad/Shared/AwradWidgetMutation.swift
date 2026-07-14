@@ -12,9 +12,9 @@ struct AwradWidgetMutationSnapshot: Codable, Hashable {
     var focusDeepLink: String?
     var focusGoalID: String?
     var focusSlotID: String?
-    var focusCount: Int
-    var focusTarget: Int
-    var focusRemaining: Int
+    var focusCount: Int64
+    var focusTarget: Int64
+    var focusRemaining: Int64
     var focusCanIncrement: Bool
     var wirdTitle: String
     var wirdSubtitle: String
@@ -80,9 +80,9 @@ struct AwradWidgetMutationSnapshot: Codable, Hashable {
         focusDeepLink: String?,
         focusGoalID: String?,
         focusSlotID: String?,
-        focusCount: Int,
-        focusTarget: Int,
-        focusRemaining: Int,
+        focusCount: Int64,
+        focusTarget: Int64,
+        focusRemaining: Int64,
         focusCanIncrement: Bool,
         wirdTitle: String,
         wirdSubtitle: String,
@@ -126,9 +126,9 @@ struct AwradWidgetMutationSnapshot: Codable, Hashable {
         focusDeepLink = try container.decodeIfPresent(String.self, forKey: .focusDeepLink)
         focusGoalID = try container.decodeIfPresent(String.self, forKey: .focusGoalID)
         focusSlotID = try container.decodeIfPresent(String.self, forKey: .focusSlotID)
-        focusCount = try container.decodeIfPresent(Int.self, forKey: .focusCount) ?? fallback.focusCount
-        focusTarget = try container.decodeIfPresent(Int.self, forKey: .focusTarget) ?? fallback.focusTarget
-        focusRemaining = try container.decodeIfPresent(Int.self, forKey: .focusRemaining) ?? fallback.focusRemaining
+        focusCount = try container.decodeIfPresent(Int64.self, forKey: .focusCount) ?? fallback.focusCount
+        focusTarget = try container.decodeIfPresent(Int64.self, forKey: .focusTarget) ?? fallback.focusTarget
+        focusRemaining = try container.decodeIfPresent(Int64.self, forKey: .focusRemaining) ?? fallback.focusRemaining
         focusCanIncrement = try container.decodeIfPresent(Bool.self, forKey: .focusCanIncrement) ?? fallback.focusCanIncrement
         wirdTitle = try container.decodeIfPresent(String.self, forKey: .wirdTitle) ?? fallback.wirdTitle
         wirdSubtitle = try container.decodeIfPresent(String.self, forKey: .wirdSubtitle) ?? fallback.wirdSubtitle
@@ -174,7 +174,7 @@ enum SharedAwradWidgetMutation {
         storeURL: URL,
         snapshot: inout AwradWidgetMutationSnapshot,
         now: Date = Date()
-    ) throws -> Int {
+    ) throws -> Int64 {
         guard snapshot.focusCanIncrement,
               let goalID = snapshot.focusGoalID,
               let root = try JSONSerialization.jsonObject(with: Data(contentsOf: storeURL)) as? [String: Any],
@@ -187,7 +187,9 @@ enum SharedAwradWidgetMutation {
         let goal = goals[goalIndex]
         let targetPolicy = goal.string(forKey: "targetPolicy") ?? "perDueDate"
         let dateKey = targetPolicy == "cumulativeTotal" ? "all-time" : snapshot.todayKey
-        let resolvedSlotID = snapshot.focusSlotID ?? firstSlotID(in: goal)
+        guard let resolvedSlotID = snapshot.focusSlotID ?? firstSlotID(in: goal) else {
+            return 0
+        }
         let currentCount = count(
             in: mutableRoot["countEntries"] as? [[String: Any]] ?? [],
             goalID: goalID,
@@ -205,7 +207,7 @@ enum SharedAwradWidgetMutation {
         }
 
         var entries = mutableRoot["countEntries"] as? [[String: Any]] ?? []
-        let applied = 1
+        let applied: Int64 = 1
         upsertCountEntry(
             entries: &entries,
             goalID: goalID,
@@ -216,7 +218,7 @@ enum SharedAwradWidgetMutation {
         )
         mutableRoot["countEntries"] = entries
 
-        goals[goalIndex]["totalCompletedCount"] = goal.int(forKey: "totalCompletedCount") + applied
+        goals[goalIndex]["totalCompletedCount"] = goal.int64(forKey: "totalCompletedCount") + applied
         goals[goalIndex]["updatedAt"] = isoString(for: now)
         updateCompletionIfNeeded(
             goal: &goals[goalIndex],
@@ -239,6 +241,7 @@ enum SharedAwradWidgetMutation {
     private static func firstSlotID(in goal: [String: Any]) -> String? {
         let slots = goal["slots"] as? [[String: Any]]
         return slots?
+            .filter { $0.bool(forKey: "isActive") }
             .sorted { $0.int(forKey: "sortOrder") < $1.int(forKey: "sortOrder") }
             .first?
             .string(forKey: "id")
@@ -247,22 +250,22 @@ enum SharedAwradWidgetMutation {
     private static func count(
         in entries: [[String: Any]],
         goalID: String,
-        slotID: String?,
+        slotID: String,
         dateKey: String
-    ) -> Int {
+    ) -> Int64 {
         entries.first {
             $0.string(forKey: "goalID") == goalID &&
                 $0.optionalString(forKey: "slotID") == slotID &&
                 $0.string(forKey: "dateKey") == dateKey
-        }?.int(forKey: "count") ?? 0
+        }?.int64(forKey: "count") ?? 0
     }
 
     private static func remainingCount(
         snapshot: AwradWidgetMutationSnapshot,
         targetPolicy: String,
-        currentCount: Int
-    ) -> Int {
-        guard targetPolicy != "none" else { return Int.max }
+        currentCount: Int64
+    ) -> Int64 {
+        guard targetPolicy != "none" else { return Int64.max }
         let targetRemaining = snapshot.focusTarget > 0
             ? max(snapshot.focusTarget - currentCount, 0)
             : snapshot.focusRemaining
@@ -275,9 +278,9 @@ enum SharedAwradWidgetMutation {
     private static func upsertCountEntry(
         entries: inout [[String: Any]],
         goalID: String,
-        slotID: String?,
+        slotID: String,
         dateKey: String,
-        amount: Int,
+        amount: Int64,
         now: Date
     ) {
         if let index = entries.firstIndex(where: {
@@ -285,7 +288,7 @@ enum SharedAwradWidgetMutation {
                 $0.optionalString(forKey: "slotID") == slotID &&
                 $0.string(forKey: "dateKey") == dateKey
         }) {
-            entries[index]["count"] = entries[index].int(forKey: "count") + amount
+            entries[index]["count"] = entries[index].int64(forKey: "count") + amount
             entries[index]["lastUpdated"] = isoString(for: now)
             return
         }
@@ -297,9 +300,7 @@ enum SharedAwradWidgetMutation {
             "dateKey": dateKey,
             "lastUpdated": isoString(for: now)
         ]
-        if let slotID {
-            entry["slotID"] = slotID
-        }
+        entry["slotID"] = slotID
         entries.append(entry)
     }
 
@@ -321,9 +322,9 @@ enum SharedAwradWidgetMutation {
 
     private static func updateWidgetSnapshot(
         _ snapshot: inout AwradWidgetMutationSnapshot,
-        applied: Int,
+        applied: Int64,
         targetPolicy: String,
-        updatedCount: Int
+        updatedCount: Int64
     ) {
         snapshot.generatedAt = Date()
         if targetPolicy != "none" {
@@ -384,6 +385,13 @@ private extension Dictionary where Key == String, Value == Any {
     func int(forKey key: String) -> Int {
         if let value = self[key] as? Int { return value }
         if let value = self[key] as? NSNumber { return value.intValue }
+        return 0
+    }
+
+    func int64(forKey key: String) -> Int64 {
+        if let value = self[key] as? Int64 { return value }
+        if let value = self[key] as? Int { return Int64(value) }
+        if let value = self[key] as? NSNumber { return value.int64Value }
         return 0
     }
 

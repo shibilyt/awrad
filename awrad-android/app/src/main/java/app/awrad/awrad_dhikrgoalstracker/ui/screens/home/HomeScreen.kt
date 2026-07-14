@@ -66,6 +66,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.ui.components.DayProgressRing
 import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakChip
 import app.awrad.awrad_dhikrgoalstracker.ui.components.FeaturedCollectionsSection
@@ -78,7 +79,7 @@ import java.time.LocalDate
 
 @Composable
 fun HomeScreen(
-    onNavigateToGoal: (Long) -> Unit,
+    onNavigateToGoal: (AwradId) -> Unit,
     onNavigateToCreateGoal: () -> Unit,
     onNavigateToGoals: () -> Unit = {},
     onNavigateToCategory: (String) -> Unit = {},

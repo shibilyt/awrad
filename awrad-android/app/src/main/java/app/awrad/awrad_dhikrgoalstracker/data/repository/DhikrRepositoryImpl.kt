@@ -6,11 +6,15 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrEntity
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.data.model.QuranRef
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.service.AudioDownloadManager
 import app.awrad.awrad_dhikrgoalstracker.service.DownloadProgress
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,7 +33,7 @@ class DhikrRepositoryImpl @Inject constructor(
     override fun searchDhikrs(query: String): Flow<List<Dhikr>> =
         dhikrDao.searchDhikrs(query).map { entities -> entities.map { it.toDomain() } }
 
-    override suspend fun getDhikrById(id: Long): Dhikr? =
+    override suspend fun getDhikrById(id: AwradId): Dhikr? =
         dhikrDao.getDhikrById(id)?.toDomain()
 
     override suspend fun initializeBuiltInDhikrs() {
@@ -41,24 +45,37 @@ class DhikrRepositoryImpl @Inject constructor(
     }
 
     private suspend fun syncBuiltInDhikrs() {
-        val existing = dhikrDao.getAllTransliterations().toSet()
-        val newDhikrs = BuiltInDhikrs.dhikrs.filter { it.transliteration !in existing }
-        if (newDhikrs.isNotEmpty()) {
-            dhikrDao.insertAll(newDhikrs)
-        }
         for (builtIn in BuiltInDhikrs.dhikrs) {
-            builtIn.audioUrl?.let { dhikrDao.updateAudioUrl(builtIn.transliteration, it) }
+            val catalogKey = requireNotNull(builtIn.catalogKey)
+            val existing = dhikrDao.getDhikrByCatalogKey(catalogKey)
+            if (existing == null) {
+                dhikrDao.insertAll(listOf(builtIn))
+            } else {
+                check(existing.id == builtIn.id) {
+                    "Built-in dhikr identity mismatch for $catalogKey: ${existing.id} != ${builtIn.id}"
+                }
+            }
+            dhikrDao.updateBuiltInContent(
+                catalogKey = catalogKey,
+                title = builtIn.title,
+                arabic = builtIn.arabic,
+                transliteration = builtIn.transliteration,
+                translation = builtIn.translation,
+                category = builtIn.category.name,
+                sortOrder = builtIn.sortOrder,
+            )
+            builtIn.audioUrl?.let { dhikrDao.updateAudioUrl(catalogKey, it) }
             if (builtIn.audioCountPerPlay != 1) {
-                dhikrDao.updateAudioCountPerPlay(builtIn.transliteration, builtIn.audioCountPerPlay)
+                dhikrDao.updateAudioCountPerPlay(catalogKey, builtIn.audioCountPerPlay)
             }
             if (builtIn.title.isNotEmpty()) {
-                dhikrDao.updateTitle(builtIn.transliteration, builtIn.title)
+                dhikrDao.updateTitle(catalogKey, builtIn.title)
             }
             val surah = builtIn.quranSurah
             val ayahStart = builtIn.quranAyahStart
             if (surah != null && ayahStart != null) {
                 dhikrDao.updateQuranContent(
-                    transliteration = builtIn.transliteration,
+                    catalogKey = catalogKey,
                     arabic = builtIn.arabic,
                     surah = surah,
                     ayahStart = ayahStart,
@@ -73,7 +90,7 @@ class DhikrRepositoryImpl @Inject constructor(
             .filter { !it.isDownloaded }
             .map { it.toDomain() }
 
-    override suspend fun markAsDownloaded(dhikrId: Long, audioFileName: String) {
+    override suspend fun markAsDownloaded(dhikrId: AwradId, audioFileName: String) {
         dhikrDao.updateAudioDownloadStatus(dhikrId, audioFileName, isDownloaded = true)
     }
 
@@ -140,8 +157,10 @@ class DhikrRepositoryImpl @Inject constructor(
     override fun getLibraryDownloadProgress(): StateFlow<DownloadProgress> =
         audioDownloadManager.downloadProgress
 
-    override suspend fun createDhikr(dhikr: Dhikr): Long {
+    override suspend fun createDhikr(dhikr: Dhikr): AwradId {
         val entity = DhikrEntity(
+            id = dhikr.id,
+            catalogKey = dhikr.catalogKey,
             title = dhikr.title,
             arabic = dhikr.arabic,
             transliteration = dhikr.transliteration,
@@ -149,15 +168,22 @@ class DhikrRepositoryImpl @Inject constructor(
             audioUrl = dhikr.audioUrl,
             audioFileName = dhikr.audioFileName,
             category = dhikr.category,
+            isDownloaded = dhikr.isDownloaded,
+            isCustom = dhikr.isCustom,
+            audioCountPerPlay = dhikr.audioCountPerPlay,
+            sortOrder = dhikr.sortOrder,
             quranSurah = dhikr.quranRef?.surah,
             quranAyahStart = dhikr.quranRef?.ayahStart,
             quranAyahEnd = dhikr.quranRef?.ayahEnd,
+            benefitsJson = Json.encodeToString(dhikr.benefits),
         )
-        return dhikrDao.insert(entity)
+        dhikrDao.insert(entity)
+        return entity.id
     }
 
     private fun DhikrEntity.toDomain() = Dhikr(
         id = id,
+        catalogKey = catalogKey,
         title = title,
         arabic = arabic,
         transliteration = transliteration,
@@ -166,11 +192,14 @@ class DhikrRepositoryImpl @Inject constructor(
         audioFileName = audioFileName,
         category = category,
         isDownloaded = isDownloaded,
+        isCustom = isCustom,
         audioCountPerPlay = audioCountPerPlay,
+        sortOrder = sortOrder,
         quranRef = if (quranSurah != null && quranAyahStart != null) {
             QuranRef(quranSurah, quranAyahStart, quranAyahEnd).takeIf { it.isValid }
         } else {
             null
         },
+        benefits = runCatching { Json.decodeFromString<List<String>>(benefitsJson) }.getOrDefault(emptyList()),
     )
 }

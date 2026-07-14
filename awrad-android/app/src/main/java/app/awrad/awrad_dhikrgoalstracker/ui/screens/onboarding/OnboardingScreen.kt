@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.service.DownloadProgress
 import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradStatusBarStyle
 import app.awrad.awrad_dhikrgoalstracker.ui.components.OemBatteryGuideDialog
@@ -87,7 +88,7 @@ import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 
 @Composable
 fun OnboardingScreen(
-    onOnboardingComplete: (firstGoalId: Long?) -> Unit,
+    onOnboardingComplete: (firstGoalId: AwradId?) -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()

@@ -66,6 +66,7 @@ import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.data.model.toStringResId
@@ -84,7 +85,7 @@ import kotlin.math.roundToInt
 @Composable
 fun LibraryScreen(
     onNavigateToCreateGoal: () -> Unit,
-    onNavigateToDhikrDetail: (Long) -> Unit = {},
+    onNavigateToDhikrDetail: (AwradId) -> Unit = {},
     onNavigateToCreateDhikr: () -> Unit = {},
     onNavigateToWird: (String) -> Unit = {},
     onCreateWird: () -> Unit = {},
@@ -259,7 +260,7 @@ private fun DhikrLibraryPane(
     onCollectionClick: (DhikrCategory) -> Unit,
     onViewAll: () -> Unit,
     onTogglePlayback: (Dhikr) -> Unit,
-    onNavigateToDhikrDetail: (Long) -> Unit,
+    onNavigateToDhikrDetail: (AwradId) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(

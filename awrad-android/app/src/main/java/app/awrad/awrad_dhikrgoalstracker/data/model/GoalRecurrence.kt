@@ -4,7 +4,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 
 data class GoalRecurrence(
-    val goalId: Long = 0,
+    val goalId: AwradId,
     val frequency: RecurrenceFrequency = RecurrenceFrequency.DAILY,
     val calendar: CalendarSystem = CalendarSystem.GREGORIAN,
     val intervalDays: Int? = null,
@@ -73,4 +73,3 @@ object BuiltInSeasonTemplates {
 
     fun find(code: SeasonTemplateCode?): SeasonTemplate? = all.firstOrNull { it.code == code }
 }
-

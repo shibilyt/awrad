@@ -8,8 +8,8 @@ import ActivityKit
 /// and in the Dynamic Island).
 struct AwradCountingActivityAttributes: ActivityAttributes {
     struct ContentState: Codable, Hashable {
-        var currentCount: Int
-        var targetCount: Int
+        var currentCount: Int64
+        var targetCount: Int64
         var isPlaying: Bool
         var audioPositionText: String
 

@@ -13,6 +13,7 @@ This is the navigation layer for repository knowledge. Keep the root [`AGENTS.md
 | Copy-ready commands | [`COMMANDS.md`](../COMMANDS.md) |
 | Durable facts and gaps | [`MEMORY.md`](../MEMORY.md) |
 | Decisions and compatibility choices | [`DECISIONS.md`](../DECISIONS.md) |
+| Progress model v1 schemas and fixtures | [`contracts/progress-model/v1/`](../contracts/progress-model/v1/) |
 
 ## Project guides
 

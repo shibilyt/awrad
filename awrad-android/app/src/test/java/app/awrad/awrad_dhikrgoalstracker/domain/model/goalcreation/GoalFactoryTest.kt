@@ -1,5 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation
 
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
@@ -7,6 +9,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.PrayerRelation
 import app.awrad.awrad_dhikrgoalstracker.data.model.RecurrenceFrequency
 import app.awrad.awrad_dhikrgoalstracker.data.model.SeasonTemplateCode
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.Threshold
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -244,7 +247,7 @@ class GoalFactoryTest {
         progressScope: ProgressScope = ProgressScope.DueDate,
         completionPolicy: CompletionPolicy = CompletionPolicy.Never,
     ) = CreateGoalCommand(
-        dhikrId = 1,
+        dhikrId = testId(1),
         startDate = LocalDate.parse("2026-05-27"),
         schedule = schedule,
         timing = timing,

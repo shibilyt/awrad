@@ -41,7 +41,7 @@ struct CountingView: View {
     @State private var showAudioExitConfirmation = false
     @State private var activeSheet: CounterSheet?
     @State private var sessionTarget: Int?
-    @State private var sessionStartCount = 0
+    @State private var sessionStartCount: Int64 = 0
     @State private var sessionDraftTarget = 33
     @State private var sessionType: SessionTargetType = .count
     @State private var sessionDraftType: SessionTargetType = .count
@@ -297,7 +297,7 @@ struct CountingView: View {
             dhikrTitle: counterTitle(for: dhikr),
             goalID: goal.id.uuidString,
             currentCount: displayedCount(for: goal),
-            targetCount: goal.targetPolicy == .none ? 0 : selectedSlotTarget(for: goal),
+            targetCount: goal.targetPolicy == .none ? 0 : Int64(selectedSlotTarget(for: goal)),
             isPlaying: services.audio.isCounting(goalID: goal.id)
         )
     }
@@ -306,7 +306,7 @@ struct CountingView: View {
         guard let goal else { return }
         liveActivity.update(
             currentCount: displayedCount(for: goal),
-            targetCount: goal.targetPolicy == .none ? 0 : selectedSlotTarget(for: goal),
+            targetCount: goal.targetPolicy == .none ? 0 : Int64(selectedSlotTarget(for: goal)),
             isPlaying: services.audio.isCounting(goalID: goal.id),
             audioPositionText: services.audio.isCounting(goalID: goal.id) ? services.audio.elapsedText : ""
         )
@@ -339,23 +339,23 @@ struct CountingView: View {
         return transliteration.isEmpty ? dhikr.title : transliteration
     }
 
-    private func formattedNumber(_ value: Int) -> String {
+    private func formattedNumber(_ value: Int64) -> String {
         value.formatted(.number)
     }
 
-    private func heroCurrentCount(for goal: Goal) -> Int {
+    private func heroCurrentCount(for goal: Goal) -> Int64 {
         if sessionTarget != nil {
             return sessionProgress(for: goal)
         }
         return displayedCount(for: goal)
     }
 
-    private func heroTarget(for goal: Goal) -> Int? {
+    private func heroTarget(for goal: Goal) -> Int64? {
         if let sessionTarget {
-            return sessionTarget
+            return Int64(sessionTarget)
         }
         guard goal.targetPolicy != .none else { return nil }
-        return goal.slots.count > 1 ? selectedSlotTarget(for: goal) : goal.totalTarget
+        return Int64(goal.activeSlots.count > 1 ? selectedSlotTarget(for: goal) : goal.totalTarget)
     }
 
     private func heroProgress(for goal: Goal) -> Double {
@@ -377,7 +377,7 @@ struct CountingView: View {
 
     private func heroRemainingLabel(for goal: Goal) -> String? {
         if let sessionTarget {
-            return "\(max(sessionTarget - sessionProgress(for: goal), 0)) remaining"
+            return "\(max(Int64(sessionTarget) - sessionProgress(for: goal), 0)) remaining"
         }
         guard goal.targetPolicy != .none else { return nil }
         return "\(store.remaining(for: goal, slotID: activeCountSlotID(for: goal))) remaining"
@@ -450,14 +450,14 @@ struct CountingView: View {
                 }
 
                 if let sessionTarget {
-                    let completed = min(sessionProgress(for: goal), sessionTarget)
+                    let completed = min(sessionProgress(for: goal), Int64(sessionTarget))
                     AwradProgressBar(value: sessionProgressValue(for: goal), height: 9)
                     HStack {
                         Text(AwradLocalizer.format("%d of %d this session", language: language, completed, sessionTarget))
                             .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
                             .foregroundStyle(AwradTheme.ink)
                         Spacer()
-                        if sessionProgress(for: goal) >= sessionTarget {
+                        if sessionProgress(for: goal) >= Int64(sessionTarget) {
                             Label("Session Complete", systemImage: "checkmark.circle.fill")
                                 .font(AwradTheme.bodyFont(.caption, weight: .semibold))
                                 .foregroundStyle(AwradTheme.sage)
@@ -497,7 +497,7 @@ struct CountingView: View {
     }
 
     private func performCount(_ amount: Int) {
-        let result = store.applyCount(goalID: goalID, slotID: activeCountSlotID(for: goal), amount: amount)
+        let result = store.applyCount(goalID: goalID, slotID: activeCountSlotID(for: goal), amount: Int64(amount))
         #if os(iOS)
         if store.preferences.vibrateOnCount, result.appliedDelta > 0 {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -617,8 +617,8 @@ struct CountingView: View {
         #endif
     }
 
-    private func displayedCount(for goal: Goal) -> Int {
-        guard goal.slots.count > 1 else { return store.count(for: goal) }
+    private func displayedCount(for goal: Goal) -> Int64 {
+        guard goal.activeSlots.count > 1 else { return store.count(for: goal) }
         return store.count(for: goal, slotID: selectedSlotID)
     }
 
@@ -634,9 +634,9 @@ struct CountingView: View {
             return AwradLocalizer.localized("Open-ended count", language: language)
         }
 
-        let remaining = store.remaining(for: goal, slotID: goal.slots.count > 1 ? selectedSlotID : nil)
-        if goal.slots.count > 1,
-           let slot = goal.slots.first(where: { $0.id == selectedSlotID }) {
+        let remaining = store.remaining(for: goal, slotID: goal.activeSlots.count > 1 ? selectedSlotID : nil)
+        if goal.activeSlots.count > 1,
+           let slot = goal.activeSlots.first(where: { $0.id == selectedSlotID }) {
             return AwradLocalizer.format(
                 "%d remaining in %@",
                 language: language,
@@ -653,13 +653,13 @@ struct CountingView: View {
             ?? goal.totalTarget
     }
 
-    private func adjustmentTarget(for goal: Goal) -> Int? {
-        goal.targetPolicy == .none ? nil : selectedSlotTarget(for: goal)
+    private func adjustmentTarget(for goal: Goal) -> Int64? {
+        goal.targetPolicy == .none ? nil : Int64(selectedSlotTarget(for: goal))
     }
 
     private func slotCards(for goal: Goal) -> some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 146), spacing: 12)], spacing: 12) {
-            ForEach(goal.slots) { slot in
+            ForEach(goal.activeSlots) { slot in
                 let count = store.count(for: goal, slotID: slot.id)
                 let target = max(slot.targetCount ?? goal.totalTarget, 1)
                 let isSelected = selectedSlotID == slot.id
@@ -810,7 +810,7 @@ struct CountingView: View {
         let slotID = activeCountSlotID(for: goal)
         services.audio.startCounting(for: dhikr, goalID: goalID, title: dhikr.displayTitle(language: language)) { [store] in
             guard let currentGoal = store.goal(id: goalID) else { return false }
-            let actualDelta = store.addCount(goalID: goalID, slotID: slotID, amount: dhikr.audioCountPerPlay)
+            let actualDelta = store.addCount(goalID: goalID, slotID: slotID, amount: Int64(dhikr.audioCountPerPlay))
             if currentGoal.targetPolicy == .none {
                 return true
             }
@@ -832,11 +832,11 @@ struct CountingView: View {
     }
 
     private func activeCountSlotID(for goal: Goal?) -> AwradID? {
-        guard let goal, goal.slots.count > 1 else { return nil }
-        return selectedSlotID ?? goal.slots.sorted { $0.sortOrder < $1.sortOrder }.first?.id
+        guard let goal else { return nil }
+        return selectedSlotID ?? goal.activeSlots.sorted { $0.sortOrder < $1.sortOrder }.first?.id
     }
 
-    private func sessionProgress(for goal: Goal) -> Int {
+    private func sessionProgress(for goal: Goal) -> Int64 {
         max(displayedCount(for: goal) - sessionStartCount, 0)
     }
 
@@ -858,9 +858,9 @@ struct CountingView: View {
     }
 
     private func suggestedSessionTarget(for goal: Goal) -> Int {
-        let remaining = store.remaining(for: goal, slotID: goal.slots.count > 1 ? selectedSlotID : nil)
+        let remaining = store.remaining(for: goal, slotID: goal.activeSlots.count > 1 ? selectedSlotID : nil)
         if goal.targetPolicy != .none, remaining > 0 {
-            return min(max(remaining, 1), 100)
+            return Int(min(max(remaining, 1), 100))
         }
         return 33
     }
@@ -1402,8 +1402,8 @@ private struct CountAdjustmentSheet: View {
     @Binding var amount: Int
     @Binding var mode: CountAdjustmentMode
 
-    let currentCount: Int
-    let targetCount: Int?
+    let currentCount: Int64
+    let targetCount: Int64?
     let language: AppLanguage
     let onApply: () -> Void
 
@@ -1413,15 +1413,15 @@ private struct CountAdjustmentSheet: View {
         max(amount, 1)
     }
 
-    private var afterAdjustment: Int {
+    private var afterAdjustment: Int64 {
         switch mode {
         case .add:
             guard let targetCount else {
-                return currentCount + effectiveAmount
+                return currentCount + Int64(effectiveAmount)
             }
-            return min(currentCount + effectiveAmount, targetCount)
+            return min(currentCount + Int64(effectiveAmount), targetCount)
         case .subtract:
-            return max(currentCount - effectiveAmount, 0)
+            return max(currentCount - Int64(effectiveAmount), 0)
         }
     }
 
@@ -1541,8 +1541,7 @@ private struct CountHistorySheet: View {
     }
 
     private func slotTitle(for entry: CountEntry) -> String {
-        entry.slotID
-            .flatMap { id in goal.slots.first { $0.id == id }?.displayLabel(language: language) }
+        goal.slots.first { $0.id == entry.slotID }?.displayLabel(language: language)
             ?? AwradLocalizer.localized("Anytime", language: language)
     }
 }

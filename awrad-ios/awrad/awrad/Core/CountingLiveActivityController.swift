@@ -9,7 +9,7 @@ import ActivityKit
 final class CountingLiveActivityController {
     private var activity: Any?
 
-    func start(dhikrTitle: String, goalID: String, currentCount: Int, targetCount: Int, isPlaying: Bool) {
+    func start(dhikrTitle: String, goalID: String, currentCount: Int64, targetCount: Int64, isPlaying: Bool) {
         guard #available(iOS 16.1, *) else { return }
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         // Replace any stale activity first.
@@ -31,7 +31,7 @@ final class CountingLiveActivityController {
         }
     }
 
-    func update(currentCount: Int, targetCount: Int, isPlaying: Bool, audioPositionText: String) {
+    func update(currentCount: Int64, targetCount: Int64, isPlaying: Bool, audioPositionText: String) {
         guard #available(iOS 16.1, *),
               let activity = activity as? Activity<AwradCountingActivityAttributes> else { return }
         let state = AwradCountingActivityAttributes.ContentState(
@@ -56,8 +56,8 @@ final class CountingLiveActivityController {
 #else
 @MainActor
 final class CountingLiveActivityController {
-    func start(dhikrTitle: String, goalID: String, currentCount: Int, targetCount: Int, isPlaying: Bool) {}
-    func update(currentCount: Int, targetCount: Int, isPlaying: Bool, audioPositionText: String) {}
+    func start(dhikrTitle: String, goalID: String, currentCount: Int64, targetCount: Int64, isPlaying: Bool) {}
+    func update(currentCount: Int64, targetCount: Int64, isPlaying: Bool, audioPositionText: String) {}
     func end() {}
 }
 #endif

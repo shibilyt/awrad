@@ -1,5 +1,9 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.goaldetail
 
+import java.util.UUID
+
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import androidx.lifecycle.SavedStateHandle
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountEntry
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
@@ -60,10 +64,10 @@ class EditGoalRemindersViewModelTest {
     fun `loads existing reminders and hides unavailable reminder types`() = runTest(dispatcher) {
         val viewModel = viewModel(
             goal = goal(
-                slots = listOf(slot(id = 10, slotType = GoalSlotType.ANYTIME)),
+                slots = listOf(slot(id = testId(10), slotType = GoalSlotType.ANYTIME)),
                 reminders = listOf(
-                    GoalReminder(id = 2, goalId = 1, reminderType = ReminderType.FIXED_TIME, hour = 21, minute = 5, sortOrder = 1),
-                    GoalReminder(id = 1, goalId = 1, reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0, sortOrder = 0),
+                    GoalReminder(id = testId(2), goalId = testId(1), reminderType = ReminderType.FIXED_TIME, hour = 21, minute = 5, sortOrder = 1),
+                    GoalReminder(id = testId(1), goalId = testId(1), reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0, sortOrder = 0),
                 ),
             ),
         )
@@ -75,7 +79,7 @@ class EditGoalRemindersViewModelTest {
         assertEquals("Istighfar", state.title)
         assertFalse(state.canAddPrayerReminder)
         assertFalse(state.canAddTimeWindowReminder)
-        assertEquals(listOf(1L, 2L), state.draft.reminders.mapNotNull { it.reminderId })
+        assertEquals(listOf(testId(1), testId(2)), state.draft.reminders.mapNotNull { it.reminderId })
         assertFalse(state.isDirty)
     }
 
@@ -84,11 +88,11 @@ class EditGoalRemindersViewModelTest {
         val viewModel = viewModel(
             goal = goal(
                 slots = listOf(
-                    slot(id = 10, slotType = GoalSlotType.TIME_WINDOW),
-                    slot(id = 11, slotType = GoalSlotType.PRAYER),
+                    slot(id = testId(10), slotType = GoalSlotType.TIME_WINDOW),
+                    slot(id = testId(11), slotType = GoalSlotType.PRAYER),
                 ),
                 reminders = listOf(
-                    GoalReminder(id = 1, goalId = 1, reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0),
+                    GoalReminder(id = testId(1), goalId = testId(1), reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0),
                 ),
             ),
         )
@@ -96,7 +100,7 @@ class EditGoalRemindersViewModelTest {
 
         viewModel.onAddReminder(ReminderType.TIME_WINDOW_START)
         val windowDraftId = viewModel.uiState.value.draft.reminders.last().draftId
-        viewModel.onTargetChange(windowDraftId, 10)
+        viewModel.onTargetChange(windowDraftId, testId(10))
         viewModel.onToggleReminder(windowDraftId, false)
         viewModel.onMoveReminder(windowDraftId, -1)
         val fixedDraftId = viewModel.uiState.value.draft.reminders.last().draftId
@@ -123,14 +127,15 @@ class EditGoalRemindersViewModelTest {
         val repository = FakeGoalRepository(
             goal(
                 reminders = listOf(
-                    GoalReminder(id = 1, goalId = 1, reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0),
+                    GoalReminder(id = testId(1), goalId = testId(1), reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0),
                 )
             )
         )
         val viewModel = viewModel(repository = repository, scheduler = scheduler)
         advanceUntilIdle()
 
-        viewModel.onDeleteReminder(1)
+        val draftId = viewModel.uiState.value.draft.reminders.single().draftId
+        viewModel.onDeleteReminder(draftId)
         viewModel.save()
         advanceUntilIdle()
 
@@ -145,14 +150,15 @@ class EditGoalRemindersViewModelTest {
         val repository = FakeGoalRepository(
             goal(
                 reminders = listOf(
-                    GoalReminder(id = 1, goalId = 1, reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0),
+                    GoalReminder(id = testId(1), goalId = testId(1), reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0),
                 )
             )
         )
         val viewModel = viewModel(repository = repository, scheduler = scheduler)
         advanceUntilIdle()
 
-        viewModel.onToggleReminder(1, false)
+        val draftId = viewModel.uiState.value.draft.reminders.single().draftId
+        viewModel.onToggleReminder(draftId, false)
         viewModel.save()
         advanceUntilIdle()
 
@@ -165,7 +171,7 @@ class EditGoalRemindersViewModelTest {
         repository: FakeGoalRepository = FakeGoalRepository(goal),
         scheduler: FakeReminderSchedulingGateway = FakeReminderSchedulingGateway(),
     ) = EditGoalRemindersViewModel(
-        savedStateHandle = SavedStateHandle(mapOf("goalId" to 1L)),
+        savedStateHandle = SavedStateHandle(mapOf("goalId" to testId(1).toString())),
         goalRepository = repository,
         dhikrRepository = FakeDhikrRepository(),
         updateGoalRemindersUseCase = UpdateGoalRemindersUseCase(repository),
@@ -173,19 +179,19 @@ class EditGoalRemindersViewModelTest {
     )
 
     private fun goal(
-        slots: List<GoalSlot> = listOf(slot(id = 10, slotType = GoalSlotType.ANYTIME)),
+        slots: List<GoalSlot> = listOf(slot(id = testId(10), slotType = GoalSlotType.ANYTIME)),
         reminders: List<GoalReminder> = emptyList(),
     ) = Goal(
-        id = 1,
-        dhikrId = 1,
+        id = testId(1),
+        dhikrId = testId(1),
         slots = slots,
         reminders = reminders,
         startDate = LocalDate.parse("2026-05-27"),
     )
 
-    private fun slot(id: Long, slotType: GoalSlotType) = GoalSlot(
+    private fun slot(id: UUID, slotType: GoalSlotType) = GoalSlot(
         id = id,
-        goalId = 1,
+        goalId = testId(1),
         slotType = slotType,
         prayerName = if (slotType == GoalSlotType.PRAYER) Prayer.FAJR else null,
         prayerRelation = if (slotType == GoalSlotType.PRAYER) PrayerRelation.AFTER else null,
@@ -218,9 +224,9 @@ private class FakeGoalRepository(
     override fun getActiveGoals(): Flow<List<Goal>> = flowOf(listOf(goal))
     override fun getCompletedGoals(): Flow<List<Goal>> = flowOf(emptyList())
     override fun getAllGoals(): Flow<List<Goal>> = flowOf(listOf(goal))
-    override fun getGoalByIdFlow(id: Long): Flow<Goal?> = flowOf(goal.takeIf { it.id == id })
-    override suspend fun getGoalById(id: Long): Goal? = goal.takeIf { it.id == id }
-    override suspend fun createGoal(validatedGoal: ValidatedGoal): Long = unsupported()
+    override fun getGoalByIdFlow(id: UUID): Flow<Goal?> = flowOf(goal.takeIf { it.id == id })
+    override suspend fun getGoalById(id: UUID): Goal? = goal.takeIf { it.id == id }
+    override suspend fun createGoal(validatedGoal: ValidatedGoal): UUID = unsupported()
     override suspend fun updateGoal(goal: Goal) {
         this.goal = goal
     }
@@ -236,30 +242,30 @@ private class FakeGoalRepository(
         goal = validatedGoalUpdate.goal
         return goal
     }
-    override suspend fun deleteGoal(id: Long) = unsupported()
-    override suspend fun addCount(goalId: Long, slotId: Long?, count: Long): Long = unsupported()
-    override fun getTotalCountForDate(goalId: Long, date: String): Flow<Long?> = flowOf(0)
-    override fun getTotalCount(goalId: Long): Flow<Long?> = flowOf(0)
-    override suspend fun getCountForSlotAndDate(goalId: Long, slotId: Long, date: String): Long = 0
-    override fun getProgressMapForDate(date: String): Flow<Map<Long, Long>> = flowOf(emptyMap())
-    override fun getHistoryForGoal(goalId: Long): Flow<List<CountEntry>> = flowOf(emptyList())
-    override fun getDailyCountsByGoal(): Flow<Map<Long, Map<LocalDate, Long>>> = flowOf(emptyMap())
-    override fun getDailySlotCountsByGoal(): Flow<Map<Long, Map<LocalDate, Map<Long, Long>>>> = flowOf(emptyMap())
-    override fun getDailySlotCountsForGoal(goalId: Long): Flow<Map<LocalDate, Map<Long, Long>>> = flowOf(emptyMap())
-    override suspend fun getSlotCountsForGoalAndDate(goalId: Long, date: String): Map<Long, Long> = emptyMap()
-    override suspend fun getTotalCountBetween(goalId: Long, startDate: String, endDate: String): Long = 0
+    override suspend fun deleteGoal(id: UUID) = unsupported()
+    override suspend fun addCount(goalId: UUID, slotId: UUID?, count: Long): Long = unsupported()
+    override fun getTotalCountForDate(goalId: UUID, date: String): Flow<Long?> = flowOf(0)
+    override fun getTotalCount(goalId: UUID): Flow<Long?> = flowOf(0)
+    override suspend fun getCountForSlotAndDate(goalId: UUID, slotId: UUID, date: String): Long = 0
+    override fun getProgressMapForDate(date: String): Flow<Map<UUID, Long>> = flowOf(emptyMap())
+    override fun getHistoryForGoal(goalId: UUID): Flow<List<CountEntry>> = flowOf(emptyList())
+    override fun getDailyCountsByGoal(): Flow<Map<UUID, Map<LocalDate, Long>>> = flowOf(emptyMap())
+    override fun getDailySlotCountsByGoal(): Flow<Map<UUID, Map<LocalDate, Map<UUID, Long>>>> = flowOf(emptyMap())
+    override fun getDailySlotCountsForGoal(goalId: UUID): Flow<Map<LocalDate, Map<UUID, Long>>> = flowOf(emptyMap())
+    override suspend fun getSlotCountsForGoalAndDate(goalId: UUID, date: String): Map<UUID, Long> = emptyMap()
+    override suspend fun getTotalCountBetween(goalId: UUID, startDate: String, endDate: String): Long = 0
     override suspend fun getActiveGoalsWithNotifications(): List<Goal> = listOf(goal).filter { it.notificationEnabled }
     override suspend fun deleteAllProgress() = unsupported()
     override suspend fun deleteAllGoalsAndProgress() = unsupported()
-    override fun getActiveGoalsByDhikrId(dhikrId: Long): Flow<List<Goal>> = flowOf(listOf(goal).filter { it.dhikrId == dhikrId })
-    override fun getDailyCountsForGoal(goalId: Long): Flow<Map<LocalDate, Long>> = flowOf(emptyMap())
+    override fun getActiveGoalsByDhikrId(dhikrId: UUID): Flow<List<Goal>> = flowOf(listOf(goal).filter { it.dhikrId == dhikrId })
+    override fun getDailyCountsForGoal(goalId: UUID): Flow<Map<LocalDate, Long>> = flowOf(emptyMap())
 
     private fun unsupported(): Nothing = error("Not needed for EditGoalRemindersViewModelTest")
 }
 
 private class FakeDhikrRepository : DhikrRepository {
     private val dhikr = Dhikr(
-        id = 1,
+        id = testId(1),
         title = "Istighfar",
         arabic = "Astaghfirullah",
         transliteration = "Istighfar",
@@ -273,13 +279,13 @@ private class FakeDhikrRepository : DhikrRepository {
     override fun getAllDhikrs(): Flow<List<Dhikr>> = flowOf(listOf(dhikr))
     override fun getDhikrsByCategory(category: DhikrCategory): Flow<List<Dhikr>> = flowOf(listOf(dhikr).filter { it.category == category })
     override fun searchDhikrs(query: String): Flow<List<Dhikr>> = flowOf(listOf(dhikr))
-    override suspend fun getDhikrById(id: Long): Dhikr? = dhikr.takeIf { it.id == id }
+    override suspend fun getDhikrById(id: UUID): Dhikr? = dhikr.takeIf { it.id == id }
     override suspend fun initializeBuiltInDhikrs() = Unit
     override suspend fun getDownloadableDhikrs(): List<Dhikr> = emptyList()
-    override suspend fun markAsDownloaded(dhikrId: Long, audioFileName: String) = Unit
+    override suspend fun markAsDownloaded(dhikrId: UUID, audioFileName: String) = Unit
     override suspend fun downloadAllAudio(): Boolean = true
     override suspend fun downloadSelectedAudio(dhikrs: List<Dhikr>): Boolean = true
     override suspend fun downloadDhikrAudio(dhikr: Dhikr): Boolean = true
     override fun getLibraryDownloadProgress(): StateFlow<DownloadProgress> = progress
-    override suspend fun createDhikr(dhikr: Dhikr): Long = dhikr.id
+    override suspend fun createDhikr(dhikr: Dhikr): UUID = dhikr.id
 }

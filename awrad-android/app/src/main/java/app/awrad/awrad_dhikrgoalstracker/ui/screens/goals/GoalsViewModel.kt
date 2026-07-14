@@ -3,6 +3,7 @@ package app.awrad.awrad_dhikrgoalstracker.ui.screens.goals
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressUseCase
@@ -97,7 +98,7 @@ class GoalsViewModel @Inject constructor(
         initialValue = GoalsUiState(),
     )
 
-    fun deleteGoal(goalId: Long) {
+    fun deleteGoal(goalId: AwradId) {
         viewModelScope.launch {
             scheduler.cancelForGoal(goalId)
             goalRepository.deleteGoal(goalId)

@@ -4,6 +4,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 
 @Entity(
     tableName = "count_entries",
@@ -18,7 +20,7 @@ import androidx.room.PrimaryKey
             entity = GoalSlotEntity::class,
             parentColumns = ["id"],
             childColumns = ["slotId"],
-            onDelete = ForeignKey.SET_NULL,
+            onDelete = ForeignKey.NO_ACTION,
         ),
     ],
     indices = [
@@ -28,9 +30,9 @@ import androidx.room.PrimaryKey
     ]
 )
 data class CountEntryEntity(
-    @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val goalId: Long,
-    val slotId: Long?,
+    @PrimaryKey val id: AwradId = newAwradId(),
+    val goalId: AwradId,
+    val slotId: AwradId,
     val count: Long = 0,
     val date: String,
     val lastUpdated: Long,

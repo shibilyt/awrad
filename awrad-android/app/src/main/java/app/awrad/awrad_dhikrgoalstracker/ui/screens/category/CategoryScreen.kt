@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 
@@ -44,7 +45,7 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 fun CategoryScreen(
     onNavigateBack: () -> Unit,
     onNavigateToCreateGoal: () -> Unit,
-    onNavigateToDhikrDetail: (Long) -> Unit = {},
+    onNavigateToDhikrDetail: (AwradId) -> Unit = {},
     viewModel: CategoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()

@@ -5,16 +5,17 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
 import app.awrad.awrad_dhikrgoalstracker.data.model.PrayerRelation
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import java.time.LocalDate
 
 data class UpdateGoalCountSetupCommand(
-    val goalId: Long,
+    val goalId: AwradId,
     val ruleMode: GoalCountRuleMode,
     val countPolicy: GoalCountPolicyUpdate = GoalCountPolicyUpdate(),
     val slotPolicies: List<GoalSlotCountPolicyUpdate> = emptyList(),
     val autoCompleteOnTarget: Boolean = false,
     val currentProgressCount: Long = 0L,
-    val currentSlotCounts: Map<Long, Long> = emptyMap(),
+    val currentSlotCounts: Map<AwradId, Long> = emptyMap(),
 )
 
 enum class GoalCountRuleMode {
@@ -34,12 +35,12 @@ data class GoalCountPolicyUpdate(
 )
 
 data class GoalSlotCountPolicyUpdate(
-    val slotId: Long,
+    val slotId: AwradId,
     val countPolicy: GoalCountPolicyUpdate,
 )
 
 data class UpdateGoalScheduleCommand(
-    val goalId: Long,
+    val goalId: AwradId,
     val schedule: ScheduleSpec = ScheduleSpec.Daily,
     val timing: ScheduleTimingUpdate = ScheduleTimingUpdate.Anytime(),
     val archivedAtMillis: Long = System.currentTimeMillis(),
@@ -47,7 +48,7 @@ data class UpdateGoalScheduleCommand(
 
 sealed class ScheduleTimingUpdate {
     data class Anytime(
-        val slotId: Long? = null,
+        val slotId: AwradId? = null,
         val label: String? = null,
     ) : ScheduleTimingUpdate()
 
@@ -61,7 +62,7 @@ sealed class ScheduleTimingUpdate {
 }
 
 data class PrayerSlotUpdate(
-    val slotId: Long? = null,
+    val slotId: AwradId? = null,
     val prayer: Prayer,
     val relation: PrayerRelation,
     val beforeLeadMinutes: Int? = null,
@@ -69,21 +70,21 @@ data class PrayerSlotUpdate(
 )
 
 data class TimeWindowSlotUpdate(
-    val slotId: Long? = null,
+    val slotId: AwradId? = null,
     val label: String,
     val startMinute: Int,
     val endMinute: Int,
 )
 
 data class UpdateGoalRemindersCommand(
-    val goalId: Long,
+    val goalId: AwradId,
     val reminders: List<GoalReminderUpdate> = emptyList(),
 )
 
 data class GoalReminderUpdate(
-    val reminderId: Long? = null,
+    val reminderId: AwradId? = null,
     val reminderType: ReminderType = ReminderType.FIXED_TIME,
-    val slotId: Long? = null,
+    val slotId: AwradId? = null,
     val hour: Int? = null,
     val minute: Int? = null,
     val offsetMinutes: Int? = null,
@@ -142,7 +143,7 @@ sealed class GoalUpdateWarning {
     ) : GoalUpdateWarning()
 
     data class SlotProgressAlreadyAboveMaximum(
-        val slotId: Long,
+        val slotId: AwradId,
         val currentCount: Long,
         val maximumCount: Int,
     ) : GoalUpdateWarning()

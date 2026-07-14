@@ -70,10 +70,7 @@ class NotificationTestHelper @Inject constructor(
             } else {
                 // No goals at all — schedule a global reminder test
                 Log.d(TAG, "No goals found, scheduling global reminder test in 30s")
-                reminderScheduler.scheduleTest(
-                    goalId = ReminderAlarmReceiver.GLOBAL_REMINDER_ID,
-                    delaySeconds = 30,
-                )
+                reminderScheduler.scheduleGlobalTest(delaySeconds = 30)
                 return
             }
         }

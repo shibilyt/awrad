@@ -1,5 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.goals
 
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalPreset
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem
@@ -10,10 +12,10 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
 import app.awrad.awrad_dhikrgoalstracker.data.model.SeasonTemplateCode
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
 import app.awrad.awrad_dhikrgoalstracker.data.model.TimingType
+import app.awrad.awrad_dhikrgoalstracker.data.model.Threshold
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.CapBehavior
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.ProgressScope
-import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.Threshold
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.TimingSpec
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.CountRuleDraft
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.CountRuleMode
@@ -57,7 +59,7 @@ class GoalDraftMapperTest {
     @Test
     fun `daily template maps to per due date anytime goal`() {
         val goal = GoalDraftMapper.toGoal(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = GoalDraftDefaults.forPreset(GoalPreset.DAILY),
             startDate = LocalDate.parse("2026-05-27"),
         )
@@ -71,12 +73,12 @@ class GoalDraftMapperTest {
     @Test
     fun `daily template maps to create command instead of persisted model`() {
         val command = GoalDraftMapper.toCommand(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = GoalDraftDefaults.forPreset(GoalPreset.DAILY),
             startDate = LocalDate.parse("2026-05-27"),
         )
 
-        assertEquals(1, command.dhikrId)
+        assertEquals(testId(1), command.dhikrId)
         assertEquals(ProgressScope.DueDate, command.progressScope)
         assertTrue(command.timing is TimingSpec.Anytime)
         assertEquals(100, command.countPolicy.targetCount)
@@ -98,7 +100,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(TargetPolicy.PER_DUE_DATE, goal.targetPolicy)
@@ -133,7 +135,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(TargetPolicy.PER_DUE_DATE, goal.targetPolicy)
@@ -150,7 +152,7 @@ class GoalDraftMapperTest {
     @Test
     fun `prayer template maps to five prayer slots and prayer offset reminder`() {
         val goal = GoalDraftMapper.toGoal(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = GoalDraftDefaults.forPreset(GoalPreset.PRAYER_BASED),
             startDate = LocalDate.parse("2026-05-27"),
         )
@@ -164,7 +166,7 @@ class GoalDraftMapperTest {
     @Test
     fun `total template maps to cumulative auto complete goal`() {
         val goal = GoalDraftMapper.toGoal(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = GoalDraftDefaults.forPreset(GoalPreset.ONE_TIME),
             startDate = LocalDate.parse("2026-05-27"),
         )
@@ -177,7 +179,7 @@ class GoalDraftMapperTest {
     @Test
     fun `weekly template maps to period total weekly goal`() {
         val goal = GoalDraftMapper.toGoal(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = GoalDraftDefaults.forPreset(GoalPreset.WEEKLY),
             startDate = LocalDate.parse("2026-05-27"),
         )
@@ -190,7 +192,7 @@ class GoalDraftMapperTest {
     @Test
     fun `season template maps to Ramadan season goal`() {
         val goal = GoalDraftMapper.toGoal(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = GoalDraftDefaults.forPreset(GoalPreset.ISLAMIC_SEASON),
             startDate = LocalDate.parse("2026-05-27"),
         )
@@ -203,7 +205,7 @@ class GoalDraftMapperTest {
     @Test
     fun `morning evening template maps to two time window slots`() {
         val goal = GoalDraftMapper.toGoal(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = GoalDraftDefaults.forPreset(GoalPreset.MORNING_EVENING),
             startDate = LocalDate.parse("2026-05-27"),
         )
@@ -218,7 +220,7 @@ class GoalDraftMapperTest {
     @Test
     fun `tracker template maps to no target tracker goal`() {
         val goal = GoalDraftMapper.toGoal(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = GoalDraftDefaults.forPreset(GoalPreset.TRACKER),
             startDate = LocalDate.parse("2026-05-27"),
         )
@@ -230,7 +232,7 @@ class GoalDraftMapperTest {
     @Test
     fun `tracker template command uses any positive count thresholds`() {
         val command = GoalDraftMapper.toCommand(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = GoalDraftDefaults.forPreset(GoalPreset.TRACKER),
             startDate = LocalDate.parse("2026-05-27"),
         )
@@ -253,11 +255,11 @@ class GoalDraftMapperTest {
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
         val command = GoalDraftMapper.toCommand(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = draft,
             startDate = LocalDate.parse("2026-05-27"),
         )
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(40, command.countPolicy.minimumCount)
@@ -287,8 +289,8 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val command = GoalDraftMapper.toCommand(1, draft, LocalDate.parse("2026-05-27"))
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val command = GoalDraftMapper.toCommand(testId(1), draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertTrue(command.timing is TimingSpec.PrayerBased)
@@ -311,11 +313,11 @@ class GoalDraftMapperTest {
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
         val command = GoalDraftMapper.toCommand(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = draft,
             startDate = LocalDate.parse("2026-05-27"),
         )
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(40, command.countPolicy.minimumCount)
@@ -339,11 +341,11 @@ class GoalDraftMapperTest {
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
         val command = GoalDraftMapper.toCommand(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = draft,
             startDate = LocalDate.parse("2026-05-27"),
         )
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(33, command.countPolicy.targetCount)
@@ -369,11 +371,11 @@ class GoalDraftMapperTest {
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
         val command = GoalDraftMapper.toCommand(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = draft,
             startDate = LocalDate.parse("2026-05-27"),
         )
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(20, command.countPolicy.minimumCount)
@@ -407,7 +409,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(80, goal.maximumCount)
@@ -433,7 +435,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(60, goal.maximumCount)
@@ -478,8 +480,8 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val command = GoalDraftMapper.toCommand(1, draft, LocalDate.parse("2026-05-27"))
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val command = GoalDraftMapper.toCommand(testId(1), draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertTrue(command.timing is TimingSpec.TimeWindows)
@@ -508,7 +510,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(66, goal.maximumCount)
@@ -539,7 +541,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(33, goal.maximumCount)
@@ -560,11 +562,11 @@ class GoalDraftMapperTest {
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
         val command = GoalDraftMapper.toCommand(
-            dhikrId = 1,
+            dhikrId = testId(1),
             draft = draft,
             startDate = LocalDate.parse("2026-05-27"),
         )
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(TargetPolicy.NONE, goal.targetPolicy)
@@ -587,7 +589,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(TargetPolicy.NONE, goal.targetPolicy)
@@ -613,7 +615,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(TargetPolicy.NONE, goal.targetPolicy)
@@ -628,7 +630,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(RecurrenceFrequency.SPECIFIC_DATES, goal.recurrence.frequency)
@@ -639,42 +641,42 @@ class GoalDraftMapperTest {
     fun `advanced recurrence options map all supported schedule drafts`() {
         val startDate = LocalDate.parse("2026-05-27")
         val weekly = GoalDraftMapper.toGoal(
-            1,
+            testId(1),
             GoalDraftDefaults.forPreset(GoalPreset.CUSTOM).copy(
                 frequencyDraft = FrequencyDraft.Weekly(setOf(java.time.DayOfWeek.MONDAY, java.time.DayOfWeek.FRIDAY)),
             ),
             startDate,
         ).recurrence
         val monthly = GoalDraftMapper.toGoal(
-            1,
+            testId(1),
             GoalDraftDefaults.forPreset(GoalPreset.CUSTOM).copy(
                 frequencyDraft = FrequencyDraft.Monthly(daysOfMonth = setOf(3, 15), calendar = "hijri"),
             ),
             startDate,
         ).recurrence
         val interval = GoalDraftMapper.toGoal(
-            1,
+            testId(1),
             GoalDraftDefaults.forPreset(GoalPreset.CUSTOM).copy(
                 frequencyDraft = FrequencyDraft.Interval("5"),
             ),
             startDate,
         ).recurrence
         val yearly = GoalDraftMapper.toGoal(
-            1,
+            testId(1),
             GoalDraftDefaults.forPreset(GoalPreset.CUSTOM).copy(
                 frequencyDraft = FrequencyDraft.Yearly(month = 9, days = setOf(1, 27), calendar = "hijri"),
             ),
             startDate,
         ).recurrence
         val season = GoalDraftMapper.toGoal(
-            1,
+            testId(1),
             GoalDraftDefaults.forPreset(GoalPreset.CUSTOM).copy(
                 frequencyDraft = FrequencyDraft.Season(SeasonTemplateCode.DHUL_HIJJAH_1_10),
             ),
             startDate,
         ).recurrence
         val specificDates = GoalDraftMapper.toGoal(
-            1,
+            testId(1),
             GoalDraftDefaults.forPreset(GoalPreset.CUSTOM).copy(
                 frequencyDraft = FrequencyDraft.SpecificDates("2026-06-01 2026-06-02"),
             ),
@@ -711,7 +713,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(listOf(55, 55), goal.slots.map { it.targetCount })
@@ -730,7 +732,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals("Morning", goal.slots[0].label)
@@ -760,7 +762,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(2, goal.slots.size)
@@ -778,7 +780,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(listOf(40, 40), goal.slots.map { it.targetCount })
@@ -799,7 +801,7 @@ class GoalDraftMapperTest {
         )
 
         val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertTrue(validation.isValid)
         assertEquals(listOf(33, 66), goal.slots.map { it.targetCount })
@@ -813,8 +815,8 @@ class GoalDraftMapperTest {
             it.copy(targetDraft = target, countRule = it.countRule.syncedWithTargetDraft(target))
         }
 
-        val command = GoalDraftMapper.toCommand(1, draft, LocalDate.parse("2026-05-27"))
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val command = GoalDraftMapper.toCommand(testId(1), draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertEquals(ProgressScope.DueDate, command.progressScope)
         assertEquals(313, command.countPolicy.targetCount)
@@ -828,7 +830,7 @@ class GoalDraftMapperTest {
             it.copy(targetDraft = target, countRule = it.countRule.syncedWithTargetDraft(target))
         }
 
-        val goal = GoalDraftMapper.toGoal(1, draft, LocalDate.parse("2026-05-27"))
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
 
         assertEquals(TargetPolicy.CUMULATIVE_TOTAL, goal.targetPolicy)
         assertTrue(goal.autoCompleteOnTarget)

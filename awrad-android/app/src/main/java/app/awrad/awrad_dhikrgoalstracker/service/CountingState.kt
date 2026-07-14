@@ -1,10 +1,12 @@
 package app.awrad.awrad_dhikrgoalstracker.service
 
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 
 data class CountingState(
-    val goalId: Long = -1,
+    val goalId: AwradId? = null,
     val currentCount: Long = 0,
     val targetCount: Int = 0,
     val maximumCount: Int? = null,
@@ -22,7 +24,7 @@ data class CountingState(
     val playbackSpeed: Float = 1f,
     val isPrayerBased: Boolean = false,
     val slots: List<GoalSlot> = emptyList(),
-    val activeSlotId: Long? = null,
-    val slotCounts: Map<Long, Long> = emptyMap(),
+    val activeSlotId: AwradId? = null,
+    val slotCounts: Map<AwradId, Long> = emptyMap(),
     val audioError: Boolean = false,
 )

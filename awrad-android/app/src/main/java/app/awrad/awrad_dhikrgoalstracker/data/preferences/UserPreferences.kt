@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -146,12 +147,12 @@ class UserPreferences @Inject constructor(
         dataStore.edit { it[KEY_READER_FONT_SCALE] = scale }
     }
 
-    suspend fun hasEarlySlotConfirmation(goalId: Long, slotId: Long, date: String): Boolean {
+    suspend fun hasEarlySlotConfirmation(goalId: AwradId, slotId: AwradId, date: String): Boolean {
         val key = earlySlotConfirmationKey(goalId, slotId, date)
         return dataStore.data.first()[KEY_EARLY_SLOT_CONFIRMATIONS].orEmpty().contains(key)
     }
 
-    suspend fun confirmEarlySlotCount(goalId: Long, slotId: Long, date: String) {
+    suspend fun confirmEarlySlotCount(goalId: AwradId, slotId: AwradId, date: String) {
         val key = earlySlotConfirmationKey(goalId, slotId, date)
         dataStore.edit { preferences ->
             val currentDatePrefix = "$date:"
@@ -163,12 +164,12 @@ class UserPreferences @Inject constructor(
         }
     }
 
-    suspend fun hasEndedSlotConfirmation(goalId: Long, slotId: Long, date: String): Boolean {
+    suspend fun hasEndedSlotConfirmation(goalId: AwradId, slotId: AwradId, date: String): Boolean {
         val key = endedSlotConfirmationKey(goalId, slotId, date)
         return dataStore.data.first()[KEY_ENDED_SLOT_CONFIRMATIONS].orEmpty().contains(key)
     }
 
-    suspend fun confirmEndedSlotCount(goalId: Long, slotId: Long, date: String) {
+    suspend fun confirmEndedSlotCount(goalId: AwradId, slotId: AwradId, date: String) {
         val key = endedSlotConfirmationKey(goalId, slotId, date)
         dataStore.edit { preferences ->
             val currentDatePrefix = "$date:"
@@ -180,9 +181,9 @@ class UserPreferences @Inject constructor(
         }
     }
 
-    private fun earlySlotConfirmationKey(goalId: Long, slotId: Long, date: String): String =
+    private fun earlySlotConfirmationKey(goalId: AwradId, slotId: AwradId, date: String): String =
         "$date:$goalId:$slotId"
 
-    private fun endedSlotConfirmationKey(goalId: Long, slotId: Long, date: String): String =
+    private fun endedSlotConfirmationKey(goalId: AwradId, slotId: AwradId, date: String): String =
         "$date:$goalId:$slotId"
 }

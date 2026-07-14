@@ -604,3 +604,7 @@
 "Searching…" = "جارٍ البحث…";
 "Use my location" = "استخدم موقعي";
 "Locating…" = "جارٍ تحديد الموقع…";
+
+/* Dhikr categories */
+"category.asma_ul_husna" = "الأسماء الحسنى";
+"category.asma_ul_husna.description" = "أسماء الله الحسنى.";

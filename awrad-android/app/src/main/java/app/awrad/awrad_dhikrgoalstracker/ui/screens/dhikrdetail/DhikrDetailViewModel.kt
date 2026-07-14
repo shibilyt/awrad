@@ -21,6 +21,8 @@ import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.TimingSpec
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.CreateGoalUseCase
 import app.awrad.awrad_dhikrgoalstracker.service.AudioDownloadManager
 import app.awrad.awrad_dhikrgoalstracker.service.AudioPreviewPlayer
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import java.util.UUID
 import app.awrad.awrad_dhikrgoalstracker.util.DateProvider
 import app.awrad.awrad_dhikrgoalstracker.util.toLocalDateOr
 import app.awrad.awrad_dhikrgoalstracker.service.PreviewPlaybackState
@@ -55,7 +57,7 @@ class DhikrDetailViewModel @Inject constructor(
     val audioPlayer: AudioPreviewPlayer,
 ) : ViewModel() {
 
-    private val dhikrId: Long = checkNotNull(savedStateHandle["dhikrId"])
+    private val dhikrId: AwradId = UUID.fromString(checkNotNull(savedStateHandle["dhikrId"] as String?))
 
     private val _uiState = MutableStateFlow(DhikrDetailUiState())
     val uiState: StateFlow<DhikrDetailUiState> = _uiState.asStateFlow()
@@ -99,7 +101,7 @@ class DhikrDetailViewModel @Inject constructor(
         return _uiState.value.existingGoals.any { goal ->
             goal.frequencyType == suggestion.frequencyType &&
                 goal.isOneTime == suggestion.isOneTime &&
-                goal.slots.firstOrNull()?.targetCount == suggestion.targetCount
+                goal.activeSlots.firstOrNull()?.targetCount == suggestion.targetCount
         }
     }
 

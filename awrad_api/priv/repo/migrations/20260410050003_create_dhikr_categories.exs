@@ -4,7 +4,10 @@ defmodule AwradApi.Repo.Migrations.CreateDhikrCategories do
   def change do
     create table(:dhikr_categories, primary_key: false) do
       add :dhikr_id, references(:dhikrs, type: :binary_id, on_delete: :delete_all), null: false
-      add :category_id, references(:categories, type: :binary_id, on_delete: :delete_all), null: false
+
+      add :category_id, references(:categories, type: :binary_id, on_delete: :delete_all),
+        null: false
+
       add :inserted_at, :utc_datetime, null: false, default: fragment("now()")
     end
 

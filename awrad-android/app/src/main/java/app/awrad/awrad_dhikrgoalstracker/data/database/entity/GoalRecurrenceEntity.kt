@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem
 import app.awrad.awrad_dhikrgoalstracker.data.model.RecurrenceFrequency
 import app.awrad.awrad_dhikrgoalstracker.data.model.SeasonTemplateCode
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 
 @Entity(
     tableName = "goal_recurrences",
@@ -21,7 +22,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.SeasonTemplateCode
     indices = [Index(value = ["goalId"], unique = true)]
 )
 data class GoalRecurrenceEntity(
-    @PrimaryKey val goalId: Long,
+    @PrimaryKey val goalId: AwradId,
     val frequency: RecurrenceFrequency = RecurrenceFrequency.DAILY,
     val calendar: CalendarSystem = CalendarSystem.GREGORIAN,
     val intervalDays: Int? = null,

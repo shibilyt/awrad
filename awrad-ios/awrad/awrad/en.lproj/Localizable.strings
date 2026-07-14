@@ -604,3 +604,7 @@
 "Searching…" = "Searching…";
 "Use my location" = "Use my location";
 "Locating…" = "Locating…";
+
+/* Dhikr categories */
+"category.asma_ul_husna" = "Asma-ul Husna";
+"category.asma_ul_husna.description" = "The beautiful names of Allah.";

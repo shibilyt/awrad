@@ -14,6 +14,7 @@ import app.awrad.awrad_dhikrgoalstracker.MainActivity
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalculationMethodPref
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.MadhabPref
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.preferences.UserPreferences
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.PrayerTimeRepository
@@ -77,7 +78,7 @@ class ReminderScheduler @Inject constructor(
     /**
      * Cancels all alarms for a specific goal.
      */
-    fun cancelForGoal(goalId: Long) {
+    fun cancelForGoal(goalId: AwradId) {
         cancelAlarm(AlarmRequestCodes.goalReminder(goalId))
         cancelAlarm(AlarmRequestCodes.goalFollowUp(goalId))
         // Cancel any prayer slot alarms for this goal (up to 10 slots)
@@ -90,7 +91,7 @@ class ReminderScheduler @Inject constructor(
     /**
      * Schedules a test alarm that fires in the specified delay.
      */
-    fun scheduleTest(goalId: Long, delaySeconds: Long = 30) {
+    fun scheduleTest(goalId: AwradId, delaySeconds: Long = 30) {
         val triggerTime = System.currentTimeMillis() + (delaySeconds * 1000)
         val intent = ReminderAlarmReceiver.createIntent(
             context = context,
@@ -105,6 +106,18 @@ class ReminderScheduler @Inject constructor(
         )
         scheduleAlarmClock(triggerTime, pendingIntent)
         Log.d(TAG, "Test alarm scheduled for goal $goalId in ${delaySeconds}s")
+    }
+
+    fun scheduleGlobalTest(delaySeconds: Long = 30) {
+        val triggerTime = System.currentTimeMillis() + (delaySeconds * 1000)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            AlarmRequestCodes.TEST,
+            ReminderAlarmReceiver.createGlobalIntent(context),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        scheduleAlarmClock(triggerTime, pendingIntent)
+        Log.d(TAG, "Global test alarm scheduled in ${delaySeconds}s")
     }
 
     /**
@@ -221,11 +234,7 @@ class ReminderScheduler @Inject constructor(
             }.timeInMillis
         }
 
-        val intent = ReminderAlarmReceiver.createIntent(
-            context = context,
-            goalId = ReminderAlarmReceiver.GLOBAL_REMINDER_ID,
-            isFollowUp = false,
-        )
+        val intent = ReminderAlarmReceiver.createGlobalIntent(context)
         val pendingIntent = PendingIntent.getBroadcast(
             context, AlarmRequestCodes.GLOBAL,
             intent,
@@ -239,8 +248,8 @@ class ReminderScheduler @Inject constructor(
      * Schedules a follow-up alarm 3 hours from now for a goal reminder.
      */
     internal fun scheduleFollowUp(
-        goalId: Long,
-        slotId: Long? = null,
+        goalId: AwradId,
+        slotId: AwradId? = null,
         slotLabel: String? = null,
         occurrenceDate: String? = null,
     ) {

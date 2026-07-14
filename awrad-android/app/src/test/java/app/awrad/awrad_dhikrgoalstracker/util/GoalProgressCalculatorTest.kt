@@ -1,5 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.util
 
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalRecurrence
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
@@ -41,7 +43,7 @@ class GoalProgressCalculatorTest {
     @Test
     fun `weekly recurrence is due only on selected weekdays`() {
         val goal = goal(
-            recurrence = GoalRecurrence(
+            recurrence = GoalRecurrence(goalId = testId(1),
                 frequency = RecurrenceFrequency.WEEKLY,
                 weekdays = setOf(DayOfWeek.MONDAY, DayOfWeek.THURSDAY),
             )
@@ -55,7 +57,7 @@ class GoalProgressCalculatorTest {
     fun `period total weekly window spans monday through sunday`() {
         val goal = goal(
             targetPolicy = TargetPolicy.PERIOD_TOTAL,
-            recurrence = GoalRecurrence(frequency = RecurrenceFrequency.WEEKLY),
+            recurrence = GoalRecurrence(goalId = testId(1), frequency = RecurrenceFrequency.WEEKLY),
         )
 
         val window = GoalProgressCalculator.currentProgressWindow(goal, LocalDate.parse("2026-05-28"))
@@ -77,7 +79,7 @@ class GoalProgressCalculatorTest {
     fun `season period window uses the active hijri season dates`() {
         val goal = goal(
             targetPolicy = TargetPolicy.PERIOD_TOTAL,
-            recurrence = GoalRecurrence(
+            recurrence = GoalRecurrence(goalId = testId(1),
                 frequency = RecurrenceFrequency.SEASON,
                 seasonTemplateCode = SeasonTemplateCode.RAMADAN,
             ),
@@ -92,14 +94,14 @@ class GoalProgressCalculatorTest {
     private fun goal(
         targetPolicy: TargetPolicy = TargetPolicy.PER_DUE_DATE,
         target: Int? = 100,
-        recurrence: GoalRecurrence = GoalRecurrence(),
+        recurrence: GoalRecurrence = GoalRecurrence(goalId = testId(1), ),
         totalCompletedCount: Long = 0,
         autoCompleteOnTarget: Boolean = false,
     ): Goal = Goal(
-        dhikrId = 1,
+        dhikrId = testId(1),
         targetPolicy = targetPolicy,
         recurrence = recurrence,
-        slots = listOf(GoalSlot(goalId = 0, slotType = GoalSlotType.ANYTIME, targetCount = target)),
+        slots = listOf(GoalSlot(goalId = testId(0), slotType = GoalSlotType.ANYTIME, targetCount = target)),
         startDate = LocalDate.parse("2026-05-24"),
         totalCompletedCount = totalCompletedCount,
         autoCompleteOnTarget = autoCompleteOnTarget,

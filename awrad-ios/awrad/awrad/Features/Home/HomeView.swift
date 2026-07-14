@@ -318,7 +318,7 @@ private struct HomeImageSet {
 
 private struct FeaturedGoalCard: View {
     let title: String
-    let count: Int
+    let count: Int64
     let target: Int?
     let progress: Double
     let language: AppLanguage
@@ -437,6 +437,7 @@ private struct EmptyHomeStartCard: View {
 
 private struct FeaturedHomeCollection: Identifiable {
     enum Tone {
+        case asmaUlHusna
         case daily
         case swalaths
         case dhikrs
@@ -458,6 +459,15 @@ private struct FeaturedHomeCollection: Identifiable {
             : count(categoryCounts, categories: [.praise, .forgiveness, .quran])
 
         return [
+            FeaturedHomeCollection(
+                title: String(
+                    localized: "category.asma_ul_husna",
+                    defaultValue: "Asma-ul Husna"
+                ),
+                category: .asmaUlHusna,
+                count: categoryCounts[.asmaUlHusna] ?? 0,
+                tone: .asmaUlHusna
+            ),
             FeaturedHomeCollection(
                 title: "Daily Essentials",
                 category: dailyCategory,
@@ -553,6 +563,8 @@ private struct FeaturedCollectionCard: View {
     private var imageName: String {
         let suffix = isDark ? "dark" : "light"
         return switch collection.tone {
+        case .asmaUlHusna:
+            "collection_asma_ul_husna_\(suffix)"
         case .daily:
             "collection_daily_essentials_\(suffix)"
         case .swalaths:
@@ -587,7 +599,7 @@ private struct TodayGoalsQueueCard: View {
     let goals: [Goal]
     let language: AppLanguage
     let titleForGoal: (Goal) -> String
-    let countForGoal: (Goal) -> Int
+    let countForGoal: (Goal) -> Int64
     let targetForGoal: (Goal) -> Int?
     let onViewAll: () -> Void
     let onGoalTap: (Goal) -> Void
@@ -666,7 +678,7 @@ private struct TodayGoalsQueueCard: View {
 
 private struct GoalQueueRow: View {
     let title: String
-    let count: Int
+    let count: Int64
     let target: Int?
     let glyph: String
     let language: AppLanguage

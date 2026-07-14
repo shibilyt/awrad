@@ -510,8 +510,10 @@ struct OnboardingView: View {
         guard !isCreatingGoal else { return }
         isCreatingGoal = true
 
-        let istighfarID = store.dhikrs.first { $0.transliteration == "Asthaghfirullahil Azeem" }?.id
-            ?? store.dhikrs.first { $0.title == "Isthighfar" }?.id
+        let istighfarID = store.dhikrs.first {
+            $0.id == BuiltInDhikrRegistry.isthighfar.id &&
+                $0.catalogKey == BuiltInDhikrRegistry.isthighfar.catalogKey
+        }?.id
 
         store.updateUserName(name)
         var goalID: AwradID?

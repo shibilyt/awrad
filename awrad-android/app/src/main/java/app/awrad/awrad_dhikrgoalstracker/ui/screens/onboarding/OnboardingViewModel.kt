@@ -13,6 +13,7 @@ import app.awrad.awrad_dhikrgoalstracker.BuildConfig
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalculationMethodPref
 import app.awrad.awrad_dhikrgoalstracker.data.model.CityResult
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.MadhabPref
 import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
 import app.awrad.awrad_dhikrgoalstracker.data.preferences.UserPreferences
@@ -81,7 +82,7 @@ data class OnboardingUiState(
     val selectedPresetId: String? = FirstGoalPresets.defaultPresetId,
     val firstGoalCount: Int = FirstGoalPresets.byId(FirstGoalPresets.defaultPresetId)?.defaultCount ?: 70,
     val isCreatingFirstGoal: Boolean = false,
-    val firstGoalId: Long? = null,
+    val firstGoalId: AwradId? = null,
     // Audio
     val dhikrsWithAudio: List<Dhikr> = emptyList(),
     val audioSetupStatus: AudioSetupStatus = AudioSetupStatus.Idle,
@@ -134,7 +135,7 @@ class OnboardingViewModel @Inject constructor(
     )
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
-    /** Full seeded dhikr list, used to resolve the first-goal preset by title. */
+    /** Full seeded dhikr list, used to resolve the first-goal preset by catalog key. */
     private var allDhikrs: List<Dhikr> = emptyList()
     private var locationSearchJob: Job? = null
 
@@ -668,10 +669,10 @@ class OnboardingViewModel @Inject constructor(
         presetId: String?,
         targetCount: Int,
         reminderPresets: Set<OnboardingReminderPreset>,
-    ): Long? {
+    ): AwradId? {
         val preset = FirstGoalPresets.byId(presetId) ?: return null
         val dhikrs = allDhikrs.ifEmpty { dhikrRepository.getAllDhikrs().first() }
-        val dhikr = dhikrs.firstOrNull { it.title == preset.builtInTitle } ?: return null
+        val dhikr = dhikrs.firstOrNull { it.catalogKey == preset.builtInCatalogKey } ?: return null
         val command = CreateGoalCommand(
             dhikrId = dhikr.id,
             startDate = LocalDate.now(),

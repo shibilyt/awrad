@@ -89,9 +89,10 @@ struct AwradDomainTests {
     }
 
     @Test func streakAllowsACompletedYesterdayWhenTodayIsEmpty() {
+        let slotID = UUID()
         let entries = [
-            CountEntry(goalID: UUID(), slotID: nil, count: 4, dateKey: "2026-05-28", lastUpdated: Date()),
-            CountEntry(goalID: UUID(), slotID: nil, count: 8, dateKey: "2026-05-29", lastUpdated: Date())
+            CountEntry(goalID: UUID(), slotID: slotID, count: 4, dateKey: "2026-05-28", lastUpdated: Date()),
+            CountEntry(goalID: UUID(), slotID: slotID, count: 8, dateKey: "2026-05-29", lastUpdated: Date())
         ]
 
         #expect(GoalProgressCalculator.streak(entries: entries, todayKey: "2026-05-30") == 2)
@@ -339,7 +340,7 @@ struct AwradDomainTests {
         let seeded = AwradSeedData.dhikrs
         let titles = Set(seeded.map(\.title))
 
-        #expect(seeded.count == 13)
+        #expect(seeded.count == 113)
         #expect(titles.contains("Swalath for Debt"))
         #expect(titles.contains("First 10 Nights"))
         #expect(titles.contains("Second 10 Nights"))
@@ -558,7 +559,7 @@ struct AwradDomainTests {
         #expect(negativeDelta == -10)
         #expect(store.count(for: cappedGoal) == 0)
         #expect(store.remaining(for: cappedGoal) == 10)
-        #expect(store.goal(id: goal.id)?.totalCompletedCount == 10)
+        #expect(store.goal(id: goal.id)?.totalCompletedCount == 0)
     }
 
     @Test func storeUsesNilSlotForSingleSlotGoalsAndSpecificSlotForPrayerGoals() async throws {
@@ -575,7 +576,7 @@ struct AwradDomainTests {
         store.addCount(goalID: dailyGoal.id, slotID: dailyGoal.slots.first?.id, amount: 3)
 
         let dailyEntry = try #require(store.countEntries.first { $0.goalID == dailyGoal.id })
-        #expect(dailyEntry.slotID == nil)
+        #expect(dailyEntry.slotID == dailyGoal.slots[0].id)
         #expect(store.count(for: dailyGoal, slotID: dailyGoal.slots.first?.id) == 3)
 
         let prayerGoal = store.createGoal(dhikrID: dhikrID, target: 10, prayerSlots: [.fajr, .dhuhr])
@@ -604,10 +605,10 @@ struct AwradDomainTests {
         let middle = Date(timeIntervalSince1970: 200)
         let older = Date(timeIntervalSince1970: 100)
         store.countEntries = [
-            CountEntry(goalID: goal.id, slotID: goal.slots.first?.id, count: 5, dateKey: "2026-05-29", lastUpdated: latest),
-            CountEntry(goalID: otherGoal.id, slotID: otherGoal.slots.first?.id, count: 9, dateKey: "2026-05-30", lastUpdated: Date(timeIntervalSince1970: 400)),
-            CountEntry(goalID: goal.id, slotID: goal.slots.first?.id, count: 8, dateKey: "2026-05-30", lastUpdated: older),
-            CountEntry(goalID: goal.id, slotID: goal.slots.first?.id, count: 6, dateKey: "2026-05-30", lastUpdated: middle)
+            CountEntry(goalID: goal.id, slotID: goal.slots[0].id, count: 5, dateKey: "2026-05-29", lastUpdated: latest),
+            CountEntry(goalID: otherGoal.id, slotID: otherGoal.slots[0].id, count: 9, dateKey: "2026-05-30", lastUpdated: Date(timeIntervalSince1970: 400)),
+            CountEntry(goalID: goal.id, slotID: goal.slots[0].id, count: 8, dateKey: "2026-05-30", lastUpdated: older),
+            CountEntry(goalID: goal.id, slotID: goal.slots[0].id, count: 6, dateKey: "2026-05-30", lastUpdated: middle)
         ]
 
         let history = store.countHistory(for: goal)
@@ -1112,7 +1113,7 @@ struct AwradDomainTests {
         #expect(reloaded.goals.count == 1)
     }
 
-    @Test func storeReadsLegacyBackupWithoutSchemaVersion() async throws {
+    @Test func storeRejectsLegacyBackupWithoutSchemaVersion() async throws {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("awrad-legacy-\(UUID().uuidString)")
             .appendingPathExtension("json")
@@ -1134,15 +1135,16 @@ struct AwradDomainTests {
 
         let store = AwradStore(snapshotURL: url)
         await store.bootstrap()
-        try store.importBackupData(Data(legacyJSON.utf8))
-
-        #expect(store.preferences.userName == "Legacy User")
-        #expect(store.preferences.isOnboarded)
-        #expect(store.preferences.reminderHour == 8)
-        #expect(store.preferences.prayerSlotDefaultLeadMinutes == 30)
-        #expect(store.preferences.appLanguage == .english)
-        #expect(store.dhikrs.isEmpty == false)
-        #expect(store.wirds.isEmpty == false)
+        do {
+            try store.importBackupData(Data(legacyJSON.utf8))
+            Issue.record("Expected a pre-v5 backup to be rejected")
+        } catch let error as AwradStoreError {
+            guard case .legacySnapshotVersion(1) = error else {
+                Issue.record("Expected legacy schema version 1, got \(error)")
+                return
+            }
+            #expect(error.localizedDescription.contains("pre-v5 backups cannot be imported"))
+        }
     }
 
     @Test func storeUpdatesBundledWirdWhenSeedVersionIsNewer() async throws {
@@ -1561,10 +1563,11 @@ struct AwradDomainTests {
             countPolicy: CountPolicy(minimumCount: 33),
             startDate: "2026-06-10"
         )
+        let slotID = goal.slots[0].id
         let entries = [
-            CountEntry(goalID: goalID, count: 40, dateKey: "2026-06-13", lastUpdated: Date()),
-            CountEntry(goalID: goalID, count: 35, dateKey: "2026-06-12", lastUpdated: Date()),
-            CountEntry(goalID: goalID, count: 10, dateKey: "2026-06-11", lastUpdated: Date())
+            CountEntry(goalID: goalID, slotID: slotID, count: 40, dateKey: "2026-06-13", lastUpdated: Date()),
+            CountEntry(goalID: goalID, slotID: slotID, count: 35, dateKey: "2026-06-12", lastUpdated: Date()),
+            CountEntry(goalID: goalID, slotID: slotID, count: 10, dateKey: "2026-06-11", lastUpdated: Date())
         ]
         #expect(goal.minimumForStreak == 33)
         // 06-13 and 06-12 qualify (>=33); 06-11 (10) breaks the chain.

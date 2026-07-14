@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.data.model.toStringResId
@@ -42,8 +44,8 @@ class CategoryViewModel @Inject constructor(
 
     val playerState: StateFlow<PreviewPlaybackState> = audioPlayer.state
 
-    private val _downloadingIds = MutableStateFlow<Set<Long>>(emptySet())
-    val downloadingIds: StateFlow<Set<Long>> = _downloadingIds.asStateFlow()
+    private val _downloadingIds = MutableStateFlow<Set<AwradId>>(emptySet())
+    val downloadingIds: StateFlow<Set<AwradId>> = _downloadingIds.asStateFlow()
 
     val uiState: StateFlow<CategoryUiState> =
         dhikrRepository.getDhikrsByCategory(category)
@@ -80,18 +82,17 @@ class CategoryViewModel @Inject constructor(
     private fun getCategoryDisplayName(category: DhikrCategory): String =
         context.getString(category.toStringResId())
 
-    companion object {
-        private fun getCategorySubtitle(category: DhikrCategory): String = when (category) {
-            DhikrCategory.MORNING -> "DAILY ESSENTIALS"
-            DhikrCategory.EVENING -> "DAILY ESSENTIALS"
-            DhikrCategory.AFTER_SALAH -> "POST-PRAYER"
-            DhikrCategory.FORGIVENESS -> "REPENTANCE"
-            DhikrCategory.PRAISE -> "GLORIFICATION"
-            DhikrCategory.PROTECTION -> "REFUGE & SAFETY"
-            DhikrCategory.GENERAL -> "EVERYDAY DHIKR"
-            DhikrCategory.SWALATHS -> "BLESSINGS UPON THE PROPHET"
-            DhikrCategory.RAMADAN -> "BLESSED MONTH"
-            DhikrCategory.QURAN -> "QURANIC VERSES"
-        }
+    private fun getCategorySubtitle(category: DhikrCategory): String = when (category) {
+        DhikrCategory.MORNING -> "DAILY ESSENTIALS"
+        DhikrCategory.EVENING -> "DAILY ESSENTIALS"
+        DhikrCategory.AFTER_SALAH -> "POST-PRAYER"
+        DhikrCategory.FORGIVENESS -> "REPENTANCE"
+        DhikrCategory.PRAISE -> "GLORIFICATION"
+        DhikrCategory.PROTECTION -> "REFUGE & SAFETY"
+        DhikrCategory.GENERAL -> "EVERYDAY DHIKR"
+        DhikrCategory.SWALATHS -> "BLESSINGS UPON THE PROPHET"
+        DhikrCategory.ASMA_UL_HUSNA -> context.getString(R.string.category_asma_ul_husna_subtitle)
+        DhikrCategory.RAMADAN -> "BLESSED MONTH"
+        DhikrCategory.QURAN -> "QURANIC VERSES"
     }
 }

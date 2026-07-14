@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.GoalCountRuleMode
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.GoalUpdateError
@@ -67,7 +68,7 @@ import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 
 @Composable
 fun EditGoalScreen(
-    goalId: Long,
+    goalId: AwradId,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EditGoalViewModel = hiltViewModel(),
@@ -155,10 +156,10 @@ private fun EditGoalContent(
     onMaximumChange: (String) -> Unit,
     onCapBehaviorChange: (CountCapBehavior) -> Unit,
     onAutoCompleteChange: (Boolean) -> Unit,
-    onSlotMinimumChange: (Long, String) -> Unit,
-    onSlotTargetChange: (Long, String) -> Unit,
-    onSlotMaximumChange: (Long, String) -> Unit,
-    onSlotCapBehaviorChange: (Long, CountCapBehavior) -> Unit,
+    onSlotMinimumChange: (AwradId, String) -> Unit,
+    onSlotTargetChange: (AwradId, String) -> Unit,
+    onSlotMaximumChange: (AwradId, String) -> Unit,
+    onSlotCapBehaviorChange: (AwradId, CountCapBehavior) -> Unit,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -691,8 +692,8 @@ private fun EditGoalPreview() {
                     maximumCount = "150",
                     capBehavior = CountCapBehavior.BlockAtMaximum,
                     slots = listOf(
-                        EditGoalSlotDraft(1, "Morning", "6:00 AM-8:00 AM", 10, "25", "50", "75", CountCapBehavior.BlockAtMaximum),
-                        EditGoalSlotDraft(2, "Evening", "6:00 PM-8:00 PM", 12, "25", "50", "75", CountCapBehavior.BlockAtMaximum),
+                        EditGoalSlotDraft(java.util.UUID.randomUUID(), "Morning", "6:00 AM-8:00 AM", 10, "25", "50", "75", CountCapBehavior.BlockAtMaximum),
+                        EditGoalSlotDraft(java.util.UUID.randomUUID(), "Evening", "6:00 PM-8:00 PM", 12, "25", "50", "75", CountCapBehavior.BlockAtMaximum),
                     ),
                 ),
             ),

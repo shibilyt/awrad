@@ -7,6 +7,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.PrayerRelation
 import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
 import app.awrad.awrad_dhikrgoalstracker.util.SlotTimingResolver
 import com.batoulapps.adhan.PrayerTimes
@@ -17,9 +18,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 data class ReminderOccurrence(
-    val goalId: Long,
-    val reminderId: Long,
-    val slotId: Long?,
+    val goalId: AwradId,
+    val reminderId: AwradId,
+    val slotId: AwradId?,
     val slotLabel: String?,
     val occurrenceDate: LocalDate,
     val triggerAtMillis: Long,
@@ -86,13 +87,13 @@ class ReminderOccurrenceResolver @Inject constructor() {
 
     private fun candidateSlots(goal: Goal, reminder: GoalReminder): List<GoalSlot?> {
         reminder.slotId?.let { slotId ->
-            return goal.slots.firstOrNull { it.id == slotId }?.let { listOf(it) }.orEmpty()
+            return goal.activeSlots.firstOrNull { it.id == slotId }?.let { listOf(it) }.orEmpty()
         }
 
         return when (reminder.reminderType) {
             ReminderType.FIXED_TIME -> listOf(null)
-            ReminderType.PRAYER_OFFSET -> goal.slots.filter { it.slotType == GoalSlotType.PRAYER }
-            ReminderType.TIME_WINDOW_START -> goal.slots.filter { it.slotType == GoalSlotType.TIME_WINDOW }
+            ReminderType.PRAYER_OFFSET -> goal.activeSlots.filter { it.slotType == GoalSlotType.PRAYER }
+            ReminderType.TIME_WINDOW_START -> goal.activeSlots.filter { it.slotType == GoalSlotType.TIME_WINDOW }
         }
     }
 

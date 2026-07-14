@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
@@ -77,7 +78,7 @@ import java.time.LocalDate
 
 @Composable
 fun EditGoalRemindersScreen(
-    goalId: Long,
+    goalId: AwradId,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: EditGoalRemindersViewModel = hiltViewModel(),
@@ -168,7 +169,7 @@ private fun EditGoalRemindersContent(
     onHourChange: (Long, String) -> Unit,
     onMinuteChange: (Long, String) -> Unit,
     onOffsetChange: (Long, String) -> Unit,
-    onTargetChange: (Long, Long?) -> Unit,
+    onTargetChange: (Long, AwradId?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -423,7 +424,7 @@ private fun ReminderEditCard(
     onHourChange: (Long, String) -> Unit,
     onMinuteChange: (Long, String) -> Unit,
     onOffsetChange: (Long, String) -> Unit,
-    onTargetChange: (Long, Long?) -> Unit,
+    onTargetChange: (Long, AwradId?) -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -510,7 +511,7 @@ private fun FixedTimeFields(
 private fun PrayerReminderFields(
     reminder: EditReminderDraft,
     prayerSlots: List<GoalSlot>,
-    onTargetChange: (Long, Long?) -> Unit,
+    onTargetChange: (Long, AwradId?) -> Unit,
     onOffsetChange: (Long, String) -> Unit,
 ) {
     TargetSelector(
@@ -532,7 +533,7 @@ private fun PrayerReminderFields(
 private fun TimeWindowReminderFields(
     reminder: EditReminderDraft,
     timeWindowSlots: List<GoalSlot>,
-    onTargetChange: (Long, Long?) -> Unit,
+    onTargetChange: (Long, AwradId?) -> Unit,
 ) {
     TargetSelector(
         allLabel = stringResource(R.string.goal_reminders_edit_all_windows),
@@ -551,8 +552,8 @@ private fun TimeWindowReminderFields(
 private fun TargetSelector(
     allLabel: String,
     slots: List<GoalSlot>,
-    selectedSlotId: Long?,
-    onSelect: (Long?) -> Unit,
+    selectedSlotId: AwradId?,
+    onSelect: (AwradId?) -> Unit,
 ) {
     Text(
         text = stringResource(R.string.goal_reminders_edit_target),
@@ -664,12 +665,12 @@ private fun EditGoalRemindersPreview() {
             uiState = EditGoalRemindersUiState(
                 isLoading = false,
                 goal = Goal(
-                    id = 1,
-                    dhikrId = 1,
+                    id = java.util.UUID.randomUUID(),
+                    dhikrId = java.util.UUID.randomUUID(),
                     slots = listOf(
                         GoalSlot(
-                            id = 10,
-                            goalId = 1,
+                            id = java.util.UUID.randomUUID(),
+                            goalId = java.util.UUID.randomUUID(),
                             slotType = GoalSlotType.TIME_WINDOW,
                             label = "Morning",
                             startMinute = 6 * 60,

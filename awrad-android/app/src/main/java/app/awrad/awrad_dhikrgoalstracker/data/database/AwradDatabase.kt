@@ -42,7 +42,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.entity.WirdSessionEntity
         WirdEntity::class,
         WirdSessionEntity::class,
     ],
-    version = 4,
+    version = 6,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

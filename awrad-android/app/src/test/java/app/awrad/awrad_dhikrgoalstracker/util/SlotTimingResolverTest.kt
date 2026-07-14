@@ -1,5 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.util
 
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
@@ -58,7 +60,7 @@ class SlotTimingResolverTest {
     @Test
     fun `time window slot starts at start minute`() {
         val slot = GoalSlot(
-            goalId = 1,
+            goalId = testId(1),
             slotType = GoalSlotType.TIME_WINDOW,
             startMinute = 9 * 60,
             endMinute = 10 * 60,
@@ -74,7 +76,7 @@ class SlotTimingResolverTest {
     @Test
     fun `time window slot resolves upcoming active and ended statuses`() {
         val slot = GoalSlot(
-            goalId = 1,
+            goalId = testId(1),
             slotType = GoalSlotType.TIME_WINDOW,
             startMinute = 9 * 60,
             endMinute = 10 * 60,
@@ -98,7 +100,7 @@ class SlotTimingResolverTest {
     @Test
     fun `time window ending at day boundary displays midnight as clock zero`() {
         val slot = GoalSlot(
-            goalId = 1,
+            goalId = testId(1),
             slotType = GoalSlotType.TIME_WINDOW,
             startMinute = 22 * 60,
             endMinute = 24 * 60,
@@ -135,14 +137,14 @@ class SlotTimingResolverTest {
 
     @Test
     fun `anytime slot is always started`() {
-        val slot = GoalSlot(goalId = 1, slotType = GoalSlotType.ANYTIME)
+        val slot = GoalSlot(goalId = testId(1), slotType = GoalSlotType.ANYTIME)
 
         assertTrue(SlotTimingResolver.isStarted(slot, friday, 0L, null, 30, zoneId))
     }
 
     private fun prayerSlot(relation: PrayerRelation): GoalSlot = GoalSlot(
-        id = 10,
-        goalId = 1,
+        id = testId(10),
+        goalId = testId(1),
         slotType = GoalSlotType.PRAYER,
         prayerName = Prayer.DHUHR,
         prayerRelation = relation,

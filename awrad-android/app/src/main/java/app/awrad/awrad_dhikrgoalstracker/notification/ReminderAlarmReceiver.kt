@@ -6,6 +6,8 @@ import android.content.Intent
 import android.util.Log
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import java.util.UUID
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.util.DateProvider
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
@@ -34,22 +36,22 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
     @Inject lateinit var dateProvider: DateProvider
 
     override fun onReceive(context: Context, intent: Intent) {
-        val goalId = intent.getLongExtra(EXTRA_GOAL_ID, -1L)
+        val goalIdValue = intent.getStringExtra(EXTRA_GOAL_ID) ?: return
         val isFollowUp = intent.getBooleanExtra(EXTRA_IS_FOLLOW_UP, false)
-        val slotId = intent.getLongExtra(EXTRA_SLOT_ID, -1L).takeIf { it > 0 }
+        val slotId = intent.getStringExtra(EXTRA_SLOT_ID)?.let { runCatching { UUID.fromString(it) }.getOrNull() }
         val slotLabel = intent.getStringExtra(EXTRA_SLOT_LABEL)
         val occurrenceDate = intent.getStringExtra(EXTRA_OCCURRENCE_DATE)
 
-        Log.d(TAG, "Alarm received: goalId=$goalId, followUp=$isFollowUp, slot=$slotId, date=$occurrenceDate")
+        Log.d(TAG, "Alarm received: goalId=$goalIdValue, followUp=$isFollowUp, slot=$slotId, date=$occurrenceDate")
 
-        if (goalId == GLOBAL_REMINDER_ID) {
+        if (goalIdValue == GLOBAL_REMINDER_ID) {
             notificationBuilder.showGlobalReminder()
             reminderScheduler.rescheduleAll()
             Log.d(TAG, "Global reminder fired")
             return
         }
 
-        if (goalId == -1L) return
+        val goalId = runCatching { UUID.fromString(goalIdValue) }.getOrNull() ?: return
 
         val pendingResult = goAsync()
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
@@ -71,9 +73,9 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
     }
 
     private suspend fun handleGoalReminder(
-        goalId: Long,
+        goalId: AwradId,
         isFollowUp: Boolean,
-        slotId: Long?,
+        slotId: AwradId?,
         slotLabel: String?,
         occurrenceDate: String?,
         dhikrFallback: String,
@@ -101,7 +103,7 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
             return
         }
 
-        val slot = slotId?.let { id -> goal.slots.firstOrNull { it.id == id } }
+        val slot = slotId?.let { id -> goal.activeSlots.firstOrNull { it.id == id } }
         if (slotId != null && slot == null) {
             Log.d(TAG, "Goal $goalId slot $slotId not found, skipping")
             return
@@ -163,21 +165,26 @@ class ReminderAlarmReceiver : BroadcastReceiver() {
         const val EXTRA_SLOT_ID = "alarm_slot_id"
         const val EXTRA_SLOT_LABEL = "alarm_slot_label"
         const val EXTRA_OCCURRENCE_DATE = "alarm_occurrence_date"
-        const val GLOBAL_REMINDER_ID = -99L
+        const val GLOBAL_REMINDER_ID = "global"
 
         fun createIntent(
             context: Context,
-            goalId: Long,
+            goalId: AwradId,
             isFollowUp: Boolean,
-            slotId: Long? = null,
+            slotId: AwradId? = null,
             slotLabel: String? = null,
             occurrenceDate: String? = null,
         ): Intent = Intent(context, ReminderAlarmReceiver::class.java).apply {
-            putExtra(EXTRA_GOAL_ID, goalId)
+            putExtra(EXTRA_GOAL_ID, goalId.toString())
             putExtra(EXTRA_IS_FOLLOW_UP, isFollowUp)
-            slotId?.let { putExtra(EXTRA_SLOT_ID, it) }
+            slotId?.let { putExtra(EXTRA_SLOT_ID, it.toString()) }
             slotLabel?.let { putExtra(EXTRA_SLOT_LABEL, it) }
             occurrenceDate?.let { putExtra(EXTRA_OCCURRENCE_DATE, it) }
+        }
+
+        fun createGlobalIntent(context: Context): Intent = Intent(context, ReminderAlarmReceiver::class.java).apply {
+            putExtra(EXTRA_GOAL_ID, GLOBAL_REMINDER_ID)
+            putExtra(EXTRA_IS_FOLLOW_UP, false)
         }
     }
 }

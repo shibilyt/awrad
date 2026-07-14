@@ -13,6 +13,7 @@ import androidx.lifecycle.viewModelScope
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountEntry
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalculationMethodPref
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.MadhabPref
@@ -28,6 +29,7 @@ import app.awrad.awrad_dhikrgoalstracker.service.CountingState
 import app.awrad.awrad_dhikrgoalstracker.service.DhikrCountingService
 import app.awrad.awrad_dhikrgoalstracker.util.CountCapCalculator
 import app.awrad.awrad_dhikrgoalstracker.util.DateProvider
+import app.awrad.awrad_dhikrgoalstracker.util.GoalCountingEligibility
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
 import app.awrad.awrad_dhikrgoalstracker.util.SlotTimeStatus
 import app.awrad.awrad_dhikrgoalstracker.util.SlotTimingInfo
@@ -70,10 +72,10 @@ data class CountingUiState(
     val isOneTime: Boolean = false,
     val todayCount: Long = 0,
     val slots: List<GoalSlot> = emptyList(),
-    val activeSlotId: Long? = null,
-    val slotCounts: Map<Long, Long> = emptyMap(),
-    val slotTimingInfo: Map<Long, SlotTimingInfo> = emptyMap(),
-    val recommendedSlotId: Long? = null,
+    val activeSlotId: AwradId? = null,
+    val slotCounts: Map<AwradId, Long> = emptyMap(),
+    val slotTimingInfo: Map<AwradId, SlotTimingInfo> = emptyMap(),
+    val recommendedSlotId: AwradId? = null,
     val slotCountingPolicy: SlotCountingPolicy = SlotCountingPolicy.WARN_AND_ALLOW,
     val hasSlotProgress: Boolean = false,
     val hasSelectableSlots: Boolean = false,
@@ -98,24 +100,27 @@ data class CountingUiState(
     val sessionElapsedSeconds: Long = 0,
     val sessionComplete: Boolean = false,
     val canManualCount: Boolean = false,
+    val canActiveCountUnderCap: Boolean = false,
+    val canCountUnderCap: Boolean = false,
+    val remainingCountLimit: Int? = null,
 )
 
 @Immutable
 data class EarlySlotWarningUiState(
-    val goalId: Long,
-    val slotId: Long,
+    val goalId: AwradId,
+    val slotId: AwradId,
     val date: String,
     val startTimeText: String,
 )
 
 @Immutable
 data class EndedSlotWarningUiState(
-    val goalId: Long,
-    val slotId: Long,
+    val goalId: AwradId,
+    val slotId: AwradId,
     val date: String,
     val slotTitle: String,
     val endedAtText: String,
-    val switchSlotId: Long?,
+    val switchSlotId: AwradId?,
     val switchSlotTitle: String,
 )
 
@@ -166,9 +171,9 @@ class CountingViewModel @Inject constructor(
     // update); these inputs only change on slot/count/timing changes, so cache on them.
     // Accessed only from the single combine coroutine -> no synchronization needed.
     private var timingInfosKey: TimingInfosKey? = null
-    private var timingInfosValue: Map<Long, SlotTimingInfo> = emptyMap()
+    private var timingInfosValue: Map<AwradId, SlotTimingInfo> = emptyMap()
     private var recommendedSlotKey: RecommendedSlotKey? = null
-    private var recommendedSlotValue: Long? = null
+    private var recommendedSlotValue: AwradId? = null
 
     private val _historyItems = MutableStateFlow<List<CountEntry>>(emptyList())
     val historyItems: StateFlow<List<CountEntry>> = _historyItems.asStateFlow()
@@ -195,8 +200,7 @@ class CountingViewModel @Inject constructor(
     val countFeedbackEvents = _countFeedbackEvents.receiveAsFlow()
 
     private var pendingCountAction: PendingCountAction? = null
-    private var forceEndedWarningSlotId: Long? = null
-    private var overTargetWarningArmed = false
+    private var forceEndedWarningSlotId: AwradId? = null
 
     // Session target state (survives process death)
     private val _sessionTargetType = savedStateHandle.getStateFlow(KEY_SESSION_TYPE, -1)
@@ -288,13 +292,25 @@ class CountingViewModel @Inject constructor(
             SlotCountingPolicy.WARN_AND_ALLOW,
             SlotCountingPolicy.SILENT_FLEXIBLE -> true
         }
-        val capAllowsManualCount = CountCapCalculator.applyDelta(
+        val capAllowsManualCount = CountCapCalculator.canApplyIncrement(
             currentCount = countingState.currentCount,
-            requestedDelta = 1L,
             targetCount = countingState.targetCount.takeIf { it > 0 },
             maximumCount = countingState.maximumCount,
             capBehavior = countingState.capBehavior,
-        ).appliedDelta > 0L
+        )
+        val remainingCountLimit = CountCapCalculator.remainingCapacity(
+            currentCount = countingState.currentCount,
+            targetCount = countingState.targetCount.takeIf { it > 0 },
+            maximumCount = countingState.maximumCount,
+            capBehavior = countingState.capBehavior,
+        )?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt()
+        val canCountUnderCap = goalInfo.goal?.let { goal ->
+            GoalCountingEligibility.canContinueCounting(
+                goal = goal,
+                progressCount = countingState.currentCount,
+                slotCounts = countingState.slotCounts,
+            )
+        } ?: capAllowsManualCount
 
         CountingUiState(
             countingState = countingState,
@@ -338,6 +354,9 @@ class CountingViewModel @Inject constructor(
             sessionElapsedSeconds = sessionElapsed,
             sessionComplete = sessionComplete,
             canManualCount = !sessionComplete && timingAllowsManualCount && capAllowsManualCount,
+            canActiveCountUnderCap = capAllowsManualCount,
+            canCountUnderCap = canCountUnderCap,
+            remainingCountLimit = remainingCountLimit,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -354,7 +373,7 @@ class CountingViewModel @Inject constructor(
         nowMillis: Long,
         prayerTimes: PrayerTimes?,
         defaultPrayerLeadMinutes: Int,
-    ): Map<Long, SlotTimingInfo> {
+    ): Map<AwradId, SlotTimingInfo> {
         val key = TimingInfosKey(slots, occurrenceDate, nowMillis, prayerTimes, defaultPrayerLeadMinutes)
         timingInfosKey?.let { if (it == key) return timingInfosValue }
         val computed = SlotTimingResolver.timingInfos(
@@ -371,9 +390,9 @@ class CountingViewModel @Inject constructor(
 
     private fun memoizedRecommendedSlot(
         slots: List<GoalSlot>,
-        slotCounts: Map<Long, Long>,
-        timingInfos: Map<Long, SlotTimingInfo>,
-    ): Long? {
+        slotCounts: Map<AwradId, Long>,
+        timingInfos: Map<AwradId, SlotTimingInfo>,
+    ): AwradId? {
         val key = RecommendedSlotKey(slots, slotCounts, timingInfos)
         recommendedSlotKey?.let { if (it == key) return recommendedSlotValue }
         val computed = selectDefaultSlot(
@@ -410,6 +429,11 @@ class CountingViewModel @Inject constructor(
                     handleEndedSlotTimingIfNeeded(state)
                 }
             }
+            viewModelScope.launch {
+                service?.overTargetWarnings?.collect {
+                    _overTargetWarningMessage.trySend(Unit)
+                }
+            }
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
@@ -418,7 +442,7 @@ class CountingViewModel @Inject constructor(
         }
     }
 
-    fun bindAndStart(goalId: Long, initialSlotId: Long? = null) {
+    fun bindAndStart(goalId: AwradId, initialSlotId: AwradId? = null) {
         viewModelScope.launch {
             val goal = goalRepository.getGoalById(goalId) ?: return@launch
             val dhikr = goal.dhikr ?: dhikrRepository.getDhikrById(goal.dhikrId) ?: return@launch
@@ -494,7 +518,7 @@ class CountingViewModel @Inject constructor(
                 goal = goal,
                 dailyTarget = dailyTarget,
             )
-            val slots = goal.slots
+            val slots = goal.activeSlots
             val isPrayerBased = goal.isPrayerBased
             val hasSlotProgress = slots.usesSlotProgress()
             val prayerTimes = if (slots.any { it.slotType == GoalSlotType.PRAYER }) {
@@ -509,7 +533,7 @@ class CountingViewModel @Inject constructor(
             )
 
             // Build per-slot counts for today
-            val slotCounts = mutableMapOf<Long, Long>()
+            val slotCounts = mutableMapOf<AwradId, Long>()
             if (slots.isNotEmpty()) {
                 slots.forEach { slot ->
                     slotCounts[slot.id] = goalRepository.getCountForSlotAndDate(goalId, slot.id, today)
@@ -597,10 +621,12 @@ class CountingViewModel @Inject constructor(
     fun setSessionTarget(type: SessionTargetType, value: Int) {
         val normalizedValue = if (type == SessionTargetType.COUNT) {
             val current = _serviceState.value
-            val remainingLimit = SessionTargetPolicy.countLimit(
-                targetCount = current.targetCount,
+            val remainingLimit = CountCapCalculator.remainingCapacity(
                 currentCount = current.currentCount,
-            )
+                targetCount = current.targetCount.takeIf { it > 0 },
+                maximumCount = current.maximumCount,
+                capBehavior = current.capBehavior,
+            )?.coerceAtMost(Int.MAX_VALUE.toLong())?.toInt()
             SessionTargetPolicy.normalizeCountTarget(value, remainingLimit) ?: return
         } else {
             value
@@ -661,7 +687,7 @@ class CountingViewModel @Inject constructor(
         timerJob = null
     }
 
-    fun setActiveSlot(slotId: Long?) {
+    fun setActiveSlot(slotId: AwradId?) {
         forceEndedWarningSlotId = slotId
         service?.setActiveSlot(slotId)
         viewModelScope.launch {
@@ -796,48 +822,12 @@ class CountingViewModel @Inject constructor(
                 return
             }
         }
-        if (warnBeforeOverTargetIfNeeded(action)) return
         executePendingCountAction(action)
-    }
-
-    private fun warnBeforeOverTargetIfNeeded(action: PendingCountAction): Boolean {
-        val delta = when (action) {
-            PendingCountAction.ManualTap -> 1L
-            is PendingCountAction.Adjust -> action.amount
-            PendingCountAction.StartAudio -> return false
-        }
-        if (delta <= 0L) {
-            overTargetWarningArmed = false
-            return false
-        }
-        val current = _serviceState.value
-        val result = CountCapCalculator.applyDelta(
-            currentCount = current.currentCount,
-            requestedDelta = delta,
-            targetCount = current.targetCount.takeIf { it > 0 },
-            maximumCount = current.maximumCount,
-            capBehavior = current.capBehavior,
-        )
-        if (result.isBlocked) {
-            overTargetWarningArmed = false
-            _countHardCapMessage.trySend(Unit)
-            return true
-        }
-        if (!result.wouldCrossTarget) {
-            overTargetWarningArmed = false
-            return false
-        }
-        if (overTargetWarningArmed) {
-            overTargetWarningArmed = false
-            return false
-        }
-        overTargetWarningArmed = true
-        _overTargetWarningMessage.trySend(Unit)
-        return true
     }
 
     private suspend fun countTimingDecision(): CountTimingDecision {
         val state = uiState.value
+        val goalId = state.countingState.goalId ?: return CountTimingDecision.Block
         val slotId = state.activeSlotId ?: return CountTimingDecision.Allow
         if (!state.hasSlotProgress) return CountTimingDecision.Allow
         val status = state.slotTimingInfo[slotId]?.timeStatus ?: SlotTimeStatus.UNKNOWN
@@ -854,7 +844,7 @@ class CountingViewModel @Inject constructor(
                 SlotTimeStatus.UPCOMING -> CountTimingDecision.WarnEarly
                 SlotTimeStatus.ENDED -> {
                     val date = state.effectiveToday.toString()
-                    if (userPreferences.hasEndedSlotConfirmation(state.countingState.goalId, slotId, date)) {
+                    if (userPreferences.hasEndedSlotConfirmation(goalId, slotId, date)) {
                         CountTimingDecision.Allow
                     } else {
                         CountTimingDecision.WarnEnded
@@ -869,13 +859,14 @@ class CountingViewModel @Inject constructor(
 
     private suspend fun buildEarlySlotWarning(): EarlySlotWarningUiState? {
         val current = _serviceState.value
+        val goalId = current.goalId ?: return null
         val slotId = current.activeSlotId ?: return null
         val slot = current.slots.firstOrNull { it.id == slotId } ?: return null
         if (slot.slotType == GoalSlotType.ANYTIME) return null
 
         val occurrenceDate = dateProvider.getEffectiveToday().toLocalDateOr(LocalDate.now())
         val date = occurrenceDate.toString()
-        if (userPreferences.hasEarlySlotConfirmation(current.goalId, slotId, date)) return null
+        if (userPreferences.hasEarlySlotConfirmation(goalId, slotId, date)) return null
 
         val prayerTimes = if (slot.slotType == GoalSlotType.PRAYER) {
             loadPrayerTimes(occurrenceDate)
@@ -892,7 +883,7 @@ class CountingViewModel @Inject constructor(
 
         if (System.currentTimeMillis() >= startInfo.startsAtMillis) return null
         return EarlySlotWarningUiState(
-            goalId = current.goalId,
+            goalId = goalId,
             slotId = slotId,
             date = date,
             startTimeText = startInfo.displayText,
@@ -901,6 +892,7 @@ class CountingViewModel @Inject constructor(
 
     private suspend fun buildEndedSlotWarning(force: Boolean = false): EndedSlotWarningUiState? {
         val state = uiState.value
+        val goalId = state.countingState.goalId ?: return null
         if (state.slotCountingPolicy != SlotCountingPolicy.WARN_AND_ALLOW) return null
         val slotId = state.activeSlotId ?: return null
         val slot = state.slots.firstOrNull { it.id == slotId } ?: return null
@@ -915,11 +907,11 @@ class CountingViewModel @Inject constructor(
         if (!shouldWarn) return null
 
         val date = state.effectiveToday.toString()
-        if (userPreferences.hasEndedSlotConfirmation(state.countingState.goalId, slotId, date)) return null
+        if (userPreferences.hasEndedSlotConfirmation(goalId, slotId, date)) return null
 
         val switchSlot = recommendedSwitchSlot(state)
         return EndedSlotWarningUiState(
-            goalId = state.countingState.goalId,
+            goalId = goalId,
             slotId = slotId,
             date = date,
             slotTitle = slot.label ?: slot.timingValue.orEmpty().ifBlank { "slot" },
@@ -959,7 +951,7 @@ class CountingViewModel @Inject constructor(
     }
 
     private fun handleEndedSlotTimingIfNeeded(state: CountingState) {
-        if (state.activeSlotId == null || state.goalId < 0) return
+        if (state.activeSlotId == null || state.goalId == null) return
         viewModelScope.launch {
             val warning = buildEndedSlotWarning(force = false)
             if (warning != null) {
@@ -1001,17 +993,17 @@ class CountingViewModel @Inject constructor(
 
         val hasCountSessionTarget =
             state.hasSessionTarget && state.sessionTargetType == SessionTargetType.COUNT
-        val hasFixedTarget = state.countingState.targetCount > 0
+        val remainingCap = state.remainingCountLimit
 
         val remaining: Int = when {
             // A count-based session target bounds the run even when the goal is open-ended.
             hasCountSessionTarget -> {
                 val sessionRemaining = (state.sessionTargetValue - state.sessionCount).toInt()
-                if (hasFixedTarget) minOf(state.remaining.toInt(), sessionRemaining) else sessionRemaining
+                if (remainingCap != null) minOf(remainingCap, sessionRemaining) else sessionRemaining
             }
-            // Goal has a target: play just enough loops to reach it.
-            hasFixedTarget -> state.remaining.toInt()
-            // Open-ended goal (no target): loop until the user stops or a maximum cap is hit.
+            // A blocking rule bounds playback at its effective target or maximum.
+            remainingCap != null -> remainingCap
+            // An allow/warn rule is open-ended until the user stops it.
             else -> DhikrCountingService.AUDIO_PLAY_INDEFINITE
         }
 
@@ -1051,20 +1043,24 @@ class CountingViewModel @Inject constructor(
             goalReached = current.targetCount > 0 && newCount >= current.targetCount,
         )
         service?.setCountingState(_serviceState.value)
+        if (clampedAmount.wouldCrossTarget) {
+            _overTargetWarningMessage.trySend(Unit)
+        }
 
+        val goalId = current.goalId ?: return
         viewModelScope.launch {
             val persistedDelta = runCatching {
-                goalRepository.addCount(current.goalId, activeSlotId, optimisticAmount)
+                goalRepository.addCount(goalId, activeSlotId, optimisticAmount)
             }.getOrDefault(0L)
             applyRepositoryCorrection(
-                goalId = current.goalId,
+                goalId = goalId,
                 slotId = activeSlotId,
                 correctionDelta = persistedDelta - optimisticAmount,
             )
         }
     }
 
-    private fun applyRepositoryCorrection(goalId: Long, slotId: Long?, correctionDelta: Long) {
+    private fun applyRepositoryCorrection(goalId: AwradId, slotId: AwradId?, correctionDelta: Long) {
         if (correctionDelta == 0L) return
         val current = _serviceState.value
         if (current.goalId != goalId) return
@@ -1152,8 +1148,8 @@ private data class TimingInfosKey(
 
 private data class RecommendedSlotKey(
     val slots: List<GoalSlot>,
-    val slotCounts: Map<Long, Long>,
-    val timingInfos: Map<Long, SlotTimingInfo>,
+    val slotCounts: Map<AwradId, Long>,
+    val timingInfos: Map<AwradId, SlotTimingInfo>,
 )
 
 private fun GoalSlot.endedAtText(slotTiming: SlotTimingInfo): String =

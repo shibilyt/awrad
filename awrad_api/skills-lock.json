@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "phoenix": {
+      "source": "mindrally/skills",
+      "sourceType": "github",
+      "skillPath": "phoenix/SKILL.md",
+      "computedHash": "94547d2956e49e5bd3d2ab51630b9f2f5fc37733f763e47ba8a952a1c38fd0b4"
+    }
+  }
+}

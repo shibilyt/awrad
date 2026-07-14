@@ -10,9 +10,15 @@ Working directory: repository root
 git status --short
 git diff --check
 git diff --stat
+
+# Regenerate native/API Asma-ul Husna seeds after editing the canonical JSON.
+./scripts/generate_asma_ul_husna.py
+
+# Validate progress-model JSON, all three built-in registries, and both native DTO suites.
+./check-mobile-model-parity
 ```
 
-The root is not a build project. Do not run Gradle, Xcode, or Mix commands here.
+The root is not itself a build project. The parity command intentionally enters the Android and iOS projects. Set `AWRAD_IOS_TEST_DESTINATION` to an `xcodebuild` destination string when automatic iPhone Simulator selection is not appropriate.
 
 ## Android
 

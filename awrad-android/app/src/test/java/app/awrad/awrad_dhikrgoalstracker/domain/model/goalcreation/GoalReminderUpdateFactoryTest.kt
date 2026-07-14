@@ -1,5 +1,9 @@
 package app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation
 
+import java.util.UUID
+
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalReminder
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
@@ -28,7 +32,7 @@ class GoalReminderUpdateFactoryTest {
             command = command(
                 reminders = listOf(
                     GoalReminderUpdate(
-                        reminderId = 1,
+                        reminderId = testId(1),
                         reminderType = ReminderType.FIXED_TIME,
                         hour = 7,
                         minute = 30,
@@ -36,7 +40,7 @@ class GoalReminderUpdateFactoryTest {
                     ),
                     GoalReminderUpdate(
                         reminderType = ReminderType.PRAYER_OFFSET,
-                        slotId = 11,
+                        slotId = testId(11),
                         offsetMinutes = null,
                     ),
                     GoalReminderUpdate(
@@ -61,7 +65,7 @@ class GoalReminderUpdateFactoryTest {
             GoalReminderUpdate(reminderType = ReminderType.FIXED_TIME, hour = 24, minute = 0),
             GoalReminderUpdate(reminderType = ReminderType.FIXED_TIME, hour = 6, minute = -1),
             GoalReminderUpdate(reminderType = ReminderType.FIXED_TIME, hour = 6, minute = 60),
-            GoalReminderUpdate(reminderType = ReminderType.FIXED_TIME, slotId = 10, hour = 6, minute = 0),
+            GoalReminderUpdate(reminderType = ReminderType.FIXED_TIME, slotId = testId(10), hour = 6, minute = 0),
         ).forEach { reminder ->
             val result = GoalReminderUpdateFactory.update(goal(), command(reminders = listOf(reminder)))
 
@@ -73,10 +77,10 @@ class GoalReminderUpdateFactoryTest {
     @Test
     fun `slot reminders require active matching slots`() {
         listOf(
-            GoalReminderUpdate(reminderType = ReminderType.PRAYER_OFFSET, slotId = 10, offsetMinutes = 10),
-            GoalReminderUpdate(reminderType = ReminderType.PRAYER_OFFSET, slotId = 99, offsetMinutes = 10),
-            GoalReminderUpdate(reminderType = ReminderType.TIME_WINDOW_START, slotId = 11),
-            GoalReminderUpdate(reminderType = ReminderType.TIME_WINDOW_START, slotId = 99),
+            GoalReminderUpdate(reminderType = ReminderType.PRAYER_OFFSET, slotId = testId(10), offsetMinutes = 10),
+            GoalReminderUpdate(reminderType = ReminderType.PRAYER_OFFSET, slotId = testId(99), offsetMinutes = 10),
+            GoalReminderUpdate(reminderType = ReminderType.TIME_WINDOW_START, slotId = testId(11)),
+            GoalReminderUpdate(reminderType = ReminderType.TIME_WINDOW_START, slotId = testId(99)),
         ).forEach { reminder ->
             val result = GoalReminderUpdateFactory.update(goal(), command(reminders = listOf(reminder)))
 
@@ -90,12 +94,12 @@ class GoalReminderUpdateFactoryTest {
         val result = GoalReminderUpdateFactory.update(
             goal(
                 archivedSlots = listOf(
-                    slot(id = 20, slotType = GoalSlotType.TIME_WINDOW, isActive = false),
+                    slot(id = testId(20), slotType = GoalSlotType.TIME_WINDOW, isActive = false),
                 )
             ),
             command(
                 reminders = listOf(
-                    GoalReminderUpdate(reminderType = ReminderType.TIME_WINDOW_START, slotId = 20)
+                    GoalReminderUpdate(reminderType = ReminderType.TIME_WINDOW_START, slotId = testId(20))
                 )
             ),
         )
@@ -107,11 +111,11 @@ class GoalReminderUpdateFactoryTest {
     @Test
     fun `unavailable aggregate slot reminder types are rejected`() {
         val noPrayer = GoalReminderUpdateFactory.update(
-            goal(slots = listOf(slot(id = 10, slotType = GoalSlotType.TIME_WINDOW))),
+            goal(slots = listOf(slot(id = testId(10), slotType = GoalSlotType.TIME_WINDOW))),
             command(reminders = listOf(GoalReminderUpdate(reminderType = ReminderType.PRAYER_OFFSET))),
         )
         val noTimeWindow = GoalReminderUpdateFactory.update(
-            goal(slots = listOf(slot(id = 11, slotType = GoalSlotType.PRAYER))),
+            goal(slots = listOf(slot(id = testId(11), slotType = GoalSlotType.PRAYER))),
             command(reminders = listOf(GoalReminderUpdate(reminderType = ReminderType.TIME_WINDOW_START))),
         )
 
@@ -143,7 +147,7 @@ class GoalReminderUpdateFactoryTest {
             goal(),
             command(
                 reminders = listOf(
-                    GoalReminderUpdate(reminderId = 99, reminderType = ReminderType.FIXED_TIME, hour = 6, minute = 0)
+                    GoalReminderUpdate(reminderId = testId(99), reminderType = ReminderType.FIXED_TIME, hour = 6, minute = 0)
                 )
             ),
         )
@@ -159,33 +163,32 @@ class GoalReminderUpdateFactoryTest {
         (GoalReminderUpdateFactory.update(existingGoal, command) as GoalUpdateResult.Valid).validatedGoalUpdate
 
     private fun command(reminders: List<GoalReminderUpdate>) =
-        UpdateGoalRemindersCommand(goalId = 1, reminders = reminders)
+        UpdateGoalRemindersCommand(goalId = testId(1), reminders = reminders)
 
     private fun goal(
         slots: List<GoalSlot> = listOf(
-            slot(id = 10, slotType = GoalSlotType.TIME_WINDOW),
-            slot(id = 11, slotType = GoalSlotType.PRAYER),
+            slot(id = testId(10), slotType = GoalSlotType.TIME_WINDOW),
+            slot(id = testId(11), slotType = GoalSlotType.PRAYER),
         ),
         archivedSlots: List<GoalSlot> = emptyList(),
         reminders: List<GoalReminder> = listOf(
-            GoalReminder(id = 1, goalId = 1, reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0)
+            GoalReminder(id = testId(1), goalId = testId(1), reminderType = ReminderType.FIXED_TIME, hour = 8, minute = 0)
         ),
     ) = Goal(
-        id = 1,
-        dhikrId = 1,
-        slots = slots,
-        archivedSlots = archivedSlots,
+        id = testId(1),
+        dhikrId = testId(1),
+        slots = slots + archivedSlots,
         reminders = reminders,
         startDate = LocalDate.parse("2026-05-27"),
     )
 
     private fun slot(
-        id: Long,
+        id: UUID,
         slotType: GoalSlotType,
         isActive: Boolean = true,
     ) = GoalSlot(
         id = id,
-        goalId = 1,
+        goalId = testId(1),
         slotType = slotType,
         prayerName = if (slotType == GoalSlotType.PRAYER) Prayer.FAJR else null,
         prayerRelation = if (slotType == GoalSlotType.PRAYER) PrayerRelation.AFTER else null,

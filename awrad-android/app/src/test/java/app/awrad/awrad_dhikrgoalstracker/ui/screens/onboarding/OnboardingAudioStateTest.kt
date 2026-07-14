@@ -1,5 +1,9 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.onboarding
 
+import java.util.UUID
+
+import app.awrad.awrad_dhikrgoalstracker.testId
+
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.service.DownloadProgress
@@ -10,9 +14,9 @@ class OnboardingAudioStateTest {
 
     @Test
     fun `completed file names mark prior downloads ready while next file downloads`() {
-        val first = dhikr(id = 1, fileName = "first.mp3")
-        val second = dhikr(id = 2, fileName = "second.mp3")
-        val third = dhikr(id = 3, fileName = "third.mp3")
+        val first = dhikr(id = testId(1), fileName = "first.mp3")
+        val second = dhikr(id = testId(2), fileName = "second.mp3")
+        val third = dhikr(id = testId(3), fileName = "third.mp3")
         val progress = DownloadProgress(
             totalFiles = 3,
             completedFiles = 1,
@@ -37,8 +41,8 @@ class OnboardingAudioStateTest {
     @Test
     fun `completed file names can complete audio scene before room emits downloaded rows`() {
         val dhikrs = listOf(
-            dhikr(id = 1, fileName = "first.mp3"),
-            dhikr(id = 2, fileName = "second.mp3"),
+            dhikr(id = testId(1), fileName = "first.mp3"),
+            dhikr(id = testId(2), fileName = "second.mp3"),
         )
         val progress = DownloadProgress(
             totalFiles = 2,
@@ -59,8 +63,8 @@ class OnboardingAudioStateTest {
 
     @Test
     fun `failed file names stay failed instead of being counted ready`() {
-        val first = dhikr(id = 1, fileName = "first.mp3")
-        val second = dhikr(id = 2, fileName = "second.mp3")
+        val first = dhikr(id = testId(1), fileName = "first.mp3")
+        val second = dhikr(id = testId(2), fileName = "second.mp3")
         val progress = DownloadProgress(
             totalFiles = 2,
             completedFiles = 2,
@@ -82,7 +86,7 @@ class OnboardingAudioStateTest {
         assertEquals(AudioRowState.Failed, onboardingAudioRowState(second, progress, status))
     }
 
-    private fun dhikr(id: Long, fileName: String): Dhikr =
+    private fun dhikr(id: UUID, fileName: String): Dhikr =
         Dhikr(
             id = id,
             title = fileName,

@@ -1,13 +1,16 @@
 package app.awrad.awrad_dhikrgoalstracker.data.model
 
 data class GoalSlot(
-    val id: Long = 0,
-    val goalId: Long,
+    val id: AwradId = newAwradId(),
+    val goalId: AwradId,
     val slotType: GoalSlotType = GoalSlotType.ANYTIME,
     val minimumCount: Int? = null,
     val targetCount: Int? = null,
     val maximumCount: Int? = null,
     val capBehavior: CountCapBehavior = CountCapBehavior.AllowOverTarget,
+    val streakThreshold: Threshold = Threshold.Target,
+    val reminderThreshold: Threshold = Threshold.Target,
+    val completionThreshold: Threshold = Threshold.Target,
     val prayerName: Prayer? = null,
     val prayerRelation: PrayerRelation? = null,
     val startMinute: Int? = null,
@@ -18,6 +21,17 @@ data class GoalSlot(
     val isActive: Boolean = true,
     val archivedAt: Long? = null,
 ) {
+    val countPolicy: CountPolicy
+        get() = CountPolicy(
+            minimumCount = minimumCount,
+            targetCount = targetCount,
+            maximumCount = maximumCount,
+            streakThreshold = streakThreshold,
+            reminderThreshold = reminderThreshold,
+            completionThreshold = completionThreshold,
+            capBehavior = capBehavior,
+        )
+
     val timingType: String
         get() = when (slotType) {
             GoalSlotType.ANYTIME -> SlotTimingTypes.ANYTIME

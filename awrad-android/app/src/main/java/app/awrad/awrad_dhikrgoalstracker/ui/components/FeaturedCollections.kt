@@ -43,6 +43,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 
 enum class FeaturedCollectionTone {
+    AsmaUlHusna,
     Daily,
     Swalaths,
     Dhikrs,
@@ -70,6 +71,12 @@ fun rememberFeaturedCollections(
         ?: categoryCounts.countFor(DhikrCategory.PRAISE, DhikrCategory.FORGIVENESS, DhikrCategory.QURAN)
 
     return listOf(
+        FeaturedCollectionUiModel(
+            title = stringResource(R.string.category_asma_ul_husna),
+            category = DhikrCategory.ASMA_UL_HUSNA,
+            count = categoryCounts[DhikrCategory.ASMA_UL_HUSNA] ?: 0,
+            tone = FeaturedCollectionTone.AsmaUlHusna,
+        ),
         FeaturedCollectionUiModel(
             title = stringResource(R.string.collection_daily_essentials),
             category = dailyCategory,
@@ -231,6 +238,11 @@ private fun collectionImageRes(
     tone: FeaturedCollectionTone,
     isDark: Boolean,
 ): Int = when (tone) {
+    FeaturedCollectionTone.AsmaUlHusna -> if (isDark) {
+        R.drawable.collection_asma_ul_husna_dark
+    } else {
+        R.drawable.collection_asma_ul_husna_light
+    }
     FeaturedCollectionTone.Daily -> if (isDark) {
         R.drawable.collection_swalaths_dark
     } else {

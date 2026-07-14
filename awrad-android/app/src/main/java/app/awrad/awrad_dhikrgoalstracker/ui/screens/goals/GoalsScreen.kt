@@ -43,15 +43,22 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
+import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
+import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
+import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
 import app.awrad.awrad_dhikrgoalstracker.ui.components.DayProgressRing
 import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakChip
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualEmptyState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.SectionHeader
+import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
 
 @Composable
 fun GoalsScreen(
-    onNavigateToGoal: (Long) -> Unit,
+    onNavigateToCounting: (AwradId) -> Unit,
+    onNavigateToGoalDetail: (AwradId) -> Unit,
     onNavigateToCreateGoal: () -> Unit,
     viewModel: GoalsViewModel = hiltViewModel(),
 ) {
@@ -95,7 +102,7 @@ fun GoalsScreen(
             items(uiState.activeGoals) { item ->
                 GoalListItem(
                     item = item,
-                    onClick = { onNavigateToGoal(item.goal.id) },
+                    onClick = { onNavigateToCounting(item.goal.id) },
                     onDelete = { viewModel.deleteGoal(item.goal.id) },
                 )
             }
@@ -109,7 +116,7 @@ fun GoalsScreen(
             items(uiState.completedGoals) { item ->
                 GoalListItem(
                     item = item,
-                    onClick = { onNavigateToGoal(item.goal.id) },
+                    onClick = { onNavigateToGoalDetail(item.goal.id) },
                     onDelete = { viewModel.deleteGoal(item.goal.id) },
                 )
             }
@@ -147,122 +154,161 @@ private fun GoalListItem(
         onClick = onClick,
         shape = RoundedCornerShape(22.dp),
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = item.dhikrName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = if (item.overallProgress >= 1f) {
-                        MaterialTheme.colorScheme.secondaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.primaryContainer
-                    },
-                ) {
-                    Text(
-                        text = item.targetDisplay,
-                        style = MaterialTheme.typography.labelSmall,
+            if (item.dailyTarget > 0) {
+                DayProgressRing(
+                    progress = item.overallProgress,
+                    count = item.todayCount,
+                    ringColor = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.62f),
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    size = 48.dp,
+                    strokeWidth = 4.dp,
+                )
+            } else {
+                Text(
+                    text = "$displayCount",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+
+            Spacer(modifier = Modifier.width(14.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = item.dhikrName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        modifier = Modifier.weight(1f, fill = false),
+                        shape = RoundedCornerShape(20.dp),
                         color = if (item.overallProgress >= 1f) {
-                            MaterialTheme.colorScheme.onSecondaryContainer
+                            MaterialTheme.colorScheme.secondaryContainer
                         } else {
-                            MaterialTheme.colorScheme.primary
+                            MaterialTheme.colorScheme.primaryContainer
                         },
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                    )
-                }
-                Box {
-                    IconButton(
-                        onClick = { menuExpanded = true },
-                        modifier = Modifier.size(36.dp),
                     ) {
-                        Icon(
-                            imageVector = Icons.Filled.MoreVert,
-                            contentDescription = "More options",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(20.dp),
+                        Text(
+                            text = goalTag(item.goal),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (item.overallProgress >= 1f) {
+                                MaterialTheme.colorScheme.onSecondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false },
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.action_archive)) },
-                            onClick = { menuExpanded = false },
-                            leadingIcon = {
-                                Icon(Icons.Outlined.Archive, contentDescription = null)
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = {
-                                Text(
-                                    stringResource(R.string.action_delete),
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            },
-                            onClick = {
-                                menuExpanded = false
-                                onDelete()
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Outlined.Delete,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
-                            },
-                        )
+                    if (item.streakDays > 0) {
+                        Spacer(modifier = Modifier.width(10.dp))
+                        GoalStreakChip(streakDays = item.streakDays)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
-            // Compact streak chip + circular "progress on the day" — the full day strip lives on
-            // the Home featured hero and the counting screen's history sheet.
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    GoalStreakChip(streakDays = item.streakDays)
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                if (item.dailyTarget > 0) {
-                    DayProgressRing(
-                        progress = item.overallProgress,
-                        count = item.todayCount,
-                        ringColor = MaterialTheme.colorScheme.secondary,
-                        trackColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.62f),
-                        textColor = MaterialTheme.colorScheme.onSurface,
-                        size = 52.dp,
-                        strokeWidth = 5.dp,
+            Box {
+                IconButton(
+                    onClick = { menuExpanded = true },
+                    modifier = Modifier.size(36.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.MoreVert,
+                        contentDescription = "More options",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
                     )
-                } else {
-                    Text(
-                        text = "$displayCount",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false },
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.action_archive)) },
+                        onClick = { menuExpanded = false },
+                        leadingIcon = {
+                            Icon(Icons.Outlined.Archive, contentDescription = null)
+                        },
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                stringResource(R.string.action_delete),
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        },
+                        onClick = {
+                            menuExpanded = false
+                            onDelete()
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Outlined.Delete,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                            )
+                        },
                     )
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun goalTag(goal: Goal): String {
+    if (goal.targetPolicy == TargetPolicy.NONE) {
+        return stringResource(R.string.goal_summary_no_target)
+    }
+
+    if (goal.isPrayerBased) {
+        val prayerSlots = goal.activeSlots.filter { it.slotType == GoalSlotType.PRAYER }
+        val prayerTargets = prayerSlots.mapNotNull { it.targetCount }.distinct()
+        val sharedTarget = prayerTargets.singleOrNull()
+        return when {
+            prayerSlots.size == 1 && sharedTarget != null ->
+                stringResource(R.string.goal_summary_target_times, sharedTarget)
+            sharedTarget != null ->
+                stringResource(R.string.goal_summary_target_per_prayer_count, sharedTarget)
+            else -> stringResource(R.string.goal_summary_target_per_prayer)
+        }
+    }
+
+    val target = GoalProgressCalculator.getTargetCount(goal)
+    val minimum = goal.minimumStreakCount
+    val maximum = goal.maximumCount
+    return when {
+        goal.capBehavior == CountCapBehavior.BlockAtMaximum &&
+            minimum != null && maximum != null && minimum < target && target < maximum ->
+            stringResource(R.string.goal_summary_bounded_count, minimum, target, maximum)
+        goal.capBehavior == CountCapBehavior.BlockAtMaximum && maximum == target ->
+            stringResource(R.string.goal_summary_exact_count, target)
+        minimum != null && minimum < target ->
+            stringResource(R.string.goal_summary_stretch_count, minimum, target)
+        minimum != null && minimum == target ->
+            stringResource(R.string.goal_summary_minimum_count, minimum)
+        goal.targetPolicy == TargetPolicy.CUMULATIVE_TOTAL ->
+            stringResource(R.string.goal_summary_target_total, target)
+        goal.targetPolicy == TargetPolicy.PERIOD_TOTAL ->
+            stringResource(R.string.goal_summary_target_period, target)
+        else -> stringResource(R.string.goal_summary_target_times, target)
     }
 }

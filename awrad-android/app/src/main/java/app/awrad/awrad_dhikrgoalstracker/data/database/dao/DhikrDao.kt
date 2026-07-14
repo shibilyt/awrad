@@ -6,18 +6,22 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrEntity
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DhikrDao {
 
-    @Query("SELECT * FROM dhikrs ORDER BY category, transliteration")
+    @Query("SELECT * FROM dhikrs ORDER BY category, sortOrder, transliteration")
     fun getAllDhikrs(): Flow<List<DhikrEntity>>
 
     @Query("SELECT * FROM dhikrs WHERE id = :id")
-    suspend fun getDhikrById(id: Long): DhikrEntity?
+    suspend fun getDhikrById(id: AwradId): DhikrEntity?
 
-    @Query("SELECT * FROM dhikrs WHERE category = :category ORDER BY transliteration")
+    @Query("SELECT * FROM dhikrs WHERE catalogKey = :catalogKey")
+    suspend fun getDhikrByCatalogKey(catalogKey: String): DhikrEntity?
+
+    @Query("SELECT * FROM dhikrs WHERE category = :category ORDER BY sortOrder, transliteration")
     fun getDhikrsByCategory(category: String): Flow<List<DhikrEntity>>
 
     @Query("SELECT * FROM dhikrs WHERE title LIKE '%' || :query || '%' OR transliteration LIKE '%' || :query || '%' OR translation LIKE '%' || :query || '%' OR arabic LIKE '%' || :query || '%'")
@@ -27,7 +31,7 @@ interface DhikrDao {
     suspend fun insertAll(dhikrs: List<DhikrEntity>)
 
     @Insert
-    suspend fun insert(dhikr: DhikrEntity): Long
+    suspend fun insert(dhikr: DhikrEntity)
 
     @Update
     suspend fun update(dhikr: DhikrEntity)
@@ -38,28 +42,43 @@ interface DhikrDao {
     @Query("SELECT * FROM dhikrs WHERE audioUrl IS NOT NULL")
     suspend fun getDhikrsWithAudioUrl(): List<DhikrEntity>
 
-    @Query("UPDATE dhikrs SET audioUrl = :audioUrl WHERE transliteration = :transliteration AND audioUrl IS NULL")
-    suspend fun updateAudioUrl(transliteration: String, audioUrl: String)
+    @Query("UPDATE dhikrs SET audioUrl = :audioUrl WHERE catalogKey = :catalogKey AND audioUrl IS NULL")
+    suspend fun updateAudioUrl(catalogKey: String, audioUrl: String)
 
     @Query("UPDATE dhikrs SET isDownloaded = :isDownloaded, audioFileName = :audioFileName WHERE id = :dhikrId")
-    suspend fun updateAudioDownloadStatus(dhikrId: Long, audioFileName: String, isDownloaded: Boolean)
+    suspend fun updateAudioDownloadStatus(dhikrId: AwradId, audioFileName: String, isDownloaded: Boolean)
 
     @Query("SELECT transliteration FROM dhikrs")
     suspend fun getAllTransliterations(): List<String>
 
-    @Query("UPDATE dhikrs SET audioCountPerPlay = :count WHERE transliteration = :transliteration")
-    suspend fun updateAudioCountPerPlay(transliteration: String, count: Int)
+    @Query("UPDATE dhikrs SET audioCountPerPlay = :count WHERE catalogKey = :catalogKey")
+    suspend fun updateAudioCountPerPlay(catalogKey: String, count: Int)
 
-    @Query("UPDATE dhikrs SET title = :title WHERE transliteration = :transliteration")
-    suspend fun updateTitle(transliteration: String, title: String)
+    @Query(
+        "UPDATE dhikrs SET title = :title, arabic = :arabic, transliteration = :transliteration, " +
+            "translation = :translation, category = :category, sortOrder = :sortOrder " +
+            "WHERE catalogKey = :catalogKey",
+    )
+    suspend fun updateBuiltInContent(
+        catalogKey: String,
+        title: String,
+        arabic: String,
+        transliteration: String,
+        translation: String,
+        category: String,
+        sortOrder: Int,
+    )
+
+    @Query("UPDATE dhikrs SET title = :title WHERE catalogKey = :catalogKey")
+    suspend fun updateTitle(catalogKey: String, title: String)
 
     @Query(
         "UPDATE dhikrs SET arabic = :arabic, quranSurah = :surah, " +
             "quranAyahStart = :ayahStart, quranAyahEnd = :ayahEnd " +
-            "WHERE transliteration = :transliteration"
+            "WHERE catalogKey = :catalogKey"
     )
     suspend fun updateQuranContent(
-        transliteration: String,
+        catalogKey: String,
         arabic: String,
         surah: Int,
         ayahStart: Int,

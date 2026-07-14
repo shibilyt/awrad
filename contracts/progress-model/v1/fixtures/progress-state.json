@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "dhikrs": [
+    {
+      "id": "c88b9491-40ad-4b42-a5b8-e07c4b4d31ef",
+      "catalog_key": "surah-ikhlas",
+      "is_custom": false,
+      "title": "Surah Ikhlas",
+      "arabic": "قُلْ هُوَ ٱللَّهُ أَحَدٌ",
+      "transliteration": "Qul huwa Allahu ahad",
+      "translation": "Say: He is Allah, One.",
+      "audio_url": "https://dhikrs.awrad.app/ikhlas.mp3",
+      "audio_file_name": "ikhlas.mp3",
+      "category": "quran",
+      "audio_count_per_play": 1,
+      "sort_order": 0,
+      "quran_ref": { "surah": 112, "ayah_start": 1, "ayah_end": 4 },
+      "benefits": ["Recited for protection, focus, and remembrance."]
+    },
+    {
+      "id": "4da26388-824c-4a97-ad4c-31f65ec31df1",
+      "catalog_key": null,
+      "is_custom": true,
+      "title": "Personal dhikr",
+      "arabic": "الله",
+      "transliteration": "Allah",
+      "translation": "Allah",
+      "audio_url": null,
+      "audio_file_name": null,
+      "category": "general",
+      "audio_count_per_play": 1,
+      "sort_order": 0,
+      "quran_ref": null,
+      "benefits": []
+    }
+  ],
+  "goals": [
+    {
+      "id": "8c93f608-36bf-45f4-8a41-4c3bd34f58d1",
+      "dhikr_id": "c88b9491-40ad-4b42-a5b8-e07c4b4d31ef",
+      "target_policy": "per_due_date",
+      "count_policy": {
+        "minimum_count": 33,
+        "target_count": 100,
+        "maximum_count": 150,
+        "streak_threshold": "minimum",
+        "reminder_threshold": "target",
+        "completion_threshold": { "type": "custom", "count": 100 },
+        "cap_behavior": "warn_over_target"
+      },
+      "completion_policy": "when_target_reached",
+      "slot_counting_policy": "warn_and_allow",
+      "recurrence": {
+        "frequency": "weekly",
+        "calendar": "gregorian",
+        "interval_days": null,
+        "anchor_date": "2026-07-13",
+        "month": null,
+        "season_code": null,
+        "weekdays": [1, 4],
+        "month_days": [],
+        "specific_dates": []
+      },
+      "slots": [
+        {
+          "id": "d8cb388c-2a3e-47e2-a341-9c87a1aa88dd",
+          "goal_id": "8c93f608-36bf-45f4-8a41-4c3bd34f58d1",
+          "slot_type": "anytime",
+          "count_policy": {
+            "minimum_count": 33,
+            "target_count": 100,
+            "maximum_count": 150,
+            "streak_threshold": "minimum",
+            "reminder_threshold": "target",
+            "completion_threshold": "target",
+            "cap_behavior": "warn_over_target"
+          },
+          "prayer_name": null,
+          "prayer_relation": null,
+          "start_minute": null,
+          "end_minute": null,
+          "start_lead_minutes_override": null,
+          "label": null,
+          "sort_order": 0,
+          "is_active": true,
+          "archived_at": null
+        },
+        {
+          "id": "420c98f0-b4f2-4d2d-a438-d6f22b9c61bb",
+          "goal_id": "8c93f608-36bf-45f4-8a41-4c3bd34f58d1",
+          "slot_type": "prayer",
+          "count_policy": {
+            "minimum_count": null,
+            "target_count": 33,
+            "maximum_count": null,
+            "streak_threshold": "target",
+            "reminder_threshold": "target",
+            "completion_threshold": "target",
+            "cap_behavior": "allow_over_target"
+          },
+          "prayer_name": "fajr",
+          "prayer_relation": "after",
+          "start_minute": null,
+          "end_minute": null,
+          "start_lead_minutes_override": 15,
+          "label": "After Fajr",
+          "sort_order": 1,
+          "is_active": false,
+          "archived_at": "2026-07-13T10:15:30Z"
+        }
+      ],
+      "reminders": [
+        {
+          "id": "7f35c313-4214-48cc-9060-6ea955dc90ef",
+          "goal_id": "8c93f608-36bf-45f4-8a41-4c3bd34f58d1",
+          "slot_id": null,
+          "reminder_type": "fixed_time",
+          "hour": 6,
+          "minute": 30,
+          "offset_minutes": null,
+          "enabled": true,
+          "sort_order": 0
+        }
+      ],
+      "start_date": "2026-07-13",
+      "end_date": null,
+      "duration_days": null,
+      "is_active": true,
+      "completed_at": null,
+      "created_at": "2026-07-13T10:00:00Z",
+      "updated_at": "2026-07-13T10:15:30Z"
+    }
+  ],
+  "count_entries": [
+    {
+      "id": "6eab03a6-1424-44b7-91b9-680f724212ec",
+      "goal_id": "8c93f608-36bf-45f4-8a41-4c3bd34f58d1",
+      "slot_id": "d8cb388c-2a3e-47e2-a341-9c87a1aa88dd",
+      "count": 9007199254740993,
+      "date": "2026-07-13",
+      "last_updated": "2026-07-13T10:15:30Z"
+    }
+  ]
+}
