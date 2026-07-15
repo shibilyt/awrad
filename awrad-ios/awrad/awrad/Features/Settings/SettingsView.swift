@@ -1,9 +1,27 @@
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
+
+enum SettingsParitySection: String, CaseIterable {
+    case profile = "Profile"
+    case appearance = "Appearance"
+    case countingPreferences = "Counting Preferences"
+    case dateAndCalendar = "Date & Calendar"
+    case notifications = "Notifications"
+    case prayerTimes = "Prayer Times"
+    case audioLibrary = "Audio Library"
+    case language = "Language"
+    case dataManagement = "Data Management"
+    case about = "About"
+
+    var title: LocalizedStringKey { LocalizedStringKey(rawValue) }
+}
 
 struct SettingsView: View {
     @Environment(AwradStore.self) private var store
     @Environment(AppServices.self) private var services
+    @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var scenePhase
     @State private var backupDocument: AwradBackupDocument?
     @State private var isExportingBackup = false
     @State private var isImportingBackup = false
@@ -15,6 +33,8 @@ struct SettingsView: View {
     @State private var destructiveAction: SettingsDestructiveAction?
     @State private var isEditingProfileName = false
     @State private var draftProfileName = ""
+    @State private var notificationAuthorizationState: NotificationAuthorizationState = .notDetermined
+    @State private var notificationRetry: (() -> Void)?
     private var language: AppLanguage { store.preferences.appLanguage }
     private var audioItems: [Dhikr] { store.dhikrs.filter { $0.audioURL != nil } }
     private var pendingAudioItems: [Dhikr] { audioItems.filter { !$0.isDownloaded } }
@@ -22,7 +42,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Profile") {
+            Section(SettingsParitySection.profile.title) {
                 ProfileNameEditor(
                     name: store.preferences.userName,
                     isEditing: $isEditingProfileName,
@@ -33,16 +53,39 @@ struct SettingsView: View {
                 )
             }
 
-            Section("Counting") {
-                Toggle("Haptic feedback", isOn: preferenceBinding(\.vibrateOnCount))
+            Section(SettingsParitySection.appearance.title) {
+                AwradBottomSheetPicker(
+                    title: "App theme",
+                    selection: preferenceBinding(\.colorSchemeMode),
+                    options: ColorSchemeMode.allCases
+                ) { $0.title }
+            }
+
+            Section(SettingsParitySection.countingPreferences.title) {
+                Toggle(isOn: preferenceBinding(\.vibrateOnCount)) {
+                    SettingsPreferenceLabel(
+                        title: "Haptic feedback",
+                        subtitle: "Vibrate gently with each count."
+                    )
+                }
                     .tint(AwradTheme.sage)
-                Toggle("Keep screen awake while counting", isOn: preferenceBinding(\.keepScreenOn))
+                Toggle(isOn: preferenceBinding(\.keepScreenOn)) {
+                    SettingsPreferenceLabel(
+                        title: "Keep screen awake",
+                        subtitle: "Prevent the display from sleeping while counting."
+                    )
+                }
                     .tint(AwradTheme.sage)
-                Toggle("Sound on count", isOn: preferenceBinding(\.soundOnCount))
+                Toggle(isOn: preferenceBinding(\.soundOnCount)) {
+                    SettingsPreferenceLabel(
+                        title: "Sound on count",
+                        subtitle: "Play a subtle sound for each count."
+                    )
+                }
                     .tint(AwradTheme.sage)
             }
 
-            Section("Date & Calendar") {
+            Section(SettingsParitySection.dateAndCalendar.title) {
                 AwradBottomSheetPicker(
                     title: "Day reset",
                     selection: preferenceBinding(\.dayReset),
@@ -60,31 +103,31 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Notifications & Reminders") {
-                Toggle("Daily reminder", isOn: Binding(
-                    get: { store.preferences.dailyReminderEnabled },
-                    set: { enabled in
-                        store.updatePreferences { $0.dailyReminderEnabled = enabled }
-                        if enabled {
-                            Task {
-                                await services.notifications.scheduleDailyReminder(
-                                    hour: store.preferences.reminderHour,
-                                    minute: store.preferences.reminderMinute,
-                                    language: store.preferences.appLanguage
-                                )
-                            }
-                        } else {
-                            services.notifications.cancelDailyReminder()
-                        }
-                    }
-                ))
-                .tint(AwradTheme.sage)
+            Section(SettingsParitySection.notifications.title) {
+                Toggle(isOn: dailyReminderBinding) {
+                    SettingsPreferenceLabel(
+                        title: "Daily reminder",
+                        subtitle: "Receive a reminder at your chosen time."
+                    )
+                }
+                    .tint(AwradTheme.sage)
 
-                DatePicker(
-                    "Reminder time",
-                    selection: reminderTimeBinding,
-                    displayedComponents: .hourAndMinute
-                )
+                if store.preferences.dailyReminderEnabled {
+                    DatePicker(
+                        "Reminder time",
+                        selection: reminderTimeBinding,
+                        displayedComponents: .hourAndMinute
+                    )
+                }
+
+                Toggle(isOn: dailyRemembranceBinding) {
+                    SettingsPreferenceLabel(
+                        title: "Daily remembrance",
+                        subtitle: "A devotional reminder every day at 9:00 AM."
+                    )
+                }
+                    .tint(AwradTheme.sage)
+
                 Stepper(value: preferenceBinding(\.prayerSlotDefaultLeadMinutes), in: 0...180, step: 5) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Before-prayer start window")
@@ -97,29 +140,45 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                     }
                 }
-                Button {
-                    rescheduleAllReminders()
-                } label: {
-                    Label("Refresh scheduled reminders", systemImage: "arrow.clockwise")
+
+                Button(action: openNotificationSettings) {
+                    HStack(spacing: 12) {
+                        Label("Notification permission", systemImage: "bell.badge")
+                        Spacer()
+                        Text(notificationAuthorizationTitle)
+                            .font(AwradTheme.bodyFont(.caption, weight: .bold))
+                            .foregroundStyle(notificationAuthorizationState == .authorized ? AwradTheme.sage : .red)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(
+                                (notificationAuthorizationState == .authorized ? AwradTheme.sage : Color.red).opacity(0.12),
+                                in: Capsule()
+                            )
+                        Image(systemName: "arrow.up.forward.app")
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
 
-            Section("Prayer Settings") {
-                PrayerLocationSetupView(mode: .displayWithChange)
+            Section(SettingsParitySection.prayerTimes.title) {
+                PrayerLocationSetupView(
+                    mode: .displayWithChange,
+                    onSelect: rescheduleAllReminders
+                )
 
                 AwradBottomSheetPicker(
                     title: "Calculation method",
-                    selection: preferenceBinding(\.calculationMethod),
+                    selection: preferenceBinding(\.calculationMethod, sideEffect: rescheduleAllReminders),
                     options: PrayerCalculationMethod.allCases
                 ) { $0.title }
                 AwradBottomSheetPicker(
                     title: "Madhab",
-                    selection: preferenceBinding(\.madhab),
+                    selection: preferenceBinding(\.madhab, sideEffect: rescheduleAllReminders),
                     options: PrayerMadhab.allCases
                 ) { $0.title }
             }
 
-            Section("Audio Library") {
+            Section(SettingsParitySection.audioLibrary.title) {
                 HStack(spacing: 12) {
                     Label("Offline audio", systemImage: "waveform.circle.fill")
                     Spacer()
@@ -169,23 +228,15 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Appearance") {
-                AwradBottomSheetPicker(
-                    title: "Appearance",
-                    selection: preferenceBinding(\.colorSchemeMode),
-                    options: ColorSchemeMode.allCases
-                ) { $0.title }
-            }
-
-            Section("Language") {
+            Section(SettingsParitySection.language.title) {
                 AwradBottomSheetPicker(
                     title: "Language",
-                    selection: preferenceBinding(\.appLanguage),
+                    selection: preferenceBinding(\.appLanguage, sideEffect: rescheduleAllReminders),
                     options: AppLanguage.allCases
                 ) { $0.title }
             }
 
-            Section("Data") {
+            Section(SettingsParitySection.dataManagement.title) {
                 Button {
                     exportBackup()
                 } label: {
@@ -211,15 +262,7 @@ struct SettingsView: View {
                 }
             }
 
-            #if DEBUG
-            DebugSettingsSection(
-                onTestNow: sendTestNotificationNow,
-                onTestIn30Seconds: scheduleTestNotificationIn30Seconds,
-                onRescheduleAll: rescheduleAllRemindersFromDebug
-            )
-            #endif
-
-            Section("About") {
+            Section(SettingsParitySection.about.title) {
                 HStack(spacing: 12) {
                     Image(systemName: "info.circle")
                         .foregroundStyle(AwradTheme.sage)
@@ -234,12 +277,11 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
-        .onChange(of: store.preferences.reminderHour) { _, _ in rescheduleReminderIfNeeded() }
-        .onChange(of: store.preferences.reminderMinute) { _, _ in rescheduleReminderIfNeeded() }
-        .onChange(of: store.preferences.latitude) { _, _ in rescheduleAllReminders() }
-        .onChange(of: store.preferences.longitude) { _, _ in rescheduleAllReminders() }
-        .onChange(of: store.preferences.calculationMethod) { _, _ in rescheduleAllReminders() }
-        .onChange(of: store.preferences.madhab) { _, _ in rescheduleAllReminders() }
+        .task { await refreshNotificationAuthorization() }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            Task { await refreshNotificationAuthorization() }
+        }
         .fileExporter(
             isPresented: $isExportingBackup,
             document: backupDocument,
@@ -270,6 +312,13 @@ struct SettingsView: View {
             }
         }
         .alert("Settings", isPresented: $showDataMessage) {
+            if notificationRetry != nil {
+                Button("Retry") {
+                    let retry = notificationRetry
+                    notificationRetry = nil
+                    retry?()
+                }
+            }
             Button("OK", role: .cancel) {}
         } message: {
             Text(dataMessage ?? "")
@@ -347,12 +396,36 @@ struct SettingsView: View {
             },
             set: { date in
                 let components = Calendar.current.dateComponents([.hour, .minute], from: date)
-                store.updatePreferences { preferences in
-                    preferences.reminderHour = components.hour ?? preferences.reminderHour
-                    preferences.reminderMinute = components.minute ?? preferences.reminderMinute
-                }
+                let hour = components.hour ?? store.preferences.reminderHour
+                let minute = components.minute ?? store.preferences.reminderMinute
+                updateReminderTime(hour: hour, minute: minute)
             }
         )
+    }
+
+    private var dailyReminderBinding: Binding<Bool> {
+        Binding(
+            get: { store.preferences.dailyReminderEnabled },
+            set: setDailyReminderEnabled
+        )
+    }
+
+    private var dailyRemembranceBinding: Binding<Bool> {
+        Binding(
+            get: { store.preferences.dailyRemembranceEnabled },
+            set: setDailyRemembranceEnabled
+        )
+    }
+
+    private var notificationAuthorizationTitle: String {
+        switch notificationAuthorizationState {
+        case .notDetermined:
+            AwradLocalizer.localized("Not requested", language: language)
+        case .denied:
+            AwradLocalizer.localized("Disabled", language: language)
+        case .authorized:
+            AwradLocalizer.localized("Allowed", language: language)
+        }
     }
 
     private func audioLibraryRow(for dhikr: Dhikr) -> some View {
@@ -375,15 +448,91 @@ struct SettingsView: View {
         }
     }
 
-    private func preferenceBinding<Value>(_ keyPath: WritableKeyPath<UserPreferences, Value>) -> Binding<Value> {
+    private func preferenceBinding<Value: Equatable>(
+        _ keyPath: WritableKeyPath<UserPreferences, Value>,
+        sideEffect: (() -> Void)? = nil
+    ) -> Binding<Value> {
         Binding(
             get: { store.preferences[keyPath: keyPath] },
             set: { value in
-                store.updatePreferences { preferences in
+                guard store.preferences[keyPath: keyPath] != value else { return }
+                guard store.updatePreferences({ preferences in
                     preferences[keyPath: keyPath] = value
-                }
+                }) else { return }
+                sideEffect?()
             }
         )
+    }
+
+    private func setDailyReminderEnabled(_ enabled: Bool) {
+        guard enabled != store.preferences.dailyReminderEnabled else { return }
+        let previous = store.preferences.dailyReminderEnabled
+        guard store.updatePreferences({ $0.dailyReminderEnabled = enabled }) else { return }
+        Task {
+            let result = if enabled {
+                await services.notifications.scheduleDailyReminder(
+                    hour: store.preferences.reminderHour,
+                    minute: store.preferences.reminderMinute,
+                    language: store.preferences.appLanguage
+                )
+            } else {
+                services.notifications.cancelDailyReminder()
+            }
+            if !result.succeeded {
+                _ = store.updatePreferences { $0.dailyReminderEnabled = previous }
+                showNotificationFailure(result) { setDailyReminderEnabled(enabled) }
+            }
+            await refreshNotificationAuthorization()
+        }
+    }
+
+    private func setDailyRemembranceEnabled(_ enabled: Bool) {
+        guard enabled != store.preferences.dailyRemembranceEnabled else { return }
+        let previous = store.preferences.dailyRemembranceEnabled
+        guard store.updatePreferences({ $0.dailyRemembranceEnabled = enabled }) else { return }
+        Task {
+            let result = if enabled {
+                await services.notifications.scheduleDailyRemembrance(
+                    language: store.preferences.appLanguage
+                )
+            } else {
+                services.notifications.cancelDailyRemembrance()
+            }
+            if !result.succeeded {
+                _ = store.updatePreferences { $0.dailyRemembranceEnabled = previous }
+                showNotificationFailure(result) { setDailyRemembranceEnabled(enabled) }
+            }
+            await refreshNotificationAuthorization()
+        }
+    }
+
+    private func updateReminderTime(hour: Int, minute: Int) {
+        let previousHour = store.preferences.reminderHour
+        let previousMinute = store.preferences.reminderMinute
+        guard hour != previousHour || minute != previousMinute else { return }
+        guard store.updatePreferences({ preferences in
+            preferences.reminderHour = hour
+            preferences.reminderMinute = minute
+        }) else { return }
+        Task {
+            let result = await reconcileAllReminders()
+            guard !result.succeeded else { return }
+            _ = store.updatePreferences { preferences in
+                preferences.reminderHour = previousHour
+                preferences.reminderMinute = previousMinute
+            }
+            _ = await reconcileAllReminders()
+            showNotificationFailure(result) { updateReminderTime(hour: hour, minute: minute) }
+        }
+    }
+
+    private func refreshNotificationAuthorization() async {
+        notificationAuthorizationState = await services.notifications.authorizationState()
+    }
+
+    private func openNotificationSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        openURL(url)
     }
 
     private func startEditingProfileName() {
@@ -392,7 +541,7 @@ struct SettingsView: View {
     }
 
     private func saveProfileName() {
-        store.updateUserName(draftProfileName)
+        guard store.updateUserName(draftProfileName) else { return }
         draftProfileName = store.preferences.userName
         isEditingProfileName = false
     }
@@ -422,7 +571,9 @@ struct SettingsView: View {
                         from: url,
                         suggestedFileName: item.audioFileName
                     )
-                    store.markDhikrAudioDownloaded(dhikrID: item.id, fileName: fileName)
+                    if !store.markDhikrAudioDownloaded(dhikrID: item.id, fileName: fileName) {
+                        failedCount += 1
+                    }
                 } catch {
                     failedCount += 1
                 }
@@ -438,35 +589,41 @@ struct SettingsView: View {
         }
     }
 
-    private func rescheduleReminderIfNeeded() {
-        guard store.preferences.dailyReminderEnabled else { return }
+    private func rescheduleAllReminders() {
         Task {
-            await services.notifications.scheduleDailyReminder(
-                hour: store.preferences.reminderHour,
-                minute: store.preferences.reminderMinute,
-                language: store.preferences.appLanguage
-            )
+            let result = await reconcileAllReminders()
+            if !result.succeeded {
+                showNotificationFailure(result, retry: rescheduleAllReminders)
+            }
         }
     }
 
-    private func rescheduleAllReminders() {
-        Task {
-            let inputs = ReminderScheduleBuilder.goalInputs(
-                goals: store.goals,
-                dhikrs: store.dhikrs,
-                preferences: store.preferences,
+    private func reconcileAllReminders() async -> NotificationSchedulingResult {
+        let preferences = store.preferences
+        let inputs = ReminderScheduleBuilder.goalInputs(
+            goals: store.goals,
+            dhikrs: store.dhikrs,
+            preferences: preferences,
+            prayerTimeService: services.prayerTimes
+        )
+        return await services.notifications.refreshScheduledReminders(
+            goalInputs: inputs,
+            dailyReminder: (
+                enabled: preferences.dailyReminderEnabled,
+                hour: preferences.reminderHour,
+                minute: preferences.reminderMinute,
+                language: preferences.appLanguage
+            ),
+            dailyRemembrance: (
+                enabled: preferences.dailyRemembranceEnabled,
+                language: preferences.appLanguage
+            ),
+            wirdInputs: ReminderScheduleBuilder.wirdInputs(
+                wirds: store.wirds,
+                preferences: preferences,
                 prayerTimeService: services.prayerTimes
             )
-            await services.notifications.refreshScheduledReminders(
-                goalInputs: inputs,
-                dailyReminder: (
-                    enabled: store.preferences.dailyReminderEnabled,
-                    hour: store.preferences.reminderHour,
-                    minute: store.preferences.reminderMinute,
-                    language: store.preferences.appLanguage
-                )
-            )
-        }
+        )
     }
 
     private func exportBackup() {
@@ -489,8 +646,14 @@ struct SettingsView: View {
 
             let data = try Data(contentsOf: url)
             try store.importBackupData(data)
-            rescheduleAllReminders()
-            showDataStatus(AwradLocalizer.localized("Backup imported.", language: language))
+            Task {
+                let result = await reconcileAllReminders()
+                if result.succeeded {
+                    showDataStatus(AwradLocalizer.localized("Backup imported.", language: language))
+                } else {
+                    showNotificationFailure(result, retry: rescheduleAllReminders)
+                }
+            }
         } catch {
             showDataStatus(error.localizedDescription)
         }
@@ -500,11 +663,17 @@ struct SettingsView: View {
         destructiveAction = nil
         switch action {
         case .resetProgress:
-            store.resetProgress()
-            rescheduleAllReminders()
-            showDataStatus(AwradLocalizer.localized("Progress reset.", language: language))
+            guard store.resetProgress() else { return }
+            Task {
+                let result = await reconcileAllReminders()
+                if result.succeeded {
+                    showDataStatus(AwradLocalizer.localized("Progress reset.", language: language))
+                } else {
+                    showNotificationFailure(result, retry: rescheduleAllReminders)
+                }
+            }
         case .deleteAllGoals:
-            store.deleteAllGoals()
+            guard store.deleteAllGoals() else { return }
             Task {
                 await services.notifications.cancelAllGoalReminders()
             }
@@ -534,8 +703,14 @@ struct SettingsView: View {
     }
 
     private func rescheduleAllRemindersFromDebug() {
-        rescheduleAllReminders()
-        showDataStatus(AwradLocalizer.localized("Reminders rescheduled.", language: language))
+        Task {
+            let result = await reconcileAllReminders()
+            if result.succeeded {
+                showDataStatus(AwradLocalizer.localized("Reminders rescheduled.", language: language))
+            } else {
+                showNotificationFailure(result, retry: rescheduleAllRemindersFromDebug)
+            }
+        }
     }
 
     private func debugNotificationBody() -> String {
@@ -546,9 +721,34 @@ struct SettingsView: View {
     }
     #endif
 
-    private func showDataStatus(_ message: String) {
+    private func showNotificationFailure(
+        _ result: NotificationSchedulingResult,
+        retry: @escaping () -> Void
+    ) {
+        guard let message = result.localizedFailureMessage(language: language) else { return }
+        showDataStatus(message, retry: retry)
+    }
+
+    private func showDataStatus(_ message: String, retry: (() -> Void)? = nil) {
         dataMessage = message
+        notificationRetry = retry
         showDataMessage = true
+    }
+}
+
+private struct SettingsPreferenceLabel: View {
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title)
+                .font(AwradTheme.bodyFont(.body, weight: .medium))
+            Text(subtitle)
+                .font(AwradTheme.bodyFont(.footnote))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 

@@ -8,7 +8,7 @@ These instructions apply inside `awrad-ios/` and extend the repository-wide rule
 - The SwiftUI app entry is `awrad/awrad/awradApp.swift`.
 - `AppServices` composes long-lived dependencies; `AppRouter` and `AwradDeepLink` own navigation/deep-link interpretation.
 - `AwradDomain.swift` owns core value types; `AwradCalculators.swift` owns reusable product calculations.
-- `AwradStore` owns local app state, persistence, and mutations. Views should call store/service APIs rather than edit persisted snapshots directly.
+- `AwradStore` owns local app state and mutations. Its production backend is the repository layer under `awrad/Core/Persistence/`; views should never edit SwiftData, widget projections, or legacy snapshots directly.
 - `AuthService` owns the current mobile JSON authentication client.
 - `Shared/` and `AwradWidgetExtension/` form a second process boundary. Shared snapshot and mutation changes must be compatible in both app and extension.
 
@@ -22,8 +22,8 @@ These instructions apply inside `awrad-ios/` and extend the repository-wide rule
 
 ## Persistence, widget, and compatibility
 
-- Persisted Codable changes need an explicit old-data path: backward-compatible decoding, migration, or deliberate reset behavior.
-- Add old-snapshot and round-trip tests when changing persisted structures.
+- SwiftData model changes require a forward `VersionedSchema`/`SchemaMigrationPlan` path. Legacy snapshot changes also require backward-compatible decoding or an explicit, non-destructive recovery path; silent reset/reseed is forbidden.
+- Add old-snapshot migration, relational round-trip, rollback, and corruption/future-version tests when changing persisted structures.
 - Update app and widget readers/writers together when shared state changes.
 - Preserve app-group and deep-link contracts. Test direct URL opening and widget-triggered mutations when affected.
 - Keep mobile product data usable offline; network auth must not become a prerequisite for local counting or reading.
@@ -39,7 +39,7 @@ These instructions apply inside `awrad-ios/` and extend the repository-wide rule
 
 - The default development auth URL is `http://127.0.0.1:4000/`, and `AuthService` supports URL injection.
 - Review [`../CONTRACTS.md`](../CONTRACTS.md) and the Phoenix router before changing auth requests or responses.
-- iOS does not currently have Android's automatic refresh-and-retry behavior. Do not claim or assume token-refresh parity without implementing and testing it.
+- `AuthService` owns Keychain credentials and single-flight refresh-and-retry. Preserve the one-refresh concurrency rule and keep local devotional workflows usable when refresh or the API is unavailable.
 
 ## Validation
 

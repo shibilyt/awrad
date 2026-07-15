@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "slug": "dalail-al-khayrat",
+  "version": 5,
+  "estimated_minutes": 60,
+  "content_sha256": "3d4d138ab9edb9967c75d59211d480a53a832eb44f73a9978461fe2c89800bac",
+  "part_segment_counts": [77, 146, 46, 52, 56, 28, 28, 19],
+  "segment_count": 452,
+  "countable_segment_count": 433,
+  "part_indexes_by_weekday": {
+    "1": [6],
+    "2": [7, 0],
+    "3": [1],
+    "4": [2],
+    "5": [3],
+    "6": [4],
+    "7": [5]
+  },
+  "identity_cases": [
+    {
+      "structural_path": "dalail-al-khayrat",
+      "id": "377ac7e5-800e-3074-bb6e-91c3af353de3"
+    },
+    {
+      "structural_path": "dalail-al-khayrat/part/0",
+      "id": "7b7ca701-9d65-3bfc-87b9-722f8b5377d9"
+    },
+    {
+      "structural_path": "dalail-al-khayrat/part/7",
+      "id": "843ed09d-2834-3ce2-850f-22192d9c6ef6"
+    },
+    {
+      "structural_path": "dalail-al-khayrat/part/0/seg/0",
+      "id": "0b78196b-72af-3483-906e-d8e1c2a204f7"
+    },
+    {
+      "structural_path": "dalail-al-khayrat/part/7/seg/18",
+      "id": "bc7b0eb7-fa7e-3de0-8fa7-c2ea0e9f4c25"
+    }
+  ]
+}

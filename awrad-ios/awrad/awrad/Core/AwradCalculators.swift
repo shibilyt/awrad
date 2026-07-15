@@ -79,9 +79,6 @@ enum GoalProgressCalculator {
     static func isDue(_ goal: Goal, on dateKey: String) -> Bool {
         guard goal.isActive, goal.completedAt == nil else { return false }
         guard dateKey >= goal.startDate else { return false }
-        if goal.targetPolicy == .cumulativeTotal {
-            return dateKey == goal.startDate
-        }
         if let endDate = goal.endDate, dateKey > endDate { return false }
         if let durationDays = goal.durationDays,
            let start = Self.dateFormatter.date(from: goal.startDate),
@@ -91,6 +88,12 @@ enum GoalProgressCalculator {
             return false
         }
         return isScheduled(goal.recurrence, startDate: goal.startDate, dateKey: dateKey)
+    }
+
+    /// Recurrence-only check used by streak/reminder/widget parity. Active,
+    /// completion, and start/end gates intentionally remain the caller's job.
+    static func isScheduled(_ goal: Goal, on dateKey: String) -> Bool {
+        isScheduled(goal.recurrence, startDate: goal.startDate, dateKey: dateKey)
     }
 
     static func streak(entries: [CountEntry], todayKey: String) -> Int {
@@ -119,13 +122,18 @@ enum GoalProgressCalculator {
             grouping: entries.filter { $0.goalID == goal.id && $0.count > 0 },
             by: \.dateKey
         ).mapValues { $0.reduce(0) { $0 + $1.count } }
-        let qualifyingDates = Set(dailyTotals.filter { $0.value >= threshold }.keys)
+        let activeDates = Set(dailyTotals.keys)
         guard let today = dateFormatter.date(from: todayKey) else { return 0 }
-        var check = qualifyingDates.contains(todayKey)
+        var check = activeDates.contains(todayKey)
             ? today
             : (Calendar.current.date(byAdding: .day, value: -1, to: today) ?? today)
         var streak = 0
-        while qualifyingDates.contains(check.dateKey) {
+        while (Calendar.current.dateComponents([.day], from: check, to: today).day ?? 367) <= 366 {
+            if !isScheduled(goal.recurrence, startDate: goal.startDate, dateKey: check.dateKey) {
+                check = Calendar.current.date(byAdding: .day, value: -1, to: check) ?? check
+                continue
+            }
+            guard dailyTotals[check.dateKey, default: 0] >= threshold else { break }
             streak += 1
             check = Calendar.current.date(byAdding: .day, value: -1, to: check) ?? check
         }
@@ -134,17 +142,22 @@ enum GoalProgressCalculator {
 
     private static func isScheduled(_ recurrence: GoalRecurrence, startDate: String, dateKey: String) -> Bool {
         guard let date = dateFormatter.date(from: dateKey) else { return true }
-        let components = Calendar.current.dateComponents([.weekday, .day, .month], from: date)
+        let gregorian = Calendar(identifier: .gregorian)
+        let gregorianComponents = gregorian.dateComponents([.weekday, .day, .month], from: date)
+        let selectedCalendar = recurrence.calendar == .hijri
+            ? Calendar(identifier: .islamicUmmAlQura)
+            : gregorian
+        let selectedComponents = selectedCalendar.dateComponents([.day, .month], from: date)
         switch recurrence.frequency {
         case .daily:
             return true
         case .weekly:
             if recurrence.weekdays.isEmpty { return true }
-            let mondayBased = ((components.weekday ?? 1) + 5) % 7 + 1
+            let mondayBased = ((gregorianComponents.weekday ?? 1) + 5) % 7 + 1
             return recurrence.weekdays.contains(mondayBased)
         case .monthly:
             if recurrence.monthDays.isEmpty { return true }
-            return recurrence.monthDays.contains(components.day ?? 0)
+            return recurrence.monthDays.contains(selectedComponents.day ?? 0)
         case .interval:
             guard let start = dateFormatter.date(from: recurrence.anchorDate?.dateKey ?? startDate) ?? dateFormatter.date(from: startDate) else {
                 return true
@@ -153,13 +166,23 @@ enum GoalProgressCalculator {
             let interval = max(recurrence.intervalDays ?? 1, 1)
             return days >= 0 && days % interval == 0
         case .yearly:
-            let monthMatches = recurrence.month.map { $0 == components.month } ?? true
-            let dayMatches = recurrence.monthDays.isEmpty || recurrence.monthDays.contains(components.day ?? 0)
+            guard let expectedMonth = recurrence.month else { return true }
+            let days = recurrence.monthDays.isEmpty
+                ? Set(recurrence.specificDates.compactMap(\.dayOfMonth))
+                : recurrence.monthDays
+            let monthMatches = expectedMonth == selectedComponents.month
+            let dayMatches = days.isEmpty || days.contains(selectedComponents.day ?? 0)
             return monthMatches && dayMatches
         case .season:
             return isSeasonDate(recurrence.seasonCode, date: date)
         case .specificDates:
-            return recurrence.specificDates.contains(dateKey)
+            return recurrence.specificDates.contains { rule in
+                if rule.date == dateKey { return true }
+                guard let month = rule.month, let day = rule.dayOfMonth else { return false }
+                let calendar = Calendar(identifier: rule.calendar == .hijri ? .islamicUmmAlQura : .gregorian)
+                let components = calendar.dateComponents([.month, .day], from: date)
+                return components.month == month && components.day == day
+            }
         }
     }
 
@@ -177,6 +200,9 @@ enum GoalProgressCalculator {
             let end = calendar.date(byAdding: .day, value: 6, to: start) ?? start
             return (start.dateKey, end.dateKey)
         case .monthly:
+            if goal.recurrence.calendar == .hijri {
+                return hijriMonthWindow(containing: date)
+            }
             let calendar = Calendar.current
             let start = calendar.date(from: calendar.dateComponents([.year, .month], from: date)) ?? date
             let range = calendar.range(of: .day, in: .month, for: date)
@@ -224,6 +250,28 @@ enum GoalProgressCalculator {
         return (start.dateKey, end.dateKey)
     }
 
+    private static func hijriMonthWindow(containing date: Date) -> (start: String, end: String) {
+        let gregorian = Calendar(identifier: .gregorian)
+        let hijri = Calendar(identifier: .islamicUmmAlQura)
+        let target = hijri.dateComponents([.year, .month], from: date)
+
+        func isSameMonth(_ candidate: Date) -> Bool {
+            let components = hijri.dateComponents([.year, .month], from: candidate)
+            return components.year == target.year && components.month == target.month
+        }
+
+        var start = date
+        while let previous = gregorian.date(byAdding: .day, value: -1, to: start), isSameMonth(previous) {
+            start = previous
+        }
+
+        var end = date
+        while let next = gregorian.date(byAdding: .day, value: 1, to: end), isSameMonth(next) {
+            end = next
+        }
+        return (start.dateKey, end.dateKey)
+    }
+
     private static func isSeasonDate(_ code: String?, date: Date) -> Bool {
         guard let code, let template = SeasonTemplateCode(rawValue: code) else {
             return false
@@ -245,7 +293,7 @@ enum GoalProgressCalculator {
         case .whiteDays:
             return (13...15).contains(day)
         case .ashura:
-            return month == 1 && day == 10
+            return month == 1 && (9...10).contains(day)
         case .arafah:
             return month == 12 && day == 9
         }
@@ -258,6 +306,18 @@ enum GoalProgressCalculator {
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter
     }()
+}
+
+struct SlotTimingResolution: Equatable {
+    var startsAt: Date? = nil
+    var endsAt: Date? = nil
+    var status: SlotTimeStatus
+}
+
+enum SlotCountingDecision: Equatable {
+    case allow
+    case requireConfirmation(SlotTimeStatus)
+    case block(SlotTimeStatus)
 }
 
 enum SlotStatusCalculator {
@@ -279,6 +339,117 @@ enum SlotStatusCalculator {
         }
     }
 
+    /// Resolves the same absolute slot interval used by Android's frozen parity
+    /// baseline. Prayer slots use the stored location, calculation method,
+    /// madhab, and default lead time. The occurrence date is the store's
+    /// effective date rather than necessarily the civil date containing `now`.
+    static func timing(
+        for slot: GoalSlot,
+        occurrenceDateKey: String,
+        preferences: UserPreferences,
+        now: Date = Date(),
+        prayerTimeService: PrayerTimeService = PrayerTimeService(),
+        calendar inputCalendar: Calendar = .current,
+        timeZone: TimeZone = .current
+    ) -> SlotTimingResolution {
+        var calendar = inputCalendar
+        calendar.timeZone = timeZone
+        let occurrenceDate = date(from: occurrenceDateKey, calendar: calendar)
+            ?? calendar.startOfDay(for: now)
+
+        let interval: (start: Date, end: Date)?
+        switch slot.slotType {
+        case .anytime:
+            return SlotTimingResolution(status: .anytime)
+        case .timeWindow:
+            interval = timeWindowInterval(
+                for: slot,
+                occurrenceDate: occurrenceDate,
+                calendar: calendar
+            )
+        case .prayer:
+            let prayerTimes = prayerTimeService.summary(
+                for: occurrenceDate,
+                latitude: preferences.latitude,
+                longitude: preferences.longitude,
+                method: preferences.calculationMethod,
+                madhab: preferences.madhab,
+                calendar: calendar,
+                timeZone: timeZone
+            )
+            interval = prayerInterval(
+                for: slot,
+                occurrenceDate: occurrenceDate,
+                prayerTimes: prayerTimes,
+                defaultLeadMinutes: preferences.prayerSlotDefaultLeadMinutes,
+                calendar: calendar
+            )
+        }
+
+        guard let interval else {
+            return SlotTimingResolution(status: .unknown)
+        }
+        let status: SlotTimeStatus = if now < interval.start {
+            .upcoming
+        } else if now < interval.end {
+            .active
+        } else {
+            .ended
+        }
+        return SlotTimingResolution(
+            startsAt: interval.start,
+            endsAt: interval.end,
+            status: status
+        )
+    }
+
+    /// Single decision seam used by every positive-count entry point.
+    static func countingDecision(
+        for slot: GoalSlot,
+        policy: SlotCountingPolicy,
+        occurrenceDateKey: String,
+        preferences: UserPreferences,
+        now: Date = Date(),
+        prayerTimeService: PrayerTimeService = PrayerTimeService(),
+        calendar: Calendar = .current,
+        timeZone: TimeZone = .current
+    ) -> SlotCountingDecision {
+        let timing = timing(
+            for: slot,
+            occurrenceDateKey: occurrenceDateKey,
+            preferences: preferences,
+            now: now,
+            prayerTimeService: prayerTimeService,
+            calendar: calendar,
+            timeZone: timeZone
+        )
+        return countingDecision(status: timing.status, policy: policy)
+    }
+
+    static func countingDecision(
+        status: SlotTimeStatus,
+        policy: SlotCountingPolicy
+    ) -> SlotCountingDecision {
+        switch policy {
+        case .silentFlexible:
+            return .allow
+        case .strictActiveOnly:
+            switch status {
+            case .active, .anytime:
+                return .allow
+            case .upcoming, .ended, .unknown:
+                return .block(status)
+            }
+        case .warnAndAllow:
+            switch status {
+            case .upcoming, .ended:
+                return .requireConfirmation(status)
+            case .active, .anytime, .unknown:
+                return .allow
+            }
+        }
+    }
+
     static func minuteOfDay(from date: Date, calendar: Calendar = .current) -> Int {
         let components = calendar.dateComponents([.hour, .minute], from: date)
         return (components.hour ?? 0) * 60 + (components.minute ?? 0)
@@ -287,15 +458,100 @@ enum SlotStatusCalculator {
     /// Whether counting is permitted, and whether a warning should be shown first,
     /// given the slot's status and the goal's `SlotCountingPolicy`.
     static func countability(status: SlotTimeStatus, policy: SlotCountingPolicy) -> (allowed: Bool, warns: Bool) {
-        switch policy {
-        case .silentFlexible:
+        switch countingDecision(status: status, policy: policy) {
+        case .allow:
             return (true, false)
-        case .strictActiveOnly:
-            return (status == .active || status == .anytime || status == .unknown, false)
-        case .warnAndAllow:
-            let warns = status == .upcoming || status == .ended
-            return (true, warns)
+        case .requireConfirmation:
+            return (true, true)
+        case .block:
+            return (false, false)
         }
+    }
+
+    private static func timeWindowInterval(
+        for slot: GoalSlot,
+        occurrenceDate: Date,
+        calendar: Calendar
+    ) -> (start: Date, end: Date)? {
+        guard let startMinute = slot.startMinute,
+              let endMinute = slot.endMinute,
+              (0..<(24 * 60)).contains(startMinute),
+              (1...(24 * 60)).contains(endMinute),
+              startMinute < endMinute,
+              let start = calendar.date(byAdding: .minute, value: startMinute, to: calendar.startOfDay(for: occurrenceDate)),
+              let end = calendar.date(byAdding: .minute, value: endMinute, to: calendar.startOfDay(for: occurrenceDate)) else {
+            return nil
+        }
+        return (start, end)
+    }
+
+    private static func prayerInterval(
+        for slot: GoalSlot,
+        occurrenceDate: Date,
+        prayerTimes: PrayerTimesSummary?,
+        defaultLeadMinutes: Int,
+        calendar: Calendar
+    ) -> (start: Date, end: Date)? {
+        guard let prayer = slot.prayerName,
+              let relation = slot.prayerRelation,
+              let prayerDate = prayerDate(for: prayer, in: prayerTimes) else {
+            return nil
+        }
+
+        switch relation {
+        case .before:
+            let leadMinutes = max(slot.startLeadMinutesOverride ?? defaultLeadMinutes, 0)
+            guard let start = calendar.date(byAdding: .minute, value: -leadMinutes, to: prayerDate) else {
+                return nil
+            }
+            return (start, prayerDate)
+        case .after:
+            let end: Date?
+            switch prayer {
+            case .fajr:
+                end = prayerTimes?.dhuhr
+            case .dhuhr:
+                end = prayerTimes?.asr
+            case .asr:
+                end = prayerTimes?.maghrib
+            case .maghrib:
+                end = prayerTimes?.isha
+            case .isha:
+                end = calendar.date(
+                    byAdding: .day,
+                    value: 1,
+                    to: calendar.startOfDay(for: occurrenceDate)
+                )
+            }
+            guard let end else { return nil }
+            return (prayerDate, end)
+        }
+    }
+
+    private static func prayerDate(
+        for prayer: Prayer,
+        in prayerTimes: PrayerTimesSummary?
+    ) -> Date? {
+        guard let prayerTimes else { return nil }
+        return switch prayer {
+        case .fajr: prayerTimes.fajr
+        case .dhuhr: prayerTimes.dhuhr
+        case .asr: prayerTimes.asr
+        case .maghrib: prayerTimes.maghrib
+        case .isha: prayerTimes.isha
+        }
+    }
+
+    private static func date(from dateKey: String, calendar: Calendar) -> Date? {
+        let parts = dateKey.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+        return calendar.date(from: DateComponents(
+            calendar: calendar,
+            timeZone: calendar.timeZone,
+            year: parts[0],
+            month: parts[1],
+            day: parts[2]
+        ))
     }
 }
 
@@ -444,6 +700,10 @@ enum WirdCalculator {
 
     static func isActive(_ wird: Wird, on date: Date, calendar: Calendar = .current) -> Bool {
         guard passesHijriAnchor(wird.schedule.hijriAnchor, on: date) else { return false }
+        if let partsByWeekday = wird.schedule.partsByWeekday {
+            let weekday = calendar.component(.weekday, from: date)
+            return partsByWeekday[weekday, default: []].contains { wird.parts.indices.contains($0) }
+        }
         switch wird.schedule.cadence {
         case .everyDay, .rotation:
             return true
@@ -461,6 +721,12 @@ enum WirdCalculator {
     /// Parts active on the given day (a single rotating part for `.rotation`, otherwise all).
     static func activeParts(_ wird: Wird, on date: Date, calendar: Calendar = .current) -> [WirdPart] {
         guard isActive(wird, on: date, calendar: calendar), !wird.parts.isEmpty else { return [] }
+        if let partsByWeekday = wird.schedule.partsByWeekday {
+            let weekday = calendar.component(.weekday, from: date)
+            return partsByWeekday[weekday, default: []].compactMap { index in
+                wird.parts.indices.contains(index) ? wird.parts[index] : nil
+            }
+        }
         switch wird.schedule.cadence {
         case .rotation:
             let index = rotationIndex(for: date, count: wird.parts.count, calendar: calendar)

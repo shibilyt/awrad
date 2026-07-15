@@ -150,6 +150,10 @@ struct AwradWidgetMutationSnapshot: Codable, Hashable {
     }()
 }
 
+/// Temporary compatibility writer for installs that have not completed the
+/// snapshot-v5 to SwiftData migration. Post-migration widget actions must use
+/// `SharedAwradRelationalWidgetMutation` instead so JSON never becomes a second
+/// persistence authority.
 enum SharedAwradWidgetMutation {
     static let storeDirectoryName = "Store"
     static let snapshotFileName = "awrad-snapshot.json"

@@ -1,55 +1,96 @@
+import Foundation
 import SwiftUI
+
+struct GoalPortfolioSections: Equatable {
+    var today: [Goal]
+    var upcoming: [Goal]
+    var completed: [Goal]
+    var other: [Goal]
+}
+
+enum GoalPortfolioBuilder {
+    /// Mirrors Android's four-way portfolio categorization. A recurring goal
+    /// completed for the effective day remains in Today and is ordered after
+    /// unfinished goals; only a non-nil `completedAt` is permanently completed.
+    static func sections(
+        goals: [Goal],
+        todayKey: String,
+        progress: (Goal) -> Double,
+        title: (Goal) -> String
+    ) -> GoalPortfolioSections {
+        let ordered = goals.sorted { lhs, rhs in
+            if lhs.createdAt == rhs.createdAt { return title(lhs) < title(rhs) }
+            return lhs.createdAt > rhs.createdAt
+        }
+        let active = ordered.filter { $0.isActive && $0.completedAt == nil }
+        let completed = ordered.filter { $0.completedAt != nil }
+        let inactive = ordered.filter { !$0.isActive && $0.completedAt == nil }
+
+        let today = active.filter { GoalProgressCalculator.isDue($0, on: todayKey) }
+        let unfinishedToday = today.filter { progress($0) < 1 }
+        let finishedToday = today.filter { progress($0) >= 1 }
+        let notToday = active.filter { goal in
+            !today.contains(where: { $0.id == goal.id })
+        }
+        let upcoming = notToday.filter { goal in
+            (1...7).contains { offset in
+                guard let dateKey = addingDays(offset, to: todayKey) else { return false }
+                return GoalProgressCalculator.isDue(goal, on: dateKey)
+            }
+        }
+        let upcomingIDs = Set(upcoming.map(\.id))
+        let otherActive = notToday.filter { !upcomingIDs.contains($0.id) }
+
+        return GoalPortfolioSections(
+            today: unfinishedToday + finishedToday,
+            upcoming: upcoming,
+            completed: completed,
+            other: otherActive + inactive
+        )
+    }
+
+    private static func addingDays(_ days: Int, to dateKey: String) -> String? {
+        guard let date = dateFormatter.date(from: dateKey),
+              let result = Calendar(identifier: .gregorian).date(byAdding: .day, value: days, to: date) else {
+            return nil
+        }
+        return dateFormatter.string(from: result)
+    }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+}
 
 struct GoalsView: View {
     @Environment(AwradStore.self) private var store
     @Environment(AppRouter.self) private var router
-    @State private var isCompletedExpanded = false
 
-    private var activeGoals: [Goal] {
-        sortedGoals { $0.isActive && !$0.isCompleted }
-    }
-
-    private var pausedGoals: [Goal] {
-        sortedGoals(where: \.isPaused)
-    }
-
-    private var completedGoals: [Goal] {
-        sortedGoals(where: \.isCompleted)
-    }
-
-    private var hasGoals: Bool {
-        !store.goals.isEmpty
+    private var sections: GoalPortfolioSections {
+        GoalPortfolioBuilder.sections(
+            goals: store.goals,
+            todayKey: store.todayKey,
+            progress: store.progress,
+            title: store.title
+        )
     }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack(alignment: .center) {
-                    Text("My Goals")
-                        .font(AwradTheme.displayFont(34, weight: .bold))
-                        .foregroundStyle(AwradTheme.ink)
-                    Spacer()
-                    Button {
-                        router.navigate(.createGoal(dhikrID: nil), in: .goals)
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(AwradTheme.bodyFont(22, weight: .semibold))
-                            .foregroundStyle(AwradTheme.sageDark)
-                            .awradGlassIconButton(size: 48)
-                    }
-                    .accessibilityLabel("Create goal")
-                }
+            VStack(alignment: .leading, spacing: 22) {
+                header
 
-                if hasGoals {
-                    GoalSection(title: "Active", goals: activeGoals, tab: .goals)
-
-                    if !pausedGoals.isEmpty {
-                        GoalSection(title: "Paused", goals: pausedGoals, tab: .goals)
-                    }
-
-                    if !completedGoals.isEmpty {
-                        CompletedGoalSection(goals: completedGoals, tab: .goals, isExpanded: completedExpansion)
-                    }
+                if store.goals.isEmpty {
+                    emptyState
+                } else {
+                    GoalSection(title: "Today", goals: sections.today, tab: .goals)
+                    GoalSection(title: "Upcoming", goals: sections.upcoming, tab: .goals)
+                    GoalSection(title: "Completed", goals: sections.completed, tab: .goals)
+                    GoalSection(title: "Other", goals: sections.other, tab: .goals)
                 }
             }
             .padding(20)
@@ -61,22 +102,44 @@ struct GoalsView: View {
         .toolbar(.hidden, for: .navigationBar)
     }
 
-    private func sortedGoals(where predicate: (Goal) -> Bool) -> [Goal] {
-        store.goals
-            .filter(predicate)
-            .sorted { lhs, rhs in
-                if lhs.createdAt == rhs.createdAt {
-                    return store.title(for: lhs) < store.title(for: rhs)
-                }
-                return lhs.createdAt > rhs.createdAt
+    private var header: some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("My Goals")
+                    .font(AwradTheme.displayFont(34, weight: .bold))
+                    .foregroundStyle(AwradTheme.ink)
+                Text("Your dhikr rhythm, today and ahead")
+                    .font(AwradTheme.bodyFont(.subheadline))
+                    .foregroundStyle(.secondary)
             }
+            Spacer()
+            Button {
+                router.navigate(.createGoal(dhikrID: nil), in: .goals)
+            } label: {
+                Image(systemName: "plus")
+                    .font(AwradTheme.bodyFont(22, weight: .semibold))
+                    .foregroundStyle(AwradTheme.sageDark)
+                    .awradGlassIconButton(size: 48)
+            }
+            .accessibilityLabel("Create goal")
+        }
     }
 
-    private var completedExpansion: Binding<Bool> {
-        Binding(
-            get: { activeGoals.isEmpty || isCompletedExpanded },
-            set: { isCompletedExpanded = $0 }
-        )
+    private var emptyState: some View {
+        VStack(spacing: 16) {
+            EmptyStateView(
+                symbol: "target",
+                title: "No goals yet",
+                message: "Create a goal to begin a steady dhikr practice."
+            )
+            Button("Create Goal") {
+                router.navigate(.createGoal(dhikrID: nil), in: .goals)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AwradTheme.sage)
+            .controlSize(.large)
+        }
+        .padding(.top, 24)
     }
 }
 
@@ -90,32 +153,13 @@ private struct GoalSection: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(title)
                     .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                    .foregroundStyle(AwradTheme.ink)
                 VStack(spacing: 12) {
                     ForEach(goals) { goal in
                         GoalSummaryRow(goal: goal, tab: tab)
                     }
                 }
             }
-        }
-    }
-}
-
-private struct CompletedGoalSection: View {
-    let goals: [Goal]
-    let tab: AppTab
-    @Binding var isExpanded: Bool
-
-    var body: some View {
-        DisclosureGroup(isExpanded: $isExpanded) {
-            VStack(spacing: 12) {
-                ForEach(goals) { goal in
-                    GoalSummaryRow(goal: goal, tab: tab)
-                }
-            }
-            .padding(.top, 10)
-        } label: {
-            Text("Completed")
-                .font(AwradTheme.bodyFont(.headline, weight: .semibold))
         }
     }
 }

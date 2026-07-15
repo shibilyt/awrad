@@ -7,6 +7,8 @@ struct GoalSummaryRow: View {
     let goal: Goal
     let tab: AppTab
     @State private var isShowingDeleteConfirmation = false
+    @State private var notificationError: String?
+    @State private var canRetryResume = false
 
     private var language: AppLanguage {
         store.preferences.appLanguage
@@ -126,8 +128,7 @@ struct GoalSummaryRow: View {
         }
         .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .onTapGesture {
-            guard goal.isActive else { return }
-            router.navigate(.counting(goalID: goal.id), in: tab)
+            router.navigate(.goalDetail(goalID: goal.id), in: tab)
         }
         .confirmationDialog(
             "Delete Goal?",
@@ -138,6 +139,17 @@ struct GoalSummaryRow: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This goal and its count history will be permanently deleted. This cannot be undone.")
+        }
+        .alert("Couldn’t update reminders", isPresented: Binding(
+            get: { notificationError != nil },
+            set: { if !$0 { notificationError = nil } }
+        )) {
+            if canRetryResume {
+                Button("Retry", action: resumeGoal)
+            }
+            Button("Cancel", role: .cancel) { canRetryResume = false }
+        } message: {
+            Text(notificationError ?? "")
         }
     }
 
@@ -159,6 +171,24 @@ struct GoalSummaryRow: View {
 
     private var goalMenu: some View {
         Menu {
+            Button("Goal details", systemImage: "list.bullet.rectangle") {
+                router.navigate(.goalDetail(goalID: goal.id), in: tab)
+            }
+
+            Button("Edit count rules", systemImage: "number.circle") {
+                router.navigate(.editGoal(goalID: goal.id), in: tab)
+            }
+
+            Button("Edit schedule", systemImage: "calendar") {
+                router.navigate(.editGoalSchedule(goalID: goal.id), in: tab)
+            }
+
+            Button("Edit reminders", systemImage: "bell") {
+                router.navigate(.editGoalReminders(goalID: goal.id), in: tab)
+            }
+
+            Divider()
+
             if goal.isActive {
                 Button("Pause", systemImage: "pause.circle", action: pauseGoal)
             } else {
@@ -186,37 +216,68 @@ struct GoalSummaryRow: View {
     }
 
     private func pauseGoal() {
-        store.pauseGoal(goal.id)
-        Task { await services.notifications.cancelGoalReminders(goalID: goal.id) }
-    }
-
-    private func resumeGoal() {
-        store.resumeGoal(goal.id)
         Task {
-            if let updatedGoal = store.goal(id: goal.id) {
-                let prayerTimes = ReminderScheduleBuilder.prayerSummaries(
-                    for: updatedGoal,
-                    preferences: store.preferences,
-                    prayerTimeService: services.prayerTimes
-                )
-                await services.notifications.scheduleGoalReminders(
-                    for: updatedGoal,
-                    dhikrTitle: store.title(for: updatedGoal),
-                    language: language,
-                    prayerTimes: prayerTimes
-                )
+            _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
+            guard store.pauseGoal(goal.id) else {
+                _ = await schedule(goal)
+                return
             }
         }
     }
 
+    private func resumeGoal() {
+        Task {
+            var candidate = goal
+            candidate.isActive = true
+            candidate.completedAt = nil
+            let result = await schedule(candidate)
+            guard result.succeeded else {
+                canRetryResume = true
+                notificationError = result.localizedFailureMessage(language: language)
+                return
+            }
+            guard store.resumeGoal(goal.id) else {
+                _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
+                canRetryResume = true
+                notificationError = AwradLocalizer.localized("Couldn’t save changes. Try again.", language: language)
+                return
+            }
+            canRetryResume = false
+        }
+    }
+
     private func completeGoal() {
-        store.completeGoal(goal.id)
-        Task { await services.notifications.cancelGoalReminders(goalID: goal.id) }
+        Task {
+            _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
+            guard store.completeGoal(goal.id) else {
+                _ = await schedule(goal)
+                return
+            }
+        }
     }
 
     private func deleteGoal() {
-        store.deleteGoal(goal.id)
-        Task { await services.notifications.cancelGoalReminders(goalID: goal.id) }
+        Task {
+            _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
+            guard store.deleteGoal(goal.id) else {
+                _ = await schedule(goal)
+                return
+            }
+        }
+    }
+
+    private func schedule(_ candidate: Goal) async -> NotificationSchedulingResult {
+        let prayerTimes = ReminderScheduleBuilder.prayerSummaries(
+            for: candidate,
+            preferences: store.preferences,
+            prayerTimeService: services.prayerTimes
+        )
+        return await services.notifications.scheduleGoalReminders(
+            for: candidate,
+            dhikrTitle: store.title(for: candidate),
+            language: language,
+            prayerTimes: prayerTimes
+        )
     }
 }
 

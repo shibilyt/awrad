@@ -7,18 +7,29 @@ struct OnboardingView: View {
     @Environment(AwradStore.self) private var store
     @Environment(AppServices.self) private var services
     @Environment(AppRouter.self) private var router
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var step = 0
+    @State private var openingPhase: OnboardingOpeningPhase = .bismillah
     @State private var name = ""
     @State private var selectedAudioIDs: Set<AwradID> = []
     @State private var downloadProgress = 0
     @State private var isDownloading = false
     @State private var downloadMessage: String?
-    @State private var notificationsResolved = false
+    @State private var notificationAuthorizationState: NotificationAuthorizationState = .notDetermined
+    @State private var selectedReminderPresets: Set<OnboardingReminderPreset> = []
     @State private var firstGoalCount = 70
     @State private var isCreatingGoal = false
+    @State private var showsAuthSheet = false
+    @State private var authMode: OnboardingAuthMode = .signIn
+    @State private var authEmail = ""
+    @State private var authPassword = ""
+    @State private var isAuthenticating = false
+    @State private var authError: String?
+    @State private var reminderSchedulingError: String?
+    @State private var pendingFirstGoal: Goal?
 
-    private let totalSteps = 8
+    private let totalSteps = 10
 
     private var audioItems: [Dhikr] {
         store.dhikrs.filter { $0.audioURL != nil }
@@ -29,8 +40,8 @@ struct OnboardingView: View {
         ZStack {
             onboardingBackground.ignoresSafeArea()
 
-            if step == 0 {
-                welcomeScreen
+            if step == OnboardingStep.opening.rawValue {
+                openingScene
             } else {
                 VStack(spacing: 0) {
                     stepHeader
@@ -49,17 +60,47 @@ struct OnboardingView: View {
                     }
                 }
                 .safeAreaInset(edge: .bottom) {
-                    controls
-                        .frame(maxWidth: .infinity)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 12)
-                        .padding(.bottom, 8)
-                        .background(AwradTheme.background.opacity(0.96))
+                    if step != OnboardingStep.account.rawValue {
+                        controls
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
+                            .padding(.bottom, 8)
+                            .background(.ultraThinMaterial)
+                    }
                 }
             }
         }
         .animation(.snappy, value: step)
         .onAppear(perform: initializeOnboardingState)
+        .task {
+            await refreshNotificationAuthorization()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            guard newPhase == .active else { return }
+            Task { await refreshNotificationAuthorization() }
+        }
+        .onChange(of: firstGoalCount) { _, _ in
+            guard step == OnboardingStep.firstGoal.rawValue else { return }
+            persistOnboardingDraft()
+        }
+        .sheet(isPresented: $showsAuthSheet) {
+            onboardingAuthSheet
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
+        .alert("Couldn’t schedule reminders", isPresented: Binding(
+            get: { reminderSchedulingError != nil },
+            set: { if !$0 { reminderSchedulingError = nil } }
+        )) {
+            Button("Retry", action: finishOnboarding)
+            if pendingFirstGoal != nil {
+                Button("Continue without reminders", action: finishWithoutReminders)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(reminderSchedulingError ?? "")
+        }
     }
 
     // MARK: - Background & progress
@@ -109,7 +150,7 @@ struct OnboardingView: View {
 
     private var backButton: some View {
         Button {
-            withAnimation(.snappy) { step -= 1 }
+            move(toRawStep: max(step - 1, 0))
         } label: {
             Image(systemName: "chevron.left")
                 .font(AwradTheme.displayFont(.subheadline, weight: .semibold))
@@ -123,7 +164,7 @@ struct OnboardingView: View {
 
     private var skipButton: some View {
         Button {
-            withAnimation(.snappy) { step += 1 }
+            move(toRawStep: min(step + 1, totalSteps - 1))
         } label: {
             Text(LocalizedStringKey("Skip"))
                 .font(AwradTheme.displayFont(.subheadline, weight: .semibold))
@@ -136,14 +177,14 @@ struct OnboardingView: View {
 
     /// Steps whose content is short enough to vertically center (no scroll).
     private var isCenteredStep: Bool {
-        step == 1 || step == 2
+        step == OnboardingStep.language.rawValue || step == OnboardingStep.name.rawValue
     }
 
     @ViewBuilder
     private var centeredStepBody: some View {
         switch step {
-        case 1: nameStep
-        case 2: languageStep
+        case OnboardingStep.language.rawValue: languageStep
+        case OnboardingStep.name.rawValue: nameStep
         default: EmptyView()
         }
     }
@@ -188,69 +229,141 @@ struct OnboardingView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    // MARK: - Welcome (editorial, no imagery)
+    // MARK: - Cinematic opening
 
-    private var welcomeScreen: some View {
-        VStack(spacing: 0) {
-            progressDots
-                .padding(.top, 12)
+    private var openingScene: some View {
+        ZStack {
+            openingGlow
 
-            Spacer(minLength: 24)
+            if openingPhase == .bismillah {
+                bismillahBlock
+                    .transition(
+                        .opacity
+                            .combined(with: .scale(scale: 0.94))
+                            .combined(with: .offset(y: -10))
+                    )
+            } else {
+                welcomeBlock
+                    .transition(.opacity.combined(with: .scale(scale: 0.92)))
+            }
 
-            VStack(spacing: 20) {
-                // ﷽ — fitted so it never clips on narrow screens.
-                Text(verbatim: "\u{FDFD}")
-                    .font(AwradTheme.arabicFont(34))
-                    .foregroundStyle(AwradTheme.gold)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.4)
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 16)
-
-                AppMark(size: 88)
-
-                VStack(spacing: 8) {
-                    Text("Awrad")
-                        .font(AwradTheme.displayFont(42, weight: .bold))
-                        .foregroundStyle(AwradTheme.ink)
-                    Text(LocalizedStringKey("Your daily dhikr companion"))
-                        .font(AwradTheme.bodyFont(.headline, weight: .regular))
-                        .foregroundStyle(AwradTheme.subdued)
+            if openingPhase == .ready {
+                VStack {
+                    Spacer()
+                    Button {
+                        move(to: .language)
+                    } label: {
+                        Text(LocalizedStringKey("Begin"))
+                            .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 17)
+                            .background(AwradTheme.sage, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
+                .padding(.horizontal, 28)
+                .padding(.bottom, 20)
             }
-
-            Spacer(minLength: 28)
-
-            VStack(spacing: 0) {
-                WelcomeRow(symbol: "circle.grid.cross.fill", title: "Dhikr goals", subtitle: "Daily, cumulative, and prayer-based.")
-                welcomeDivider
-                WelcomeRow(symbol: "waveform", title: "Audio counting", subtitle: "Let recitations count for you, hands-free.")
-                welcomeDivider
-                WelcomeRow(symbol: "book.pages.fill", title: "Wirds & community", subtitle: "Read collections, grow with others.")
-            }
-
-            Spacer(minLength: 28)
-
-            Button {
-                withAnimation(.snappy) { step = 1 }
-            } label: {
-                Text(LocalizedStringKey("Begin"))
-                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 17)
-                    .background(AwradTheme.sage, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            }
-            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 28)
-        .padding(.bottom, 20)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard openingPhase != .ready else { return }
+            withAnimation(.easeInOut(duration: 0.6)) {
+                openingPhase = .ready
+            }
+        }
+        .task(id: openingPhase) {
+            do {
+                switch openingPhase {
+                case .bismillah:
+                    try await Task.sleep(for: .milliseconds(3_100))
+                    withAnimation(.easeInOut(duration: 0.5)) {
+                        openingPhase = .welcome
+                    }
+                case .welcome:
+                    try await Task.sleep(for: .milliseconds(1_200))
+                    withAnimation(.easeOut(duration: 0.6)) {
+                        openingPhase = .ready
+                    }
+                case .ready:
+                    break
+                }
+            } catch {
+                // A phase change cancels the previous beat; the new phase owns the timeline.
+            }
+        }
+        .accessibilityElement(children: .contain)
     }
 
-    private var welcomeDivider: some View {
-        Rectangle()
-            .fill(AwradTheme.ink.opacity(0.08))
-            .frame(height: 1)
+    private var openingGlow: some View {
+        RadialGradient(
+            colors: [AwradTheme.sage.opacity(0.12), .clear],
+            center: .center,
+            startRadius: 24,
+            endRadius: 360
+        )
+        .ignoresSafeArea()
+    }
+
+    private var bismillahBlock: some View {
+        VStack(spacing: 18) {
+            Text(verbatim: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ")
+                .font(AwradTheme.arabicFont(34))
+                .foregroundStyle(AwradTheme.sageDark)
+                .multilineTextAlignment(.center)
+                .lineSpacing(8)
+
+            HStack(spacing: 10) {
+                Rectangle().fill(AwradTheme.sage.opacity(0.45)).frame(width: 48, height: 1)
+                Image(systemName: "diamond.fill")
+                    .font(.system(size: 7))
+                    .foregroundStyle(AwradTheme.sage)
+                Rectangle().fill(AwradTheme.sage.opacity(0.45)).frame(width: 48, height: 1)
+            }
+
+            let translation = String(localized: "In the name of Allah, the Most Compassionate, the Most Merciful")
+            if !translation.isEmpty {
+                Text(translation)
+                    .font(AwradTheme.bodyFont(.title3, weight: .regular))
+                    .foregroundStyle(AwradTheme.subdued)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .padding(.horizontal, 32)
+    }
+
+    private var welcomeBlock: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                Circle()
+                    .fill(AwradTheme.sage.opacity(0.10))
+                    .frame(width: 196, height: 196)
+                    .blur(radius: 1)
+                AppMark(size: 148)
+            }
+
+            Text(LocalizedStringKey("As-salamu alaykum"))
+                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                .tracking(2)
+                .foregroundStyle(AwradTheme.sage)
+                .multilineTextAlignment(.center)
+                .padding(.top, 30)
+
+            Text(LocalizedStringKey("Welcome to Awrad"))
+                .font(AwradTheme.displayFont(38, weight: .bold))
+                .foregroundStyle(AwradTheme.sageDark)
+                .multilineTextAlignment(.center)
+                .padding(.top, 10)
+
+            Text(LocalizedStringKey("Your daily dhikr companion"))
+                .font(AwradTheme.bodyFont(.title3, weight: .regular))
+                .foregroundStyle(AwradTheme.subdued)
+                .multilineTextAlignment(.center)
+                .padding(.top, 10)
+        }
+        .padding(.horizontal, 28)
     }
 
     // MARK: - Steps
@@ -258,22 +371,264 @@ struct OnboardingView: View {
     @ViewBuilder
     private var stepContent: some View {
         switch step {
-        case 3:
+        case OnboardingStep.account.rawValue:
+            accountStep
+        case OnboardingStep.location.rawValue:
             OnboardingLocationStep()
-        case 4:
-            OnboardingPanel(title: "How should Awrad feel?", subtitle: "Choose a theme. You can change this anytime in Settings.") {
-                themePicker
-            }
-        case 5:
-            OnboardingPanel(title: "Stay on track", subtitle: "Allow notifications so Awrad can remind you of your daily dhikr and prayers.") {
+        case OnboardingStep.notifications.rawValue:
+            OnboardingPanel(title: "Never miss a moment of dhikr", subtitle: "Gentle reminders at the times you choose help daily awrad become habit.") {
                 notificationsStep
             }
-        case 6:
+        case OnboardingStep.reminderPresets.rawValue:
+            OnboardingPanel(title: "When should we remind you?", subtitle: "Choose the moments for your daily dhikr — pick as many as you like.") {
+                reminderPresetsStep
+            }
+        case OnboardingStep.audio.rawValue:
             OnboardingPanel(title: "Prepare guided audio", subtitle: "Download recitations now so audio-assisted counting works offline.") {
                 audioStep
             }
+        case OnboardingStep.goalIntro.rawValue:
+            goalIntroStep
         default:
             firstGoalStep
+        }
+    }
+
+    // MARK: - Account
+
+    private var accountStep: some View {
+        OnboardingPanel(
+            title: "Keep your progress safe",
+            subtitle: "Sign in to sync goals and streaks across your devices. Local reading and counting always remain available offline."
+        ) {
+            VStack(spacing: 14) {
+                if services.auth.isLoggedIn {
+                    HStack(spacing: 12) {
+                        Image(systemName: "checkmark.shield.fill")
+                            .font(AwradTheme.bodyFont(.title2))
+                            .foregroundStyle(AwradTheme.sage)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(LocalizedStringKey("You're signed in"))
+                                .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                            if let email = services.auth.userEmail {
+                                Text(email)
+                                    .font(AwradTheme.bodyFont(.footnote))
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(16)
+                    .awradGlassSurface(cornerRadius: 18)
+
+                    Button("Next") { move(to: .name) }
+                        .awradPrimaryButton()
+                } else {
+                    Button {
+                        authMode = .signIn
+                        authError = nil
+                        showsAuthSheet = true
+                    } label: {
+                        Label("Continue with email", systemImage: "envelope.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .awradPrimaryButton()
+
+                    Button("Continue as guest") { move(to: .name) }
+                        .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                        .foregroundStyle(AwradTheme.sage)
+                        .frame(minHeight: 44)
+                }
+            }
+        }
+    }
+
+    private var onboardingAuthSheet: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(LocalizedStringKey(authMode == .signIn ? "Welcome back" : "Create your account"))
+                        .font(AwradTheme.displayFont(.title, weight: .bold))
+                    Text(LocalizedStringKey("Your goals and streaks will follow you to any device."))
+                        .font(AwradTheme.bodyFont(.subheadline))
+                        .foregroundStyle(.secondary)
+                }
+
+                TextField("Email", text: $authEmail)
+                    .textContentType(.emailAddress)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding(14)
+                    .awradGlassSurface(cornerRadius: 14, interactive: true)
+
+                SecureField("Password", text: $authPassword)
+                    .textContentType(authMode == .signIn ? .password : .newPassword)
+                    .padding(14)
+                    .awradGlassSurface(cornerRadius: 14, interactive: true)
+
+                if authMode == .createAccount {
+                    Text(LocalizedStringKey(AuthPasswordPolicy.guidance))
+                        .font(AwradTheme.bodyFont(.footnote))
+                        .foregroundStyle(
+                            AuthPasswordPolicy.isValid(authPassword) || authPassword.isEmpty
+                                ? Color.secondary
+                                : Color.red
+                        )
+                }
+
+                if let authError {
+                    Text(authError)
+                        .font(AwradTheme.bodyFont(.footnote))
+                        .foregroundStyle(.red)
+                        .accessibilityLabel(Text("Authentication error: \(authError)"))
+                }
+
+                Button(action: submitOnboardingAuth) {
+                    Group {
+                        if isAuthenticating {
+                            ProgressView().tint(.white)
+                        } else {
+                            Text(LocalizedStringKey(authMode == .signIn ? "Sign in" : "Create account"))
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .awradPrimaryButton()
+                .disabled(
+                    isAuthenticating || authEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                        authPassword.isEmpty ||
+                        (authMode == .createAccount && !AuthPasswordPolicy.isValid(authPassword))
+                )
+
+                Button(authMode == .signIn ? "New to Awrad? Create an account" : "Already have an account? Sign in") {
+                    authMode = authMode == .signIn ? .createAccount : .signIn
+                    authError = nil
+                }
+                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                .foregroundStyle(AwradTheme.sage)
+                .frame(maxWidth: .infinity, minHeight: 44)
+
+                Spacer(minLength: 0)
+            }
+            .padding(20)
+            .background(AwradTheme.background.ignoresSafeArea())
+            .navigationTitle(Text(LocalizedStringKey("Your account")))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { showsAuthSheet = false }
+                }
+            }
+        }
+    }
+
+    private func submitOnboardingAuth() {
+        let email = authEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !email.isEmpty, !authPassword.isEmpty else {
+            authError = String(localized: "Enter your email and password to continue.")
+            return
+        }
+        guard authMode == .signIn || AuthPasswordPolicy.isValid(authPassword) else {
+            authError = AuthPasswordPolicy.guidance
+            return
+        }
+        guard !isAuthenticating else { return }
+        isAuthenticating = true
+        authError = nil
+        Task {
+            do {
+                if authMode == .signIn {
+                    try await services.auth.login(email: email, password: authPassword)
+                } else {
+                    try await services.auth.register(email: email, password: authPassword)
+                }
+                isAuthenticating = false
+                showsAuthSheet = false
+                move(to: .name)
+            } catch {
+                isAuthenticating = false
+                authError = error.localizedDescription
+            }
+        }
+    }
+
+    // MARK: - Reminder presets
+
+    private var reminderPresetsStep: some View {
+        VStack(spacing: 10) {
+            ForEach(OnboardingReminderPreset.allCases) { preset in
+                let selected = selectedReminderPresets.contains(preset)
+                Button {
+                    if selected {
+                        selectedReminderPresets.remove(preset)
+                    } else {
+                        selectedReminderPresets.insert(preset)
+                    }
+                    persistOnboardingDraft()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: preset.symbol)
+                            .font(AwradTheme.bodyFont(.title3, weight: .semibold))
+                            .foregroundStyle(selected ? .white : AwradTheme.sage)
+                            .frame(width: 40, height: 40)
+                            .background(selected ? AwradTheme.sage : AwradTheme.sage.opacity(0.12), in: Circle())
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(LocalizedStringKey(preset.title))
+                                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                            Text(LocalizedStringKey(preset.subtitle))
+                                .font(AwradTheme.bodyFont(.footnote))
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.leading)
+                        }
+                        Spacer()
+                        Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(selected ? AwradTheme.sage : .secondary)
+                    }
+                    .padding(14)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .awradGlassSurface(cornerRadius: 16, interactive: true)
+                .accessibilityAddTraits(selected ? .isSelected : [])
+            }
+
+            Text(LocalizedStringKey("These become reminders on your first goal — edit or remove them anytime."))
+                .font(AwradTheme.bodyFont(.footnote))
+                .foregroundStyle(.secondary)
+                .padding(.top, 4)
+        }
+    }
+
+    // MARK: - Goal introduction
+
+    private var goalIntroStep: some View {
+        OnboardingPanel(
+            title: "A prophetic practice",
+            subtitle: "Even the most beloved of Allah ﷺ sought forgiveness every single day."
+        ) {
+            VStack(spacing: 18) {
+                Text(LocalizedStringKey("onboarding_goalintro_hadith_arabic"))
+                    .font(AwradTheme.arabicFont(25))
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(AwradTheme.sageDark)
+
+                Text(LocalizedStringKey("By Allah, I seek Allah's forgiveness and turn to Him in repentance more than seventy times a day."))
+                    .font(AwradTheme.bodyFont(.body))
+                    .multilineTextAlignment(.center)
+
+                Text(LocalizedStringKey("Sahih al-Bukhari · 6307"))
+                    .font(AwradTheme.bodyFont(.caption, weight: .semibold))
+                    .foregroundStyle(AwradTheme.gold)
+
+                Divider()
+
+                Text(LocalizedStringKey("Begin where he began — with istighfar."))
+                    .font(AwradTheme.displayFont(.headline, weight: .semibold))
+                    .multilineTextAlignment(.center)
+            }
+            .padding(18)
+            .awradGlassSurface(cornerRadius: 22)
         }
     }
 
@@ -357,25 +712,51 @@ struct OnboardingView: View {
 
     private var notificationsStep: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Image(systemName: notificationsResolved ? "checkmark.circle.fill" : "bell.badge.fill")
+            Image(systemName: notificationAuthorizationState == .authorized
+                  ? "checkmark.circle.fill"
+                  : notificationAuthorizationState == .denied ? "bell.slash.fill" : "bell.badge.fill")
                 .font(AwradTheme.bodyFont(44))
-                .foregroundStyle(notificationsResolved ? AwradTheme.sage : AwradTheme.gold)
+                .foregroundStyle(notificationAuthorizationState == .authorized ? AwradTheme.sage : AwradTheme.gold)
                 .frame(maxWidth: .infinity, alignment: .center)
 
             FeatureLine(symbol: "alarm.fill", text: "Reminders for your daily dhikr goals")
             FeatureLine(symbol: "sun.horizon.fill", text: "Prayer-time aware nudges")
 
             Button {
-                Task {
-                    await services.notifications.requestAuthorizationIfUseful()
-                    notificationsResolved = true
+                if notificationAuthorizationState == .denied {
+                    #if canImport(UIKit)
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                    #endif
+                } else {
+                    Task {
+                        await services.notifications.requestAuthorizationIfUseful()
+                        notificationAuthorizationState = await services.notifications.authorizationState()
+                    }
                 }
             } label: {
-                Text(LocalizedStringKey(notificationsResolved ? "Notifications set" : "Enable notifications"))
+                Text(LocalizedStringKey(notificationAuthorizationState == .authorized
+                     ? "Notifications set"
+                     : notificationAuthorizationState == .denied ? "Open notification settings" : "Enable notifications"))
                     .frame(maxWidth: .infinity)
             }
             .awradPrimaryButton()
-            .disabled(notificationsResolved)
+            .disabled(notificationAuthorizationState == .authorized)
+
+            if notificationAuthorizationState == .denied {
+                Text("Notifications are required to continue. Enable them in Settings, then return to Awrad.")
+                    .font(AwradTheme.bodyFont(.footnote))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            } else if notificationAuthorizationState != .authorized {
+                Text("Allow notifications to continue onboarding.")
+                    .font(AwradTheme.bodyFont(.footnote))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
         }
     }
 
@@ -430,10 +811,14 @@ struct OnboardingView: View {
     }
 
     private var firstGoalStep: some View {
-        OnboardingPanel(title: "Your first dhikr goal", subtitle: "We begin with Istighfar — seeking Allah's forgiveness — starting small so it lasts.") {
+        OnboardingPanel(title: "Your first dhikr goal", subtitle: "One tap, and the Prophet's ﷺ daily practice becomes yours too.") {
             VStack(spacing: 18) {
                 istighfarCard
                 CountStepper(count: $firstGoalCount, quickValues: [70, 100])
+                Text(LocalizedStringKey("Seventy istighfar a day — the number the Prophet ﷺ himself named. Keep it, or set your own pace."))
+                    .font(AwradTheme.bodyFont(.footnote))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
             }
         }
     }
@@ -477,56 +862,104 @@ struct OnboardingView: View {
     }
 
     private var primaryTitle: LocalizedStringKey {
-        step == totalSteps - 1 ? "Begin Counting" : "Next"
+        step == OnboardingStep.firstGoal.rawValue ? "Begin Counting" : "Next"
     }
 
     private var canSkip: Bool {
-        // Location (3) and notifications (5) are optional.
-        step == 3 || step == 5
+        guard let onboardingStep = OnboardingStep(rawValue: step) else { return false }
+        return OnboardingForwardGate.canSkip(onboardingStep)
     }
 
     private var canAdvance: Bool {
-        switch step {
-        case 1: return !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        case totalSteps - 1: return !isCreatingGoal
-        default: return true
-        }
+        guard let onboardingStep = OnboardingStep(rawValue: step) else { return false }
+        return OnboardingForwardGate.canAdvance(
+            onboardingStep,
+            name: name,
+            notificationAuthorizationState: notificationAuthorizationState,
+            isCreatingGoal: isCreatingGoal
+        )
     }
 
     private func advance() {
         guard canAdvance else { return }
         switch step {
-        case 1:
+        case OnboardingStep.name.rawValue:
             store.updateUserName(name)
-            step += 1
-        case totalSteps - 1:
+            move(to: .location)
+        case OnboardingStep.firstGoal.rawValue:
             finishOnboarding()
         default:
-            step += 1
+            move(toRawStep: min(step + 1, totalSteps - 1))
         }
     }
 
     private func finishOnboarding() {
         guard !isCreatingGoal else { return }
-        isCreatingGoal = true
 
         let istighfarID = store.dhikrs.first {
             $0.id == BuiltInDhikrRegistry.isthighfar.id &&
                 $0.catalogKey == BuiltInDhikrRegistry.isthighfar.catalogKey
         }?.id
-
-        store.updateUserName(name)
-        var goalID: AwradID?
-        if let istighfarID {
-            let goal = store.createGoal(dhikrID: istighfarID, target: max(firstGoalCount, 1))
-            goalID = goal.id
+        guard let istighfarID,
+              let prepared = store.firstOnboardingGoal(
+                dhikrID: istighfarID,
+                target: max(firstGoalCount, 1),
+                reminders: resolvedOnboardingReminders()
+              ) else {
+            isCreatingGoal = false
+            return
         }
-        store.completeOnboarding(name: name)
-
-        if let goalID {
-            store.selectedTab = .home
-            router.homePath = [.counting(goalID: goalID)]
+        isCreatingGoal = true
+        pendingFirstGoal = prepared
+        Task {
+            let prayerTimes = ReminderScheduleBuilder.prayerSummaries(
+                for: prepared,
+                preferences: store.preferences,
+                prayerTimeService: services.prayerTimes
+            )
+            let result = await services.notifications.scheduleGoalReminders(
+                for: prepared,
+                dhikrTitle: store.title(for: prepared),
+                language: language,
+                prayerTimes: prayerTimes
+            )
+            guard result.succeeded else {
+                isCreatingGoal = false
+                reminderSchedulingError = result.localizedFailureMessage(language: language)
+                return
+            }
+            guard commitOnboarding(firstGoal: prepared, reminderPresetKeys: selectedReminderPresets.map(\.rawValue)) else {
+                _ = await services.notifications.cancelGoalReminders(goalID: prepared.id)
+                isCreatingGoal = false
+                reminderSchedulingError = AwradLocalizer.localized("Couldn’t save changes. Try again.", language: language)
+                return
+            }
         }
+    }
+
+    private func finishWithoutReminders() {
+        guard var prepared = pendingFirstGoal else { return }
+        prepared.reminders = []
+        reminderSchedulingError = nil
+        isCreatingGoal = true
+        guard commitOnboarding(firstGoal: prepared, reminderPresetKeys: []) else {
+            isCreatingGoal = false
+            reminderSchedulingError = AwradLocalizer.localized("Couldn’t save changes. Try again.", language: language)
+            return
+        }
+    }
+
+    @discardableResult
+    private func commitOnboarding(firstGoal: Goal, reminderPresetKeys: [String]) -> Bool {
+        guard let saved = store.completeOnboarding(
+            name: name,
+            reminderPresetKeys: reminderPresetKeys,
+            firstGoal: firstGoal
+        ) else { return false }
+        pendingFirstGoal = nil
+        store.selectedTab = .home
+        router.homePath = [.counting(goalID: saved.id, slotID: nil)]
+        return true
     }
 
     // MARK: - State
@@ -535,8 +968,71 @@ struct OnboardingView: View {
         if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             name = store.preferences.userName
         }
+        step = min(max(store.preferences.onboardingStep, 0), totalSteps - 1)
+        firstGoalCount = max(store.preferences.onboardingFirstGoalCount, 1)
+        selectedReminderPresets = Set(
+            store.preferences.onboardingReminderPresetKeys.compactMap(OnboardingReminderPreset.init(rawValue:))
+        )
         if selectedAudioIDs.isEmpty {
             selectedAudioIDs = Set(audioItems.map(\.id))
+        }
+    }
+
+    private func move(to destination: OnboardingStep) {
+        move(toRawStep: destination.rawValue)
+    }
+
+    private func move(toRawStep newStep: Int) {
+        let clamped = min(max(newStep, 0), totalSteps - 1)
+        withAnimation(.snappy) {
+            step = clamped
+        }
+        persistOnboardingDraft(step: clamped)
+    }
+
+    private func persistOnboardingDraft(step: Int? = nil) {
+        store.updatePreferences {
+            if let step { $0.onboardingStep = step }
+            $0.onboardingFirstGoalCount = max(firstGoalCount, 1)
+            $0.onboardingReminderPresetKeys = selectedReminderPresets.map(\.rawValue).sorted()
+        }
+    }
+
+    private func refreshNotificationAuthorization() async {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--awrad-ui-force-notifications-undetermined") {
+            notificationAuthorizationState = .notDetermined
+            return
+        }
+        #endif
+        notificationAuthorizationState = await services.notifications.authorizationState()
+    }
+
+    private func resolvedOnboardingReminders(now: Date = Date()) -> [GoalReminder] {
+        guard !selectedReminderPresets.isEmpty else { return [] }
+        let prayerTimes: PrayerTimesSummary?
+        if let latitude = store.preferences.latitude, let longitude = store.preferences.longitude {
+            prayerTimes = services.prayerTimes.summary(
+                for: now,
+                latitude: latitude,
+                longitude: longitude,
+                method: store.preferences.calculationMethod,
+                madhab: store.preferences.madhab
+            )
+        } else {
+            prayerTimes = nil
+        }
+
+        let calendar = Calendar.current
+        return selectedReminderPresets.sorted { $0.sortOrder < $1.sortOrder }.enumerated().map { index, preset in
+            let components = preset.timeComponents(prayerTimes: prayerTimes, calendar: calendar)
+            return GoalReminder(
+                reminderType: .fixedTime,
+                hour: components.hour,
+                minute: components.minute,
+                enabled: true,
+                sortOrder: index
+            )
         }
     }
 
@@ -601,6 +1097,120 @@ struct OnboardingView: View {
         case .light: "Always light"
         case .dark: "Always dark"
         }
+    }
+}
+
+enum OnboardingStep: Int, CaseIterable {
+    case opening
+    case language
+    case account
+    case name
+    case location
+    case notifications
+    case reminderPresets
+    case audio
+    case goalIntro
+    case firstGoal
+}
+
+enum OnboardingOpeningPhase: Equatable {
+    case bismillah
+    case welcome
+    case ready
+}
+
+enum OnboardingForwardGate {
+    static func canSkip(_ step: OnboardingStep) -> Bool {
+        step == .location || step == .audio
+    }
+
+    static func canAdvance(
+        _ step: OnboardingStep,
+        name: String,
+        notificationAuthorizationState: NotificationAuthorizationState,
+        isCreatingGoal: Bool
+    ) -> Bool {
+        switch step {
+        case .name:
+            !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        case .notifications:
+            notificationAuthorizationState == .authorized
+        case .firstGoal:
+            !isCreatingGoal
+        default:
+            true
+        }
+    }
+}
+
+private enum OnboardingAuthMode {
+    case signIn
+    case createAccount
+}
+
+private enum OnboardingReminderPreset: String, CaseIterable, Identifiable {
+    case afterFajr
+    case morning
+    case afterAsr
+    case afterMaghrib
+
+    var id: String { rawValue }
+
+    var sortOrder: Int {
+        Self.allCases.firstIndex(of: self) ?? 0
+    }
+
+    var title: String {
+        switch self {
+        case .afterFajr: "After Fajr"
+        case .morning: "Morning"
+        case .afterAsr: "After Asr"
+        case .afterMaghrib: "After Maghrib"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .afterFajr: "30 minutes after the dawn prayer"
+        case .morning: "A bright start to the day"
+        case .afterAsr: "30 minutes after the afternoon prayer"
+        case .afterMaghrib: "As the day closes"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .afterFajr: "sunrise.fill"
+        case .morning: "sun.max.fill"
+        case .afterAsr: "sun.haze.fill"
+        case .afterMaghrib: "sunset.fill"
+        }
+    }
+
+    func timeComponents(
+        prayerTimes: PrayerTimesSummary?,
+        calendar: Calendar
+    ) -> DateComponents {
+        let resolvedDate: Date?
+        let fallback: (hour: Int, minute: Int)
+        switch self {
+        case .afterFajr:
+            resolvedDate = prayerTimes.flatMap { calendar.date(byAdding: .minute, value: 30, to: $0.fajr) }
+            fallback = (6, 15)
+        case .morning:
+            resolvedDate = nil
+            fallback = (7, 0)
+        case .afterAsr:
+            resolvedDate = prayerTimes.flatMap { calendar.date(byAdding: .minute, value: 30, to: $0.asr) }
+            fallback = (17, 0)
+        case .afterMaghrib:
+            resolvedDate = prayerTimes.flatMap { calendar.date(byAdding: .minute, value: 15, to: $0.maghrib) }
+            fallback = (19, 15)
+        }
+        guard let resolvedDate else {
+            return DateComponents(hour: fallback.hour, minute: fallback.minute)
+        }
+        return calendar.dateComponents([.hour, .minute], from: resolvedDate)
     }
 }
 

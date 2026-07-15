@@ -212,6 +212,7 @@ extension DhikrV1 {
         try container.encode(audioFileName, forKey: .audioFileName)
         try container.encode(category, forKey: .category)
         try container.encode(audioCountPerPlay, forKey: .audioCountPerPlay)
+        try container.encode(sortOrder, forKey: .sortOrder)
         try container.encode(quranRef, forKey: .quranRef)
         try container.encode(benefits, forKey: .benefits)
     }
@@ -428,7 +429,9 @@ private extension RecurrenceV1 {
             frequency: try RecurrenceFrequency.contractValue(frequency),
             calendar: try CalendarSystem.contractValue(calendar), intervalDays: intervalDays,
             anchorDate: anchorDate.flatMap(ContractV1Date.components), month: month,
-            weekdays: Set(weekdays), monthDays: Set(monthDays), specificDates: Set(specificDates),
+            weekdays: Set(weekdays),
+            monthDays: Set(monthDays),
+            specificDates: Set(specificDates.map { GoalSpecificDate(date: $0) }),
             seasonCode: seasonCode
         )
     }
@@ -438,7 +441,11 @@ private extension RecurrenceV1 {
             frequency: value.frequency.contractWire, calendar: value.calendar.contractWire,
             intervalDays: value.intervalDays, anchorDate: ContractV1Date.string(value.anchorDate), month: value.month,
             seasonCode: value.seasonCode, weekdays: value.weekdays.sorted(),
-            monthDays: value.monthDays.sorted(), specificDates: value.specificDates.sorted()
+            monthDays: value.monthDays.sorted(),
+            // progress-model/v1 intentionally remains a fixed-date wire format.
+            // Calendar-recurring rules are an on-device schema capability and
+            // require a future reviewed contract version before transmission.
+            specificDates: value.specificDates.compactMap(\.date).sorted()
         )
     }
 }

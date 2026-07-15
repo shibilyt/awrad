@@ -168,8 +168,27 @@ class WirdModelTest {
         val cadence = w.schedule.cadence as WirdCadence.PartsByWeekday
 
         assertEquals("dalail-al-khayrat", w.slug)
+        assertEquals("377ac7e5-800e-3074-bb6e-91c3af353de3", w.id)
+        assertEquals(5, w.version)
+        assertEquals(60, w.estimatedMinutes)
         assertEquals(8, w.parts.size)
+        assertEquals(
+            mapOf(
+                1 to listOf(6),
+                2 to listOf(7, 0),
+                3 to listOf(1),
+                4 to listOf(2),
+                5 to listOf(3),
+                6 to listOf(4),
+                7 to listOf(5),
+            ),
+            cadence.partIndexesByDay,
+        )
         assertEquals(listOf(7, 0), cadence.partIndexesByDay[2])
+        assertEquals("7b7ca701-9d65-3bfc-87b9-722f8b5377d9", w.parts[0].id)
+        assertEquals("843ed09d-2834-3ce2-850f-22192d9c6ef6", w.parts[7].id)
+        assertEquals("0b78196b-72af-3483-906e-d8e1c2a204f7", w.parts[0].segments[0].id)
+        assertEquals("bc7b0eb7-fa7e-3de0-8fa7-c2ea0e9f4c25", w.parts[7].segments[18].id)
         assertEquals(452, w.parts.sumOf { it.segments.size })
         assertEquals(433, w.parts.sumOf { it.countableSegments.size })
         assertTrue(w.parts.all { part -> part.countableSegments.all { it.arabic.isNotBlank() } })

@@ -11,8 +11,11 @@ struct CommunityView: View {
                     .font(AwradTheme.bodyFont(.body))
                     .foregroundStyle(.secondary)
 
-                if services.auth.isLoggedIn {
+                if services.auth.isLoggedIn, services.auth.userEmailVerified {
                     loggedInCard
+                } else if services.auth.pendingVerificationEmail != nil ||
+                            (services.auth.isLoggedIn && !services.auth.userEmailVerified) {
+                    verificationRequiredCard
                 } else {
                     guestCard
                 }
@@ -25,11 +28,19 @@ struct CommunityView: View {
         .toolbar {
             if services.auth.isLoggedIn {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Log Out") {
-                        Task {
-                            await services.auth.logout()
+                    Menu {
+                        Button("Active Sessions") {
+                            router.navigate(.sessions, in: .community)
                         }
+                        Button("Log Out", role: .destructive) {
+                            Task {
+                                await services.auth.logout()
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "person.crop.circle")
                     }
+                    .accessibilityLabel("Account menu")
                 }
             }
         }
@@ -93,6 +104,41 @@ struct CommunityView: View {
         }
     }
 
+    private var verificationRequiredCard: some View {
+        AwradCard(padding: 22) {
+            VStack(spacing: 16) {
+                Image(systemName: "envelope.badge.shield.half.filled")
+                    .font(AwradTheme.bodyFont(34, weight: .semibold))
+                    .foregroundStyle(AwradTheme.gold)
+                    .frame(width: 76, height: 76)
+                    .background(AwradTheme.gold.opacity(0.12), in: Circle())
+
+                Text("Verify your email")
+                    .font(AwradTheme.displayFont(24))
+                    .foregroundStyle(AwradTheme.ink)
+
+                Text("Open the verification link we sent, or enter its token to finish securing your account.")
+                    .font(AwradTheme.bodyFont(.body))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+
+                if let email = services.auth.pendingVerificationEmail ?? services.auth.userEmail {
+                    Text(email)
+                        .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                        .foregroundStyle(AwradTheme.sage)
+                }
+
+                Button {
+                    router.navigate(.verifyEmail(token: nil), in: .community)
+                } label: {
+                    Text("Enter verification token").frame(maxWidth: .infinity)
+                }
+                .awradPrimaryButton()
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
     private var communityMark: some View {
         Image(systemName: "person.2.fill")
             .font(AwradTheme.bodyFont(34, weight: .semibold))
@@ -102,6 +148,11 @@ struct CommunityView: View {
     }
 }
 
+private enum AuthInputField: Hashable {
+    case email
+    case password
+}
+
 struct LoginView: View {
     @Environment(AppServices.self) private var services
     @Environment(AppRouter.self) private var router
@@ -109,6 +160,7 @@ struct LoginView: View {
     @State private var password = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @FocusState private var focusedField: AuthInputField?
 
     var body: some View {
         AuthFormShell(title: "Welcome Back", subtitle: "Log in to your account") {
@@ -123,11 +175,13 @@ struct LoginView: View {
             .disabled(email.isEmpty || password.isEmpty || isLoading)
 
             Button("Forgot Password") {
+                focusedField = nil
                 router.navigate(.forgotPassword, in: .community)
             }
             .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
 
             Button("No account? Sign Up") {
+                focusedField = nil
                 router.replaceLast(with: .signup, in: .community)
             }
             .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
@@ -143,11 +197,13 @@ struct LoginView: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .awradAuthField()
+            .focused($focusedField, equals: .email)
 
         if includePassword {
             SecureField("Password", text: $password)
                 .textContentType(.password)
                 .awradAuthField()
+                .focused($focusedField, equals: .password)
         }
 
         if let errorMessage {
@@ -180,6 +236,7 @@ struct SignupView: View {
     @State private var password = ""
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @FocusState private var focusedField: AuthInputField?
 
     var body: some View {
         AuthFormShell(title: "Create your account", subtitle: "Start sharing progress with the community") {
@@ -189,10 +246,17 @@ struct SignupView: View {
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .awradAuthField()
+                .focused($focusedField, equals: .email)
 
             SecureField("Password", text: $password)
-                .textContentType(.newPassword)
+                .textContentType(usesPasswordAutoFill ? .newPassword : nil)
                 .awradAuthField()
+                .focused($focusedField, equals: .password)
+
+            Text(LocalizedStringKey(AuthPasswordPolicy.guidance))
+                .font(AwradTheme.bodyFont(.footnote))
+                .foregroundStyle(AuthPasswordPolicy.isValid(password) || password.isEmpty ? Color.secondary : Color.red)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             if let errorMessage {
                 Text(errorMessage)
@@ -207,14 +271,23 @@ struct SignupView: View {
                 AuthButtonLabel(title: "Sign Up", isLoading: isLoading)
             }
             .awradPrimaryButton()
-            .disabled(email.isEmpty || password.isEmpty || isLoading)
+            .disabled(email.isEmpty || !AuthPasswordPolicy.isValid(password) || isLoading)
 
             Button("Already have an account? Log In") {
+                focusedField = nil
                 router.replaceLast(with: .login, in: .community)
             }
             .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
         }
         .navigationTitle("Sign Up")
+    }
+
+    private var usesPasswordAutoFill: Bool {
+#if DEBUG
+        !ProcessInfo.processInfo.arguments.contains("--awrad-ui-testing")
+#else
+        true
+#endif
     }
 
     private func submit() {
@@ -223,7 +296,7 @@ struct SignupView: View {
         Task {
             do {
                 try await services.auth.register(email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
-                router.popToRoot(in: .community)
+                router.replaceLast(with: .verifyEmail(token: nil), in: .community)
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -232,35 +305,319 @@ struct SignupView: View {
     }
 }
 
-struct ForgotPasswordView: View {
+struct VerifyEmailView: View {
     @Environment(AppServices.self) private var services
-    @State private var email = ""
-    @State private var isLoading = false
+    @Environment(AppRouter.self) private var router
+    @State private var token: String
+    @State private var isVerifying = false
+    @State private var isResending = false
+    @State private var cooldownSeconds = 0
     @State private var message: String?
+    @State private var messageIsSuccess = false
+
+    init(token: String?) {
+        _token = State(initialValue: token ?? "")
+    }
 
     var body: some View {
-        AuthFormShell(title: "Reset Password", subtitle: "Send a reset link to your email") {
-            TextField("Email", text: $email)
-                .textContentType(.emailAddress)
-                .keyboardType(.emailAddress)
+        AuthFormShell(title: "Verify your email", subtitle: "Paste the token from your verification link.") {
+            TextField("Verification token", text: $token)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .awradAuthField()
 
-            if let message {
-                Text(message)
-                    .font(AwradTheme.bodyFont(.footnote))
-                    .foregroundStyle(.secondary)
+            if let email = services.auth.pendingVerificationEmail ?? services.auth.userEmail {
+                Text(email)
+                    .font(AwradTheme.bodyFont(.footnote, weight: .semibold))
+                    .foregroundStyle(AwradTheme.sage)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Button {
-                submit()
-            } label: {
-                AuthButtonLabel(title: "Send Reset Link", isLoading: isLoading)
+            if let message {
+                Text(message)
+                    .font(AwradTheme.bodyFont(.footnote))
+                    .foregroundStyle(messageIsSuccess ? AwradTheme.sage : Color.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            Button(action: verify) {
+                AuthButtonLabel(title: "Verify and Sign In", isLoading: isVerifying)
             }
             .awradPrimaryButton()
-            .disabled(email.isEmpty || isLoading)
+            .disabled(token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isVerifying)
+
+            Button(action: resend) {
+                if isResending {
+                    ProgressView()
+                } else if cooldownSeconds > 0 {
+                    Text("Resend in \(cooldownSeconds)s")
+                } else {
+                    Text("Resend verification email")
+                }
+            }
+            .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .disabled(isResending || cooldownSeconds > 0)
+        }
+        .navigationTitle("Verify Email")
+        .task {
+            while !Task.isCancelled {
+                refreshCooldown()
+                try? await Task<Never, Never>.sleep(for: .seconds(1))
+            }
+        }
+    }
+
+    private func verify() {
+        guard !isVerifying else { return }
+        isVerifying = true
+        message = nil
+        messageIsSuccess = false
+        Task {
+            do {
+                try await services.auth.verifyEmail(token: token.trimmingCharacters(in: .whitespacesAndNewlines))
+                router.popToRoot(in: .community)
+            } catch {
+                message = error.localizedDescription
+            }
+            isVerifying = false
+        }
+    }
+
+    private func resend() {
+        guard !isResending, cooldownSeconds == 0 else { return }
+        isResending = true
+        message = nil
+        messageIsSuccess = false
+        Task {
+            do {
+                try await services.auth.resendVerification()
+                message = "Verification email sent."
+                messageIsSuccess = true
+                refreshCooldown()
+            } catch {
+                message = error.localizedDescription
+            }
+            isResending = false
+        }
+    }
+
+    private func refreshCooldown(now: Date = Date()) {
+        guard let availableAt = services.auth.verificationResendAvailableAt else {
+            cooldownSeconds = 0
+            return
+        }
+        cooldownSeconds = max(Int(ceil(availableAt.timeIntervalSince(now))), 0)
+    }
+}
+
+struct ResetPasswordView: View {
+    @Environment(AppServices.self) private var services
+    @Environment(\.dismiss) private var dismiss
+    let token: String
+    @State private var password = ""
+    @State private var confirmation = ""
+    @State private var isLoading = false
+    @State private var message: String?
+
+    var body: some View {
+        AuthFormShell(title: "Choose a new password", subtitle: "Use a strong password you do not use elsewhere.") {
+            SecureField("New password", text: $password)
+                .textContentType(.newPassword)
+                .awradAuthField()
+            SecureField("Confirm new password", text: $confirmation)
+                .textContentType(.newPassword)
+                .awradAuthField()
+
+            Text(LocalizedStringKey(AuthPasswordPolicy.guidance))
+                .font(AwradTheme.bodyFont(.footnote))
+                .foregroundStyle(AuthPasswordPolicy.isValid(password) || password.isEmpty ? Color.secondary : Color.red)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let message {
+                Text(message)
+                    .font(AwradTheme.bodyFont(.footnote))
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            Button(action: submit) {
+                AuthButtonLabel(title: "Reset Password", isLoading: isLoading)
+            }
+            .awradPrimaryButton()
+            .disabled(!AuthPasswordPolicy.isValid(password) || password != confirmation || isLoading)
+        }
+        .navigationTitle("Reset Password")
+    }
+
+    private func submit() {
+        guard password == confirmation, AuthPasswordPolicy.isValid(password) else { return }
+        isLoading = true
+        message = nil
+        Task {
+            do {
+                try await services.auth.resetPassword(token: token, password: password)
+                dismiss()
+            } catch {
+                message = error.localizedDescription
+            }
+            isLoading = false
+        }
+    }
+}
+
+struct SessionManagementView: View {
+    @Environment(AppServices.self) private var services
+    @Environment(AppRouter.self) private var router
+    @State private var sessions: [AuthSessionInfo] = []
+    @State private var isLoading = true
+    @State private var errorMessage: String?
+    @State private var revokingID: String?
+
+    var body: some View {
+        List {
+            if isLoading {
+                HStack { Spacer(); ProgressView(); Spacer() }
+            } else if sessions.isEmpty {
+                ContentUnavailableView(
+                    "No active sessions",
+                    systemImage: "iphone.slash",
+                    description: Text("Sign in again to create a new device session.")
+                )
+            } else {
+                Section("Devices") {
+                    ForEach(sessions) { session in
+                        HStack(spacing: 12) {
+                            Image(systemName: session.platform.lowercased() == "ios" ? "iphone" : "apps.iphone")
+                                .foregroundStyle(AwradTheme.sage)
+                                .frame(width: 32)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(session.device_name)
+                                    .font(AwradTheme.bodyFont(.body, weight: .semibold))
+                                Text(session.id == services.auth.sessionID ? "This device" : session.platform.uppercased())
+                                    .font(AwradTheme.bodyFont(.caption))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if revokingID == session.id {
+                                ProgressView()
+                            } else {
+                                Button("Revoke", role: .destructive) { revoke(session) }
+                                    .buttonStyle(.borderless)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+
+                Section {
+                    Button("Revoke All Sessions", role: .destructive, action: revokeAll)
+                        .disabled(revokingID != nil)
+                }
+            }
+
+            if let errorMessage {
+                Section {
+                    Text(errorMessage).foregroundStyle(.red)
+                    Button("Retry") { load() }
+                }
+            }
+        }
+        .navigationTitle("Active Sessions")
+        .task { await loadSessions() }
+    }
+
+    private func load() {
+        Task { await loadSessions() }
+    }
+
+    private func loadSessions() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            sessions = try await services.auth.sessions()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoading = false
+    }
+
+    private func revoke(_ session: AuthSessionInfo) {
+        guard revokingID == nil else { return }
+        revokingID = session.id
+        Task {
+            do {
+                try await services.auth.revokeSession(id: session.id)
+                sessions.removeAll { $0.id == session.id }
+                if !services.auth.isLoggedIn { router.popToRoot(in: .community) }
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            revokingID = nil
+        }
+    }
+
+    private func revokeAll() {
+        guard revokingID == nil else { return }
+        revokingID = "all"
+        Task {
+            do {
+                try await services.auth.revokeAllSessions()
+                sessions = []
+                router.popToRoot(in: .community)
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            revokingID = nil
+        }
+    }
+}
+
+struct ForgotPasswordView: View {
+    @Environment(AppServices.self) private var services
+    @Environment(AppRouter.self) private var router
+    @State private var email = ""
+    @State private var isLoading = false
+    @State private var message: String?
+    @State private var sent = false
+
+    var body: some View {
+        AuthFormShell(
+            title: sent ? "Check your email" : "Reset Password",
+            subtitle: sent ? "We sent a password reset link to your email." : "Send a reset link to your email"
+        ) {
+            if sent {
+                Image(systemName: "envelope.badge.fill")
+                    .font(AwradTheme.bodyFont(42, weight: .semibold))
+                    .foregroundStyle(AwradTheme.sage)
+                    .frame(maxWidth: .infinity)
+                Button("Back to Log In") {
+                    router.replaceLast(with: .login, in: .community)
+                }
+                .awradPrimaryButton()
+            } else {
+                TextField("Email", text: $email)
+                    .textContentType(.emailAddress)
+                    .keyboardType(.emailAddress)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .awradAuthField()
+
+                if let message {
+                    Text(message)
+                        .font(AwradTheme.bodyFont(.footnote))
+                        .foregroundStyle(Color.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
+                Button {
+                    submit()
+                } label: {
+                    AuthButtonLabel(title: "Send Reset Link", isLoading: isLoading)
+                }
+                .awradPrimaryButton()
+                .disabled(email.isEmpty || isLoading)
+            }
         }
         .navigationTitle("Forgot Password")
     }
@@ -271,7 +628,7 @@ struct ForgotPasswordView: View {
         Task {
             do {
                 try await services.auth.forgotPassword(email: email.trimmingCharacters(in: .whitespacesAndNewlines))
-                message = "Reset link sent."
+                sent = true
             } catch {
                 message = error.localizedDescription
             }
@@ -304,6 +661,7 @@ private struct AuthFormShell<Content: View>: View {
             .padding(20)
             .padding(.bottom, 40)
         }
+        .scrollDismissesKeyboard(.interactively)
         .background(AwradTheme.background)
     }
 }
@@ -329,10 +687,6 @@ private extension View {
         textFieldStyle(.plain)
             .padding(.horizontal, 14)
             .frame(height: 52)
-            .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(AwradTheme.sage.opacity(0.16), lineWidth: 1)
-            }
+            .awradGlassSurface(cornerRadius: 14, interactive: true)
     }
 }

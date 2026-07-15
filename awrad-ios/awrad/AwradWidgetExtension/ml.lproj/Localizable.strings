@@ -10,3 +10,6 @@
 "Add one count to the current Awrad focus goal." = "നിലവിലെ അവ്‌റാദ് ലക്ഷ്യത്തിലേക്ക് ഒരു എണ്ണം ചേർക്കുക.";
 "Count" = "എണ്ണുക";
 "Add one count" = "ഒരു എണ്ണം ചേർക്കുക";
+"widget_count_before_slot_confirmation" = "ഈ സ്ലോട്ട് ഇനിയും ആരംഭിച്ചിട്ടില്ല. എങ്കിലും ഒരു എണ്ണം ചേർക്കണോ?";
+"widget_count_after_slot_confirmation" = "ഈ സ്ലോട്ട് അവസാനിച്ചു. എങ്കിലും ഒരു എണ്ണം ചേർക്കണോ?";
+"widget_count_outside_slot_confirmation" = "തിരഞ്ഞെടുത്ത സ്ലോട്ടിന്റെ സമയത്തിന് പുറത്തായി ഒരു എണ്ണം ചേർക്കണോ?";

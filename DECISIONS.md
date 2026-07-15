@@ -115,6 +115,86 @@ Android and iOS automatically merge the collection into existing local product s
 
 None. This extends ADR-2026-07-13 UUIDv4 progress identity and native model parity.
 
+## ADR-2026-07-15: Data-preserving iOS relational migration
+
+Status: Accepted
+
+### Context
+
+iOS stored the complete offline product graph in one App Group JSON snapshot. That made relational uniqueness, atomic aggregate updates, forward schema evolution, and safe main-app/widget coordination fragile. Existing snapshot-v5 installs still contain user-created content and devotional history that cannot be discarded.
+
+### Decision
+
+iOS keeps `AwradStore` as its observable facade but moves production data to an App Group SwiftData store behind repository protocols, a `VersionedSchema`, and a `SchemaMigrationPlan`. Snapshot v5 is imported once through validation, an immutable backup, an atomic replace, reload verification, and a canonical semantic checksum. Corrupt or future data is never reseeded; the app exposes retry/export recovery, and a valid snapshot may remain available through a protected working fallback. Preferences move to App Group `UserDefaults`, credentials remain in Keychain, and widgets render a compact projection while interactive mutations use the relational repository after migration.
+
+### Consequences
+
+Existing UUIDs, definitions, counts, history, and preferences survive the storage transition. Future iOS schema changes use forward migrations. App and widget transactions share Android-equivalent uniqueness and cap semantics without making Room and SwiftData byte-identical. The legacy JSON writer remains only for migration recovery and explicitly gated pre-migration widget compatibility.
+
+### Evidence
+
+- `awrad-ios/awrad/awrad/Core/Persistence/AwradPersistenceSchema.swift`
+- `awrad-ios/awrad/awrad/Core/Persistence/LegacySnapshotMigration.swift`
+- `awrad-ios/awrad/Shared/AwradRelationalWidgetMutation.swift`
+- `awrad-ios/awrad/awradTests/AwradPersistenceTests.swift`
+
+### Supersedes
+
+The iOS snapshot file as the normal persistence and widget mutation boundary. Snapshot v5 remains supported migration and backup input.
+
+## ADR-2026-07-15: Canonical cross-platform Wird model
+
+Status: Accepted
+
+### Context
+
+Android shipped version 5 with eight weekday-assigned parts, while iOS shipped a seven-part version 2 with unstable nested UUIDs. Updating each native asset independently could attach existing progress to the wrong devotional text or keep the two clients permanently divergent.
+
+### Decision
+
+`contracts/wird-model/v1` owns the reviewed bundled Wird content, eight-part structure, weekday/cadence fixture, deterministic structural IDs, identity manifest, and content hash. A generator emits both native assets. iOS maps legacy nested IDs only when a normalized content signature has one complete unambiguous canonical match. Otherwise, an in-progress session stays pinned to a hidden legacy definition until its cycle is complete.
+
+### Consequences
+
+Android and iOS use matching content, ordering, IDs, and cadence for new sessions. Generated assets cannot drift silently. Migrated progress is preserved without guessing; a legacy definition may temporarily coexist with the canonical one as an intentional safety tradeoff.
+
+### Evidence
+
+- `contracts/wird-model/v1/`
+- `scripts/generate_wird_model.py`
+- `awrad-ios/awrad/awrad/Core/WirdContentMigration.swift`
+- `awrad-ios/awrad/awradTests/WirdContentMigrationTests.swift`
+
+### Supersedes
+
+Platform-maintained bundled Wird copies and random nested identifiers.
+
+## ADR-2026-07-15: Native iOS presentation for Android behavior parity
+
+Status: Accepted
+
+### Context
+
+Pixel-copying Material surfaces would conflict with iOS navigation, accessibility, and system design behavior. At the same time, redesigning page hierarchy independently would make workflows and state visibility diverge from the frozen Android product.
+
+### Decision
+
+Android commit `2f56aa4` defines page membership, section order, state transitions, actions, and persisted outcomes. iOS implements those contracts with native SwiftUI navigation, sheets, toolbars, controls, and gestures. On iOS 26 and later, standard chrome receives system Liquid Glass and custom glass is restricted to interactive controls. iOS 18–25 and Reduce Transparency use readable material or opaque fallbacks; devotional text and primary content remain on high-contrast surfaces.
+
+### Consequences
+
+Users receive equivalent product behavior without Android-shaped iOS controls. Platform differences must be explicit in the parity ledger, and visual acceptance covers iOS 26, iOS 18, RTL, Dynamic Type, VoiceOver, Reduce Motion, and Reduce Transparency.
+
+### Evidence
+
+- `docs/ios-android-parity-ledger.md`
+- `awrad-ios/awrad/awrad/DesignSystem/AwradDesign.swift`
+- `docs/ios-parity-debugger-review.md`
+
+### Supersedes
+
+None.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

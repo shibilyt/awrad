@@ -10,3 +10,6 @@
 "Add one count to the current Awrad focus goal." = "أضف عدّة واحدة إلى هدف أوراد الحالي.";
 "Count" = "عدّ";
 "Add one count" = "أضف عدّة واحدة";
+"widget_count_before_slot_confirmation" = "لم تبدأ هذه الخانة بعد. هل تريد إضافة واحدة إلى العدّ على أي حال؟";
+"widget_count_after_slot_confirmation" = "انتهى وقت هذه الخانة. هل تريد إضافة واحدة إلى العدّ على أي حال؟";
+"widget_count_outside_slot_confirmation" = "هل تريد إضافة واحدة إلى العدّ خارج وقت الخانة المحددة؟";

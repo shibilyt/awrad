@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		ABCD00102FCB900000000010 /* AwradWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = ABCD00012FCB900000000001 /* AwradWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		ABCD00302FCB920000000030 /* AwradPersistenceSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABCD00312FCB920000000031 /* AwradPersistenceSchema.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +54,7 @@
 		18AB84AE2FCB03F600C439B3 /* awradTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = awradTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		18AB84B82FCB03F600C439B3 /* awradUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = awradUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		ABCD00012FCB900000000001 /* AwradWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AwradWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		ABCD00312FCB920000000031 /* AwradPersistenceSchema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = awrad/Core/Persistence/AwradPersistenceSchema.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -144,6 +146,7 @@
 				18AB84A32FCB03F400C439B3 /* awrad */,
 				ABCD00202FCB910000000020 /* Shared */,
 				ABCD00022FCB900000000002 /* AwradWidgetExtension */,
+				ABCD00312FCB920000000031 /* AwradPersistenceSchema.swift */,
 				18AB84B12FCB03F600C439B3 /* awradTests */,
 				18AB84BB2FCB03F600C439B3 /* awradUITests */,
 				18AB84A22FCB03F400C439B3 /* Products */,
@@ -365,6 +368,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ABCD00302FCB920000000030 /* AwradPersistenceSchema.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

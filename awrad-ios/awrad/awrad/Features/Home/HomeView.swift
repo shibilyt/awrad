@@ -7,10 +7,11 @@ struct HomeView: View {
     @Environment(AppServices.self) private var services
     @Environment(\.colorScheme) private var colorScheme
     @State private var now = Date()
+    @State private var isEnablingPrayerTimes = false
 
     private var dueGoals: [Goal] { store.todayGoals() }
     private var dailyWirds: [Wird] {
-        store.sortedWirds
+        HomeParityModel.activeFeaturedWirds(store.sortedWirds, on: effectiveDate)
     }
     private var categoryCounts: [DhikrCategory: Int] {
         Dictionary(uniqueKeysWithValues: DhikrCategory.allCases.map { category in
@@ -21,10 +22,10 @@ struct HomeView: View {
         FeaturedHomeCollection.collections(categoryCounts: categoryCounts)
     }
     private var primaryGoal: Goal? {
-        dueGoals.first ?? store.goals.first(where: \.isActive)
+        HomeParityModel.primaryGoal(from: dueGoals)
     }
     private var visibleGoals: [Goal] {
-        Array(dueGoals.prefix(3))
+        HomeParityModel.visibleGoals(from: dueGoals)
     }
     private var language: AppLanguage { store.preferences.appLanguage }
     private var prayerSummary: PrayerTimesSummary? {
@@ -72,14 +73,6 @@ struct HomeView: View {
                     hero
                     prayerCard
                     todaysFocus
-                    if store.streak() > 0 {
-                        CompactStreakCard(
-                            streak: store.streak(),
-                            activeDates: store.contributionDateKeys(),
-                            today: effectiveDate,
-                            language: language
-                        )
-                    }
                     featuredCollectionsSection
                     dailyWird
                 }
@@ -109,7 +102,7 @@ struct HomeView: View {
         Group {
             if let primaryGoal {
                 Button {
-                    router.navigate(.counting(goalID: primaryGoal.id), in: .home)
+                    router.navigate(.counting(goalID: primaryGoal.id, slotID: nil), in: .home)
                 } label: {
                     FeaturedGoalCard(
                         title: store.title(for: primaryGoal),
@@ -123,8 +116,7 @@ struct HomeView: View {
                 .buttonStyle(.plain)
             } else {
                 Button {
-                    store.selectedTab = .library
-                    router.popToRoot(in: .library)
+                    router.navigate(.createGoal(dhikrID: nil), in: .home)
                 } label: {
                     EmptyHomeStartCard()
                 }
@@ -141,13 +133,23 @@ struct HomeView: View {
                 tomorrow: tomorrowPrayerSummary,
                 now: now
            ) {
-            PrayerTimeCard(
-                summary: prayerSummary,
-                nextPrayer: nextPrayer,
-                cityName: store.preferences.cityName,
-                now: now,
-                language: language
-            )
+            Button {
+                router.navigate(.settings, in: .home)
+            } label: {
+                HomePrayerRhythmCard(
+                    nextPrayer: nextPrayer,
+                    cityName: store.preferences.cityName,
+                    now: now,
+                    language: language
+                )
+            }
+            .buttonStyle(.plain)
+        } else {
+            Button(action: enablePrayerTimes) {
+                HomePrayerPromptCard(isLoading: isEnablingPrayerTimes)
+            }
+            .buttonStyle(.plain)
+            .disabled(isEnablingPrayerTimes)
         }
     }
 
@@ -160,12 +162,20 @@ struct HomeView: View {
                     titleForGoal: { store.title(for: $0) },
                     countForGoal: { store.count(for: $0) },
                     targetForGoal: { $0.targetPolicy == .none ? nil : $0.totalTarget },
+                    progressForGoal: { store.progress(for: $0) },
+                    streakForGoal: {
+                        GoalProgressCalculator.streak(
+                            for: $0,
+                            entries: store.countEntries,
+                            todayKey: store.todayKey
+                        )
+                    },
                     onViewAll: {
                         store.selectedTab = .goals
                         router.popToRoot(in: .goals)
                     },
                     onGoalTap: { goal in
-                        router.navigate(.counting(goalID: goal.id), in: .home)
+                        router.navigate(.counting(goalID: goal.id, slotID: nil), in: .home)
                     },
                     imageName: homeImages.goalsImageName
                 )
@@ -173,28 +183,27 @@ struct HomeView: View {
         }
     }
 
+    @ViewBuilder
     private var dailyWird: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            SectionHeader(title: "Wirds for Today", subtitle: "Continue your reading", actionTitle: "View All") {
-                store.selectedTab = .library
-                router.navigate(.wirdList, in: .library)
-            }
-            if dailyWirds.isEmpty {
-                EmptyStateView(
-                    symbol: "book.closed",
-                    title: "No Wird collections",
-                    message: "Add a collection to begin reading."
-                )
-                .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            } else {
+        if !dailyWirds.isEmpty {
+            VStack(alignment: .leading, spacing: 14) {
+                SectionHeader(title: "Featured Wirds", subtitle: nil, actionTitle: "View All") {
+                    store.selectedTab = .library
+                    router.navigate(.wirdList, in: .library)
+                }
                 LazyVStack(spacing: 12) {
                     ForEach(dailyWirds) { wird in
-                        let todayPart = store.todayPrimaryPart(for: wird)
-                        let summary = store.progressSummary(for: wird)
+                        let todayPart = store.todayPrimaryPart(for: wird, now: effectiveDate)
+                        let summary = store.progressSummary(for: wird, now: effectiveDate)
                         let streak = store.wirdStreak(for: wird)
 
                         Button {
-                            router.navigate(.wirdDetail(wird.id), in: .home)
+                            if let todayPart {
+                                router.navigate(
+                                    .wirdReader(wirdID: wird.id, partID: todayPart.id),
+                                    in: .home
+                                )
+                            }
                         } label: {
                             HomeWirdCard(
                                 wird: wird,
@@ -277,6 +286,52 @@ struct HomeView: View {
         store.refreshEffectiveDate(prayerTimes: prayerSummary, now: date)
     }
 
+    private func enablePrayerTimes() {
+        guard !isEnablingPrayerTimes else { return }
+        isEnablingPrayerTimes = true
+        Task {
+            defer { isEnablingPrayerTimes = false }
+            do {
+                let result = try await services.locations.requestCurrentLocation()
+                store.setPrayerLocation(result)
+                refreshDayContext()
+                await rescheduleGoalRemindersAfterLocationChange()
+            } catch {
+                // Android falls back to Settings when permission or a location
+                // fix is unavailable. The iOS page keeps that recovery path
+                // native by opening the existing location editor.
+                router.navigate(.settings, in: .home)
+            }
+        }
+    }
+
+    private func rescheduleGoalRemindersAfterLocationChange() async {
+        let inputs = ReminderScheduleBuilder.goalInputs(
+            goals: store.goals,
+            dhikrs: store.dhikrs,
+            preferences: store.preferences,
+            prayerTimeService: services.prayerTimes
+        )
+        _ = await services.notifications.refreshScheduledReminders(
+            goalInputs: inputs,
+            dailyReminder: (
+                enabled: store.preferences.dailyReminderEnabled,
+                hour: store.preferences.reminderHour,
+                minute: store.preferences.reminderMinute,
+                language: store.preferences.appLanguage
+            ),
+            dailyRemembrance: (
+                enabled: store.preferences.dailyRemembranceEnabled,
+                language: store.preferences.appLanguage
+            ),
+            wirdInputs: ReminderScheduleBuilder.wirdInputs(
+                wirds: store.wirds,
+                preferences: store.preferences,
+                prayerTimeService: services.prayerTimes
+            )
+        )
+    }
+
     private static let minuteTimer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
     private static let dateKeyFormatter: DateFormatter = {
@@ -286,6 +341,28 @@ struct HomeView: View {
         formatter.dateFormat = "yyyy-MM-dd"
         return formatter
     }()
+}
+
+enum HomeParityModel {
+    static func primaryGoal(from dueGoals: [Goal]) -> Goal? {
+        dueGoals.first
+    }
+
+    static func visibleGoals(from dueGoals: [Goal]) -> [Goal] {
+        Array(dueGoals.prefix(3))
+    }
+
+    static func activeFeaturedWirds(_ wirds: [Wird], on date: Date) -> [Wird] {
+        Array(
+            wirds
+                .filter { !$0.isCustom && !WirdCalculator.activeParts($0, on: date).isEmpty }
+                .sorted { lhs, rhs in
+                    if lhs.sortOrder == rhs.sortOrder { return lhs.id.uuidString < rhs.id.uuidString }
+                    return lhs.sortOrder < rhs.sortOrder
+                }
+                .prefix(4)
+        )
+    }
 }
 
 private struct HomeImageSet {
@@ -325,91 +402,63 @@ private struct FeaturedGoalCard: View {
     let imageName: String
 
     var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
+        ZStack {
+            AwradBundleImage(name: imageName)
+                .scaledToFill()
+                .frame(maxWidth: .infinity, minHeight: 96)
+                .clipped()
+            LinearGradient(
+                colors: [AwradTheme.surface.opacity(0.96), AwradTheme.surface.opacity(0.78), AwradTheme.surface.opacity(0.3)],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
 
-            ZStack {
-                AwradBundleImage(name: imageName)
-                    .scaledToFill()
-                    .frame(width: width, height: 246)
-                    .clipped()
-                LinearGradient(
-                    colors: [.white.opacity(0.16), .white.opacity(0.34)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-
-                VStack(spacing: 12) {
-                    Spacer(minLength: 34)
-                    Text(title)
-                        .font(AwradTheme.displayFont(32, weight: .bold))
-                        .foregroundStyle(AwradTheme.sageDark)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.56)
-                        .allowsTightening(true)
-                        .frame(maxWidth: .infinity)
-                    Text(progressText)
-                        .font(AwradTheme.displayFont(26, weight: .bold))
-                        .foregroundStyle(AwradTheme.subdued)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.64)
-                        .allowsTightening(true)
-                        .frame(maxWidth: .infinity)
-                    AwradProgressBar(value: progress, height: 9)
-                        .padding(.horizontal, 18)
-                    ButtonLikeContinueLabel()
+            HStack(spacing: 14) {
+                if let target {
+                    HomeGoalProgressRing(
+                        progress: progress,
+                        count: count,
+                        accessibilityTarget: target,
+                        language: language,
+                        size: 54,
+                        lineWidth: 5
+                    )
                 }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 24)
-                .frame(width: width)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(AwradLocalizer.format("Continue %@", language: language, title))
+                        .font(AwradTheme.bodyFont(.headline, weight: .bold))
+                        .foregroundStyle(AwradTheme.sageDark)
+                        .lineLimit(2)
+                    Text(progressText)
+                        .font(AwradTheme.bodyFont(.subheadline))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Image(systemName: "chevron.forward")
+                    .font(AwradTheme.bodyFont(.headline, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 38, height: 38)
+                    .background(AwradTheme.sage, in: Circle())
             }
-            .frame(width: width, height: 246)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
         }
-        .frame(height: 246)
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("\(title), \(progressText)"))
     }
 
     private var progressText: String {
         guard let target else {
-            return AwradLocalizer.format("%d today", language: language, count)
+            return AwradLocalizer.format("%lld today", language: language, count)
         }
-        return AwradLocalizer.format("%d / %d today", language: language, count, target)
-    }
-}
-
-private struct ButtonLikeContinueLabel: View {
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        Text(LocalizedStringKey("Continue"))
-            .font(AwradTheme.bodyFont(.headline, weight: .bold))
-            .foregroundStyle(contentColor)
-            .frame(maxWidth: .infinity)
-            .frame(height: 56)
-            .background(containerColor, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-    }
-
-    private var isDark: Bool {
-        colorScheme == .dark
-    }
-
-    private var containerColor: Color {
-        isDark ? Self.color(0x123927) : Self.color(0x2E5C3D)
-    }
-
-    private var contentColor: Color {
-        isDark ? Self.color(0xD4E8DA) : .white
-    }
-
-    private static func color(_ hex: UInt32) -> Color {
-        Color(
-            red: Double((hex >> 16) & 0xFF) / 255,
-            green: Double((hex >> 8) & 0xFF) / 255,
-            blue: Double(hex & 0xFF) / 255
-        )
+        if count >= target {
+            return AwradLocalizer.localized("Done", language: language)
+        }
+        return AwradLocalizer.format("%lld left today", language: language, max(Int64(target) - count, 0))
     }
 }
 
@@ -429,9 +478,102 @@ private struct EmptyHomeStartCard: View {
                     .font(AwradTheme.bodyFont(.subheadline))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                ButtonLikeContinueLabel()
+                Text("Create goal")
+                    .font(AwradTheme.bodyFont(.headline, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .awradGlassSurface(
+                        cornerRadius: 22,
+                        tint: AwradTheme.sage,
+                        interactive: true
+                    )
             }
         }
+    }
+}
+
+private struct HomePrayerPromptCard: View {
+    let isLoading: Bool
+
+    var body: some View {
+        AwradCard(padding: 18) {
+            HStack(spacing: 14) {
+                Image(systemName: "location.fill")
+                    .font(AwradTheme.bodyFont(20, weight: .semibold))
+                    .foregroundStyle(AwradTheme.sage)
+                    .frame(width: 46, height: 46)
+                    .background(AwradTheme.mint.opacity(0.28), in: Circle())
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Enable prayer times")
+                        .font(AwradTheme.bodyFont(.headline, weight: .bold))
+                        .foregroundStyle(AwradTheme.sageDark)
+                    Text("Use your location for the next prayer and prayer-based reminders.")
+                        .font(AwradTheme.bodyFont(.footnote))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                if isLoading {
+                    ProgressView()
+                        .tint(AwradTheme.sage)
+                } else {
+                    Image(systemName: "chevron.forward")
+                        .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct HomePrayerRhythmCard: View {
+    let nextPrayer: NextPrayerSummary
+    let cityName: String
+    let now: Date
+    let language: AppLanguage
+
+    var body: some View {
+        AwradCard(padding: 18) {
+            HStack(spacing: 14) {
+                Image(systemName: "building.columns.fill")
+                    .font(AwradTheme.bodyFont(20, weight: .semibold))
+                    .foregroundStyle(AwradTheme.gold)
+                    .frame(width: 48, height: 48)
+                    .background(AwradTheme.gold.opacity(0.14), in: Circle())
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Next prayer")
+                        .font(AwradTheme.bodyFont(.subheadline))
+                        .foregroundStyle(.secondary)
+                    Text(prayerAndTime)
+                        .font(AwradTheme.bodyFont(.title3, weight: .bold))
+                        .foregroundStyle(AwradTheme.sageDark)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.76)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Text(AwradLocalizer.countdown(from: now, to: nextPrayer.time, language: language))
+                    .font(AwradTheme.bodyFont(.subheadline, weight: .bold))
+                    .foregroundStyle(AwradTheme.gold)
+                    .lineLimit(1)
+
+                Image(systemName: "chevron.forward")
+                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityHint(Text(cityName.isEmpty ? "Open prayer time settings" : cityName))
+    }
+
+    private var prayerAndTime: String {
+        let prayer = AwradLocalizer.localized(nextPrayer.prayer.title, language: language)
+        let time = AwradLocalizer.formattedTime(nextPrayer.time, language: language)
+        return "\(prayer) · \(time)"
     }
 }
 
@@ -532,7 +674,7 @@ private struct FeaturedCollectionCard: View {
             )
 
             VStack(alignment: .leading, spacing: 8) {
-                Text(collection.title)
+                Text(AwradLocalizer.localized(collection.title, language: language))
                     .font(AwradTheme.bodyFont(.headline, weight: .bold))
                     .foregroundStyle(isDark ? Color.white.opacity(0.97) : AwradTheme.sageDark)
                     .lineLimit(2)
@@ -566,9 +708,9 @@ private struct FeaturedCollectionCard: View {
         case .asmaUlHusna:
             "collection_asma_ul_husna_\(suffix)"
         case .daily:
-            "collection_daily_essentials_\(suffix)"
-        case .swalaths:
             "collection_swalaths_\(suffix)"
+        case .swalaths:
+            "collection_daily_essentials_\(suffix)"
         case .dhikrs:
             "collection_dhikrs_\(suffix)"
         case .evening:
@@ -601,6 +743,8 @@ private struct TodayGoalsQueueCard: View {
     let titleForGoal: (Goal) -> String
     let countForGoal: (Goal) -> Int64
     let targetForGoal: (Goal) -> Int?
+    let progressForGoal: (Goal) -> Double
+    let streakForGoal: (Goal) -> Int
     let onViewAll: () -> Void
     let onGoalTap: (Goal) -> Void
     let imageName: String
@@ -618,28 +762,24 @@ private struct TodayGoalsQueueCard: View {
             )
 
             VStack(spacing: 14) {
-                HStack(spacing: 12) {
-                    Image(systemName: "scope")
-                        .font(AwradTheme.bodyFont(20, weight: .semibold))
-                        .foregroundStyle(AwradTheme.sage)
-                        .frame(width: 46, height: 46)
-                        .background(AwradTheme.mint.opacity(0.22), in: Circle())
-                        .overlay(Circle().stroke(AwradTheme.sage.opacity(0.26), lineWidth: 1))
-                    Text("Today's goals")
-                        .font(AwradTheme.displayFont(24, weight: .bold))
-                        .foregroundStyle(AwradTheme.sageDark)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.72)
-                    Spacer(minLength: 8)
-                    Button(action: onViewAll) {
-                        HStack(spacing: 4) {
-                            Text("View all")
-                            Image(systemName: "chevron.right")
-                        }
-                            .font(AwradTheme.bodyFont(.subheadline, weight: .bold))
-                            .foregroundStyle(AwradTheme.sage)
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 12) {
+                        headerIcon
+                        headerTitle
+                            .fixedSize(horizontal: true, vertical: false)
+                        Spacer(minLength: 8)
+                        viewAllButton
                     }
-                    .lineLimit(1)
+
+                    HStack(alignment: .top, spacing: 12) {
+                        headerIcon
+                        VStack(alignment: .leading, spacing: 7) {
+                            headerTitle
+                                .lineLimit(2)
+                            viewAllButton
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
 
                 VStack(spacing: 0) {
@@ -651,7 +791,8 @@ private struct TodayGoalsQueueCard: View {
                                 title: titleForGoal(goal),
                                 count: countForGoal(goal),
                                 target: targetForGoal(goal),
-                                glyph: glyph(for: goal),
+                                progress: progressForGoal(goal),
+                                streak: streakForGoal(goal),
                                 language: language
                             )
                         }
@@ -670,52 +811,129 @@ private struct TodayGoalsQueueCard: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 
-    private func glyph(for goal: Goal) -> String {
-        let title = titleForGoal(goal).trimmingCharacters(in: .whitespacesAndNewlines)
-        return String(title.prefix(1))
+    private var headerIcon: some View {
+        Image(systemName: "scope")
+            .font(AwradTheme.bodyFont(20, weight: .semibold))
+            .foregroundStyle(AwradTheme.sage)
+            .frame(width: 46, height: 46)
+            .background(AwradTheme.mint.opacity(0.22), in: Circle())
+            .overlay(Circle().stroke(AwradTheme.sage.opacity(0.26), lineWidth: 1))
     }
+
+    private var headerTitle: some View {
+        Text(AwradLocalizer.localized("Today's goals", language: language))
+            .font(AwradTheme.displayFont(24, weight: .bold))
+            .foregroundStyle(AwradTheme.sageDark)
+            .minimumScaleFactor(0.78)
+    }
+
+    private var viewAllButton: some View {
+        Button(action: onViewAll) {
+            HStack(spacing: 4) {
+                Text("View all")
+                Image(systemName: "chevron.right")
+            }
+            .font(AwradTheme.bodyFont(.subheadline, weight: .bold))
+            .foregroundStyle(AwradTheme.sage)
+        }
+        .lineLimit(1)
+    }
+
 }
 
 private struct GoalQueueRow: View {
     let title: String
     let count: Int64
     let target: Int?
-    let glyph: String
+    let progress: Double
+    let streak: Int
     let language: AppLanguage
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(glyph)
-                .font(AwradTheme.arabicFont(24, weight: .semibold))
-                .foregroundStyle(AwradTheme.sage)
-                .frame(width: 54, height: 54)
-                .background(AwradTheme.mint.opacity(0.2), in: RoundedRectangle(cornerRadius: 15, style: .continuous))
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 5) {
                 Text(title)
                     .font(AwradTheme.bodyFont(.headline, weight: .bold))
                     .foregroundStyle(AwradTheme.sageDark)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.78)
+                    .lineLimit(2)
+                if streak > 0 {
+                    Label {
+                        Text(AwradLocalizer.format("%d day streak", language: language, streak))
+                    } icon: {
+                        Image(systemName: "flame.fill")
+                    }
+                    .font(AwradTheme.bodyFont(.caption, weight: .semibold))
+                    .foregroundStyle(AwradTheme.gold)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(AwradTheme.gold.opacity(0.12), in: Capsule())
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Spacer(minLength: 8)
-            Text(progressText)
-                .font(AwradTheme.bodyFont(.subheadline, weight: .bold))
-                .foregroundStyle(AwradTheme.sage)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-            Image(systemName: "chevron.right")
+
+            if let target {
+                HomeGoalProgressRing(
+                    progress: progress,
+                    count: count,
+                    accessibilityTarget: target,
+                    language: language,
+                    size: 48,
+                    lineWidth: 4
+                )
+            } else {
+                Text("\(count)")
+                    .font(AwradTheme.bodyFont(.subheadline, weight: .bold).monospacedDigit())
+                    .foregroundStyle(AwradTheme.sage)
+            }
+
+            Image(systemName: "chevron.forward")
                 .font(AwradTheme.bodyFont(.headline, weight: .bold))
                 .foregroundStyle(AwradTheme.sage)
         }
         .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
+}
 
-    private var progressText: String {
-        guard let target else { return "\(count)" }
-        return count >= target
-            ? AwradLocalizer.localized("Done", language: language)
-            : "\(count) / \(target)"
+private struct HomeGoalProgressRing: View {
+    let progress: Double
+    let count: Int64
+    let accessibilityTarget: Int
+    let language: AppLanguage
+    let size: CGFloat
+    let lineWidth: CGFloat
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(AwradTheme.mint.opacity(0.38), lineWidth: lineWidth)
+            Circle()
+                .trim(from: 0, to: min(max(progress, 0), 1))
+                .stroke(
+                    AwradTheme.sage,
+                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+            Text("\(count)")
+                .font(AwradTheme.bodyFont(.caption, weight: .bold).monospacedDigit())
+                .foregroundStyle(AwradTheme.sageDark)
+                .lineLimit(1)
+                .minimumScaleFactor(0.55)
+                .padding(5)
+        }
+        .frame(width: size, height: size)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(AwradLocalizer.format(
+            "%lld of %lld",
+            language: language,
+            count,
+            Int64(accessibilityTarget)
+        )))
+        .accessibilityValue(Text(AwradLocalizer.format(
+            "%d percent",
+            language: language,
+            Int(min(max(progress, 0), 1) * 100)
+        )))
     }
 }
 

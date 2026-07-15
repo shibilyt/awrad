@@ -9,6 +9,35 @@ import Foundation
 import Testing
 @testable import awrad
 
+struct OnboardingForwardGateTests {
+    @Test func notificationPermissionIsRequiredForForwardProgress() {
+        #expect(OnboardingForwardGate.canAdvance(
+            .notifications,
+            name: "",
+            notificationAuthorizationState: .notDetermined,
+            isCreatingGoal: false
+        ) == false)
+        #expect(OnboardingForwardGate.canAdvance(
+            .notifications,
+            name: "",
+            notificationAuthorizationState: .denied,
+            isCreatingGoal: false
+        ) == false)
+        #expect(OnboardingForwardGate.canAdvance(
+            .notifications,
+            name: "",
+            notificationAuthorizationState: .authorized,
+            isCreatingGoal: false
+        ))
+    }
+
+    @Test func notificationStepCannotBeSkipped() {
+        #expect(OnboardingForwardGate.canSkip(.notifications) == false)
+        #expect(OnboardingForwardGate.canSkip(.location))
+        #expect(OnboardingForwardGate.canSkip(.audio))
+    }
+}
+
 @MainActor
 struct AwradDomainTests {
     @Test func dailyProgressUsesOnlyTheEffectiveDate() {
@@ -52,7 +81,7 @@ struct AwradDomainTests {
         #expect(abs(store.completionRatioForToday() - 0.375) < 0.001)
     }
 
-    @Test func cumulativeTotalGoalsAreDueOnlyOnStartDateAndAutoCompleteAtTarget() async throws {
+    @Test func cumulativeTotalGoalsRemainDueUntilTheyAutoCompleteAtTarget() async throws {
         let goal = Goal(
             dhikrID: UUID(),
             targetPolicy: .cumulativeTotal,
@@ -63,7 +92,7 @@ struct AwradDomainTests {
         )
 
         #expect(GoalProgressCalculator.isDue(goal, on: "2026-05-30"))
-        #expect(!GoalProgressCalculator.isDue(goal, on: "2026-05-31"))
+        #expect(GoalProgressCalculator.isDue(goal, on: "2026-05-31"))
 
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("awrad-one-time-complete-\(UUID().uuidString)")
@@ -414,7 +443,10 @@ struct AwradDomainTests {
         #expect(arabicSuggestion.targetCount == englishSuggestion.targetCount)
         #expect(arabicSuggestion.targetPolicy == englishSuggestion.targetPolicy)
         #expect(arabicSuggestion.label != englishSuggestion.label)
-        #expect(arabicSuggestion.description.contains("ورد") == true)
+        // The Arabic object takes tanwin ("وردًا"). Swift correctly treats
+        // the combining mark as part of the final grapheme cluster, so the
+        // undiacritized substring is not a valid Character-boundary match.
+        #expect(arabicSuggestion.description.contains("وردًا") == true)
         #expect(malayalam.benefits.first?.title == "മികച്ച ദിക്ർ")
         #expect(malayalamSuggestion.description.contains("ദൈനംദിന") == true)
 
@@ -923,7 +955,9 @@ struct AwradDomainTests {
         )
 
         #expect(slot.displayLabel(language: .english) == "After Fajr")
-        #expect(slot.displayLabel(language: .arabic) == "بعد الفجر")
+        // Locale-aware `%@` formatting isolates the interpolated prayer name
+        // so it remains ordered correctly inside the RTL sentence.
+        #expect(slot.displayLabel(language: .arabic) == "بعد \u{2068}الفجر\u{2069}")
         #expect(slot.displayLabel(language: .malayalam).contains("ഫജ്ർ"))
     }
 
@@ -1158,6 +1192,7 @@ struct AwradDomainTests {
         stale.id = UUID()
         stale.localizedName["en"] = "Outdated Wird"
         stale.version = max(seed.version - 1, 0)
+        stale.sortOrder = seed.sortOrder + 19
         stale.parts = [WirdPart(localizedTitle: ["en": "Old Section"])]
         let snapshot = AwradSnapshot(
             dhikrs: [],
@@ -1175,6 +1210,7 @@ struct AwradDomainTests {
         let updated = try #require(store.wirds.first { $0.slug == seed.slug })
 
         #expect(updated.id == stale.id)
+        #expect(updated.sortOrder == stale.sortOrder)
         #expect(updated.displayName(language: .english) == seed.displayName(language: .english))
         #expect(updated.version == seed.version)
         #expect(updated.parts.isEmpty == false)
@@ -1455,6 +1491,8 @@ struct AwradDomainTests {
         #expect(AwradLocalizer.format("Month %d", language: .arabic, 9) == "الشهر 9")
         #expect(AwradLocalizer.format("Start hour %d", language: .malayalam, 5) == "തുടങ്ങുന്ന മണിക്കൂർ 5")
         #expect(AwradLocalizer.format("%d minutes", language: .english, 45) == "45 minutes")
+        #expect(AwradLocalizer.localized("Today's goals", language: .arabic) == "أهداف اليوم")
+        #expect(AwradLocalizer.localized("Evening Dhikrs", language: .malayalam) == "സായാഹ്ന ദിക്‌റുകൾ")
     }
 
     @Test func homeDatesMatchAndroidCalendarFormatting() {
@@ -1585,11 +1623,12 @@ struct AwradDomainTests {
         draft.targetText = "100"
         draft.maximumText = "200"
 
-        let configuration = try? #require(draft.configuration)
+        let configuration = draft.configuration
+        #expect(configuration != nil)
         #expect(configuration?.countPolicy.minimumCount == 33)
         #expect(configuration?.countPolicy.maximumCount == 200)
         #expect(configuration?.countPolicy.capBehavior == .blockAtMaximum)
-        #expect(configuration?.completionPolicy == .whenTargetReached)
+        #expect(configuration?.completionPolicy == .never)
     }
 
     @Test func boundedDraftRejectsUnorderedCounts() {
@@ -1598,11 +1637,53 @@ struct AwradDomainTests {
         draft.timingMode = .anytime
         draft.countRuleMode = .bounded
         draft.minimumText = "100"
-        draft.targetText = "100"
+        draft.targetText = "99"
         draft.maximumText = "200"
 
         #expect(draft.validationMessage != nil)
         #expect(draft.configuration == nil)
+    }
+
+    @Test func boundedDraftAllowsEqualThresholds() throws {
+        var draft = GoalDraft(preset: .custom)
+        draft.selectedTargetPolicy = .perDueDate
+        draft.timingMode = .anytime
+        draft.countRuleMode = .bounded
+        draft.minimumText = "100"
+        draft.targetText = "100"
+        draft.maximumText = "100"
+
+        let configuration = try #require(draft.configuration)
+        #expect(configuration.countPolicy.minimumCount == 100)
+        #expect(configuration.countPolicy.targetCount == 100)
+        #expect(configuration.countPolicy.maximumCount == 100)
+    }
+
+    @Test func minimumDraftUsesMinimumAsSlotTarget() throws {
+        var draft = GoalDraft(preset: .custom)
+        draft.selectedTargetPolicy = .perDueDate
+        draft.timingMode = .anytime
+        draft.countRuleMode = .minimum
+        draft.minimumText = "33"
+        draft.targetText = "100"
+
+        let configuration = try #require(draft.configuration)
+        #expect(configuration.slots.first?.targetCount == 33)
+        #expect(configuration.countPolicy.minimumCount == 33)
+        #expect(configuration.countPolicy.targetCount == nil)
+    }
+
+    @Test func exactDraftBlocksAtMaximum() throws {
+        var draft = GoalDraft(preset: .custom)
+        draft.selectedTargetPolicy = .perDueDate
+        draft.timingMode = .anytime
+        draft.countRuleMode = .exact
+        draft.targetText = "100"
+
+        let configuration = try #require(draft.configuration)
+        #expect(configuration.countPolicy.targetCount == 100)
+        #expect(configuration.countPolicy.maximumCount == 100)
+        #expect(configuration.countPolicy.capBehavior == .blockAtMaximum)
     }
 
     @Test func stretchDraftRequiresTargetAboveMinimum() {
@@ -1616,7 +1697,8 @@ struct AwradDomainTests {
         #expect(draft.validationMessage != nil)
 
         draft.targetText = "120"
-        let configuration = try? #require(draft.configuration)
+        let configuration = draft.configuration
+        #expect(configuration != nil)
         #expect(configuration?.countPolicy.minimumCount == 50)
         #expect(configuration?.countPolicy.targetCount == 120)
     }

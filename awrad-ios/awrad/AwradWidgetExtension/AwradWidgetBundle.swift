@@ -101,6 +101,9 @@ private enum AwradWidgetSnapshotStore {
               let snapshot = try? JSONDecoder().decode(AwradWidgetMutationSnapshot.self, from: data) else {
             return .fallback
         }
+        if let projection = try? SharedAwradWidgetProjection.load(from: defaults) {
+            return snapshot.merging(projection)
+        }
         return snapshot
     }
 }
@@ -112,26 +115,52 @@ struct IncrementTodayAwradWidgetIntent: AppIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        guard let defaults = UserDefaults(suiteName: AwradWidgetSharedConfiguration.appGroupID),
-              let data = defaults.data(forKey: AwradWidgetSharedConfiguration.snapshotKey),
-              var snapshot = try? JSONDecoder().decode(AwradWidgetMutationSnapshot.self, from: data),
-              let storeURL = SharedAwradWidgetMutation.appGroupSnapshotURL(
-                appGroupID: AwradWidgetSharedConfiguration.appGroupID
-              ) else {
+        guard let defaults = UserDefaults(suiteName: AwradWidgetSharedConfiguration.appGroupID) else {
             return .result()
         }
-
-        let applied = (try? SharedAwradWidgetMutation.incrementFocusCount(
-            storeURL: storeURL,
-            snapshot: &snapshot
-        )) ?? 0
-        guard applied > 0, let encoded = try? JSONEncoder().encode(snapshot) else {
-            return .result()
+        var result = try SharedAwradWidgetMutationCoordinator.incrementFocusCount(
+            appGroupID: AwradWidgetSharedConfiguration.appGroupID,
+            displaySnapshotKey: AwradWidgetSharedConfiguration.snapshotKey,
+            defaults: defaults
+        )
+        if case .requiresConfirmation(let status) = result {
+            try await requestConfirmation(
+                actionName: .add,
+                dialog: confirmationDialog(for: status)
+            )
+            // Re-open and re-check the live aggregate after the user confirms;
+            // no state captured before the prompt is trusted for the write.
+            result = try SharedAwradWidgetMutationCoordinator.incrementFocusCount(
+                appGroupID: AwradWidgetSharedConfiguration.appGroupID,
+                displaySnapshotKey: AwradWidgetSharedConfiguration.snapshotKey,
+                defaults: defaults,
+                outsideSlotConfirmed: true
+            )
         }
-
-        defaults.set(encoded, forKey: AwradWidgetSharedConfiguration.snapshotKey)
-        WidgetCenter.shared.reloadAllTimelines()
+        if result.shouldReloadWidget {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
         return .result()
+    }
+
+    private func confirmationDialog(for status: SharedAwradSlotTimeStatus) -> IntentDialog {
+        switch status {
+        case .upcoming:
+            IntentDialog(LocalizedStringResource(
+                "widget_count_before_slot_confirmation",
+                defaultValue: "This slot has not started yet. Add one count anyway?"
+            ))
+        case .ended:
+            IntentDialog(LocalizedStringResource(
+                "widget_count_after_slot_confirmation",
+                defaultValue: "This slot has ended. Add one count anyway?"
+            ))
+        case .active, .anytime, .unknown:
+            IntentDialog(LocalizedStringResource(
+                "widget_count_outside_slot_confirmation",
+                defaultValue: "Add one count outside the selected slot time?"
+            ))
+        }
     }
 }
 

@@ -108,6 +108,12 @@ final class AppRouter {
         case .wirdList:
             pendingTab = .library
             libraryPath = [.wirdList]
+        case .verifyEmail(let token):
+            pendingTab = .community
+            communityPath = [.verifyEmail(token: token)]
+        case .resetPassword(let token):
+            pendingTab = .community
+            communityPath = [.resetPassword(token: token)]
         case .counting, .todaysWird:
             break
         }

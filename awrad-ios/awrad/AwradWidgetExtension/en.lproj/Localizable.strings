@@ -10,3 +10,6 @@
 "Add one count to the current Awrad focus goal." = "Add one count to the current Awrad focus goal.";
 "Count" = "Count";
 "Add one count" = "Add one count";
+"widget_count_before_slot_confirmation" = "This slot has not started yet. Add one count anyway?";
+"widget_count_after_slot_confirmation" = "This slot has ended. Add one count anyway?";
+"widget_count_outside_slot_confirmation" = "Add one count outside the selected slot time?";

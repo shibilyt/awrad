@@ -57,6 +57,7 @@
 "Clear search" = "Clear search";
 "Explore beautiful dhikrs\nfrom the Qur’an & Sunnah" = "Explore beautiful dhikrs\nfrom the Qur’an & Sunnah";
 "Featured collections" = "Featured collections";
+"Today's goals" = "Today's goals";
 "All dhikrs" = "All dhikrs";
 "Daily Essentials" = "Daily Essentials";
 "Swalaths" = "Swalaths";
@@ -473,7 +474,6 @@
 "Add Suggested Goal" = "Add Suggested Goal";
 "Add Goal" = "Add Goal";
 "Already Added" = "Already Added";
-"%d recitations" = "%d recitations";
 
 /* Goal count rule (Advanced editor) */
 "Count rule" = "Count rule";
@@ -555,8 +555,10 @@
 "Recited" = "Recited";
 "Mark as recited" = "Mark as recited";
 
-/* Onboarding (7-step flow) */
+/* Onboarding (10-step flow) */
 "As-salamu alaykum" = "As-salamu alaykum";
+"In the name of Allah, the Most Compassionate, the Most Merciful" = "In the name of Allah, the Most Compassionate, the Most Merciful";
+"Welcome to Awrad" = "Welcome to Awrad";
 "Your daily dhikr companion" = "Your daily dhikr companion";
 "Dhikr goals" = "Dhikr goals";
 "Daily, cumulative, and prayer-based goals that build a lasting habit." = "Daily, cumulative, and prayer-based goals that build a lasting habit.";
@@ -608,3 +610,298 @@
 /* Dhikr categories */
 "category.asma_ul_husna" = "Asma-ul Husna";
 "category.asma_ul_husna.description" = "The beautiful names of Allah.";
+
+/* Android-parity onboarding */
+"Keep your progress safe" = "Keep your progress safe";
+"Sign in to sync goals and streaks across your devices. Local reading and counting always remain available offline." = "Sign in to sync goals and streaks across your devices. Local reading and counting always remain available offline.";
+"You're signed in" = "You're signed in";
+"Continue with email" = "Continue with email";
+"Continue as guest" = "Continue as guest";
+"Welcome back" = "Welcome back";
+"Your goals and streaks will follow you to any device." = "Your goals and streaks will follow you to any device.";
+"Sign in" = "Sign in";
+"Create account" = "Create account";
+"New to Awrad? Create an account" = "New to Awrad? Create an account";
+"Already have an account? Sign in" = "Already have an account? Sign in";
+"Enter your email and password to continue." = "Enter your email and password to continue.";
+"Your account" = "Your account";
+"Never miss a moment of dhikr" = "Never miss a moment of dhikr";
+"Gentle reminders at the times you choose help daily awrad become habit." = "Gentle reminders at the times you choose help daily awrad become habit.";
+"When should we remind you?" = "When should we remind you?";
+"Choose the moments for your daily dhikr — pick as many as you like." = "Choose the moments for your daily dhikr — pick as many as you like.";
+"After Fajr" = "After Fajr";
+"30 minutes after the dawn prayer" = "30 minutes after the dawn prayer";
+"Morning" = "Morning";
+"A bright start to the day" = "A bright start to the day";
+"After Asr" = "After Asr";
+"30 minutes after the afternoon prayer" = "30 minutes after the afternoon prayer";
+"After Maghrib" = "After Maghrib";
+"As the day closes" = "As the day closes";
+"These become reminders on your first goal — edit or remove them anytime." = "These become reminders on your first goal — edit or remove them anytime.";
+"A prophetic practice" = "A prophetic practice";
+"Even the most beloved of Allah ﷺ sought forgiveness every single day." = "Even the most beloved of Allah ﷺ sought forgiveness every single day.";
+"onboarding_goalintro_hadith_arabic" = "وَاللَّهِ إِنِّي لَأَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ فِي الْيَوْمِ أَكْثَرَ مِنْ سَبْعِينَ مَرَّةً";
+"By Allah, I seek Allah's forgiveness and turn to Him in repentance more than seventy times a day." = "By Allah, I seek Allah's forgiveness and turn to Him in repentance more than seventy times a day.";
+"Sahih al-Bukhari · 6307" = "Sahih al-Bukhari · 6307";
+"Begin where he began — with istighfar." = "Begin where he began — with istighfar.";
+"One tap, and the Prophet's ﷺ daily practice becomes yours too." = "One tap, and the Prophet's ﷺ daily practice becomes yours too.";
+"Seventy istighfar a day — the number the Prophet ﷺ himself named. Keep it, or set your own pace." = "Seventy istighfar a day — the number the Prophet ﷺ himself named. Keep it, or set your own pace.";
+
+/* Authentication and device sessions */
+"Active Sessions" = "Active Sessions";
+"Account menu" = "Account menu";
+"Verify your email" = "Verify your email";
+"Open the verification link we sent, or enter its token to finish securing your account." = "Open the verification link we sent, or enter its token to finish securing your account.";
+"Enter verification token" = "Enter verification token";
+"Logged in as %@" = "Logged in as %@";
+"Paste the token from your verification link." = "Paste the token from your verification link.";
+"Verification token" = "Verification token";
+"Verify and Sign In" = "Verify and Sign In";
+"Resend in %llds" = "Resend in %llds";
+"Resend verification email" = "Resend verification email";
+"Verification email sent." = "Verification email sent.";
+"Verify Email" = "Verify Email";
+"Choose a new password" = "Choose a new password";
+"Use a strong password you do not use elsewhere." = "Use a strong password you do not use elsewhere.";
+"New password" = "New password";
+"Confirm new password" = "Confirm new password";
+"No active sessions" = "No active sessions";
+"Sign in again to create a new device session." = "Sign in again to create a new device session.";
+"Devices" = "Devices";
+"This device" = "This device";
+"Revoke" = "Revoke";
+"Revoke All Sessions" = "Revoke All Sessions";
+"Retry" = "Retry";
+
+/* Parity recovery, authentication, and session completion */
+"This item is no longer available" = "This item is no longer available";
+"It may have been deleted or changed on another device. Return to the previous page and choose another item." = "It may have been deleted or changed on another device. Return to the previous page and choose another item.";
+"Dhikr not found" = "Dhikr not found";
+"The requested dhikr is not available in this library." = "The requested dhikr is not available in this library.";
+"Use at least 10 characters with lowercase, uppercase, and a number or symbol." = "Use at least 10 characters with lowercase, uppercase, and a number or symbol.";
+"Check your email" = "Check your email";
+"We sent a password reset link to your email." = "We sent a password reset link to your email.";
+"Back to Log In" = "Back to Log In";
+"Open notification settings" = "Open notification settings";
+"Notifications are required to continue. Enable them in Settings, then return to Awrad." = "Notifications are required to continue. Enable them in Settings, then return to Awrad.";
+"Allow notifications to continue onboarding." = "Allow notifications to continue onboarding.";
+"Continue previous version" = "Continue previous version";
+"This saved cycle uses its original text and will be removed after completion." = "This saved cycle uses its original text and will be removed after completion.";
+"Maximum is below existing progress" = "Maximum is below existing progress";
+"Save New Maximum" = "Save New Maximum";
+"Review Changes" = "Review Changes";
+"Existing history will be preserved. The goal may already be beyond the new maximum, so no further counts will be accepted for that session." = "Existing history will be preserved. The goal may already be beyond the new maximum, so no further counts will be accepted for that session.";
+"Timer session complete" = "Timer session complete";
+"Count session complete" = "Count session complete";
+"Start Another Session" = "Start Another Session";
+"Your timed recitation session has ended." = "Your timed recitation session has ended.";
+"You reached this sitting’s count target." = "You reached this sitting’s count target.";
+
+/* Home dashboard and settings parity */
+"Continue %@" = "Continue %@";
+"%lld left today" = "%lld left today";
+"Enable prayer times" = "Enable prayer times";
+"Use your location for the next prayer and prayer-based reminders." = "Use your location for the next prayer and prayer-based reminders.";
+"Open prayer time settings" = "Open prayer time settings";
+"Featured Wirds" = "Featured Wirds";
+"%lld of %lld" = "%lld of %lld";
+"%d percent" = "%d percent";
+"App theme" = "App theme";
+"Counting Preferences" = "Counting Preferences";
+"Vibrate gently with each count." = "Vibrate gently with each count.";
+"Prevent the display from sleeping while counting." = "Prevent the display from sleeping while counting.";
+"Keep screen awake" = "Keep screen awake";
+"Play a subtle sound for each count." = "Play a subtle sound for each count.";
+"Notifications" = "Notifications";
+"Receive a reminder at your chosen time." = "Receive a reminder at your chosen time.";
+"Daily remembrance" = "Daily remembrance";
+"A devotional reminder every day at 9:00 AM." = "A devotional reminder every day at 9:00 AM.";
+"Notification permission" = "Notification permission";
+"Not requested" = "Not requested";
+"Allowed" = "Allowed";
+"Data Management" = "Data Management";
+"Take a moment to remember Allah." = "Take a moment to remember Allah.";
+
+/* Counting text display and target cap */
+"See full" = "See full";
+"Adjust text size" = "Adjust text size";
+"Text display" = "Text display";
+"Text size" = "Text size";
+"Line spacing" = "Line spacing";
+"Decrease text size" = "Decrease text size";
+"Increase text size" = "Increase text size";
+"Decrease line spacing" = "Decrease line spacing";
+"Increase line spacing" = "Increase line spacing";
+"Adjust the Dhikr text size and line spacing. Your choice is saved for every counter." = "Adjust the Dhikr text size and line spacing. Your choice is saved for every counter.";
+"Target reached" = "Target reached";
+"Target %@ reached · +%@ additional" = "Target %@ reached · +%@ additional";
+"Counting is paused because this goal stops at its target." = "Counting is paused because this goal stops at its target.";
+"Allow counting past target" = "Allow counting past target";
+"Allow counting past target?" = "Allow counting past target?";
+"Allow" = "Allow";
+"This permanently changes this slot’s cap to allow counts above the target. The goal will remain completed." = "This permanently changes this slot’s cap to allow counts above the target. The goal will remain completed.";
+"You can now continue counting past the target." = "You can now continue counting past the target.";
+"Could not change the counting cap. Try again." = "Could not change the counting cap. Try again.";
+
+/* Library, audio, and Quran reader */
+"Library section" = "Library section";
+"TRANSLITERATION" = "TRANSLITERATION";
+"MEANING" = "MEANING";
+"Opens the Quran reader" = "Opens the Quran reader";
+"Audio unavailable" = "Audio unavailable";
+"This dhikr does not have a recitation yet. Reading and goal creation remain available." = "This dhikr does not have a recitation yet. Reading and goal creation remain available.";
+"Remove downloaded audio?" = "Remove downloaded audio?";
+"Remove Download" = "Remove Download";
+"Remove downloaded audio" = "Remove downloaded audio";
+"The recitation can still stream while you are online." = "The recitation can still stream while you are online.";
+"Quran Reader" = "Quran Reader";
+"COUNT" = "COUNT";
+"You reached the target. Counting can continue for this slot." = "You reached the target. Counting can continue for this slot.";
+"This slot has reached its maximum count." = "This slot has reached its maximum count.";
+
+/* Wird lifecycle parity */
+"No wirds yet" = "No wirds yet";
+"Create a personal wird to begin a recurring reading practice." = "Create a personal wird to begin a recurring reading practice.";
+"Delete this wird?" = "Delete this wird?";
+"Delete wird" = "Delete wird";
+"Its reading progress and reminders will also be removed." = "Its reading progress and reminders will also be removed.";
+"Not scheduled today" = "Not scheduled today";
+"Sections by weekday" = "Sections by weekday";
+"Choose one or more sections for each weekday. Unassigned days are skipped." = "Choose one or more sections for each weekday. Unassigned days are skipped.";
+"Add a section before assigning weekdays." = "Add a section before assigning weekdays.";
+"Section %d" = "Section %d";
+"%d sections" = "%d sections";
+"%d recitations" = "%d recitations";
+"%d of %d sections" = "%d of %d sections";
+"%d min" = "%d min";
+"Begin recitation" = "Begin recitation";
+"Sections" = "Sections";
+"To recite" = "To recite";
+"Continuous" = "Continuous";
+"Pages" = "Pages";
+"Reading mode" = "Reading mode";
+"Previous section" = "Previous section";
+"Next section" = "Next section";
+"Finish section" = "Finish section";
+"Continue to next section" = "Continue to next section";
+"Remind me" = "Remind me";
+"Turn off reminder" = "Turn off reminder";
+"Wird reminder" = "Wird reminder";
+"Save reminder" = "Save reminder";
+
+/* Goal portfolio and lifecycle parity */
+"My Goals" = "My Goals";
+"Your dhikr rhythm, today and ahead" = "Your dhikr rhythm, today and ahead";
+"Upcoming" = "Upcoming";
+"Other" = "Other";
+"Create a goal to begin a steady dhikr practice." = "Create a goal to begin a steady dhikr practice.";
+"Goal not found" = "Goal not found";
+"This goal may have been removed." = "This goal may have been removed.";
+"Goal details" = "Goal details";
+"Overview" = "Overview";
+"Count rules" = "Count rules";
+"Sessions" = "Sessions";
+"Reminders" = "Reminders";
+"No reminders" = "No reminders";
+"Enabled" = "Enabled";
+"Disabled" = "Disabled";
+"Count history" = "Count history";
+"Resume goal" = "Resume goal";
+"Continue counting" = "Continue counting";
+"Begin counting" = "Begin counting";
+"Delete goal" = "Delete goal";
+"Reset all progress?" = "Reset all progress?";
+"All count history for this goal will be removed." = "All count history for this goal will be removed.";
+"Done today" = "Done today";
+"Any time during the due day" = "Any time during the due day";
+"%lld today" = "%lld today";
+"%lld archived sessions retained for history" = "%lld archived sessions retained for history";
+"Minimum %lld for today’s streak" = "Minimum %lld for today’s streak";
+"Minimum %lld, target %lld, maximum %lld" = "Minimum %lld, target %lld, maximum %lld";
+"Minimum %lld, target %lld" = "Minimum %lld, target %lld";
+"Target %lld" = "Target %lld";
+"At %@ start" = "At %@ start";
+
+/* Goal count rules */
+"Edit count rules" = "Edit count rules";
+"Couldn’t save changes" = "Couldn’t save changes";
+"Set how progress, milestones, and count limits work." = "Set how progress, milestones, and count limits work.";
+"Progress target" = "Progress target";
+"Session targets" = "Session targets";
+"Each session keeps its own target and count history." = "Each session keeps its own target and count history.";
+"Complete goal when target is reached" = "Complete goal when target is reached";
+"Enter positive counts in order: minimum ≤ target ≤ maximum." = "Enter positive counts in order: minimum ≤ target ≤ maximum.";
+"Review the count rule and try again." = "Review the count rule and try again.";
+"Exact count" = "Exact count";
+"Maximum" = "Maximum";
+"At the limit" = "At the limit";
+"Keep counting" = "Keep counting";
+"Warn, then continue" = "Warn, then continue";
+"Stop at target" = "Stop at target";
+"Stop at maximum" = "Stop at maximum";
+
+/* Goal schedule editor */
+"Edit schedule" = "Edit schedule";
+"Review the schedule and try again." = "Review the schedule and try again.";
+"Enter valid month days from 1 to 31." = "Enter valid month days from 1 to 31.";
+"Interval must be at least one day." = "Interval must be at least one day.";
+"Enter at least one date as YYYY-MM-DD." = "Enter at least one date as YYYY-MM-DD.";
+"Review the schedule." = "Review the schedule.";
+"Sessions must be unique and use valid prayers or time windows." = "Sessions must be unique and use valid prayers or time windows.";
+"Archived sessions stay attached to count history." = "Archived sessions stay attached to count history.";
+"Repeat" = "Repeat";
+"Frequency" = "Frequency";
+"Every due day" = "Every due day";
+"Days of month, e.g. 1, 15, 29" = "Days of month, e.g. 1, 15, 29";
+"Every" = "Every";
+"days" = "days";
+"Month" = "Month";
+"Days, e.g. 1, 10" = "Days, e.g. 1, 10";
+"YYYY-MM-DD, one or more" = "YYYY-MM-DD, one or more";
+"Add session" = "Add session";
+"Available whenever this goal is due." = "Available whenever this goal is due.";
+"Prayer session" = "Prayer session";
+"Relation" = "Relation";
+"Session name" = "Session name";
+"Starts" = "Starts";
+"Ends" = "Ends";
+"Remove session" = "Remove session";
+
+/* Goal reminder editor */
+"Edit reminders" = "Edit reminders";
+"Reminders follow this goal’s active sessions and schedule." = "Reminders follow this goal’s active sessions and schedule.";
+"Add a fixed time or a reminder linked to a session." = "Add a fixed time or a reminder linked to a session.";
+"Each reminder must use a unique time or session." = "Each reminder must use a unique time or session.";
+"Choose a valid reminder time." = "Choose a valid reminder time.";
+"Choose an active prayer session and a valid offset." = "Choose an active prayer session and a valid offset.";
+"Choose an active time-window session." = "Choose an active time-window session.";
+"Add reminder" = "Add reminder";
+"Fixed time" = "Fixed time";
+"Session start" = "Session start";
+"Review the reminders and try again." = "Review the reminders and try again.";
+"Delete reminder" = "Delete reminder";
+"Reminder type" = "Reminder type";
+"Time" = "Time";
+"Session" = "Session";
+"%lld minutes before" = "%lld minutes before";
+"Delivered when the selected session begins." = "Delivered when the selected session begins.";
+"Move session up" = "Move session up";
+"Move session down" = "Move session down";
+"Begin %lld minutes before" = "Begin %lld minutes before";
+"Your Awrad data needs attention" = "Your Awrad data needs attention";
+"Retry safely" = "Retry safely";
+"Export original data" = "Export original data";
+"Using protected recovery data" = "Using protected recovery data";
+"Your original backup is unchanged." = "Your original backup is unchanged.";
+"Retry" = "Retry";
+"Notifications are disabled. Enable them in Settings, then try again." = "Notifications are disabled. Enable them in Settings, then try again.";
+"Some reminders could not be scheduled. Try again." = "Some reminders could not be scheduled. Try again.";
+"Couldn’t save changes. Try again." = "Couldn’t save changes. Try again.";
+"Reminders need attention" = "Reminders need attention";
+"Not now" = "Not now";
+"Couldn’t update reminders" = "Couldn’t update reminders";
+"Couldn’t update reminder" = "Couldn’t update reminder";
+"Couldn’t create goal" = "Couldn’t create goal";
+"Couldn’t schedule reminders" = "Couldn’t schedule reminders";
+"Continue without reminders" = "Continue without reminders";
+"Couldn’t save wird" = "Couldn’t save wird";

@@ -1,0 +1,2342 @@
+{
+  "schema_version": 1,
+  "identity_algorithm": "UUIDv3(MD5, UTF-8('awrad-wird:' + structural_path))",
+  "assets": [
+    {
+      "slug": "dalail-al-khayrat",
+      "version": 5,
+      "canonical_file": "fixtures/dalail-al-khayrat.json",
+      "sha256": "3d4d138ab9edb9967c75d59211d480a53a832eb44f73a9978461fe2c89800bac",
+      "estimated_minutes": 60,
+      "wird_id": "377ac7e5-800e-3074-bb6e-91c3af353de3",
+      "part_count": 8,
+      "segment_count": 452,
+      "parts": [
+        {
+          "index": 0,
+          "structural_path": "dalail-al-khayrat/part/0",
+          "id": "7b7ca701-9d65-3bfc-87b9-722f8b5377d9",
+          "segment_count": 77,
+          "segments": [
+            {
+              "index": 0,
+              "structural_path": "dalail-al-khayrat/part/0/seg/0",
+              "id": "0b78196b-72af-3483-906e-d8e1c2a204f7"
+            },
+            {
+              "index": 1,
+              "structural_path": "dalail-al-khayrat/part/0/seg/1",
+              "id": "d750974c-14c5-3358-829d-b557a1670c7e"
+            },
+            {
+              "index": 2,
+              "structural_path": "dalail-al-khayrat/part/0/seg/2",
+              "id": "0a69deef-5cc4-384a-8901-e4d0822f293f"
+            },
+            {
+              "index": 3,
+              "structural_path": "dalail-al-khayrat/part/0/seg/3",
+              "id": "5b84042d-d3a4-33a8-8218-9f1ac3c00c9b"
+            },
+            {
+              "index": 4,
+              "structural_path": "dalail-al-khayrat/part/0/seg/4",
+              "id": "6dbe7c8a-e0d2-3011-88d7-5e759bd55c64"
+            },
+            {
+              "index": 5,
+              "structural_path": "dalail-al-khayrat/part/0/seg/5",
+              "id": "3bca5f57-32a2-3c03-8ac4-1000aaedacdd"
+            },
+            {
+              "index": 6,
+              "structural_path": "dalail-al-khayrat/part/0/seg/6",
+              "id": "fac74c1b-7f74-383e-aee2-a90773c2fe9c"
+            },
+            {
+              "index": 7,
+              "structural_path": "dalail-al-khayrat/part/0/seg/7",
+              "id": "f7018d94-1e46-339d-88d3-b775e6655e75"
+            },
+            {
+              "index": 8,
+              "structural_path": "dalail-al-khayrat/part/0/seg/8",
+              "id": "963f5b74-2bb8-3a92-b416-683a42c47e8e"
+            },
+            {
+              "index": 9,
+              "structural_path": "dalail-al-khayrat/part/0/seg/9",
+              "id": "e2be464f-4324-3527-bb22-f206e398068d"
+            },
+            {
+              "index": 10,
+              "structural_path": "dalail-al-khayrat/part/0/seg/10",
+              "id": "52505bf2-1571-3a75-a183-0ac48ed9fa7d"
+            },
+            {
+              "index": 11,
+              "structural_path": "dalail-al-khayrat/part/0/seg/11",
+              "id": "0119a701-0847-3a76-8ddc-ac4302b48558"
+            },
+            {
+              "index": 12,
+              "structural_path": "dalail-al-khayrat/part/0/seg/12",
+              "id": "22082b01-6716-35f9-b600-c3e801480ebf"
+            },
+            {
+              "index": 13,
+              "structural_path": "dalail-al-khayrat/part/0/seg/13",
+              "id": "399e18d9-4589-36cd-86b6-5a10300cf71d"
+            },
+            {
+              "index": 14,
+              "structural_path": "dalail-al-khayrat/part/0/seg/14",
+              "id": "172908d7-b81e-359e-9e30-77d64d824e7c"
+            },
+            {
+              "index": 15,
+              "structural_path": "dalail-al-khayrat/part/0/seg/15",
+              "id": "480c9381-3813-3d5e-93ed-b7f00ba8f33e"
+            },
+            {
+              "index": 16,
+              "structural_path": "dalail-al-khayrat/part/0/seg/16",
+              "id": "b6f1f468-9343-3122-aab3-507972722f8e"
+            },
+            {
+              "index": 17,
+              "structural_path": "dalail-al-khayrat/part/0/seg/17",
+              "id": "ff89ae1d-3a3f-3b27-835a-267230158a06"
+            },
+            {
+              "index": 18,
+              "structural_path": "dalail-al-khayrat/part/0/seg/18",
+              "id": "e419520a-6353-3550-b340-464474f44fc5"
+            },
+            {
+              "index": 19,
+              "structural_path": "dalail-al-khayrat/part/0/seg/19",
+              "id": "9806d989-89fd-3970-a332-c417a8aa9add"
+            },
+            {
+              "index": 20,
+              "structural_path": "dalail-al-khayrat/part/0/seg/20",
+              "id": "c4db491a-15d7-35a4-ba3e-7a3a435f1837"
+            },
+            {
+              "index": 21,
+              "structural_path": "dalail-al-khayrat/part/0/seg/21",
+              "id": "4b68d7f7-f6c1-3f56-894f-92eab98ac02d"
+            },
+            {
+              "index": 22,
+              "structural_path": "dalail-al-khayrat/part/0/seg/22",
+              "id": "247060fd-84ba-39b1-99c1-fab672602133"
+            },
+            {
+              "index": 23,
+              "structural_path": "dalail-al-khayrat/part/0/seg/23",
+              "id": "a6c614fd-0747-3ca6-bf40-bb9d9b3b82c0"
+            },
+            {
+              "index": 24,
+              "structural_path": "dalail-al-khayrat/part/0/seg/24",
+              "id": "81c99b81-c4bb-31b5-a556-5f89e2d5a57a"
+            },
+            {
+              "index": 25,
+              "structural_path": "dalail-al-khayrat/part/0/seg/25",
+              "id": "b9884759-3253-3d31-894b-4fa8424c73ef"
+            },
+            {
+              "index": 26,
+              "structural_path": "dalail-al-khayrat/part/0/seg/26",
+              "id": "368fee02-68be-3c9b-899f-7f4d111fe796"
+            },
+            {
+              "index": 27,
+              "structural_path": "dalail-al-khayrat/part/0/seg/27",
+              "id": "3484e210-459b-39d7-ba36-458bbf23b84b"
+            },
+            {
+              "index": 28,
+              "structural_path": "dalail-al-khayrat/part/0/seg/28",
+              "id": "710b8383-6d08-3db1-9dee-84b1ad8f0932"
+            },
+            {
+              "index": 29,
+              "structural_path": "dalail-al-khayrat/part/0/seg/29",
+              "id": "089d2748-7fc5-3eb2-b9ea-6b1dc6d88c89"
+            },
+            {
+              "index": 30,
+              "structural_path": "dalail-al-khayrat/part/0/seg/30",
+              "id": "862fb4fd-60f5-3aff-a476-6f7b36d85fc5"
+            },
+            {
+              "index": 31,
+              "structural_path": "dalail-al-khayrat/part/0/seg/31",
+              "id": "20c00973-0d8a-31b6-961a-19e5de92880b"
+            },
+            {
+              "index": 32,
+              "structural_path": "dalail-al-khayrat/part/0/seg/32",
+              "id": "b0377c02-e9fd-37f4-b095-f30e3d0c767b"
+            },
+            {
+              "index": 33,
+              "structural_path": "dalail-al-khayrat/part/0/seg/33",
+              "id": "02edbb0e-d782-30ed-aae8-71d8223beee6"
+            },
+            {
+              "index": 34,
+              "structural_path": "dalail-al-khayrat/part/0/seg/34",
+              "id": "b179022d-ab93-3b31-8a47-0f32a7afd947"
+            },
+            {
+              "index": 35,
+              "structural_path": "dalail-al-khayrat/part/0/seg/35",
+              "id": "92b7f476-b408-3f9b-a133-368a8ce9c30a"
+            },
+            {
+              "index": 36,
+              "structural_path": "dalail-al-khayrat/part/0/seg/36",
+              "id": "42f7a55c-c6a2-3b21-ab44-69a266406f7a"
+            },
+            {
+              "index": 37,
+              "structural_path": "dalail-al-khayrat/part/0/seg/37",
+              "id": "ca50bf89-799d-34c0-b42f-9bf0655c7e91"
+            },
+            {
+              "index": 38,
+              "structural_path": "dalail-al-khayrat/part/0/seg/38",
+              "id": "ecf47339-1065-364c-a56e-db2fcca242d3"
+            },
+            {
+              "index": 39,
+              "structural_path": "dalail-al-khayrat/part/0/seg/39",
+              "id": "683b66fd-6aaf-3002-b6a6-70a382bbf8bd"
+            },
+            {
+              "index": 40,
+              "structural_path": "dalail-al-khayrat/part/0/seg/40",
+              "id": "122d8cba-785b-338e-aacd-0e3ed438f351"
+            },
+            {
+              "index": 41,
+              "structural_path": "dalail-al-khayrat/part/0/seg/41",
+              "id": "959e7607-6a94-3cc2-8d29-5c0ed2c66a02"
+            },
+            {
+              "index": 42,
+              "structural_path": "dalail-al-khayrat/part/0/seg/42",
+              "id": "efdf4a14-cdd4-393f-9f57-6c92cf273b0e"
+            },
+            {
+              "index": 43,
+              "structural_path": "dalail-al-khayrat/part/0/seg/43",
+              "id": "a8d85448-5568-3245-ab12-98e4a94fa06b"
+            },
+            {
+              "index": 44,
+              "structural_path": "dalail-al-khayrat/part/0/seg/44",
+              "id": "958b8eac-21db-3a64-bc46-830f47b233ab"
+            },
+            {
+              "index": 45,
+              "structural_path": "dalail-al-khayrat/part/0/seg/45",
+              "id": "1afeb0ef-5fb8-38aa-9bc7-01fabd7a151c"
+            },
+            {
+              "index": 46,
+              "structural_path": "dalail-al-khayrat/part/0/seg/46",
+              "id": "e456e826-44a7-33b9-807b-4fbc2dc0612e"
+            },
+            {
+              "index": 47,
+              "structural_path": "dalail-al-khayrat/part/0/seg/47",
+              "id": "561fa87e-4da3-34df-a096-d3f70e34fdfa"
+            },
+            {
+              "index": 48,
+              "structural_path": "dalail-al-khayrat/part/0/seg/48",
+              "id": "4c5f6593-3a50-33f5-9591-024e60183abf"
+            },
+            {
+              "index": 49,
+              "structural_path": "dalail-al-khayrat/part/0/seg/49",
+              "id": "4f593bb0-d419-38f8-a85f-60bdc487f1b8"
+            },
+            {
+              "index": 50,
+              "structural_path": "dalail-al-khayrat/part/0/seg/50",
+              "id": "882187e4-5724-34e6-973f-ad5fbe37a33f"
+            },
+            {
+              "index": 51,
+              "structural_path": "dalail-al-khayrat/part/0/seg/51",
+              "id": "52122f58-39e7-3e1d-9ae6-3d36d7d8626c"
+            },
+            {
+              "index": 52,
+              "structural_path": "dalail-al-khayrat/part/0/seg/52",
+              "id": "3b0a0bd3-fcbf-3c71-9679-4f75d607ba98"
+            },
+            {
+              "index": 53,
+              "structural_path": "dalail-al-khayrat/part/0/seg/53",
+              "id": "37c09308-84ae-389a-94cb-dfaae8cbbbbb"
+            },
+            {
+              "index": 54,
+              "structural_path": "dalail-al-khayrat/part/0/seg/54",
+              "id": "170c5a84-dc69-31e5-ae0f-48bc97a156d3"
+            },
+            {
+              "index": 55,
+              "structural_path": "dalail-al-khayrat/part/0/seg/55",
+              "id": "1decd158-9e67-3a86-83c7-274135d26577"
+            },
+            {
+              "index": 56,
+              "structural_path": "dalail-al-khayrat/part/0/seg/56",
+              "id": "6734ef7c-563c-38dd-90e7-cfddc1362dd4"
+            },
+            {
+              "index": 57,
+              "structural_path": "dalail-al-khayrat/part/0/seg/57",
+              "id": "e9286730-f6bd-30b5-9d91-d878dfd079cb"
+            },
+            {
+              "index": 58,
+              "structural_path": "dalail-al-khayrat/part/0/seg/58",
+              "id": "bb99f1dc-e010-381c-832b-d7421be8b2ab"
+            },
+            {
+              "index": 59,
+              "structural_path": "dalail-al-khayrat/part/0/seg/59",
+              "id": "a8885134-0311-384e-82e3-6203f7da8fb6"
+            },
+            {
+              "index": 60,
+              "structural_path": "dalail-al-khayrat/part/0/seg/60",
+              "id": "536f760d-11a5-3776-b4de-88c37f1c5133"
+            },
+            {
+              "index": 61,
+              "structural_path": "dalail-al-khayrat/part/0/seg/61",
+              "id": "f92cfdfd-d21d-3799-8f4c-d9acf4a250a4"
+            },
+            {
+              "index": 62,
+              "structural_path": "dalail-al-khayrat/part/0/seg/62",
+              "id": "e933bedc-7ad1-3084-be41-32e4bf87e18b"
+            },
+            {
+              "index": 63,
+              "structural_path": "dalail-al-khayrat/part/0/seg/63",
+              "id": "f78003ea-592a-3158-9297-5ad7fcbe7f93"
+            },
+            {
+              "index": 64,
+              "structural_path": "dalail-al-khayrat/part/0/seg/64",
+              "id": "9a87657e-5850-380b-ac3c-d53f0a88cfa9"
+            },
+            {
+              "index": 65,
+              "structural_path": "dalail-al-khayrat/part/0/seg/65",
+              "id": "f765279c-4a82-3178-8d7c-4159f0cd09f7"
+            },
+            {
+              "index": 66,
+              "structural_path": "dalail-al-khayrat/part/0/seg/66",
+              "id": "b543bd3d-522f-36f6-8056-2bff9b508c3b"
+            },
+            {
+              "index": 67,
+              "structural_path": "dalail-al-khayrat/part/0/seg/67",
+              "id": "c4ba6b39-a1d5-3eba-b909-cd87a2852c81"
+            },
+            {
+              "index": 68,
+              "structural_path": "dalail-al-khayrat/part/0/seg/68",
+              "id": "db81b95e-4eb1-31ac-b800-2131036193c8"
+            },
+            {
+              "index": 69,
+              "structural_path": "dalail-al-khayrat/part/0/seg/69",
+              "id": "cd4ee0e9-4555-3c12-9774-290c8061c098"
+            },
+            {
+              "index": 70,
+              "structural_path": "dalail-al-khayrat/part/0/seg/70",
+              "id": "a7c45835-1cac-3174-a126-2fb9a30c3065"
+            },
+            {
+              "index": 71,
+              "structural_path": "dalail-al-khayrat/part/0/seg/71",
+              "id": "00ea72fc-596d-36b2-9728-ba3040b747c1"
+            },
+            {
+              "index": 72,
+              "structural_path": "dalail-al-khayrat/part/0/seg/72",
+              "id": "ffe87d15-a61d-3ed5-b6b0-99d2b29ad753"
+            },
+            {
+              "index": 73,
+              "structural_path": "dalail-al-khayrat/part/0/seg/73",
+              "id": "b665017f-b915-3d94-b93e-51da28b7a511"
+            },
+            {
+              "index": 74,
+              "structural_path": "dalail-al-khayrat/part/0/seg/74",
+              "id": "0e8aa61e-a103-3a93-b36f-ba1c97a25ac0"
+            },
+            {
+              "index": 75,
+              "structural_path": "dalail-al-khayrat/part/0/seg/75",
+              "id": "1440ffda-1ba4-3420-97ab-4da6af69a97c"
+            },
+            {
+              "index": 76,
+              "structural_path": "dalail-al-khayrat/part/0/seg/76",
+              "id": "4c26b7b3-ddca-33e0-8fd4-042a9da05ff4"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "structural_path": "dalail-al-khayrat/part/1",
+          "id": "a2297c23-feaf-3d4d-8242-70ebda0bd874",
+          "segment_count": 146,
+          "segments": [
+            {
+              "index": 0,
+              "structural_path": "dalail-al-khayrat/part/1/seg/0",
+              "id": "d076c2a1-b3df-3819-b3c6-964701f730f8"
+            },
+            {
+              "index": 1,
+              "structural_path": "dalail-al-khayrat/part/1/seg/1",
+              "id": "ffab3a8b-1f35-3561-a34e-f3dde6a6021f"
+            },
+            {
+              "index": 2,
+              "structural_path": "dalail-al-khayrat/part/1/seg/2",
+              "id": "aded1819-ca04-3bd0-8cb7-ec4905fe4616"
+            },
+            {
+              "index": 3,
+              "structural_path": "dalail-al-khayrat/part/1/seg/3",
+              "id": "1c458122-8054-36f3-87ce-48561e2150ca"
+            },
+            {
+              "index": 4,
+              "structural_path": "dalail-al-khayrat/part/1/seg/4",
+              "id": "a7a8bf26-a428-332a-9e90-294526054208"
+            },
+            {
+              "index": 5,
+              "structural_path": "dalail-al-khayrat/part/1/seg/5",
+              "id": "2eb8aa33-ba08-3623-b491-881ad33694dd"
+            },
+            {
+              "index": 6,
+              "structural_path": "dalail-al-khayrat/part/1/seg/6",
+              "id": "2574ebc8-610c-32a4-a785-5f8e24061635"
+            },
+            {
+              "index": 7,
+              "structural_path": "dalail-al-khayrat/part/1/seg/7",
+              "id": "29c5c65f-7123-33e4-aed3-63a1eaa7cf19"
+            },
+            {
+              "index": 8,
+              "structural_path": "dalail-al-khayrat/part/1/seg/8",
+              "id": "54701865-428e-3cd1-b52f-057b266e7fdd"
+            },
+            {
+              "index": 9,
+              "structural_path": "dalail-al-khayrat/part/1/seg/9",
+              "id": "abfea2db-bea1-3156-814f-b1dc4fd6c1f1"
+            },
+            {
+              "index": 10,
+              "structural_path": "dalail-al-khayrat/part/1/seg/10",
+              "id": "5d7b6e64-d356-3f4d-835a-aac314cfbfa0"
+            },
+            {
+              "index": 11,
+              "structural_path": "dalail-al-khayrat/part/1/seg/11",
+              "id": "e78ad7f6-e12e-332a-bb9e-efd1b04305b2"
+            },
+            {
+              "index": 12,
+              "structural_path": "dalail-al-khayrat/part/1/seg/12",
+              "id": "5c98fb50-da4b-3525-8397-1133876ccc75"
+            },
+            {
+              "index": 13,
+              "structural_path": "dalail-al-khayrat/part/1/seg/13",
+              "id": "0ad034df-b6ef-35e4-a5eb-a1244d982764"
+            },
+            {
+              "index": 14,
+              "structural_path": "dalail-al-khayrat/part/1/seg/14",
+              "id": "faf84707-df72-397a-b4e6-f1048eb105db"
+            },
+            {
+              "index": 15,
+              "structural_path": "dalail-al-khayrat/part/1/seg/15",
+              "id": "49baffcd-774f-3215-b36a-2132be48d273"
+            },
+            {
+              "index": 16,
+              "structural_path": "dalail-al-khayrat/part/1/seg/16",
+              "id": "19342eec-dc7c-3311-829e-e21696ffad55"
+            },
+            {
+              "index": 17,
+              "structural_path": "dalail-al-khayrat/part/1/seg/17",
+              "id": "53a8f85d-14c0-3fe8-b538-4e61433a5288"
+            },
+            {
+              "index": 18,
+              "structural_path": "dalail-al-khayrat/part/1/seg/18",
+              "id": "ac4436b1-1004-3695-8bc3-e7a4bd5c8f4a"
+            },
+            {
+              "index": 19,
+              "structural_path": "dalail-al-khayrat/part/1/seg/19",
+              "id": "cc073a5f-c4f2-36e2-807f-4d943240d555"
+            },
+            {
+              "index": 20,
+              "structural_path": "dalail-al-khayrat/part/1/seg/20",
+              "id": "38fc4b7f-20d3-3bd1-9dd1-5465e25f2684"
+            },
+            {
+              "index": 21,
+              "structural_path": "dalail-al-khayrat/part/1/seg/21",
+              "id": "35591638-5f86-3fcd-8d29-1bc66544892d"
+            },
+            {
+              "index": 22,
+              "structural_path": "dalail-al-khayrat/part/1/seg/22",
+              "id": "0f630c58-f9b0-370e-a531-aa61bb2a3aba"
+            },
+            {
+              "index": 23,
+              "structural_path": "dalail-al-khayrat/part/1/seg/23",
+              "id": "1c46db3a-be24-3cd2-9f5a-4e2789d078f0"
+            },
+            {
+              "index": 24,
+              "structural_path": "dalail-al-khayrat/part/1/seg/24",
+              "id": "fc045ac5-1df4-3d1d-b3ee-199cd9dd9555"
+            },
+            {
+              "index": 25,
+              "structural_path": "dalail-al-khayrat/part/1/seg/25",
+              "id": "fd0210a0-9622-3652-9059-785a9272211d"
+            },
+            {
+              "index": 26,
+              "structural_path": "dalail-al-khayrat/part/1/seg/26",
+              "id": "2611a812-92db-39f3-8878-bba10c92a9c6"
+            },
+            {
+              "index": 27,
+              "structural_path": "dalail-al-khayrat/part/1/seg/27",
+              "id": "dc38a5e6-c44d-3624-aa8f-38f05889ceec"
+            },
+            {
+              "index": 28,
+              "structural_path": "dalail-al-khayrat/part/1/seg/28",
+              "id": "a24116f6-729b-32f9-b3ac-53dcaeb62163"
+            },
+            {
+              "index": 29,
+              "structural_path": "dalail-al-khayrat/part/1/seg/29",
+              "id": "f740b0a7-49c7-3c7e-9447-d1cf92dd4e31"
+            },
+            {
+              "index": 30,
+              "structural_path": "dalail-al-khayrat/part/1/seg/30",
+              "id": "1f4ff872-f231-396c-8507-e7215224e17f"
+            },
+            {
+              "index": 31,
+              "structural_path": "dalail-al-khayrat/part/1/seg/31",
+              "id": "38384368-e4fb-34f6-85f0-914c98617c00"
+            },
+            {
+              "index": 32,
+              "structural_path": "dalail-al-khayrat/part/1/seg/32",
+              "id": "e288239d-e783-302b-8aea-159bbc46229e"
+            },
+            {
+              "index": 33,
+              "structural_path": "dalail-al-khayrat/part/1/seg/33",
+              "id": "5896a176-5aeb-3964-8aef-0643fa9dd3cd"
+            },
+            {
+              "index": 34,
+              "structural_path": "dalail-al-khayrat/part/1/seg/34",
+              "id": "c5df611d-36b2-3c64-9667-a71a57ed03c1"
+            },
+            {
+              "index": 35,
+              "structural_path": "dalail-al-khayrat/part/1/seg/35",
+              "id": "8071fbaa-6c00-33db-b6f7-66fc3a4d98dd"
+            },
+            {
+              "index": 36,
+              "structural_path": "dalail-al-khayrat/part/1/seg/36",
+              "id": "064bfed7-0b4b-3557-8f0e-f8e854f8e53f"
+            },
+            {
+              "index": 37,
+              "structural_path": "dalail-al-khayrat/part/1/seg/37",
+              "id": "81204fed-b732-3453-a656-f32cda90ab4f"
+            },
+            {
+              "index": 38,
+              "structural_path": "dalail-al-khayrat/part/1/seg/38",
+              "id": "14ca5443-d5d8-30ac-b3d2-eb401ba9f3e5"
+            },
+            {
+              "index": 39,
+              "structural_path": "dalail-al-khayrat/part/1/seg/39",
+              "id": "3988cea5-4d95-34d0-9370-aba67faeb356"
+            },
+            {
+              "index": 40,
+              "structural_path": "dalail-al-khayrat/part/1/seg/40",
+              "id": "88a803d3-207a-301d-9795-b9f0eddc525c"
+            },
+            {
+              "index": 41,
+              "structural_path": "dalail-al-khayrat/part/1/seg/41",
+              "id": "5c663fa0-d5a1-3bd9-9075-901ab1e32d45"
+            },
+            {
+              "index": 42,
+              "structural_path": "dalail-al-khayrat/part/1/seg/42",
+              "id": "a54a2e18-0334-35d9-88bf-e49306142eb6"
+            },
+            {
+              "index": 43,
+              "structural_path": "dalail-al-khayrat/part/1/seg/43",
+              "id": "ddf47f82-3c91-3f2e-8fd9-d8d03c9ed0a8"
+            },
+            {
+              "index": 44,
+              "structural_path": "dalail-al-khayrat/part/1/seg/44",
+              "id": "360c50c2-d77f-3b50-a845-9d800f34ef77"
+            },
+            {
+              "index": 45,
+              "structural_path": "dalail-al-khayrat/part/1/seg/45",
+              "id": "488b8d38-2871-3a23-a9a1-52f3563b2cda"
+            },
+            {
+              "index": 46,
+              "structural_path": "dalail-al-khayrat/part/1/seg/46",
+              "id": "a11f2fc8-61a7-33d5-b805-fa6bdf515192"
+            },
+            {
+              "index": 47,
+              "structural_path": "dalail-al-khayrat/part/1/seg/47",
+              "id": "02ff73cb-4ca9-32d5-a5fe-c5ac70de5884"
+            },
+            {
+              "index": 48,
+              "structural_path": "dalail-al-khayrat/part/1/seg/48",
+              "id": "b67ddf68-f168-378e-ae65-5c6f9b6c69aa"
+            },
+            {
+              "index": 49,
+              "structural_path": "dalail-al-khayrat/part/1/seg/49",
+              "id": "e119f55c-44aa-351b-8a01-b53347af6823"
+            },
+            {
+              "index": 50,
+              "structural_path": "dalail-al-khayrat/part/1/seg/50",
+              "id": "fef2d889-0cce-3513-ba11-c1f26725fc2c"
+            },
+            {
+              "index": 51,
+              "structural_path": "dalail-al-khayrat/part/1/seg/51",
+              "id": "b1b4ee7a-0c7a-3413-97d9-4f7ded1ed78a"
+            },
+            {
+              "index": 52,
+              "structural_path": "dalail-al-khayrat/part/1/seg/52",
+              "id": "9d19e140-76f8-316b-b1fe-3100c60bd0bb"
+            },
+            {
+              "index": 53,
+              "structural_path": "dalail-al-khayrat/part/1/seg/53",
+              "id": "dad7ecc0-fa53-3c71-947d-7a51a06191bb"
+            },
+            {
+              "index": 54,
+              "structural_path": "dalail-al-khayrat/part/1/seg/54",
+              "id": "9b3f0bcb-41e5-318b-adef-a29e0746259b"
+            },
+            {
+              "index": 55,
+              "structural_path": "dalail-al-khayrat/part/1/seg/55",
+              "id": "93125141-8928-370c-8ca2-c012e1e3ab38"
+            },
+            {
+              "index": 56,
+              "structural_path": "dalail-al-khayrat/part/1/seg/56",
+              "id": "bffa124f-d299-3d90-a92a-6c785cf57206"
+            },
+            {
+              "index": 57,
+              "structural_path": "dalail-al-khayrat/part/1/seg/57",
+              "id": "37f8c1d6-d7a1-3c72-8413-4cef89064639"
+            },
+            {
+              "index": 58,
+              "structural_path": "dalail-al-khayrat/part/1/seg/58",
+              "id": "99ae24fd-8158-305d-a4ee-b6b620f6f2fe"
+            },
+            {
+              "index": 59,
+              "structural_path": "dalail-al-khayrat/part/1/seg/59",
+              "id": "8f7d4267-984d-3a7c-947c-6d7e6e5b88e9"
+            },
+            {
+              "index": 60,
+              "structural_path": "dalail-al-khayrat/part/1/seg/60",
+              "id": "7392a3ff-8643-34bc-80dd-f4de98976860"
+            },
+            {
+              "index": 61,
+              "structural_path": "dalail-al-khayrat/part/1/seg/61",
+              "id": "19d170b8-000a-397d-a1e8-2048883ec593"
+            },
+            {
+              "index": 62,
+              "structural_path": "dalail-al-khayrat/part/1/seg/62",
+              "id": "4fba4ca8-ae39-3620-937e-63fc867ff386"
+            },
+            {
+              "index": 63,
+              "structural_path": "dalail-al-khayrat/part/1/seg/63",
+              "id": "77c72938-4cf7-3e0d-b13a-c2a31ab79d79"
+            },
+            {
+              "index": 64,
+              "structural_path": "dalail-al-khayrat/part/1/seg/64",
+              "id": "8f02f9f8-b54c-34fa-a422-a0c764932d6e"
+            },
+            {
+              "index": 65,
+              "structural_path": "dalail-al-khayrat/part/1/seg/65",
+              "id": "66349f13-36e3-3e9c-9626-500482ee8dcd"
+            },
+            {
+              "index": 66,
+              "structural_path": "dalail-al-khayrat/part/1/seg/66",
+              "id": "6f2763aa-07d1-39b5-80b4-3faa6c626c8f"
+            },
+            {
+              "index": 67,
+              "structural_path": "dalail-al-khayrat/part/1/seg/67",
+              "id": "f0a16c9e-8df4-346a-b608-c4c6ff7fe942"
+            },
+            {
+              "index": 68,
+              "structural_path": "dalail-al-khayrat/part/1/seg/68",
+              "id": "5d0366d7-208f-3720-aa89-6c54c3e4bacb"
+            },
+            {
+              "index": 69,
+              "structural_path": "dalail-al-khayrat/part/1/seg/69",
+              "id": "655a925b-004f-3eab-8628-56b6151561c8"
+            },
+            {
+              "index": 70,
+              "structural_path": "dalail-al-khayrat/part/1/seg/70",
+              "id": "bfbe1b02-a791-3693-a9ab-39296436ceb6"
+            },
+            {
+              "index": 71,
+              "structural_path": "dalail-al-khayrat/part/1/seg/71",
+              "id": "fdc535a8-2d7b-3d49-8f1b-eb4e6242887f"
+            },
+            {
+              "index": 72,
+              "structural_path": "dalail-al-khayrat/part/1/seg/72",
+              "id": "ec335be0-9fcc-3950-a1c9-add9e1315696"
+            },
+            {
+              "index": 73,
+              "structural_path": "dalail-al-khayrat/part/1/seg/73",
+              "id": "17f0fc0a-b158-38d9-9ab1-f4f0488dd709"
+            },
+            {
+              "index": 74,
+              "structural_path": "dalail-al-khayrat/part/1/seg/74",
+              "id": "0afea5c2-69da-32e0-89ab-16dd1276ab58"
+            },
+            {
+              "index": 75,
+              "structural_path": "dalail-al-khayrat/part/1/seg/75",
+              "id": "bcfb7c17-8a2a-3602-9c3f-e1d61fa1d570"
+            },
+            {
+              "index": 76,
+              "structural_path": "dalail-al-khayrat/part/1/seg/76",
+              "id": "2a350024-6c6d-36d5-916c-e88f8777fe6a"
+            },
+            {
+              "index": 77,
+              "structural_path": "dalail-al-khayrat/part/1/seg/77",
+              "id": "7f286292-a54b-3ea5-9e78-5afdf47a3432"
+            },
+            {
+              "index": 78,
+              "structural_path": "dalail-al-khayrat/part/1/seg/78",
+              "id": "7a641fca-f85d-3bbd-86da-a677a3f09483"
+            },
+            {
+              "index": 79,
+              "structural_path": "dalail-al-khayrat/part/1/seg/79",
+              "id": "ab80f1be-0051-35a2-a62f-ed887317cbaf"
+            },
+            {
+              "index": 80,
+              "structural_path": "dalail-al-khayrat/part/1/seg/80",
+              "id": "bd71d9b1-f82c-3674-8bca-8c70b479dc09"
+            },
+            {
+              "index": 81,
+              "structural_path": "dalail-al-khayrat/part/1/seg/81",
+              "id": "9ffb604b-2580-34f2-a38a-425d81eb8c13"
+            },
+            {
+              "index": 82,
+              "structural_path": "dalail-al-khayrat/part/1/seg/82",
+              "id": "83fc7ffc-b208-3c45-b0dc-112618b063f8"
+            },
+            {
+              "index": 83,
+              "structural_path": "dalail-al-khayrat/part/1/seg/83",
+              "id": "6f2d6e27-fff7-364c-8fdf-3f4b45fa27d1"
+            },
+            {
+              "index": 84,
+              "structural_path": "dalail-al-khayrat/part/1/seg/84",
+              "id": "a6b800ae-08c3-360c-ae44-ff4029135001"
+            },
+            {
+              "index": 85,
+              "structural_path": "dalail-al-khayrat/part/1/seg/85",
+              "id": "0084afe2-7497-3191-836f-d594f549d57c"
+            },
+            {
+              "index": 86,
+              "structural_path": "dalail-al-khayrat/part/1/seg/86",
+              "id": "5203c4e2-913f-3c90-814f-b6423bb78446"
+            },
+            {
+              "index": 87,
+              "structural_path": "dalail-al-khayrat/part/1/seg/87",
+              "id": "c7f0a939-7cee-32bb-8fbd-6ff3df9e0370"
+            },
+            {
+              "index": 88,
+              "structural_path": "dalail-al-khayrat/part/1/seg/88",
+              "id": "e6f45ccb-a0c6-3c3e-b86f-0020e712dbe4"
+            },
+            {
+              "index": 89,
+              "structural_path": "dalail-al-khayrat/part/1/seg/89",
+              "id": "25a78478-b2cd-3f11-a66d-bd13a270e507"
+            },
+            {
+              "index": 90,
+              "structural_path": "dalail-al-khayrat/part/1/seg/90",
+              "id": "d0b82fff-f700-380c-b0f4-8acb91281a1c"
+            },
+            {
+              "index": 91,
+              "structural_path": "dalail-al-khayrat/part/1/seg/91",
+              "id": "4b66a801-6110-369f-ab96-411f41b7d703"
+            },
+            {
+              "index": 92,
+              "structural_path": "dalail-al-khayrat/part/1/seg/92",
+              "id": "ffa3ca5b-2962-35c5-984a-670636e901f5"
+            },
+            {
+              "index": 93,
+              "structural_path": "dalail-al-khayrat/part/1/seg/93",
+              "id": "13ec7a9f-bfd8-3716-84a4-23bc5442b9af"
+            },
+            {
+              "index": 94,
+              "structural_path": "dalail-al-khayrat/part/1/seg/94",
+              "id": "e460fedc-2d67-3042-89db-0a65a9cc23b8"
+            },
+            {
+              "index": 95,
+              "structural_path": "dalail-al-khayrat/part/1/seg/95",
+              "id": "25e5f9e1-f95d-3568-a8e6-81c5b68610d1"
+            },
+            {
+              "index": 96,
+              "structural_path": "dalail-al-khayrat/part/1/seg/96",
+              "id": "2b0339c9-0e76-3d17-845c-c3ca15ffc066"
+            },
+            {
+              "index": 97,
+              "structural_path": "dalail-al-khayrat/part/1/seg/97",
+              "id": "d7d197b7-dbc9-39d8-ad8f-8865661a78e5"
+            },
+            {
+              "index": 98,
+              "structural_path": "dalail-al-khayrat/part/1/seg/98",
+              "id": "2bd5cc80-dea7-38fa-a20b-431d8eaacfe6"
+            },
+            {
+              "index": 99,
+              "structural_path": "dalail-al-khayrat/part/1/seg/99",
+              "id": "63d6248c-1c47-3ade-8fa3-c43cfbe44c63"
+            },
+            {
+              "index": 100,
+              "structural_path": "dalail-al-khayrat/part/1/seg/100",
+              "id": "ce11aed0-309e-3308-aaea-2f69b7abb449"
+            },
+            {
+              "index": 101,
+              "structural_path": "dalail-al-khayrat/part/1/seg/101",
+              "id": "009871c3-4c03-3fcd-904c-1f1e1eaf6c28"
+            },
+            {
+              "index": 102,
+              "structural_path": "dalail-al-khayrat/part/1/seg/102",
+              "id": "60b88838-99fd-3351-9183-cb638bce5ee5"
+            },
+            {
+              "index": 103,
+              "structural_path": "dalail-al-khayrat/part/1/seg/103",
+              "id": "7a068e00-bd1c-3a43-81d4-7507d1092ae1"
+            },
+            {
+              "index": 104,
+              "structural_path": "dalail-al-khayrat/part/1/seg/104",
+              "id": "128a2907-4ef3-325b-a0e1-8ce7cb805e9d"
+            },
+            {
+              "index": 105,
+              "structural_path": "dalail-al-khayrat/part/1/seg/105",
+              "id": "a86166c7-cef3-3156-8e04-3ab0b7b48fb7"
+            },
+            {
+              "index": 106,
+              "structural_path": "dalail-al-khayrat/part/1/seg/106",
+              "id": "00c1379f-dd5b-307b-922a-91e3ddfe35bd"
+            },
+            {
+              "index": 107,
+              "structural_path": "dalail-al-khayrat/part/1/seg/107",
+              "id": "13e73922-1096-3863-be4f-477bdf4d44f9"
+            },
+            {
+              "index": 108,
+              "structural_path": "dalail-al-khayrat/part/1/seg/108",
+              "id": "e3b77435-7b0b-3718-9efa-d76b7feab32e"
+            },
+            {
+              "index": 109,
+              "structural_path": "dalail-al-khayrat/part/1/seg/109",
+              "id": "3f8b0096-c271-35cd-847d-658b8cf38e70"
+            },
+            {
+              "index": 110,
+              "structural_path": "dalail-al-khayrat/part/1/seg/110",
+              "id": "f9afefa4-576b-3100-8d32-8aa75bb6e995"
+            },
+            {
+              "index": 111,
+              "structural_path": "dalail-al-khayrat/part/1/seg/111",
+              "id": "6a91663e-e26c-31f2-a9c9-e431c2977122"
+            },
+            {
+              "index": 112,
+              "structural_path": "dalail-al-khayrat/part/1/seg/112",
+              "id": "a51e8286-dbe8-3652-9838-a3952eca6aab"
+            },
+            {
+              "index": 113,
+              "structural_path": "dalail-al-khayrat/part/1/seg/113",
+              "id": "1cba885a-19c8-3d60-bc7b-e411590eb65c"
+            },
+            {
+              "index": 114,
+              "structural_path": "dalail-al-khayrat/part/1/seg/114",
+              "id": "9a6c834b-d73f-3fda-802c-8ba8d24ad546"
+            },
+            {
+              "index": 115,
+              "structural_path": "dalail-al-khayrat/part/1/seg/115",
+              "id": "3a2dde35-f796-3630-b833-bfc62199bafe"
+            },
+            {
+              "index": 116,
+              "structural_path": "dalail-al-khayrat/part/1/seg/116",
+              "id": "2ffca117-35ab-3327-b1f6-074dd92ac691"
+            },
+            {
+              "index": 117,
+              "structural_path": "dalail-al-khayrat/part/1/seg/117",
+              "id": "7429d9c1-997f-38f0-b369-20361fe138a8"
+            },
+            {
+              "index": 118,
+              "structural_path": "dalail-al-khayrat/part/1/seg/118",
+              "id": "d9b3110b-212f-30ed-81e9-cadaab6763f5"
+            },
+            {
+              "index": 119,
+              "structural_path": "dalail-al-khayrat/part/1/seg/119",
+              "id": "08a3ceb9-8776-3e31-80bb-7a2a9d4483b9"
+            },
+            {
+              "index": 120,
+              "structural_path": "dalail-al-khayrat/part/1/seg/120",
+              "id": "35ea4157-5ccb-3d58-bf2b-e6c17722a65f"
+            },
+            {
+              "index": 121,
+              "structural_path": "dalail-al-khayrat/part/1/seg/121",
+              "id": "aa53991a-b5a4-3066-ab6d-c16c139e69d1"
+            },
+            {
+              "index": 122,
+              "structural_path": "dalail-al-khayrat/part/1/seg/122",
+              "id": "e378acdb-9aac-3885-9289-28bc7a483f3d"
+            },
+            {
+              "index": 123,
+              "structural_path": "dalail-al-khayrat/part/1/seg/123",
+              "id": "72a2cec1-ed13-35eb-8487-9ed4dde92738"
+            },
+            {
+              "index": 124,
+              "structural_path": "dalail-al-khayrat/part/1/seg/124",
+              "id": "dd3c77cd-2d27-3871-98b6-19506aab81fb"
+            },
+            {
+              "index": 125,
+              "structural_path": "dalail-al-khayrat/part/1/seg/125",
+              "id": "c8be17b8-6631-3ccd-9281-e14bce89f572"
+            },
+            {
+              "index": 126,
+              "structural_path": "dalail-al-khayrat/part/1/seg/126",
+              "id": "8278b430-aed9-378c-aac3-1031c3dd41f7"
+            },
+            {
+              "index": 127,
+              "structural_path": "dalail-al-khayrat/part/1/seg/127",
+              "id": "69840ba1-8ac9-3d56-a0cb-7599d48300a9"
+            },
+            {
+              "index": 128,
+              "structural_path": "dalail-al-khayrat/part/1/seg/128",
+              "id": "9e2215e0-c2d3-3b7e-b202-4451cac30d57"
+            },
+            {
+              "index": 129,
+              "structural_path": "dalail-al-khayrat/part/1/seg/129",
+              "id": "01b65856-d7f9-389f-bdf6-b82d065329a7"
+            },
+            {
+              "index": 130,
+              "structural_path": "dalail-al-khayrat/part/1/seg/130",
+              "id": "566ffdf3-27c0-3f9e-a212-0fc1f7ea794f"
+            },
+            {
+              "index": 131,
+              "structural_path": "dalail-al-khayrat/part/1/seg/131",
+              "id": "ac83d147-9822-3227-96aa-0014b0dae3eb"
+            },
+            {
+              "index": 132,
+              "structural_path": "dalail-al-khayrat/part/1/seg/132",
+              "id": "c1e01e0b-0a36-3db1-a13f-c92161e1718e"
+            },
+            {
+              "index": 133,
+              "structural_path": "dalail-al-khayrat/part/1/seg/133",
+              "id": "5873cc2e-235a-3396-ae21-34a5c6ffc962"
+            },
+            {
+              "index": 134,
+              "structural_path": "dalail-al-khayrat/part/1/seg/134",
+              "id": "f694ca95-cdc9-3cf0-b7a5-bda3091270ee"
+            },
+            {
+              "index": 135,
+              "structural_path": "dalail-al-khayrat/part/1/seg/135",
+              "id": "c759d870-6e4f-3178-9723-fd90d6ccc519"
+            },
+            {
+              "index": 136,
+              "structural_path": "dalail-al-khayrat/part/1/seg/136",
+              "id": "af5af4c3-0c9a-3d97-9c78-66d2d6986824"
+            },
+            {
+              "index": 137,
+              "structural_path": "dalail-al-khayrat/part/1/seg/137",
+              "id": "f62bd8c5-78f7-3298-b0b1-dfe726964907"
+            },
+            {
+              "index": 138,
+              "structural_path": "dalail-al-khayrat/part/1/seg/138",
+              "id": "ca3efcfd-8840-3dfb-aa3f-80d9e98c2bb3"
+            },
+            {
+              "index": 139,
+              "structural_path": "dalail-al-khayrat/part/1/seg/139",
+              "id": "c7196f0e-9982-3eba-9879-105e14db72ad"
+            },
+            {
+              "index": 140,
+              "structural_path": "dalail-al-khayrat/part/1/seg/140",
+              "id": "2605921b-44d2-3b1b-bb1b-c08ec0b55948"
+            },
+            {
+              "index": 141,
+              "structural_path": "dalail-al-khayrat/part/1/seg/141",
+              "id": "eda357c6-2212-35fa-82e9-496cb4f8c803"
+            },
+            {
+              "index": 142,
+              "structural_path": "dalail-al-khayrat/part/1/seg/142",
+              "id": "f34c466f-ddf5-3215-8a8f-e180657e1c38"
+            },
+            {
+              "index": 143,
+              "structural_path": "dalail-al-khayrat/part/1/seg/143",
+              "id": "42c1a128-d364-3d36-aea4-9cfc9de6219d"
+            },
+            {
+              "index": 144,
+              "structural_path": "dalail-al-khayrat/part/1/seg/144",
+              "id": "81e45e44-8e78-3434-a90e-deb5655b0eb8"
+            },
+            {
+              "index": 145,
+              "structural_path": "dalail-al-khayrat/part/1/seg/145",
+              "id": "70385333-8670-3036-8406-a1658951b849"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "structural_path": "dalail-al-khayrat/part/2",
+          "id": "5c51b4e4-2aae-3443-bded-bfe2f09003df",
+          "segment_count": 46,
+          "segments": [
+            {
+              "index": 0,
+              "structural_path": "dalail-al-khayrat/part/2/seg/0",
+              "id": "9ab0b1fb-bdcf-3079-b1dc-ff3ccc9e63b3"
+            },
+            {
+              "index": 1,
+              "structural_path": "dalail-al-khayrat/part/2/seg/1",
+              "id": "1f0c6b3c-ed64-3369-8d46-f93789aac08a"
+            },
+            {
+              "index": 2,
+              "structural_path": "dalail-al-khayrat/part/2/seg/2",
+              "id": "a88bd71a-d55f-35c7-a9c8-803b99f41063"
+            },
+            {
+              "index": 3,
+              "structural_path": "dalail-al-khayrat/part/2/seg/3",
+              "id": "a0c00a84-5f4c-35a3-bcb6-cff21a3a0cab"
+            },
+            {
+              "index": 4,
+              "structural_path": "dalail-al-khayrat/part/2/seg/4",
+              "id": "09fa712e-1b41-333d-9c34-d1cada549b4b"
+            },
+            {
+              "index": 5,
+              "structural_path": "dalail-al-khayrat/part/2/seg/5",
+              "id": "03c564ed-c137-38d8-a1b7-8fad35287119"
+            },
+            {
+              "index": 6,
+              "structural_path": "dalail-al-khayrat/part/2/seg/6",
+              "id": "0a97981f-97fc-36a7-8940-7e0f73bcfcd3"
+            },
+            {
+              "index": 7,
+              "structural_path": "dalail-al-khayrat/part/2/seg/7",
+              "id": "a79c8fca-ebee-3268-9e42-dfbf575d5637"
+            },
+            {
+              "index": 8,
+              "structural_path": "dalail-al-khayrat/part/2/seg/8",
+              "id": "1b62261c-1c2d-38c3-b187-6f137a33959e"
+            },
+            {
+              "index": 9,
+              "structural_path": "dalail-al-khayrat/part/2/seg/9",
+              "id": "d9f43784-9a0f-37ab-a351-e69c87dead0d"
+            },
+            {
+              "index": 10,
+              "structural_path": "dalail-al-khayrat/part/2/seg/10",
+              "id": "8420cfdf-0c41-3dae-bfd1-6357a85b88b5"
+            },
+            {
+              "index": 11,
+              "structural_path": "dalail-al-khayrat/part/2/seg/11",
+              "id": "ed742e9a-1b22-39d5-833c-00fdb0c1e96a"
+            },
+            {
+              "index": 12,
+              "structural_path": "dalail-al-khayrat/part/2/seg/12",
+              "id": "c590864c-db48-386c-99f3-0f5a8302dea2"
+            },
+            {
+              "index": 13,
+              "structural_path": "dalail-al-khayrat/part/2/seg/13",
+              "id": "24a8f1d3-b41f-3824-a736-86316ebe24de"
+            },
+            {
+              "index": 14,
+              "structural_path": "dalail-al-khayrat/part/2/seg/14",
+              "id": "fe3335c0-450a-3c53-8ea2-ee90c1fcd321"
+            },
+            {
+              "index": 15,
+              "structural_path": "dalail-al-khayrat/part/2/seg/15",
+              "id": "4ccc3a75-e39c-34f9-88be-aef59101c82c"
+            },
+            {
+              "index": 16,
+              "structural_path": "dalail-al-khayrat/part/2/seg/16",
+              "id": "14dbc02a-43d5-3700-a55e-92d226e1b3c6"
+            },
+            {
+              "index": 17,
+              "structural_path": "dalail-al-khayrat/part/2/seg/17",
+              "id": "cf1a3795-ac29-3673-b849-c70a5ad00c00"
+            },
+            {
+              "index": 18,
+              "structural_path": "dalail-al-khayrat/part/2/seg/18",
+              "id": "3f059744-ac48-3060-a509-f653a349e41e"
+            },
+            {
+              "index": 19,
+              "structural_path": "dalail-al-khayrat/part/2/seg/19",
+              "id": "48ce70b0-a41c-3715-bdea-038a0c77c620"
+            },
+            {
+              "index": 20,
+              "structural_path": "dalail-al-khayrat/part/2/seg/20",
+              "id": "99e72b2b-7668-3c15-9cf8-3623584a8a11"
+            },
+            {
+              "index": 21,
+              "structural_path": "dalail-al-khayrat/part/2/seg/21",
+              "id": "edae4ab9-d087-39cc-bbd3-555b4947727f"
+            },
+            {
+              "index": 22,
+              "structural_path": "dalail-al-khayrat/part/2/seg/22",
+              "id": "613dad60-95bf-38df-a45f-eb45eaef2e47"
+            },
+            {
+              "index": 23,
+              "structural_path": "dalail-al-khayrat/part/2/seg/23",
+              "id": "46027048-9286-3a96-b894-ad87fef2d995"
+            },
+            {
+              "index": 24,
+              "structural_path": "dalail-al-khayrat/part/2/seg/24",
+              "id": "c9738a88-59fe-3974-ad7d-79dd7bf88c31"
+            },
+            {
+              "index": 25,
+              "structural_path": "dalail-al-khayrat/part/2/seg/25",
+              "id": "79f15e8b-9827-3657-b5a8-176ed211d464"
+            },
+            {
+              "index": 26,
+              "structural_path": "dalail-al-khayrat/part/2/seg/26",
+              "id": "62330c0d-5157-3b83-941c-19fac8f7ca37"
+            },
+            {
+              "index": 27,
+              "structural_path": "dalail-al-khayrat/part/2/seg/27",
+              "id": "654ea9f3-de8f-3867-8d5e-ad16b031c981"
+            },
+            {
+              "index": 28,
+              "structural_path": "dalail-al-khayrat/part/2/seg/28",
+              "id": "aaaf1282-28af-3e7a-a3c8-8adb1cc60c68"
+            },
+            {
+              "index": 29,
+              "structural_path": "dalail-al-khayrat/part/2/seg/29",
+              "id": "501e31f2-fa36-3319-b734-b5796bdb6e7e"
+            },
+            {
+              "index": 30,
+              "structural_path": "dalail-al-khayrat/part/2/seg/30",
+              "id": "01a7008a-8b01-3e62-8715-5ecf9d71f0ea"
+            },
+            {
+              "index": 31,
+              "structural_path": "dalail-al-khayrat/part/2/seg/31",
+              "id": "a12fc2a2-c860-370f-96d1-82ea864329a7"
+            },
+            {
+              "index": 32,
+              "structural_path": "dalail-al-khayrat/part/2/seg/32",
+              "id": "d8d0bd51-5720-3e81-a316-d34b01bf86b4"
+            },
+            {
+              "index": 33,
+              "structural_path": "dalail-al-khayrat/part/2/seg/33",
+              "id": "c3ff6fd2-6c1f-37f5-97bf-d63f01eb087c"
+            },
+            {
+              "index": 34,
+              "structural_path": "dalail-al-khayrat/part/2/seg/34",
+              "id": "3342e606-6d7b-33c3-8e14-4321453ce533"
+            },
+            {
+              "index": 35,
+              "structural_path": "dalail-al-khayrat/part/2/seg/35",
+              "id": "f6c5b53b-da2e-32ee-a516-a0b274492123"
+            },
+            {
+              "index": 36,
+              "structural_path": "dalail-al-khayrat/part/2/seg/36",
+              "id": "fdee2ec6-34fd-3813-bbec-fe0df720a02f"
+            },
+            {
+              "index": 37,
+              "structural_path": "dalail-al-khayrat/part/2/seg/37",
+              "id": "97d57bc2-7906-3994-86ff-5ad7cb9f853d"
+            },
+            {
+              "index": 38,
+              "structural_path": "dalail-al-khayrat/part/2/seg/38",
+              "id": "804d6041-00db-3dcb-80e2-c9988113338c"
+            },
+            {
+              "index": 39,
+              "structural_path": "dalail-al-khayrat/part/2/seg/39",
+              "id": "2fe38b96-cd12-3843-91d3-740f30f1f7d4"
+            },
+            {
+              "index": 40,
+              "structural_path": "dalail-al-khayrat/part/2/seg/40",
+              "id": "1c5fc069-da51-3a11-9bba-bc3db62df3da"
+            },
+            {
+              "index": 41,
+              "structural_path": "dalail-al-khayrat/part/2/seg/41",
+              "id": "35aadb75-ec38-3243-b487-19606e04ec2d"
+            },
+            {
+              "index": 42,
+              "structural_path": "dalail-al-khayrat/part/2/seg/42",
+              "id": "5a4ba7ff-ef22-35e2-af99-d280881ae9ed"
+            },
+            {
+              "index": 43,
+              "structural_path": "dalail-al-khayrat/part/2/seg/43",
+              "id": "7e106a16-e550-3b3c-8ef3-0f69ef188b4c"
+            },
+            {
+              "index": 44,
+              "structural_path": "dalail-al-khayrat/part/2/seg/44",
+              "id": "24e953ec-675d-3533-bad0-a2dc7272f267"
+            },
+            {
+              "index": 45,
+              "structural_path": "dalail-al-khayrat/part/2/seg/45",
+              "id": "fd6595e3-9aac-3fd4-98fa-375c48e7241c"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "structural_path": "dalail-al-khayrat/part/3",
+          "id": "301bfadd-c920-35b3-8d86-177010336c0c",
+          "segment_count": 52,
+          "segments": [
+            {
+              "index": 0,
+              "structural_path": "dalail-al-khayrat/part/3/seg/0",
+              "id": "dc43d73a-be9c-38f5-86dc-29ded55ad02b"
+            },
+            {
+              "index": 1,
+              "structural_path": "dalail-al-khayrat/part/3/seg/1",
+              "id": "339caa67-6192-30ab-8d49-d88c265ff47e"
+            },
+            {
+              "index": 2,
+              "structural_path": "dalail-al-khayrat/part/3/seg/2",
+              "id": "267b72b4-744a-33f1-93f9-be3ed9cfe906"
+            },
+            {
+              "index": 3,
+              "structural_path": "dalail-al-khayrat/part/3/seg/3",
+              "id": "35970c1f-5047-3939-99f8-82a7125594ee"
+            },
+            {
+              "index": 4,
+              "structural_path": "dalail-al-khayrat/part/3/seg/4",
+              "id": "9a7a9b06-d267-372a-9a90-6bf934ab221f"
+            },
+            {
+              "index": 5,
+              "structural_path": "dalail-al-khayrat/part/3/seg/5",
+              "id": "55cff177-d659-3392-bacd-6e431309c9b9"
+            },
+            {
+              "index": 6,
+              "structural_path": "dalail-al-khayrat/part/3/seg/6",
+              "id": "0b8fd63a-5954-3935-a2a8-8c5bb95eef41"
+            },
+            {
+              "index": 7,
+              "structural_path": "dalail-al-khayrat/part/3/seg/7",
+              "id": "b9525ddd-8fe5-3398-acfa-884d906ddf3f"
+            },
+            {
+              "index": 8,
+              "structural_path": "dalail-al-khayrat/part/3/seg/8",
+              "id": "c88719d0-f5fb-3a77-a70d-287d11c65346"
+            },
+            {
+              "index": 9,
+              "structural_path": "dalail-al-khayrat/part/3/seg/9",
+              "id": "4eb3eb64-9459-3e94-8e30-280a0c689d14"
+            },
+            {
+              "index": 10,
+              "structural_path": "dalail-al-khayrat/part/3/seg/10",
+              "id": "ebf43d55-212f-345e-86d6-c6421541002f"
+            },
+            {
+              "index": 11,
+              "structural_path": "dalail-al-khayrat/part/3/seg/11",
+              "id": "81467b8c-74ca-3c92-82bc-61ea7bc50762"
+            },
+            {
+              "index": 12,
+              "structural_path": "dalail-al-khayrat/part/3/seg/12",
+              "id": "a71ed203-6995-3952-a778-427e982eb03a"
+            },
+            {
+              "index": 13,
+              "structural_path": "dalail-al-khayrat/part/3/seg/13",
+              "id": "5cc77312-8126-386d-8506-fde7e8be1dce"
+            },
+            {
+              "index": 14,
+              "structural_path": "dalail-al-khayrat/part/3/seg/14",
+              "id": "bcb92284-ef2d-3b6a-94f1-648f4919da43"
+            },
+            {
+              "index": 15,
+              "structural_path": "dalail-al-khayrat/part/3/seg/15",
+              "id": "8b66e7b8-8dce-3c61-abd7-16305ef8938b"
+            },
+            {
+              "index": 16,
+              "structural_path": "dalail-al-khayrat/part/3/seg/16",
+              "id": "da6f59bb-fa25-3b03-b585-9cfe5ac74b24"
+            },
+            {
+              "index": 17,
+              "structural_path": "dalail-al-khayrat/part/3/seg/17",
+              "id": "48b8c64a-24e9-3ab6-bf21-a5823d7760b4"
+            },
+            {
+              "index": 18,
+              "structural_path": "dalail-al-khayrat/part/3/seg/18",
+              "id": "d4525f46-8a38-3352-8280-d7a0f70049d2"
+            },
+            {
+              "index": 19,
+              "structural_path": "dalail-al-khayrat/part/3/seg/19",
+              "id": "f0794e41-4f7e-3637-baed-05380c79dbd7"
+            },
+            {
+              "index": 20,
+              "structural_path": "dalail-al-khayrat/part/3/seg/20",
+              "id": "b19e79b0-ecc8-3c53-b093-d8334640b85f"
+            },
+            {
+              "index": 21,
+              "structural_path": "dalail-al-khayrat/part/3/seg/21",
+              "id": "62e45642-347b-32de-933b-b71a6ffc7b88"
+            },
+            {
+              "index": 22,
+              "structural_path": "dalail-al-khayrat/part/3/seg/22",
+              "id": "9844ea57-e16b-3464-b1c4-6706915b6f67"
+            },
+            {
+              "index": 23,
+              "structural_path": "dalail-al-khayrat/part/3/seg/23",
+              "id": "8a019d33-5562-34a6-9c4a-705ebc510053"
+            },
+            {
+              "index": 24,
+              "structural_path": "dalail-al-khayrat/part/3/seg/24",
+              "id": "8742c754-92ca-37b1-8b2b-b4101fb9d840"
+            },
+            {
+              "index": 25,
+              "structural_path": "dalail-al-khayrat/part/3/seg/25",
+              "id": "8c21894f-7d91-38a3-9714-f11f1fa02a44"
+            },
+            {
+              "index": 26,
+              "structural_path": "dalail-al-khayrat/part/3/seg/26",
+              "id": "1cf88498-f205-3f44-9285-90fd2bb156ae"
+            },
+            {
+              "index": 27,
+              "structural_path": "dalail-al-khayrat/part/3/seg/27",
+              "id": "f8b7b05f-2b02-30fa-8c3c-e313fd6604da"
+            },
+            {
+              "index": 28,
+              "structural_path": "dalail-al-khayrat/part/3/seg/28",
+              "id": "f8ec5004-2646-3747-8c1a-44d7878e6a7b"
+            },
+            {
+              "index": 29,
+              "structural_path": "dalail-al-khayrat/part/3/seg/29",
+              "id": "ffb2b8b2-7fdc-33fd-84fb-eb461d3e275b"
+            },
+            {
+              "index": 30,
+              "structural_path": "dalail-al-khayrat/part/3/seg/30",
+              "id": "62e4c87d-b641-3ed1-bbba-e076479d40ea"
+            },
+            {
+              "index": 31,
+              "structural_path": "dalail-al-khayrat/part/3/seg/31",
+              "id": "ff0bb5f5-fa15-37d5-bb0f-883ed775e432"
+            },
+            {
+              "index": 32,
+              "structural_path": "dalail-al-khayrat/part/3/seg/32",
+              "id": "9251d13f-48c9-35dc-b1ee-ba5dba957ac8"
+            },
+            {
+              "index": 33,
+              "structural_path": "dalail-al-khayrat/part/3/seg/33",
+              "id": "974b1ebe-766c-3d86-992a-44804093cfda"
+            },
+            {
+              "index": 34,
+              "structural_path": "dalail-al-khayrat/part/3/seg/34",
+              "id": "73dd52aa-6ea3-393e-b20a-587f77f18a75"
+            },
+            {
+              "index": 35,
+              "structural_path": "dalail-al-khayrat/part/3/seg/35",
+              "id": "f53db90e-03a0-3f8c-bb0e-d548ec9e235d"
+            },
+            {
+              "index": 36,
+              "structural_path": "dalail-al-khayrat/part/3/seg/36",
+              "id": "f644061f-ca51-3050-9b01-42821f53357f"
+            },
+            {
+              "index": 37,
+              "structural_path": "dalail-al-khayrat/part/3/seg/37",
+              "id": "d5ad001e-3a14-3e74-955a-a29e97eb6ea0"
+            },
+            {
+              "index": 38,
+              "structural_path": "dalail-al-khayrat/part/3/seg/38",
+              "id": "84f53607-f281-333d-9956-adad60966b2f"
+            },
+            {
+              "index": 39,
+              "structural_path": "dalail-al-khayrat/part/3/seg/39",
+              "id": "fb8726ee-1861-32d0-b939-5374218b66fe"
+            },
+            {
+              "index": 40,
+              "structural_path": "dalail-al-khayrat/part/3/seg/40",
+              "id": "eeaab235-df77-3910-ae28-2b3e1599972a"
+            },
+            {
+              "index": 41,
+              "structural_path": "dalail-al-khayrat/part/3/seg/41",
+              "id": "e3365034-e068-3a41-83a0-10ef7b94d1c2"
+            },
+            {
+              "index": 42,
+              "structural_path": "dalail-al-khayrat/part/3/seg/42",
+              "id": "23c3c3d6-2d4e-3221-98dd-e957b2193922"
+            },
+            {
+              "index": 43,
+              "structural_path": "dalail-al-khayrat/part/3/seg/43",
+              "id": "f5a81f7f-a7ad-35c4-a31c-3fad816368f3"
+            },
+            {
+              "index": 44,
+              "structural_path": "dalail-al-khayrat/part/3/seg/44",
+              "id": "1003bcb0-a924-309f-80e2-2ada06de6e56"
+            },
+            {
+              "index": 45,
+              "structural_path": "dalail-al-khayrat/part/3/seg/45",
+              "id": "208d1fc5-f8f8-3d2c-be36-edf415c37f0a"
+            },
+            {
+              "index": 46,
+              "structural_path": "dalail-al-khayrat/part/3/seg/46",
+              "id": "d56b6e15-1db9-3108-82f0-e5e5b1b99a4e"
+            },
+            {
+              "index": 47,
+              "structural_path": "dalail-al-khayrat/part/3/seg/47",
+              "id": "2c60d037-2e96-3c16-a1af-46ef04b556ba"
+            },
+            {
+              "index": 48,
+              "structural_path": "dalail-al-khayrat/part/3/seg/48",
+              "id": "21f59e92-f6cd-3fa8-b8aa-dc3cca4479bd"
+            },
+            {
+              "index": 49,
+              "structural_path": "dalail-al-khayrat/part/3/seg/49",
+              "id": "763494b3-375f-3b5a-a094-794898c22ca0"
+            },
+            {
+              "index": 50,
+              "structural_path": "dalail-al-khayrat/part/3/seg/50",
+              "id": "cef99638-b935-36b5-9047-0e562e65fb53"
+            },
+            {
+              "index": 51,
+              "structural_path": "dalail-al-khayrat/part/3/seg/51",
+              "id": "aa1bb31f-6b60-3fa5-a2d4-3b39d5a37bc3"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "structural_path": "dalail-al-khayrat/part/4",
+          "id": "57a38972-1c17-3c05-a299-ea4917927c71",
+          "segment_count": 56,
+          "segments": [
+            {
+              "index": 0,
+              "structural_path": "dalail-al-khayrat/part/4/seg/0",
+              "id": "cb74f033-9152-31da-9939-a1461d028114"
+            },
+            {
+              "index": 1,
+              "structural_path": "dalail-al-khayrat/part/4/seg/1",
+              "id": "92f4e3e0-2b3d-3fa0-a102-46952a46d2ce"
+            },
+            {
+              "index": 2,
+              "structural_path": "dalail-al-khayrat/part/4/seg/2",
+              "id": "82fd415e-8fce-3adf-bb81-43dcbbada3e4"
+            },
+            {
+              "index": 3,
+              "structural_path": "dalail-al-khayrat/part/4/seg/3",
+              "id": "2144d618-2a31-3bf7-8d35-0bbb49c9eaa9"
+            },
+            {
+              "index": 4,
+              "structural_path": "dalail-al-khayrat/part/4/seg/4",
+              "id": "35adf105-806f-3ffb-a5fa-47cac1319114"
+            },
+            {
+              "index": 5,
+              "structural_path": "dalail-al-khayrat/part/4/seg/5",
+              "id": "cb733e10-b868-30d6-8f6b-8d33c163a4ed"
+            },
+            {
+              "index": 6,
+              "structural_path": "dalail-al-khayrat/part/4/seg/6",
+              "id": "a92f3841-16b4-31af-ba89-313024126fbd"
+            },
+            {
+              "index": 7,
+              "structural_path": "dalail-al-khayrat/part/4/seg/7",
+              "id": "ad4633fd-663d-37be-b24d-775a2931369b"
+            },
+            {
+              "index": 8,
+              "structural_path": "dalail-al-khayrat/part/4/seg/8",
+              "id": "c5ff664f-c833-3a12-ad07-7396ed118d77"
+            },
+            {
+              "index": 9,
+              "structural_path": "dalail-al-khayrat/part/4/seg/9",
+              "id": "6d12646e-5285-3172-906e-6843c7afb9ee"
+            },
+            {
+              "index": 10,
+              "structural_path": "dalail-al-khayrat/part/4/seg/10",
+              "id": "c2694004-388f-37b9-899f-8540dbccda9d"
+            },
+            {
+              "index": 11,
+              "structural_path": "dalail-al-khayrat/part/4/seg/11",
+              "id": "7a00c1f8-04de-3dff-8ca9-34262071656d"
+            },
+            {
+              "index": 12,
+              "structural_path": "dalail-al-khayrat/part/4/seg/12",
+              "id": "a4ee52a0-2806-39ef-9698-7850a63e9915"
+            },
+            {
+              "index": 13,
+              "structural_path": "dalail-al-khayrat/part/4/seg/13",
+              "id": "34e5d672-82a5-3013-8ce6-b26e8896ff9d"
+            },
+            {
+              "index": 14,
+              "structural_path": "dalail-al-khayrat/part/4/seg/14",
+              "id": "3008b3a8-6343-3763-bafe-34eb8a1361c9"
+            },
+            {
+              "index": 15,
+              "structural_path": "dalail-al-khayrat/part/4/seg/15",
+              "id": "6a4eac1f-59f9-3b08-a63a-aa89b82271e5"
+            },
+            {
+              "index": 16,
+              "structural_path": "dalail-al-khayrat/part/4/seg/16",
+              "id": "b7a95c10-b998-3791-ae28-32b4564336a8"
+            },
+            {
+              "index": 17,
+              "structural_path": "dalail-al-khayrat/part/4/seg/17",
+              "id": "196bef9d-5cb8-34bb-9444-651772fc246f"
+            },
+            {
+              "index": 18,
+              "structural_path": "dalail-al-khayrat/part/4/seg/18",
+              "id": "b843c22e-1b8e-389b-b7de-4cd20efaf711"
+            },
+            {
+              "index": 19,
+              "structural_path": "dalail-al-khayrat/part/4/seg/19",
+              "id": "b0ce69fe-f4a0-332c-9b92-f0fd7b9d3bef"
+            },
+            {
+              "index": 20,
+              "structural_path": "dalail-al-khayrat/part/4/seg/20",
+              "id": "e4e2fcac-3343-30e4-a88a-77ee21fc8c6c"
+            },
+            {
+              "index": 21,
+              "structural_path": "dalail-al-khayrat/part/4/seg/21",
+              "id": "7bb01389-b5e1-33ce-9ea5-ecf4adb9e8cc"
+            },
+            {
+              "index": 22,
+              "structural_path": "dalail-al-khayrat/part/4/seg/22",
+              "id": "52442487-960f-3775-b050-11b460675686"
+            },
+            {
+              "index": 23,
+              "structural_path": "dalail-al-khayrat/part/4/seg/23",
+              "id": "5da2c541-9d84-347b-b42e-d1630ba4173f"
+            },
+            {
+              "index": 24,
+              "structural_path": "dalail-al-khayrat/part/4/seg/24",
+              "id": "2d5b6b25-73f2-3296-9edb-6b2f973b3ff5"
+            },
+            {
+              "index": 25,
+              "structural_path": "dalail-al-khayrat/part/4/seg/25",
+              "id": "32ce02bc-1775-3f9a-a130-aa007bbb08f3"
+            },
+            {
+              "index": 26,
+              "structural_path": "dalail-al-khayrat/part/4/seg/26",
+              "id": "20af3247-28d0-3965-b175-c97d9f9aa59f"
+            },
+            {
+              "index": 27,
+              "structural_path": "dalail-al-khayrat/part/4/seg/27",
+              "id": "713c49b1-764f-34cf-8bac-90a1e4912293"
+            },
+            {
+              "index": 28,
+              "structural_path": "dalail-al-khayrat/part/4/seg/28",
+              "id": "992675ef-fd07-3096-878d-1979536873c8"
+            },
+            {
+              "index": 29,
+              "structural_path": "dalail-al-khayrat/part/4/seg/29",
+              "id": "98628294-15aa-303e-88d2-193a54afac2b"
+            },
+            {
+              "index": 30,
+              "structural_path": "dalail-al-khayrat/part/4/seg/30",
+              "id": "cd0359e5-451a-3913-8aab-7253e35f0107"
+            },
+            {
+              "index": 31,
+              "structural_path": "dalail-al-khayrat/part/4/seg/31",
+              "id": "234220a7-2eb9-3688-9cc7-9955171d243f"
+            },
+            {
+              "index": 32,
+              "structural_path": "dalail-al-khayrat/part/4/seg/32",
+              "id": "f15684bf-abe2-3663-9bce-58fb079cb7fc"
+            },
+            {
+              "index": 33,
+              "structural_path": "dalail-al-khayrat/part/4/seg/33",
+              "id": "6247c67e-80e8-3c60-94a5-9031028e57f6"
+            },
+            {
+              "index": 34,
+              "structural_path": "dalail-al-khayrat/part/4/seg/34",
+              "id": "a890dbaa-ee7c-3ad9-ada7-5c4e0d4cfa6d"
+            },
+            {
+              "index": 35,
+              "structural_path": "dalail-al-khayrat/part/4/seg/35",
+              "id": "f89ca582-fc49-3f87-8d85-06c1460a0a8a"
+            },
+            {
+              "index": 36,
+              "structural_path": "dalail-al-khayrat/part/4/seg/36",
+              "id": "17aed51e-1615-384c-9ac2-0c5aae0f3b84"
+            },
+            {
+              "index": 37,
+              "structural_path": "dalail-al-khayrat/part/4/seg/37",
+              "id": "86d35d75-f7be-3957-87e2-e122d35af631"
+            },
+            {
+              "index": 38,
+              "structural_path": "dalail-al-khayrat/part/4/seg/38",
+              "id": "358082d5-6555-3ea1-9aa7-c28c8ecdcafe"
+            },
+            {
+              "index": 39,
+              "structural_path": "dalail-al-khayrat/part/4/seg/39",
+              "id": "02798b2f-8e75-390a-97d6-06fea93b2331"
+            },
+            {
+              "index": 40,
+              "structural_path": "dalail-al-khayrat/part/4/seg/40",
+              "id": "88093a02-c5b2-37d7-ab9b-cec6924f1540"
+            },
+            {
+              "index": 41,
+              "structural_path": "dalail-al-khayrat/part/4/seg/41",
+              "id": "9344bf06-c3ff-3ba9-805a-666a2f2398bf"
+            },
+            {
+              "index": 42,
+              "structural_path": "dalail-al-khayrat/part/4/seg/42",
+              "id": "e65a7590-ee5b-3c2a-a2db-d4e080ec1bda"
+            },
+            {
+              "index": 43,
+              "structural_path": "dalail-al-khayrat/part/4/seg/43",
+              "id": "fedb924e-8ed8-38f7-ad2e-fe33a72f7fb2"
+            },
+            {
+              "index": 44,
+              "structural_path": "dalail-al-khayrat/part/4/seg/44",
+              "id": "42a08682-9cab-3894-b4d0-d0178d993618"
+            },
+            {
+              "index": 45,
+              "structural_path": "dalail-al-khayrat/part/4/seg/45",
+              "id": "a74d86df-38f9-3d3a-908e-6986bfeb6658"
+            },
+            {
+              "index": 46,
+              "structural_path": "dalail-al-khayrat/part/4/seg/46",
+              "id": "a21d20df-afd4-3a64-8115-c396f383149d"
+            },
+            {
+              "index": 47,
+              "structural_path": "dalail-al-khayrat/part/4/seg/47",
+              "id": "0d2aecdd-cbcd-33f2-a87a-f9f16bb9a391"
+            },
+            {
+              "index": 48,
+              "structural_path": "dalail-al-khayrat/part/4/seg/48",
+              "id": "07b300d3-8771-3854-b95b-d75ec0e3118b"
+            },
+            {
+              "index": 49,
+              "structural_path": "dalail-al-khayrat/part/4/seg/49",
+              "id": "528341b7-56d1-3c9e-bcf7-1d6ecf84220f"
+            },
+            {
+              "index": 50,
+              "structural_path": "dalail-al-khayrat/part/4/seg/50",
+              "id": "c3d611a1-8f4b-364b-8a24-a17f330101a2"
+            },
+            {
+              "index": 51,
+              "structural_path": "dalail-al-khayrat/part/4/seg/51",
+              "id": "5257ff0e-f9bf-3fc3-8b14-c85c935dd3ce"
+            },
+            {
+              "index": 52,
+              "structural_path": "dalail-al-khayrat/part/4/seg/52",
+              "id": "b2719936-4a61-3bab-b08d-0edd7b192c38"
+            },
+            {
+              "index": 53,
+              "structural_path": "dalail-al-khayrat/part/4/seg/53",
+              "id": "2596457e-78ce-3f25-abc3-fa527f3e1ac1"
+            },
+            {
+              "index": 54,
+              "structural_path": "dalail-al-khayrat/part/4/seg/54",
+              "id": "89e98c16-b141-30fc-b6a0-a0568ddcedba"
+            },
+            {
+              "index": 55,
+              "structural_path": "dalail-al-khayrat/part/4/seg/55",
+              "id": "73e27542-a898-33a6-89c4-e350fcf92d4a"
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "structural_path": "dalail-al-khayrat/part/5",
+          "id": "828bb75c-18c4-3456-853a-3b273ef5f787",
+          "segment_count": 28,
+          "segments": [
+            {
+              "index": 0,
+              "structural_path": "dalail-al-khayrat/part/5/seg/0",
+              "id": "105997de-8f9e-3c19-9043-6bf1ddb48cde"
+            },
+            {
+              "index": 1,
+              "structural_path": "dalail-al-khayrat/part/5/seg/1",
+              "id": "5c5964a1-9718-3c42-9921-005c29a278c6"
+            },
+            {
+              "index": 2,
+              "structural_path": "dalail-al-khayrat/part/5/seg/2",
+              "id": "5d9a15ca-7f9e-3da8-b85e-56f82aad50af"
+            },
+            {
+              "index": 3,
+              "structural_path": "dalail-al-khayrat/part/5/seg/3",
+              "id": "93039914-dd96-3312-9741-269ebc4a8e29"
+            },
+            {
+              "index": 4,
+              "structural_path": "dalail-al-khayrat/part/5/seg/4",
+              "id": "96a22ade-0754-356d-9792-c5ee23e5e22a"
+            },
+            {
+              "index": 5,
+              "structural_path": "dalail-al-khayrat/part/5/seg/5",
+              "id": "610d4498-9bff-37fe-a0cc-1a0fae00e79c"
+            },
+            {
+              "index": 6,
+              "structural_path": "dalail-al-khayrat/part/5/seg/6",
+              "id": "0f1b7794-dda0-3b14-9966-c08726f32b3c"
+            },
+            {
+              "index": 7,
+              "structural_path": "dalail-al-khayrat/part/5/seg/7",
+              "id": "2900c1ed-f22f-33b3-adca-0be21bea3ace"
+            },
+            {
+              "index": 8,
+              "structural_path": "dalail-al-khayrat/part/5/seg/8",
+              "id": "72753446-8f3b-3004-82d6-223968fa58ee"
+            },
+            {
+              "index": 9,
+              "structural_path": "dalail-al-khayrat/part/5/seg/9",
+              "id": "53158091-160d-34a2-9419-e8a7ed722daa"
+            },
+            {
+              "index": 10,
+              "structural_path": "dalail-al-khayrat/part/5/seg/10",
+              "id": "2d071be0-8409-3fb9-8ddd-0a667b35cb7c"
+            },
+            {
+              "index": 11,
+              "structural_path": "dalail-al-khayrat/part/5/seg/11",
+              "id": "32440dbd-9f8b-3d28-ac94-bdeb4a1f1e65"
+            },
+            {
+              "index": 12,
+              "structural_path": "dalail-al-khayrat/part/5/seg/12",
+              "id": "5b73dec9-8f3d-3879-a660-0d0d18100f2d"
+            },
+            {
+              "index": 13,
+              "structural_path": "dalail-al-khayrat/part/5/seg/13",
+              "id": "6ea0fa68-e3a9-3e1c-a04e-04a5a3bdf00e"
+            },
+            {
+              "index": 14,
+              "structural_path": "dalail-al-khayrat/part/5/seg/14",
+              "id": "bd892561-3447-3836-bb46-48209a23b697"
+            },
+            {
+              "index": 15,
+              "structural_path": "dalail-al-khayrat/part/5/seg/15",
+              "id": "4a0497a5-5ac5-3c86-ac8d-b174b17eb3a4"
+            },
+            {
+              "index": 16,
+              "structural_path": "dalail-al-khayrat/part/5/seg/16",
+              "id": "22089f27-fa00-3346-a30a-d340b015edc2"
+            },
+            {
+              "index": 17,
+              "structural_path": "dalail-al-khayrat/part/5/seg/17",
+              "id": "ab83293e-5e9c-3166-b862-acc7e56f2c59"
+            },
+            {
+              "index": 18,
+              "structural_path": "dalail-al-khayrat/part/5/seg/18",
+              "id": "4318d768-12a6-35d5-a445-a3e937719bc7"
+            },
+            {
+              "index": 19,
+              "structural_path": "dalail-al-khayrat/part/5/seg/19",
+              "id": "9bb261cc-94b2-338c-8784-ee7b6368d9f1"
+            },
+            {
+              "index": 20,
+              "structural_path": "dalail-al-khayrat/part/5/seg/20",
+              "id": "37dd5a34-0154-3c64-a7f8-2303c6c219b5"
+            },
+            {
+              "index": 21,
+              "structural_path": "dalail-al-khayrat/part/5/seg/21",
+              "id": "9947bd67-d74e-31f4-8aac-2bfcec6a719a"
+            },
+            {
+              "index": 22,
+              "structural_path": "dalail-al-khayrat/part/5/seg/22",
+              "id": "468042a7-8f31-3ebb-8a86-26eb25ffe3fc"
+            },
+            {
+              "index": 23,
+              "structural_path": "dalail-al-khayrat/part/5/seg/23",
+              "id": "50169f2e-ec39-3a36-a388-c43e907b994e"
+            },
+            {
+              "index": 24,
+              "structural_path": "dalail-al-khayrat/part/5/seg/24",
+              "id": "0640c4cc-ce73-3f1f-8dfb-157d02b613b7"
+            },
+            {
+              "index": 25,
+              "structural_path": "dalail-al-khayrat/part/5/seg/25",
+              "id": "e21ea04c-ed4e-332b-973f-310e4028af20"
+            },
+            {
+              "index": 26,
+              "structural_path": "dalail-al-khayrat/part/5/seg/26",
+              "id": "a8f11a0c-9dfd-31ca-aa50-6d157961983a"
+            },
+            {
+              "index": 27,
+              "structural_path": "dalail-al-khayrat/part/5/seg/27",
+              "id": "4c6b96f1-92b2-3016-b795-0aa903b73ba3"
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "structural_path": "dalail-al-khayrat/part/6",
+          "id": "5c5c73e2-3edf-325c-bc72-da06ebdbd5d5",
+          "segment_count": 28,
+          "segments": [
+            {
+              "index": 0,
+              "structural_path": "dalail-al-khayrat/part/6/seg/0",
+              "id": "bc43a7f1-81c6-3e95-bac1-6f4833c017cd"
+            },
+            {
+              "index": 1,
+              "structural_path": "dalail-al-khayrat/part/6/seg/1",
+              "id": "f307be63-6d59-38ee-8c69-6aab36e8a62e"
+            },
+            {
+              "index": 2,
+              "structural_path": "dalail-al-khayrat/part/6/seg/2",
+              "id": "6af67b7d-3706-3a50-bbac-fbf3650c38e6"
+            },
+            {
+              "index": 3,
+              "structural_path": "dalail-al-khayrat/part/6/seg/3",
+              "id": "d9464e67-35c0-34c1-b221-a807efb57587"
+            },
+            {
+              "index": 4,
+              "structural_path": "dalail-al-khayrat/part/6/seg/4",
+              "id": "515031a2-e36f-3816-a92b-52ab5309a89d"
+            },
+            {
+              "index": 5,
+              "structural_path": "dalail-al-khayrat/part/6/seg/5",
+              "id": "9e79602b-8339-3fe7-aa4d-d1ba7a1bc451"
+            },
+            {
+              "index": 6,
+              "structural_path": "dalail-al-khayrat/part/6/seg/6",
+              "id": "9d854d9d-8e8e-326c-9dca-6358ea8c6b4c"
+            },
+            {
+              "index": 7,
+              "structural_path": "dalail-al-khayrat/part/6/seg/7",
+              "id": "7d7700da-ac7d-3927-87d3-542fd31be6e4"
+            },
+            {
+              "index": 8,
+              "structural_path": "dalail-al-khayrat/part/6/seg/8",
+              "id": "f7f342cc-a736-3ceb-8e83-177f5025dd8f"
+            },
+            {
+              "index": 9,
+              "structural_path": "dalail-al-khayrat/part/6/seg/9",
+              "id": "6e5415a2-66af-3004-9d20-d45360f130fb"
+            },
+            {
+              "index": 10,
+              "structural_path": "dalail-al-khayrat/part/6/seg/10",
+              "id": "0ca12ca0-a69d-394c-8c5e-1c4a2c8bf43a"
+            },
+            {
+              "index": 11,
+              "structural_path": "dalail-al-khayrat/part/6/seg/11",
+              "id": "f45a8989-b179-351c-b5c5-c11ac219b5a6"
+            },
+            {
+              "index": 12,
+              "structural_path": "dalail-al-khayrat/part/6/seg/12",
+              "id": "f8c53699-1b7f-32f8-97b6-dbbc52c1f339"
+            },
+            {
+              "index": 13,
+              "structural_path": "dalail-al-khayrat/part/6/seg/13",
+              "id": "d4e2208c-cfdf-3941-b2b6-dc377c455224"
+            },
+            {
+              "index": 14,
+              "structural_path": "dalail-al-khayrat/part/6/seg/14",
+              "id": "47d6b733-378d-379b-92ce-de7854e7d94b"
+            },
+            {
+              "index": 15,
+              "structural_path": "dalail-al-khayrat/part/6/seg/15",
+              "id": "9bc41f90-85b4-3dc8-af01-d3474ab4b95b"
+            },
+            {
+              "index": 16,
+              "structural_path": "dalail-al-khayrat/part/6/seg/16",
+              "id": "d86f143a-9910-3da5-8dfc-ae66e3ee6f1e"
+            },
+            {
+              "index": 17,
+              "structural_path": "dalail-al-khayrat/part/6/seg/17",
+              "id": "5b7b4911-5699-3e23-aedb-1de605ae71a1"
+            },
+            {
+              "index": 18,
+              "structural_path": "dalail-al-khayrat/part/6/seg/18",
+              "id": "550b59b1-d96a-3049-bb6e-4fefedb5324f"
+            },
+            {
+              "index": 19,
+              "structural_path": "dalail-al-khayrat/part/6/seg/19",
+              "id": "a7ecc213-117c-352e-bc35-7f881944259d"
+            },
+            {
+              "index": 20,
+              "structural_path": "dalail-al-khayrat/part/6/seg/20",
+              "id": "a999d13a-c398-3059-938f-f964068eb14a"
+            },
+            {
+              "index": 21,
+              "structural_path": "dalail-al-khayrat/part/6/seg/21",
+              "id": "3635bc56-4d58-36df-9dd3-c69b5e358897"
+            },
+            {
+              "index": 22,
+              "structural_path": "dalail-al-khayrat/part/6/seg/22",
+              "id": "2ead7e56-649b-3d69-b85f-2d6974b3a645"
+            },
+            {
+              "index": 23,
+              "structural_path": "dalail-al-khayrat/part/6/seg/23",
+              "id": "7e2fceca-4c01-3937-98ee-a27d0670c159"
+            },
+            {
+              "index": 24,
+              "structural_path": "dalail-al-khayrat/part/6/seg/24",
+              "id": "cdb6d7a9-7a58-30c4-b399-dd8737ff532b"
+            },
+            {
+              "index": 25,
+              "structural_path": "dalail-al-khayrat/part/6/seg/25",
+              "id": "fc6e5dc2-4bb5-3f89-b7b5-69490131cb34"
+            },
+            {
+              "index": 26,
+              "structural_path": "dalail-al-khayrat/part/6/seg/26",
+              "id": "be91de48-d2d3-3899-825e-16a5b41553db"
+            },
+            {
+              "index": 27,
+              "structural_path": "dalail-al-khayrat/part/6/seg/27",
+              "id": "0699005d-358e-3b39-a760-f5e3b41103da"
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "structural_path": "dalail-al-khayrat/part/7",
+          "id": "843ed09d-2834-3ce2-850f-22192d9c6ef6",
+          "segment_count": 19,
+          "segments": [
+            {
+              "index": 0,
+              "structural_path": "dalail-al-khayrat/part/7/seg/0",
+              "id": "ad1a096a-2e3d-34d0-8a3c-396131b1b223"
+            },
+            {
+              "index": 1,
+              "structural_path": "dalail-al-khayrat/part/7/seg/1",
+              "id": "3a752356-eafa-3e60-879b-1f52df90c264"
+            },
+            {
+              "index": 2,
+              "structural_path": "dalail-al-khayrat/part/7/seg/2",
+              "id": "d06af6b4-aa31-3146-a998-41008da614e5"
+            },
+            {
+              "index": 3,
+              "structural_path": "dalail-al-khayrat/part/7/seg/3",
+              "id": "0610b382-4a37-346b-bfa2-f1a54d191fdc"
+            },
+            {
+              "index": 4,
+              "structural_path": "dalail-al-khayrat/part/7/seg/4",
+              "id": "3ae6ba79-207f-3042-9987-8a29651c170d"
+            },
+            {
+              "index": 5,
+              "structural_path": "dalail-al-khayrat/part/7/seg/5",
+              "id": "2d20dad8-6cc2-32ed-a649-461534886f97"
+            },
+            {
+              "index": 6,
+              "structural_path": "dalail-al-khayrat/part/7/seg/6",
+              "id": "452c2c73-c103-3ea7-92d8-e90fd395677a"
+            },
+            {
+              "index": 7,
+              "structural_path": "dalail-al-khayrat/part/7/seg/7",
+              "id": "638ca234-f21a-3696-904c-dd866881a8e6"
+            },
+            {
+              "index": 8,
+              "structural_path": "dalail-al-khayrat/part/7/seg/8",
+              "id": "250aecc4-98b3-388f-9b99-2e8a925749a8"
+            },
+            {
+              "index": 9,
+              "structural_path": "dalail-al-khayrat/part/7/seg/9",
+              "id": "4f2bfd65-564a-3c4e-bcd5-907935d93880"
+            },
+            {
+              "index": 10,
+              "structural_path": "dalail-al-khayrat/part/7/seg/10",
+              "id": "a8c882a8-15ca-3177-9066-310e674f5eb5"
+            },
+            {
+              "index": 11,
+              "structural_path": "dalail-al-khayrat/part/7/seg/11",
+              "id": "16c431cb-4eab-36dc-85a2-dfff6ff86687"
+            },
+            {
+              "index": 12,
+              "structural_path": "dalail-al-khayrat/part/7/seg/12",
+              "id": "697ae9df-52f6-3ba8-bce8-b1fe167cd9c6"
+            },
+            {
+              "index": 13,
+              "structural_path": "dalail-al-khayrat/part/7/seg/13",
+              "id": "256134b2-8b61-371d-bdd1-e41ec1e65e3e"
+            },
+            {
+              "index": 14,
+              "structural_path": "dalail-al-khayrat/part/7/seg/14",
+              "id": "b4a2b7da-45ef-35e4-87a4-fd0afee13566"
+            },
+            {
+              "index": 15,
+              "structural_path": "dalail-al-khayrat/part/7/seg/15",
+              "id": "ce0b7260-2fd4-3f33-aa36-ffc493247c0c"
+            },
+            {
+              "index": 16,
+              "structural_path": "dalail-al-khayrat/part/7/seg/16",
+              "id": "ae78d854-b82a-3623-895d-71b25f1f19b8"
+            },
+            {
+              "index": 17,
+              "structural_path": "dalail-al-khayrat/part/7/seg/17",
+              "id": "480233e7-92db-3dfa-b9b1-5be34a8c832b"
+            },
+            {
+              "index": 18,
+              "structural_path": "dalail-al-khayrat/part/7/seg/18",
+              "id": "bc7b0eb7-fa7e-3de0-8fa7-c2ea0e9f4c25"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -223,6 +223,7 @@ private struct DhikrInputField: View {
             .modifier(OptionalLineLimitModifier(limit: closedLineLimit))
             .textInputAutocapitalization(.sentences)
             .autocorrectionDisabled()
+            .accessibilityIdentifier("dhikr-input-\(title)")
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))

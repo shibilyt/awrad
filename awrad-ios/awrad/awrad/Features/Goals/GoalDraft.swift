@@ -341,8 +341,8 @@ struct GoalDraft: Hashable {
             guard let minimum = minimumValue else { return "Enter a positive minimum count." }
             guard let target else { return "Enter a positive target." }
             guard let maximum = maximumValue else { return "Enter a positive maximum count." }
-            if !(minimum < target && target < maximum) {
-                return "Counts must be ordered: minimum < target < maximum."
+            if !(minimum <= target && target <= maximum) {
+                return "Counts must be ordered: minimum ≤ target ≤ maximum."
             }
         }
         return nil
@@ -356,7 +356,7 @@ struct GoalDraft: Hashable {
 
         let completionPolicy: CompletionPolicy = durationEnabled
             ? .durationEnded
-            : (policy == .none ? .never : .whenTargetReached)
+            : (policy == .cumulativeTotal ? .whenTargetReached : .never)
 
         return GoalCreationConfiguration(
             targetPolicy: policy,
@@ -394,7 +394,7 @@ struct GoalDraft: Hashable {
             return CountPolicy(
                 targetCount: target > 0 ? target : nil,
                 maximumCount: target > 0 ? target : nil,
-                capBehavior: .blockAtTarget
+                capBehavior: .blockAtMaximum
             )
         case .bounded:
             return CountPolicy(
@@ -689,7 +689,11 @@ struct GoalDraft: Hashable {
     }
 
     private var fixedTarget: Int? {
-        positiveInt(targetText)
+        // Android persists the minimum itself as the slot target for a
+        // minimum-only rule. That keeps progress, completion rings, and
+        // effective-day fixtures aligned even though the aggregate policy
+        // intentionally has no explicit targetCount.
+        resolvedCountRuleMode == .minimum ? minimumValue : positiveInt(targetText)
     }
 
     private var morningTarget: Int? {
@@ -724,12 +728,13 @@ struct GoalDraft: Hashable {
         parseIntSet(monthDaysText, in: 1...31)
     }
 
-    private var parsedSpecificDates: Set<String> {
+    private var parsedSpecificDates: Set<GoalSpecificDate> {
         Set(
             specificDatesText
                 .split { $0 == "," || $0 == "\n" || $0 == " " }
                 .map { String($0).trimmingCharacters(in: .whitespacesAndNewlines) }
                 .filter { Self.dateFormatter.date(from: $0) != nil }
+                .map { GoalSpecificDate(date: $0) }
         )
     }
 
@@ -828,6 +833,7 @@ struct GoalDraft: Hashable {
             guard slot.endMinuteOfDay > slot.startMinuteOfDay else { return nil }
 
             return GoalSlot(
+                id: slot.id,
                 slotType: .timeWindow,
                 targetCount: target,
                 startMinute: slot.startMinuteOfDay,

@@ -13,24 +13,40 @@ final class AppServices {
     let locations: LocationService
     let audio: AudioSessionService
     let auth: AuthService
+    let persistence: AwradPersistenceRuntime?
+    let persistenceInitializationError: String?
 
     init(
         notifications: NotificationService? = nil,
         prayerTimes: PrayerTimeService? = nil,
         locations: LocationService? = nil,
         audio: AudioSessionService? = nil,
-        auth: AuthService? = nil
+        auth: AuthService? = nil,
+        persistence: AwradPersistenceRuntime? = nil
     ) {
         self.notifications = notifications ?? NotificationService()
         self.prayerTimes = prayerTimes ?? PrayerTimeService()
         self.locations = locations ?? LocationService()
         self.audio = audio ?? AudioSessionService()
         self.auth = auth ?? AuthService()
+        if let persistence {
+            self.persistence = persistence
+            self.persistenceInitializationError = nil
+        } else {
+            do {
+                self.persistence = try AwradPersistenceRuntime()
+                self.persistenceInitializationError = nil
+            } catch {
+                self.persistence = nil
+                self.persistenceInitializationError = error.localizedDescription
+            }
+        }
     }
 
     /// Reschedules (or clears) a wird's reminders, resolving prayer-offset times from the
     /// user's current location/method.
-    func rescheduleWirdReminders(for wird: Wird, store: AwradStore) {
+    @discardableResult
+    func rescheduleWirdReminders(for wird: Wird, store: AwradStore) async -> NotificationSchedulingResult {
         let language = store.preferences.appLanguage
         let summary = prayerTimes.summary(
             for: Date(),
@@ -39,40 +55,145 @@ final class AppServices {
             method: store.preferences.calculationMethod,
             madhab: store.preferences.madhab
         )
-        Task {
-            await notifications.scheduleWirdReminders(for: wird, language: language, prayerTimes: summary)
-        }
+        return await notifications.scheduleWirdReminders(for: wird, language: language, prayerTimes: summary)
     }
 
-    func cancelWirdReminders(wirdID: AwradID) {
-        Task { await notifications.cancelWirdReminders(wirdID: wirdID) }
+    @discardableResult
+    func cancelWirdReminders(wirdID: AwradID) async -> NotificationSchedulingResult {
+        await notifications.cancelWirdReminders(wirdID: wirdID)
     }
 }
 
-final class NotificationService {
-    private let center: UNUserNotificationCenter
+@MainActor
+protocol AwradUserNotificationCenter: AnyObject {
+    func awradAuthorizationStatus() async -> UNAuthorizationStatus
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
+    func pendingNotificationRequests() async -> [UNNotificationRequest]
+    func add(_ request: UNNotificationRequest) async throws
+    func removePendingNotificationRequests(withIdentifiers identifiers: [String])
+}
 
-    init(center: UNUserNotificationCenter = .current()) {
+extension UNUserNotificationCenter: AwradUserNotificationCenter {
+    func awradAuthorizationStatus() async -> UNAuthorizationStatus {
+        await notificationSettings().authorizationStatus
+    }
+}
+
+enum NotificationAuthorizationRequestResult: Equatable {
+    case authorized
+    case denied
+    case failed(String)
+}
+
+enum NotificationSchedulingResult: Equatable {
+    case scheduled(count: Int)
+    case cleared
+    case denied
+    case failed(String)
+
+    var succeeded: Bool {
+        switch self {
+        case .scheduled, .cleared: true
+        case .denied, .failed: false
+        }
+    }
+
+    func localizedFailureMessage(language: AppLanguage) -> String? {
+        switch self {
+        case .scheduled, .cleared:
+            nil
+        case .denied:
+            AwradLocalizer.localized(
+                "Notifications are disabled. Enable them in Settings, then try again.",
+                language: language
+            )
+        case .failed:
+            AwradLocalizer.localized(
+                "Some reminders could not be scheduled. Try again.",
+                language: language
+            )
+        }
+    }
+
+    static func combined(_ results: [NotificationSchedulingResult]) -> NotificationSchedulingResult {
+        if let failure = results.first(where: {
+            if case .failed = $0 { return true }
+            return false
+        }) {
+            return failure
+        }
+        if results.contains(.denied) { return .denied }
+        let count = results.reduce(into: 0) { partial, result in
+            if case .scheduled(let scheduled) = result { partial += scheduled }
+        }
+        return count > 0 ? .scheduled(count: count) : .cleared
+    }
+}
+
+@MainActor
+final class NotificationService {
+    private let center: any AwradUserNotificationCenter
+
+    init(center: any AwradUserNotificationCenter = UNUserNotificationCenter.current()) {
         self.center = center
     }
 
-    func requestAuthorizationIfUseful() async {
-        let settings = await center.notificationSettings()
-        guard settings.authorizationStatus == .notDetermined else { return }
-        _ = try? await center.requestAuthorization(options: [.alert, .badge, .sound])
+    @discardableResult
+    func requestAuthorizationIfUseful() async -> NotificationAuthorizationRequestResult {
+        switch await center.awradAuthorizationStatus() {
+        case .authorized, .provisional, .ephemeral:
+            return .authorized
+        case .denied:
+            return .denied
+        case .notDetermined:
+            do {
+                guard try await center.requestAuthorization(options: [.alert, .badge, .sound]) else {
+                    return .denied
+                }
+                return [.authorized, .provisional, .ephemeral].contains(await center.awradAuthorizationStatus())
+                    ? .authorized
+                    : .denied
+            } catch {
+                return .failed(error.localizedDescription)
+            }
+        @unknown default:
+            return .denied
+        }
     }
 
-    func scheduleDailyReminder(hour: Int, minute: Int, language: AppLanguage = .english) async {
+    func authorizationState() async -> NotificationAuthorizationState {
+        NotificationAuthorizationState(centerStatus: await center.awradAuthorizationStatus())
+    }
+
+    @discardableResult
+    func scheduleDailyReminder(hour: Int, minute: Int, language: AppLanguage = .english) async -> NotificationSchedulingResult {
         await schedule(
             [ReminderPlanner.dailyReminder(hour: hour, minute: minute, language: language)],
             replacingIdentifiers: [ReminderPlanner.dailyReminderIdentifier]
         )
     }
 
-    func cancelDailyReminder() {
+    @discardableResult
+    func cancelDailyReminder() -> NotificationSchedulingResult {
         center.removePendingNotificationRequests(withIdentifiers: [ReminderPlanner.dailyReminderIdentifier])
+        return .cleared
     }
 
+    @discardableResult
+    func scheduleDailyRemembrance(language: AppLanguage = .english) async -> NotificationSchedulingResult {
+        await schedule(
+            [ReminderPlanner.dailyRemembrance(language: language)],
+            replacingIdentifiers: [ReminderPlanner.dailyRemembranceIdentifier]
+        )
+    }
+
+    @discardableResult
+    func cancelDailyRemembrance() -> NotificationSchedulingResult {
+        center.removePendingNotificationRequests(withIdentifiers: [ReminderPlanner.dailyRemembranceIdentifier])
+        return .cleared
+    }
+
+    @discardableResult
     func scheduleGoalReminders(
         for goal: Goal,
         dhikrTitle: String,
@@ -80,10 +201,9 @@ final class NotificationService {
         prayerTimes: [PrayerTimesSummary] = [],
         now: Date = Date(),
         calendar: Calendar = .current
-    ) async {
+    ) async -> NotificationSchedulingResult {
         guard goal.isActive else {
-            await cancelGoalReminders(goalID: goal.id)
-            return
+            return await cancelGoalReminders(goalID: goal.id)
         }
 
         let planned = ReminderPlanner.goalReminders(
@@ -94,24 +214,42 @@ final class NotificationService {
             now: now,
             calendar: calendar
         )
-        await replaceGoalReminders(goalID: goal.id, with: planned)
+        return await replaceGoalReminders(goalID: goal.id, with: planned)
     }
 
+    @discardableResult
     func refreshScheduledReminders(
         goalInputs: [GoalReminderScheduleInput],
         dailyReminder: (enabled: Bool, hour: Int, minute: Int, language: AppLanguage),
+        dailyRemembrance: (enabled: Bool, language: AppLanguage),
+        wirdInputs: [WirdReminderScheduleInput],
         now: Date = Date(),
         calendar: Calendar = .current
-    ) async {
+    ) async -> NotificationSchedulingResult {
+        var results: [NotificationSchedulingResult] = []
         if dailyReminder.enabled {
-            await scheduleDailyReminder(hour: dailyReminder.hour, minute: dailyReminder.minute, language: dailyReminder.language)
+            results.append(await scheduleDailyReminder(
+                hour: dailyReminder.hour,
+                minute: dailyReminder.minute,
+                language: dailyReminder.language
+            ))
         } else {
-            cancelDailyReminder()
+            results.append(cancelDailyReminder())
         }
 
-        await cancelAllGoalReminders()
-        for input in goalInputs where input.goal.isActive && input.goal.reminders.contains(where: \.enabled) {
-            let planned = ReminderPlanner.goalReminders(
+        if dailyRemembrance.enabled {
+            results.append(await scheduleDailyRemembrance(language: dailyRemembrance.language))
+        } else {
+            results.append(cancelDailyRemembrance())
+        }
+
+        let existingGoalIdentifiers = await center.pendingNotificationRequests()
+            .map(\.identifier)
+            .filter { $0.hasPrefix(ReminderPlanner.goalReminderIdentifierRoot) }
+        let plannedGoals = goalInputs
+            .filter { $0.goal.isActive && $0.goal.reminders.contains(where: \.enabled) }
+            .flatMap { input in
+                ReminderPlanner.goalReminders(
                 for: input.goal,
                 dhikrTitle: input.dhikrTitle,
                 language: input.language,
@@ -119,48 +257,69 @@ final class NotificationService {
                 now: now,
                 calendar: calendar
             )
-            await schedule(planned, replacingIdentifiers: [])
+            }
+        results.append(await schedule(plannedGoals, replacingIdentifiers: existingGoalIdentifiers))
+
+        let existingWirdIdentifiers = await center.pendingNotificationRequests()
+            .map(\.identifier)
+            .filter { $0.hasPrefix(ReminderPlanner.wirdReminderIdentifierRoot) }
+        let plannedWirds = wirdInputs.flatMap { input in
+            ReminderPlanner.wirdReminders(
+                for: input.wird,
+                language: input.language,
+                prayerTimes: input.prayerTimes,
+                calendar: calendar
+            )
         }
+        results.append(await schedule(plannedWirds, replacingIdentifiers: existingWirdIdentifiers))
+        return .combined(results)
     }
 
-    func cancelGoalReminders(goalID: AwradID) async {
+    @discardableResult
+    func cancelGoalReminders(goalID: AwradID) async -> NotificationSchedulingResult {
         let prefix = ReminderPlanner.goalReminderIdentifierPrefix(for: goalID)
         let identifiers = await center.pendingNotificationRequests()
             .map(\.identifier)
             .filter { $0.hasPrefix(prefix) }
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
+        return .cleared
     }
 
-    func cancelAllGoalReminders() async {
+    @discardableResult
+    func cancelAllGoalReminders() async -> NotificationSchedulingResult {
         let identifiers = await center.pendingNotificationRequests()
             .map(\.identifier)
             .filter { $0.hasPrefix(ReminderPlanner.goalReminderIdentifierRoot) }
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
+        return .cleared
     }
 
+    @discardableResult
     func scheduleWirdReminders(
         for wird: Wird,
         language: AppLanguage = .english,
         prayerTimes: PrayerTimesSummary? = nil
-    ) async {
+    ) async -> NotificationSchedulingResult {
         let planned = ReminderPlanner.wirdReminders(for: wird, language: language, prayerTimes: prayerTimes)
-        await replaceWirdReminders(wirdID: wird.id, with: planned)
+        return await replaceWirdReminders(wirdID: wird.id, with: planned)
     }
 
-    func cancelWirdReminders(wirdID: AwradID) async {
+    @discardableResult
+    func cancelWirdReminders(wirdID: AwradID) async -> NotificationSchedulingResult {
         let prefix = ReminderPlanner.wirdReminderIdentifierPrefix(for: wirdID)
         let identifiers = await center.pendingNotificationRequests()
             .map(\.identifier)
             .filter { $0.hasPrefix(prefix) }
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
+        return .cleared
     }
 
-    private func replaceWirdReminders(wirdID: AwradID, with notifications: [PlannedNotification]) async {
+    private func replaceWirdReminders(wirdID: AwradID, with notifications: [PlannedNotification]) async -> NotificationSchedulingResult {
         let prefix = ReminderPlanner.wirdReminderIdentifierPrefix(for: wirdID)
         let existing = await center.pendingNotificationRequests()
             .map(\.identifier)
             .filter { $0.hasPrefix(prefix) }
-        await schedule(notifications, replacingIdentifiers: existing)
+        return await schedule(notifications, replacingIdentifiers: existing)
     }
 
     #if DEBUG
@@ -185,35 +344,45 @@ final class NotificationService {
     }
     #endif
 
-    private func replaceGoalReminders(goalID: AwradID, with notifications: [PlannedNotification]) async {
+    private func replaceGoalReminders(goalID: AwradID, with notifications: [PlannedNotification]) async -> NotificationSchedulingResult {
         let prefix = ReminderPlanner.goalReminderIdentifierPrefix(for: goalID)
         let existing = await center.pendingNotificationRequests()
             .map(\.identifier)
             .filter { $0.hasPrefix(prefix) }
-        await schedule(notifications, replacingIdentifiers: existing)
+        return await schedule(notifications, replacingIdentifiers: existing)
     }
 
     private func schedule(
         _ notifications: [PlannedNotification],
         replacingIdentifiers identifiers: [String]
-    ) async {
+    ) async -> NotificationSchedulingResult {
         guard !notifications.isEmpty else {
             if !identifiers.isEmpty {
                 center.removePendingNotificationRequests(withIdentifiers: identifiers)
             }
-            return
+            return .cleared
         }
 
-        await requestAuthorizationIfUseful()
-        let settings = await center.notificationSettings()
-        guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else {
-            return
+        switch await requestAuthorizationIfUseful() {
+        case .authorized:
+            break
+        case .denied:
+            return .denied
+        case .failed(let message):
+            return .failed(message)
         }
 
-        if !identifiers.isEmpty {
-            center.removePendingNotificationRequests(withIdentifiers: identifiers)
+        let existingIdentifiers = Set(identifiers)
+        let requestedIdentifiers = notifications.map(\.identifier)
+        guard Set(requestedIdentifiers).count == requestedIdentifiers.count else {
+            return .failed("Duplicate notification identifiers")
         }
-
+        let existingRequests = await center.pendingNotificationRequests()
+        let originalsByIdentifier = Dictionary(uniqueKeysWithValues: existingRequests.compactMap { request in
+            existingIdentifiers.contains(request.identifier) ? (request.identifier, request) : nil
+        })
+        var newlyAddedIdentifiers: [String] = []
+        var overwrittenOriginals: [UNNotificationRequest] = []
         for notification in notifications {
             let content = UNMutableNotificationContent()
             content.title = notification.title
@@ -229,8 +398,39 @@ final class NotificationService {
                 content: content,
                 trigger: trigger
             )
-            try? await center.add(request)
+            do {
+                try await center.add(request)
+                if !existingIdentifiers.contains(notification.identifier) {
+                    newlyAddedIdentifiers.append(notification.identifier)
+                } else if let original = originalsByIdentifier[notification.identifier] {
+                    overwrittenOriginals.append(original)
+                }
+            } catch {
+                if !newlyAddedIdentifiers.isEmpty {
+                    center.removePendingNotificationRequests(withIdentifiers: newlyAddedIdentifiers)
+                }
+                var rollbackError: Error?
+                for original in overwrittenOriginals {
+                    do {
+                        try await center.add(original)
+                    } catch {
+                        rollbackError = error
+                    }
+                }
+                let message = if let rollbackError {
+                    "\(error.localizedDescription) (rollback: \(rollbackError.localizedDescription))"
+                } else {
+                    error.localizedDescription
+                }
+                return .failed(message)
+            }
         }
+
+        let staleIdentifiers = existingIdentifiers.subtracting(Set(requestedIdentifiers))
+        if !staleIdentifiers.isEmpty {
+            center.removePendingNotificationRequests(withIdentifiers: Array(staleIdentifiers))
+        }
+        return .scheduled(count: notifications.count)
     }
 
     #if DEBUG
@@ -240,9 +440,7 @@ final class NotificationService {
         body: String,
         trigger: UNNotificationTrigger?
     ) async -> Bool {
-        await requestAuthorizationIfUseful()
-        let settings = await center.notificationSettings()
-        guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else {
+        guard case .authorized = await requestAuthorizationIfUseful() else {
             return false
         }
 
@@ -262,11 +460,36 @@ final class NotificationService {
     #endif
 }
 
+enum NotificationAuthorizationState: String, Equatable {
+    case notDetermined
+    case denied
+    case authorized
+
+    init(centerStatus: UNAuthorizationStatus) {
+        switch centerStatus {
+        case .notDetermined:
+            self = .notDetermined
+        case .denied:
+            self = .denied
+        case .authorized, .provisional, .ephemeral:
+            self = .authorized
+        @unknown default:
+            self = .denied
+        }
+    }
+}
+
 struct GoalReminderScheduleInput {
     var goal: Goal
     var dhikrTitle: String
     var language: AppLanguage
     var prayerTimes: [PrayerTimesSummary]
+}
+
+struct WirdReminderScheduleInput {
+    var wird: Wird
+    var language: AppLanguage
+    var prayerTimes: PrayerTimesSummary?
 }
 
 struct PlannedNotification: Equatable {
@@ -279,6 +502,7 @@ struct PlannedNotification: Equatable {
 
 enum ReminderPlanner {
     static let dailyReminderIdentifier = "awrad.daily-reminder"
+    static let dailyRemembranceIdentifier = "awrad.daily-remembrance"
     static let goalReminderIdentifierRoot = "awrad.goal."
 
     static func dailyReminder(hour: Int, minute: Int, language: AppLanguage = .english) -> PlannedNotification {
@@ -290,6 +514,20 @@ enum ReminderPlanner {
             identifier: dailyReminderIdentifier,
             title: "Awrad",
             body: AwradLocalizer.localized("Your daily remembrance is ready.", language: language),
+            dateComponents: components,
+            repeats: true
+        )
+    }
+
+    static func dailyRemembrance(language: AppLanguage = .english) -> PlannedNotification {
+        var components = DateComponents()
+        components.hour = 9
+        components.minute = 0
+
+        return PlannedNotification(
+            identifier: dailyRemembranceIdentifier,
+            title: AwradLocalizer.localized("Daily remembrance", language: language),
+            body: AwradLocalizer.localized("Take a moment to remember Allah.", language: language),
             dateComponents: components,
             repeats: true
         )
@@ -515,6 +753,32 @@ enum ReminderScheduleBuilder {
                     calendar: calendar,
                     timeZone: timeZone
                 )
+            )
+        }
+    }
+
+    static func wirdInputs(
+        wirds: [Wird],
+        preferences: UserPreferences,
+        prayerTimeService: PrayerTimeService,
+        now: Date = Date(),
+        calendar: Calendar = .current,
+        timeZone: TimeZone = .current
+    ) -> [WirdReminderScheduleInput] {
+        let prayerTimes = prayerTimeService.summary(
+            for: now,
+            latitude: preferences.latitude,
+            longitude: preferences.longitude,
+            method: preferences.calculationMethod,
+            madhab: preferences.madhab,
+            calendar: calendar,
+            timeZone: timeZone
+        )
+        return wirds.map {
+            WirdReminderScheduleInput(
+                wird: $0,
+                language: preferences.appLanguage,
+                prayerTimes: prayerTimes
             )
         }
     }
@@ -936,15 +1200,26 @@ final class AudioSessionService {
     private var player: AVPlayer?
     private var progressTimer: Timer?
     private var endObserver: NSObjectProtocol?
+    private let notificationCenter: NotificationCenter
+    private var interruptionObserver: NSObjectProtocol?
+    private var routeChangeObserver: NSObjectProtocol?
+    private var mediaServicesResetObserver: NSObjectProtocol?
+    private var shouldResumeAfterInterruption = false
     private var remoteCommandTargets: [(command: MPRemoteCommand, target: Any)] = []
     private var onCountingLoopCompleted: (() -> Bool)?
     private var nowPlayingTitle = "Awrad"
     private var nowPlayingSubtitle = "Dhikr"
     private var lastNowPlayingElapsedSecond: Int?
 
+    init(notificationCenter: NotificationCenter = .default) {
+        self.notificationCenter = notificationCenter
+        registerAudioSessionObservers()
+    }
+
     deinit {
         stop()
         unregisterRemoteCommands()
+        removeAudioSessionObservers()
     }
 
     func configureForPlayback() {
@@ -1241,6 +1516,100 @@ final class AudioSessionService {
             registration.command.removeTarget(registration.target)
         }
         remoteCommandTargets.removeAll()
+    }
+
+    private func registerAudioSessionObservers() {
+        let session = AVAudioSession.sharedInstance()
+        interruptionObserver = notificationCenter.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: session,
+            queue: .main
+        ) { [weak self] notification in
+            self?.handleAudioSessionInterruption(notification)
+        }
+        routeChangeObserver = notificationCenter.addObserver(
+            forName: AVAudioSession.routeChangeNotification,
+            object: session,
+            queue: .main
+        ) { [weak self] notification in
+            guard Self.routeChangeRequiresPause(notification) else { return }
+            self?.pause()
+        }
+        mediaServicesResetObserver = notificationCenter.addObserver(
+            forName: AVAudioSession.mediaServicesWereResetNotification,
+            object: session,
+            queue: .main
+        ) { [weak self] _ in
+            self?.restoreAfterMediaServicesReset()
+        }
+    }
+
+    private func removeAudioSessionObservers() {
+        for observer in [interruptionObserver, routeChangeObserver, mediaServicesResetObserver].compactMap({ $0 }) {
+            notificationCenter.removeObserver(observer)
+        }
+        interruptionObserver = nil
+        routeChangeObserver = nil
+        mediaServicesResetObserver = nil
+    }
+
+    private func handleAudioSessionInterruption(_ notification: Notification) {
+        switch Self.interruptionAction(notification) {
+        case .pause:
+            shouldResumeAfterInterruption = isPlaying
+            pause()
+        case .resume:
+            let shouldResume = shouldResumeAfterInterruption
+            shouldResumeAfterInterruption = false
+            if shouldResume {
+                play()
+            }
+        case .finishWithoutResuming:
+            shouldResumeAfterInterruption = false
+        case .ignore:
+            break
+        }
+    }
+
+    private func restoreAfterMediaServicesReset() {
+        let shouldResume = isPlaying
+        isConfigured = false
+        configureForPlayback()
+        if shouldResume {
+            play()
+        }
+    }
+
+    enum InterruptionAction: Equatable {
+        case pause
+        case resume
+        case finishWithoutResuming
+        case ignore
+    }
+
+    static func interruptionAction(_ notification: Notification) -> InterruptionAction {
+        guard let typeValue = notification.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt,
+              let type = AVAudioSession.InterruptionType(rawValue: typeValue) else {
+            return .ignore
+        }
+        switch type {
+        case .began:
+            return .pause
+        case .ended:
+            let optionValue = notification.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionValue)
+            return options.contains(.shouldResume) ? .resume : .finishWithoutResuming
+        @unknown default:
+            return .ignore
+        }
+    }
+
+    static func routeChangeRequiresPause(_ notification: Notification) -> Bool {
+        guard let reasonValue = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
+              let reason = AVAudioSession.RouteChangeReason(rawValue: reasonValue) else {
+            return false
+        }
+        return reason == .oldDeviceUnavailable
     }
 
     private static func durationString(_ seconds: Double) -> String {

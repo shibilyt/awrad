@@ -138,9 +138,10 @@ struct CountingCoachOverlay: View {
                                 .background(.white.opacity(0.18), in: Capsule())
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("counting-coach-skip")
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 8)
+                    .padding(.top, proxy.safeAreaInsets.top + 8)
 
                     if cardAtBottom { Spacer() }
 

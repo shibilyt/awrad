@@ -25,7 +25,10 @@ struct AwradApp: App {
                 .modifier(AwradAppTypography(language: store.preferences.appLanguage))
                 .preferredColorScheme(store.preferences.colorScheme)
                 .task {
-                    await store.bootstrap()
+                    await store.bootstrap(
+                        persistence: services.persistence,
+                        initializationError: services.persistenceInitializationError
+                    )
                 }
                 .onOpenURL { url in
                     pendingURL = url

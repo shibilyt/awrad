@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 enum AwradSeedData {
     static let dhikrs: [Dhikr] = [
@@ -235,6 +236,7 @@ private struct WirdJSON: Decodable {
 
     func toWird() -> Wird {
         Wird(
+            id: WirdStructuralID.make(slug),
             slug: slug,
             version: version ?? 1,
             sortOrder: sortOrder ?? 0,
@@ -245,7 +247,9 @@ private struct WirdJSON: Decodable {
             tags: (tags ?? []).compactMap { WirdTag(rawValue: $0.lowercased()) },
             estimatedMinutes: estimatedMinutes,
             schedule: schedule?.toSchedule() ?? WirdSchedule(),
-            parts: parts.map { $0.toPart() }
+            parts: parts.enumerated().map { index, part in
+                part.toPart(slug: slug, index: index)
+            }
         )
     }
 }
@@ -255,6 +259,7 @@ private struct ScheduleJSON: Decodable {
     var daysOfWeek: [Int]?
     var intervalDays: Int?
     var intervalAnchor: String?
+    var partsByWeekday: [String: [Int]]?
     var hijriAnchor: String?
     var defaultOccasion: OccasionJSON?
 
@@ -267,6 +272,15 @@ private struct ScheduleJSON: Decodable {
             schedule.cadence = .daysOfWeek(Set(daysOfWeek ?? []))
         case "INTERVAL":
             schedule.cadence = .interval(days: max(intervalDays ?? 1, 1), anchor: intervalAnchor ?? "2024-01-01")
+        case "PARTS_BY_WEEKDAY":
+            schedule.cadence = .everyDay
+            schedule.partsByWeekday = (partsByWeekday ?? [:]).reduce(into: [:]) { result, entry in
+                guard let weekday = Int(entry.key), (1...7).contains(weekday) else { return }
+                let indexes = entry.value.filter { $0 >= 0 }
+                if !indexes.isEmpty {
+                    result[weekday] = indexes
+                }
+            }
         default:
             schedule.cadence = .everyDay
         }
@@ -312,13 +326,16 @@ private struct PartJSON: Decodable {
     var blockRepeat: Int?
     var segments: [SegmentJSON]
 
-    func toPart() -> WirdPart {
+    func toPart(slug: String, index: Int) -> WirdPart {
         WirdPart(
+            id: WirdStructuralID.make("\(slug)/part/\(index)"),
             localizedTitle: title,
             localizedSubtitle: subtitle ?? [:],
             occasion: occasion?.toOccasion(),
             blockRepeat: max(blockRepeat ?? 1, 1),
-            segments: segments.map { $0.toSegment() }
+            segments: segments.enumerated().map { segmentIndex, segment in
+                segment.toSegment(slug: slug, partIndex: index, index: segmentIndex)
+            }
         )
     }
 }
@@ -333,8 +350,9 @@ private struct SegmentJSON: Decodable {
     var fadl: [String: String]?
     var quran: QuranJSON?
 
-    func toSegment() -> WirdSegment {
+    func toSegment(slug: String, partIndex: Int, index: Int) -> WirdSegment {
         WirdSegment(
+            id: WirdStructuralID.make("\(slug)/part/\(partIndex)/seg/\(index)"),
             kind: SegmentKind(rawValue: (kind ?? "dhikr").lowercased()) ?? .dhikr,
             arabic: arabic ?? "",
             transliteration: transliteration ?? [:],
@@ -344,6 +362,20 @@ private struct SegmentJSON: Decodable {
             quranRef: quran?.toRef(),
             fadl: fadl ?? [:]
         )
+    }
+}
+
+private enum WirdStructuralID {
+    static func make(_ structuralPath: String) -> UUID {
+        var digest = Array(Insecure.MD5.hash(data: Data("awrad-wird:\(structuralPath)".utf8)))
+        digest[6] = (digest[6] & 0x0f) | 0x30
+        digest[8] = (digest[8] & 0x3f) | 0x80
+        return UUID(uuid: (
+            digest[0], digest[1], digest[2], digest[3],
+            digest[4], digest[5], digest[6], digest[7],
+            digest[8], digest[9], digest[10], digest[11],
+            digest[12], digest[13], digest[14], digest[15]
+        ))
     }
 }
 

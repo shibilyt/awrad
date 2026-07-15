@@ -16,12 +16,16 @@ struct CreateWirdView: View {
     @State private var sourceAttribution = ""
     @State private var cadence: CadenceKind = .everyDay
     @State private var weekdays: Set<Int> = [2, 5] // Mon, Thu
+    @State private var partsByWeekday: [Int: [Int]] = [:]
     @State private var intervalDays = 2
     @State private var hijri: HijriKind = .none
     @State private var defaultOccasion = WirdOccasion.anytime
     @State private var parts: [WirdPart] = [WirdPart(localizedTitle: ["en": "Part 1"], segments: [])]
     @State private var reminders: [WirdReminder] = []
     @State private var didHydrate = false
+    @State private var showDeleteConfirmation = false
+    @State private var isSaving = false
+    @State private var saveError: String?
 
     private var language: AppLanguage { store.preferences.appLanguage }
 
@@ -29,7 +33,8 @@ struct CreateWirdView: View {
 
     private var canSave: Bool {
         !nameEn.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        parts.contains { part in part.segments.contains { $0.isCountable && !$0.arabic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } }
+        parts.contains { part in part.segments.contains { $0.isCountable && !$0.arabic.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty } } &&
+        (cadence != .partsByWeekday || !normalizedWeekdayAssignments.isEmpty)
     }
 
     var body: some View {
@@ -43,9 +48,38 @@ struct CreateWirdView: View {
         .navigationTitle(isEditing ? "Edit Wird" : "Create Wird")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { EditButton() }
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                EditButton()
+                if isEditing {
+                    Button(role: .destructive) {
+                        showDeleteConfirmation = true
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                    .accessibilityLabel(Text(LocalizedStringKey("Delete wird")))
+                }
+            }
         }
         .onAppear(perform: hydrateIfNeeded)
+        .confirmationDialog(
+            LocalizedStringKey("Delete this wird?"),
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(LocalizedStringKey("Delete wird"), role: .destructive, action: deleteWird)
+            Button(LocalizedStringKey("Cancel"), role: .cancel) {}
+        } message: {
+            Text(LocalizedStringKey("Its reading progress and reminders will also be removed."))
+        }
+        .alert("Couldn’t save wird", isPresented: Binding(
+            get: { saveError != nil },
+            set: { if !$0 { saveError = nil } }
+        )) {
+            Button("Retry", action: save)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(saveError ?? "")
+        }
     }
 
     // MARK: Sections
@@ -72,6 +106,9 @@ struct CreateWirdView: View {
             if cadence == .daysOfWeek {
                 weekdayPicker
             }
+            if cadence == .partsByWeekday {
+                weekdayPartPicker
+            }
             if cadence == .interval {
                 Stepper(value: $intervalDays, in: 1...60) {
                     Text(AwradLocalizer.format("Every %d days", language: language, intervalDays))
@@ -79,6 +116,11 @@ struct CreateWirdView: View {
             }
             if cadence == .rotation {
                 Text(LocalizedStringKey("One section per day, cycling through your sections."))
+                    .font(AwradTheme.bodyFont(.caption))
+                    .foregroundStyle(.secondary)
+            }
+            if cadence == .partsByWeekday {
+                Text(LocalizedStringKey("Choose one or more sections for each weekday. Unassigned days are skipped."))
                     .font(AwradTheme.bodyFont(.caption))
                     .foregroundStyle(.secondary)
             }
@@ -110,6 +152,48 @@ struct CreateWirdView: View {
         }
     }
 
+    private var weekdayPartPicker: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            ForEach(1...7, id: \.self) { weekday in
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(WirdDisplay.weekdayName(weekday))
+                        .font(AwradTheme.bodyFont(.caption, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                    if parts.isEmpty {
+                        Text(LocalizedStringKey("Add a section before assigning weekdays."))
+                            .font(AwradTheme.bodyFont(.caption))
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(parts.indices, id: \.self) { index in
+                                    let selected = partsByWeekday[weekday, default: []].contains(index)
+                                    Button {
+                                        togglePart(index, for: weekday)
+                                    } label: {
+                                        Label {
+                                            Text(partLabel(at: index))
+                                                .lineLimit(1)
+                                        } icon: {
+                                            if selected { Image(systemName: "checkmark") }
+                                        }
+                                        .font(AwradTheme.bodyFont(.caption, weight: .semibold))
+                                        .padding(.horizontal, 11)
+                                        .padding(.vertical, 8)
+                                        .foregroundStyle(selected ? Color.white : AwradTheme.ink)
+                                        .background(selected ? AwradTheme.sage : AwradTheme.surface, in: Capsule())
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+    }
+
     private var partsSection: some View {
         Section(header: Text(LocalizedStringKey("Sections"))) {
             ForEach($parts) { $part in
@@ -125,8 +209,8 @@ struct CreateWirdView: View {
                     }
                 }
             }
-            .onDelete { parts.remove(atOffsets: $0) }
-            .onMove { parts.move(fromOffsets: $0, toOffset: $1) }
+            .onDelete(perform: deleteParts)
+            .onMove(perform: moveParts)
 
             Button {
                 parts.append(WirdPart(localizedTitle: ["en": "Part \(parts.count + 1)"], segments: []))
@@ -159,7 +243,7 @@ struct CreateWirdView: View {
                     .frame(maxWidth: .infinity)
                     .fontWeight(.semibold)
             }
-            .disabled(!canSave)
+            .disabled(!canSave || isSaving)
         }
     }
 
@@ -171,16 +255,28 @@ struct CreateWirdView: View {
         case .rotation: return .rotation
         case .daysOfWeek: return .daysOfWeek(weekdays)
         case .interval: return .interval(days: intervalDays, anchor: Date().dateKey)
+        case .partsByWeekday: return .everyDay
         }
     }
 
+    private var normalizedWeekdayAssignments: [Int: [Int]] {
+        WirdLifecycleLogic.normalizedWeekdayAssignments(partsByWeekday, partCount: parts.count)
+    }
+
     private func save() {
+        guard !isSaving else { return }
+        let previous = editingWirdID.flatMap { store.wird(id: $0) }
         var wird = isEditing ? (store.wird(id: editingWirdID!) ?? Wird(slug: "")) : Wird(slug: "")
         wird.localizedName = compact(["en": nameEn, "ar": nameAr])
         wird.localizedDescription = compact(["en": descEn])
         wird.author = author.isEmpty ? (store.preferences.userName.isEmpty ? "You" : store.preferences.userName) : author
         wird.sourceAttribution = sourceAttribution.isEmpty ? nil : sourceAttribution
-        wird.schedule = WirdSchedule(cadence: resolvedCadence(), hijriAnchor: hijri.anchor, defaultOccasion: defaultOccasion)
+        wird.schedule = WirdSchedule(
+            cadence: resolvedCadence(),
+            partsByWeekday: cadence == .partsByWeekday ? normalizedWeekdayAssignments : nil,
+            hijriAnchor: hijri.anchor,
+            defaultOccasion: defaultOccasion
+        )
         wird.parts = parts
         wird.reminders = reminders
 
@@ -191,8 +287,24 @@ struct CreateWirdView: View {
             saved = store.createWird(wird)
         }
         guard let saved else { return }
-        services.rescheduleWirdReminders(for: saved, store: store)
-        router.replaceLast(with: .wirdDetail(saved.id), in: store.selectedTab)
+        isSaving = true
+        Task {
+            let result = await services.rescheduleWirdReminders(for: saved, store: store)
+            isSaving = false
+            if result.succeeded {
+                router.replaceLast(with: .wirdDetail(saved.id), in: store.selectedTab)
+            } else {
+                if let previous {
+                    if let restored = store.updateWird(previous) {
+                        _ = await services.rescheduleWirdReminders(for: restored, store: store)
+                    }
+                } else {
+                    _ = store.deleteWird(saved.id)
+                    _ = await services.cancelWirdReminders(wirdID: saved.id)
+                }
+                saveError = result.localizedFailureMessage(language: language)
+            }
+        }
     }
 
     private func compact(_ map: [String: String]) -> [String: String] {
@@ -210,14 +322,65 @@ struct CreateWirdView: View {
         sourceAttribution = wird.sourceAttribution ?? ""
         defaultOccasion = wird.schedule.defaultOccasion
         hijri = HijriKind(anchor: wird.schedule.hijriAnchor)
-        switch wird.schedule.cadence {
-        case .everyDay: cadence = .everyDay
-        case .rotation: cadence = .rotation
-        case .daysOfWeek(let days): cadence = .daysOfWeek; weekdays = days
-        case .interval(let days, _): cadence = .interval; intervalDays = days
+        if let assignments = wird.schedule.partsByWeekday {
+            cadence = .partsByWeekday
+            partsByWeekday = assignments
+        } else {
+            switch wird.schedule.cadence {
+            case .everyDay: cadence = .everyDay
+            case .rotation: cadence = .rotation
+            case .daysOfWeek(let days): cadence = .daysOfWeek; weekdays = days
+            case .interval(let days, _): cadence = .interval; intervalDays = days
+            }
         }
         parts = wird.parts
         reminders = wird.reminders
+    }
+
+    private func togglePart(_ index: Int, for weekday: Int) {
+        var indexes = partsByWeekday[weekday, default: []]
+        if let position = indexes.firstIndex(of: index) {
+            indexes.remove(at: position)
+        } else {
+            indexes.append(index)
+        }
+        if indexes.isEmpty {
+            partsByWeekday.removeValue(forKey: weekday)
+        } else {
+            partsByWeekday[weekday] = indexes
+        }
+    }
+
+    private func partLabel(at index: Int) -> String {
+        guard parts.indices.contains(index) else { return "" }
+        let title = parts[index].displayTitle(language: language)
+        return title.isEmpty ? AwradLocalizer.format("Section %d", language: language, index + 1) : title
+    }
+
+    private func deleteParts(at offsets: IndexSet) {
+        let assignmentIDs = WirdLifecycleLogic.assignmentIDs(from: partsByWeekday, parts: parts)
+        parts.remove(atOffsets: offsets)
+        partsByWeekday = WirdLifecycleLogic.assignments(from: assignmentIDs, parts: parts)
+    }
+
+    private func moveParts(from offsets: IndexSet, to destination: Int) {
+        let assignmentIDs = WirdLifecycleLogic.assignmentIDs(from: partsByWeekday, parts: parts)
+        parts.move(fromOffsets: offsets, toOffset: destination)
+        partsByWeekday = WirdLifecycleLogic.assignments(from: assignmentIDs, parts: parts)
+    }
+
+    private func deleteWird() {
+        guard let editingWirdID, store.wird(id: editingWirdID)?.isCustom == true else { return }
+        guard let wird = store.wird(id: editingWirdID) else { return }
+        Task {
+            _ = await services.cancelWirdReminders(wirdID: editingWirdID)
+            guard store.deleteWird(editingWirdID) else {
+                _ = await services.rescheduleWirdReminders(for: wird, store: store)
+                return
+            }
+            router.pop(in: store.selectedTab)
+            router.pop(in: store.selectedTab)
+        }
     }
 }
 
@@ -538,7 +701,7 @@ struct DhikrPickerView: View {
 // MARK: - UI enums
 
 private enum CadenceKind: String, CaseIterable, Identifiable {
-    case everyDay, rotation, daysOfWeek, interval
+    case everyDay, rotation, daysOfWeek, interval, partsByWeekday
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -546,6 +709,7 @@ private enum CadenceKind: String, CaseIterable, Identifiable {
         case .rotation: "Rotating sections"
         case .daysOfWeek: "Specific days"
         case .interval: "Every N days"
+        case .partsByWeekday: "Sections by weekday"
         }
     }
 }

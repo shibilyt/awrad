@@ -511,16 +511,25 @@ enum AppTab: String, CaseIterable, Identifiable, Codable {
 }
 
 enum AppRoute: Hashable, Codable {
+    case unavailable(title: String, message: String)
     case settings
     case login
     case signup
     case forgotPassword
-    case counting(goalID: AwradID)
+    case verifyEmail(token: String?)
+    case resetPassword(token: String)
+    case sessions
+    case counting(goalID: AwradID, slotID: AwradID?)
     case createGoal(dhikrID: AwradID?)
+    case goalDetail(goalID: AwradID)
+    case editGoal(goalID: AwradID)
+    case editGoalSchedule(goalID: AwradID)
+    case editGoalReminders(goalID: AwradID)
     case createDhikr
     case editDhikr(AwradID)
     case category(DhikrCategory)
     case dhikrDetail(AwradID)
+    case quranDhikrReader(dhikrID: AwradID, goalID: AwradID?, slotID: AwradID?)
     case wirdList
     case wirdDetail(AwradID)
     case wirdReader(wirdID: AwradID, partID: AwradID)
@@ -617,6 +626,60 @@ struct Dhikr: Identifiable, Codable, Hashable {
     }
 }
 
+/// One explicit occurrence in a specific-date recurrence.
+///
+/// Android permits either a fixed Gregorian date or a recurring month/day in
+/// the selected Gregorian or Hijri calendar. The single-value decoder keeps
+/// snapshot-v5 arrays of `"yyyy-MM-dd"` strings source compatible while new
+/// snapshots retain the complete logical rule.
+struct GoalSpecificDate: Codable, Hashable, Comparable, ExpressibleByStringLiteral {
+    var date: String?
+    var calendar: CalendarSystem = .gregorian
+    var month: Int?
+    var dayOfMonth: Int?
+
+    init(
+        date: String? = nil,
+        calendar: CalendarSystem = .gregorian,
+        month: Int? = nil,
+        dayOfMonth: Int? = nil
+    ) {
+        self.date = date
+        self.calendar = calendar
+        self.month = month
+        self.dayOfMonth = dayOfMonth
+    }
+
+    init(stringLiteral value: String) {
+        self.init(date: value)
+    }
+
+    init(from decoder: Decoder) throws {
+        if let container = try? decoder.singleValueContainer(),
+           let legacyDate = try? container.decode(String.self) {
+            self.init(date: legacyDate)
+            return
+        }
+
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            date: try container.decodeIfPresent(String.self, forKey: .date),
+            calendar: try container.decodeIfPresent(CalendarSystem.self, forKey: .calendar) ?? .gregorian,
+            month: try container.decodeIfPresent(Int.self, forKey: .month),
+            dayOfMonth: try container.decodeIfPresent(Int.self, forKey: .dayOfMonth)
+        )
+    }
+
+    static func < (lhs: GoalSpecificDate, rhs: GoalSpecificDate) -> Bool {
+        lhs.sortKey < rhs.sortKey
+    }
+
+    private var sortKey: String {
+        [date ?? "", calendar.rawValue, month.map(String.init) ?? "", dayOfMonth.map(String.init) ?? ""]
+            .joined(separator: "|")
+    }
+}
+
 struct GoalRecurrence: Codable, Hashable {
     var frequency: RecurrenceFrequency = .daily
     var calendar: CalendarSystem = .gregorian
@@ -625,7 +688,7 @@ struct GoalRecurrence: Codable, Hashable {
     var month: Int?
     var weekdays: Set<Int> = []
     var monthDays: Set<Int> = []
-    var specificDates: Set<String> = []
+    var specificDates: Set<GoalSpecificDate> = []
     var seasonCode: String?
 }
 
@@ -895,6 +958,9 @@ enum HijriAnchor: Codable, Hashable {
 
 struct WirdSchedule: Codable, Hashable {
     var cadence: WirdCadence = .everyDay
+    /// Android-compatible Sunday-based weekday (1...7) to zero-based part indexes.
+    /// When present, this mapping owns both day activity and active-part selection.
+    var partsByWeekday: [Int: [Int]]?
     var hijriAnchor: HijriAnchor?
     /// Default timing for parts that don't declare their own `occasion`.
     var defaultOccasion: WirdOccasion = .anytime
@@ -1007,11 +1073,17 @@ struct WirdSession: Identifiable, Codable, Hashable {
 struct UserPreferences: Codable, Hashable {
     var userName: String = ""
     var isOnboarded: Bool = false
+    var onboardingStep: Int = 0
+    var onboardingReminderPresetKeys: [String] = []
+    var onboardingFirstGoalCount: Int = 70
     var colorSchemeMode: ColorSchemeMode = .system
-    var vibrateOnCount: Bool = true
+    var vibrateOnCount: Bool = false
     var keepScreenOn: Bool = false
     var soundOnCount: Bool = false
+    var countingDhikrTextScale: Double = 1
+    var countingDhikrLineSpacing: Double = 1
     var dailyReminderEnabled: Bool = false
+    var dailyRemembranceEnabled: Bool = false
     var reminderHour: Int = 8
     var reminderMinute: Int = 0
     var prayerSlotDefaultLeadMinutes: Int = 30
@@ -1043,11 +1115,17 @@ struct UserPreferences: Codable, Hashable {
     enum CodingKeys: String, CodingKey {
         case userName
         case isOnboarded
+        case onboardingStep
+        case onboardingReminderPresetKeys
+        case onboardingFirstGoalCount
         case colorSchemeMode
         case vibrateOnCount
         case keepScreenOn
         case soundOnCount
+        case countingDhikrTextScale
+        case countingDhikrLineSpacing
         case dailyReminderEnabled
+        case dailyRemembranceEnabled
         case reminderHour
         case reminderMinute
         case prayerSlotDefaultLeadMinutes
@@ -1066,11 +1144,17 @@ struct UserPreferences: Codable, Hashable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         userName = try container.decodeIfPresent(String.self, forKey: .userName) ?? ""
         isOnboarded = try container.decodeIfPresent(Bool.self, forKey: .isOnboarded) ?? false
+        onboardingStep = try container.decodeIfPresent(Int.self, forKey: .onboardingStep) ?? 0
+        onboardingReminderPresetKeys = try container.decodeIfPresent([String].self, forKey: .onboardingReminderPresetKeys) ?? []
+        onboardingFirstGoalCount = try container.decodeIfPresent(Int.self, forKey: .onboardingFirstGoalCount) ?? 70
         colorSchemeMode = try container.decodeIfPresent(ColorSchemeMode.self, forKey: .colorSchemeMode) ?? .system
-        vibrateOnCount = try container.decodeIfPresent(Bool.self, forKey: .vibrateOnCount) ?? true
+        vibrateOnCount = try container.decodeIfPresent(Bool.self, forKey: .vibrateOnCount) ?? false
         keepScreenOn = try container.decodeIfPresent(Bool.self, forKey: .keepScreenOn) ?? false
         soundOnCount = try container.decodeIfPresent(Bool.self, forKey: .soundOnCount) ?? false
+        countingDhikrTextScale = try container.decodeIfPresent(Double.self, forKey: .countingDhikrTextScale) ?? 1
+        countingDhikrLineSpacing = try container.decodeIfPresent(Double.self, forKey: .countingDhikrLineSpacing) ?? 1
         dailyReminderEnabled = try container.decodeIfPresent(Bool.self, forKey: .dailyReminderEnabled) ?? false
+        dailyRemembranceEnabled = try container.decodeIfPresent(Bool.self, forKey: .dailyRemembranceEnabled) ?? false
         reminderHour = try container.decodeIfPresent(Int.self, forKey: .reminderHour) ?? 8
         reminderMinute = try container.decodeIfPresent(Int.self, forKey: .reminderMinute) ?? 0
         prayerSlotDefaultLeadMinutes = try container.decodeIfPresent(Int.self, forKey: .prayerSlotDefaultLeadMinutes) ?? 30

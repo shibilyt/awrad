@@ -1,31 +1,32 @@
 import SwiftUI
 
 struct LibraryView: View {
+    private enum Segment: String, CaseIterable, Identifiable {
+        case dhikrs = "Dhikrs"
+        case wirds = "Wirds"
+
+        var id: String { rawValue }
+    }
+
     @Environment(AwradStore.self) private var store
     @Environment(AppRouter.self) private var router
     @Environment(AppServices.self) private var services
     @Environment(\.colorScheme) private var colorScheme
     @State private var searchText = ""
     @State private var selectedCategory: DhikrCategory?
+    @State private var selectedSegment: Segment = .dhikrs
     @State private var isSearchVisible = false
     @State private var showAudioError = false
     @FocusState private var isSearchFocused: Bool
     private var language: AppLanguage { store.preferences.appLanguage }
 
     private var filteredDhikrs: [Dhikr] {
-        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        return sortedDhikrs(store.dhikrs.filter { dhikr in
-            let categoryMatches = selectedCategory.map { $0 == dhikr.category } ?? true
-            guard !query.isEmpty else { return categoryMatches }
-            return categoryMatches &&
-                dhikr.localizedSearchText(language: language).contains {
-                    $0.localizedCaseInsensitiveContains(query)
-                }
-        })
-    }
-
-    private var usesGroupedDisplay: Bool {
-        searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && selectedCategory == nil
+        LibraryCatalogPolicy.filtered(
+            store.dhikrs,
+            query: searchText,
+            category: selectedCategory,
+            language: language
+        )
     }
 
     private var populatedCategories: [DhikrCategory] {
@@ -48,24 +49,49 @@ struct LibraryView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 16) {
                 libraryHeader
-                if shouldShowSearchField {
-                    librarySearchField
+                Picker("Library section", selection: $selectedSegment) {
+                    ForEach(Segment.allCases) { segment in
+                        Text(LocalizedStringKey(segment.rawValue)).tag(segment)
+                    }
                 }
-                categories
-                featuredCollectionSection
-                wirdCollections
-                dhikrList
+                .pickerStyle(.segmented)
             }
-            .padding(20)
-            .padding(.bottom, 96)
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 14)
+            .background(AwradTheme.background)
+
+            switch selectedSegment {
+            case .dhikrs:
+                dhikrPane
+            case .wirds:
+                WirdListView(showsCreateButton: false)
+            }
         }
         .background(AwradTheme.background)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
+        .overlay(alignment: .bottomTrailing) {
+            if selectedSegment == .wirds {
+                Button {
+                    router.navigate(.createWird, in: .library)
+                } label: {
+                    Image(systemName: "plus")
+                        .font(AwradTheme.bodyFont(21, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 56, height: 56)
+                        .background(AwradTheme.sage, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Create wird")
+                .padding(.trailing, 20)
+                .padding(.bottom, 100)
+            }
+        }
         .onChange(of: services.audio.errorMessage) { _, newValue in
             showAudioError = newValue != nil
         }
@@ -78,6 +104,22 @@ struct LibraryView: View {
         }
     }
 
+    private var dhikrPane: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                if shouldShowSearchField {
+                    librarySearchField
+                }
+                categories
+                featuredCollectionSection
+                dhikrList
+            }
+            .padding(20)
+            .padding(.bottom, 96)
+        }
+        .background(AwradTheme.background)
+    }
+
     private var libraryHeader: some View {
         HStack(alignment: .center, spacing: 18) {
             VStack(alignment: .leading, spacing: 10) {
@@ -85,24 +127,23 @@ struct LibraryView: View {
                     .font(AwradTheme.displayFont(34, weight: .bold))
                     .foregroundStyle(AwradTheme.ink)
                     .lineLimit(1)
-                Text("Explore beautiful dhikrs\nfrom the Qur’an & Sunnah")
-                    .font(AwradTheme.bodyFont(.title3, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
             }
             Spacer(minLength: 12)
             VStack(spacing: 12) {
-                Button {
-                    router.navigate(.createDhikr, in: .library)
-                } label: {
-                    Image(systemName: "plus")
-                        .font(AwradTheme.bodyFont(23, weight: .semibold))
-                        .foregroundStyle(AwradTheme.sage)
-                        .awradGlassIconButton(size: 58)
+                if selectedSegment == .dhikrs {
+                    Button {
+                        router.navigate(.createDhikr, in: .library)
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(AwradTheme.bodyFont(23, weight: .semibold))
+                            .foregroundStyle(AwradTheme.sage)
+                            .awradGlassIconButton(size: 58)
+                    }
+                    .accessibilityLabel("Create Dhikr")
                 }
-                .accessibilityLabel("Create Dhikr")
 
                 Button {
+                    selectedSegment = .dhikrs
                     withAnimation(.snappy(duration: 0.22)) {
                         isSearchVisible.toggle()
                         if !isSearchVisible {
@@ -204,44 +245,6 @@ struct LibraryView: View {
         }
     }
 
-    private var wirdCollections: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(
-                title: "Wirds",
-                subtitle: AwradLocalizer.collectionCount(store.wirds.count, language: language),
-                actionTitle: "See all"
-            ) {
-                router.navigate(.wirdList, in: .library)
-            }
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 14) {
-                    ForEach(store.sortedWirds) { wird in
-                        Button {
-                            router.navigate(.wirdDetail(wird.id), in: .library)
-                        } label: {
-                            VStack(alignment: .leading, spacing: 10) {
-                                AwradBundleImage(name: "collection_daily_essentials_light")
-                                    .scaledToFill()
-                                    .frame(width: 176, height: 112)
-                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                                Text(wird.displayName(language: language))
-                                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
-                                    .foregroundStyle(AwradTheme.ink)
-                                    .lineLimit(1)
-                                Text(wird.displayDescription(language: language))
-                                    .font(AwradTheme.bodyFont(.caption))
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(2)
-                            }
-                            .frame(width: 176, alignment: .leading)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-        }
-    }
-
     private var dhikrList: some View {
         VStack(alignment: .leading, spacing: 12) {
             LibraryDhikrListHeader(
@@ -261,26 +264,6 @@ struct LibraryView: View {
                     title: "No matches found",
                     message: "Try another title, translation, transliteration, or Arabic phrase."
                 )
-            } else if usesGroupedDisplay {
-                LazyVStack(alignment: .leading, spacing: 12, pinnedViews: [.sectionHeaders]) {
-                    ForEach(populatedCategories) { category in
-                        let dhikrs = sortedDhikrs(store.dhikrs.filter { $0.category == category })
-                        if !dhikrs.isEmpty {
-                            Section {
-                                ForEach(dhikrs) { dhikr in
-                                    DhikrCard(dhikr: dhikr, language: language) {
-                                        router.navigate(.dhikrDetail(dhikr.id), in: .library)
-                                    }
-                                }
-                            } header: {
-                                LibraryCategoryHeader(
-                                    title: category.title,
-                                    subtitle: AwradLocalizer.dhikrCount(dhikrs.count, language: language)
-                                )
-                            }
-                        }
-                    }
-                }
             } else {
                 LazyVStack(spacing: 12) {
                     ForEach(filteredDhikrs) { dhikr in
@@ -290,18 +273,6 @@ struct LibraryView: View {
                     }
                 }
             }
-        }
-    }
-
-    private func sortedDhikrs(_ dhikrs: [Dhikr]) -> [Dhikr] {
-        dhikrs.sorted {
-            if $0.category != $1.category {
-                return $0.category.sortRank < $1.category.sortRank
-            }
-            if $0.sortOrder != $1.sortOrder {
-                return $0.sortOrder < $1.sortOrder
-            }
-            return $0.displayTitle(language: language).localizedCaseInsensitiveCompare($1.displayTitle(language: language)) == .orderedAscending
         }
     }
 
@@ -479,14 +450,12 @@ struct CategoryDhikrsView: View {
     private var language: AppLanguage { store.preferences.appLanguage }
 
     private var categoryDhikrs: [Dhikr] {
-        store.dhikrs
-            .filter { $0.category == category }
-            .sorted {
-                if $0.sortOrder != $1.sortOrder {
-                    return $0.sortOrder < $1.sortOrder
-                }
-                return $0.displayTitle(language: language).localizedCaseInsensitiveCompare($1.displayTitle(language: language)) == .orderedAscending
-            }
+        LibraryCatalogPolicy.filtered(
+            store.dhikrs,
+            query: "",
+            category: category,
+            language: language
+        )
     }
 
     var body: some View {
@@ -494,7 +463,7 @@ struct CategoryDhikrsView: View {
             VStack(alignment: .leading, spacing: 18) {
                 SectionHeader(
                     title: category.title,
-                    subtitle: category.descriptionKey,
+                    subtitle: AwradLocalizer.dhikrCount(categoryDhikrs.count, language: language),
                     actionTitle: nil,
                     action: nil
                 )
@@ -538,11 +507,29 @@ struct DhikrDetailView: View {
     @Environment(AppRouter.self) private var router
     @Environment(AppServices.self) private var services
     let dhikrID: AwradID
+    let onDownloadedAudioRemoved: ((AwradID) -> Bool)?
     @State private var isDownloadingAudio = false
     @State private var audioErrorMessage: String?
     @State private var showAudioError = false
     @State private var showDeleteConfirmation = false
+    @State private var showRemoveAudioConfirmation = false
+    @State private var audioCacheRevision = 0
     @State private var pendingSuggestedGoal: DhikrSuggestedGoal?
+
+    private var language: AppLanguage { store.preferences.appLanguage }
+
+    private var navigationTitle: String {
+        store.dhikr(id: dhikrID)?.displayTitle(language: language)
+            ?? AwradLocalizer.localized("Dhikr", language: language)
+    }
+
+    init(
+        dhikrID: AwradID,
+        onDownloadedAudioRemoved: ((AwradID) -> Bool)? = nil
+    ) {
+        self.dhikrID = dhikrID
+        self.onDownloadedAudioRemoved = onDownloadedAudioRemoved
+    }
 
     var body: some View {
         ScrollView {
@@ -550,23 +537,7 @@ struct DhikrDetailView: View {
                 let language = store.preferences.appLanguage
                 let guidance = DhikrGuidanceRegistry.guidance(for: dhikr, language: language)
                 VStack(alignment: .leading, spacing: 20) {
-                    AwradCard {
-                        VStack(spacing: 18) {
-                            Text(dhikr.arabic)
-                                .font(AwradTheme.arabicFont(34))
-                                .multilineTextAlignment(.center)
-                                .frame(maxWidth: .infinity)
-                                .environment(\.layoutDirection, .rightToLeft)
-                            Text(dhikr.transliteration)
-                                .font(AwradTheme.bodyFont(.headline, weight: .semibold))
-                                .multilineTextAlignment(.center)
-                                .foregroundStyle(AwradTheme.sage)
-                            Text(dhikr.displayTranslation(language: language))
-                                .font(AwradTheme.bodyFont(.body))
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                    }
+                    quranAwareTextCard(for: dhikr, language: language)
 
                     audioPreviewCard(for: dhikr)
 
@@ -580,7 +551,7 @@ struct DhikrDetailView: View {
 
                     Button {
                         if let goal = store.goals(for: dhikr.id).first {
-                            router.navigate(.counting(goalID: goal.id), in: store.selectedTab)
+                            router.navigate(.counting(goalID: goal.id, slotID: nil), in: store.selectedTab)
                         } else {
                             router.navigate(.createGoal(dhikrID: dhikr.id), in: store.selectedTab)
                         }
@@ -599,7 +570,7 @@ struct DhikrDetailView: View {
             }
         }
         .background(AwradTheme.background)
-        .navigationTitle("Dhikr")
+        .navigationTitle(navigationTitle)
         .toolbar {
             if let dhikr = store.dhikr(id: dhikrID), dhikr.isCustom {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -620,6 +591,12 @@ struct DhikrDetailView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This removes the personal dhikr, linked goals, reminders, and counts.")
+        }
+        .confirmationDialog("Remove downloaded audio?", isPresented: $showRemoveAudioConfirmation, titleVisibility: .visible) {
+            Button("Remove Download", role: .destructive, action: removeDownloadedAudio)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The recitation can still stream while you are online.")
         }
         .confirmationDialog(
             "Add Suggested Goal",
@@ -648,6 +625,79 @@ struct DhikrDetailView: View {
             }
         } message: {
             Text(audioErrorMessage ?? "Audio playback failed.")
+        }
+    }
+
+    @ViewBuilder
+    private func quranAwareTextCard(for dhikr: Dhikr, language: AppLanguage) -> some View {
+        let reference = dhikr.quranRef.flatMap { QuranDhikrReadingPolicy.isValid($0) ? $0 : nil }
+        let splitText = QuranDhikrReadingPolicy.splitBismillah(dhikr.arabic)
+        let rendersFully = reference.map {
+            QuranDhikrReadingPolicy.shouldRenderFullyInline(reference: $0, arabic: dhikr.arabic)
+        } ?? true
+
+        VStack(alignment: .leading, spacing: 16) {
+            AwradCard {
+                VStack(spacing: 12) {
+                    if let bismillah = splitText.bismillah {
+                        Text(bismillah)
+                            .font(AwradTheme.arabicFont(25))
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
+                            .environment(\.layoutDirection, .rightToLeft)
+                    }
+
+                    Text(splitText.body)
+                        .font(AwradTheme.arabicFont(reference == nil ? 34 : 29))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(8)
+                        .lineLimit(rendersFully ? nil : 4)
+                        .truncationMode(.tail)
+                        .frame(maxWidth: .infinity)
+                        .environment(\.layoutDirection, .rightToLeft)
+
+                    if reference != nil, !rendersFully {
+                        Button("See full") {
+                            router.navigate(
+                                .quranDhikrReader(dhikrID: dhikr.id, goalID: nil, slotID: nil),
+                                in: store.selectedTab
+                            )
+                        }
+                        .buttonStyle(.bordered)
+                        .tint(AwradTheme.sage)
+                        .accessibilityHint("Opens the Quran reader")
+                    }
+                }
+                .padding(.vertical, 16)
+            }
+
+            if !dhikr.transliteration.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("TRANSLITERATION")
+                        .font(AwradTheme.bodyFont(.caption2, weight: .bold))
+                        .tracking(1)
+                        .foregroundStyle(AwradTheme.sage)
+                    Text(dhikr.transliteration)
+                        .font(AwradTheme.bodyFont(.body))
+                        .italic()
+                        .foregroundStyle(AwradTheme.ink)
+                }
+            }
+
+            let translation = dhikr.displayTranslation(language: language)
+            if !translation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+               translation != dhikr.displayTitle(language: language),
+               translation != dhikr.transliteration {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("MEANING")
+                        .font(AwradTheme.bodyFont(.caption2, weight: .bold))
+                        .tracking(1)
+                        .foregroundStyle(AwradTheme.gold)
+                    Text(translation)
+                        .font(AwradTheme.bodyFont(.body))
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
     }
 
@@ -736,7 +786,7 @@ struct DhikrDetailView: View {
 
                         Button {
                             if let existingGoal {
-                                router.navigate(.counting(goalID: existingGoal.id), in: store.selectedTab)
+                                router.navigate(.counting(goalID: existingGoal.id, slotID: nil), in: store.selectedTab)
                             } else {
                                 pendingSuggestedGoal = suggestion
                             }
@@ -795,75 +845,121 @@ struct DhikrDetailView: View {
         }
 
         pendingSuggestedGoal = nil
-        router.navigate(.counting(goalID: goal.id), in: store.selectedTab)
+        router.navigate(.counting(goalID: goal.id, slotID: nil), in: store.selectedTab)
     }
 
     private func audioPreviewCard(for dhikr: Dhikr) -> some View {
-        Group {
-            if dhikr.audioURL != nil || dhikr.isDownloaded {
-                AwradCard {
-                    VStack(alignment: .leading, spacing: 14) {
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: dhikr.isDownloaded ? "checkmark.circle.fill" : "waveform.circle.fill")
-                                .font(AwradTheme.bodyFont(26))
-                                .foregroundStyle(dhikr.isDownloaded ? AwradTheme.sage : AwradTheme.gold)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Audio")
-                                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
-                                Text(dhikr.isDownloaded ? "Available offline" : "Streams until downloaded")
-                                    .font(AwradTheme.bodyFont(.caption))
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                        }
-
-                        if services.audio.isPreviewing(dhikr.id) {
-                            ProgressView(value: services.audio.progress)
-                                .tint(AwradTheme.sage)
-                            HStack {
-                                Text(services.audio.elapsedText)
-                                Spacer()
-                                Text(services.audio.durationText)
-                            }
-                            .font(AwradTheme.bodyFont(.caption).monospacedDigit())
+        let availability = audioAvailability(for: dhikr)
+        return AwradCard {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: audioStatusSymbol(availability))
+                        .font(AwradTheme.bodyFont(26))
+                        .foregroundStyle(audioStatusColor(availability))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Audio")
+                            .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                        Text(audioStatusTitle(availability))
+                            .font(AwradTheme.bodyFont(.caption))
                             .foregroundStyle(.secondary)
-                        }
+                    }
+                    Spacer()
+                }
 
-                        HStack(spacing: 12) {
-                            Button {
-                                services.audio.togglePreview(
-                                    for: dhikr,
-                                    title: dhikr.displayTitle(language: store.preferences.appLanguage)
-                                )
-                            } label: {
-                                Label(previewButtonTitle(for: dhikr), systemImage: previewButtonSymbol(for: dhikr))
-                                    .frame(maxWidth: .infinity)
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.large)
+                if availability == .unavailable {
+                    Text("This dhikr does not have a recitation yet. Reading and goal creation remain available.")
+                        .font(AwradTheme.bodyFont(.caption))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    if services.audio.isPreviewing(dhikr.id) {
+                        ProgressView(value: services.audio.progress)
                             .tint(AwradTheme.sage)
+                        HStack {
+                            Text(services.audio.elapsedText)
+                            Spacer()
+                            Text(services.audio.durationText)
+                        }
+                        .font(AwradTheme.bodyFont(.caption).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                    }
 
-                            if dhikr.audioURL != nil, !dhikr.isDownloaded {
-                                Button {
-                                    downloadAudio(for: dhikr)
-                                } label: {
-                                    if isDownloadingAudio {
-                                        ProgressView()
-                                            .frame(width: 46, height: 46)
-                                    } else {
-                                        Image(systemName: "arrow.down.circle.fill")
-                                            .frame(width: 46, height: 46)
-                                    }
+                    HStack(spacing: 12) {
+                        Button {
+                            services.audio.togglePreview(
+                                for: dhikr,
+                                title: dhikr.displayTitle(language: store.preferences.appLanguage)
+                            )
+                        } label: {
+                            Label(previewButtonTitle(for: dhikr), systemImage: previewButtonSymbol(for: dhikr))
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.large)
+                        .tint(AwradTheme.sage)
+
+                        switch availability {
+                        case .streaming:
+                            Button {
+                                downloadAudio(for: dhikr)
+                            } label: {
+                                if isDownloadingAudio {
+                                    ProgressView()
+                                        .frame(width: 46, height: 46)
+                                } else {
+                                    Image(systemName: "arrow.down.circle.fill")
+                                        .frame(width: 46, height: 46)
                                 }
-                                .buttonStyle(.bordered)
-                                .tint(AwradTheme.sage)
-                                .disabled(isDownloadingAudio)
-                                .accessibilityLabel("Download audio")
                             }
+                            .buttonStyle(.bordered)
+                            .tint(AwradTheme.sage)
+                            .disabled(isDownloadingAudio)
+                            .accessibilityLabel("Download audio")
+                        case .downloaded:
+                            Button(role: .destructive) {
+                                showRemoveAudioConfirmation = true
+                            } label: {
+                                Image(systemName: "trash")
+                                    .frame(width: 46, height: 46)
+                            }
+                            .buttonStyle(.bordered)
+                            .accessibilityLabel("Remove downloaded audio")
+                        case .unavailable:
+                            EmptyView()
                         }
                     }
                 }
             }
+        }
+    }
+
+    private func audioAvailability(for dhikr: Dhikr) -> LibraryAudioAvailability {
+        _ = audioCacheRevision
+        let localExists = dhikr.audioFileName.flatMap { services.audio.localAudioURL(fileName: $0) } != nil
+        return LibraryCatalogPolicy.audioAvailability(for: dhikr, localAudioExists: localExists)
+    }
+
+    private func audioStatusTitle(_ availability: LibraryAudioAvailability) -> LocalizedStringKey {
+        switch availability {
+        case .downloaded: "Available offline"
+        case .streaming: "Streams until downloaded"
+        case .unavailable: "Audio unavailable"
+        }
+    }
+
+    private func audioStatusSymbol(_ availability: LibraryAudioAvailability) -> String {
+        switch availability {
+        case .downloaded: "checkmark.circle.fill"
+        case .streaming: "waveform.circle.fill"
+        case .unavailable: "speaker.slash.circle.fill"
+        }
+    }
+
+    private func audioStatusColor(_ availability: LibraryAudioAvailability) -> Color {
+        switch availability {
+        case .downloaded: AwradTheme.sage
+        case .streaming: AwradTheme.gold
+        case .unavailable: .secondary
         }
     }
 
@@ -883,12 +979,45 @@ struct DhikrDetailView: View {
         Task {
             do {
                 let fileName = try await services.audio.downloadAudio(from: url, suggestedFileName: dhikr.audioFileName)
-                store.markDhikrAudioDownloaded(dhikrID: dhikr.id, fileName: fileName)
+                guard store.markDhikrAudioDownloaded(dhikrID: dhikr.id, fileName: fileName) else {
+                    if let message = store.persistenceRecovery?.message {
+                        audioErrorMessage = message
+                        showAudioError = true
+                    }
+                    isDownloadingAudio = false
+                    return
+                }
             } catch {
                 audioErrorMessage = error.localizedDescription
                 showAudioError = true
             }
             isDownloadingAudio = false
+        }
+    }
+
+    private func removeDownloadedAudio() {
+        guard let dhikr = store.dhikr(id: dhikrID),
+              let fileName = dhikr.audioFileName,
+              let localURL = services.audio.localAudioURL(fileName: fileName) else {
+            return
+        }
+
+        if services.audio.isPreviewing(dhikrID) {
+            services.audio.stop()
+        }
+        guard onDownloadedAudioRemoved?(dhikrID) != false else {
+            if let message = store.persistenceRecovery?.message {
+                audioErrorMessage = message
+                showAudioError = true
+            }
+            return
+        }
+        do {
+            try LibraryAudioCache.removeDownloadedFile(at: localURL)
+            audioCacheRevision &+= 1
+        } catch {
+            audioErrorMessage = error.localizedDescription
+            showAudioError = true
         }
     }
 }
@@ -920,11 +1049,9 @@ private struct DhikrCard: View {
                                         .font(AwradTheme.bodyFont(.caption, weight: .semibold))
                                         .foregroundStyle(AwradTheme.sage)
                                 }
-                                if canPreviewAudio {
-                                    Label(dhikr.isDownloaded ? "Offline audio" : "Audio", systemImage: dhikr.isDownloaded ? "checkmark.circle.fill" : "waveform")
-                                        .font(AwradTheme.bodyFont(.caption, weight: .semibold))
-                                        .foregroundStyle(dhikr.isDownloaded ? AwradTheme.sage : AwradTheme.gold)
-                                }
+                                Label(audioBadgeTitle, systemImage: audioBadgeSymbol)
+                                    .font(AwradTheme.bodyFont(.caption, weight: .semibold))
+                                    .foregroundStyle(audioBadgeColor)
                                 Text(dhikr.arabic)
                                     .font(AwradTheme.arabicFont(24))
                                     .foregroundStyle(AwradTheme.sageDark)
@@ -943,19 +1070,24 @@ private struct DhikrCard: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel(AwradLocalizer.format("Open %@", language: language, dhikr.displayTitle(language: language)))
 
-                    if canPreviewAudio {
-                        Button {
+                    Button {
+                        if canPreviewAudio {
                             services.audio.togglePreview(for: dhikr, title: dhikr.displayTitle(language: language))
-                        } label: {
-                            Image(systemName: previewButtonSymbol)
-                                .font(AwradTheme.bodyFont(16, weight: .bold))
-                                .foregroundStyle(isPreviewing ? .white : AwradTheme.sage)
-                                .frame(width: 42, height: 42)
-                                .background(isPreviewing ? AwradTheme.sage : AwradTheme.mint.opacity(0.2), in: Circle())
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(Text(LocalizedStringKey(isPreviewing && services.audio.isPlaying ? "Pause audio preview" : "Play audio preview")))
+                    } label: {
+                        Image(systemName: canPreviewAudio ? previewButtonSymbol : "speaker.slash.fill")
+                            .font(AwradTheme.bodyFont(16, weight: .bold))
+                            .foregroundStyle(isPreviewing ? .white : canPreviewAudio ? AwradTheme.sage : .secondary)
+                            .frame(width: 44, height: 44)
+                            .background(isPreviewing ? AwradTheme.sage : AwradTheme.mint.opacity(0.2), in: Circle())
                     }
+                    .buttonStyle(.plain)
+                    .disabled(!canPreviewAudio)
+                    .accessibilityLabel(Text(LocalizedStringKey(
+                        canPreviewAudio
+                            ? (isPreviewing && services.audio.isPlaying ? "Pause audio preview" : "Play audio preview")
+                            : "Audio unavailable"
+                    )))
                 }
 
                 if isPreviewing {
@@ -974,7 +1106,36 @@ private struct DhikrCard: View {
     }
 
     private var canPreviewAudio: Bool {
-        services.audio.sourceURL(for: dhikr) != nil
+        audioAvailability != .unavailable
+    }
+
+    private var audioAvailability: LibraryAudioAvailability {
+        let localExists = dhikr.audioFileName.flatMap { services.audio.localAudioURL(fileName: $0) } != nil
+        return LibraryCatalogPolicy.audioAvailability(for: dhikr, localAudioExists: localExists)
+    }
+
+    private var audioBadgeTitle: LocalizedStringKey {
+        switch audioAvailability {
+        case .downloaded: "Offline audio"
+        case .streaming: "Audio"
+        case .unavailable: "Audio unavailable"
+        }
+    }
+
+    private var audioBadgeSymbol: String {
+        switch audioAvailability {
+        case .downloaded: "checkmark.circle.fill"
+        case .streaming: "waveform"
+        case .unavailable: "speaker.slash.fill"
+        }
+    }
+
+    private var audioBadgeColor: Color {
+        switch audioAvailability {
+        case .downloaded: AwradTheme.sage
+        case .streaming: AwradTheme.gold
+        case .unavailable: .secondary
+        }
     }
 
     private var isPreviewing: Bool {

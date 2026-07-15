@@ -1,32 +1,22 @@
-//
-//  awradUITestsLaunchTests.swift
-//  awradUITests
-//
-//  Created by FAO on 30/05/26.
-//
-
 import XCTest
 
 final class awradUITestsLaunchTests: XCTestCase {
-
-    override class var runsForEachTargetApplicationUIConfiguration: Bool {
-        true
-    }
+    override class var runsForEachTargetApplicationUIConfiguration: Bool { true }
 
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
 
     @MainActor
-    func testLaunch() throws {
+    func testReadyStoreLaunchSnapshot() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["--awrad-seed-qa-state"]
         app.launch()
 
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
+        XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 8))
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
-        attachment.name = "Launch Screen"
+        attachment.name = "Ready four-tab shell"
         attachment.lifetime = .keepAlways
         add(attachment)
     }

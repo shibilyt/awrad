@@ -93,13 +93,13 @@ struct AwradWidgetSnapshot: Codable, Hashable {
             count: count,
             target: target,
             remaining: remaining,
-            canIncrement: goal.targetPolicy == .none || remaining > 0
+            canIncrement: store.canIncrement(goal, slotID: slot?.id)
         )
     }
 
     private static func focusSlot(for goal: Goal, store: AwradStore) -> GoalSlot? {
         let slots = goal.activeSlots.sorted { $0.sortOrder < $1.sortOrder }
-        return slots.first { store.remaining(for: goal, slotID: $0.id) > 0 } ?? slots.first
+        return slots.first { store.canIncrement(goal, slotID: $0.id) } ?? slots.first
     }
 
     private static func wirdPayload(from store: AwradStore) -> WidgetPayload {

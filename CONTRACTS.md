@@ -10,11 +10,11 @@ The authoritative route declarations are in `awrad_api/lib/awrad_api_web/router.
 |---|---|---|---|
 | `POST` | `/api/auth/register` | Public | Android, iOS |
 | `POST` | `/api/auth/login` | Public | Android, iOS |
-| `POST` | `/api/auth/refresh` | Public; refresh token in JSON body | Android automatic token authenticator |
+| `POST` | `/api/auth/refresh` | Public; refresh token in JSON body | Android and iOS automatic refresh/retry |
 | `POST` | `/api/auth/verify-email` | Public; one-time verification token | Android, iOS |
-| `POST` | `/api/auth/verify-email/resend` | Public; generic response | Android, iOS |
+| `POST` | `/api/auth/verify-email/resend` | Public; generic response | iOS verification flow |
 | `POST` | `/api/auth/forgot-password` | Public | Android, iOS |
-| `POST` | `/api/auth/reset-password` | Public; reset token and new password | Reset flow/API surface |
+| `POST` | `/api/auth/reset-password` | Public; reset token and new password | iOS reset-completion flow |
 | `DELETE` | `/api/auth/logout` | Bearer access token; refresh token in JSON body | Android, iOS |
 | `GET` | `/api/auth/sessions` | Bearer access token | Mobile account security |
 | `DELETE` | `/api/auth/sessions/:id` | Bearer access token; owned session only | Mobile account security |
@@ -40,7 +40,7 @@ Any request/response or status-code change requires server tests and review of b
 - Logout revokes the bearer token's current session and cannot revoke another user's session.
 - Secrets and production token configuration belong in runtime environment configuration, never in clients or committed files.
 
-Android automatically refreshes after an authentication failure through its OkHttp authenticator. iOS currently stores and sends tokens but does not implement the same automatic refresh retry path; do not claim parity until code and tests establish it.
+Android automatically refreshes after an authentication failure through its OkHttp authenticator. iOS uses a single-flight refresh task in `AuthService`: concurrent 401 responses share one rotation, retry once with the successor access token, preserve credentials after transient failures, and clear them after definitive revocation/reuse failures. The focused native auth suites lock both paths.
 
 ## API base URLs
 
@@ -56,10 +56,10 @@ Base URLs must retain a trailing-slash-safe shape because clients resolve relati
 Android and iOS own their local product state independently:
 
 - Android uses Room entities, DAOs, repositories, and migrations.
-- iOS uses Codable domain snapshots coordinated by `AwradStore`, with selected shared widget state/mutations.
+- iOS uses an App Group SwiftData store behind repository protocols and `AwradStore`; snapshot v5 is supported as migration/backup input, and widgets use a compact projection plus relational App Intent mutations.
 - The API uses Ecto/PostgreSQL for server-owned records.
 
-Dhikr, Goal, GoalSlot, GoalReminder, GoalRecurrence, CountPolicy, and CountEntry now have a stable native-model contract in `contracts/progress-model/v1/`. Wird remains outside that contract. Do not serialize persistence records directly; use the versioned Android/iOS DTO mappers and authenticated API context boundary.
+Dhikr, Goal, GoalSlot, GoalReminder, GoalRecurrence, CountPolicy, and CountEntry have a stable native-model contract in `contracts/progress-model/v1/`. Bundled Wird definitions have a separate content and structural-identity contract in `contracts/wird-model/v1/`; persisted Wird/session records and synchronization remain outside that content contract. Do not serialize persistence records directly; use the versioned Android/iOS DTO mappers and authenticated API context boundary.
 
 ## Progress model v1 and UUID identity
 
@@ -78,11 +78,25 @@ Identity and representation rules:
 - Enum wire values are canonical snake_case. Threshold selectors are `any_positive`, `minimum`, `target`, `maximum`, or `{ "type": "custom", "count": n }`.
 - Canonical defaults are declared in the schema and `fixtures/coverage.json`: goals default to per-due-date, active, incomplete, `never` completion; recurrence defaults to daily Gregorian; count thresholds default to target with allow-over-target caps.
 
-Android stores UUIDs as Room `TEXT`; schema version 5 deliberately resets identity-dependent development product tables before reseeding canonical dhikrs, and version 6 adds persisted dhikr ordering. iOS snapshot version 5 resets pre-v5 development snapshots, decodes missing dhikr sort order as zero, and rejects pre-v5 backup imports while leaving Keychain authentication credentials alone. Phoenix retains `:binary_id` storage and advances through a forward migration; authenticated scope, not payload ownership fields, supplies `user_id`.
+Android stores UUIDs as Room `TEXT`; schema version 5 deliberately resets identity-dependent development product tables before reseeding canonical dhikrs, and version 6 adds persisted dhikr ordering. The former iOS snapshot version 5 reset pre-v5 development snapshots and decodes missing dhikr sort order as zero. Current iOS installs migrate a validated version-5 snapshot into SwiftData without changing semantic IDs or values; pre-v5 imports remain unsupported and Keychain credentials are unaffected. Phoenix retains `:binary_id` storage and advances through a forward migration; authenticated scope, not payload ownership fields, supplies `user_id`.
 
 There are no progress synchronization routes in v1. Outboxes, operation IDs, tombstones, ownership binding, reconciliation, and conflict resolution remain deferred.
 
 Run `./check-mobile-model-parity` at the root for schema/fixture validation, exact persisted-field classification, three-way built-in registry comparison, and the Android and iOS contract suites. A progress-model change is incomplete unless its schema, fixtures, native mappers, API representation, and tests change together.
+
+## Bundled Wird model v1
+
+`contracts/wird-model/v1/fixtures/dalail-al-khayrat.json` is the reviewed canonical devotional-content source. The generated Android and iOS assets must be byte-identical to it. `fixtures/behavior.json` locks the version-5 eight-part `PARTS_BY_WEEKDAY` schedule, 60-minute estimate, content hash, counts, and representative identities; `manifest.json` enumerates every generated structural identity.
+
+Built-in Wird, part, and segment IDs use UUIDv3 with the same result as Java `UUID.nameUUIDFromBytes`, over UTF-8 `awrad-wird:<structural-path>`. Structural paths use the slug, `/part/<zero-based-index>`, and `/seg/<zero-based-index>`. Reordering reviewed content is therefore an identity migration, not a cosmetic edit.
+
+Run `./scripts/generate_wird_model.py --check` to validate the source and reject stale platform assets. The contract governs bundled content and selection semantics only; it does not add API routes. iOS remaps an old random part/segment ID only when the complete normalized content signature has one unambiguous canonical match and the destination session identity remains unique. A partial, ambiguous, malformed, or conflicting in-progress session retains a hidden pinned legacy definition rather than guessing.
+
+## Behavior model v1
+
+`contracts/behavior-model/v1/fixtures/behavior-cases.json` is a deterministic cross-platform acceptance fixture. Its case families cover recurrence, effective-day resolution, count limits, slot selection, streaks, reminder plans, and Wird cadence. It is product-behavior evidence rather than a persistence or network wire format.
+
+`scripts/validate_behavior_fixtures.py` validates the fixture structure. Android `BehaviorFixtureParityTest` and iOS `BehaviorParityTests` consume it alongside platform-specific edge cases. The root `./check-mobile-model-parity` command runs all three checks; a behavior change is incomplete when only one native calculator changes.
 
 ## Product parity
 

@@ -14,7 +14,13 @@ git diff --stat
 # Regenerate native/API Asma-ul Husna seeds after editing the canonical JSON.
 ./scripts/generate_asma_ul_husna.py
 
-# Validate progress-model JSON, all three built-in registries, and both native DTO suites.
+# Regenerate both native bundled Wird assets and their identity manifest.
+./scripts/generate_wird_model.py
+
+# Verify the canonical Wird content hash, behavior fixture, identities, and native assets only.
+./scripts/generate_wird_model.py --check
+
+# Validate progress/Wird contracts, generated registries/assets, and both native suites.
 ./check-mobile-model-parity
 ```
 

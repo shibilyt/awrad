@@ -351,16 +351,17 @@ extension View {
 }
 
 private struct AwradGlassSurfaceModifier: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let cornerRadius: CGFloat
     let tint: Color
     let interactive: Bool
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, *), interactive, !reduceTransparency {
             content
                 .background(tint.opacity(0.7), in: shape)
-                .glassEffect(.regular.tint(tint).interactive(interactive), in: shape)
+                .glassEffect(.regular.tint(tint).interactive(true), in: shape)
         } else {
             content
                 .background(tint, in: shape)
@@ -371,13 +372,14 @@ private struct AwradGlassSurfaceModifier: ViewModifier {
 }
 
 private struct AwradGlassIconButtonModifier: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let size: CGFloat
     let cornerRadius: CGFloat
     let tint: Color
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, *), !reduceTransparency {
             content
                 .frame(width: size, height: size)
                 .background(tint.opacity(0.72), in: shape)

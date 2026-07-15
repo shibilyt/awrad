@@ -11,6 +11,8 @@ struct CreateGoalView: View {
     @State private var searchText = ""
     @State private var draft = GoalDraft()
     @State private var showDhikrPicker = false
+    @State private var isSaving = false
+    @State private var saveError: String?
 
     init(defaultDhikrID: AwradID?) {
         self.defaultDhikrID = defaultDhikrID
@@ -36,7 +38,7 @@ struct CreateGoalView: View {
     private var language: AppLanguage { store.preferences.appLanguage }
 
     private var isCreateEnabled: Bool {
-        selectedDhikr != nil && draft.configuration != nil
+        selectedDhikr != nil && draft.configuration != nil && !isSaving
     }
 
     var body: some View {
@@ -80,6 +82,15 @@ struct CreateGoalView: View {
                     }
                 }
             }
+        }
+        .alert("Couldn’t create goal", isPresented: Binding(
+            get: { saveError != nil },
+            set: { if !$0 { saveError = nil } }
+        )) {
+            Button("Retry", action: createGoal)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(saveError ?? "")
         }
     }
 
@@ -223,6 +234,7 @@ struct CreateGoalView: View {
     }
 
     private func createGoal() {
+        guard !isSaving else { return }
         guard let selectedDhikrID,
               let configuration = draft.configuration,
               let goal = store.createConfiguredGoal(
@@ -240,22 +252,27 @@ struct CreateGoalView: View {
               ) else {
             return
         }
-
-        if !goal.reminders.isEmpty {
-            Task {
-                await scheduleGoalReminders(for: goal)
+        isSaving = true
+        Task {
+            let result = await scheduleGoalReminders(for: goal)
+            isSaving = false
+            if result.succeeded {
+                dismiss()
+            } else {
+                _ = store.deleteGoal(goal.id)
+                _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
+                saveError = result.localizedFailureMessage(language: language)
             }
         }
-        dismiss()
     }
 
-    private func scheduleGoalReminders(for goal: Goal) async {
+    private func scheduleGoalReminders(for goal: Goal) async -> NotificationSchedulingResult {
         let prayerTimes = ReminderScheduleBuilder.prayerSummaries(
             for: goal,
             preferences: store.preferences,
             prayerTimeService: services.prayerTimes
         )
-        await services.notifications.scheduleGoalReminders(
+        return await services.notifications.scheduleGoalReminders(
             for: goal,
             dhikrTitle: store.title(for: goal),
             language: store.preferences.appLanguage,

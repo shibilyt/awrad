@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "effective_day": [
+    {"id": "midnight", "day_reset": "midnight", "now": "2026-06-24T19:30:00Z", "maghrib": "2026-06-24T18:45:00Z", "expected_date": "2026-06-24"},
+    {"id": "after_maghrib", "day_reset": "maghrib", "now": "2026-06-24T19:30:00Z", "maghrib": "2026-06-24T18:45:00Z", "expected_date": "2026-06-25"}
+  ],
+  "recurrence": [
+    {"id": "cumulative_weekly_due", "date": "2026-07-13", "expected": true},
+    {"id": "hijri_month_day_9", "date": "2026-06-24", "expected": true},
+    {"id": "hijri_yearly_1_10", "date": "2026-06-25", "expected": true},
+    {"id": "fixed_specific_date", "date": "2026-07-15", "expected": true},
+    {"id": "ashura_9", "date": "2026-06-24", "expected": true},
+    {"id": "ashura_10", "date": "2026-06-25", "expected": true}
+  ],
+  "count_limits": [
+    {"id": "stop_at_maximum", "current": 99, "increment": 5, "target": 33, "maximum": 100, "cap_behavior": "stop_at_maximum", "expected": 100},
+    {"id": "warn_first_increment_after_target", "current": 33, "increment": 1, "target": 33, "cap_behavior": "warn_over_target", "expected_warning": true}
+  ],
+  "slot_selection": [
+    {"id": "strict_unknown_blocks", "policy": "strict_active_only", "status": "unknown", "expected": "block"},
+    {"id": "warn_upcoming_confirms", "policy": "warn_and_allow", "status": "upcoming", "expected": "confirm"},
+    {"id": "silent_ended_allows", "policy": "silent_flexible", "status": "ended", "expected": "allow"}
+  ],
+  "streaks": [
+    {"id": "weekly_skips_unscheduled_days", "today": "2026-07-13", "active_dates": ["2026-07-06", "2026-07-13"], "expected": 2}
+  ],
+  "reminder_plans": [
+    {"id": "fixed_time", "type": "fixed_time", "hour": 8, "minute": 15, "expected_occurrences": 1},
+    {"id": "prayer_offset", "type": "prayer_offset", "prayer": "fajr", "offset_minutes": 30, "expected_occurrences": 1}
+  ],
+  "wird_cadence": [
+    {"id": "weekday_assignment", "weekday": 2, "expected_part_indexes": [0]},
+    {"id": "rotation", "day_offset": 8, "part_count": 8, "expected_part_index": 0}
+  ]
+}

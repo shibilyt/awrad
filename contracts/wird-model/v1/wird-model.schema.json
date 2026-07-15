@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://awrad.app/contracts/wird-model/v1/wird-model.schema.json",
+  "title": "Awrad bundled Wird model v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["slug", "version", "name", "schedule", "parts"],
+  "properties": {
+    "slug": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "version": { "type": "integer", "minimum": 1 },
+    "sortOrder": { "type": "integer" },
+    "name": { "$ref": "#/$defs/localizedString" },
+    "description": { "$ref": "#/$defs/localizedString" },
+    "author": { "type": "string" },
+    "sourceAttribution": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": ["morning", "evening", "salawat", "protection", "quran", "forgiveness", "praise", "general"]
+      }
+    },
+    "estimatedMinutes": { "type": "integer", "minimum": 1 },
+    "schedule": { "$ref": "#/$defs/schedule" },
+    "parts": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/part" }
+    }
+  },
+  "$defs": {
+    "localizedString": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z]{2,3}(?:-[A-Z]{2})?$" },
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "occasion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type"],
+      "properties": {
+        "type": {
+          "enum": ["ANYTIME", "AFTER_PRAYER", "MORNING", "EVENING", "BEFORE_SLEEP", "TIME_WINDOW"]
+        },
+        "prayer": { "enum": ["fajr", "dhuhr", "asr", "maghrib", "isha"] },
+        "startMinute": { "type": "integer", "minimum": 0, "maximum": 1439 },
+        "endMinute": { "type": "integer", "minimum": 1, "maximum": 1440 }
+      }
+    },
+    "schedule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cadence"],
+      "properties": {
+        "cadence": {
+          "enum": ["EVERY_DAY", "DAYS_OF_WEEK", "INTERVAL", "ROTATION", "PARTS_BY_WEEKDAY"]
+        },
+        "daysOfWeek": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 1, "maximum": 7 }
+        },
+        "intervalDays": { "type": "integer", "minimum": 1 },
+        "intervalAnchor": { "type": "string", "format": "date" },
+        "hijriAnchor": { "type": "string" },
+        "partsByWeekday": {
+          "type": "object",
+          "minProperties": 1,
+          "patternProperties": {
+            "^[1-7]$": {
+              "type": "array",
+              "minItems": 1,
+              "items": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "additionalProperties": false
+        },
+        "defaultOccasion": { "$ref": "#/$defs/occasion" }
+      }
+    },
+    "part": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "segments"],
+      "properties": {
+        "title": { "$ref": "#/$defs/localizedString" },
+        "subtitle": { "$ref": "#/$defs/localizedString" },
+        "occasion": { "$ref": "#/$defs/occasion" },
+        "blockRepeat": { "type": "integer", "minimum": 1 },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/segment" }
+        }
+      }
+    },
+    "segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": { "enum": ["heading", "instruction", "dua", "salah", "quran", "dhikr"] },
+        "arabic": { "type": "string" },
+        "transliteration": { "$ref": "#/$defs/localizedString" },
+        "translation": { "$ref": "#/$defs/localizedString" },
+        "text": { "$ref": "#/$defs/localizedString" },
+        "repeat": { "$ref": "#/$defs/repeat" },
+        "fadl": { "$ref": "#/$defs/localizedString" },
+        "quran": { "$ref": "#/$defs/quranRef" }
+      }
+    },
+    "repeat": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "count": { "type": "integer", "minimum": 1 },
+        "min": { "type": "integer", "minimum": 1 },
+        "max": { "type": "integer", "minimum": 1 }
+      },
+      "anyOf": [
+        { "required": ["count"] },
+        { "required": ["min"] },
+        { "required": ["max"] }
+      ]
+    },
+    "quranRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["surah", "ayahStart"],
+      "properties": {
+        "surah": { "type": "integer", "minimum": 1, "maximum": 114 },
+        "ayahStart": { "type": "integer", "minimum": 1 },
+        "ayahEnd": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}

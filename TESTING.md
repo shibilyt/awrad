@@ -18,6 +18,7 @@ Validate the smallest relevant surface first, then widen checks according to ris
 | API context/schema | Focused context test and migration review | Full `mix test` |
 | API controller/router/auth | Focused controller/plug tests | Full `mix test` and mobile consumer review |
 | Cross-project progress contract | `./check-mobile-model-parity` plus focused API context tests | Full native/API suites and migration checks |
+| Cross-platform behavior fixture | `python3 scripts/validate_behavior_fixtures.py` plus the matching Android/iOS behavior test | `./check-mobile-model-parity` and the affected native suites |
 | Documentation only | Link/path audit and `git diff --check` | Verify documented task discovery commands |
 
 ## Android escalation
@@ -38,6 +39,8 @@ Room changes must include a new migration, updated exported schema, migration co
 
 Do not hard-code an old simulator UUID in repository guidance. Discover available destinations for the current machine.
 
+For the iOS parity release, record runtime evidence in [`docs/ios-parity-debugger-review.md`](docs/ios-parity-debugger-review.md). Source inspection or a unit test does not substitute for visual/lifecycle evidence. The runtime record must name the simulator/device, OS version, build, launch state, action, and observed result. Notification delivery, audio interruptions/routes, signed App Group widget/App Intent mutation, Live Activity lifecycle, real location accuracy, and keep-awake/haptics require physical-device evidence.
+
 ## API escalation
 
 1. Run the focused test file or line.
@@ -51,7 +54,7 @@ Security-sensitive API changes also require focused checks for generic account r
 
 ## Cross-project acceptance
 
-For progress model v1, the root parity command must pass. It validates the dependency-free schema rules and golden fixtures, exact 112-entry registry parity across Android/iOS/API, generated 99-name Asma-ul Husna content, enum/default/edge-case coverage, and exact persisted-field classification against Room schema, Swift Codable models, and Ecto schemas, then runs both native decode → model → encode suites. API schema/context tests remain separate because this slice deliberately exposes no sync route.
+For progress model v1, behavior model v1, and bundled Wird model v1, the root parity command must pass. It validates the dependency-free progress schemas and golden fixtures, exact 113-entry registry parity across Android/iOS/API, generated 100-entry Asma-ul Husna invocation content, enum/default/edge-case coverage, exact persisted-field classification against Room schema, Swift models, and Ecto schemas, the shared behavior-case families, and the canonical eight-part Wird content/hash/identity/cadence fixtures. It then runs the focused Android and iOS native suites. API schema/context tests remain separate because these contracts deliberately expose no sync route.
 
 For a changed contract, record all of the following in the handoff:
 

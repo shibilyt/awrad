@@ -11,6 +11,7 @@ private enum CounterSheet: String, Identifiable {
     case adjustCount
     case history
     case fullDhikr
+    case textDisplay
 
     var id: String { rawValue }
 }
@@ -31,8 +32,26 @@ private enum CountAdjustmentMode: String, CaseIterable, Identifiable {
     }
 }
 
+private enum PendingSlotTimingAction {
+    case count(Int)
+    case startAudio
+    case resumeAudio
+}
+
+private struct SlotTimingConfirmationKey: Hashable {
+    var slotID: AwradID
+    var dateKey: String
+    var status: SlotTimeStatus
+}
+
+private struct PendingSlotTimingConfirmation {
+    var key: SlotTimingConfirmationKey
+    var action: PendingSlotTimingAction
+}
+
 struct CountingView: View {
     @Environment(AwradStore.self) private var store
+    @Environment(AppRouter.self) private var router
     @Environment(AppServices.self) private var services
     @Environment(\.dismiss) private var dismiss
     let goalID: AwradID
@@ -46,6 +65,9 @@ struct CountingView: View {
     @State private var sessionType: SessionTargetType = .count
     @State private var sessionDraftType: SessionTargetType = .count
     @State private var sessionTimerEnd: Date?
+    @State private var showSessionCompletionDialog = false
+    @State private var completedSessionType: SessionTargetType = .count
+    @State private var completedSessionTarget = 0
     @State private var adjustmentAmount = 1
     @State private var adjustmentMode = CountAdjustmentMode.add
     // Phase 3: cap warnings, slot timing guard, completion, ticker
@@ -53,9 +75,9 @@ struct CountingView: View {
     @State private var showCapMessage = false
     @State private var didShowCompletion = false
     @State private var showCompletionDialog = false
-    @State private var pendingOutOfWindowCount = false
-    @State private var confirmedOutOfWindowSlots: Set<AwradID> = []
-    @State private var nowMinuteOfDay = SlotStatusCalculator.minuteOfDay(from: Date())
+    @State private var showAllowPastTargetConfirmation = false
+    @State private var pendingSlotTimingConfirmation: PendingSlotTimingConfirmation?
+    @State private var confirmedSlotTimingWindows: Set<SlotTimingConfirmationKey> = []
     // Phase 4: first-run coach marks
     @State private var showCoachMarks = false
     @State private var coachTapProgress = 0
@@ -63,6 +85,11 @@ struct CountingView: View {
     @State private var liveActivity = CountingLiveActivityController()
 
     private let minuteTicker = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
+
+    init(goalID: AwradID, initialSlotID: AwradID? = nil) {
+        self.goalID = goalID
+        _selectedSlotID = State(initialValue: initialSlotID)
+    }
 
     private var goal: Goal? { store.goal(id: goalID) }
     private var language: AppLanguage { store.preferences.appLanguage }
@@ -82,14 +109,6 @@ struct CountingView: View {
                     )
 
                     VStack(spacing: 10) {
-                        CountingTargetReadout(
-                            currentText: formattedNumber(heroCurrentCount(for: goal)),
-                            denominatorText: heroDenominatorText(for: goal),
-                            todayChipText: heroTodayChipText(for: goal),
-                            progress: heroProgress(for: goal)
-                        )
-                        .coachAnchor("progress")
-
                         if sessionTarget == nil, let minimum = goal.minimumForStreak {
                             MinimumStreakChip(
                                 text: AwradLocalizer.format("counting_min_for_streak", language: language, minimum)
@@ -100,11 +119,27 @@ struct CountingView: View {
                             SessionTimerChip(endDate: endDate)
                         }
 
-                        DhikrPreviewCard(arabic: dhikr.arabic) {
-                            activeSheet = .fullDhikr
-                        }
+                        DhikrPreviewCard(
+                            arabic: dhikr.arabic,
+                            textScale: store.preferences.countingDhikrTextScale,
+                            onShowFull: {
+                                if dhikr.quranRef != nil {
+                                    router.navigate(
+                                        .quranDhikrReader(
+                                            dhikrID: dhikr.id,
+                                            goalID: goal.id,
+                                            slotID: selectedSlotID
+                                        ),
+                                        in: store.selectedTab
+                                    )
+                                } else {
+                                    activeSheet = .fullDhikr
+                                }
+                            },
+                            onAdjustText: { activeSheet = .textDisplay }
+                        )
 
-                        if goal.slots.count > 1 {
+                        if goal.activeSlots.count > 1 {
                             slotCards(for: goal)
                         }
 
@@ -116,29 +151,44 @@ struct CountingView: View {
 
                         countingActionRow(goal: goal, dhikr: dhikr)
 
+                        if isPausedAtTarget(goal) {
+                            TargetReachedCapCard {
+                                showAllowPastTargetConfirmation = true
+                            }
+                        }
+
                         if services.audio.isCounting(goalID: goal.id) {
                             CompactAudioStatus(
+                                isPlaying: services.audio.isPlaying,
                                 progress: services.audio.progress,
                                 elapsedText: services.audio.elapsedText,
                                 durationText: services.audio.durationText,
                                 playbackRate: services.audio.playbackRate,
-                                onStop: { services.audio.stop() }
+                                onTogglePlayback: {
+                                    if services.audio.isPlaying {
+                                        services.audio.pause()
+                                    } else if let slotID = activeCountSlotID(for: goal),
+                                              authorizeSlotTimingAction(.resumeAudio, goal: goal, slotID: slotID) {
+                                        services.audio.play()
+                                    }
+                                },
+                                onSetPlaybackRate: { services.audio.playbackRate = $0 }
                             )
                         }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
 
-                    if !services.audio.isCounting(goalID: goal.id) {
-                        CountCircleButton(
-                            isEnabled: countButtonEnabled(for: goal),
-                            onCount: { add(1) }
-                        )
-                        .padding(.horizontal, 20)
-                        .padding(.top, 8)
-                    } else {
-                        Spacer(minLength: 24)
-                    }
+                    CountCircleButton(
+                        isEnabled: !services.audio.isCounting(goalID: goal.id) && countButtonEnabled(for: goal),
+                        primaryProgress: primaryRingProgress(for: goal),
+                        minimumProgress: minimumRingProgress(for: goal),
+                        countText: formattedNumber(heroCurrentCount(for: goal)),
+                        targetText: heroDenominatorText(for: goal).map { "of \($0)" },
+                        onCount: { add(1) }
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
                 }
             } else {
                 EmptyStateView(symbol: "target", title: "Goal Missing", message: "This goal is no longer available.")
@@ -158,14 +208,13 @@ struct CountingView: View {
                         onFinish: finishCoachMarks
                     )
                 }
-                .ignoresSafeArea()
             }
         }
         .background(AwradTheme.background)
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
-            selectedSlotID = selectedSlotID ?? goal?.slots.first?.id
+            selectedSlotID = selectedSlotID ?? goal?.activeSlots.sorted { $0.sortOrder < $1.sortOrder }.first?.id
             updateIdleTimer(enabled: store.preferences.keepScreenOn)
             if !store.preferences.hasSeenCountingGuide {
                 showCoachMarks = true
@@ -220,13 +269,35 @@ struct CountingView: View {
                     )
                 case .fullDhikr:
                     if let dhikr = store.dhikr(id: goal.dhikrID) {
-                        FullDhikrSheet(arabic: dhikr.arabic) {
-                            add(1)
-                        }
+                        FullDhikrSheet(
+                            arabic: dhikr.arabic,
+                            textScale: store.preferences.countingDhikrTextScale,
+                            lineSpacing: store.preferences.countingDhikrLineSpacing,
+                            canCount: !services.audio.isCounting(goalID: goal.id) && countButtonEnabled(for: goal),
+                            onDecreaseTextSize: { adjustTextScale(increasing: false) },
+                            onIncreaseTextSize: { adjustTextScale(increasing: true) },
+                            onDecreaseLineSpacing: { adjustLineSpacing(increasing: false) },
+                            onIncreaseLineSpacing: { adjustLineSpacing(increasing: true) },
+                            onCount: { add(1) }
+                        )
                         .presentationDetents([.large])
                         .presentationDragIndicator(.visible)
                     } else {
                         EmptyStateView(symbol: "text.book.closed", title: "Dhikr Missing", message: "This dhikr is no longer available.")
+                    }
+                case .textDisplay:
+                    if let dhikr = store.dhikr(id: goal.dhikrID) {
+                        DhikrDisplaySettingsSheet(
+                            arabic: dhikr.arabic,
+                            textScale: store.preferences.countingDhikrTextScale,
+                            lineSpacing: store.preferences.countingDhikrLineSpacing,
+                            onDecreaseTextSize: { adjustTextScale(increasing: false) },
+                            onIncreaseTextSize: { adjustTextScale(increasing: true) },
+                            onDecreaseLineSpacing: { adjustLineSpacing(increasing: false) },
+                            onIncreaseLineSpacing: { adjustLineSpacing(increasing: true) }
+                        )
+                        .presentationDetents([.medium, .large])
+                        .presentationDragIndicator(.visible)
                     }
                 }
             } else {
@@ -257,19 +328,18 @@ struct CountingView: View {
             }
         }
         .confirmationDialog(
-            Text(AwradLocalizer.localized("slot_ended_title", language: language)),
-            isPresented: $pendingOutOfWindowCount,
+            Text(slotTimingConfirmationTitle),
+            isPresented: pendingSlotTimingConfirmationBinding,
             titleVisibility: .visible
         ) {
             Button(AwradLocalizer.localized("Count anyway", language: language)) {
-                if let goal, let slotID = activeCountSlotID(for: goal) {
-                    confirmedOutOfWindowSlots.insert(slotID)
-                }
-                performCount(1)
+                confirmPendingSlotTimingAction()
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) {
+                pendingSlotTimingConfirmation = nil
+            }
         } message: {
-            Text(AwradLocalizer.localized("slot_ended_body", language: language))
+            Text(slotTimingConfirmationMessage)
         }
         .alert(
             Text(AwradLocalizer.localized("goal_reached_title", language: language)),
@@ -281,9 +351,42 @@ struct CountingView: View {
                 Text(AwradLocalizer.format("goal_reached_body", language: language, goal.totalTarget))
             }
         }
-        .onReceive(minuteTicker) { _ in
-            nowMinuteOfDay = SlotStatusCalculator.minuteOfDay(from: Date())
+        .confirmationDialog(
+            "Allow counting past target?",
+            isPresented: $showAllowPastTargetConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Allow") { allowCountingPastTarget() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently changes this slot’s cap to allow counts above the target. The goal will remain completed.")
+        }
+        .confirmationDialog(
+            Text(completedSessionType == .timer ? "Timer session complete" : "Count session complete"),
+            isPresented: $showSessionCompletionDialog,
+            titleVisibility: .visible
+        ) {
+            Button("Start Another Session") {
+                sessionDraftType = completedSessionType
+                sessionDraftTarget = max(completedSessionTarget, 1)
+                activeSheet = .sessionTarget
+            }
+            Button("Done") { dismiss() }
+        } message: {
+            Text(completedSessionType == .timer
+                 ? "Your timed recitation session has ended."
+                 : "You reached this sitting’s count target.")
+        }
+        .task(id: sessionTimerEnd) {
+            guard let end = sessionTimerEnd else { return }
+            let nanoseconds = UInt64(max(end.timeIntervalSinceNow, 0) * 1_000_000_000)
+            try? await Task<Never, Never>.sleep(nanoseconds: nanoseconds)
+            guard !Task<Never, Never>.isCancelled else { return }
             evaluateTimerSession()
+        }
+        .onReceive(minuteTicker) { now in
+            evaluateTimerSession()
+            enforceAudioTiming(at: now)
         }
         .onDisappear {
             updateIdleTimer(enabled: false)
@@ -314,12 +417,9 @@ struct CountingView: View {
 
     /// Fires the session-complete dialog when a TIMER session elapses.
     private func evaluateTimerSession() {
-        guard sessionType == .timer, let end = sessionTimerEnd, sessionTarget != nil,
+        guard sessionType == .timer, let end = sessionTimerEnd, let target = sessionTarget,
               Date() >= end, let goal else { return }
-        sessionTimerEnd = nil
-        clearSessionTarget(for: goal)
-        capMessage = "counting_session_complete_body_timer"
-        showCapMessage = true
+        completeSession(type: .timer, target: target, goal: goal)
     }
 
     private var shouldConfirmAudioExit: Bool {
@@ -344,14 +444,14 @@ struct CountingView: View {
     }
 
     private func heroCurrentCount(for goal: Goal) -> Int64 {
-        if sessionTarget != nil {
+        if sessionTarget != nil, sessionType == .count {
             return sessionProgress(for: goal)
         }
         return displayedCount(for: goal)
     }
 
     private func heroTarget(for goal: Goal) -> Int64? {
-        if let sessionTarget {
+        if let sessionTarget, sessionType == .count {
             return Int64(sessionTarget)
         }
         guard goal.targetPolicy != .none else { return nil }
@@ -359,16 +459,17 @@ struct CountingView: View {
     }
 
     private func heroProgress(for goal: Goal) -> Double {
-        if sessionTarget != nil {
+        if sessionTarget != nil, sessionType == .count {
             return sessionProgressValue(for: goal)
         }
         return displayedProgress(for: goal)
     }
 
     private func heroGoalLabel(for goal: Goal) -> String {
-        if sessionTarget != nil {
+        if sessionTarget != nil, sessionType == .count {
             return "Session active"
         }
+        if sessionTarget != nil, sessionType == .timer { return "Timed session" }
         guard let target = heroTarget(for: goal) else {
             return "Open count"
         }
@@ -376,7 +477,7 @@ struct CountingView: View {
     }
 
     private func heroRemainingLabel(for goal: Goal) -> String? {
-        if let sessionTarget {
+        if let sessionTarget, sessionType == .count {
             return "\(max(Int64(sessionTarget) - sessionProgress(for: goal), 0)) remaining"
         }
         guard goal.targetPolicy != .none else { return nil }
@@ -384,7 +485,27 @@ struct CountingView: View {
     }
 
     private func heroDenominatorText(for goal: Goal) -> String? {
-        heroTarget(for: goal).map(formattedNumber)
+        guard heroMilestoneText(for: goal) == nil else { return nil }
+        return heroTarget(for: goal).map(formattedNumber)
+    }
+
+    private func heroMilestoneText(for goal: Goal) -> String? {
+        guard sessionTarget == nil,
+              goal.targetPolicy != .none,
+              !usesRangeProgress(goal),
+              let target = heroTarget(for: goal), target > 0 else { return nil }
+        let current = heroCurrentCount(for: goal)
+        guard current >= target else { return nil }
+        let additional = current - target
+        if additional == 0 {
+            return AwradLocalizer.localized("Target reached", language: language)
+        }
+        return AwradLocalizer.format(
+            "Target %@ reached · +%@ additional",
+            language: language,
+            formattedNumber(target),
+            formattedNumber(additional)
+        )
     }
 
     private func heroTodayChipText(for goal: Goal) -> String? {
@@ -395,14 +516,77 @@ struct CountingView: View {
     }
 
     private func countButtonEnabled(for goal: Goal) -> Bool {
-        goal.targetPolicy == .none || store.remaining(for: goal, slotID: activeCountSlotID(for: goal)) > 0
+        guard goal.targetPolicy != .none else { return true }
+        let policy = activeCountPolicy(for: goal)
+        let current = displayedCount(for: goal)
+        switch policy.capBehavior {
+        case .allowOverTarget, .warnOverTarget:
+            return true
+        case .blockAtTarget:
+            return policy.targetCount.map { current < Int64($0) } ?? true
+        case .blockAtMaximum:
+            let limit = policy.maximumCount ?? policy.targetCount
+            return limit.map { current < Int64($0) } ?? true
+        }
+    }
+
+    private func activeCountPolicy(for goal: Goal) -> CountPolicy {
+        if let slotID = activeCountSlotID(for: goal),
+           let slot = goal.activeSlots.first(where: { $0.id == slotID }) {
+            return slot.countPolicy
+        }
+        return goal.countPolicy
+    }
+
+    private func usesRangeProgress(_ goal: Goal) -> Bool {
+        let policy = activeCountPolicy(for: goal)
+        guard sessionTarget == nil,
+              let minimum = policy.minimumCount, minimum > 0,
+              let upper = policy.maximumCount ?? policy.targetCount else { return false }
+        return upper >= minimum
+    }
+
+    private func primaryRingProgress(for goal: Goal) -> Double? {
+        if sessionTarget != nil { return heroProgress(for: goal) }
+        let policy = activeCountPolicy(for: goal)
+        guard let upper = policy.maximumCount ?? policy.targetCount, upper > 0 else { return nil }
+        return min(Double(displayedCount(for: goal)) / Double(upper), 1)
+    }
+
+    private func minimumRingProgress(for goal: Goal) -> Double? {
+        guard usesRangeProgress(goal) else { return nil }
+        let policy = activeCountPolicy(for: goal)
+        guard let minimum = policy.minimumCount, minimum > 0 else { return nil }
+        return min(Double(displayedCount(for: goal)) / Double(minimum), 1)
+    }
+
+    private func isPausedAtTarget(_ goal: Goal) -> Bool {
+        guard !countButtonEnabled(for: goal) else { return false }
+        let policy = activeCountPolicy(for: goal)
+        return policy.capBehavior == .blockAtTarget
+    }
+
+    private func allowCountingPastTarget() {
+        guard let goal,
+              store.allowCountingPastTarget(
+                goalID: goal.id,
+                slotID: activeCountSlotID(for: goal)
+              ) != nil else {
+            presentCap("Could not change the counting cap. Try again.")
+            return
+        }
+        presentCap("You can now continue counting past the target.")
     }
 
     private func countingActionRow(goal: Goal, dhikr: Dhikr) -> some View {
         HStack(spacing: 14) {
             if services.audio.sourceURL(for: dhikr) != nil {
                 Button {
-                    toggleAudioCounting(goal: goal, dhikr: dhikr)
+                    if services.audio.isCounting(goalID: goal.id) {
+                        services.audio.stop()
+                    } else {
+                        startAudioCountingIfAllowed(goal: goal, dhikr: dhikr)
+                    }
                 } label: {
                     Text(LocalizedStringKey(services.audio.isCounting(goalID: goal.id) ? "Stop Audio Count" : "Start Audio Count"))
                         .font(AwradTheme.bodyFont(.headline, weight: .semibold))
@@ -479,25 +663,19 @@ struct CountingView: View {
     }
 
     private func add(_ amount: Int) {
-        // Slot timing guard applies only to positive manual counts on slot goals.
-        if amount > 0, let goal, let slotID = activeCountSlotID(for: goal),
-           let slot = goal.slots.first(where: { $0.id == slotID }) {
-            let status = SlotStatusCalculator.status(for: slot, nowMinuteOfDay: nowMinuteOfDay)
-            let decision = SlotStatusCalculator.countability(status: status, policy: goal.slotCountingPolicy)
-            if !decision.allowed {
-                presentCap("slot_count_blocked_outside_active")
-                return
-            }
-            if decision.warns, !confirmedOutOfWindowSlots.contains(slotID) {
-                pendingOutOfWindowCount = true
-                return
-            }
+        guard amount > 0, let goal, let slotID = activeCountSlotID(for: goal) else {
+            performCount(amount)
+            return
         }
-        performCount(amount)
+        guard authorizeSlotTimingAction(.count(amount), goal: goal, slotID: slotID) else {
+            return
+        }
+        performCount(amount, slotID: slotID)
     }
 
-    private func performCount(_ amount: Int) {
-        let result = store.applyCount(goalID: goalID, slotID: activeCountSlotID(for: goal), amount: Int64(amount))
+    private func performCount(_ amount: Int, slotID: AwradID? = nil) {
+        let resolvedSlotID = slotID ?? activeCountSlotID(for: goal)
+        let result = store.applyCount(goalID: goalID, slotID: resolvedSlotID, amount: Int64(amount))
         #if os(iOS)
         if store.preferences.vibrateOnCount, result.appliedDelta > 0 {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
@@ -519,7 +697,96 @@ struct CountingView: View {
         }
         refreshLiveActivity()
         stopAudioIfTargetReached()
+        evaluateCountSession()
         evaluateCompletion()
+    }
+
+    private func authorizeSlotTimingAction(
+        _ action: PendingSlotTimingAction,
+        goal: Goal,
+        slotID: AwradID,
+        now: Date = Date()
+    ) -> Bool {
+        guard let slot = goal.activeSlots.first(where: { $0.id == slotID }) else {
+            return false
+        }
+        switch slotTimingDecision(for: slot, goal: goal, now: now) {
+        case .allow:
+            return true
+        case .block:
+            presentCap("slot_count_blocked_outside_active")
+            return false
+        case let .requireConfirmation(status):
+            let key = SlotTimingConfirmationKey(
+                slotID: slotID,
+                dateKey: store.todayKey,
+                status: status
+            )
+            guard !confirmedSlotTimingWindows.contains(key) else { return true }
+            pendingSlotTimingConfirmation = PendingSlotTimingConfirmation(key: key, action: action)
+            return false
+        }
+    }
+
+    private func slotTimingDecision(
+        for slot: GoalSlot,
+        goal: Goal,
+        now: Date = Date()
+    ) -> SlotCountingDecision {
+        SlotStatusCalculator.countingDecision(
+            for: slot,
+            policy: goal.slotCountingPolicy,
+            occurrenceDateKey: store.todayKey,
+            preferences: store.preferences,
+            now: now,
+            prayerTimeService: services.prayerTimes
+        )
+    }
+
+    private var pendingSlotTimingConfirmationBinding: Binding<Bool> {
+        Binding(
+            get: { pendingSlotTimingConfirmation != nil },
+            set: { if !$0 { pendingSlotTimingConfirmation = nil } }
+        )
+    }
+
+    private var slotTimingConfirmationTitle: String {
+        let key = pendingSlotTimingConfirmation?.key.status == .ended
+            ? "slot_ended_title"
+            : "Counting outside slot"
+        return AwradLocalizer.localized(key, language: language)
+    }
+
+    private var slotTimingConfirmationMessage: String {
+        let key = pendingSlotTimingConfirmation?.key.status == .ended
+            ? "slot_ended_body"
+            : "slot_count_blocked_outside_active"
+        return AwradLocalizer.localized(key, language: language)
+    }
+
+    private func confirmPendingSlotTimingAction() {
+        guard let pending = pendingSlotTimingConfirmation else { return }
+        pendingSlotTimingConfirmation = nil
+        confirmedSlotTimingWindows.insert(pending.key)
+
+        switch pending.action {
+        case let .count(amount):
+            performCount(amount, slotID: pending.key.slotID)
+        case .startAudio:
+            guard let goal = store.goal(id: goalID),
+                  let dhikr = store.dhikr(id: goal.dhikrID),
+                  activeCountSlotID(for: goal) == pending.key.slotID else {
+                return
+            }
+            startAudioCounting(goal: goal, dhikr: dhikr, slotID: pending.key.slotID)
+        case .resumeAudio:
+            guard let goal = store.goal(id: goalID),
+                  activeCountSlotID(for: goal) == pending.key.slotID,
+                  services.audio.isCounting(goalID: goal.id) else {
+                return
+            }
+            services.audio.play()
+        }
     }
 
     private var coachSteps: [CountingCoachStep] {
@@ -593,17 +860,17 @@ struct CountingView: View {
 
     /// The active slot is complete but the goal still has incomplete slots.
     private func showsSlotCompleteBanner(for goal: Goal) -> Bool {
-        guard goal.slots.count > 1, !goal.isCompleted else { return false }
+        guard goal.activeSlots.count > 1, !goal.isCompleted else { return false }
         let slotComplete = store.remaining(for: goal, slotID: activeCountSlotID(for: goal)) == 0
             && goal.targetPolicy != .none
         guard slotComplete else { return false }
-        return goal.slots.contains { slot in
+        return goal.activeSlots.contains { slot in
             store.remaining(for: goal, slotID: slot.id) > 0
         }
     }
 
     private func selectNextIncompleteSlot(for goal: Goal) {
-        let next = goal.slots
+        let next = goal.activeSlots
             .sorted { $0.sortOrder < $1.sortOrder }
             .first { store.remaining(for: goal, slotID: $0.id) > 0 }
         if let next {
@@ -623,7 +890,7 @@ struct CountingView: View {
     }
 
     private func displayedProgress(for goal: Goal) -> Double {
-        guard goal.slots.count > 1 else { return store.progress(for: goal) }
+        guard goal.activeSlots.count > 1 else { return store.progress(for: goal) }
         let target = selectedSlotTarget(for: goal)
         guard target > 0 else { return 0 }
         return min(Double(displayedCount(for: goal)) / Double(target), 1)
@@ -796,20 +1063,38 @@ struct CountingView: View {
     }
 
     private func audioStartDisabled(for goal: Goal) -> Bool {
-        guard !services.audio.isCounting(goalID: goal.id), goal.targetPolicy != .none else { return false }
-        return store.remaining(for: goal, slotID: activeCountSlotID(for: goal)) == 0
+        guard !services.audio.isCounting(goalID: goal.id) else { return false }
+        return !countButtonEnabled(for: goal)
     }
 
     private func toggleAudioCounting(goal: Goal, dhikr: Dhikr) {
         if services.audio.isCounting(goalID: goal.id) {
-            services.audio.isPlaying ? services.audio.pause() : services.audio.play()
+            if services.audio.isPlaying {
+                services.audio.pause()
+            } else if let slotID = activeCountSlotID(for: goal),
+                      authorizeSlotTimingAction(.resumeAudio, goal: goal, slotID: slotID) {
+                services.audio.play()
+            }
             return
         }
+        startAudioCountingIfAllowed(goal: goal, dhikr: dhikr)
+    }
 
+    private func startAudioCountingIfAllowed(goal: Goal, dhikr: Dhikr) {
+        guard let slotID = activeCountSlotID(for: goal),
+              authorizeSlotTimingAction(.startAudio, goal: goal, slotID: slotID) else {
+            return
+        }
+        startAudioCounting(goal: goal, dhikr: dhikr, slotID: slotID)
+    }
+
+    private func startAudioCounting(goal: Goal, dhikr: Dhikr, slotID: AwradID) {
         let goalID = goal.id
-        let slotID = activeCountSlotID(for: goal)
         services.audio.startCounting(for: dhikr, goalID: goalID, title: dhikr.displayTitle(language: language)) { [store] in
-            guard let currentGoal = store.goal(id: goalID) else { return false }
+            guard let currentGoal = store.goal(id: goalID),
+                  authorizeSlotTimingAction(.startAudio, goal: currentGoal, slotID: slotID) else {
+                return false
+            }
             let actualDelta = store.addCount(goalID: goalID, slotID: slotID, amount: Int64(dhikr.audioCountPerPlay))
             if currentGoal.targetPolicy == .none {
                 return true
@@ -821,11 +1106,21 @@ struct CountingView: View {
         }
     }
 
+    private func enforceAudioTiming(at now: Date) {
+        guard services.audio.isCounting(goalID: goalID),
+              services.audio.isPlaying,
+              let goal = store.goal(id: goalID),
+              let slotID = activeCountSlotID(for: goal),
+              !authorizeSlotTimingAction(.startAudio, goal: goal, slotID: slotID, now: now) else {
+            return
+        }
+        services.audio.stop()
+    }
+
     private func stopAudioIfTargetReached() {
         guard let goal = store.goal(id: goalID),
               services.audio.isCounting(goalID: goalID),
-              goal.targetPolicy != .none,
-              store.remaining(for: goal, slotID: activeCountSlotID(for: goal)) == 0 else {
+              !countButtonEnabled(for: goal) else {
             return
         }
         services.audio.stop()
@@ -876,6 +1171,25 @@ struct CountingView: View {
         }
     }
 
+    private func evaluateCountSession() {
+        guard sessionType == .count,
+              let target = sessionTarget,
+              let goal,
+              sessionProgress(for: goal) >= Int64(target) else { return }
+        completeSession(type: .count, target: target, goal: goal)
+    }
+
+    private func completeSession(type: SessionTargetType, target: Int, goal: Goal) {
+        completedSessionType = type
+        completedSessionTarget = max(target, 1)
+        sessionTarget = nil
+        sessionTimerEnd = nil
+        sessionType = .count
+        sessionStartCount = displayedCount(for: goal)
+        services.audio.stop()
+        showSessionCompletionDialog = true
+    }
+
     private func clearSessionTarget(for goal: Goal) {
         sessionTarget = nil
         sessionTimerEnd = nil
@@ -888,6 +1202,26 @@ struct CountingView: View {
         add(adjustmentMode == .add ? amount : -amount)
         if sessionTarget != nil {
             sessionStartCount = min(sessionStartCount, displayedCount(for: goal))
+        }
+    }
+
+    private func adjustTextScale(increasing: Bool) {
+        store.updatePreferences { preferences in
+            preferences.countingDhikrTextScale = steppedDisplayValue(
+                preferences.countingDhikrTextScale,
+                values: countingDhikrTextScales,
+                increasing: increasing
+            )
+        }
+    }
+
+    private func adjustLineSpacing(increasing: Bool) {
+        store.updatePreferences { preferences in
+            preferences.countingDhikrLineSpacing = steppedDisplayValue(
+                preferences.countingDhikrLineSpacing,
+                values: countingDhikrLineSpacings,
+                increasing: increasing
+            )
         }
     }
 }
@@ -965,6 +1299,7 @@ private struct CountingTargetReadout: View {
     let currentText: String
     let denominatorText: String?
     let todayChipText: String?
+    let milestoneText: String?
     let progress: Double
 
     var body: some View {
@@ -1009,6 +1344,13 @@ private struct CountingTargetReadout: View {
             }
             .frame(maxWidth: .infinity, alignment: .center)
 
+            if let milestoneText {
+                Text(milestoneText)
+                    .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                    .foregroundStyle(AwradTheme.sageDark)
+                    .multilineTextAlignment(.center)
+            }
+
             CountingProgressTrack(value: progress)
         }
         .padding(.horizontal, 4)
@@ -1043,7 +1385,9 @@ private struct CountingProgressTrack: View {
 
 private struct DhikrPreviewCard: View {
     let arabic: String
+    let textScale: Double
     let onShowFull: () -> Void
+    let onAdjustText: () -> Void
 
     private var shouldShowFullButton: Bool {
         arabic.count > 78 || arabic.contains("\n")
@@ -1052,7 +1396,7 @@ private struct DhikrPreviewCard: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(arabic)
-                .font(AwradTheme.arabicFont(25, weight: .semibold))
+                .font(AwradTheme.arabicFont(25 * CGFloat(textScale), weight: .semibold))
                 .foregroundStyle(AwradTheme.ink)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
@@ -1062,15 +1406,27 @@ private struct DhikrPreviewCard: View {
                 .padding(.horizontal, 16)
                 .environment(\.layoutDirection, .rightToLeft)
 
-            if shouldShowFullButton {
-                Button(action: onShowFull) {
-                    Text("see full")
-                        .font(AwradTheme.bodyFont(.footnote, weight: .semibold))
-                        .foregroundStyle(AwradTheme.sage)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
+            HStack(spacing: 4) {
+                if shouldShowFullButton {
+                    Button(action: onShowFull) {
+                        Text("See full")
+                            .font(AwradTheme.bodyFont(.footnote, weight: .semibold))
+                            .foregroundStyle(AwradTheme.sage)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Button(action: onAdjustText) {
+                    Text("Aa")
+                        .font(AwradTheme.bodyFont(.footnote, weight: .bold))
+                        .foregroundStyle(AwradTheme.sageDark)
+                        .frame(width: 32, height: 32)
+                        .background(AwradTheme.mint.opacity(0.55), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel(Text("Adjust text size"))
             }
         }
         .padding(.vertical, shouldShowFullButton ? 8 : 7)
@@ -1095,34 +1451,62 @@ private struct CounterIconButton: View {
 }
 
 private struct CompactAudioStatus: View {
+    let isPlaying: Bool
     let progress: Double
     let elapsedText: String
     let durationText: String
     let playbackRate: Double
-    let onStop: () -> Void
+    let onTogglePlayback: () -> Void
+    let onSetPlaybackRate: (Double) -> Void
+
+    private let playbackRates = [0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
 
     var body: some View {
-        VStack(spacing: 8) {
-            ProgressView(value: progress)
-                .tint(AwradTheme.sage)
-
-            HStack {
-                Text(elapsedText)
-                Spacer()
-                Text("\(playbackRate, specifier: "%.2g")x")
-                Spacer()
-                Text(durationText)
-                Button(action: onStop) {
-                    Image(systemName: "stop.fill")
-                        .font(AwradTheme.bodyFont(.caption, weight: .bold))
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(.plain)
-                .foregroundStyle(AwradTheme.sageDark)
-                .background(AwradTheme.mint, in: Circle())
+        HStack(spacing: 12) {
+            Button(action: onTogglePlayback) {
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                    .font(AwradTheme.bodyFont(.headline, weight: .bold))
+                    .frame(width: 44, height: 44)
             }
-            .font(AwradTheme.bodyFont(.caption).monospacedDigit())
-            .foregroundStyle(AwradTheme.subdued)
+            .buttonStyle(.plain)
+            .foregroundStyle(.white)
+            .background(AwradTheme.sage, in: Circle())
+            .accessibilityLabel(Text(isPlaying ? "Pause audio counting" : "Resume audio counting"))
+
+            VStack(spacing: 5) {
+                ProgressView(value: progress)
+                    .tint(AwradTheme.sage)
+
+                HStack {
+                    Text(elapsedText)
+                    Spacer()
+                    Text(durationText)
+                }
+                .font(AwradTheme.bodyFont(.caption2).monospacedDigit())
+                .foregroundStyle(AwradTheme.subdued)
+            }
+            .frame(maxWidth: .infinity)
+
+            Menu {
+                ForEach(playbackRates, id: \.self) { rate in
+                    Button {
+                        onSetPlaybackRate(rate)
+                    } label: {
+                        if rate == playbackRate {
+                            Label("\(rate, specifier: "%.2g")x", systemImage: "checkmark")
+                        } else {
+                            Text("\(rate, specifier: "%.2g")x")
+                        }
+                    }
+                }
+            } label: {
+                Text("\(playbackRate, specifier: "%.2g")x")
+                    .font(AwradTheme.bodyFont(.subheadline, weight: .semibold).monospacedDigit())
+                    .foregroundStyle(AwradTheme.sageDark)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .background(AwradTheme.mint.opacity(0.52), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .accessibilityLabel(Text("Playback speed"))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -1132,16 +1516,55 @@ private struct CompactAudioStatus: View {
 
 private struct FullDhikrSheet: View {
     let arabic: String
+    let textScale: Double
+    let lineSpacing: Double
+    let canCount: Bool
+    let onDecreaseTextSize: () -> Void
+    let onIncreaseTextSize: () -> Void
+    let onDecreaseLineSpacing: () -> Void
+    let onIncreaseLineSpacing: () -> Void
     let onCount: () -> Void
+    @State private var showsDisplayControls = false
 
     var body: some View {
         VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Button {
+                    withAnimation(.snappy) { showsDisplayControls.toggle() }
+                } label: {
+                    Text("Aa")
+                        .font(AwradTheme.bodyFont(.subheadline, weight: .bold))
+                        .frame(width: 44, height: 44)
+                }
+                .buttonStyle(.bordered)
+                .buttonBorderShape(.roundedRectangle(radius: 14))
+                .tint(AwradTheme.sage)
+                .accessibilityLabel(Text("Adjust text size"))
+            }
+            .padding(.horizontal, 18)
+            .padding(.top, 8)
+
+            if showsDisplayControls {
+                DhikrDisplayControls(
+                    textScale: textScale,
+                    lineSpacing: lineSpacing,
+                    onDecreaseTextSize: onDecreaseTextSize,
+                    onIncreaseTextSize: onIncreaseTextSize,
+                    onDecreaseLineSpacing: onDecreaseLineSpacing,
+                    onIncreaseLineSpacing: onIncreaseLineSpacing
+                )
+                .padding(.horizontal, 18)
+                .padding(.bottom, 8)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
             ScrollView {
                 Text(arabic)
-                    .font(AwradTheme.arabicFont(32, weight: .semibold))
+                    .font(AwradTheme.arabicFont(32 * CGFloat(textScale), weight: .semibold))
                     .foregroundStyle(AwradTheme.ink)
                     .multilineTextAlignment(.center)
-                    .lineSpacing(12)
+                    .lineSpacing(12 * CGFloat(lineSpacing))
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 24)
                     .padding(.top, 56)
@@ -1162,6 +1585,8 @@ private struct FullDhikrSheet: View {
                 }
                 .buttonStyle(.plain)
                 .modifier(GlassControlModifier(cornerRadius: 16, tint: AwradTheme.sage))
+                .disabled(!canCount)
+                .opacity(canCount ? 1 : 0.48)
 
                 Text("Tap to increment")
                     .font(AwradTheme.bodyFont(.subheadline))
@@ -1176,58 +1601,261 @@ private struct FullDhikrSheet: View {
     }
 }
 
+private struct DhikrDisplaySettingsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let arabic: String
+    let textScale: Double
+    let lineSpacing: Double
+    let onDecreaseTextSize: () -> Void
+    let onIncreaseTextSize: () -> Void
+    let onDecreaseLineSpacing: () -> Void
+    let onIncreaseLineSpacing: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                Text("Adjust the Dhikr text size and line spacing. Your choice is saved for every counter.")
+                    .font(AwradTheme.bodyFont(.subheadline))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                ScrollView {
+                    Text(arabic)
+                        .font(AwradTheme.arabicFont(28 * CGFloat(textScale), weight: .semibold))
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(10 * CGFloat(lineSpacing))
+                        .frame(maxWidth: .infinity)
+                        .padding(20)
+                        .environment(\.layoutDirection, .rightToLeft)
+                }
+                .frame(maxHeight: 180)
+                .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+                DhikrDisplayControls(
+                    textScale: textScale,
+                    lineSpacing: lineSpacing,
+                    onDecreaseTextSize: onDecreaseTextSize,
+                    onIncreaseTextSize: onIncreaseTextSize,
+                    onDecreaseLineSpacing: onDecreaseLineSpacing,
+                    onIncreaseLineSpacing: onIncreaseLineSpacing
+                )
+
+                Spacer(minLength: 0)
+            }
+            .padding(20)
+            .background(AwradTheme.background)
+            .navigationTitle("Text display")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+private struct DhikrDisplayControls: View {
+    let textScale: Double
+    let lineSpacing: Double
+    let onDecreaseTextSize: () -> Void
+    let onIncreaseTextSize: () -> Void
+    let onDecreaseLineSpacing: () -> Void
+    let onIncreaseLineSpacing: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            controlRow(
+                title: "Text size",
+                value: textScale,
+                lowerBound: countingDhikrTextScales.first ?? 0.85,
+                upperBound: countingDhikrTextScales.last ?? 1.3,
+                decreaseLabel: "Decrease text size",
+                increaseLabel: "Increase text size",
+                onDecrease: onDecreaseTextSize,
+                onIncrease: onIncreaseTextSize
+            )
+            Divider()
+            controlRow(
+                title: "Line spacing",
+                value: lineSpacing,
+                lowerBound: countingDhikrLineSpacings.first ?? 0.9,
+                upperBound: countingDhikrLineSpacings.last ?? 1.3,
+                decreaseLabel: "Decrease line spacing",
+                increaseLabel: "Increase line spacing",
+                onDecrease: onDecreaseLineSpacing,
+                onIncrease: onIncreaseLineSpacing
+            )
+        }
+        .padding(.horizontal, 14)
+        .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(AwradTheme.sage.opacity(0.16), lineWidth: 1)
+        )
+    }
+
+    private func controlRow(
+        title: LocalizedStringKey,
+        value: Double,
+        lowerBound: Double,
+        upperBound: Double,
+        decreaseLabel: LocalizedStringKey,
+        increaseLabel: LocalizedStringKey,
+        onDecrease: @escaping () -> Void,
+        onIncrease: @escaping () -> Void
+    ) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                Text("\(Int((value * 100).rounded()))%")
+                    .font(AwradTheme.bodyFont(.caption).monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button(action: onDecrease) {
+                Image(systemName: "minus")
+                    .frame(width: 32, height: 32)
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
+            .disabled(value <= lowerBound + 0.01)
+            .accessibilityLabel(Text(decreaseLabel))
+
+            Button(action: onIncrease) {
+                Image(systemName: "plus")
+                    .frame(width: 32, height: 32)
+            }
+            .buttonStyle(.bordered)
+            .buttonBorderShape(.circle)
+            .disabled(value >= upperBound - 0.01)
+            .accessibilityLabel(Text(increaseLabel))
+        }
+        .frame(minHeight: 62)
+        .tint(AwradTheme.sage)
+    }
+}
+
+private let countingDhikrTextScales: [Double] = [0.85, 1, 1.15, 1.3]
+private let countingDhikrLineSpacings: [Double] = [0.9, 1, 1.15, 1.3]
+
+private func steppedDisplayValue(_ current: Double, values: [Double], increasing: Bool) -> Double {
+    if increasing {
+        return values.first(where: { $0 > current + 0.01 }) ?? values.last ?? current
+    }
+    return values.last(where: { $0 < current - 0.01 }) ?? values.first ?? current
+}
+
 private struct CountCircleButton: View {
     let isEnabled: Bool
+    let primaryProgress: Double?
+    let minimumProgress: Double?
+    let countText: String
+    let targetText: String?
     let onCount: () -> Void
 
     var body: some View {
         GeometryReader { proxy in
             let buttonSize = max(0, min(proxy.size.width, proxy.size.height))
-            Button(action: onCount) {
-                Text("COUNT")
-                    .font(AwradTheme.bodyFont(.headline, weight: .bold))
-                    .tracking(2)
-                    .foregroundStyle(.white)
-                    .frame(width: buttonSize, height: buttonSize)
-                    .modifier(GlassCircleControlModifier(tint: AwradTheme.sage))
-                    .opacity(isEnabled ? 1 : 0.45)
-                    .coachAnchor("tap")
+            ZStack {
+                if let primaryProgress {
+                    Circle()
+                        .stroke(AwradTheme.mint.opacity(0.42), lineWidth: 9)
+                    Circle()
+                        .trim(from: 0, to: min(max(primaryProgress, 0), 1))
+                        .stroke(AwradTheme.gold, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .animation(.easeOut(duration: 0.24), value: primaryProgress)
+                }
+
+                if let minimumProgress {
+                    Circle()
+                        .inset(by: 15)
+                        .stroke(AwradTheme.sage.opacity(0.16), lineWidth: 8)
+                    Circle()
+                        .inset(by: 15)
+                        .trim(from: 0, to: min(max(minimumProgress, 0), 1))
+                        .stroke(AwradTheme.sage, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .animation(.easeOut(duration: 0.24), value: minimumProgress)
+                }
+
+                Button(action: onCount) {
+                    VStack(spacing: 2) {
+                        Text(countText)
+                            .font(AwradTheme.bodyFont(64, weight: .bold))
+                            .monospacedDigit()
+                        if let targetText {
+                            Text(targetText)
+                                .font(AwradTheme.bodyFont(28, weight: .semibold))
+                                .monospacedDigit()
+                        }
+                    }
+                    .foregroundStyle(AwradTheme.ink)
+                        .frame(
+                            width: max(buttonSize - (minimumProgress == nil ? 26 : 54), 0),
+                            height: max(buttonSize - (minimumProgress == nil ? 26 : 54), 0)
+                        )
+                        .modifier(GlassCircleControlModifier(tint: AwradTheme.mint.opacity(0.72)))
+                        .opacity(isEnabled ? 1 : 0.45)
+                        .coachAnchor("tap")
+                }
+                .buttonStyle(.plain)
+                .disabled(!isEnabled)
+                .accessibilityLabel(Text("Count"))
             }
-            .buttonStyle(.plain)
-            .disabled(!isEnabled)
+            .frame(width: buttonSize, height: buttonSize)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-            .accessibilityLabel(Text("Count"))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.bottom, 24)
     }
 }
 
+private struct TargetReachedCapCard: View {
+    let onAllowPastTarget: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Target reached")
+                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                .foregroundStyle(AwradTheme.sageDark)
+            Text("Counting is paused because this goal stops at its target.")
+                .font(AwradTheme.bodyFont(.caption))
+                .foregroundStyle(.secondary)
+            Button("Allow counting past target", action: onAllowPastTarget)
+                .font(AwradTheme.bodyFont(.caption, weight: .semibold))
+                .frame(minHeight: 44)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AwradTheme.mint.opacity(0.34), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
 private struct GlassSurfaceModifier: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let cornerRadius: CGFloat
     let tint: Color
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        if #available(iOS 26.0, *) {
-            content
-                .background(tint.opacity(0.18), in: shape)
-                .glassEffect(.regular.tint(tint), in: shape)
-        } else {
-            content
-                .background(.ultraThinMaterial, in: shape)
-                .overlay(shape.stroke(AwradTheme.sage.opacity(0.18), lineWidth: 1))
-        }
+        content
+            .background(reduceTransparency ? AnyShapeStyle(AwradTheme.surface) : AnyShapeStyle(.ultraThinMaterial), in: shape)
+            .overlay(shape.stroke(AwradTheme.sage.opacity(0.18), lineWidth: 1))
     }
 }
 
 private struct GlassControlModifier: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let cornerRadius: CGFloat
     var tint: Color = AwradTheme.mint.opacity(0.50)
 
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, *), !reduceTransparency {
             content
                 .background(tint.opacity(0.76), in: shape)
                 .glassEffect(.regular.tint(tint).interactive(true), in: shape)
@@ -1240,10 +1868,11 @@ private struct GlassControlModifier: ViewModifier {
 }
 
 private struct GlassCircleControlModifier: ViewModifier {
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     let tint: Color
 
     func body(content: Content) -> some View {
-        if #available(iOS 26.0, *) {
+        if #available(iOS 26.0, *), !reduceTransparency {
             content
                 .background(tint.opacity(0.84), in: Circle())
                 .glassEffect(.regular.tint(tint).interactive(true), in: Circle())

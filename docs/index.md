@@ -14,6 +14,9 @@ This is the navigation layer for repository knowledge. Keep the root [`AGENTS.md
 | Durable facts and gaps | [`MEMORY.md`](../MEMORY.md) |
 | Decisions and compatibility choices | [`DECISIONS.md`](../DECISIONS.md) |
 | Progress model v1 schemas and fixtures | [`contracts/progress-model/v1/`](../contracts/progress-model/v1/) |
+| Bundled Wird model v1 and generated identities | [`contracts/wird-model/v1/`](../contracts/wird-model/v1/) |
+| iOS–Android parity delivery ledger | [`ios-android-parity-ledger.md`](ios-android-parity-ledger.md) |
+| iOS parity runtime/debugger review | [`ios-parity-debugger-review.md`](ios-parity-debugger-review.md) |
 
 ## Project guides
 
