@@ -457,6 +457,7 @@ struct WirdPartEditorView: View {
             DhikrPickerView(dhikrs: dhikrs, language: language) { dhikr in
                 part.segments.append(segment(from: dhikr))
             }
+            .awradSheetStyle()
         }
     }
 

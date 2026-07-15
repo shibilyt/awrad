@@ -1472,14 +1472,17 @@ final class AwradStore {
     func applyDebugLaunchStateIfNeeded(arguments: [String] = ProcessInfo.processInfo.arguments) -> Bool {
         let argumentSet = Set(arguments)
         guard argumentSet.contains(Self.debugResetStateArgument) ||
-                argumentSet.contains(Self.debugSeedQAStateArgument) else {
+                argumentSet.contains(Self.debugSeedQAStateArgument) ||
+                argumentSet.contains(Self.debugSeedGoalCardQAStateArgument) else {
             return true
         }
 
         let previous = captureMutationState()
         seedDefaults()
 
-        if argumentSet.contains(Self.debugSeedQAStateArgument) {
+        if argumentSet.contains(Self.debugSeedGoalCardQAStateArgument) {
+            seedGoalCardQAComparisonState()
+        } else if argumentSet.contains(Self.debugSeedQAStateArgument) {
             seedQAComparisonState()
         }
 
@@ -1509,8 +1512,67 @@ final class AwradStore {
         )
     }
 
+    /// Mirrors the representative Android Goals-screen fixture for visual parity checks.
+    private func seedGoalCardQAComparisonState() {
+        preferences.userName = "Awrad Goal Card QA"
+        preferences.isOnboarded = true
+        preferences.appLanguage = .english
+        preferences.calendarSystem = .gregorian
+        preferences.dayReset = .midnight
+
+        func dhikrID(_ catalogKey: String) -> AwradID? {
+            dhikrs.first(where: { $0.catalogKey == catalogKey })?.id
+        }
+
+        if let allahID = dhikrID("asma-ul-husna-allah") {
+            _ = createConfiguredGoal(
+                dhikrID: allahID,
+                targetPolicy: .perDueDate,
+                recurrence: GoalRecurrence(frequency: .daily),
+                slots: [GoalSlot(slotType: .anytime, targetCount: 100)],
+                countPolicy: CountPolicy(targetCount: 100)
+            )
+        }
+
+        if let malikID = dhikrID("asma-ul-husna-al-malik"),
+           let malik = createConfiguredGoal(
+               dhikrID: malikID,
+               targetPolicy: .perDueDate,
+               recurrence: GoalRecurrence(frequency: .daily),
+               slots: [GoalSlot(slotType: .anytime, targetCount: 100, minimumCount: 33)],
+               countPolicy: CountPolicy(minimumCount: 33, targetCount: 100)
+           ) {
+            _ = addCount(goalID: malik.id, amount: 37)
+        }
+
+        if let isthighfar = createConfiguredGoal(
+            dhikrID: BuiltInDhikrRegistry.isthighfar.id,
+            targetPolicy: .perDueDate,
+            recurrence: GoalRecurrence(frequency: .daily),
+            slots: [GoalSlot(slotType: .anytime, targetCount: 70)],
+            countPolicy: CountPolicy(targetCount: 70)
+        ) {
+            _ = addCount(goalID: isthighfar.id, amount: 70)
+        }
+
+        if let quddusID = dhikrID("asma-ul-husna-al-quddus") {
+            _ = createConfiguredGoal(
+                dhikrID: quddusID,
+                targetPolicy: .perDueDate,
+                recurrence: GoalRecurrence(
+                    frequency: .monthly,
+                    calendar: .gregorian,
+                    monthDays: [1]
+                ),
+                slots: [GoalSlot(slotType: .anytime, targetCount: 1_000)],
+                countPolicy: CountPolicy(targetCount: 1_000)
+            )
+        }
+    }
+
     static let debugResetStateArgument = "--awrad-reset-state"
     static let debugSeedQAStateArgument = "--awrad-seed-qa-state"
+    static let debugSeedGoalCardQAStateArgument = "--awrad-seed-goal-card-qa-state"
 #endif
 
     /// Value-semantic copy of every facade field a persisted mutation may

@@ -1541,6 +1541,46 @@ struct AwradDomainTests {
         #expect(store.count(for: store.goal(id: goal.id)!) == 15)
     }
 
+    @Test func audioCountingLoopUsesCapBehaviorAfterReachingTarget() async throws {
+        let (store, dhikrID) = try await makeCapStore()
+        let allowGoal = try #require(store.createConfiguredGoal(
+            dhikrID: dhikrID,
+            targetPolicy: .perDueDate,
+            recurrence: GoalRecurrence(frequency: .daily),
+            slots: [GoalSlot(slotType: .anytime, targetCount: 1)],
+            countPolicy: CountPolicy(capBehavior: .allowOverTarget)
+        ))
+        let allowSlotID = try #require(allowGoal.activeSlots.first?.id)
+        let allowResult = store.applyCount(goalID: allowGoal.id, slotID: allowSlotID)
+        let updatedAllowGoal = try #require(store.goal(id: allowGoal.id))
+
+        #expect(store.remaining(for: updatedAllowGoal, slotID: allowSlotID) == 0)
+        #expect(AudioCountingLoopPolicy.shouldContinue(
+            appliedDelta: allowResult.appliedDelta,
+            goal: updatedAllowGoal,
+            slotID: allowSlotID,
+            store: store
+        ))
+
+        let blockedGoal = try #require(store.createConfiguredGoal(
+            dhikrID: dhikrID,
+            targetPolicy: .perDueDate,
+            recurrence: GoalRecurrence(frequency: .daily),
+            slots: [GoalSlot(slotType: .anytime, targetCount: 1)],
+            countPolicy: CountPolicy(capBehavior: .blockAtTarget)
+        ))
+        let blockedSlotID = try #require(blockedGoal.activeSlots.first?.id)
+        let blockedResult = store.applyCount(goalID: blockedGoal.id, slotID: blockedSlotID)
+        let updatedBlockedGoal = try #require(store.goal(id: blockedGoal.id))
+
+        #expect(!AudioCountingLoopPolicy.shouldContinue(
+            appliedDelta: blockedResult.appliedDelta,
+            goal: updatedBlockedGoal,
+            slotID: blockedSlotID,
+            store: store
+        ))
+    }
+
     @Test func warnOverTargetSignalsOnceWhenCrossingTarget() async throws {
         let (store, dhikrID) = try await makeCapStore()
         let goal = try #require(store.createConfiguredGoal(

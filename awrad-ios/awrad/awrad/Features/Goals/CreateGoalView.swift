@@ -82,6 +82,7 @@ struct CreateGoalView: View {
                     }
                 }
             }
+            .awradSheetStyle()
         }
         .alert("Couldn’t create goal", isPresented: Binding(
             get: { saveError != nil },
@@ -1668,6 +1669,7 @@ private struct AdvancedTimeSlotRows: View {
                 AdvancedTimeSlotEditorSheet(slot: binding)
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
+                    .awradSheetStyle()
             }
         }
     }
@@ -2199,6 +2201,7 @@ private struct AdvancedPickerRow<Selection: Hashable, Content: View>: View {
             }
             .presentationDetents([.fraction(0.7), .large])
             .presentationDragIndicator(.visible)
+            .awradSheetStyle()
             .onChange(of: selection) { _, _ in isPresented = false }
         }
     }
@@ -2849,6 +2852,7 @@ private struct WeekdaySelectRow: View {
             }
             .presentationDetents([.fraction(0.7), .large])
             .presentationDragIndicator(.visible)
+            .awradSheetStyle()
         }
     }
 

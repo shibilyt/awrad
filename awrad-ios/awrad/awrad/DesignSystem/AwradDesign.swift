@@ -5,6 +5,7 @@ import UIKit
 #endif
 
 enum AwradTheme {
+    static let sheetCornerRadius: CGFloat = 36
     static let sage = dynamicColor(light: 0x4B7C5A, dark: 0x6B9E7A)
     static let sageDark = dynamicColor(light: 0x2E5C3D, dark: 0xD4E8DA)
     static let mint = dynamicColor(light: 0xD4E8DA, dark: 0x2E5C3D)
@@ -326,6 +327,10 @@ struct SectionHeader: View {
 }
 
 extension View {
+    func awradSheetStyle(cornerRadius: CGFloat = AwradTheme.sheetCornerRadius) -> some View {
+        presentationCornerRadius(cornerRadius)
+    }
+
     func awradPrimaryButton() -> some View {
         buttonStyle(.borderedProminent)
             .tint(AwradTheme.sage)

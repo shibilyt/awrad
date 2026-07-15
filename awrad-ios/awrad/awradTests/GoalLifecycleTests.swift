@@ -4,6 +4,159 @@ import Testing
 
 @MainActor
 struct GoalLifecycleTests {
+    @Test func goalCardPresentationMatchesAndroidRingStates() {
+        let active = Goal(
+            dhikrID: UUID(),
+            slots: [GoalSlot(slotType: .anytime, targetCount: 100, minimumCount: 33)],
+            countPolicy: CountPolicy(minimumCount: 33, targetCount: 100),
+            startDate: "2026-07-15"
+        )
+        let inProgress = GoalCardPresentation(
+            goal: active,
+            currentCount: 37,
+            progress: 0.37,
+            streakDays: 1,
+            language: .english
+        )
+
+        #expect(inProgress.usesProgressRing)
+        #expect(inProgress.centerContent == .count("37"))
+        #expect(abs((inProgress.minimumProgress ?? 0) - 0.33) < 0.0001)
+        #expect(inProgress.targetTag == "Minimum 33, target 100 daily")
+        #expect(inProgress.streakTag == "1 day streak")
+
+        let reached = GoalCardPresentation(
+            goal: active,
+            currentCount: 100,
+            progress: 1,
+            streakDays: 8,
+            language: .english
+        )
+        #expect(reached.centerContent == .checkmark)
+        #expect(reached.streakTag == "🔥 8 day streak")
+
+        var completed = active
+        completed.completedAt = Date()
+        completed.isActive = false
+        completed.totalCompletedCount = 12_345
+        let completedPresentation = GoalCardPresentation(
+            goal: completed,
+            currentCount: 0,
+            progress: 0,
+            streakDays: 0,
+            language: .english
+        )
+        #expect(completedPresentation.progress == 1)
+        #expect(completedPresentation.displayCount == 12_345)
+        #expect(completedPresentation.centerContent == .count("12345"))
+        #expect(completedPresentation.lifecycleTag == "Completed")
+    }
+
+    @Test func goalCardPresentationMatchesTargetlessPrayerAndCompactCountStates() {
+        let targetless = Goal(
+            dhikrID: UUID(),
+            targetPolicy: .none,
+            slots: [GoalSlot(slotType: .anytime)],
+            startDate: "2026-07-15"
+        )
+        let targetlessPresentation = GoalCardPresentation(
+            goal: targetless,
+            currentCount: 125_000,
+            progress: 0,
+            streakDays: 0,
+            language: .english
+        )
+        #expect(!targetlessPresentation.usesProgressRing)
+        #expect(targetlessPresentation.targetTag == "No target")
+        #expect(targetlessPresentation.centerContent == .count("125K"))
+        #expect(GoalCardPresentation.compactCount(100_000, language: .english) == "100000")
+
+        let sharedPrayer = Goal(
+            dhikrID: UUID(),
+            slots: [
+                GoalSlot(slotType: .prayer, targetCount: 33, prayerName: .fajr),
+                GoalSlot(slotType: .prayer, targetCount: 33, prayerName: .isha),
+            ],
+            startDate: "2026-07-15"
+        )
+        #expect(presentation(sharedPrayer).targetTag == "33 per prayer")
+
+        var mixedPrayer = sharedPrayer
+        mixedPrayer.slots[1].targetCount = 100
+        #expect(presentation(mixedPrayer).targetTag == "Per-prayer targets")
+
+        var singlePrayer = sharedPrayer
+        singlePrayer.slots = [singlePrayer.slots[0]]
+        #expect(presentation(singlePrayer).targetTag == "33 times")
+    }
+
+    @Test func goalCardPresentationMatchesAndroidCountRuleCopy() {
+        let target = 100
+        func goal(
+            policy: TargetPolicy = .perDueDate,
+            minimum: Int? = nil,
+            maximum: Int? = nil,
+            cap: CapBehavior = .allowOverTarget,
+            frequency: RecurrenceFrequency = .daily
+        ) -> Goal {
+            Goal(
+                dhikrID: UUID(),
+                targetPolicy: policy,
+                recurrence: GoalRecurrence(frequency: frequency),
+                slots: [GoalSlot(slotType: .anytime, targetCount: target)],
+                countPolicy: CountPolicy(
+                    minimumCount: minimum,
+                    targetCount: target,
+                    maximumCount: maximum,
+                    capBehavior: cap
+                ),
+                startDate: "2026-07-15"
+            )
+        }
+
+        #expect(presentation(goal()).targetTag == "100 times daily")
+        #expect(presentation(goal(minimum: 100)).targetTag == "Minimum 100 daily")
+        #expect(presentation(goal(minimum: 33)).targetTag == "Minimum 33, target 100 daily")
+        #expect(presentation(goal(maximum: 100, cap: .blockAtMaximum)).targetTag == "Exactly 100 daily")
+        #expect(presentation(goal(minimum: 33, maximum: 200, cap: .blockAtMaximum)).targetTag == "Minimum 33, target 100, maximum 200 daily")
+        #expect(presentation(goal(policy: .cumulativeTotal, frequency: .weekly)).targetTag == "100 total")
+        #expect(presentation(goal(policy: .periodTotal, frequency: .monthly)).targetTag == "100 per period")
+    }
+
+    @Test func goalCardPresentationMatchesAndroidScheduleCopy() {
+        func scheduled(_ recurrence: GoalRecurrence) -> Goal {
+            Goal(
+                dhikrID: UUID(),
+                recurrence: recurrence,
+                slots: [GoalSlot(slotType: .anytime, targetCount: 10)],
+                startDate: "2026-07-15"
+            )
+        }
+
+        #expect(presentation(scheduled(GoalRecurrence(frequency: .daily))).scheduleTag == nil)
+        #expect(presentation(scheduled(GoalRecurrence(frequency: .weekly))).scheduleTag == "Weekly")
+        #expect(presentation(scheduled(GoalRecurrence(frequency: .weekly, weekdays: [1, 3]))).scheduleTag == "Every Mon, Wed")
+        #expect(presentation(scheduled(GoalRecurrence(frequency: .monthly, calendar: .gregorian))).scheduleTag == "Gregorian monthly")
+        #expect(presentation(scheduled(GoalRecurrence(frequency: .interval, intervalDays: 3))).scheduleTag == "Every 3 days")
+        #expect(presentation(scheduled(GoalRecurrence(frequency: .yearly))).scheduleTag == "Yearly")
+        #expect(presentation(scheduled(GoalRecurrence(frequency: .season))).scheduleTag == "Seasonal")
+        #expect(presentation(scheduled(GoalRecurrence(frequency: .specificDates))).scheduleTag == "Specific dates")
+    }
+
+    @Test func goalCardRoutesMatchAndroidSections() {
+        let active = makeGoal(startDate: "2026-07-15")
+        var paused = active
+        paused.isActive = false
+        var completed = paused
+        completed.completedAt = Date()
+
+        #expect(GoalPortfolioSectionKind.today.primaryRoute(for: active) == .counting(goalID: active.id, slotID: nil))
+        #expect(GoalPortfolioSectionKind.upcoming.primaryRoute(for: active) == .counting(goalID: active.id, slotID: nil))
+        #expect(GoalPortfolioSectionKind.completed.primaryRoute(for: completed) == .counting(goalID: completed.id, slotID: nil))
+        #expect(GoalPortfolioSectionKind.other.primaryRoute(for: active) == .counting(goalID: active.id, slotID: nil))
+        #expect(GoalPortfolioSectionKind.other.primaryRoute(for: paused) == .goalDetail(goalID: paused.id))
+    }
+
     @Test func portfolioMatchesAndroidFourSectionOrdering() {
         let todayKey = "2026-07-15"
         let unfinished = makeGoal(startDate: todayKey)
@@ -269,6 +422,16 @@ struct GoalLifecycleTests {
             recurrence: recurrence,
             slots: [GoalSlot(slotType: .anytime, targetCount: 10)],
             startDate: startDate
+        )
+    }
+
+    private func presentation(_ goal: Goal) -> GoalCardPresentation {
+        GoalCardPresentation(
+            goal: goal,
+            currentCount: 0,
+            progress: 0,
+            streakDays: 0,
+            language: .english
         )
     }
 }

@@ -98,5 +98,6 @@ private struct AwradBottomSheetPickerList<Value: Hashable & Identifiable>: View 
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
+        .awradSheetStyle()
     }
 }

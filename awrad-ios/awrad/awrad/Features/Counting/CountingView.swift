@@ -12,8 +12,22 @@ private enum CounterSheet: String, Identifiable {
     case history
     case fullDhikr
     case textDisplay
+    case playbackSpeed
 
     var id: String { rawValue }
+}
+
+enum AudioCountingLoopPolicy {
+    @MainActor
+    static func shouldContinue(
+        appliedDelta: Int64,
+        goal: Goal,
+        slotID: AwradID,
+        store: AwradStore
+    ) -> Bool {
+        guard appliedDelta > 0 else { return false }
+        return store.canIncrement(goal, slotID: slotID)
+    }
 }
 
 private enum CountAdjustmentMode: String, CaseIterable, Identifiable {
@@ -172,7 +186,7 @@ struct CountingView: View {
                                         services.audio.play()
                                     }
                                 },
-                                onSetPlaybackRate: { services.audio.playbackRate = $0 }
+                                onShowPlaybackSpeed: { activeSheet = .playbackSpeed }
                             )
                         }
                     }
@@ -235,8 +249,9 @@ struct CountingView: View {
             if showCoachMarks { coachAudioProgress += 1 }
         }
         .sheet(item: $activeSheet) { sheet in
-            if let goal {
-                switch sheet {
+            Group {
+                if let goal {
+                    switch sheet {
                 case .sessionTarget:
                     SessionTargetSheet(
                         target: $sessionDraftTarget,
@@ -299,10 +314,21 @@ struct CountingView: View {
                         .presentationDetents([.medium, .large])
                         .presentationDragIndicator(.visible)
                     }
+                case .playbackSpeed:
+                    PlaybackSpeedSheet(
+                        playbackRate: Binding(
+                            get: { services.audio.playbackRate },
+                            set: { services.audio.playbackRate = $0 }
+                        )
+                    )
+                    .presentationDetents([.height(316)])
+                    .presentationDragIndicator(.visible)
+                    }
+                } else {
+                    EmptyStateView(symbol: "target", title: "Goal Missing", message: "This goal is no longer available.")
                 }
-            } else {
-                EmptyStateView(symbol: "target", title: "Goal Missing", message: "This goal is no longer available.")
             }
+            .awradSheetStyle()
         }
         .alert("Audio Error", isPresented: $showAudioError) {
             Button("OK") {
@@ -1026,25 +1052,23 @@ struct CountingView: View {
                         }
 
                         if services.audio.isCounting(goalID: goal.id) {
-                            VStack(alignment: .leading, spacing: 6) {
+                            Button {
+                                activeSheet = .playbackSpeed
+                            } label: {
                                 HStack {
                                     Label("Speed", systemImage: "speedometer")
                                     Spacer()
-                                    Text("\(services.audio.playbackRate, specifier: "%.2g")x")
+                                    Text(formatPlaybackSpeed(services.audio.playbackRate))
                                         .monospacedDigit()
+                                    Image(systemName: "chevron.up")
+                                        .font(AwradTheme.bodyFont(.caption2, weight: .bold))
                                 }
                                 .font(AwradTheme.bodyFont(.caption, weight: .semibold))
                                 .foregroundStyle(.secondary)
-                                Slider(
-                                    value: Binding(
-                                        get: { services.audio.playbackRate },
-                                        set: { services.audio.playbackRate = $0 }
-                                    ),
-                                    in: 0.75...3,
-                                    step: 0.25
-                                )
-                                .tint(AwradTheme.sage)
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(Text("Playback Speed"))
+                            .accessibilityValue(Text(formatPlaybackSpeed(services.audio.playbackRate)))
                         }
                     }
                 }
@@ -1096,13 +1120,15 @@ struct CountingView: View {
                 return false
             }
             let actualDelta = store.addCount(goalID: goalID, slotID: slotID, amount: Int64(dhikr.audioCountPerPlay))
-            if currentGoal.targetPolicy == .none {
-                return true
-            }
-            guard actualDelta > 0, let updatedGoal = store.goal(id: goalID) else {
+            guard let updatedGoal = store.goal(id: goalID) else {
                 return false
             }
-            return store.remaining(for: updatedGoal, slotID: slotID) > 0
+            return AudioCountingLoopPolicy.shouldContinue(
+                appliedDelta: actualDelta,
+                goal: updatedGoal,
+                slotID: slotID,
+                store: store
+            )
         }
     }
 
@@ -1457,9 +1483,7 @@ private struct CompactAudioStatus: View {
     let durationText: String
     let playbackRate: Double
     let onTogglePlayback: () -> Void
-    let onSetPlaybackRate: (Double) -> Void
-
-    private let playbackRates = [0.75, 1.0, 1.25, 1.5, 2.0, 2.5, 3.0]
+    let onShowPlaybackSpeed: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
@@ -1487,30 +1511,150 @@ private struct CompactAudioStatus: View {
             }
             .frame(maxWidth: .infinity)
 
-            Menu {
-                ForEach(playbackRates, id: \.self) { rate in
-                    Button {
-                        onSetPlaybackRate(rate)
-                    } label: {
-                        if rate == playbackRate {
-                            Label("\(rate, specifier: "%.2g")x", systemImage: "checkmark")
-                        } else {
-                            Text("\(rate, specifier: "%.2g")x")
-                        }
-                    }
-                }
-            } label: {
-                Text("\(playbackRate, specifier: "%.2g")x")
+            Button(action: onShowPlaybackSpeed) {
+                Text(formatPlaybackSpeed(playbackRate))
                     .font(AwradTheme.bodyFont(.subheadline, weight: .semibold).monospacedDigit())
                     .foregroundStyle(AwradTheme.sageDark)
                     .frame(minWidth: 44, minHeight: 44)
                     .background(AwradTheme.mint.opacity(0.52), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
-            .accessibilityLabel(Text("Playback speed"))
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Playback Speed"))
+            .accessibilityValue(Text(formatPlaybackSpeed(playbackRate)))
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+    }
+}
+
+private struct PlaybackSpeedSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var playbackRate: Double
+
+    private let minimumRate = 0.75
+    private let maximumRate = 3.0
+    private let rateStep = 0.05
+    private let presets = [0.75, 1.0, 1.25, 1.5, 1.75, 2.0]
+
+    var body: some View {
+        VStack(spacing: 20) {
+            HStack {
+                Text("Playback Speed")
+                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                Spacer()
+                Button("Done") { dismiss() }
+                    .font(AwradTheme.bodyFont(.body, weight: .semibold))
+                    .foregroundStyle(AwradTheme.sageDark)
+            }
+            .padding(.horizontal, 20)
+
+            Text(formatPlaybackSpeed(playbackRate))
+                .font(AwradTheme.bodyFont(38, weight: .bold).monospacedDigit())
+                .foregroundStyle(AwradTheme.sageDark)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(presets, id: \.self) { preset in
+                        let isSelected = speedsMatch(playbackRate, preset)
+                        Button {
+                            playbackRate = preset
+                        } label: {
+                            Text(formatPlaybackSpeed(preset))
+                                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold).monospacedDigit())
+                                .foregroundStyle(isSelected ? .white : AwradTheme.sageDark)
+                                .padding(.horizontal, 14)
+                                .frame(minHeight: 40)
+                                .background(
+                                    isSelected ? AwradTheme.sage : AwradTheme.mint.opacity(0.52),
+                                    in: Capsule()
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(isSelected ? .isSelected : [])
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+
+            HStack(spacing: 12) {
+                speedAdjustmentButton(
+                    symbol: "minus",
+                    accessibilityLabel: "Decrease playback speed",
+                    adjustment: -rateStep,
+                    disabled: playbackRate <= minimumRate
+                )
+
+                Slider(
+                    value: $playbackRate,
+                    in: minimumRate...maximumRate,
+                    step: rateStep
+                )
+                .tint(AwradTheme.sage)
+                .accessibilityLabel(Text("Playback Speed"))
+                .accessibilityValue(Text(formatPlaybackSpeed(playbackRate)))
+
+                speedAdjustmentButton(
+                    symbol: "plus",
+                    accessibilityLabel: "Increase playback speed",
+                    adjustment: rateStep,
+                    disabled: playbackRate >= maximumRate
+                )
+            }
+            .padding(.horizontal, 20)
+
+            HStack {
+                Text(formatPlaybackSpeed(minimumRate))
+                Spacer()
+                Text(formatPlaybackSpeed(maximumRate))
+            }
+            .font(AwradTheme.bodyFont(.caption).monospacedDigit())
+            .foregroundStyle(AwradTheme.subdued)
+            .padding(.horizontal, 68)
+        }
+        .padding(.top, 28)
+        .padding(.bottom, 20)
+    }
+
+    private func speedAdjustmentButton(
+        symbol: String,
+        accessibilityLabel: LocalizedStringKey,
+        adjustment: Double,
+        disabled: Bool
+    ) -> some View {
+        Button {
+            playbackRate = steppedRate(playbackRate + adjustment)
+        } label: {
+            Image(systemName: symbol)
+                .font(AwradTheme.bodyFont(.headline, weight: .bold))
+                .frame(width: 44, height: 44)
+        }
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.circle)
+        .tint(AwradTheme.sage)
+        .disabled(disabled)
+        .accessibilityLabel(Text(accessibilityLabel))
+    }
+
+    private func steppedRate(_ value: Double) -> Double {
+        let clamped = min(max(value, minimumRate), maximumRate)
+        return (clamped / rateStep).rounded() * rateStep
+    }
+
+    private func speedsMatch(_ lhs: Double, _ rhs: Double) -> Bool {
+        abs(lhs - rhs) < 0.001
+    }
+}
+
+private func formatPlaybackSpeed(_ speed: Double) -> String {
+    let hundredths = Int((speed * 100).rounded())
+    switch hundredths {
+    case let value where value.isMultiple(of: 100):
+        return "\(value / 100)×"
+    case let value where value.isMultiple(of: 10):
+        return String(format: "%.1f×", speed)
+    default:
+        return String(format: "%.2f×", speed)
     }
 }
 

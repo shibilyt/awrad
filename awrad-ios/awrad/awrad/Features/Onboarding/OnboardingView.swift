@@ -88,6 +88,7 @@ struct OnboardingView: View {
             onboardingAuthSheet
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
+                .awradSheetStyle()
         }
         .alert("Couldn’t schedule reminders", isPresented: Binding(
             get: { reminderSchedulingError != nil },

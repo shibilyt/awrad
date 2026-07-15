@@ -1188,11 +1188,15 @@ final class AudioSessionService {
     /// Monotonic counter incremented each time a counting-mode play completes a loop.
     /// Used by the counter coach-mark to gate the audio step.
     private(set) var countingPlayTick = 0
-    var playbackRate: Double = 1 {
-        didSet {
-            playbackRate = playbackRate.clamped(to: 0.75...3)
+    private var playbackRateStorage: Double = 1
+    var playbackRate: Double {
+        get { playbackRateStorage }
+        set {
+            let clampedRate = newValue.clamped(to: 0.75...3)
+            guard clampedRate != playbackRateStorage else { return }
+            playbackRateStorage = clampedRate
             guard isPlaying else { return }
-            player?.rate = Float(playbackRate)
+            player?.rate = Float(clampedRate)
             updateNowPlayingInfo(force: true)
         }
     }

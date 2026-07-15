@@ -260,6 +260,7 @@ struct WirdDetailView: View {
                 showReminderPicker = false
             }
             .presentationDetents([.medium])
+            .awradSheetStyle()
         }
         .alert("Couldn’t update reminder", isPresented: Binding(
             get: { reminderError != nil },

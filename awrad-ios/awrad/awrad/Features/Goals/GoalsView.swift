@@ -87,10 +87,10 @@ struct GoalsView: View {
                 if store.goals.isEmpty {
                     emptyState
                 } else {
-                    GoalSection(title: "Today", goals: sections.today, tab: .goals)
-                    GoalSection(title: "Upcoming", goals: sections.upcoming, tab: .goals)
-                    GoalSection(title: "Completed", goals: sections.completed, tab: .goals)
-                    GoalSection(title: "Other", goals: sections.other, tab: .goals)
+                    GoalSection(title: "Today's goals", kind: .today, goals: sections.today, tab: .goals)
+                    GoalSection(title: "Upcoming goals", kind: .upcoming, goals: sections.upcoming, tab: .goals)
+                    GoalSection(title: "Completed goals", kind: .completed, goals: sections.completed, tab: .goals)
+                    GoalSection(title: "Other goals", kind: .other, goals: sections.other, tab: .goals)
                 }
             }
             .padding(20)
@@ -145,6 +145,7 @@ struct GoalsView: View {
 
 private struct GoalSection: View {
     let title: LocalizedStringKey
+    let kind: GoalPortfolioSectionKind
     let goals: [Goal]
     let tab: AppTab
 
@@ -152,11 +153,11 @@ private struct GoalSection: View {
         if !goals.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 Text(title)
-                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                    .font(AwradTheme.bodyFont(.title2, weight: .semibold))
                     .foregroundStyle(AwradTheme.ink)
                 VStack(spacing: 12) {
                     ForEach(goals) { goal in
-                        GoalSummaryRow(goal: goal, tab: tab)
+                        GoalSummaryRow(goal: goal, tab: tab, section: kind)
                     }
                 }
             }

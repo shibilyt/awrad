@@ -6,6 +6,19 @@ import Testing
 @MainActor
 @Suite("Audio session lifecycle")
 struct AudioSessionServiceTests {
+    @Test func changingPlaybackSpeedClampsWithoutRecursing() {
+        let service = AudioSessionService(notificationCenter: NotificationCenter())
+
+        service.playbackRate = 1.55
+        #expect(service.playbackRate == 1.55)
+
+        service.playbackRate = 4
+        #expect(service.playbackRate == 3)
+
+        service.playbackRate = 0.5
+        #expect(service.playbackRate == 0.75)
+    }
+
     @Test func interruptionBeginningPausesPlayback() {
         let notification = Notification(
             name: AVAudioSession.interruptionNotification,
