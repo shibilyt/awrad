@@ -92,30 +92,13 @@ extension SharedAwradWidgetProjection {
               let focus,
               focus.canIncrement,
               focus.goalUpdatedAt != nil,
-              let slotType = focus.slotType,
-              let policy = focus.slotCountingPolicy else {
+              focus.slotType != nil,
+              focus.slotCountingPolicy != nil else {
             return false
         }
-
-        let status: SharedAwradSlotTimeStatus
-        if slotType == "anytime" {
-            status = .anytime
-        } else if let start = focus.slotWindowStart,
-                  let end = focus.slotWindowEnd,
-                  start < end {
-            status = now < start ? .upcoming : (now < end ? .active : .ended)
-        } else {
-            status = .unknown
-        }
-
-        switch policy {
-        case "strictActiveOnly":
-            return status == .active || status == .anytime
-        case "silentFlexible", "warnAndAllow":
-            return true
-        default:
-            return false
-        }
+        // Availability is checked by the mutation and may request confirmation;
+        // the legacy policy must not disable the widget button pre-emptively.
+        return true
     }
 
     private static func dateKey(for date: Date, calendar: Calendar) -> String {
@@ -147,7 +130,10 @@ enum SharedAwradRelationalNoApplyReason: Equatable {
     case slotUnavailable
     case capReached
     case blockedBySlotTiming(SharedAwradSlotTimeStatus)
-    case requiresSlotTimingConfirmation(SharedAwradSlotTimeStatus)
+    case requiresCountingAvailabilityConfirmation(
+        reasons: Set<CountingAvailabilityReason>,
+        key: CountingAvailabilityConfirmationKey
+    )
 }
 
 enum SharedAwradWidgetMutationError: LocalizedError, Equatable {
@@ -183,7 +169,10 @@ struct SharedAwradRelationalMutationOutcome: Equatable {
 enum SharedAwradWidgetMutationResult: Equatable {
     case relational(appliedDelta: Int64)
     case legacyFallback(appliedDelta: Int64)
-    case requiresConfirmation(SharedAwradSlotTimeStatus)
+    case requiresConfirmation(
+        reasons: Set<CountingAvailabilityReason>,
+        key: CountingAvailabilityConfirmationKey
+    )
     case unavailable(SharedAwradRelationalNoApplyReason)
     case notApplied
 
@@ -212,7 +201,7 @@ enum SharedAwradRelationalWidgetMutation {
 
     @MainActor
     static func makeAppGroupContainer(appGroupID: String) throws -> ModelContainer {
-        let schema = SwiftData.Schema(versionedSchema: AwradSchemaV1.self)
+        let schema = SwiftData.Schema(versionedSchema: AwradSchemaV2.self)
         let configuration = ModelConfiguration(
             storeName,
             schema: schema,
@@ -236,7 +225,7 @@ enum SharedAwradRelationalWidgetMutation {
         in container: ModelContainer,
         projection: inout SharedAwradWidgetProjection,
         now: Date = Date(),
-        outsideSlotConfirmed: Bool = false
+        availabilityConfirmed: Bool = false
     ) throws -> SharedAwradRelationalMutationOutcome {
         guard var focus = projection.focus else {
             return SharedAwradRelationalMutationOutcome(
@@ -334,10 +323,17 @@ enum SharedAwradRelationalWidgetMutation {
                     noApplyReason = .goalInactive
                     return
                 }
-                guard isDue(goal: goal, recurrence: recurrence, dateKey: dateKey) else {
+                guard !isExpired(goal: goal, dateKey: dateKey) else {
                     refreshedCanIncrement = false
                     noApplyReason = .goalNotDue
                     return
+                }
+
+                var availabilityReasons: Set<CountingAvailabilityReason> = []
+                if dateKey < goal.startDate {
+                    availabilityReasons.insert(.futureStart)
+                } else if !isScheduledOn(recurrence: recurrence, dateKey: dateKey) {
+                    availabilityReasons.insert(.offRecurrence)
                 }
 
                 let slotStatus = slotTimeStatus(
@@ -346,20 +342,28 @@ enum SharedAwradRelationalWidgetMutation {
                     dateKey: dateKey,
                     now: now
                 )
-                switch slotTimingDecision(
-                    status: slotStatus,
-                    policy: goal.slotCountingPolicy,
-                    outsideSlotConfirmed: outsideSlotConfirmed
-                ) {
-                case .allow:
+                switch slotStatus {
+                case .active, .anytime:
                     break
-                case .block(let status):
+                case .upcoming:
+                    availabilityReasons.insert(.slotUpcoming)
+                case .ended:
+                    availabilityReasons.insert(.slotEnded)
+                case .unknown:
+                    availabilityReasons.insert(.slotTimingUnavailable)
+                }
+                if !availabilityReasons.isEmpty, !availabilityConfirmed {
+                    let key = CountingAvailabilityConfirmationKey(
+                        goalID: focus.goalID,
+                        slotID: focus.slotID,
+                        effectiveDateKey: dateKey,
+                        reasons: availabilityReasons
+                    )
                     shouldRefreshProjection = false
-                    noApplyReason = .blockedBySlotTiming(status)
-                    return
-                case .requireConfirmation(let status):
-                    shouldRefreshProjection = false
-                    noApplyReason = .requiresSlotTimingConfirmation(status)
+                    noApplyReason = .requiresCountingAvailabilityConfirmation(
+                        reasons: availabilityReasons,
+                        key: key
+                    )
                     return
                 }
 
@@ -371,7 +375,9 @@ enum SharedAwradRelationalWidgetMutation {
 
                 let (updatedCount, overflow) = current.addingReportingOverflow(1)
                 guard !overflow else { throw SharedAwradWidgetMutationError.countOverflow }
-                let entryDateKey = goal.targetPolicy == "cumulativeTotal" ? "all-time" : dateKey
+                // Legacy undated totals remain readable, but new widget taps
+                // always keep the effective date required by progress-sync.
+                let entryDateKey = dateKey
                 let semanticKey = Schema.CountEntryRecord.makeSemanticKey(
                     goalID: goalID,
                     dateKey: entryDateKey,
@@ -394,6 +400,18 @@ enum SharedAwradRelationalWidgetMutation {
                     entries.append(entry)
                 }
                 appliedDelta = 1
+
+                // The widget and app commit through the same App Group
+                // transaction, so a successful tap always has a durable sync
+                // operation before the extension returns.
+                try SharedProgressSyncPersistence.recordPositiveCount(
+                    goalID: goalID,
+                    slotID: slot.id,
+                    localDate: entryDateKey,
+                    amount: 1,
+                    now: now,
+                    in: context
+                )
 
                 goal.totalCompletedCount = try sum(entries.map(\.count))
                 goal.updatedAt = now
@@ -531,29 +549,25 @@ enum SharedAwradRelationalWidgetMutation {
         )
     }
 
-    private enum SlotTimingDecision {
-        case allow
-        case block(SharedAwradSlotTimeStatus)
-        case requireConfirmation(SharedAwradSlotTimeStatus)
-    }
-
-    private static func isDue(
+    private static func isExpired(
         goal: Schema.GoalRecord,
-        recurrence: RecurrenceContext,
         dateKey: String
     ) -> Bool {
         guard let date = dateFormatter.date(from: dateKey),
-              let start = dateFormatter.date(from: goal.startDate),
-              date >= start else {
-            return false
-        }
-        if let endDate = goal.endDate.flatMap(dateFormatter.date), date > endDate {
-            return false
-        }
+              let start = dateFormatter.date(from: goal.startDate) else { return false }
+        if let endDate = goal.endDate.flatMap(dateFormatter.date), date > endDate { return true }
         if let durationDays = goal.durationDays {
             let elapsed = Calendar.current.dateComponents([.day], from: start, to: date).day ?? 0
-            if elapsed >= durationDays { return false }
+            if elapsed >= durationDays { return true }
         }
+        return false
+    }
+
+    private static func isScheduledOn(
+        recurrence: RecurrenceContext,
+        dateKey: String
+    ) -> Bool {
+        guard let date = dateFormatter.date(from: dateKey) else { return true }
         return isScheduled(recurrence: recurrence, date: date)
     }
 
@@ -604,28 +618,6 @@ enum SharedAwradRelationalWidgetMutation {
         if now < start { return .upcoming }
         if now < end { return .active }
         return .ended
-    }
-
-    private static func slotTimingDecision(
-        status: SharedAwradSlotTimeStatus,
-        policy: String,
-        outsideSlotConfirmed: Bool
-    ) -> SlotTimingDecision {
-        switch policy {
-        case "strictActiveOnly":
-            return status == .active || status == .anytime ? .allow : .block(status)
-        case "silentFlexible":
-            return .allow
-        case "warnAndAllow":
-            switch status {
-            case .upcoming, .ended:
-                return outsideSlotConfirmed ? .allow : .requireConfirmation(status)
-            case .active, .anytime, .unknown:
-                return .allow
-            }
-        default:
-            return .block(.unknown)
-        }
     }
 
     private static func canIncrement(current: Int64, cap: CapContext) -> Bool {
@@ -871,7 +863,7 @@ enum SharedAwradWidgetMutationCoordinator {
         displaySnapshotKey: String,
         defaults: UserDefaults,
         now: Date = Date(),
-        outsideSlotConfirmed: Bool = false
+        availabilityConfirmed: Bool = false
     ) throws -> SharedAwradWidgetMutationResult {
         let migrationIsComplete = defaults.string(
             forKey: SharedAwradRelationalWidgetMutation.migrationChecksumKey
@@ -888,10 +880,19 @@ enum SharedAwradWidgetMutationCoordinator {
                 in: container,
                 projection: &projection,
                 now: now,
-                outsideSlotConfirmed: outsideSlotConfirmed
+                availabilityConfirmed: availabilityConfirmed
             )
-            if case .requiresSlotTimingConfirmation(let status) = outcome.noApplyReason {
-                return .requiresConfirmation(status)
+            if case let .requiresCountingAvailabilityConfirmation(reasons, key) = outcome.noApplyReason {
+                if CountingAvailabilityConfirmationStore.isConfirmed(key, defaults: defaults) {
+                    return try incrementFocusCount(
+                        appGroupID: appGroupID,
+                        displaySnapshotKey: displaySnapshotKey,
+                        defaults: defaults,
+                        now: now,
+                        availabilityConfirmed: true
+                    )
+                }
+                return .requiresConfirmation(reasons: reasons, key: key)
             }
             if outcome.matchedGoal {
                 switch outcome.noApplyReason {

@@ -13,3 +13,6 @@
 "widget_count_before_slot_confirmation" = "This slot has not started yet. Add one count anyway?";
 "widget_count_after_slot_confirmation" = "This slot has ended. Add one count anyway?";
 "widget_count_outside_slot_confirmation" = "Add one count outside the selected slot time?";
+"widget_count_future_goal_confirmation" = "This goal has not started yet. Add one count anyway?";
+"widget_count_off_day_confirmation" = "This goal is not scheduled today. Add one count anyway?";
+"widget_count_multiple_reasons_confirmation" = "This goal is not due now and its selected slot is unavailable. Add one count anyway?";

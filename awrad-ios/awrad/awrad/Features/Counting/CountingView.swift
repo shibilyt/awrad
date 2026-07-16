@@ -46,21 +46,16 @@ private enum CountAdjustmentMode: String, CaseIterable, Identifiable {
     }
 }
 
-private enum PendingSlotTimingAction {
+private enum PendingCountingAvailabilityAction {
     case count(Int)
     case startAudio
     case resumeAudio
 }
 
-private struct SlotTimingConfirmationKey: Hashable {
-    var slotID: AwradID
-    var dateKey: String
-    var status: SlotTimeStatus
-}
-
-private struct PendingSlotTimingConfirmation {
-    var key: SlotTimingConfirmationKey
-    var action: PendingSlotTimingAction
+private struct PendingCountingAvailabilityConfirmation {
+    var reasons: Set<CountingAvailabilityReason>
+    var key: CountingAvailabilityConfirmationKey
+    var action: PendingCountingAvailabilityAction
 }
 
 struct CountingView: View {
@@ -90,8 +85,7 @@ struct CountingView: View {
     @State private var didShowCompletion = false
     @State private var showCompletionDialog = false
     @State private var showAllowPastTargetConfirmation = false
-    @State private var pendingSlotTimingConfirmation: PendingSlotTimingConfirmation?
-    @State private var confirmedSlotTimingWindows: Set<SlotTimingConfirmationKey> = []
+    @State private var pendingCountingAvailability: PendingCountingAvailabilityConfirmation?
     // Phase 4: first-run coach marks
     @State private var showCoachMarks = false
     @State private var coachTapProgress = 0
@@ -182,7 +176,7 @@ struct CountingView: View {
                                     if services.audio.isPlaying {
                                         services.audio.pause()
                                     } else if let slotID = activeCountSlotID(for: goal),
-                                              authorizeSlotTimingAction(.resumeAudio, goal: goal, slotID: slotID) {
+                                              authorizeCountingAvailability(.resumeAudio, goal: goal, slotID: slotID) {
                                         services.audio.play()
                                     }
                                 },
@@ -354,18 +348,18 @@ struct CountingView: View {
             }
         }
         .confirmationDialog(
-            Text(slotTimingConfirmationTitle),
-            isPresented: pendingSlotTimingConfirmationBinding,
+            Text(countingAvailabilityConfirmationTitle),
+            isPresented: pendingCountingAvailabilityBinding,
             titleVisibility: .visible
         ) {
-            Button(AwradLocalizer.localized("Count anyway", language: language)) {
-                confirmPendingSlotTimingAction()
+            Button(countingAvailabilityConfirmationActionTitle) {
+                confirmPendingCountingAvailability()
             }
             Button("Cancel", role: .cancel) {
-                pendingSlotTimingConfirmation = nil
+                pendingCountingAvailability = nil
             }
         } message: {
-            Text(slotTimingConfirmationMessage)
+            Text(countingAvailabilityConfirmationMessage)
         }
         .alert(
             Text(AwradLocalizer.localized("goal_reached_title", language: language)),
@@ -689,11 +683,12 @@ struct CountingView: View {
     }
 
     private func add(_ amount: Int) {
-        guard amount > 0, let goal, let slotID = activeCountSlotID(for: goal) else {
+        guard amount > 0, let goal else {
             performCount(amount)
             return
         }
-        guard authorizeSlotTimingAction(.count(amount), goal: goal, slotID: slotID) else {
+        let slotID = activeCountSlotID(for: goal)
+        guard authorizeCountingAvailability(.count(amount), goal: goal, slotID: slotID) else {
             return
         }
         performCount(amount, slotID: slotID)
@@ -727,73 +722,78 @@ struct CountingView: View {
         evaluateCompletion()
     }
 
-    private func authorizeSlotTimingAction(
-        _ action: PendingSlotTimingAction,
+    private func authorizeCountingAvailability(
+        _ action: PendingCountingAvailabilityAction,
         goal: Goal,
-        slotID: AwradID,
+        slotID: AwradID?,
         now: Date = Date()
     ) -> Bool {
-        guard let slot = goal.activeSlots.first(where: { $0.id == slotID }) else {
-            return false
+        let slot: GoalSlot?
+        if let slotID {
+            guard let selectedSlot = goal.activeSlots.first(where: { $0.id == slotID }) else {
+                return false
+            }
+            slot = selectedSlot
+        } else {
+            slot = nil
         }
-        switch slotTimingDecision(for: slot, goal: goal, now: now) {
-        case .allow:
-            return true
-        case .block:
-            presentCap("slot_count_blocked_outside_active")
-            return false
-        case let .requireConfirmation(status):
-            let key = SlotTimingConfirmationKey(
-                slotID: slotID,
-                dateKey: store.todayKey,
-                status: status
-            )
-            guard !confirmedSlotTimingWindows.contains(key) else { return true }
-            pendingSlotTimingConfirmation = PendingSlotTimingConfirmation(key: key, action: action)
-            return false
-        }
-    }
-
-    private func slotTimingDecision(
-        for slot: GoalSlot,
-        goal: Goal,
-        now: Date = Date()
-    ) -> SlotCountingDecision {
-        SlotStatusCalculator.countingDecision(
-            for: slot,
-            policy: goal.slotCountingPolicy,
-            occurrenceDateKey: store.todayKey,
+        switch CountingAvailabilityCalculator.decision(
+            for: goal,
+            slot: slot,
+            effectiveDateKey: store.todayKey,
             preferences: store.preferences,
             now: now,
             prayerTimeService: services.prayerTimes
-        )
+        ) {
+        case .allow:
+            return true
+        case let .hardBlock(reason):
+            presentCap(hardBlockMessageKey(for: reason))
+            return false
+        case let .requiresConfirmation(reasons, key):
+            guard !CountingAvailabilityConfirmationStore.isConfirmed(key) else { return true }
+            pendingCountingAvailability = PendingCountingAvailabilityConfirmation(
+                reasons: reasons,
+                key: key,
+                action: action
+            )
+            return false
+        }
     }
 
-    private var pendingSlotTimingConfirmationBinding: Binding<Bool> {
+    private var pendingCountingAvailabilityBinding: Binding<Bool> {
         Binding(
-            get: { pendingSlotTimingConfirmation != nil },
-            set: { if !$0 { pendingSlotTimingConfirmation = nil } }
+            get: { pendingCountingAvailability != nil },
+            set: { if !$0 { pendingCountingAvailability = nil } }
         )
     }
 
-    private var slotTimingConfirmationTitle: String {
-        let key = pendingSlotTimingConfirmation?.key.status == .ended
-            ? "slot_ended_title"
-            : "Counting outside slot"
+    private var countingAvailabilityConfirmationTitle: String {
+        AwradLocalizer.localized("counting_availability_title", language: language)
+    }
+
+    private var countingAvailabilityConfirmationActionTitle: String {
+        let key = switch pendingCountingAvailability?.action {
+        case .startAudio: "counting_availability_start_anyway"
+        case .resumeAudio: "counting_availability_resume_anyway"
+        case .count, .none: "counting_availability_count_anyway"
+        }
         return AwradLocalizer.localized(key, language: language)
     }
 
-    private var slotTimingConfirmationMessage: String {
-        let key = pendingSlotTimingConfirmation?.key.status == .ended
-            ? "slot_ended_body"
-            : "slot_count_blocked_outside_active"
-        return AwradLocalizer.localized(key, language: language)
+    private var countingAvailabilityConfirmationMessage: String {
+        guard let pending = pendingCountingAvailability else { return "" }
+        let messages = pending.reasons.sorted { $0.rawValue < $1.rawValue }.map {
+            countingAvailabilityMessage(for: $0, key: pending.key)
+        }
+        return messages.map { "• \($0)" }.joined(separator: "\n")
     }
 
-    private func confirmPendingSlotTimingAction() {
-        guard let pending = pendingSlotTimingConfirmation else { return }
-        pendingSlotTimingConfirmation = nil
-        confirmedSlotTimingWindows.insert(pending.key)
+    private func confirmPendingCountingAvailability() {
+        guard let pending = pendingCountingAvailability else { return }
+        pendingCountingAvailability = nil
+        CountingAvailabilityConfirmationStore.confirm(pending.key)
+        guard store.todayKey == pending.key.effectiveDateKey else { return }
 
         switch pending.action {
         case let .count(amount):
@@ -801,13 +801,15 @@ struct CountingView: View {
         case .startAudio:
             guard let goal = store.goal(id: goalID),
                   let dhikr = store.dhikr(id: goal.dhikrID),
-                  activeCountSlotID(for: goal) == pending.key.slotID else {
+                  let slotID = pending.key.slotID,
+                  activeCountSlotID(for: goal) == slotID else {
                 return
             }
-            startAudioCounting(goal: goal, dhikr: dhikr, slotID: pending.key.slotID)
+            startAudioCounting(goal: goal, dhikr: dhikr, slotID: slotID)
         case .resumeAudio:
             guard let goal = store.goal(id: goalID),
-                  activeCountSlotID(for: goal) == pending.key.slotID,
+                  let slotID = pending.key.slotID,
+                  activeCountSlotID(for: goal) == slotID,
                   services.audio.isCounting(goalID: goal.id) else {
                 return
             }
@@ -815,9 +817,69 @@ struct CountingView: View {
         }
     }
 
+    private func hardBlockMessageKey(for reason: CountingHardBlockReason) -> LocalizedStringKey {
+        switch reason {
+        case .paused: "counting_hard_block_paused"
+        case .completed: "counting_hard_block_completed"
+        case .expired: "counting_hard_block_expired"
+        case .durationEnded: "counting_hard_block_duration_ended"
+        }
+    }
+
+    private func countingAvailabilityMessage(
+        for reason: CountingAvailabilityReason,
+        key: CountingAvailabilityConfirmationKey
+    ) -> String {
+        switch reason {
+        case .futureStart:
+            return AwradLocalizer.format(
+                "counting_availability_future_start",
+                language: language,
+                goal?.startDate ?? ""
+            )
+        case .offRecurrence:
+            return AwradLocalizer.localized("counting_availability_off_recurrence", language: language)
+        case .slotUpcoming, .slotEnded:
+            guard let goal,
+                  let slotID = key.slotID,
+                  let slot = goal.activeSlots.first(where: { $0.id == slotID }) else {
+                return AwradLocalizer.localized(
+                    reason == .slotUpcoming
+                        ? "counting_availability_slot_upcoming_unknown"
+                        : "counting_availability_slot_ended_unknown",
+                    language: language
+                )
+            }
+            let timing = SlotStatusCalculator.timing(
+                for: slot,
+                occurrenceDateKey: key.effectiveDateKey,
+                preferences: store.preferences,
+                prayerTimeService: services.prayerTimes
+            )
+            let date = reason == .slotUpcoming ? timing.startsAt : timing.endsAt
+            guard let date else {
+                return AwradLocalizer.localized(
+                    reason == .slotUpcoming
+                        ? "counting_availability_slot_upcoming_unknown"
+                        : "counting_availability_slot_ended_unknown",
+                    language: language
+                )
+            }
+            return AwradLocalizer.format(
+                reason == .slotUpcoming
+                    ? "counting_availability_slot_upcoming"
+                    : "counting_availability_slot_ended",
+                language: language,
+                AwradLocalizer.formattedTime(date, language: language)
+            )
+        case .slotTimingUnavailable:
+            return AwradLocalizer.localized("counting_availability_slot_unknown", language: language)
+        }
+    }
+
     private var coachSteps: [CountingCoachStep] {
-        guard let goal else { return [] }
-        var steps: [CountingCoachStep] = [
+        guard goal != nil else { return [] }
+        return [
             CountingCoachStep(
                 id: "tap",
                 titleKey: "coach_tap_title",
@@ -826,42 +888,8 @@ struct CountingView: View {
                 targetID: "tap",
                 circle: true,
                 gate: .taps(required: 3)
-            ),
-            CountingCoachStep(
-                id: "progress",
-                titleKey: "coach_progress_title",
-                bodyKey: "coach_progress_body",
-                symbol: "chart.bar.fill",
-                targetID: "progress"
-            ),
-            CountingCoachStep(
-                id: "session",
-                titleKey: "coach_session_title",
-                bodyKey: "coach_session_body",
-                symbol: "scope",
-                targetID: "session"
-            ),
-            CountingCoachStep(
-                id: "history",
-                titleKey: "coach_history_title",
-                bodyKey: "coach_history_body",
-                symbol: "clock.arrow.circlepath",
-                targetID: "history"
             )
         ]
-        if let dhikr = store.dhikr(id: goal.dhikrID), services.audio.sourceURL(for: dhikr) != nil {
-            steps.append(
-                CountingCoachStep(
-                    id: "audio",
-                    titleKey: "coach_audio_title",
-                    bodyKey: "coach_audio_body",
-                    symbol: "waveform",
-                    targetID: "audio",
-                    gate: .audioPlays(required: 3)
-                )
-            )
-        }
-        return steps
     }
 
     private func finishCoachMarks() {
@@ -1096,7 +1124,7 @@ struct CountingView: View {
             if services.audio.isPlaying {
                 services.audio.pause()
             } else if let slotID = activeCountSlotID(for: goal),
-                      authorizeSlotTimingAction(.resumeAudio, goal: goal, slotID: slotID) {
+                      authorizeCountingAvailability(.resumeAudio, goal: goal, slotID: slotID) {
                 services.audio.play()
             }
             return
@@ -1106,7 +1134,7 @@ struct CountingView: View {
 
     private func startAudioCountingIfAllowed(goal: Goal, dhikr: Dhikr) {
         guard let slotID = activeCountSlotID(for: goal),
-              authorizeSlotTimingAction(.startAudio, goal: goal, slotID: slotID) else {
+              authorizeCountingAvailability(.startAudio, goal: goal, slotID: slotID) else {
             return
         }
         startAudioCounting(goal: goal, dhikr: dhikr, slotID: slotID)
@@ -1116,7 +1144,7 @@ struct CountingView: View {
         let goalID = goal.id
         services.audio.startCounting(for: dhikr, goalID: goalID, title: dhikr.displayTitle(language: language)) { [store] in
             guard let currentGoal = store.goal(id: goalID),
-                  authorizeSlotTimingAction(.startAudio, goal: currentGoal, slotID: slotID) else {
+                  authorizeCountingAvailability(.startAudio, goal: currentGoal, slotID: slotID) else {
                 return false
             }
             let actualDelta = store.addCount(goalID: goalID, slotID: slotID, amount: Int64(dhikr.audioCountPerPlay))
@@ -1137,10 +1165,10 @@ struct CountingView: View {
               services.audio.isPlaying,
               let goal = store.goal(id: goalID),
               let slotID = activeCountSlotID(for: goal),
-              !authorizeSlotTimingAction(.startAudio, goal: goal, slotID: slotID, now: now) else {
+              !authorizeCountingAvailability(.resumeAudio, goal: goal, slotID: slotID, now: now) else {
             return
         }
-        services.audio.stop()
+        services.audio.pause()
     }
 
     private func stopAudioIfTargetReached() {
@@ -1948,6 +1976,7 @@ private struct CountCircleButton: View {
                 .buttonStyle(.plain)
                 .disabled(!isEnabled)
                 .accessibilityLabel(Text("Count"))
+                .accessibilityValue(Text(targetText.map { "\(countText) \($0)" } ?? countText))
             }
             .frame(width: buttonSize, height: buttonSize)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)

@@ -9,7 +9,7 @@ struct BehaviorParityTests {
         let document = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         let required = [
             "effective_day", "recurrence", "count_limits", "slot_selection",
-            "streaks", "reminder_plans", "wird_cadence",
+            "counting_availability", "streaks", "reminder_plans", "wird_cadence",
         ]
         for section in required {
             #expect((document[section] as? [[String: Any]])?.isEmpty == false)

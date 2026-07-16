@@ -11,7 +11,7 @@ enum AwradPersistenceContainerFactory {
         guard FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) != nil else {
             throw AwradPersistenceError.appGroupUnavailable(appGroupID)
         }
-        let schema = Schema(versionedSchema: AwradSchemaV1.self)
+        let schema = Schema(versionedSchema: AwradSchemaV2.self)
         let configuration = ModelConfiguration(
             storeName,
             schema: schema,
@@ -28,7 +28,7 @@ enum AwradPersistenceContainerFactory {
     }
 
     static func makeInMemoryContainer() throws -> ModelContainer {
-        let schema = Schema(versionedSchema: AwradSchemaV1.self)
+        let schema = Schema(versionedSchema: AwradSchemaV2.self)
         let configuration = ModelConfiguration(
             "\(storeName)-Tests-\(UUID().uuidString)",
             schema: schema,
@@ -49,7 +49,7 @@ enum AwradPersistenceContainerFactory {
             at: storeURL.deletingLastPathComponent(),
             withIntermediateDirectories: true
         )
-        let schema = Schema(versionedSchema: AwradSchemaV1.self)
+        let schema = Schema(versionedSchema: AwradSchemaV2.self)
         let configuration = ModelConfiguration(
             storeName,
             schema: schema,

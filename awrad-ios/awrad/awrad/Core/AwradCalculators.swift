@@ -308,6 +308,77 @@ enum GoalProgressCalculator {
     }()
 }
 
+enum CountingAvailabilityCalculator {
+    static func decision(
+        for goal: Goal,
+        slot: GoalSlot?,
+        effectiveDateKey: String,
+        preferences: UserPreferences,
+        now: Date = Date(),
+        prayerTimeService: PrayerTimeService = PrayerTimeService()
+    ) -> CountingAvailabilityDecision {
+        if goal.completedAt != nil {
+            return .hardBlock(.completed)
+        }
+        if !goal.isActive {
+            return .hardBlock(.paused)
+        }
+        if let endDate = goal.endDate, effectiveDateKey > endDate {
+            return .hardBlock(.expired)
+        }
+        if let durationDays = goal.durationDays,
+           let start = dateFormatter.date(from: goal.startDate),
+           let effectiveDate = dateFormatter.date(from: effectiveDateKey),
+           Calendar.current.dateComponents([.day], from: start, to: effectiveDate).day ?? 0 >= durationDays {
+            return .hardBlock(.durationEnded)
+        }
+
+        var reasons: Set<CountingAvailabilityReason> = []
+        if effectiveDateKey < goal.startDate {
+            reasons.insert(.futureStart)
+        } else if !GoalProgressCalculator.isScheduled(goal, on: effectiveDateKey) {
+            reasons.insert(.offRecurrence)
+        }
+
+        if let slot, slot.slotType != .anytime {
+            let status = SlotStatusCalculator.timing(
+                for: slot,
+                occurrenceDateKey: effectiveDateKey,
+                preferences: preferences,
+                now: now,
+                prayerTimeService: prayerTimeService
+            ).status
+            switch status {
+            case .active, .anytime:
+                break
+            case .upcoming:
+                reasons.insert(.slotUpcoming)
+            case .ended:
+                reasons.insert(.slotEnded)
+            case .unknown:
+                reasons.insert(.slotTimingUnavailable)
+            }
+        }
+
+        guard !reasons.isEmpty else { return .allow }
+        let key = CountingAvailabilityConfirmationKey(
+            goalID: goal.id,
+            slotID: slot?.id,
+            effectiveDateKey: effectiveDateKey,
+            reasons: reasons
+        )
+        return .requiresConfirmation(reasons: reasons, key: key)
+    }
+
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+}
+
 struct SlotTimingResolution: Equatable {
     var startsAt: Date? = nil
     var endsAt: Date? = nil
@@ -430,23 +501,12 @@ enum SlotStatusCalculator {
         status: SlotTimeStatus,
         policy: SlotCountingPolicy
     ) -> SlotCountingDecision {
-        switch policy {
-        case .silentFlexible:
+        _ = policy // Retained on disk and on the wire for compatibility only.
+        switch status {
+        case .active, .anytime:
             return .allow
-        case .strictActiveOnly:
-            switch status {
-            case .active, .anytime:
-                return .allow
-            case .upcoming, .ended, .unknown:
-                return .block(status)
-            }
-        case .warnAndAllow:
-            switch status {
-            case .upcoming, .ended:
-                return .requireConfirmation(status)
-            case .active, .anytime, .unknown:
-                return .allow
-            }
+        case .upcoming, .ended, .unknown:
+            return .requireConfirmation(status)
         }
     }
 

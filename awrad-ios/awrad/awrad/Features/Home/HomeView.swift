@@ -114,6 +114,7 @@ struct HomeView: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .accessibilityIdentifier("home.continueGoal")
             } else {
                 Button {
                     router.navigate(.createGoal(dhikrID: nil), in: .home)
@@ -205,16 +206,15 @@ struct HomeView: View {
                                 )
                             }
                         } label: {
-                            HomeWirdCard(
+                            WirdCatalogCard(
                                 wird: wird,
-                                todayPart: todayPart,
                                 summary: summary,
-                                streak: streak,
-                                language: language,
-                                imageName: homeImages.wirdImageName
+                                isActiveToday: todayPart != nil,
+                                language: language
                             )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("home.wird.\(wird.id.uuidString)")
                         .accessibilityLabel(Text(homeWirdAccessibilityLabel(
                             wird: wird,
                             todayPart: todayPart,
@@ -229,7 +229,7 @@ struct HomeView: View {
 
     private var featuredCollectionsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            SectionHeader(title: "Featured collections", subtitle: nil, actionTitle: "View All") {
+            SectionHeader(title: "Featured dhikr collections", subtitle: nil, actionTitle: "View All") {
                 store.selectedTab = .library
                 router.popToRoot(in: .library)
             }
@@ -368,18 +368,15 @@ enum HomeParityModel {
 private struct HomeImageSet {
     let featuredImageName: String
     let goalsImageName: String
-    let wirdImageName: String
 
     init(now: Date, prayerSummary: PrayerTimesSummary?, isDarkTheme: Bool) {
         let isNight = Self.isNight(now: now, prayerSummary: prayerSummary)
         if isDarkTheme {
             featuredImageName = isNight ? "home_featured_night" : "home_featured_dark_day"
             goalsImageName = isNight ? "home_goals_night" : "home_goals_dark_day"
-            wirdImageName = "collection_daily_essentials_dark"
         } else {
             featuredImageName = isNight ? "home_featured_light_night" : "home_featured_day"
             goalsImageName = isNight ? "home_goals_light_night" : "home_goals_day"
-            wirdImageName = "collection_daily_essentials_light"
         }
     }
 
@@ -405,7 +402,8 @@ private struct FeaturedGoalCard: View {
         ZStack {
             AwradBundleImage(name: imageName)
                 .scaledToFill()
-                .frame(maxWidth: .infinity, minHeight: 96)
+                .frame(maxWidth: .infinity)
+                .frame(height: 86)
                 .clipped()
             LinearGradient(
                 colors: [AwradTheme.surface.opacity(0.96), AwradTheme.surface.opacity(0.78), AwradTheme.surface.opacity(0.3)],
@@ -413,14 +411,14 @@ private struct FeaturedGoalCard: View {
                 endPoint: .trailing
             )
 
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 if let target {
                     HomeGoalProgressRing(
                         progress: progress,
                         count: count,
                         accessibilityTarget: target,
                         language: language,
-                        size: 54,
+                        size: 52,
                         lineWidth: 5
                     )
                 }
@@ -429,9 +427,9 @@ private struct FeaturedGoalCard: View {
                     Text(AwradLocalizer.format("Continue %@", language: language, title))
                         .font(AwradTheme.bodyFont(.headline, weight: .bold))
                         .foregroundStyle(AwradTheme.sageDark)
-                        .lineLimit(2)
+                        .lineLimit(1)
                     Text(progressText)
-                        .font(AwradTheme.bodyFont(.subheadline))
+                        .font(AwradTheme.bodyFont(.caption))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
@@ -440,12 +438,12 @@ private struct FeaturedGoalCard: View {
                 Image(systemName: "chevron.forward")
                     .font(AwradTheme.bodyFont(.headline, weight: .bold))
                     .foregroundStyle(.white)
-                    .frame(width: 38, height: 38)
+                    .frame(width: 36, height: 36)
                     .background(AwradTheme.sage, in: Circle())
             }
             .padding(.horizontal, 18)
-            .padding(.vertical, 16)
         }
+        .frame(height: 86)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("\(title), \(progressText)"))
@@ -934,104 +932,5 @@ private struct HomeGoalProgressRing: View {
             language: language,
             Int(min(max(progress, 0), 1) * 100)
         )))
-    }
-}
-
-private struct HomeWirdCard: View {
-    let wird: Wird
-    let todayPart: WirdPart?
-    let summary: WirdProgressSummary
-    let streak: Int
-    let language: AppLanguage
-    let imageName: String
-
-    var body: some View {
-        AwradCard {
-            HStack(alignment: .top, spacing: 14) {
-                AwradBundleImage(name: imageName)
-                    .scaledToFill()
-                    .frame(width: 70, height: 70)
-                    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 9) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(wird.displayName(language: language))
-                            .font(AwradTheme.bodyFont(.headline, weight: .semibold))
-                            .foregroundStyle(AwradTheme.ink)
-                            .lineLimit(2)
-                        Text(wird.displayDescription(language: language))
-                            .font(AwradTheme.bodyFont(.caption))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-
-                    if let todayPart {
-                        VStack(alignment: .leading, spacing: 7) {
-                            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                                Text(todayPart.displayTitle(language: language))
-                                    .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
-                                    .foregroundStyle(AwradTheme.ink)
-                                    .lineLimit(1)
-                                Spacer(minLength: 0)
-                                if summary.isComplete {
-                                    HomeStatusPill(title: "Complete", symbol: "checkmark.circle.fill", tint: AwradTheme.sage)
-                                }
-                            }
-
-                            if let subtitle = todayPart.displaySubtitle(language: language) {
-                                Text(subtitle)
-                                    .font(AwradTheme.bodyFont(.caption))
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-
-                            if !summary.isComplete {
-                                AwradProgressBar(value: summary.progress, height: 7)
-                            }
-                            Text(AwradLocalizer.readingProgress(
-                                completed: summary.completedItems,
-                                total: summary.totalItems,
-                                language: language
-                            ))
-                            .font(AwradTheme.bodyFont(.caption))
-                            .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    Label {
-                        Text(AwradLocalizer.wirdStreak(streak, language: language))
-                    } icon: {
-                        Image(systemName: "flame.fill")
-                    }
-                    .font(AwradTheme.bodyFont(.caption, weight: .semibold))
-                    .foregroundStyle(AwradTheme.sage)
-                }
-
-                Image(systemName: "chevron.right")
-                    .font(AwradTheme.bodyFont(.caption, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .padding(.top, 4)
-            }
-        }
-    }
-}
-
-private struct HomeStatusPill: View {
-    let title: String
-    let symbol: String
-    let tint: Color
-
-    var body: some View {
-        Label {
-            Text(LocalizedStringKey(title))
-        } icon: {
-            Image(systemName: symbol)
-        }
-        .font(AwradTheme.bodyFont(.caption2, weight: .semibold))
-        .lineLimit(1)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
-        .foregroundStyle(tint)
-        .background(tint.opacity(0.14), in: Capsule())
     }
 }

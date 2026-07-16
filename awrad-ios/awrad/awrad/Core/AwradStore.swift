@@ -27,6 +27,7 @@ final class AwradStore {
     var selectedTab: AppTab = .home
     var todayKey: String = Date().dateKey
     private(set) var widgetSnapshotRevision = 0
+    private(set) var syncRequestRevision = 0
 
     private let snapshotURL: URL
     private let encoder: JSONEncoder
@@ -959,7 +960,10 @@ final class AwradStore {
         guard let resolvedSlotID = Self.resolvedCountSlotID(for: goal, requestedSlotID: slotID) else {
             return CountApplyResult(appliedDelta: 0, capEvent: .none)
         }
-        let dateKeyForEntry = goal.targetPolicy == .cumulativeTotal ? "all-time" : todayKey
+        // `all-time` is retained only for legacy aggregate imports. New counts
+        // always keep their effective local date so the operation can be
+        // synchronized and reconciled without losing daily provenance.
+        let dateKeyForEntry = todayKey
 
         var appliedAmount = amount
         var capEvent: CountCapEvent = .none
@@ -1300,6 +1304,66 @@ final class AwradStore {
         return commitMutation(orRestore: previous)
     }
 
+    /// Commits scroll-driven reading progress as one transaction. Only countable segments whose
+    /// effective target is one may be auto-completed; repeated segments always use
+    /// `incrementSegment` so every recitation remains explicit.
+    @discardableResult
+    func recordWirdReadingAdvance(
+        wirdID: AwradID,
+        partID: AwradID,
+        occasionKey: String,
+        completedSegmentIDs: [AwradID],
+        activeSegmentID: AwradID
+    ) -> Bool {
+        guard let wird = wird(id: wirdID),
+              let part = wird.part(id: partID),
+              part.segments.contains(where: { $0.id == activeSegmentID }) else { return false }
+
+        let segmentsByID = Dictionary(uniqueKeysWithValues: part.segments.map { ($0.id, $0) })
+        var seenSegmentIDs: Set<AwradID> = []
+        let uniqueCompletedSegmentIDs = completedSegmentIDs.filter {
+            seenSegmentIDs.insert($0).inserted
+        }
+        guard uniqueCompletedSegmentIDs.allSatisfy({ segmentID in
+            guard let segment = segmentsByID[segmentID], segment.isCountable else { return false }
+            return Self.effectiveTarget(for: segment, in: part) == 1
+        }) else { return false }
+
+        let previous = captureMutationState()
+        if let index = sessionIndex(wirdID: wirdID, partID: partID, occasionKey: occasionKey) {
+            var changed = false
+            for segmentID in uniqueCompletedSegmentIDs {
+                let key = segmentID.uuidString
+                if (wirdSessions[index].segmentProgress[key] ?? 0) < 1 {
+                    wirdSessions[index].segmentProgress[key] = 1
+                    changed = true
+                }
+            }
+            if wirdSessions[index].lastSegmentID != activeSegmentID {
+                wirdSessions[index].lastSegmentID = activeSegmentID
+                changed = true
+            }
+            guard changed else { return true }
+            refreshCompletion(at: index, part: part)
+        } else {
+            let progress = Dictionary(
+                uniqueKeysWithValues: uniqueCompletedSegmentIDs.map { ($0.uuidString, 1) }
+            )
+            var created = WirdSession(
+                wirdID: wirdID,
+                partID: partID,
+                occasionKey: occasionKey,
+                dateKey: todayKey,
+                segmentProgress: progress,
+                lastSegmentID: activeSegmentID
+            )
+            created.isComplete = WirdCalculator.isComplete(part: part, session: created)
+            if created.isComplete { created.completedAt = Date() }
+            wirdSessions.append(created)
+        }
+        return commitMutation(orRestore: previous)
+    }
+
     @discardableResult
     func resetSession(wirdID: AwradID, partID: AwradID, occasionKey: String) -> Bool {
         let previous = captureMutationState()
@@ -1485,6 +1549,18 @@ final class AwradStore {
         } else if argumentSet.contains(Self.debugSeedQAStateArgument) {
             seedQAComparisonState()
         }
+        if argumentSet.contains(Self.debugSeedWirdFinalSegmentArgument) {
+            seedWirdFinalSegmentQAState()
+        }
+
+        if argumentSet.contains(Self.debugForceLightThemeArgument) {
+            preferences.colorSchemeMode = .light
+        } else if argumentSet.contains(Self.debugForceDarkThemeArgument) {
+            preferences.colorSchemeMode = .dark
+        }
+        if argumentSet.contains(Self.debugForceArabicArgument) {
+            preferences.appLanguage = .arabic
+        }
 
         refreshEffectiveDate()
         return commitMutation(orRestore: previous)
@@ -1510,6 +1586,31 @@ final class AwradStore {
             recurrence: GoalRecurrence(frequency: .daily),
             slots: [GoalSlot(slotType: .anytime, targetCount: 4_444)]
         )
+    }
+
+    private func seedWirdFinalSegmentQAState() {
+        let first = WirdSegment(kind: .dhikr, arabic: "الأول")
+        let final = WirdSegment(kind: .dhikr, arabic: "الآخر")
+        let part = WirdPart(
+            localizedTitle: ["en": "Final segment"],
+            segments: [first, final]
+        )
+        let wird = Wird(
+            slug: "ui-final-segment",
+            localizedName: ["en": "Final segment test"],
+            parts: [part]
+        )
+        wirds = [wird]
+        wirdSessions = [
+            WirdSession(
+                wirdID: wird.id,
+                partID: part.id,
+                occasionKey: "anytime",
+                dateKey: todayKey,
+                segmentProgress: [first.id.uuidString: 1],
+                lastSegmentID: final.id
+            )
+        ]
     }
 
     /// Mirrors the representative Android Goals-screen fixture for visual parity checks.
@@ -1573,6 +1674,10 @@ final class AwradStore {
     static let debugResetStateArgument = "--awrad-reset-state"
     static let debugSeedQAStateArgument = "--awrad-seed-qa-state"
     static let debugSeedGoalCardQAStateArgument = "--awrad-seed-goal-card-qa-state"
+    static let debugSeedWirdFinalSegmentArgument = "--awrad-ui-wird-final-segment"
+    static let debugForceLightThemeArgument = "--awrad-ui-force-light-theme"
+    static let debugForceDarkThemeArgument = "--awrad-ui-force-dark-theme"
+    static let debugForceArabicArgument = "--awrad-ui-force-arabic"
 #endif
 
     /// Value-semantic copy of every facade field a persisted mutation may
@@ -1741,6 +1846,7 @@ final class AwradStore {
 
     private func didCommit(using runtime: AwradPersistenceRuntime) {
         widgetSnapshotRevision &+= 1
+        syncRequestRevision &+= 1
         let legacySnapshot = AwradWidgetSnapshot.make(from: self)
         let goal = todayGoals().first
         let slot = goal?.activeSlots.sorted { $0.sortOrder < $1.sortOrder }.first {

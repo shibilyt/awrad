@@ -104,45 +104,20 @@ final class awradUITests: XCTestCase {
     }
 
     @MainActor
-    func testLibraryDetailCustomDhikrAndEditRoutes() throws {
+    func testLibraryDhikrHeaderOnlyShowsSearchAction() throws {
         let app = launchSeededApp()
         openDeepLink("awrad://library")
 
-        XCTAssertTrue(app.buttons["Create Dhikr"].waitForExistence(timeout: 4))
-        app.buttons["Create Dhikr"].tap()
-        XCTAssertTrue(app.navigationBars["Create Dhikr"].waitForExistence(timeout: 4))
+        XCTAssertTrue(app.buttons["Search dhikr"].waitForExistence(timeout: 4))
+        XCTAssertFalse(app.buttons["Create Dhikr"].exists)
 
-        let arabic = app.descendants(matching: .any)["dhikr-input-Arabic text"].firstMatch
-        XCTAssertTrue(arabic.waitForExistence(timeout: 3))
-        arabic.tap()
-        arabic.typeText("Subhanallah")
-
-        let title = app.descendants(matching: .any)["dhikr-input-Title"].firstMatch
-        title.tap()
-        title.typeText("Parity custom dhikr")
-
-        let toolbarSave = app.navigationBars["Create Dhikr"].buttons["Create Dhikr"]
-        XCTAssertTrue(toolbarSave.waitForExistence(timeout: 3))
-        XCTAssertTrue(toolbarSave.isEnabled)
-        toolbarSave.tap()
-
-        XCTAssertTrue(app.navigationBars["Parity custom dhikr"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Parity custom dhikr"].exists)
-        XCTAssertTrue(app.buttons["Dhikr actions"].exists)
-
-        app.buttons["Dhikr actions"].tap()
-        XCTAssertTrue(app.buttons["Edit Dhikr"].waitForExistence(timeout: 2))
-        app.buttons["Edit Dhikr"].tap()
-
-        XCTAssertTrue(app.navigationBars["Edit Dhikr"].waitForExistence(timeout: 4))
-        XCTAssertEqual(
-            app.descendants(matching: .any)["dhikr-input-Title"].firstMatch.value as? String,
-            "Parity custom dhikr"
-        )
-        XCTAssertEqual(
-            app.descendants(matching: .any)["dhikr-input-Arabic text"].firstMatch.value as? String,
-            "Subhanallah"
-        )
+        let dhikrsTab = app.buttons["Dhikrs"]
+        let wirdsTab = app.buttons["Wirds"]
+        XCTAssertTrue(dhikrsTab.waitForExistence(timeout: 4))
+        XCTAssertTrue(wirdsTab.exists)
+        XCTAssertTrue(dhikrsTab.isSelected)
+        wirdsTab.tap()
+        XCTAssertTrue(app.staticTexts["Dalail al-Khayrat"].waitForExistence(timeout: 5))
     }
 
     @MainActor
@@ -228,9 +203,9 @@ final class awradUITests: XCTestCase {
         let app = launchSeededApp()
         openDeepLink("awrad://library")
 
-        let wirdsSegment = app.segmentedControls.buttons["Wirds"]
-        XCTAssertTrue(wirdsSegment.waitForExistence(timeout: 4))
-        wirdsSegment.tap()
+        let wirdsTab = app.buttons["Wirds"]
+        XCTAssertTrue(wirdsTab.waitForExistence(timeout: 4))
+        wirdsTab.tap()
 
         XCTAssertTrue(app.staticTexts["Dalail al-Khayrat"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Create wird"].exists)
@@ -257,10 +232,95 @@ final class awradUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Begin recitation"].waitForExistence(timeout: 3))
         app.buttons["Begin recitation"].tap()
 
-        XCTAssertTrue(app.buttons["Reading mode"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["wird.reader.surface"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.buttons["Reading mode"].exists)
         XCTAssertTrue(
             app.buttons["Previous section"].exists || app.buttons["Next section"].exists,
             "The canonical eight-part reader must expose adjacent-part navigation"
+        )
+    }
+
+    @MainActor
+    func testWirdReaderSmokeInLightDarkAndArabicRTL() throws {
+        let configurations: [(name: String, arguments: [String], isRTL: Bool)] = [
+            ("Light", ["--awrad-ui-force-light-theme"], false),
+            ("Dark", ["--awrad-ui-force-dark-theme"], false),
+            ("Arabic RTL", ["--awrad-ui-force-light-theme", "--awrad-ui-force-arabic"], true)
+        ]
+
+        for configuration in configurations {
+            let app = openSeededWirdReader(additionalArguments: configuration.arguments)
+            let surface = app.descendants(matching: .any)["wird.reader.surface"]
+            XCTAssertTrue(surface.waitForExistence(timeout: 5), "Missing reader surface in \(configuration.name)")
+
+            let activeLine = app.descendants(matching: .any).matching(
+                NSPredicate(format: "identifier BEGINSWITH %@", "wird.reader.active.")
+            ).firstMatch
+            XCTAssertTrue(activeLine.waitForExistence(timeout: 3), "Missing active line in \(configuration.name)")
+
+            let screenshot = XCTAttachment(screenshot: app.screenshot())
+            screenshot.name = "Wird Reader - \(configuration.name)"
+            screenshot.lifetime = .keepAlways
+            add(screenshot)
+
+            if configuration.isRTL {
+                let close = app.buttons["wird.reader.close"]
+                XCTAssertTrue(close.waitForExistence(timeout: 2))
+                XCTAssertGreaterThan(close.frame.midX, app.frame.midX, "Close control should mirror in RTL")
+            }
+            app.terminate()
+        }
+    }
+
+    @MainActor
+    func testWirdReaderActiveLineAndProgressAdvanceWhenScrolling() throws {
+        let app = openSeededWirdReader(additionalArguments: ["--awrad-ui-force-light-theme"])
+        let surface = app.descendants(matching: .any)["wird.reader.surface"]
+        let position = app.staticTexts["wird.reader.position"]
+        XCTAssertTrue(surface.waitForExistence(timeout: 5))
+        XCTAssertTrue(position.waitForExistence(timeout: 3))
+
+        let initialActive = app.descendants(matching: .any).matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "wird.reader.active.")
+        ).firstMatch
+        XCTAssertTrue(initialActive.waitForExistence(timeout: 3))
+        let initialIdentifier = initialActive.identifier
+        let initialPosition = position.label
+
+        let advancedActive = app.descendants(matching: .any).matching(
+            NSPredicate(
+                format: "identifier BEGINSWITH %@ AND identifier != %@",
+                "wird.reader.active.",
+                initialIdentifier
+            )
+        ).firstMatch
+        for _ in 0..<8 where !advancedActive.exists {
+            surface.swipeUp()
+        }
+
+        XCTAssertTrue(
+            advancedActive.waitForExistence(timeout: 3),
+            "Expected the active Wird segment to change after scrolling from \(initialIdentifier)"
+        )
+        XCTAssertNotEqual(position.label, initialPosition, "Expected the reader position to advance")
+    }
+
+    @MainActor
+    func testFinalWirdSegmentCompletesAtTopTenPercent() throws {
+        let app = openSeededWirdReader(additionalArguments: ["--awrad-ui-wird-final-segment"])
+        let surface = app.descendants(matching: .any)["wird.reader.surface"]
+        let finish = app.buttons["wird.reader.finish"]
+        XCTAssertTrue(surface.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["2 / 2"].waitForExistence(timeout: 3))
+        XCTAssertFalse(finish.exists)
+
+        for _ in 0..<4 where !finish.exists {
+            surface.swipeUp()
+        }
+
+        XCTAssertTrue(
+            finish.waitForExistence(timeout: 3),
+            "Expected the final ordinary dhikr to complete at the top-ten-percent threshold"
         )
     }
 
@@ -369,6 +429,167 @@ final class awradUITests: XCTestCase {
     }
 
     @MainActor
+    func testHomeGoalAndWirdCatalogCardsUseCompactContent() throws {
+        let app = launchSeededApp()
+
+        let continueGoal = app.buttons["home.continueGoal"]
+        XCTAssertTrue(continueGoal.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts.matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Continue ")
+        ).firstMatch.exists)
+
+        openDeepLink("awrad://wirds")
+        let wirdCard = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "wird.collection.")
+        ).firstMatch
+        XCTAssertTrue(wirdCard.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Salawat"].exists)
+        XCTAssertTrue(app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS %@", "8 sections")
+        ).firstMatch.exists)
+        XCTAssertFalse(app.staticTexts[
+            "A complete Arabic wird of prayers and blessings upon the Prophet Muhammad ﷺ, compiled by Imam Muhammad ibn Sulayman al-Jazuli."
+        ].exists)
+    }
+
+    @MainActor
+    func testProgressSyncAcrossRealIOSAndAndroidClients() throws {
+        let environment = ProcessInfo.processInfo.environment
+        guard let email = environment["AWRAD_SYNC_QA_EMAIL"],
+              let password = environment["AWRAD_SYNC_QA_PASSWORD"],
+              let markerPath = environment["AWRAD_SYNC_QA_ANDROID_DONE_FILE"] else {
+            throw XCTSkip("Real progress-sync QA credentials and marker path were not supplied")
+        }
+
+        let markerURL = URL(fileURLWithPath: markerPath)
+        try? FileManager.default.removeItem(at: markerURL)
+
+        let app = launchSeededApp()
+        openCommunityRoot(in: app)
+        ensureGuestCommunity(in: app)
+
+        let login = app.buttons["Log In"]
+        XCTAssertTrue(login.waitForExistence(timeout: 4))
+        login.tap()
+        XCTAssertTrue(app.navigationBars["Log In"].waitForExistence(timeout: 4))
+
+        let emailField = app.textFields["Email"]
+        let passwordField = app.secureTextFields["Password"]
+        XCTAssertTrue(emailField.waitForExistence(timeout: 3))
+        emailField.tap()
+        emailField.typeText(email)
+        passwordField.tap()
+        typeSecureText(password, into: passwordField)
+
+        let submit = app.buttons["Log In"].firstMatch
+        XCTAssertTrue(waitUntilEnabled(submit, timeout: 3))
+        submit.tap()
+        XCTAssertTrue(app.buttons["Account menu"].waitForExistence(timeout: 8))
+
+        openDeepLink("awrad://goals")
+        let goalTitle = app.staticTexts["Swalath al Nariyya"].firstMatch
+        XCTAssertTrue(goalTitle.waitForExistence(timeout: 12))
+        goalTitle.tap()
+        let beginCounting = app.buttons["Begin counting"]
+        let countButton = app.buttons["Count"]
+        if !countButton.waitForExistence(timeout: 2) {
+            XCTAssertTrue(beginCounting.waitForExistence(timeout: 4))
+            beginCounting.tap()
+        }
+        dismissCountingCoachIfNeeded(in: app)
+
+        XCTAssertTrue(countButton.waitForExistence(timeout: 4))
+        countButton.tap()
+        XCTAssertTrue(
+            waitForAccessibilityValue(countButton, prefix: "1 ", timeout: 5),
+            "The iOS contribution must be visible before Android joins the same account"
+        )
+
+        let marker = ProgressSyncQAMarker(url: markerURL)
+        let androidFinished = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "exists == true"),
+            object: marker
+        )
+        XCTAssertEqual(
+            XCTWaiter.wait(for: [androidFinished], timeout: 180),
+            .completed,
+            "Android did not finish its same-account contribution in time"
+        )
+
+        app.terminate()
+        app.launchArguments = []
+        app.launch()
+        openDeepLink("awrad://goals")
+        XCTAssertTrue(goalTitle.waitForExistence(timeout: 12))
+        goalTitle.tap()
+        if !countButton.waitForExistence(timeout: 2) {
+            XCTAssertTrue(beginCounting.waitForExistence(timeout: 4))
+            beginCounting.tap()
+        }
+        dismissCountingCoachIfNeeded(in: app)
+
+        XCTAssertTrue(
+            waitForAccessibilityValue(countButton, prefix: "2 ", timeout: 15),
+            "iOS must pull the merged canonical count after Android contributes"
+        )
+    }
+
+    @MainActor
+    func testProgressSyncPullsExistingAndroidContribution() throws {
+        let environment = ProcessInfo.processInfo.environment
+        guard environment["AWRAD_SYNC_QA_VERIFY_EXISTING"] == "1",
+              let email = environment["AWRAD_SYNC_QA_EMAIL"],
+              let password = environment["AWRAD_SYNC_QA_PASSWORD"] else {
+            throw XCTSkip("Existing cross-device progress-sync verification credentials were not supplied")
+        }
+
+        let app = launchSeededApp()
+        openCommunityRoot(in: app)
+        ensureGuestCommunity(in: app)
+
+        let login = app.buttons["Log In"]
+        XCTAssertTrue(login.waitForExistence(timeout: 4))
+        login.tap()
+        XCTAssertTrue(app.navigationBars["Log In"].waitForExistence(timeout: 4))
+
+        let emailField = app.textFields["Email"]
+        let passwordField = app.secureTextFields["Password"]
+        XCTAssertTrue(emailField.waitForExistence(timeout: 3))
+        emailField.tap()
+        emailField.typeText(email)
+        passwordField.tap()
+        typeSecureText(password, into: passwordField)
+
+        let submit = app.buttons["Log In"].firstMatch
+        XCTAssertTrue(waitUntilEnabled(submit, timeout: 3))
+        submit.tap()
+        XCTAssertTrue(app.buttons["Account menu"].waitForExistence(timeout: 8))
+
+        openDeepLink("awrad://goals")
+        let syncedGoal = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Swalath al Nariyya, 2,")
+        ).firstMatch
+        XCTAssertTrue(
+            syncedGoal.waitForExistence(timeout: 20),
+            "The goals list must expose Android's canonical count before opening the counter"
+        )
+        syncedGoal.tap()
+
+        let beginCounting = app.buttons["Begin counting"]
+        let countButton = app.buttons["Count"]
+        if !countButton.waitForExistence(timeout: 2) {
+            XCTAssertTrue(beginCounting.waitForExistence(timeout: 4))
+            beginCounting.tap()
+        }
+        dismissCountingCoachIfNeeded(in: app)
+
+        XCTAssertTrue(
+            waitForAccessibilityValue(countButton, prefix: "2 ", timeout: 20),
+            "iOS must pull Android's accepted contribution and display canonical count 2"
+        )
+    }
+
+    @MainActor
     func testLaunchPerformanceForReadyStore() throws {
         measure(metrics: [XCTApplicationLaunchMetric()]) {
             let app = XCUIApplication()
@@ -388,6 +609,33 @@ final class awradUITests: XCTestCase {
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 5))
         openDeepLink("awrad://home")
         XCTAssertTrue(app.tabBars.firstMatch.waitForExistence(timeout: 3))
+        return app
+    }
+
+    private func waitForAccessibilityValue(
+        _ element: XCUIElement,
+        prefix: String,
+        timeout: TimeInterval
+    ) -> Bool {
+        let predicate = NSPredicate(format: "value BEGINSWITH %@", prefix)
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
+    }
+
+    @MainActor
+    private func openSeededWirdReader(additionalArguments: [String]) -> XCUIApplication {
+        let app = launchSeededApp(additionalArguments: additionalArguments)
+        openDeepLink("awrad://wirds")
+
+        let collection = app.buttons.matching(
+            NSPredicate(format: "identifier BEGINSWITH %@", "wird.collection.")
+        ).firstMatch
+        XCTAssertTrue(collection.waitForExistence(timeout: 5))
+        collection.tap()
+
+        let begin = app.buttons["wird.detail.begin"]
+        XCTAssertTrue(begin.waitForExistence(timeout: 5))
+        begin.tap()
         return app
     }
 
@@ -516,6 +764,18 @@ final class awradUITests: XCTestCase {
             }
             previous = current
         }
+    }
+}
+
+private final class ProgressSyncQAMarker: NSObject {
+    private let url: URL
+
+    init(url: URL) {
+        self.url = url
+    }
+
+    @objc dynamic var exists: Bool {
+        FileManager.default.fileExists(atPath: url.path)
     }
 }
 

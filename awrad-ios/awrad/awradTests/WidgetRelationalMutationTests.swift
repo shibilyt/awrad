@@ -53,6 +53,38 @@ struct WidgetRelationalMutationTests {
         #expect(goals.first?.completedAt == firstDate.addingTimeInterval(1))
     }
 
+    @Test func boundWidgetIncrementCommitsDurableSyncBatchWithCount() throws {
+        let container = try AwradPersistenceContainerFactory.makeInMemoryContainer()
+        let goalID = UUID(uuidString: "20000000-0000-4000-8000-000000000111")!
+        let slotID = UUID(uuidString: "30000000-0000-4000-8000-000000000111")!
+        try seed(
+            container: container, goalID: goalID, slotID: slotID,
+            targetPolicy: "perDueDate", target: 10, maximum: nil,
+            capBehavior: "allowOverTarget"
+        )
+        let context = ModelContext(container)
+        try context.transaction {
+            _ = try ProgressSyncLocalStore.bind(
+                userID: UUID().uuidString.lowercased(),
+                installationID: UUID().uuidString.lowercased(), in: context
+            )
+            try context.save()
+        }
+        var projection = makeProjection(goalID: goalID, slotID: slotID, target: 10)
+
+        let outcome = try SharedAwradRelationalWidgetMutation.incrementFocusCount(
+            in: container, projection: &projection, now: testNow
+        )
+
+        #expect(outcome.appliedDelta == 1)
+        let syncContext = ModelContext(container)
+        let batches = try syncContext.fetch(FetchDescriptor<AwradSchemaV2.SyncOpenCountBatchRecord>())
+        #expect(batches.count == 1)
+        #expect(batches.first?.goalID == goalID.uuidString.lowercased())
+        #expect(batches.first?.slotID == slotID.uuidString.lowercased())
+        #expect(batches.first?.amount == 1)
+    }
+
     @Test func weeklyPeriodCapUsesTheWholeWindowInsteadOfOnlyTodaysEntry() throws {
         let container = try AwradPersistenceContainerFactory.makeInMemoryContainer()
         let goalID = UUID(uuidString: "20000000-0000-4000-8000-000000000102")!
@@ -122,12 +154,16 @@ struct WidgetRelationalMutationTests {
     }
 
     @Test func relationalIntentRejectsStartEndInactiveCompletedAndExpiredDurationGoals() throws {
-        let scenarios: [(configure: (AwradSchemaV1.GoalRecord) -> Void, reason: SharedAwradRelationalNoApplyReason)] = [
-            ({ $0.startDate = "2026-07-16" }, .goalNotDue),
-            ({ $0.startDate = "2026-07-01"; $0.endDate = "2026-07-14" }, .goalNotDue),
-            ({ $0.isActive = false }, .goalInactive),
-            ({ $0.isActive = false; $0.completedAt = self.testNow }, .goalCompleted),
-            ({ $0.startDate = "2026-07-12"; $0.durationDays = 3 }, .goalNotDue)
+        let scenarios: [(
+            configure: (AwradSchemaV1.GoalRecord) -> Void,
+            reason: SharedAwradRelationalNoApplyReason?,
+            confirmationReasons: Set<CountingAvailabilityReason>?
+        )] = [
+            ({ $0.startDate = "2026-07-16" }, nil, [.futureStart]),
+            ({ $0.startDate = "2026-07-01"; $0.endDate = "2026-07-14" }, .goalNotDue, nil),
+            ({ $0.isActive = false }, .goalInactive, nil),
+            ({ $0.isActive = false; $0.completedAt = self.testNow }, .goalCompleted, nil),
+            ({ $0.startDate = "2026-07-12"; $0.durationDays = 3 }, .goalNotDue, nil)
         ]
 
         for scenario in scenarios {
@@ -156,7 +192,15 @@ struct WidgetRelationalMutationTests {
             )
 
             #expect(outcome.appliedDelta == 0)
-            #expect(outcome.noApplyReason == scenario.reason)
+            if let expectedReasons = scenario.confirmationReasons {
+                guard case let .requiresCountingAvailabilityConfirmation(reasons, _) = outcome.noApplyReason else {
+                    Issue.record("Expected counting availability confirmation")
+                    continue
+                }
+                #expect(reasons == expectedReasons)
+            } else {
+                #expect(outcome.noApplyReason == scenario.reason)
+            }
             #expect(try context.fetch(FetchDescriptor<AwradSchemaV1.CountEntryRecord>()).isEmpty)
         }
     }
@@ -190,7 +234,11 @@ struct WidgetRelationalMutationTests {
             projection: &weeklyProjection,
             now: testNow
         )
-        #expect(weeklyOutcome.noApplyReason == .goalNotDue)
+        guard case let .requiresCountingAvailabilityConfirmation(weeklyReasons, _) = weeklyOutcome.noApplyReason else {
+            Issue.record("Expected weekly off-day confirmation")
+            return
+        }
+        #expect(weeklyReasons == [.offRecurrence])
 
         // A fixed date takes precedence over month/day fields, matching Android.
         let fixedContainer = try AwradPersistenceContainerFactory.makeInMemoryContainer()
@@ -224,7 +272,11 @@ struct WidgetRelationalMutationTests {
             projection: &fixedProjection,
             now: testNow
         )
-        #expect(fixedOutcome.noApplyReason == .goalNotDue)
+        guard case let .requiresCountingAvailabilityConfirmation(fixedReasons, _) = fixedOutcome.noApplyReason else {
+            Issue.record("Expected specific-date off-day confirmation")
+            return
+        }
+        #expect(fixedReasons == [.offRecurrence])
 
         let hijriContainer = try AwradPersistenceContainerFactory.makeInMemoryContainer()
         let hijriGoalID = UUID()
@@ -263,7 +315,7 @@ struct WidgetRelationalMutationTests {
         #expect(hijriOutcome.noApplyReason == nil)
     }
 
-    @Test func timeWindowPoliciesBlockWarnConfirmOrSilentlyAllow() throws {
+    @Test func timeWindowPoliciesAllRequireConfirmation() throws {
         let warnContainer = try configuredSlotContainer(
             policy: "warnAndAllow",
             slotType: "timeWindow",
@@ -285,13 +337,17 @@ struct WidgetRelationalMutationTests {
             projection: &warnProjection,
             now: testNow
         )
-        #expect(warning.noApplyReason == .requiresSlotTimingConfirmation(.upcoming))
+        guard case let .requiresCountingAvailabilityConfirmation(reasons, _) = warning.noApplyReason else {
+            Issue.record("Expected counting availability confirmation")
+            return
+        }
+        #expect(reasons == [.slotUpcoming])
         #expect(try countEntries(in: warnContainer).isEmpty)
         let confirmed = try SharedAwradRelationalWidgetMutation.incrementFocusCount(
             in: warnContainer,
             projection: &warnProjection,
             now: testNow,
-            outsideSlotConfirmed: true
+            availabilityConfirmed: true
         )
         #expect(confirmed.appliedDelta == 1)
 
@@ -316,7 +372,11 @@ struct WidgetRelationalMutationTests {
             projection: &strictProjection,
             now: testNow
         )
-        #expect(blocked.noApplyReason == .blockedBySlotTiming(.upcoming))
+        guard case let .requiresCountingAvailabilityConfirmation(strictReasons, _) = blocked.noApplyReason else {
+            Issue.record("Expected strict legacy policy to request confirmation")
+            return
+        }
+        #expect(strictReasons == [.slotUpcoming])
         #expect(try countEntries(in: strictContainer).isEmpty)
 
         let silentContainer = try configuredSlotContainer(
@@ -340,10 +400,14 @@ struct WidgetRelationalMutationTests {
             projection: &silentProjection,
             now: testNow
         )
-        #expect(allowed.appliedDelta == 1)
+        guard case let .requiresCountingAvailabilityConfirmation(silentReasons, _) = allowed.noApplyReason else {
+            Issue.record("Expected silent legacy policy to request confirmation")
+            return
+        }
+        #expect(silentReasons == [.slotUpcoming])
     }
 
-    @Test func prayerSlotsUseProjectedAbsoluteWindowAndFailClosedWhenStrictAndUnknown() throws {
+    @Test func prayerSlotsUseProjectedAbsoluteWindowAndConfirmWhenUnknown() throws {
         let activeContainer = try configuredSlotContainer(
             policy: "strictActiveOnly",
             slotType: "prayer",
@@ -386,7 +450,11 @@ struct WidgetRelationalMutationTests {
             projection: &unknownProjection,
             now: testNow
         )
-        #expect(unknown.noApplyReason == .blockedBySlotTiming(.unknown))
+        guard case let .requiresCountingAvailabilityConfirmation(unknownReasons, _) = unknown.noApplyReason else {
+            Issue.record("Expected unknown prayer timing confirmation")
+            return
+        }
+        #expect(unknownReasons == [.slotTimingUnavailable])
         #expect(try countEntries(in: unknownContainer).isEmpty)
     }
 

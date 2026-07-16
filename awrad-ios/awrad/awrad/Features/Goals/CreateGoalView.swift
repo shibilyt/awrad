@@ -1878,15 +1878,6 @@ private struct AdvancedTargetsStep: View {
                 }
             }
 
-            AdvancedPickerRow(
-                title: "Counting outside slot",
-                value: draft.slotCountingPolicy.title,
-                selection: $draft.slotCountingPolicy
-            ) {
-                ForEach(SlotCountingPolicy.allCases) { policy in
-                    Text(LocalizedStringKey(policy.title)).tag(policy)
-                }
-            }
         }
     }
 
@@ -3331,15 +3322,6 @@ private struct GoalFineTuneSection: View {
                 GoalNumberField(title: "Minimum daily count", text: $draft.minimumStreakText)
             }
 
-            AwradBottomSheetPicker(
-                title: "Counting outside a slot's time",
-                selection: $draft.slotCountingPolicy,
-                options: SlotCountingPolicy.allCases,
-                description: { $0.detail }
-            ) { $0.title }
-            .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity, minHeight: 50)
-            .awradGlassSurface(cornerRadius: 18, tint: AwradTheme.surface.opacity(0.62), interactive: true)
         }
     }
 }

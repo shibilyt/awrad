@@ -35,6 +35,8 @@ struct SettingsView: View {
     @State private var draftProfileName = ""
     @State private var notificationAuthorizationState: NotificationAuthorizationState = .notDetermined
     @State private var notificationRetry: (() -> Void)?
+    @State private var syncHealth: ProgressSyncHealth?
+    @State private var syncConflicts: [ProgressSyncConflict] = []
     private var language: AppLanguage { store.preferences.appLanguage }
     private var audioItems: [Dhikr] { store.dhikrs.filter { $0.audioURL != nil } }
     private var pendingAudioItems: [Dhikr] { audioItems.filter { !$0.isDownloaded } }
@@ -238,6 +240,43 @@ struct SettingsView: View {
 
             Section(SettingsParitySection.dataManagement.title) {
                 Button {
+                    Task {
+                        await services.progressSync.synchronize(store: store)
+                        refreshSyncHealth()
+                    }
+                } label: {
+                    Label("Sync progress now", systemImage: "arrow.triangle.2.circlepath")
+                }
+                if let syncHealth {
+                    Text(syncStatusText(syncHealth))
+                        .font(AwradTheme.bodyFont(.footnote))
+                        .foregroundStyle(syncHealth.lastError == nil ? .secondary : Color.red)
+                }
+                ForEach(syncConflicts) { conflict in
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("A synced change needs attention.")
+                            .font(AwradTheme.bodyFont(.footnote))
+                        HStack {
+                            if conflict.entityType != nil, conflict.status == "conflict" {
+                                Button("Use cloud version") {
+                                    resolveSyncConflict(conflict, keepDevice: false)
+                                }
+                                if conflict.commandType == "entity_upsert" {
+                                    Button("Keep device version") {
+                                        resolveSyncConflict(conflict, keepDevice: true)
+                                    }
+                                }
+                            } else {
+                                Button("Discard failed change") {
+                                    discardSyncConflict(conflict)
+                                }
+                            }
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+
+                Button {
                     exportBackup()
                 } label: {
                     Label("Export backup", systemImage: "square.and.arrow.up")
@@ -277,7 +316,10 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Settings")
-        .task { await refreshNotificationAuthorization() }
+        .task {
+            await refreshNotificationAuthorization()
+            refreshSyncHealth()
+        }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active else { return }
             Task { await refreshNotificationAuthorization() }
@@ -533,6 +575,56 @@ struct SettingsView: View {
     private func openNotificationSettings() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         openURL(url)
+    }
+
+    private func refreshSyncHealth() {
+        syncHealth = try? services.progressSync.health()
+        syncConflicts = (try? services.progressSync.conflicts()) ?? []
+    }
+
+    private func resolveSyncConflict(_ conflict: ProgressSyncConflict, keepDevice: Bool) {
+        Task {
+            if keepDevice {
+                await services.progressSync.keepDeviceVersion(commandID: conflict.commandID, store: store)
+            } else {
+                await services.progressSync.acceptCloud(commandID: conflict.commandID, store: store)
+            }
+            refreshSyncHealth()
+        }
+    }
+
+    private func discardSyncConflict(_ conflict: ProgressSyncConflict) {
+        Task {
+            await services.progressSync.discardTerminalChange(commandID: conflict.commandID, store: store)
+            refreshSyncHealth()
+        }
+    }
+
+    private func syncStatusText(_ health: ProgressSyncHealth) -> String {
+        if health.lastError != nil {
+            return AwradLocalizer.localized(
+                "The last sync did not finish. Tap to retry.", language: language
+            )
+        }
+        if health.conflicts > 0 || health.failedCommands > 0 {
+            return AwradLocalizer.format(
+                "%lld conflicts and %lld failed changes need attention.",
+                language: language,
+                Int64(health.conflicts), Int64(health.failedCommands)
+            )
+        }
+        if health.pendingCommands > 0 {
+            return AwradLocalizer.format(
+                "%lld changes waiting to sync.", language: language,
+                Int64(health.pendingCommands)
+            )
+        }
+        return AwradLocalizer.localized(
+            health.lastSyncAt == nil
+                ? "Progress has not synced yet."
+                : "Cloud progress is up to date.",
+            language: language
+        )
     }
 
     private func startEditingProfileName() {

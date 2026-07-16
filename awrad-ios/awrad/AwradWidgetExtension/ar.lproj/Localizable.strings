@@ -13,3 +13,6 @@
 "widget_count_before_slot_confirmation" = "لم تبدأ هذه الخانة بعد. هل تريد إضافة واحدة إلى العدّ على أي حال؟";
 "widget_count_after_slot_confirmation" = "انتهى وقت هذه الخانة. هل تريد إضافة واحدة إلى العدّ على أي حال؟";
 "widget_count_outside_slot_confirmation" = "هل تريد إضافة واحدة إلى العدّ خارج وقت الخانة المحددة؟";
+"widget_count_future_goal_confirmation" = "لم يبدأ هذا الهدف بعد. هل تريد إضافة واحدة إلى العدّ على أي حال؟";
+"widget_count_off_day_confirmation" = "هذا الهدف غير مجدول اليوم. هل تريد إضافة واحدة إلى العدّ على أي حال؟";
+"widget_count_multiple_reasons_confirmation" = "الهدف غير مستحق الآن والخانة المحددة غير متاحة. هل تريد إضافة واحدة إلى العدّ على أي حال؟";

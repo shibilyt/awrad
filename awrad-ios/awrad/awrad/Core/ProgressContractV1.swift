@@ -308,6 +308,26 @@ struct NativeProgressStateV1 {
     var countEntries: [CountEntry]
 }
 
+@MainActor
+extension Dhikr {
+    func progressContractV1() -> DhikrV1 { DhikrV1(self) }
+}
+
+@MainActor
+extension Goal {
+    func progressContractV1() -> GoalV1 { GoalV1(self) }
+}
+
+@MainActor
+extension DhikrV1 {
+    func nativeModel() throws -> Dhikr { try native() }
+}
+
+@MainActor
+extension GoalV1 {
+    func nativeModel() throws -> Goal { try native() }
+}
+
 
 @MainActor
 extension ProgressStateV1 {
@@ -530,8 +550,16 @@ private enum ContractV1Date {
         return formatter
     }()
 
+    static let fractionalISO: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+
     static func date(_ value: String) throws -> Date {
-        guard let date = iso.date(from: value) else { throw ContractV1Error.invalidDate(value) }
+        guard let date = fractionalISO.date(from: value) ?? iso.date(from: value) else {
+            throw ContractV1Error.invalidDate(value)
+        }
         return date
     }
 

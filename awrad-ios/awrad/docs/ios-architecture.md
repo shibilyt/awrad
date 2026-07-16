@@ -98,7 +98,7 @@ Home, Goals, Library, and Community each retain a separate navigation stack. Foc
 - Library owns Android-ordered search, filters, featured collections, category, detail, custom dhikr, Quran reader, and audio states.
 - Goals groups items as Today, Upcoming, Completed, and Other. Same-day completed recurring goals remain in Today after unfinished items; paused/inactive goals belong to Other.
 - Counting owns slot routing, effective-day boundaries, minimum/target/maximum rules, targetless display, target/max confirmations, history, session count/timer, text presentation preferences, audio, haptics, and completion handling.
-- Wird owns list, detail, reader, create, and edit; list/page reading modes and resume all use deterministic part/segment identity.
+- Wird owns list, detail, reader, create, and edit. Its single continuous reader uses deterministic segment identity to restore the exact focused line, atomically records crossed target-one lines, and gates forward scrolling only at unfinished repeated lines.
 - Home derives its queue and progress from the shared calculators and presents Android's header, focus, prayer/location state, today's goals, featured collections, and active featured Wird order.
 - Settings follows Android's Profile, Appearance, Counting Preferences, Date & Calendar, Notifications, Prayer Times, Audio Library, Language, Data Management, and About order. Android exact-alarm/battery-management actions map to iOS notification status and a system Settings link.
 

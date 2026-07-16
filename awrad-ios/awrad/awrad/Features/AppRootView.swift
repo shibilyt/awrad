@@ -65,11 +65,16 @@ struct AppRootView: View {
             handlePendingIntentIfPossible()
             Task {
                 await refreshScheduledReminders()
+                await services.progressSync.synchronize(store: store)
             }
         }
         .task(id: widgetSnapshotVersion) {
             guard store.isReady else { return }
             AwradWidgetSnapshotPublisher.publish(from: store)
+        }
+        .task(id: progressSyncVersion) {
+            guard store.isReady, services.auth.isLoggedIn else { return }
+            await services.progressSync.synchronize(store: store)
         }
         .alert("Reminders need attention", isPresented: Binding(
             get: { reminderReconciliationError != nil },
@@ -90,6 +95,10 @@ struct AppRootView: View {
         hasher.combine(store.todayKey)
         hasher.combine(store.widgetSnapshotRevision)
         return hasher.finalize()
+    }
+
+    private var progressSyncVersion: String {
+        "\(store.isReady)|\(services.auth.userID ?? "signed-out")|\(store.syncRequestRevision)"
     }
 
     private var navigationStateVersion: Int {
@@ -401,11 +410,11 @@ private struct PersistenceRecoveryBanner: View {
 private struct SplashView: View {
     var body: some View {
         VStack(spacing: 18) {
-            Image(systemName: "sparkles")
-                .font(AwradTheme.bodyFont(36, weight: .semibold))
-                .foregroundStyle(AwradTheme.gold)
-                .frame(width: 76, height: 76)
-                .background(AwradTheme.mint.opacity(0.24), in: Circle())
+            Image("AppLogo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 132, height: 132)
+                .accessibilityHidden(true)
             Text("Awrad")
                 .font(AwradTheme.displayFont(34))
                 .foregroundStyle(AwradTheme.sageDark)

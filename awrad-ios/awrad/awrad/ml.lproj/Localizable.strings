@@ -57,6 +57,7 @@
 "Clear search" = "തിരയൽ മായ്ക്കുക";
 "Explore beautiful dhikrs\nfrom the Qur’an & Sunnah" = "ഖുർആനിലും സുന്നത്തിലുമുള്ള\nമനോഹരമായ ദിക്‌റുകൾ കാണുക";
 "Featured collections" = "പ്രധാന ശേഖരങ്ങൾ";
+"Featured dhikr collections" = "പ്രധാന ദിക്‌ർ ശേഖരങ്ങൾ";
 "Today's goals" = "ഇന്നത്തെ ലക്ഷ്യങ്ങൾ";
 "All dhikrs" = "എല്ലാ ദിക്‌റുകളും";
 "Daily Essentials" = "ദൈനംദിന അടിസ്ഥാനങ്ങൾ";
@@ -209,6 +210,7 @@
 "Praise" = "തസ്ബീഹ്";
 "Protection" = "സംരക്ഷണം";
 "General" = "പൊതുവായ";
+"Salawat" = "സ്വലാത്ത്";
 "Swalaths" = "സ്വലാത്ത്";
 "Ramadan" = "റമദാൻ";
 "Quran" = "ഖുർആൻ";
@@ -680,7 +682,7 @@
 "coach_progress_title" = "നിങ്ങളുടെ പുരോഗതി കാണുക";
 "coach_session_body" = "എണ്ണമോ ടൈമറോ ഉപയോഗിച്ച് ഒരു ചെറിയ സെഷൻ ലക്ഷ്യമാക്കുക.";
 "coach_session_title" = "സെഷൻ ലക്ഷ്യം സജ്ജമാക്കുക";
-"coach_tap_body" = "നിങ്ങളുടെ ദിക്‌റിൽ ഒന്ന് കൂട്ടാൻ COUNT ബട്ടൺ ടാപ്പ് ചെയ്യുക.";
+"coach_tap_body" = "COUNT ബട്ടൺ മൂന്ന് തവണ ടാപ്പ് ചെയ്യുക. ഓരോ ടാപ്പും ദിക്‌ർ എണ്ണത്തിലേക്ക് ചേർക്കുകയും വട്ടം പുതുക്കുകയും ചെയ്യും.";
 "coach_tap_title" = "എണ്ണാൻ ടാപ്പ് ചെയ്യുക";
 "count_hard_cap_reached" = "ഈ ലക്ഷ്യത്തിന്റെ പരിധിയിലെത്തി.";
 "count_over_target_warning" = "നിങ്ങൾ ലക്ഷ്യത്തിന് മുകളിലേക്ക് എണ്ണിയിരിക്കുന്നു.";
@@ -695,6 +697,21 @@
 "slot_count_blocked_outside_active" = "ഈ സെഷൻ ഇപ്പോൾ സജീവമല്ല.";
 "slot_ended_body" = "ഈ സെഷന്റെ സമയം കഴിഞ്ഞു. എങ്കിലും എണ്ണുന്നത് തുടരണമോ?";
 "slot_ended_title" = "സെഷൻ സമയം അവസാനിച്ചു";
+"counting_availability_title" = "എണ്ണൽ ഇതുവരെ ലഭ്യമല്ല";
+"counting_availability_future_start" = "ഈ ലക്ഷ്യം %@-ന് ആരംഭിക്കും.";
+"counting_availability_off_recurrence" = "നിലവിലെ പ്രാബല്യത്തിലുള്ള ദിവസത്തിൽ ഈ ലക്ഷ്യം ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല.";
+"counting_availability_slot_upcoming" = "തിരഞ്ഞെടുത്ത സമയം %@-ന് ആരംഭിക്കും.";
+"counting_availability_slot_upcoming_unknown" = "തിരഞ്ഞെടുത്ത സമയം ഇതുവരെ ആരംഭിച്ചിട്ടില്ല.";
+"counting_availability_slot_ended" = "തിരഞ്ഞെടുത്ത സമയം %@-ന് അവസാനിച്ചു.";
+"counting_availability_slot_ended_unknown" = "തിരഞ്ഞെടുത്ത സമയം അവസാനിച്ചു.";
+"counting_availability_slot_unknown" = "തിരഞ്ഞെടുത്ത സമയം നിർണ്ണയിക്കാനായില്ല.";
+"counting_availability_count_anyway" = "എങ്കിലും എണ്ണുക";
+"counting_availability_start_anyway" = "എങ്കിലും ആരംഭിക്കുക";
+"counting_availability_resume_anyway" = "എങ്കിലും പുനരാരംഭിക്കുക";
+"counting_hard_block_paused" = "ഈ ലക്ഷ്യം താൽക്കാലികമായി നിർത്തിയിരിക്കുന്നു. എണ്ണുന്നതിന് മുമ്പ് പുനരാരംഭിക്കുക.";
+"counting_hard_block_completed" = "ഈ ലക്ഷ്യം പൂർത്തിയായി; ഇനി എണ്ണാനാവില്ല.";
+"counting_hard_block_expired" = "ഈ ലക്ഷ്യത്തിന്റെ കാലാവധി കഴിഞ്ഞു; ഇനി എണ്ണാനാവില്ല.";
+"counting_hard_block_duration_ended" = "ഈ ലക്ഷ്യത്തിന്റെ ദൈർഘ്യം അവസാനിച്ചു; ഇനി എണ്ണാനാവില്ല.";
 
 /* ഹോം ഡാഷ്ബോർഡും ക്രമീകരണങ്ങളും */
 "Continue %@" = "%@ തുടരുക";
@@ -782,6 +799,11 @@
 "Next section" = "അടുത്ത വിഭാഗം";
 "Finish section" = "വിഭാഗം പൂർത്തിയാക്കുക";
 "Continue to next section" = "അടുത്ത വിഭാഗത്തിലേക്ക് തുടരുക";
+"Reading progress" = "വായന പുരോഗതി";
+"Complete the count to continue" = "തുടരാൻ എണ്ണം പൂർത്തിയാക്കുക";
+"Tap anywhere to count" = "എണ്ണാൻ എവിടെയെങ്കിലും ടാപ്പ് ചെയ്യുക";
+"Scroll to continue" = "തുടരാൻ സ്ക്രോൾ ചെയ്യുക";
+"Read" = "വായിച്ചു";
 "Remind me" = "എന്നെ ഓർമ്മിപ്പിക്കുക";
 "Turn off reminder" = "ഓർമ്മപ്പെടുത്തൽ ഓഫ് ചെയ്യുക";
 "Wird reminder" = "വിർദ് ഓർമ്മപ്പെടുത്തൽ";
@@ -929,3 +951,13 @@
 "Couldn’t schedule reminders" = "ഓർമ്മപ്പെടുത്തലുകൾ ഷെഡ്യൂൾ ചെയ്യാനായില്ല";
 "Continue without reminders" = "ഓർമ്മപ്പെടുത്തലുകളില്ലാതെ തുടരുക";
 "Couldn’t save wird" = "വിർദ് സംരക്ഷിക്കാനായില്ല";
+"Sync progress now" = "പുരോഗതി ഇപ്പോൾ സമന്വയിപ്പിക്കുക";
+"The last sync did not finish. Tap to retry." = "അവസാന സമന്വയം പൂർത്തിയായില്ല. വീണ്ടും ശ്രമിക്കാൻ ടാപ്പ് ചെയ്യുക.";
+"%lld conflicts and %lld failed changes need attention." = "%lld വൈരുദ്ധ്യങ്ങളും %lld പരാജയപ്പെട്ട മാറ്റങ്ങളും പരിശോധിക്കണം.";
+"%lld changes waiting to sync." = "%lld മാറ്റങ്ങൾ സമന്വയത്തിനായി കാത്തിരിക്കുന്നു.";
+"Progress has not synced yet." = "പുരോഗതി ഇതുവരെ സമന്വയിപ്പിച്ചിട്ടില്ല.";
+"Cloud progress is up to date." = "ക്ലൗഡ് പുരോഗതി പുതുക്കിയിരിക്കുന്നു.";
+"A synced change needs attention." = "സമന്വയിപ്പിച്ച ഒരു മാറ്റം പരിശോധിക്കണം.";
+"Use cloud version" = "ക്ലൗഡ് പതിപ്പ് ഉപയോഗിക്കുക";
+"Keep device version" = "ഉപകരണ പതിപ്പ് നിലനിർത്തുക";
+"Discard failed change" = "പരാജയപ്പെട്ട മാറ്റം ഒഴിവാക്കുക";

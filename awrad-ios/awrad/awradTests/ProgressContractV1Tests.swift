@@ -79,6 +79,19 @@ struct ProgressContractV1Tests {
         #expect(reminder.enabled)
     }
 
+    @Test func androidMillisecondRFC3339TimestampsDecodeLosslessly() throws {
+        let original = try String(contentsOf: fixtureURL("progress-state.json"), encoding: .utf8)
+        let androidEncoded = original
+            .replacingOccurrences(of: "2026-07-13T10:00:00Z", with: "2026-07-13T10:00:00.731Z")
+            .replacingOccurrences(of: "2026-07-13T10:15:30Z", with: "2026-07-13T10:15:30.732Z")
+
+        let decoded = try JSONDecoder().decode(ProgressStateV1.self, from: Data(androidEncoded.utf8))
+        let native = try decoded.native()
+
+        #expect(abs(native.goals.single().createdAt.timeIntervalSince1970 - 1_783_936_800.731) < 0.001)
+        #expect(abs(native.goals.single().updatedAt.timeIntervalSince1970 - 1_783_937_730.732) < 0.001)
+    }
+
     private func fixtureURL(_ name: String) -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

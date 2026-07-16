@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 @main
 struct AwradApp: App {
@@ -13,6 +14,17 @@ struct AwradApp: App {
     @State private var router = AppRouter()
     @State private var services = AppServices()
     @State private var pendingURL: URL?
+
+    init() {
+        guard #unavailable(iOS 26.0) else { return }
+
+        let appearance = UITabBarAppearance()
+        appearance.configureWithDefaultBackground()
+        appearance.shadowColor = UIColor(AwradTheme.outline)
+
+        UITabBar.appearance().standardAppearance = appearance
+        UITabBar.appearance().scrollEdgeAppearance = appearance
+    }
 
     var body: some Scene {
         WindowGroup {

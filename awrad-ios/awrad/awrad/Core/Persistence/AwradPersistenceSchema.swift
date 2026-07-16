@@ -514,12 +514,312 @@ enum AwradSchemaV1: VersionedSchema {
     }
 }
 
+/// Adds device-local progress-sync bookkeeping to the shared App Group store.
+/// Product rows intentionally keep their V1 model identities so this is a
+/// lightweight, forward-only migration; sync rows are never part of backups.
+enum AwradSchemaV2: VersionedSchema {
+    static var versionIdentifier = Schema.Version(2, 0, 0)
+
+    static var models: [any PersistentModel.Type] {
+        AwradSchemaV1.models + [
+            SyncStateRecord.self,
+            SyncOutboxRecord.self,
+            SyncOpenCountBatchRecord.self,
+            SyncEntityShadowRecord.self,
+            SyncInboxPageRecord.self,
+            SyncCountShadowRecord.self,
+            SyncConflictRecord.self,
+        ]
+    }
+
+    @Model
+    final class SyncStateRecord {
+        @Attribute(.unique) var key: String
+        var boundUserID: String
+        var actorID: String
+        var installationID: String
+        var nextActorSequence: Int64
+        var cursor: String?
+        var appliedRevision: Int64
+        var safeCompactionRevision: Int64
+        var generation: Int64
+        var generationResetPending: Bool
+        var pendingTransferID: String?
+        var pendingTransferKind: String?
+        var pendingTransferCursor: String?
+        var pendingTransferThroughRevision: Int64?
+        var pendingTransferPage: Int?
+        var pendingTransferPageCount: Int?
+        var pendingTransferChecksum: String?
+        var pendingTransferRecordCount: Int?
+        var initialImportCompleted: Bool
+        var lastSyncAt: Date?
+        var lastError: String?
+
+        init(
+            key: String = "progress-sync-v1",
+            boundUserID: String,
+            actorID: String,
+            installationID: String,
+            nextActorSequence: Int64 = 1,
+            cursor: String? = nil,
+            appliedRevision: Int64 = 0,
+            safeCompactionRevision: Int64 = 0,
+            generation: Int64 = 1,
+            generationResetPending: Bool = false,
+            pendingTransferID: String? = nil,
+            pendingTransferKind: String? = nil,
+            pendingTransferCursor: String? = nil,
+            pendingTransferThroughRevision: Int64? = nil,
+            pendingTransferPage: Int? = nil,
+            pendingTransferPageCount: Int? = nil,
+            pendingTransferChecksum: String? = nil,
+            pendingTransferRecordCount: Int? = nil,
+            initialImportCompleted: Bool = false,
+            lastSyncAt: Date? = nil,
+            lastError: String? = nil
+        ) {
+            self.key = key
+            self.boundUserID = boundUserID
+            self.actorID = actorID
+            self.installationID = installationID
+            self.nextActorSequence = nextActorSequence
+            self.cursor = cursor
+            self.appliedRevision = appliedRevision
+            self.safeCompactionRevision = safeCompactionRevision
+            self.generation = generation
+            self.generationResetPending = generationResetPending
+            self.pendingTransferID = pendingTransferID
+            self.pendingTransferKind = pendingTransferKind
+            self.pendingTransferCursor = pendingTransferCursor
+            self.pendingTransferThroughRevision = pendingTransferThroughRevision
+            self.pendingTransferPage = pendingTransferPage
+            self.pendingTransferPageCount = pendingTransferPageCount
+            self.pendingTransferChecksum = pendingTransferChecksum
+            self.pendingTransferRecordCount = pendingTransferRecordCount
+            self.initialImportCompleted = initialImportCompleted
+            self.lastSyncAt = lastSyncAt
+            self.lastError = lastError
+        }
+    }
+
+    @Model
+    final class SyncOutboxRecord {
+        @Attribute(.unique) var commandID: String
+        @Attribute(.unique) var actorSequence: Int64
+        var type: String
+        var payloadData: Data
+        var entityType: String?
+        var entityID: String?
+        var goalID: String?
+        var slotID: String?
+        var localDate: String?
+        var countDelta: Int64?
+        var status: String
+        var createdAt: Date
+        var attemptCount: Int
+        var lastError: String?
+
+        init(
+            commandID: String,
+            actorSequence: Int64,
+            type: String,
+            payloadData: Data,
+            entityType: String? = nil,
+            entityID: String? = nil,
+            goalID: String? = nil,
+            slotID: String? = nil,
+            localDate: String? = nil,
+            countDelta: Int64? = nil,
+            status: String = "pending",
+            createdAt: Date = Date(),
+            attemptCount: Int = 0,
+            lastError: String? = nil
+        ) {
+            self.commandID = commandID
+            self.actorSequence = actorSequence
+            self.type = type
+            self.payloadData = payloadData
+            self.entityType = entityType
+            self.entityID = entityID
+            self.goalID = goalID
+            self.slotID = slotID
+            self.localDate = localDate
+            self.countDelta = countDelta
+            self.status = status
+            self.createdAt = createdAt
+            self.attemptCount = attemptCount
+            self.lastError = lastError
+        }
+    }
+
+    @Model
+    final class SyncOpenCountBatchRecord {
+        @Attribute(.unique) var semanticKey: String
+        @Attribute(.unique) var commandID: String
+        var goalID: String
+        var slotID: String
+        var localDate: String
+        var entityIncarnation: Int64
+        var amount: Int64
+        var createdAt: Date
+        var updatedAt: Date
+
+        init(
+            commandID: String,
+            goalID: String,
+            slotID: String,
+            localDate: String,
+            entityIncarnation: Int64,
+            amount: Int64,
+            createdAt: Date = Date(),
+            updatedAt: Date = Date()
+        ) {
+            self.semanticKey = Self.makeSemanticKey(
+                goalID: goalID,
+                slotID: slotID,
+                localDate: localDate,
+                entityIncarnation: entityIncarnation
+            )
+            self.commandID = commandID
+            self.goalID = goalID
+            self.slotID = slotID
+            self.localDate = localDate
+            self.entityIncarnation = entityIncarnation
+            self.amount = amount
+            self.createdAt = createdAt
+            self.updatedAt = updatedAt
+        }
+
+        static func makeSemanticKey(
+            goalID: String,
+            slotID: String,
+            localDate: String,
+            entityIncarnation: Int64
+        ) -> String {
+            "\(goalID)|\(slotID)|\(localDate)|\(entityIncarnation)"
+        }
+    }
+
+    @Model
+    final class SyncEntityShadowRecord {
+        @Attribute(.unique) var key: String
+        var entityType: String
+        var entityID: String
+        var version: Int64
+        var incarnation: Int64
+        var syncRevision: Int64
+        var state: String
+        var documentData: Data?
+        var conflictDocumentData: Data?
+
+        init(
+            entityType: String,
+            entityID: String,
+            version: Int64,
+            incarnation: Int64,
+            syncRevision: Int64,
+            state: String,
+            documentData: Data?,
+            conflictDocumentData: Data? = nil
+        ) {
+            self.key = "\(entityType):\(entityID)"
+            self.entityType = entityType
+            self.entityID = entityID
+            self.version = version
+            self.incarnation = incarnation
+            self.syncRevision = syncRevision
+            self.state = state
+            self.documentData = documentData
+            self.conflictDocumentData = conflictDocumentData
+        }
+    }
+
+    @Model
+    final class SyncInboxPageRecord {
+        @Attribute(.unique) var key: String
+        var transferID: String
+        var pageNumber: Int
+        var checksum: String
+        var recordsData: Data
+        var itemCount: Int
+
+        init(
+            transferID: String,
+            pageNumber: Int,
+            checksum: String,
+            recordsData: Data,
+            itemCount: Int
+        ) {
+            self.key = "\(transferID):\(pageNumber)"
+            self.transferID = transferID
+            self.pageNumber = pageNumber
+            self.checksum = checksum
+            self.recordsData = recordsData
+            self.itemCount = itemCount
+        }
+    }
+
+    @Model
+    final class SyncCountShadowRecord {
+        @Attribute(.unique) var key: String
+        var goalID: String
+        var slotID: String
+        var localDate: String
+        var entityIncarnation: Int64
+        var canonicalCount: Int64
+        var syncRevision: Int64
+
+        init(
+            goalID: String,
+            slotID: String,
+            localDate: String,
+            entityIncarnation: Int64,
+            canonicalCount: Int64,
+            syncRevision: Int64
+        ) {
+            self.key = "\(goalID):\(slotID):\(localDate):\(entityIncarnation)"
+            self.goalID = goalID
+            self.slotID = slotID
+            self.localDate = localDate
+            self.entityIncarnation = entityIncarnation
+            self.canonicalCount = canonicalCount
+            self.syncRevision = syncRevision
+        }
+    }
+
+    @Model
+    final class SyncConflictRecord {
+        @Attribute(.unique) var commandID: String
+        var entityType: String
+        var entityID: String
+        var proposedDocumentData: Data
+        var syncRevision: Int64
+
+        init(
+            commandID: String,
+            entityType: String,
+            entityID: String,
+            proposedDocumentData: Data,
+            syncRevision: Int64
+        ) {
+            self.commandID = commandID
+            self.entityType = entityType
+            self.entityID = entityID
+            self.proposedDocumentData = proposedDocumentData
+            self.syncRevision = syncRevision
+        }
+    }
+}
+
 enum AwradSchemaMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [AwradSchemaV1.self]
+        [AwradSchemaV1.self, AwradSchemaV2.self]
     }
 
     static var stages: [MigrationStage] {
-        []
+        [
+            .lightweight(fromVersion: AwradSchemaV1.self, toVersion: AwradSchemaV2.self),
+        ]
     }
 }

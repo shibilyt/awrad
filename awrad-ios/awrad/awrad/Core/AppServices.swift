@@ -15,6 +15,7 @@ final class AppServices {
     let auth: AuthService
     let persistence: AwradPersistenceRuntime?
     let persistenceInitializationError: String?
+    let progressSync: ProgressSyncEngine
 
     init(
         notifications: NotificationService? = nil,
@@ -41,6 +42,10 @@ final class AppServices {
                 self.persistenceInitializationError = error.localizedDescription
             }
         }
+        self.progressSync = ProgressSyncEngine(
+            auth: self.auth,
+            repository: self.persistence?.repository
+        )
     }
 
     /// Reschedules (or clears) a wird's reminders, resolving prayer-offset times from the

@@ -17,6 +17,18 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
         modelContext.autosaveEnabled = false
     }
 
+    /// Progress sync shares this repository's context so product rows, outbox
+    /// receipts, entity shadows, and transfer page advancement commit as one
+    /// App Group transaction. Remote application deliberately bypasses local
+    /// diff generation.
+    func performProgressSyncTransaction(
+        _ work: (ModelContext) throws -> Void
+    ) throws {
+        try performTransaction(enqueueSync: false) {
+            try work(modelContext)
+        }
+    }
+
     func loadState() throws -> AwradRepositoryState {
         let dhikrs = try fetchDhikrs()
         let goals = try fetchGoals()
@@ -385,10 +397,21 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
 
     // MARK: Transactions and cascades
 
-    private func performTransaction(_ work: () throws -> Void) throws {
+    private func performTransaction(
+        enqueueSync: Bool = true,
+        _ work: () throws -> Void
+    ) throws {
+        let previousState = enqueueSync ? try loadState() : nil
         do {
             try modelContext.transaction {
                 try work()
+                if let previousState {
+                    try ProgressSyncLocalStore.enqueueDiff(
+                        previous: previousState,
+                        current: try loadState(),
+                        in: modelContext
+                    )
+                }
                 try modelContext.save()
             }
         } catch {

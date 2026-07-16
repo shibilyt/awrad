@@ -13,3 +13,6 @@
 "widget_count_before_slot_confirmation" = "ഈ സ്ലോട്ട് ഇനിയും ആരംഭിച്ചിട്ടില്ല. എങ്കിലും ഒരു എണ്ണം ചേർക്കണോ?";
 "widget_count_after_slot_confirmation" = "ഈ സ്ലോട്ട് അവസാനിച്ചു. എങ്കിലും ഒരു എണ്ണം ചേർക്കണോ?";
 "widget_count_outside_slot_confirmation" = "തിരഞ്ഞെടുത്ത സ്ലോട്ടിന്റെ സമയത്തിന് പുറത്തായി ഒരു എണ്ണം ചേർക്കണോ?";
+"widget_count_future_goal_confirmation" = "ഈ ലക്ഷ്യം ഇതുവരെ ആരംഭിച്ചിട്ടില്ല. എങ്കിലും ഒരു എണ്ണം ചേർക്കണോ?";
+"widget_count_off_day_confirmation" = "ഈ ലക്ഷ്യം ഇന്ന് ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല. എങ്കിലും ഒരു എണ്ണം ചേർക്കണോ?";
+"widget_count_multiple_reasons_confirmation" = "ഈ ലക്ഷ്യം ഇപ്പോൾ നിശ്ചിതമല്ല; തിരഞ്ഞെടുത്ത സ്ലോട്ടും ലഭ്യമല്ല. എങ്കിലും ഒരു എണ്ണം ചേർക്കണോ?";

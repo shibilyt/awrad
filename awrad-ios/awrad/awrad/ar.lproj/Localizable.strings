@@ -57,6 +57,7 @@
 "Clear search" = "مسح البحث";
 "Explore beautiful dhikrs\nfrom the Qur’an & Sunnah" = "استكشف أذكارًا جميلة\nمن القرآن والسنة";
 "Featured collections" = "مجموعات مميزة";
+"Featured dhikr collections" = "مجموعات الذكر المميزة";
 "Today's goals" = "أهداف اليوم";
 "All dhikrs" = "كل الأذكار";
 "Daily Essentials" = "أساسيات يومية";
@@ -209,6 +210,7 @@
 "Praise" = "التسبيح";
 "Protection" = "التحصين";
 "General" = "عام";
+"Salawat" = "الصلاة على النبي";
 "Swalaths" = "الصلاة على النبي ﷺ";
 "Ramadan" = "رمضان";
 "Quran" = "القرآن";
@@ -513,6 +515,21 @@
 "slot_count_blocked_outside_active" = "هذه الفترة غير نشطة الآن.";
 "slot_ended_title" = "انتهت فترة هذه الجلسة";
 "slot_ended_body" = "انتهى وقت هذه الفترة. هل تريد متابعة العد؟";
+"counting_availability_title" = "العد غير متاح بعد";
+"counting_availability_future_start" = "يبدأ هذا الهدف في %@.";
+"counting_availability_off_recurrence" = "هذا الهدف غير مجدول لليوم الفعلي الحالي.";
+"counting_availability_slot_upcoming" = "تبدأ الفترة المحددة في %@.";
+"counting_availability_slot_upcoming_unknown" = "لم تبدأ الفترة المحددة بعد.";
+"counting_availability_slot_ended" = "انتهت الفترة المحددة في %@.";
+"counting_availability_slot_ended_unknown" = "انتهت الفترة المحددة.";
+"counting_availability_slot_unknown" = "تعذر تحديد وقت الفترة المحددة.";
+"counting_availability_count_anyway" = "العد على أي حال";
+"counting_availability_start_anyway" = "البدء على أي حال";
+"counting_availability_resume_anyway" = "الاستئناف على أي حال";
+"counting_hard_block_paused" = "هذا الهدف متوقف مؤقتًا. استأنفه قبل العد.";
+"counting_hard_block_completed" = "هذا الهدف مكتمل ولا يمكن العد فيه.";
+"counting_hard_block_expired" = "انتهت صلاحية هذا الهدف ولا يمكن العد فيه.";
+"counting_hard_block_duration_ended" = "انتهت مدة هذا الهدف ولا يمكن العد فيه.";
 "goal_reached_title" = "تم بلوغ الهدف";
 "goal_reached_body" = "لقد أكملت %d تكرار.";
 "counting_slot_complete" = "اكتملت الجلسة!";
@@ -525,7 +542,7 @@
 
 /* Counting coach marks */
 "coach_tap_title" = "اضغط للعد";
-"coach_tap_body" = "اضغط زر العد لإضافة ذكرك.";
+"coach_tap_body" = "اضغط زر العد ثلاث مرات. كل ضغطة تضيف إلى ذكرك وتحدّث الحلقة.";
 "coach_progress_title" = "تابع تقدمك";
 "coach_progress_body" = "يتحدث عدّك وتقدمك هنا أثناء العد.";
 "coach_session_title" = "حدد هدف الجلسة";
@@ -787,6 +804,11 @@
 "Next section" = "القسم التالي";
 "Finish section" = "إنهاء القسم";
 "Continue to next section" = "المتابعة إلى القسم التالي";
+"Reading progress" = "تقدم القراءة";
+"Complete the count to continue" = "أكمل العدّ للمتابعة";
+"Tap anywhere to count" = "اضغط في أي مكان للعدّ";
+"Scroll to continue" = "مرر للمتابعة";
+"Read" = "مقروء";
 "Remind me" = "ذكّرني";
 "Turn off reminder" = "إيقاف التذكير";
 "Wird reminder" = "تذكير الورد";
@@ -934,3 +956,13 @@
 "Couldn’t schedule reminders" = "تعذّرت جدولة التذكيرات";
 "Continue without reminders" = "المتابعة دون تذكيرات";
 "Couldn’t save wird" = "تعذّر حفظ الورد";
+"Sync progress now" = "مزامنة التقدم الآن";
+"The last sync did not finish. Tap to retry." = "لم تكتمل آخر مزامنة. اضغط لإعادة المحاولة.";
+"%lld conflicts and %lld failed changes need attention." = "هناك %lld تعارضات و%lld تغييرات فاشلة تحتاج إلى مراجعة.";
+"%lld changes waiting to sync." = "هناك %lld تغييرات بانتظار المزامنة.";
+"Progress has not synced yet." = "لم تتم مزامنة التقدم بعد.";
+"Cloud progress is up to date." = "تقدمك السحابي محدّث.";
+"A synced change needs attention." = "يحتاج أحد التغييرات المتزامنة إلى مراجعة.";
+"Use cloud version" = "استخدام نسخة السحابة";
+"Keep device version" = "الاحتفاظ بنسخة الجهاز";
+"Discard failed change" = "تجاهل التغيير الفاشل";

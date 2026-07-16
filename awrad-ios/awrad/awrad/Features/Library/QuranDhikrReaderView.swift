@@ -1,13 +1,6 @@
 import SwiftUI
 import UIKit
 
-private struct QuranSlotTimingConfirmationKey: Hashable {
-    var goalID: AwradID
-    var slotID: AwradID
-    var dateKey: String
-    var status: SlotTimeStatus
-}
-
 /// Full Quran reading surface. It is read-only when entered from Library and keeps an optional
 /// goal/slot identity when entered from Counting, matching Android's destination contract.
 struct QuranDhikrReaderView: View {
@@ -18,8 +11,7 @@ struct QuranDhikrReaderView: View {
     let initialSlotID: AwradID?
 
     @State private var countAlertMessage: String?
-    @State private var pendingTimingConfirmation: QuranSlotTimingConfirmationKey?
-    @State private var confirmedTimingWindows: Set<QuranSlotTimingConfirmationKey> = []
+    @State private var pendingCountingConfirmation: CountingAvailabilityConfirmationKey?
     @State private var feedbackTrigger = 0
 
     init(
@@ -54,11 +46,14 @@ struct QuranDhikrReaderView: View {
             }
         }
         .alert(
-            Text(AwradLocalizer.localized("Counting", language: store.preferences.appLanguage)),
+            Text(AwradLocalizer.localized(
+                pendingCountingConfirmation == nil ? "Counting" : "counting_availability_title",
+                language: store.preferences.appLanguage
+            )),
             isPresented: countAlertBinding
         ) {
-            if pendingTimingConfirmation != nil {
-                Button(AwradLocalizer.localized("Count anyway", language: store.preferences.appLanguage)) {
+            if pendingCountingConfirmation != nil {
+                Button(AwradLocalizer.localized("counting_availability_count_anyway", language: store.preferences.appLanguage)) {
                     confirmPendingCount()
                 }
                 Button("Cancel", role: .cancel) {
@@ -236,45 +231,40 @@ struct QuranDhikrReaderView: View {
               let slot = goal.activeSlots.first(where: { $0.id == slotID }) else {
             return
         }
-        switch SlotStatusCalculator.countingDecision(
-            for: slot,
-            policy: goal.slotCountingPolicy,
-            occurrenceDateKey: store.todayKey,
+        switch CountingAvailabilityCalculator.decision(
+            for: goal,
+            slot: slot,
+            effectiveDateKey: store.todayKey,
             preferences: store.preferences,
             prayerTimeService: services.prayerTimes
         ) {
         case .allow:
             applyCount(goalID: goalID, slotID: slotID)
-        case .block:
+        case let .hardBlock(reason):
             countAlertMessage = AwradLocalizer.localized(
-                "slot_count_blocked_outside_active",
+                hardBlockMessageKey(for: reason),
                 language: store.preferences.appLanguage
             )
-        case let .requireConfirmation(status):
-            let key = QuranSlotTimingConfirmationKey(
-                goalID: goalID,
-                slotID: slotID,
-                dateKey: store.todayKey,
-                status: status
-            )
-            if confirmedTimingWindows.contains(key) {
+        case let .requiresConfirmation(reasons, key):
+            if CountingAvailabilityConfirmationStore.isConfirmed(key) {
                 applyCount(goalID: goalID, slotID: slotID)
             } else {
-                pendingTimingConfirmation = key
-                countAlertMessage = AwradLocalizer.localized(
-                    status == .ended ? "slot_ended_body" : "slot_count_blocked_outside_active",
-                    language: store.preferences.appLanguage
-                )
+                pendingCountingConfirmation = key
+                countAlertMessage = reasons
+                    .sorted { $0.rawValue < $1.rawValue }
+                    .map { "• \(availabilityMessage(for: $0, goal: goal, slot: slot))" }
+                    .joined(separator: "\n")
             }
         }
     }
 
     private func confirmPendingCount() {
-        guard let pending = pendingTimingConfirmation else { return }
+        guard let pending = pendingCountingConfirmation else { return }
         clearCountAlert()
-        confirmedTimingWindows.insert(pending)
-        guard store.todayKey == pending.dateKey else { return }
-        applyCount(goalID: pending.goalID, slotID: pending.slotID)
+        CountingAvailabilityConfirmationStore.confirm(pending)
+        guard store.todayKey == pending.effectiveDateKey,
+              let slotID = pending.slotID else { return }
+        applyCount(goalID: pending.goalID, slotID: slotID)
     }
 
     private func applyCount(goalID: AwradID, slotID: AwradID) {
@@ -294,7 +284,59 @@ struct QuranDhikrReaderView: View {
 
     private func clearCountAlert() {
         countAlertMessage = nil
-        pendingTimingConfirmation = nil
+        pendingCountingConfirmation = nil
+    }
+
+    private func hardBlockMessageKey(for reason: CountingHardBlockReason) -> String {
+        switch reason {
+        case .paused: "counting_hard_block_paused"
+        case .completed: "counting_hard_block_completed"
+        case .expired: "counting_hard_block_expired"
+        case .durationEnded: "counting_hard_block_duration_ended"
+        }
+    }
+
+    private func availabilityMessage(
+        for reason: CountingAvailabilityReason,
+        goal: Goal,
+        slot: GoalSlot
+    ) -> String {
+        let language = store.preferences.appLanguage
+        switch reason {
+        case .futureStart:
+            return AwradLocalizer.format(
+                "counting_availability_future_start",
+                language: language,
+                goal.startDate
+            )
+        case .offRecurrence:
+            return AwradLocalizer.localized("counting_availability_off_recurrence", language: language)
+        case .slotUpcoming, .slotEnded:
+            let timing = SlotStatusCalculator.timing(
+                for: slot,
+                occurrenceDateKey: store.todayKey,
+                preferences: store.preferences,
+                prayerTimeService: services.prayerTimes
+            )
+            let date = reason == .slotUpcoming ? timing.startsAt : timing.endsAt
+            guard let date else {
+                return AwradLocalizer.localized(
+                    reason == .slotUpcoming
+                        ? "counting_availability_slot_upcoming_unknown"
+                        : "counting_availability_slot_ended_unknown",
+                    language: language
+                )
+            }
+            return AwradLocalizer.format(
+                reason == .slotUpcoming
+                    ? "counting_availability_slot_upcoming"
+                    : "counting_availability_slot_ended",
+                language: language,
+                AwradLocalizer.formattedTime(date, language: language)
+            )
+        case .slotTimingUnavailable:
+            return AwradLocalizer.localized("counting_availability_slot_unknown", language: language)
+        }
     }
 
     private var countAlertBinding: Binding<Bool> {

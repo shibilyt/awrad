@@ -28,7 +28,7 @@ struct WirdLifecycleLogicTests {
         #expect(restored == [2: [0, 1]])
     }
 
-    @Test func resumeUsesPersistedPositionThenMovesPastACompletedLine() {
+    @Test func resumeUsesExactPersistedPositionEvenWhenCompleted() {
         let first = WirdSegment(kind: .dhikr, arabic: "one", repeatSpec: RepeatSpec(count: 2))
         let second = WirdSegment(kind: .dhikr, arabic: "two", repeatSpec: RepeatSpec(count: 1))
         let third = WirdSegment(kind: .dhikr, arabic: "three", repeatSpec: RepeatSpec(count: 1))
@@ -49,7 +49,117 @@ struct WirdLifecycleLogicTests {
             segmentProgress: [first.id.uuidString: 2],
             lastSegmentID: first.id
         )
-        #expect(WirdLifecycleLogic.resumeIndex(in: part, session: completedPosition) == 1)
+        #expect(WirdLifecycleLogic.resumeIndex(in: part, session: completedPosition) == 0)
+    }
+
+    @Test func resumeFallsBackToFirstIncompleteWhenPersistedSegmentIsMissing() {
+        let first = WirdSegment(kind: .dhikr, arabic: "one", repeatSpec: RepeatSpec(count: 2))
+        let second = WirdSegment(kind: .dhikr, arabic: "two", repeatSpec: RepeatSpec(count: 1))
+        let part = WirdPart(segments: [first, second])
+        let session = WirdSession(
+            wirdID: UUID(),
+            partID: part.id,
+            dateKey: "2026-07-15",
+            segmentProgress: [first.id.uuidString: 2],
+            lastSegmentID: UUID()
+        )
+
+        #expect(WirdLifecycleLogic.resumeIndex(in: part, session: session) == 1)
+    }
+
+    @Test func forwardScrollCompletesPlainLinesAndStopsAtUnfinishedRepeat() {
+        let heading = WirdSegment(kind: .heading, localizedText: ["en": "Heading"])
+        let plain = WirdSegment(kind: .dhikr, arabic: "plain")
+        let repeated = WirdSegment(kind: .dhikr, arabic: "repeat", repeatSpec: RepeatSpec(count: 3))
+        let after = WirdSegment(kind: .dua, arabic: "after")
+        let part = WirdPart(segments: [heading, plain, repeated, after])
+
+        let transition = WirdLifecycleLogic.readerTransition(
+            in: part,
+            session: nil,
+            from: 1,
+            requestedIndex: part.segments.count
+        )
+
+        #expect(transition.targetIndex == 2)
+        #expect(transition.completedSegmentIDs == [plain.id])
+        #expect(transition.wasClamped)
+        #expect(!transition.reachedEnd)
+    }
+
+    @Test func completedRepeatDoesNotGateAndEndCompletesFinalPlainLine() {
+        let first = WirdSegment(kind: .dhikr, arabic: "first")
+        let repeated = WirdSegment(kind: .dhikr, arabic: "repeat", repeatSpec: RepeatSpec(count: 3))
+        let final = WirdSegment(kind: .dua, arabic: "final")
+        let part = WirdPart(segments: [first, repeated, final])
+        let session = WirdSession(
+            wirdID: UUID(),
+            partID: part.id,
+            dateKey: "2026-07-15",
+            segmentProgress: [
+                first.id.uuidString: 1,
+                repeated.id.uuidString: 3
+            ],
+            lastSegmentID: final.id
+        )
+
+        let transition = WirdLifecycleLogic.readerTransition(
+            in: part,
+            session: session,
+            from: 2,
+            requestedIndex: part.segments.count
+        )
+
+        #expect(transition.targetIndex == 2)
+        #expect(transition.completedSegmentIDs == [final.id])
+        #expect(!transition.wasClamped)
+        #expect(transition.reachedEnd)
+    }
+
+    @Test func finalSegmentCompletionRequiresItsBottomToReachTopTenPercent() {
+        #expect(
+            !WirdReaderGeometry.finalSegmentHasReachedCompletion(
+                segmentBottom: 101,
+                viewportHeight: 1_000
+            )
+        )
+        #expect(
+            WirdReaderGeometry.finalSegmentHasReachedCompletion(
+                segmentBottom: 100,
+                viewportHeight: 1_000
+            )
+        )
+        #expect(
+            WirdReaderGeometry.finalSegmentHasReachedCompletion(
+                segmentBottom: 80,
+                viewportHeight: 1_000
+            )
+        )
+        #expect(
+            !WirdReaderGeometry.finalSegmentHasReachedCompletion(
+                segmentBottom: 0,
+                viewportHeight: 0
+            )
+        )
+        #expect(WirdReaderGeometry.trailingSpacerHeight(viewportHeight: 1_000) == 900)
+    }
+
+    @Test func backwardScrollNeverCompletesCountsAndSkipsHeadings() {
+        let first = WirdSegment(kind: .dhikr, arabic: "first")
+        let heading = WirdSegment(kind: .heading, localizedText: ["en": "Heading"])
+        let final = WirdSegment(kind: .dua, arabic: "final")
+        let part = WirdPart(segments: [first, heading, final])
+
+        let transition = WirdLifecycleLogic.readerTransition(
+            in: part,
+            session: nil,
+            from: 2,
+            requestedIndex: 1
+        )
+
+        #expect(transition.targetIndex == 2)
+        #expect(transition.completedSegmentIDs.isEmpty)
+        #expect(!transition.wasClamped)
     }
 
     @Test func preferredTodayPartSkipsCompletedActivePart() {

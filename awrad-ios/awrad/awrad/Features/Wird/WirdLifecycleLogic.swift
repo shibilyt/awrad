@@ -1,24 +1,10 @@
 import Foundation
 
-enum WirdReaderMode: String, CaseIterable, Identifiable {
-    case continuous
-    case pages
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .continuous: "Continuous"
-        case .pages: "Pages"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .continuous: "list.bullet.rectangle"
-        case .pages: "rectangle.stack"
-        }
-    }
+struct WirdReaderTransition: Equatable {
+    let targetIndex: Int
+    let completedSegmentIDs: [AwradID]
+    let wasClamped: Bool
+    let reachedEnd: Bool
 }
 
 enum WirdPartDirection: Equatable {
@@ -63,19 +49,7 @@ enum WirdLifecycleLogic {
 
         if let lastID = session?.lastSegmentID,
            let lastIndex = part.segments.firstIndex(where: { $0.id == lastID }) {
-            let segment = part.segments[lastIndex]
-            let count = session?.count(for: segment.id) ?? 0
-            let target = WirdCalculator.effectiveTarget(for: segment, in: part)
-            if !segment.isCountable || count < target {
-                return lastIndex
-            }
-            if let nextIncomplete = part.segments.indices.dropFirst(lastIndex + 1).first(where: { index in
-                let candidate = part.segments[index]
-                guard candidate.isCountable else { return false }
-                return (session?.count(for: candidate.id) ?? 0) < WirdCalculator.effectiveTarget(for: candidate, in: part)
-            }) {
-                return nextIncomplete
-            }
+            return nearestActionableIndex(in: part, to: lastIndex) ?? lastIndex
         }
 
         if let firstIncomplete = part.segments.firstIndex(where: { segment in
@@ -84,7 +58,77 @@ enum WirdLifecycleLogic {
         }) {
             return firstIncomplete
         }
-        return part.segments.index(before: part.segments.endIndex)
+        return lastActionableIndex(in: part) ?? part.segments.index(before: part.segments.endIndex)
+    }
+
+    static func nearestActionableIndex(in part: WirdPart, to requestedIndex: Int) -> Int? {
+        guard !part.segments.isEmpty else { return nil }
+        let clamped = min(max(requestedIndex, 0), part.segments.index(before: part.segments.endIndex))
+        if part.segments[clamped].kind != .heading { return clamped }
+        if let next = part.segments.indices.dropFirst(clamped + 1).first(where: {
+            part.segments[$0].kind != .heading
+        }) {
+            return next
+        }
+        return part.segments.indices.prefix(clamped).last(where: {
+            part.segments[$0].kind != .heading
+        })
+    }
+
+    static func firstUnfinishedRepeatIndex(in part: WirdPart, session: WirdSession?) -> Int? {
+        part.segments.firstIndex { segment in
+            guard segment.isCountable else { return false }
+            let target = WirdCalculator.effectiveTarget(for: segment, in: part)
+            return target > 1 && (session?.count(for: segment.id) ?? 0) < target
+        }
+    }
+
+    static func readerTransition(
+        in part: WirdPart,
+        session: WirdSession?,
+        from currentIndex: Int,
+        requestedIndex: Int
+    ) -> WirdReaderTransition {
+        guard !part.segments.isEmpty else {
+            return WirdReaderTransition(
+                targetIndex: 0,
+                completedSegmentIDs: [],
+                wasClamped: false,
+                reachedEnd: true
+            )
+        }
+
+        let endIndex = part.segments.count
+        let requested = min(max(requestedIndex, 0), endIndex)
+        let isForward = requested > currentIndex
+        let lock = firstUnfinishedRepeatIndex(in: part, session: session)
+        let clampedRequest = if isForward, let lock, requested > lock { lock } else { requested }
+        let wasClamped = clampedRequest != requested
+        let reachedEnd = clampedRequest == endIndex
+        let targetIndex = reachedEnd
+            ? (lastActionableIndex(in: part) ?? part.segments.index(before: part.segments.endIndex))
+            : (nearestActionableIndex(in: part, to: clampedRequest) ?? clampedRequest)
+
+        let completedSegmentIDs: [AwradID]
+        if isForward {
+            let upperBound = reachedEnd ? endIndex : targetIndex
+            let lowerBound = min(max(currentIndex, 0), upperBound)
+            completedSegmentIDs = part.segments[lowerBound..<upperBound].compactMap { segment in
+                guard segment.isCountable,
+                      WirdCalculator.effectiveTarget(for: segment, in: part) == 1,
+                      (session?.count(for: segment.id) ?? 0) < 1 else { return nil }
+                return segment.id
+            }
+        } else {
+            completedSegmentIDs = []
+        }
+
+        return WirdReaderTransition(
+            targetIndex: targetIndex,
+            completedSegmentIDs: completedSegmentIDs,
+            wasClamped: wasClamped,
+            reachedEnd: reachedEnd
+        )
     }
 
     static func adjacentPart(
@@ -96,6 +140,10 @@ enum WirdLifecycleLogic {
         let candidate = direction == .previous ? index - 1 : index + 1
         guard parts.indices.contains(candidate) else { return nil }
         return parts[candidate]
+    }
+
+    private static func lastActionableIndex(in part: WirdPart) -> Int? {
+        part.segments.indices.last(where: { part.segments[$0].kind != .heading })
     }
 
     static func normalizedWeekdayAssignments(

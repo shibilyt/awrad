@@ -5,6 +5,99 @@ import Testing
 @MainActor
 @Suite(.serialized)
 struct AuthServiceTests {
+    @Test func actorAckForkRotatesAndRetriesAtNextDurableSequence() async throws {
+        let recorder = AuthRequestRecorder()
+        MockAuthURLProtocol.install { request in
+            recorder.record(request)
+            guard request.url?.path == "/api/sync/v1/progress/actors/ack" else {
+                return .json(status: 404, body: #"{"error":"missing"}"#)
+            }
+            if recorder.count(path: "/api/sync/v1/progress/actors/ack") == 1 {
+                return .json(status: 409, body: #"{"error":"actor_fork"}"#)
+            }
+            let body = recorder.jsonBody(path: "/api/sync/v1/progress/actors/ack") ?? [:]
+            let actorID = body["actor_id"] as? String ?? ""
+            return .json(status: 200, body: """
+            {
+              "header":{"protocol_version":1,"progress_model_version":1,"capabilities":["materialized_transfers"]},
+              "actor_id":"\(actorID)",
+              "applied_revision":"12",
+              "safe_compaction_revision":"10"
+            }
+            """)
+        }
+        defer { MockAuthURLProtocol.reset() }
+
+        let container = try AwradPersistenceContainerFactory.makeInMemoryContainer()
+        let repository = SwiftDataAwradRepository(container: container)
+        let installationID = UUID().uuidString.lowercased()
+        var originalActorID = ""
+        try repository.performProgressSyncTransaction { context in
+            let state = try ProgressSyncLocalStore.bind(
+                userID: UUID().uuidString.lowercased(),
+                installationID: installationID, in: context
+            )
+            originalActorID = state.actorID
+            state.nextActorSequence = 8
+            state.appliedRevision = 12
+            state.safeCompactionRevision = 10
+        }
+        let auth = AuthService(
+            baseURL: testBaseURL, session: mockSession(), defaults: isolatedDefaults(),
+            credentialStore: InMemoryAuthCredentialStore(credentials: StoredAuthCredentials(
+                accessToken: "access", refreshToken: "refresh"
+            ))
+        )
+        let engine = ProgressSyncEngine(auth: auth, repository: repository)
+        try await engine.acknowledgeActor(repository: repository)
+
+        let state = try #require(try SharedProgressSyncPersistence.state(in: repository.modelContext))
+        #expect(state.actorID != originalActorID)
+        #expect(state.installationID == installationID)
+        #expect(state.nextActorSequence == 8)
+        #expect(recorder.count(path: "/api/sync/v1/progress/actors/ack") == 2)
+        let finalBody = recorder.jsonBody(path: "/api/sync/v1/progress/actors/ack")
+        #expect(finalBody?["actor_id"] as? String == state.actorID)
+        #expect(finalBody?["installation_id"] as? String == installationID)
+        #expect(finalBody?["starting_sequence"] as? String == "8")
+    }
+
+    @Test func authAndProgressSyncShareAndMigrateOneInstallationIdentity() async throws {
+        let legacyInstallationID = UUID().uuidString.lowercased()
+        let defaults = isolatedDefaults()
+        defaults.set(
+            legacyInstallationID,
+            forKey: AwradInstallationIdentity.legacyProgressSyncStorageKey
+        )
+        let recorder = AuthRequestRecorder()
+        MockAuthURLProtocol.install { request in
+            recorder.record(request)
+            if request.url?.path == "/api/auth/login" {
+                return .json(status: 200, body: authResponse(access: "access", refresh: "refresh"))
+            }
+            return .json(status: 404, body: #"{"error":"missing"}"#)
+        }
+        defer { MockAuthURLProtocol.reset() }
+
+        let service = AuthService(
+            baseURL: testBaseURL, session: mockSession(), defaults: defaults,
+            credentialStore: InMemoryAuthCredentialStore()
+        )
+        try await service.login(email: "person@example.com", password: "Strong-password1")
+
+        let device = recorder.jsonBody(path: "/api/auth/login")?["device"] as? [String: Any]
+        #expect(device?["installation_id"] as? String == legacyInstallationID)
+        #expect(defaults.string(forKey: AwradInstallationIdentity.storageKey) == legacyInstallationID)
+        #expect(defaults.string(forKey: AwradInstallationIdentity.legacyProgressSyncStorageKey) == nil)
+
+        let sessionInstallationID = UUID().uuidString.lowercased()
+        let staleSyncInstallationID = UUID().uuidString.lowercased()
+        defaults.set(sessionInstallationID, forKey: AwradInstallationIdentity.storageKey)
+        defaults.set(staleSyncInstallationID, forKey: AwradInstallationIdentity.legacyProgressSyncStorageKey)
+        #expect(AwradInstallationIdentity.resolve(in: defaults) == sessionInstallationID)
+        #expect(defaults.string(forKey: AwradInstallationIdentity.legacyProgressSyncStorageKey) == nil)
+    }
+
     @Test func legacyTokensMoveIntoSecureCredentialStore() {
         let defaults = isolatedDefaults()
         defaults.set("legacy-access", forKey: "auth_access_token")

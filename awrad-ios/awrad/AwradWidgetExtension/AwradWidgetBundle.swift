@@ -123,18 +123,19 @@ struct IncrementTodayAwradWidgetIntent: AppIntent {
             displaySnapshotKey: AwradWidgetSharedConfiguration.snapshotKey,
             defaults: defaults
         )
-        if case .requiresConfirmation(let status) = result {
+        if case let .requiresConfirmation(reasons, key) = result {
             try await requestConfirmation(
                 actionName: .add,
-                dialog: confirmationDialog(for: status)
+                dialog: confirmationDialog(for: reasons)
             )
+            CountingAvailabilityConfirmationStore.confirm(key, defaults: defaults)
             // Re-open and re-check the live aggregate after the user confirms;
             // no state captured before the prompt is trusted for the write.
             result = try SharedAwradWidgetMutationCoordinator.incrementFocusCount(
                 appGroupID: AwradWidgetSharedConfiguration.appGroupID,
                 displaySnapshotKey: AwradWidgetSharedConfiguration.snapshotKey,
                 defaults: defaults,
-                outsideSlotConfirmed: true
+                availabilityConfirmed: true
             )
         }
         if result.shouldReloadWidget {
@@ -143,22 +144,40 @@ struct IncrementTodayAwradWidgetIntent: AppIntent {
         return .result()
     }
 
-    private func confirmationDialog(for status: SharedAwradSlotTimeStatus) -> IntentDialog {
-        switch status {
-        case .upcoming:
-            IntentDialog(LocalizedStringResource(
+    private func confirmationDialog(
+        for reasons: Set<CountingAvailabilityReason>
+    ) -> IntentDialog {
+        if reasons.count > 1 {
+            return IntentDialog(LocalizedStringResource(
+                "widget_count_multiple_reasons_confirmation",
+                defaultValue: "This goal is not due now and its selected slot is unavailable. Add one count anyway?"
+            ))
+        }
+        switch reasons.first {
+        case .futureStart:
+            return IntentDialog(LocalizedStringResource(
+                "widget_count_future_goal_confirmation",
+                defaultValue: "This goal has not started yet. Add one count anyway?"
+            ))
+        case .offRecurrence:
+            return IntentDialog(LocalizedStringResource(
+                "widget_count_off_day_confirmation",
+                defaultValue: "This goal is not scheduled today. Add one count anyway?"
+            ))
+        case .slotUpcoming:
+            return IntentDialog(LocalizedStringResource(
                 "widget_count_before_slot_confirmation",
                 defaultValue: "This slot has not started yet. Add one count anyway?"
             ))
-        case .ended:
-            IntentDialog(LocalizedStringResource(
+        case .slotEnded:
+            return IntentDialog(LocalizedStringResource(
                 "widget_count_after_slot_confirmation",
                 defaultValue: "This slot has ended. Add one count anyway?"
             ))
-        case .active, .anytime, .unknown:
-            IntentDialog(LocalizedStringResource(
+        case .slotTimingUnavailable, .none:
+            return IntentDialog(LocalizedStringResource(
                 "widget_count_outside_slot_confirmation",
-                defaultValue: "Add one count outside the selected slot time?"
+                defaultValue: "The selected slot time is unavailable. Add one count anyway?"
             ))
         }
     }

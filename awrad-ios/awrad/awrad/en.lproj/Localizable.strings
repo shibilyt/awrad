@@ -57,6 +57,7 @@
 "Clear search" = "Clear search";
 "Explore beautiful dhikrs\nfrom the Qur’an & Sunnah" = "Explore beautiful dhikrs\nfrom the Qur’an & Sunnah";
 "Featured collections" = "Featured collections";
+"Featured dhikr collections" = "Featured dhikr collections";
 "Today's goals" = "Today's goals";
 "All dhikrs" = "All dhikrs";
 "Daily Essentials" = "Daily Essentials";
@@ -209,6 +210,7 @@
 "Praise" = "Praise";
 "Protection" = "Protection";
 "General" = "General";
+"Salawat" = "Salawat";
 "Swalaths" = "Swalaths";
 "Ramadan" = "Ramadan";
 "Quran" = "Quran";
@@ -524,7 +526,7 @@
 
 /* Counting coach marks */
 "coach_tap_title" = "Tap to count";
-"coach_tap_body" = "Tap the COUNT button to add to your dhikr.";
+"coach_tap_body" = "Tap the COUNT button three times. Each tap adds to your dhikr and updates the ring.";
 "coach_progress_title" = "Watch your progress";
 "coach_progress_body" = "Your count and progress update here as you go.";
 "coach_session_title" = "Set a session target";
@@ -787,6 +789,11 @@
 "Next section" = "Next section";
 "Finish section" = "Finish section";
 "Continue to next section" = "Continue to next section";
+"Reading progress" = "Reading progress";
+"Complete the count to continue" = "Complete the count to continue";
+"Tap anywhere to count" = "Tap anywhere to count";
+"Scroll to continue" = "Scroll to continue";
+"Read" = "Read";
 "Remind me" = "Remind me";
 "Turn off reminder" = "Turn off reminder";
 "Wird reminder" = "Wird reminder";
@@ -934,3 +941,28 @@
 "Couldn’t schedule reminders" = "Couldn’t schedule reminders";
 "Continue without reminders" = "Continue without reminders";
 "Couldn’t save wird" = "Couldn’t save wird";
+"counting_availability_title" = "Counting is not available yet";
+"counting_availability_future_start" = "This goal starts on %@.";
+"counting_availability_off_recurrence" = "This goal is not scheduled for the current effective day.";
+"counting_availability_slot_upcoming" = "The selected slot starts at %@.";
+"counting_availability_slot_upcoming_unknown" = "The selected slot has not started yet.";
+"counting_availability_slot_ended" = "The selected slot ended at %@.";
+"counting_availability_slot_ended_unknown" = "The selected slot has ended.";
+"counting_availability_slot_unknown" = "The selected slot time could not be resolved.";
+"counting_availability_count_anyway" = "Count anyway";
+"counting_availability_start_anyway" = "Start anyway";
+"counting_availability_resume_anyway" = "Resume anyway";
+"counting_hard_block_paused" = "This goal is paused. Resume it before counting.";
+"counting_hard_block_completed" = "This goal is completed and cannot be counted.";
+"counting_hard_block_expired" = "This goal has expired and cannot be counted.";
+"counting_hard_block_duration_ended" = "This goal’s duration has ended and cannot be counted.";
+"Sync progress now" = "Sync progress now";
+"The last sync did not finish. Tap to retry." = "The last sync did not finish. Tap to retry.";
+"%lld conflicts and %lld failed changes need attention." = "%lld conflicts and %lld failed changes need attention.";
+"%lld changes waiting to sync." = "%lld changes waiting to sync.";
+"Progress has not synced yet." = "Progress has not synced yet.";
+"Cloud progress is up to date." = "Cloud progress is up to date.";
+"A synced change needs attention." = "A synced change needs attention.";
+"Use cloud version" = "Use cloud version";
+"Keep device version" = "Keep device version";
+"Discard failed change" = "Discard failed change";

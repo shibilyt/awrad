@@ -13,6 +13,29 @@ enum AuthPasswordPolicy {
     static let guidance = "Use at least 10 characters with lowercase, uppercase, and a number or symbol."
 }
 
+/// One installation identity shared by mobile authentication and progress
+/// sync. Authentication's established key is canonical because existing server
+/// sessions are already bound to it; the former sync-only key is consumed as a
+/// one-time fallback for installations that never created an auth identity.
+enum AwradInstallationIdentity {
+    static let storageKey = "auth_installation_id"
+    static let legacyProgressSyncStorageKey = "AwradProgressSync.installationID.v1"
+
+    static func resolve(in defaults: UserDefaults) -> String {
+        let resolved = validUUID(defaults.string(forKey: storageKey))
+            ?? validUUID(defaults.string(forKey: legacyProgressSyncStorageKey))
+            ?? UUID().uuidString.lowercased()
+        defaults.set(resolved, forKey: storageKey)
+        defaults.removeObject(forKey: legacyProgressSyncStorageKey)
+        return resolved
+    }
+
+    private static func validUUID(_ value: String?) -> String? {
+        guard let value, let uuid = UUID(uuidString: value) else { return nil }
+        return uuid.uuidString.lowercased()
+    }
+}
+
 @MainActor
 @Observable
 final class AuthService {
@@ -251,6 +274,13 @@ final class AuthService {
         }
     }
 
+    func authenticatedRequest<ResponseBody: Decodable>(
+        _ endpoint: String,
+        method: String
+    ) async throws -> ResponseBody {
+        try await authenticatedRequest(endpoint, method: method, body: EmptyRequest())
+    }
+
     private func refreshedResponse() async throws -> AuthResponse {
         if let refreshTask {
             return try await refreshTask.value
@@ -313,7 +343,7 @@ final class AuthService {
             throw AuthServiceError.http(
                 statusCode: httpResponse.statusCode,
                 message: apiError?.displayMessage ?? "Unknown error",
-                errorCode: apiError?.error_code
+                errorCode: apiError?.error_code ?? apiError?.error
             )
         }
 
@@ -371,9 +401,7 @@ final class AuthService {
     }
 
     private func device() -> DeviceRequest {
-        let key = StorageKey.installationID
-        let installationID = defaults.string(forKey: key) ?? UUID().uuidString.lowercased()
-        defaults.set(installationID, forKey: key)
+        let installationID = AwradInstallationIdentity.resolve(in: defaults)
         return DeviceRequest(installation_id: installationID, name: "Apple device", platform: "ios")
     }
 }
@@ -463,7 +491,6 @@ private enum StorageKey {
     static let sessionID = "auth_session_id"
     static let pendingVerificationEmail = "auth_pending_verification_email"
     static let verificationResendAvailableAt = "auth_verification_resend_available_at"
-    static let installationID = "auth_installation_id"
 }
 
 private struct AuthCredentials: Encodable {

@@ -161,6 +161,12 @@ struct AwradStoreTransactionTests {
             target: 3
         ) == 1)
 
+        let autoReadSegment = WirdSegment(kind: .dhikr, arabic: "الْحَمْدُ لِلَّهِ")
+        let repeatSegment = WirdSegment(
+            kind: .dhikr,
+            arabic: "سُبْحَانَ اللَّهِ",
+            repeatSpec: RepeatSpec(count: 3)
+        )
         let custom = try #require(store.createWird(
             Wird(
                 slug: "custom-transaction-test",
@@ -168,10 +174,32 @@ struct AwradStoreTransactionTests {
                 parts: [
                     WirdPart(
                         localizedTitle: ["en": "Part"],
-                        segments: [WirdSegment(arabic: "الْحَمْدُ لِلَّهِ")]
+                        segments: [autoReadSegment, repeatSegment]
                     )
                 ]
             )
+        ))
+        let customPart = try #require(custom.parts.first)
+        #expect(store.recordWirdReadingAdvance(
+            wirdID: custom.id,
+            partID: customPart.id,
+            occasionKey: "anytime",
+            completedSegmentIDs: [autoReadSegment.id],
+            activeSegmentID: repeatSegment.id
+        ))
+        let committedCustomSession = try #require(store.session(
+            wirdID: custom.id,
+            partID: customPart.id,
+            occasionKey: "anytime"
+        ))
+        #expect(committedCustomSession.count(for: autoReadSegment.id) == 1)
+        #expect(committedCustomSession.lastSegmentID == repeatSegment.id)
+        #expect(!store.recordWirdReadingAdvance(
+            wirdID: custom.id,
+            partID: customPart.id,
+            occasionKey: "anytime",
+            completedSegmentIDs: [repeatSegment.id],
+            activeSegmentID: repeatSegment.id
         ))
         let committedWirds = store.wirds
         let committedSessions = store.wirdSessions
@@ -191,6 +219,14 @@ struct AwradStoreTransactionTests {
             partID: part.id,
             occasionKey: occasionKey,
             segmentID: UUID()
+        ))
+        #expect(store.wirdSessions == committedSessions)
+        #expect(!store.recordWirdReadingAdvance(
+            wirdID: custom.id,
+            partID: customPart.id,
+            occasionKey: "anytime",
+            completedSegmentIDs: [],
+            activeSegmentID: autoReadSegment.id
         ))
         #expect(store.wirdSessions == committedSessions)
         #expect(!store.resetSession(wirdID: wird.id, partID: part.id, occasionKey: occasionKey))
