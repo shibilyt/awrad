@@ -7,7 +7,12 @@ import com.google.gson.annotations.SerializedName
 data class SyncHeaderDto(
     @SerializedName("protocol_version") val protocolVersion: Int = 1,
     @SerializedName("progress_model_version") val progressModelVersion: Int = 1,
-    val capabilities: List<String> = listOf("count_ledger", "entity_occ", "materialized_transfers"),
+    val capabilities: List<String> = listOf(
+        "count_ledger",
+        "entity_occ",
+        "materialized_transfers",
+        "unchanged_delta",
+    ),
 )
 
 data class SyncCommandBatchRequest(
@@ -36,15 +41,16 @@ data class SyncTransferRequest(
 
 data class SyncTransferSessionDto(
     val header: SyncHeaderDto,
-    @SerializedName("transfer_id") val transferId: String,
+    val status: String? = null,
+    @SerializedName("transfer_id") val transferId: String? = null,
     val kind: String,
     @SerializedName("through_revision") val throughRevision: String,
     val generation: String,
     val cursor: String,
-    @SerializedName("page_count") val pageCount: Int,
-    @SerializedName("record_count") val recordCount: Int,
-    val checksum: String,
-    @SerializedName("expires_at") val expiresAt: String,
+    @SerializedName("page_count") val pageCount: Int? = null,
+    @SerializedName("record_count") val recordCount: Int? = null,
+    val checksum: String? = null,
+    @SerializedName("expires_at") val expiresAt: String? = null,
 )
 
 data class SyncTransferPageDto(

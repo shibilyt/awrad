@@ -128,6 +128,13 @@ conflict retention, and cursor-safe apply transactions. The server owns entity
 versions/incarnations, tombstones and purge fences, the immutable count ledger,
 derived projections, transfer quotas, retention, and bounded maintenance.
 
+Authenticated foreground clients debounce mutation-triggered sync by two
+seconds, poll with jitter at roughly 10 seconds on the counter and 60 seconds on
+other screens, and apply bounded exponential backoff after failures. Clients
+advertising `unchanged_delta` may receive a cursor-bearing `status: unchanged`
+delta response without a materialized transfer; clients without the capability
+continue to receive the original transfer-session representation.
+
 Protocol/server support for entity restore and explicit manual goal completion
 or reopening is reserved for clients that expose those actions. The current
 native apps synchronize deletion and automatic count-driven lifecycle state but

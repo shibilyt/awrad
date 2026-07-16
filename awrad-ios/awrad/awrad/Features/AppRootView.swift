@@ -58,14 +58,15 @@ struct AppRootView: View {
             await refreshScheduledReminders()
         }
         .onChange(of: scenePhase) { _, phase in
-            guard phase == .active, store.isReady else { return }
-            store.reloadFromDisk()
-            store.refreshEffectiveDate()
-            handlePendingURLIfPossible()
-            handlePendingIntentIfPossible()
-            Task {
-                await refreshScheduledReminders()
-                await services.progressSync.synchronize(store: store)
+            guard store.isReady else { return }
+            if phase == .active {
+                store.reloadFromDisk()
+                store.refreshEffectiveDate()
+                handlePendingURLIfPossible()
+                handlePendingIntentIfPossible()
+                Task { await refreshScheduledReminders() }
+            } else if phase == .background, services.auth.isLoggedIn {
+                Task { await services.progressSync.synchronize(store: store) }
             }
         }
         .task(id: widgetSnapshotVersion) {
@@ -73,8 +74,33 @@ struct AppRootView: View {
             AwradWidgetSnapshotPublisher.publish(from: store)
         }
         .task(id: progressSyncVersion) {
-            guard store.isReady, services.auth.isLoggedIn else { return }
+            guard store.isReady, services.auth.isLoggedIn, scenePhase == .active else { return }
+            try? await Task<Never, Never>.sleep(
+                nanoseconds: ForegroundProgressSyncPolicy.mutationDebounceNanoseconds
+            )
+            guard !Task<Never, Never>.isCancelled, scenePhase == .active else { return }
             await services.progressSync.synchronize(store: store)
+        }
+        .task(id: foregroundProgressSyncVersion) {
+            guard store.isReady, services.auth.isLoggedIn, scenePhase == .active else { return }
+            var consecutiveFailures = 0
+            while !Task<Never, Never>.isCancelled {
+                await services.progressSync.synchronize(store: store)
+                let failed = (try? services.progressSync.health()?.lastError) != nil
+                consecutiveFailures = failed ? consecutiveFailures + 1 : 0
+                let regularInterval = ForegroundProgressSyncPolicy.intervalNanoseconds(
+                    countingActive: services.progressSyncCountingActive,
+                    randomUnit: Double.random(in: 0...1)
+                )
+                let interval = max(
+                    regularInterval,
+                    ForegroundProgressSyncPolicy.backoffNanoseconds(
+                        consecutiveFailures: consecutiveFailures
+                    )
+                )
+                try? await Task<Never, Never>.sleep(nanoseconds: interval)
+                guard !Task<Never, Never>.isCancelled, scenePhase == .active else { return }
+            }
         }
         .alert("Reminders need attention", isPresented: Binding(
             get: { reminderReconciliationError != nil },
@@ -98,7 +124,11 @@ struct AppRootView: View {
     }
 
     private var progressSyncVersion: String {
-        "\(store.isReady)|\(services.auth.userID ?? "signed-out")|\(store.syncRequestRevision)"
+        "\(store.isReady)|\(services.auth.userID ?? "signed-out")|\(scenePhase)|\(store.syncRequestRevision)"
+    }
+
+    private var foregroundProgressSyncVersion: String {
+        "\(store.isReady)|\(services.auth.userID ?? "signed-out")|\(scenePhase)|\(services.progressSyncCountingActive)|\(services.progressSyncNetworkRevision)"
     }
 
     private var navigationStateVersion: Int {

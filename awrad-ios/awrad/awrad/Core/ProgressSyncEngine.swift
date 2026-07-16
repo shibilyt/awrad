@@ -2,6 +2,29 @@ import CryptoKit
 import Foundation
 import SwiftData
 
+enum ForegroundProgressSyncPolicy {
+    static let mutationDebounceNanoseconds: UInt64 = 2_000_000_000
+    static let counterIntervalNanoseconds: UInt64 = 10_000_000_000
+    static let foregroundIntervalNanoseconds: UInt64 = 60_000_000_000
+    static let initialBackoffNanoseconds: UInt64 = 5_000_000_000
+    static let maximumBackoffNanoseconds: UInt64 = 300_000_000_000
+
+    static func intervalNanoseconds(countingActive: Bool, randomUnit: Double) -> UInt64 {
+        let base = countingActive ? counterIntervalNanoseconds : foregroundIntervalNanoseconds
+        let unit = min(max(randomUnit, 0), 1)
+        let jitter = 0.8 + (unit * 0.4)
+        return max(UInt64(Double(base) * jitter), 1)
+    }
+
+    static func backoffNanoseconds(consecutiveFailures: Int) -> UInt64 {
+        guard consecutiveFailures > 0 else { return 0 }
+        let exponent = min(consecutiveFailures - 1, 16)
+        let multiplier = UInt64(1) << UInt64(exponent)
+        let (value, overflow) = initialBackoffNanoseconds.multipliedReportingOverflow(by: multiplier)
+        return overflow ? maximumBackoffNanoseconds : min(value, maximumBackoffNanoseconds)
+    }
+}
+
 enum JSONValue: Codable, Equatable {
     case object([String: JSONValue])
     case array([JSONValue])
@@ -68,7 +91,9 @@ enum JSONValue: Codable, Equatable {
 private struct SyncHeader: Codable, Equatable {
     var protocolVersion = 1
     var progressModelVersion = 1
-    var capabilities = ["count_ledger", "entity_occ", "materialized_transfers"]
+    var capabilities = [
+        "count_ledger", "entity_occ", "materialized_transfers", "unchanged_delta"
+    ]
 
     enum CodingKeys: String, CodingKey {
         case protocolVersion = "protocol_version"
@@ -115,18 +140,19 @@ private struct SyncTransferRequest: Codable {
 
 private struct SyncTransferSession: Decodable {
     var header: SyncHeader
-    var transferID: String
+    var status: String?
+    var transferID: String?
     var kind: String
     var throughRevision: String
     var generation: String
     var cursor: String
-    var pageCount: Int
-    var recordCount: Int
-    var checksum: String
-    var expiresAt: String
+    var pageCount: Int?
+    var recordCount: Int?
+    var checksum: String?
+    var expiresAt: String?
 
     enum CodingKeys: String, CodingKey {
-        case header, kind, generation, cursor, checksum
+        case header, status, kind, generation, cursor, checksum
         case transferID = "transfer_id"
         case throughRevision = "through_revision"
         case pageCount = "page_count"
@@ -522,7 +548,29 @@ final class ProgressSyncEngine {
                         body: SyncTransferRequest(kind: kind, cursor: state.cursor)
                     )
                     try validate(header: session.header)
-                    guard session.kind == kind, session.pageCount > 0, session.recordCount >= 0 else {
+                    if session.status == "unchanged" {
+                        let throughRevision = try Self.int64(session.throughRevision)
+                        let generation = try Self.int64(session.generation)
+                        guard session.header.capabilities.contains("unchanged_delta"),
+                              kind == "delta", session.kind == "delta",
+                              throughRevision == state.appliedRevision,
+                              generation == state.generation else {
+                            throw ProgressSyncPersistenceError.invalidPayload
+                        }
+                        try repository.performProgressSyncTransaction { context in
+                            guard let row = try SharedProgressSyncPersistence.state(in: context) else { return }
+                            row.cursor = session.cursor
+                            row.lastSyncAt = Date()
+                            row.lastError = nil
+                        }
+                        return
+                    }
+                    guard session.status == nil,
+                          session.kind == kind,
+                          let transferID = session.transferID,
+                          let pageCount = session.pageCount, pageCount > 0,
+                          let recordCount = session.recordCount, recordCount >= 0,
+                          let checksum = session.checksum else {
                         throw ProgressSyncPersistenceError.invalidPayload
                     }
                     try repository.performProgressSyncTransaction { context in
@@ -530,14 +578,14 @@ final class ProgressSyncEngine {
                         try context.fetch(
                             FetchDescriptor<AwradSchemaV2.SyncInboxPageRecord>()
                         ).forEach(context.delete)
-                        row.pendingTransferID = session.transferID
+                        row.pendingTransferID = transferID
                         row.pendingTransferKind = session.kind
                         row.pendingTransferCursor = session.cursor
                         row.pendingTransferThroughRevision = try Self.int64(session.throughRevision)
                         row.pendingTransferPage = 1
-                        row.pendingTransferPageCount = session.pageCount
-                        row.pendingTransferChecksum = session.checksum
-                        row.pendingTransferRecordCount = session.recordCount
+                        row.pendingTransferPageCount = pageCount
+                        row.pendingTransferChecksum = checksum
+                        row.pendingTransferRecordCount = recordCount
                         row.generation = try Self.int64(session.generation)
                     }
                 } catch let error as AuthServiceError where Self.isHTTP(error, status: 409) {

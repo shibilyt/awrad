@@ -124,6 +124,27 @@
       }
     },
     {
+      "name": "delta_unchanged",
+      "definition": "transfer_unchanged",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": [
+            "count_ledger",
+            "entity_occ",
+            "materialized_transfers",
+            "unchanged_delta"
+          ]
+        },
+        "status": "unchanged",
+        "kind": "delta",
+        "through_revision": "257",
+        "generation": "1",
+        "cursor": "signed-generation-1-revision-257"
+      }
+    },
+    {
       "name": "actor_acknowledgement",
       "definition": "actor_ack_request",
       "value": {

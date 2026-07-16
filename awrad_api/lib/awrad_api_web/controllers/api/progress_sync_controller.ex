@@ -92,7 +92,12 @@ defmodule AwradApiWeb.Api.ProgressSyncController do
     with :ok <- enabled(),
          :ok <- header(params["header"]),
          true <- is_nil(params["kind"]) or params["kind"] == kind,
-         {:ok, response} <- Transfer.start(conn.assigns.current_scope, kind, params["cursor"]) do
+         {:ok, response} <-
+           Transfer.start(conn.assigns.current_scope, kind, params["cursor"],
+             allow_unchanged:
+               kind == "delta" and
+                 "unchanged_delta" in params["header"]["capabilities"]
+           ) do
       json(conn, Map.put(response, "header", response_header()))
     else
       false ->
@@ -210,7 +215,12 @@ defmodule AwradApiWeb.Api.ProgressSyncController do
     %{
       protocol_version: 1,
       progress_model_version: 1,
-      capabilities: ["count_ledger", "entity_occ", "materialized_transfers"]
+      capabilities: [
+        "count_ledger",
+        "entity_occ",
+        "materialized_transfers",
+        "unchanged_delta"
+      ]
     }
   end
 

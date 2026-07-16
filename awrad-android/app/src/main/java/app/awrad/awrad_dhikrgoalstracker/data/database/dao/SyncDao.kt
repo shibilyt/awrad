@@ -13,11 +13,18 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncOpenCountBatch
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncOutboxEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncStateEntity
 import com.google.gson.JsonParser
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class SyncDao {
     @Query("SELECT * FROM sync_state WHERE id = 1")
     abstract suspend fun state(): SyncStateEntity?
+
+    @Query("SELECT syncRequested FROM sync_state WHERE id = 1")
+    abstract fun observeSyncRequested(): Flow<Boolean>
+
+    @Query("SELECT MAX(updatedAt) FROM sync_open_count_batches")
+    abstract fun observeLatestOpenBatchUpdate(): Flow<Long?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun putState(state: SyncStateEntity)

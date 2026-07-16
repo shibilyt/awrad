@@ -408,20 +408,50 @@ class ProgressSyncEngine @Inject constructor(
             if (!response.isSuccessful) throw IOException("Progress transfer start failed: ${response.code()}")
             val session = response.body() ?: throw IOException("Progress transfer returned no body")
             validateHeader(session.header)
-            if (session.kind != kind || session.pageCount <= 0 || session.recordCount < 0) {
+            if (session.status == "unchanged") {
+                val throughRevision = session.throughRevision.toLong()
+                val generation = session.generation.toLong()
+                if (
+                    "unchanged_delta" !in session.header.capabilities ||
+                    kind != "delta" || session.kind != "delta" ||
+                    throughRevision != state.appliedRevision || generation != state.generation
+                ) {
+                    throw IOException("Invalid unchanged progress delta")
+                }
+                database.withTransaction {
+                    val current = requireNotNull(syncDao.state())
+                    syncDao.putState(
+                        current.copy(
+                            cursor = session.cursor,
+                            lastSyncAt = System.currentTimeMillis(),
+                            lastError = null,
+                        ),
+                    )
+                }
+                return
+            }
+            val transferId = session.transferId
+                ?: throw IOException("Progress transfer is missing its ID")
+            val pageCount = session.pageCount
+                ?: throw IOException("Progress transfer is missing its page count")
+            val recordCount = session.recordCount
+                ?: throw IOException("Progress transfer is missing its record count")
+            val checksum = session.checksum
+                ?: throw IOException("Progress transfer is missing its checksum")
+            if (session.status != null || session.kind != kind || pageCount <= 0 || recordCount < 0) {
                 throw IOException("Invalid progress transfer session")
             }
             database.withTransaction {
                 syncDao.clearInboxPages()
                 check(
                     syncDao.beginTransfer(
-                        transferId = session.transferId,
+                        transferId = transferId,
                         kind = session.kind,
                         cursor = session.cursor,
-                        pageCount = session.pageCount,
+                        pageCount = pageCount,
                         throughRevision = session.throughRevision.toLong(),
-                        checksum = session.checksum,
-                        recordCount = session.recordCount,
+                        checksum = checksum,
+                        recordCount = recordCount,
                         generation = session.generation.toLong(),
                     ) == 1,
                 )

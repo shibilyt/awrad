@@ -38,11 +38,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import app.awrad.awrad_dhikrgoalstracker.data.repository.AuthRepository
+import app.awrad.awrad_dhikrgoalstracker.data.sync.ForegroundProgressSyncCoordinator
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     @Inject lateinit var authRepository: AuthRepository
+    @Inject lateinit var foregroundProgressSyncCoordinator: ForegroundProgressSyncCoordinator
 
     private val mainViewModel: MainViewModel by viewModels()
 
@@ -60,6 +62,16 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         handleNotificationIntent(intent)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        foregroundProgressSyncCoordinator.setAppForeground(true)
+    }
+
+    override fun onStop() {
+        foregroundProgressSyncCoordinator.setAppForeground(false)
+        super.onStop()
     }
 
     private fun handleNotificationIntent(intent: Intent) {

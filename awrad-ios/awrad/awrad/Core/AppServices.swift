@@ -2,6 +2,7 @@ import AVFoundation
 import CoreLocation
 import Foundation
 import MediaPlayer
+import Network
 import Observation
 import UserNotifications
 
@@ -16,6 +17,13 @@ final class AppServices {
     let persistence: AwradPersistenceRuntime?
     let persistenceInitializationError: String?
     let progressSync: ProgressSyncEngine
+    private(set) var progressSyncCountingActive = false
+    private(set) var progressSyncNetworkRevision = 0
+    @ObservationIgnored private let progressSyncNetworkMonitor = NWPathMonitor()
+    @ObservationIgnored private let progressSyncNetworkQueue = DispatchQueue(
+        label: "app.awrad.progress-sync-network"
+    )
+    @ObservationIgnored private var progressSyncNetworkOnline = false
 
     init(
         notifications: NotificationService? = nil,
@@ -46,6 +54,21 @@ final class AppServices {
             auth: self.auth,
             repository: self.persistence?.repository
         )
+        progressSyncNetworkMonitor.pathUpdateHandler = { [weak self] path in
+            Task { @MainActor in
+                guard let self else { return }
+                let isOnline = path.status == .satisfied
+                if isOnline && !self.progressSyncNetworkOnline {
+                    self.progressSyncNetworkRevision &+= 1
+                }
+                self.progressSyncNetworkOnline = isOnline
+            }
+        }
+        progressSyncNetworkMonitor.start(queue: progressSyncNetworkQueue)
+    }
+
+    func setProgressSyncCountingActive(_ active: Bool) {
+        progressSyncCountingActive = active
     }
 
     /// Reschedules (or clears) a wird's reminders, resolving prayer-offset times from the

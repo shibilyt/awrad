@@ -243,6 +243,21 @@
       },
       "additionalProperties": false
     },
+    "transfer_unchanged": {
+      "type": "object",
+      "required": [
+        "header", "status", "kind", "through_revision", "generation", "cursor"
+      ],
+      "properties": {
+        "header": { "$ref": "#/definitions/protocol_header" },
+        "status": { "const": "unchanged" },
+        "kind": { "const": "delta" },
+        "through_revision": { "$ref": "#/definitions/non_negative_int64" },
+        "generation": { "$ref": "#/definitions/positive_int64" },
+        "cursor": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
     "actor_ack_request": {
       "type": "object",
       "required": ["header", "actor_id", "installation_id", "starting_sequence", "applied_revision", "safe_compaction_revision"],

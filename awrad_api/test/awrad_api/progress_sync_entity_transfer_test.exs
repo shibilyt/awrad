@@ -87,6 +87,15 @@ defmodule AwradApi.ProgressSyncEntityTransferTest do
     assert {:ok, delta} = Transfer.start(context.scope, "delta", session["cursor"])
     assert delta["record_count"] == 0
 
+    session_count = Repo.aggregate(TransferSession, :count)
+
+    assert {:ok, unchanged} =
+             Transfer.start(context.scope, "delta", session["cursor"], allow_unchanged: true)
+
+    assert unchanged["status"] == "unchanged"
+    assert unchanged["through_revision"] == "2"
+    assert Repo.aggregate(TransferSession, :count) == session_count
+
     assert {:ok, _head} = ProgressSync.bump_generation(context.scope)
     assert {:error, :generation_reset} = Transfer.start(context.scope, "delta", session["cursor"])
   end

@@ -24,6 +24,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.preferences.UserPreferences
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.PrayerTimeRepository
+import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncActivityTracker
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.AllowCountingPastTargetResult
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.AllowCountingPastTargetUseCase
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressUseCase
@@ -160,7 +161,12 @@ class CountingViewModel @Inject constructor(
     private val prayerTimeRepository: PrayerTimeRepository,
     private val goalProgressUseCase: GoalProgressUseCase,
     private val allowCountingPastTargetUseCase: AllowCountingPastTargetUseCase,
+    private val progressSyncActivityTracker: ProgressSyncActivityTracker,
 ) : ViewModel() {
+
+    fun setCountingScreenActive(active: Boolean) {
+        progressSyncActivityTracker.setCountingActive(active)
+    }
 
     val vibrateOnCount: StateFlow<Boolean> = userPreferences.vibrateOnCount
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
@@ -506,10 +512,6 @@ class CountingViewModel @Inject constructor(
                 goalRepository.getHistoryForGoal(goalId).collect { _historyItems.value = it }
             }
 
-            launch {
-                goalRepository.getDailyCountsForGoal(goalId).collect { _dailyCounts.value = it }
-            }
-
             // Prefer local downloaded file; fall back to streaming URL
             audioUrl = dhikr.audioFileName
                 ?.let { audioDownloadManager.getAudioFilePath(it) }
@@ -639,7 +641,84 @@ class CountingViewModel @Inject constructor(
                     }
                 }
             }
+
+            // The counting service owns fast local interaction state, but Room remains the
+            // durable source of truth. Keep the already-open counter reconciled with Room so
+            // progress applied by foreground sync (or another local writer) is visible without
+            // requiring a navigation cycle or process restart.
+            viewModelScope.launch {
+                combine(
+                    goalRepository.getGoalByIdFlow(goalId),
+                    goalRepository.getDailyCountsForGoal(goalId),
+                    goalRepository.getDailySlotCountsForGoal(goalId),
+                    _isBound,
+                ) { latestGoal, dailyCounts, dailySlotCounts, bound ->
+                    PersistedCountingSnapshot(latestGoal, dailyCounts, dailySlotCounts, bound)
+                }.collect { snapshot ->
+                    _dailyCounts.value = snapshot.dailyCounts
+                    val latestGoal = snapshot.goal ?: return@collect
+                    if (!snapshot.serviceBound || service?.isCountingGoal(goalId) != true) {
+                        return@collect
+                    }
+                    reconcileCountingStateFromPersistence(
+                        goal = latestGoal,
+                        dailyCounts = snapshot.dailyCounts,
+                        dailySlotCounts = snapshot.dailySlotCounts,
+                        effectiveToday = todayDate,
+                    )
+                }
+            }
         }
+    }
+
+    private fun reconcileCountingStateFromPersistence(
+        goal: Goal,
+        dailyCounts: Map<LocalDate, Long>,
+        dailySlotCounts: Map<LocalDate, Map<AwradId, Long>>,
+        effectiveToday: LocalDate,
+    ) {
+        val current = _serviceState.value
+        if (current.goalId != goal.id) return
+
+        val slots = goal.activeSlots
+        val slotCounts = dailySlotCounts[effectiveToday].orEmpty()
+        val progressCount = goalProgressUseCase.progressCountFor(goal, dailyCounts, effectiveToday)
+        val activeSlotId = current.activeSlotId?.takeIf { selectedId ->
+            slots.any { it.id == selectedId }
+        }
+        val effectiveCount = activeSlotId?.let { slotCounts[it] } ?: progressCount
+
+        _goalInfo.update { info ->
+            if (info.goal?.id == goal.id) {
+                info.copy(
+                    goal = goal,
+                    goalLabel = GoalProgressCalculator.getFormattedTarget(goal),
+                    minimumCount = goal.minimumCount,
+                    dailyTarget = GoalProgressCalculator.getTotalDailyTarget(goal),
+                )
+            } else {
+                info
+            }
+        }
+
+        // This change came from persisted aggregate state, not a local counting gesture. Move
+        // the session observer baseline before publishing it so another device's increment does
+        // not advance this device's optional session target.
+        lastObservedCount = effectiveCount
+        service?.startCounting(
+            goalId = goal.id,
+            targetCount = GoalProgressCalculator.getTotalDailyTarget(goal),
+            maximumCount = goal.maximumCount,
+            capBehavior = goal.capBehavior,
+            currentCount = progressCount,
+            dhikrArabic = current.dhikrArabic,
+            dhikrTransliteration = current.dhikrTransliteration,
+            audioCountPerPlay = current.audioCountPerPlay,
+            isPrayerBased = goal.isPrayerBased,
+            slots = slots,
+            slotCounts = slotCounts,
+            activeSlotId = activeSlotId,
+        )
     }
 
     private suspend fun loadLocalAudioDuration(audioPath: String): Long =
@@ -1136,6 +1215,13 @@ private data class SessionSnapshot(
     val complete: Boolean,
     val type: Int,
     val value: Int,
+)
+
+private data class PersistedCountingSnapshot(
+    val goal: Goal?,
+    val dailyCounts: Map<LocalDate, Long>,
+    val dailySlotCounts: Map<LocalDate, Map<AwradId, Long>>,
+    val serviceBound: Boolean,
 )
 
 private data class SlotRuntimeSnapshot(

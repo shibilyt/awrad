@@ -247,6 +247,29 @@ POST /actors/ack
 
 Protocol envelopes carry protocol version, progress-model version, and client capabilities. Ownership comes only from authenticated scope. Routes and body/batch/decompressed response work are bounded before public rollout.
 
+## Foreground synchronization cadence
+
+Synchronization is event-driven first and periodic second. A successful local
+mutation schedules a debounced attempt after two seconds. While an authenticated
+app is visible, Android and iOS also pull on a jittered interval: approximately
+every 10 seconds while the counting screen is active and every 60 seconds on
+other screens. Entering the foreground, opening the counter, and regaining the
+network trigger an immediate attempt. Leaving the foreground permits one
+best-effort bounded flush; the operating-system background scheduler remains the
+durability fallback and offline writes never wait for the network.
+
+Only one engine run may execute at a time. Failures use exponential backoff from
+five seconds to five minutes, and all regular intervals include plus-or-minus
+20 percent jitter so a fleet does not wake in lockstep. A later local mutation
+is durable even when an attempt is delayed by backoff.
+
+Delta requests advertising the `unchanged_delta` capability may receive a
+lightweight `status: unchanged` response when their cursor already equals the
+account head. That response carries a replacement signed cursor but creates no
+transfer session or pages. Older clients retain the materialized empty-delta
+behavior. If a command commits immediately after the head check, its revision is
+simply returned by the next delta; correctness never depends on the fast path.
+
 ## Operations and rollout
 
 `PROGRESS_SYNC_ENABLED` is the network kill switch.

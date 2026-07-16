@@ -222,6 +222,7 @@ struct CountingView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
         .onAppear {
+            services.setProgressSyncCountingActive(true)
             selectedSlotID = selectedSlotID ?? goal?.activeSlots.sorted { $0.sortOrder < $1.sortOrder }.first?.id
             updateIdleTimer(enabled: store.preferences.keepScreenOn)
             if !store.preferences.hasSeenCountingGuide {
@@ -409,6 +410,7 @@ struct CountingView: View {
             enforceAudioTiming(at: now)
         }
         .onDisappear {
+            services.setProgressSyncCountingActive(false)
             updateIdleTimer(enabled: false)
             liveActivity.end()
         }

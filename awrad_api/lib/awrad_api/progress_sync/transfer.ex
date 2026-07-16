@@ -23,20 +23,28 @@ defmodule AwradApi.ProgressSync.Transfer do
   @max_transfer_records 50_000
   @cursor_salt "progress-sync-cursor-v1"
 
-  def start(scope, kind, cursor \\ nil)
+  def start(scope, kind, cursor \\ nil, options \\ [])
 
-  def start(%Scope{user: %User{id: user_id}}, kind, cursor)
+  def start(%Scope{user: %User{id: user_id}}, kind, cursor, options)
       when kind in ["snapshot", "delta"] do
     with {:ok, from_revision, requested_generation} <- cursor_position(kind, cursor, user_id) do
       Repo.transaction(
-        fn -> materialize(user_id, kind, from_revision, requested_generation) end,
+        fn ->
+          start_or_materialize(
+            user_id,
+            kind,
+            from_revision,
+            requested_generation,
+            Keyword.get(options, :allow_unchanged, false)
+          )
+        end,
         isolation: :repeatable_read
       )
       |> normalize_transaction()
     end
   end
 
-  def start(_scope, _kind, _cursor), do: {:error, :invalid_transfer_request}
+  def start(_scope, _kind, _cursor, _options), do: {:error, :invalid_transfer_request}
 
   def page(%Scope{user: %User{id: user_id}}, session_id, page_number)
       when is_integer(page_number) and page_number > 0 do
@@ -71,6 +79,21 @@ defmodule AwradApi.ProgressSync.Transfer do
   end
 
   def page(_scope, _session_id, _page_number), do: {:error, :invalid_transfer_page}
+
+  defp start_or_materialize(user_id, "delta", from_revision, requested_generation, true) do
+    head = ensure_head!(user_id)
+
+    cond do
+      requested_generation != head.generation -> Repo.rollback(:generation_reset)
+      from_revision > head.revision -> Repo.rollback(:future_cursor)
+      from_revision == head.revision -> unchanged_response(head)
+      true -> materialize(user_id, "delta", from_revision, requested_generation)
+    end
+  end
+
+  defp start_or_materialize(user_id, kind, from_revision, requested_generation, _allow_unchanged) do
+    materialize(user_id, kind, from_revision, requested_generation)
+  end
 
   defp materialize(user_id, kind, from_revision, requested_generation) do
     now = DateTime.utc_now(:second)
@@ -307,6 +330,16 @@ defmodule AwradApi.ProgressSync.Transfer do
       "record_count" => session.record_count,
       "checksum" => Base.encode16(session.checksum, case: :lower),
       "expires_at" => DateTime.to_iso8601(session.expires_at)
+    }
+  end
+
+  defp unchanged_response(head) do
+    %{
+      "status" => "unchanged",
+      "kind" => "delta",
+      "through_revision" => Integer.to_string(head.revision),
+      "generation" => Integer.to_string(head.generation),
+      "cursor" => encode_cursor(head.user_id, head.generation, head.revision)
     }
   end
 

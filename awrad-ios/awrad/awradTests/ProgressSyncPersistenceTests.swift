@@ -6,6 +6,27 @@ import Testing
 @MainActor
 struct ProgressSyncPersistenceTests {
     @Test
+    func foregroundSyncPolicyUsesTenAndSixtySecondIntervalsWithBoundedJitter() {
+        #expect(ForegroundProgressSyncPolicy.intervalNanoseconds(
+            countingActive: true, randomUnit: 0.5
+        ) == 10_000_000_000)
+        #expect(ForegroundProgressSyncPolicy.intervalNanoseconds(
+            countingActive: false, randomUnit: 0.5
+        ) == 60_000_000_000)
+        #expect(ForegroundProgressSyncPolicy.intervalNanoseconds(
+            countingActive: true, randomUnit: 0
+        ) == 8_000_000_000)
+        #expect(ForegroundProgressSyncPolicy.intervalNanoseconds(
+            countingActive: true, randomUnit: 1
+        ) == 12_000_000_000)
+        #expect(ForegroundProgressSyncPolicy.mutationDebounceNanoseconds == 2_000_000_000)
+        #expect(ForegroundProgressSyncPolicy.backoffNanoseconds(consecutiveFailures: 0) == 0)
+        #expect(ForegroundProgressSyncPolicy.backoffNanoseconds(consecutiveFailures: 1) == 5_000_000_000)
+        #expect(ForegroundProgressSyncPolicy.backoffNanoseconds(consecutiveFailures: 2) == 10_000_000_000)
+        #expect(ForegroundProgressSyncPolicy.backoffNanoseconds(consecutiveFailures: 20) == 300_000_000_000)
+    }
+
+    @Test
     func onDiskV1StoreMigratesToV2WithoutChangingProductRows() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("awrad-progress-sync-migration-\(UUID().uuidString)", isDirectory: true)

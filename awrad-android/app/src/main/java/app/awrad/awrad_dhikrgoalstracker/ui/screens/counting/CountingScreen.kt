@@ -79,6 +79,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -165,6 +166,11 @@ fun CountingScreen(
     var showAllowPastTargetDialog by remember { mutableStateOf(false) }
     var showGoalReachedDialog by remember(goalId) { mutableStateOf(false) }
     var previousCompletionBlock by remember(goalId) { mutableStateOf<Boolean?>(null) }
+
+    DisposableEffect(viewModel) {
+        viewModel.setCountingScreenActive(true)
+        onDispose { viewModel.setCountingScreenActive(false) }
+    }
 
     // First-run counting coach marks
     val hasSeenCountingGuide by viewModel.hasSeenCountingGuide.collectAsStateWithLifecycle()

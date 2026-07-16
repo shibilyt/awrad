@@ -2,9 +2,10 @@ defmodule AwradApiWeb.Api.ProgressSyncControllerTest do
   use AwradApiWeb.ConnCase, async: false
 
   import AwradApi.AccountsFixtures
+  import Ecto.Query
 
   alias AwradApi.Accounts.Token
-  alias AwradApi.ProgressSync.{Actor, CommandReceipt, EntityRecord, Head}
+  alias AwradApi.ProgressSync.{Actor, CommandReceipt, EntityRecord, Head, TransferSession}
   alias AwradApi.Repo
 
   @header %{
@@ -81,6 +82,38 @@ defmodule AwradApiWeb.Api.ProgressSyncControllerTest do
       get(other_conn, ~p"/api/sync/v1/progress/snapshots/#{session_id}/pages/1")
 
     assert json_response(denied, 410)["error"] == "transfer_expired_or_missing"
+  end
+
+  test "capable clients get an unchanged delta without a materialized session", %{conn: conn} do
+    {conn, user} = authenticated_conn(conn)
+
+    snapshot =
+      post(conn, ~p"/api/sync/v1/progress/snapshots", %{
+        "header" => @header,
+        "kind" => "snapshot",
+        "cursor" => nil
+      })
+
+    cursor = json_response(snapshot, 200)["cursor"]
+    sessions = from(session in TransferSession, where: session.user_id == ^user.id)
+    before_count = Repo.aggregate(sessions, :count)
+
+    capable_header =
+      Map.update!(@header, "capabilities", &(&1 ++ ["unchanged_delta"]))
+
+    delta =
+      post(recycle(snapshot), ~p"/api/sync/v1/progress/deltas", %{
+        "header" => capable_header,
+        "kind" => "delta",
+        "cursor" => cursor
+      })
+
+    body = json_response(delta, 200)
+    assert body["status"] == "unchanged"
+    assert body["kind"] == "delta"
+    assert body["through_revision"] == "0"
+    assert Repo.aggregate(sessions, :count) == before_count
+    refute Map.has_key?(body, "transfer_id")
   end
 
   test "registered actor can acknowledge applied and safe revisions", %{conn: conn} do

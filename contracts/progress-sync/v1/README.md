@@ -24,6 +24,12 @@ resolution are both revisioned: an unresolved `conflict` transfer record carries
 revision with `resolved=true` and `resolved_at`, and resolved conflicts are
 omitted from fresh snapshots.
 
+Clients advertising `unchanged_delta` receive a lightweight
+`status=unchanged` delta response when their signed cursor is already at the
+account head. That response advances no state and creates no materialized
+transfer session or page. Clients without the capability continue receiving the
+original empty, checksummed transfer session for wire compatibility.
+
 Deletion wins over an old entity incarnation in v1. A late count command gets a
 durable `gone` receipt that clients retain as a user-visible recovery item; it is
 never silently applied to a restored incarnation.
