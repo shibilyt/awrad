@@ -17,9 +17,20 @@
     {"id": "warn_first_increment_after_target", "current": 33, "increment": 1, "target": 33, "cap_behavior": "warn_over_target", "expected_warning": true}
   ],
   "slot_selection": [
-    {"id": "strict_unknown_blocks", "policy": "strict_active_only", "status": "unknown", "expected": "block"},
+    {"id": "strict_unknown_confirms", "policy": "strict_active_only", "status": "unknown", "expected": "confirm"},
     {"id": "warn_upcoming_confirms", "policy": "warn_and_allow", "status": "upcoming", "expected": "confirm"},
-    {"id": "silent_ended_allows", "policy": "silent_flexible", "status": "ended", "expected": "allow"}
+    {"id": "silent_ended_confirms", "policy": "silent_flexible", "status": "ended", "expected": "confirm"},
+    {"id": "strict_active_allows", "policy": "strict_active_only", "status": "active", "expected": "allow"},
+    {"id": "silent_anytime_allows", "policy": "silent_flexible", "status": "anytime", "expected": "allow"}
+  ],
+  "counting_availability": [
+    {"id": "future_start_confirms", "goal_state": "active", "schedule": "future_start", "expected": "confirm", "reasons": ["future_start"]},
+    {"id": "off_recurrence_confirms", "goal_state": "active", "schedule": "off_recurrence", "expected": "confirm", "reasons": ["off_recurrence"]},
+    {"id": "paused_hard_blocks", "goal_state": "paused", "schedule": "due", "expected": "hard_block"},
+    {"id": "completed_hard_blocks", "goal_state": "completed", "schedule": "due", "expected": "hard_block"},
+    {"id": "expired_hard_blocks", "goal_state": "expired", "schedule": "due", "expected": "hard_block"},
+    {"id": "duration_ended_hard_blocks", "goal_state": "duration_ended", "schedule": "due", "expected": "hard_block"},
+    {"id": "future_and_upcoming_combine", "goal_state": "active", "schedule": "future_start", "slot_status": "upcoming", "expected": "confirm", "reasons": ["future_start", "slot_upcoming"]}
   ],
   "streaks": [
     {"id": "weekly_skips_unscheduled_days", "today": "2026-07-13", "active_dates": ["2026-07-06", "2026-07-13"], "expected": 2}

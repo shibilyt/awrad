@@ -14,6 +14,7 @@ REQUIRED_SECTIONS = (
     "recurrence",
     "count_limits",
     "slot_selection",
+    "counting_availability",
     "streaks",
     "reminder_plans",
     "wird_cadence",

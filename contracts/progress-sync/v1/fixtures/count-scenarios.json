@@ -1,0 +1,151 @@
+{
+  "schema_version": 1,
+  "scenarios": [
+    {
+      "name": "concurrent_increments_are_additive",
+      "checkpoint": { "remaining": "100", "revision": "1" },
+      "commands": [
+        {
+          "type": "increment",
+          "command_id": "71000000-0000-4000-8000-000000000001",
+          "actor_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "actor_sequence": "1",
+          "accepted_revision": "2",
+          "amount": "12"
+        },
+        {
+          "type": "increment",
+          "command_id": "71000000-0000-4000-8000-000000000002",
+          "actor_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "actor_sequence": "1",
+          "accepted_revision": "3",
+          "amount": "8"
+        }
+      ],
+      "expected_count": "120",
+      "expected_applied": []
+    },
+    {
+      "name": "duplicate_increment_counts_once",
+      "checkpoint": { "remaining": "0", "revision": "0" },
+      "commands": [
+        {
+          "type": "increment",
+          "command_id": "72000000-0000-4000-8000-000000000001",
+          "actor_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "actor_sequence": "1",
+          "accepted_revision": "1",
+          "amount": "12"
+        },
+        {
+          "type": "increment",
+          "command_id": "72000000-0000-4000-8000-000000000001",
+          "actor_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "actor_sequence": "1",
+          "accepted_revision": "1",
+          "amount": "12"
+        }
+      ],
+      "expected_count": "12",
+      "expected_applied": []
+    },
+    {
+      "name": "concurrent_decrements_do_not_create_debt",
+      "checkpoint": { "remaining": "0", "revision": "0" },
+      "commands": [
+        {
+          "type": "increment",
+          "command_id": "73000000-0000-4000-8000-000000000001",
+          "actor_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "actor_sequence": "1",
+          "accepted_revision": "1",
+          "amount": "10"
+        },
+        {
+          "type": "decrement",
+          "command_id": "73000000-0000-4000-8000-000000000002",
+          "actor_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "actor_sequence": "2",
+          "accepted_revision": "2",
+          "basis_revision": "1",
+          "local_frontier_sequence": "1",
+          "observed_local_credit_ids": [],
+          "amount": "8"
+        },
+        {
+          "type": "decrement",
+          "command_id": "73000000-0000-4000-8000-000000000003",
+          "actor_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "actor_sequence": "1",
+          "accepted_revision": "3",
+          "basis_revision": "1",
+          "local_frontier_sequence": "0",
+          "observed_local_credit_ids": [],
+          "amount": "8"
+        }
+      ],
+      "expected_count": "0",
+      "expected_applied": ["8", "2"]
+    },
+    {
+      "name": "reset_preserves_unseen_concurrent_increment",
+      "checkpoint": { "remaining": "0", "revision": "0" },
+      "commands": [
+        {
+          "type": "increment",
+          "command_id": "74000000-0000-4000-8000-000000000001",
+          "actor_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "actor_sequence": "1",
+          "accepted_revision": "10",
+          "amount": "10"
+        },
+        {
+          "type": "increment",
+          "command_id": "74000000-0000-4000-8000-000000000002",
+          "actor_id": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+          "actor_sequence": "1",
+          "accepted_revision": "11",
+          "amount": "5"
+        },
+        {
+          "type": "reset",
+          "command_id": "74000000-0000-4000-8000-000000000003",
+          "actor_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "actor_sequence": "2",
+          "accepted_revision": "12",
+          "basis_revision": "10",
+          "local_frontier_sequence": "1",
+          "observed_local_credit_ids": []
+        }
+      ],
+      "expected_count": "5",
+      "expected_applied": ["10"]
+    },
+    {
+      "name": "reset_includes_observed_same_actor_pending_credit",
+      "checkpoint": { "remaining": "0", "revision": "0" },
+      "commands": [
+        {
+          "type": "increment",
+          "command_id": "75000000-0000-4000-8000-000000000001",
+          "actor_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "actor_sequence": "4",
+          "accepted_revision": "21",
+          "amount": "7"
+        },
+        {
+          "type": "reset",
+          "command_id": "75000000-0000-4000-8000-000000000002",
+          "actor_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+          "actor_sequence": "5",
+          "accepted_revision": "22",
+          "basis_revision": "20",
+          "local_frontier_sequence": "4",
+          "observed_local_credit_ids": []
+        }
+      ],
+      "expected_count": "0",
+      "expected_applied": ["7"]
+    }
+  ]
+}

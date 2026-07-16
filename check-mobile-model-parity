@@ -6,6 +6,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 python3 "$ROOT/scripts/generate_asma_ul_husna.py" --check
 python3 "$ROOT/scripts/generate_wird_model.py" --check
 python3 "$ROOT/scripts/validate_progress_contract.py"
+python3 "$ROOT/scripts/validate_progress_sync.py"
 python3 "$ROOT/scripts/validate_behavior_fixtures.py"
 
 (

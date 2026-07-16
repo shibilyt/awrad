@@ -73,7 +73,7 @@
         "CountEntry.id", "CountEntry.goal_id", "CountEntry.slot_id", "CountEntry.count", "CountEntry.date", "CountEntry.updated_at"
       ],
       "local_only": [
-        "Dhikr.repeat_count", "Dhikr.inserted_at", "Dhikr.updated_at",
+        "Dhikr.user_id", "Dhikr.deleted_at", "Dhikr.repeat_count", "Dhikr.inserted_at", "Dhikr.updated_at",
         "Goal.user_id", "Goal.frequency_type", "Goal.timing_type", "Goal.target_type", "Goal.duration_type", "Goal.config", "Goal.notification_enabled", "Goal.notification_time", "Goal.deleted_at",
         "GoalSlot.timing_type", "GoalSlot.timing_value", "GoalSlot.deleted_at", "GoalSlot.inserted_at", "GoalSlot.updated_at",
         "GoalReminder.inserted_at", "GoalReminder.updated_at",

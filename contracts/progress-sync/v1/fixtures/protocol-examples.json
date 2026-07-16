@@ -1,0 +1,165 @@
+{
+  "schema_version": 1,
+  "examples": [
+    {
+      "name": "offline_increment_batch",
+      "definition": "command_batch",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": ["count_ledger", "entity_occ", "materialized_transfers"]
+        },
+        "installation_id": "10000000-0000-4000-8000-000000000001",
+        "commands": [
+          {
+            "type": "increment",
+            "command_id": "20000000-0000-4000-8000-000000000001",
+            "actor_id": "30000000-0000-4000-8000-000000000001",
+            "actor_sequence": "48",
+            "goal_id": "40000000-0000-4000-8000-000000000001",
+            "slot_id": "50000000-0000-4000-8000-000000000001",
+            "local_date": "2026-07-16",
+            "amount": "12",
+            "entity_incarnation": "1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "reset_observed_progress",
+      "definition": "command_batch",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": ["count_ledger", "entity_occ", "materialized_transfers"]
+        },
+        "installation_id": "10000000-0000-4000-8000-000000000001",
+        "commands": [
+          {
+            "type": "reset_bucket_observed",
+            "command_id": "20000000-0000-4000-8000-000000000002",
+            "actor_id": "30000000-0000-4000-8000-000000000001",
+            "actor_sequence": "49",
+            "goal_id": "40000000-0000-4000-8000-000000000001",
+            "slot_id": "50000000-0000-4000-8000-000000000001",
+            "local_date": "2026-07-16",
+            "basis_revision": "50",
+            "local_frontier_sequence": "48",
+            "observed_local_credit_ids": [],
+            "entity_incarnation": "1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "decrement_observed_progress",
+      "definition": "command_batch",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": ["count_ledger", "entity_occ", "materialized_transfers"]
+        },
+        "installation_id": "10000000-0000-4000-8000-000000000001",
+        "commands": [
+          {
+            "type": "decrement_bucket",
+            "command_id": "20000000-0000-4000-8000-000000000003",
+            "actor_id": "30000000-0000-4000-8000-000000000001",
+            "actor_sequence": "50",
+            "goal_id": "40000000-0000-4000-8000-000000000001",
+            "slot_id": "50000000-0000-4000-8000-000000000001",
+            "local_date": "2026-07-16",
+            "amount": "3",
+            "basis_revision": "50",
+            "local_frontier_sequence": "48",
+            "observed_local_credit_ids": [],
+            "entity_incarnation": "1"
+          }
+        ]
+      }
+    },
+    {
+      "name": "accepted_increment_receipt",
+      "definition": "command_batch_result",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": ["count_ledger", "entity_occ", "materialized_transfers"]
+        },
+        "receipts": [
+          {
+            "command_id": "20000000-0000-4000-8000-000000000001",
+            "status": "accepted",
+            "result_revision": "141",
+            "canonical_effect": {
+              "count": "12",
+              "applied_amount": "12"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "delta_session",
+      "definition": "transfer_session",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": ["count_ledger", "entity_occ", "materialized_transfers"]
+        },
+        "transfer_id": "60000000-0000-4000-8000-000000000001",
+        "kind": "delta",
+        "through_revision": "257",
+        "generation": "1",
+        "cursor": "signed-generation-1-revision-257",
+        "page_count": 1,
+        "record_count": 1,
+        "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "expires_at": "2026-07-16T12:30:00Z"
+      }
+    },
+    {
+      "name": "actor_acknowledgement",
+      "definition": "actor_ack_request",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": ["count_ledger", "entity_occ", "materialized_transfers"]
+        },
+        "actor_id": "30000000-0000-4000-8000-000000000001",
+        "installation_id": "10000000-0000-4000-8000-000000000001",
+        "starting_sequence": "258",
+        "applied_revision": "257",
+        "safe_compaction_revision": "257"
+      }
+    },
+    {
+      "name": "actor_acknowledgement_result",
+      "definition": "actor_ack_response",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": ["count_ledger", "entity_occ", "materialized_transfers"]
+        },
+        "actor_id": "30000000-0000-4000-8000-000000000001",
+        "applied_revision": "257",
+        "safe_compaction_revision": "257"
+      }
+    },
+    {
+      "name": "sequence_gap_error",
+      "definition": "error_response",
+      "value": {
+        "error": "sequence_gap",
+        "expected_sequence": "48"
+      }
+    }
+  ]
+}

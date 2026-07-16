@@ -1,0 +1,306 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://awrad.app/contracts/progress-sync/v1/progress-sync.schema.json",
+  "title": "Awrad progress sync v1",
+  "oneOf": [
+    { "$ref": "#/definitions/command_batch" },
+    { "$ref": "#/definitions/command_batch_result" },
+    { "$ref": "#/definitions/transfer_request" },
+    { "$ref": "#/definitions/transfer_session" },
+    { "$ref": "#/definitions/transfer_page" },
+    { "$ref": "#/definitions/actor_ack_request" },
+    { "$ref": "#/definitions/actor_ack_response" },
+    { "$ref": "#/definitions/error_response" }
+  ],
+  "definitions": {
+    "uuid_v4": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "non_negative_int64": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$",
+      "maxLength": 19
+    },
+    "positive_int64": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*$",
+      "maxLength": 19
+    },
+    "protocol_header": {
+      "type": "object",
+      "required": ["protocol_version", "progress_model_version", "capabilities"],
+      "properties": {
+        "protocol_version": { "const": 1 },
+        "progress_model_version": { "type": "integer", "minimum": 1 },
+        "capabilities": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "type": "string", "pattern": "^[a-z0-9_]+$", "maxLength": 64 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "command_identity": {
+      "type": "object",
+      "required": ["command_id", "actor_id", "actor_sequence"],
+      "properties": {
+        "command_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_sequence": { "$ref": "#/definitions/positive_int64" }
+      },
+      "additionalProperties": false
+    },
+    "increment": {
+      "type": "object",
+      "required": [
+        "type", "command_id", "actor_id", "actor_sequence", "goal_id", "slot_id",
+        "local_date", "amount", "entity_incarnation"
+      ],
+      "properties": {
+        "type": { "const": "increment" },
+        "command_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_sequence": { "$ref": "#/definitions/positive_int64" },
+        "goal_id": { "$ref": "#/definitions/uuid_v4" },
+        "slot_id": { "$ref": "#/definitions/uuid_v4" },
+        "local_date": { "type": "string", "format": "date" },
+        "amount": { "$ref": "#/definitions/positive_int64" },
+        "entity_incarnation": { "$ref": "#/definitions/positive_int64" }
+      },
+      "additionalProperties": false
+    },
+    "decrement": {
+      "type": "object",
+      "required": [
+        "type", "command_id", "actor_id", "actor_sequence", "goal_id", "slot_id",
+        "local_date", "amount", "basis_revision", "local_frontier_sequence",
+        "observed_local_credit_ids", "entity_incarnation"
+      ],
+      "properties": {
+        "type": { "const": "decrement_bucket" },
+        "command_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_sequence": { "$ref": "#/definitions/positive_int64" },
+        "goal_id": { "$ref": "#/definitions/uuid_v4" },
+        "slot_id": { "$ref": "#/definitions/uuid_v4" },
+        "local_date": { "type": "string", "format": "date" },
+        "amount": { "$ref": "#/definitions/positive_int64" },
+        "basis_revision": { "$ref": "#/definitions/non_negative_int64" },
+        "local_frontier_sequence": { "$ref": "#/definitions/non_negative_int64" },
+        "observed_local_credit_ids": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/uuid_v4" },
+          "uniqueItems": true
+        },
+        "entity_incarnation": { "$ref": "#/definitions/positive_int64" }
+      },
+      "additionalProperties": false
+    },
+    "reset": {
+      "type": "object",
+      "required": [
+        "type", "command_id", "actor_id", "actor_sequence", "goal_id", "slot_id",
+        "local_date", "basis_revision", "local_frontier_sequence",
+        "observed_local_credit_ids", "entity_incarnation"
+      ],
+      "properties": {
+        "type": { "const": "reset_bucket_observed" },
+        "command_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_sequence": { "$ref": "#/definitions/positive_int64" },
+        "goal_id": { "$ref": "#/definitions/uuid_v4" },
+        "slot_id": { "$ref": "#/definitions/uuid_v4" },
+        "local_date": { "type": "string", "format": "date" },
+        "basis_revision": { "$ref": "#/definitions/non_negative_int64" },
+        "local_frontier_sequence": { "$ref": "#/definitions/non_negative_int64" },
+        "observed_local_credit_ids": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/uuid_v4" },
+          "uniqueItems": true
+        },
+        "entity_incarnation": { "$ref": "#/definitions/positive_int64" }
+      },
+      "additionalProperties": false
+    },
+    "entity_upsert": {
+      "type": "object",
+      "required": [
+        "type", "command_id", "actor_id", "actor_sequence", "entity_type", "entity_id",
+        "base_version", "entity_incarnation", "proposed_document"
+      ],
+      "properties": {
+        "type": { "const": "entity_upsert" },
+        "command_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_sequence": { "$ref": "#/definitions/positive_int64" },
+        "entity_type": { "enum": ["custom_dhikr", "goal"] },
+        "entity_id": { "$ref": "#/definitions/uuid_v4" },
+        "base_version": { "$ref": "#/definitions/non_negative_int64" },
+        "entity_incarnation": { "$ref": "#/definitions/positive_int64" },
+        "proposed_document": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "entity_lifecycle": {
+      "type": "object",
+      "required": [
+        "type", "command_id", "actor_id", "actor_sequence", "entity_type", "entity_id",
+        "base_version", "entity_incarnation"
+      ],
+      "properties": {
+        "type": { "enum": ["entity_delete", "entity_restore", "entity_accept_canonical", "manual_complete", "manual_reopen"] },
+        "command_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_id": { "$ref": "#/definitions/uuid_v4" },
+        "actor_sequence": { "$ref": "#/definitions/positive_int64" },
+        "entity_type": { "enum": ["custom_dhikr", "goal"] },
+        "entity_id": { "$ref": "#/definitions/uuid_v4" },
+        "base_version": { "$ref": "#/definitions/non_negative_int64" },
+        "entity_incarnation": { "$ref": "#/definitions/positive_int64" }
+      },
+      "additionalProperties": false
+    },
+    "command": {
+      "oneOf": [
+        { "$ref": "#/definitions/increment" },
+        { "$ref": "#/definitions/decrement" },
+        { "$ref": "#/definitions/reset" },
+        { "$ref": "#/definitions/entity_upsert" },
+        { "$ref": "#/definitions/entity_lifecycle" }
+      ]
+    },
+    "command_batch": {
+      "type": "object",
+      "required": ["header", "installation_id", "commands"],
+      "properties": {
+        "header": { "$ref": "#/definitions/protocol_header" },
+        "installation_id": { "$ref": "#/definitions/uuid_v4" },
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/definitions/command" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "receipt": {
+      "type": "object",
+      "required": ["command_id", "status", "result_revision", "canonical_effect"],
+      "properties": {
+        "command_id": { "$ref": "#/definitions/uuid_v4" },
+        "status": {
+          "enum": [
+            "accepted", "duplicate", "conflict", "invalid", "blocked_dependency",
+            "stale_basis", "gone"
+          ]
+        },
+        "result_revision": { "$ref": "#/definitions/non_negative_int64" },
+        "canonical_effect": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "command_batch_result": {
+      "type": "object",
+      "required": ["header", "receipts"],
+      "properties": {
+        "header": { "$ref": "#/definitions/protocol_header" },
+        "receipts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/receipt" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "transfer_request": {
+      "type": "object",
+      "required": ["header", "kind", "cursor"],
+      "properties": {
+        "header": { "$ref": "#/definitions/protocol_header" },
+        "kind": { "enum": ["snapshot", "delta"] },
+        "cursor": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "transfer_session": {
+      "type": "object",
+      "required": [
+        "header", "transfer_id", "kind", "through_revision", "generation", "cursor",
+        "page_count", "record_count", "checksum", "expires_at"
+      ],
+      "properties": {
+        "header": { "$ref": "#/definitions/protocol_header" },
+        "transfer_id": { "$ref": "#/definitions/uuid_v4" },
+        "kind": { "enum": ["snapshot", "delta"] },
+        "through_revision": { "$ref": "#/definitions/non_negative_int64" },
+        "generation": { "$ref": "#/definitions/positive_int64" },
+        "cursor": { "type": "string", "minLength": 1 },
+        "page_count": { "type": "integer", "minimum": 0 },
+        "record_count": { "type": "integer", "minimum": 0 },
+        "checksum": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "expires_at": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "actor_ack_request": {
+      "type": "object",
+      "required": ["header", "actor_id", "installation_id", "starting_sequence", "applied_revision", "safe_compaction_revision"],
+      "properties": {
+        "header": { "$ref": "#/definitions/protocol_header" },
+        "actor_id": { "$ref": "#/definitions/uuid_v4" },
+        "installation_id": { "$ref": "#/definitions/uuid_v4" },
+        "starting_sequence": { "$ref": "#/definitions/positive_int64" },
+        "applied_revision": { "$ref": "#/definitions/non_negative_int64" },
+        "safe_compaction_revision": { "$ref": "#/definitions/non_negative_int64" }
+      },
+      "additionalProperties": false
+    },
+    "actor_ack_response": {
+      "type": "object",
+      "required": ["header", "actor_id", "applied_revision", "safe_compaction_revision"],
+      "properties": {
+        "header": { "$ref": "#/definitions/protocol_header" },
+        "actor_id": { "$ref": "#/definitions/uuid_v4" },
+        "applied_revision": { "$ref": "#/definitions/non_negative_int64" },
+        "safe_compaction_revision": { "$ref": "#/definitions/non_negative_int64" }
+      },
+      "additionalProperties": false
+    },
+    "error_response": {
+      "type": "object",
+      "required": ["error"],
+      "properties": {
+        "error": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "expected_sequence": { "$ref": "#/definitions/positive_int64" }
+      },
+      "additionalProperties": false
+    },
+    "transfer_record": {
+      "type": "object",
+      "required": ["kind", "id", "sync_revision", "payload"],
+      "properties": {
+        "kind": { "enum": ["custom_dhikr", "goal", "count_projection", "conflict", "tombstone", "deletion_fence"] },
+        "id": { "$ref": "#/definitions/uuid_v4" },
+        "sync_revision": { "$ref": "#/definitions/non_negative_int64" },
+        "payload": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "transfer_page": {
+      "type": "object",
+      "required": ["header", "transfer_id", "page", "checksum", "records"],
+      "properties": {
+        "header": { "$ref": "#/definitions/protocol_header" },
+        "transfer_id": { "$ref": "#/definitions/uuid_v4" },
+        "page": { "type": "integer", "minimum": 1 },
+        "checksum": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "records": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/transfer_record" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
