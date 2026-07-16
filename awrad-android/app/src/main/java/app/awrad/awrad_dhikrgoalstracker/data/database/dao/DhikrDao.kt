@@ -36,6 +36,9 @@ interface DhikrDao {
     @Update
     suspend fun update(dhikr: DhikrEntity)
 
+    @Query("DELETE FROM dhikrs WHERE id = :id AND isCustom = 1")
+    suspend fun deleteCustomById(id: AwradId)
+
     @Query("SELECT COUNT(*) FROM dhikrs")
     suspend fun getCount(): Int
 

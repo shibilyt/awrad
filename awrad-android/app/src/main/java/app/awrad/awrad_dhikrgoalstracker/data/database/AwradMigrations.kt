@@ -121,6 +121,77 @@ object AwradMigrations {
         }
     }
 
+    /** v6 -> v7: adds account-bound sync state, durable outbox, open count batches, and shadows. */
+    val MIGRATION_6_7: Migration = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `sync_state` (`id` INTEGER NOT NULL, `boundUserId` TEXT NOT NULL, `actorId` TEXT NOT NULL, `installationId` TEXT NOT NULL, `nextActorSequence` INTEGER NOT NULL, `cursor` TEXT, `appliedRevision` INTEGER NOT NULL, `safeCompactionRevision` INTEGER NOT NULL, `generation` INTEGER NOT NULL, `pendingTransferId` TEXT, `pendingTransferCursor` TEXT, `pendingTransferPage` INTEGER, `pendingTransferPageCount` INTEGER, `lastSyncAt` INTEGER, `lastError` TEXT, PRIMARY KEY(`id`))")
+            db.execSQL("CREATE TABLE IF NOT EXISTS `sync_outbox` (`commandId` TEXT NOT NULL, `actorSequence` INTEGER NOT NULL, `type` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, `state` TEXT NOT NULL, `entityType` TEXT, `entityId` TEXT, `goalId` TEXT, `slotId` TEXT, `localDate` TEXT, `countDelta` INTEGER, `createdAt` INTEGER NOT NULL, `attemptCount` INTEGER NOT NULL, `lastAttemptAt` INTEGER, `lastError` TEXT, PRIMARY KEY(`commandId`))")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_sync_outbox_actorSequence` ON `sync_outbox` (`actorSequence`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_sync_outbox_state_actorSequence` ON `sync_outbox` (`state`, `actorSequence`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_sync_outbox_entityType_entityId` ON `sync_outbox` (`entityType`, `entityId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_sync_outbox_goalId_slotId_localDate` ON `sync_outbox` (`goalId`, `slotId`, `localDate`)")
+            db.execSQL("CREATE TABLE IF NOT EXISTS `sync_open_count_batches` (`id` TEXT NOT NULL, `goalId` TEXT NOT NULL, `slotId` TEXT NOT NULL, `localDate` TEXT NOT NULL, `entityIncarnation` INTEGER NOT NULL, `amount` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_sync_open_count_batches_goalId_slotId_localDate_entityIncarnation` ON `sync_open_count_batches` (`goalId`, `slotId`, `localDate`, `entityIncarnation`)")
+            db.execSQL("CREATE TABLE IF NOT EXISTS `sync_entity_shadows` (`key` TEXT NOT NULL, `entityType` TEXT NOT NULL, `entityId` TEXT NOT NULL, `version` INTEGER NOT NULL, `incarnation` INTEGER NOT NULL, `syncRevision` INTEGER NOT NULL, `state` TEXT NOT NULL, `documentJson` TEXT, `conflictDocumentJson` TEXT, PRIMARY KEY(`key`))")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_sync_entity_shadows_entityType_entityId` ON `sync_entity_shadows` (`entityType`, `entityId`)")
+        }
+    }
+
+    /**
+     * v7 -> v8: remembers a transfer's revision frontier until every page has
+     * passed integrity verification and has been committed locally.
+     */
+    val MIGRATION_7_8: Migration = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `sync_state` ADD COLUMN `pendingTransferThroughRevision` INTEGER")
+        }
+    }
+
+    /** v8 -> v9: stages immutable transfer pages and verifies the full session before install. */
+    val MIGRATION_8_9: Migration = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `sync_state` ADD COLUMN `pendingTransferKind` TEXT")
+            db.execSQL("ALTER TABLE `sync_state` ADD COLUMN `pendingTransferChecksum` TEXT")
+            db.execSQL("ALTER TABLE `sync_state` ADD COLUMN `pendingTransferRecordCount` INTEGER")
+            db.execSQL("CREATE TABLE IF NOT EXISTS `sync_inbox_pages` (`key` TEXT NOT NULL, `transferId` TEXT NOT NULL, `pageNumber` INTEGER NOT NULL, `checksum` TEXT NOT NULL, `recordsJson` TEXT NOT NULL, `itemCount` INTEGER NOT NULL, PRIMARY KEY(`key`))")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_sync_inbox_pages_transferId_pageNumber` ON `sync_inbox_pages` (`transferId`, `pageNumber`)")
+        }
+    }
+
+    /** v9 -> v10: tracks canonical bucket state and authoritative generation replacement. */
+    val MIGRATION_9_10: Migration = object : Migration(9, 10) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `sync_state` ADD COLUMN `generationResetPending` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("CREATE TABLE IF NOT EXISTS `sync_count_shadows` (`key` TEXT NOT NULL, `goalId` TEXT NOT NULL, `slotId` TEXT NOT NULL, `localDate` TEXT NOT NULL, `entityIncarnation` INTEGER NOT NULL, `canonicalCount` INTEGER NOT NULL, `syncRevision` INTEGER NOT NULL, PRIMARY KEY(`key`))")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_sync_count_shadows_goalId_slotId_localDate_entityIncarnation` ON `sync_count_shadows` (`goalId`, `slotId`, `localDate`, `entityIncarnation`)")
+        }
+    }
+
+    val MIGRATION_10_11: Migration = object : Migration(10, 11) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE `sync_state` ADD COLUMN `initialImportCompleted` INTEGER NOT NULL DEFAULT 0",
+            )
+        }
+    }
+
+    /** v11 -> v12: makes first import durable and preserves mutation wakeups during active sync. */
+    val MIGRATION_11_12: Migration = object : Migration(11, 12) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `sync_state` ADD COLUMN `initialImportPayloadJson` TEXT")
+            db.execSQL("ALTER TABLE `sync_state` ADD COLUMN `syncRequested` INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
+    /** v12 -> v13: persists server-origin entity conflicts without requiring a local outbox row. */
+    val MIGRATION_12_13: Migration = object : Migration(12, 13) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `sync_conflicts` (`conflictId` TEXT NOT NULL, `commandId` TEXT NOT NULL, `entityType` TEXT NOT NULL, `entityId` TEXT NOT NULL, `proposedDocumentJson` TEXT, `syncRevision` INTEGER NOT NULL, PRIMARY KEY(`conflictId`))")
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_sync_conflicts_commandId` ON `sync_conflicts` (`commandId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_sync_conflicts_entityType_entityId` ON `sync_conflicts` (`entityType`, `entityId`)")
+        }
+    }
+
     /** All migrations in ascending order. Register with Room via `addMigrations(*ALL_MIGRATIONS)`. */
     val ALL_MIGRATIONS: Array<Migration> = arrayOf(
         MIGRATION_1_2,
@@ -128,5 +199,12 @@ object AwradMigrations {
         MIGRATION_3_4,
         MIGRATION_4_5,
         MIGRATION_5_6,
+        MIGRATION_6_7,
+        MIGRATION_7_8,
+        MIGRATION_8_9,
+        MIGRATION_9_10,
+        MIGRATION_10_11,
+        MIGRATION_11_12,
+        MIGRATION_12_13,
     )
 }

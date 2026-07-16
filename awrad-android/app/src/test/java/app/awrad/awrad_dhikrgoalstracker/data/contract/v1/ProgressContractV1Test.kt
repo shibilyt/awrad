@@ -32,7 +32,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ProgressContractV1Test {
-    private val json = Json { explicitNulls = true }
+    private val json = Json { explicitNulls = true; encodeDefaults = true }
 
     @Test
     fun sharedFixtureRoundTripsThroughNativeModels() {
@@ -102,6 +102,17 @@ class ProgressContractV1Test {
         assertEquals(true, slot.isActive)
         assertEquals(ReminderType.FIXED_TIME, reminder.reminderType)
         assertEquals(true, reminder.enabled)
+    }
+
+    @Test
+    fun nullablePolicyMembersMayBeOmittedByAnotherNativeEncoder() {
+        val policy = json.decodeFromString<CountPolicyV1>(
+            """{"target_count":4444,"streak_threshold":"target","reminder_threshold":"target","completion_threshold":"target","cap_behavior":"allow_over_target"}""",
+        )
+
+        assertEquals(null, policy.minimumCount)
+        assertEquals(4_444, policy.targetCount)
+        assertEquals(null, policy.maximumCount)
     }
 
     private fun fixture(name: String): File =

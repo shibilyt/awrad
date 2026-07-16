@@ -9,6 +9,9 @@ import app.awrad.awrad_dhikrgoalstracker.data.network.LogoutRequest
 import app.awrad.awrad_dhikrgoalstracker.data.network.RegisterRequest
 import app.awrad.awrad_dhikrgoalstracker.data.network.AuthSession
 import app.awrad.awrad_dhikrgoalstracker.data.preferences.AuthTokenManager
+import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncRepository
+import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncScheduler
+import app.awrad.awrad_dhikrgoalstracker.data.sync.SyncAccountMismatchException
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -24,6 +27,8 @@ sealed class AuthResult<out T> {
 class AuthRepository @Inject constructor(
     private val api: AwradApiService,
     private val tokenManager: AuthTokenManager,
+    private val progressSyncRepository: ProgressSyncRepository,
+    private val progressSyncScheduler: ProgressSyncScheduler,
 ) {
     val isLoggedIn: Flow<Boolean> = tokenManager.isLoggedIn
     val userEmail: Flow<String?> = tokenManager.userEmail
@@ -50,8 +55,17 @@ class AuthRepository @Inject constructor(
             val response = api.login(LoginRequest(email, password, device))
             if (response.isSuccessful) {
                 val body = response.body()!!
+                try {
+                    progressSyncRepository.bind(body.user.id, tokenManager.installationId())
+                } catch (error: SyncAccountMismatchException) {
+                    runCatching {
+                        api.logout("Bearer ${body.access_token}", LogoutRequest(body.refresh_token))
+                    }
+                    return AuthResult.Error(error.message ?: "Local progress belongs to another account")
+                }
                 tokenManager.saveTokens(body.access_token, body.refresh_token)
                 tokenManager.saveUser(body.user.id, body.user.email, body.user.emailVerified, body.session.id)
+                progressSyncScheduler.enqueue()
                 AuthResult.Success(Unit)
             } else {
                 AuthResult.Error(parseError(response.errorBody()?.string()))
@@ -80,8 +94,17 @@ class AuthRepository @Inject constructor(
             val response = api.verifyEmail(mapOf("token" to token, "device" to device))
             if (response.isSuccessful) {
                 val body = response.body()!!
+                try {
+                    progressSyncRepository.bind(body.user.id, tokenManager.installationId())
+                } catch (error: SyncAccountMismatchException) {
+                    runCatching {
+                        api.logout("Bearer ${body.access_token}", LogoutRequest(body.refresh_token))
+                    }
+                    return AuthResult.Error(error.message ?: "Local progress belongs to another account")
+                }
                 tokenManager.saveTokens(body.access_token, body.refresh_token)
                 tokenManager.saveUser(body.user.id, body.user.email, body.user.emailVerified, body.session.id)
+                progressSyncScheduler.enqueue()
                 AuthResult.Success(Unit)
             } else {
                 AuthResult.Error(parseError(response.errorBody()?.string()))

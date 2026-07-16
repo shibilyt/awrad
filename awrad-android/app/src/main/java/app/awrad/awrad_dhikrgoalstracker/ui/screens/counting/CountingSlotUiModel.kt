@@ -144,17 +144,10 @@ internal fun buildSlotCountingUiModels(
             timeStatus = if (slot.slotType == GoalSlotType.ANYTIME) SlotTimeStatus.ANYTIME else SlotTimeStatus.UNKNOWN,
         )
         val isComplete = target > 0 && count >= target
-        val canCountNow = when (slotCountingPolicy) {
-            SlotCountingPolicy.STRICT_ACTIVE_ONLY -> timing.timeStatus == SlotTimeStatus.ACTIVE ||
-                timing.timeStatus == SlotTimeStatus.ANYTIME
-            SlotCountingPolicy.WARN_AND_ALLOW,
-            SlotCountingPolicy.SILENT_FLEXIBLE -> true
-        }
-        val canSelect = isSelectable && when (slotCountingPolicy) {
-            SlotCountingPolicy.STRICT_ACTIVE_ONLY -> canCountNow
-            SlotCountingPolicy.WARN_AND_ALLOW,
-            SlotCountingPolicy.SILENT_FLEXIBLE -> true
-        }
+        // The persisted legacy policy no longer controls interaction. Selecting an
+        // unavailable slot is allowed so the universal counting guard can explain it.
+        val canCountNow = true
+        val canSelect = isSelectable
         SlotCountingUiModel(
             id = slot.id,
             title = titleForSlot(slot),
@@ -171,9 +164,7 @@ internal fun buildSlotCountingUiModels(
             isSelectable = isSelectable,
             canSelect = canSelect,
             canCountNow = canCountNow,
-            requiresEndedWarning = slotCountingPolicy == SlotCountingPolicy.WARN_AND_ALLOW &&
-                timing.timeStatus == SlotTimeStatus.ENDED &&
-                !isComplete,
+            requiresEndedWarning = timing.timeStatus == SlotTimeStatus.ENDED && !isComplete,
         )
     }
 }

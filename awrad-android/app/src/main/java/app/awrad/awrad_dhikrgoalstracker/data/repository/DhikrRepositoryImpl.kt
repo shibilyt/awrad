@@ -2,6 +2,9 @@ package app.awrad.awrad_dhikrgoalstracker.data.repository
 
 import app.awrad.awrad_dhikrgoalstracker.data.database.BuiltInDhikrs
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.AwradDatabase
+import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncRepository
+import androidx.room.withTransaction
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrEntity
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
@@ -22,6 +25,8 @@ import javax.inject.Singleton
 class DhikrRepositoryImpl @Inject constructor(
     private val dhikrDao: DhikrDao,
     private val audioDownloadManager: AudioDownloadManager,
+    private val database: AwradDatabase? = null,
+    private val progressSyncRepository: ProgressSyncRepository? = null,
 ) : DhikrRepository {
 
     override fun getAllDhikrs(): Flow<List<Dhikr>> =
@@ -158,28 +163,47 @@ class DhikrRepositoryImpl @Inject constructor(
         audioDownloadManager.downloadProgress
 
     override suspend fun createDhikr(dhikr: Dhikr): AwradId {
-        val entity = DhikrEntity(
-            id = dhikr.id,
-            catalogKey = dhikr.catalogKey,
-            title = dhikr.title,
-            arabic = dhikr.arabic,
-            transliteration = dhikr.transliteration,
-            translation = dhikr.translation,
-            audioUrl = dhikr.audioUrl,
-            audioFileName = dhikr.audioFileName,
-            category = dhikr.category,
-            isDownloaded = dhikr.isDownloaded,
-            isCustom = dhikr.isCustom,
-            audioCountPerPlay = dhikr.audioCountPerPlay,
-            sortOrder = dhikr.sortOrder,
-            quranSurah = dhikr.quranRef?.surah,
-            quranAyahStart = dhikr.quranRef?.ayahStart,
-            quranAyahEnd = dhikr.quranRef?.ayahEnd,
-            benefitsJson = Json.encodeToString(dhikr.benefits),
-        )
-        dhikrDao.insert(entity)
+        val entity = dhikr.toEntity()
+        val persist: suspend () -> Unit = {
+            dhikrDao.insert(entity)
+            progressSyncRepository?.enqueueDhikr(dhikr)
+        }
+        database?.withTransaction { persist() } ?: persist()
         return entity.id
     }
+
+    suspend fun applyRemoteDhikr(dhikr: Dhikr) = requireNotNull(database).withTransaction {
+        val existing = dhikrDao.getDhikrById(dhikr.id)
+        val entity = dhikr.toEntity().copy(
+            isDownloaded = existing?.isDownloaded ?: false,
+            audioFileName = existing?.audioFileName ?: dhikr.audioFileName,
+        )
+        if (existing == null) dhikrDao.insert(entity) else dhikrDao.update(entity)
+    }
+
+    suspend fun deleteRemoteDhikr(id: AwradId) = requireNotNull(database).withTransaction {
+        dhikrDao.deleteCustomById(id)
+    }
+
+    private fun Dhikr.toEntity() = DhikrEntity(
+        id = id,
+        catalogKey = catalogKey,
+        title = title,
+        arabic = arabic,
+        transliteration = transliteration,
+        translation = translation,
+        audioUrl = audioUrl,
+        audioFileName = audioFileName,
+        category = category,
+        isDownloaded = isDownloaded,
+        isCustom = isCustom,
+        audioCountPerPlay = audioCountPerPlay,
+        sortOrder = sortOrder,
+        quranSurah = quranRef?.surah,
+        quranAyahStart = quranRef?.ayahStart,
+        quranAyahEnd = quranRef?.ayahEnd,
+        benefitsJson = Json.encodeToString(benefits),
+    )
 
     private fun DhikrEntity.toDomain() = Dhikr(
         id = id,

@@ -8,7 +8,6 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -42,8 +41,8 @@ class UserPreferences @Inject constructor(
         private val KEY_READER_FONT_SCALE = floatPreferencesKey("wird_reader_font_scale")
         private val KEY_COUNTING_DHIKR_TEXT_SCALE = floatPreferencesKey("counting_dhikr_text_scale")
         private val KEY_COUNTING_DHIKR_LINE_SPACING = floatPreferencesKey("counting_dhikr_line_spacing")
-        private val KEY_EARLY_SLOT_CONFIRMATIONS = stringSetPreferencesKey("early_slot_confirmations")
-        private val KEY_ENDED_SLOT_CONFIRMATIONS = stringSetPreferencesKey("ended_slot_confirmations")
+        private val KEY_COUNTING_AVAILABILITY_CONFIRMATIONS =
+            stringSetPreferencesKey("counting_availability_confirmations")
     }
 
     val userName: Flow<String> = dataStore.data.map { it[KEY_USER_NAME] ?: "" }
@@ -159,43 +158,25 @@ class UserPreferences @Inject constructor(
         dataStore.edit { it[KEY_COUNTING_DHIKR_LINE_SPACING] = spacing }
     }
 
-    suspend fun hasEarlySlotConfirmation(goalId: AwradId, slotId: AwradId, date: String): Boolean {
-        val key = earlySlotConfirmationKey(goalId, slotId, date)
-        return dataStore.data.first()[KEY_EARLY_SLOT_CONFIRMATIONS].orEmpty().contains(key)
+    suspend fun hasCountingAvailabilityConfirmation(key: String): Boolean {
+        val prefix = "${key.substringBefore(':')}:"
+        val stored = dataStore.data.first()[KEY_COUNTING_AVAILABILITY_CONFIRMATIONS].orEmpty()
+        if (stored.all { it.startsWith(prefix) }) return key in stored
+        dataStore.edit { preferences ->
+            preferences[KEY_COUNTING_AVAILABILITY_CONFIRMATIONS] =
+                stored.filterTo(mutableSetOf()) { it.startsWith(prefix) }
+        }
+        return key in stored
     }
 
-    suspend fun confirmEarlySlotCount(goalId: AwradId, slotId: AwradId, date: String) {
-        val key = earlySlotConfirmationKey(goalId, slotId, date)
+    suspend fun confirmCountingAvailability(key: String, effectiveDate: String) {
         dataStore.edit { preferences ->
-            val currentDatePrefix = "$date:"
-            val pruned = preferences[KEY_EARLY_SLOT_CONFIRMATIONS]
+            val currentDatePrefix = "$effectiveDate:"
+            val pruned = preferences[KEY_COUNTING_AVAILABILITY_CONFIRMATIONS]
                 .orEmpty()
                 .filterTo(mutableSetOf()) { it.startsWith(currentDatePrefix) }
             pruned.add(key)
-            preferences[KEY_EARLY_SLOT_CONFIRMATIONS] = pruned
+            preferences[KEY_COUNTING_AVAILABILITY_CONFIRMATIONS] = pruned
         }
     }
-
-    suspend fun hasEndedSlotConfirmation(goalId: AwradId, slotId: AwradId, date: String): Boolean {
-        val key = endedSlotConfirmationKey(goalId, slotId, date)
-        return dataStore.data.first()[KEY_ENDED_SLOT_CONFIRMATIONS].orEmpty().contains(key)
-    }
-
-    suspend fun confirmEndedSlotCount(goalId: AwradId, slotId: AwradId, date: String) {
-        val key = endedSlotConfirmationKey(goalId, slotId, date)
-        dataStore.edit { preferences ->
-            val currentDatePrefix = "$date:"
-            val pruned = preferences[KEY_ENDED_SLOT_CONFIRMATIONS]
-                .orEmpty()
-                .filterTo(mutableSetOf()) { it.startsWith(currentDatePrefix) }
-            pruned.add(key)
-            preferences[KEY_ENDED_SLOT_CONFIRMATIONS] = pruned
-        }
-    }
-
-    private fun earlySlotConfirmationKey(goalId: AwradId, slotId: AwradId, date: String): String =
-        "$date:$goalId:$slotId"
-
-    private fun endedSlotConfirmationKey(goalId: AwradId, slotId: AwradId, date: String): String =
-        "$date:$goalId:$slotId"
 }

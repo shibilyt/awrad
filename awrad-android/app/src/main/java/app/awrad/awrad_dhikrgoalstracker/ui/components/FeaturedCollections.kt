@@ -1,6 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.components
 
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -116,6 +117,7 @@ fun FeaturedCollectionsSection(
     onCollectionClick: (DhikrCategory) -> Unit,
     modifier: Modifier = Modifier,
     onViewAll: (() -> Unit)? = null,
+    @StringRes titleRes: Int = R.string.featured_collections,
 ) {
     val collections = rememberFeaturedCollections(categoryCounts)
 
@@ -131,7 +133,7 @@ fun FeaturedCollectionsSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(R.string.featured_collections),
+                text = stringResource(titleRes),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,

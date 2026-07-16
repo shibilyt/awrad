@@ -24,18 +24,18 @@ data class ProgressStateV1(
 @Serializable
 data class DhikrV1(
     val id: String,
-    @SerialName("catalog_key") val catalogKey: String?,
+    @SerialName("catalog_key") val catalogKey: String? = null,
     @SerialName("is_custom") val isCustom: Boolean,
     val title: String,
     val arabic: String,
     val transliteration: String,
     val translation: String,
-    @SerialName("audio_url") val audioUrl: String?,
-    @SerialName("audio_file_name") val audioFileName: String?,
+    @SerialName("audio_url") val audioUrl: String? = null,
+    @SerialName("audio_file_name") val audioFileName: String? = null,
     val category: String,
     @SerialName("audio_count_per_play") val audioCountPerPlay: Int,
     @SerialName("sort_order") val sortOrder: Int,
-    @SerialName("quran_ref") val quranRef: QuranRefV1?,
+    @SerialName("quran_ref") val quranRef: QuranRefV1? = null,
     val benefits: List<String>,
 )
 
@@ -43,14 +43,14 @@ data class DhikrV1(
 data class QuranRefV1(
     val surah: Int,
     @SerialName("ayah_start") val ayahStart: Int,
-    @SerialName("ayah_end") val ayahEnd: Int?,
+    @SerialName("ayah_end") val ayahEnd: Int? = null,
 )
 
 @Serializable
 data class CountPolicyV1(
-    @SerialName("minimum_count") val minimumCount: Int?,
-    @SerialName("target_count") val targetCount: Int?,
-    @SerialName("maximum_count") val maximumCount: Int?,
+    @SerialName("minimum_count") val minimumCount: Int? = null,
+    @SerialName("target_count") val targetCount: Int? = null,
+    @SerialName("maximum_count") val maximumCount: Int? = null,
     @SerialName("streak_threshold") val streakThreshold: JsonElement,
     @SerialName("reminder_threshold") val reminderThreshold: JsonElement,
     @SerialName("completion_threshold") val completionThreshold: JsonElement,
@@ -61,10 +61,10 @@ data class CountPolicyV1(
 data class RecurrenceV1(
     val frequency: String,
     val calendar: String,
-    @SerialName("interval_days") val intervalDays: Int?,
-    @SerialName("anchor_date") val anchorDate: String?,
-    val month: Int?,
-    @SerialName("season_code") val seasonCode: String?,
+    @SerialName("interval_days") val intervalDays: Int? = null,
+    @SerialName("anchor_date") val anchorDate: String? = null,
+    val month: Int? = null,
+    @SerialName("season_code") val seasonCode: String? = null,
     val weekdays: List<Int>,
     @SerialName("month_days") val monthDays: List<Int>,
     @SerialName("specific_dates") val specificDates: List<String>,
@@ -76,26 +76,26 @@ data class GoalSlotV1(
     @SerialName("goal_id") val goalId: String,
     @SerialName("slot_type") val slotType: String,
     @SerialName("count_policy") val countPolicy: CountPolicyV1,
-    @SerialName("prayer_name") val prayerName: String?,
-    @SerialName("prayer_relation") val prayerRelation: String?,
-    @SerialName("start_minute") val startMinute: Int?,
-    @SerialName("end_minute") val endMinute: Int?,
-    @SerialName("start_lead_minutes_override") val startLeadMinutesOverride: Int?,
-    val label: String?,
+    @SerialName("prayer_name") val prayerName: String? = null,
+    @SerialName("prayer_relation") val prayerRelation: String? = null,
+    @SerialName("start_minute") val startMinute: Int? = null,
+    @SerialName("end_minute") val endMinute: Int? = null,
+    @SerialName("start_lead_minutes_override") val startLeadMinutesOverride: Int? = null,
+    val label: String? = null,
     @SerialName("sort_order") val sortOrder: Int,
     @SerialName("is_active") val isActive: Boolean,
-    @SerialName("archived_at") val archivedAt: String?,
+    @SerialName("archived_at") val archivedAt: String? = null,
 )
 
 @Serializable
 data class GoalReminderV1(
     val id: String,
     @SerialName("goal_id") val goalId: String,
-    @SerialName("slot_id") val slotId: String?,
+    @SerialName("slot_id") val slotId: String? = null,
     @SerialName("reminder_type") val reminderType: String,
-    val hour: Int?,
-    val minute: Int?,
-    @SerialName("offset_minutes") val offsetMinutes: Int?,
+    val hour: Int? = null,
+    val minute: Int? = null,
+    @SerialName("offset_minutes") val offsetMinutes: Int? = null,
     val enabled: Boolean,
     @SerialName("sort_order") val sortOrder: Int,
 )
@@ -112,10 +112,10 @@ data class GoalV1(
     val slots: List<GoalSlotV1>,
     val reminders: List<GoalReminderV1>,
     @SerialName("start_date") val startDate: String,
-    @SerialName("end_date") val endDate: String?,
-    @SerialName("duration_days") val durationDays: Int?,
+    @SerialName("end_date") val endDate: String? = null,
+    @SerialName("duration_days") val durationDays: Int? = null,
     @SerialName("is_active") val isActive: Boolean,
-    @SerialName("completed_at") val completedAt: String?,
+    @SerialName("completed_at") val completedAt: String? = null,
     @SerialName("created_at") val createdAt: String,
     @SerialName("updated_at") val updatedAt: String,
 )
@@ -148,6 +148,11 @@ fun NativeProgressStateV1.toContract(): ProgressStateV1 = ProgressStateV1(
     goals = goals.map { it.toContract() },
     countEntries = countEntries.map { it.toContract() },
 )
+
+fun Dhikr.toProgressContractV1(): DhikrV1 = toContract()
+fun Goal.toProgressContractV1(): GoalV1 = toContract()
+fun DhikrV1.toNativeDhikr(): Dhikr = toNative()
+fun GoalV1.toNativeGoal(): Goal = toNative()
 
 private fun DhikrV1.toNative() = Dhikr(
     id = uuid(id),

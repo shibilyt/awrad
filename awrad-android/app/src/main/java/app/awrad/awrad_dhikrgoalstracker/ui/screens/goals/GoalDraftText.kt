@@ -246,9 +246,7 @@ fun remindersSummary(draft: GoalDraft): String {
             "%02d:%02d".format(draft.extras.notificationHour, draft.extras.notificationMinute),
         )
     }
-    val timing = GoalDraftMapper.effectiveTiming(draft)
-    if (timing == GoalTimingDraft.Anytime) return reminders
-    return stringResource(R.string.goal_summary_reminders_with_slot_policy, reminders, draft.extras.slotCountingPolicy.localizedSummary())
+    return reminders
 }
 
 @Composable

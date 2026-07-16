@@ -323,6 +323,22 @@
     <string name="slot_ended_switch_action">انتقل إلى %1$s</string>
     <string name="slot_ended_keep_counting">متابعة العد هنا</string>
     <string name="slot_count_blocked_outside_active">هذه الجلسة خارج وقتها النشط.</string>
+    <string name="counting_availability_title">العد غير متاح بعد</string>
+    <string name="counting_availability_intro">يمكنك المتابعة على أي حال للأسباب التالية:</string>
+    <string name="counting_availability_future_start">يبدأ هذا الهدف في %1$s.</string>
+    <string name="counting_availability_off_recurrence">هذا الهدف غير مجدول لليوم الفعلي الحالي.</string>
+    <string name="counting_availability_slot_upcoming">تبدأ الفترة المحددة في %1$s.</string>
+    <string name="counting_availability_slot_upcoming_unknown">لم تبدأ الفترة المحددة بعد.</string>
+    <string name="counting_availability_slot_ended">انتهت الفترة المحددة في %1$s.</string>
+    <string name="counting_availability_slot_ended_unknown">انتهت الفترة المحددة.</string>
+    <string name="counting_availability_slot_unknown">تعذر تحديد وقت الفترة المحددة.</string>
+    <string name="counting_availability_count_anyway">العد على أي حال</string>
+    <string name="counting_availability_start_anyway">البدء على أي حال</string>
+    <string name="counting_availability_resume_anyway">الاستئناف على أي حال</string>
+    <string name="counting_hard_block_paused">هذا الهدف متوقف مؤقتًا. استأنفه قبل العد.</string>
+    <string name="counting_hard_block_completed">هذا الهدف مكتمل ولا يمكن العد فيه.</string>
+    <string name="counting_hard_block_expired">انتهت صلاحية هذا الهدف ولا يمكن العد فيه.</string>
+    <string name="counting_hard_block_duration_ended">انتهت مدة هذا الهدف ولا يمكن العد فيه.</string>
     <string name="count_over_target_warning">تم تجاوز الهدف. سيستمر العد.</string>
     <string name="count_hard_cap_reached">وصل هذا الهدف إلى حد العد.</string>
     <string name="counting_see_full">اقرأ المزيد</string>
@@ -366,6 +382,7 @@
     <string name="library_filter_all">الكل</string>
     <string name="library_no_match">لا توجد أذكار تطابق بحثك</string>
     <string name="library_no_dhikrs">لا توجد أذكار</string>
+    <string name="featured_dhikr_collections">مجموعات الذكر المميزة</string>
 
     <!-- Create Dhikr screen -->
     <string name="create_dhikr_title">إضافة ذكر</string>
@@ -1122,4 +1139,10 @@
     <string name="counting_allow_past_target_confirm">سماح</string>
     <string name="counting_allow_past_target_success">يمكنك الآن متابعة العد بعد الهدف.</string>
     <string name="counting_allow_past_target_error">تعذر تغيير حد العد. حاول مرة أخرى.</string>
+    <string name="settings_sync_now">مزامنة التقدم الآن</string>
+    <string name="settings_sync_current">تقدمك السحابي محدّث.</string>
+    <string name="settings_sync_not_yet">لم تتم مزامنة التقدم بعد.</string>
+    <string name="settings_sync_pending">هناك %1$d تغييرات بانتظار المزامنة.</string>
+    <string name="settings_sync_attention">هناك %1$d تعارضات و%2$d تغييرات فاشلة تحتاج إلى مراجعة.</string>
+    <string name="settings_sync_error">لم تكتمل آخر مزامنة. اضغط لإعادة المحاولة.</string>
 </resources>

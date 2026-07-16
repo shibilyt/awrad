@@ -67,6 +67,9 @@ interface GoalDao {
     @Query("UPDATE goals SET totalCompletedCount = 0, completedAt = NULL, isActive = 1, updatedAt = :updatedAt")
     suspend fun resetAllGoalProgress(updatedAt: Long)
 
+    @Query("UPDATE goals SET totalCompletedCount = 0, updatedAt = :updatedAt WHERE id = :goalId")
+    suspend fun resetGoalCount(goalId: AwradId, updatedAt: Long)
+
     @Query("SELECT * FROM goals WHERE dhikrId = :dhikrId AND isActive = 1 ORDER BY createdAt DESC")
     fun getActiveGoalsByDhikrId(dhikrId: AwradId): Flow<List<GoalEntity>>
 }

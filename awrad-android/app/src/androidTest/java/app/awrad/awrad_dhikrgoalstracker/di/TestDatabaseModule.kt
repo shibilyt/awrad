@@ -10,6 +10,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.dao.CountEntryDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalSlotDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.dao.SyncDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -39,6 +40,9 @@ object TestDatabaseModule {
 
     @Provides
     fun provideCountEntryDao(db: AwradDatabase): CountEntryDao = db.countEntryDao()
+
+    @Provides
+    fun provideSyncDao(db: AwradDatabase): SyncDao = db.syncDao()
 
     @Provides
     @Singleton

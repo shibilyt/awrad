@@ -145,7 +145,146 @@ class AwradMigrationsTest {
 
     @Test
     @Throws(IOException::class)
-    fun migrateAll1To6_appliesEveryMigration_andEndsAtUuidSchema() {
+    fun migrate6To7_addsDurableSyncTables_andPreservesProductData() {
+        helper.createDatabase(TEST_DB, 6).apply {
+            execSQL(
+                "INSERT INTO dhikrs " +
+                    "(id, catalogKey, title, arabic, transliteration, translation, category, isDownloaded, isCustom, audioCountPerPlay, benefitsJson, sortOrder) " +
+                    "VALUES ('d1', NULL, 'Custom', '', '', '', 'GENERAL', 0, 1, 1, '[]', 0)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 7, true, AwradMigrations.MIGRATION_6_7)
+        helper.closeWhenFinished(db)
+
+        assertEquals("Custom", queryString(db, "SELECT title FROM dhikrs WHERE id = 'd1'"))
+        db.execSQL(
+            "INSERT INTO sync_state " +
+                "(id, boundUserId, actorId, installationId, nextActorSequence, appliedRevision, safeCompactionRevision, generation) " +
+                "VALUES (1, 'user', 'actor', 'install', 1, 0, 0, 1)",
+        )
+        assertEquals(1L, queryLong(db, "SELECT nextActorSequence FROM sync_state WHERE id = 1"))
+        assertTrue(tableExists(db, "sync_outbox"))
+        assertTrue(tableExists(db, "sync_open_count_batches"))
+        assertTrue(tableExists(db, "sync_entity_shadows"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate7To8_addsPendingTransferFrontier_withoutChangingSyncState() {
+        helper.createDatabase(TEST_DB, 7).apply {
+            execSQL(
+                "INSERT INTO sync_state " +
+                    "(id, boundUserId, actorId, installationId, nextActorSequence, appliedRevision, safeCompactionRevision, generation, pendingTransferId) " +
+                    "VALUES (1, 'user', 'actor', 'install', 2, 7, 6, 1, 'transfer')",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 8, true, AwradMigrations.MIGRATION_7_8)
+        helper.closeWhenFinished(db)
+
+        assertEquals(7L, queryLong(db, "SELECT appliedRevision FROM sync_state WHERE id = 1"))
+        assertTrue(queryIsNull(db, "SELECT pendingTransferThroughRevision FROM sync_state WHERE id = 1"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate8To9_addsAtomicTransferInbox_withoutChangingSyncState() {
+        helper.createDatabase(TEST_DB, 8).apply {
+            execSQL(
+                "INSERT INTO sync_state " +
+                    "(id, boundUserId, actorId, installationId, nextActorSequence, appliedRevision, safeCompactionRevision, generation) " +
+                    "VALUES (1, 'user', 'actor', 'install', 2, 7, 6, 1)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 9, true, AwradMigrations.MIGRATION_8_9)
+        helper.closeWhenFinished(db)
+
+        assertEquals(7L, queryLong(db, "SELECT appliedRevision FROM sync_state WHERE id = 1"))
+        assertTrue(tableExists(db, "sync_inbox_pages"))
+        assertTrue(queryIsNull(db, "SELECT pendingTransferChecksum FROM sync_state WHERE id = 1"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate9To10_addsCanonicalCountShadows_andGenerationResetState() {
+        helper.createDatabase(TEST_DB, 9).apply {
+            execSQL(
+                "INSERT INTO sync_state " +
+                    "(id, boundUserId, actorId, installationId, nextActorSequence, appliedRevision, safeCompactionRevision, generation) " +
+                    "VALUES (1, 'user', 'actor', 'install', 2, 7, 6, 1)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 10, true, AwradMigrations.MIGRATION_9_10)
+        helper.closeWhenFinished(db)
+
+        assertEquals(0L, queryLong(db, "SELECT generationResetPending FROM sync_state WHERE id = 1"))
+        assertTrue(tableExists(db, "sync_count_shadows"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate10To11_addsDurableInitialImportMarker() {
+        helper.createDatabase(TEST_DB, 10).apply {
+            execSQL(
+                "INSERT INTO sync_state " +
+                    "(id, boundUserId, actorId, installationId, nextActorSequence, appliedRevision, safeCompactionRevision, generation, generationResetPending) " +
+                    "VALUES (1, 'user', 'actor', 'install', 2, 7, 6, 1, 0)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 11, true, AwradMigrations.MIGRATION_10_11)
+        helper.closeWhenFinished(db)
+
+        assertEquals(0L, queryLong(db, "SELECT initialImportCompleted FROM sync_state WHERE id = 1"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate11To12_addsDurableImportPayloadAndSyncWakeup() {
+        helper.createDatabase(TEST_DB, 11).apply {
+            execSQL(
+                "INSERT INTO sync_state " +
+                    "(id, boundUserId, actorId, installationId, nextActorSequence, appliedRevision, safeCompactionRevision, generation, generationResetPending, initialImportCompleted) " +
+                    "VALUES (1, 'user', 'actor', 'install', 2, 7, 6, 1, 0, 0)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 12, true, AwradMigrations.MIGRATION_11_12)
+        helper.closeWhenFinished(db)
+
+        assertTrue(queryIsNull(db, "SELECT initialImportPayloadJson FROM sync_state WHERE id = 1"))
+        assertEquals(0L, queryLong(db, "SELECT syncRequested FROM sync_state WHERE id = 1"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrate12To13_addsDurableServerConflicts() {
+        helper.createDatabase(TEST_DB, 12).close()
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 13, true, AwradMigrations.MIGRATION_12_13)
+        helper.closeWhenFinished(db)
+
+        assertTrue(tableExists(db, "sync_conflicts"))
+        db.execSQL(
+            "INSERT INTO sync_conflicts " +
+                "(conflictId, commandId, entityType, entityId, proposedDocumentJson, syncRevision) " +
+                "VALUES ('conflict', 'command', 'goal', 'goal-id', '{}', 9)",
+        )
+        assertEquals(1L, queryLong(db, "SELECT COUNT(*) FROM sync_conflicts"))
+    }
+
+    @Test
+    @Throws(IOException::class)
+    fun migrateAll1To13_appliesEveryMigration_andEndsAtSyncSchema() {
         helper.createDatabase(TEST_DB, 1).apply {
             seedDhikr(this, id = 1, title = "Istighfar")
             execSQL(
@@ -160,7 +299,7 @@ class AwradMigrationsTest {
             close()
         }
 
-        val db = helper.runMigrationsAndValidate(TEST_DB, 6, true, *AwradMigrations.ALL_MIGRATIONS)
+        val db = helper.runMigrationsAndValidate(TEST_DB, 13, true, *AwradMigrations.ALL_MIGRATIONS)
         helper.closeWhenFinished(db)
 
         assertEquals(0L, queryLong(db, "SELECT COUNT(*) FROM dhikrs"))
@@ -168,6 +307,10 @@ class AwradMigrationsTest {
         assertEquals(0L, queryLong(db, "SELECT COUNT(*) FROM goals"))
         assertFalse(tableExists(db, "wird_collections"))
         assertTrue(tableExists(db, "wirds"))
+        assertTrue(tableExists(db, "sync_state"))
+        assertTrue(tableExists(db, "sync_inbox_pages"))
+        assertTrue(tableExists(db, "sync_count_shadows"))
+        assertTrue(tableExists(db, "sync_conflicts"))
     }
 
     private fun seedDhikr(db: SupportSQLiteDatabase, id: Long, title: String) {

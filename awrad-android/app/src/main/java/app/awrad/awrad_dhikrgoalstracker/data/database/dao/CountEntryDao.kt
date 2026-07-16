@@ -13,6 +13,9 @@ data class GoalDateCount(val goalId: AwradId, val total: Long)
 @Dao
 abstract class CountEntryDao {
 
+    @Query("SELECT * FROM count_entries WHERE count > 0 ORDER BY date, goalId, slotId")
+    abstract suspend fun allForInitialSync(): List<CountEntryEntity>
+
     @Insert
     protected abstract suspend fun insert(entry: CountEntryEntity)
 
@@ -27,6 +30,25 @@ abstract class CountEntryDao {
 
     @Query("SELECT count FROM count_entries WHERE goalId = :goalId AND date = :date AND slotId = :slotId")
     abstract suspend fun getCountValueForSlot(goalId: AwradId, slotId: AwradId, date: String): Long?
+
+    @Query("UPDATE count_entries SET count = :count, lastUpdated = :lastUpdated WHERE goalId = :goalId AND slotId = :slotId AND date = :date")
+    protected abstract suspend fun updateCanonicalCount(goalId: AwradId, slotId: AwradId, date: String, count: Long, lastUpdated: Long): Int
+
+    @Transaction
+    open suspend fun setCanonicalCount(goalId: AwradId, slotId: AwradId, date: String, count: Long, lastUpdated: Long) {
+        val updated = updateCanonicalCount(goalId, slotId, date, count.coerceAtLeast(0), lastUpdated)
+        if (updated == 0) {
+            insert(
+                CountEntryEntity(
+                    goalId = goalId,
+                    slotId = slotId,
+                    count = count.coerceAtLeast(0),
+                    date = date,
+                    lastUpdated = lastUpdated,
+                ),
+            )
+        }
+    }
 
     @Transaction
     open suspend fun upsertCount(goalId: AwradId, slotId: AwradId, date: String, increment: Long, lastUpdated: Long) {
@@ -85,6 +107,9 @@ abstract class CountEntryDao {
 
     @Query("DELETE FROM count_entries")
     abstract suspend fun deleteAll()
+
+    @Query("DELETE FROM count_entries WHERE goalId = :goalId")
+    abstract suspend fun deleteForGoal(goalId: AwradId)
 }
 
 data class DateCount(val date: String, val total: Long)

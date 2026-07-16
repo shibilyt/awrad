@@ -199,6 +199,22 @@
     <string name="slot_ended_switch_action">%1$s-ലേക്ക് മാറുക</string>
     <string name="slot_ended_keep_counting">ഇവിടെ തുടർന്നു എണ്ണുക</string>
     <string name="slot_count_blocked_outside_active">ഈ സെഷൻ അതിന്റെ സജീവ സമയത്തിന് പുറത്താണ്.</string>
+    <string name="counting_availability_title">എണ്ണൽ ഇതുവരെ ലഭ്യമല്ല</string>
+    <string name="counting_availability_intro">ഈ കാരണങ്ങളുണ്ടെങ്കിലും നിങ്ങൾക്ക് തുടരാം:</string>
+    <string name="counting_availability_future_start">ഈ ലക്ഷ്യം %1$s-ന് ആരംഭിക്കും.</string>
+    <string name="counting_availability_off_recurrence">നിലവിലെ പ്രാബല്യത്തിലുള്ള ദിവസത്തിൽ ഈ ലക്ഷ്യം ഷെഡ്യൂൾ ചെയ്തിട്ടില്ല.</string>
+    <string name="counting_availability_slot_upcoming">തിരഞ്ഞെടുത്ത സമയം %1$s-ന് ആരംഭിക്കും.</string>
+    <string name="counting_availability_slot_upcoming_unknown">തിരഞ്ഞെടുത്ത സമയം ഇതുവരെ ആരംഭിച്ചിട്ടില്ല.</string>
+    <string name="counting_availability_slot_ended">തിരഞ്ഞെടുത്ത സമയം %1$s-ന് അവസാനിച്ചു.</string>
+    <string name="counting_availability_slot_ended_unknown">തിരഞ്ഞെടുത്ത സമയം അവസാനിച്ചു.</string>
+    <string name="counting_availability_slot_unknown">തിരഞ്ഞെടുത്ത സമയം നിർണ്ണയിക്കാനായില്ല.</string>
+    <string name="counting_availability_count_anyway">എങ്കിലും എണ്ണുക</string>
+    <string name="counting_availability_start_anyway">എങ്കിലും ആരംഭിക്കുക</string>
+    <string name="counting_availability_resume_anyway">എങ്കിലും പുനരാരംഭിക്കുക</string>
+    <string name="counting_hard_block_paused">ഈ ലക്ഷ്യം താൽക്കാലികമായി നിർത്തിയിരിക്കുന്നു. എണ്ണുന്നതിന് മുമ്പ് പുനരാരംഭിക്കുക.</string>
+    <string name="counting_hard_block_completed">ഈ ലക്ഷ്യം പൂർത്തിയായി; ഇനി എണ്ണാനാവില്ല.</string>
+    <string name="counting_hard_block_expired">ഈ ലക്ഷ്യത്തിന്റെ കാലാവധി കഴിഞ്ഞു; ഇനി എണ്ണാനാവില്ല.</string>
+    <string name="counting_hard_block_duration_ended">ഈ ലക്ഷ്യത്തിന്റെ ദൈർഘ്യം അവസാനിച്ചു; ഇനി എണ്ണാനാവില്ല.</string>
     <string name="count_over_target_warning">ലക്ഷ്യം മറികടന്നു. എണ്ണൽ തുടരും.</string>
     <string name="count_hard_cap_reached">ഈ ലക്ഷ്യം അതിന്റെ എണ്ണൽ പരിധിയിലെത്തി.</string>
     <string name="counting_see_full">പൂർണ്ണം കാണുക</string>
@@ -242,6 +258,7 @@
     <string name="library_filter_all">എല്ലാം</string>
     <string name="library_no_match">തിരയലുമായി ദിക്‌ർ ഒന്നും ലഭ്യമല്ല</string>
     <string name="library_no_dhikrs">ദിക്‌ർ ഒന്നും കണ്ടെത്തിയില്ല</string>
+    <string name="featured_dhikr_collections">പ്രധാന ദിക്‌ർ ശേഖരങ്ങൾ</string>
 
     <!-- Category screen -->
     <string name="category_no_dhikrs">ഈ വിഭാഗത്തിൽ ദിക്‌ർ ഒന്നുമില്ല</string>
@@ -757,4 +774,10 @@
     <string name="counting_allow_past_target_confirm">അനുവദിക്കുക</string>
     <string name="counting_allow_past_target_success">ഇപ്പോൾ ലക്ഷ്യത്തിന് ശേഷവും എണ്ണൽ തുടരാം.</string>
     <string name="counting_allow_past_target_error">എണ്ണൽ പരിധി മാറ്റാനായില്ല. വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="settings_sync_now">പുരോഗതി ഇപ്പോൾ സമന്വയിപ്പിക്കുക</string>
+    <string name="settings_sync_current">ക്ലൗഡ് പുരോഗതി പുതുക്കിയിരിക്കുന്നു.</string>
+    <string name="settings_sync_not_yet">പുരോഗതി ഇതുവരെ സമന്വയിപ്പിച്ചിട്ടില്ല.</string>
+    <string name="settings_sync_pending">%1$d മാറ്റങ്ങൾ സമന്വയത്തിനായി കാത്തിരിക്കുന്നു.</string>
+    <string name="settings_sync_attention">%1$d വൈരുദ്ധ്യങ്ങളും %2$d പരാജയപ്പെട്ട മാറ്റങ്ങളും പരിശോധിക്കണം.</string>
+    <string name="settings_sync_error">അവസാന സമന്വയം പൂർത്തിയായില്ല. വീണ്ടും ശ്രമിക്കാൻ ടാപ്പ് ചെയ്യുക.</string>
 </resources>

@@ -10,6 +10,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalRecurrenceDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalReminderDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalSlotDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.SeasonTemplateDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.dao.SyncDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.WirdDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.WirdSessionDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.CountEntryEntity
@@ -23,6 +24,13 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.entity.GoalReminderEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.GoalSlotEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SeasonTemplateDayEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SeasonTemplateEntity
+import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncEntityShadowEntity
+import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncCountShadowEntity
+import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncConflictEntity
+import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncInboxPageEntity
+import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncOpenCountBatchEntity
+import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncOutboxEntity
+import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncStateEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.WirdEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.WirdSessionEntity
 
@@ -41,8 +49,15 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.entity.WirdSessionEntity
         CountEntryEntity::class,
         WirdEntity::class,
         WirdSessionEntity::class,
+        SyncStateEntity::class,
+        SyncOutboxEntity::class,
+        SyncOpenCountBatchEntity::class,
+        SyncEntityShadowEntity::class,
+        SyncInboxPageEntity::class,
+        SyncCountShadowEntity::class,
+        SyncConflictEntity::class,
     ],
-    version = 6,
+    version = 13,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -56,4 +71,5 @@ abstract class AwradDatabase : RoomDatabase() {
     abstract fun countEntryDao(): CountEntryDao
     abstract fun wirdDao(): WirdDao
     abstract fun wirdSessionDao(): WirdSessionDao
+    abstract fun syncDao(): SyncDao
 }

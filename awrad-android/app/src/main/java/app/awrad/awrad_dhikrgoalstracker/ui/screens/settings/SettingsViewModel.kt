@@ -22,6 +22,8 @@ import app.awrad.awrad_dhikrgoalstracker.notification.BatteryOptimizationHelper
 import app.awrad.awrad_dhikrgoalstracker.notification.DailyRemembranceScheduler
 import app.awrad.awrad_dhikrgoalstracker.notification.ReminderScheduler
 import app.awrad.awrad_dhikrgoalstracker.service.DownloadProgress
+import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncRepository
+import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncScheduler
 import app.awrad.awrad_dhikrgoalstracker.ui.components.ReminderReliabilityUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -64,6 +66,11 @@ data class SettingsUiState(
     val calendarSystem: CalendarSystem = CalendarSystem.GREGORIAN,
     val reminderReliability: ReminderReliabilityUiState = ReminderReliabilityUiState(),
     val showOemBatteryDialog: Boolean = false,
+    val syncPendingCommands: Int = 0,
+    val syncConflicts: Int = 0,
+    val syncFailedCommands: Int = 0,
+    val syncLastError: String? = null,
+    val syncLastSyncAt: Long? = null,
 )
 
 @HiltViewModel
@@ -75,6 +82,8 @@ class SettingsViewModel @Inject constructor(
     private val reminderScheduler: ReminderScheduler,
     private val dailyRemembranceScheduler: DailyRemembranceScheduler,
     private val batteryOptimizationHelper: BatteryOptimizationHelper,
+    private val progressSyncRepository: ProgressSyncRepository,
+    private val progressSyncScheduler: ProgressSyncScheduler,
 ) : ViewModel() {
 
     private val _localState = MutableStateFlow(SettingsLocalState())
@@ -164,6 +173,11 @@ class SettingsViewModel @Inject constructor(
             calendarSystem = calSystem,
             reminderReliability = prayer.local.reminderReliability,
             showOemBatteryDialog = prayer.local.showOemBatteryDialog,
+            syncPendingCommands = prayer.local.syncPendingCommands,
+            syncConflicts = prayer.local.syncConflicts,
+            syncFailedCommands = prayer.local.syncFailedCommands,
+            syncLastError = prayer.local.syncLastError,
+            syncLastSyncAt = prayer.local.syncLastSyncAt,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -182,6 +196,7 @@ class SettingsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             refreshDownloadableCount()
+            refreshSyncHealth()
         }
         refreshReminderReliability()
     }
@@ -189,6 +204,27 @@ class SettingsViewModel @Inject constructor(
     private suspend fun refreshDownloadableCount() {
         val count = dhikrRepository.getDownloadableDhikrs().size
         _localState.update { it.copy(downloadableCount = count) }
+    }
+
+    private suspend fun refreshSyncHealth() {
+        val health = progressSyncRepository.health()
+        _localState.update {
+            it.copy(
+                syncPendingCommands = health.pendingCommands,
+                syncConflicts = health.conflicts,
+                syncFailedCommands = health.failedCommands,
+                syncLastError = health.lastError,
+                syncLastSyncAt = health.lastSyncAt,
+            )
+        }
+    }
+
+    fun syncNow() {
+        progressSyncScheduler.enqueue()
+        viewModelScope.launch {
+            delay(1_000)
+            refreshSyncHealth()
+        }
     }
 
     fun onStartEditName() {
@@ -498,6 +534,11 @@ class SettingsViewModel @Inject constructor(
         val isSearchingLocation: Boolean = false,
         val reminderReliability: ReminderReliabilityUiState = ReminderReliabilityUiState(),
         val showOemBatteryDialog: Boolean = false,
+        val syncPendingCommands: Int = 0,
+        val syncConflicts: Int = 0,
+        val syncFailedCommands: Int = 0,
+        val syncLastError: String? = null,
+        val syncLastSyncAt: Long? = null,
     )
 
     private data class PrefsGroup(

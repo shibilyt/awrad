@@ -187,6 +187,7 @@ fun HomeScreen(
                     categoryCounts = uiState.categoryDhikrCounts,
                     onCollectionClick = { onNavigateToCategory(it.name) },
                     onViewAll = onNavigateToLibrary,
+                    titleRes = R.string.featured_dhikr_collections,
                 )
             }
 
@@ -220,6 +221,7 @@ private fun WirdsSection(
                 text = stringResource(R.string.wird_tab_featured),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
             Row(

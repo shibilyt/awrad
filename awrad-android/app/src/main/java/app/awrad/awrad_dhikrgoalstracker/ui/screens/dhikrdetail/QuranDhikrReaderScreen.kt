@@ -57,6 +57,8 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.QuranBodyText
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.splitBismillah
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.CountingViewModel
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.CountingAvailabilityDialog
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.CountingHardBlockReason
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.NotoNaskhArabicFontFamily
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 
@@ -72,8 +74,7 @@ fun QuranDhikrReaderScreen(
 ) {
     val detailState by detailViewModel.uiState.collectAsStateWithLifecycle()
     val countingState by countingViewModel.uiState.collectAsStateWithLifecycle()
-    val earlyWarning by countingViewModel.earlySlotWarning.collectAsStateWithLifecycle()
-    val endedWarning by countingViewModel.endedSlotWarning.collectAsStateWithLifecycle()
+    val availabilityPrompt by countingViewModel.countingAvailabilityPrompt.collectAsStateWithLifecycle()
     val textScale by countingViewModel.countingDhikrTextScale.collectAsStateWithLifecycle()
     val lineSpacing by countingViewModel.countingDhikrLineSpacing.collectAsStateWithLifecycle()
     val vibrateOnCount by countingViewModel.vibrateOnCount.collectAsStateWithLifecycle()
@@ -101,35 +102,32 @@ fun QuranDhikrReaderScreen(
             if (soundOnCount) toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 50)
         }
     }
-    val blockedMessage = stringResource(R.string.slot_count_blocked_outside_active)
+    val pausedBlockedMessage = stringResource(R.string.counting_hard_block_paused)
+    val completedBlockedMessage = stringResource(R.string.counting_hard_block_completed)
+    val expiredBlockedMessage = stringResource(R.string.counting_hard_block_expired)
+    val durationEndedBlockedMessage = stringResource(R.string.counting_hard_block_duration_ended)
     val capMessage = stringResource(R.string.count_hard_cap_reached)
     val overTargetMessage = stringResource(R.string.count_over_target_warning)
-    LaunchedEffect(Unit) { countingViewModel.countBlockedMessage.collect { snackbarHostState.showSnackbar(blockedMessage) } }
+    LaunchedEffect(Unit) {
+        countingViewModel.countBlockedMessage.collect { reason ->
+            snackbarHostState.showSnackbar(
+                when (reason) {
+                    CountingHardBlockReason.PAUSED -> pausedBlockedMessage
+                    CountingHardBlockReason.COMPLETED -> completedBlockedMessage
+                    CountingHardBlockReason.EXPIRED -> expiredBlockedMessage
+                    CountingHardBlockReason.DURATION_ENDED -> durationEndedBlockedMessage
+                },
+            )
+        }
+    }
     LaunchedEffect(Unit) { countingViewModel.countHardCapMessage.collect { snackbarHostState.showSnackbar(capMessage) } }
     LaunchedEffect(Unit) { countingViewModel.overTargetWarningMessage.collect { snackbarHostState.showSnackbar(overTargetMessage) } }
 
-    earlyWarning?.let { warning ->
-        AlertDialog(
-            onDismissRequest = countingViewModel::cancelEarlySlotWarning,
-            title = { Text(stringResource(R.string.slot_not_started_title)) },
-            text = { Text(stringResource(R.string.slot_not_started_body, warning.startTimeText)) },
-            confirmButton = { TextButton(onClick = countingViewModel::confirmEarlySlotWarning) { Text(stringResource(R.string.action_count_now)) } },
-            dismissButton = { TextButton(onClick = countingViewModel::cancelEarlySlotWarning) { Text(stringResource(R.string.action_cancel)) } },
-        )
-    }
-    endedWarning?.let { warning ->
-        AlertDialog(
-            onDismissRequest = countingViewModel::cancelEndedSlotWarning,
-            title = { Text(stringResource(R.string.slot_ended_title, warning.slotTitle)) },
-            text = { Text(stringResource(R.string.slot_ended_body, warning.slotTitle, warning.endedAtText)) },
-            confirmButton = { TextButton(onClick = countingViewModel::confirmEndedSlotWarning) { Text(stringResource(R.string.slot_ended_keep_counting)) } },
-            dismissButton = {
-                warning.switchSlotId?.let {
-                    TextButton(onClick = countingViewModel::switchFromEndedSlotWarning) {
-                        Text(stringResource(R.string.slot_ended_switch_action, warning.switchSlotTitle))
-                    }
-                }
-            },
+    availabilityPrompt?.let { prompt ->
+        CountingAvailabilityDialog(
+            prompt = prompt,
+            onConfirm = countingViewModel::confirmCountingAvailability,
+            onCancel = countingViewModel::cancelCountingAvailability,
         )
     }
     if (goalId != null && countingState.sessionComplete) {

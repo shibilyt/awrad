@@ -16,6 +16,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalRecurrenceDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalReminderDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalSlotDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.SeasonTemplateDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.dao.SyncDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.WirdDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.WirdSessionDao
 import app.awrad.awrad_dhikrgoalstracker.data.model.BuiltInSeasonTemplates
@@ -82,6 +83,9 @@ object DatabaseModule {
 
     @Provides
     fun provideWirdSessionDao(database: AwradDatabase): WirdSessionDao = database.wirdSessionDao()
+
+    @Provides
+    fun provideSyncDao(database: AwradDatabase): SyncDao = database.syncDao()
 
     @Provides
     @Singleton

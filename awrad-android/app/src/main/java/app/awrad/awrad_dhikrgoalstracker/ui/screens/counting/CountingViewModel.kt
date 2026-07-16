@@ -136,23 +136,16 @@ internal fun CountingState.isBlockedAtTargetCap(): Boolean =
         targetCount > 0 &&
         currentCount >= targetCount
 
-@Immutable
-data class EarlySlotWarningUiState(
-    val goalId: AwradId,
-    val slotId: AwradId,
-    val date: String,
-    val startTimeText: String,
-)
+enum class CountingAvailabilityActionLabel { COUNT, START, RESUME }
 
 @Immutable
-data class EndedSlotWarningUiState(
-    val goalId: AwradId,
-    val slotId: AwradId,
-    val date: String,
+data class CountingAvailabilityPromptUiState(
+    val decision: CountingAvailabilityDecision.RequiresConfirmation,
+    val actionLabel: CountingAvailabilityActionLabel,
+    val goalStartDate: LocalDate,
     val slotTitle: String,
-    val endedAtText: String,
-    val switchSlotId: AwradId?,
-    val switchSlotTitle: String,
+    val slotStartText: String,
+    val slotEndText: String,
 )
 
 @HiltViewModel
@@ -251,13 +244,13 @@ class CountingViewModel @Inject constructor(
     private val _dailyCounts = MutableStateFlow<Map<LocalDate, Long>>(emptyMap())
     val dailyCounts: StateFlow<Map<LocalDate, Long>> = _dailyCounts.asStateFlow()
 
-    private val _earlySlotWarning = MutableStateFlow<EarlySlotWarningUiState?>(null)
-    val earlySlotWarning: StateFlow<EarlySlotWarningUiState?> = _earlySlotWarning.asStateFlow()
+    private val _countingAvailabilityPrompt =
+        MutableStateFlow<CountingAvailabilityPromptUiState?>(null)
+    val countingAvailabilityPrompt: StateFlow<CountingAvailabilityPromptUiState?> =
+        _countingAvailabilityPrompt.asStateFlow()
 
-    private val _endedSlotWarning = MutableStateFlow<EndedSlotWarningUiState?>(null)
-    val endedSlotWarning: StateFlow<EndedSlotWarningUiState?> = _endedSlotWarning.asStateFlow()
-
-    private val _countBlockedMessage = Channel<Unit>(capacity = Channel.BUFFERED)
+    private val _countBlockedMessage =
+        Channel<CountingHardBlockReason>(capacity = Channel.BUFFERED)
     val countBlockedMessage = _countBlockedMessage.receiveAsFlow()
 
     private val _countHardCapMessage = Channel<Unit>(capacity = Channel.BUFFERED)
@@ -279,7 +272,6 @@ class CountingViewModel @Inject constructor(
     val countFeedbackEvents = _countFeedbackEvents.receiveAsFlow()
 
     private var pendingCountAction: PendingCountAction? = null
-    private var forceEndedWarningSlotId: AwradId? = null
 
     // Session target state (survives process death)
     private val _sessionTargetType = savedStateHandle.getStateFlow(KEY_SESSION_TYPE, -1)
@@ -354,23 +346,6 @@ class CountingViewModel @Inject constructor(
         val hasSession = sessionType >= 0 && sessionValue > 0
         val sessionComplete = session.complete
         val slotCountingPolicy = goalInfo.goal?.slotCountingPolicy ?: SlotCountingPolicy.WARN_AND_ALLOW
-        val timingAllowsManualCount = when (slotCountingPolicy) {
-            SlotCountingPolicy.STRICT_ACTIVE_ONLY -> {
-                if (!hasSlotProgress || countingState.activeSlotId == null) {
-                    true
-                } else {
-                    when (slotTimingInfo[countingState.activeSlotId]?.timeStatus ?: SlotTimeStatus.UNKNOWN) {
-                        SlotTimeStatus.ACTIVE,
-                        SlotTimeStatus.ANYTIME -> true
-                        SlotTimeStatus.UPCOMING,
-                        SlotTimeStatus.ENDED,
-                        SlotTimeStatus.UNKNOWN -> false
-                    }
-                }
-            }
-            SlotCountingPolicy.WARN_AND_ALLOW,
-            SlotCountingPolicy.SILENT_FLEXIBLE -> true
-        }
         val capAllowsManualCount = CountCapCalculator.canApplyIncrement(
             currentCount = countingState.currentCount,
             targetCount = countingState.targetCount.takeIf { it > 0 },
@@ -432,7 +407,7 @@ class CountingViewModel @Inject constructor(
             sessionCount = sessionCount,
             sessionElapsedSeconds = sessionElapsed,
             sessionComplete = sessionComplete,
-            canManualCount = !sessionComplete && timingAllowsManualCount && capAllowsManualCount,
+            canManualCount = !sessionComplete && capAllowsManualCount,
             canActiveCountUnderCap = capAllowsManualCount,
             canCountUnderCap = canCountUnderCap,
             remainingCountLimit = remainingCountLimit,
@@ -506,7 +481,7 @@ class CountingViewModel @Inject constructor(
                     }
                     lastObservedCount = state.currentCount
                     _serviceState.value = state
-                    handleEndedSlotTimingIfNeeded(state)
+                    handleAudioAvailabilityIfNeeded(state)
                 }
             }
             viewModelScope.launch {
@@ -634,16 +609,6 @@ class CountingViewModel @Inject constructor(
                 restoredSlotId = restoredSlotId,
             )
             val initialActiveSlotId = selection.slotId
-            forceEndedWarningSlotId = when (selection.source) {
-                SlotSelectionSource.INITIAL,
-                SlotSelectionSource.RESTORED,
-                SlotSelectionSource.COUNTED_ENDED -> initialActiveSlotId
-                SlotSelectionSource.NONE,
-                SlotSelectionSource.ACTIVE_TIME,
-                SlotSelectionSource.UPCOMING,
-                SlotSelectionSource.FALLBACK -> null
-            }
-
             val intent = Intent(context, DhikrCountingService::class.java)
             context.startService(intent)
             context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
@@ -781,11 +746,7 @@ class CountingViewModel @Inject constructor(
     }
 
     fun setActiveSlot(slotId: AwradId?) {
-        forceEndedWarningSlotId = slotId
         service?.setActiveSlot(slotId)
-        viewModelScope.launch {
-            buildEndedSlotWarning(force = true)?.let { _endedSlotWarning.value = it }
-        }
     }
 
     fun startAudioCounting() {
@@ -799,7 +760,13 @@ class CountingViewModel @Inject constructor(
     }
 
     fun togglePlayPause() {
-        service?.togglePlayPause()
+        if (_serviceState.value.isPlaying) {
+            service?.togglePlayPause()
+        } else {
+            viewModelScope.launch {
+                runWithSlotTimingGuard(PendingCountAction.ResumeAudio)
+            }
+        }
     }
 
     fun setPlaybackSpeed(speed: Float) {
@@ -852,65 +819,26 @@ class CountingViewModel @Inject constructor(
         adjustExternalCountUnchecked(amount)
     }
 
-    fun confirmEarlySlotWarning() {
-        val warning = _earlySlotWarning.value
+    fun confirmCountingAvailability() {
+        val prompt = _countingAvailabilityPrompt.value
         val action = pendingCountAction
-        _earlySlotWarning.value = null
+        _countingAvailabilityPrompt.value = null
         pendingCountAction = null
         viewModelScope.launch {
-            if (warning != null) {
-                userPreferences.confirmEarlySlotCount(warning.goalId, warning.slotId, warning.date)
+            if (prompt != null) {
+                val key = prompt.decision.key
+                userPreferences.confirmCountingAvailability(
+                    key = key.persistedValue,
+                    effectiveDate = key.effectiveDate.toString(),
+                )
             }
             action?.let { executePendingCountAction(it) }
         }
     }
 
-    fun cancelEarlySlotWarning() {
-        _earlySlotWarning.value = null
+    fun cancelCountingAvailability() {
+        _countingAvailabilityPrompt.value = null
         pendingCountAction = null
-    }
-
-    fun confirmEndedSlotWarning() {
-        val warning = _endedSlotWarning.value
-        _endedSlotWarning.value = null
-        forceEndedWarningSlotId = null
-        viewModelScope.launch {
-            if (warning != null) {
-                userPreferences.confirmEndedSlotCount(warning.goalId, warning.slotId, warning.date)
-            }
-            pendingCountAction?.let { action ->
-                pendingCountAction = null
-                executePendingCountAction(action)
-            }
-        }
-    }
-
-    fun cancelEndedSlotWarning() {
-        _endedSlotWarning.value = null
-        pendingCountAction = null
-    }
-
-    fun switchFromEndedSlotWarning() {
-        val warning = _endedSlotWarning.value ?: return
-        _endedSlotWarning.value = null
-        pendingCountAction = null
-        forceEndedWarningSlotId = null
-        viewModelScope.launch {
-            userPreferences.confirmEndedSlotCount(warning.goalId, warning.slotId, warning.date)
-            warning.switchSlotId?.let { setActiveSlot(it) }
-        }
-    }
-
-    fun viewSlotsFromEndedWarning() {
-        val warning = _endedSlotWarning.value
-        _endedSlotWarning.value = null
-        pendingCountAction = null
-        forceEndedWarningSlotId = null
-        viewModelScope.launch {
-            if (warning != null) {
-                userPreferences.confirmEndedSlotCount(warning.goalId, warning.slotId, warning.date)
-            }
-        }
     }
 
     private suspend fun runWithSlotTimingGuard(action: PendingCountAction) {
@@ -918,150 +846,60 @@ class CountingViewModel @Inject constructor(
             val state = uiState.value
             if (state.hasSessionTarget && state.sessionComplete) return
         }
-        if (action == PendingCountAction.StartAudio) {
+        if (action == PendingCountAction.StartAudio || action == PendingCountAction.ResumeAudio) {
             val state = uiState.value
             if (state.hasSessionTarget && state.sessionComplete) return
         }
 
-        val timingDecision = countTimingDecision()
-        when (timingDecision) {
-            CountTimingDecision.Allow -> Unit
-            CountTimingDecision.WarnEarly -> {
-                val warning = buildEarlySlotWarning()
-                if (warning != null) {
+        when (val decision = countingAvailabilityDecision()) {
+            CountingAvailabilityDecision.Allow -> Unit
+            is CountingAvailabilityDecision.RequiresConfirmation -> {
+                if (!userPreferences.hasCountingAvailabilityConfirmation(decision.key.persistedValue)) {
                     pendingCountAction = action
-                    _earlySlotWarning.value = warning
+                    _countingAvailabilityPrompt.value = buildAvailabilityPrompt(decision, action)
                     return
                 }
             }
-            CountTimingDecision.WarnEnded -> {
-                val warning = buildEndedSlotWarning(force = true)
-                if (warning != null) {
-                    pendingCountAction = action
-                    _endedSlotWarning.value = warning
-                    return
-                }
-            }
-            CountTimingDecision.Block -> {
-                _countBlockedMessage.trySend(Unit)
+            is CountingAvailabilityDecision.HardBlock -> {
+                _countBlockedMessage.trySend(decision.reason)
                 return
             }
         }
         executePendingCountAction(action)
     }
 
-    private suspend fun countTimingDecision(): CountTimingDecision {
+    private fun countingAvailabilityDecision(): CountingAvailabilityDecision {
         val state = uiState.value
-        val goalId = state.countingState.goalId ?: return CountTimingDecision.Block
-        val slotId = state.activeSlotId ?: return CountTimingDecision.Allow
-        if (!state.hasSlotProgress) return CountTimingDecision.Allow
-        val status = state.slotTimingInfo[slotId]?.timeStatus ?: SlotTimeStatus.UNKNOWN
-        return when (state.slotCountingPolicy) {
-            SlotCountingPolicy.STRICT_ACTIVE_ONLY -> when (status) {
-                SlotTimeStatus.ACTIVE,
-                SlotTimeStatus.ANYTIME -> CountTimingDecision.Allow
-                SlotTimeStatus.UPCOMING,
-                SlotTimeStatus.ENDED,
-                SlotTimeStatus.UNKNOWN -> CountTimingDecision.Block
-            }
-            SlotCountingPolicy.SILENT_FLEXIBLE -> CountTimingDecision.Allow
-            SlotCountingPolicy.WARN_AND_ALLOW -> when (status) {
-                SlotTimeStatus.UPCOMING -> CountTimingDecision.WarnEarly
-                SlotTimeStatus.ENDED -> {
-                    val date = state.effectiveToday.toString()
-                    if (userPreferences.hasEndedSlotConfirmation(goalId, slotId, date)) {
-                        CountTimingDecision.Allow
-                    } else {
-                        CountTimingDecision.WarnEnded
-                    }
-                }
-                SlotTimeStatus.ACTIVE,
-                SlotTimeStatus.ANYTIME,
-                SlotTimeStatus.UNKNOWN -> CountTimingDecision.Allow
-            }
-        }
-    }
-
-    private suspend fun buildEarlySlotWarning(): EarlySlotWarningUiState? {
-        val current = _serviceState.value
-        val goalId = current.goalId ?: return null
-        val slotId = current.activeSlotId ?: return null
-        val slot = current.slots.firstOrNull { it.id == slotId } ?: return null
-        if (slot.slotType == GoalSlotType.ANYTIME) return null
-
-        val occurrenceDate = dateProvider.getEffectiveToday().toLocalDateOr(LocalDate.now())
-        val date = occurrenceDate.toString()
-        if (userPreferences.hasEarlySlotConfirmation(goalId, slotId, date)) return null
-
-        val prayerTimes = if (slot.slotType == GoalSlotType.PRAYER) {
-            loadPrayerTimes(occurrenceDate)
-        } else {
-            null
-        }
-        val defaultLeadMinutes = userPreferences.prayerSlotDefaultLeadMinutes.first()
-        val startInfo = SlotTimingResolver.startInfo(
-            slot = slot,
-            occurrenceDate = occurrenceDate,
-            prayerTimes = prayerTimes,
-            defaultPrayerLeadMinutes = defaultLeadMinutes,
-        ) ?: return null
-
-        if (System.currentTimeMillis() >= startInfo.startsAtMillis) return null
-        return EarlySlotWarningUiState(
-            goalId = goalId,
-            slotId = slotId,
-            date = date,
-            startTimeText = startInfo.displayText,
+        val goal = state.goal
+            ?: return CountingAvailabilityDecision.HardBlock(CountingHardBlockReason.PAUSED)
+        return CountingAvailabilityPolicy.evaluate(
+            goal = goal,
+            effectiveDate = state.effectiveToday,
+            activeSlotId = state.activeSlotId,
+            slotTimingInfo = state.slotTimingInfo,
         )
     }
 
-    private suspend fun buildEndedSlotWarning(force: Boolean = false): EndedSlotWarningUiState? {
+    private fun buildAvailabilityPrompt(
+        decision: CountingAvailabilityDecision.RequiresConfirmation,
+        action: PendingCountAction,
+    ): CountingAvailabilityPromptUiState {
         val state = uiState.value
-        val goalId = state.countingState.goalId ?: return null
-        if (state.slotCountingPolicy != SlotCountingPolicy.WARN_AND_ALLOW) return null
-        val slotId = state.activeSlotId ?: return null
-        val slot = state.slots.firstOrNull { it.id == slotId } ?: return null
-        if (slot.slotType == GoalSlotType.ANYTIME) return null
-        val slotTiming = state.slotTimingInfo[slotId] ?: return null
-        if (slotTiming.timeStatus != SlotTimeStatus.ENDED) return null
-
-        val count = state.slotCounts[slotId] ?: 0L
-        val target = slot.targetCount ?: 0
-        val isComplete = target > 0 && count >= target
-        val shouldWarn = !isComplete && (count > 0L || force || forceEndedWarningSlotId == slotId)
-        if (!shouldWarn) return null
-
-        val date = state.effectiveToday.toString()
-        if (userPreferences.hasEndedSlotConfirmation(goalId, slotId, date)) return null
-
-        val switchSlot = recommendedSwitchSlot(state)
-        return EndedSlotWarningUiState(
-            goalId = goalId,
-            slotId = slotId,
-            date = date,
-            slotTitle = slot.label ?: slot.timingValue.orEmpty().ifBlank { "slot" },
-            endedAtText = slot.endedAtText(slotTiming),
-            switchSlotId = switchSlot?.id,
-            switchSlotTitle = switchSlot?.let { it.label ?: it.timingValue.orEmpty() }.orEmpty(),
+        val slot = state.activeSlotId?.let { id -> state.slots.firstOrNull { it.id == id } }
+        val timing = slot?.let { state.slotTimingInfo[it.id] }
+        return CountingAvailabilityPromptUiState(
+            decision = decision,
+            actionLabel = when (action) {
+                PendingCountAction.StartAudio -> CountingAvailabilityActionLabel.START
+                PendingCountAction.ResumeAudio -> CountingAvailabilityActionLabel.RESUME
+                PendingCountAction.ManualTap,
+                is PendingCountAction.Adjust -> CountingAvailabilityActionLabel.COUNT
+            },
+            goalStartDate = state.goalStartDate,
+            slotTitle = slot?.label ?: slot?.timingValue.orEmpty(),
+            slotStartText = timing?.startText.orEmpty(),
+            slotEndText = timing?.endText.orEmpty(),
         )
-    }
-
-    private fun recommendedSwitchSlot(state: CountingUiState): GoalSlot? {
-        val active = state.slots
-            .filter { state.slotTimingInfo[it.id]?.timeStatus == SlotTimeStatus.ACTIVE && it.id != state.activeSlotId }
-            .maxWithOrNull(compareBy<GoalSlot> { state.slotTimingInfo[it.id]?.startsAtMillis ?: Long.MIN_VALUE }
-                .thenByDescending { -it.sortOrder })
-        if (active != null) return active
-        return state.slots
-            .filter { slot ->
-                val target = slot.targetCount ?: 0
-                val count = state.slotCounts[slot.id] ?: 0L
-                state.slotTimingInfo[slot.id]?.timeStatus == SlotTimeStatus.UPCOMING &&
-                    (target <= 0 || count < target) &&
-                    slot.id != state.activeSlotId
-            }
-            .minWithOrNull(compareBy<GoalSlot> { state.slotTimingInfo[it.id]?.startsAtMillis ?: Long.MAX_VALUE }
-                .thenBy { it.sortOrder })
     }
 
     private fun startSlotTimingTicker() {
@@ -1069,21 +907,31 @@ class CountingViewModel @Inject constructor(
         slotTimingTickerJob = viewModelScope.launch {
             while (true) {
                 _nowMillis.value = System.currentTimeMillis()
-                handleEndedSlotTimingIfNeeded(_serviceState.value)
+                handleAudioAvailabilityIfNeeded(_serviceState.value)
                 delay(SLOT_TIMING_TICK_MS)
             }
         }
     }
 
-    private fun handleEndedSlotTimingIfNeeded(state: CountingState) {
-        if (state.activeSlotId == null || state.goalId == null) return
+    private fun handleAudioAvailabilityIfNeeded(state: CountingState) {
+        if (!state.isAudioMode || !state.isPlaying || state.goalId == null) return
         viewModelScope.launch {
-            val warning = buildEndedSlotWarning(force = false)
-            if (warning != null) {
-                if (state.isAudioMode) {
-                    service?.stopAudioPlayback()
+            when (val decision = countingAvailabilityDecision()) {
+                CountingAvailabilityDecision.Allow -> Unit
+                is CountingAvailabilityDecision.RequiresConfirmation -> {
+                    if (!userPreferences.hasCountingAvailabilityConfirmation(decision.key.persistedValue)) {
+                        pendingCountAction = PendingCountAction.ResumeAudio
+                        _countingAvailabilityPrompt.value = buildAvailabilityPrompt(
+                            decision = decision,
+                            action = PendingCountAction.ResumeAudio,
+                        )
+                        service?.togglePlayPause()
+                    }
                 }
-                _endedSlotWarning.value = warning
+                is CountingAvailabilityDecision.HardBlock -> {
+                    service?.stopAudioPlayback()
+                    _countBlockedMessage.trySend(decision.reason)
+                }
             }
         }
     }
@@ -1108,6 +956,7 @@ class CountingViewModel @Inject constructor(
             }
             is PendingCountAction.Adjust -> adjustExternalCountUnchecked(action.amount)
             PendingCountAction.StartAudio -> startAudioCountingUnchecked()
+            PendingCountAction.ResumeAudio -> service?.togglePlayPause()
         }
     }
 
@@ -1276,15 +1125,9 @@ class CountingViewModel @Inject constructor(
     private sealed interface PendingCountAction {
         data object ManualTap : PendingCountAction
         data object StartAudio : PendingCountAction
+        data object ResumeAudio : PendingCountAction
         data class Adjust(val amount: Long) : PendingCountAction
     }
-}
-
-private enum class CountTimingDecision {
-    Allow,
-    WarnEarly,
-    WarnEnded,
-    Block,
 }
 
 private data class SessionSnapshot(
@@ -1313,25 +1156,6 @@ private data class RecommendedSlotKey(
     val slotCounts: Map<AwradId, Long>,
     val timingInfos: Map<AwradId, SlotTimingInfo>,
 )
-
-private fun GoalSlot.endedAtText(slotTiming: SlotTimingInfo): String =
-    when (slotType) {
-        GoalSlotType.TIME_WINDOW -> endMinute?.toClockText() ?: slotTiming.endText
-        GoalSlotType.PRAYER,
-        GoalSlotType.ANYTIME -> slotTiming.endText
-    }
-
-private fun Int.toClockText(): String {
-    val clamped = coerceIn(0, 24 * 60)
-    val hour24 = (clamped / 60) % 24
-    val minute = clamped % 60
-    val suffix = if (hour24 < 12) "AM" else "PM"
-    val hour12 = when (val normalized = hour24 % 12) {
-        0 -> 12
-        else -> normalized
-    }
-    return "%d:%02d %s".format(hour12, minute, suffix)
-}
 
 private data class GoalInfoHolder(
     val goalLabel: String = "",

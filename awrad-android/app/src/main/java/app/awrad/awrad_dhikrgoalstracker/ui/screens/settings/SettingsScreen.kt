@@ -369,6 +369,27 @@ fun SettingsScreen(
 
             item {
                 SettingsSection(title = stringResource(R.string.settings_data_management)) {
+                    val syncSubtitle = when {
+                        uiState.syncLastError != null -> stringResource(R.string.settings_sync_error)
+                        uiState.syncConflicts > 0 || uiState.syncFailedCommands > 0 ->
+                            stringResource(
+                                R.string.settings_sync_attention,
+                                uiState.syncConflicts,
+                                uiState.syncFailedCommands,
+                            )
+                        uiState.syncPendingCommands > 0 ->
+                            stringResource(R.string.settings_sync_pending, uiState.syncPendingCommands)
+                        uiState.syncLastSyncAt != null -> stringResource(R.string.settings_sync_current)
+                        else -> stringResource(R.string.settings_sync_not_yet)
+                    }
+                    SettingsActionCard(
+                        icon = Icons.Default.Storage,
+                        title = stringResource(R.string.settings_sync_now),
+                        subtitle = syncSubtitle,
+                        onClick = viewModel::syncNow,
+                        showChevron = false,
+                        trailingIcon = Icons.Default.Refresh,
+                    )
                     SettingsDangerCard(
                         icon = Icons.Default.Refresh,
                         title = stringResource(R.string.settings_reset_progress),

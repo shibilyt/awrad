@@ -101,4 +101,31 @@ interface AwradApiService {
 
     @DELETE("api/auth/sessions")
     suspend fun revokeAllSessions(): Response<Unit>
+
+    @POST("api/sync/v1/progress/commands")
+    suspend fun pushProgressCommands(
+        @Body request: SyncCommandBatchRequest,
+    ): Response<SyncCommandBatchResponse>
+
+    @POST("api/sync/v1/progress/snapshots")
+    suspend fun startProgressSnapshot(
+        @Body request: SyncTransferRequest,
+    ): Response<SyncTransferSessionDto>
+
+    @POST("api/sync/v1/progress/deltas")
+    suspend fun startProgressDelta(
+        @Body request: SyncTransferRequest,
+    ): Response<SyncTransferSessionDto>
+
+    @GET("api/sync/v1/progress/{kind}/{id}/pages/{page}")
+    suspend fun progressTransferPage(
+        @Path("kind") kind: String,
+        @Path("id") id: String,
+        @Path("page") page: Int,
+    ): Response<SyncTransferPageDto>
+
+    @POST("api/sync/v1/progress/actors/ack")
+    suspend fun acknowledgeProgressActor(
+        @Body request: SyncActorAckRequest,
+    ): Response<SyncActorAckResponse>
 }

@@ -148,8 +148,7 @@ fun CountingScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val countingState = uiState.countingState
     val historyItems by viewModel.historyItems.collectAsStateWithLifecycle()
-    val earlySlotWarning by viewModel.earlySlotWarning.collectAsStateWithLifecycle()
-    val endedSlotWarning by viewModel.endedSlotWarning.collectAsStateWithLifecycle()
+    val availabilityPrompt by viewModel.countingAvailabilityPrompt.collectAsStateWithLifecycle()
     val isUpdatingCap by viewModel.isUpdatingCap.collectAsStateWithLifecycle()
     var showHistory by remember { mutableStateOf(false) }
     var showSlots by remember { mutableStateOf(false) }
@@ -359,70 +358,11 @@ fun CountingScreen(
         )
     }
 
-    earlySlotWarning?.let { warning ->
-        AlertDialog(
-            onDismissRequest = viewModel::cancelEarlySlotWarning,
-            title = { Text(stringResource(R.string.slot_not_started_title)) },
-            text = { Text(stringResource(R.string.slot_not_started_body, warning.startTimeText)) },
-            confirmButton = {
-                TextButton(onClick = viewModel::confirmEarlySlotWarning) {
-                    Text(stringResource(R.string.action_count_now))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = viewModel::cancelEarlySlotWarning) {
-                    Text(stringResource(R.string.action_cancel))
-                }
-            },
-        )
-    }
-
-    endedSlotWarning?.let { warning ->
-        AlertDialog(
-            onDismissRequest = viewModel::cancelEndedSlotWarning,
-            title = { Text(stringResource(R.string.slot_ended_title, warning.slotTitle)) },
-            text = {
-                Text(
-                    if (warning.switchSlotTitle.isNotBlank()) {
-                        stringResource(
-                            R.string.slot_ended_body_with_switch,
-                            warning.slotTitle,
-                            warning.endedAtText,
-                            warning.switchSlotTitle,
-                        )
-                    } else {
-                        stringResource(R.string.slot_ended_body, warning.slotTitle, warning.endedAtText)
-                    },
-                )
-            },
-            confirmButton = {
-                if (warning.switchSlotId != null) {
-                    TextButton(onClick = viewModel::switchFromEndedSlotWarning) {
-                        Text(stringResource(R.string.slot_ended_switch_action, warning.switchSlotTitle))
-                    }
-                } else {
-                    TextButton(onClick = viewModel::confirmEndedSlotWarning) {
-                        Text(stringResource(R.string.slot_ended_keep_counting))
-                    }
-                }
-            },
-            dismissButton = {
-                Row {
-                    TextButton(
-                        onClick = {
-                            viewModel.viewSlotsFromEndedWarning()
-                            showSlots = true
-                        },
-                    ) {
-                        Text(stringResource(R.string.counting_slots_title))
-                    }
-                    if (warning.switchSlotId != null) {
-                        TextButton(onClick = viewModel::confirmEndedSlotWarning) {
-                            Text(stringResource(R.string.slot_ended_keep_counting))
-                        }
-                    }
-                }
-            },
+    availabilityPrompt?.let { prompt ->
+        CountingAvailabilityDialog(
+            prompt = prompt,
+            onConfirm = viewModel::confirmCountingAvailability,
+            onCancel = viewModel::cancelCountingAvailability,
         )
     }
 
@@ -470,10 +410,20 @@ fun CountingScreen(
         }
     }
 
-    val countBlockedMessage = stringResource(R.string.slot_count_blocked_outside_active)
+    val pausedBlockedMessage = stringResource(R.string.counting_hard_block_paused)
+    val completedBlockedMessage = stringResource(R.string.counting_hard_block_completed)
+    val expiredBlockedMessage = stringResource(R.string.counting_hard_block_expired)
+    val durationEndedBlockedMessage = stringResource(R.string.counting_hard_block_duration_ended)
     LaunchedEffect(Unit) {
-        viewModel.countBlockedMessage.collect {
-            snackbarHostState.showSnackbar(countBlockedMessage)
+        viewModel.countBlockedMessage.collect { reason ->
+            snackbarHostState.showSnackbar(
+                when (reason) {
+                    CountingHardBlockReason.PAUSED -> pausedBlockedMessage
+                    CountingHardBlockReason.COMPLETED -> completedBlockedMessage
+                    CountingHardBlockReason.EXPIRED -> expiredBlockedMessage
+                    CountingHardBlockReason.DURATION_ENDED -> durationEndedBlockedMessage
+                },
+            )
         }
     }
 

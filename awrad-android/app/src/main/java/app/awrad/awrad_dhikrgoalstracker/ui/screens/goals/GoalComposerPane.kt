@@ -89,7 +89,6 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalPreset
 import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
 import app.awrad.awrad_dhikrgoalstracker.data.model.SeasonTemplateCode
-import app.awrad.awrad_dhikrgoalstracker.data.model.SlotCountingPolicy
 import app.awrad.awrad_dhikrgoalstracker.data.model.TimingType
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.CapBehavior
 import app.awrad.awrad_dhikrgoalstracker.service.PreviewPlaybackState
@@ -544,7 +543,6 @@ private fun CountTimingConfig(
                 GoalTimingDraft.CustomSlots -> {
                     SessionsRuleSelector(draft = draft, onDraftChange = onDraftChange)
                     CustomSessionsEditor(draft = draft, mode = draft.countRule.mode, onDraftChange = onDraftChange)
-                    SlotPolicySelector(draft = draft, onDraftChange = onDraftChange)
                 }
                 else -> Unit
             }
@@ -988,23 +986,6 @@ private fun PrayerBucketEditor(
                     }
                 }
             }
-        SlotPolicySelector(draft = draft, onDraftChange = onDraftChange)
-    }
-}
-
-@Composable
-private fun SlotPolicySelector(
-    draft: GoalDraft,
-    onDraftChange: (GoalDraft) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        SectionLabel(stringResourceCompat(R.string.composer_slot_policy))
-        ComposerSelect(
-            options = SlotCountingPolicy.entries.map { SelectOption(it, it.localizedTitle()) },
-            selected = draft.extras.slotCountingPolicy,
-            sheetTitle = stringResourceCompat(R.string.composer_slot_policy),
-            onSelect = { onDraftChange(draft.copy(extras = draft.extras.copy(slotCountingPolicy = it))) },
-        )
     }
 }
 

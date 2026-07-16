@@ -90,7 +90,6 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.RecurrenceFrequency
 import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
-import app.awrad.awrad_dhikrgoalstracker.data.model.SlotCountingPolicy
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressSummary
 import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradStatusBarStyle
@@ -517,7 +516,6 @@ private fun GoalOverviewSection(
         DetailItem(Icons.Outlined.TrackChanges, stringResource(R.string.goal_details_progress_scope), progressScopeSummary(goal.targetPolicy)),
         DetailItem(Icons.Outlined.Shield, stringResource(R.string.goal_details_cap_behavior), capBehaviorSummary(goal.capBehavior)),
         DetailItem(Icons.Outlined.Flag, stringResource(R.string.goal_details_completion), completionSummary(goal)),
-        DetailItem(Icons.Outlined.Rule, stringResource(R.string.goal_details_slot_policy), slotPolicySummary(goal.slotCountingPolicy)),
     )
 
     val scheduleItems = listOf(
@@ -1053,14 +1051,6 @@ private fun durationSummary(goal: Goal): String =
         goal.durationDays != null -> stringResource(R.string.goal_summary_duration_days, goal.durationDays)
         goal.endDate != null -> stringResource(R.string.goal_details_duration_until, goal.endDate.toString())
         else -> stringResource(R.string.goal_summary_duration_ongoing)
-    }
-
-@Composable
-private fun slotPolicySummary(policy: SlotCountingPolicy): String =
-    when (policy) {
-        SlotCountingPolicy.WARN_AND_ALLOW -> stringResource(R.string.goal_details_slot_policy_warn)
-        SlotCountingPolicy.STRICT_ACTIVE_ONLY -> stringResource(R.string.goal_details_slot_policy_strict)
-        SlotCountingPolicy.SILENT_FLEXIBLE -> stringResource(R.string.goal_details_slot_policy_flexible)
     }
 
 @Composable

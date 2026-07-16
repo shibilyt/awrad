@@ -193,7 +193,7 @@ class CountingSlotUiModelTest {
     }
 
     @Test
-    fun `strict policy blocks positive count outside active slot in ui model`() {
+    fun `legacy strict policy leaves outside slot selectable for universal guard`() {
         val slot = timeSlots().first()
 
         val strict = buildSlotCountingUiModels(
@@ -206,11 +206,11 @@ class CountingSlotUiModelTest {
             subtitleForSlot = { "" },
         ).single()
 
-        assertFalse(strict.canCountNow)
+        assertTrue(strict.canCountNow)
     }
 
     @Test
-    fun `warn and silent policies allow ended slot with warning flag only for warn`() {
+    fun `all legacy policies expose ended warning state`() {
         val slot = timeSlots().first()
 
         val warn = buildSlotCountingUiModels(
@@ -235,7 +235,7 @@ class CountingSlotUiModelTest {
         assertTrue(warn.canCountNow)
         assertTrue(warn.requiresEndedWarning)
         assertTrue(silent.canCountNow)
-        assertFalse(silent.requiresEndedWarning)
+        assertTrue(silent.requiresEndedWarning)
     }
 
     private fun timeSlots(): List<GoalSlot> = listOf(

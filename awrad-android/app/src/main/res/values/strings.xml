@@ -431,6 +431,22 @@
     <string name="slot_ended_switch_action">Switch to %1$s</string>
     <string name="slot_ended_keep_counting">Keep counting here</string>
     <string name="slot_count_blocked_outside_active">This session is outside its active time.</string>
+    <string name="counting_availability_title">Counting is not available yet</string>
+    <string name="counting_availability_intro">You can continue anyway for these reasons:</string>
+    <string name="counting_availability_future_start">This goal starts on %1$s.</string>
+    <string name="counting_availability_off_recurrence">This goal is not scheduled for the current effective day.</string>
+    <string name="counting_availability_slot_upcoming">The selected slot starts at %1$s.</string>
+    <string name="counting_availability_slot_upcoming_unknown">The selected slot has not started yet.</string>
+    <string name="counting_availability_slot_ended">The selected slot ended at %1$s.</string>
+    <string name="counting_availability_slot_ended_unknown">The selected slot has ended.</string>
+    <string name="counting_availability_slot_unknown">The selected slot time could not be resolved.</string>
+    <string name="counting_availability_count_anyway">Count anyway</string>
+    <string name="counting_availability_start_anyway">Start anyway</string>
+    <string name="counting_availability_resume_anyway">Resume anyway</string>
+    <string name="counting_hard_block_paused">This goal is paused. Resume it before counting.</string>
+    <string name="counting_hard_block_completed">This goal is completed and cannot be counted.</string>
+    <string name="counting_hard_block_expired">This goal has expired and cannot be counted.</string>
+    <string name="counting_hard_block_duration_ended">This goal’s duration has ended and cannot be counted.</string>
     <string name="count_over_target_warning">Target exceeded. Counting will continue.</string>
     <string name="count_hard_cap_reached">This goal has reached its counting limit.</string>
     <string name="counting_see_full">see full</string>
@@ -496,6 +512,7 @@
     <string name="library_no_match">No dhikrs match your search</string>
     <string name="library_no_dhikrs">No dhikrs found</string>
     <string name="featured_collections">Featured collections</string>
+    <string name="featured_dhikr_collections">Featured dhikr collections</string>
     <string name="all_dhikrs">All dhikrs</string>
     <string name="collection_daily_essentials">Daily Essentials</string>
     <string name="collection_swalaths">Swalaths</string>
@@ -1426,4 +1443,10 @@
     <string name="counting_allow_past_target_confirm">Allow</string>
     <string name="counting_allow_past_target_success">You can now continue counting past the target.</string>
     <string name="counting_allow_past_target_error">Could not change the counting cap. Try again.</string>
+    <string name="settings_sync_now">Sync progress now</string>
+    <string name="settings_sync_current">Cloud progress is up to date.</string>
+    <string name="settings_sync_not_yet">Progress has not synced yet.</string>
+    <string name="settings_sync_pending">%1$d changes waiting to sync.</string>
+    <string name="settings_sync_attention">%1$d conflicts and %2$d failed changes need attention.</string>
+    <string name="settings_sync_error">The last sync did not finish. Tap to retry.</string>
 </resources>

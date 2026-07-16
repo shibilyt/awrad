@@ -33,6 +33,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.QuranRef
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.ValidatedGoal
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.ValidatedGoalUpdate
+import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncRepository
 import app.awrad.awrad_dhikrgoalstracker.util.CountCapCalculator
 import app.awrad.awrad_dhikrgoalstracker.util.DateProvider
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
@@ -57,6 +58,7 @@ class GoalRepositoryImpl @Inject constructor(
     private val countEntryDao: CountEntryDao,
     private val dhikrDao: DhikrDao,
     private val dateProvider: DateProvider,
+    private val progressSyncRepository: ProgressSyncRepository? = null,
 ) : GoalRepository {
 
     override fun getActiveGoals(): Flow<List<Goal>> =
@@ -101,6 +103,7 @@ class GoalRepositoryImpl @Inject constructor(
         if (reminderEntities.isNotEmpty()) {
             goalReminderDao.insertAll(reminderEntities)
         }
+        progressSyncRepository?.enqueueGoal(goal)
         goalId
     }
 
@@ -127,7 +130,7 @@ class GoalRepositoryImpl @Inject constructor(
         getGoalById(goal.id) ?: goal
     }
 
-    private suspend fun updateGoalAggregate(goal: Goal) {
+    private suspend fun updateGoalAggregate(goal: Goal, enqueueSync: Boolean = true) {
         goal.requirePersistable()
         goalDao.update(goal.toEntity())
         replaceRecurrence(goal.id, goal.recurrence)
@@ -169,6 +172,32 @@ class GoalRepositoryImpl @Inject constructor(
         } else {
             goalSlotDao.deleteForGoalExcept(goal.id, retainedSlotIds)
         }
+        if (enqueueSync) progressSyncRepository?.enqueueGoal(goal)
+    }
+
+    suspend fun applyRemoteGoal(remoteGoal: Goal) = database.withTransaction {
+        val existing = goalDao.getGoalById(remoteGoal.id)
+        val goal = if (existing == null) remoteGoal else remoteGoal.copy(totalCompletedCount = existing.totalCompletedCount)
+        if (existing == null) {
+            goal.requirePersistable()
+            goalDao.insert(goal.toEntity())
+            replaceRecurrence(goal.id, goal.recurrence)
+            val slots = goal.slots.map { it.toEntity(goal.id) }
+            if (slots.isNotEmpty()) goalSlotDao.insertAll(slots)
+            val reminders = goal.reminders.map { reminder ->
+                reminder.toEntity(
+                    goalId = goal.id,
+                    slotId = GoalPersistenceMapper.normalizedReminderSlotId(reminder, goal.slots),
+                )
+            }
+            if (reminders.isNotEmpty()) goalReminderDao.insertAll(reminders)
+        } else {
+            updateGoalAggregate(goal, enqueueSync = false)
+        }
+    }
+
+    suspend fun deleteRemoteGoal(id: AwradId) = database.withTransaction {
+        goalDao.deleteById(id)
     }
 
     private suspend fun recomputeCompletionAfterCountSetupUpdate(goalId: AwradId) {
@@ -192,7 +221,10 @@ class GoalRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteGoal(id: AwradId) {
-        goalDao.deleteById(id)
+        database.withTransaction {
+            progressSyncRepository?.enqueueDelete("goal", id.toString())
+            goalDao.deleteById(id)
+        }
     }
 
     override suspend fun addCount(goalId: AwradId, slotId: AwradId?, count: Long): Long = database.withTransaction {
@@ -222,6 +254,7 @@ class GoalRepositoryImpl @Inject constructor(
         val now = System.currentTimeMillis()
         countEntryDao.upsertCount(goalId, normalizedSlotId, today, appliedDelta, now)
         goalDao.incrementTotalCount(goalId, appliedDelta, now)
+        progressSyncRepository?.recordCountDelta(goalId, normalizedSlotId, today, appliedDelta)
         // Auto-completion only reads totalCompletedCount (just changed) + already-loaded fields,
         // so recompute from `goal` instead of a second full re-fetch. The clamp mirrors the
         // `incrementTotalCount` CASE so the in-memory value matches the persisted row exactly.
@@ -231,8 +264,12 @@ class GoalRepositoryImpl @Inject constructor(
             )
             val isComplete = GoalProgressCalculator.isGoalComplete(recomputedGoal)
             when {
-                isComplete && goal.completedAt == null -> goalDao.markCompleted(goalId, now)
-                !isComplete && goal.completedAt != null -> goalDao.reopenGoal(goalId, now)
+                isComplete && goal.completedAt == null -> {
+                    goalDao.markCompleted(goalId, now)
+                }
+                !isComplete && goal.completedAt != null -> {
+                    goalDao.reopenGoal(goalId, now)
+                }
             }
         }
         appliedDelta
@@ -294,13 +331,28 @@ class GoalRepositoryImpl @Inject constructor(
         goalDao.getActiveGoalsWithNotifications().withChildren()
 
     override suspend fun deleteAllProgress() {
-        countEntryDao.deleteAll()
-        goalDao.resetAllGoalProgress(System.currentTimeMillis())
+        database.withTransaction {
+            countEntryDao.allForInitialSync().filter { it.count > 0L }.forEach { entry ->
+                progressSyncRepository?.resetObservedBucket(
+                    entry.goalId,
+                    entry.slotId,
+                    entry.date,
+                    entry.count,
+                )
+            }
+            countEntryDao.deleteAll()
+            goalDao.resetAllGoalProgress(System.currentTimeMillis())
+        }
     }
 
     override suspend fun deleteAllGoalsAndProgress() {
-        countEntryDao.deleteAll()
-        goalDao.deleteAllGoals()
+        database.withTransaction {
+            goalDao.getAllGoals().first().forEach { goal ->
+                progressSyncRepository?.enqueueDelete("goal", goal.id.toString())
+            }
+            countEntryDao.deleteAll()
+            goalDao.deleteAllGoals()
+        }
     }
 
     override fun getActiveGoalsByDhikrId(dhikrId: AwradId): Flow<List<Goal>> =

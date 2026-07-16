@@ -26,7 +26,7 @@ class BehaviorFixtureParityTest {
         val document = Json.parseToJsonElement(fixture().readText()).jsonObject
         val required = setOf(
             "effective_day", "recurrence", "count_limits", "slot_selection",
-            "streaks", "reminder_plans", "wird_cadence",
+            "counting_availability", "streaks", "reminder_plans", "wird_cadence",
         )
         required.forEach { section -> assertTrue(document.getValue(section).jsonArray.isNotEmpty()) }
 
