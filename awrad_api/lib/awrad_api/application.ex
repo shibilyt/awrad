@@ -10,6 +10,7 @@ defmodule AwradApi.Application do
     children = [
       AwradApiWeb.Telemetry,
       AwradApi.Repo,
+      AwradApi.Dhikr.BuiltInRegistryGuard,
       {DNSCluster, query: Application.get_env(:awrad_api, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: AwradApi.PubSub},
       # Start a worker by calling: AwradApi.Worker.start_link(arg)
@@ -17,6 +18,16 @@ defmodule AwradApi.Application do
       # Start to serve requests, typically the last entry
       AwradApiWeb.Endpoint
     ]
+
+    children =
+      if Application.get_env(:awrad_api, :progress_sync_maintenance_enabled, true),
+        do: List.insert_at(children, -1, AwradApi.ProgressSync.Maintenance),
+        else: children
+
+    children =
+      if Application.get_env(:awrad_api, :built_in_registry_guard_enabled, true),
+        do: children,
+        else: List.delete(children, AwradApi.Dhikr.BuiltInRegistryGuard)
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

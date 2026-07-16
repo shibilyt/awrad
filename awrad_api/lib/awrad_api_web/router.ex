@@ -59,6 +59,19 @@ defmodule AwradApiWeb.Router do
     delete "/auth/sessions", AuthController, :revoke_all_sessions
   end
 
+  # Progress sync is restricted to verified bearer-token identities. Ownership is
+  # always derived from current_scope inside the context boundary.
+  scope "/api/sync/v1/progress", AwradApiWeb.Api do
+    pipe_through :api_auth_verified
+
+    post "/commands", ProgressSyncController, :commands
+    post "/actors/ack", ProgressSyncController, :acknowledge
+    post "/snapshots", ProgressSyncController, :snapshot
+    post "/deltas", ProgressSyncController, :delta
+    get "/snapshots/:id/pages/:page", ProgressSyncController, :page
+    get "/deltas/:id/pages/:page", ProgressSyncController, :page
+  end
+
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:awrad_api, :dev_routes) do
     import Phoenix.LiveDashboard.Router

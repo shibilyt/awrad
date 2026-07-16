@@ -1,5 +1,8 @@
 import Config
 
+config :awrad_api, :progress_sync_maintenance_enabled, false
+config :awrad_api, :built_in_registry_guard_enabled, false
+
 # Only in tests, remove the complexity from the password hashing algorithm
 config :bcrypt_elixir, :log_rounds, 1
 config :argon2_elixir, t_cost: 1, m_cost: 8

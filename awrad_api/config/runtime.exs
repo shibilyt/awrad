@@ -23,6 +23,16 @@ end
 config :awrad_api, AwradApiWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+# Operational kill switch: mobile clients keep their durable outboxes and
+# continue offline while every progress-sync route returns retryable 503.
+if value = System.get_env("PROGRESS_SYNC_ENABLED") do
+  config :awrad_api, :progress_sync_enabled, value in ~w(true 1)
+end
+
+if value = System.get_env("PROGRESS_SYNC_MAINTENANCE_ENABLED") do
+  config :awrad_api, :progress_sync_maintenance_enabled, value in ~w(true 1)
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

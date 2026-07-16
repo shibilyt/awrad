@@ -18,7 +18,9 @@ defmodule AwradApi.Dhikr.Dhikr do
     field :benefits, {:array, :string}, default: []
     field :repeat_count, :integer, default: 1
     field :sort_order, :integer, default: 0
+    field :deleted_at, :utc_datetime
 
+    belongs_to :user, AwradApi.Accounts.User
     has_many :translations, AwradApi.Dhikr.DhikrTranslation
     many_to_many :categories, AwradApi.Dhikr.Category, join_through: "dhikr_categories"
 
