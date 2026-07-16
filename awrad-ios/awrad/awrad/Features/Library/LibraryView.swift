@@ -19,7 +19,6 @@ struct LibraryView: View {
     @Environment(AppRouter.self) private var router
     @Environment(AppServices.self) private var services
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @State private var searchText = ""
     @State private var selectedCategory: DhikrCategory?
     @State private var selectedSegment: Segment = .dhikrs
@@ -151,72 +150,26 @@ struct LibraryView: View {
         }
     }
 
-    @ViewBuilder
     private var librarySegmentControl: some View {
-        if #available(iOS 26.0, *), !reduceTransparency {
-            GlassEffectContainer(spacing: 8) {
-                HStack(spacing: 8) {
-                    ForEach(Segment.allCases) { segment in
-                        librarySegmentButton(segment)
-                            .glassEffect(
-                                .regular
-                                    .tint(
-                                        selectedSegment == segment
-                                            ? AwradTheme.sage.opacity(0.28)
-                                            : AwradTheme.surface.opacity(0.16)
-                                    )
-                                    .interactive(true),
-                                in: .capsule
-                            )
+        AwradSegmentedControl(
+            selection: Binding(
+                get: { selectedSegment },
+                set: { segment in
+                    selectedSegment = segment
+                    if segment == .wirds {
+                        isSearchFocused = false
                     }
                 }
-            }
-        } else {
-            HStack(spacing: 4) {
-                ForEach(Segment.allCases) { segment in
-                    librarySegmentButton(segment)
-                        .background(
-                            selectedSegment == segment
-                                ? AwradTheme.sage.opacity(0.16)
-                                : Color.clear,
-                            in: Capsule()
-                        )
-                }
-            }
-            .padding(4)
-            .background(.ultraThinMaterial, in: Capsule())
-            .overlay {
-                Capsule()
-                    .stroke(AwradTheme.sage.opacity(0.16), lineWidth: 1)
-            }
-        }
-    }
-
-    private func librarySegmentButton(_ segment: Segment) -> some View {
-        Button {
-            guard selectedSegment != segment else { return }
-            withAnimation(.snappy(duration: 0.28)) {
-                selectedSegment = segment
-            }
-            if segment == .wirds {
-                isSearchFocused = false
-            }
-        } label: {
+            ),
+            options: Segment.allCases
+        ) { segment in
             HStack(spacing: 8) {
                 Image(systemName: segment.symbol)
                     .font(AwradTheme.bodyFont(14, weight: .semibold))
                 Text(LocalizedStringKey(segment.rawValue))
-                    .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
             }
-            .foregroundStyle(selectedSegment == segment ? AwradTheme.sage : .secondary)
-            .frame(maxWidth: .infinity)
-            .frame(height: 44)
-            .contentShape(Capsule())
+            .accessibilityLabel(Text(LocalizedStringKey(segment.rawValue)))
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(Text(LocalizedStringKey(segment.rawValue)))
-        .accessibilityAddTraits(selectedSegment == segment ? .isSelected : [])
-        .animation(.snappy(duration: 0.28), value: selectedSegment)
     }
 
     private var librarySearchField: some View {

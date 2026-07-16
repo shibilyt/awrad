@@ -588,10 +588,12 @@ private struct GoalScheduleSlotEditor: View {
                 Picker("Prayer", selection: $slot.prayerName) {
                     ForEach(Prayer.allCases) { Text($0.title).tag(Optional($0)) }
                 }
-                Picker("Relation", selection: $slot.prayerRelation) {
-                    ForEach(PrayerRelation.allCases) { Text($0.rawValue.capitalized).tag(Optional($0)) }
+                AwradSegmentedControl(
+                    selection: $slot.prayerRelation,
+                    options: PrayerRelation.allCases.map(Optional.some)
+                ) { relation in
+                    Text(relation?.rawValue.capitalized ?? "")
                 }
-                .pickerStyle(.segmented)
                 if slot.prayerRelation == .before {
                     Stepper(value: $slot.beforeLeadMinutes, in: 0...180, step: 5) {
                         Text("Begin \(slot.beforeLeadMinutes) minutes before")

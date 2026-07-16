@@ -630,11 +630,12 @@ private struct ReminderEditorRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Toggle(LocalizedStringKey("Enabled"), isOn: $reminder.enabled)
-            Picker(LocalizedStringKey("Type"), selection: $reminder.reminderType) {
-                Text(LocalizedStringKey("Fixed time")).tag(ReminderType.fixedTime)
-                Text(LocalizedStringKey("After prayer")).tag(ReminderType.prayerOffset)
+            AwradSegmentedControl(
+                selection: $reminder.reminderType,
+                options: [ReminderType.fixedTime, .prayerOffset]
+            ) { option in
+                Text(LocalizedStringKey(option == .fixedTime ? "Fixed time" : "After prayer"))
             }
-            .pickerStyle(.segmented)
             if reminder.reminderType == .prayerOffset {
                 Picker(LocalizedStringKey("Prayer"), selection: prayer) {
                     ForEach(Prayer.allCases) { p in Text(LocalizedStringKey(p.title)).tag(p) }

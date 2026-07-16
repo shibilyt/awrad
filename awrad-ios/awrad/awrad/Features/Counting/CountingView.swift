@@ -2136,15 +2136,21 @@ private struct SessionTargetSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    Picker("Mode", selection: $type) {
-                        Text(LocalizedStringKey("counting_session_count_tab")).tag(SessionTargetType.count)
-                        Text(LocalizedStringKey("counting_session_timer_tab")).tag(SessionTargetType.timer)
+                    AwradSegmentedControl(
+                        selection: $type,
+                        options: [SessionTargetType.count, .timer]
+                    ) { option in
+                        Text(LocalizedStringKey(
+                            option == .count ? "counting_session_count_tab" : "counting_session_timer_tab"
+                        ))
                     }
-                    .pickerStyle(.segmented)
                     .onChange(of: type) { _, newValue in
                         target = newValue == .timer ? 10 : 33
                     }
                 }
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
 
                 Section("This Session") {
                     if type == .timer {
@@ -2233,12 +2239,12 @@ private struct CountAdjustmentSheet: View {
         NavigationStack {
             Form {
                 Section("Adjustment") {
-                    Picker("Mode", selection: $mode) {
-                        ForEach(CountAdjustmentMode.allCases) { mode in
-                            Text(mode.titleKey).tag(mode)
-                        }
+                    AwradSegmentedControl(
+                        selection: $mode,
+                        options: CountAdjustmentMode.allCases
+                    ) { option in
+                        Text(option.titleKey)
                     }
-                    .pickerStyle(.segmented)
 
                     TextField("Count Amount", value: $amount, format: .number)
                         #if os(iOS)
