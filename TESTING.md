@@ -18,6 +18,7 @@ Validate the smallest relevant surface first, then widen checks according to ris
 | API context/schema | Focused context test and migration review | Full `mix test` |
 | API controller/router/auth | Focused controller/plug tests | Full `mix test` and mobile consumer review |
 | Cross-project progress contract | `./check-mobile-model-parity` plus focused API context tests | Full native/API suites and migration checks |
+| Progress sync protocol/reducer | `python3 scripts/validate_progress_sync.py` | Root parity plus Phoenix sync context tests |
 | Cross-platform behavior fixture | `python3 scripts/validate_behavior_fixtures.py` plus the matching Android/iOS behavior test | `./check-mobile-model-parity` and the affected native suites |
 | Documentation only | Link/path audit and `git diff --check` | Verify documented task discovery commands |
 

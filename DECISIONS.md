@@ -195,6 +195,65 @@ Users receive equivalent product behavior without Android-shaped iOS controls. P
 
 None.
 
+## ADR-2026-07-15: Universal confirmation before unavailable goal counting
+
+Status: Accepted
+
+### Context
+
+Android and iOS previously interpreted `slot_counting_policy` differently and only guarded some outside-slot actions. Future-start and off-recurrence counting could also bypass the timing prompts, while counter, Quran, audio, and widget entry points did not share a daily authorization.
+
+### Decision
+
+Every positive native count action uses a platform-local availability calculator. Future-start, off-recurrence, upcoming, ended, and unresolved-slot reasons require one combined confirmation; paused, completed, expired, and duration-ended goals hard-block. A confirmation is keyed by goal, slot, effective day, and the complete reason set. iOS shares keys through App Group defaults and Android uses DataStore. Legacy `slot_counting_policy` values remain persisted and wire-compatible but no longer control runtime counting and are hidden from goal editors.
+
+### Consequences
+
+Manual counts, positive adjustments, Quran counting, audio start/resume, and iOS widget/App Intent mutations now agree. Negative corrections remain available, existing caps still run after authorization, and bypassed counts stay on the current effective day rather than advancing a future occurrence.
+
+### Evidence
+
+- `contracts/behavior-model/v1/fixtures/behavior-cases.json`
+- `awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/ui/screens/counting/CountingAvailability.kt`
+- `awrad-ios/awrad/Shared/CountingAvailability.swift`
+
+### Supersedes
+
+Runtime behavior implied by the legacy slot-counting policy selector; the persistence and wire representation remain compatible.
+
+## ADR-2026-07-16: Offline-first progress synchronization
+
+Status: Accepted
+
+### Context
+
+Stable UUIDs and the progress-model contract removed identity divergence, but mutable count totals cannot safely synchronize across disconnected devices. Timestamp replacement loses taps, signed deltas can create negative debt, live paginated tables can skip moving rows, and the current clients need an explicit account, retry, deletion, and legacy-import contract before public routes are added.
+
+### Decision
+
+Native state remains authoritative for immediate offline use. Every synchronized write creates an ordered UUID-keyed outbox command atomically with local product state. Phoenix assigns commit-ordered per-user revisions and idempotent receipts. Positive count batches become immutable credits; decrement and reset consume only eligible observed credit under server order. Custom dhikrs and goal definitions use whole-document optimistic concurrency. Automatic completion is projection state. Bootstrap and delta responses are immutable short-lived materializations from one PostgreSQL snapshot. Deleted entities use recoverable tombstones, incarnation barriers, and permanent minimal anti-resurrection fences.
+
+Local data binds immutably to the first account whose import completes. Ambiguous legacy aggregate counts require explicit reconciliation rather than guessed arithmetic. Count ledgers compact through actor-safe checkpoints, while stale destructive commands are rejected for refresh and re-confirmation.
+
+### Consequences
+
+Counting never depends on connectivity, retries cannot duplicate accepted progress, concurrent increments converge, and destructive operations cannot erase unseen progress or create negative debt. The server stores additional command/credit metadata and serializes bounded writes per account. Android requires a Room sync migration; iOS synchronized state requires one transactional App Group persistence authority and background-safe token refresh before sync rollout.
+
+### Evidence
+
+- `docs/progress-sync-architecture.md`
+- `contracts/progress-sync/v1/`
+- `scripts/validate_progress_sync.py`
+- `awrad_api/lib/awrad_api/progress_sync.ex`
+- `awrad_api/priv/repo/migrations/20260716053734_create_progress_sync_foundation.exs`
+- `awrad_api/priv/repo/migrations/20260716055321_create_progress_sync_count_ledger.exs`
+- `awrad_api/test/awrad_api/progress_sync_test.exs`
+- `awrad_api/test/awrad_api/progress_sync_count_ledger_test.exs`
+
+### Supersedes
+
+The previously undecided synchronization portions of ADR-2026-07-13 UUIDv4 progress identity and native model parity.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

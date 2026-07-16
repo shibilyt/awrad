@@ -22,6 +22,12 @@ git diff --stat
 
 # Validate progress/Wird contracts, generated registries/assets, and both native suites.
 ./check-mobile-model-parity
+
+# Validate only the progress-sync protocol examples and reference count reducer.
+python3 scripts/validate_progress_sync.py
+
+# Validate Phoenix ordering, idempotency, and immutable count-ledger behavior.
+(cd awrad_api && mix test test/awrad_api/progress_sync_test.exs test/awrad_api/progress_sync_count_ledger_test.exs)
 ```
 
 The root is not itself a build project. The parity command intentionally enters the Android and iOS projects. Set `AWRAD_IOS_TEST_DESTINATION` to an `xcodebuild` destination string when automatic iPhone Simulator selection is not appropriate.

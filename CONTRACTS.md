@@ -80,7 +80,11 @@ Identity and representation rules:
 
 Android stores UUIDs as Room `TEXT`; schema version 5 deliberately resets identity-dependent development product tables before reseeding canonical dhikrs, and version 6 adds persisted dhikr ordering. The former iOS snapshot version 5 reset pre-v5 development snapshots and decodes missing dhikr sort order as zero. Current iOS installs migrate a validated version-5 snapshot into SwiftData without changing semantic IDs or values; pre-v5 imports remain unsupported and Keychain credentials are unaffected. Phoenix retains `:binary_id` storage and advances through a forward migration; authenticated scope, not payload ownership fields, supplies `user_id`.
 
-There are no progress synchronization routes in v1. Outboxes, operation IDs, tombstones, ownership binding, reconciliation, and conflict resolution remain deferred.
+Progress synchronization v1 is implemented under `/api/sync/v1/progress` for
+verified authenticated users. It includes command batches, snapshot/delta
+transfer sessions and pages, actor acknowledgements, native durable outboxes,
+tombstones, conservative first import, generation reconciliation, and entity
+conflict resolution. Ownership is always derived from authenticated scope.
 
 Run `./check-mobile-model-parity` at the root for schema/fixture validation, exact persisted-field classification, three-way built-in registry comparison, and the Android and iOS contract suites. A progress-model change is incomplete unless its schema, fixtures, native mappers, API representation, and tests change together.
 
@@ -109,8 +113,24 @@ Parity means equivalent user-visible rules, not identical source structure. When
 
 High-risk parity areas include count caps, streak eligibility, day boundaries, recurring goals, reminder timing, prayer-relative slots, wird part selection, backup schema, deep links, and widget mutations.
 
-## Planned: offline-first synchronization
+## Progress synchronization v1
 
-General account-bound synchronization and online-library imports are not implemented end to end. The intended direction is local-first: local records remain usable offline, server association is explicit, imported library content is a snapshot, and audio download/cache state is separate from logical content state.
+Account-bound synchronization is implemented end to end. The architecture and
+operational bounds are documented in [`docs/progress-sync-architecture.md`](docs/progress-sync-architecture.md), and the executable transport/count fixtures live in `contracts/progress-sync/v1/`.
 
-Stable UUIDv4 identity and the native progress model are now locked by ADR-2026-07-13. Before implementing routes, add a follow-up decision for immutable account binding, revisions, tombstones/deletion, conflict policy, initial upload/download behavior, and compatibility with existing local data. Do not infer those rules from the current Ecto schemas alone.
+The accepted direction is local-first: native records remain usable offline, local writes create durable outbox commands, server revisions are commit ordered per account, positive progress synchronizes as idempotent credits, and decrement/reset consume only observed credit. Bootstrap and delta responses are immutable materialized transfer sessions. Custom dhikrs and goal definitions use whole-document optimistic concurrency; aggregate counts and automatic completion are projections rather than mutation authority.
+
+Phoenix exposes the verified-auth `/api/sync/v1/progress` routes for ordered
+commands, materialized snapshots/deltas, immutable transfer pages, and actor
+acknowledgements. Android and iOS consume those routes through durable native
+outboxes, canonical shadows, inbox staging, account binding, first import,
+conflict retention, and cursor-safe apply transactions. The server owns entity
+versions/incarnations, tombstones and purge fences, the immutable count ledger,
+derived projections, transfer quotas, retention, and bounded maintenance.
+
+Protocol/server support for entity restore and explicit manual goal completion
+or reopening is reserved for clients that expose those actions. The current
+native apps synchronize deletion and automatic count-driven lifecycle state but
+do not yet expose restore or manual lifecycle controls as end-to-end user
+actions. Audio cache state and Wird synchronization remain outside
+progress-sync v1.
