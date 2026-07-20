@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
+import app.awrad.awrad_dhikrgoalstracker.data.repository.PendingVerificationContext
 
 private fun isPasswordValid(password: String): Boolean {
     return password.length >= 10 &&
@@ -61,6 +62,7 @@ fun SignupScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onSignupSuccess: () -> Unit,
+    onVerificationRequired: (PendingVerificationContext) -> Unit,
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -165,7 +167,7 @@ fun SignupScreen(
                     onDone = {
                         focusManager.clearFocus()
                         if (email.isNotBlank() && isPasswordValid(password)) {
-                            viewModel.register(email.trim(), password, onSignupSuccess)
+                            viewModel.register(email.trim(), password, onSignupSuccess, onVerificationRequired)
                         }
                     },
                 ),
@@ -186,7 +188,9 @@ fun SignupScreen(
             Spacer(Modifier.height(24.dp))
 
             Button(
-                onClick = { viewModel.register(email.trim(), password, onSignupSuccess) },
+                onClick = {
+                    viewModel.register(email.trim(), password, onSignupSuccess, onVerificationRequired)
+                },
                 enabled = email.isNotBlank() && isPasswordValid(password) && !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(18.dp),

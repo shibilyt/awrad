@@ -19,6 +19,8 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
 import app.awrad.awrad_dhikrgoalstracker.data.preferences.UserPreferences
 import app.awrad.awrad_dhikrgoalstracker.data.repository.AuthRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.AuthResult
+import app.awrad.awrad_dhikrgoalstracker.data.repository.VerificationMode
+import app.awrad.awrad_dhikrgoalstracker.data.repository.VerificationOrigin
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.PrayerTimeRepository
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.CountPolicy
@@ -35,12 +37,14 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.ReminderReliabilityUiStat
 import com.batoulapps.adhan.PrayerTimes
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -76,6 +80,7 @@ data class OnboardingUiState(
     val authPassword: String = "",
     val isAuthenticating: Boolean = false,
     val authError: String? = null,
+    val usesReturningUserFlow: Boolean = false,
     // Name
     val userName: String = "",
     // First goal
@@ -131,6 +136,7 @@ class OnboardingViewModel @Inject constructor(
         OnboardingUiState(
             currentStep = savedStateHandle.get<Int>(KEY_CURRENT_STEP) ?: OPENING_STEP_INDEX,
             languageTag = currentLanguageTag(),
+            usesReturningUserFlow = savedStateHandle.get<Boolean>(KEY_RETURNING_USER_FLOW) ?: false,
         ),
     )
     val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
@@ -138,6 +144,9 @@ class OnboardingViewModel @Inject constructor(
     /** Full seeded dhikr list, used to resolve the first-goal preset by catalog key. */
     private var allDhikrs: List<Dhikr> = emptyList()
     private var locationSearchJob: Job? = null
+    private var awaitingVerificationMode: AuthSheetMode? = null
+    private val _verificationNavigationEvents = Channel<Unit>(Channel.BUFFERED)
+    val verificationNavigationEvents = _verificationNavigationEvents.receiveAsFlow()
 
     val downloadProgress: StateFlow<DownloadProgress> =
         dhikrRepository.getLibraryDownloadProgress()
@@ -160,7 +169,33 @@ class OnboardingViewModel @Inject constructor(
         const val GOAL_INTRO_STEP_INDEX = 8
         const val FIRST_GOAL_STEP_INDEX = 9
 
+        private val RETURNING_USER_STEPS = listOf(
+            OPENING_STEP_INDEX,
+            LANGUAGE_STEP_INDEX,
+            ACCOUNT_STEP_INDEX,
+            LOCATION_STEP_INDEX,
+            NOTIFICATIONS_STEP_INDEX,
+            AUDIO_STEP_INDEX,
+        )
+
+        internal fun visibleSteps(returningUser: Boolean): List<Int> =
+            if (returningUser) RETURNING_USER_STEPS else (0 until TOTAL_STEPS).toList()
+
+        internal fun nextStepIndex(current: Int, returningUser: Boolean): Int? =
+            adjacentStepIndex(current, offset = 1, returningUser = returningUser)
+
+        internal fun previousStepIndex(current: Int, returningUser: Boolean): Int? =
+            adjacentStepIndex(current, offset = -1, returningUser = returningUser)
+
+        private fun adjacentStepIndex(current: Int, offset: Int, returningUser: Boolean): Int? {
+            val route = visibleSteps(returningUser)
+            val currentIndex = route.indexOf(current)
+            if (currentIndex == -1) return null
+            return route.getOrNull(currentIndex + offset)
+        }
+
         private const val KEY_CURRENT_STEP = "onboarding_current_step"
+        private const val KEY_RETURNING_USER_FLOW = "onboarding_returning_user_flow"
         private const val LOCATION_SEARCH_DEBOUNCE_MS = 500L
         private const val MIN_LOCATION_QUERY_LENGTH = 2
     }
@@ -194,6 +229,31 @@ class OnboardingViewModel @Inject constructor(
             authRepository.isLoggedIn.collect { loggedIn ->
                 val email = if (loggedIn) authRepository.userEmail.first() else null
                 _uiState.update { it.copy(isSignedIn = loggedIn, signedInEmail = email) }
+                val completedMode = awaitingVerificationMode
+                if (loggedIn && completedMode != null && _uiState.value.currentStep == ACCOUNT_STEP_INDEX) {
+                    val returning = completedMode == AuthSheetMode.SignIn
+                    awaitingVerificationMode = null
+                    savedStateHandle[KEY_RETURNING_USER_FLOW] = returning
+                    _uiState.update {
+                        it.copy(
+                            showAuthSheet = false,
+                            authPassword = "",
+                            usesReturningUserFlow = returning,
+                        )
+                    }
+                    nextStep()
+                }
+            }
+        }
+        viewModelScope.launch {
+            authRepository.pendingVerificationContext.collect { context ->
+                if (context?.origin == VerificationOrigin.Onboarding) {
+                    awaitingVerificationMode = when (context.mode) {
+                        VerificationMode.Login -> AuthSheetMode.SignIn
+                        VerificationMode.Signup -> AuthSheetMode.CreateAccount
+                    }
+                    _verificationNavigationEvents.trySend(Unit)
+                }
             }
         }
         viewModelScope.launch {
@@ -298,16 +358,19 @@ class OnboardingViewModel @Inject constructor(
         _uiState.update { it.copy(isAuthenticating = true, authError = null) }
         viewModelScope.launch {
             val result = when (state.authMode) {
-                AuthSheetMode.SignIn -> authRepository.login(email, password)
-                AuthSheetMode.CreateAccount -> authRepository.register(email, password)
+                AuthSheetMode.SignIn -> authRepository.login(email, password, VerificationOrigin.Onboarding)
+                AuthSheetMode.CreateAccount -> authRepository.register(email, password, VerificationOrigin.Onboarding)
             }
             when (result) {
                 is AuthResult.Success -> {
+                    val usesReturningUserFlow = state.authMode == AuthSheetMode.SignIn
+                    savedStateHandle[KEY_RETURNING_USER_FLOW] = usesReturningUserFlow
                     _uiState.update {
                         it.copy(
                             isAuthenticating = false,
                             showAuthSheet = false,
                             authPassword = "",
+                            usesReturningUserFlow = usesReturningUserFlow,
                         )
                     }
                     if (_uiState.value.currentStep == ACCOUNT_STEP_INDEX) {
@@ -319,12 +382,32 @@ class OnboardingViewModel @Inject constructor(
                         it.copy(isAuthenticating = false, authError = result.message)
                     }
                 }
+                is AuthResult.VerificationRequired -> {
+                    awaitingVerificationMode = state.authMode
+                    _uiState.update {
+                        it.copy(
+                            isAuthenticating = false,
+                            showAuthSheet = false,
+                            authPassword = "",
+                        )
+                    }
+                    _verificationNavigationEvents.trySend(Unit)
+                }
             }
         }
     }
 
     fun onContinueAsGuest() {
-        _uiState.update { it.copy(showAuthSheet = false) }
+        savedStateHandle[KEY_RETURNING_USER_FLOW] = false
+        _uiState.update { it.copy(showAuthSheet = false, usesReturningUserFlow = false) }
+        if (_uiState.value.currentStep == ACCOUNT_STEP_INDEX) {
+            nextStep()
+        }
+    }
+
+    fun onContinueSignedIn() {
+        savedStateHandle[KEY_RETURNING_USER_FLOW] = true
+        _uiState.update { it.copy(usesReturningUserFlow = true) }
         if (_uiState.value.currentStep == ACCOUNT_STEP_INDEX) {
             nextStep()
         }
@@ -346,9 +429,9 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun nextStep() {
-        val current = _uiState.value.currentStep
-        if (current >= TOTAL_STEPS - 1) return
-        if (current == AUDIO_STEP_INDEX && _uiState.value.audioSetupStatus == AudioSetupStatus.Downloading) return
+        val state = _uiState.value
+        val current = state.currentStep
+        if (current == AUDIO_STEP_INDEX && state.audioSetupStatus == AudioSetupStatus.Downloading) return
 
         if (current == NAME_STEP_INDEX) {
             viewModelScope.launch {
@@ -356,14 +439,17 @@ class OnboardingViewModel @Inject constructor(
             }
         }
 
-        setStep(current + 1)
+        val next = nextStepIndex(current, state.usesReturningUserFlow)
+        if (next != null) {
+            setStep(next)
+        } else if (state.usesReturningUserFlow && current == AUDIO_STEP_INDEX) {
+            completeReturningUserOnboarding()
+        }
     }
 
     fun previousStep() {
-        val current = _uiState.value.currentStep
-        if (current > 0) {
-            setStep(current - 1)
-        }
+        val state = _uiState.value
+        previousStepIndex(state.currentStep, state.usesReturningUserFlow)?.let(::setStep)
     }
 
     fun goToStep(step: Int) {
@@ -662,6 +748,15 @@ class OnboardingViewModel @Inject constructor(
 
             userPreferences.setOnboarded(true)
             _uiState.update { it.copy(firstGoalId = firstGoalId, isComplete = true) }
+        }
+    }
+
+    private fun completeReturningUserOnboarding() {
+        if (_uiState.value.isCreatingFirstGoal) return
+        _uiState.update { it.copy(isCreatingFirstGoal = true) }
+        viewModelScope.launch {
+            userPreferences.setOnboarded(true)
+            _uiState.update { it.copy(firstGoalId = null, isComplete = true) }
         }
     }
 

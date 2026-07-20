@@ -2,6 +2,8 @@ package app.awrad.awrad_dhikrgoalstracker.di
 
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepositoryImpl
+import app.awrad.awrad_dhikrgoalstracker.data.repository.CommunityStatsRepository
+import app.awrad.awrad_dhikrgoalstracker.data.repository.CommunityStatsRepositoryImpl
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepositoryImpl
 import app.awrad.awrad_dhikrgoalstracker.data.repository.WirdLibraryRepository
@@ -19,6 +21,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindCommunityStatsRepository(impl: CommunityStatsRepositoryImpl): CommunityStatsRepository
 
     @Binds
     @Singleton

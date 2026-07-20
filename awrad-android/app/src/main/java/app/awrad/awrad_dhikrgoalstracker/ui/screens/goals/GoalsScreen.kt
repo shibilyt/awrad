@@ -23,11 +23,14 @@ import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,23 +58,33 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualEmptyState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.SectionHeader
 import app.awrad.awrad_dhikrgoalstracker.ui.components.compactGoalCount
+import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
+import app.awrad.awrad_dhikrgoalstracker.ui.sync.ProgressSyncRefreshViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GoalsScreen(
     onNavigateToCounting: (AwradId) -> Unit,
     onNavigateToGoalDetail: (AwradId) -> Unit,
     onNavigateToCreateGoal: () -> Unit,
     viewModel: GoalsViewModel = hiltViewModel(),
+    refreshViewModel: ProgressSyncRefreshViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by refreshViewModel.isRefreshing.collectAsStateWithLifecycle()
     val density = LocalDensity.current
     val statusBarTopPadding = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
 
-    LazyColumn(
+    PullToRefreshBox(
+        isRefreshing = isRefreshing,
+        onRefresh = refreshViewModel::refresh,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = statusBarTopPadding, bottom = 112.dp),
     ) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = statusBarTopPadding, bottom = 112.dp),
+        ) {
         item {
             Row(
                 modifier = Modifier
@@ -186,6 +199,7 @@ fun GoalsScreen(
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
+}
 
 @Composable
 private fun GoalListItem(
@@ -204,6 +218,11 @@ private fun GoalListItem(
             .padding(horizontal = 20.dp, vertical = 4.dp),
         onClick = onClick,
         shape = RoundedCornerShape(22.dp),
+        containerColor = if (isAwradDarkTheme()) {
+            NavigationBarDefaults.containerColor
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
     ) {
         Row(
             modifier = Modifier
@@ -355,7 +374,7 @@ private fun GoalListItem(
 }
 
 @Composable
-private fun goalTag(goal: Goal): String {
+internal fun goalTag(goal: Goal): String {
     if (goal.targetPolicy == TargetPolicy.NONE) {
         return stringResource(R.string.goal_summary_no_target)
     }

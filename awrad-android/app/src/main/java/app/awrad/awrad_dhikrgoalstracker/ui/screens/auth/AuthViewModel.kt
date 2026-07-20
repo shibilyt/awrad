@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.awrad_dhikrgoalstracker.data.repository.AuthRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.AuthResult
+import app.awrad.awrad_dhikrgoalstracker.data.repository.PendingVerificationContext
+import app.awrad.awrad_dhikrgoalstracker.data.repository.VerificationOrigin
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,6 +19,9 @@ data class AuthUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val forgotPasswordSent: Boolean = false,
+    val isVerifying: Boolean = false,
+    val isResending: Boolean = false,
+    val verificationEmailSent: Boolean = false,
 )
 
 @HiltViewModel
@@ -38,16 +43,34 @@ class AuthViewModel @Inject constructor(
     val pendingVerificationEmail: StateFlow<String?> = authRepository.pendingVerificationEmail
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
+    val pendingVerificationContext: StateFlow<PendingVerificationContext?> =
+        authRepository.pendingVerificationContext
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    val verificationResendAvailableAt: StateFlow<Long?> =
+        authRepository.verificationResendAvailableAt
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
     val isEmailVerified: StateFlow<Boolean> = authRepository.isEmailVerified
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    fun login(email: String, password: String, onSuccess: () -> Unit) {
+    fun login(
+        email: String,
+        password: String,
+        onSuccess: () -> Unit,
+        onVerificationRequired: (PendingVerificationContext) -> Unit,
+        origin: VerificationOrigin = VerificationOrigin.Account,
+    ) {
         viewModelScope.launch {
             _uiState.value = AuthUiState(isLoading = true)
-            when (val result = authRepository.login(email, password)) {
+            when (val result = authRepository.login(email, password, origin)) {
                 is AuthResult.Success -> {
                     _uiState.value = AuthUiState()
                     onSuccess()
+                }
+                is AuthResult.VerificationRequired -> {
+                    _uiState.value = AuthUiState()
+                    onVerificationRequired(result.context)
                 }
                 is AuthResult.Error -> {
                     _uiState.value = AuthUiState(error = result.message)
@@ -56,13 +79,22 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun register(email: String, password: String, onSuccess: () -> Unit) {
+    fun register(
+        email: String,
+        password: String,
+        onSuccess: () -> Unit,
+        onVerificationRequired: (PendingVerificationContext) -> Unit,
+    ) {
         viewModelScope.launch {
             _uiState.value = AuthUiState(isLoading = true)
             when (val result = authRepository.register(email, password)) {
                 is AuthResult.Success -> {
                     _uiState.value = AuthUiState()
                     onSuccess()
+                }
+                is AuthResult.VerificationRequired -> {
+                    _uiState.value = AuthUiState()
+                    onVerificationRequired(result.context)
                 }
                 is AuthResult.Error -> {
                     _uiState.value = AuthUiState(error = result.message)
@@ -81,6 +113,36 @@ class AuthViewModel @Inject constructor(
                 is AuthResult.Error -> {
                     _uiState.value = AuthUiState(error = result.message)
                 }
+                is AuthResult.VerificationRequired -> Unit
+            }
+        }
+    }
+
+    fun verifyEmail(token: String, onSuccess: () -> Unit) {
+        if (_uiState.value.isVerifying) return
+        viewModelScope.launch {
+            _uiState.value = AuthUiState(isVerifying = true)
+            when (val result = authRepository.verifyEmail(token)) {
+                is AuthResult.Success -> {
+                    _uiState.value = AuthUiState()
+                    onSuccess()
+                }
+                is AuthResult.Error -> _uiState.value = AuthUiState(error = result.message)
+                is AuthResult.VerificationRequired -> Unit
+            }
+        }
+    }
+
+    fun resendVerification() {
+        if (_uiState.value.isResending) return
+        viewModelScope.launch {
+            _uiState.value = AuthUiState(isResending = true)
+            when (val result = authRepository.resendVerification()) {
+                is AuthResult.Success -> {
+                    _uiState.value = AuthUiState(verificationEmailSent = true)
+                }
+                is AuthResult.Error -> _uiState.value = AuthUiState(error = result.message)
+                is AuthResult.VerificationRequired -> Unit
             }
         }
     }
@@ -96,6 +158,7 @@ class AuthViewModel @Inject constructor(
             when (val result = authRepository.sessions()) {
                 is AuthResult.Success -> _sessions.value = result.data
                 is AuthResult.Error -> Unit
+                is AuthResult.VerificationRequired -> Unit
             }
         }
     }

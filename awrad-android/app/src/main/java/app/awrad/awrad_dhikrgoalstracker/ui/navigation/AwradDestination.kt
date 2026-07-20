@@ -57,7 +57,27 @@ sealed class AwradDestination(val route: String) {
     }
     data object CreateDhikr : AwradDestination("create_dhikr")
     data object Community : AwradDestination("community")
-    data object Login : AwradDestination("login")
+    data object CommunityStats : AwradDestination("community/stats")
+    data object CommunityChallenges : AwradDestination("community/challenges")
+    data object CommunityCircles : AwradDestination("community/circles")
+    data object CommunitySaved : AwradDestination("community/saved")
+    data object CommunityProfile : AwradDestination("community/profile")
+    data object CommunityPostDetail : AwradDestination("community/post")
+    data object Login : AwradDestination("login?email={email}&origin={origin}") {
+        fun createRoute(email: String? = null, origin: String? = null): String {
+            val query = buildList {
+                email?.takeIf { it.isNotBlank() }?.let { add("email=${android.net.Uri.encode(it)}") }
+                origin?.takeIf { it.isNotBlank() }?.let { add("origin=${android.net.Uri.encode(it)}") }
+            }
+            return "login" + query.takeIf { it.isNotEmpty() }
+                ?.joinToString(separator = "&", prefix = "?").orEmpty()
+        }
+    }
     data object Signup : AwradDestination("signup")
+    data object VerifyEmail : AwradDestination("verify_email?token={token}") {
+        fun createRoute(token: String? = null) =
+            token?.takeIf { it.isNotBlank() }?.let { "verify_email?token=${android.net.Uri.encode(it)}" }
+                ?: "verify_email"
+    }
     data object ForgotPassword : AwradDestination("forgot_password")
 }

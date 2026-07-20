@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
+import app.awrad.awrad_dhikrgoalstracker.data.repository.PendingVerificationContext
+import app.awrad.awrad_dhikrgoalstracker.data.repository.VerificationOrigin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,10 +57,13 @@ fun LoginScreen(
     onNavigateToSignup: () -> Unit,
     onNavigateToForgotPassword: () -> Unit,
     onLoginSuccess: () -> Unit,
+    onVerificationRequired: (PendingVerificationContext) -> Unit,
+    initialEmail: String = "",
+    origin: VerificationOrigin = VerificationOrigin.Account,
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var email by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf(initialEmail) }
     var password by rememberSaveable { mutableStateOf("") }
     var passwordVisible by rememberSaveable { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
@@ -158,7 +163,9 @@ fun LoginScreen(
                     onDone = {
                         focusManager.clearFocus()
                         if (email.isNotBlank() && password.isNotBlank()) {
-                            viewModel.login(email.trim(), password, onLoginSuccess)
+                            viewModel.login(
+                                email.trim(), password, onLoginSuccess, onVerificationRequired, origin,
+                            )
                         }
                     },
                 ),
@@ -191,7 +198,11 @@ fun LoginScreen(
             Spacer(Modifier.height(16.dp))
 
             Button(
-                onClick = { viewModel.login(email.trim(), password, onLoginSuccess) },
+                onClick = {
+                    viewModel.login(
+                        email.trim(), password, onLoginSuccess, onVerificationRequired, origin,
+                    )
+                },
                 enabled = email.isNotBlank() && password.isNotBlank() && !uiState.isLoading,
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(18.dp),

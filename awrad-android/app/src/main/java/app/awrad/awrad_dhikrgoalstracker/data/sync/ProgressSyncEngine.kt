@@ -54,6 +54,7 @@ class ProgressSyncEngine @Inject constructor(
     private val dhikrRepository: DhikrRepositoryImpl,
     private val syncRepository: ProgressSyncRepository,
     private val tokenManager: AuthTokenManager,
+    private val feedbackBus: ProgressSyncFeedbackBus,
 ) {
     private val gson = Gson()
     private val contractJson = Json {
@@ -301,67 +302,88 @@ class ProgressSyncEngine @Inject constructor(
         }
     }
 
-    private suspend fun applyReceipts(receipts: List<SyncReceiptDto>) = database.withTransaction {
-        receipts.forEach { receipt ->
-            val outbox = syncDao.outbox(receipt.commandId) ?: return@forEach
-            val revision = receipt.resultRevision.toLong()
+    private suspend fun applyReceipts(receipts: List<SyncReceiptDto>) {
+        val countChanges = database.withTransaction {
+            val changes = mutableListOf<ProgressSyncCountChange>()
+            receipts.forEach { receipt ->
+                val outbox = syncDao.outbox(receipt.commandId) ?: return@forEach
+                val revision = receipt.resultRevision.toLong()
 
-            if (isDeletionFence(receipt.canonicalEffect)) {
-                applyPurgedEntityReceipt(receipt.canonicalEffect, revision)
-                return@forEach
-            }
+                if (isDeletionFence(receipt.canonicalEffect)) {
+                    applyPurgedEntityReceipt(receipt.canonicalEffect, revision)
+                    return@forEach
+                }
 
-            when (receipt.status) {
-                "accepted", "duplicate" -> {
-                    when {
-                        outbox.goalId != null && receipt.canonicalEffect.has("count") -> {
-                            syncDao.deleteOutbox(outbox.commandId)
-                            installCanonicalCount(
-                                outbox.goalId,
-                                requireNotNull(outbox.slotId),
-                                requireNotNull(outbox.localDate),
-                                receipt.canonicalEffect["count"].asString.toLong(),
-                                receipt.canonicalEffect.get("entity_incarnation")?.asString?.toLongOrNull() ?: 1L,
-                                revision,
-                            )
+                when (receipt.status) {
+                    "accepted", "duplicate" -> {
+                        when {
+                            outbox.goalId != null && receipt.canonicalEffect.has("count") -> {
+                                syncDao.deleteOutbox(outbox.commandId)
+                                installCanonicalCount(
+                                    outbox.goalId,
+                                    requireNotNull(outbox.slotId),
+                                    requireNotNull(outbox.localDate),
+                                    receipt.canonicalEffect["count"].asString.toLong(),
+                                    receipt.canonicalEffect.get("entity_incarnation")
+                                        ?.asString?.toLongOrNull() ?: 1L,
+                                    revision,
+                                )?.let(changes::add)
+                            }
+                            outbox.entityType != null -> {
+                                installEntityShadow(receipt.canonicalEffect, revision, null)
+                                syncDao.deleteOutbox(outbox.commandId)
+                                rebaseNextEntityEdit(receipt.canonicalEffect)
+                            }
+                            else -> syncDao.deleteOutbox(outbox.commandId)
                         }
-                        outbox.entityType != null -> {
-                            installEntityShadow(receipt.canonicalEffect, revision, null)
-                            syncDao.deleteOutbox(outbox.commandId)
-                            rebaseNextEntityEdit(receipt.canonicalEffect)
-                        }
-                        else -> syncDao.deleteOutbox(outbox.commandId)
                     }
-                }
-                "conflict" -> {
-                    installEntityShadow(receipt.canonicalEffect, revision, outbox.payloadJson)
-                    applyCanonicalEntityEffect(receipt.canonicalEffect)
-                    syncDao.markOutbox(outbox.commandId, "conflict", System.currentTimeMillis(), "conflict")
-                }
-                "stale_basis" -> {
-                    syncDao.markOutbox(outbox.commandId, "conflict", System.currentTimeMillis(), "stale_basis")
-                    installCanonicalCountEffect(receipt.canonicalEffect, revision)
-                }
-                "invalid", "gone", "blocked_dependency" -> {
-                    syncDao.markOutbox(outbox.commandId, "failed", System.currentTimeMillis(), receipt.status)
-                    if (receipt.canonicalEffect.has("entity_type")) {
-                        installEntityShadow(receipt.canonicalEffect, revision, null)
+                    "conflict" -> {
+                        installEntityShadow(receipt.canonicalEffect, revision, outbox.payloadJson)
                         applyCanonicalEntityEffect(receipt.canonicalEffect)
+                        syncDao.markOutbox(
+                            outbox.commandId,
+                            "conflict",
+                            System.currentTimeMillis(),
+                            "conflict",
+                        )
                     }
-                    if (outbox.goalId != null) {
-                        val currentIncarnation = syncDao.shadow("goal", outbox.goalId)?.incarnation
-                        val effectIncarnation = receipt.canonicalEffect
-                            .get("entity_incarnation")?.asString?.toLongOrNull()
-                        if (receipt.canonicalEffect.has("count") && effectIncarnation == currentIncarnation) {
-                            installCanonicalCountEffect(receipt.canonicalEffect, revision)
-                        } else {
-                            reinstallVisibleCount(outbox, revision)
+                    "stale_basis" -> {
+                        syncDao.markOutbox(
+                            outbox.commandId,
+                            "conflict",
+                            System.currentTimeMillis(),
+                            "stale_basis",
+                        )
+                        installCanonicalCountEffect(receipt.canonicalEffect, revision)
+                    }
+                    "invalid", "gone", "blocked_dependency" -> {
+                        syncDao.markOutbox(
+                            outbox.commandId,
+                            "failed",
+                            System.currentTimeMillis(),
+                            receipt.status,
+                        )
+                        if (receipt.canonicalEffect.has("entity_type")) {
+                            installEntityShadow(receipt.canonicalEffect, revision, null)
+                            applyCanonicalEntityEffect(receipt.canonicalEffect)
+                        }
+                        if (outbox.goalId != null) {
+                            val currentIncarnation = syncDao.shadow("goal", outbox.goalId)?.incarnation
+                            val effectIncarnation = receipt.canonicalEffect
+                                .get("entity_incarnation")?.asString?.toLongOrNull()
+                            if (receipt.canonicalEffect.has("count") && effectIncarnation == currentIncarnation) {
+                                installCanonicalCountEffect(receipt.canonicalEffect, revision)
+                            } else {
+                                reinstallVisibleCount(outbox, revision)
+                            }
                         }
                     }
+                    else -> throw IOException("Unknown sync receipt status ${receipt.status}")
                 }
-                else -> throw IOException("Unknown sync receipt status ${receipt.status}")
             }
+            changes
         }
+        feedbackBus.publish(countChanges)
     }
 
     private fun isDeletionFence(effect: JsonObject): Boolean = ProgressSyncPurgeEffect.isFence(effect)
@@ -524,80 +546,108 @@ class ProgressSyncEngine @Inject constructor(
         syncDao.putState(state.copy(pendingTransferPage = requireNotNull(state.pendingTransferPage) + 1))
     }
 
-    private suspend fun installStagedTransfer() = database.withTransaction {
-        val state = requireNotNull(syncDao.state())
-        val transferId = requireNotNull(state.pendingTransferId)
-        val pages = syncDao.inboxPages(transferId)
-        val expectedPages = requireNotNull(state.pendingTransferPageCount)
-        if (pages.size != expectedPages || pages.map { it.pageNumber } != (1..expectedPages).toList()) {
-            throw IOException("Progress transfer is missing a staged page")
-        }
-        val recordCount = pages.sumOf { it.itemCount }
-        if (recordCount != requireNotNull(state.pendingTransferRecordCount)) {
-            throw IOException("Progress transfer record count mismatch")
-        }
-        val actualSessionChecksum = ProgressSyncPageIntegrity.sessionChecksum(
-            pages.map { it.checksum },
-            recordCount,
-        )
-        if (actualSessionChecksum != state.pendingTransferChecksum) {
-            throw IOException("Progress transfer session checksum mismatch")
-        }
+    private suspend fun installStagedTransfer() {
+        val countChanges = database.withTransaction {
+            val state = requireNotNull(syncDao.state())
+            val shouldNotify = state.pendingTransferKind == "delta" && !state.generationResetPending
+            val changes = mutableListOf<ProgressSyncCountChange>()
+            val transferId = requireNotNull(state.pendingTransferId)
+            val pages = syncDao.inboxPages(transferId)
+            val expectedPages = requireNotNull(state.pendingTransferPageCount)
+            if (pages.size != expectedPages || pages.map { it.pageNumber } != (1..expectedPages).toList()) {
+                throw IOException("Progress transfer is missing a staged page")
+            }
+            val recordCount = pages.sumOf { it.itemCount }
+            if (recordCount != requireNotNull(state.pendingTransferRecordCount)) {
+                throw IOException("Progress transfer record count mismatch")
+            }
+            val actualSessionChecksum = ProgressSyncPageIntegrity.sessionChecksum(
+                pages.map { it.checksum },
+                recordCount,
+            )
+            if (actualSessionChecksum != state.pendingTransferChecksum) {
+                throw IOException("Progress transfer session checksum mismatch")
+            }
 
-        val records = pages
-            .flatMap { page -> JsonParser.parseString(page.recordsJson).asJsonArray.map { gson.fromJson(it, SyncTransferRecordDto::class.java) } }
-            .sortedWith(compareBy<SyncTransferRecordDto>({ dependencyOrder(it.kind) }, { it.syncRevision.toLong() }))
-        if (state.generationResetPending) reconcileGeneration(records)
-        records.forEach { applyRecord(it) }
+            val records = pages
+                .flatMap { page ->
+                    JsonParser.parseString(page.recordsJson).asJsonArray.map {
+                        gson.fromJson(it, SyncTransferRecordDto::class.java)
+                    }
+                }
+                .sortedWith(
+                    compareBy<SyncTransferRecordDto>(
+                        { dependencyOrder(it.kind) },
+                        { it.syncRevision.toLong() },
+                    ),
+                )
+            if (state.generationResetPending) reconcileGeneration(records)
+            records.forEach { record ->
+                applyRecord(record)?.takeIf { shouldNotify }?.let(changes::add)
+            }
 
-        val committedRevision = if (state.generationResetPending) {
-            requireNotNull(state.pendingTransferThroughRevision)
-        } else {
-            maxOf(state.appliedRevision, requireNotNull(state.pendingTransferThroughRevision))
+            val committedRevision = if (state.generationResetPending) {
+                requireNotNull(state.pendingTransferThroughRevision)
+            } else {
+                maxOf(state.appliedRevision, requireNotNull(state.pendingTransferThroughRevision))
+            }
+            syncDao.putState(
+                state.copy(
+                    cursor = state.pendingTransferCursor,
+                    appliedRevision = committedRevision,
+                    safeCompactionRevision = safeRevision(committedRevision),
+                    generationResetPending = false,
+                    pendingTransferId = null,
+                    pendingTransferKind = null,
+                    pendingTransferCursor = null,
+                    pendingTransferPage = null,
+                    pendingTransferPageCount = null,
+                    pendingTransferThroughRevision = null,
+                    pendingTransferChecksum = null,
+                    pendingTransferRecordCount = null,
+                    lastSyncAt = System.currentTimeMillis(),
+                    lastError = null,
+                ),
+            )
+            syncDao.clearInboxPages()
+            changes
         }
-        syncDao.putState(
-            state.copy(
-                cursor = state.pendingTransferCursor,
-                appliedRevision = committedRevision,
-                safeCompactionRevision = safeRevision(committedRevision),
-                generationResetPending = false,
-                pendingTransferId = null,
-                pendingTransferKind = null,
-                pendingTransferCursor = null,
-                pendingTransferPage = null,
-                pendingTransferPageCount = null,
-                pendingTransferThroughRevision = null,
-                pendingTransferChecksum = null,
-                pendingTransferRecordCount = null,
-                lastSyncAt = System.currentTimeMillis(),
-                lastError = null,
-            ),
-        )
-        syncDao.clearInboxPages()
+        feedbackBus.publish(countChanges)
     }
 
-    private suspend fun applyRecord(record: SyncTransferRecordDto) {
+    private suspend fun applyRecord(record: SyncTransferRecordDto): ProgressSyncCountChange? =
         when (record.kind) {
-            "custom_dhikr", "goal" -> applyEntity(record)
+            "custom_dhikr", "goal" -> {
+                applyEntity(record)
+                null
+            }
             "count_projection" -> {
                 val payload = record.payload
                 val goalShadow = syncDao.shadow("goal", payload["goal_id"].asString)
                 val incarnation = payload["entity_incarnation"].asString.toLong()
-                if (goalShadow != null && goalShadow.incarnation != incarnation) return
-                installCanonicalCount(
-                    payload["goal_id"].asString,
-                    payload["slot_id"].asString,
-                    payload["local_date"].asString,
-                    payload["count"].asString.toLong(),
-                    incarnation,
-                    record.syncRevision.toLong(),
-                )
+                if (goalShadow != null && goalShadow.incarnation != incarnation) {
+                    null
+                } else {
+                    installCanonicalCount(
+                        payload["goal_id"].asString,
+                        payload["slot_id"].asString,
+                        payload["local_date"].asString,
+                        payload["count"].asString.toLong(),
+                        incarnation,
+                        record.syncRevision.toLong(),
+                    )
+                }
             }
-            "tombstone", "deletion_fence" -> applyTombstone(record)
-            "conflict" -> applyConflict(record)
+            "tombstone", "deletion_fence" -> {
+                applyTombstone(record)
+                null
+            }
+            "conflict" -> {
+                applyConflict(record)
+                null
+            }
             else -> throw IOException("Unknown progress transfer record kind ${record.kind}")
         }
-    }
 
     private suspend fun applyEntity(record: SyncTransferRecordDto) {
         val payload = record.payload
@@ -697,7 +747,7 @@ class ProgressSyncEngine @Inject constructor(
         canonical: Long,
         incarnation: Long,
         revision: Long,
-    ) {
+    ): ProgressSyncCountChange? {
         syncDao.putCountShadow(
             SyncCountShadowEntity(
                 key = "$goalId:$slotId:$localDate:$incarnation",
@@ -716,7 +766,11 @@ class ProgressSyncEngine @Inject constructor(
         val slotUuid = UUID.fromString(slotId)
         val before = countEntryDao.getCountValueForSlot(goalUuid, slotUuid, localDate) ?: 0L
         countEntryDao.setCanonicalCount(goalUuid, slotUuid, localDate, visible, System.currentTimeMillis())
-        goalDao.incrementTotalCount(goalUuid, visible - before, System.currentTimeMillis())
+        val delta = visible - before
+        goalDao.incrementTotalCount(goalUuid, delta, System.currentTimeMillis())
+        return delta.takeIf { it != 0L }?.let {
+            ProgressSyncCountChange(goalId = goalUuid, delta = it)
+        }
     }
 
     private suspend fun installEntityShadow(effect: JsonObject, revision: Long, conflict: String?) {

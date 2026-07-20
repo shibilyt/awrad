@@ -35,7 +35,9 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -73,10 +75,12 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.FeaturedCollectionsSectio
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualPrimaryButton
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdCatalogCard
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
+import app.awrad.awrad_dhikrgoalstracker.ui.sync.ProgressSyncRefreshViewModel
 import kotlinx.coroutines.delay
 import java.time.Instant
 import java.time.LocalDate
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     onNavigateToGoal: (AwradId) -> Unit,
@@ -88,10 +92,12 @@ fun HomeScreen(
     onNavigateToWirdList: () -> Unit = {},
     onNavigateToWirdReader: (wirdId: String, partId: String) -> Unit = { _, _ -> },
     viewModel: HomeViewModel = hiltViewModel(),
+    refreshViewModel: ProgressSyncRefreshViewModel = hiltViewModel(),
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val prayerCardState = viewModel.prayerCardState.collectAsStateWithLifecycle().value
     val wirdHome = viewModel.wirdHome.collectAsStateWithLifecycle().value
+    val isRefreshing by refreshViewModel.isRefreshing.collectAsStateWithLifecycle()
     val now by rememberHomeNow()
     val visuals = resolveHomeVisuals(
         now = now,
@@ -125,11 +131,16 @@ fun HomeScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        LazyColumn(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = refreshViewModel::refresh,
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = statusBarTopPadding + 22.dp, bottom = 112.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(top = statusBarTopPadding + 22.dp, bottom = 112.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+            ) {
             item {
                 HomeHeader(
                     primaryDate = uiState.primaryDate,
@@ -202,6 +213,7 @@ fun HomeScreen(
             }
         }
     }
+}
 }
 
 @Composable

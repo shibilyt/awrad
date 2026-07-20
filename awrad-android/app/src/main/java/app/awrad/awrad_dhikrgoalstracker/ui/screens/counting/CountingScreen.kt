@@ -1,6 +1,10 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.counting
 
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.NotoNaskhArabicFontFamily
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
@@ -23,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -48,6 +53,7 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.Timer
+import androidx.compose.material.icons.outlined.CloudDone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -101,6 +107,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.text.font.FontWeight
@@ -129,10 +138,14 @@ import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
 import app.awrad.awrad_dhikrgoalstracker.util.SlotTimeStatus
 import app.awrad.awrad_dhikrgoalstracker.util.toLocalDateOrNull
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.goalTag
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.text.NumberFormat
+import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
+import kotlinx.coroutines.delay
 
 private val CountRingAccent = Color(0xFFD9A72E)
 
@@ -148,6 +161,7 @@ fun CountingScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val countingState = uiState.countingState
+    val syncFeedback by viewModel.syncFeedback.collectAsStateWithLifecycle()
     val historyItems by viewModel.historyItems.collectAsStateWithLifecycle()
     val availabilityPrompt by viewModel.countingAvailabilityPrompt.collectAsStateWithLifecycle()
     val isUpdatingCap by viewModel.isUpdatingCap.collectAsStateWithLifecycle()
@@ -378,12 +392,20 @@ fun CountingScreen(
 
     val isCompletionBlocked =
         uiState.areAllSlotsComplete && !uiState.sessionComplete && !uiState.canCountUnderCap
-    LaunchedEffect(uiState.isLoading, isCompletionBlocked) {
+    LaunchedEffect(uiState.isLoading, isCompletionBlocked, syncFeedback) {
         if (!uiState.isLoading) {
-            if (shouldShowGoalReachedDialog(previousCompletionBlock, isCompletionBlocked)) {
-                showGoalReachedDialog = true
-            }
+            val shouldShowCompletion = shouldShowGoalReachedDialog(
+                previousCompletionBlock,
+                isCompletionBlocked,
+            )
             previousCompletionBlock = isCompletionBlocked
+            if (shouldShowCompletion) {
+                // Give a remote-count event from the same Room transaction time to
+                // reach the UI. Cloud completion uses the inline sync alert rather
+                // than interrupting an active counter with a modal.
+                delay(250)
+                if (syncFeedback == null) showGoalReachedDialog = true
+            }
         }
     }
 
@@ -469,6 +491,7 @@ fun CountingScreen(
         topBar = {
             CountingTopBar(
                 title = uiState.dhikrTranslation.ifBlank { countingState.dhikrTransliteration },
+                goalTag = uiState.goal?.let { goalTag(it) },
                 onNavigateBack = {
                     if (countingState.isAudioMode) {
                         showStopAudioDialog = true
@@ -759,6 +782,7 @@ fun CountingScreen(
                         onOpenSlots = { showSlots = true },
                         onCount = viewModel::onManualTap,
                         canCount = uiState.canManualCount && !countingState.isAudioMode,
+                        syncFeedback = syncFeedback,
                     )
                 } else {
                     CountingHeroPanel(
@@ -768,6 +792,7 @@ fun CountingScreen(
                         onClearSession = viewModel::clearSessionTarget,
                         onCount = viewModel::onManualTap,
                         canCount = uiState.canManualCount && !countingState.isAudioMode,
+                        syncFeedback = syncFeedback,
                     )
                 }
             }
@@ -853,6 +878,8 @@ fun CountingScreen(
             lineSpacing = dhikrLineSpacing,
             isAudioMode = countingState.isAudioMode,
             canManualCount = uiState.canManualCount,
+            currentCount = countingState.currentCount,
+            targetCount = countingState.targetCount.takeIf { it > 0 },
             onDecreaseTextSize = viewModel::decreaseDhikrTextScale,
             onIncreaseTextSize = viewModel::increaseDhikrTextScale,
             onDecreaseLineSpacing = viewModel::decreaseDhikrLineSpacing,
@@ -998,6 +1025,7 @@ private fun TargetReachedCapCard(
 @Composable
 private fun CountingTopBar(
     title: String,
+    goalTag: String?,
     onNavigateBack: () -> Unit,
     actions: @Composable RowScope.() -> Unit,
 ) {
@@ -1018,7 +1046,7 @@ private fun CountingTopBar(
             Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .height(64.dp)
                 .padding(start = 4.dp, end = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -1028,17 +1056,37 @@ private fun CountingTopBar(
                     contentDescription = stringResource(R.string.action_back),
                 )
             }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            Column(
                 modifier = Modifier
                     .weight(1f)
                     .padding(start = 8.dp),
-            )
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                goalTag?.let { tag ->
+                    Spacer(modifier = Modifier.height(3.dp))
+                    Surface(
+                        shape = RoundedCornerShape(20.dp),
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                    ) {
+                        Text(
+                            text = tag,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
             Row(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
@@ -1136,6 +1184,7 @@ private fun CountingHeroPanel(
     onClearSession: () -> Unit,
     onCount: () -> Unit,
     canCount: Boolean,
+    syncFeedback: CountingSyncFeedback?,
 ) {
     val totalSessionSeconds = uiState.sessionTargetValue * 60L
     val activeSlotPolicy = uiState.slots.firstOrNull { it.id == countingState.activeSlotId }
@@ -1271,10 +1320,9 @@ private fun CountingHeroPanel(
             }
         }
 
-        Text(
-            text = stringResource(R.string.counting_tap_circle_to_count),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        CountingHintOrSyncAlert(
+            feedback = syncFeedback,
+            defaultText = stringResource(R.string.counting_tap_circle_to_count),
         )
 
         when {
@@ -1313,6 +1361,76 @@ private fun CountingHeroPanel(
 }
 
 @Composable
+private fun CountingHintOrSyncAlert(
+    feedback: CountingSyncFeedback?,
+    defaultText: String,
+) {
+    AnimatedContent(
+        targetState = feedback,
+        transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
+        label = "countingSyncFeedback",
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 40.dp),
+    ) { current ->
+        if (current == null) {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = defaultText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        } else {
+            val formattedDelta = NumberFormat.getIntegerInstance().format(current.delta.absoluteValue)
+            val message = stringResource(
+                if (current.delta > 0L) {
+                    R.string.counting_sync_added
+                } else {
+                    R.string.counting_sync_adjusted
+                },
+                formattedDelta,
+            )
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = CountRingAccent.copy(alpha = if (isAwradDarkTheme()) 0.2f else 0.12f),
+                    border = BorderStroke(1.dp, CountRingAccent.copy(alpha = 0.48f)),
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.CloudDone,
+                            contentDescription = null,
+                            tint = CountRingAccent,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Text(
+                            text = message,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun DualCountingProgressRings(
     minimumProgress: Float,
     maximumProgress: Float,
@@ -1345,6 +1463,7 @@ private fun SlotProgressCard(
     onOpenSlots: () -> Unit,
     onCount: () -> Unit,
     canCount: Boolean,
+    syncFeedback: CountingSyncFeedback?,
 ) {
     val totalSessionSeconds = uiState.sessionTargetValue * 60L
     val activeSlotPolicy = uiState.slots.firstOrNull { it.id == countingState.activeSlotId }
@@ -1491,10 +1610,9 @@ private fun SlotProgressCard(
             }
         }
 
-        Text(
-            text = stringResource(R.string.counting_tap_session_to_count),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        CountingHintOrSyncAlert(
+            feedback = syncFeedback,
+            defaultText = stringResource(R.string.counting_tap_session_to_count),
         )
 
         when {
@@ -2343,6 +2461,8 @@ internal fun DhikrFullTextBottomSheet(
     lineSpacing: Float,
     isAudioMode: Boolean,
     canManualCount: Boolean,
+    currentCount: Long = 0,
+    targetCount: Int? = null,
     onDecreaseTextSize: () -> Unit,
     onIncreaseTextSize: () -> Unit,
     onDecreaseLineSpacing: () -> Unit,
@@ -2357,6 +2477,10 @@ internal fun DhikrFullTextBottomSheet(
     val maximumTextScale = COUNTING_DHIKR_TEXT_SCALES.last()
     val minimumLineSpacing = COUNTING_DHIKR_LINE_SPACINGS.first()
     val maximumLineSpacing = COUNTING_DHIKR_LINE_SPACINGS.last()
+    val formattedCurrentCount = NumberFormat.getIntegerInstance().format(currentCount)
+    val countButtonText = targetCount?.let { target ->
+        "$formattedCurrentCount / ${NumberFormat.getIntegerInstance().format(target)}"
+    } ?: formattedCurrentCount
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -2433,7 +2557,7 @@ internal fun DhikrFullTextBottomSheet(
             }
 
             if (showCountButton) {
-                // Fixed bottom: COUNT button
+                // Fixed bottom: live count button
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -2454,10 +2578,9 @@ internal fun DhikrFullTextBottomSheet(
                         ),
                     ) {
                         Text(
-                            text = stringResource(R.string.counting_count_button),
+                            text = countButtonText,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp,
                         )
                     }
                     Spacer(modifier = Modifier.height(8.dp))

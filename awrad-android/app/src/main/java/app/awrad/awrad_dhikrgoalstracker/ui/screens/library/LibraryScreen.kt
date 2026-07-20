@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FilterChipDefaults
@@ -43,6 +44,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,11 +79,13 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualEmptyState
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdLibraryPane
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
+import app.awrad.awrad_dhikrgoalstracker.ui.sync.ProgressSyncRefreshViewModel
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     onNavigateToCreateGoal: () -> Unit,
@@ -90,9 +94,11 @@ fun LibraryScreen(
     onNavigateToWird: (String) -> Unit = {},
     onCreateWird: () -> Unit = {},
     viewModel: LibraryViewModel = hiltViewModel(),
+    refreshViewModel: ProgressSyncRefreshViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val playerState by viewModel.playerState.collectAsStateWithLifecycle()
+    val isRefreshing by refreshViewModel.isRefreshing.collectAsStateWithLifecycle()
     var isSearchVisible by rememberSaveable { mutableStateOf(false) }
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
     val scope = rememberCoroutineScope()
@@ -161,89 +167,100 @@ fun LibraryScreen(
                     )
                     .onGloballyPositioned { sheetLeftPx = it.positionInRoot().x },
             ) {
-              Surface(
-                modifier = Modifier.fillMaxSize(),
-                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                shadowElevation = 0.dp,
-            ) {
-                HorizontalPager(
-                    state = pagerState,
+                Surface(
                     modifier = Modifier.fillMaxSize(),
-                    beyondViewportPageCount = 1,
-                ) { page ->
-                    when (page) {
-                        0 -> DhikrLibraryPane(
-                            uiState = uiState,
-                            playerState = playerState,
-                            isSearchVisible = isSearchVisible,
-                            onSearchQueryChange = viewModel::onSearchQueryChanged,
-                            onClearSearch = { viewModel.onSearchQueryChanged("") },
-                            onCategorySelected = { category ->
-                                viewModel.onCategorySelected(category)
-                                isSearchVisible = false
-                            },
-                            onCollectionClick = { viewModel.onCategorySelected(it) },
-                            onViewAll = {
-                                viewModel.clearFilters()
-                                isSearchVisible = false
-                            },
-                            onTogglePlayback = viewModel::togglePlayback,
-                            onNavigateToDhikrDetail = onNavigateToDhikrDetail,
+                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    shadowElevation = 0.dp,
+                ) {
+                    PullToRefreshBox(
+                        isRefreshing = isRefreshing,
+                        onRefresh = refreshViewModel::refresh,
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        HorizontalPager(
+                            state = pagerState,
                             modifier = Modifier.fillMaxSize(),
-                        )
+                            beyondViewportPageCount = 1,
+                        ) { page ->
+                            when (page) {
+                                0 -> DhikrLibraryPane(
+                                    uiState = uiState,
+                                    playerState = playerState,
+                                    isSearchVisible = isSearchVisible,
+                                    onSearchQueryChange = viewModel::onSearchQueryChanged,
+                                    onClearSearch = { viewModel.onSearchQueryChanged("") },
+                                    onCategorySelected = { category ->
+                                        viewModel.onCategorySelected(category)
+                                        isSearchVisible = false
+                                    },
+                                    onCollectionClick = { viewModel.onCategorySelected(it) },
+                                    onViewAll = {
+                                        viewModel.clearFilters()
+                                        isSearchVisible = false
+                                    },
+                                    onTogglePlayback = viewModel::togglePlayback,
+                                    onNavigateToDhikrDetail = onNavigateToDhikrDetail,
+                                    modifier = Modifier.fillMaxSize(),
+                                )
 
-                        else -> WirdLibraryPane(
-                            onNavigateToWird = onNavigateToWird,
-                            onCreateWird = onCreateWird,
-                            showInlineCreate = false,
-                            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 112.dp),
-                            modifier = Modifier.fillMaxSize(),
+                                else -> WirdLibraryPane(
+                                    onNavigateToWird = onNavigateToWird,
+                                    onCreateWird = onCreateWird,
+                                    showInlineCreate = false,
+                                    contentPadding = PaddingValues(
+                                        start = 20.dp,
+                                        end = 20.dp,
+                                        top = 18.dp,
+                                        bottom = 112.dp,
+                                    ),
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Active-tab indicator nub, drawn on the content sheet's top edge under the active tab.
+                if (tabCentersPx.isNotEmpty()) {
+                    val indicatorPos = (pagerState.currentPage + pagerState.currentPageOffsetFraction)
+                        .coerceIn(0f, (tabCentersPx.size - 1).toFloat())
+                    val lowerIdx = floor(indicatorPos).toInt().coerceIn(0, tabCentersPx.lastIndex)
+                    val upperIdx = ceil(indicatorPos).toInt().coerceIn(0, tabCentersPx.lastIndex)
+                    val frac = indicatorPos - lowerIdx
+                    val nubWidth = 24.dp
+                    val nubCenterX = lerp(tabCentersPx[lowerIdx], tabCentersPx[upperIdx], frac) - sheetLeftPx
+                    val nubHalfPx = with(density) { nubWidth.toPx() } / 2f
+                    // Lift the nub up off the sheet so it floats in the gap above the content.
+                    val nubOffsetYpx = with(density) { 5.dp.toPx() }.roundToInt()
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .offset { IntOffset((nubCenterX - nubHalfPx).roundToInt(), -nubOffsetYpx) }
+                            .width(nubWidth)
+                            .height(4.dp)
+                            .clip(RoundedCornerShape(percent = 50))
+                            .background(MaterialTheme.colorScheme.primary),
+                    )
+                }
+
+                // Floating "new wird" button, shown on the Wirds tab, anchored above the navbar.
+                if (pagerState.currentPage == 1) {
+                    FloatingActionButton(
+                        onClick = onCreateWird,
+                        shape = CircleShape,
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 20.dp, bottom = navBarBottomPadding + 88.dp),
+                    ) {
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = stringResource(R.string.wird_create_title),
                         )
                     }
                 }
-              }
-
-              // Active-tab indicator nub, drawn on the content sheet's top edge under the active tab.
-              if (tabCentersPx.isNotEmpty()) {
-                  val indicatorPos = (pagerState.currentPage + pagerState.currentPageOffsetFraction)
-                      .coerceIn(0f, (tabCentersPx.size - 1).toFloat())
-                  val lowerIdx = floor(indicatorPos).toInt().coerceIn(0, tabCentersPx.lastIndex)
-                  val upperIdx = ceil(indicatorPos).toInt().coerceIn(0, tabCentersPx.lastIndex)
-                  val frac = indicatorPos - lowerIdx
-                  val nubWidth = 24.dp
-                  val nubCenterX = lerp(tabCentersPx[lowerIdx], tabCentersPx[upperIdx], frac) - sheetLeftPx
-                  val nubHalfPx = with(density) { nubWidth.toPx() } / 2f
-                  // Lift the nub up off the sheet so it floats in the gap above the content.
-                  val nubOffsetYpx = with(density) { 5.dp.toPx() }.roundToInt()
-                  Box(
-                      modifier = Modifier
-                          .align(Alignment.TopStart)
-                          .offset { IntOffset((nubCenterX - nubHalfPx).roundToInt(), -nubOffsetYpx) }
-                          .width(nubWidth)
-                          .height(4.dp)
-                          .clip(RoundedCornerShape(percent = 50))
-                          .background(MaterialTheme.colorScheme.primary),
-                  )
-              }
-
-              // Floating "new wird" button, shown on the Wirds tab, anchored above the navbar.
-              if (pagerState.currentPage == 1) {
-                  FloatingActionButton(
-                      onClick = onCreateWird,
-                      shape = CircleShape,
-                      containerColor = MaterialTheme.colorScheme.primary,
-                      contentColor = MaterialTheme.colorScheme.onPrimary,
-                      modifier = Modifier
-                          .align(Alignment.BottomEnd)
-                          .padding(end = 20.dp, bottom = navBarBottomPadding + 88.dp),
-                  ) {
-                      Icon(
-                          Icons.Filled.Add,
-                          contentDescription = stringResource(R.string.wird_create_title),
-                      )
-                  }
-              }
             }
         }
     }

@@ -14,9 +14,8 @@ class AuthInterceptor @Inject constructor(
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
 
-        // Skip auth header for public auth endpoints
         val path = request.url.encodedPath
-        if (path.endsWith("/login") || path.endsWith("/register") || path.endsWith("/refresh")) {
+        if (PublicApiPaths.isPublic(path)) {
             return chain.proceed(request)
         }
 
@@ -30,4 +29,12 @@ class AuthInterceptor @Inject constructor(
 
         return chain.proceed(request)
     }
+}
+
+internal object PublicApiPaths {
+    fun isPublic(path: String): Boolean =
+        path == "/api/community/stats" ||
+            path.endsWith("/login") ||
+            path.endsWith("/register") ||
+            path.endsWith("/refresh")
 }

@@ -15,14 +15,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.DismissibleNavigationDrawer
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.lifecycle.lifecycleScope
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -32,18 +35,20 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradBottomBar
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.navigation.AwradDestination
 import app.awrad.awrad_dhikrgoalstracker.ui.navigation.AwradNavGraph
+import app.awrad.awrad_dhikrgoalstracker.ui.navigation.navigateSafely
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityDrawer
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.AwradDhikrGoalsTrackerTheme
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 import javax.inject.Inject
-import app.awrad.awrad_dhikrgoalstracker.data.repository.AuthRepository
 import app.awrad.awrad_dhikrgoalstracker.data.sync.ForegroundProgressSyncCoordinator
+import app.awrad.awrad_dhikrgoalstracker.ui.navigation.AuthVerificationLink
+import java.net.URI
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
-    @Inject lateinit var authRepository: AuthRepository
     @Inject lateinit var foregroundProgressSyncCoordinator: ForegroundProgressSyncCoordinator
 
     private val mainViewModel: MainViewModel by viewModels()
@@ -80,12 +85,10 @@ class MainActivity : AppCompatActivity() {
             mainViewModel.onWirdDeepLink(it)
             return
         }
-        // awrad:// deep links — awrad://wirds and awrad://todays-wird (both open the wird list).
+        // App links and awrad:// deep links.
         intent.data?.let { uri ->
-            if (uri.scheme == "https" && uri.pathSegments.take(2) == listOf("auth", "verify-email")) {
-                uri.lastPathSegment?.takeIf { it.isNotBlank() }?.let { token ->
-                    lifecycleScope.launch { authRepository.verifyEmail(token) }
-                }
+            AuthVerificationLink.token(uri.toString(), URI(BuildConfig.API_BASE_URL).host)?.let { token ->
+                mainViewModel.onVerificationDeepLink(token)
                 return
             }
             if (uri.scheme == "awrad" && uri.host in setOf("wirds", "todays-wird", "today-wird")) {
@@ -160,37 +163,77 @@ fun AwradApp(
                 }
             }
 
+            LaunchedEffect(Unit) {
+                mainViewModel.verificationNavEvents.collect { token ->
+                    navController.navigate(AwradDestination.VerifyEmail.createRoute(token)) {
+                        launchSingleTop = true
+                    }
+                }
+            }
+
             val showBottomBar = currentRoute in listOf(
                 AwradDestination.Home.route,
                 AwradDestination.Goals.route,
                 AwradDestination.Library.route,
                 AwradDestination.Community.route,
             )
-
-            Box(modifier = Modifier.fillMaxSize()) {
-                RitualScreen {
-                    AwradNavGraph(
-                        navController = navController,
-                        startDestination = startDestination,
-                        modifier = Modifier.fillMaxSize(),
-                    )
+            val communityDrawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+            val communityDrawerScope = rememberCoroutineScope()
+            val navigateFromCommunityDrawer: (String?) -> Unit = { route ->
+                communityDrawerScope.launch {
+                    communityDrawerState.close()
+                    route?.let(navController::navigateSafely)
                 }
+            }
 
-                if (!isOnboardingFlow) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .fillMaxWidth()
-                            .windowInsetsTopHeight(WindowInsets.statusBars)
-                            .background(statusBarContainerColor(currentRoute)),
-                    )
+            LaunchedEffect(currentRoute) {
+                if (currentRoute != AwradDestination.Community.route && communityDrawerState.isOpen) {
+                    communityDrawerState.close()
                 }
+            }
 
-                if (showBottomBar) {
-                    AwradBottomBar(
-                        navController = navController,
-                        modifier = Modifier.align(Alignment.BottomCenter),
+            DismissibleNavigationDrawer(
+                drawerState = communityDrawerState,
+                gesturesEnabled = currentRoute == AwradDestination.Community.route,
+                drawerContent = {
+                    CommunityDrawer(
+                        onFeed = { navigateFromCommunityDrawer(null) },
+                        onChallenges = { navigateFromCommunityDrawer(AwradDestination.CommunityChallenges.route) },
+                        onCircles = { navigateFromCommunityDrawer(AwradDestination.CommunityCircles.route) },
+                        onSaved = { navigateFromCommunityDrawer(AwradDestination.CommunitySaved.route) },
+                        onStats = { navigateFromCommunityDrawer(AwradDestination.CommunityStats.route) },
+                        onProfile = { navigateFromCommunityDrawer(AwradDestination.CommunityProfile.route) },
                     )
+                },
+            ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    RitualScreen {
+                        AwradNavGraph(
+                            navController = navController,
+                            startDestination = startDestination,
+                            modifier = Modifier.fillMaxSize(),
+                            onOpenCommunityMenu = {
+                                communityDrawerScope.launch { communityDrawerState.open() }
+                            },
+                        )
+                    }
+
+                    if (!isOnboardingFlow) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .fillMaxWidth()
+                                .windowInsetsTopHeight(WindowInsets.statusBars)
+                                .background(statusBarContainerColor(currentRoute)),
+                        )
+                    }
+
+                    if (showBottomBar) {
+                        AwradBottomBar(
+                            navController = navController,
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                        )
+                    }
                 }
             }
         }
@@ -207,12 +250,11 @@ private val surfaceStatusBarRoutes = setOf(
     AwradDestination.EditGoal.route,
     AwradDestination.DhikrDetail.route,
     AwradDestination.WirdList.route,
-    AwradDestination.WirdDetail.route,
-    AwradDestination.WirdReader.route,
     AwradDestination.CreateDhikr.route,
     AwradDestination.Login.route,
     AwradDestination.Signup.route,
     AwradDestination.ForgotPassword.route,
+    AwradDestination.VerifyEmail.route,
 )
 
 private fun String?.isSurfaceStatusBarRoute(): Boolean =

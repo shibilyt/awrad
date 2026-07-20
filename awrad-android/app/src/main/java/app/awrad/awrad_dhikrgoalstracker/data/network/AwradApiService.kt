@@ -35,6 +35,8 @@ data class LogoutRequest(@SerializedName("refresh_token") val refresh_token: Str
 
 data class ForgotPasswordRequest(@SerializedName("email") val email: String)
 
+data class EmailRequest(@SerializedName("email") val email: String)
+
 data class AuthUser(
     @SerializedName("id") val id: String,
     @SerializedName("email") val email: String,
@@ -72,6 +74,11 @@ data class ErrorResponse(
 
 interface AwradApiService {
 
+    @GET("api/community/stats")
+    suspend fun communityStats(
+        @Header("Cache-Control") cacheControl: String? = null,
+    ): Response<CommunityStatsDto>
+
     @POST("api/auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<MessageResponse>
 
@@ -92,6 +99,9 @@ interface AwradApiService {
 
     @POST("api/auth/verify-email")
     suspend fun verifyEmail(@Body request: Map<String, @JvmSuppressWildcards Any>): Response<AuthResponse>
+
+    @POST("api/auth/verify-email/resend")
+    suspend fun resendVerification(@Body request: EmailRequest): Response<MessageResponse>
 
     @GET("api/auth/sessions")
     suspend fun sessions(): Response<SessionsResponse>

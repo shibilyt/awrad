@@ -55,9 +55,17 @@ class MainViewModel @Inject constructor(
         _wirdNavEvents.trySend(wirdId)
     }
 
+    private val _verificationNavEvents = Channel<String>(capacity = Channel.BUFFERED)
+    val verificationNavEvents: Flow<String> = _verificationNavEvents.receiveAsFlow()
+
+    fun onVerificationDeepLink(token: String) {
+        _verificationNavEvents.trySend(token)
+    }
+
     override fun onCleared() {
         super.onCleared()
         _notificationGoalEvents.close()
         _wirdNavEvents.close()
+        _verificationNavEvents.close()
     }
 }

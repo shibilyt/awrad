@@ -19,6 +19,7 @@ class TokenAuthenticator @Inject constructor(
     private val refreshMutex = Mutex()
 
     override fun authenticate(route: Route?, response: Response): Request? = runBlocking {
+        if (PublicApiPaths.isPublic(response.request.url.encodedPath)) return@runBlocking null
         if (response.request.header(RETRY_HEADER) != null) return@runBlocking null
 
         refreshMutex.withLock {

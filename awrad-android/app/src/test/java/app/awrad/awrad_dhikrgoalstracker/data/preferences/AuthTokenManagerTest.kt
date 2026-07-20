@@ -64,6 +64,27 @@ class AuthTokenManagerTest {
         assertNull(dataStore.data.first()[stringPreferencesKey(AuthTokenManager.ACCESS_TOKEN_KEY)])
     }
 
+    @Test
+    fun pendingVerificationAndCooldownSurviveManagerRecreation() = runTest {
+        val dataStore = testDataStore("verification")
+        val storage = FakeAuthTokenStorage()
+        val firstManager = AuthTokenManager(dataStore, storage)
+
+        firstManager.savePendingVerification(
+            email = "person@example.com",
+            mode = "login",
+            origin = "onboarding",
+        )
+        firstManager.saveVerificationResendAvailableAt(123_456L)
+
+        val restoredManager = AuthTokenManager(dataStore, storage)
+
+        assertEquals("person@example.com", restoredManager.pendingVerificationEmail.first())
+        assertEquals("login", restoredManager.pendingVerificationMode.first())
+        assertEquals("onboarding", restoredManager.pendingVerificationOrigin.first())
+        assertEquals(123_456L, restoredManager.verificationResendAvailableAt.first())
+    }
+
     private fun TestScope.testDataStore(name: String): DataStore<Preferences> =
         PreferenceDataStoreFactory.create(scope = backgroundScope) {
             temporaryFolder.newFile("$name.preferences_pb")

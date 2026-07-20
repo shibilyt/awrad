@@ -42,10 +42,10 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="${awradAppLinkHost}"
-                    android:pathPrefix="/auth/verify-email/" />
+                <data android:scheme="https" />
+                <data android:host="${awradAppLinkHost}" />
+                <data android:pathPrefix="/auth/verify-email/" />
+                <data android:pathPrefix="/auth/mobile/verify-email/" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />

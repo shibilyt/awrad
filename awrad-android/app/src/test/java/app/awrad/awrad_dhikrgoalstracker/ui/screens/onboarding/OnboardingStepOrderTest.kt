@@ -1,6 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.onboarding
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class OnboardingStepOrderTest {
@@ -35,5 +36,37 @@ class OnboardingStepOrderTest {
     @Test
     fun `onboarding has ten scenes`() {
         assertEquals(10, OnboardingViewModel.TOTAL_STEPS)
+    }
+
+    @Test
+    fun `returning user goes from account through device setup and then completes`() {
+        assertEquals(
+            listOf(
+                OnboardingViewModel.OPENING_STEP_INDEX,
+                OnboardingViewModel.LANGUAGE_STEP_INDEX,
+                OnboardingViewModel.ACCOUNT_STEP_INDEX,
+                OnboardingViewModel.LOCATION_STEP_INDEX,
+                OnboardingViewModel.NOTIFICATIONS_STEP_INDEX,
+                OnboardingViewModel.AUDIO_STEP_INDEX,
+            ),
+            OnboardingViewModel.visibleSteps(returningUser = true),
+        )
+        assertEquals(
+            OnboardingViewModel.LOCATION_STEP_INDEX,
+            OnboardingViewModel.nextStepIndex(OnboardingViewModel.ACCOUNT_STEP_INDEX, returningUser = true),
+        )
+        assertEquals(
+            OnboardingViewModel.NOTIFICATIONS_STEP_INDEX,
+            OnboardingViewModel.nextStepIndex(OnboardingViewModel.LOCATION_STEP_INDEX, returningUser = true),
+        )
+        assertEquals(
+            OnboardingViewModel.AUDIO_STEP_INDEX,
+            OnboardingViewModel.nextStepIndex(OnboardingViewModel.NOTIFICATIONS_STEP_INDEX, returningUser = true),
+        )
+        assertNull(OnboardingViewModel.nextStepIndex(OnboardingViewModel.AUDIO_STEP_INDEX, returningUser = true))
+        assertEquals(
+            OnboardingViewModel.NOTIFICATIONS_STEP_INDEX,
+            OnboardingViewModel.previousStepIndex(OnboardingViewModel.AUDIO_STEP_INDEX, returningUser = true),
+        )
     }
 }

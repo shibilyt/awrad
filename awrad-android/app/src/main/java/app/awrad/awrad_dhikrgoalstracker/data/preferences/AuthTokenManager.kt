@@ -31,6 +31,9 @@ class AuthTokenManager @Inject constructor(
         internal const val USER_VERIFIED_KEY = "auth_user_verified"
         internal const val SESSION_ID_KEY = "auth_session_id"
         internal const val PENDING_EMAIL_KEY = "auth_pending_email"
+        internal const val PENDING_MODE_KEY = "auth_pending_mode"
+        internal const val PENDING_ORIGIN_KEY = "auth_pending_origin"
+        internal const val VERIFICATION_RESEND_AT_KEY = "auth_verification_resend_at"
         internal const val INSTALLATION_ID_KEY = "auth_installation_id"
 
         private val LEGACY_ACCESS_TOKEN_KEY = stringPreferencesKey(ACCESS_TOKEN_KEY)
@@ -47,6 +50,9 @@ class AuthTokenManager @Inject constructor(
             USER_VERIFIED_KEY,
             SESSION_ID_KEY,
             PENDING_EMAIL_KEY,
+            PENDING_MODE_KEY,
+            PENDING_ORIGIN_KEY,
+            VERIFICATION_RESEND_AT_KEY,
         )
     }
 
@@ -60,6 +66,10 @@ class AuthTokenManager @Inject constructor(
     val userEmail: Flow<String?> = secureValueFlow(USER_EMAIL_KEY)
     val isEmailVerified: Flow<Boolean> = secureValueFlow(USER_VERIFIED_KEY).map { it == "true" }
     val pendingVerificationEmail: Flow<String?> = secureValueFlow(PENDING_EMAIL_KEY)
+    val pendingVerificationMode: Flow<String?> = secureValueFlow(PENDING_MODE_KEY)
+    val pendingVerificationOrigin: Flow<String?> = secureValueFlow(PENDING_ORIGIN_KEY)
+    val verificationResendAvailableAt: Flow<Long?> = secureValueFlow(VERIFICATION_RESEND_AT_KEY)
+        .map { it?.toLongOrNull() }
     val sessionId: Flow<String?> = secureValueFlow(SESSION_ID_KEY)
 
     val isLoggedIn: Flow<Boolean> = refreshToken.map { it != null }
@@ -80,12 +90,22 @@ class AuthTokenManager @Inject constructor(
         tokenStorage.putString(USER_VERIFIED_KEY, verified.toString())
         sessionId?.let { tokenStorage.putString(SESSION_ID_KEY, it) }
         tokenStorage.remove(PENDING_EMAIL_KEY)
+        tokenStorage.remove(PENDING_MODE_KEY)
+        tokenStorage.remove(PENDING_ORIGIN_KEY)
+        tokenStorage.remove(VERIFICATION_RESEND_AT_KEY)
         removeLegacyValues(USER_ID_KEY, USER_EMAIL_KEY)
         notifyTokenChanged()
     }
 
-    suspend fun savePendingVerification(email: String) {
+    suspend fun savePendingVerification(email: String, mode: String, origin: String) {
         tokenStorage.putString(PENDING_EMAIL_KEY, email)
+        tokenStorage.putString(PENDING_MODE_KEY, mode)
+        tokenStorage.putString(PENDING_ORIGIN_KEY, origin)
+        notifyTokenChanged()
+    }
+
+    suspend fun saveVerificationResendAvailableAt(timestampMillis: Long) {
+        tokenStorage.putString(VERIFICATION_RESEND_AT_KEY, timestampMillis.toString())
         notifyTokenChanged()
     }
 

@@ -25,6 +25,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.PrayerTimeRepository
 import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncActivityTracker
+import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncFeedbackBus
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.AllowCountingPastTargetResult
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.AllowCountingPastTargetUseCase
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressUseCase
@@ -132,6 +133,12 @@ data class CountingUiState(
     val isBlockedAtTarget: Boolean = false,
 )
 
+@Immutable
+data class CountingSyncFeedback(
+    val eventId: AwradId,
+    val delta: Long,
+)
+
 internal fun CountingState.isBlockedAtTargetCap(): Boolean =
     capBehavior == CountCapBehavior.BlockAtTarget &&
         targetCount > 0 &&
@@ -162,6 +169,7 @@ class CountingViewModel @Inject constructor(
     private val goalProgressUseCase: GoalProgressUseCase,
     private val allowCountingPastTargetUseCase: AllowCountingPastTargetUseCase,
     private val progressSyncActivityTracker: ProgressSyncActivityTracker,
+    private val progressSyncFeedbackBus: ProgressSyncFeedbackBus,
 ) : ViewModel() {
 
     fun setCountingScreenActive(active: Boolean) {
@@ -277,7 +285,33 @@ class CountingViewModel @Inject constructor(
     private val _countFeedbackEvents = Channel<Unit>(capacity = Channel.BUFFERED)
     val countFeedbackEvents = _countFeedbackEvents.receiveAsFlow()
 
+    private val _syncFeedback = MutableStateFlow<CountingSyncFeedback?>(null)
+    val syncFeedback: StateFlow<CountingSyncFeedback?> = _syncFeedback.asStateFlow()
+    private var syncFeedbackDismissJob: Job? = null
+    private var boundGoalId: AwradId? = null
+
     private var pendingCountAction: PendingCountAction? = null
+
+    init {
+        viewModelScope.launch {
+            progressSyncFeedbackBus.remoteCountEvents.collect { event ->
+                if (event.goalId != boundGoalId) return@collect
+                val combinedDelta = _syncFeedback.value?.delta?.let { current ->
+                    runCatching { Math.addExact(current, event.delta) }.getOrDefault(event.delta)
+                } ?: event.delta
+                _syncFeedback.value = combinedDelta.takeIf { it != 0L }?.let {
+                    CountingSyncFeedback(eventId = event.id, delta = it)
+                }
+                syncFeedbackDismissJob?.cancel()
+                if (_syncFeedback.value != null) {
+                    syncFeedbackDismissJob = launch {
+                        delay(SYNC_FEEDBACK_DURATION_MS)
+                        _syncFeedback.value = null
+                    }
+                }
+            }
+        }
+    }
 
     // Session target state (survives process death)
     private val _sessionTargetType = savedStateHandle.getStateFlow(KEY_SESSION_TYPE, -1)
@@ -504,6 +538,7 @@ class CountingViewModel @Inject constructor(
     }
 
     fun bindAndStart(goalId: AwradId, initialSlotId: AwradId? = null) {
+        boundGoalId = goalId
         viewModelScope.launch {
             val goal = goalRepository.getGoalById(goalId) ?: return@launch
             val dhikr = goal.dhikr ?: dhikrRepository.getDhikrById(goal.dhikrId) ?: return@launch
@@ -1199,6 +1234,7 @@ class CountingViewModel @Inject constructor(
         private const val KEY_SESSION_ELAPSED = "session_elapsed"
         private const val KEY_SESSION_COMPLETE = "session_complete"
         private const val SLOT_TIMING_TICK_MS = 60_000L
+        private const val SYNC_FEEDBACK_DURATION_MS = 4_000L
     }
 
     private sealed interface PendingCountAction {

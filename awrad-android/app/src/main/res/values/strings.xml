@@ -402,6 +402,8 @@
     <string name="counting_progress_of">of %s</string>
     <string name="counting_tap_circle_to_count">Tap the circle to count</string>
     <string name="counting_tap_session_to_count">Tap the circle to count this session</string>
+    <string name="counting_sync_added">+%1$s synced from another device</string>
+    <string name="counting_sync_adjusted">−%1$s adjustment synced from another device</string>
     <string name="slot_not_started_title">Session time has not started</string>
     <string name="slot_not_started_body">This session starts at %1$s. Count it now anyway?</string>
     <string name="counting_of_target">of %d</string>
@@ -1098,7 +1100,7 @@
     <string name="min_streak_count_label">Minimum count for streak</string>
 
     <!-- Community / Auth -->
-    <string name="community_title">Community</string>
+    <string name="community_title" translatable="false">awrad</string>
     <string name="community_subtitle">Keep your practice connected and steady.</string>
     <string name="community_join_title">Join the Community</string>
     <string name="community_join_subtitle">Connect with fellow practitioners, share your progress, and stay inspired together.</string>
@@ -1129,6 +1131,77 @@
     <string name="community_verify_email_body">We sent a verification link to %s. Open it to secure your account.</string>
     <string name="community_active_devices">Active devices</string>
     <string name="community_revoke_device">Revoke</string>
+    <string name="community_stats_loading">Syncing community estimates</string>
+    <string name="community_stats_unavailable_title">Community totals are unavailable</string>
+    <string name="community_stats_unavailable_body">Your practice is safe. Try loading the public estimates again.</string>
+    <string name="community_stats_retry">Try again</string>
+    <string name="community_stats_refresh">Refresh community stats</string>
+    <string name="community_stats_synced_badge">APPROXIMATE / SYNCED</string>
+    <string name="community_stats_total_label">Community dhikr count</string>
+    <string name="community_stats_total_context">A shared estimate across tracked goals</string>
+    <string name="community_stats_total_accessibility">Approximate community dhikr count: %1$s</string>
+    <string name="community_stats_goals_label">Tracked goals</string>
+    <string name="community_stats_hours_label">Dhikr hours</string>
+    <string name="community_stats_seven_day_title">Last seven days</string>
+    <string name="community_stats_estimate_note">Estimates assume %1$d second per count.</string>
+    <string name="community_stats_as_of">Synced %1$s</string>
+    <string name="community_stats_day_accessibility">%1$s: approximately %2$s counts</string>
+    <string name="community_nav_feed">Feed</string>
+    <string name="community_nav_challenges">Challenges</string>
+    <string name="community_nav_stats">Stats</string>
+    <string name="community_nav_profile">Profile</string>
+    <string name="community_nav_circles">Circles</string>
+    <string name="community_nav_saved">Saved posts</string>
+    <string name="community_tab_for_you">For You</string>
+    <string name="community_tab_goals">Community Goals</string>
+    <string name="community_tab_explore">Explore</string>
+    <string name="community_notifications">Notifications</string>
+    <string name="community_messages">Messages</string>
+    <string name="community_menu_open">Open Community menu</string>
+    <string name="community_drawer_view_profile">View profile</string>
+    <string name="community_saved_title">Keep meaningful posts close</string>
+    <string name="community_saved_body">Dhikr posts and reflections you save will appear here.</string>
+    <string name="community_feed_destination_coming_soon">This Community page is coming soon.</string>
+    <string name="community_feed_together_badge">TODAY TOGETHER</string>
+    <string name="community_feed_together_title">Practice with the Awrad community</string>
+    <string name="community_feed_together_body">Discover authentic remembrance, build steady habits, and encourage one another without comparison.</string>
+    <string name="community_feed_explore">Explore community</string>
+    <string name="community_feed_today_title">Today for you</string>
+    <string name="community_feed_suggested_title">Suggested practice</string>
+    <string name="community_feed_circles_title">Your circles</string>
+    <string name="community_feed_see_all">See all</string>
+    <string name="community_feed_manage">Manage</string>
+    <string name="community_feed_daily_dhikr_badge">DAILY DHIKR</string>
+    <string name="community_feed_daily_dhikr_arabic" translatable="false">أَسْتَغْفِرُ اللَّهَ</string>
+    <string name="community_feed_daily_dhikr_transliteration">Astaghfirullāh</string>
+    <string name="community_feed_daily_dhikr_meaning">I seek forgiveness from Allah.</string>
+    <string name="community_feed_source_preview">Source, grading, and review details will appear here.</string>
+    <string name="community_feed_save">Save post</string>
+    <string name="community_feed_start_dhikr">Start dhikr</string>
+    <string name="community_feed_suggested_goal_badge">SUGGESTED GOAL</string>
+    <string name="community_feed_suggested_goal_title">70 istighfar every day</string>
+    <string name="community_feed_suggested_goal_body">Build a gentle seven-day practice. This is an Awrad practice target, not a prescribed count.</string>
+    <string name="community_feed_daily">Daily</string>
+    <string name="community_feed_seven_days">7 days</string>
+    <string name="community_feed_private">Private</string>
+    <string name="community_feed_create_goal">Preview goal</string>
+    <string name="community_feed_weekly_challenge_badge">TODAY’S CHALLENGE</string>
+    <string name="community_feed_weekly_challenge_title">70× istighfar</string>
+    <string name="community_feed_weekly_challenge_body">The Prophet (peace be upon him) sought forgiveness at least 70 times each day.</string>
+    <string name="community_feed_weekly_challenge_progress">~2 min</string>
+    <string name="community_feed_start_challenge">Start</string>
+    <string name="community_feed_challenge_streak">🔥 %d-day streak</string>
+    <string name="community_feed_view_challenge">View challenge</string>
+    <string name="community_feed_circle_name">Family Circle</string>
+    <string name="community_feed_circle_status">4 of 6 members practiced today</string>
+    <string name="community_feed_account_title">Account and devices</string>
+    <string name="community_challenges_title">Challenges</string>
+    <string name="community_profile_title">Profile</string>
+    <string name="community_post_title">Daily dhikr</string>
+    <string name="community_profile_practice">Your practice</string>
+    <string name="community_profile_practice_body">Keep your streak private, share encouragement when you choose.</string>
+    <string name="community_challenges_more">More challenges are on the way.</string>
+    <string name="community_post_reflection">A quiet moment of seeking forgiveness can reset the heart.</string>
 
     <!-- Localized goal draft summaries and validation -->
     <string name="cd_see_more">See more</string>
@@ -1449,4 +1522,14 @@
     <string name="settings_sync_pending">%1$d changes waiting to sync.</string>
     <string name="settings_sync_attention">%1$d conflicts and %2$d failed changes need attention.</string>
     <string name="settings_sync_error">The last sync did not finish. Tap to retry.</string>
+    <string name="auth_verify_navigation_title">Verify Email</string>
+    <string name="auth_verify_title">Check your email</string>
+    <string name="auth_verify_body">We sent a verification link to %1$s. Open it on this device to finish signing in.</string>
+    <string name="auth_verifying">Verifying and signing you in…</string>
+    <string name="auth_verification_sent">Verification email sent.</string>
+    <string name="auth_resend_verification">Resend verification email</string>
+    <string name="auth_resend_in">Resend in %1$d seconds</string>
+    <string name="auth_sign_in_instead">Sign in instead</string>
+    <string name="auth_continue_as_guest">Continue as guest</string>
+    <string name="auth_resume_verification">Continue verification</string>
 </resources>

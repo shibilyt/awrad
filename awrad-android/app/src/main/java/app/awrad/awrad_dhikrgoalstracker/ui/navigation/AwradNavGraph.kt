@@ -8,6 +8,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import app.awrad.awrad_dhikrgoalstracker.data.repository.VerificationOrigin
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradScreenWrapper
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.category.CategoryScreen
@@ -28,7 +29,14 @@ import app.awrad.awrad_dhikrgoalstracker.ui.screens.settings.SettingsScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.auth.ForgotPasswordScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.auth.LoginScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.auth.SignupScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.auth.VerificationScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityChallengesScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityCirclesScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityPostDetailScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityProfileScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunitySavedScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityStatsScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.createdhikr.CreateDhikrScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdDetailScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdEditorScreen
@@ -42,6 +50,7 @@ fun AwradNavGraph(
     navController: NavHostController,
     startDestination: String,
     modifier: Modifier = Modifier,
+    onOpenCommunityMenu: () -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -70,6 +79,11 @@ fun AwradNavGraph(
                         // Land the user directly on their new goal's counting screen,
                         // with Home beneath so system-back returns to Home.
                         navController.navigate(AwradDestination.Counting.createRoute(firstGoalId))
+                    }
+                },
+                onNavigateToVerification = {
+                    navController.navigate(AwradDestination.VerifyEmail.createRoute()) {
+                        launchSingleTop = true
                     }
                 },
             )
@@ -164,11 +178,54 @@ fun AwradNavGraph(
                     onNavigateToSignup = {
                         navController.navigateSafely(AwradDestination.Signup.route)
                     },
+                    onNavigateToVerification = {
+                        navController.navigateSafely(AwradDestination.VerifyEmail.createRoute())
+                    },
+                    onNavigateToStats = { navController.navigateSafely(AwradDestination.CommunityStats.route) },
+                    onNavigateToProfile = { navController.navigateSafely(AwradDestination.CommunityProfile.route) },
+                    onNavigateToChallenges = { navController.navigateSafely(AwradDestination.CommunityChallenges.route) },
+                    onNavigateToCircles = { navController.navigateSafely(AwradDestination.CommunityCircles.route) },
+                    onNavigateToSaved = { navController.navigateSafely(AwradDestination.CommunitySaved.route) },
+                    onNavigateToPost = { navController.navigateSafely(AwradDestination.CommunityPostDetail.route) },
+                    onOpenMenu = onOpenCommunityMenu,
                 )
             }
         }
 
-        composable(AwradDestination.Login.route) {
+        composable(AwradDestination.CommunityStats.route) {
+            WrappedAwradDestination(navController) { CommunityStatsScreen(onNavigateBack = navController::navigateUp) }
+        }
+        composable(AwradDestination.CommunityChallenges.route) {
+            WrappedAwradDestination(navController) { CommunityChallengesScreen(onNavigateBack = navController::navigateUp) }
+        }
+        composable(AwradDestination.CommunityCircles.route) {
+            WrappedAwradDestination(navController) { CommunityCirclesScreen(onNavigateBack = navController::navigateUp) }
+        }
+        composable(AwradDestination.CommunitySaved.route) {
+            WrappedAwradDestination(navController) { CommunitySavedScreen(onNavigateBack = navController::navigateUp) }
+        }
+        composable(AwradDestination.CommunityProfile.route) {
+            WrappedAwradDestination(navController) { CommunityProfileScreen(onNavigateBack = navController::navigateUp) }
+        }
+        composable(AwradDestination.CommunityPostDetail.route) {
+            WrappedAwradDestination(navController) { CommunityPostDetailScreen(onNavigateBack = navController::navigateUp) }
+        }
+
+        composable(
+            route = AwradDestination.Login.route,
+            arguments = listOf(navArgument("email") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            }, navArgument("origin") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            }),
+        ) { backStackEntry ->
+            val loginOrigin = VerificationOrigin.entries.firstOrNull {
+                it.storageValue == backStackEntry.arguments?.getString("origin")
+            } ?: VerificationOrigin.Account
             WrappedAwradDestination(navController) {
                 LoginScreen(
                     onNavigateBack = { navController.popBackStack() },
@@ -181,8 +238,19 @@ fun AwradNavGraph(
                         navController.navigateSafely(AwradDestination.ForgotPassword.route)
                     },
                     onLoginSuccess = {
-                        navController.popBackStack(AwradDestination.Community.route, inclusive = false)
+                        if (loginOrigin == VerificationOrigin.Onboarding) {
+                            navController.popBackStack()
+                        } else {
+                            navController.popBackStack(AwradDestination.Community.route, inclusive = false)
+                        }
                     },
+                    onVerificationRequired = {
+                        navController.navigateSafely(AwradDestination.VerifyEmail.createRoute()) {
+                            popUpTo(AwradDestination.Login.route) { inclusive = true }
+                        }
+                    },
+                    initialEmail = backStackEntry.arguments?.getString("email").orEmpty(),
+                    origin = loginOrigin,
                 )
             }
         }
@@ -206,6 +274,44 @@ fun AwradNavGraph(
                     },
                     onSignupSuccess = {
                         navController.popBackStack(AwradDestination.Community.route, inclusive = false)
+                    },
+                    onVerificationRequired = {
+                        navController.navigateSafely(AwradDestination.VerifyEmail.createRoute()) {
+                            popUpTo(AwradDestination.Signup.route) { inclusive = true }
+                        }
+                    },
+                )
+            }
+        }
+
+        composable(
+            route = AwradDestination.VerifyEmail.route,
+            arguments = listOf(navArgument("token") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            }),
+        ) { backStackEntry ->
+            WrappedAwradDestination(navController) {
+                VerificationScreen(
+                    token = backStackEntry.arguments?.getString("token"),
+                    onNavigateBack = { navController.popBackStack() },
+                    onVerified = {
+                        if (navController.previousBackStackEntry?.destination?.route == AwradDestination.Onboarding.route) {
+                            navController.popBackStack()
+                        } else {
+                            navController.navigate(AwradDestination.Community.route) {
+                                popUpTo(AwradDestination.Home.route) { inclusive = false }
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    onSignIn = { email, origin ->
+                        navController.navigate(
+                            AwradDestination.Login.createRoute(email, origin.storageValue),
+                        ) {
+                            popUpTo(AwradDestination.VerifyEmail.route) { inclusive = true }
+                        }
                     },
                 )
             }

@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,7 +61,7 @@ fun AwradBottomBar(
     val isDark = colorScheme.background.luminance() < 0.2f
     val colors = BottomBarColors(
         container = if (isDark) {
-            NavigationBarDefaults.containerColor
+            colorScheme.surface
         } else {
             colorScheme.surfaceContainerLow
         },
@@ -105,6 +104,7 @@ fun AwradBottomBar(
                 ),
             shape = RoundedCornerShape(28.dp),
             color = colors.container,
+            tonalElevation = if (isDark) 3.dp else 0.dp,
             shadowElevation = 3.dp,
         ) {
             Row(

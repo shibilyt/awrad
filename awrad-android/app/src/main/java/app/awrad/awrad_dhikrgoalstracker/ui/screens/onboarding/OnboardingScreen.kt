@@ -89,10 +89,13 @@ import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 @Composable
 fun OnboardingScreen(
     onOnboardingComplete: (firstGoalId: AwradId?) -> Unit,
+    onNavigateToVerification: () -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val downloadProgress by viewModel.downloadProgress.collectAsState()
+    val visibleSteps = OnboardingViewModel.visibleSteps(uiState.usesReturningUserFlow)
+    val visibleStepIndex = visibleSteps.indexOf(uiState.currentStep).coerceAtLeast(0)
     AwradStatusBarStyle(
         color = Color.Transparent,
         useDarkIcons = !isAwradDarkTheme(),
@@ -114,6 +117,12 @@ fun OnboardingScreen(
         viewModel.refreshReminderReliability()
     }
 
+    LaunchedEffect(Unit) {
+        viewModel.verificationNavigationEvents.collect {
+            onNavigateToVerification()
+        }
+    }
+
     fun launchSystemSettings(intent: Intent, fallback: Intent? = null) {
         try {
             systemSettingsLauncher.launch(intent)
@@ -130,8 +139,8 @@ fun OnboardingScreen(
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             CinematicBackdrop(
-                stepIndex = uiState.currentStep,
-                totalSteps = OnboardingViewModel.TOTAL_STEPS,
+                stepIndex = visibleStepIndex,
+                totalSteps = visibleSteps.size,
             )
 
             Column(modifier = Modifier.fillMaxSize()) {
@@ -173,7 +182,7 @@ fun OnboardingScreen(
                             authError = uiState.authError,
                             onContinueWithEmail = viewModel::onContinueWithEmail,
                             onContinueAsGuest = viewModel::onContinueAsGuest,
-                            onContinueSignedIn = viewModel::nextStep,
+                            onContinueSignedIn = viewModel::onContinueSignedIn,
                             onDismissAuthSheet = viewModel::onDismissAuthSheet,
                             onAuthModeChanged = viewModel::onAuthModeChanged,
                             onAuthEmailChanged = viewModel::onAuthEmailChanged,
@@ -244,8 +253,8 @@ fun OnboardingScreen(
 
                 if (uiState.currentStep != OnboardingViewModel.OPENING_STEP_INDEX) {
                     BottomControls(
-                        currentStep = uiState.currentStep,
-                        totalSteps = OnboardingViewModel.TOTAL_STEPS,
+                        currentStep = visibleStepIndex,
+                        totalSteps = visibleSteps.size,
                         canAdvance = when (uiState.currentStep) {
                             OnboardingViewModel.NAME_STEP_INDEX -> uiState.userName.isNotBlank()
                             OnboardingViewModel.AUDIO_STEP_INDEX -> uiState.audioSetupStatus != AudioSetupStatus.Downloading

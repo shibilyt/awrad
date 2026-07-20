@@ -1,5 +1,6 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.components
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -56,13 +58,71 @@ fun AwradPagerTabs(
 ) {
     if (tabs.isEmpty()) return
 
-    val haptics = LocalHapticFeedback.current
-    val pillShape = RoundedCornerShape(percent = 50)
-
     // Continuous position across the tabs, e.g. 0.5 == half-way between tab 0 and tab 1.
     val position = (pagerState.currentPage + pagerState.currentPageOffsetFraction)
         .coerceIn(0f, (tabs.size - 1).toFloat())
     val settledPage = pagerState.currentPage.coerceIn(0, tabs.lastIndex)
+
+    AwradPillTabs(
+        tabs = tabs,
+        position = position,
+        settledPage = settledPage,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+        onTabCenters = onTabCenters,
+        selectedColor = selectedColor,
+        unselectedColor = unselectedColor,
+        selectedLabelColor = selectedLabelColor,
+        unselectedLabelColor = unselectedLabelColor,
+    )
+}
+
+/** Library-style pill tabs for screens whose content is not hosted in a horizontal pager. */
+@Composable
+fun AwradTabs(
+    tabs: List<String>,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    selectedColor: Color = MaterialTheme.colorScheme.primary,
+    unselectedColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
+    selectedLabelColor: Color = MaterialTheme.colorScheme.onPrimary,
+    unselectedLabelColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+) {
+    if (tabs.isEmpty()) return
+    val settledPage = selectedTab.coerceIn(0, tabs.lastIndex)
+    val position by animateFloatAsState(
+        targetValue = settledPage.toFloat(),
+        label = "AwradTabPosition",
+    )
+    AwradPillTabs(
+        tabs = tabs,
+        position = position,
+        settledPage = settledPage,
+        onTabSelected = onTabSelected,
+        modifier = modifier,
+        selectedColor = selectedColor,
+        unselectedColor = unselectedColor,
+        selectedLabelColor = selectedLabelColor,
+        unselectedLabelColor = unselectedLabelColor,
+    )
+}
+
+@Composable
+private fun AwradPillTabs(
+    tabs: List<String>,
+    position: Float,
+    settledPage: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier,
+    onTabCenters: (List<Float>) -> Unit = {},
+    selectedColor: Color,
+    unselectedColor: Color,
+    selectedLabelColor: Color,
+    unselectedLabelColor: Color,
+) {
+    val haptics = LocalHapticFeedback.current
+    val pillShape = RoundedCornerShape(percent = 50)
 
     // Each pill reports its horizontal centre (root coords) so the caller can place the nub.
     val centers = remember(tabs.size) {
