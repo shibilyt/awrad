@@ -126,6 +126,23 @@ canonical server projection
 
 An acknowledgement includes its result revision and canonical effect. The client removes a pending overlay only in the same transaction that installs an equal-or-newer canonical effect.
 
+### Remote count feedback
+
+When a committed delta changes the visible count, native clients aggregate the
+signed change by goal and publish a transient in-process feedback event. The
+event is calculated from the canonical projection installed by sync, after
+accounting for open and pending local overlays; it is never inferred from the
+screen's before/after total. A local tap whose receipt merely replaces its own
+optimistic overlay therefore produces a zero feedback delta.
+
+While that goal's counter is open, Android and iOS temporarily replace the
+normal counting hint with a styled, non-interactive cloud message such as
+`+12 synced from another device`. Closely spaced changes accumulate and the
+message clears after four seconds without pausing counting, stealing focus, or
+adding haptic/audio feedback. Initial snapshot restoration and generation-reset
+reconciliation remain silent so opening an account does not replay historical
+activity as live device changes.
+
 ## Goal and custom-dhikr updates
 
 Version one uses whole-document optimistic concurrency. A mutation sends the entity UUID, current `base_version`, and proposed canonical document.
@@ -210,6 +227,37 @@ Legacy iOS cumulative `all-time` rows use the stable protocol-valid migration
 bucket `1970-01-01`. This preserves cumulative totals across retries without
 pretending the value belongs to the day on which it was last edited. All new
 progress uses its real ISO local date.
+
+### Reinstall and installation recovery
+
+Secure credential storage may outlive an app installation, while the
+installation identity and product database do not. Mobile credentials are
+therefore bound to both their user and the installation UUID that created them.
+If those credentials survive but their installation marker does not, the client
+must not present authenticated UI or silently reuse the old session.
+
+The app instead shows a blocking, account-specific sign-in recovery screen. It
+may display a masked email hint, but it exposes no cloud data before the user
+authenticates again. A server `installation_mismatch` response enters the same
+path for credentials created before installation markers existed. Pending and
+in-flight commands are quarantined immediately so a partial fresh database
+cannot be interpreted as intentional deletion.
+
+After the same user signs in, the client rotates its installation identity and
+clears only synchronization metadata: cursors, shadows, inbox pages, conflicts,
+batches, and quarantined commands. Native goals, dhikrs, and counts remain
+intact. The next run performs a full conservative snapshot merge, restores
+cloud records, and uploads genuinely local records under the new installation.
+Signing in as another user is rejected while recovery is pending. This local
+recovery flow never deletes cloud progress.
+
+The recovery screen also offers an explicitly confirmed local reset. That path
+clears product rows, sync cursors, shadows, inbox/outbox work, conflicts,
+preferences, widget projections, reminder schedules, and legacy local snapshots;
+then it reseeds the built-in offline library and returns to onboarding while
+signed out. It uses a persistence transaction that bypasses sync diff generation,
+so erasing the installation cannot enqueue entity deletions or change the
+account's cloud backup.
 
 ## Retention and compaction
 
