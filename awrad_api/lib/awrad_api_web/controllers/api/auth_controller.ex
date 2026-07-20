@@ -215,7 +215,7 @@ defmodule AwradApiWeb.Api.AuthController do
   end
 
   defp ip_subject(conn), do: conn.remote_ip |> :inet.ntoa() |> to_string()
-  defp verification_url(token), do: url(~p"/auth/verify-email/#{token}")
+  defp verification_url(token), do: url(~p"/auth/mobile/verify-email/#{token}")
 
   defp registration_accepted(conn),
     do:

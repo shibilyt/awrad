@@ -33,10 +33,25 @@ defmodule AwradApiWeb.Router do
     pipe_through :browser
 
     live "/", HomeLive
+    get "/auth/mobile/verify-email/:token", EmailVerificationController, :mobile
     get "/auth/verify-email/:token", EmailVerificationController, :verify
   end
 
+  # Mobile operating systems fetch these unauthenticated JSON association files.
+  scope "/.well-known", AwradApiWeb do
+    pipe_through :api
+
+    get "/apple-app-site-association", MobileAssociationController, :apple
+    get "/assetlinks.json", MobileAssociationController, :android
+  end
+
   # Mobile API - public auth endpoints
+  scope "/api", AwradApiWeb.Api do
+    pipe_through :api
+
+    get "/community/stats", CommunityStatsController, :show
+  end
+
   scope "/api/auth", AwradApiWeb.Api do
     pipe_through :api
 

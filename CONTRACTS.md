@@ -12,7 +12,7 @@ The authoritative route declarations are in `awrad_api/lib/awrad_api_web/router.
 | `POST` | `/api/auth/login` | Public | Android, iOS |
 | `POST` | `/api/auth/refresh` | Public; refresh token in JSON body | Android and iOS automatic refresh/retry |
 | `POST` | `/api/auth/verify-email` | Public; one-time verification token | Android, iOS |
-| `POST` | `/api/auth/verify-email/resend` | Public; generic response | iOS verification flow |
+| `POST` | `/api/auth/verify-email/resend` | Public; generic response | Android, iOS verification flows |
 | `POST` | `/api/auth/forgot-password` | Public | Android, iOS |
 | `POST` | `/api/auth/reset-password` | Public; reset token and new password | iOS reset-completion flow |
 | `DELETE` | `/api/auth/logout` | Bearer access token; refresh token in JSON body | Android, iOS |
@@ -21,6 +21,19 @@ The authoritative route declarations are in `awrad_api/lib/awrad_api_web/router.
 | `DELETE` | `/api/auth/sessions` | Bearer access token | Mobile account security |
 
 Registration returns a generic `202` and never issues credentials. Email verification creates the initial device session. Successful verification, verified-user login, and refresh return a user, device session, access token, and refresh token. JSON uses snake_case fields.
+
+Unverified password login returns `403` with `error_code: "email_verification_required"`. Both clients treat registration and that structured login response as a pending authentication state: local/offline features remain available, but authentication success, account binding, progress synchronization, and protected API access wait until `POST /api/auth/verify-email` creates a session. Pending state records the normalized email, initiating mode (`signup` or `login`), flow origin (`onboarding` or account/community), and the resend deadline. Duplicate registration and resend responses remain generic to avoid account enumeration.
+
+## Email verification links and app association
+
+New verification messages link to `GET /auth/mobile/verify-email/:token`. This browser landing is deliberately non-consuming: it attempts `awrad://verify-email?token=...` for installed-app fallback and presents an explicit browser action targeting the legacy `GET /auth/verify-email/:token` route. The legacy route remains consuming for previously issued messages and older clients. Mobile clients also accept configured-host HTTPS links for both paths and submit the token once through `POST /api/auth/verify-email`; invalid, expired, or replayed tokens leave the client unauthenticated and allow resend.
+
+The landing response is browser-facing HTML in the public `:browser` pipeline. It is served with `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, a restrictive Content Security Policy, and no third-party resources. The public `:api` pipeline serves OS association JSON at:
+
+- `GET /.well-known/apple-app-site-association`, claiming both verification paths for `<IOS_APP_TEAM_ID>.app.awrad.awrad`.
+- `GET /.well-known/assetlinks.json`, claiming both paths for `app.awrad.awrad_dhikrgoalstracker` and every configured release signing SHA-256 fingerprint.
+
+Production API startup requires `PHX_HOST`, a valid 10-character `IOS_APP_TEAM_ID`, and one or more comma-separated fingerprints in `ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS`. The iOS release build must supply `AWRAD_APP_LINK_HOST` with the same `PHX_HOST`; Android derives its app-link host from `AWRAD_RELEASE_API_BASE_URL`. Local and test environments use explicit non-production association fixtures. Universal/app-link validation still requires a signed release build and deployed HTTPS host.
 
 Contract owners:
 
@@ -50,6 +63,37 @@ Android automatically refreshes after an authentication failure through its OkHt
 - Phoenix local default: `http://localhost:4000`.
 
 Base URLs must retain a trailing-slash-safe shape because clients resolve relative endpoint paths. Physical devices need a reachable LAN or deployed address.
+
+## Community statistics API
+
+`GET /api/community/stats` is public in the plain `:api` pipeline and returns cached, aggregate Community progress without user-identifying fields. Responses include `Cache-Control: public, max-age=300, stale-while-revalidate=600` and have this shape:
+
+```json
+{
+  "as_of": "2026-07-19T16:00:00Z",
+  "count_semantics": "current_canonical_net",
+  "total_tracked_goals": 12,
+  "approximate_total_counts": "34567",
+  "approximate_dhikr_hours": 9.6,
+  "seconds_per_count": 1,
+  "daily_counts": [
+    {"date": "2026-07-13", "approximate_count": "0"},
+    {"date": "2026-07-14", "approximate_count": "1200"},
+    {"date": "2026-07-15", "approximate_count": "4300"},
+    {"date": "2026-07-16", "approximate_count": "5100"},
+    {"date": "2026-07-17", "approximate_count": "7000"},
+    {"date": "2026-07-18", "approximate_count": "8100"},
+    {"date": "2026-07-19", "approximate_count": "8867"}
+  ]
+}
+```
+
+- `as_of` is a UTC RFC3339 timestamp. Count values are decimal integer strings so totals remain exact across JSON clients; hours are a JSON number rounded to one decimal.
+- `total_tracked_goals` counts active canonical goal entity records, including goals whose goal document is paused or completed. Deleted and purged entities are omitted.
+- Counts are current canonical net projections whose user, goal ID, and current entity incarnation all match. They are not lifetime gross activity and do not sum credits, consumptions, or count entries.
+- Only progress synchronized to the API is represented; offline and not-yet-synced mobile activity is omitted.
+- `daily_counts` always contains seven local-date buckets ending on the server's current UTC date, ordered oldest to newest and zero-filled. The trend uses client-recorded local dates; the all-time total also includes older and migrated historical buckets.
+- `approximate_dhikr_hours` assumes exactly one second per count, exposed as `seconds_per_count: 1`; it is an estimate rather than measured session duration.
 
 ## Local persistence ownership
 

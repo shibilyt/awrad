@@ -2,6 +2,7 @@ defmodule AwradApiWeb.Api.AuthControllerTest do
   use AwradApiWeb.ConnCase, async: false
 
   import AwradApi.AccountsFixtures
+  import Swoosh.TestAssertions
 
   alias AwradApi.Accounts
   alias AwradApi.Accounts.Token
@@ -21,6 +22,12 @@ defmodule AwradApiWeb.Api.AuthControllerTest do
 
     assert body["verification_required"]
     refute Map.has_key?(body, "access_token")
+
+    assert_email_sent(fn email ->
+      assert email.text_body =~ "/auth/mobile/verify-email/"
+      refute email.text_body =~ "/auth/verify-email/"
+      true
+    end)
 
     duplicate = post(build_conn(), ~p"/api/auth/register", %{email: email, password: @password})
     assert json_response(duplicate, 202)["message"] == body["message"]
@@ -48,6 +55,27 @@ defmodule AwradApiWeb.Api.AuthControllerTest do
 
     reused = post(build_conn(), ~p"/api/auth/verify-email", %{token: token, device: @device})
     assert json_response(reused, 422)["error"] =~ "invalid"
+  end
+
+  test "verification resend stays generic and rate limited", %{conn: conn} do
+    {:ok, user} =
+      Accounts.register_password_user(%{email: unique_user_email(), password: @password})
+
+    existing = post(conn, ~p"/api/auth/verify-email/resend", %{email: user.email})
+    existing_body = json_response(existing, 202)
+
+    unknown_email = unique_user_email()
+    unknown = post(build_conn(), ~p"/api/auth/verify-email/resend", %{email: unknown_email})
+    assert json_response(unknown, 202) == existing_body
+
+    Enum.each(1..3, fn _ ->
+      response = post(build_conn(), ~p"/api/auth/verify-email/resend", %{email: unknown_email})
+      assert json_response(response, 202) == existing_body
+    end)
+
+    limited = post(build_conn(), ~p"/api/auth/verify-email/resend", %{email: unknown_email})
+    assert json_response(limited, 429)["error_code"] == "rate_limited"
+    assert get_resp_header(limited, "retry-after") != []
   end
 
   test "refresh is idempotent for one request id and revokes on replay", %{conn: conn} do

@@ -63,7 +63,31 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  host = System.get_env("PHX_HOST") || raise "environment variable PHX_HOST is missing"
+
+  ios_team_id =
+    System.get_env("IOS_APP_TEAM_ID") || raise "environment variable IOS_APP_TEAM_ID is missing"
+
+  unless Regex.match?(~r/^[A-Z0-9]{10}$/, ios_team_id) do
+    raise "IOS_APP_TEAM_ID must be the 10-character Apple Team ID"
+  end
+
+  android_fingerprints =
+    System.get_env("ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS", "")
+    |> String.split(",", trim: true)
+    |> Enum.map(&String.trim/1)
+
+  fingerprint_pattern = ~r/^(?:[0-9A-Fa-f]{2}:){31}[0-9A-Fa-f]{2}$/
+
+  if android_fingerprints == [] or
+       Enum.any?(android_fingerprints, &(not Regex.match?(fingerprint_pattern, &1))) do
+    raise "ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS must contain comma-separated SHA-256 fingerprints"
+  end
+
+  config :awrad_api, :mobile_app_links,
+    ios_app_id: "#{ios_team_id}.app.awrad.awrad",
+    android_package: "app.awrad.awrad_dhikrgoalstracker",
+    android_sha256_cert_fingerprints: Enum.map(android_fingerprints, &String.upcase/1)
 
   jwt_secret =
     System.get_env("JWT_SIGNING_SECRET") ||

@@ -24,6 +24,13 @@ config :awrad_api,
   ecto_repos: [AwradApi.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]
 
+config :awrad_api, :mobile_app_links,
+  ios_app_id: "TESTTEAMID.app.awrad.awrad",
+  android_package: "app.awrad.awrad_dhikrgoalstracker",
+  android_sha256_cert_fingerprints: [
+    "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+  ]
+
 # Configure the endpoint
 config :awrad_api, AwradApiWeb.Endpoint,
   url: [host: "localhost"],
