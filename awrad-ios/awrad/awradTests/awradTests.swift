@@ -38,6 +38,30 @@ struct OnboardingForwardGateTests {
     }
 }
 
+struct OnboardingRouteTests {
+    @Test func returningUserSkipsProfileRemindersAndGoalCreation() {
+        #expect(OnboardingRoute.steps(returningUser: true) == [
+            .opening,
+            .language,
+            .account,
+            .location,
+            .notifications,
+            .audio,
+        ])
+        #expect(OnboardingRoute.next(after: .account, returningUser: true) == .location)
+        #expect(OnboardingRoute.next(after: .location, returningUser: true) == .notifications)
+        #expect(OnboardingRoute.next(after: .notifications, returningUser: true) == .audio)
+        #expect(OnboardingRoute.next(after: .audio, returningUser: true) == nil)
+        #expect(OnboardingRoute.previous(before: .audio, returningUser: true) == .notifications)
+    }
+
+    @Test func newUserKeepsTheFullGoalSetupRoute() {
+        #expect(OnboardingRoute.next(after: .account, returningUser: false) == .name)
+        #expect(OnboardingRoute.next(after: .notifications, returningUser: false) == .reminderPresets)
+        #expect(OnboardingRoute.next(after: .audio, returningUser: false) == .goalIntro)
+    }
+}
+
 @MainActor
 struct AwradDomainTests {
     @Test func dailyProgressUsesOnlyTheEffectiveDate() {

@@ -6,6 +6,21 @@ import Testing
 @MainActor
 struct ProgressSyncPersistenceTests {
     @Test
+    func remoteCountFeedbackAggregatesByGoalAndDropsCancelledAdjustments() throws {
+        let changes = [
+            ProgressSyncRemoteCountChange(goalID: "goal-a", delta: 8),
+            ProgressSyncRemoteCountChange(goalID: "goal-b", delta: 4),
+            ProgressSyncRemoteCountChange(goalID: "goal-a", delta: 3),
+            ProgressSyncRemoteCountChange(goalID: "goal-b", delta: -4),
+        ]
+
+        let result = try aggregateRemoteCountChanges(changes)
+
+        #expect(result["goal-a"] == 11)
+        #expect(result["goal-b"] == nil)
+    }
+
+    @Test
     func foregroundSyncPolicyUsesTenAndSixtySecondIntervalsWithBoundedJitter() {
         #expect(ForegroundProgressSyncPolicy.intervalNanoseconds(
             countingActive: true, randomUnit: 0.5
@@ -194,6 +209,91 @@ struct ProgressSyncPersistenceTests {
             FetchDescriptor<AwradSchemaV2.SyncOutboxRecord>()
         )
         #expect(outbox.map(\.actorSequence) == [7])
+    }
+
+    @Test
+    func reauthenticationQuarantinesDeletesThenResetsOnlySyncMetadata() throws {
+        let container = try AwradPersistenceContainerFactory.makeInMemoryContainer()
+        let repository = SwiftDataAwradRepository(container: container)
+        let userID = UUID().uuidString.lowercased()
+        let goalID = UUID().uuidString.lowercased()
+        try repository.performProgressSyncTransaction { context in
+            _ = try ProgressSyncLocalStore.bind(
+                userID: userID,
+                installationID: UUID().uuidString.lowercased(),
+                in: context
+            )
+            context.insert(AwradSchemaV2.SyncEntityShadowRecord(
+                entityType: "goal", entityID: goalID, version: 1,
+                incarnation: 1, syncRevision: 12, state: "active",
+                documentData: Data("{}".utf8)
+            ))
+            context.insert(AwradSchemaV2.SyncOutboxRecord(
+                commandID: UUID().uuidString.lowercased(), actorSequence: 1,
+                type: "entity_delete", payloadData: Data("{}".utf8),
+                entityType: "goal", entityID: goalID
+            ))
+        }
+
+        try repository.performProgressSyncTransaction { context in
+            try ProgressSyncLocalStore.quarantineForReauthentication(in: context)
+        }
+        let quarantined = try #require(repository.modelContext.fetch(
+            FetchDescriptor<AwradSchemaV2.SyncOutboxRecord>()
+        ).first)
+        #expect(quarantined.status == "failed")
+        #expect(quarantined.lastError == "reauthentication_required")
+
+        try repository.performProgressSyncTransaction { context in
+            try ProgressSyncLocalStore.resetForReauthentication(userID: userID, in: context)
+        }
+        #expect(try SharedProgressSyncPersistence.state(in: repository.modelContext) == nil)
+        #expect(try repository.modelContext.fetchCount(
+            FetchDescriptor<AwradSchemaV2.SyncOutboxRecord>()
+        ) == 0)
+        #expect(try repository.modelContext.fetchCount(
+            FetchDescriptor<AwradSchemaV2.SyncEntityShadowRecord>()
+        ) == 0)
+    }
+
+    @Test
+    func persistedInstallationMismatchBlocksAuthenticatedShellOnEngineStartup() throws {
+        let container = try AwradPersistenceContainerFactory.makeInMemoryContainer()
+        let repository = SwiftDataAwradRepository(container: container)
+        let defaults = UserDefaults(suiteName: "ProgressSyncRecovery.\(UUID().uuidString)")!
+        let installationID = AwradInstallationIdentity.markCurrentInstall(in: defaults)
+        defaults.set("user-1", forKey: "auth_user_id")
+        defaults.set("person@example.com", forKey: "auth_user_email")
+        defaults.set(true, forKey: "auth_user_email_verified")
+        let credentials = InMemoryProgressSyncCredentialStore(credentials: StoredAuthCredentials(
+            accessToken: "access", refreshToken: "refresh",
+            installationID: installationID, userID: "user-1", userEmail: "person@example.com"
+        ))
+        let auth = AuthService(
+            baseURL: URL(string: "https://awrad.test/")!,
+            defaults: defaults,
+            credentialStore: credentials
+        )
+        try repository.performProgressSyncTransaction { context in
+            let state = try ProgressSyncLocalStore.bind(
+                userID: "user-1", installationID: installationID, in: context
+            )
+            state.lastError = "installation_mismatch"
+            context.insert(AwradSchemaV2.SyncOutboxRecord(
+                commandID: UUID().uuidString.lowercased(), actorSequence: 1,
+                type: "entity_delete", payloadData: Data("{}".utf8),
+                entityType: "goal", entityID: UUID().uuidString.lowercased()
+            ))
+        }
+
+        _ = ProgressSyncEngine(auth: auth, repository: repository, defaults: defaults)
+
+        #expect(auth.reauthenticationRequired)
+        #expect(!auth.isLoggedIn)
+        let outbox = try repository.modelContext.fetch(
+            FetchDescriptor<AwradSchemaV2.SyncOutboxRecord>()
+        )
+        #expect(outbox.first?.status == "failed")
     }
 
     @Test
@@ -641,7 +741,22 @@ struct ProgressSyncPersistenceTests {
 }
 
 private final class InMemoryProgressSyncCredentialStore: AuthCredentialStore, @unchecked Sendable {
-    func load() -> StoredAuthCredentials? { nil }
-    func save(_ credentials: StoredAuthCredentials) throws {}
-    func clear() {}
+    private let lock = NSLock()
+    private var credentials: StoredAuthCredentials?
+
+    init(credentials: StoredAuthCredentials? = nil) {
+        self.credentials = credentials
+    }
+
+    func load() -> StoredAuthCredentials? {
+        lock.withLock { credentials }
+    }
+
+    func save(_ credentials: StoredAuthCredentials) throws {
+        lock.withLock { self.credentials = credentials }
+    }
+
+    func clear() {
+        lock.withLock { credentials = nil }
+    }
 }

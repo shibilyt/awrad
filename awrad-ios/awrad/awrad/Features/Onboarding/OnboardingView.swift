@@ -4,6 +4,8 @@ import UIKit
 #endif
 
 struct OnboardingView: View {
+    var verificationToken: String? = nil
+    var onVerificationHandled: () -> Void = {}
     @Environment(AwradStore.self) private var store
     @Environment(AppServices.self) private var services
     @Environment(AppRouter.self) private var router
@@ -21,12 +23,16 @@ struct OnboardingView: View {
     @State private var firstGoalCount = 70
     @State private var isCreatingGoal = false
     @State private var showsAuthSheet = false
+    @State private var showsAuthVerification = false
+    @State private var authVerificationToken: String?
     @State private var authMode: OnboardingAuthMode = .signIn
     @State private var authEmail = ""
     @State private var authPassword = ""
     @State private var isAuthenticating = false
     @State private var authError: String?
+    @SceneStorage("awrad.onboarding.usesReturningUserFlow") private var usesReturningUserFlow = false
     @State private var reminderSchedulingError: String?
+    @State private var onboardingCompletionError: String?
     @State private var pendingFirstGoal: Goal?
 
     private let totalSteps = 10
@@ -35,6 +41,13 @@ struct OnboardingView: View {
         store.dhikrs.filter { $0.audioURL != nil }
     }
     private var language: AppLanguage { store.preferences.appLanguage }
+    private var visibleSteps: [OnboardingStep] {
+        OnboardingRoute.steps(returningUser: usesReturningUserFlow)
+    }
+    private var visibleStepIndex: Int {
+        guard let currentStep = OnboardingStep(rawValue: step) else { return 0 }
+        return visibleSteps.firstIndex(of: currentStep) ?? 0
+    }
 
     var body: some View {
         ZStack {
@@ -84,6 +97,17 @@ struct OnboardingView: View {
             guard step == OnboardingStep.firstGoal.rawValue else { return }
             persistOnboardingDraft()
         }
+        .onChange(of: verificationToken, initial: true) { _, token in
+            guard let token else { return }
+            if let pending = services.auth.pendingVerificationContext {
+                authEmail = pending.email
+                authMode = pending.mode == .login ? .signIn : .createAccount
+            }
+            authVerificationToken = token
+            showsAuthVerification = true
+            showsAuthSheet = true
+            onVerificationHandled()
+        }
         .sheet(isPresented: $showsAuthSheet) {
             onboardingAuthSheet
                 .presentationDetents([.medium, .large])
@@ -101,6 +125,14 @@ struct OnboardingView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text(reminderSchedulingError ?? "")
+        }
+        .alert("Couldn’t save changes", isPresented: Binding(
+            get: { onboardingCompletionError != nil },
+            set: { if !$0 { onboardingCompletionError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(onboardingCompletionError ?? "")
         }
     }
 
@@ -120,15 +152,15 @@ struct OnboardingView: View {
 
     private var progressDots: some View {
         HStack(spacing: 6) {
-            ForEach(0..<totalSteps, id: \.self) { index in
+            ForEach(visibleSteps.indices, id: \.self) { index in
                 Capsule()
-                    .fill(index == step ? AwradTheme.sage : AwradTheme.ink.opacity(0.12))
-                    .frame(width: index == step ? 18 : 6, height: 4)
+                    .fill(index == visibleStepIndex ? AwradTheme.sage : AwradTheme.ink.opacity(0.12))
+                    .frame(width: index == visibleStepIndex ? 18 : 6, height: 4)
                     .animation(.snappy, value: step)
             }
         }
         .frame(maxWidth: .infinity, alignment: .center)
-        .accessibilityLabel("Onboarding step \(step + 1) of \(totalSteps)")
+        .accessibilityLabel("Onboarding step \(visibleStepIndex + 1) of \(visibleSteps.count)")
     }
 
     // MARK: - Shared step header (logo on top)
@@ -151,7 +183,12 @@ struct OnboardingView: View {
 
     private var backButton: some View {
         Button {
-            move(toRawStep: max(step - 1, 0))
+            guard let currentStep = OnboardingStep(rawValue: step),
+                  let previous = OnboardingRoute.previous(
+                    before: currentStep,
+                    returningUser: usesReturningUserFlow
+                  ) else { return }
+            move(to: previous)
         } label: {
             Image(systemName: "chevron.left")
                 .font(AwradTheme.displayFont(.subheadline, weight: .semibold))
@@ -165,7 +202,7 @@ struct OnboardingView: View {
 
     private var skipButton: some View {
         Button {
-            move(toRawStep: min(step + 1, totalSteps - 1))
+            advance()
         } label: {
             Text(LocalizedStringKey("Skip"))
                 .font(AwradTheme.displayFont(.subheadline, weight: .semibold))
@@ -422,12 +459,23 @@ struct OnboardingView: View {
                     .padding(16)
                     .awradGlassSurface(cornerRadius: 18)
 
-                    Button("Next") { move(to: .name) }
+                    Button("Next") {
+                        usesReturningUserFlow = true
+                        move(to: .location)
+                    }
                         .awradPrimaryButton()
                 } else {
                     Button {
                         authMode = .signIn
                         authError = nil
+                        if let pending = services.auth.pendingVerificationContext,
+                           pending.origin == .onboarding {
+                            authEmail = pending.email
+                            authMode = pending.mode == .login ? .signIn : .createAccount
+                            showsAuthVerification = true
+                        } else {
+                            showsAuthVerification = false
+                        }
                         showsAuthSheet = true
                     } label: {
                         Label("Continue with email", systemImage: "envelope.fill")
@@ -446,7 +494,26 @@ struct OnboardingView: View {
 
     private var onboardingAuthSheet: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 18) {
+            if showsAuthVerification {
+                VerifyEmailView(
+                    token: authVerificationToken,
+                    onVerified: completeOnboardingAuthentication,
+                    onSignIn: { email in
+                        authEmail = email ?? authEmail
+                        authPassword = ""
+                        authMode = .signIn
+                        authError = nil
+                        showsAuthVerification = false
+                        authVerificationToken = nil
+                    }
+                )
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { showsAuthSheet = false }
+                    }
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(LocalizedStringKey(authMode == .signIn ? "Welcome back" : "Create your account"))
                         .font(AwradTheme.displayFont(.title, weight: .bold))
@@ -512,13 +579,14 @@ struct OnboardingView: View {
 
                 Spacer(minLength: 0)
             }
-            .padding(20)
-            .background(AwradTheme.background.ignoresSafeArea())
-            .navigationTitle(Text(LocalizedStringKey("Your account")))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showsAuthSheet = false }
+                .padding(20)
+                .background(AwradTheme.background.ignoresSafeArea())
+                .navigationTitle(Text(LocalizedStringKey("Your account")))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Cancel") { showsAuthSheet = false }
+                    }
                 }
             }
         }
@@ -537,21 +605,51 @@ struct OnboardingView: View {
         guard !isAuthenticating else { return }
         isAuthenticating = true
         authError = nil
+        let submittedMode = authMode
         Task {
             do {
-                if authMode == .signIn {
-                    try await services.auth.login(email: email, password: authPassword)
+                if submittedMode == .signIn {
+                    try await services.auth.login(
+                        email: email,
+                        password: authPassword,
+                        origin: .onboarding
+                    )
                 } else {
-                    try await services.auth.register(email: email, password: authPassword)
+                    try await services.auth.register(
+                        email: email,
+                        password: authPassword,
+                        origin: .onboarding
+                    )
+                    isAuthenticating = false
+                    authPassword = ""
+                    showsAuthVerification = true
+                    authVerificationToken = nil
+                    return
                 }
                 isAuthenticating = false
                 showsAuthSheet = false
-                move(to: .name)
+                usesReturningUserFlow = submittedMode == .signIn
+                move(to: submittedMode == .signIn ? .location : .name)
             } catch {
                 isAuthenticating = false
-                authError = error.localizedDescription
+                if let pending = services.auth.pendingVerificationContext,
+                   pending.origin == .onboarding {
+                    authPassword = ""
+                    showsAuthVerification = true
+                    authVerificationToken = nil
+                } else {
+                    authError = error.localizedDescription
+                }
             }
         }
+    }
+
+    private func completeOnboardingAuthentication() {
+        showsAuthVerification = false
+        authVerificationToken = nil
+        showsAuthSheet = false
+        usesReturningUserFlow = authMode == .signIn
+        move(to: authMode == .signIn ? .location : .name)
     }
 
     // MARK: - Reminder presets
@@ -883,15 +981,38 @@ struct OnboardingView: View {
 
     private func advance() {
         guard canAdvance else { return }
-        switch step {
-        case OnboardingStep.name.rawValue:
+        guard let currentStep = OnboardingStep(rawValue: step) else { return }
+        switch currentStep {
+        case .name:
             store.updateUserName(name)
             move(to: .location)
-        case OnboardingStep.firstGoal.rawValue:
+        case .firstGoal:
             finishOnboarding()
         default:
-            move(toRawStep: min(step + 1, totalSteps - 1))
+            if let next = OnboardingRoute.next(
+                after: currentStep,
+                returningUser: usesReturningUserFlow
+            ) {
+                move(to: next)
+            } else if usesReturningUserFlow, currentStep == .audio {
+                finishReturningUserOnboarding()
+            }
         }
+    }
+
+    private func finishReturningUserOnboarding() {
+        guard store.updatePreferences({ preferences in
+            preferences.isOnboarded = true
+            preferences.onboardingStep = OnboardingStep.firstGoal.rawValue
+        }) else {
+            onboardingCompletionError = AwradLocalizer.localized(
+                "Couldn’t save changes. Try again.",
+                language: language
+            )
+            return
+        }
+        store.selectedTab = .home
+        router.homePath = []
     }
 
     private func finishOnboarding() {
@@ -1112,6 +1233,41 @@ enum OnboardingStep: Int, CaseIterable {
     case audio
     case goalIntro
     case firstGoal
+}
+
+enum OnboardingRoute {
+    private static let returningUserSteps: [OnboardingStep] = [
+        .opening,
+        .language,
+        .account,
+        .location,
+        .notifications,
+        .audio,
+    ]
+
+    static func steps(returningUser: Bool) -> [OnboardingStep] {
+        returningUser ? returningUserSteps : OnboardingStep.allCases
+    }
+
+    static func next(after step: OnboardingStep, returningUser: Bool) -> OnboardingStep? {
+        adjacentStep(to: step, offset: 1, returningUser: returningUser)
+    }
+
+    static func previous(before step: OnboardingStep, returningUser: Bool) -> OnboardingStep? {
+        adjacentStep(to: step, offset: -1, returningUser: returningUser)
+    }
+
+    private static func adjacentStep(
+        to step: OnboardingStep,
+        offset: Int,
+        returningUser: Bool
+    ) -> OnboardingStep? {
+        let route = steps(returningUser: returningUser)
+        guard let index = route.firstIndex(of: step) else { return nil }
+        let destination = index + offset
+        guard route.indices.contains(destination) else { return nil }
+        return route[destination]
+    }
 }
 
 enum OnboardingOpeningPhase: Equatable {

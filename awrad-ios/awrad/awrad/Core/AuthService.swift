@@ -13,6 +13,22 @@ enum AuthPasswordPolicy {
     static let guidance = "Use at least 10 characters with lowercase, uppercase, and a number or symbol."
 }
 
+enum AuthVerificationMode: String, Codable {
+    case signup
+    case login
+}
+
+enum AuthVerificationOrigin: String, Codable {
+    case account
+    case onboarding
+}
+
+struct PendingVerificationContext: Codable, Equatable {
+    var email: String
+    var mode: AuthVerificationMode
+    var origin: AuthVerificationOrigin
+}
+
 /// One installation identity shared by mobile authentication and progress
 /// sync. Authentication's established key is canonical because existing server
 /// sessions are already bound to it; the former sync-only key is consumed as a
@@ -20,6 +36,7 @@ enum AuthPasswordPolicy {
 enum AwradInstallationIdentity {
     static let storageKey = "auth_installation_id"
     static let legacyProgressSyncStorageKey = "AwradProgressSync.installationID.v1"
+    static let installMarkerKey = "auth_installation_marker_v1"
 
     static func resolve(in defaults: UserDefaults) -> String {
         let resolved = validUUID(defaults.string(forKey: storageKey))
@@ -28,6 +45,22 @@ enum AwradInstallationIdentity {
         defaults.set(resolved, forKey: storageKey)
         defaults.removeObject(forKey: legacyProgressSyncStorageKey)
         return resolved
+    }
+
+    @discardableResult
+    static func markCurrentInstall(in defaults: UserDefaults) -> String {
+        let installationID = resolve(in: defaults)
+        defaults.set(installationID, forKey: installMarkerKey)
+        return installationID
+    }
+
+    @discardableResult
+    static func rotateForReauthentication(in defaults: UserDefaults) -> String {
+        let installationID = UUID().uuidString.lowercased()
+        defaults.set(installationID, forKey: storageKey)
+        defaults.set(installationID, forKey: installMarkerKey)
+        defaults.removeObject(forKey: legacyProgressSyncStorageKey)
+        return installationID
     }
 
     private static func validUUID(_ value: String?) -> String? {
@@ -46,7 +79,12 @@ final class AuthService {
     private(set) var userEmailVerified: Bool
     private(set) var sessionID: String?
     private(set) var pendingVerificationEmail: String?
+    private(set) var pendingVerificationMode: AuthVerificationMode?
+    private(set) var pendingVerificationOrigin: AuthVerificationOrigin?
     private(set) var verificationResendAvailableAt: Date?
+    private(set) var reauthenticationRequired: Bool
+    private(set) var recoveryUserEmail: String?
+    private(set) var recoveryUserID: String?
 
     private let baseURL: URL
     private let session: URLSession
@@ -56,7 +94,20 @@ final class AuthService {
     private let encoder: JSONEncoder
     private var refreshTask: Task<AuthResponse, Error>?
 
-    var isLoggedIn: Bool { accessToken != nil }
+    var isLoggedIn: Bool { accessToken != nil && !reauthenticationRequired }
+    var pendingVerificationContext: PendingVerificationContext? {
+        guard let pendingVerificationEmail, let pendingVerificationMode, let pendingVerificationOrigin else {
+            return nil
+        }
+        return PendingVerificationContext(
+            email: pendingVerificationEmail,
+            mode: pendingVerificationMode,
+            origin: pendingVerificationOrigin
+        )
+    }
+    var progressSyncRebindRequired: Bool {
+        defaults.bool(forKey: StorageKey.progressSyncRebindRequired)
+    }
 
     init(
         baseURL: URL? = nil,
@@ -98,17 +149,59 @@ final class AuthService {
             migratedCredentials = nil
         }
 
-        self.accessToken = migratedCredentials?.accessToken
-        self.refreshToken = migratedCredentials?.refreshToken
-        self.userID = defaults.string(forKey: StorageKey.userID)
-        self.userEmail = defaults.string(forKey: StorageKey.userEmail)
-        self.userEmailVerified = defaults.bool(forKey: StorageKey.userEmailVerified)
-        self.sessionID = defaults.string(forKey: StorageKey.sessionID)
+        let persistedRecovery = defaults.bool(forKey: StorageKey.reauthenticationRequired)
+        let localInstallationID = defaults.string(forKey: AwradInstallationIdentity.storageKey)
+        let localInstallMarker = defaults.string(forKey: AwradInstallationIdentity.installMarkerKey)
+        let secureCredentialsOutlivedLocalInstall = secureCredentials != nil && localInstallationID == nil
+        let credentialInstallationMismatch = migratedCredentials?.installationID.map { credentialInstallationID in
+            localInstallationID != credentialInstallationID ||
+                (localInstallMarker != nil && localInstallMarker != credentialInstallationID)
+        } ?? false
+        let detectedReinstall = secureCredentialsOutlivedLocalInstall || credentialInstallationMismatch
+        let requiresRecovery = persistedRecovery || detectedReinstall
+
+        self.reauthenticationRequired = requiresRecovery
+        self.recoveryUserEmail = defaults.string(forKey: StorageKey.recoveryUserEmail)
+            ?? (detectedReinstall ? migratedCredentials?.userEmail : nil)
+        self.recoveryUserID = defaults.string(forKey: StorageKey.recoveryUserID)
+            ?? (detectedReinstall ? migratedCredentials?.userID : nil)
+        self.accessToken = requiresRecovery ? nil : migratedCredentials?.accessToken
+        self.refreshToken = requiresRecovery ? nil : migratedCredentials?.refreshToken
+        self.userID = requiresRecovery ? nil : (defaults.string(forKey: StorageKey.userID) ?? migratedCredentials?.userID)
+        self.userEmail = requiresRecovery ? nil : (defaults.string(forKey: StorageKey.userEmail) ?? migratedCredentials?.userEmail)
+        self.userEmailVerified = requiresRecovery ? false : defaults.bool(forKey: StorageKey.userEmailVerified)
+        self.sessionID = requiresRecovery ? nil : defaults.string(forKey: StorageKey.sessionID)
         self.pendingVerificationEmail = defaults.string(forKey: StorageKey.pendingVerificationEmail)
+        self.pendingVerificationMode = defaults.string(forKey: StorageKey.pendingVerificationMode)
+            .flatMap(AuthVerificationMode.init(rawValue:))
+        self.pendingVerificationOrigin = defaults.string(forKey: StorageKey.pendingVerificationOrigin)
+            .flatMap(AuthVerificationOrigin.init(rawValue:))
         let resendTimestamp = defaults.double(forKey: StorageKey.verificationResendAvailableAt)
         self.verificationResendAvailableAt = resendTimestamp > 0
             ? Date(timeIntervalSince1970: resendTimestamp)
             : nil
+
+        if detectedReinstall {
+            defaults.set(true, forKey: StorageKey.reauthenticationRequired)
+            defaults.set(true, forKey: StorageKey.progressSyncRebindRequired)
+            defaults.set(recoveryUserEmail, forKey: StorageKey.recoveryUserEmail)
+            defaults.set(recoveryUserID, forKey: StorageKey.recoveryUserID)
+            self.credentialStore.clear()
+            clearActiveSessionMetadata()
+            AwradInstallationIdentity.rotateForReauthentication(in: defaults)
+        } else if !requiresRecovery {
+            let installationID = AwradInstallationIdentity.markCurrentInstall(in: defaults)
+            if let migratedCredentials,
+               migratedCredentials.installationID == nil {
+                try? self.credentialStore.save(StoredAuthCredentials(
+                    accessToken: migratedCredentials.accessToken,
+                    refreshToken: migratedCredentials.refreshToken,
+                    installationID: installationID,
+                    userID: userID,
+                    userEmail: userEmail
+                ))
+            }
+        }
     }
 
     private static func configuredBaseURL(
@@ -125,35 +218,51 @@ final class AuthService {
         return URL(string: "http://127.0.0.1:4000/")!
     }
 
-    func login(email: String, password: String) async throws {
+    func login(
+        email: String,
+        password: String,
+        origin: AuthVerificationOrigin = .account
+    ) async throws {
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         do {
             let response: AuthResponse = try await send(
                 "api/auth/login",
                 method: "POST",
-                body: AuthCredentials(email: email, password: password, device: device())
+                body: AuthCredentials(email: normalizedEmail, password: password, device: device())
             )
+            if let recoveryUserID, reauthenticationRequired,
+               response.user.id != recoveryUserID {
+                throw AuthServiceError.recoveryAccountMismatch
+            }
             try save(response)
         } catch let error as AuthServiceError {
             if case .http(_, _, let errorCode) = error,
                errorCode == "email_verification_required" {
-                pendingVerificationEmail = email
-                defaults.set(email, forKey: StorageKey.pendingVerificationEmail)
+                setPendingVerification(
+                    email: normalizedEmail,
+                    mode: .login,
+                    origin: origin
+                )
             }
             throw error
         }
     }
 
-    func register(email: String, password: String) async throws {
+    func register(
+        email: String,
+        password: String,
+        origin: AuthVerificationOrigin = .account
+    ) async throws {
         guard AuthPasswordPolicy.isValid(password) else {
             throw AuthServiceError.invalidPassword
         }
+        let normalizedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let _: MessageResponse = try await send(
             "api/auth/register",
             method: "POST",
-            body: AuthCredentials(email: email, password: password)
+            body: AuthCredentials(email: normalizedEmail, password: password)
         )
-        pendingVerificationEmail = email
-        defaults.set(email, forKey: StorageKey.pendingVerificationEmail)
+        setPendingVerification(email: normalizedEmail, mode: .signup, origin: origin)
     }
 
     func verifyEmail(token: String) async throws {
@@ -248,6 +357,47 @@ final class AuthService {
         clear()
     }
 
+    func requireReauthentication() {
+        guard !reauthenticationRequired else { return }
+        recoveryUserEmail = userEmail
+        recoveryUserID = userID
+        defaults.set(recoveryUserEmail, forKey: StorageKey.recoveryUserEmail)
+        defaults.set(recoveryUserID, forKey: StorageKey.recoveryUserID)
+        defaults.set(true, forKey: StorageKey.reauthenticationRequired)
+        defaults.set(true, forKey: StorageKey.progressSyncRebindRequired)
+        reauthenticationRequired = true
+        refreshTask?.cancel()
+        refreshTask = nil
+        credentialStore.clear()
+        accessToken = nil
+        refreshToken = nil
+        userID = nil
+        userEmail = nil
+        userEmailVerified = false
+        sessionID = nil
+        pendingVerificationEmail = nil
+        pendingVerificationMode = nil
+        pendingVerificationOrigin = nil
+        verificationResendAvailableAt = nil
+        clearActiveSessionMetadata()
+        AwradInstallationIdentity.rotateForReauthentication(in: defaults)
+    }
+
+    func completeProgressSyncRebind() {
+        defaults.removeObject(forKey: StorageKey.progressSyncRebindRequired)
+        defaults.removeObject(forKey: StorageKey.recoveryUserID)
+        defaults.removeObject(forKey: StorageKey.recoveryUserEmail)
+        recoveryUserID = nil
+        recoveryUserEmail = nil
+    }
+
+    /// Abandons account recovery after product persistence has been reset.
+    /// This is local-only and deliberately does not call the logout API.
+    func resetLocalAuthentication() {
+        clear()
+        AwradInstallationIdentity.rotateForReauthentication(in: defaults)
+    }
+
     /// Sends an authenticated JSON request and retries it once after a serialized
     /// refresh. Concurrent callers await the same refresh task.
     func authenticatedRequest<RequestBody: Encodable, ResponseBody: Decodable>(
@@ -279,6 +429,22 @@ final class AuthService {
         method: String
     ) async throws -> ResponseBody {
         try await authenticatedRequest(endpoint, method: method, body: EmptyRequest())
+    }
+
+    /// Uses the configured API session and base URL without attaching account
+    /// credentials or entering the authentication refresh flow.
+    func publicRequest<ResponseBody: Decodable>(
+        _ endpoint: String,
+        method: String = "GET",
+        forceRefresh: Bool = false
+    ) async throws -> ResponseBody {
+        try await send(
+            endpoint,
+            method: method,
+            body: EmptyRequest(),
+            cachePolicy: forceRefresh ? .reloadIgnoringLocalCacheData : .useProtocolCachePolicy,
+            requestHeaders: forceRefresh ? ["Cache-Control": "no-cache"] : [:]
+        )
     }
 
     private func refreshedResponse() async throws -> AuthResponse {
@@ -316,7 +482,9 @@ final class AuthService {
         _ endpoint: String,
         method: String,
         body: RequestBody,
-        bearerToken: String? = nil
+        bearerToken: String? = nil,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy,
+        requestHeaders: [String: String] = [:]
     ) async throws -> ResponseBody {
         guard let url = URL(string: endpoint, relativeTo: baseURL) else {
             throw AuthServiceError.invalidURL
@@ -324,7 +492,11 @@ final class AuthService {
 
         var request = URLRequest(url: url)
         request.httpMethod = method
+        request.cachePolicy = cachePolicy
         request.setValue("application/json", forHTTPHeaderField: "Accept")
+        for (field, value) in requestHeaders {
+            request.setValue(value, forHTTPHeaderField: field)
+        }
         if !(body is EmptyRequest) {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             request.httpBody = try encoder.encode(body)
@@ -354,9 +526,13 @@ final class AuthService {
     }
 
     private func save(_ response: AuthResponse) throws {
+        let installationID = AwradInstallationIdentity.markCurrentInstall(in: defaults)
         let credentials = StoredAuthCredentials(
             accessToken: response.access_token,
-            refreshToken: response.refresh_token
+            refreshToken: response.refresh_token,
+            installationID: installationID,
+            userID: response.user.id,
+            userEmail: response.user.email
         )
         try credentialStore.save(credentials)
 
@@ -367,13 +543,19 @@ final class AuthService {
         userEmailVerified = response.user.email_verified
         sessionID = response.session.id
         pendingVerificationEmail = nil
+        pendingVerificationMode = nil
+        pendingVerificationOrigin = nil
         verificationResendAvailableAt = nil
+        reauthenticationRequired = false
         defaults.set(response.user.id, forKey: StorageKey.userID)
         defaults.set(response.user.email, forKey: StorageKey.userEmail)
         defaults.set(response.user.email_verified, forKey: StorageKey.userEmailVerified)
         defaults.set(response.session.id, forKey: StorageKey.sessionID)
         defaults.removeObject(forKey: StorageKey.pendingVerificationEmail)
+        defaults.removeObject(forKey: StorageKey.pendingVerificationMode)
+        defaults.removeObject(forKey: StorageKey.pendingVerificationOrigin)
         defaults.removeObject(forKey: StorageKey.verificationResendAvailableAt)
+        defaults.removeObject(forKey: StorageKey.reauthenticationRequired)
         defaults.removeObject(forKey: StorageKey.accessToken)
         defaults.removeObject(forKey: StorageKey.refreshToken)
     }
@@ -389,7 +571,20 @@ final class AuthService {
         userEmailVerified = false
         sessionID = nil
         pendingVerificationEmail = nil
+        pendingVerificationMode = nil
+        pendingVerificationOrigin = nil
         verificationResendAvailableAt = nil
+        reauthenticationRequired = false
+        recoveryUserEmail = nil
+        recoveryUserID = nil
+        clearActiveSessionMetadata()
+        defaults.removeObject(forKey: StorageKey.reauthenticationRequired)
+        defaults.removeObject(forKey: StorageKey.progressSyncRebindRequired)
+        defaults.removeObject(forKey: StorageKey.recoveryUserID)
+        defaults.removeObject(forKey: StorageKey.recoveryUserEmail)
+    }
+
+    private func clearActiveSessionMetadata() {
         defaults.removeObject(forKey: StorageKey.accessToken)
         defaults.removeObject(forKey: StorageKey.refreshToken)
         defaults.removeObject(forKey: StorageKey.userID)
@@ -397,7 +592,22 @@ final class AuthService {
         defaults.removeObject(forKey: StorageKey.userEmailVerified)
         defaults.removeObject(forKey: StorageKey.sessionID)
         defaults.removeObject(forKey: StorageKey.pendingVerificationEmail)
+        defaults.removeObject(forKey: StorageKey.pendingVerificationMode)
+        defaults.removeObject(forKey: StorageKey.pendingVerificationOrigin)
         defaults.removeObject(forKey: StorageKey.verificationResendAvailableAt)
+    }
+
+    private func setPendingVerification(
+        email: String,
+        mode: AuthVerificationMode,
+        origin: AuthVerificationOrigin
+    ) {
+        pendingVerificationEmail = email
+        pendingVerificationMode = mode
+        pendingVerificationOrigin = origin
+        defaults.set(email, forKey: StorageKey.pendingVerificationEmail)
+        defaults.set(mode.rawValue, forKey: StorageKey.pendingVerificationMode)
+        defaults.set(origin.rawValue, forKey: StorageKey.pendingVerificationOrigin)
     }
 
     private func device() -> DeviceRequest {
@@ -409,6 +619,9 @@ final class AuthService {
 struct StoredAuthCredentials: Codable, Equatable {
     var accessToken: String
     var refreshToken: String
+    var installationID: String? = nil
+    var userID: String? = nil
+    var userEmail: String? = nil
 }
 
 protocol AuthCredentialStore: Sendable {
@@ -490,7 +703,13 @@ private enum StorageKey {
     static let userEmailVerified = "auth_user_email_verified"
     static let sessionID = "auth_session_id"
     static let pendingVerificationEmail = "auth_pending_verification_email"
+    static let pendingVerificationMode = "auth_pending_verification_mode"
+    static let pendingVerificationOrigin = "auth_pending_verification_origin"
     static let verificationResendAvailableAt = "auth_verification_resend_available_at"
+    static let reauthenticationRequired = "auth_reauthentication_required_v1"
+    static let progressSyncRebindRequired = "auth_progress_sync_rebind_required_v1"
+    static let recoveryUserID = "auth_recovery_user_id_v1"
+    static let recoveryUserEmail = "auth_recovery_user_email_v1"
 }
 
 private struct AuthCredentials: Encodable {
@@ -556,6 +775,7 @@ enum AuthServiceError: LocalizedError {
     case notAuthenticated
     case missingVerificationEmail
     case invalidPassword
+    case recoveryAccountMismatch
     case resendCooldown(TimeInterval)
     case secureStorage(OSStatus)
     case network(String)
@@ -583,6 +803,8 @@ enum AuthServiceError: LocalizedError {
             "Enter the email address that needs verification."
         case .invalidPassword:
             AuthPasswordPolicy.guidance
+        case .recoveryAccountMismatch:
+            "Sign in with the account that owns the previous progress on this device."
         case .resendCooldown(let remaining):
             "Try again in \(max(Int(ceil(remaining)), 1)) seconds."
         case .secureStorage(let status):

@@ -91,6 +91,8 @@ struct CountingView: View {
     @State private var coachTapProgress = 0
     @State private var coachAudioProgress = 0
     @State private var liveActivity = CountingLiveActivityController()
+    @State private var syncFeedback: CountingSyncFeedbackState?
+    @State private var lastHandledRemoteCountEventID: UUID?
 
     private let minuteTicker = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
@@ -111,6 +113,11 @@ struct CountingView: View {
                 VStack(spacing: 0) {
                     CountingTopChrome(
                         title: counterTitle(for: dhikr),
+                        goalTag: GoalCardPresentation.targetTag(
+                            goal: goal,
+                            target: max(goal.totalTarget, goal.targetPolicy == .none ? 0 : 1),
+                            language: language
+                        ),
                         onBack: handleBack,
                         onHistory: { activeSheet = .history },
                         onAdjust: openAdjustmentSheet
@@ -197,6 +204,13 @@ struct CountingView: View {
                     )
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
+
+                    CountingHintOrSyncAlert(
+                        feedback: syncFeedback,
+                        language: language
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 12)
                 }
             } else {
                 EmptyStateView(symbol: "target", title: "Goal Missing", message: "This goal is no longer available.")
@@ -243,6 +257,13 @@ struct CountingView: View {
         .onChange(of: services.audio.countingPlayTick) { _, _ in
             if showCoachMarks { coachAudioProgress += 1 }
         }
+        .onChange(of: services.progressSync.remoteCountEvents) { _, events in
+            guard let event = events.last(where: {
+                $0.goalID == goalID.uuidString.lowercased()
+            }), event.id != lastHandledRemoteCountEventID else { return }
+            lastHandledRemoteCountEventID = event.id
+            presentSyncFeedback(event)
+        }
         .sheet(item: $activeSheet) { sheet in
             Group {
                 if let goal {
@@ -284,6 +305,8 @@ struct CountingView: View {
                             textScale: store.preferences.countingDhikrTextScale,
                             lineSpacing: store.preferences.countingDhikrLineSpacing,
                             canCount: !services.audio.isCounting(goalID: goal.id) && countButtonEnabled(for: goal),
+                            currentCount: displayedCount(for: goal),
+                            targetCount: adjustmentTarget(for: goal),
                             onDecreaseTextSize: { adjustTextScale(increasing: false) },
                             onIncreaseTextSize: { adjustTextScale(increasing: true) },
                             onDecreaseLineSpacing: { adjustLineSpacing(increasing: false) },
@@ -405,6 +428,18 @@ struct CountingView: View {
             guard !Task<Never, Never>.isCancelled else { return }
             evaluateTimerSession()
         }
+        .task(id: syncFeedback?.eventID) {
+            guard syncFeedback != nil else { return }
+            do {
+                try await Task<Never, Never>.sleep(nanoseconds: 4_000_000_000)
+            } catch {
+                return
+            }
+            guard !Task<Never, Never>.isCancelled else { return }
+            withAnimation(.easeInOut(duration: 0.2)) {
+                syncFeedback = nil
+            }
+        }
         .onReceive(minuteTicker) { now in
             evaluateTimerSession()
             enforceAudioTiming(at: now)
@@ -425,6 +460,17 @@ struct CountingView: View {
             targetCount: goal.targetPolicy == .none ? 0 : Int64(selectedSlotTarget(for: goal)),
             isPlaying: services.audio.isCounting(goalID: goal.id)
         )
+    }
+
+    private func presentSyncFeedback(_ event: RemoteCountSyncEvent) {
+        let currentDelta = syncFeedback?.delta ?? 0
+        let (combined, overflow) = currentDelta.addingReportingOverflow(event.delta)
+        let delta = overflow ? event.delta : combined
+        withAnimation(.easeInOut(duration: 0.2)) {
+            syncFeedback = delta == 0
+                ? nil
+                : CountingSyncFeedbackState(eventID: event.id, delta: delta)
+        }
     }
 
     private func refreshLiveActivity() {
@@ -1284,6 +1330,7 @@ struct CountingView: View {
 
 private struct CountingTopChrome: View {
     let title: String
+    let goalTag: String
     let onBack: () -> Void
     let onHistory: () -> Void
     let onAdjust: () -> Void
@@ -1299,7 +1346,7 @@ private struct CountingTopChrome: View {
             }
         }
         .padding(.horizontal, 16)
-        .frame(height: 56)
+        .frame(height: 64)
         .background(.thinMaterial)
     }
 
@@ -1307,12 +1354,23 @@ private struct CountingTopChrome: View {
         HStack(spacing: 8) {
             chromeIconButton(symbol: "chevron.left", action: onBack, accessibilityLabel: "Back")
 
-            Text(title)
-                .font(AwradTheme.displayFont(20, weight: .semibold))
-                .foregroundStyle(AwradTheme.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.72)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(AwradTheme.displayFont(17, weight: .semibold))
+                    .foregroundStyle(AwradTheme.ink)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+                Text(goalTag)
+                    .font(AwradTheme.bodyFont(.caption2, weight: .medium))
+                    .foregroundStyle(AwradTheme.sage)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(AwradTheme.mint.opacity(0.42), in: Capsule())
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Menu {
                 Button {
@@ -1693,6 +1751,8 @@ private struct FullDhikrSheet: View {
     let textScale: Double
     let lineSpacing: Double
     let canCount: Bool
+    let currentCount: Int64
+    let targetCount: Int64?
     let onDecreaseTextSize: () -> Void
     let onIncreaseTextSize: () -> Void
     let onDecreaseLineSpacing: () -> Void
@@ -1751,9 +1811,9 @@ private struct FullDhikrSheet: View {
                 Button {
                     onCount()
                 } label: {
-                    Text("COUNT")
+                    Text(countButtonText)
                         .font(AwradTheme.bodyFont(.headline, weight: .bold))
-                        .tracking(2)
+                        .monospacedDigit()
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity, minHeight: 64)
                 }
@@ -1772,6 +1832,11 @@ private struct FullDhikrSheet: View {
             .background(AwradTheme.background)
         }
         .background(AwradTheme.surface)
+    }
+
+    private var countButtonText: String {
+        guard let targetCount else { return currentCount.formatted() }
+        return "\(currentCount.formatted()) / \(targetCount.formatted())"
     }
 }
 
@@ -1921,6 +1986,62 @@ private func steppedDisplayValue(_ current: Double, values: [Double], increasing
     return values.last(where: { $0 < current - 0.01 }) ?? values.first ?? current
 }
 
+private struct CountingSyncFeedbackState: Equatable {
+    let eventID: UUID
+    let delta: Int64
+}
+
+private struct CountingHintOrSyncAlert: View {
+    let feedback: CountingSyncFeedbackState?
+    let language: AppLanguage
+
+    private var message: String? {
+        guard let feedback else { return nil }
+        let amount = abs(feedback.delta).formatted(
+            .number.locale(Locale(identifier: language.localeIdentifier))
+        )
+        return AwradLocalizer.format(
+            feedback.delta > 0 ? "counting_sync_added" : "counting_sync_adjusted",
+            language: language,
+            amount
+        )
+    }
+
+    var body: some View {
+        ZStack {
+            if let message {
+                Label {
+                    Text(message)
+                        .lineLimit(2)
+                } icon: {
+                    Image(systemName: "icloud.and.arrow.down.fill")
+                }
+                .font(AwradTheme.bodyFont(.caption, weight: .semibold))
+                .foregroundStyle(AwradTheme.ink)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    AwradTheme.gold.opacity(0.12),
+                    in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+                )
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(AwradTheme.gold.opacity(0.48), lineWidth: 1)
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                .accessibilityLabel(Text(message))
+            } else {
+                Text(AwradLocalizer.localized("counting_tap_circle_to_count", language: language))
+                    .font(AwradTheme.bodyFont(.subheadline))
+                    .foregroundStyle(.secondary)
+                    .transition(.opacity)
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 40)
+        .animation(.easeInOut(duration: 0.2), value: feedback)
+    }
+}
+
 private struct CountCircleButton: View {
     let isEnabled: Bool
     let primaryProgress: Double?
@@ -1984,7 +2105,7 @@ private struct CountCircleButton: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.bottom, 24)
+        .padding(.bottom, 8)
     }
 }
 

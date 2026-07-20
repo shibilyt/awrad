@@ -1,8 +1,175 @@
 import SwiftUI
 
+struct AccountRecoveryView: View {
+    @Environment(AwradStore.self) private var store
+    @Environment(AppServices.self) private var services
+    @State private var showsLogin = false
+    @State private var showsVerification = false
+    @State private var showsLocalResetConfirmation = false
+    @State private var isResettingLocalState = false
+    @State private var localResetError: String?
+    let verificationToken: String?
+    let onVerificationHandled: () -> Void
+
+    init(
+        verificationToken: String? = nil,
+        onVerificationHandled: @escaping () -> Void = {}
+    ) {
+        self.verificationToken = verificationToken
+        self.onVerificationHandled = onVerificationHandled
+    }
+
+    var body: some View {
+        ZStack {
+            AwradTheme.background.ignoresSafeArea()
+
+            ScrollView {
+                AwradCard(padding: 24) {
+                    VStack(spacing: 20) {
+                        Image(systemName: "icloud.and.arrow.down.fill")
+                            .font(AwradTheme.bodyFont(36, weight: .semibold))
+                            .foregroundStyle(AwradTheme.sage)
+                            .frame(width: 78, height: 78)
+                            .background(AwradTheme.mint.opacity(0.28), in: Circle())
+
+                        VStack(spacing: 10) {
+                            Text("Previous progress found")
+                                .font(AwradTheme.displayFont(28))
+                                .foregroundStyle(AwradTheme.ink)
+                                .multilineTextAlignment(.center)
+
+                            Text(recoveryMessage)
+                                .font(AwradTheme.bodyFont(.body))
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
+
+                        Button {
+                            showsLogin = true
+                        } label: {
+                            Text("Sign in to restore").frame(maxWidth: .infinity)
+                        }
+                        .awradPrimaryButton()
+                        .disabled(isResettingLocalState)
+
+                        Button(role: .destructive) {
+                            showsLocalResetConfirmation = true
+                        } label: {
+                            Label("Start fresh on this device", systemImage: "trash")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .disabled(isResettingLocalState)
+
+                        Text("Prefer not to restore? You can erase this device and continue with a clean, signed-out app.")
+                            .font(AwradTheme.bodyFont(.footnote))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+
+                        Text("Awrad signed out the previous session because this is a new app installation. Your cloud progress has not been deleted.")
+                            .font(AwradTheme.bodyFont(.footnote))
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(24)
+                .frame(maxWidth: 560)
+            }
+        }
+        .sheet(isPresented: $showsLogin) {
+            NavigationStack {
+                if showsVerification {
+                    VerifyEmailView(
+                        token: verificationToken,
+                        onVerified: {
+                            onVerificationHandled()
+                            showsLogin = false
+                        },
+                        onSignIn: { _ in
+                            onVerificationHandled()
+                            showsVerification = false
+                        }
+                    )
+                } else {
+                    LoginView(
+                        prefilledEmail: services.auth.pendingVerificationEmail
+                            ?? services.auth.recoveryUserEmail,
+                        onSuccess: { showsLogin = false },
+                        onVerificationRequired: { showsVerification = true }
+                    )
+                }
+            }
+        }
+        .onChange(of: verificationToken, initial: true) { _, token in
+            guard token != nil else { return }
+            showsVerification = true
+            showsLogin = true
+        }
+        .confirmationDialog(
+            "Start fresh on this device?",
+            isPresented: $showsLocalResetConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Erase local data", role: .destructive, action: resetLocalState)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This permanently erases goals, counts, custom dhikrs, wird progress, preferences, and sync history on this device. Data already backed up to your account stays in the cloud.")
+        }
+        .alert("Couldn’t reset local data", isPresented: Binding(
+            get: { localResetError != nil },
+            set: { if !$0 { localResetError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(localResetError ?? "")
+        }
+    }
+
+    private var recoveryMessage: String {
+        guard let email = services.auth.recoveryUserEmail, !email.isEmpty else {
+            return AwradLocalizer.localized(
+                "Sign in again to safely restore the goals and counts previously backed up from this device.",
+                language: store.preferences.appLanguage
+            )
+        }
+        return AwradLocalizer.format(
+            "We found progress previously backed up with %@. Sign in again to safely restore your goals and counts.",
+            language: store.preferences.appLanguage,
+            masked(email)
+        )
+    }
+
+    private func masked(_ email: String) -> String {
+        let parts = email.split(separator: "@", maxSplits: 1).map(String.init)
+        guard parts.count == 2, let first = parts[0].first else { return email }
+        return "\(first)••••@\(parts[1])"
+    }
+
+    private func resetLocalState() {
+        guard !isResettingLocalState else { return }
+        isResettingLocalState = true
+        localResetError = nil
+        Task {
+            do {
+                try store.resetLocalState()
+                services.auth.resetLocalAuthentication()
+                _ = await services.clearScheduledRemindersForLocalReset()
+            } catch {
+                localResetError = error.localizedDescription
+            }
+            isResettingLocalState = false
+        }
+    }
+}
+
 struct CommunityView: View {
+    @Environment(AwradStore.self) private var store
     @Environment(AppServices.self) private var services
     @Environment(AppRouter.self) private var router
+    @State private var stats: CommunityStatsResponse?
+    @State private var isLoadingStats = false
+    @State private var statsLoadFailed = false
 
     var body: some View {
         ScrollView {
@@ -10,6 +177,8 @@ struct CommunityView: View {
                 Text("Keep your practice connected and steady.")
                     .font(AwradTheme.bodyFont(.body))
                     .foregroundStyle(.secondary)
+
+                communityStatsSection
 
                 if services.auth.isLoggedIn, services.auth.userEmailVerified {
                     loggedInCard
@@ -25,6 +194,8 @@ struct CommunityView: View {
         }
         .background(AwradTheme.background)
         .navigationTitle("Community")
+        .task { await loadStats() }
+        .refreshable { await loadStats(forceRefresh: true) }
         .toolbar {
             if services.auth.isLoggedIn {
                 ToolbarItem(placement: .topBarTrailing) {
@@ -44,6 +215,241 @@ struct CommunityView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private var communityStatsSection: some View {
+        if let stats {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Text(localized("Community at a glance"))
+                        .font(AwradTheme.displayFont(.headline))
+                        .foregroundStyle(AwradTheme.ink)
+                    Spacer()
+                    Button {
+                        Task { await loadStats(forceRefresh: true) }
+                    } label: {
+                        if isLoadingStats {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "arrow.clockwise")
+                        }
+                    }
+                    .disabled(isLoadingStats)
+                    .accessibilityLabel(localized("Refresh community stats"))
+                }
+
+                statsHero(stats)
+
+                HStack(alignment: .top, spacing: 12) {
+                    metricCard(
+                        value: stats.totalTrackedGoals.formatted(.number.locale(locale)),
+                        label: localized("Tracked goals"),
+                        icon: "target"
+                    )
+                    metricCard(
+                        value: stats.approximateDhikrHours.formatted(
+                            .number.precision(.fractionLength(0...1)).locale(locale)
+                        ),
+                        label: localized("Approx. hours"),
+                        icon: "clock.fill"
+                    )
+                }
+
+                dailyChart(stats.dailyCounts)
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Label(
+                        AwradLocalizer.format(
+                            "Synced %@",
+                            language: language,
+                            stats.asOf.formatted(
+                                .dateTime
+                                    .year().month(.abbreviated).day()
+                                    .hour().minute()
+                                    .locale(locale)
+                            )
+                        ),
+                        systemImage: "arrow.triangle.2.circlepath"
+                    )
+                    Text(AwradLocalizer.format(
+                        "Estimates assume %d second per count.",
+                        language: language,
+                        stats.secondsPerCount
+                    ))
+                    Text(localized("Community totals are approximate and may change as progress syncs."))
+                }
+                .font(AwradTheme.bodyFont(.footnote))
+                .foregroundStyle(AwradTheme.subdued)
+            }
+        } else if isLoadingStats {
+            AwradCard(padding: 24) {
+                HStack(spacing: 14) {
+                    ProgressView().tint(AwradTheme.sage)
+                    Text(localized("Loading community totals…"))
+                        .font(AwradTheme.bodyFont(.body, weight: .medium))
+                        .foregroundStyle(AwradTheme.ink)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .accessibilityElement(children: .combine)
+            }
+        } else if statsLoadFailed {
+            AwradCard(padding: 22) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Label(localized("Community totals are unavailable"), systemImage: "wifi.exclamationmark")
+                        .font(AwradTheme.displayFont(.headline))
+                        .foregroundStyle(AwradTheme.ink)
+                    Text(localized("Check your connection and try again."))
+                        .font(AwradTheme.bodyFont(.subheadline))
+                        .foregroundStyle(.secondary)
+                    Button(localized("Retry")) { Task { await loadStats() } }
+                        .buttonStyle(.bordered)
+                        .tint(AwradTheme.sage)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+    }
+
+    private func statsHero(_ stats: CommunityStatsResponse) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(localized("Community dhikr"), systemImage: "person.3.fill")
+                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                .foregroundStyle(AwradTheme.sageDark)
+            Text(compactCount(stats.approximateTotalCounts))
+                .font(AwradTheme.displayFont(.largeTitle, weight: .bold))
+                .minimumScaleFactor(0.65)
+                .lineLimit(1)
+                .foregroundStyle(AwradTheme.ink)
+            Text(localized("Approximate counts together"))
+                .font(AwradTheme.bodyFont(.body, weight: .medium))
+                .foregroundStyle(AwradTheme.subdued)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(24)
+        .background(
+            LinearGradient(
+                colors: [AwradTheme.mint.opacity(0.72), AwradTheme.gold.opacity(0.18)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(AwradLocalizer.format(
+            "Approximately %@ community counts",
+            language: language,
+            fullCount(stats.approximateTotalCounts)
+        ))
+    }
+
+    private func metricCard(value: String, label: String, icon: String) -> some View {
+        AwradCard(padding: 16) {
+            VStack(alignment: .leading, spacing: 9) {
+                Image(systemName: icon).foregroundStyle(AwradTheme.sage)
+                Text(value)
+                    .font(AwradTheme.displayFont(.title2, weight: .bold))
+                    .foregroundStyle(AwradTheme.ink)
+                Text(label)
+                    .font(AwradTheme.bodyFont(.caption, weight: .medium))
+                    .foregroundStyle(AwradTheme.subdued)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(label), \(value)")
+        }
+    }
+
+    private func dailyChart(_ counts: [CommunityStatsResponse.DailyCount]) -> some View {
+        let days = Array(counts.suffix(7))
+        let maximum = max(days.map(\.approximateCount.magnitudeForChart).max() ?? 0, 1)
+        return AwradCard(padding: 18) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text(localized("Last seven days"))
+                    .font(AwradTheme.displayFont(.headline))
+                    .foregroundStyle(AwradTheme.ink)
+                HStack(alignment: .bottom, spacing: 8) {
+                    ForEach(days) { day in
+                        VStack(spacing: 7) {
+                            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                .fill(AwradTheme.sage.gradient)
+                                .frame(height: max(5, 76 * day.approximateCount.magnitudeForChart / maximum))
+                            Text(weekday(for: day.date))
+                                .font(AwradTheme.bodyFont(.caption2, weight: .medium))
+                                .foregroundStyle(AwradTheme.subdued)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(AwradLocalizer.format(
+                            "%@, approximately %@ counts",
+                            language: language,
+                            weekday(for: day.date),
+                            fullCount(day.approximateCount)
+                        ))
+                    }
+                }
+                .frame(height: 102, alignment: .bottom)
+            }
+        }
+    }
+
+    private var language: AppLanguage { store.preferences.appLanguage }
+    private var locale: Locale { Locale(identifier: language.localeIdentifier) }
+
+    private func localized(_ key: String) -> String {
+        AwradLocalizer.localized(key, language: language)
+    }
+
+    private func compactCount(_ count: DecimalIntegerString) -> String {
+        guard let value = Int64(count.rawValue) else { return fullCount(count) }
+        return value.formatted(.number.notation(.compactName).locale(locale))
+    }
+
+    private func fullCount(_ count: DecimalIntegerString) -> String {
+        let separator = locale.groupingSeparator ?? ","
+        let groups = stride(from: count.rawValue.count, to: 0, by: -3).map { end -> String in
+            let start = max(0, end - 3)
+            let lower = count.rawValue.index(count.rawValue.startIndex, offsetBy: start)
+            let upper = count.rawValue.index(count.rawValue.startIndex, offsetBy: end)
+            return String(count.rawValue[lower..<upper])
+        }.reversed()
+        let asciiGrouped = groups.joined(separator: separator)
+        return asciiGrouped.reduce(into: "") { result, character in
+            if let digit = character.wholeNumberValue {
+                result += digit.formatted(.number.locale(locale))
+            } else {
+                result.append(character)
+            }
+        }
+    }
+
+    private func weekday(for date: String) -> String {
+        let parser = DateFormatter()
+        parser.locale = Locale(identifier: "en_US_POSIX")
+        parser.calendar = Calendar(identifier: .gregorian)
+        parser.dateFormat = "yyyy-MM-dd"
+        guard let value = parser.date(from: date) else { return date }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEE")
+        return formatter.string(from: value)
+    }
+
+    @MainActor
+    private func loadStats(forceRefresh: Bool = false) async {
+        guard !isLoadingStats else { return }
+        isLoadingStats = true
+        statsLoadFailed = false
+        do {
+            stats = try await services.auth.publicRequest(
+                "api/community/stats",
+                forceRefresh: forceRefresh
+            )
+        } catch {
+            statsLoadFailed = true
+        }
+        isLoadingStats = false
     }
 
     private var guestCard: some View {
@@ -154,6 +560,7 @@ private enum AuthInputField: Hashable {
 }
 
 struct LoginView: View {
+    @Environment(AwradStore.self) private var store
     @Environment(AppServices.self) private var services
     @Environment(AppRouter.self) private var router
     @State private var email = ""
@@ -161,6 +568,18 @@ struct LoginView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @FocusState private var focusedField: AuthInputField?
+    private let onSuccess: (() -> Void)?
+    private let onVerificationRequired: (() -> Void)?
+
+    init(
+        prefilledEmail: String? = nil,
+        onSuccess: (() -> Void)? = nil,
+        onVerificationRequired: (() -> Void)? = nil
+    ) {
+        _email = State(initialValue: prefilledEmail ?? "")
+        self.onSuccess = onSuccess
+        self.onVerificationRequired = onVerificationRequired
+    }
 
     var body: some View {
         AuthFormShell(title: "Welcome Back", subtitle: "Log in to your account") {
@@ -220,9 +639,26 @@ struct LoginView: View {
         Task {
             do {
                 try await services.auth.login(email: email.trimmingCharacters(in: .whitespacesAndNewlines), password: password)
-                router.popToRoot(in: .community)
+                if let onSuccess {
+                    onSuccess()
+                } else {
+                    router.popToRoot(in: .community)
+                }
+            } catch AuthServiceError.recoveryAccountMismatch {
+                errorMessage = AwradLocalizer.localized(
+                    "Sign in with the account that owns the previous progress on this device.",
+                    language: store.preferences.appLanguage
+                )
             } catch {
-                errorMessage = error.localizedDescription
+                if services.auth.pendingVerificationContext != nil {
+                    if let onVerificationRequired {
+                        onVerificationRequired()
+                    } else {
+                        router.replaceLast(with: .verifyEmail(token: nil), in: .community)
+                    }
+                } else {
+                    errorMessage = error.localizedDescription
+                }
             }
             isLoading = false
         }
@@ -308,23 +744,32 @@ struct SignupView: View {
 struct VerifyEmailView: View {
     @Environment(AppServices.self) private var services
     @Environment(AppRouter.self) private var router
-    @State private var token: String
+    let token: String?
+    private let onVerified: (() -> Void)?
+    private let onSignIn: ((String?) -> Void)?
     @State private var isVerifying = false
     @State private var isResending = false
     @State private var cooldownSeconds = 0
     @State private var message: String?
     @State private var messageIsSuccess = false
 
-    init(token: String?) {
-        _token = State(initialValue: token ?? "")
+    @State private var attemptedToken = false
+
+    init(
+        token: String?,
+        onVerified: (() -> Void)? = nil,
+        onSignIn: ((String?) -> Void)? = nil
+    ) {
+        self.token = token
+        self.onVerified = onVerified
+        self.onSignIn = onSignIn
     }
 
     var body: some View {
-        AuthFormShell(title: "Verify your email", subtitle: "Paste the token from your verification link.") {
-            TextField("Verification token", text: $token)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .awradAuthField()
+        AuthFormShell(
+            title: "Check your email",
+            subtitle: "Open the verification link on this device to finish signing in."
+        ) {
 
             if let email = services.auth.pendingVerificationEmail ?? services.auth.userEmail {
                 Text(email)
@@ -340,11 +785,13 @@ struct VerifyEmailView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            Button(action: verify) {
-                AuthButtonLabel(title: "Verify and Sign In", isLoading: isVerifying)
+            if isVerifying {
+                HStack(spacing: 12) {
+                    ProgressView()
+                    Text("Verifying and signing you in…")
+                }
+                .frame(maxWidth: .infinity, minHeight: 44)
             }
-            .awradPrimaryButton()
-            .disabled(token.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isVerifying)
 
             Button(action: resend) {
                 if isResending {
@@ -358,9 +805,23 @@ struct VerifyEmailView: View {
             .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
             .frame(maxWidth: .infinity, minHeight: 44)
             .disabled(isResending || cooldownSeconds > 0)
+
+            Button("Sign in instead") {
+                let email = services.auth.pendingVerificationEmail
+                if let onSignIn {
+                    onSignIn(email)
+                } else {
+                    router.replaceLast(with: .login, in: .community)
+                }
+            }
+            .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
         }
         .navigationTitle("Verify Email")
-        .task {
+        .task(id: token) {
+            if let token, !attemptedToken {
+                attemptedToken = true
+                verify(token: token)
+            }
             while !Task.isCancelled {
                 refreshCooldown()
                 try? await Task<Never, Never>.sleep(for: .seconds(1))
@@ -368,7 +829,7 @@ struct VerifyEmailView: View {
         }
     }
 
-    private func verify() {
+    private func verify(token: String) {
         guard !isVerifying else { return }
         isVerifying = true
         message = nil
@@ -376,7 +837,11 @@ struct VerifyEmailView: View {
         Task {
             do {
                 try await services.auth.verifyEmail(token: token.trimmingCharacters(in: .whitespacesAndNewlines))
-                router.popToRoot(in: .community)
+                if let onVerified {
+                    onVerified()
+                } else {
+                    router.popToRoot(in: .community)
+                }
             } catch {
                 message = error.localizedDescription
             }

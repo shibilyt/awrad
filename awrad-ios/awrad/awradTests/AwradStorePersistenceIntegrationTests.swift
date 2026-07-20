@@ -1,4 +1,5 @@
 import Foundation
+import SwiftData
 import Testing
 @testable import awrad
 
@@ -79,6 +80,69 @@ struct AwradStorePersistenceIntegrationTests {
         #expect(store.persistenceRecovery?.isUsingLegacyFallback == false)
         #expect(store.persistenceRecovery?.exportURL == snapshotURL)
         #expect(try runtime.repository.isEmpty())
+    }
+
+    @Test func localResetReseedsOfflineStateAndCannotQueueCloudDeletes() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("awrad-local-reset-\(UUID().uuidString)", isDirectory: true)
+        let snapshotURL = directory.appendingPathComponent("awrad-snapshot.json")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let defaults = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: defaultsSuite(defaults)) }
+        let runtime = AwradPersistenceRuntime(
+            container: try AwradPersistenceContainerFactory.makeInMemoryContainer(),
+            defaults: defaults,
+            legacySnapshotURL: snapshotURL
+        )
+        let store = AwradStore(snapshotURL: snapshotURL)
+        await store.bootstrap(persistence: runtime)
+        let dhikrID = try #require(store.dhikrs.first?.id)
+        #expect(store.completeOnboarding(name: "Previous user"))
+        _ = store.createGoal(dhikrID: dhikrID, target: 33)
+        #expect(store.goals.count == 1)
+
+        try runtime.repository.performProgressSyncTransaction { context in
+            _ = try ProgressSyncLocalStore.bind(
+                userID: UUID().uuidString.lowercased(),
+                installationID: UUID().uuidString.lowercased(),
+                in: context
+            )
+            context.insert(AwradSchemaV2.SyncOutboxRecord(
+                commandID: UUID().uuidString.lowercased(),
+                actorSequence: 1,
+                type: "entity_delete",
+                payloadData: Data("{}".utf8),
+                entityType: "goal",
+                entityID: UUID().uuidString.lowercased()
+            ))
+        }
+        try Data("legacy".utf8).write(to: runtime.legacySnapshotURL)
+        try Data("backup".utf8).write(to: runtime.legacyBackupURL)
+        runtime.migrationStateStore.markComplete(checksum: "old")
+
+        try store.resetLocalState()
+
+        #expect(store.dhikrs.count == AwradSeedData.dhikrs.count)
+        #expect(store.goals.isEmpty)
+        #expect(store.countEntries.isEmpty)
+        #expect(store.wirdSessions.isEmpty)
+        #expect(!store.preferences.isOnboarded)
+        #expect(store.preferences.userName.isEmpty)
+        #expect(try SharedProgressSyncPersistence.state(in: runtime.repository.modelContext) == nil)
+        #expect(try runtime.repository.modelContext.fetchCount(
+            FetchDescriptor<AwradSchemaV2.SyncOutboxRecord>()
+        ) == 0)
+        #expect(runtime.migrationStateStore.checksum == nil)
+        #expect(!FileManager.default.fileExists(atPath: runtime.legacySnapshotURL.path))
+        #expect(!FileManager.default.fileExists(atPath: runtime.legacyBackupURL.path))
+
+        let relaunched = AwradStore(snapshotURL: snapshotURL)
+        await relaunched.bootstrap(persistence: runtime)
+        #expect(relaunched.dhikrs.count == AwradSeedData.dhikrs.count)
+        #expect(relaunched.goals.isEmpty)
+        #expect(!relaunched.preferences.isOnboarded)
     }
 
     @Test func finalOnboardingStepCommitsPreferencesAndFirstGoalTogether() async throws {

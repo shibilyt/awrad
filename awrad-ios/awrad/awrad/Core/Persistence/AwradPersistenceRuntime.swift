@@ -78,6 +78,33 @@ final class AwradPersistenceRuntime {
         }
     }
 
+    /// Starts this installation over without generating synchronization
+    /// commands. Cloud state is deliberately outside this operation.
+    func resetLocalState(
+        state: AwradRepositoryState,
+        preferences: UserPreferences
+    ) throws {
+        try AwradPersistenceValidator.validate(state: state)
+        let preferenceIssues = AwradPersistenceValidator.preferenceIssues(preferences)
+        guard preferenceIssues.isEmpty else {
+            throw AwradPersistenceValidationError(issues: preferenceIssues)
+        }
+
+        let previousPreferences = try preferenceStore.load()
+        try preferenceStore.save(preferences)
+        do {
+            try repository.resetLocalState(with: state)
+        } catch {
+            try? preferenceStore.save(previousPreferences)
+            throw error
+        }
+
+        widgetSnapshotStore.reset()
+        migrationStateStore.clear()
+        try? FileManager.default.removeItem(at: legacySnapshotURL)
+        try? FileManager.default.removeItem(at: legacyBackupURL)
+    }
+
     /// Counting owns a goal and all of its entries, so they commit through one
     /// repository transaction rather than independent writes.
     func saveGoalAggregate(goal: Goal, countEntries: [CountEntry]) throws {

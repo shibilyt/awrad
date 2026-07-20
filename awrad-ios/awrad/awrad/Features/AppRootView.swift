@@ -10,6 +10,8 @@ struct AppRootView: View {
     @SceneStorage("awrad.navigation.v1") private var restoredNavigationJSON = ""
     @State private var didRestoreNavigation = false
     @State private var reminderReconciliationError: String?
+    @State private var onboardingVerificationToken: String?
+    @State private var recoveryVerificationToken: String?
 
     init(pendingURL: Binding<URL?> = .constant(nil)) {
         _pendingURL = pendingURL
@@ -22,8 +24,16 @@ struct AppRootView: View {
             } else if let recovery = store.persistenceRecovery,
                       !recovery.isUsingLegacyFallback {
                 PersistenceRecoveryView(recovery: recovery)
+            } else if services.auth.reauthenticationRequired {
+                AccountRecoveryView(
+                    verificationToken: recoveryVerificationToken,
+                    onVerificationHandled: { recoveryVerificationToken = nil }
+                )
             } else if !store.preferences.isOnboarded {
-                OnboardingView()
+                OnboardingView(
+                    verificationToken: onboardingVerificationToken,
+                    onVerificationHandled: { onboardingVerificationToken = nil }
+                )
             } else {
                 MainTabShell()
             }
@@ -293,6 +303,14 @@ struct AppRootView: View {
         case .todaysWird:
             route(intentAction: AwradIntentAction(destination: .todaysWird))
         case .verifyEmail(let token):
+            if services.auth.reauthenticationRequired {
+                recoveryVerificationToken = token
+                return
+            }
+            if !store.preferences.isOnboarded {
+                onboardingVerificationToken = token
+                return
+            }
             router.pendingTab = .community
             router.communityPath = [.verifyEmail(token: token)]
         case .resetPassword(let token):
@@ -538,6 +556,7 @@ private struct MainTabShell: View {
 
 private struct RouteDestinationView: View {
     @Environment(AwradStore.self) private var store
+    @Environment(AppServices.self) private var services
     let route: AppRoute
 
     var body: some View {
@@ -557,7 +576,7 @@ private struct RouteDestinationView: View {
         case .settings:
             SettingsView()
         case .login:
-            LoginView()
+            LoginView(prefilledEmail: services.auth.pendingVerificationEmail)
         case .signup:
             SignupView()
         case .forgotPassword:

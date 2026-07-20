@@ -57,6 +57,37 @@ enum ProgressSyncLocalStore {
         return state
     }
 
+    /// Stops an installation-mismatched session from turning a partial local
+    /// store into authoritative cloud deletions while the user signs in again.
+    static func quarantineForReauthentication(in context: ModelContext) throws {
+        let rows = try context.fetch(FetchDescriptor<SyncSchema.SyncOutboxRecord>())
+        for row in rows where row.status == "pending" || row.status == "sending" {
+            row.status = "failed"
+            row.lastError = "reauthentication_required"
+        }
+        try context.fetch(FetchDescriptor<SyncSchema.SyncOpenCountBatchRecord>())
+            .forEach(context.delete)
+        let state = try SharedProgressSyncPersistence.state(in: context)
+        state?.lastError = "installation_mismatch"
+    }
+
+    /// Begins a new device incarnation without touching native product rows.
+    /// The next sync therefore requests a full snapshot and conservatively
+    /// merges any genuinely local goals instead of replaying stale deletions.
+    static func resetForReauthentication(userID: String, in context: ModelContext) throws {
+        if let state = try SharedProgressSyncPersistence.state(in: context),
+           state.boundUserID != userID {
+            throw ProgressSyncPersistenceError.accountMismatch
+        }
+        try context.fetch(FetchDescriptor<SyncSchema.SyncOutboxRecord>()).forEach(context.delete)
+        try context.fetch(FetchDescriptor<SyncSchema.SyncOpenCountBatchRecord>()).forEach(context.delete)
+        try context.fetch(FetchDescriptor<SyncSchema.SyncEntityShadowRecord>()).forEach(context.delete)
+        try context.fetch(FetchDescriptor<SyncSchema.SyncCountShadowRecord>()).forEach(context.delete)
+        try context.fetch(FetchDescriptor<SyncSchema.SyncInboxPageRecord>()).forEach(context.delete)
+        try context.fetch(FetchDescriptor<SyncSchema.SyncConflictRecord>()).forEach(context.delete)
+        try context.fetch(FetchDescriptor<SyncSchema.SyncStateRecord>()).forEach(context.delete)
+    }
+
     /// Removes a binding created by a first sync attempt only while it is still
     /// completely tentative. Once any account-scoped state or local command is
     /// durable, retaining the binding is required to prevent cross-account data

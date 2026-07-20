@@ -510,6 +510,9 @@
 
 /* Counting page (Android parity) */
 "counting_min_for_streak" = "الحد الأدنى: %d";
+"counting_tap_circle_to_count" = "اضغط على الدائرة للعد";
+"counting_sync_added" = "تمت مزامنة +%@ من جهاز آخر";
+"counting_sync_adjusted" = "تمت مزامنة تعديل بقيمة −%@ من جهاز آخر";
 "count_over_target_warning" = "لقد تجاوزت هدفك.";
 "count_hard_cap_reached" = "لقد بلغت الحد الأقصى لهذا الهدف.";
 "slot_count_blocked_outside_active" = "هذه الفترة غير نشطة الآن.";
@@ -701,6 +704,9 @@
 "The requested dhikr is not available in this library." = "الذكر المطلوب غير متاح في هذه المكتبة.";
 "Use at least 10 characters with lowercase, uppercase, and a number or symbol." = "استخدم 10 أحرف على الأقل، مع أحرف صغيرة وكبيرة ورقم أو رمز.";
 "Check your email" = "تحقق من بريدك الإلكتروني";
+"Open the verification link on this device to finish signing in." = "افتح رابط التحقق على هذا الجهاز لإكمال تسجيل الدخول.";
+"Verifying and signing you in…" = "جارٍ التحقق وتسجيل الدخول…";
+"Sign in instead" = "تسجيل الدخول بدلاً من ذلك";
 "We sent a password reset link to your email." = "أرسلنا رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.";
 "Back to Log In" = "العودة إلى تسجيل الدخول";
 "Open notification settings" = "فتح إعدادات الإشعارات";
@@ -966,3 +972,31 @@
 "Use cloud version" = "استخدام نسخة السحابة";
 "Keep device version" = "الاحتفاظ بنسخة الجهاز";
 "Discard failed change" = "تجاهل التغيير الفاشل";
+"Previous progress found" = "تم العثور على تقدم سابق";
+"Sign in to restore" = "تسجيل الدخول للاستعادة";
+"Sign in again to safely restore the goals and counts previously backed up from this device." = "سجّل الدخول مجددًا لاستعادة الأهداف والأعداد التي نُسخت احتياطيًا من هذا الجهاز بأمان.";
+"We found progress previously backed up with %@. Sign in again to safely restore your goals and counts." = "وجدنا تقدمًا نُسخ احتياطيًا سابقًا باستخدام %@. سجّل الدخول مجددًا لاستعادة أهدافك وأعدادك بأمان.";
+"Awrad signed out the previous session because this is a new app installation. Your cloud progress has not been deleted." = "سجّل أوراد خروج الجلسة السابقة لأن هذا تثبيت جديد للتطبيق. لم يتم حذف تقدمك السحابي.";
+"Sign in with the account that owns the previous progress on this device." = "سجّل الدخول بالحساب الذي يملك التقدم السابق على هذا الجهاز.";
+"Start fresh on this device" = "البدء من جديد على هذا الجهاز";
+"Prefer not to restore? You can erase this device and continue with a clean, signed-out app." = "إذا كنت لا تريد الاستعادة، يمكنك مسح بيانات هذا الجهاز والمتابعة بتطبيق نظيف في وضع تسجيل الخروج.";
+"Start fresh on this device?" = "هل تريد البدء من جديد على هذا الجهاز؟";
+"Erase local data" = "مسح البيانات المحلية";
+"This permanently erases goals, counts, custom dhikrs, wird progress, preferences, and sync history on this device. Data already backed up to your account stays in the cloud." = "سيؤدي هذا إلى مسح الأهداف والأعداد والأذكار المخصصة وتقدم الأوراد والتفضيلات وسجل المزامنة نهائيًا من هذا الجهاز. ستبقى البيانات التي نُسخت احتياطيًا إلى حسابك محفوظة في السحابة.";
+"Couldn’t reset local data" = "تعذّر مسح البيانات المحلية";
+
+"Tracked goals" = "الأهداف المتتبعة";
+"Approx. hours" = "الساعات التقريبية";
+"Community dhikr" = "ذكر المجتمع";
+"Approximate counts together" = "العدد التقريبي معًا";
+"Approximately %@ community counts" = "نحو %@ من أذكار المجتمع";
+"Last seven days" = "آخر سبعة أيام";
+"%@, approximately %@ counts" = "%@، نحو %@ ذكرًا";
+"Synced %@" = "تمت المزامنة %@";
+"Estimates assume %d second per count." = "تفترض التقديرات %d ثانية لكل ذكر.";
+"Community totals are approximate and may change as progress syncs." = "إجماليات المجتمع تقريبية وقد تتغير مع مزامنة التقدم.";
+"Loading community totals…" = "جارٍ تحميل إجماليات المجتمع…";
+"Community totals are unavailable" = "إجماليات المجتمع غير متاحة";
+"Check your connection and try again." = "تحقق من اتصالك وحاول مرة أخرى.";
+"Community at a glance" = "المجتمع في لمحة";
+"Refresh community stats" = "تحديث إحصاءات المجتمع";

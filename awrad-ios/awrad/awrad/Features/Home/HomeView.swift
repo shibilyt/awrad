@@ -81,6 +81,9 @@ struct HomeView: View {
                 .padding(.vertical, 20)
                 .padding(.bottom, 96)
             }
+            .refreshable {
+                await refreshProgressFromCloud()
+            }
         }
         .background(AwradTheme.background)
         .navigationTitle("")
@@ -96,6 +99,11 @@ struct HomeView: View {
             now = date
             refreshDayContext(at: date)
         }
+    }
+
+    private func refreshProgressFromCloud() async {
+        guard services.auth.isLoggedIn else { return }
+        await services.progressSync.synchronize(store: store)
     }
 
     private var hero: some View {

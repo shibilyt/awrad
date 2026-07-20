@@ -125,6 +125,38 @@ final class AwradStore {
         isReady = true
     }
 
+    /// Erases only this installation and reseeds the offline library. The
+    /// persistence runtime bypasses sync diff generation, so this can never be
+    /// interpreted as deleting the account's cloud-backed progress.
+    func resetLocalState() throws {
+        let previousSnapshot = makeSnapshot()
+        let previousTemplates = seasonTemplates
+        seedDefaults()
+        selectedTab = .home
+        refreshEffectiveDate()
+
+        do {
+            if let persistence {
+                try persistence.resetLocalState(
+                    state: repositoryState,
+                    preferences: preferences
+                )
+                didCommit(using: persistence)
+            } else {
+                try? FileManager.default.removeItem(at: snapshotURL)
+                guard saveLegacySnapshot(to: snapshotURL) else {
+                    throw AwradStoreError.localResetFailed
+                }
+            }
+            persistenceRecovery = nil
+            isReady = true
+        } catch {
+            seasonTemplates = previousTemplates
+            apply(previousSnapshot)
+            throw error
+        }
+    }
+
     func reloadFromDisk() {
         if let persistence, persistenceRecovery?.isUsingLegacyFallback != true {
             do {
@@ -2334,6 +2366,7 @@ enum AwradStoreError: LocalizedError {
     case unsupportedSnapshotVersion(Int)
     case legacySnapshotVersion(Int)
     case persistenceUnavailable(String)
+    case localResetFailed
 
     var errorDescription: String? {
         switch self {
@@ -2343,6 +2376,8 @@ enum AwradStoreError: LocalizedError {
             "This backup uses schema version \(version). Awrad v5 requires stable UUID identities, so pre-v5 backups cannot be imported."
         case .persistenceUnavailable(let message):
             "The shared Awrad data store could not be opened: \(message)"
+        case .localResetFailed:
+            "Awrad could not reset this device's local data."
         }
     }
 }

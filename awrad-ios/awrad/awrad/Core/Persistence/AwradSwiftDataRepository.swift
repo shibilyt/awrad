@@ -4,6 +4,7 @@ import SwiftData
 @MainActor
 final class SwiftDataAwradRepository: AwradPersistenceRepository {
     private typealias Schema = AwradSchemaV1
+    private typealias SyncSchema = AwradSchemaV2
 
     let modelContext: ModelContext
 
@@ -73,6 +74,18 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
     func deleteAll() throws {
         try performTransaction {
             try deleteAllRecords()
+        }
+    }
+
+    /// Replaces this installation's product graph without interpreting the
+    /// removal as cloud mutations. Account-recovery reset uses this path to
+    /// guarantee that local erasure cannot enqueue server deletes.
+    func resetLocalState(with state: AwradRepositoryState) throws {
+        try AwradPersistenceValidator.validate(state: state)
+        try performTransaction(enqueueSync: false) {
+            try deleteAllSyncRecords()
+            try deleteAllRecords()
+            try insert(state)
         }
     }
 
@@ -488,6 +501,16 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
         try delete(Schema.SeasonTemplateRecord.self)
         try delete(Schema.WirdSessionRecord.self)
         try delete(Schema.WirdRecord.self)
+    }
+
+    private func deleteAllSyncRecords() throws {
+        try delete(SyncSchema.SyncOutboxRecord.self)
+        try delete(SyncSchema.SyncOpenCountBatchRecord.self)
+        try delete(SyncSchema.SyncEntityShadowRecord.self)
+        try delete(SyncSchema.SyncCountShadowRecord.self)
+        try delete(SyncSchema.SyncInboxPageRecord.self)
+        try delete(SyncSchema.SyncConflictRecord.self)
+        try delete(SyncSchema.SyncStateRecord.self)
     }
 
     private func count<T: PersistentModel>(_ type: T.Type) throws -> Int {

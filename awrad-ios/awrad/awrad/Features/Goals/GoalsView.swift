@@ -69,6 +69,7 @@ enum GoalPortfolioBuilder {
 struct GoalsView: View {
     @Environment(AwradStore.self) private var store
     @Environment(AppRouter.self) private var router
+    @Environment(AppServices.self) private var services
 
     private var sections: GoalPortfolioSections {
         GoalPortfolioBuilder.sections(
@@ -95,6 +96,10 @@ struct GoalsView: View {
             }
             .padding(20)
             .padding(.bottom, 96)
+        }
+        .refreshable {
+            guard services.auth.isLoggedIn else { return }
+            await services.progressSync.synchronize(store: store)
         }
         .background(AwradTheme.background)
         .navigationTitle("")

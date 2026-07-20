@@ -71,6 +71,16 @@ final class AppServices {
         progressSyncCountingActive = active
     }
 
+    @discardableResult
+    func clearScheduledRemindersForLocalReset() async -> NotificationSchedulingResult {
+        await notifications.refreshScheduledReminders(
+            goalInputs: [],
+            dailyReminder: (enabled: false, hour: 9, minute: 0, language: .english),
+            dailyRemembrance: (enabled: false, language: .english),
+            wirdInputs: []
+        )
+    }
+
     /// Reschedules (or clears) a wird's reminders, resolving prayer-offset times from the
     /// user's current location/method.
     @discardableResult

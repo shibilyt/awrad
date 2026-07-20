@@ -11,10 +11,20 @@ enum AwradDeepLink: Equatable {
     case verifyEmail(token: String?)
     case resetPassword(token: String)
 
-    init?(url: URL) {
-        guard url.scheme?.lowercased() == "awrad" else {
-            return nil
+    init?(url: URL, appLinkHost: String? = AwradDeepLink.configuredAppLinkHost) {
+        let scheme = url.scheme?.lowercased()
+        if scheme == "https" {
+            guard let appLinkHost,
+                  url.host?.caseInsensitiveCompare(appLinkHost) == .orderedSame else { return nil }
+            let segments = url.pathComponents.filter { $0 != "/" }
+            let isLegacy = segments.count == 3 && Array(segments.prefix(2)) == ["auth", "verify-email"]
+            let isMobile = segments.count == 4 && Array(segments.prefix(3)) == ["auth", "mobile", "verify-email"]
+            guard isLegacy || isMobile, let token = segments.last?.nonEmptyValue else { return nil }
+            self = .verifyEmail(token: token)
+            return
         }
+
+        guard scheme == "awrad" else { return nil }
 
         let destination = (url.host ?? url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))).lowercased()
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
@@ -44,6 +54,13 @@ enum AwradDeepLink: Equatable {
         default:
             return nil
         }
+    }
+
+    private static var configuredAppLinkHost: String? {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "AWRADAppLinkHost") as? String,
+              !value.isEmpty,
+              !value.contains("$(") else { return nil }
+        return value
     }
 
     var url: URL {

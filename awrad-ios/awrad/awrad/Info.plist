@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>AWRADAppLinkHost</key>
+	<string>$(AWRAD_APP_LINK_HOST)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Awrad</string>
 	<key>CFBundleExecutable</key>

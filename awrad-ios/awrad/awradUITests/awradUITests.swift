@@ -417,7 +417,7 @@ final class awradUITests: XCTestCase {
 
         openDeepLink("awrad://verify-email?token=ui-verification-token")
         XCTAssertTrue(app.navigationBars["Verify Email"].waitForExistence(timeout: 4))
-        XCTAssertEqual(app.textFields["Verification token"].value as? String, "ui-verification-token")
+        XCTAssertTrue(app.staticTexts["Verifying and signing you in…"].waitForExistence(timeout: 4))
 
         openDeepLink("awrad://counting?dhikr=removed-from-library")
         XCTAssertTrue(app.staticTexts["Dhikr not found"].waitForExistence(timeout: 4))

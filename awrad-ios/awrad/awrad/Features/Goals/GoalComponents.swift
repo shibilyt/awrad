@@ -78,7 +78,7 @@ struct GoalCardPresentation: Equatable {
         return Double(minimum) / Double(target)
     }
 
-    private static func targetTag(goal: Goal, target: Int, language: AppLanguage) -> String {
+    static func targetTag(goal: Goal, target: Int, language: AppLanguage) -> String {
         if goal.targetPolicy == .none {
             return AwradLocalizer.localized("No target", language: language)
         }

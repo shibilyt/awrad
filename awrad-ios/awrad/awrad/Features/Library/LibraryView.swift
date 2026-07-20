@@ -71,6 +71,9 @@ struct LibraryView: View {
                 dhikrPane
             case .wirds:
                 WirdListView(showsCreateButton: false)
+                    .refreshable {
+                        await refreshProgressFromCloud()
+                    }
             }
         }
         .background(AwradTheme.background)
@@ -119,7 +122,15 @@ struct LibraryView: View {
             .padding(20)
             .padding(.bottom, 96)
         }
+        .refreshable {
+            await refreshProgressFromCloud()
+        }
         .background(AwradTheme.background)
+    }
+
+    private func refreshProgressFromCloud() async {
+        guard services.auth.isLoggedIn else { return }
+        await services.progressSync.synchronize(store: store)
     }
 
     private var libraryHeader: some View {

@@ -509,6 +509,9 @@
 
 /* Counting page (Android parity) */
 "counting_min_for_streak" = "Minimum: %d";
+"counting_tap_circle_to_count" = "Tap the circle to count";
+"counting_sync_added" = "+%@ synced from another device";
+"counting_sync_adjusted" = "−%@ adjustment synced from another device";
 "count_over_target_warning" = "You've gone past your target.";
 "count_hard_cap_reached" = "You've reached the limit for this goal.";
 "slot_count_blocked_outside_active" = "This slot isn't active right now.";
@@ -685,6 +688,9 @@
 "The requested dhikr is not available in this library." = "The requested dhikr is not available in this library.";
 "Use at least 10 characters with lowercase, uppercase, and a number or symbol." = "Use at least 10 characters with lowercase, uppercase, and a number or symbol.";
 "Check your email" = "Check your email";
+"Open the verification link on this device to finish signing in." = "Open the verification link on this device to finish signing in.";
+"Verifying and signing you in…" = "Verifying and signing you in…";
+"Sign in instead" = "Sign in instead";
 "We sent a password reset link to your email." = "We sent a password reset link to your email.";
 "Back to Log In" = "Back to Log In";
 "Open notification settings" = "Open notification settings";
@@ -966,3 +972,31 @@
 "Use cloud version" = "Use cloud version";
 "Keep device version" = "Keep device version";
 "Discard failed change" = "Discard failed change";
+"Previous progress found" = "Previous progress found";
+"Sign in to restore" = "Sign in to restore";
+"Sign in again to safely restore the goals and counts previously backed up from this device." = "Sign in again to safely restore the goals and counts previously backed up from this device.";
+"We found progress previously backed up with %@. Sign in again to safely restore your goals and counts." = "We found progress previously backed up with %@. Sign in again to safely restore your goals and counts.";
+"Awrad signed out the previous session because this is a new app installation. Your cloud progress has not been deleted." = "Awrad signed out the previous session because this is a new app installation. Your cloud progress has not been deleted.";
+"Sign in with the account that owns the previous progress on this device." = "Sign in with the account that owns the previous progress on this device.";
+"Start fresh on this device" = "Start fresh on this device";
+"Prefer not to restore? You can erase this device and continue with a clean, signed-out app." = "Prefer not to restore? You can erase this device and continue with a clean, signed-out app.";
+"Start fresh on this device?" = "Start fresh on this device?";
+"Erase local data" = "Erase local data";
+"This permanently erases goals, counts, custom dhikrs, wird progress, preferences, and sync history on this device. Data already backed up to your account stays in the cloud." = "This permanently erases goals, counts, custom dhikrs, wird progress, preferences, and sync history on this device. Data already backed up to your account stays in the cloud.";
+"Couldn’t reset local data" = "Couldn’t reset local data";
+
+"Tracked goals" = "Tracked goals";
+"Approx. hours" = "Approx. hours";
+"Community dhikr" = "Community dhikr";
+"Approximate counts together" = "Approximate counts together";
+"Approximately %@ community counts" = "Approximately %@ community counts";
+"Last seven days" = "Last seven days";
+"%@, approximately %@ counts" = "%@, approximately %@ counts";
+"Synced %@" = "Synced %@";
+"Estimates assume %d second per count." = "Estimates assume %d second per count.";
+"Community totals are approximate and may change as progress syncs." = "Community totals are approximate and may change as progress syncs.";
+"Loading community totals…" = "Loading community totals…";
+"Community totals are unavailable" = "Community totals are unavailable";
+"Check your connection and try again." = "Check your connection and try again.";
+"Community at a glance" = "Community at a glance";
+"Refresh community stats" = "Refresh community stats";

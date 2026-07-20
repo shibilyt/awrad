@@ -171,6 +171,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 18AB84C22FCB03F600C439B3 /* Build configuration list for PBXNativeTarget "awrad" */;
 			buildPhases = (
+				ABCD00402FCB930000000040 /* Validate App Link Host */,
 				18AB849D2FCB03F400C439B3 /* Sources */,
 				18AB849E2FCB03F400C439B3 /* Frameworks */,
 				18AB849F2FCB03F400C439B3 /* Resources */,
@@ -341,6 +342,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		ABCD00402FCB930000000040 /* Validate App Link Host */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Validate App Link Host";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"$CONFIGURATION\" != \"Release\" ]; then\n  exit 0\nfi\ncase \"$AWRAD_APP_LINK_HOST\" in\n  \"\"|*\"://\"*|*\"/\"*|*\" \"*|localhost|127.*|10.0.2.2)\n    echo \"error: Release builds require AWRAD_APP_LINK_HOST to be the deployed HTTPS API hostname (without scheme or path).\" >&2\n    exit 1\n    ;;\nesac\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		18AB849D2FCB03F400C439B3 /* Sources */ = {

@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import Observation
 import SwiftData
 
 enum ForegroundProgressSyncPolicy {
@@ -217,6 +218,31 @@ private struct SyncActorAckResponse: Decodable {
         case safeCompactionRevision = "safe_compaction_revision"
     }
 }
+struct ProgressSyncRemoteCountChange: Equatable {
+    let goalID: String
+    let delta: Int64
+}
+
+struct RemoteCountSyncEvent: Identifiable, Equatable {
+    let id = UUID()
+    let goalID: String
+    let delta: Int64
+}
+
+func aggregateRemoteCountChanges(
+    _ changes: [ProgressSyncRemoteCountChange]
+) throws -> [String: Int64] {
+    var totals: [String: Int64] = [:]
+    for change in changes {
+        let (combined, overflow) = (totals[change.goalID] ?? 0).addingReportingOverflow(change.delta)
+        guard !overflow else { throw ProgressSyncPersistenceError.countOverflow }
+        if combined == 0 { totals.removeValue(forKey: change.goalID) }
+        else { totals[change.goalID] = combined }
+    }
+    return totals
+}
+
+@Observable
 @MainActor
 final class ProgressSyncEngine {
     private let auth: AuthService
@@ -224,8 +250,10 @@ final class ProgressSyncEngine {
     private let defaults: UserDefaults
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
-    private var syncTask: Task<Void, Never>?
-    private var needsAnotherRun = false
+    private(set) var remoteCountEvents: [RemoteCountSyncEvent] = []
+    @ObservationIgnored private var syncTask: Task<Void, Never>?
+    @ObservationIgnored private var needsAnotherRun = false
+    @ObservationIgnored private var pendingRemoteCountChanges: [ProgressSyncRemoteCountChange] = []
 
     init(
         auth: AuthService,
@@ -238,6 +266,20 @@ final class ProgressSyncEngine {
         encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         decoder = JSONDecoder()
+
+        // Older builds could persist this terminal server response without
+        // clearing their surviving Keychain session. Recover synchronously so
+        // the first rendered frame cannot expose an authenticated app shell.
+        if auth.isLoggedIn, let repository {
+            let persistedError = try? SharedProgressSyncPersistence
+                .state(in: repository.modelContext)?.lastError
+            if persistedError == "installation_mismatch" {
+                try? repository.performProgressSyncTransaction { context in
+                    try ProgressSyncLocalStore.quarantineForReauthentication(in: context)
+                }
+                auth.requireReauthentication()
+            }
+        }
     }
 
     func health() throws -> ProgressSyncHealth? {
@@ -299,6 +341,15 @@ final class ProgressSyncEngine {
                     // this installation is forbidden to open.
                     await self.auth.logout()
                     self.record(error: ProgressSyncPersistenceError.accountMismatch)
+                } catch let error as AuthServiceError
+                    where error.syncErrorCode == "installation_mismatch" {
+                    if let repository = self.repository {
+                        try? repository.performProgressSyncTransaction { context in
+                            try ProgressSyncLocalStore.quarantineForReauthentication(in: context)
+                        }
+                    }
+                    self.record(error: error)
+                    self.auth.requireReauthentication()
                 } catch {
                     self.record(error: error)
                 }
@@ -322,10 +373,17 @@ final class ProgressSyncEngine {
               auth.isLoggedIn,
               auth.userEmailVerified else { return }
 
+        pendingRemoteCountChanges.removeAll(keepingCapacity: true)
+
         let installationID = stableInstallationID()
         var initialState: AwradRepositoryState?
         var createdTentativeBinding = false
         try repository.performProgressSyncTransaction { context in
+            if auth.progressSyncRebindRequired {
+                try ProgressSyncLocalStore.resetForReauthentication(
+                    userID: userID, in: context
+                )
+            }
             createdTentativeBinding = try SharedProgressSyncPersistence.state(in: context) == nil
             let state = try ProgressSyncLocalStore.bind(
                 userID: userID, installationID: installationID, in: context
@@ -372,7 +430,15 @@ final class ProgressSyncEngine {
             try await resumeOrPull(repository: repository)
             try await acknowledgeActor(repository: repository)
             store.reloadFromDisk()
+            publishRemoteCountFeedback()
+            if auth.progressSyncRebindRequired {
+                auth.completeProgressSyncRebind()
+            }
         } catch {
+            if !pendingRemoteCountChanges.isEmpty {
+                store.reloadFromDisk()
+                publishRemoteCountFeedback()
+            }
             if createdTentativeBinding {
                 try? repository.performProgressSyncTransaction { context in
                     try ProgressSyncLocalStore.rollbackTentativeBindingIfUnused(
@@ -382,6 +448,21 @@ final class ProgressSyncEngine {
             }
             throw error
         }
+    }
+
+    private func recordRemoteCountChanges(_ changes: [ProgressSyncRemoteCountChange]) {
+        pendingRemoteCountChanges.append(contentsOf: changes)
+    }
+
+    private func publishRemoteCountFeedback() {
+        defer { pendingRemoteCountChanges.removeAll(keepingCapacity: true) }
+        guard let totals = try? aggregateRemoteCountChanges(pendingRemoteCountChanges) else { return }
+        let events = totals
+            .filter { $0.value != 0 }
+            .sorted { $0.key < $1.key }
+            .map { RemoteCountSyncEvent(goalID: $0.key, delta: $0.value) }
+        guard !events.isEmpty else { return }
+        remoteCountEvents = Array((remoteCountEvents + events).suffix(32))
     }
 
     private func pushPending(repository: SwiftDataAwradRepository) async throws {
@@ -453,6 +534,7 @@ final class ProgressSyncEngine {
         receipts: [SyncReceipt],
         repository: SwiftDataAwradRepository
     ) throws {
+        var countChanges: [ProgressSyncRemoteCountChange] = []
         try repository.performProgressSyncTransaction { context in
             guard let state = try SharedProgressSyncPersistence.state(in: context) else { return }
             for receipt in receipts {
@@ -492,11 +574,13 @@ final class ProgressSyncEngine {
                               let slotID = outbox.slotID,
                               let localDate = outbox.localDate,
                               let count = receipt.canonicalEffect.object?["count"]?.string {
-                        try ProgressSyncRemoteApplier.installCanonicalCount(
+                        if let change = try ProgressSyncRemoteApplier.installCanonicalCount(
                             goalID: goalID, slotID: slotID, localDate: localDate,
                             canonical: Self.int64(count), incarnation: nil,
                             revision: revision, in: context
-                        )
+                        ) {
+                            countChanges.append(change)
+                        }
                     }
                 case "conflict":
                     try ProgressSyncRemoteApplier.installEntityEffect(
@@ -534,6 +618,7 @@ final class ProgressSyncEngine {
                 }
             }
         }
+        recordRemoteCountChanges(countChanges)
     }
 
     private func resumeOrPull(repository: SwiftDataAwradRepository) async throws {
@@ -639,8 +724,10 @@ final class ProgressSyncEngine {
             guard let nextPage = state.pendingTransferPage,
                   let totalPages = state.pendingTransferPageCount,
                   nextPage > totalPages else { return }
+            var countChanges: [ProgressSyncRemoteCountChange] = []
             try repository.performProgressSyncTransaction { context in
                 guard let row = try SharedProgressSyncPersistence.state(in: context) else { return }
+                let shouldNotify = row.pendingTransferKind == "delta" && !row.generationResetPending
                 let transferID = row.pendingTransferID ?? ""
                 let pages = try context.fetch(
                     FetchDescriptor<AwradSchemaV2.SyncInboxPageRecord>(
@@ -663,7 +750,10 @@ final class ProgressSyncEngine {
                         records: records, in: context
                     )
                 }
-                try ProgressSyncRemoteApplier.apply(records: records, in: context, decoder: decoder)
+                let appliedCountChanges = try ProgressSyncRemoteApplier.apply(
+                    records: records, in: context, decoder: decoder
+                )
+                if shouldNotify { countChanges = appliedCountChanges }
                 row.cursor = row.pendingTransferCursor
                 row.appliedRevision = row.generationResetPending
                     ? (row.pendingTransferThroughRevision ?? 0)
@@ -682,6 +772,7 @@ final class ProgressSyncEngine {
                 row.lastError = nil
                 pages.forEach(context.delete)
             }
+            recordRemoteCountChanges(countChanges)
             return
         }
     }
@@ -859,16 +950,21 @@ enum ProgressSyncRemoteApplier {
         records: [SyncTransferRecord],
         in context: ModelContext,
         decoder: JSONDecoder
-    ) throws {
+    ) throws -> [ProgressSyncRemoteCountChange] {
+        var countChanges: [ProgressSyncRemoteCountChange] = []
         for record in records.sorted(by: { order($0.kind) < order($1.kind) }) {
             switch record.kind {
             case "custom_dhikr", "goal": try applyEntity(record, in: context, decoder: decoder)
-            case "count_projection": try applyCount(record, in: context)
+            case "count_projection":
+                if let change = try applyCount(record, in: context) {
+                    countChanges.append(change)
+                }
             case "tombstone", "deletion_fence": try applyTombstone(record, in: context)
             case "conflict": try applyConflict(record, in: context)
             default: throw ProgressSyncPersistenceError.invalidPayload
             }
         }
+        return countChanges
     }
 
     static func resolveInitialOverlap(
@@ -1120,6 +1216,7 @@ enum ProgressSyncRemoteApplier {
         oldConflicts.filter { !conflictCommandIDs.contains($0.commandID) }.forEach(context.delete)
     }
 
+    @discardableResult
     static func installCanonicalCount(
         goalID: String,
         slotID: String,
@@ -1128,11 +1225,11 @@ enum ProgressSyncRemoteApplier {
         incarnation: Int64?,
         revision: Int64,
         in context: ModelContext
-    ) throws {
+    ) throws -> ProgressSyncRemoteCountChange? {
         if let incarnation,
            let shadow = try SharedProgressSyncPersistence.shadow(
             entityType: "goal", entityID: goalID, in: context
-           ), shadow.incarnation != incarnation { return }
+           ), shadow.incarnation != incarnation { return nil }
         let currentIncarnation = try SharedProgressSyncPersistence.shadow(
             entityType: "goal", entityID: goalID, in: context
         )?.incarnation
@@ -1172,6 +1269,7 @@ enum ProgressSyncRemoteApplier {
         let existing = try context.fetch(
             FetchDescriptor<Domain.CountEntryRecord>(predicate: #Predicate { $0.semanticKey == semanticKey })
         )
+        let before = existing.first?.count ?? 0
         if visible == 0 { existing.forEach(context.delete) }
         else if let entry = existing.first { entry.count = visible; entry.lastUpdated = Date() }
         else {
@@ -1181,6 +1279,8 @@ enum ProgressSyncRemoteApplier {
             ))
         }
         try refreshGoalTotal(goalID: goalID, in: context)
+        let delta = try tryAdd(visible, -before)
+        return delta == 0 ? nil : ProgressSyncRemoteCountChange(goalID: goalID, delta: delta)
     }
 
     private static func applyEntity(
@@ -1251,7 +1351,10 @@ enum ProgressSyncRemoteApplier {
         }
     }
 
-    private static func applyCount(_ record: SyncTransferRecord, in context: ModelContext) throws {
+    private static func applyCount(
+        _ record: SyncTransferRecord,
+        in context: ModelContext
+    ) throws -> ProgressSyncRemoteCountChange? {
         guard let payload = record.payload.object,
               let goalID = payload["goal_id"]?.string,
               let slotID = payload["slot_id"]?.string,
@@ -1260,7 +1363,7 @@ enum ProgressSyncRemoteApplier {
               let incarnation = payload["entity_incarnation"]?.string.flatMap(Int64.init) else {
             throw ProgressSyncPersistenceError.invalidPayload
         }
-        try installCanonicalCount(
+        return try installCanonicalCount(
             goalID: goalID, slotID: slotID, localDate: localDate,
             canonical: count, incarnation: incarnation,
             revision: try int64(record.syncRevision), in: context

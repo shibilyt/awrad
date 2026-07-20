@@ -5,6 +5,108 @@ import Testing
 @MainActor
 @Suite(.serialized)
 struct AuthServiceTests {
+    @Test func publicCommunityStatsGETPreservesLargeCountsWithoutCredentials() async throws {
+        let recorder = AuthRequestRecorder()
+        MockAuthURLProtocol.install { request in
+            recorder.record(request)
+            return .json(status: 200, body: #"""
+            {
+              "as_of":"2026-07-19T16:08:25.123Z",
+              "count_semantics":"accepted_progress",
+              "total_tracked_goals":42,
+              "approximate_total_counts":"1234567890123456789012345678901234567890",
+              "approximate_dhikr_hours":12.5,
+              "seconds_per_count":1,
+              "daily_counts":[{"date":"2026-07-19","approximate_count":"999999999999999999999999"}]
+            }
+            """#)
+        }
+        defer { MockAuthURLProtocol.reset() }
+        let defaults = isolatedDefaults()
+        let service = AuthService(
+            baseURL: testBaseURL,
+            session: mockSession(),
+            defaults: defaults,
+            credentialStore: authenticatedCredentials(in: defaults, access: "secret", refresh: "refresh")
+        )
+
+        let response: CommunityStatsResponse = try await service.publicRequest("api/community/stats")
+
+        #expect(response.approximateTotalCounts.rawValue == "1234567890123456789012345678901234567890")
+        #expect(response.dailyCounts.first?.approximateCount.rawValue == "999999999999999999999999")
+        #expect(recorder.method(path: "/api/community/stats") == "GET")
+        #expect(recorder.authorization(path: "/api/community/stats") == nil)
+        #expect(recorder.count(path: "/api/auth/refresh") == 0)
+    }
+
+    @Test func publicCommunityStatsSurfacesHTTPErrorWithoutRefreshing() async throws {
+        let recorder = AuthRequestRecorder()
+        MockAuthURLProtocol.install { request in
+            recorder.record(request)
+            return .json(status: 503, body: #"{"error":"temporarily_unavailable","message":"Try later"}"#)
+        }
+        defer { MockAuthURLProtocol.reset() }
+        let service = AuthService(
+            baseURL: testBaseURL,
+            session: mockSession(),
+            defaults: isolatedDefaults(),
+            credentialStore: InMemoryAuthCredentialStore()
+        )
+
+        do {
+            let _: CommunityStatsResponse = try await service.publicRequest("api/community/stats")
+            Issue.record("Expected the public request to fail")
+        } catch let AuthServiceError.http(statusCode, _, errorCode) {
+            #expect(statusCode == 503)
+            #expect(errorCode == "temporarily_unavailable")
+        }
+        #expect(recorder.count(path: "/api/community/stats") == 1)
+        #expect(recorder.count(path: "/api/auth/refresh") == 0)
+    }
+
+    @Test func forcedCommunityStatsRefreshBypassesCachedResponse() async throws {
+        let recorder = AuthRequestRecorder()
+        MockAuthURLProtocol.install { request in
+            recorder.record(request)
+            return .json(status: 200, body: #"""
+            {
+              "as_of":"2026-07-19T16:08:25Z","count_semantics":"current_canonical_net",
+              "total_tracked_goals":1,"approximate_total_counts":"2",
+              "approximate_dhikr_hours":0.0,"seconds_per_count":1,"daily_counts":[]
+            }
+            """#)
+        }
+        defer { MockAuthURLProtocol.reset() }
+        let service = AuthService(
+            baseURL: testBaseURL,
+            session: mockSession(),
+            defaults: isolatedDefaults(),
+            credentialStore: InMemoryAuthCredentialStore()
+        )
+
+        let _: CommunityStatsResponse = try await service.publicRequest(
+            "api/community/stats",
+            forceRefresh: true
+        )
+
+        #expect(recorder.header("Cache-Control", path: "/api/community/stats") == "no-cache")
+        #expect(recorder.authorization(path: "/api/community/stats") == nil)
+        #expect(recorder.count(path: "/api/auth/refresh") == 0)
+    }
+
+    @Test func communityStatsRejectsNonDecimalCountStringsAndInvalidDates() {
+        let data = Data(#"""
+        {
+          "as_of":"not-a-date","count_semantics":"accepted_progress","total_tracked_goals":1,
+          "approximate_total_counts":"12.5","approximate_dhikr_hours":1,"seconds_per_count":1,
+          "daily_counts":[]
+        }
+        """#.utf8)
+        #expect(throws: DecodingError.self) {
+            try JSONDecoder().decode(CommunityStatsResponse.self, from: data)
+        }
+    }
+
     @Test func actorAckForkRotatesAndRetriesAtNextDurableSequence() async throws {
         let recorder = AuthRequestRecorder()
         MockAuthURLProtocol.install { request in
@@ -42,11 +144,14 @@ struct AuthServiceTests {
             state.appliedRevision = 12
             state.safeCompactionRevision = 10
         }
+        let authDefaults = isolatedDefaults()
+        authDefaults.set(installationID, forKey: AwradInstallationIdentity.storageKey)
+        authDefaults.set(installationID, forKey: AwradInstallationIdentity.installMarkerKey)
         let auth = AuthService(
-            baseURL: testBaseURL, session: mockSession(), defaults: isolatedDefaults(),
-            credentialStore: InMemoryAuthCredentialStore(credentials: StoredAuthCredentials(
-                accessToken: "access", refreshToken: "refresh"
-            ))
+            baseURL: testBaseURL, session: mockSession(), defaults: authDefaults,
+            credentialStore: authenticatedCredentials(
+                in: authDefaults, access: "access", refresh: "refresh"
+            )
         )
         let engine = ProgressSyncEngine(auth: auth, repository: repository)
         try await engine.acknowledgeActor(repository: repository)
@@ -98,6 +203,153 @@ struct AuthServiceTests {
         #expect(defaults.string(forKey: AwradInstallationIdentity.legacyProgressSyncStorageKey) == nil)
     }
 
+    @Test func reinstallWithPreservedCredentialsRequiresExplicitSignIn() {
+        let previousInstallationID = UUID().uuidString.lowercased()
+        let credentials = InMemoryAuthCredentialStore(credentials: StoredAuthCredentials(
+            accessToken: "access",
+            refreshToken: "refresh",
+            installationID: previousInstallationID,
+            userID: "user-1",
+            userEmail: "person@example.com"
+        ))
+        let freshDefaults = isolatedDefaults()
+
+        let service = AuthService(
+            baseURL: testBaseURL,
+            session: mockSession(),
+            defaults: freshDefaults,
+            credentialStore: credentials
+        )
+
+        #expect(service.reauthenticationRequired)
+        #expect(!service.isLoggedIn)
+        #expect(service.accessToken == nil)
+        #expect(service.recoveryUserEmail == "person@example.com")
+        #expect(service.recoveryUserID == "user-1")
+        #expect(service.progressSyncRebindRequired)
+        #expect(credentials.credentials == nil)
+        #expect(freshDefaults.string(forKey: AwradInstallationIdentity.storageKey) != previousInstallationID)
+    }
+
+    @Test func reinstallDetectsLegacySecureCredentialsWithoutInstallationMetadata() {
+        let credentials = InMemoryAuthCredentialStore(credentials: StoredAuthCredentials(
+            accessToken: "legacy-access",
+            refreshToken: "legacy-refresh"
+        ))
+        let freshDefaults = isolatedDefaults()
+
+        let service = AuthService(
+            baseURL: testBaseURL,
+            session: mockSession(),
+            defaults: freshDefaults,
+            credentialStore: credentials
+        )
+
+        #expect(service.reauthenticationRequired)
+        #expect(!service.isLoggedIn)
+        #expect(service.progressSyncRebindRequired)
+        #expect(credentials.credentials == nil)
+    }
+
+    @Test func installationMismatchSignsOutAndPersistsRecoveryPrompt() {
+        let defaults = isolatedDefaults()
+        let installationID = AwradInstallationIdentity.markCurrentInstall(in: defaults)
+        defaults.set("user-1", forKey: "auth_user_id")
+        defaults.set("person@example.com", forKey: "auth_user_email")
+        defaults.set(true, forKey: "auth_user_email_verified")
+        defaults.set("session-1", forKey: "auth_session_id")
+        let credentials = InMemoryAuthCredentialStore(credentials: StoredAuthCredentials(
+            accessToken: "access", refreshToken: "refresh",
+            installationID: installationID, userID: "user-1", userEmail: "person@example.com"
+        ))
+        let service = AuthService(
+            baseURL: testBaseURL, session: mockSession(), defaults: defaults,
+            credentialStore: credentials
+        )
+
+        #expect(service.isLoggedIn)
+        service.requireReauthentication()
+
+        #expect(!service.isLoggedIn)
+        #expect(service.reauthenticationRequired)
+        #expect(service.recoveryUserEmail == "person@example.com")
+        #expect(service.progressSyncRebindRequired)
+        #expect(credentials.credentials == nil)
+
+        let restored = AuthService(
+            baseURL: testBaseURL, session: mockSession(), defaults: defaults,
+            credentialStore: credentials
+        )
+        #expect(restored.reauthenticationRequired)
+        #expect(!restored.isLoggedIn)
+        #expect(restored.recoveryUserID == "user-1")
+    }
+
+    @Test func localResetClearsRecoveryWithoutCallingTheServer() {
+        let defaults = isolatedDefaults()
+        let credentials = authenticatedCredentials(
+            in: defaults, access: "access", refresh: "refresh"
+        )
+        let service = AuthService(
+            baseURL: testBaseURL, session: mockSession(), defaults: defaults,
+            credentialStore: credentials
+        )
+        service.requireReauthentication()
+        let recoveryInstallationID = defaults.string(
+            forKey: AwradInstallationIdentity.storageKey
+        )
+
+        service.resetLocalAuthentication()
+
+        #expect(!service.isLoggedIn)
+        #expect(!service.reauthenticationRequired)
+        #expect(!service.progressSyncRebindRequired)
+        #expect(service.recoveryUserID == nil)
+        #expect(service.recoveryUserEmail == nil)
+        #expect(credentials.credentials == nil)
+        #expect(defaults.string(forKey: AwradInstallationIdentity.storageKey) != recoveryInstallationID)
+    }
+
+    @Test func recoveryRejectsSigningIntoAnotherAccount() async {
+        MockAuthURLProtocol.install { request in
+            guard request.url?.path == "/api/auth/login" else {
+                return .json(status: 404, body: #"{"error":"missing"}"#)
+            }
+            return .json(
+                status: 200,
+                body: authResponse(
+                    access: "other-access",
+                    refresh: "other-refresh",
+                    userID: "user-2",
+                    email: "other@example.com"
+                )
+            )
+        }
+        defer { MockAuthURLProtocol.reset() }
+
+        let defaults = isolatedDefaults()
+        let installationID = AwradInstallationIdentity.markCurrentInstall(in: defaults)
+        defaults.set("user-1", forKey: "auth_user_id")
+        defaults.set("person@example.com", forKey: "auth_user_email")
+        let credentials = InMemoryAuthCredentialStore(credentials: StoredAuthCredentials(
+            accessToken: "access", refreshToken: "refresh",
+            installationID: installationID, userID: "user-1", userEmail: "person@example.com"
+        ))
+        let service = AuthService(
+            baseURL: testBaseURL, session: mockSession(), defaults: defaults,
+            credentialStore: credentials
+        )
+        service.requireReauthentication()
+
+        await #expect(throws: AuthServiceError.self) {
+            try await service.login(email: "other@example.com", password: "Strong-password1")
+        }
+        #expect(service.reauthenticationRequired)
+        #expect(!service.isLoggedIn)
+        #expect(service.recoveryUserID == "user-1")
+        #expect(credentials.credentials == nil)
+    }
+
     @Test func legacyTokensMoveIntoSecureCredentialStore() {
         let defaults = isolatedDefaults()
         defaults.set("legacy-access", forKey: "auth_access_token")
@@ -113,9 +365,10 @@ struct AuthServiceTests {
 
         #expect(service.accessToken == "legacy-access")
         #expect(service.refreshToken == "legacy-refresh")
-        #expect(credentials.credentials == StoredAuthCredentials(
-            accessToken: "legacy-access",
-            refreshToken: "legacy-refresh"
+        #expect(credentials.credentials?.accessToken == "legacy-access")
+        #expect(credentials.credentials?.refreshToken == "legacy-refresh")
+        #expect(credentials.credentials?.installationID == defaults.string(
+            forKey: AwradInstallationIdentity.storageKey
         ))
         #expect(defaults.string(forKey: "auth_access_token") == nil)
         #expect(defaults.string(forKey: "auth_refresh_token") == nil)
@@ -123,8 +376,9 @@ struct AuthServiceTests {
 
     @Test func concurrentUnauthorizedRequestsShareOneRefresh() async throws {
         let recorder = AuthRequestRecorder()
-        let credentials = InMemoryAuthCredentialStore(
-            credentials: StoredAuthCredentials(accessToken: "old-access", refreshToken: "old-refresh")
+        let defaults = isolatedDefaults()
+        let credentials = authenticatedCredentials(
+            in: defaults, access: "old-access", refresh: "old-refresh"
         )
         MockAuthURLProtocol.install { request in
             recorder.record(request)
@@ -146,7 +400,7 @@ struct AuthServiceTests {
         let service = AuthService(
             baseURL: testBaseURL,
             session: mockSession(),
-            defaults: isolatedDefaults(),
+            defaults: defaults,
             credentialStore: credentials
         )
 
@@ -170,8 +424,9 @@ struct AuthServiceTests {
     }
 
     @Test func transientRefreshFailurePreservesCredentialsForOfflineRecovery() async {
-        let credentials = InMemoryAuthCredentialStore(
-            credentials: StoredAuthCredentials(accessToken: "old-access", refreshToken: "old-refresh")
+        let defaults = isolatedDefaults()
+        let credentials = authenticatedCredentials(
+            in: defaults, access: "old-access", refresh: "old-refresh"
         )
         MockAuthURLProtocol.install { request in
             if request.url?.path == "/api/auth/refresh" {
@@ -184,7 +439,7 @@ struct AuthServiceTests {
         let service = AuthService(
             baseURL: testBaseURL,
             session: mockSession(),
-            defaults: isolatedDefaults(),
+            defaults: defaults,
             credentialStore: credentials
         )
 
@@ -203,8 +458,9 @@ struct AuthServiceTests {
     }
 
     @Test func definitiveRefreshFailureClearsRevokedCredentials() async {
-        let credentials = InMemoryAuthCredentialStore(
-            credentials: StoredAuthCredentials(accessToken: "old-access", refreshToken: "old-refresh")
+        let defaults = isolatedDefaults()
+        let credentials = authenticatedCredentials(
+            in: defaults, access: "old-access", refresh: "old-refresh"
         )
         MockAuthURLProtocol.install { request in
             if request.url?.path == "/api/auth/refresh" {
@@ -220,7 +476,7 @@ struct AuthServiceTests {
         let service = AuthService(
             baseURL: testBaseURL,
             session: mockSession(),
-            defaults: isolatedDefaults(),
+            defaults: defaults,
             credentialStore: credentials
         )
 
@@ -240,8 +496,9 @@ struct AuthServiceTests {
 
     @Test func verificationResetAndSessionOperationsUsePhoenixContracts() async throws {
         let recorder = AuthRequestRecorder()
-        let credentials = InMemoryAuthCredentialStore(
-            credentials: StoredAuthCredentials(accessToken: "access", refreshToken: "refresh")
+        let defaults = isolatedDefaults()
+        let credentials = authenticatedCredentials(
+            in: defaults, access: "access", refresh: "refresh"
         )
         MockAuthURLProtocol.install { request in
             recorder.record(request)
@@ -260,7 +517,6 @@ struct AuthServiceTests {
         }
         defer { MockAuthURLProtocol.reset() }
 
-        let defaults = isolatedDefaults()
         defaults.set("person@example.com", forKey: "auth_pending_verification_email")
         let service = AuthService(
             baseURL: testBaseURL,
@@ -318,6 +574,102 @@ struct AuthServiceTests {
         }
     }
 
+    @Test func unverifiedLoginPersistsStructuredOnboardingContext() async {
+        MockAuthURLProtocol.install { request in
+            if request.url?.path == "/api/auth/login" {
+                return .json(
+                    status: 403,
+                    body: #"{"error":"email verification required","error_code":"email_verification_required"}"#
+                )
+            }
+            return .json(status: 404, body: #"{"error":"missing"}"#)
+        }
+        defer { MockAuthURLProtocol.reset() }
+
+        let defaults = isolatedDefaults()
+        let service = AuthService(
+            baseURL: testBaseURL,
+            session: mockSession(),
+            defaults: defaults,
+            credentialStore: InMemoryAuthCredentialStore()
+        )
+
+        do {
+            try await service.login(
+                email: " PERSON@Example.com ",
+                password: "Strong-password1",
+                origin: .onboarding
+            )
+            Issue.record("Expected email verification to be required")
+        } catch {}
+
+        #expect(service.pendingVerificationContext == PendingVerificationContext(
+            email: "person@example.com",
+            mode: .login,
+            origin: .onboarding
+        ))
+
+        let restored = AuthService(
+            baseURL: testBaseURL,
+            session: mockSession(),
+            defaults: defaults,
+            credentialStore: InMemoryAuthCredentialStore()
+        )
+        #expect(restored.pendingVerificationContext == service.pendingVerificationContext)
+    }
+
+    @Test func signupWaitsForVerificationAndVerificationSavesTheSession() async throws {
+        let recorder = AuthRequestRecorder()
+        MockAuthURLProtocol.install { request in
+            recorder.record(request)
+            switch request.url?.path {
+            case "/api/auth/register":
+                return .json(
+                    status: 202,
+                    body: #"{"message":"accepted","verification_required":true}"#
+                )
+            case "/api/auth/verify-email":
+                return .json(
+                    status: 200,
+                    body: authResponse(access: "verified-access", refresh: "verified-refresh")
+                )
+            default:
+                return .json(status: 404, body: #"{"error":"missing"}"#)
+            }
+        }
+        defer { MockAuthURLProtocol.reset() }
+
+        let defaults = isolatedDefaults()
+        let credentials = InMemoryAuthCredentialStore()
+        let service = AuthService(
+            baseURL: testBaseURL,
+            session: mockSession(),
+            defaults: defaults,
+            credentialStore: credentials
+        )
+
+        try await service.register(
+            email: " PERSON@Example.com ",
+            password: "Strong-password1",
+            origin: .onboarding
+        )
+
+        #expect(!service.isLoggedIn)
+        #expect(service.pendingVerificationContext == PendingVerificationContext(
+            email: "person@example.com",
+            mode: .signup,
+            origin: .onboarding
+        ))
+
+        try await service.verifyEmail(token: "verification-token")
+
+        #expect(service.isLoggedIn)
+        #expect(service.pendingVerificationContext == nil)
+        #expect(credentials.credentials?.accessToken == "verified-access")
+        #expect(credentials.credentials?.refreshToken == "verified-refresh")
+        #expect(recorder.jsonBody(path: "/api/auth/verify-email")?["token"] as? String == "verification-token")
+    }
+
     @Test func authDeepLinksRoundTripTokensAndRejectMissingResetToken() throws {
         let verifyURL = try #require(URL(string: "awrad://verify-email?token=verify-123"))
         let resetURL = try #require(URL(string: "awrad://reset-password?token=reset-123"))
@@ -327,6 +679,25 @@ struct AuthServiceTests {
         #expect(AwradDeepLink.verifyEmail(token: nil).url.absoluteString == "awrad://verify-email")
         #expect(AwradDeepLink.resetPassword(token: "reset-123").url.absoluteString == "awrad://reset-password?token=reset-123")
         #expect(AwradDeepLink(url: URL(string: "awrad://reset-password")!) == nil)
+
+        #expect(
+            AwradDeepLink(
+                url: URL(string: "https://api.awrad.app/auth/mobile/verify-email/mobile-token")!,
+                appLinkHost: "api.awrad.app"
+            ) == .verifyEmail(token: "mobile-token")
+        )
+        #expect(
+            AwradDeepLink(
+                url: URL(string: "https://api.awrad.app/auth/verify-email/legacy-token")!,
+                appLinkHost: "api.awrad.app"
+            ) == .verifyEmail(token: "legacy-token")
+        )
+        #expect(
+            AwradDeepLink(
+                url: URL(string: "https://attacker.example/auth/mobile/verify-email/token")!,
+                appLinkHost: "api.awrad.app"
+            ) == nil
+        )
     }
 
     private var testBaseURL: URL { URL(string: "https://awrad.test/")! }
@@ -343,15 +714,38 @@ struct AuthServiceTests {
         configuration.protocolClasses = [MockAuthURLProtocol.self]
         return URLSession(configuration: configuration)
     }
+
+    private func authenticatedCredentials(
+        in defaults: UserDefaults,
+        access: String,
+        refresh: String
+    ) -> InMemoryAuthCredentialStore {
+        let installationID = AwradInstallationIdentity.markCurrentInstall(in: defaults)
+        defaults.set("user-1", forKey: "auth_user_id")
+        defaults.set("person@example.com", forKey: "auth_user_email")
+        defaults.set(true, forKey: "auth_user_email_verified")
+        return InMemoryAuthCredentialStore(credentials: StoredAuthCredentials(
+            accessToken: access,
+            refreshToken: refresh,
+            installationID: installationID,
+            userID: "user-1",
+            userEmail: "person@example.com"
+        ))
+    }
 }
 
 private struct EmptyTestRequest: Encodable {}
 private struct ProtectedResponse: Decodable { let value: String }
 
-private func authResponse(access: String, refresh: String) -> String {
+private func authResponse(
+    access: String,
+    refresh: String,
+    userID: String = "user-1",
+    email: String = "person@example.com"
+) -> String {
     """
     {
-      "user": {"id":"user-1","email":"person@example.com","email_verified":true},
+      "user": {"id":"\(userID)","email":"\(email)","email_verified":true},
       "access_token":"\(access)",
       "refresh_token":"\(refresh)",
       "session":{"id":"session-1","device_name":"iPhone","platform":"ios"}
@@ -411,10 +805,21 @@ private final class AuthRequestRecorder: @unchecked Sendable {
         withRequests { $0.filter { $0.request.url?.path == path }.count }
     }
 
+    func method(path: String) -> String? {
+        withRequests { $0.last(where: { $0.request.url?.path == path })?.request.httpMethod }
+    }
+
     func authorization(path: String) -> String? {
         withRequests { requests in
             requests.last(where: { $0.request.url?.path == path })?
                 .request.value(forHTTPHeaderField: "Authorization")
+        }
+    }
+
+    func header(_ field: String, path: String) -> String? {
+        withRequests { requests in
+            requests.last(where: { $0.request.url?.path == path })?
+                .request.value(forHTTPHeaderField: field)
         }
     }
 
