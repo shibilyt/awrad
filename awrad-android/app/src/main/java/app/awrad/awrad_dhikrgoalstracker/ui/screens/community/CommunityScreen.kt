@@ -222,7 +222,7 @@ fun CommunityScreen(
                 )
 
                 if (isLoggedIn && isEmailVerified && pendingVerificationEmail == null) {
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(4.dp))
                     CommunityFeedTabs(
                         tabs = listOf(
                             stringResource(R.string.community_tab_for_you),
