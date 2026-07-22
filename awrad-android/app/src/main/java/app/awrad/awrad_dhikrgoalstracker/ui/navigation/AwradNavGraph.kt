@@ -37,6 +37,8 @@ import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityPostDetai
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityProfileScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunitySavedScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityStatsScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityMessagesScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityNotificationsScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.createdhikr.CreateDhikrScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdDetailScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdEditorScreen
@@ -182,11 +184,13 @@ fun AwradNavGraph(
                         navController.navigateSafely(AwradDestination.VerifyEmail.createRoute())
                     },
                     onNavigateToStats = { navController.navigateSafely(AwradDestination.CommunityStats.route) },
-                    onNavigateToProfile = { navController.navigateSafely(AwradDestination.CommunityProfile.route) },
-                    onNavigateToChallenges = { navController.navigateSafely(AwradDestination.CommunityChallenges.route) },
                     onNavigateToCircles = { navController.navigateSafely(AwradDestination.CommunityCircles.route) },
                     onNavigateToSaved = { navController.navigateSafely(AwradDestination.CommunitySaved.route) },
                     onNavigateToPost = { navController.navigateSafely(AwradDestination.CommunityPostDetail.route) },
+                    onNavigateToMessages = { navController.navigateSafely(AwradDestination.CommunityMessages.route) },
+                    onNavigateToNotifications = {
+                        navController.navigateSafely(AwradDestination.CommunityNotifications.route)
+                    },
                     onOpenMenu = onOpenCommunityMenu,
                 )
             }
@@ -209,6 +213,14 @@ fun AwradNavGraph(
         }
         composable(AwradDestination.CommunityPostDetail.route) {
             WrappedAwradDestination(navController) { CommunityPostDetailScreen(onNavigateBack = navController::navigateUp) }
+        }
+        composable(AwradDestination.CommunityMessages.route) {
+            WrappedAwradDestination(navController) { CommunityMessagesScreen(onNavigateBack = navController::navigateUp) }
+        }
+        composable(AwradDestination.CommunityNotifications.route) {
+            WrappedAwradDestination(navController) {
+                CommunityNotificationsScreen(onNavigateBack = navController::navigateUp)
+            }
         }
 
         composable(

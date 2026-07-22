@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -19,23 +20,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BarChart
-import androidx.compose.material.icons.rounded.BookmarkBorder
-import androidx.compose.material.icons.rounded.DynamicFeed
-import androidx.compose.material.icons.rounded.EmojiEvents
-import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.ChatBubbleOutline
-import androidx.compose.material.icons.rounded.Menu
-import androidx.compose.material.icons.rounded.NotificationsNone
-import androidx.compose.material.icons.rounded.Person
-import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.TrackChanges
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -74,22 +63,22 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualPrimaryButton
-import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradTabs
+import app.awrad.awrad_dhikrgoalstracker.ui.icons.phosphor.PhosphorRegular
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.auth.AuthViewModel
-import app.awrad.awrad_dhikrgoalstracker.ui.screens.onboarding.AwradLogoMark
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import app.awrad.awrad_dhikrgoalstracker.data.repository.CommunityDailyCount
 import app.awrad.awrad_dhikrgoalstracker.data.repository.CommunityStats
@@ -118,11 +107,11 @@ fun CommunityScreen(
     onNavigateToSignup: () -> Unit,
     onNavigateToVerification: () -> Unit,
     onNavigateToStats: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToChallenges: () -> Unit,
     onNavigateToCircles: () -> Unit,
     onNavigateToSaved: () -> Unit,
     onNavigateToPost: () -> Unit,
+    onNavigateToMessages: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onOpenMenu: () -> Unit,
     authViewModel: AuthViewModel = hiltViewModel(),
     statsViewModel: CommunityStatsViewModel = hiltViewModel(),
@@ -192,12 +181,11 @@ fun CommunityScreen(
                 when (selectedFeedTab) {
                     0 -> CommunityLandingFeed(
                         onUnavailableAction = showUnavailableAction,
-                        onOpenChallenges = onNavigateToChallenges,
                         onOpenPost = onNavigateToPost,
                         modifier = Modifier.padding(horizontal = 20.dp),
                     )
-                    1 -> CommunityTabPlaceholder(title = stringResource(R.string.community_tab_goals))
-                    else -> CommunityTabPlaceholder(title = stringResource(R.string.community_tab_explore))
+                    1 -> CommunityTabPlaceholder(title = stringResource(R.string.community_tab_explore))
+                    else -> CommunityTabPlaceholder(title = stringResource(R.string.community_tab_goals))
                 }
                 } else {
                 CommunityStatsSection(
@@ -229,25 +217,22 @@ fun CommunityScreen(
                 CommunityHeader(
                     isLoggedIn = isLoggedIn,
                     onMenuClick = onOpenMenu,
-                    onNotificationsClick = showUnavailableAction,
-                    onMessagesClick = showUnavailableAction,
-                    onProfileClick = onNavigateToProfile,
+                    onNotificationsClick = onNavigateToNotifications,
+                    onMessagesClick = onNavigateToMessages,
                 )
 
                 if (isLoggedIn && isEmailVerified && pendingVerificationEmail == null) {
                     Spacer(Modifier.height(14.dp))
-                    AwradTabs(
+                    CommunityFeedTabs(
                         tabs = listOf(
                             stringResource(R.string.community_tab_for_you),
-                            stringResource(R.string.community_tab_goals),
                             stringResource(R.string.community_tab_explore),
+                            stringResource(R.string.community_tab_goals),
                         ),
                         selectedTab = selectedFeedTab,
                         onTabSelected = { selectedFeedTab = it },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(horizontal = 20.dp),
+                            .fillMaxWidth(),
                     )
                 }
 
@@ -265,6 +250,74 @@ fun CommunityScreen(
                     contentColor = MaterialTheme.colorScheme.onSurface,
                 )
             }
+    }
+}
+
+@Composable
+internal fun CommunityFeedTabs(
+    tabs: List<String>,
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (tabs.isEmpty()) return
+
+    val selectedIndex = selectedTab.coerceIn(0, tabs.lastIndex)
+    val locale = currentLocale()
+
+    Box(
+        modifier = modifier
+            .height(48.dp)
+            .testTag("communityFeedTabs")
+            .selectableGroup(),
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant),
+        )
+
+        Row(modifier = Modifier.fillMaxSize()) {
+            tabs.forEachIndexed { index, label ->
+                val isSelected = index == selectedIndex
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .selectable(
+                            selected = isSelected,
+                            role = Role.Tab,
+                            onClick = { onTabSelected(index) },
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = label.uppercase(locale),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.68f)
+                        },
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+
+                    if (isSelected) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth(0.75f)
+                                .height(4.dp)
+                                .background(MaterialTheme.colorScheme.primary),
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -397,7 +450,7 @@ private fun CommunityStatsContent(
                             CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
                         } else {
                             Icon(
-                                imageVector = Icons.Rounded.Refresh,
+                                imageVector = PhosphorRegular.ArrowsClockwise,
                                 contentDescription = stringResource(R.string.community_stats_refresh),
                             )
                         }
@@ -431,13 +484,13 @@ private fun CommunityStatsContent(
             CommunityMetricCard(
                 label = stringResource(R.string.community_stats_goals_label),
                 value = goals,
-                icon = { Icon(Icons.Rounded.TrackChanges, contentDescription = null) },
+                icon = { Icon(PhosphorRegular.Target, contentDescription = null) },
                 modifier = Modifier.weight(1f),
             )
             CommunityMetricCard(
                 label = stringResource(R.string.community_stats_hours_label),
                 value = hours,
-                icon = { Icon(Icons.Rounded.Schedule, contentDescription = null) },
+                icon = { Icon(PhosphorRegular.Clock, contentDescription = null) },
                 modifier = Modifier.weight(1f),
             )
         }
@@ -619,7 +672,7 @@ internal fun CommunityDrawer(
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Rounded.Person, contentDescription = null)
+                        Icon(PhosphorRegular.User, contentDescription = null)
                     }
                 }
                 Column {
@@ -640,31 +693,31 @@ internal fun CommunityDrawer(
                 label = { Text(stringResource(R.string.community_nav_feed)) },
                 selected = true,
                 onClick = onFeed,
-                icon = { Icon(Icons.Rounded.DynamicFeed, contentDescription = null) },
+                icon = { Icon(PhosphorRegular.Rss, contentDescription = null) },
             )
             NavigationDrawerItem(
                 label = { Text(stringResource(R.string.community_nav_challenges)) },
                 selected = false,
                 onClick = onChallenges,
-                icon = { Icon(Icons.Rounded.EmojiEvents, contentDescription = null) },
+                icon = { Icon(PhosphorRegular.Trophy, contentDescription = null) },
             )
             NavigationDrawerItem(
                 label = { Text(stringResource(R.string.community_nav_circles)) },
                 selected = false,
                 onClick = onCircles,
-                icon = { Icon(Icons.Rounded.Groups, contentDescription = null) },
+                icon = { Icon(PhosphorRegular.UsersThree, contentDescription = null) },
             )
             NavigationDrawerItem(
                 label = { Text(stringResource(R.string.community_nav_saved)) },
                 selected = false,
                 onClick = onSaved,
-                icon = { Icon(Icons.Rounded.BookmarkBorder, contentDescription = null) },
+                icon = { Icon(PhosphorRegular.BookmarkSimple, contentDescription = null) },
             )
             NavigationDrawerItem(
                 label = { Text(stringResource(R.string.community_nav_stats)) },
                 selected = false,
                 onClick = onStats,
-                icon = { Icon(Icons.Rounded.BarChart, contentDescription = null) },
+                icon = { Icon(PhosphorRegular.ChartBar, contentDescription = null) },
             )
         }
     }
@@ -676,7 +729,6 @@ private fun CommunityHeader(
     onMenuClick: () -> Unit,
     onNotificationsClick: () -> Unit,
     onMessagesClick: () -> Unit,
-    onProfileClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -690,64 +742,30 @@ private fun CommunityHeader(
                 modifier = Modifier.align(Alignment.CenterStart),
             ) {
                 Icon(
-                    imageVector = Icons.Rounded.Menu,
+                    imageVector = PhosphorRegular.List,
                     contentDescription = stringResource(R.string.community_menu_open),
                 )
             }
         }
-        Row(
-            modifier = Modifier.align(Alignment.Center),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            AwradLogoMark(modifier = Modifier.size(32.dp))
-            Text(
-                text = stringResource(R.string.community_title),
-                style = MaterialTheme.typography.labelLarge.copy(fontSize = 21.sp, fontFeatureSettings = "smcp"),
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
         if (isLoggedIn) {
             Row(
                 modifier = Modifier.align(Alignment.CenterEnd),
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(
-                    onClick = onNotificationsClick,
-                    modifier = Modifier.size(40.dp),
-                ) {
+                IconButton(onClick = onNotificationsClick) {
                     Icon(
-                        imageVector = Icons.Rounded.NotificationsNone,
+                        imageVector = PhosphorRegular.Bell,
                         contentDescription = stringResource(R.string.community_notifications),
-                        modifier = Modifier.size(22.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                IconButton(
-                    onClick = onMessagesClick,
-                    modifier = Modifier.size(40.dp),
-                ) {
+                IconButton(onClick = onMessagesClick) {
                     Icon(
-                        imageVector = Icons.Rounded.ChatBubbleOutline,
+                        imageVector = PhosphorRegular.ChatsCircle,
                         contentDescription = stringResource(R.string.community_messages),
-                        modifier = Modifier.size(22.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                }
-                Surface(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clickable(onClick = onProfileClick),
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Rounded.Person,
-                            contentDescription = stringResource(R.string.community_nav_profile),
-                            modifier = Modifier.size(22.dp),
-                        )
-                    }
                 }
             }
         }
@@ -850,7 +868,7 @@ private fun CommunityMark(
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
-                imageVector = Icons.Rounded.Groups,
+                imageVector = PhosphorRegular.UsersThree,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(34.dp),

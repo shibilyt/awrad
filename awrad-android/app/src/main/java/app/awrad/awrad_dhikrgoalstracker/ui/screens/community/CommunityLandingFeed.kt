@@ -1,7 +1,6 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.community
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,16 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.BookmarkBorder
-import androidx.compose.material.icons.rounded.ChatBubbleOutline
-import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.Groups
-import androidx.compose.material.icons.rounded.PlayArrow
-import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material.icons.rounded.TrackChanges
-import androidx.compose.material.icons.rounded.Verified
+import app.awrad.awrad_dhikrgoalstracker.ui.icons.phosphor.PhosphorRegular
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -36,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -47,7 +36,6 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 @Composable
 internal fun CommunityLandingFeed(
     onUnavailableAction: () -> Unit,
-    onOpenChallenges: () -> Unit,
     onOpenPost: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -55,7 +43,6 @@ internal fun CommunityLandingFeed(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        ChallengePost(onOpenChallenge = onOpenChallenges)
         DailyDhikrPost(
             onStart = onOpenPost,
             onSave = onUnavailableAction,
@@ -113,12 +100,12 @@ private fun DailyDhikrPost(
             ) {
                 FeedPostHeader(
                     context = stringResource(R.string.community_feed_daily_dhikr_badge),
-                    icon = Icons.Rounded.Verified,
+                    icon = PhosphorRegular.SealCheck,
                     onSave = onSave,
                 )
                 IconButton(onClick = onSave) {
                     Icon(
-                        imageVector = Icons.Rounded.BookmarkBorder,
+                        imageVector = PhosphorRegular.BookmarkSimple,
                         contentDescription = stringResource(R.string.community_feed_save),
                     )
                 }
@@ -166,7 +153,7 @@ private fun DailyDhikrPost(
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(18.dp),
             ) {
-                Icon(Icons.Rounded.PlayArrow, contentDescription = null)
+                Icon(PhosphorRegular.Play, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.community_feed_start_dhikr))
             }
@@ -185,7 +172,7 @@ private fun SuggestedGoalPost(onCreateGoal: () -> Unit) {
         Column(modifier = Modifier.fillMaxWidth().padding(22.dp)) {
             FeedPostHeader(
                 context = stringResource(R.string.community_feed_suggested_goal_badge),
-                icon = Icons.Rounded.TrackChanges,
+                icon = PhosphorRegular.Target,
                 onSave = onCreateGoal,
             )
             Spacer(Modifier.height(18.dp))
@@ -222,72 +209,6 @@ private fun SuggestedGoalPost(onCreateGoal: () -> Unit) {
 }
 
 @Composable
-private fun ChallengePost(onOpenChallenge: () -> Unit) {
-    val challengeStreakDays = 7
-    val challengeShape = RoundedCornerShape(22.dp)
-    val challengeGradient = Brush.linearGradient(
-        colors = listOf(
-            communityCardContainerColor(),
-            communityCardContainerColor(
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.28f),
-            ),
-        ),
-    )
-    RitualCard(
-        modifier = Modifier.fillMaxWidth().background(challengeGradient, challengeShape),
-        shape = challengeShape,
-        containerColor = Color.Transparent,
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(22.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(R.string.community_feed_weekly_challenge_badge),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = stringResource(R.string.community_feed_weekly_challenge_progress),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.height(18.dp))
-            Text(
-                text = stringResource(R.string.community_feed_weekly_challenge_title),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Spacer(Modifier.height(7.dp))
-            Text(
-                text = stringResource(R.string.community_feed_weekly_challenge_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = stringResource(R.string.community_feed_challenge_streak, challengeStreakDays),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Spacer(Modifier.height(16.dp))
-            Button(
-                onClick = onOpenChallenge,
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                shape = RoundedCornerShape(14.dp),
-            ) {
-                Text(stringResource(R.string.community_feed_start_challenge))
-            }
-        }
-    }
-}
-
-@Composable
 private fun CirclesPreview(onOpenCircles: () -> Unit) {
     RitualCard(
         modifier = Modifier.fillMaxWidth(),
@@ -307,7 +228,7 @@ private fun CirclesPreview(onOpenCircles: () -> Unit) {
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Rounded.Groups, contentDescription = null)
+                    Icon(PhosphorRegular.UsersThree, contentDescription = null)
                 }
             }
             Column(modifier = Modifier.weight(1f)) {
@@ -329,7 +250,7 @@ private fun CirclesPreview(onOpenCircles: () -> Unit) {
                 )
             }
             Icon(
-                imageVector = Icons.Rounded.ChevronRight,
+                imageVector = PhosphorRegular.CaretRight,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -374,7 +295,7 @@ private fun FeedPostHeader(
         }
         IconButton(onClick = onSave) {
             Icon(
-                imageVector = Icons.Rounded.BookmarkBorder,
+                imageVector = PhosphorRegular.BookmarkSimple,
                 contentDescription = stringResource(R.string.community_feed_save),
                 tint = contentColor,
             )
@@ -393,13 +314,13 @@ private fun FeedEngagementRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onSave) {
-            Icon(Icons.Rounded.FavoriteBorder, contentDescription = null, tint = contentColor)
+            Icon(PhosphorRegular.Heart, contentDescription = null, tint = contentColor)
         }
         IconButton(onClick = onSave) {
-            Icon(Icons.Rounded.ChatBubbleOutline, contentDescription = null, tint = contentColor)
+            Icon(PhosphorRegular.ChatCircle, contentDescription = null, tint = contentColor)
         }
         IconButton(onClick = onSave) {
-            Icon(Icons.Rounded.Share, contentDescription = null, tint = contentColor)
+            Icon(PhosphorRegular.ShareNetwork, contentDescription = null, tint = contentColor)
         }
     }
 }

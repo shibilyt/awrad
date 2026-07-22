@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "android-emulator-qa": {
+      "source": "openai/plugins",
+      "sourceType": "github",
+      "skillPath": "plugins/test-android-apps/skills/android-emulator-qa/SKILL.md",
+      "computedHash": "ab0b9be6fb98db09fe87e52155ee068f96c074a8c14a29b8cfffb1386dc66bb1"
+    },
+    "test-driven-development": {
+      "source": "openai/plugins",
+      "sourceType": "github",
+      "skillPath": "plugins/superpowers/skills/test-driven-development/SKILL.md",
+      "computedHash": "16c75c74a838fe4ebbeacc6ef3afa375981d8ef3b0d5b066c6be0bbafc1215fe"
+    }
+  }
+}

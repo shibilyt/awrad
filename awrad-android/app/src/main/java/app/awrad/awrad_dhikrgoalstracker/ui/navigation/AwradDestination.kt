@@ -63,6 +63,8 @@ sealed class AwradDestination(val route: String) {
     data object CommunitySaved : AwradDestination("community/saved")
     data object CommunityProfile : AwradDestination("community/profile")
     data object CommunityPostDetail : AwradDestination("community/post")
+    data object CommunityMessages : AwradDestination("community/messages")
+    data object CommunityNotifications : AwradDestination("community/notifications")
     data object Login : AwradDestination("login?email={email}&origin={origin}") {
         fun createRoute(email: String? = null, origin: String? = null): String {
             val query = buildList {
