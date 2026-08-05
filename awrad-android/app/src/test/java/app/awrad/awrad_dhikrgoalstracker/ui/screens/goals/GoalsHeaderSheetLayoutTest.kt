@@ -65,10 +65,14 @@ class GoalsHeaderSheetLayoutTest {
         val goalCard = goalsScreenSource().readText()
             .substringAfter("private fun GoalListItem(")
             .substringBefore("private fun goalTag(")
+            .filterNot(Char::isWhitespace)
+        val sharedCardColor =
+            "containerColor=if(isAwradDarkTheme()){MaterialTheme.colorScheme.surfaceContainer}" +
+                "else{MaterialTheme.colorScheme.surface}"
 
         assertTrue(
-            "Goal cards must use the Library dhikr card surface color in dark mode",
-            "containerColor = MaterialTheme.colorScheme.surface" in goalCard,
+            "Goal cards must use the same light and dark surfaces as Library dhikr cards",
+            sharedCardColor in goalCard,
         )
     }
 
