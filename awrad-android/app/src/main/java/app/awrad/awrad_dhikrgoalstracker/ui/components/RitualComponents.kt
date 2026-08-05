@@ -245,6 +245,8 @@ fun RitualEmptyState(
     body: String,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
 ) {
     RitualCard(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -270,6 +272,11 @@ fun RitualEmptyState(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+            if (actionLabel != null && onAction != null) {
+                androidx.compose.material3.TextButton(onClick = onAction) {
+                    Text(text = actionLabel)
+                }
+            }
         }
     }
 }

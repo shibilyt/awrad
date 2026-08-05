@@ -72,4 +72,7 @@ interface GoalDao {
 
     @Query("SELECT * FROM goals WHERE dhikrId = :dhikrId AND isActive = 1 ORDER BY createdAt DESC")
     fun getActiveGoalsByDhikrId(dhikrId: AwradId): Flow<List<GoalEntity>>
+
+    @Query("SELECT * FROM goals WHERE dhikrId = :dhikrId")
+    suspend fun getGoalsByDhikrId(dhikrId: AwradId): List<GoalEntity>
 }

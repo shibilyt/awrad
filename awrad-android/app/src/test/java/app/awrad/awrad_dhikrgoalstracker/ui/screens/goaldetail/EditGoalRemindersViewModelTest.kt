@@ -288,4 +288,21 @@ private class FakeDhikrRepository : DhikrRepository {
     override suspend fun downloadDhikrAudio(dhikr: Dhikr): Boolean = true
     override fun getLibraryDownloadProgress(): StateFlow<DownloadProgress> = progress
     override suspend fun createDhikr(dhikr: Dhikr): UUID = dhikr.id
+    override fun getCustomDhikrs(): Flow<List<Dhikr>> = flowOf(emptyList())
+    override suspend fun updateCustomDhikr(dhikr: Dhikr): Boolean = false
+    override suspend fun deleteCustomDhikr(id: UUID): Boolean = false
+    override fun observeUserTags(): Flow<List<app.awrad.awrad_dhikrgoalstracker.data.model.UserTag>> = flowOf(emptyList())
+    override suspend fun createUserTag(rawName: String) = null
+    override suspend fun renameUserTag(id: UUID, rawName: String) = null
+    override suspend fun deleteUserTag(id: UUID): Boolean = false
+    override suspend fun setDhikrTags(dhikrId: UUID, tagIds: Set<UUID>) = Unit
+    override fun observeTagIdsForDhikr(dhikrId: UUID): Flow<Set<UUID>> = flowOf(emptySet())
+    override fun observeAssignments(): Flow<Map<UUID, Set<UUID>>> = flowOf(emptyMap())
+    override suspend fun getOwnedAudio(dhikrId: UUID) = null
+    override fun observeOwnedAudio(dhikrId: UUID) = flowOf(null)
+    override fun observeOwnedAudioByDhikrId() = flowOf(emptyMap<UUID, app.awrad.awrad_dhikrgoalstracker.data.model.DhikrAudioAsset>())
+    override suspend fun attachOwnedAudio(dhikrId: UUID, staged: app.awrad.awrad_dhikrgoalstracker.service.StagedOwnedAudio) = error("unused")
+    override suspend fun removeOwnedAudio(dhikrId: UUID) = Unit
+    override suspend fun ownedAudioAvailability(dhikrId: UUID) = app.awrad.awrad_dhikrgoalstracker.service.OwnedAudioAvailability.MISSING
+    override suspend fun cleanupOwnedAudioOrphans() = Unit
 }

@@ -12,6 +12,7 @@ data class SyncHeaderDto(
         "entity_occ",
         "materialized_transfers",
         "unchanged_delta",
+        "dhikr_tags_v1",
     ),
 )
 

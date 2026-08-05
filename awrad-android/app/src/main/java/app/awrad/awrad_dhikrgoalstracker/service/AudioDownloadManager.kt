@@ -125,16 +125,25 @@ class AudioDownloadManager @Inject constructor(
         }
 
     fun getAudioFilePath(fileName: String): String? {
-        val file = AudioDownloadSecurity.resolveOutputFile(audioDir, fileName) ?: return null
-        return if (file.exists()) file.absolutePath else null
+        val catalogFile = AudioDownloadSecurity.resolveOutputFile(audioDir, fileName)
+        if (catalogFile?.exists() == true) return catalogFile.absolutePath
+        val ownedFile = AudioDownloadSecurity.resolveOutputFile(ownedAudioDir, fileName)
+        return if (ownedFile?.exists() == true) ownedFile.absolutePath else null
     }
 
     fun isFileDownloaded(fileName: String): Boolean =
-        AudioDownloadSecurity.resolveOutputFile(audioDir, fileName)?.exists() == true
+        AudioDownloadSecurity.resolveOutputFile(audioDir, fileName)?.exists() == true ||
+            AudioDownloadSecurity.resolveOutputFile(ownedAudioDir, fileName)?.exists() == true
 
     fun resetProgress() {
         _downloadProgress.value = DownloadProgress()
     }
+
+    private val ownedAudioDir: File
+        get() = File(
+            File(context.filesDir, CustomDhikrAudioStore.ROOT_DIR_NAME),
+            CustomDhikrAudioStore.OWNED_DIR_NAME,
+        ).also { it.mkdirs() }
 }
 
 internal object AudioDownloadSecurity {

@@ -28,6 +28,8 @@ class BackupRulesTest {
             "database" to "awrad_database-journal",
             "database" to "awrad_database-shm",
             "database" to "awrad_database-wal",
+            "file" to "dhikr_owned_audio/",
+            "file" to "dhikr_audio/",
         )
 
         assertTrue(excludes.containsAll(expected))

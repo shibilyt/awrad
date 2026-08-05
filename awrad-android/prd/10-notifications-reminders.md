@@ -2,7 +2,9 @@
 
 ## Overview
 
-The app supports three types of reminders: goal-specific reminders, prayer-linked reminders, and a global daily reminder. Reminders are scheduled as exact alarms for reliability and include a follow-up mechanism.
+The app supports configured goal, prayer-linked, and daily reminders plus the cross-platform notification obligation engine. Configured reminders retain their existing behavior. The obligation engine adds deadline warnings, streak guardians, live-state cancellation, exact-alarm/WorkManager fallback, and a global urgency preference.
+
+The current cross-platform timing and lifecycle contract is documented in [`../../docs/notification-obligation-engine.md`](../../docs/notification-obligation-engine.md). Where older requirements below describe fixed prayer offsets, numeric request-code identity, or a single follow-up path, current executable planner, identity, reconciliation, and delivery tests are authoritative for engine-generated urgency nudges.
 
 ---
 

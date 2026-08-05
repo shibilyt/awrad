@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,7 +19,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -32,9 +32,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -190,15 +188,20 @@ fun LibraryScreen(
                                     isSearchVisible = isSearchVisible,
                                     onSearchQueryChange = viewModel::onSearchQueryChanged,
                                     onClearSearch = { viewModel.onSearchQueryChanged("") },
-                                    onCategorySelected = { category ->
-                                        viewModel.onCategorySelected(category)
+                                    onCollectionClick = { category ->
+                                        viewModel.onFeaturedCollectionSelected(category)
                                         isSearchVisible = false
                                     },
-                                    onCollectionClick = { viewModel.onCategorySelected(it) },
+                                    onYourDhikrsClick = {
+                                        viewModel.onYourDhikrsSelected()
+                                        isSearchVisible = false
+                                    },
                                     onViewAll = {
                                         viewModel.clearFilters()
                                         isSearchVisible = false
                                     },
+                                    onClearFilters = viewModel::clearFilters,
+                                    onCreateDhikr = onNavigateToCreateDhikr,
                                     onTogglePlayback = viewModel::togglePlayback,
                                     onNavigateToDhikrDetail = onNavigateToDhikrDetail,
                                     modifier = Modifier.fillMaxSize(),
@@ -244,8 +247,23 @@ fun LibraryScreen(
                     )
                 }
 
-                // Floating "new wird" button, shown on the Wirds tab, anchored above the navbar.
-                if (pagerState.currentPage == 1) {
+                // Floating create actions: dhikrs on tab 0, wirds on tab 1.
+                if (pagerState.currentPage == 0) {
+                    FloatingActionButton(
+                        onClick = onNavigateToCreateDhikr,
+                        shape = CircleShape,
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 20.dp, bottom = navBarBottomPadding + 88.dp),
+                    ) {
+                        Icon(
+                            Icons.Filled.Add,
+                            contentDescription = stringResource(R.string.create_dhikr_title),
+                        )
+                    }
+                } else if (pagerState.currentPage == 1) {
                     FloatingActionButton(
                         onClick = onCreateWird,
                         shape = CircleShape,
@@ -264,6 +282,7 @@ fun LibraryScreen(
             }
         }
     }
+
 }
 
 @Composable
@@ -273,9 +292,11 @@ private fun DhikrLibraryPane(
     isSearchVisible: Boolean,
     onSearchQueryChange: (String) -> Unit,
     onClearSearch: () -> Unit,
-    onCategorySelected: (DhikrCategory?) -> Unit,
     onCollectionClick: (DhikrCategory) -> Unit,
+    onYourDhikrsClick: () -> Unit,
     onViewAll: () -> Unit,
+    onClearFilters: () -> Unit,
+    onCreateDhikr: () -> Unit,
     onTogglePlayback: (Dhikr) -> Unit,
     onNavigateToDhikrDetail: (AwradId) -> Unit,
     modifier: Modifier = Modifier,
@@ -283,36 +304,39 @@ private fun DhikrLibraryPane(
     LazyColumn(
         modifier = modifier,
         contentPadding = PaddingValues(top = 18.dp, bottom = 112.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (isSearchVisible || uiState.searchQuery.isNotBlank()) {
             item {
-                LibrarySearchField(
-                    query = uiState.searchQuery,
-                    onQueryChange = onSearchQueryChange,
-                    onClear = onClearSearch,
-                )
+                Column {
+                    LibrarySearchField(
+                        query = uiState.searchQuery,
+                        onQueryChange = onSearchQueryChange,
+                        onClear = onClearSearch,
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
             }
         }
 
         item {
-            LibraryCategoryRail(
-                categories = uiState.availableCategories,
-                selectedCategory = uiState.selectedCategory,
-                onCategorySelected = onCategorySelected,
-            )
+            Column {
+                FeaturedCollectionsSection(
+                    categoryCounts = uiState.categoryCounts,
+                    customCount = uiState.customCount,
+                    onCollectionClick = onCollectionClick,
+                    onYourDhikrsClick = onYourDhikrsClick,
+                    onViewAll = onViewAll,
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+            }
         }
 
         item {
-            FeaturedCollectionsSection(
-                categoryCounts = uiState.categoryCounts,
-                onCollectionClick = onCollectionClick,
-                onViewAll = onViewAll,
-            )
-        }
-
-        item {
-            DhikrListHeader(uiState = uiState)
+            Column {
+                DhikrListHeader(uiState = uiState)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
         }
 
         if (uiState.filteredDhikrs.isEmpty()) {
@@ -323,22 +347,48 @@ private fun DhikrLibraryPane(
                         .padding(horizontal = 20.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    RitualEmptyState(
-                        title = if (uiState.searchQuery.isNotEmpty()) {
-                            stringResource(R.string.library_no_match)
-                        } else {
-                            stringResource(R.string.library_no_dhikrs)
-                        },
-                        body = stringResource(R.string.library_search_hint),
-                        icon = Icons.Default.Search,
-                    )
+                    when {
+                        uiState.customOnly && uiState.searchQuery.isBlank() -> {
+                            RitualEmptyState(
+                                title = stringResource(R.string.your_dhikrs_empty_title),
+                                body = stringResource(R.string.your_dhikrs_empty_body),
+                                icon = Icons.Default.Search,
+                                actionLabel = stringResource(R.string.create_dhikr_title),
+                                onAction = onCreateDhikr,
+                            )
+                        }
+                        uiState.hasActiveFilters -> {
+                            RitualEmptyState(
+                                title = stringResource(R.string.library_no_match),
+                                body = stringResource(R.string.library_clear_filters_hint),
+                                icon = Icons.Default.Search,
+                                actionLabel = stringResource(R.string.library_clear_filters),
+                                onAction = onClearFilters,
+                            )
+                        }
+                        else -> {
+                            RitualEmptyState(
+                                title = if (uiState.searchQuery.isNotEmpty()) {
+                                    stringResource(R.string.library_no_match)
+                                } else {
+                                    stringResource(R.string.library_no_dhikrs)
+                                },
+                                body = stringResource(R.string.library_search_hint),
+                                icon = Icons.Default.Search,
+                            )
+                        }
+                    }
                 }
             }
         } else {
             items(uiState.filteredDhikrs, key = { it.id }) { dhikr ->
+                val hasOwned = uiState.ownedAudioByDhikrId.containsKey(dhikr.id)
+                val ownedMissing = dhikr.id in uiState.missingOwnedAudioIds
                 LibraryDhikrRow(
                     dhikr = dhikr,
                     isPlaying = playerState.dhikrId == dhikr.id && playerState.isPlaying,
+                    canPlay = (dhikr.audioUrl != null || hasOwned) && !ownedMissing,
+                    ownedAudioMissing = ownedMissing,
                     onPlayPause = { onTogglePlayback(dhikr) },
                     onClick = { onNavigateToDhikrDetail(dhikr.id) },
                     modifier = Modifier
@@ -443,46 +493,6 @@ private fun LibrarySearchField(
 }
 
 @Composable
-private fun LibraryCategoryRail(
-    categories: List<DhikrCategory>,
-    selectedCategory: DhikrCategory?,
-    onCategorySelected: (DhikrCategory?) -> Unit,
-) {
-    val chipShape = RoundedCornerShape(percent = 50)
-    val chipColors = FilterChipDefaults.filterChipColors(
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        selectedContainerColor = MaterialTheme.colorScheme.primary,
-        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
-    )
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(horizontal = 20.dp),
-    ) {
-        item {
-            FilterChip(
-                selected = selectedCategory == null,
-                onClick = { onCategorySelected(null) },
-                label = { Text(stringResource(R.string.all_dhikrs)) },
-                shape = chipShape,
-                colors = chipColors,
-                border = null,
-            )
-        }
-        items(categories, key = { it.name }) { category ->
-            FilterChip(
-                selected = selectedCategory == category,
-                onClick = { onCategorySelected(category) },
-                label = { Text(stringResource(category.toStringResId())) },
-                shape = chipShape,
-                colors = chipColors,
-                border = null,
-            )
-        }
-    }
-}
-
-@Composable
 private fun DhikrListHeader(
     uiState: LibraryUiState,
 ) {
@@ -494,8 +504,11 @@ private fun DhikrListHeader(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = uiState.selectedCategory?.let { stringResource(it.toStringResId()) }
-                ?: stringResource(R.string.all_dhikrs),
+            text = when {
+                uiState.customOnly -> stringResource(R.string.collection_your_dhikrs)
+                uiState.selectedCategory != null -> stringResource(uiState.selectedCategory.toStringResId())
+                else -> stringResource(R.string.all_dhikrs)
+            },
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
@@ -519,6 +532,8 @@ private fun DhikrListHeader(
 private fun LibraryDhikrRow(
     dhikr: Dhikr,
     isPlaying: Boolean,
+    canPlay: Boolean,
+    ownedAudioMissing: Boolean,
     onPlayPause: () -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -547,9 +562,16 @@ private fun LibraryDhikrRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = dhikr.translation.ifBlank { stringResource(dhikr.category.toStringResId()) },
+                    text = when {
+                        ownedAudioMissing -> stringResource(R.string.audio_missing)
+                        else -> dhikr.translation.ifBlank { stringResource(dhikr.category.toStringResId()) }
+                    },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (ownedAudioMissing) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -564,7 +586,7 @@ private fun LibraryDhikrRow(
             }
             FilledTonalIconButton(
                 onClick = onPlayPause,
-                enabled = dhikr.audioUrl != null,
+                enabled = canPlay,
                 modifier = Modifier.size(44.dp),
                 colors = IconButtonDefaults.filledTonalIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,

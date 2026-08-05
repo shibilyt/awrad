@@ -136,6 +136,35 @@ class SlotTimingResolverTest {
     }
 
     @Test
+    fun `non positive prayer interval is unavailable`() {
+        val slot = prayerSlot(PrayerRelation.BEFORE).copy(startLeadMinutesOverride = 0)
+
+        val timing = SlotTimingResolver.timingInfo(slot, friday, millisAt(12, 0), prayerTimes(friday), 30, zoneId)
+
+        assertEquals(SlotTimeStatus.UNKNOWN, timing.timeStatus)
+        assertEquals(null, timing.startsAtMillis)
+        assertEquals(null, timing.endsAtMillis)
+    }
+
+    @Test
+    fun `spring forward custom window with inverted instants is unavailable`() {
+        // 02:30→03:00 on US spring-forward day: local start resolves after local end.
+        assertEquals(
+            null,
+            resolveSpringForwardCustomWindow(startMinute = 2 * 60 + 30, endMinute = 3 * 60),
+        )
+    }
+
+    @Test
+    fun `spring forward custom window with equal collapsed instants is unavailable`() {
+        // 02:00→03:00 on US spring-forward day: both local endpoints collapse to one instant.
+        assertEquals(
+            null,
+            resolveSpringForwardCustomWindow(startMinute = 2 * 60, endMinute = 3 * 60),
+        )
+    }
+
+    @Test
     fun `anytime slot is always started`() {
         val slot = GoalSlot(goalId = testId(1), slotType = GoalSlotType.ANYTIME)
 
@@ -160,6 +189,20 @@ class SlotTimingResolverTest {
             params,
         )
     }
+
+    private fun resolveSpringForwardCustomWindow(startMinute: Int, endMinute: Int) =
+        SlotTimingResolver.resolveInterval(
+            slot = GoalSlot(
+                goalId = testId(1),
+                slotType = GoalSlotType.TIME_WINDOW,
+                startMinute = startMinute,
+                endMinute = endMinute,
+            ),
+            occurrenceDate = LocalDate.parse("2026-03-08"),
+            prayerTimes = null,
+            defaultPrayerLeadMinutes = 30,
+            zoneId = ZoneId.of("America/New_York"),
+        )
 
     private fun millisAt(hour: Int, minute: Int): Long =
         friday.atTime(LocalTime.of(hour, minute)).atZone(zoneId).toInstant().toEpochMilli()

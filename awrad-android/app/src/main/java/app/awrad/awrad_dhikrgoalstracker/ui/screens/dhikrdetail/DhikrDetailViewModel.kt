@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -44,6 +45,12 @@ data class DhikrDetailUiState(
     val existingGoals: List<Goal> = emptyList(),
     val isLoading: Boolean = true,
     val pendingConfirmation: SuggestedGoal? = null,
+    val showDeleteConfirm: Boolean = false,
+    val isDeleted: Boolean = false,
+    val ownedAudioFileName: String? = null,
+    val ownedAudioMissing: Boolean = false,
+    val statsDailyCounts: Map<LocalDate, Long> = emptyMap(),
+    val statsEffectiveToday: LocalDate = LocalDate.now(),
 )
 
 @HiltViewModel
@@ -73,16 +80,43 @@ class DhikrDetailViewModel @Inject constructor(
     init {
         loadDhikr()
         observeExistingGoals()
+        viewModelScope.launch {
+            combine(
+                goalRepository.getAllGoals(),
+                goalRepository.getDailyCountsByGoal(),
+                dateProvider.effectiveToday,
+            ) { goals, dailyCountsByGoal, effectiveToday ->
+                val goalIds = goals.asSequence()
+                    .filter { it.dhikrId == dhikrId }
+                    .map { it.id }
+                    .toSet()
+                DhikrStatsCalculator.aggregateGoalCounts(goalIds, dailyCountsByGoal) to
+                    effectiveToday.toLocalDateOr(LocalDate.now())
+            }.collect { (dailyCounts, effectiveToday) ->
+                _uiState.update {
+                    it.copy(
+                        statsDailyCounts = dailyCounts,
+                        statsEffectiveToday = effectiveToday,
+                    )
+                }
+            }
+        }
     }
 
     private fun loadDhikr() {
         viewModelScope.launch {
             val dhikr = dhikrRepository.getDhikrById(dhikrId)
             val benefits = dhikr?.let { DhikrBenefitsRegistry.getBenefits(it.transliteration) }
+            val owned = dhikrRepository.getOwnedAudio(dhikrId)
+            val missing = owned != null &&
+                dhikrRepository.ownedAudioAvailability(dhikrId) ==
+                app.awrad.awrad_dhikrgoalstracker.service.OwnedAudioAvailability.MISSING
             _uiState.update {
                 it.copy(
                     dhikr = dhikr,
                     benefitsData = benefits,
+                    ownedAudioFileName = owned?.relativeFileName,
+                    ownedAudioMissing = missing,
                     isLoading = false,
                 )
             }
@@ -137,7 +171,16 @@ class DhikrDetailViewModel @Inject constructor(
 
     fun togglePlayback() {
         val dhikr = _uiState.value.dhikr ?: return
-        audioPlayer.toggle(dhikr.id, dhikr.audioUrl, dhikr.audioFileName)
+        if (_uiState.value.ownedAudioMissing) return
+        val local = _uiState.value.ownedAudioFileName ?: dhikr.audioFileName
+        audioPlayer.toggle(dhikr.id, dhikr.audioUrl, local)
+    }
+
+    fun removeMissingOwnedAudio() {
+        viewModelScope.launch {
+            dhikrRepository.removeOwnedAudio(dhikrId)
+            _uiState.update { it.copy(ownedAudioFileName = null, ownedAudioMissing = false) }
+        }
     }
 
     fun downloadAudio() {
@@ -149,6 +192,24 @@ class DhikrDetailViewModel @Inject constructor(
             val updated = dhikrRepository.getDhikrById(dhikrId)
             _uiState.update { it.copy(dhikr = updated) }
             _isDownloading.value = false
+        }
+    }
+
+    fun requestDelete() {
+        if (_uiState.value.dhikr?.isCustom == true) {
+            _uiState.update { it.copy(showDeleteConfirm = true) }
+        }
+    }
+
+    fun dismissDelete() {
+        _uiState.update { it.copy(showDeleteConfirm = false) }
+    }
+
+    fun confirmDelete() {
+        viewModelScope.launch {
+            if (dhikrRepository.deleteCustomDhikr(dhikrId)) {
+                _uiState.update { it.copy(showDeleteConfirm = false, isDeleted = true) }
+            }
         }
     }
 }

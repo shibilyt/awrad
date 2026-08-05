@@ -18,6 +18,8 @@ data class SyncStateEntity(
     val initialImportCompleted: Boolean = false,
     val initialImportPayloadJson: String? = null,
     val syncRequested: Boolean = false,
+    /** One-time capability-aware snapshot completed after upgrading into dhikr_tags_v1. */
+    val dhikrTagsBootstrapCompleted: Boolean = false,
     val generationResetPending: Boolean = false,
     val pendingTransferId: String? = null,
     val pendingTransferKind: String? = null,

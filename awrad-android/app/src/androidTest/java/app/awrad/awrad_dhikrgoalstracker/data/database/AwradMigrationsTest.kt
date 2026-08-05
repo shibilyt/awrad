@@ -284,6 +284,39 @@ class AwradMigrationsTest {
 
     @Test
     @Throws(IOException::class)
+    fun migrate13To14_repairsNullCatalogCustoms_andAddsTagAudioTables() {
+        helper.createDatabase(TEST_DB, 13).apply {
+            execSQL(
+                "INSERT INTO dhikrs " +
+                    "(id, catalogKey, title, arabic, transliteration, translation, category, isDownloaded, isCustom, audioCountPerPlay, benefitsJson, sortOrder) " +
+                    "VALUES ('custom-1', NULL, 'Mine', 'نص', 'mine', 'mine', 'GENERAL', 0, 0, 1, '[]', 0)",
+            )
+            execSQL(
+                "INSERT INTO dhikrs " +
+                    "(id, catalogKey, title, arabic, transliteration, translation, category, isDownloaded, isCustom, audioCountPerPlay, benefitsJson, sortOrder) " +
+                    "VALUES ('builtin-1', 'subhanallah', 'Subhanallah', 'سبحان الله', 'Subhanallah', 'Glory', 'GENERAL', 0, 0, 1, '[]', 1)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 14, true, AwradMigrations.MIGRATION_13_14)
+        helper.closeWhenFinished(db)
+
+        assertEquals(1L, queryLong(db, "SELECT isCustom FROM dhikrs WHERE id = 'custom-1'"))
+        assertEquals(0L, queryLong(db, "SELECT isCustom FROM dhikrs WHERE id = 'builtin-1'"))
+        assertTrue(tableExists(db, "user_tags"))
+        assertTrue(tableExists(db, "dhikr_tag_assignments"))
+        assertTrue(tableExists(db, "dhikr_audio_assets"))
+        db.execSQL(
+            "INSERT INTO sync_state " +
+                "(id, boundUserId, actorId, installationId, nextActorSequence, appliedRevision, safeCompactionRevision, generation, initialImportCompleted, syncRequested, generationResetPending, dhikrTagsBootstrapCompleted) " +
+                "VALUES (1, 'user', 'actor', 'install', 1, 0, 0, 1, 0, 0, 0, 0)",
+        )
+        assertEquals(0L, queryLong(db, "SELECT dhikrTagsBootstrapCompleted FROM sync_state WHERE id = 1"))
+    }
+
+    @Test
+    @Throws(IOException::class)
     fun migrateAll1To13_appliesEveryMigration_andEndsAtSyncSchema() {
         helper.createDatabase(TEST_DB, 1).apply {
             seedDhikr(this, id = 1, title = "Istighfar")

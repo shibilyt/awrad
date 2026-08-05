@@ -102,13 +102,20 @@
 
     <!-- Goals screen -->
     <string name="goals_title">My Goals</string>
+    <string name="goals_tab_active">Active</string>
+    <string name="goals_tab_history">History</string>
     <string name="goals_section_today">Today’s goals</string>
     <string name="goals_section_upcoming">Upcoming goals</string>
+    <string name="goals_section_past">Past goals</string>
     <string name="goals_section_completed">Completed goals</string>
     <string name="goals_section_other">Other goals</string>
     <string name="goals_total_count">%d goals</string>
     <string name="goals_empty_title">No goals yet</string>
     <string name="goals_empty_hint">Tap + to create your first dhikr goal</string>
+    <string name="goals_active_empty_title">No active goals</string>
+    <string name="goals_active_empty_hint">Tap + to create a new dhikr goal</string>
+    <string name="goals_history_empty_title">No goal history yet</string>
+    <string name="goals_history_empty_hint">Past and completed goals will appear here</string>
 
     <!-- Create Goal screen -->
     <string name="create_goal_select_dhikr">Select Dhikr</string>
@@ -536,6 +543,67 @@
     <string name="create_dhikr_category_label">Category</string>
     <string name="create_dhikr_save">Save</string>
     <string name="create_dhikr_saving">Saving\u2026</string>
+    <string name="collection_your_dhikrs">Your Dhikrs</string>
+    <string name="your_dhikrs_empty_title">No personal dhikrs yet</string>
+    <string name="your_dhikrs_empty_body">Create a dhikr with your own text and optional imported audio.</string>
+    <string name="library_clear_filters">Clear filters</string>
+    <string name="library_clear_filters_hint">Try clearing search, category, tags, or Your Dhikrs.</string>
+    <string name="edit_dhikr_title">Edit Dhikr</string>
+    <string name="delete_dhikr">Delete dhikr</string>
+    <string name="delete_dhikr_confirm_title">Delete this dhikr?</string>
+    <string name="delete_dhikr_confirm_body">Linked goals, reminders, and counts will also be deleted. Owned audio on this device will be removed.</string>
+    <string name="manage_tags">Manage tags</string>
+    <string name="import_audio">Upload audio</string>
+    <string name="replace_audio">Replace audio</string>
+    <string name="remove_audio">Remove audio</string>
+    <string name="audio_missing">Audio missing</string>
+    <string name="audio_missing_body">Audio is stored on this device only. Reattach a file or remove the attachment.</string>
+    <string name="audio_other_device">Audio is stored on your other device — attach audio here</string>
+    <string name="create_dhikr_counts_per_play">Counts per playback</string>
+    <string name="create_dhikr_tags_label">Tags</string>
+    <string name="tag_name_label">Tag name</string>
+    <string name="create_tag">Create tag</string>
+    <string name="tag_rename">Rename</string>
+    <string name="tag_rename_save">Save name</string>
+    <string name="tag_delete">Delete tag</string>
+    <string name="tag_limit_reached">This dhikr already has the maximum number of tags.</string>
+    <string name="tag_invalid_name">Enter a valid tag name.</string>
+    <string name="library_tags_filter">Tags</string>
+    <string name="library_tags_filter_all">All tags</string>
+    <string name="library_tags_filter_selected">Tags · %1$d</string>
+    <string name="library_tags_sheet_title">Filter by tags</string>
+    <string name="library_tags_sheet_hint">Match dhikrs that have all selected tags.</string>
+    <string name="custom_audio_too_large">Audio must be under 10 MB.</string>
+    <string name="custom_audio_too_long">Audio must be 10 minutes or shorter.</string>
+    <string name="custom_audio_unsupported">Use AAC/M4A, MP3, or WAV audio.</string>
+    <string name="custom_audio_corrupt">Audio file could not be read. Try another file.</string>
+    <string name="custom_audio_io">Could not import audio. Check the file and try again.</string>
+    <string name="create_dhikr_save_failed">Could not save this dhikr. Try again.</string>
+    <string name="create_dhikr_partial_failure">Dhikr saved, but tags or audio could not be updated. Try again.</string>
+    <string name="cd_library_tag_filter_row">Tag filters</string>
+    <string name="cd_library_tag_filter_chip">Open tag filters</string>
+    <string name="cd_library_tag_filter_sheet">Filter library by tags</string>
+    <string name="cd_library_tag_selected">Tag %1$s selected</string>
+    <string name="cd_library_tag_unselected">Tag %1$s not selected</string>
+    <string name="cd_sheet_tag_selected">Filter tag %1$s selected</string>
+    <string name="cd_sheet_tag_unselected">Filter tag %1$s not selected</string>
+    <string name="cd_create_dhikr_tag_chips">Dhikr tags</string>
+    <string name="cd_create_dhikr_new_tag_field">New tag name</string>
+    <string name="cd_create_tag_selected">Tag %1$s assigned</string>
+    <string name="cd_create_tag_unselected">Tag %1$s not assigned</string>
+    <string name="cd_counts_per_play">Counts per playback</string>
+    <string name="cd_decrease_counts_per_play">Decrease counts per playback</string>
+    <string name="cd_increase_counts_per_play">Increase counts per playback</string>
+    <string name="create_dhikr_tags_none">No tags selected</string>
+    <string name="create_dhikr_tags_selected">%1$d tags selected</string>
+    <string name="create_dhikr_tags_search">Search tags</string>
+    <string name="create_dhikr_tags_empty">No tags yet. Add your first tag below.</string>
+    <string name="create_dhikr_tags_no_match">No tags match your search.</string>
+    <string name="create_dhikr_counts_requires_audio">Add audio to enable counts per playback.</string>
+    <string name="cd_tag_name_field">Tag name</string>
+    <string name="cd_tag_assigned">Tag %1$s assigned to this dhikr</string>
+    <string name="cd_tag_unassigned">Tag %1$s not assigned to this dhikr</string>
+    <string name="audio_missing_reattach">Reattach audio</string>
 
     <!-- Category screen -->
     <string name="category_no_dhikrs">No dhikrs in this category yet</string>
@@ -567,6 +635,8 @@
     <string name="settings_notifications">Notifications</string>
     <string name="settings_daily_reminder">Daily Reminder</string>
     <string name="settings_daily_reminder_sub">Get a daily reminder to complete your dhikr</string>
+    <string name="settings_urgency_reminders">Urgency reminders</string>
+    <string name="settings_urgency_reminders_sub">Warn when a goal or session is nearing its deadline.</string>
     <string name="settings_reminder_time">Reminder Time</string>
     <string name="settings_prayer_slot_lead">Before-prayer lead window</string>
     <string name="settings_prayer_slot_lead_sub">Default minutes before prayer when before-prayer slots become active.</string>
@@ -693,6 +763,33 @@
     <string name="notif_global_title">Time for Dhikr</string>
     <string name="notif_global_body">Take a moment to remember Allah and count your daily dhikr</string>
     <string name="notif_global_expanded_body">Take a quiet moment to remember Allah and continue your daily dhikr in Awrad.</string>
+    <string name="notif_urgency_anytime_deadline">%1$s left for %3$s · %2$d remaining</string>
+    <string name="notif_urgency_slot_deadline">%1$s left in %3$s · %2$d remaining</string>
+    <string name="notif_urgency_streak_guardian">Keep your %1$d-day streak · %2$s left · %3$d needed</string>
+    <string name="notif_urgency_tracker_guardian">Keep your practice going · %1$s left for %2$s</string>
+    <string name="notif_urgency_deadline_generic">%1$s left · %2$d remaining</string>
+    <string name="notif_urgency_slot_deadline_generic">%1$s left in this session · %2$d remaining</string>
+    <string name="notif_urgency_time_remaining_about">About %1$s left</string>
+    <string name="notif_urgency_duration_less_than_minute">less than a minute</string>
+    <string name="notif_urgency_duration_minutes">%1$d min</string>
+    <string name="notif_urgency_duration_hours">%1$d hr</string>
+    <string name="notif_urgency_duration_days">%1$d day</string>
+    <string name="notif_urgency_duration_hours_minutes">%1$d hr %2$d min</string>
+    <string name="notif_urgency_duration_days_hours">%1$d day %2$d hr</string>
+    <!-- Built-in urgency notification goal names -->
+    <string name="notif_goal_name_surah_ikhlas">Surah Ikhlas</string>
+    <string name="notif_goal_name_tahleel">Tahleel</string>
+    <string name="notif_goal_name_ya_wahhabu">Ya Wahhabu</string>
+    <string name="notif_goal_name_isthighfar">Isthighfar</string>
+    <string name="notif_goal_name_swalath_al_fathimiyya">Swalath Al Fathimiyya</string>
+    <string name="notif_goal_name_swalath">Swalath</string>
+    <string name="notif_goal_name_swalath_sayyidina">Swalath 2</string>
+    <string name="notif_goal_name_swalath_al_fatih">Swalath al Fatih</string>
+    <string name="notif_goal_name_swalath_al_nariyya">Swalath al Nariyya</string>
+    <string name="notif_goal_name_swalath_for_debt">Swalath for Debt</string>
+    <string name="notif_goal_name_ramadan_dhikr">Ramadan Dhikr</string>
+    <string name="notif_goal_name_ramadan_first_ten_nights">First 10 Nights</string>
+    <string name="notif_goal_name_ramadan_second_ten_nights">Second 10 Nights</string>
 
     <!-- Daily remembrance -->
     <string name="remembrance_overline">Daily remembrance</string>
@@ -1558,4 +1655,36 @@
     <string name="auth_sign_in_instead">Sign in instead</string>
     <string name="auth_continue_as_guest">Continue as guest</string>
     <string name="auth_resume_verification">Continue verification</string>
+    <string name="dhikr_detail_about">About</string>
+    <string name="dhikr_detail_insights">Insights</string>
+    <string name="dhikr_stats_pattern_eyebrow">PRACTICE PATTERN</string>
+    <string name="dhikr_stats_pattern_title">Your rhythm with this dhikr</string>
+    <string name="dhikr_stats_empty_title">Your practice starts here</string>
+    <plurals name="dhikr_stats_pattern_description">
+        <item quantity="one">You practiced this dhikr on %1$d day in the selected period.</item>
+        <item quantity="other">You practiced this dhikr on %1$d days in the selected period.</item>
+    </plurals>
+    <string name="dhikr_stats_empty_description">Counts for this dhikr will appear here after your first active day.</string>
+    <string name="dhikr_stats_recorded_total">Recorded total</string>
+    <string name="dhikr_stats_across_every_goal">Across every goal</string>
+    <string name="dhikr_stats_active_day_average">Average on active days</string>
+    <string name="dhikr_stats_zero_days_excluded">On days you practiced</string>
+    <string name="dhikr_stats_days_counted">Days counted</string>
+    <string name="dhikr_stats_presence">%1$d%% of this window</string>
+    <string name="dhikr_stats_current_streak">Current streak</string>
+    <plurals name="dhikr_stats_days_value">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <string name="dhikr_stats_effective_day_based">Follows your practice day</string>
+    <string name="dhikr_stats_daily_rhythm">Daily rhythm</string>
+    <string name="dhikr_stats_last_30_effective_days">Last 30 days</string>
+    <string name="dhikr_stats_last_90_effective_days">Last 90 days</string>
+    <string name="dhikr_stats_all_time_period">All time</string>
+    <string name="dhikr_stats_consistency">Consistency</string>
+    <string name="dhikr_stats_darker_more">Darker means more repetitions</string>
+    <string name="dhikr_stats_window">Practice window</string>
+    <string name="dhikr_stats_range_30">30D</string>
+    <string name="dhikr_stats_range_90">90D</string>
+    <string name="dhikr_stats_range_all">All</string>
 </resources>

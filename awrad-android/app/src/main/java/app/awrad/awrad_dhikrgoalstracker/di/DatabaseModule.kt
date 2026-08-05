@@ -10,13 +10,16 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import app.awrad.awrad_dhikrgoalstracker.data.database.AwradDatabase
 import app.awrad.awrad_dhikrgoalstracker.data.database.AwradMigrations
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.CountEntryDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrAudioAssetDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrTagAssignmentDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalRecurrenceDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalReminderDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalSlotDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.SeasonTemplateDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.SyncDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.dao.UserTagDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.WirdDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.WirdSessionDao
 import app.awrad.awrad_dhikrgoalstracker.data.model.BuiltInSeasonTemplates
@@ -83,6 +86,17 @@ object DatabaseModule {
 
     @Provides
     fun provideWirdSessionDao(database: AwradDatabase): WirdSessionDao = database.wirdSessionDao()
+
+    @Provides
+    fun provideUserTagDao(database: AwradDatabase): UserTagDao = database.userTagDao()
+
+    @Provides
+    fun provideDhikrTagAssignmentDao(database: AwradDatabase): DhikrTagAssignmentDao =
+        database.dhikrTagAssignmentDao()
+
+    @Provides
+    fun provideDhikrAudioAssetDao(database: AwradDatabase): DhikrAudioAssetDao =
+        database.dhikrAudioAssetDao()
 
     @Provides
     fun provideSyncDao(database: AwradDatabase): SyncDao = database.syncDao()

@@ -1,18 +1,22 @@
 package app.awrad.awrad_dhikrgoalstracker.data.sync
 
 import androidx.room.withTransaction
+import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.DhikrTagAssignmentV1
 import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.toProgressContractV1
 import app.awrad.awrad_dhikrgoalstracker.data.database.AwradDatabase
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.SyncDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncOpenCountBatchEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncOutboxEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncStateEntity
+import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
+import app.awrad.awrad_dhikrgoalstracker.data.model.UserTag
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -223,6 +227,28 @@ class ProgressSyncRepository @Inject constructor(
         if (!dhikr.isCustom) return
         val document = contractJson.encodeToString(dhikr.toProgressContractV1())
         enqueueEntity("custom_dhikr", dhikr.id.toString(), JsonParser.parseString(document).asJsonObject)
+    }
+
+    suspend fun enqueueUserTag(tag: UserTag) {
+        val document = contractJson.encodeToString(tag.toProgressContractV1())
+        enqueueEntity("user_tag", tag.id.toString(), JsonParser.parseString(document).asJsonObject)
+    }
+
+    suspend fun enqueueTagAssignment(
+        id: AwradId,
+        tagId: AwradId,
+        dhikrId: AwradId,
+        createdAt: Long,
+    ) {
+        val document = contractJson.encodeToString(
+            DhikrTagAssignmentV1(
+                id = id.toString(),
+                tagId = tagId.toString(),
+                dhikrId = dhikrId.toString(),
+                createdAt = Instant.ofEpochMilli(createdAt).toString(),
+            ),
+        )
+        enqueueEntity("dhikr_tag_assignment", id.toString(), JsonParser.parseString(document).asJsonObject)
     }
 
     suspend fun enqueueGoal(goal: Goal) {

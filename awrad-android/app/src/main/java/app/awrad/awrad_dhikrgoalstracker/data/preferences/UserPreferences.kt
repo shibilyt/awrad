@@ -8,6 +8,9 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestReason
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestSink
+import app.awrad.awrad_dhikrgoalstracker.notification.NoopNotificationObligationRequestSink
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -16,8 +19,10 @@ import javax.inject.Singleton
 
 @Singleton
 class UserPreferences @Inject constructor(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val notificationRequests: NotificationObligationRequestSink,
 ) {
+    constructor(dataStore: DataStore<Preferences>) : this(dataStore, NoopNotificationObligationRequestSink)
     companion object {
         private val KEY_USER_NAME = stringPreferencesKey("user_name")
         private val KEY_IS_ONBOARDED = booleanPreferencesKey("is_onboarded")
@@ -28,6 +33,7 @@ class UserPreferences @Inject constructor(
         private val KEY_SOUND_ON_COUNT = booleanPreferencesKey("sound_on_count")
         private val KEY_DAILY_REMINDER_ENABLED = booleanPreferencesKey("daily_reminder_enabled")
         private val KEY_DAILY_REMEMBRANCE_ENABLED = booleanPreferencesKey("daily_remembrance_enabled")
+        private val KEY_URGENCY_REMINDERS_ENABLED = booleanPreferencesKey("urgency_reminders_enabled")
         private val KEY_REMINDER_HOUR = intPreferencesKey("reminder_hour")
         private val KEY_REMINDER_MINUTE = intPreferencesKey("reminder_minute")
         private val KEY_LATITUDE = stringPreferencesKey("location_latitude")
@@ -54,6 +60,7 @@ class UserPreferences @Inject constructor(
     val soundOnCount: Flow<Boolean> = dataStore.data.map { it[KEY_SOUND_ON_COUNT] ?: false }
     val dailyReminderEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_DAILY_REMINDER_ENABLED] ?: false }
     val dailyRemembranceEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_DAILY_REMEMBRANCE_ENABLED] ?: false }
+    val urgencyRemindersEnabled: Flow<Boolean> = dataStore.data.map { it[KEY_URGENCY_REMINDERS_ENABLED] ?: true }
     val reminderHour: Flow<Int> = dataStore.data.map { it[KEY_REMINDER_HOUR] ?: 8 }
     val reminderMinute: Flow<Int> = dataStore.data.map { it[KEY_REMINDER_MINUTE] ?: 0 }
     val latitude: Flow<Double?> = dataStore.data.map { it[KEY_LATITUDE]?.toDoubleOrNull() }
@@ -110,6 +117,11 @@ class UserPreferences @Inject constructor(
         dataStore.edit { it[KEY_DAILY_REMEMBRANCE_ENABLED] = enabled }
     }
 
+    suspend fun setUrgencyRemindersEnabled(enabled: Boolean) {
+        dataStore.edit { it[KEY_URGENCY_REMINDERS_ENABLED] = enabled }
+        notificationRequests.request(NotificationObligationRequestReason.PREFERENCE)
+    }
+
     suspend fun setReminderHour(hour: Int) {
         dataStore.edit { it[KEY_REMINDER_HOUR] = hour }
     }
@@ -124,18 +136,22 @@ class UserPreferences @Inject constructor(
             it[KEY_LONGITUDE] = longitude.toString()
             it[KEY_CITY_NAME] = cityName
         }
+        notificationRequests.request(NotificationObligationRequestReason.DAY_RESET_OR_LOCATION)
     }
 
     suspend fun setCalculationMethod(method: String) {
         dataStore.edit { it[KEY_CALCULATION_METHOD] = method }
+        notificationRequests.request(NotificationObligationRequestReason.DAY_RESET_OR_LOCATION)
     }
 
     suspend fun setMadhab(madhab: String) {
         dataStore.edit { it[KEY_MADHAB] = madhab }
+        notificationRequests.request(NotificationObligationRequestReason.DAY_RESET_OR_LOCATION)
     }
 
     suspend fun setDayResetTime(value: String) {
         dataStore.edit { it[KEY_DAY_RESET_TIME] = value }
+        notificationRequests.request(NotificationObligationRequestReason.DAY_RESET_OR_LOCATION)
     }
 
     suspend fun setCalendarSystem(value: String) {
@@ -144,6 +160,7 @@ class UserPreferences @Inject constructor(
 
     suspend fun setPrayerSlotDefaultLeadMinutes(minutes: Int) {
         dataStore.edit { it[KEY_PRAYER_SLOT_DEFAULT_LEAD_MINUTES] = minutes.coerceAtLeast(0) }
+        notificationRequests.request(NotificationObligationRequestReason.PREFERENCE)
     }
 
     suspend fun setReaderFontScale(scale: Float) {

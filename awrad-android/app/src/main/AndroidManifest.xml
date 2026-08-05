@@ -69,6 +69,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".notification.UrgencyNudgeReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".notification.WirdReminderReceiver"
             android:exported="false" />
 

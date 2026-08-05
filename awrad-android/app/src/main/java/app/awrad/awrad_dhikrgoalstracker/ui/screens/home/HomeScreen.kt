@@ -130,7 +130,11 @@ fun HomeScreen(
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface),
+    ) {
         PullToRefreshBox(
             isRefreshing = isRefreshing,
             onRefresh = refreshViewModel::refresh,
@@ -273,6 +277,7 @@ private fun WirdsSection(
                     progress = card.progress,
                     onClick = { card.part?.let { onOpenReader(card.wird.id, it.id) } },
                     modifier = Modifier.fillMaxWidth(),
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 )
             }
         }
@@ -623,7 +628,7 @@ private fun PrayerRhythmCard(
             .padding(horizontal = 20.dp),
         onClick = onClick,
         shape = RoundedCornerShape(24.dp),
-        color = visuals.elevatedCardColor,
+        color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(
             modifier = Modifier

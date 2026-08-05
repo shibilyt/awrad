@@ -60,16 +60,16 @@ private val DarkColorScheme = darkColorScheme(
     surfaceVariant = SurfaceContainerDark,
     onSurfaceVariant = Neutral70,
     outline = Neutral50,
-    outlineVariant = Color(0xFF1F3B31),
+    outlineVariant = Neutral30,
     error = ErrorDark,
     onError = Color(0xFF690005),
     errorContainer = ErrorContainerDark,
     onErrorContainer = ErrorDark,
-    surfaceContainerLowest = Color(0xFF010403),
-    surfaceContainerLow = Color(0xFF06100D),
+    surfaceContainerLowest = Color(0xFF0E100E),
+    surfaceContainerLow = Color(0xFF181A18),
     surfaceContainer = SurfaceContainerDark,
-    surfaceContainerHigh = Color(0xFF101B17),
-    surfaceContainerHighest = Color(0xFF17251F),
+    surfaceContainerHigh = Color(0xFF282A28),
+    surfaceContainerHighest = Neutral20,
 )
 
 @Composable

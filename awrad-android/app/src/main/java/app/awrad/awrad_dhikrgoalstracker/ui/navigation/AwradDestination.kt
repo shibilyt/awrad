@@ -55,7 +55,13 @@ sealed class AwradDestination(val route: String) {
     data object WirdEdit : AwradDestination("wird_edit/{wirdId}") {
         fun createRoute(wirdId: String) = "wird_edit/$wirdId"
     }
-    data object CreateDhikr : AwradDestination("create_dhikr")
+    data object CreateDhikr : AwradDestination("create_dhikr?dhikrId={dhikrId}") {
+        fun createRoute(dhikrId: AwradId? = null) =
+            if (dhikrId != null) "create_dhikr?dhikrId=$dhikrId" else "create_dhikr"
+    }
+    data object ManageTags : AwradDestination("manage_tags/{dhikrId}") {
+        fun createRoute(dhikrId: AwradId) = "manage_tags/$dhikrId"
+    }
     data object Community : AwradDestination("community")
     data object CommunityStats : AwradDestination("community/stats")
     data object CommunityChallenges : AwradDestination("community/challenges")

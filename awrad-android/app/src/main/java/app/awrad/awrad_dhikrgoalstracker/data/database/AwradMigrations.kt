@@ -192,6 +192,16 @@ object AwradMigrations {
         }
     }
 
+    /**
+     * v13 -> v14: user tags, tag assignments, owned custom audio metadata, isCustom repair for
+     * null-catalog rows, and one-time dhikr_tags_v1 bootstrap flag on sync_state.
+     */
+    val MIGRATION_13_14: Migration = object : Migration(13, 14) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            migration13To14Statements().forEach(db::execSQL)
+        }
+    }
+
     /** All migrations in ascending order. Register with Room via `addMigrations(*ALL_MIGRATIONS)`. */
     val ALL_MIGRATIONS: Array<Migration> = arrayOf(
         MIGRATION_1_2,
@@ -206,5 +216,20 @@ object AwradMigrations {
         MIGRATION_10_11,
         MIGRATION_11_12,
         MIGRATION_12_13,
+        MIGRATION_13_14,
+    )
+
+    fun migration13To14Statements(): List<String> = listOf(
+        "UPDATE `dhikrs` SET `isCustom` = 1 WHERE `catalogKey` IS NULL",
+        "CREATE TABLE IF NOT EXISTS `user_tags` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `normalizedName` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "CREATE UNIQUE INDEX IF NOT EXISTS `index_user_tags_normalizedName` ON `user_tags` (`normalizedName`)",
+        "CREATE TABLE IF NOT EXISTS `dhikr_tag_assignments` (`id` TEXT NOT NULL, `tagId` TEXT NOT NULL, `dhikrId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`tagId`) REFERENCES `user_tags`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`dhikrId`) REFERENCES `dhikrs`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS `index_dhikr_tag_assignments_tagId_dhikrId` ON `dhikr_tag_assignments` (`tagId`, `dhikrId`)",
+        "CREATE INDEX IF NOT EXISTS `index_dhikr_tag_assignments_dhikrId` ON `dhikr_tag_assignments` (`dhikrId`)",
+        "CREATE INDEX IF NOT EXISTS `index_dhikr_tag_assignments_tagId` ON `dhikr_tag_assignments` (`tagId`)",
+        "CREATE TABLE IF NOT EXISTS `dhikr_audio_assets` (`id` TEXT NOT NULL, `dhikrId` TEXT NOT NULL, `relativeFileName` TEXT NOT NULL, `mimeType` TEXT NOT NULL, `byteSize` INTEGER NOT NULL, `durationMs` INTEGER NOT NULL, `sha256` TEXT NOT NULL, `source` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`dhikrId`) REFERENCES `dhikrs`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS `index_dhikr_audio_assets_dhikrId` ON `dhikr_audio_assets` (`dhikrId`)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS `index_dhikr_audio_assets_relativeFileName` ON `dhikr_audio_assets` (`relativeFileName`)",
+        "ALTER TABLE `sync_state` ADD COLUMN `dhikrTagsBootstrapCompleted` INTEGER NOT NULL DEFAULT 0",
     )
 }

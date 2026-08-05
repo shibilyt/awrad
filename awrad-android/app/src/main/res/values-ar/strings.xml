@@ -84,13 +84,20 @@
 
     <!-- Goals screen -->
     <string name="goals_title">أهدافي</string>
+    <string name="goals_tab_active">النشطة</string>
+    <string name="goals_tab_history">السجل</string>
     <string name="goals_section_today">أهداف اليوم</string>
     <string name="goals_section_upcoming">الأهداف القادمة</string>
+    <string name="goals_section_past">الأهداف السابقة</string>
     <string name="goals_section_completed">الأهداف المكتملة</string>
     <string name="goals_section_other">أهداف أخرى</string>
     <string name="goals_total_count">%d هدف</string>
     <string name="goals_empty_title">لا توجد أهداف بعد</string>
     <string name="goals_empty_hint">اضغط + لإنشاء هدفك الأول</string>
+    <string name="goals_active_empty_title">لا توجد أهداف نشطة</string>
+    <string name="goals_active_empty_hint">اضغط + لإنشاء هدف ذكر جديد</string>
+    <string name="goals_history_empty_title">لا يوجد سجل للأهداف بعد</string>
+    <string name="goals_history_empty_hint">ستظهر الأهداف السابقة والمكتملة هنا</string>
 
     <!-- Create Goal screen -->
     <string name="create_goal_select_dhikr">اختر الذكر</string>
@@ -399,6 +406,67 @@
     <string name="create_dhikr_category_label">الفئة</string>
     <string name="create_dhikr_save">حفظ</string>
     <string name="create_dhikr_saving">جارٍ الحفظ\u2026</string>
+    <string name="collection_your_dhikrs">أذكارك</string>
+    <string name="your_dhikrs_empty_title">لا توجد أذكار شخصية بعد</string>
+    <string name="your_dhikrs_empty_body">أنشئ ذكرًا بنصّك الخاص مع صوت مستورد اختياريًا.</string>
+    <string name="library_clear_filters">مسح عوامل التصفية</string>
+    <string name="library_clear_filters_hint">جرّب مسح البحث أو التصنيف أو الوسوم أو أذكارك.</string>
+    <string name="edit_dhikr_title">تعديل الذكر</string>
+    <string name="delete_dhikr">حذف الذكر</string>
+    <string name="delete_dhikr_confirm_title">حذف هذا الذكر؟</string>
+    <string name="delete_dhikr_confirm_body">سيتم أيضًا حذف الأهداف والتذكيرات والعدّ المرتبطة. ستُزال الملفات الصوتية المملوكة على هذا الجهاز.</string>
+    <string name="manage_tags">إدارة الوسوم</string>
+    <string name="import_audio">رفع صوت</string>
+    <string name="replace_audio">استبدال الصوت</string>
+    <string name="remove_audio">إزالة الصوت</string>
+    <string name="audio_missing">الصوت مفقود</string>
+    <string name="audio_missing_body">يُخزَّن الصوت على هذا الجهاز فقط. أعد إرفاق ملف أو أزل المرفق.</string>
+    <string name="audio_other_device">الصوت محفوظ على جهازك الآخر — أرفق الصوت هنا</string>
+    <string name="create_dhikr_counts_per_play">العدّ لكل تشغيل</string>
+    <string name="create_dhikr_tags_label">الوسوم</string>
+    <string name="tag_name_label">اسم الوسم</string>
+    <string name="create_tag">إنشاء وسم</string>
+    <string name="tag_rename">إعادة التسمية</string>
+    <string name="tag_rename_save">حفظ الاسم</string>
+    <string name="tag_delete">حذف الوسم</string>
+    <string name="tag_limit_reached">وصل هذا الذكر إلى الحد الأقصى من الوسوم.</string>
+    <string name="tag_invalid_name">أدخل اسم وسم صالحًا.</string>
+    <string name="library_tags_filter">الوسوم</string>
+    <string name="library_tags_filter_all">كل الوسوم</string>
+    <string name="library_tags_filter_selected">وسوم · %1$d</string>
+    <string name="library_tags_sheet_title">تصفية حسب الوسوم</string>
+    <string name="library_tags_sheet_hint">اعرض الأذكار التي تحتوي على كل الوسوم المحددة.</string>
+    <string name="custom_audio_too_large">يجب أن يكون الصوت أقل من 10 ميغابايت.</string>
+    <string name="custom_audio_too_long">يجب ألا يتجاوز الصوت 10 دقائق.</string>
+    <string name="custom_audio_unsupported">استخدم صوت AAC/M4A أو MP3 أو WAV.</string>
+    <string name="custom_audio_corrupt">تعذر قراءة ملف الصوت. جرّب ملفًا آخر.</string>
+    <string name="custom_audio_io">تعذر استيراد الصوت. تحقق من الملف وحاول مجددًا.</string>
+    <string name="create_dhikr_save_failed">تعذر حفظ هذا الذكر. حاول مجددًا.</string>
+    <string name="create_dhikr_partial_failure">تم حفظ الذكر، لكن تعذر تحديث الوسوم أو الصوت. حاول مجددًا.</string>
+    <string name="cd_library_tag_filter_row">مرشحات الوسوم</string>
+    <string name="cd_library_tag_filter_chip">فتح مرشحات الوسوم</string>
+    <string name="cd_library_tag_filter_sheet">تصفية المكتبة حسب الوسوم</string>
+    <string name="cd_library_tag_selected">الوسم %1$s محدد</string>
+    <string name="cd_library_tag_unselected">الوسم %1$s غير محدد</string>
+    <string name="cd_sheet_tag_selected">وسم التصفية %1$s محدد</string>
+    <string name="cd_sheet_tag_unselected">وسم التصفية %1$s غير محدد</string>
+    <string name="cd_create_dhikr_tag_chips">وسوم الذكر</string>
+    <string name="cd_create_dhikr_new_tag_field">اسم وسم جديد</string>
+    <string name="cd_create_tag_selected">الوسم %1$s معيّن</string>
+    <string name="cd_create_tag_unselected">الوسم %1$s غير معيّن</string>
+    <string name="cd_counts_per_play">العدّ لكل تشغيل</string>
+    <string name="cd_decrease_counts_per_play">إنقاص العدّ لكل تشغيل</string>
+    <string name="cd_increase_counts_per_play">زيادة العدّ لكل تشغيل</string>
+    <string name="create_dhikr_tags_none">لم يتم اختيار وسوم</string>
+    <string name="create_dhikr_tags_selected">تم اختيار %1$d وسوم</string>
+    <string name="create_dhikr_tags_search">البحث في الوسوم</string>
+    <string name="create_dhikr_tags_empty">لا توجد وسوم بعد. أضف وسمك الأول أدناه.</string>
+    <string name="create_dhikr_tags_no_match">لا توجد وسوم تطابق بحثك.</string>
+    <string name="create_dhikr_counts_requires_audio">أضف صوتًا لتفعيل العدّ لكل تشغيل.</string>
+    <string name="cd_tag_name_field">اسم الوسم</string>
+    <string name="cd_tag_assigned">الوسم %1$s معيّن لهذا الذكر</string>
+    <string name="cd_tag_unassigned">الوسم %1$s غير معيّن لهذا الذكر</string>
+    <string name="audio_missing_reattach">إعادة إرفاق الصوت</string>
 
     <!-- Category screen -->
     <string name="category_no_dhikrs">لا توجد أذكار في هذه الفئة</string>
@@ -429,6 +497,8 @@
     <string name="settings_notifications">الإشعارات</string>
     <string name="settings_daily_reminder">تذكير يومي</string>
     <string name="settings_daily_reminder_sub">احصل على تذكير يومي لإتمام ذكرك</string>
+    <string name="settings_urgency_reminders">تذكيرات قرب الموعد</string>
+    <string name="settings_urgency_reminders_sub">تنبيه عند اقتراب هدف أو جلسة من موعدها النهائي.</string>
     <string name="settings_reminder_time">وقت التذكير</string>
     <string name="settings_prayer_slot_lead">نافذة البداية قبل الصلاة</string>
     <string name="settings_prayer_slot_lead_sub">عدد الدقائق الافتراضي قبل الصلاة التي تصبح فيها خانات قبل الصلاة نشطة.</string>
@@ -540,6 +610,33 @@
     <string name="notif_global_title">حان وقت الذكر</string>
     <string name="notif_global_body">خصص لحظة لذكر الله وعد أذكارك اليومية</string>
     <string name="notif_global_expanded_body">خصص لحظة هادئة لذكر الله ومتابعة أذكارك اليومية في أوراد.</string>
+    <string name="notif_urgency_anytime_deadline">متبقي %1$s لـ%3$s · %2$d متبقٍ</string>
+    <string name="notif_urgency_slot_deadline">متبقي %1$s في %3$s · %2$d متبقٍ</string>
+    <string name="notif_urgency_streak_guardian">حافظ على سلسلة %1$d يومًا · متبقي %2$s · يلزم %3$d</string>
+    <string name="notif_urgency_tracker_guardian">تابع ممارستك · متبقي %1$s لـ%2$s</string>
+    <string name="notif_urgency_deadline_generic">متبقي %1$s · %2$d متبقٍ</string>
+    <string name="notif_urgency_slot_deadline_generic">متبقي %1$s في هذه الجلسة · %2$d متبقٍ</string>
+    <string name="notif_urgency_time_remaining_about">نحو %1$s متبقٍ</string>
+    <string name="notif_urgency_duration_less_than_minute">أقل من دقيقة</string>
+    <string name="notif_urgency_duration_minutes">%1$d د</string>
+    <string name="notif_urgency_duration_hours">%1$d س</string>
+    <string name="notif_urgency_duration_days">%1$d يوم</string>
+    <string name="notif_urgency_duration_hours_minutes">%1$d س %2$d د</string>
+    <string name="notif_urgency_duration_days_hours">%1$d يوم %2$d س</string>
+    <!-- Built-in urgency notification goal names -->
+    <string name="notif_goal_name_surah_ikhlas">سورة الإخلاص</string>
+    <string name="notif_goal_name_tahleel">التهليل</string>
+    <string name="notif_goal_name_ya_wahhabu">يا وهاب</string>
+    <string name="notif_goal_name_isthighfar">الاستغفار</string>
+    <string name="notif_goal_name_swalath_al_fathimiyya">الصلاة الفاطمية</string>
+    <string name="notif_goal_name_swalath">الصلاة على النبي</string>
+    <string name="notif_goal_name_swalath_sayyidina">الصلاة على سيدنا محمد</string>
+    <string name="notif_goal_name_swalath_al_fatih">صلاة الفاتح</string>
+    <string name="notif_goal_name_swalath_al_nariyya">الصلاة النارية</string>
+    <string name="notif_goal_name_swalath_for_debt">صلاة قضاء الدين</string>
+    <string name="notif_goal_name_ramadan_dhikr">ذكر رمضان</string>
+    <string name="notif_goal_name_ramadan_first_ten_nights">العشر الأوائل من رمضان</string>
+    <string name="notif_goal_name_ramadan_second_ten_nights">العشر الوسطى من رمضان</string>
 
     <!-- Daily remembrance -->
     <string name="remembrance_overline">الذكر اليومي</string>
@@ -1253,4 +1350,36 @@
     <string name="auth_sign_in_instead">تسجيل الدخول بدلاً من ذلك</string>
     <string name="auth_continue_as_guest">المتابعة كضيف</string>
     <string name="auth_resume_verification">متابعة التأكيد</string>
+    <string name="dhikr_detail_about">حول الذكر</string>
+    <string name="dhikr_detail_insights">إحصاءات</string>
+    <string name="dhikr_stats_pattern_eyebrow">نمط الممارسة</string>
+    <string name="dhikr_stats_pattern_title">إيقاعك مع هذا الذكر</string>
+    <string name="dhikr_stats_empty_title">تبدأ ممارستك من هنا</string>
+    <plurals name="dhikr_stats_pattern_description">
+        <item quantity="one">مارست هذا الذكر في يوم واحد خلال الفترة المحددة.</item>
+        <item quantity="other">مارست هذا الذكر في %1$d أيام خلال الفترة المحددة.</item>
+    </plurals>
+    <string name="dhikr_stats_empty_description">ستظهر أعداد هذا الذكر هنا بعد أول يوم تمارس فيه.</string>
+    <string name="dhikr_stats_recorded_total">الإجمالي المسجّل</string>
+    <string name="dhikr_stats_across_every_goal">عبر جميع الأهداف</string>
+    <string name="dhikr_stats_active_day_average">متوسط الأيام النشطة</string>
+    <string name="dhikr_stats_zero_days_excluded">في أيام ممارستك</string>
+    <string name="dhikr_stats_days_counted">أيام الممارسة</string>
+    <string name="dhikr_stats_presence">%1$d%% من هذه الفترة</string>
+    <string name="dhikr_stats_current_streak">التتابع الحالي</string>
+    <plurals name="dhikr_stats_days_value">
+        <item quantity="one">يوم واحد</item>
+        <item quantity="other">%1$d أيام</item>
+    </plurals>
+    <string name="dhikr_stats_effective_day_based">بحسب يوم ممارستك</string>
+    <string name="dhikr_stats_daily_rhythm">الإيقاع اليومي</string>
+    <string name="dhikr_stats_last_30_effective_days">آخر 30 يومًا فعليًا</string>
+    <string name="dhikr_stats_last_90_effective_days">آخر 90 يومًا فعليًا</string>
+    <string name="dhikr_stats_all_time_period">كل الفترات</string>
+    <string name="dhikr_stats_consistency">الاستمرارية</string>
+    <string name="dhikr_stats_darker_more">اللون الأغمق يعني تكرارات أكثر</string>
+    <string name="dhikr_stats_window">فترة الممارسة</string>
+    <string name="dhikr_stats_range_30">30</string>
+    <string name="dhikr_stats_range_90">90</string>
+    <string name="dhikr_stats_range_all">الكل</string>
 </resources>

@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import java.time.LocalDate
+import java.time.Instant
+import java.time.ZoneId
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -70,5 +72,16 @@ class DateProvider @Inject constructor(
             }
         }
         return now.toString()
+    }
+
+    companion object {
+        /** Pure effective-day calculation for policy consumers that inject time and location data. */
+        fun effectiveDayWindow(
+            now: Instant,
+            zoneId: ZoneId,
+            dayReset: app.awrad.awrad_dhikrgoalstracker.data.model.DayResetOption,
+            maghribForCivilDate: (LocalDate) -> Instant?,
+        ): EffectiveDayWindow =
+            EffectiveDayWindowResolver.resolve(now, zoneId, dayReset, maghribForCivilDate)
     }
 }

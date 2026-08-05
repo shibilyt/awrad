@@ -44,6 +44,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 
 enum class FeaturedCollectionTone {
+    YourDhikrs,
     AsmaUlHusna,
     Daily,
     Swalaths,
@@ -54,14 +55,16 @@ enum class FeaturedCollectionTone {
 
 data class FeaturedCollectionUiModel(
     val title: String,
-    val category: DhikrCategory,
+    val category: DhikrCategory?,
     val count: Int,
     val tone: FeaturedCollectionTone,
+    val isYourDhikrs: Boolean = false,
 )
 
 @Composable
 fun rememberFeaturedCollections(
     categoryCounts: Map<DhikrCategory, Int>,
+    customCount: Int = 0,
 ): List<FeaturedCollectionUiModel> {
     val dailyCategory = categoryCounts.preferredCategory(
         preferred = DhikrCategory.MORNING,
@@ -72,6 +75,13 @@ fun rememberFeaturedCollections(
         ?: categoryCounts.countFor(DhikrCategory.PRAISE, DhikrCategory.FORGIVENESS, DhikrCategory.QURAN)
 
     return listOf(
+        FeaturedCollectionUiModel(
+            title = stringResource(R.string.collection_your_dhikrs),
+            category = null,
+            count = customCount,
+            tone = FeaturedCollectionTone.YourDhikrs,
+            isYourDhikrs = true,
+        ),
         FeaturedCollectionUiModel(
             title = stringResource(R.string.category_asma_ul_husna),
             category = DhikrCategory.ASMA_UL_HUSNA,
@@ -117,9 +127,11 @@ fun FeaturedCollectionsSection(
     onCollectionClick: (DhikrCategory) -> Unit,
     modifier: Modifier = Modifier,
     onViewAll: (() -> Unit)? = null,
+    customCount: Int = 0,
+    onYourDhikrsClick: (() -> Unit)? = null,
     @StringRes titleRes: Int = R.string.featured_collections,
 ) {
-    val collections = rememberFeaturedCollections(categoryCounts)
+    val collections = rememberFeaturedCollections(categoryCounts, customCount)
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -159,7 +171,13 @@ fun FeaturedCollectionsSection(
             items(collections, key = { it.title }) { collection ->
                 FeaturedCollectionCard(
                     collection = collection,
-                    onClick = { onCollectionClick(collection.category) },
+                    onClick = {
+                        if (collection.isYourDhikrs) {
+                            onYourDhikrsClick?.invoke()
+                        } else {
+                            collection.category?.let(onCollectionClick)
+                        }
+                    },
                 )
             }
         }
@@ -240,25 +258,30 @@ private fun collectionImageRes(
     tone: FeaturedCollectionTone,
     isDark: Boolean,
 ): Int = when (tone) {
+    FeaturedCollectionTone.YourDhikrs -> if (isDark) {
+        R.drawable.collection_your_dhikrs_dark
+    } else {
+        R.drawable.collection_your_dhikrs_light
+    }
+    FeaturedCollectionTone.Dhikrs -> if (isDark) {
+        R.drawable.collection_dhikrs_dark
+    } else {
+        R.drawable.collection_dhikrs_light
+    }
     FeaturedCollectionTone.AsmaUlHusna -> if (isDark) {
         R.drawable.collection_asma_ul_husna_dark
     } else {
         R.drawable.collection_asma_ul_husna_light
     }
     FeaturedCollectionTone.Daily -> if (isDark) {
-        R.drawable.collection_swalaths_dark
-    } else {
-        R.drawable.collection_swalaths_light
-    }
-    FeaturedCollectionTone.Swalaths -> if (isDark) {
         R.drawable.collection_daily_essentials_dark
     } else {
         R.drawable.collection_daily_essentials_light
     }
-    FeaturedCollectionTone.Dhikrs -> if (isDark) {
-        R.drawable.collection_dhikrs_dark
+    FeaturedCollectionTone.Swalaths -> if (isDark) {
+        R.drawable.collection_swalaths_dark
     } else {
-        R.drawable.collection_dhikrs_light
+        R.drawable.collection_swalaths_light
     }
     FeaturedCollectionTone.Evening -> if (isDark) {
         R.drawable.collection_evening_dhikrs_dark

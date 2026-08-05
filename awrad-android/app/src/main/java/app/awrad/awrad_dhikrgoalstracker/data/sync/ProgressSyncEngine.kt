@@ -1,10 +1,13 @@
 package app.awrad.awrad_dhikrgoalstracker.data.sync
 
 import androidx.room.withTransaction
+import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.DhikrTagAssignmentV1
 import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.DhikrV1
 import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.GoalV1
+import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.UserTagV1
 import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.toNativeDhikr
 import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.toNativeGoal
+import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.toNativeUserTag
 import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.toProgressContractV1
 import app.awrad.awrad_dhikrgoalstracker.data.database.AwradDatabase
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.CountEntryDao
@@ -24,6 +27,8 @@ import app.awrad.awrad_dhikrgoalstracker.data.network.SyncTransferRequest
 import app.awrad.awrad_dhikrgoalstracker.data.preferences.AuthTokenManager
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepositoryImpl
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepositoryImpl
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestDispatcher
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestReason
 import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
@@ -55,6 +60,7 @@ class ProgressSyncEngine @Inject constructor(
     private val syncRepository: ProgressSyncRepository,
     private val tokenManager: AuthTokenManager,
     private val feedbackBus: ProgressSyncFeedbackBus,
+    private val notificationRequests: NotificationObligationRequestDispatcher,
 ) {
     private val gson = Gson()
     private val contractJson = Json {
@@ -186,6 +192,9 @@ class ProgressSyncEngine @Inject constructor(
                     )
                 }
         }
+        if (cloudGoalIds.isNotEmpty()) {
+            notificationRequests.request(NotificationObligationRequestReason.SYNC_IMPORT)
+        }
 
         val newGoalIds = initial.goals
             .filter { syncDao.shadow("goal", it.entityId) == null }
@@ -303,6 +312,7 @@ class ProgressSyncEngine @Inject constructor(
     }
 
     private suspend fun applyReceipts(receipts: List<SyncReceiptDto>) {
+        var schedulingRelevantChanged = false
         val countChanges = database.withTransaction {
             val changes = mutableListOf<ProgressSyncCountChange>()
             receipts.forEach { receipt ->
@@ -311,6 +321,8 @@ class ProgressSyncEngine @Inject constructor(
 
                 if (isDeletionFence(receipt.canonicalEffect)) {
                     applyPurgedEntityReceipt(receipt.canonicalEffect, revision)
+                    schedulingRelevantChanged = schedulingRelevantChanged ||
+                        receipt.canonicalEffect.get("entity_type")?.asString == "goal"
                     return@forEach
                 }
 
@@ -330,9 +342,25 @@ class ProgressSyncEngine @Inject constructor(
                                 )?.let(changes::add)
                             }
                             outbox.entityType != null -> {
+                                val effectId = receipt.canonicalEffect.get("entity_id")?.asString
+                                val localId = outbox.entityId
+                                if (outbox.entityType == "user_tag" &&
+                                    effectId != null &&
+                                    localId != null &&
+                                    effectId != localId
+                                ) {
+                                    applyUserTagCoalesce(
+                                        localTagId = UUID.fromString(localId),
+                                        effect = receipt.canonicalEffect,
+                                    )
+                                } else {
+                                    applyCanonicalEntityEffect(receipt.canonicalEffect)
+                                }
                                 installEntityShadow(receipt.canonicalEffect, revision, null)
                                 syncDao.deleteOutbox(outbox.commandId)
                                 rebaseNextEntityEdit(receipt.canonicalEffect)
+                                schedulingRelevantChanged = schedulingRelevantChanged ||
+                                    outbox.entityType == "goal"
                             }
                             else -> syncDao.deleteOutbox(outbox.commandId)
                         }
@@ -340,6 +368,8 @@ class ProgressSyncEngine @Inject constructor(
                     "conflict" -> {
                         installEntityShadow(receipt.canonicalEffect, revision, outbox.payloadJson)
                         applyCanonicalEntityEffect(receipt.canonicalEffect)
+                        schedulingRelevantChanged = schedulingRelevantChanged ||
+                            receipt.canonicalEffect.get("entity_type")?.asString == "goal"
                         syncDao.markOutbox(
                             outbox.commandId,
                             "conflict",
@@ -366,6 +396,8 @@ class ProgressSyncEngine @Inject constructor(
                         if (receipt.canonicalEffect.has("entity_type")) {
                             installEntityShadow(receipt.canonicalEffect, revision, null)
                             applyCanonicalEntityEffect(receipt.canonicalEffect)
+                            schedulingRelevantChanged = schedulingRelevantChanged ||
+                                receipt.canonicalEffect.get("entity_type")?.asString == "goal"
                         }
                         if (outbox.goalId != null) {
                             val currentIncarnation = syncDao.shadow("goal", outbox.goalId)?.incarnation
@@ -384,6 +416,12 @@ class ProgressSyncEngine @Inject constructor(
             changes
         }
         feedbackBus.publish(countChanges)
+        if (countChanges.isNotEmpty() || schedulingRelevantChanged) {
+            notificationRequests.request(
+                NotificationObligationRequestReason.SYNC_IMPORT,
+                countChanges.mapTo(linkedSetOf()) { it.goalId },
+            )
+        }
     }
 
     private fun isDeletionFence(effect: JsonObject): Boolean = ProgressSyncPurgeEffect.isFence(effect)
@@ -413,9 +451,8 @@ class ProgressSyncEngine @Inject constructor(
             state = requireNotNull(syncDao.state())
         }
         while (state.pendingTransferId == null) {
-            // The persisted cursor is authoritative. It may be cleared after a
-            // server generation reset while this invocation is still running.
-            val requestedCursor = state.cursor
+            // One-time capability-aware snapshot when first gaining dhikr_tags_v1.
+            val requestedCursor = if (!state.dhikrTagsBootstrapCompleted) null else state.cursor
             val kind = if (requestedCursor == null) "snapshot" else "delta"
             val response = if (kind == "snapshot") {
                 api.startProgressSnapshot(SyncTransferRequest(kind = kind, cursor = null))
@@ -547,6 +584,7 @@ class ProgressSyncEngine @Inject constructor(
     }
 
     private suspend fun installStagedTransfer() {
+        var schedulingRelevantChanged = false
         val countChanges = database.withTransaction {
             val state = requireNotNull(syncDao.state())
             val shouldNotify = state.pendingTransferKind == "delta" && !state.generationResetPending
@@ -584,6 +622,7 @@ class ProgressSyncEngine @Inject constructor(
             if (state.generationResetPending) reconcileGeneration(records)
             records.forEach { record ->
                 applyRecord(record)?.takeIf { shouldNotify }?.let(changes::add)
+                schedulingRelevantChanged = schedulingRelevantChanged || record.affectsNotificationScheduling()
             }
 
             val committedRevision = if (state.generationResetPending) {
@@ -597,6 +636,8 @@ class ProgressSyncEngine @Inject constructor(
                     appliedRevision = committedRevision,
                     safeCompactionRevision = safeRevision(committedRevision),
                     generationResetPending = false,
+                    dhikrTagsBootstrapCompleted = state.dhikrTagsBootstrapCompleted ||
+                        state.pendingTransferKind == "snapshot",
                     pendingTransferId = null,
                     pendingTransferKind = null,
                     pendingTransferCursor = null,
@@ -613,11 +654,17 @@ class ProgressSyncEngine @Inject constructor(
             changes
         }
         feedbackBus.publish(countChanges)
+        if (countChanges.isNotEmpty() || schedulingRelevantChanged) {
+            notificationRequests.request(
+                NotificationObligationRequestReason.SYNC_IMPORT,
+                countChanges.mapTo(linkedSetOf()) { it.goalId },
+            )
+        }
     }
 
     private suspend fun applyRecord(record: SyncTransferRecordDto): ProgressSyncCountChange? =
         when (record.kind) {
-            "custom_dhikr", "goal" -> {
+            "custom_dhikr", "goal", "user_tag", "dhikr_tag_assignment" -> {
                 applyEntity(record)
                 null
             }
@@ -681,6 +728,18 @@ class ProgressSyncEngine @Inject constructor(
             "goal" -> goalRepository.applyRemoteGoal(
                 contractJson.decodeFromString<GoalV1>(gson.toJson(document)).toNativeGoal(),
             )
+            "user_tag" -> dhikrRepository.applyRemoteUserTag(
+                contractJson.decodeFromString<UserTagV1>(gson.toJson(document)).toNativeUserTag(),
+            )
+            "dhikr_tag_assignment" -> {
+                val assignment = contractJson.decodeFromString<DhikrTagAssignmentV1>(gson.toJson(document))
+                dhikrRepository.applyRemoteTagAssignment(
+                    id = UUID.fromString(assignment.id),
+                    tagId = UUID.fromString(assignment.tagId),
+                    dhikrId = UUID.fromString(assignment.dhikrId),
+                    createdAt = java.time.Instant.parse(assignment.createdAt).toEpochMilli(),
+                )
+            }
         }
     }
 
@@ -705,6 +764,10 @@ class ProgressSyncEngine @Inject constructor(
             syncDao.deleteCountShadowsForGoal(record.id)
         }
         if (type == "custom_dhikr") dhikrRepository.deleteRemoteDhikr(UUID.fromString(record.id))
+        if (type == "user_tag") dhikrRepository.deleteRemoteUserTag(UUID.fromString(record.id))
+        if (type == "dhikr_tag_assignment") {
+            dhikrRepository.deleteRemoteTagAssignment(UUID.fromString(record.id))
+        }
     }
 
     private suspend fun applyConflict(record: SyncTransferRecordDto) {
@@ -801,6 +864,8 @@ class ProgressSyncEngine @Inject constructor(
         if (state != "active" || document == null) {
             if (type == "goal") goalRepository.deleteRemoteGoal(id)
             if (type == "custom_dhikr") dhikrRepository.deleteRemoteDhikr(id)
+            if (type == "user_tag") dhikrRepository.deleteRemoteUserTag(id)
+            if (type == "dhikr_tag_assignment") dhikrRepository.deleteRemoteTagAssignment(id)
             return
         }
         when (type) {
@@ -810,7 +875,42 @@ class ProgressSyncEngine @Inject constructor(
             "custom_dhikr" -> dhikrRepository.applyRemoteDhikr(
                 contractJson.decodeFromString<DhikrV1>(gson.toJson(document)).toNativeDhikr(),
             )
+            "user_tag" -> dhikrRepository.applyRemoteUserTag(
+                contractJson.decodeFromString<UserTagV1>(gson.toJson(document)).toNativeUserTag(),
+            )
+            "dhikr_tag_assignment" -> {
+                val assignment = contractJson.decodeFromString<DhikrTagAssignmentV1>(gson.toJson(document))
+                dhikrRepository.applyRemoteTagAssignment(
+                    id = UUID.fromString(assignment.id),
+                    tagId = UUID.fromString(assignment.tagId),
+                    dhikrId = UUID.fromString(assignment.dhikrId),
+                    createdAt = java.time.Instant.parse(assignment.createdAt).toEpochMilli(),
+                )
+            }
         }
+    }
+
+    private suspend fun applyUserTagCoalesce(localTagId: UUID, effect: JsonObject) {
+        val document = effect.get("document")?.takeUnless { it.isJsonNull }?.asJsonObject
+            ?: throw IOException("Coalesced user_tag receipt missing document")
+        val canonical = contractJson.decodeFromString<UserTagV1>(gson.toJson(document)).toNativeUserTag()
+        dhikrRepository.coalesceUserTag(localTagId, canonical)
+        val from = localTagId.toString()
+        val to = canonical.id.toString()
+        syncDao.pendingOutbox()
+            .filter { it.entityType == "dhikr_tag_assignment" && it.payloadJson.contains(from) }
+            .forEach { pending ->
+                val rewritten = UserTagCoalesceRepoint.rewritePendingAssignmentPayload(
+                    payloadJson = pending.payloadJson,
+                    fromTagId = from,
+                    toTagId = to,
+                )
+                if (rewritten != pending.payloadJson) {
+                    syncDao.putOutbox(pending.copy(payloadJson = rewritten))
+                }
+            }
+        syncDao.deleteEntityOutbox("user_tag", from)
+        syncDao.deleteConflictsForEntity("user_tag", from)
     }
 
     private suspend fun installCanonicalCountEffect(effect: JsonObject, revision: Long) {
@@ -844,7 +944,7 @@ class ProgressSyncEngine @Inject constructor(
         syncDao.clearConflicts()
         val entityKeys = records.mapNotNull { record ->
             when (record.kind) {
-                "custom_dhikr", "goal" -> "${record.kind}:${record.id}"
+                "custom_dhikr", "goal", "user_tag", "dhikr_tag_assignment" -> "${record.kind}:${record.id}"
                 "tombstone", "deletion_fence" -> "${record.payload["entity_type"].asString}:${record.id}"
                 else -> null
             }
@@ -854,6 +954,10 @@ class ProgressSyncEngine @Inject constructor(
                 val id = UUID.fromString(shadow.entityId)
                 if (shadow.entityType == "goal") goalRepository.deleteRemoteGoal(id)
                 if (shadow.entityType == "custom_dhikr") dhikrRepository.deleteRemoteDhikr(id)
+                if (shadow.entityType == "user_tag") dhikrRepository.deleteRemoteUserTag(id)
+                if (shadow.entityType == "dhikr_tag_assignment") {
+                    dhikrRepository.deleteRemoteTagAssignment(id)
+                }
                 syncDao.deleteShadow(shadow.key)
             }
         }
@@ -920,13 +1024,12 @@ class ProgressSyncEngine @Inject constructor(
         }
     }
 
-    private fun dependencyOrder(kind: String): Int = when (kind) {
-        "custom_dhikr" -> 0
-        "goal" -> 1
-        "count_projection" -> 2
-        "conflict" -> 3
-        else -> 4
-    }
+    private fun dependencyOrder(kind: String): Int = ProgressSyncDependencyOrder.order(kind)
+
+    private fun SyncTransferRecordDto.affectsNotificationScheduling(): Boolean =
+        kind == "goal" || kind == "count_projection" ||
+            (kind in setOf("tombstone", "deletion_fence") &&
+                payload.get("entity_type")?.asString == "goal")
 
     private data class InitialLocalState(
         val dhikrs: List<InitialEntity>,

@@ -3,12 +3,13 @@ package app.awrad.awrad_dhikrgoalstracker.ui.screens.library
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.data.model.toStringResId
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.service.AudioPreviewPlayer
+import app.awrad.awrad_dhikrgoalstracker.service.OwnedAudioAvailability
 import app.awrad.awrad_dhikrgoalstracker.service.PreviewPlaybackState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -25,11 +26,15 @@ import javax.inject.Inject
 data class LibraryUiState(
     val searchQuery: String = "",
     val selectedCategory: DhikrCategory? = null,
-    val availableCategories: List<DhikrCategory> = emptyList(),
+    val customOnly: Boolean = false,
     val categoryCounts: Map<DhikrCategory, Int> = emptyMap(),
+    val customCount: Int = 0,
     val filteredDhikrs: List<Dhikr> = emptyList(),
     val groupedDhikrs: Map<DhikrCategory, List<Dhikr>> = emptyMap(),
+    val ownedAudioByDhikrId: Map<AwradId, String> = emptyMap(),
+    val missingOwnedAudioIds: Set<AwradId> = emptySet(),
     val isShowingAll: Boolean = true,
+    val hasActiveFilters: Boolean = false,
 )
 
 @HiltViewModel
@@ -41,6 +46,8 @@ class LibraryViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     private val _selectedCategory = MutableStateFlow<DhikrCategory?>(null)
+    private val _customOnly = MutableStateFlow(false)
+    private val _missingOwnedAudioIds = MutableStateFlow<Set<AwradId>>(emptySet())
 
     val playerState: StateFlow<PreviewPlaybackState> = audioPlayer.state
 
@@ -48,42 +55,43 @@ class LibraryViewModel @Inject constructor(
     val downloadingIds: StateFlow<Set<AwradId>> = _downloadingIds.asStateFlow()
 
     val uiState: StateFlow<LibraryUiState> = combine(
-        _searchQuery,
-        _selectedCategory,
+        combine(_searchQuery, _selectedCategory, _customOnly) { q, c, custom ->
+            LibraryFilterCriteria(query = q, category = c, customOnly = custom)
+        },
         dhikrRepository.getAllDhikrs(),
-    ) { query, category, allDhikrs ->
-        val filtered = allDhikrs.filter { dhikr ->
-            val matchesQuery = query.isBlank() ||
-                dhikr.title.contains(query, ignoreCase = true) ||
-                dhikr.transliteration.contains(query, ignoreCase = true) ||
-                dhikr.translation.contains(query, ignoreCase = true) ||
-                dhikr.arabic.contains(query)
-            val matchesCategory = category == null || dhikr.category == category
-            matchesQuery && matchesCategory
-        }
-
-        val isShowingAll = query.isBlank() && category == null
+        combine(
+            dhikrRepository.observeOwnedAudioByDhikrId(),
+            _missingOwnedAudioIds,
+        ) { owned, missing -> owned to missing },
+    ) { criteria, allDhikrs, ownedAndMissing ->
+        val (ownedById, missingOwned) = ownedAndMissing
+        val items = allDhikrs.map { LibraryFilterItem(dhikr = it) }
+        val filteredItems = LibraryFilterPolicy.filter(
+            items = items,
+            query = criteria.query,
+            category = criteria.category,
+            customOnly = criteria.customOnly,
+        )
+        val filtered = filteredItems.map { it.dhikr }
+        val isShowingAll = !criteria.hasActiveFilters
         val grouped = if (isShowingAll) {
             filtered.groupBy { it.category }
                 .toSortedMap(compareBy { DhikrCategory.entries.indexOf(it) })
         } else {
             emptyMap()
         }
-        val availableCategories = allDhikrs
-            .map { it.category }
-            .distinct()
-            .sortedBy { DhikrCategory.entries.indexOf(it) }
-        val categoryCounts = allDhikrs.groupBy { it.category }
-            .mapValues { it.value.size }
-
         LibraryUiState(
-            searchQuery = query,
-            selectedCategory = category,
-            availableCategories = availableCategories,
-            categoryCounts = categoryCounts,
+            searchQuery = criteria.query,
+            selectedCategory = criteria.category,
+            customOnly = criteria.customOnly,
+            categoryCounts = allDhikrs.groupBy { it.category }.mapValues { it.value.size },
+            customCount = allDhikrs.count { it.isCustom },
             filteredDhikrs = filtered,
             groupedDhikrs = grouped,
+            ownedAudioByDhikrId = ownedById.mapValues { it.value.relativeFileName },
+            missingOwnedAudioIds = missingOwned,
             isShowingAll = isShowingAll,
+            hasActiveFilters = criteria.hasActiveFilters,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -95,17 +103,36 @@ class LibraryViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
-    fun onCategorySelected(category: DhikrCategory?) {
+    fun onFeaturedCollectionSelected(category: DhikrCategory) {
+        _customOnly.value = false
         _selectedCategory.value = category
+    }
+
+    fun onYourDhikrsSelected() {
+        _customOnly.value = true
+        _selectedCategory.value = null
     }
 
     fun clearFilters() {
         _searchQuery.value = ""
         _selectedCategory.value = null
+        _customOnly.value = false
     }
 
     fun togglePlayback(dhikr: Dhikr) {
-        audioPlayer.toggle(dhikr.id, dhikr.audioUrl, dhikr.audioFileName)
+        viewModelScope.launch {
+            val owned = dhikrRepository.getOwnedAudio(dhikr.id)
+            if (owned != null) {
+                if (dhikrRepository.ownedAudioAvailability(dhikr.id) == OwnedAudioAvailability.MISSING) {
+                    _missingOwnedAudioIds.update { it + dhikr.id }
+                    return@launch
+                }
+                _missingOwnedAudioIds.update { it - dhikr.id }
+                audioPlayer.toggle(dhikr.id, dhikr.audioUrl, owned.relativeFileName)
+                return@launch
+            }
+            audioPlayer.toggle(dhikr.id, dhikr.audioUrl, dhikr.audioFileName)
+        }
     }
 
     fun downloadDhikrAudio(dhikr: Dhikr) {

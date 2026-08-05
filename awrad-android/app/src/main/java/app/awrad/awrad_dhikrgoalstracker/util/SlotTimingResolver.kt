@@ -34,6 +34,18 @@ data class SlotTimingInfo(
     val timeStatus: SlotTimeStatus = SlotTimeStatus.UNKNOWN,
 )
 
+/** A valid half-open slot interval that callers can use without inventing timing. */
+data class SlotInterval(
+    val startMillis: Long,
+    val endMillis: Long,
+    val startText: String = "",
+    val endText: String = "",
+) {
+    init {
+        require(endMillis > startMillis) { "Slot interval must be positive" }
+    }
+}
+
 object SlotTimingResolver {
     private val timeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("h:mm a")
 
@@ -92,12 +104,9 @@ object SlotTimingResolver {
         defaultPrayerLeadMinutes: Int,
         zoneId: ZoneId = ZoneId.systemDefault(),
     ): SlotTimingInfo {
-        val interval = when (slot.slotType) {
-            GoalSlotType.ANYTIME -> return SlotTimingInfo(timeStatus = SlotTimeStatus.ANYTIME)
-            GoalSlotType.TIME_WINDOW -> timeWindowInterval(slot, occurrenceDate, zoneId) ?: return SlotTimingInfo()
-            GoalSlotType.PRAYER -> prayerInterval(slot, occurrenceDate, prayerTimes, defaultPrayerLeadMinutes, zoneId)
-                ?: return SlotTimingInfo()
-        }
+        if (slot.slotType == GoalSlotType.ANYTIME) return SlotTimingInfo(timeStatus = SlotTimeStatus.ANYTIME)
+        val interval = resolveInterval(slot, occurrenceDate, prayerTimes, defaultPrayerLeadMinutes, zoneId)
+            ?: return SlotTimingInfo()
         return SlotTimingInfo(
             startsAtMillis = interval.startMillis,
             endsAtMillis = interval.endMillis,
@@ -109,6 +118,18 @@ object SlotTimingResolver {
                 else -> SlotTimeStatus.ENDED
             },
         )
+    }
+
+    fun resolveInterval(
+        slot: GoalSlot,
+        occurrenceDate: LocalDate,
+        prayerTimes: PrayerTimes?,
+        defaultPrayerLeadMinutes: Int,
+        zoneId: ZoneId,
+    ): SlotInterval? = when (slot.slotType) {
+        GoalSlotType.ANYTIME -> null
+        GoalSlotType.TIME_WINDOW -> timeWindowInterval(slot, occurrenceDate, zoneId)
+        GoalSlotType.PRAYER -> prayerInterval(slot, occurrenceDate, prayerTimes, defaultPrayerLeadMinutes, zoneId)
     }
 
     fun timingInfos(
@@ -145,9 +166,12 @@ object SlotTimingResolver {
         if (startMinute !in 0 until MINUTES_PER_DAY) return null
         if (endMinute !in 1..MINUTES_PER_DAY) return null
         if (startMinute >= endMinute) return null
+        val startMillis = minuteOfDayMillis(occurrenceDate, startMinute, zoneId)
+        val endMillis = minuteOfDayMillis(occurrenceDate, endMinute, zoneId)
+        if (endMillis <= startMillis) return null
         return SlotInterval(
-            startMillis = minuteOfDayMillis(occurrenceDate, startMinute, zoneId),
-            endMillis = minuteOfDayMillis(occurrenceDate, endMinute, zoneId),
+            startMillis = startMillis,
+            endMillis = endMillis,
             startText = startMinute.toClockText(),
             endText = endMinute.toClockText(),
         )
@@ -166,7 +190,8 @@ object SlotTimingResolver {
         val prayerMillis = prayerDate.time
         return when (relation) {
             PrayerRelation.BEFORE -> {
-                val leadMinutes = (slot.startLeadMinutesOverride ?: defaultPrayerLeadMinutes).coerceAtLeast(0)
+                val leadMinutes = slot.startLeadMinutesOverride ?: defaultPrayerLeadMinutes
+                if (leadMinutes <= 0) return null
                 SlotInterval(
                     startMillis = prayerMillis - leadMinutes * MILLIS_PER_MINUTE,
                     endMillis = prayerMillis,
@@ -182,6 +207,7 @@ object SlotTimingResolver {
                     } else {
                         return null
                     }
+                if (endMillis <= prayerMillis) return null
                 SlotInterval(
                     startMillis = prayerMillis,
                     endMillis = endMillis,
@@ -217,13 +243,6 @@ object SlotTimingResolver {
 
     private fun formatMillis(millis: Long, zoneId: ZoneId): String =
         Instant.ofEpochMilli(millis).atZone(zoneId).format(timeFormatter)
-
-    private data class SlotInterval(
-        val startMillis: Long,
-        val endMillis: Long,
-        val startText: String = "",
-        val endText: String = "",
-    )
 
     private const val MINUTES_PER_DAY = 24 * 60
     private const val MILLIS_PER_MINUTE = 60_000L

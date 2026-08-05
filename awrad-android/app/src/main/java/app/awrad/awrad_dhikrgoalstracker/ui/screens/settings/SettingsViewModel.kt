@@ -45,6 +45,7 @@ data class SettingsUiState(
     val soundOnCount: Boolean = false,
     val dailyReminderEnabled: Boolean = false,
     val dailyRemembranceEnabled: Boolean = false,
+    val urgencyRemindersEnabled: Boolean = true,
     val reminderHour: Int = 8,
     val reminderMinute: Int = 0,
     val prayerSlotDefaultLeadMinutes: Int = 30,
@@ -107,14 +108,16 @@ class SettingsViewModel @Inject constructor(
                 userPreferences.cityName,
                 userPreferences.calculationMethod,
             ) { reminderEnabled, reminderHour, reminderMinute, cityName, methodStr ->
-                NotifGroup(reminderEnabled, reminderHour, reminderMinute, cityName, methodStr, 30, false)
+                NotifGroup(reminderEnabled, reminderHour, reminderMinute, cityName, methodStr, 30, false, true)
             },
             userPreferences.prayerSlotDefaultLeadMinutes,
             userPreferences.dailyRemembranceEnabled,
-        ) { notifs, leadMinutes, remembranceEnabled ->
+            userPreferences.urgencyRemindersEnabled,
+        ) { notifs, leadMinutes, remembranceEnabled, urgencyEnabled ->
             notifs.copy(
                 prayerSlotDefaultLeadMinutes = leadMinutes,
                 dailyRemembranceEnabled = remembranceEnabled,
+                urgencyRemindersEnabled = urgencyEnabled,
             )
         },
         combine(
@@ -154,6 +157,7 @@ class SettingsViewModel @Inject constructor(
             soundOnCount = prefs.sound,
             dailyReminderEnabled = notifs.reminderEnabled,
             dailyRemembranceEnabled = notifs.dailyRemembranceEnabled,
+            urgencyRemindersEnabled = notifs.urgencyRemindersEnabled,
             reminderHour = notifs.reminderHour,
             reminderMinute = notifs.reminderMinute,
             prayerSlotDefaultLeadMinutes = notifs.prayerSlotDefaultLeadMinutes,
@@ -282,6 +286,12 @@ class SettingsViewModel @Inject constructor(
             } else {
                 dailyRemembranceScheduler.cancel()
             }
+        }
+    }
+
+    fun onUrgencyRemindersChanged(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.setUrgencyRemindersEnabled(enabled)
         }
     }
 
@@ -557,6 +567,7 @@ class SettingsViewModel @Inject constructor(
         val methodStr: String,
         val prayerSlotDefaultLeadMinutes: Int,
         val dailyRemembranceEnabled: Boolean,
+        val urgencyRemindersEnabled: Boolean,
     )
 
     private data class PrayerGroup(

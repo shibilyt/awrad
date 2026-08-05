@@ -4,6 +4,7 @@ import app.awrad.awrad_dhikrgoalstracker.testId
 
 import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalRecurrence
+import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSpecificDate
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlot
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.RecurrenceFrequency
@@ -89,6 +90,96 @@ class GoalProgressCalculatorTest {
 
         assertEquals(LocalDate.parse("2026-02-18"), window?.start)
         assertEquals(LocalDate.parse("2026-03-19"), window?.endInclusive)
+    }
+
+    @Test
+    fun `hijri monthly period window spans the civil days of that hijri month`() {
+        val goal = goal(
+            targetPolicy = TargetPolicy.PERIOD_TOTAL,
+            recurrence = GoalRecurrence(
+                goalId = testId(1),
+                frequency = RecurrenceFrequency.MONTHLY,
+                calendar = app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem.HIJRI,
+            ),
+        )
+
+        val window = GoalProgressCalculator.currentProgressWindow(goal, LocalDate.parse("2026-03-01"))
+
+        assertEquals(LocalDate.parse("2026-02-18"), window?.start)
+        assertEquals(LocalDate.parse("2026-03-19"), window?.endInclusive)
+    }
+
+    @Test
+    fun `interval period window is anchored to recurrence anchor`() {
+        val goal = goal(
+            targetPolicy = TargetPolicy.PERIOD_TOTAL,
+            recurrence = GoalRecurrence(
+                goalId = testId(1),
+                frequency = RecurrenceFrequency.INTERVAL,
+                intervalDays = 7,
+                anchorDate = LocalDate.parse("2026-05-01"),
+            ),
+        )
+
+        val window = GoalProgressCalculator.currentProgressWindow(goal, LocalDate.parse("2026-05-12"))
+
+        assertEquals(LocalDate.parse("2026-05-08"), window?.start)
+        assertEquals(LocalDate.parse("2026-05-14"), window?.endInclusive)
+    }
+
+    @Test
+    fun `yearly contiguous scheduled days form one period total window`() {
+        val goal = goal(
+            targetPolicy = TargetPolicy.PERIOD_TOTAL,
+            recurrence = GoalRecurrence(
+                goalId = testId(1),
+                frequency = RecurrenceFrequency.YEARLY,
+                month = 7,
+                monthDays = setOf(1, 2, 3),
+            ),
+        )
+
+        val window = GoalProgressCalculator.currentProgressWindow(goal, LocalDate.parse("2026-07-02"))
+
+        assertEquals(LocalDate.parse("2026-07-01"), window?.start)
+        assertEquals(LocalDate.parse("2026-07-03"), window?.endInclusive)
+    }
+
+    @Test
+    fun `season contiguous run forms one period total window`() {
+        val goal = goal(
+            targetPolicy = TargetPolicy.PERIOD_TOTAL,
+            recurrence = GoalRecurrence(
+                goalId = testId(1),
+                frequency = RecurrenceFrequency.SEASON,
+                seasonTemplateCode = SeasonTemplateCode.WHITE_DAYS,
+            ),
+        )
+
+        val window = GoalProgressCalculator.currentProgressWindow(goal, LocalDate.parse("2026-03-03"))
+
+        assertEquals(LocalDate.parse("2026-03-02"), window?.start)
+        assertEquals(LocalDate.parse("2026-03-04"), window?.endInclusive)
+    }
+
+    @Test
+    fun `non contiguous specific dates remain separate period total windows`() {
+        val goal = goal(
+            targetPolicy = TargetPolicy.PERIOD_TOTAL,
+            recurrence = GoalRecurrence(
+                goalId = testId(1),
+                frequency = RecurrenceFrequency.SPECIFIC_DATES,
+                specificDates = setOf(
+                    GoalSpecificDate(date = LocalDate.parse("2026-07-01")),
+                    GoalSpecificDate(date = LocalDate.parse("2026-07-15")),
+                ),
+            ),
+        )
+
+        val window = GoalProgressCalculator.currentProgressWindow(goal, LocalDate.parse("2026-07-15"))
+
+        assertEquals(LocalDate.parse("2026-07-15"), window?.start)
+        assertEquals(LocalDate.parse("2026-07-15"), window?.endInclusive)
     }
 
     private fun goal(

@@ -38,7 +38,7 @@ class GoalsCategorizationTest {
     }
 
     @Test
-    fun `goals are grouped into today next seven days and other`() {
+    fun `goals are grouped into today upcoming and past`() {
         val today = LocalDate.parse("2026-07-14")
         val finishedToday = displayItem(id = 1, startDate = today, overallProgress = 1f)
         val unfinishedToday = displayItem(id = 5, startDate = today, overallProgress = 0.5f)
@@ -49,21 +49,34 @@ class GoalsCategorizationTest {
             startDate = today.minusDays(2),
             endDate = today.minusDays(1),
         )
+        val durationEndedYesterday = displayItem(
+            id = 6,
+            startDate = today.minusDays(2),
+            durationDays = 2,
+        )
 
         val sections = categorizeActiveGoals(
-            goals = listOf(finishedToday, unfinishedToday, dueOnSeventhDay, dueOnEighthDay, endedYesterday),
+            goals = listOf(
+                finishedToday,
+                unfinishedToday,
+                dueOnSeventhDay,
+                dueOnEighthDay,
+                endedYesterday,
+                durationEndedYesterday,
+            ),
             today = today,
         )
 
         assertEquals(listOf(testId(5), testId(1)), sections.today.map { it.goal.id })
-        assertEquals(listOf(testId(2)), sections.upcoming.map { it.goal.id })
-        assertEquals(listOf(testId(3), testId(4)), sections.other.map { it.goal.id })
+        assertEquals(listOf(testId(2), testId(3)), sections.upcoming.map { it.goal.id })
+        assertEquals(listOf(testId(4), testId(6)), sections.past.map { it.goal.id })
     }
 
     private fun displayItem(
         id: Int,
         startDate: LocalDate,
         endDate: LocalDate? = null,
+        durationDays: Int? = null,
         overallProgress: Float = 0f,
     ): GoalDisplayItem = GoalDisplayItem(
         goal = Goal(
@@ -71,6 +84,7 @@ class GoalsCategorizationTest {
             dhikrId = testId(id + 100),
             startDate = startDate,
             endDate = endDate,
+            durationDays = durationDays,
         ),
         overallProgress = overallProgress,
     )

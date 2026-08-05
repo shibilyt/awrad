@@ -34,6 +34,8 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.ValidatedGoal
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.ValidatedGoalUpdate
 import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncRepository
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestDispatcher
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestReason
 import app.awrad.awrad_dhikrgoalstracker.util.CountCapCalculator
 import app.awrad.awrad_dhikrgoalstracker.util.DateProvider
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
@@ -59,6 +61,7 @@ class GoalRepositoryImpl @Inject constructor(
     private val dhikrDao: DhikrDao,
     private val dateProvider: DateProvider,
     private val progressSyncRepository: ProgressSyncRepository? = null,
+    private val notificationRequests: NotificationObligationRequestDispatcher,
 ) : GoalRepository {
 
     override fun getActiveGoals(): Flow<List<Goal>> =
@@ -105,10 +108,14 @@ class GoalRepositoryImpl @Inject constructor(
         }
         progressSyncRepository?.enqueueGoal(goal)
         goalId
+    }.also { goalId ->
+        notificationRequests.request(NotificationObligationRequestReason.GOAL_MUTATION, setOf(goalId))
     }
 
     override suspend fun updateGoal(goal: Goal) = database.withTransaction {
         updateGoalAggregate(goal)
+    }.also {
+        notificationRequests.request(NotificationObligationRequestReason.GOAL_MUTATION, setOf(goal.id))
     }
 
     override suspend fun updateGoal(validatedGoalUpdate: ValidatedGoalUpdate): Goal = database.withTransaction {
@@ -116,18 +123,24 @@ class GoalRepositoryImpl @Inject constructor(
         updateGoalAggregate(goal)
         recomputeCompletionAfterCountSetupUpdate(goal.id)
         getGoalById(goal.id) ?: goal
+    }.also {
+        notificationRequests.request(NotificationObligationRequestReason.GOAL_MUTATION, setOf(it.id))
     }
 
     override suspend fun updateGoalSchedule(validatedGoalUpdate: ValidatedGoalUpdate): Goal = database.withTransaction {
         val goal = validatedGoalUpdate.goal
         updateGoalAggregate(goal)
         getGoalById(goal.id) ?: goal
+    }.also {
+        notificationRequests.request(NotificationObligationRequestReason.GOAL_MUTATION, setOf(it.id))
     }
 
     override suspend fun updateGoalReminders(validatedGoalUpdate: ValidatedGoalUpdate): Goal = database.withTransaction {
         val goal = validatedGoalUpdate.goal
         updateGoalAggregate(goal)
         getGoalById(goal.id) ?: goal
+    }.also {
+        notificationRequests.request(NotificationObligationRequestReason.GOAL_MUTATION, setOf(it.id))
     }
 
     private suspend fun updateGoalAggregate(goal: Goal, enqueueSync: Boolean = true) {
@@ -225,6 +238,7 @@ class GoalRepositoryImpl @Inject constructor(
             progressSyncRepository?.enqueueDelete("goal", id.toString())
             goalDao.deleteById(id)
         }
+        notificationRequests.request(NotificationObligationRequestReason.GOAL_MUTATION, setOf(id))
     }
 
     override suspend fun addCount(goalId: AwradId, slotId: AwradId?, count: Long): Long = database.withTransaction {
@@ -273,6 +287,10 @@ class GoalRepositoryImpl @Inject constructor(
             }
         }
         appliedDelta
+    }.also { appliedDelta ->
+        if (appliedDelta != 0L) {
+            notificationRequests.request(NotificationObligationRequestReason.COUNT_MUTATION, setOf(goalId))
+        }
     }
 
     override fun getTotalCountForDate(goalId: AwradId, date: String): Flow<Long?> =
@@ -321,6 +339,45 @@ class GoalRepositoryImpl @Inject constructor(
             }.toMap()
         }
 
+    override suspend fun getDailyCountsForGoalsInRange(
+        goalIds: List<AwradId>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): Map<AwradId, Map<LocalDate, Long>> {
+        if (goalIds.isEmpty() || endDate.isBefore(startDate)) return emptyMap()
+        return countEntryDao.getDailyCountsForGoalsInRange(
+            goalIds = goalIds,
+            startDate = startDate.toString(),
+            endDate = endDate.toString(),
+        ).groupBy { it.goalId }.mapValues { (_, rows) ->
+            rows.mapNotNull { row -> row.date.toLocalDateOrNull()?.let { it to row.total } }.toMap()
+        }
+    }
+
+    override suspend fun getDailySlotCountsForGoalsInRange(
+        goalIds: List<AwradId>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): Map<AwradId, Map<LocalDate, Map<AwradId, Long>>> {
+        if (goalIds.isEmpty() || endDate.isBefore(startDate)) return emptyMap()
+        return countEntryDao.getDailySlotCountsForGoalsInRange(
+            goalIds = goalIds,
+            startDate = startDate.toString(),
+            endDate = endDate.toString(),
+        ).groupBy { it.goalId }.mapValues { (_, goalRows) ->
+            goalRows.groupBy { it.date }.mapNotNull { (dateString, dateRows) ->
+                dateString.toLocalDateOrNull()?.let { date ->
+                    date to dateRows.associate { it.slotId to it.total }
+                }
+            }.toMap()
+        }
+    }
+
+    override suspend fun getTotalCountsForGoals(goalIds: List<AwradId>): Map<AwradId, Long> {
+        if (goalIds.isEmpty()) return emptyMap()
+        return countEntryDao.getTotalCountsForGoals(goalIds).associate { it.goalId to it.total }
+    }
+
     override suspend fun getSlotCountsForGoalAndDate(goalId: AwradId, date: String): Map<AwradId, Long> =
         countEntryDao.getSlotCountsForGoalAndDate(goalId, date).associate { it.slotId to it.total }
 
@@ -343,6 +400,7 @@ class GoalRepositoryImpl @Inject constructor(
             countEntryDao.deleteAll()
             goalDao.resetAllGoalProgress(System.currentTimeMillis())
         }
+        notificationRequests.request(NotificationObligationRequestReason.COUNT_MUTATION)
     }
 
     override suspend fun deleteAllGoalsAndProgress() {
@@ -353,6 +411,7 @@ class GoalRepositoryImpl @Inject constructor(
             countEntryDao.deleteAll()
             goalDao.deleteAllGoals()
         }
+        notificationRequests.request(NotificationObligationRequestReason.GOAL_MUTATION)
     }
 
     override fun getActiveGoalsByDhikrId(dhikrId: AwradId): Flow<List<Goal>> =

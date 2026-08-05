@@ -10,8 +10,18 @@ import app.awrad.awrad_dhikrgoalstracker.data.repository.WirdLibraryRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.WirdLibraryRepositoryImpl
 import app.awrad.awrad_dhikrgoalstracker.data.wird.HijriCalendar
 import app.awrad.awrad_dhikrgoalstracker.data.wird.IcuHijriCalendar
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationPlanGateway
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationSchedulingEffectGateway
+import app.awrad.awrad_dhikrgoalstracker.notification.AndroidNotificationSchedulingEffects
+import app.awrad.awrad_dhikrgoalstracker.notification.DataStoreNotificationScheduleStore
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationScheduleStore
+import app.awrad.awrad_dhikrgoalstracker.notification.RepositoryNotificationObligationPlanGateway
 import app.awrad.awrad_dhikrgoalstracker.notification.ReminderScheduler
 import app.awrad.awrad_dhikrgoalstracker.notification.ReminderSchedulingGateway
+import app.awrad.awrad_dhikrgoalstracker.notification.AndroidNotificationObligationEngineErrorReporter
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationEngineErrorReporter
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestDispatcher
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestSink
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -45,4 +55,34 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindReminderSchedulingGateway(impl: ReminderScheduler): ReminderSchedulingGateway
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationObligationPlanGateway(
+        impl: RepositoryNotificationObligationPlanGateway,
+    ): NotificationObligationPlanGateway
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationSchedulingEffects(
+        impl: AndroidNotificationSchedulingEffects,
+    ): NotificationSchedulingEffectGateway
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationScheduleStore(
+        impl: DataStoreNotificationScheduleStore,
+    ): NotificationScheduleStore
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationObligationEngineErrorReporter(
+        impl: AndroidNotificationObligationEngineErrorReporter,
+    ): NotificationObligationEngineErrorReporter
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationObligationRequestSink(
+        impl: NotificationObligationRequestDispatcher,
+    ): NotificationObligationRequestSink
 }

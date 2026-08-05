@@ -501,6 +501,7 @@ fun CountingScreen(
                 },
                 actions = {
                     var showMenu by remember { mutableStateOf(false) }
+                    DhikrTextSizeButton(onClick = { showTextSizeSheet = true })
                     Box {
                         IconButton(onClick = { showMenu = true }) {
                             Icon(
@@ -570,7 +571,6 @@ fun CountingScreen(
                             onNavigateToQuranReader(dhikrId, uiState.activeSlotId)
                         }
                     },
-                    onAdjustTextSize = { showTextSizeSheet = true },
                 )
             } else {
                 DhikrPreviewCard(
@@ -579,7 +579,6 @@ fun CountingScreen(
                     isOverflowing = isArabicOverflowing,
                     onTextOverflowChanged = { isArabicOverflowing = it },
                     onShowFullDhikr = { showFullDhikr = true },
-                    onAdjustTextSize = { showTextSizeSheet = true },
                 )
             }
 
@@ -1680,7 +1679,6 @@ private fun QuranDhikrPreviewCard(
     textScale: Float,
     onTextOverflowChanged: (Boolean) -> Unit,
     onShowFullDhikr: () -> Unit,
-    onAdjustTextSize: () -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -1701,13 +1699,6 @@ private fun QuranDhikrPreviewCard(
                 onShowFull = onShowFullDhikr,
                 onOverflowChanged = onTextOverflowChanged,
             )
-            Spacer(Modifier.height(8.dp))
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                DhikrTextSizeButton(onClick = onAdjustTextSize)
-            }
         }
     }
 }
@@ -1719,7 +1710,6 @@ private fun DhikrPreviewCard(
     isOverflowing: Boolean,
     onTextOverflowChanged: (Boolean) -> Unit,
     onShowFullDhikr: () -> Unit,
-    onAdjustTextSize: () -> Unit,
 ) {
     val cardShape = RoundedCornerShape(18.dp)
     Card(
@@ -1759,21 +1749,15 @@ private fun DhikrPreviewCard(
                 onTextLayout = { onTextOverflowChanged(it.hasVisualOverflow) },
                 modifier = Modifier.fillMaxWidth(),
             )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (isOverflowing) {
-                    TextButton(onClick = onShowFullDhikr) {
-                        Text(
-                            text = stringResource(R.string.counting_see_full),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.secondary,
-                        )
-                    }
+            if (isOverflowing) {
+                Spacer(modifier = Modifier.height(8.dp))
+                TextButton(onClick = onShowFullDhikr) {
+                    Text(
+                        text = stringResource(R.string.counting_see_full),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
                 }
-                DhikrTextSizeButton(onClick = onAdjustTextSize)
             }
         }
     }

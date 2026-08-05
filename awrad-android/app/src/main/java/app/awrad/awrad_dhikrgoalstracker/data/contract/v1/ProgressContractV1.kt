@@ -40,6 +40,23 @@ data class DhikrV1(
 )
 
 @Serializable
+data class UserTagV1(
+    val id: String,
+    val name: String,
+    @SerialName("normalized_name") val normalizedName: String,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("updated_at") val updatedAt: String,
+)
+
+@Serializable
+data class DhikrTagAssignmentV1(
+    val id: String,
+    @SerialName("tag_id") val tagId: String,
+    @SerialName("dhikr_id") val dhikrId: String,
+    @SerialName("created_at") val createdAt: String,
+)
+
+@Serializable
 data class QuranRefV1(
     val surah: Int,
     @SerialName("ayah_start") val ayahStart: Int,
@@ -151,6 +168,24 @@ fun NativeProgressStateV1.toContract(): ProgressStateV1 = ProgressStateV1(
 
 fun Dhikr.toProgressContractV1(): DhikrV1 = toContract()
 fun Goal.toProgressContractV1(): GoalV1 = toContract()
+fun UserTag.toProgressContractV1(): UserTagV1 = UserTagV1(
+    id = id.toString(),
+    name = name,
+    normalizedName = normalizedName,
+    createdAt = createdAt.toTimestamp(),
+    updatedAt = updatedAt.toTimestamp(),
+)
+
+fun UserTagV1.toNativeUserTag(): UserTag = UserTag(
+    id = uuid(id),
+    name = name,
+    normalizedName = normalizedName,
+    createdAt = createdAt.toEpochMillis(),
+    updatedAt = updatedAt.toEpochMillis(),
+)
+
+fun DhikrTagAssignmentV1.toNativeIds(): Triple<UUID, UUID, UUID> =
+    Triple(uuid(id), uuid(tagId), uuid(dhikrId))
 fun DhikrV1.toNativeDhikr(): Dhikr = toNative()
 fun GoalV1.toNativeGoal(): Goal = toNative()
 

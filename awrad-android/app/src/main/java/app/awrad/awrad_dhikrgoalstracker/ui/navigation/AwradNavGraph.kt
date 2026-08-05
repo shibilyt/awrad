@@ -40,6 +40,7 @@ import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityStatsScre
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityMessagesScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityNotificationsScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.createdhikr.CreateDhikrScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.managetags.ManageTagsScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdDetailScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdEditorScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdListScreen
@@ -150,7 +151,7 @@ fun AwradNavGraph(
                         navController.navigateSafely(AwradDestination.DhikrDetail.createRoute(dhikrId))
                     },
                     onNavigateToCreateDhikr = {
-                        navController.navigateSafely(AwradDestination.CreateDhikr.route)
+                        navController.navigateSafely(AwradDestination.CreateDhikr.createRoute())
                     },
                     onNavigateToWird = { wirdId ->
                         navController.navigateSafely(AwradDestination.WirdDetail.createRoute(wirdId))
@@ -162,11 +163,31 @@ fun AwradNavGraph(
             }
         }
 
-        composable(AwradDestination.CreateDhikr.route) {
+        composable(
+            route = AwradDestination.CreateDhikr.route,
+            arguments = listOf(
+                navArgument("dhikrId") {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                },
+            ),
+        ) {
             WrappedAwradDestination(navController) {
                 CreateDhikrScreen(
                     onNavigateBack = { navController.popBackStack() },
                     onDhikrCreated = { navController.popBackStack() },
+                )
+            }
+        }
+
+        composable(
+            route = AwradDestination.ManageTags.route,
+            arguments = listOf(navArgument("dhikrId") { type = NavType.StringType }),
+        ) {
+            WrappedAwradDestination(navController) {
+                ManageTagsScreen(
+                    onNavigateBack = { navController.popBackStack() },
                 )
             }
         }
@@ -487,6 +508,12 @@ fun AwradNavGraph(
                     },
                     onNavigateToQuranReader = { readerDhikrId ->
                         navController.navigateSafely(AwradDestination.QuranDhikrReader.createRoute(readerDhikrId))
+                    },
+                    onNavigateToEditDhikr = { editId ->
+                        navController.navigateSafely(AwradDestination.CreateDhikr.createRoute(editId))
+                    },
+                    onNavigateToManageTags = { tagDhikrId ->
+                        navController.navigateSafely(AwradDestination.ManageTags.createRoute(tagDhikrId))
                     },
                 )
             }

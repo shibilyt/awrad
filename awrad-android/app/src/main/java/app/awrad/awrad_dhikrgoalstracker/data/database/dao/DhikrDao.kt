@@ -36,8 +36,29 @@ interface DhikrDao {
     @Update
     suspend fun update(dhikr: DhikrEntity)
 
+    @Query(
+        "UPDATE dhikrs SET title = :title, arabic = :arabic, transliteration = :transliteration, " +
+            "translation = :translation, category = :category, audioCountPerPlay = :audioCountPerPlay " +
+            "WHERE id = :id AND isCustom = 1",
+    )
+    suspend fun updateCustomContent(
+        id: AwradId,
+        title: String,
+        arabic: String,
+        transliteration: String,
+        translation: String,
+        category: String,
+        audioCountPerPlay: Int,
+    ): Int
+
     @Query("DELETE FROM dhikrs WHERE id = :id AND isCustom = 1")
-    suspend fun deleteCustomById(id: AwradId)
+    suspend fun deleteCustomById(id: AwradId): Int
+
+    @Query("SELECT * FROM dhikrs WHERE isCustom = 1 ORDER BY title COLLATE NOCASE")
+    fun getCustomDhikrs(): Flow<List<DhikrEntity>>
+
+    @Query("SELECT COUNT(*) FROM dhikrs WHERE isCustom = 1")
+    suspend fun getCustomCount(): Int
 
     @Query("SELECT COUNT(*) FROM dhikrs")
     suspend fun getCount(): Int

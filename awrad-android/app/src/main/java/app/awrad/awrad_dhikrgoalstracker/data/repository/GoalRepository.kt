@@ -32,6 +32,23 @@ interface GoalRepository {
     fun getDailySlotCountsByGoal(): Flow<Map<AwradId, Map<LocalDate, Map<AwradId, Long>>>>
     /** A single goal's per-day per-slot totals (date -> slotId -> summed count) over positive rows. */
     fun getDailySlotCountsForGoal(goalId: AwradId): Flow<Map<LocalDate, Map<AwradId, Long>>>
+    /** Bounded per-goal daily totals for planning and other one-shot policy reads. */
+    suspend fun getDailyCountsForGoalsInRange(
+        goalIds: List<AwradId>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): Map<AwradId, Map<LocalDate, Long>> =
+        error("Bounded notification count reads are not implemented by this repository")
+    /** Bounded per-goal per-slot totals for planning and other one-shot policy reads. */
+    suspend fun getDailySlotCountsForGoalsInRange(
+        goalIds: List<AwradId>,
+        startDate: LocalDate,
+        endDate: LocalDate,
+    ): Map<AwradId, Map<LocalDate, Map<AwradId, Long>>> =
+        error("Bounded notification slot count reads are not implemented by this repository")
+    /** Current lifetime totals for a bounded goal set. */
+    suspend fun getTotalCountsForGoals(goalIds: List<AwradId>): Map<AwradId, Long> =
+        error("Bounded notification lifetime reads are not implemented by this repository")
     /** A single goal's per-slot totals for one date (slotId -> summed count) over positive rows. */
     suspend fun getSlotCountsForGoalAndDate(goalId: AwradId, date: String): Map<AwradId, Long>
     suspend fun getTotalCountBetween(goalId: AwradId, startDate: String, endDate: String): Long

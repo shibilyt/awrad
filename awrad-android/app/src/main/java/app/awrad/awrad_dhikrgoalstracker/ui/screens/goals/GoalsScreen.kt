@@ -1,5 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.goals
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,13 +11,17 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
@@ -27,7 +33,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -35,14 +41,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.lerp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
@@ -52,15 +64,20 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.RecurrenceFrequency
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
+import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradPagerTabs
 import app.awrad.awrad_dhikrgoalstracker.ui.components.DayProgressRing
 import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakChip
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualEmptyState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.SectionHeader
 import app.awrad.awrad_dhikrgoalstracker.ui.components.compactGoalCount
+import app.awrad.awrad_dhikrgoalstracker.ui.sync.ProgressSyncRefreshViewModel
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
-import app.awrad.awrad_dhikrgoalstracker.ui.sync.ProgressSyncRefreshViewModel
+import kotlinx.coroutines.launch
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,41 +92,150 @@ fun GoalsScreen(
     val isRefreshing by refreshViewModel.isRefreshing.collectAsStateWithLifecycle()
     val density = LocalDensity.current
     val statusBarTopPadding = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
+    val headerBackgroundColor = if (isAwradDarkTheme()) {
+        Color.Transparent
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val pagerState = rememberPagerState(initialPage = 0) { 2 }
+    val scope = rememberCoroutineScope()
+    var tabCentersPx by remember { mutableStateOf(listOf<Float>()) }
+    var sheetLeftPx by remember { mutableStateOf(0f) }
+    val tabs = listOf(
+        stringResource(R.string.goals_tab_active),
+        stringResource(R.string.goals_tab_history),
+    )
 
-    PullToRefreshBox(
-        isRefreshing = isRefreshing,
-        onRefresh = refreshViewModel::refresh,
-        modifier = Modifier.fillMaxSize(),
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(headerBackgroundColor),
     ) {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = statusBarTopPadding, bottom = 112.dp),
-        ) {
-        item {
-            Row(
+        Scaffold(
+            containerColor = Color.Transparent,
+            contentWindowInsets = WindowInsets(0),
+        ) { scaffoldPadding ->
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 16.dp, bottom = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .fillMaxSize()
+                    .padding(scaffoldPadding),
             ) {
-                Text(
-                    text = stringResource(R.string.goals_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(onClick = onNavigateToCreateGoal) {
-                    Icon(
-                        imageVector = Icons.Filled.Add,
-                        contentDescription = stringResource(R.string.cd_create_goal),
-                        tint = MaterialTheme.colorScheme.onSurface,
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(headerBackgroundColor)
+                        .padding(top = statusBarTopPadding + 22.dp, bottom = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.goals_title),
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f),
+                        )
+                        IconButton(onClick = onNavigateToCreateGoal) {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = stringResource(R.string.cd_create_goal),
+                                tint = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+
+                    AwradPagerTabs(
+                        tabs = tabs,
+                        pagerState = pagerState,
+                        onTabSelected = { page ->
+                            scope.launch { pagerState.animateScrollToPage(page) }
+                        },
+                        onTabCenters = { tabCentersPx = it },
+                        modifier = Modifier.padding(horizontal = 20.dp),
                     )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .background(headerBackgroundColor)
+                        .onGloballyPositioned { sheetLeftPx = it.positionInRoot().x },
+                ) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        shadowElevation = 0.dp,
+                    ) {
+                        PullToRefreshBox(
+                            isRefreshing = isRefreshing,
+                            onRefresh = refreshViewModel::refresh,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            HorizontalPager(
+                                state = pagerState,
+                                modifier = Modifier.fillMaxSize(),
+                                beyondViewportPageCount = 1,
+                            ) { page ->
+                                when (page) {
+                                    0 -> ActiveGoalsPane(
+                                        uiState = uiState,
+                                        onNavigateToCounting = onNavigateToCounting,
+                                        onDelete = viewModel::deleteGoal,
+                                    )
+
+                                    else -> HistoryGoalsPane(
+                                        uiState = uiState,
+                                        onNavigateToGoalDetail = onNavigateToGoalDetail,
+                                        onDelete = viewModel::deleteGoal,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    if (tabCentersPx.isNotEmpty()) {
+                        val indicatorPos = (pagerState.currentPage + pagerState.currentPageOffsetFraction)
+                            .coerceIn(0f, (tabCentersPx.size - 1).toFloat())
+                        val lowerIdx = floor(indicatorPos).toInt().coerceIn(0, tabCentersPx.lastIndex)
+                        val upperIdx = ceil(indicatorPos).toInt().coerceIn(0, tabCentersPx.lastIndex)
+                        val fraction = indicatorPos - lowerIdx
+                        val nubWidth = 24.dp
+                        val nubCenterX = lerp(tabCentersPx[lowerIdx], tabCentersPx[upperIdx], fraction) - sheetLeftPx
+                        val nubHalfPx = with(density) { nubWidth.toPx() } / 2f
+                        val nubOffsetYpx = with(density) { 5.dp.toPx() }.roundToInt()
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .offset { IntOffset((nubCenterX - nubHalfPx).roundToInt(), -nubOffsetYpx) }
+                                .width(nubWidth)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(percent = 50))
+                                .background(MaterialTheme.colorScheme.primary),
+                        )
+                    }
                 }
             }
         }
+    }
+}
 
+@Composable
+private fun ActiveGoalsPane(
+    uiState: GoalsUiState,
+    onNavigateToCounting: (AwradId) -> Unit,
+    onDelete: (AwradId) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(top = 12.dp, bottom = 112.dp),
+    ) {
         if (uiState.todayGoals.isNotEmpty()) {
             item {
                 SectionHeader(title = stringResource(R.string.goals_section_today))
@@ -118,7 +244,7 @@ fun GoalsScreen(
                 GoalListItem(
                     item = item,
                     onClick = { onNavigateToCounting(item.goal.id) },
-                    onDelete = { viewModel.deleteGoal(item.goal.id) },
+                    onDelete = { onDelete(item.goal.id) },
                 )
             }
         }
@@ -132,49 +258,7 @@ fun GoalsScreen(
                 GoalListItem(
                     item = item,
                     onClick = { onNavigateToCounting(item.goal.id) },
-                    onDelete = { viewModel.deleteGoal(item.goal.id) },
-                )
-            }
-        }
-
-        if (uiState.completedGoals.isNotEmpty()) {
-            item {
-                if (uiState.todayGoals.isNotEmpty() || uiState.upcomingGoals.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                SectionHeader(title = stringResource(R.string.goals_section_completed))
-            }
-            items(uiState.completedGoals) { item ->
-                GoalListItem(
-                    item = item,
-                    onClick = { onNavigateToCounting(item.goal.id) },
-                    onDelete = { viewModel.deleteGoal(item.goal.id) },
-                )
-            }
-        }
-
-        if (uiState.otherGoals.isNotEmpty()) {
-            item {
-                if (
-                    uiState.todayGoals.isNotEmpty() ||
-                    uiState.upcomingGoals.isNotEmpty() ||
-                    uiState.completedGoals.isNotEmpty()
-                ) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                SectionHeader(title = stringResource(R.string.goals_section_other))
-            }
-            items(uiState.otherGoals) { item ->
-                GoalListItem(
-                    item = item,
-                    onClick = {
-                        if (item.goal.isActive) {
-                            onNavigateToCounting(item.goal.id)
-                        } else {
-                            onNavigateToGoalDetail(item.goal.id)
-                        }
-                    },
-                    onDelete = { viewModel.deleteGoal(item.goal.id) },
+                    onDelete = { onDelete(item.goal.id) },
                 )
             }
         }
@@ -182,14 +266,12 @@ fun GoalsScreen(
         if (
             uiState.todayGoals.isEmpty() &&
             uiState.upcomingGoals.isEmpty() &&
-            uiState.completedGoals.isEmpty() &&
-            uiState.otherGoals.isEmpty() &&
             !uiState.isLoading
         ) {
             item {
                 RitualEmptyState(
-                    title = stringResource(R.string.goals_empty_title),
-                    body = stringResource(R.string.goals_empty_hint),
+                    title = stringResource(R.string.goals_active_empty_title),
+                    body = stringResource(R.string.goals_active_empty_hint),
                     icon = Icons.Filled.Add,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 28.dp),
                 )
@@ -199,6 +281,41 @@ fun GoalsScreen(
         item { Spacer(modifier = Modifier.height(16.dp)) }
     }
 }
+
+@Composable
+private fun HistoryGoalsPane(
+    uiState: GoalsUiState,
+    onNavigateToGoalDetail: (AwradId) -> Unit,
+    onDelete: (AwradId) -> Unit,
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(top = 12.dp, bottom = 112.dp),
+    ) {
+        if (uiState.historyGoals.isNotEmpty()) {
+            item {
+                SectionHeader(title = stringResource(R.string.goals_section_past))
+            }
+            items(uiState.historyGoals) { item ->
+                GoalListItem(
+                    item = item,
+                    onClick = { onNavigateToGoalDetail(item.goal.id) },
+                    onDelete = { onDelete(item.goal.id) },
+                )
+            }
+        } else if (!uiState.isLoading) {
+            item {
+                RitualEmptyState(
+                    title = stringResource(R.string.goals_history_empty_title),
+                    body = stringResource(R.string.goals_history_empty_hint),
+                    icon = Icons.Outlined.Archive,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 28.dp),
+                )
+            }
+        }
+
+        item { Spacer(modifier = Modifier.height(16.dp)) }
+    }
 }
 
 @Composable
@@ -218,11 +335,7 @@ private fun GoalListItem(
             .padding(horizontal = 20.dp, vertical = 4.dp),
         onClick = onClick,
         shape = RoundedCornerShape(22.dp),
-        containerColor = if (isAwradDarkTheme()) {
-            NavigationBarDefaults.containerColor
-        } else {
-            MaterialTheme.colorScheme.surface
-        },
+        containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Row(
             modifier = Modifier

@@ -242,13 +242,14 @@ fun AwradApp(
 }
 
 private val surfaceStatusBarRoutes = setOf(
+    AwradDestination.Home.route,
+    AwradDestination.Goals.route,
     AwradDestination.Library.route,
     AwradDestination.CreateGoal.route,
     AwradDestination.Category.route,
     AwradDestination.Counting.route,
     AwradDestination.GoalDetail.route,
     AwradDestination.EditGoal.route,
-    AwradDestination.DhikrDetail.route,
     AwradDestination.WirdList.route,
     AwradDestination.CreateDhikr.route,
     AwradDestination.Login.route,
@@ -258,7 +259,9 @@ private val surfaceStatusBarRoutes = setOf(
 )
 
 private fun String?.isSurfaceStatusBarRoute(): Boolean =
-    this in surfaceStatusBarRoutes || this?.startsWith("create_goal") == true
+    this in surfaceStatusBarRoutes ||
+        this?.startsWith("create_goal") == true ||
+        this?.startsWith("create_dhikr") == true
 
 @Composable
 private fun statusBarContainerColor(route: String?) =

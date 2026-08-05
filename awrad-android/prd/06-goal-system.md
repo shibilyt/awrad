@@ -127,9 +127,11 @@ Goals are the core tracking unit. A user creates a goal for a specific dhikr, ch
 
 ### UI Elements
 
-- **Header:** "Goals" title + Add button (navigates to Create Goal wizard)
-- **Active Goals section:** List of currently active goals
-- **Completed Goals section:** Collapsible list of finished goals
+- **Header:** "My Goals" title + Add button (navigates to Create Goal wizard)
+- **Tabs:** Library-style "Active" and "History" pager tabs
+- **Content sheet:** Rounded-top surface below the tabs containing all goal sections and cards
+- **Active tab:** Today's goals followed by all upcoming goals
+- **History tab:** Date-ended, duration-ended, paused, and completed goals
 
 ### Goal List Item
 
@@ -142,14 +144,14 @@ Goals are the core tracking unit. A user creates a goal for a specific dhikr, ch
 
 ### Requirements
 
-- R-GOAL-030: Active goals are sorted by creation date (newest first).
-- R-GOAL-031: Completed goals are sorted by creation date (newest first).
-- R-GOAL-032: The completed section is collapsible (defaults to collapsed if there are active goals).
-- R-GOAL-033: Tapping a goal item navigates to the Counting screen.
+- R-GOAL-030: The Active tab groups goals into "Today's goals" and "Upcoming goals" sections.
+- R-GOAL-031: Goals whose inclusive end date or positive duration has elapsed appear in History alongside paused and completed goals.
+- R-GOAL-032: Tabs support both tapping and horizontal swiping, using the same pager-tab treatment as Library.
+- R-GOAL-033: Tapping an active goal navigates to Counting; tapping a history goal navigates to Goal Detail.
 - R-GOAL-034: Deleting a goal:
   1. Cancel any scheduled reminders for this goal
   2. Delete the goal (cascades to slots and count entries)
-- R-GOAL-035: If no goals exist, show empty state with hint text and link to create one.
+- R-GOAL-035: Each tab shows a contextual empty state when it contains no goals.
 - R-GOAL-036: Today's count is the sum of all count entries for this goal on the effective today date.
 - R-GOAL-037: Daily target is the sum of all slot target counts for the goal (minimum 1).
 - R-GOAL-038: Progress bar = todayCount / dailyTarget (clamped to 0.0 - 1.0).

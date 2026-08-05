@@ -6,6 +6,9 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import app.awrad.awrad_dhikrgoalstracker.notification.ReminderScheduler
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationEngine
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationEngineResult
+import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestReason
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -21,13 +24,20 @@ class DailySchedulerWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted workerParams: WorkerParameters,
     private val reminderScheduler: ReminderScheduler,
+    private val notificationObligationEngine: NotificationObligationEngine,
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
         Log.d(TAG, "Watchdog running — rescheduling all alarms")
         reminderScheduler.rescheduleAllAlarms()
-        Log.d(TAG, "Watchdog finished")
-        return Result.success()
+        return when (notificationObligationEngine.reconcileNow(NotificationObligationRequestReason.WATCHDOG)) {
+            NotificationObligationEngineResult.Reconciled -> {
+                Log.d(TAG, "Watchdog finished")
+                Result.success()
+            }
+            is NotificationObligationEngineResult.TransientFailure -> Result.retry()
+            is NotificationObligationEngineResult.FatalFailure -> Result.failure()
+        }
     }
 
     companion object {

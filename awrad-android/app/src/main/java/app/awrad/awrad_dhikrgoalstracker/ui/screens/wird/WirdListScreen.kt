@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -204,6 +205,7 @@ fun WirdCatalogCard(
     progress: ProgressSummary,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
 ) {
     val lang = currentLang()
     val meta = wirdMetaLine(wird)
@@ -216,7 +218,7 @@ fun WirdCatalogCard(
         onClick = onClick,
         modifier = modifier,
         shape = RoundedCornerShape(26.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = containerColor,
     ) {
         Column(
             Modifier

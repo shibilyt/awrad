@@ -6,4 +6,6 @@
     <exclude domain="database" path="awrad_database-journal" />
     <exclude domain="database" path="awrad_database-shm" />
     <exclude domain="database" path="awrad_database-wal" />
+    <exclude domain="file" path="dhikr_owned_audio/" />
+    <exclude domain="file" path="dhikr_audio/" />
 </full-backup-content>

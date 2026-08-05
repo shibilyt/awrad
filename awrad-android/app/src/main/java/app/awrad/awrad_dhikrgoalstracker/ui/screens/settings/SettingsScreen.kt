@@ -307,6 +307,16 @@ fun SettingsScreen(
                             viewModel.onToggleDailyRemembrance(enabled)
                         },
                     )
+                    SettingsToggleCard(
+                        icon = Icons.Default.Notifications,
+                        title = stringResource(R.string.settings_urgency_reminders),
+                        subtitle = stringResource(R.string.settings_urgency_reminders_sub),
+                        checked = uiState.urgencyRemindersEnabled,
+                        onCheckedChange = { enabled ->
+                            if (enabled) requestNotificationPermissionIfNeeded()
+                            viewModel.onUrgencyRemindersChanged(enabled)
+                        },
+                    )
                     PrayerLeadMinutesPicker(
                         minutes = uiState.prayerSlotDefaultLeadMinutes,
                         onMinutesChanged = viewModel::onPrayerSlotDefaultLeadMinutesChanged,

@@ -20,13 +20,13 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 data class GoalsUiState(
     val todayGoals: List<GoalDisplayItem> = emptyList(),
     val upcomingGoals: List<GoalDisplayItem> = emptyList(),
-    val completedGoals: List<GoalDisplayItem> = emptyList(),
-    val otherGoals: List<GoalDisplayItem> = emptyList(),
+    val historyGoals: List<GoalDisplayItem> = emptyList(),
     val isLoading: Boolean = true,
 )
 
@@ -44,7 +44,7 @@ data class GoalDisplayItem(
 internal data class ActiveGoalSections(
     val today: List<GoalDisplayItem>,
     val upcoming: List<GoalDisplayItem>,
-    val other: List<GoalDisplayItem>,
+    val past: List<GoalDisplayItem>,
 )
 
 internal fun categorizeActiveGoals(
@@ -57,15 +57,16 @@ internal fun categorizeActiveGoals(
     val (unfinishedTodayGoals, finishedTodayGoals) = todayGoals.partition { item ->
         item.overallProgress < 1f
     }
-    val (upcomingGoals, otherGoals) = notToday.partition { item ->
-        (1L..7L).any { daysAhead ->
-            GoalProgressCalculator.isDueToday(item.goal, today.plusDays(daysAhead))
-        }
+    val (pastGoals, upcomingGoals) = notToday.partition { item ->
+        item.goal.endDate?.isBefore(today) == true ||
+            item.goal.durationDays
+                ?.takeIf { it > 0 }
+                ?.let { duration -> ChronoUnit.DAYS.between(item.goal.startDate, today) >= duration } == true
     }
     return ActiveGoalSections(
         today = unfinishedTodayGoals + finishedTodayGoals,
         upcoming = upcomingGoals,
-        other = otherGoals,
+        past = pastGoals,
     )
 }
 
@@ -127,14 +128,15 @@ class GoalsViewModel @Inject constructor(
             GoalsUiState(
                 todayGoals = activeSections.today,
                 upcomingGoals = activeSections.upcoming,
-                completedGoals = completedGoals.map { goal ->
-                    val dhikr = dhikrMap[goal.dhikrId]
-                    completedGoalDisplayItem(
-                        goal = goal,
-                        dhikrName = dhikr?.title.orEmpty().ifBlank { dhikr?.transliteration.orEmpty() },
-                    )
-                },
-                otherGoals = activeSections.other + inactiveGoals.map(::displayItem),
+                historyGoals = activeSections.past +
+                    completedGoals.map { goal ->
+                        val dhikr = dhikrMap[goal.dhikrId]
+                        completedGoalDisplayItem(
+                            goal = goal,
+                            dhikrName = dhikr?.title.orEmpty().ifBlank { dhikr?.transliteration.orEmpty() },
+                        )
+                    } +
+                    inactiveGoals.map(::displayItem),
                 isLoading = false,
             )
         }

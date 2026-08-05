@@ -101,6 +101,38 @@ abstract class CountEntryDao {
     @Query("SELECT date, slotId, SUM(count) as total FROM count_entries WHERE goalId = :goalId AND count > 0 AND slotId IS NOT NULL GROUP BY date, slotId")
     abstract fun getDailySlotCountsForGoal(goalId: AwradId): Flow<List<SlotDateCount>>
 
+    /** Bounded grouped read used by notification planning; avoids collecting full history flows. */
+    @Query("""
+        SELECT goalId, date, SUM(count) as total FROM count_entries
+        WHERE goalId IN (:goalIds) AND date BETWEEN :startDate AND :endDate AND count > 0
+        GROUP BY goalId, date
+    """)
+    abstract suspend fun getDailyCountsForGoalsInRange(
+        goalIds: List<AwradId>,
+        startDate: String,
+        endDate: String,
+    ): List<GoalDailyCount>
+
+    /** Bounded grouped per-slot read used by notification planning. */
+    @Query("""
+        SELECT goalId, date, slotId, SUM(count) as total FROM count_entries
+        WHERE goalId IN (:goalIds) AND date BETWEEN :startDate AND :endDate
+            AND count > 0 AND slotId IS NOT NULL
+        GROUP BY goalId, date, slotId
+    """)
+    abstract suspend fun getDailySlotCountsForGoalsInRange(
+        goalIds: List<AwradId>,
+        startDate: String,
+        endDate: String,
+    ): List<GoalSlotDailyCount>
+
+    @Query("""
+        SELECT goalId, SUM(count) as total FROM count_entries
+        WHERE goalId IN (:goalIds)
+        GROUP BY goalId
+    """)
+    abstract suspend fun getTotalCountsForGoals(goalIds: List<AwradId>): List<GoalTotalCount>
+
     /** Per-slot totals for a single goal on a single date, positive rows with a slot only (one-shot edit reads). */
     @Query("SELECT slotId, SUM(count) as total FROM count_entries WHERE goalId = :goalId AND date = :date AND count > 0 AND slotId IS NOT NULL GROUP BY slotId")
     abstract suspend fun getSlotCountsForGoalAndDate(goalId: AwradId, date: String): List<SlotCount>
@@ -119,6 +151,9 @@ data class GoalDailyCount(val goalId: AwradId, val date: String, val total: Long
 
 /** One row of the per-goal per-day per-slot aggregate (all goals; slotId is never null). */
 data class GoalSlotDailyCount(val goalId: AwradId, val date: String, val slotId: AwradId, val total: Long)
+
+/** One row of a lifetime goal aggregate. */
+data class GoalTotalCount(val goalId: AwradId, val total: Long)
 
 /** One row of a single goal's per-day per-slot aggregate (slotId is never null). */
 data class SlotDateCount(val date: String, val slotId: AwradId, val total: Long)

@@ -547,10 +547,16 @@ class CountingViewModel @Inject constructor(
                 goalRepository.getHistoryForGoal(goalId).collect { _historyItems.value = it }
             }
 
-            // Prefer local downloaded file; fall back to streaming URL
-            audioUrl = dhikr.audioFileName
-                ?.let { audioDownloadManager.getAudioFilePath(it) }
-                ?: dhikr.audioUrl
+            // Prefer owned custom audio, then catalog download, then streaming URL
+            val owned = dhikrRepository.getOwnedAudio(dhikr.id)
+            audioUrl = when {
+                owned != null &&
+                    dhikrRepository.ownedAudioAvailability(dhikr.id) ==
+                    app.awrad.awrad_dhikrgoalstracker.service.OwnedAudioAvailability.AVAILABLE ->
+                    audioDownloadManager.getAudioFilePath(owned.relativeFileName)
+                else -> dhikr.audioFileName?.let { audioDownloadManager.getAudioFilePath(it) }
+                    ?: dhikr.audioUrl
+            }
             audioCountPerPlay = dhikr.audioCountPerPlay
 
             val todayDate = dateProvider.getEffectiveToday().toLocalDateOr(LocalDate.now())
