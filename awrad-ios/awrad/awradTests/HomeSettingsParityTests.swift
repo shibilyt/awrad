@@ -72,13 +72,13 @@ struct HomeSettingsParityTests {
             .components(separatedBy: "var body: some View").last?
             .components(separatedBy: "private var header").first ?? ""
         let headerRange = goalsBody.range(of: "header")
-        let scrollRange = goalsBody.range(of: "ScrollView")
+        let pagerRange = goalsBody.range(of: "AwradPager(")
 
         #expect(goalsBody.contains("VStack(spacing: 0)"))
         #expect(headerRange != nil)
-        #expect(scrollRange != nil)
-        if let headerRange, let scrollRange {
-            #expect(headerRange.lowerBound < scrollRange.lowerBound)
+        #expect(pagerRange != nil)
+        if let headerRange, let pagerRange {
+            #expect(headerRange.lowerBound < pagerRange.lowerBound)
         }
     }
 

@@ -196,6 +196,10 @@
 "View All" = "عرض الكل";
 "Create a goal to begin tracking." = "أنشئ هدفًا لبدء التتبع.";
 "No goals yet" = "لا توجد أهداف بعد";
+"No active goals" = "لا توجد أهداف نشطة";
+"Tap + to create a new dhikr goal" = "اضغط + لإنشاء هدف ذكر جديد";
+"No goal history yet" = "لا يوجد سجل للأهداف بعد";
+"Past and completed goals will appear here" = "ستظهر الأهداف السابقة والمكتملة هنا";
 "Create one from the library." = "أنشئ واحدًا من المكتبة.";
 "Daily Wird" = "الورد اليومي";
 "Wirds for Today" = "أوراد اليوم";

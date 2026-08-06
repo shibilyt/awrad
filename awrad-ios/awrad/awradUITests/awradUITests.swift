@@ -121,6 +121,43 @@ final class awradUITests: XCTestCase {
     }
 
     @MainActor
+    func testGoalsAndLibraryPagersTrackTapAndSwipeSelection() throws {
+        let app = launchSeededApp()
+
+        openDeepLink("awrad://goals")
+        let activeTab = app.buttons["Active"]
+        let historyTab = app.buttons["History"]
+        XCTAssertTrue(activeTab.waitForExistence(timeout: 4))
+        XCTAssertTrue(historyTab.exists)
+        XCTAssertTrue(activeTab.isSelected)
+
+        let goalsPager = app.descendants(matching: .any)["goals.pager"]
+        XCTAssertTrue(goalsPager.waitForExistence(timeout: 3))
+        goalsPager.swipeLeft()
+        XCTAssertTrue(waitUntilSelected(historyTab, timeout: 3))
+        goalsPager.swipeRight()
+        XCTAssertTrue(waitUntilSelected(activeTab, timeout: 3))
+        historyTab.tap()
+        XCTAssertTrue(waitUntilSelected(historyTab, timeout: 3))
+
+        openDeepLink("awrad://library")
+        let dhikrsTab = app.buttons["Dhikrs"]
+        let wirdsTab = app.buttons["Wirds"]
+        XCTAssertTrue(dhikrsTab.waitForExistence(timeout: 4))
+        XCTAssertTrue(wirdsTab.exists)
+        XCTAssertTrue(dhikrsTab.isSelected)
+
+        let libraryPager = app.descendants(matching: .any)["library.pager"]
+        XCTAssertTrue(libraryPager.waitForExistence(timeout: 3))
+        libraryPager.swipeLeft()
+        XCTAssertTrue(waitUntilSelected(wirdsTab, timeout: 3))
+        libraryPager.swipeRight()
+        XCTAssertTrue(waitUntilSelected(dhikrsTab, timeout: 3))
+        wirdsTab.tap()
+        XCTAssertTrue(waitUntilSelected(wirdsTab, timeout: 3))
+    }
+
+    @MainActor
     func testQuranDhikrCreatesGoalAndKeepsCountingContextInReader() throws {
         let app = launchSeededApp()
         openDeepLink("awrad://library")
@@ -696,6 +733,15 @@ final class awradUITests: XCTestCase {
     private func waitUntilEnabled(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
         let expectation = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "enabled == true"),
+            object: element
+        )
+        return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed
+    }
+
+    @MainActor
+    private func waitUntilSelected(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+        let expectation = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "selected == true"),
             object: element
         )
         return XCTWaiter.wait(for: [expectation], timeout: timeout) == .completed

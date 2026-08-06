@@ -67,9 +67,16 @@ enum GoalPortfolioBuilder {
 }
 
 struct GoalsView: View {
+    private enum Segment: String, CaseIterable {
+        case active = "Active"
+        case history = "History"
+    }
+
     @Environment(AwradStore.self) private var store
     @Environment(AppRouter.self) private var router
     @Environment(AppServices.self) private var services
+    @State private var selectedSegment: Segment = .active
+    @State private var pagerPosition: CGFloat = 0
 
     private var sections: GoalPortfolioSections {
         GoalPortfolioBuilder.sections(
@@ -82,35 +89,87 @@ struct GoalsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 14)
-                .background(AwradTheme.background)
+            VStack(alignment: .leading, spacing: 16) {
+                header
+                AwradPagerTabs(
+                    selection: $selectedSegment,
+                    options: Segment.allCases,
+                    position: pagerPosition,
+                    title: { $0.rawValue }
+                )
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .background(AwradTheme.surface)
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    if store.goals.isEmpty {
-                        emptyState
-                    } else {
-                        GoalSection(title: "Today's goals", kind: .today, goals: sections.today, tab: .goals)
-                        GoalSection(title: "Upcoming goals", kind: .upcoming, goals: sections.upcoming, tab: .goals)
-                        GoalSection(title: "Completed goals", kind: .completed, goals: sections.completed, tab: .goals)
-                        GoalSection(title: "Other goals", kind: .other, goals: sections.other, tab: .goals)
-                    }
+            AwradPager(
+                selection: $selectedSegment,
+                options: Segment.allCases,
+                position: $pagerPosition,
+                accessibilityIdentifier: "goals.pager"
+            ) { segment in
+                switch segment {
+                case .active:
+                    activeGoalsPane
+                case .history:
+                    goalHistoryPane
                 }
-                .padding(20)
-                .padding(.bottom, 96)
             }
-            .refreshable {
-                guard services.auth.isLoggedIn else { return }
-                await services.progressSync.synchronize(store: store)
-            }
+            .background(AwradTheme.background)
+            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28))
         }
-        .background(AwradTheme.background)
+        .background(AwradTheme.surface)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    private var activeGoalsPane: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                if sections.today.isEmpty, sections.upcoming.isEmpty {
+                    emptyState
+                } else {
+                    GoalSection(title: "Today's goals", kind: .today, goals: sections.today, tab: .goals)
+                    GoalSection(title: "Upcoming goals", kind: .upcoming, goals: sections.upcoming, tab: .goals)
+                }
+            }
+            .padding(20)
+            .padding(.bottom, 96)
+        }
+        .refreshable {
+            await refreshProgressFromCloud()
+        }
+        .background(AwradTheme.background)
+    }
+
+    private var goalHistoryPane: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                if sections.completed.isEmpty, sections.other.isEmpty {
+                    EmptyStateView(
+                        symbol: "archivebox",
+                        title: "No goal history yet",
+                        message: "Past and completed goals will appear here"
+                    )
+                    .padding(.top, 24)
+                } else {
+                    GoalSection(title: "Completed goals", kind: .completed, goals: sections.completed, tab: .goals)
+                    GoalSection(title: "Other goals", kind: .other, goals: sections.other, tab: .goals)
+                }
+            }
+            .padding(20)
+            .padding(.bottom, 96)
+        }
+        .refreshable {
+            await refreshProgressFromCloud()
+        }
+        .background(AwradTheme.background)
+    }
+
+    private func refreshProgressFromCloud() async {
+        guard services.auth.isLoggedIn else { return }
+        await services.progressSync.synchronize(store: store)
     }
 
     private var header: some View {
@@ -140,8 +199,8 @@ struct GoalsView: View {
         VStack(spacing: 16) {
             EmptyStateView(
                 symbol: "target",
-                title: "No goals yet",
-                message: "Create a goal to begin a steady dhikr practice."
+                title: "No active goals",
+                message: "Tap + to create a new dhikr goal"
             )
             Button("Create Goal") {
                 router.navigate(.createGoal(dhikrID: nil), in: .goals)

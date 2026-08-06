@@ -6,13 +6,6 @@ struct LibraryView: View {
         case wirds = "Wirds"
 
         var id: String { rawValue }
-
-        var symbol: String {
-            switch self {
-            case .dhikrs: "sparkles"
-            case .wirds: "text.book.closed.fill"
-            }
-        }
     }
 
     @Environment(AwradStore.self) private var store
@@ -24,6 +17,7 @@ struct LibraryView: View {
     @State private var collectionScope: LibraryCollectionScope = .all
     @State private var selectedTagIDs: Set<AwradID> = []
     @State private var selectedSegment: Segment = .dhikrs
+    @State private var pagerPosition: CGFloat = 0
     @State private var isSearchVisible = false
     @State private var showAudioError = false
     @FocusState private var isSearchFocused: Bool
@@ -62,28 +56,53 @@ struct LibraryView: View {
         isSearchVisible || !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var segmentSelection: Binding<Segment> {
+        Binding(
+            get: { selectedSegment },
+            set: { segment in
+                selectedSegment = segment
+                if segment == .wirds {
+                    isSearchFocused = false
+                }
+            }
+        )
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 16) {
                 libraryHeader
-                librarySegmentControl
+                AwradPagerTabs(
+                    selection: segmentSelection,
+                    options: Segment.allCases,
+                    position: pagerPosition,
+                    title: { $0.rawValue }
+                )
             }
             .padding(.horizontal, 20)
             .padding(.top, 12)
-            .padding(.bottom, 14)
-            .background(AwradTheme.background)
+            .background(AwradTheme.surface)
 
-            switch selectedSegment {
-            case .dhikrs:
-                dhikrPane
-            case .wirds:
-                WirdListView(showsCreateButton: false)
-                    .refreshable {
-                        await refreshProgressFromCloud()
-                    }
+            AwradPager(
+                selection: segmentSelection,
+                options: Segment.allCases,
+                position: $pagerPosition,
+                accessibilityIdentifier: "library.pager"
+            ) { segment in
+                switch segment {
+                case .dhikrs:
+                    dhikrPane
+                case .wirds:
+                    WirdListView(showsCreateButton: false)
+                        .refreshable {
+                            await refreshProgressFromCloud()
+                        }
+                }
             }
+            .background(AwradTheme.background)
+            .clipShape(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28))
         }
-        .background(AwradTheme.background)
+        .background(AwradTheme.surface)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
@@ -164,8 +183,8 @@ struct LibraryView: View {
             }
             Spacer(minLength: 12)
             Button {
-                selectedSegment = .dhikrs
                 withAnimation(.snappy(duration: 0.22)) {
+                    selectedSegment = .dhikrs
                     isSearchVisible.toggle()
                     if !isSearchVisible {
                         searchText = ""
@@ -179,28 +198,6 @@ struct LibraryView: View {
                     .awradGlassIconButton(size: 58)
             }
             .accessibilityLabel("Search dhikr")
-        }
-    }
-
-    private var librarySegmentControl: some View {
-        AwradSegmentedControl(
-            selection: Binding(
-                get: { selectedSegment },
-                set: { segment in
-                    selectedSegment = segment
-                    if segment == .wirds {
-                        isSearchFocused = false
-                    }
-                }
-            ),
-            options: Segment.allCases
-        ) { segment in
-            HStack(spacing: 8) {
-                Image(systemName: segment.symbol)
-                    .font(AwradTheme.bodyFont(14, weight: .semibold))
-                Text(LocalizedStringKey(segment.rawValue))
-            }
-            .accessibilityLabel(Text(LocalizedStringKey(segment.rawValue)))
         }
     }
 
