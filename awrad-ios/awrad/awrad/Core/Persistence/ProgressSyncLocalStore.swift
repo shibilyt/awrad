@@ -23,6 +23,16 @@ struct ProgressSyncConflict: Identifiable, Equatable {
 enum ProgressSyncLocalStore {
     typealias SyncSchema = AwradSchemaV2
 
+    static func entityUpsertDependencyOrder(_ entityType: String) -> Int {
+        switch entityType {
+        case "user_tag": 0
+        case "custom_dhikr": 1
+        case "dhikr_tag_assignment": 2
+        case "goal": 3
+        default: 99
+        }
+    }
+
     private static let encoder: JSONEncoder = {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
@@ -287,6 +297,20 @@ enum ProgressSyncLocalStore {
             (oldCounts[key] ?? 0) == (newCounts[key] ?? 0) ? nil : key.goalID
         })
 
+        // Contract dependency order: user_tag → custom_dhikr → dhikr_tag_assignment → goal.
+        // Deletes use reverse dependency order so children leave before parents.
+        let oldTags = Dictionary(uniqueKeysWithValues: previous.userTags.map { ($0.id, $0) })
+        let newTags = Dictionary(uniqueKeysWithValues: current.userTags.map { ($0.id, $0) })
+        let deletedTagIDs = Set(oldTags.keys).subtracting(newTags.keys)
+        for (id, tag) in newTags where oldTags[id] != tag {
+            try enqueueUpsert(
+                entityType: "user_tag",
+                entityID: id.uuidString.lowercased(),
+                document: tag.progressContractV1(),
+                in: context
+            )
+        }
+
         let oldDhikrs = Dictionary(uniqueKeysWithValues: previous.dhikrs.filter(\.isCustom).map { ($0.id, $0) })
         let newDhikrs = Dictionary(uniqueKeysWithValues: current.dhikrs.filter(\.isCustom).map { ($0.id, $0) })
         let deletedDhikrIDs = Set(oldDhikrs.keys).subtracting(newDhikrs.keys)
@@ -297,6 +321,28 @@ enum ProgressSyncLocalStore {
                 document: dhikr.progressContractV1(),
                 in: context
             )
+        }
+
+        let oldAssignments = Dictionary(uniqueKeysWithValues: previous.tagAssignments.map { ($0.id, $0) })
+        let newAssignments = Dictionary(uniqueKeysWithValues: current.tagAssignments.map { ($0.id, $0) })
+        let deletedAssignmentIDs = Set(oldAssignments.keys).subtracting(newAssignments.keys)
+        for id in deletedAssignmentIDs {
+            try enqueueDelete(
+                entityType: "dhikr_tag_assignment",
+                entityID: id.uuidString.lowercased(),
+                in: context
+            )
+        }
+        for (id, assignment) in newAssignments where oldAssignments[id] != assignment {
+            try enqueueUpsert(
+                entityType: "dhikr_tag_assignment",
+                entityID: id.uuidString.lowercased(),
+                document: assignment.progressContractV1(),
+                in: context
+            )
+        }
+        for id in deletedTagIDs {
+            try enqueueDelete(entityType: "user_tag", entityID: id.uuidString.lowercased(), in: context)
         }
 
         let oldGoals = Dictionary(uniqueKeysWithValues: previous.goals.map { ($0.id, $0) })

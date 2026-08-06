@@ -9,6 +9,8 @@ defmodule AwradApi.ProgressSync.Materializer do
 
   def put("custom_dhikr", document, user_id), do: put_dhikr(document, user_id)
   def put("goal", document, user_id), do: put_goal(document, user_id)
+  def put("user_tag", _document, _user_id), do: {:ok, :user_tag}
+  def put("dhikr_tag_assignment", _document, _user_id), do: {:ok, :dhikr_tag_assignment}
 
   def soft_delete("custom_dhikr", entity_id, user_id, deleted_at) do
     case Repo.one(from d in Dhikr, where: d.id == ^entity_id and d.user_id == ^user_id) do
@@ -27,6 +29,10 @@ defmodule AwradApi.ProgressSync.Materializer do
     end
   end
 
+  def soft_delete(type, _entity_id, _user_id, _deleted_at)
+      when type in ["user_tag", "dhikr_tag_assignment"],
+      do: {:ok, type}
+
   def purge("goal", entity_id, user_id) do
     case Repo.one(from g in Goal, where: g.id == ^entity_id and g.user_id == ^user_id) do
       nil -> :ok
@@ -40,6 +46,9 @@ defmodule AwradApi.ProgressSync.Materializer do
       dhikr -> dhikr |> Repo.delete() |> normalize_delete()
     end
   end
+
+  def purge(type, _entity_id, _user_id) when type in ["user_tag", "dhikr_tag_assignment"],
+    do: :ok
 
   def custom_dhikr_referenced?(entity_id, user_id) do
     Repo.exists?(

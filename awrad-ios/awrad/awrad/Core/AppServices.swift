@@ -17,6 +17,13 @@ final class AppServices {
     let persistence: AwradPersistenceRuntime?
     let persistenceInitializationError: String?
     let progressSync: ProgressSyncEngine
+    let notificationRoutes: NotificationRouteMailbox
+    private let notificationResponseDelegate: AwradNotificationResponseDelegate
+    private let urgencyReconciler: UrgencyNotificationReconciler
+    private var notificationRefreshTask: Task<NotificationSchedulingResult, Never>?
+    private var notificationRefreshPending = false
+    private var pendingNotificationChange: NotificationSchedulingChange?
+    private var pendingUrgencyAuthorization = false
     private(set) var progressSyncCountingActive = false
     private(set) var progressSyncNetworkRevision = 0
     @ObservationIgnored private let progressSyncNetworkMonitor = NWPathMonitor()
@@ -31,13 +38,25 @@ final class AppServices {
         locations: LocationService? = nil,
         audio: AudioSessionService? = nil,
         auth: AuthService? = nil,
-        persistence: AwradPersistenceRuntime? = nil
+        persistence: AwradPersistenceRuntime? = nil,
+        urgencyReconciler: UrgencyNotificationReconciler? = nil
     ) {
+        let routes = NotificationRouteMailbox()
+        self.notificationRoutes = routes
+        self.notificationResponseDelegate = AwradNotificationResponseDelegate { route in
+            routes.pendingRoute = route
+        }
         self.notifications = notifications ?? NotificationService()
         self.prayerTimes = prayerTimes ?? PrayerTimeService()
         self.locations = locations ?? LocationService()
         self.audio = audio ?? AudioSessionService()
         self.auth = auth ?? AuthService()
+        self.urgencyReconciler = urgencyReconciler ?? UrgencyNotificationReconciler(
+            center: SystemUrgencyNotificationCenter(),
+            ledger: AppGroupUrgencyDeliveredLedger(
+                defaults: UserDefaults(suiteName: "group.app.awrad.awrad") ?? .standard
+            )
+        )
         if let persistence {
             self.persistence = persistence
             self.persistenceInitializationError = nil
@@ -54,6 +73,7 @@ final class AppServices {
             auth: self.auth,
             repository: self.persistence?.repository
         )
+        UNUserNotificationCenter.current().delegate = notificationResponseDelegate
         progressSyncNetworkMonitor.pathUpdateHandler = { [weak self] path in
             Task { @MainActor in
                 guard let self else { return }
@@ -71,34 +91,156 @@ final class AppServices {
         progressSyncCountingActive = active
     }
 
+    /// The sole production refresh path: configured requests settle first, then urgency sees
+    /// their resulting pending count. A request arriving mid-pass coalesces into one follow-up.
     @discardableResult
-    func clearScheduledRemindersForLocalReset() async -> NotificationSchedulingResult {
-        await notifications.refreshScheduledReminders(
-            goalInputs: [],
-            dailyReminder: (enabled: false, hour: 9, minute: 0, language: .english),
-            dailyRemembrance: (enabled: false, language: .english),
-            wirdInputs: []
+    func refreshNotifications(
+        store: AwradStore,
+        change: NotificationSchedulingChange? = nil,
+        requestUrgencyAuthorization: Bool = false
+    ) async -> NotificationSchedulingResult {
+        enqueueNotificationRefresh(
+            change: change,
+            requestUrgencyAuthorization: requestUrgencyAuthorization
+        )
+        if let task = notificationRefreshTask {
+            return await task.value
+        }
+        let task = Task { [weak self, weak store] () -> NotificationSchedulingResult in
+            guard let self, let store else { return .cleared }
+            while self.notificationRefreshPending {
+                self.notificationRefreshPending = false
+                let change = self.pendingNotificationChange
+                self.pendingNotificationChange = nil
+                let requestsAuthorization = self.pendingUrgencyAuthorization
+                self.pendingUrgencyAuthorization = false
+                let result = await self.performNotificationRefresh(
+                    store: store,
+                    change: change,
+                    requestUrgencyAuthorization: requestsAuthorization
+                )
+                if !self.notificationRefreshPending {
+                    self.notificationRefreshTask = nil
+                    return result
+                }
+            }
+            self.notificationRefreshTask = nil
+            return .cleared
+        }
+        notificationRefreshTask = task
+        return await task.value
+    }
+
+    private func enqueueNotificationRefresh(
+        change: NotificationSchedulingChange?,
+        requestUrgencyAuthorization: Bool
+    ) {
+        notificationRefreshPending = true
+        pendingUrgencyAuthorization = pendingUrgencyAuthorization || requestUrgencyAuthorization
+        guard let change else { return }
+        guard let existing = pendingNotificationChange else {
+            pendingNotificationChange = change
+            return
+        }
+        pendingNotificationChange = NotificationSchedulingChange(
+            goalIDs: existing.goalIDs.union(change.goalIDs),
+            reason: NotificationSchedulingChangeReason.merged(existing.reason, change.reason)
         )
     }
 
-    /// Reschedules (or clears) a wird's reminders, resolving prayer-offset times from the
-    /// user's current location/method.
-    @discardableResult
-    func rescheduleWirdReminders(for wird: Wird, store: AwradStore) async -> NotificationSchedulingResult {
-        let language = store.preferences.appLanguage
-        let summary = prayerTimes.summary(
-            for: Date(),
-            latitude: store.preferences.latitude,
-            longitude: store.preferences.longitude,
-            method: store.preferences.calculationMethod,
-            madhab: store.preferences.madhab
+    private func performNotificationRefresh(
+        store: AwradStore,
+        change: NotificationSchedulingChange?,
+        requestUrgencyAuthorization: Bool
+    ) async -> NotificationSchedulingResult {
+        let preferences = store.preferences
+        let configured = await notifications.refreshScheduledReminders(
+            goalInputs: ReminderScheduleBuilder.goalInputs(
+                goals: store.goals, dhikrs: store.dhikrs, preferences: preferences, prayerTimeService: prayerTimes
+            ),
+            dailyReminder: (preferences.dailyReminderEnabled, preferences.reminderHour, preferences.reminderMinute, preferences.appLanguage),
+            dailyRemembrance: (preferences.dailyRemembranceEnabled, preferences.appLanguage),
+            wirdInputs: ReminderScheduleBuilder.wirdInputs(
+                wirds: store.wirds, preferences: preferences, prayerTimeService: prayerTimes
+            )
         )
-        return await notifications.scheduleWirdReminders(for: wird, language: language, prayerTimes: summary)
+        if requestUrgencyAuthorization && preferences.urgencyRemindersEnabled {
+            _ = await notifications.requestAuthorizationIfUseful()
+        }
+        let plans = NotificationObligationPlanningAssembler.planDetailed(
+            .init(
+                goals: store.goals, dhikrs: store.dhikrs, countEntries: store.countEntries,
+                preferences: preferences, now: Date(), timeZone: .current,
+                prayerTimes: { [prayerTimes] key in
+                    guard let day = EffectiveDayWindowResolver.date(key, calendar: Calendar(identifier: .gregorian)) else { return nil }
+                    return prayerTimes.summary(
+                        for: day, latitude: preferences.latitude, longitude: preferences.longitude,
+                        method: preferences.calculationMethod, madhab: preferences.madhab
+                    )
+                }
+            )
+        )
+        let urgency = await urgencyReconciler.reconcile(desired: plans, now: Date())
+        let urgencyReconciled: Bool
+        switch urgency {
+        case .reconciled:
+            urgencyReconciled = true
+        case .disabledBySystem, .authorizationNotDetermined, .failed:
+            urgencyReconciled = false
+        }
+        var cleanup: UrgencyDeliveredCleanupResult?
+        if let request = NotificationSchedulingChange.deliveredCleanupRequest(
+            change: change,
+            urgencyRemindersEnabled: preferences.urgencyRemindersEnabled
+        ) {
+            let shouldClean: Bool
+            switch request.timing {
+            case .independentOfReconciliation:
+                shouldClean = true
+            case .afterSuccessfulReconciliation:
+                shouldClean = urgencyReconciled
+            }
+            if shouldClean {
+                cleanup = await urgencyReconciler.removeDelivered(
+                    goalIDs: request.goalIDs,
+                    all: request.removeAll
+                )
+            }
+        }
+        var failures: [String] = []
+        if case .failed(let message) = configured {
+            failures.append("Configured reminders: \(message)")
+        }
+        if case .failed(let message) = urgency {
+            failures.append("Urgency reconciliation: \(message)")
+        }
+        if case .failed(let message)? = cleanup {
+            failures.append("Urgency delivered cleanup: \(message)")
+        }
+        if !failures.isEmpty { return .failed(failures.joined(separator: "; ")) }
+        if urgency == .disabledBySystem { return configured.succeeded ? .denied : configured }
+        return configured
+    }
+
+    /// Entry points for mutation views intentionally reconcile every configured request before
+    /// urgency capacity is considered; scheduling an individual request would overrun capacity.
+    @discardableResult
+    func refreshNotificationsAfterGoalMutation(
+        goalID: AwradID,
+        store: AwradStore
+    ) async -> NotificationSchedulingResult {
+        await refreshNotifications(
+            store: store,
+            change: .init(goalIDs: [goalID], reason: .goalMutation)
+        )
     }
 
     @discardableResult
-    func cancelWirdReminders(wirdID: AwradID) async -> NotificationSchedulingResult {
-        await notifications.cancelWirdReminders(wirdID: wirdID)
+    func refreshNotificationsAfterWirdMutation(store: AwradStore) async -> NotificationSchedulingResult {
+        await refreshNotifications(
+            store: store,
+            change: .init(goalIDs: [], reason: .capacityRefresh)
+        )
     }
 }
 
@@ -1252,6 +1394,8 @@ final class AudioSessionService {
     private var nowPlayingTitle = "Awrad"
     private var nowPlayingSubtitle = "Dhikr"
     private var lastNowPlayingElapsedSecond: Int?
+    /// Resolves owned custom-dhikr audio before catalog download / remote URL fallback.
+    var ownedPlayableURLProvider: ((AwradID) -> URL?)?
 
     init(notificationCenter: NotificationCenter = .default) {
         self.notificationCenter = notificationCenter
@@ -1352,13 +1496,42 @@ final class AudioSessionService {
         playbackContext?.goalID == goalID
     }
 
-    func sourceURL(for dhikr: Dhikr) -> URL? {
+    func sourceURL(for dhikr: Dhikr, ownedAsset: DhikrAudioAsset? = nil, ownedStore: OwnedDhikrAudioStore? = nil) -> URL? {
+        if let ownedAsset,
+           let ownedStore,
+           let ownedURL = ownedStore.resolvePlayableURL(for: ownedAsset) {
+            return ownedURL
+        }
+        if let ownedURL = ownedPlayableURLProvider?(dhikr.id) {
+            return ownedURL
+        }
         if dhikr.isDownloaded,
            let fileName = dhikr.audioFileName,
            let localURL = localAudioURL(fileName: fileName) {
             return localURL
         }
         return dhikr.audioURL
+    }
+
+    func sourceURL(for dhikr: Dhikr) -> URL? {
+        sourceURL(for: dhikr, ownedAsset: nil, ownedStore: nil)
+    }
+
+    private func localOwnedAudioURL(fileName: String) -> URL? {
+        let roots = [
+            (try? FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: AwradPersistenceContainerFactory.appGroupID
+            ))?.appendingPathComponent("DhikrOwnedAudio/owned", isDirectory: true),
+            FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+                .appendingPathComponent("DhikrOwnedAudio/owned", isDirectory: true),
+        ].compactMap { $0 }
+        for root in roots {
+            let url = root.appendingPathComponent(fileName)
+            if FileManager.default.fileExists(atPath: url.path) {
+                return url
+            }
+        }
+        return nil
     }
 
     func downloadAudio(from url: URL, suggestedFileName: String?) async throws -> String {

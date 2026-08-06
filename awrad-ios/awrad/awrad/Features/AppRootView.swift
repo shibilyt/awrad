@@ -1,4 +1,6 @@
+import Combine
 import SwiftUI
+import UIKit
 
 struct AppRootView: View {
     @Environment(AwradStore.self) private var store
@@ -53,6 +55,9 @@ struct AppRootView: View {
         .onChange(of: intentHandoff.pendingAction) { _, _ in
             handlePendingIntentIfPossible()
         }
+        .onChange(of: services.notificationRoutes.pendingRoute) { _, _ in
+            handlePendingNotificationRouteIfPossible()
+        }
         .onChange(of: pendingURL) { _, _ in
             handlePendingURLIfPossible()
         }
@@ -61,11 +66,20 @@ struct AppRootView: View {
         }
         .task(id: store.isReady) {
             guard store.isReady else { return }
+            services.audio.ownedPlayableURLProvider = { [store] dhikrID in
+                guard let asset = store.audioAsset(for: dhikrID) else { return nil }
+                return store.ownedAudioStore.resolvePlayableURL(for: asset)
+            }
             store.refreshEffectiveDate()
             restoreNavigationIfPossible()
             handlePendingURLIfPossible()
             handlePendingIntentIfPossible()
+            handlePendingNotificationRouteIfPossible()
             await refreshScheduledReminders()
+        }
+        .task(id: notificationSchedulingRevision) {
+            guard store.isReady else { return }
+            await refreshScheduledReminders(change: store.notificationSchedulingChanges.latest)
         }
         .onChange(of: scenePhase) { _, phase in
             guard store.isReady else { return }
@@ -74,10 +88,25 @@ struct AppRootView: View {
                 store.refreshEffectiveDate()
                 handlePendingURLIfPossible()
                 handlePendingIntentIfPossible()
+                handlePendingNotificationRouteIfPossible()
                 Task { await refreshScheduledReminders() }
             } else if phase == .background, services.auth.isLoggedIn {
                 Task { await services.progressSync.synchronize(store: store) }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            guard store.isReady else { return }
+            store.refreshEffectiveDate()
+            Task { await refreshScheduledReminders(change: .init(goalIDs: [], reason: .syncAll)) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .NSSystemTimeZoneDidChange)) { _ in
+            guard store.isReady else { return }
+            store.refreshEffectiveDate()
+            Task { await refreshScheduledReminders(change: .init(goalIDs: [], reason: .syncAll)) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSLocale.currentLocaleDidChangeNotification)) { _ in
+            guard store.isReady else { return }
+            Task { await refreshScheduledReminders(change: .init(goalIDs: [], reason: .syncAll)) }
         }
         .task(id: widgetSnapshotVersion) {
             guard store.isReady else { return }
@@ -139,6 +168,10 @@ struct AppRootView: View {
 
     private var foregroundProgressSyncVersion: String {
         "\(store.isReady)|\(services.auth.userID ?? "signed-out")|\(scenePhase)|\(services.progressSyncCountingActive)|\(services.progressSyncNetworkRevision)"
+    }
+
+    private var notificationSchedulingRevision: Int {
+        store.notificationSchedulingChanges.revision
     }
 
     private var navigationStateVersion: Int {
@@ -240,31 +273,8 @@ struct AppRootView: View {
         }
     }
 
-    private func refreshScheduledReminders() async {
-        let inputs = ReminderScheduleBuilder.goalInputs(
-            goals: store.goals,
-            dhikrs: store.dhikrs,
-            preferences: store.preferences,
-            prayerTimeService: services.prayerTimes
-        )
-        let result = await services.notifications.refreshScheduledReminders(
-            goalInputs: inputs,
-            dailyReminder: (
-                enabled: store.preferences.dailyReminderEnabled,
-                hour: store.preferences.reminderHour,
-                minute: store.preferences.reminderMinute,
-                language: store.preferences.appLanguage
-            ),
-            dailyRemembrance: (
-                enabled: store.preferences.dailyRemembranceEnabled,
-                language: store.preferences.appLanguage
-            ),
-            wirdInputs: ReminderScheduleBuilder.wirdInputs(
-                wirds: store.wirds,
-                preferences: store.preferences,
-                prayerTimeService: services.prayerTimes
-            )
-        )
+    private func refreshScheduledReminders(change: NotificationSchedulingChange? = nil) async {
+        let result = await services.refreshNotifications(store: store, change: change)
         reminderReconciliationError = result.localizedFailureMessage(language: store.preferences.appLanguage)
     }
 
@@ -278,6 +288,22 @@ struct AppRootView: View {
         guard store.isReady, let url = pendingURL else { return }
         route(url: url)
         pendingURL = nil
+    }
+
+    private func handlePendingNotificationRouteIfPossible() {
+        guard store.isReady, let route = services.notificationRoutes.pendingRoute else { return }
+        defer { services.notificationRoutes.pendingRoute = nil }
+        switch route {
+        case .goalDetail(let goalID):
+            guard store.goal(id: goalID) != nil else { return }
+            router.pendingTab = .goals
+            router.goalsPath = [.goalDetail(goalID: goalID)]
+        case .counting(let goalID, let slotID):
+            guard let goal = store.goal(id: goalID),
+                  goal.activeSlots.contains(where: { $0.id == slotID }) else { return }
+            router.pendingTab = .goals
+            router.goalsPath = [.counting(goalID: goalID, slotID: slotID)]
+        }
     }
 
     private func route(url: URL) {
@@ -298,8 +324,11 @@ struct AppRootView: View {
         case .wirdList:
             router.pendingTab = .library
             router.libraryPath = [.wirdList]
-        case .counting(let dhikrSlug):
-            route(intentAction: AwradIntentAction(destination: .counting, dhikrSlug: dhikrSlug))
+        case .counting(let dhikrID, let dhikrSlug):
+            route(intentAction: AwradIntentAction(
+                destination: .counting,
+                dhikrSlug: dhikrID?.uuidString.lowercased() ?? dhikrSlug
+            ))
         case .todaysWird:
             route(intentAction: AwradIntentAction(destination: .todaysWird))
         case .verifyEmail(let token):
@@ -370,9 +399,13 @@ struct AppRootView: View {
         }
     }
 
-    private func dhikr(matching slug: String?) -> Dhikr? {
-        guard let slug else { return nil }
-        return store.dhikrs.first { $0.intentSlug == slug }
+    private func dhikr(matching token: String?) -> Dhikr? {
+        guard let token else { return nil }
+        if let id = UUID(uuidString: token) {
+            return store.dhikr(id: id)
+        }
+        return store.dhikrs.first { $0.intentSlug == token }
+            ?? store.dhikrs.first { $0.id.uuidString.lowercased() == token.lowercased() }
     }
 }
 

@@ -154,7 +154,10 @@ struct AccountRecoveryView: View {
             do {
                 try store.resetLocalState()
                 services.auth.resetLocalAuthentication()
-                _ = await services.clearScheduledRemindersForLocalReset()
+                _ = await services.refreshNotifications(
+                    store: store,
+                    change: .init(goalIDs: [], reason: .syncAll)
+                )
             } catch {
                 localResetError = error.localizedDescription
             }

@@ -318,6 +318,40 @@ transfer session or pages. Older clients retain the materialized empty-delta
 behavior. If a command commits immediately after the head check, its revision is
 simply returned by the next delta; correctness never depends on the fast path.
 
+### Dhikr tags capability (`dhikr_tags_v1`)
+
+Progress-sync v1 can carry user-defined dhikr tags as whole-document entities:
+
+- `user_tag`: `id`, display `name`, `normalized_name`, `created_at`, `updated_at`
+- `dhikr_tag_assignment`: `id`, `tag_id`, `dhikr_id`, `created_at`
+
+Normalization is server-owned and locked by
+`contracts/behavior-model/v1/fixtures/tag-normalization-contract.json`: trim and
+collapse Unicode White_Space (including NNBSP/figure space), NFC-normalize
+display text, and apply Unicode Default Case Folding for `normalized_name`
+without stripping diacritics or Arabic marks. Duplicate normalized creates
+coalesce: the accepted receipt's `canonical_effect.entity_id` (and
+`document.id`) is the surviving canonical tag UUID, even when the command
+proposed a different create id; capable clients must re-point local assignments
+and drop the losing tag. Assignment `tag_id`/`dhikr_id` are immutable on update;
+`entity_restore` revalidates ownership/limits. Assignments may reference
+built-in or caller-owned custom dhikrs. Tag delete and custom-dhikr delete
+cascade assignment tombstones at the deleting command's revision.
+
+Transfer materialization emits tag records only when the client advertises
+`dhikr_tags_v1`, ordered as `custom_dhikr`/`user_tag` (0),
+`dhikr_tag_assignment` (1), `goal` (2), then projections/conflicts/tombstones.
+Older clients continue to receive the pre-tag record surface — tag/assignment
+rows are excluded from the entity query before the shared transfer limit — and
+the server still cascades assignment tombstones for capable peers when an older
+client deletes a custom dhikr. Custom-dhikr documents remain unchanged and never
+carry owned audio bytes or device paths.
+
+Native clients that newly advertise `dhikr_tags_v1` perform one capability-aware
+snapshot bootstrap, then mark a durable local bootstrap flag complete before
+resuming ordinary deltas. This prevents tag revisions that predate an older
+cursor from being skipped.
+
 ## Operations and rollout
 
 `PROGRESS_SYNC_ENABLED` is the network kill switch.

@@ -7,7 +7,9 @@ config :awrad_api, AwradApiWeb.Endpoint,
   force_ssl: [
     rewrite_on: [:x_forwarded_proto],
     exclude: [
-      # paths: ["/health"],
+      # The proxy and container healthcheck reach the release over plain HTTP
+      # without `x-forwarded-proto`, so a redirect here would fail the probe.
+      paths: ["/up"],
       hosts: ["localhost", "127.0.0.1"]
     ]
   ]

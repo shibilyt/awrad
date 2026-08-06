@@ -87,7 +87,7 @@ struct AwradWidgetSnapshot: Codable, Hashable {
             detail: progressDetail(percent: percent, language: language),
             symbol: dhikr?.category.symbol ?? "sparkles",
             progress: progress,
-            deepLink: AwradDeepLink.counting(dhikrSlug: dhikr?.intentSlug).url.absoluteString,
+            deepLink: AwradDeepLink.counting(dhikrID: dhikr?.id, dhikrSlug: dhikr?.intentSlug).url.absoluteString,
             goalID: goal.id,
             slotID: slot?.id,
             count: count,
@@ -189,9 +189,18 @@ struct AwradWidgetSnapshot: Codable, Hashable {
 enum AwradWidgetSnapshotPublisher {
     @MainActor
     static func publish(from store: AwradStore) {
+        guard let defaults = UserDefaults(suiteName: AwradWidgetSharedConfiguration.appGroupID) else {
+            return
+        }
+
+        let intentProjection = AwradIntentDhikrProjection.make(from: store.dhikrs)
+        if let projectionData = try? JSONEncoder().encode(intentProjection),
+           defaults.data(forKey: AwradIntentDhikrProjection.storageKey) != projectionData {
+            defaults.set(projectionData, forKey: AwradIntentDhikrProjection.storageKey)
+        }
+
         let snapshot = AwradWidgetSnapshot.make(from: store)
         guard let data = try? JSONEncoder().encode(snapshot),
-              let defaults = UserDefaults(suiteName: AwradWidgetSharedConfiguration.appGroupID),
               defaults.data(forKey: AwradWidgetSharedConfiguration.snapshotKey) != data else {
             return
         }

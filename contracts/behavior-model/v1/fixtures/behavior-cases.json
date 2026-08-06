@@ -42,5 +42,173 @@
   "wird_cadence": [
     {"id": "weekday_assignment", "weekday": 2, "expected_part_indexes": [0]},
     {"id": "rotation", "day_offset": 8, "part_count": 8, "expected_part_index": 0}
+  ],
+  "notification_obligations": [
+    {
+      "id": "target_policies_and_recurrence",
+      "policies": [
+        {"target_policy": "per_due_date", "recurrence": "weekly", "recurrence_aware": true, "scheduled_unit": "occurrence"},
+        {"target_policy": "period_total", "recurrence": "monthly", "recurrence_aware": true, "scheduled_unit": "period"},
+        {"target_policy": "cumulative_total", "recurrence": "weekly", "recurrence_aware": true, "scheduled_unit": "occurrence"},
+        {"target_policy": "none", "recurrence": "daily", "recurrence_aware": true, "scheduled_unit": "none"}
+      ]
+    },
+    {
+      "id": "per_due_date_anytime_warning",
+      "target_policy": "per_due_date",
+      "slot_type": "anytime",
+      "obligation_deadline": "2026-07-15T18:00:00Z",
+      "expected_warning_at": "2026-07-15T15:30:00Z"
+    },
+    {
+      "id": "time_window_warning",
+      "slot_type": "time_window",
+      "slot_start": "2026-07-15T08:00:00Z",
+      "slot_end": "2026-07-15T13:00:00Z",
+      "expected_warning_at": "2026-07-15T12:00:00Z"
+    },
+    {
+      "id": "prayer_slot_warning",
+      "slot_type": "prayer",
+      "slot_start": "2026-07-15T12:30:00Z",
+      "slot_end": "2026-07-15T15:00:00Z",
+      "expected_warning_at": "2026-07-15T14:30:00Z"
+    },
+    {
+      "id": "odd_millisecond_time_window_warning",
+      "slot_type": "time_window",
+      "slot_start": "2026-07-15T08:00:00Z",
+      "slot_end": "2026-07-15T08:01:41Z",
+      "expected_warning_at": "2026-07-15T08:01:20.800Z"
+    },
+    {
+      "id": "warning_suppression",
+      "examples": [
+        {"reason": "invalid_slot_duration", "expected_warning_at": null},
+        {"reason": "unavailable_slot_duration", "expected_warning_at": null},
+        {"reason": "non_positive_slot_duration", "expected_warning_at": null},
+        {"reason": "already_satisfied", "expected_warning_at": null},
+        {"reason": "already_closed", "expected_warning_at": null},
+        {"reason": "warning_at_not_after_planning_now", "expected_warning_at": null, "retime_to_now": false}
+      ]
+    },
+    {
+      "id": "cumulative_urgency_requires_end",
+      "without_end": {"target_policy": "cumulative_total", "expected_urgency": null},
+      "with_end_date": {
+        "target_policy": "cumulative_total",
+        "start": "2026-07-01T00:00:00Z",
+        "end_date": "2026-07-31",
+        "deadline": "2026-07-31T00:00:00Z",
+        "expected_warning_at": "2026-07-25T00:00:00Z"
+      },
+      "with_duration": {
+        "target_policy": "cumulative_total",
+        "start": "2026-07-01T00:00:00Z",
+        "duration_days": 14,
+        "deadline": "2026-07-15T00:00:00Z",
+        "expected_warning_at": "2026-07-12T04:48:00Z"
+      }
+    },
+    {
+      "id": "none_has_no_remaining_count",
+      "target_policy": "none",
+      "expected_remaining_count": null
+    },
+    {
+      "id": "global_urgency_toggle",
+      "urgency_enabled_false": {"global_urgency_enabled": false, "expected_urgency": null},
+      "urgency_enabled_true": {"global_urgency_enabled": true, "expected_urgency": "eligible"}
+    },
+    {
+      "id": "streak_guardian_threshold",
+      "below_threshold": {"current_streak": 2, "eligible": false},
+      "at_threshold": {"current_streak": 3, "eligible": true}
+    },
+    {
+      "id": "goal_completion_and_recurring_satisfaction",
+      "recurring_occurrence_satisfied": {"occurrence_satisfied": true, "goal_completed": false},
+      "goal_lifecycle_completed": {"occurrence_satisfied": false, "goal_completed": true}
+    },
+    {
+      "id": "conjunctive_active_slot_continuity",
+      "all_active_slots_at_threshold": {"active_slot_thresholds_met": [true, true], "continuous": true},
+      "overcounted_other_slot": {"active_slot_thresholds_met": [true, false], "overcounted_slot": 0, "continuous": false}
+    },
+    {
+      "id": "effective_day_boundaries",
+      "midnight": {"day_reset": "midnight", "now": "2026-06-24T19:30:00Z", "expected_date": "2026-06-24"},
+      "maghrib": {"day_reset": "maghrib", "now": "2026-06-24T19:30:00Z", "maghrib": "2026-06-24T18:45:00Z", "expected_date": "2026-06-25"}
+    },
+    {
+      "id": "slice_one_non_goals",
+      "excluded": ["pacing", "adaptive_budget", "collision", "exact_delivery"]
+    }
+  ],
+  "tag_normalization": [
+    {
+      "id": "trim_collapse_casefold",
+      "input": "  Before   Sleep  ",
+      "expected_display": "Before Sleep",
+      "expected_normalized": "before sleep"
+    },
+    {
+      "id": "nfc_and_casefold",
+      "input": "Beforé Sleep",
+      "expected_display": "Beforé Sleep",
+      "expected_normalized": "beforé sleep",
+      "notes": "Combining marks are NFC-normalized for display; uniqueness uses locale-independent Unicode Default Case Folding without stripping diacritics or Arabic marks. Full White_Space / ß↔SS / dotted-I fixtures live in tag-normalization-contract.json."
+    },
+    {
+      "id": "arabic_marks_preserved",
+      "input_a": "سَلام",
+      "input_b": "سلام",
+      "expected_same_normalized": false
+    },
+    {
+      "id": "reject_empty_and_oversized",
+      "cases": [
+        {"input": "   ", "accepted": false},
+        {"input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "accepted": false, "reason": "over_40_graphemes"},
+        {"input": "Sleep", "accepted": true}
+      ]
+    },
+    {
+      "id": "sharp_s_full_casefold",
+      "input_a": "Straße",
+      "input_b": "STRASSE",
+      "expected_same_normalized": true,
+      "expected_normalized": "strasse",
+      "notes": "Unicode full casefold maps ß→ss so Straße and STRASSE collide."
+    },
+    {
+      "id": "dotted_i_full_casefold",
+      "input": "İstanbul",
+      "expected_display": "İstanbul",
+      "expected_normalized": "i\u0307stanbul",
+      "notes": "Non-Turkic full casefold maps U+0130 to i + combining dot above (not Turkish i)."
+    },
+    {
+      "id": "unicode_whitespace_collapse",
+      "input": "Before\u202F\u202FSleep\u2007Night",
+      "expected_display": "Before Sleep Night",
+      "expected_normalized": "before sleep night",
+      "notes": "NNBSP (U+202F) and figure space (U+2007) collapse like other Unicode Zs whitespace."
+    }
+  ],
+  "tag_filter": [
+    {
+      "id": "multi_tag_and_with_search_category",
+      "collection_scope": "your_dhikrs",
+      "category": "protection",
+      "selected_tags": ["Travel", "Family"],
+      "search": "night",
+      "semantics": "and",
+      "notes": "An item appears only when it is custom, matches the category, carries every selected tag, and matches search in content or assigned tag names."
+    },
+    {
+      "id": "clear_filters",
+      "clears": ["category", "tags", "search", "custom_only_scope"]
+    }
   ]
 }

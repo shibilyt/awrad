@@ -13,6 +13,7 @@ Awrad API is a Phoenix 1.8.5 application that serves the Awrad Android and iOS a
 | Database schema change | [patterns/database.md](patterns/database.md) |
 | Writing a test | [patterns/testing.md](patterns/testing.md) |
 | Security invariants / endpoint review | [security.md](security.md) |
+| Docker image, CI/CD, Dokploy deploy | [deployment.md](deployment.md) |
 | Auth (web or API) | [patterns/auth.md](patterns/auth.md), [features/auth/README.md](features/auth/README.md) |
 | Token design / refresh flow | [features/auth/token-design.md](features/auth/token-design.md) |
 | Understanding the router | [patterns/router.md](patterns/router.md) |

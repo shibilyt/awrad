@@ -308,6 +308,77 @@ struct NativeProgressStateV1 {
     var countEntries: [CountEntry]
 }
 
+extension UserTag {
+    func progressContractV1() -> UserTagV1 { UserTagV1(self) }
+}
+
+extension DhikrTagAssignment {
+    func progressContractV1() -> DhikrTagAssignmentV1 { DhikrTagAssignmentV1(self) }
+}
+
+struct UserTagV1: Codable, Equatable {
+    var id: String
+    var name: String
+    var normalizedName: String
+    var createdAt: String
+    var updatedAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case normalizedName = "normalized_name"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+
+    init(_ value: UserTag) {
+        id = ContractV1UUID.string(value.id)
+        name = value.name
+        normalizedName = value.normalizedName
+        createdAt = ContractV1Date.string(value.createdAt)
+        updatedAt = ContractV1Date.string(value.updatedAt)
+    }
+
+    func nativeModel() throws -> UserTag {
+        UserTag(
+            id: try ContractV1UUID.value(id),
+            name: name,
+            normalizedName: normalizedName,
+            createdAt: try ContractV1Date.date(createdAt),
+            updatedAt: try ContractV1Date.date(updatedAt)
+        )
+    }
+}
+
+struct DhikrTagAssignmentV1: Codable, Equatable {
+    var id: String
+    var tagID: String
+    var dhikrID: String
+    var createdAt: String
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case tagID = "tag_id"
+        case dhikrID = "dhikr_id"
+        case createdAt = "created_at"
+    }
+
+    init(_ value: DhikrTagAssignment) {
+        id = ContractV1UUID.string(value.id)
+        tagID = ContractV1UUID.string(value.tagID)
+        dhikrID = ContractV1UUID.string(value.dhikrID)
+        createdAt = ContractV1Date.string(value.createdAt)
+    }
+
+    func nativeModel() throws -> DhikrTagAssignment {
+        DhikrTagAssignment(
+            id: try ContractV1UUID.value(id),
+            tagID: try ContractV1UUID.value(tagID),
+            dhikrID: try ContractV1UUID.value(dhikrID),
+            createdAt: try ContractV1Date.date(createdAt)
+        )
+    }
+}
+
 @MainActor
 extension Dhikr {
     func progressContractV1() -> DhikrV1 { DhikrV1(self) }
@@ -376,8 +447,8 @@ private extension DhikrV1 {
         self.init(
             id: ContractV1UUID.string(value.id), catalogKey: value.catalogKey, isCustom: value.isCustom,
             title: value.title, arabic: value.arabic, transliteration: value.transliteration,
-            translation: value.translation, audioURL: value.audioURL,
-            audioFileName: value.audioFileName, category: value.category.contractWire,
+            translation: value.translation, audioURL: value.isCustom ? nil : value.audioURL,
+            audioFileName: value.isCustom ? nil : value.audioFileName, category: value.category.contractWire,
             audioCountPerPlay: value.audioCountPerPlay, sortOrder: value.sortOrder,
             quranRef: value.quranRef.map { QuranRefV1(surah: $0.surah, ayahStart: $0.ayahStart, ayahEnd: $0.ayahEnd) },
             benefits: value.benefits

@@ -19,12 +19,10 @@ class GoalsHeaderSheetLayoutTest {
             "Goals must not override Library's edge-to-edge status bar treatment",
             "AwradStatusBarStyle(" in screen,
         )
-        val statusBarRoutes = mainActivitySource().readText()
-            .substringAfter("private val surfaceStatusBarRoutes = setOf(")
-            .substringBefore("private fun String?.isSurfaceStatusBarRoute()")
-        assertTrue(
-            "Goals must use the same shell status-bar surface as Library",
-            "AwradDestination.Goals.route" in statusBarRoutes,
+        val mainActivity = mainActivitySource().readText()
+        assertFalse(
+            "Goals must draw its own edge-to-edge header without a shell status-bar overlay",
+            "statusBarContainerColor" in mainActivity,
         )
     }
 

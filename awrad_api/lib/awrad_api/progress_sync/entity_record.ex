@@ -35,7 +35,7 @@ defmodule AwradApi.ProgressSync.EntityRecord do
       :sync_revision,
       :document
     ])
-    |> validate_inclusion(:entity_type, ~w(custom_dhikr goal))
+    |> validate_inclusion(:entity_type, ~w(custom_dhikr goal user_tag dhikr_tag_assignment))
     |> validate_inclusion(:state, ~w(active deleted purged))
     |> validate_number(:incarnation, greater_than: 0)
     |> validate_number(:version, greater_than: 0)

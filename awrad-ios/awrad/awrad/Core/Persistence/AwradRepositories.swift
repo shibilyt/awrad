@@ -16,6 +16,9 @@ struct AwradRepositoryState: Hashable {
     var seasonTemplates: [SeasonTemplateDefinition]
     var wirds: [Wird]
     var wirdSessions: [WirdSession]
+    var userTags: [UserTag] = []
+    var tagAssignments: [DhikrTagAssignment] = []
+    var audioAssets: [DhikrAudioAsset] = []
 
     static let empty = AwradRepositoryState(
         dhikrs: [],
@@ -23,8 +26,26 @@ struct AwradRepositoryState: Hashable {
         countEntries: [],
         seasonTemplates: [],
         wirds: [],
-        wirdSessions: []
+        wirdSessions: [],
+        userTags: [],
+        tagAssignments: [],
+        audioAssets: []
     )
+
+    /// Drop dangling tag/audio rows before validation so portable restores remain importable.
+    static func reconcilePortableRestore(_ state: inout AwradRepositoryState) {
+        let dhikrIDs = Set(state.dhikrs.map(\.id))
+        let tagIDs = Set(state.userTags.map(\.id))
+        state.tagAssignments.removeAll {
+            !dhikrIDs.contains($0.dhikrID) || !tagIDs.contains($0.tagID)
+        }
+        state.audioAssets.removeAll { !dhikrIDs.contains($0.dhikrID) }
+        for index in state.dhikrs.indices where state.dhikrs[index].isCustom {
+            // Owned relative filenames must never ride on Dhikr / sync / backup documents.
+            state.dhikrs[index].audioFileName = nil
+            state.dhikrs[index].isDownloaded = false
+        }
+    }
 }
 
 @MainActor
@@ -552,6 +573,75 @@ enum AwradPersistenceMapper {
             offsetMinutes: record.offsetMinutes,
             enabled: record.enabled,
             sortOrder: record.sortOrder
+        )
+    }
+
+    static func userTagRecord(from tag: UserTag) throws -> AwradSchemaV3.UserTagRecord {
+        AwradSchemaV3.UserTagRecord(
+            id: idString(tag.id),
+            name: tag.name,
+            normalizedName: tag.normalizedName,
+            createdAt: tag.createdAt,
+            updatedAt: tag.updatedAt
+        )
+    }
+
+    static func userTag(from record: AwradSchemaV3.UserTagRecord) throws -> UserTag {
+        UserTag(
+            id: try id(record.id, entity: "user tag"),
+            name: record.name,
+            normalizedName: record.normalizedName,
+            createdAt: record.createdAt,
+            updatedAt: record.updatedAt
+        )
+    }
+
+    static func tagAssignmentRecord(from assignment: DhikrTagAssignment) throws -> AwradSchemaV3.DhikrTagAssignmentRecord {
+        AwradSchemaV3.DhikrTagAssignmentRecord(
+            id: idString(assignment.id),
+            tagID: idString(assignment.tagID),
+            dhikrID: idString(assignment.dhikrID),
+            createdAt: assignment.createdAt
+        )
+    }
+
+    static func tagAssignment(from record: AwradSchemaV3.DhikrTagAssignmentRecord) throws -> DhikrTagAssignment {
+        DhikrTagAssignment(
+            id: try id(record.id, entity: "dhikr tag assignment"),
+            tagID: try id(record.tagID, entity: "dhikr tag assignment tag"),
+            dhikrID: try id(record.dhikrID, entity: "dhikr tag assignment dhikr"),
+            createdAt: record.createdAt
+        )
+    }
+
+    static func audioAssetRecord(from asset: DhikrAudioAsset) throws -> AwradSchemaV3.DhikrAudioAssetRecord {
+        AwradSchemaV3.DhikrAudioAssetRecord(
+            id: idString(asset.id),
+            dhikrID: idString(asset.dhikrID),
+            relativeFileName: asset.relativeFileName,
+            mimeType: asset.mimeType,
+            byteSize: asset.byteSize,
+            durationMs: asset.durationMs,
+            sha256: asset.sha256,
+            source: asset.source.rawValue,
+            createdAt: asset.createdAt
+        )
+    }
+
+    static func audioAsset(from record: AwradSchemaV3.DhikrAudioAssetRecord) throws -> DhikrAudioAsset {
+        guard let source = DhikrAudioAsset.Source(rawValue: record.source) else {
+            throw corrupt("dhikr audio asset", record.id, "source")
+        }
+        return DhikrAudioAsset(
+            id: try id(record.id, entity: "dhikr audio asset"),
+            dhikrID: try id(record.dhikrID, entity: "dhikr audio asset dhikr"),
+            relativeFileName: record.relativeFileName,
+            mimeType: record.mimeType,
+            byteSize: record.byteSize,
+            durationMs: record.durationMs,
+            sha256: record.sha256,
+            source: source,
+            createdAt: record.createdAt
         )
     }
 

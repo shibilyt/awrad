@@ -64,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,6 +73,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.ui.components.DayProgressRing
 import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakChip
 import app.awrad.awrad_dhikrgoalstracker.ui.components.FeaturedCollectionsSection
+import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradTopEdgeScrim
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualPrimaryButton
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdCatalogCard
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
@@ -216,6 +218,12 @@ fun HomeScreen(
                 }
             }
         }
+        AwradTopEdgeScrim(
+            fadeExtentBelowStatusBar = 36.dp,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(1f),
+        )
     }
 }
 }
@@ -340,13 +348,13 @@ private fun HomeHeader(
                 .align(Alignment.CenterEnd)
                 .size(56.dp),
             shape = CircleShape,
-            color = visuals.chipColor.copy(alpha = if (visuals.isDarkTheme) 0.68f else 0.78f),
+            color = MaterialTheme.colorScheme.surfaceContainer,
         ) {
             IconButton(onClick = onNavigateToSettings) {
                 Icon(
                     imageVector = Icons.Filled.Tune,
                     contentDescription = stringResource(R.string.settings_title),
-                    tint = visuals.chipContentColor,
+                    tint = visuals.secondaryTextColor,
                 )
             }
         }
@@ -563,7 +571,7 @@ private fun PrayerTimesPromptCard(
             .padding(horizontal = 20.dp),
         onClick = onEnable,
         shape = RoundedCornerShape(24.dp),
-        color = visuals.elevatedCardColor,
+        color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(
             modifier = Modifier

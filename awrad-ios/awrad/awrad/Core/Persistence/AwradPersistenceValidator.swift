@@ -103,6 +103,56 @@ enum AwradPersistenceValidator {
             }
         }
 
+        issues += duplicateIssues(state.userTags.map { ($0.id.uuidString, "user tag") })
+        issues += duplicateValueIssues(state.userTags.map(\.normalizedName), label: "user tag normalized name")
+        if state.userTags.count > UserTagPolicy.maxTagsPerAccount {
+            issues.append("more than \(UserTagPolicy.maxTagsPerAccount) user tags")
+        }
+        let tagIDs = Set(state.userTags.map(\.id))
+        for tag in state.userTags {
+            if UserTagPolicy.normalize(tag.name)?.normalizedName != tag.normalizedName {
+                issues.append("user tag \(tag.id) has inconsistent normalization")
+            }
+        }
+
+        issues += duplicateIssues(state.tagAssignments.map { ($0.id.uuidString, "dhikr tag assignment") })
+        var assignmentPairs = Set<String>()
+        var assignmentsByDhikr: [AwradID: Int] = [:]
+        for assignment in state.tagAssignments {
+            if !tagIDs.contains(assignment.tagID) {
+                issues.append("tag assignment \(assignment.id) references missing tag \(assignment.tagID)")
+            }
+            if !dhikrIDs.contains(assignment.dhikrID) {
+                issues.append("tag assignment \(assignment.id) references missing dhikr \(assignment.dhikrID)")
+            }
+            let pair = "\(assignment.tagID.uuidString.lowercased())|\(assignment.dhikrID.uuidString.lowercased())"
+            if !assignmentPairs.insert(pair).inserted {
+                issues.append("duplicate tag assignment pair \(pair)")
+            }
+            assignmentsByDhikr[assignment.dhikrID, default: 0] += 1
+        }
+        for (dhikrID, count) in assignmentsByDhikr where count > UserTagPolicy.maxTagsPerDhikr {
+            issues.append("dhikr \(dhikrID) has more than \(UserTagPolicy.maxTagsPerDhikr) tags")
+        }
+
+        issues += duplicateIssues(state.audioAssets.map { ($0.id.uuidString, "dhikr audio asset") })
+        issues += duplicateValueIssues(state.audioAssets.map { $0.dhikrID.uuidString.lowercased() }, label: "dhikr audio asset dhikr")
+        issues += duplicateValueIssues(state.audioAssets.map(\.relativeFileName), label: "dhikr audio asset file")
+        for asset in state.audioAssets {
+            if !dhikrIDs.contains(asset.dhikrID) {
+                issues.append("audio asset \(asset.id) references missing dhikr \(asset.dhikrID)")
+            }
+            if asset.byteSize <= 0 || asset.byteSize >= OwnedDhikrAudioStore.maxByteSize {
+                issues.append("audio asset \(asset.id) has an invalid byte size")
+            }
+            if asset.durationMs < 0 || asset.durationMs > OwnedDhikrAudioStore.maxDurationMs {
+                issues.append("audio asset \(asset.id) has an invalid duration")
+            }
+            if asset.relativeFileName.contains("/") || asset.relativeFileName.contains("..") {
+                issues.append("audio asset \(asset.id) has an invalid relative file name")
+            }
+        }
+
         if !issues.isEmpty {
             throw AwradPersistenceValidationError(issues: issues.sorted())
         }

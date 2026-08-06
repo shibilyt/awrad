@@ -300,11 +300,8 @@ struct GoalDetailView: View {
             Button("Delete goal", role: .destructive) {
                 guard let goal = store.goal(id: goalID) else { return }
                 Task {
-                    _ = await services.notifications.cancelGoalReminders(goalID: goalID)
-                    guard store.deleteGoal(goalID) else {
-                        _ = await schedule(goal)
-                        return
-                    }
+                    guard store.deleteGoal(goalID) else { return }
+                    _ = await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
                     confirmation = nil
                     dismiss()
                 }
@@ -321,56 +318,34 @@ struct GoalDetailView: View {
 
     private func pause(_ goal: Goal) {
         Task {
-            _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
-            guard store.pauseGoal(goal.id) else {
-                _ = await schedule(goal)
-                return
-            }
+            guard store.pauseGoal(goal.id) else { return }
+            _ = await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
         }
     }
 
     private func complete(_ goal: Goal) {
         Task {
-            _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
-            guard store.completeGoal(goal.id) else {
-                _ = await schedule(goal)
-                return
-            }
+            guard store.completeGoal(goal.id) else { return }
+            _ = await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
         }
     }
 
     private func resume(_ goal: Goal) {
         Task {
-            var candidate = goal
-            candidate.isActive = true
-            candidate.completedAt = nil
-            let result = await schedule(candidate)
-            guard result.succeeded else {
-                retryResumeGoalID = goal.id
-                notificationError = result.localizedFailureMessage(language: language)
-                return
-            }
             guard store.resumeGoal(goal.id) else {
-                _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
                 notificationError = AwradLocalizer.localized("Couldn’t save changes. Try again.", language: language)
                 retryResumeGoalID = goal.id
                 return
             }
+            let result = await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
+            guard result.succeeded else {
+                _ = store.restoreGoal(goal)
+                _ = await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
+                retryResumeGoalID = goal.id
+                notificationError = result.localizedFailureMessage(language: language)
+                return
+            }
         }
-    }
-
-    private func schedule(_ goal: Goal) async -> NotificationSchedulingResult {
-        let prayerTimes = ReminderScheduleBuilder.prayerSummaries(
-            for: goal,
-            preferences: store.preferences,
-            prayerTimeService: services.prayerTimes
-        )
-        return await services.notifications.scheduleGoalReminders(
-            for: goal,
-            dhikrTitle: store.title(for: goal),
-            language: language,
-            prayerTimes: prayerTimes
-        )
     }
 }
 

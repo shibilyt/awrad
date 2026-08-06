@@ -21,6 +21,8 @@ struct LibraryView: View {
     @Environment(\.colorScheme) private var colorScheme
     @State private var searchText = ""
     @State private var selectedCategory: DhikrCategory?
+    @State private var collectionScope: LibraryCollectionScope = .all
+    @State private var selectedTagIDs: Set<AwradID> = []
     @State private var selectedSegment: Segment = .dhikrs
     @State private var isSearchVisible = false
     @State private var showAudioError = false
@@ -32,14 +34,16 @@ struct LibraryView: View {
             store.dhikrs,
             query: searchText,
             category: selectedCategory,
-            language: language
+            language: language,
+            collectionScope: collectionScope,
+            selectedTagIDs: selectedTagIDs,
+            tags: store.userTags,
+            assignments: store.tagAssignments
         )
     }
 
-    private var populatedCategories: [DhikrCategory] {
-        DhikrCategory.allCases.filter { category in
-            store.dhikrs.contains { $0.category == category }
-        }
+    private var customDhikrCount: Int {
+        store.dhikrs.filter(\.isCustom).count
     }
 
     private var categoryCounts: [DhikrCategory: Int] {
@@ -48,7 +52,10 @@ struct LibraryView: View {
     }
 
     private var featuredCollections: [FeaturedDhikrCollection] {
-        FeaturedDhikrCollection.collections(categoryCounts: categoryCounts)
+        FeaturedDhikrCollection.collections(
+            categoryCounts: categoryCounts,
+            customCount: customDhikrCount
+        )
     }
 
     private var shouldShowSearchField: Bool {
@@ -94,7 +101,21 @@ struct LibraryView: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel("Create wird")
                 .padding(.trailing, 20)
-                .padding(.bottom, 100)
+                .padding(.bottom, 20)
+            } else if selectedSegment == .dhikrs {
+                Button {
+                    router.navigate(.createDhikr, in: .library)
+                } label: {
+                    Image(systemName: "plus")
+                        .font(AwradTheme.bodyFont(21, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 56, height: 56)
+                        .background(AwradTheme.sage, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Create Dhikr")
+                .padding(.trailing, 20)
+                .padding(.bottom, 20)
             }
         }
         .onChange(of: services.audio.errorMessage) { _, newValue in
@@ -115,7 +136,7 @@ struct LibraryView: View {
                 if shouldShowSearchField {
                     librarySearchField
                 }
-                categories
+                tagFilterSection
                 featuredCollectionSection
                 dhikrList
             }
@@ -214,20 +235,65 @@ struct LibraryView: View {
         .transition(.opacity.combined(with: .move(edge: .top)))
     }
 
-    private var categories: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                CategoryChip(title: "All dhikrs", symbol: "square.grid.2x2.fill", isSelected: selectedCategory == nil) {
-                    selectedCategory = nil
-                    hideSearchIfEmpty()
-                }
-                ForEach(populatedCategories) { category in
-                    CategoryChip(title: category.title, symbol: category.symbol, isSelected: selectedCategory == category) {
-                        selectedCategory = category
-                        hideSearchIfEmpty()
+    private var catalogFilters: LibraryCatalogFilters {
+        LibraryCatalogFilters(
+            query: searchText,
+            category: selectedCategory,
+            collectionScope: collectionScope,
+            selectedTagIDs: selectedTagIDs
+        )
+    }
+
+    private var sortedUserTags: [UserTag] {
+        store.userTags.sorted {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
+    }
+
+    @ViewBuilder
+    private var tagFilterSection: some View {
+        if !sortedUserTags.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Filter by tags")
+                    .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                    .foregroundStyle(AwradTheme.ink)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(sortedUserTags) { tag in
+                            let selected = selectedTagIDs.contains(tag.id)
+                            Button {
+                                var filters = catalogFilters
+                                LibraryTagFilterControls.toggle(tag.id, in: &filters)
+                                selectedTagIDs = filters.selectedTagIDs
+                                hideSearchIfEmpty()
+                            } label: {
+                                Label {
+                                    Text(tag.name)
+                                } icon: {
+                                    Image(systemName: selected ? "tag.fill" : "tag")
+                                }
+                                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .foregroundStyle(selected ? .white : AwradTheme.sage)
+                                .background(selected ? AwradTheme.sage : AwradTheme.surface, in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel(tag.name)
+                            .accessibilityValue(selected ? "Selected" : "Not selected")
+                            .accessibilityHint("Filters library with AND tag semantics")
+                            .accessibilityAddTraits(selected ? .isSelected : [])
+                        }
                     }
                 }
             }
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel(
+                LibraryFilterAccessibility.summary(
+                    filters: catalogFilters,
+                    tags: sortedUserTags
+                )
+            )
         }
     }
 
@@ -239,6 +305,8 @@ struct LibraryView: View {
                 actionTitle: "View all"
             ) {
                 selectedCategory = nil
+                collectionScope = .all
+                selectedTagIDs = []
                 searchText = ""
                 isSearchVisible = false
                 isSearchFocused = false
@@ -248,8 +316,15 @@ struct LibraryView: View {
                 HStack(spacing: 12) {
                     ForEach(featuredCollections) { collection in
                         Button {
-                            selectedCategory = collection.category
+                            if collection.isYourDhikrs {
+                                collectionScope = .yourDhikrs
+                                selectedCategory = nil
+                            } else {
+                                collectionScope = .all
+                                selectedCategory = collection.category
+                            }
                             searchText = ""
+                            selectedTagIDs = []
                             isSearchVisible = false
                             isSearchFocused = false
                         } label: {
@@ -269,11 +344,25 @@ struct LibraryView: View {
     private var dhikrList: some View {
         VStack(alignment: .leading, spacing: 12) {
             LibraryDhikrListHeader(
-                title: selectedCategory?.title ?? "All dhikrs",
+                title: listTitle,
                 count: AwradLocalizer.dhikrCount(filteredDhikrs.count, language: language)
             )
 
-            if store.dhikrs.isEmpty {
+            if collectionScope == .yourDhikrs, customDhikrCount == 0 {
+                EmptyStateView(
+                    symbol: "sparkles",
+                    title: "No personal dhikrs yet",
+                    message: "Create a dhikr with your own text and optional imported audio."
+                )
+                Button {
+                    router.navigate(.createDhikr, in: .library)
+                } label: {
+                    Label("Create Dhikr", systemImage: "plus.circle.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .awradPrimaryButton()
+                .accessibilityLabel("Create Dhikr")
+            } else if store.dhikrs.isEmpty {
                 EmptyStateView(
                     symbol: "text.book.closed",
                     title: "No dhikrs in library",
@@ -283,8 +372,16 @@ struct LibraryView: View {
                 EmptyStateView(
                     symbol: "text.magnifyingglass",
                     title: "No matches found",
-                    message: "Try another title, translation, transliteration, or Arabic phrase."
+                    message: "Try another title, translation, transliteration, Arabic phrase, or clear filters."
                 )
+                Button {
+                    clearFilters()
+                } label: {
+                    Label("Clear filters", systemImage: "xmark.circle")
+                        .frame(maxWidth: .infinity)
+                }
+                .awradPrimaryButton()
+                .opacity(0.9)
             } else {
                 LazyVStack(spacing: 12) {
                     ForEach(filteredDhikrs) { dhikr in
@@ -295,6 +392,22 @@ struct LibraryView: View {
                 }
             }
         }
+    }
+
+    private var listTitle: String {
+        if collectionScope == .yourDhikrs {
+            return "Your Dhikrs"
+        }
+        return selectedCategory?.title ?? "All dhikrs"
+    }
+
+    private func clearFilters() {
+        selectedCategory = nil
+        collectionScope = .all
+        selectedTagIDs = []
+        searchText = ""
+        isSearchVisible = false
+        isSearchFocused = false
     }
 
     private func hideSearchIfEmpty() {
@@ -312,22 +425,34 @@ private struct FeaturedDhikrCollection: Identifiable {
         case dhikrs
         case evening
         case prayer
+        case custom
     }
 
     let title: String
-    let category: DhikrCategory
+    let category: DhikrCategory?
     let count: Int
     let tone: Tone
+    var isYourDhikrs: Bool = false
 
     var id: String { title }
 
-    static func collections(categoryCounts: [DhikrCategory: Int]) -> [FeaturedDhikrCollection] {
+    static func collections(
+        categoryCounts: [DhikrCategory: Int],
+        customCount: Int
+    ) -> [FeaturedDhikrCollection] {
         let dailyCategory: DhikrCategory = (categoryCounts[.morning] ?? 0) > 0 ? .morning : .praise
         let dailyCount = (categoryCounts[.morning] ?? 0) > 0
             ? (categoryCounts[.morning] ?? 0)
             : count(categoryCounts, categories: [.praise, .forgiveness, .quran])
 
         return [
+            FeaturedDhikrCollection(
+                title: "Your Dhikrs",
+                category: nil,
+                count: customCount,
+                tone: .custom,
+                isYourDhikrs: true
+            ),
             FeaturedDhikrCollection(
                 title: String(
                     localized: "category.asma_ul_husna",
@@ -438,6 +563,8 @@ private struct LibraryFeaturedCollectionCard: View {
             return "collection_swalaths_\(suffix)"
         case .dhikrs:
             return "collection_dhikrs_\(suffix)"
+        case .custom:
+            return "collection_your_dhikrs_\(suffix)"
         case .evening:
             return "collection_evening_dhikrs_\(suffix)"
         case .prayer:
@@ -534,6 +661,7 @@ struct DhikrDetailView: View {
     @State private var showAudioError = false
     @State private var showDeleteConfirmation = false
     @State private var showRemoveAudioConfirmation = false
+    @State private var showManageTags = false
     @State private var audioCacheRevision = 0
     @State private var pendingSuggestedGoal: DhikrSuggestedGoal?
 
@@ -570,6 +698,18 @@ struct DhikrDetailView: View {
                         suggestedGoalsCard(for: dhikr, suggestions: guidance.suggestedGoals)
                     }
 
+                    tagsSummaryCard(for: dhikr)
+
+                    Button {
+                        showManageTags = true
+                    } label: {
+                        Label("Manage tags", systemImage: "tag.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(AwradTheme.sage)
+                    .accessibilityLabel("Manage tags")
+
                     Button {
                         if let goal = store.goals(for: dhikr.id).first {
                             router.navigate(.counting(goalID: goal.id, slotID: nil), in: store.selectedTab)
@@ -593,25 +733,41 @@ struct DhikrDetailView: View {
         .background(AwradTheme.background)
         .navigationTitle(navigationTitle)
         .toolbar {
-            if let dhikr = store.dhikr(id: dhikrID), dhikr.isCustom {
+            if let dhikr = store.dhikr(id: dhikrID) {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button("Edit Dhikr", systemImage: "pencil", action: editDhikr)
-                        Button("Delete Dhikr", systemImage: "trash", role: .destructive) {
-                            showDeleteConfirmation = true
+                    if dhikr.isCustom {
+                        Menu {
+                            Button("Manage tags", systemImage: "tag.fill") {
+                                showManageTags = true
+                            }
+                            Button("Edit Dhikr", systemImage: "pencil", action: editDhikr)
+                            Button("Delete Dhikr", systemImage: "trash", role: .destructive) {
+                                showDeleteConfirmation = true
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
                         }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
+                        .accessibilityLabel("Dhikr actions")
+                    } else {
+                        Button {
+                            showManageTags = true
+                        } label: {
+                            Image(systemName: "tag.fill")
+                        }
+                        .accessibilityLabel("Manage tags")
                     }
-                    .accessibilityLabel("Dhikr actions")
                 }
             }
+        }
+        .sheet(isPresented: $showManageTags) {
+            ManageTagsView(dhikrID: dhikrID)
+                .environment(store)
         }
         .confirmationDialog("Delete Dhikr", isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
             Button("Delete Dhikr and Goals", role: .destructive, action: deleteDhikr)
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("This removes the personal dhikr, linked goals, reminders, and counts.")
+            Text(CustomDhikrDeletionCopy.warningResource)
         }
         .confirmationDialog("Remove downloaded audio?", isPresented: $showRemoveAudioConfirmation, titleVisibility: .visible) {
             Button("Remove Download", role: .destructive, action: removeDownloadedAudio)
@@ -737,13 +893,42 @@ struct DhikrDetailView: View {
         router.navigate(.editDhikr(dhikrID), in: store.selectedTab)
     }
 
+    private func tagsSummaryCard(for dhikr: Dhikr) -> some View {
+        let assigned = store.userTags
+            .filter { tag in
+                store.tagAssignments.contains { $0.dhikrID == dhikr.id && $0.tagID == tag.id }
+            }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+
+        return AwradCard {
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Tags", systemImage: "tag.fill")
+                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                if assigned.isEmpty {
+                    Text("No tags assigned yet.")
+                        .font(AwradTheme.bodyFont(.subheadline))
+                        .foregroundStyle(.secondary)
+                } else {
+                    FlowTagChips(names: assigned.map(\.name))
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            assigned.isEmpty
+                ? "No tags assigned yet"
+                : "Tags: \(assigned.map(\.name).joined(separator: ", "))"
+        )
+    }
+
     private func deleteDhikr() {
         services.audio.stop()
         guard let removedGoalIDs = store.deleteCustomDhikr(dhikrID) else { return }
         Task {
-            for goalID in removedGoalIDs {
-                await services.notifications.cancelGoalReminders(goalID: goalID)
-            }
+            _ = await services.refreshNotifications(
+                store: store,
+                change: .init(goalIDs: Set(removedGoalIDs), reason: .goalMutation)
+            )
         }
         router.popToRoot(in: store.selectedTab)
     }
@@ -892,6 +1077,32 @@ struct DhikrDetailView: View {
                         .font(AwradTheme.bodyFont(.caption))
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                } else if availability == .missingOwned {
+                    Text("Owned audio is missing on this device. Reattach a file or remove the broken attachment.")
+                        .font(AwradTheme.bodyFont(.caption))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    HStack(spacing: 12) {
+                        Button {
+                            router.navigate(.editDhikr(dhikr.id), in: store.selectedTab)
+                        } label: {
+                            Label("Reattach audio", systemImage: "square.and.arrow.down")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(AwradTheme.sage)
+                        .accessibilityLabel("Reattach audio")
+
+                        Button(role: .destructive) {
+                            _ = store.removeOwnedAudio(from: dhikr.id)
+                            audioCacheRevision += 1
+                        } label: {
+                            Label("Remove audio", systemImage: "trash")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityLabel("Remove missing owned audio")
+                    }
                 } else {
                     if services.audio.isPreviewing(dhikr.id) {
                         ProgressView(value: services.audio.progress)
@@ -938,14 +1149,19 @@ struct DhikrDetailView: View {
                             .accessibilityLabel("Download audio")
                         case .downloaded:
                             Button(role: .destructive) {
-                                showRemoveAudioConfirmation = true
+                                if store.audioAsset(for: dhikr.id) != nil {
+                                    _ = store.removeOwnedAudio(from: dhikr.id)
+                                    audioCacheRevision += 1
+                                } else {
+                                    showRemoveAudioConfirmation = true
+                                }
                             } label: {
                                 Image(systemName: "trash")
                                     .frame(width: 46, height: 46)
                             }
                             .buttonStyle(.bordered)
                             .accessibilityLabel("Remove downloaded audio")
-                        case .unavailable:
+                        case .missingOwned, .unavailable:
                             EmptyView()
                         }
                     }
@@ -956,14 +1172,20 @@ struct DhikrDetailView: View {
 
     private func audioAvailability(for dhikr: Dhikr) -> LibraryAudioAvailability {
         _ = audioCacheRevision
-        let localExists = dhikr.audioFileName.flatMap { services.audio.localAudioURL(fileName: $0) } != nil
-        return LibraryCatalogPolicy.audioAvailability(for: dhikr, localAudioExists: localExists)
+        let catalogLocalExists = dhikr.audioFileName.flatMap { services.audio.localAudioURL(fileName: $0) } != nil
+        return LibraryCatalogPolicy.resolvedLibraryAudioAvailability(
+            dhikr: dhikr,
+            ownedAsset: store.audioAsset(for: dhikr.id),
+            resolveOwnedURL: store.ownedAudioStore.resolvePlayableURL(for:),
+            catalogLocalExists: catalogLocalExists
+        )
     }
 
     private func audioStatusTitle(_ availability: LibraryAudioAvailability) -> LocalizedStringKey {
         switch availability {
         case .downloaded: "Available offline"
         case .streaming: "Streams until downloaded"
+        case .missingOwned: "Owned audio missing"
         case .unavailable: "Audio unavailable"
         }
     }
@@ -972,6 +1194,7 @@ struct DhikrDetailView: View {
         switch availability {
         case .downloaded: "checkmark.circle.fill"
         case .streaming: "waveform.circle.fill"
+        case .missingOwned: "exclamationmark.triangle.fill"
         case .unavailable: "speaker.slash.circle.fill"
         }
     }
@@ -980,6 +1203,7 @@ struct DhikrDetailView: View {
         switch availability {
         case .downloaded: AwradTheme.sage
         case .streaming: AwradTheme.gold
+        case .missingOwned: .orange
         case .unavailable: .secondary
         }
     }
@@ -1044,6 +1268,7 @@ struct DhikrDetailView: View {
 }
 
 private struct DhikrCard: View {
+    @Environment(AwradStore.self) private var store
     @Environment(AppServices.self) private var services
     let dhikr: Dhikr
     let language: AppLanguage
@@ -1120,12 +1345,17 @@ private struct DhikrCard: View {
     }
 
     private var canPreviewAudio: Bool {
-        audioAvailability != .unavailable
+        audioAvailability == .downloaded || audioAvailability == .streaming
     }
 
     private var audioAvailability: LibraryAudioAvailability {
-        let localExists = dhikr.audioFileName.flatMap { services.audio.localAudioURL(fileName: $0) } != nil
-        return LibraryCatalogPolicy.audioAvailability(for: dhikr, localAudioExists: localExists)
+        let catalogLocalExists = dhikr.audioFileName.flatMap { services.audio.localAudioURL(fileName: $0) } != nil
+        return LibraryCatalogPolicy.resolvedLibraryAudioAvailability(
+            dhikr: dhikr,
+            ownedAsset: store.audioAsset(for: dhikr.id),
+            resolveOwnedURL: store.ownedAudioStore.resolvePlayableURL(for:),
+            catalogLocalExists: catalogLocalExists
+        )
     }
 
     private var isPreviewing: Bool {
@@ -1177,26 +1407,20 @@ private struct LibraryDhikrListHeader: View {
     }
 }
 
-private struct CategoryChip: View {
-    let title: String
-    let symbol: String
-    let isSelected: Bool
-    let action: () -> Void
+private struct FlowTagChips: View {
+    let names: [String]
 
     var body: some View {
-        Button(action: action) {
-            Label {
-                Text(LocalizedStringKey(title))
-            } icon: {
-                Image(systemName: symbol)
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 8)], alignment: .leading, spacing: 8) {
+            ForEach(names, id: \.self) { name in
+                Text(name)
+                    .font(AwradTheme.bodyFont(.caption, weight: .semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .foregroundStyle(AwradTheme.sage)
+                    .background(AwradTheme.mint.opacity(0.18), in: Capsule())
             }
-                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .foregroundStyle(isSelected ? .white : AwradTheme.sage)
-                .background(isSelected ? AwradTheme.sage : AwradTheme.surface, in: Capsule())
         }
-        .buttonStyle(.plain)
     }
 }
 

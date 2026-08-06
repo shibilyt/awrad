@@ -1,0 +1,133 @@
+name: API image
+
+# Builds and publishes the awrad_api release image to GHCR. Dokploy pulls the
+# immutable `sha-<short>` tag; it never builds from source.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "awrad_api/**"
+      - ".github/workflows/api-image.yml"
+  pull_request:
+    paths:
+      - "awrad_api/**"
+      - ".github/workflows/api-image.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: api-image-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/awrad-api
+
+jobs:
+  test:
+    name: mix precommit
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    defaults:
+      run:
+        working-directory: awrad_api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.19.5"
+          otp-version: "28"
+
+      - name: Cache deps and build
+        uses: actions/cache@v4
+        with:
+          path: |
+            awrad_api/deps
+            awrad_api/_build
+          key: ${{ runner.os }}-mix-test-${{ hashFiles('awrad_api/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-test-
+
+      - run: mix deps.get
+      - run: mix precommit
+        env:
+          MIX_ENV: test
+
+      - name: Fail if formatting or unused deps changed tracked files
+        run: git diff --exit-code
+
+  build:
+    name: Build and push image
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=short,prefix=sha-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: awrad_api
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Trigger Dokploy deploy
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Point the Dokploy application at the new tag
+        env:
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_TOKEN: ${{ secrets.DOKPLOY_API_TOKEN }}
+          DOKPLOY_APPLICATION_ID: ${{ secrets.DOKPLOY_APPLICATION_ID }}
+        run: |
+          set -euo pipefail
+          short_image="${IMAGE_NAME}:sha-$(echo "${GITHUB_SHA}" | cut -c1-7)"
+          curl --fail-with-body -sS -X POST "${DOKPLOY_URL}/api/application.saveDockerProvider" \
+            -H "x-api-key: ${DOKPLOY_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"applicationId\":\"${DOKPLOY_APPLICATION_ID}\",\"dockerImage\":\"${short_image}\",\"registryUrl\":\"ghcr.io\",\"username\":\"${{ github.repository_owner }}\",\"password\":\"${{ secrets.GHCR_PULL_TOKEN }}\"}"
+          curl --fail-with-body -sS -X POST "${DOKPLOY_URL}/api/application.deploy" \
+            -H "x-api-key: ${DOKPLOY_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"applicationId\":\"${DOKPLOY_APPLICATION_ID}\"}"

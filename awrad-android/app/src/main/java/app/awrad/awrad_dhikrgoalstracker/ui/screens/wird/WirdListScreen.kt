@@ -99,6 +99,7 @@ fun WirdLibraryPane(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(20.dp),
     showInlineCreate: Boolean = false,
+    cardContainerColor: Color = MaterialTheme.colorScheme.surface,
     viewModel: WirdListViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -135,7 +136,9 @@ fun WirdLibraryPane(
             }
             if (state.custom.isNotEmpty()) {
                 item { SectionHeader(stringResource(R.string.wird_your_wirds)) }
-                items(state.custom, key = { it.wird.id }) { WirdCard(it, onNavigateToWird) }
+                items(state.custom, key = { it.wird.id }) {
+                    WirdCard(it, onNavigateToWird, cardContainerColor)
+                }
             }
             if (state.library.isNotEmpty()) {
                 // Only label the library group when a "Your wirds" group sits above it; on its
@@ -143,7 +146,9 @@ fun WirdLibraryPane(
                 if (state.custom.isNotEmpty()) {
                     item { SectionHeader(stringResource(R.string.wird_library)) }
                 }
-                items(state.library, key = { it.wird.id }) { WirdCard(it, onNavigateToWird) }
+                items(state.library, key = { it.wird.id }) {
+                    WirdCard(it, onNavigateToWird, cardContainerColor)
+                }
             }
         }
     }
@@ -184,12 +189,17 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun WirdCard(item: WirdListItem, onClick: (String) -> Unit) {
+private fun WirdCard(
+    item: WirdListItem,
+    onClick: (String) -> Unit,
+    containerColor: Color,
+) {
     WirdCatalogCard(
         wird = item.wird,
         isActiveToday = item.isActiveToday,
         progress = item.progress,
         onClick = { onClick(item.wird.id) },
+        containerColor = containerColor,
     )
 }
 

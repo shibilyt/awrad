@@ -87,11 +87,20 @@ struct AwradDhikrQuery: EntityQuery, EntityStringQuery {
     }
 
     private static var entities: [AwradDhikrEntity] {
-        AwradSeedData.dhikrs.map {
+        let defaults = UserDefaults(suiteName: AwradWidgetSharedConfiguration.appGroupID)
+        let projection = defaults.flatMap { AwradIntentDhikrProjection.load(from: $0) }
+        return AwradIntentDhikrProjection.resolvedEntities(
+            projection: projection,
+            seedFallback: AwradSeedData.dhikrs
+        )
+    }
+
+    static func entities(from dhikrs: [Dhikr]) -> [AwradDhikrEntity] {
+        dhikrs.map { dhikr in
             AwradDhikrEntity(
-                id: $0.intentSlug,
-                title: $0.title,
-                subtitle: $0.category.title
+                id: dhikr.isCustom ? dhikr.id.uuidString.lowercased() : dhikr.intentSlug,
+                title: dhikr.title,
+                subtitle: dhikr.category.title
             )
         }
     }

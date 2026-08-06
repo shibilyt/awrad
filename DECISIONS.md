@@ -254,6 +254,37 @@ Counting never depends on connectivity, retries cannot duplicate accepted progre
 
 The previously undecided synchronization portions of ADR-2026-07-13 UUIDv4 progress identity and native model parity.
 
+## ADR-2026-07-24: Capability-gated dhikr tags in progress sync v1
+
+Status: Accepted
+
+### Context
+
+Custom-dhikr expansion needs user-defined tags that sync for authenticated users, without exposing unknown transfer record kinds to older clients and without syncing owned audio bytes.
+
+### Decision
+
+Extend progress-sync protocol v1 with capability `dhikr_tags_v1` and entity types `user_tag` and `dhikr_tag_assignment`. Keep progress-model version 1 and the existing `custom_dhikr` document shape unchanged. The server owns tag-name normalization (NFC display + Unicode Default Case Fold + White_Space collapse), duplicate normalized-name coalescing via accepted `canonical_effect.entity_id` identity swap, immutable assignment references after create, restore-time ownership revalidation, built-in/custom assignment targets, limits, and cascade tombstones. Transfer pages omit tag records unless the client advertises `dhikr_tags_v1`, and non-capable transfers exclude those rows before the shared record limit. Newly capable clients take one capability-aware snapshot bootstrap before resuming deltas. Owned audio remains device-local outside the sync contract. The Ecto CHECK expansion for tag entity types is irreversible once deployed.
+
+### Consequences
+
+Server and contracts can roll out ahead of native tag UI/sync. Older clients remain compatible. Native clients must implement the durable bootstrap flag and coalescing apply path when they adopt the capability (re-point local assignments when `command.entity_id != canonical_effect.entity_id`). Native normalizers must adopt the shared full-casefold/White_Space contract in `tag-normalization-contract.json`.
+
+### Evidence
+
+- `contracts/progress-sync/v1/progress-sync.schema.json`
+- `contracts/progress-sync/v1/README.md`
+- `contracts/behavior-model/v1/fixtures/tag-normalization-contract.json`
+- `awrad_api/lib/awrad_api/progress_sync/document.ex`
+- `awrad_api/lib/awrad_api/progress_sync/entity_store.ex`
+- `awrad_api/lib/awrad_api/progress_sync/transfer.ex`
+- `awrad_api/test/awrad_api/progress_sync_dhikr_tags_test.exs`
+- `awrad_api/priv/repo/migrations/20260724065752_expand_progress_sync_entity_types_for_dhikr_tags.exs`
+
+### Supersedes
+
+None.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

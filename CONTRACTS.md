@@ -64,6 +64,10 @@ Android automatically refreshes after an authentication failure through its OkHt
 
 Base URLs must retain a trailing-slash-safe shape because clients resolve relative endpoint paths. Physical devices need a reachable LAN or deployed address.
 
+## Healthcheck route
+
+`GET /up` is public in the plain `:api` pipeline, performs no database access, and returns `{"status":"ok"}` with `Cache-Control: no-store`. It exists for the container healthcheck and reverse proxy; mobile clients must not depend on it. `config/prod.exs` excludes the path from `force_ssl` so plain-HTTP probes are not redirected.
+
 ## Community statistics API
 
 `GET /api/community/stats` is public in the plain `:api` pipeline and returns cached, aggregate Community progress without user-identifying fields. Responses include `Cache-Control: public, max-age=300, stale-while-revalidate=600` and have this shape:
@@ -142,9 +146,9 @@ Run `./scripts/generate_wird_model.py --check` to validate the source and reject
 
 ## Behavior model v1
 
-`contracts/behavior-model/v1/fixtures/behavior-cases.json` is a deterministic cross-platform acceptance fixture. Its case families cover recurrence, effective-day resolution, count limits, slot selection, streaks, reminder plans, and Wird cadence. It is product-behavior evidence rather than a persistence or network wire format.
+`contracts/behavior-model/v1/fixtures/behavior-cases.json` is a deterministic cross-platform acceptance fixture. Its case families cover recurrence, effective-day resolution, count limits, slot selection, streaks, reminder plans, notification obligations, and Wird cadence. Notification-obligation cases lock target-policy continuity, deadline formulas, suppression, lifecycle separation, cumulative bounds, slot conjunction, and the global urgency toggle. Optional `tag_normalization` and `tag_filter` families lock baseline user-tag display/normalized uniqueness rules and AND filter composition for the custom-dhikr expansion; the exact Unicode White_Space / full Default Case Fold contract (ß↔SS, dotted capital I, NNBSP/figure space) lives in `contracts/behavior-model/v1/fixtures/tag-normalization-contract.json`. Native calculators adopt those sections when tag UI ships. It is product-behavior evidence rather than a persistence or network wire format.
 
-`scripts/validate_behavior_fixtures.py` validates the fixture structure. Android `BehaviorFixtureParityTest` and iOS `BehaviorParityTests` consume it alongside platform-specific edge cases. The root `./check-mobile-model-parity` command runs all three checks; a behavior change is incomplete when only one native calculator changes.
+`scripts/validate_behavior_fixtures.py` validates the fixture structure. Android `BehaviorFixtureParityTest` and iOS `BehaviorParityTests` consume it alongside platform-specific edge cases and execute native production semantics for every notification-obligation case. The root `./check-mobile-model-parity` command runs all three checks; a behavior change is incomplete when only one native calculator changes. See [`docs/notification-obligation-engine.md`](docs/notification-obligation-engine.md) for the runtime architecture and platform constraints.
 
 ## Product parity
 
@@ -178,6 +182,26 @@ other screens, and apply bounded exponential backoff after failures. Clients
 advertising `unchanged_delta` may receive a cursor-bearing `status: unchanged`
 delta response without a materialized transfer; clients without the capability
 continue to receive the original transfer-session representation.
+
+Capability `dhikr_tags_v1` extends progress-sync v1 with `user_tag` and
+`dhikr_tag_assignment` whole-document entities. Server validation owns tag-name
+normalization (see
+`contracts/behavior-model/v1/fixtures/tag-normalization-contract.json` for the
+exact NFC display + Unicode Default Case Fold + White_Space contract), duplicate
+normalized-name coalescing via accepted receipts whose
+`canonical_effect.entity_id` is the surviving tag id, immutable assignment
+`tag_id`/`dhikr_id` after create, restore-time ownership revalidation,
+built-in/custom assignment targets, per-account/per-dhikr limits, and cascade
+tombstones when a tag or custom dhikr is deleted. Transfer pages omit those
+record kinds unless the client advertises `dhikr_tags_v1`, and non-capable
+transfers exclude tag/assignment rows before the shared record limit so they
+cannot crowd out non-tag progress. Documented dependency order is
+`custom_dhikr`/`user_tag` (0), `dhikr_tag_assignment` (1), `goal` (2),
+`count_projection` (3), `conflict` (4), tombstone/fence (5). Custom-dhikr
+document shape is unchanged and owned audio bytes remain outside the sync
+contract. Clients that newly gain the capability must take one
+capability-aware snapshot before resuming delta sync so earlier tag revisions
+are not missed.
 
 Protocol/server support for entity restore and explicit manual goal completion
 or reopening is reserved for clients that expose those actions. The current

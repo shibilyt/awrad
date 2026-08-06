@@ -23,11 +23,20 @@ git diff --stat
 # Validate progress/Wird contracts, generated registries/assets, and both native suites.
 ./check-mobile-model-parity
 
+# Validate shared behavior fixtures and malformed-case rejection only.
+python3 scripts/validate_behavior_fixtures.py --self-test
+
+# Validate Android urgency resource keys/placeholders across en/ar/ml.
+python3 scripts/validate_android_urgency_resources.py --self-test
+
 # Validate only the progress-sync protocol examples and reference count reducer.
 python3 scripts/validate_progress_sync.py
 
 # Validate Phoenix ordering, idempotency, and immutable count-ledger behavior.
 (cd awrad_api && mix test test/awrad_api/progress_sync_test.exs test/awrad_api/progress_sync_count_ledger_test.exs)
+
+# Validate capability-gated dhikr tag entities, coalescing, cascades, and transfer filtering.
+(cd awrad_api && mix test test/awrad_api/progress_sync_document_test.exs test/awrad_api/progress_sync_dhikr_tags_test.exs test/awrad_api/progress_sync_entity_transfer_test.exs)
 ```
 
 The root is not itself a build project. The parity command intentionally enters the Android and iOS projects. Set `AWRAD_IOS_TEST_DESTINATION` to an `xcodebuild` destination string when automatic iPhone Simulator selection is not appropriate.
@@ -148,7 +157,21 @@ mix test
 mix precommit
 ```
 
-Production runtime requires at least `DATABASE_URL`, `SECRET_KEY_BASE`, and `JWT_SIGNING_SECRET`. See `awrad_api/config/runtime.exs` for the authoritative list and constraints.
+Production runtime requires at least `DATABASE_URL`, `SECRET_KEY_BASE`, and `JWT_SIGNING_SECRET`. See `awrad_api/config/runtime.exs` for the authoritative list and constraints, and `awrad_api/.env.example` for the deployment-facing template.
+
+Release image, built by CI and pulled by Dokploy. See `awrad_api/memory/deployment.md`.
+
+```bash
+# Build the production image locally (context is awrad_api/)
+docker build --platform linux/amd64 -t awrad-api:local .
+
+# Run it against a reachable Postgres, then probe the healthcheck
+docker run --rm -p 4000:4000 --env-file .env awrad-api:local
+curl -fsS http://localhost:4000/up
+
+# Apply migrations inside a running release (Dokploy pre-deploy command)
+/app/bin/migrate
+```
 
 ## Local integration
 

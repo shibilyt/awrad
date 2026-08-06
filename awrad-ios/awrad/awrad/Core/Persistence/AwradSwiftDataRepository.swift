@@ -37,13 +37,19 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
         let seasonTemplates = try fetchSeasonTemplates()
         let wirds = try fetchWirds()
         let wirdSessions = try fetchWirdSessions()
+        let userTags = try fetchUserTags()
+        let tagAssignments = try fetchTagAssignments()
+        let audioAssets = try fetchAudioAssets()
         return AwradRepositoryState(
             dhikrs: dhikrs,
             goals: goals,
             countEntries: countEntries,
             seasonTemplates: seasonTemplates,
             wirds: wirds,
-            wirdSessions: wirdSessions
+            wirdSessions: wirdSessions,
+            userTags: userTags,
+            tagAssignments: tagAssignments,
+            audioAssets: audioAssets
         )
     }
 
@@ -60,14 +66,19 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
             count(Schema.SeasonTemplateDayRecord.self) == 0 &&
             count(Schema.CountEntryRecord.self) == 0 &&
             count(Schema.WirdRecord.self) == 0 &&
-            count(Schema.WirdSessionRecord.self) == 0
+            count(Schema.WirdSessionRecord.self) == 0 &&
+            count(AwradSchemaV3.UserTagRecord.self) == 0 &&
+            count(AwradSchemaV3.DhikrTagAssignmentRecord.self) == 0 &&
+            count(AwradSchemaV3.DhikrAudioAssetRecord.self) == 0
     }
 
     func replaceAll(with state: AwradRepositoryState) throws {
-        try AwradPersistenceValidator.validate(state: state)
+        var reconciled = state
+        AwradRepositoryState.reconcilePortableRestore(&reconciled)
+        try AwradPersistenceValidator.validate(state: reconciled)
         try performTransaction {
             try deleteAllRecords()
-            try insert(state)
+            try insert(reconciled)
         }
     }
 
@@ -81,11 +92,13 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
     /// removal as cloud mutations. Account-recovery reset uses this path to
     /// guarantee that local erasure cannot enqueue server deletes.
     func resetLocalState(with state: AwradRepositoryState) throws {
-        try AwradPersistenceValidator.validate(state: state)
+        var reconciled = state
+        AwradRepositoryState.reconcilePortableRestore(&reconciled)
+        try AwradPersistenceValidator.validate(state: reconciled)
         try performTransaction(enqueueSync: false) {
             try deleteAllSyncRecords()
             try deleteAllRecords()
-            try insert(state)
+            try insert(reconciled)
         }
     }
 
@@ -454,6 +467,33 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
         for session in state.wirdSessions {
             modelContext.insert(try AwradPersistenceMapper.wirdSessionRecord(from: session))
         }
+        for tag in state.userTags {
+            modelContext.insert(try AwradPersistenceMapper.userTagRecord(from: tag))
+        }
+        for assignment in state.tagAssignments {
+            modelContext.insert(try AwradPersistenceMapper.tagAssignmentRecord(from: assignment))
+        }
+        for asset in state.audioAssets {
+            modelContext.insert(try AwradPersistenceMapper.audioAssetRecord(from: asset))
+        }
+    }
+
+    private func fetchUserTags() throws -> [UserTag] {
+        try modelContext.fetch(FetchDescriptor<AwradSchemaV3.UserTagRecord>())
+            .map(AwradPersistenceMapper.userTag)
+            .sorted { $0.normalizedName < $1.normalizedName }
+    }
+
+    private func fetchTagAssignments() throws -> [DhikrTagAssignment] {
+        try modelContext.fetch(FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>())
+            .map(AwradPersistenceMapper.tagAssignment)
+            .sorted { $0.id.uuidString < $1.id.uuidString }
+    }
+
+    private func fetchAudioAssets() throws -> [DhikrAudioAsset] {
+        try modelContext.fetch(FetchDescriptor<AwradSchemaV3.DhikrAudioAssetRecord>())
+            .map(AwradPersistenceMapper.audioAsset)
+            .sorted { $0.dhikrID.uuidString < $1.dhikrID.uuidString }
     }
 
     private func insert(_ goal: Goal) throws {
@@ -501,6 +541,9 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
         try delete(Schema.SeasonTemplateRecord.self)
         try delete(Schema.WirdSessionRecord.self)
         try delete(Schema.WirdRecord.self)
+        try delete(AwradSchemaV3.DhikrTagAssignmentRecord.self)
+        try delete(AwradSchemaV3.UserTagRecord.self)
+        try delete(AwradSchemaV3.DhikrAudioAssetRecord.self)
     }
 
     private func deleteAllSyncRecords() throws {

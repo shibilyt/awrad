@@ -1096,8 +1096,16 @@ struct UserPreferences: Codable, Hashable {
     var calendarSystem: CalendarSystem = .gregorian
     var languageCode: String = "en"
     var hasSeenCountingGuide: Bool = false
+    /// Optional backing preserves compatibility with preference snapshots written before urgency
+    /// nudges existed. A missing value is deliberately treated as enabled.
+    private var urgencyRemindersEnabledBacking: Bool? = true
 
     init() {}
+
+    var urgencyRemindersEnabled: Bool {
+        get { urgencyRemindersEnabledBacking ?? true }
+        set { urgencyRemindersEnabledBacking = newValue }
+    }
 
     var colorScheme: ColorScheme? {
         switch colorSchemeMode {
@@ -1138,6 +1146,7 @@ struct UserPreferences: Codable, Hashable {
         case calendarSystem
         case languageCode
         case hasSeenCountingGuide
+        case urgencyRemindersEnabled
     }
 
     init(from decoder: Decoder) throws {
@@ -1167,6 +1176,40 @@ struct UserPreferences: Codable, Hashable {
         calendarSystem = try container.decodeIfPresent(CalendarSystem.self, forKey: .calendarSystem) ?? .gregorian
         languageCode = try container.decodeIfPresent(String.self, forKey: .languageCode) ?? "en"
         hasSeenCountingGuide = try container.decodeIfPresent(Bool.self, forKey: .hasSeenCountingGuide) ?? false
+        urgencyRemindersEnabledBacking = try container.decodeIfPresent(
+            Bool.self,
+            forKey: .urgencyRemindersEnabled
+        )
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userName, forKey: .userName)
+        try container.encode(isOnboarded, forKey: .isOnboarded)
+        try container.encode(onboardingStep, forKey: .onboardingStep)
+        try container.encode(onboardingReminderPresetKeys, forKey: .onboardingReminderPresetKeys)
+        try container.encode(onboardingFirstGoalCount, forKey: .onboardingFirstGoalCount)
+        try container.encode(colorSchemeMode, forKey: .colorSchemeMode)
+        try container.encode(vibrateOnCount, forKey: .vibrateOnCount)
+        try container.encode(keepScreenOn, forKey: .keepScreenOn)
+        try container.encode(soundOnCount, forKey: .soundOnCount)
+        try container.encode(countingDhikrTextScale, forKey: .countingDhikrTextScale)
+        try container.encode(countingDhikrLineSpacing, forKey: .countingDhikrLineSpacing)
+        try container.encode(dailyReminderEnabled, forKey: .dailyReminderEnabled)
+        try container.encode(dailyRemembranceEnabled, forKey: .dailyRemembranceEnabled)
+        try container.encode(reminderHour, forKey: .reminderHour)
+        try container.encode(reminderMinute, forKey: .reminderMinute)
+        try container.encode(prayerSlotDefaultLeadMinutes, forKey: .prayerSlotDefaultLeadMinutes)
+        try container.encodeIfPresent(latitude, forKey: .latitude)
+        try container.encodeIfPresent(longitude, forKey: .longitude)
+        try container.encode(cityName, forKey: .cityName)
+        try container.encode(calculationMethod, forKey: .calculationMethod)
+        try container.encode(madhab, forKey: .madhab)
+        try container.encode(dayReset, forKey: .dayReset)
+        try container.encode(calendarSystem, forKey: .calendarSystem)
+        try container.encode(languageCode, forKey: .languageCode)
+        try container.encode(hasSeenCountingGuide, forKey: .hasSeenCountingGuide)
+        try container.encode(urgencyRemindersEnabled, forKey: .urgencyRemindersEnabled)
     }
 }
 

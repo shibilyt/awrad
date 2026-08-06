@@ -289,18 +289,18 @@ struct CreateWirdView: View {
         guard let saved else { return }
         isSaving = true
         Task {
-            let result = await services.rescheduleWirdReminders(for: saved, store: store)
+            let result = await services.refreshNotificationsAfterWirdMutation(store: store)
             isSaving = false
             if result.succeeded {
                 router.replaceLast(with: .wirdDetail(saved.id), in: store.selectedTab)
             } else {
                 if let previous {
                     if let restored = store.updateWird(previous) {
-                        _ = await services.rescheduleWirdReminders(for: restored, store: store)
+                        _ = await services.refreshNotificationsAfterWirdMutation(store: store)
                     }
                 } else {
                     _ = store.deleteWird(saved.id)
-                    _ = await services.cancelWirdReminders(wirdID: saved.id)
+                    _ = await services.refreshNotificationsAfterWirdMutation(store: store)
                 }
                 saveError = result.localizedFailureMessage(language: language)
             }
@@ -373,9 +373,9 @@ struct CreateWirdView: View {
         guard let editingWirdID, store.wird(id: editingWirdID)?.isCustom == true else { return }
         guard let wird = store.wird(id: editingWirdID) else { return }
         Task {
-            _ = await services.cancelWirdReminders(wirdID: editingWirdID)
+            _ = await services.refreshNotificationsAfterWirdMutation(store: store)
             guard store.deleteWird(editingWirdID) else {
-                _ = await services.rescheduleWirdReminders(for: wird, store: store)
+                _ = await services.refreshNotificationsAfterWirdMutation(store: store)
                 return
             }
             router.pop(in: store.selectedTab)

@@ -93,9 +93,14 @@ fun GoalsScreen(
     val density = LocalDensity.current
     val statusBarTopPadding = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val headerBackgroundColor = if (isAwradDarkTheme()) {
-        Color.Transparent
+        MaterialTheme.colorScheme.surfaceContainer
     } else {
         MaterialTheme.colorScheme.surface
+    }
+    val contentBackgroundColor = if (isAwradDarkTheme()) {
+        MaterialTheme.colorScheme.surface
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
     }
     val pagerState = rememberPagerState(initialPage = 0) { 2 }
     val scope = rememberCoroutineScope()
@@ -156,6 +161,7 @@ fun GoalsScreen(
                             scope.launch { pagerState.animateScrollToPage(page) }
                         },
                         onTabCenters = { tabCentersPx = it },
+                        unselectedColor = contentBackgroundColor,
                         modifier = Modifier.padding(horizontal = 20.dp),
                     )
                 }
@@ -170,7 +176,7 @@ fun GoalsScreen(
                     Surface(
                         modifier = Modifier.fillMaxSize(),
                         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        color = contentBackgroundColor,
                         shadowElevation = 0.dp,
                     ) {
                         PullToRefreshBox(
@@ -335,7 +341,11 @@ private fun GoalListItem(
             .padding(horizontal = 20.dp, vertical = 4.dp),
         onClick = onClick,
         shape = RoundedCornerShape(22.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = if (isAwradDarkTheme()) {
+            MaterialTheme.colorScheme.surfaceContainer
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
     ) {
         Row(
             modifier = Modifier

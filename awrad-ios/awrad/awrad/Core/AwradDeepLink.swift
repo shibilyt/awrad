@@ -6,7 +6,7 @@ enum AwradDeepLink: Equatable {
     case library
     case settings
     case wirdList
-    case counting(dhikrSlug: String?)
+    case counting(dhikrID: AwradID?, dhikrSlug: String?)
     case todaysWird
     case verifyEmail(token: String?)
     case resetPassword(token: String)
@@ -28,7 +28,7 @@ enum AwradDeepLink: Equatable {
 
         let destination = (url.host ?? url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))).lowercased()
         let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-        let dhikrSlug = components?.queryItems?.first(where: { $0.name == "dhikr" })?.value
+        let dhikrToken = components?.queryItems?.first(where: { $0.name == "dhikr" })?.value
         let token = components?.queryItems?.first(where: { $0.name == "token" })?.value?.nonEmptyValue
 
         switch destination {
@@ -43,7 +43,8 @@ enum AwradDeepLink: Equatable {
         case "wirds":
             self = .wirdList
         case "counting":
-            self = .counting(dhikrSlug: dhikrSlug?.nonEmptyValue)
+            let parsed = Self.parseDhikrToken(dhikrToken)
+            self = .counting(dhikrID: parsed.id, dhikrSlug: parsed.slug)
         case "todays-wird", "today-wird":
             self = .todaysWird
         case "verify-email":
@@ -54,6 +55,14 @@ enum AwradDeepLink: Equatable {
         default:
             return nil
         }
+    }
+
+    private static func parseDhikrToken(_ raw: String?) -> (id: AwradID?, slug: String?) {
+        guard let raw = raw?.nonEmptyValue else { return (nil, nil) }
+        if let id = UUID(uuidString: raw) {
+            return (id, nil)
+        }
+        return (nil, raw)
     }
 
     private static var configuredAppLinkHost: String? {
@@ -78,9 +87,11 @@ enum AwradDeepLink: Equatable {
             components.host = "settings"
         case .wirdList:
             components.host = "wirds"
-        case .counting(let dhikrSlug):
+        case .counting(let dhikrID, let dhikrSlug):
             components.host = "counting"
-            if let dhikrSlug {
+            if let dhikrID {
+                components.queryItems = [URLQueryItem(name: "dhikr", value: dhikrID.uuidString.lowercased())]
+            } else if let dhikrSlug {
                 components.queryItems = [URLQueryItem(name: "dhikr", value: dhikrSlug)]
             }
         case .todaysWird:

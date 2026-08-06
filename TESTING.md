@@ -10,7 +10,7 @@ Validate the smallest relevant surface first, then widen checks according to ris
 | Android repository/Room | Repository JVM tests plus schema/migration tests | Unit suite and relevant instrumentation tests |
 | Android Compose/navigation | Compile plus focused UI/state tests | Debug build and emulator smoke flow |
 | Android notification/audio/service | Focused policy tests and debug build | Device/emulator flow and log review |
-| Android resources/localization | Resource build and locale-key comparison | Runtime smoke in affected locales |
+| Android resources/localization | Resource build and locale-key comparison; urgency copy uses `python3 scripts/validate_android_urgency_resources.py --self-test` | Runtime smoke in affected locales |
 | iOS pure domain/store | Matching XCTest method or class | Main XCTest target |
 | iOS SwiftUI/navigation/deep link | Build-for-testing plus focused XCTest | Simulator smoke or UI test |
 | iOS widget/shared mutation | Widget/shared focused XCTest | App-widget simulator integration |
@@ -18,7 +18,7 @@ Validate the smallest relevant surface first, then widen checks according to ris
 | API context/schema | Focused context test and migration review | Full `mix test` |
 | API controller/router/auth | Focused controller/plug tests | Full `mix test` and mobile consumer review |
 | Cross-project progress contract | `./check-mobile-model-parity` plus focused API context tests | Full native/API suites and migration checks |
-| Progress sync protocol/reducer | `python3 scripts/validate_progress_sync.py` | Root parity plus Phoenix sync context tests |
+| Progress sync protocol/reducer | `python3 scripts/validate_progress_sync.py` plus focused Phoenix entity/tag transfer tests when entity kinds change | Root parity plus Phoenix sync context tests |
 | Cross-platform behavior fixture | `python3 scripts/validate_behavior_fixtures.py` plus the matching Android/iOS behavior test | `./check-mobile-model-parity` and the affected native suites |
 | Documentation only | Link/path audit and `git diff --check` | Verify documented task discovery commands |
 

@@ -45,6 +45,43 @@ struct HomeSettingsParityTests {
         #expect(featured.map(\.id) == [first.id, second.id, third.id, fourth.id])
     }
 
+    @Test func homeSettingsIconUsesTheMutedContentColor() throws {
+        let homeHeaderSourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Home/HomePrayerViews.swift")
+            .standardizedFileURL
+        let homeHeaderSource = try String(contentsOf: homeHeaderSourceURL, encoding: .utf8)
+            .components(separatedBy: "Button(action: onSettingsTap)").last?
+            .components(separatedBy: ".accessibilityLabel(\"Settings\")").first ?? ""
+
+        #expect(homeHeaderSource.contains("Image(systemName: \"slider.horizontal.3\")"))
+        #expect(homeHeaderSource.contains(".foregroundStyle(.secondary)"))
+        #expect(homeHeaderSource.contains(".background(AwradTheme.surface, in: Circle())"))
+    }
+
+    @Test func goalsHeaderStaysOutsideTheScrollableContent() throws {
+        let goalsSourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Goals/GoalsView.swift")
+            .standardizedFileURL
+        let goalsSource = try String(contentsOf: goalsSourceURL, encoding: .utf8)
+        let goalsViewSource = goalsSource
+            .components(separatedBy: "struct GoalsView: View").last?
+            .components(separatedBy: "private struct GoalSection").first ?? ""
+        let goalsBody = goalsViewSource
+            .components(separatedBy: "var body: some View").last?
+            .components(separatedBy: "private var header").first ?? ""
+        let headerRange = goalsBody.range(of: "header")
+        let scrollRange = goalsBody.range(of: "ScrollView")
+
+        #expect(goalsBody.contains("VStack(spacing: 0)"))
+        #expect(headerRange != nil)
+        #expect(scrollRange != nil)
+        if let headerRange, let scrollRange {
+            #expect(headerRange.lowerBound < scrollRange.lowerBound)
+        }
+    }
+
     @Test func settingsSectionsMatchTheFrozenAndroidOrder() {
         #expect(SettingsParitySection.allCases.map(\.rawValue) == [
             "Profile",
@@ -58,6 +95,149 @@ struct HomeSettingsParityTests {
             "Data Management",
             "About",
         ])
+    }
+
+    @Test func settingsUsesTheHomeBackgroundAndPrayerCardSurface() throws {
+        let settingsSource = try settingsViewSource()
+
+        #expect(settingsSource.contains(".scrollContentBackground(.hidden)"))
+        #expect(settingsSource.contains(".background(AwradTheme.background)"))
+        #expect(settingsSource.contains(".listRowBackground(AwradTheme.surface)"))
+    }
+
+    @Test func settingsHeaderUsesAnAccessibleLiquidGlassBackButton() throws {
+        let settingsSource = try settingsViewSource()
+
+        #expect(settingsSource.contains(".navigationBarBackButtonHidden(true)"))
+        #expect(settingsSource.contains("ToolbarItem(placement: .topBarLeading)"))
+        #expect(settingsSource.contains(".buttonStyle(.glass)"))
+        #expect(settingsSource.contains(".accessibilityLabel(\"Back\")"))
+    }
+
+    @Test func libraryCreateButtonSitsJustAboveTheSystemTabBar() throws {
+        let librarySourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Library/LibraryView.swift")
+            .standardizedFileURL
+        let librarySource = try String(contentsOf: librarySourceURL, encoding: .utf8)
+        let floatingButtonSource = librarySource
+            .components(separatedBy: ".overlay(alignment: .bottomTrailing)").last?
+            .components(separatedBy: ".task {").first ?? ""
+
+        #expect(floatingButtonSource.contains(".padding(.bottom, 20)"))
+        #expect(!floatingButtonSource.contains(".padding(.bottom, 100)"))
+    }
+
+    @Test func libraryDhikrPaneDoesNotShowCategoryFilterPills() throws {
+        let librarySourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Library/LibraryView.swift")
+            .standardizedFileURL
+        let librarySource = try String(contentsOf: librarySourceURL, encoding: .utf8)
+        let dhikrPane = librarySource
+            .components(separatedBy: "private var dhikrPane: some View").last?
+            .components(separatedBy: "private func refreshProgressFromCloud").first ?? ""
+
+        #expect(!dhikrPane.contains("categories"))
+        #expect(!librarySource.contains("private struct CategoryChip"))
+    }
+
+    @Test func iosLibraryUsesTheAndroidFeaturedCollectionArtwork() throws {
+        let repositoryRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let androidImages = repositoryRoot
+            .appendingPathComponent("awrad-android/app/src/main/res/drawable-nodpi")
+        let iosImages = repositoryRoot
+            .appendingPathComponent("awrad-ios/awrad/awrad/Resources/Images")
+        let collectionNames = [
+            "after_prayer",
+            "asma_ul_husna",
+            "daily_essentials",
+            "dhikrs",
+            "evening_dhikrs",
+            "swalaths",
+            "your_dhikrs",
+        ]
+
+        for collectionName in collectionNames {
+            for appearance in ["light", "dark"] {
+                let fileName = "collection_\(collectionName)_\(appearance).png"
+                let androidURL = androidImages.appendingPathComponent(fileName)
+                let iosURL = iosImages.appendingPathComponent(fileName)
+
+                guard FileManager.default.fileExists(atPath: iosURL.path) else {
+                    Issue.record("Missing iOS copy of Android artwork: \(fileName)")
+                    continue
+                }
+                #expect(try Data(contentsOf: iosURL) == Data(contentsOf: androidURL))
+            }
+        }
+
+        let librarySourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Library/LibraryView.swift")
+            .standardizedFileURL
+        let librarySource = try String(contentsOf: librarySourceURL, encoding: .utf8)
+        #expect(librarySource.contains("case .custom:\n            return \"collection_your_dhikrs_\\(suffix)\""))
+    }
+
+    @Test func iosHomeMapsEachFeaturedCollectionToItsAndroidArtwork() throws {
+        let homeSourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Home/HomeView.swift")
+            .standardizedFileURL
+        let homeSource = try String(contentsOf: homeSourceURL, encoding: .utf8)
+        let imageMapping = homeSource
+            .components(separatedBy: "private struct FeaturedCollectionCard: View").last?
+            .components(separatedBy: "private var scrimColors").first ?? ""
+
+        #expect(imageMapping.contains("case .daily:\n            \"collection_daily_essentials_\\(suffix)\""))
+        #expect(imageMapping.contains("case .swalaths:\n            \"collection_swalaths_\\(suffix)\""))
+    }
+
+    @Test func iosHomeCardsUseAndroidMinimalArtwork() throws {
+        let repositoryRoot = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        let androidImages = repositoryRoot
+            .appendingPathComponent("awrad-android/app/src/main/res/drawable-nodpi")
+        let iosImages = repositoryRoot
+            .appendingPathComponent("awrad-ios/awrad/awrad/Resources/Images")
+        let fileNames = [
+            "home_continue_minimal_light.png",
+            "home_continue_minimal_dark.png",
+            "home_goals_minimal_light.png",
+            "home_goals_minimal_dark.png",
+        ]
+
+        for fileName in fileNames {
+            let androidURL = androidImages.appendingPathComponent(fileName)
+            let iosURL = iosImages.appendingPathComponent(fileName)
+            guard FileManager.default.fileExists(atPath: iosURL.path) else {
+                Issue.record("Missing iOS copy of Android home artwork: \(fileName)")
+                continue
+            }
+            #expect(try Data(contentsOf: iosURL) == Data(contentsOf: androidURL))
+        }
+
+        let homeSourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Home/HomeView.swift")
+            .standardizedFileURL
+        let homeSource = try String(contentsOf: homeSourceURL, encoding: .utf8)
+        let imageSet = homeSource
+            .components(separatedBy: "private struct HomeImageSet").last?
+            .components(separatedBy: "private struct HomeFeaturedCard").first ?? ""
+
+        #expect(imageSet.contains("home_continue_minimal_dark"))
+        #expect(imageSet.contains("home_continue_minimal_light"))
+        #expect(imageSet.contains("home_goals_minimal_dark"))
+        #expect(imageSet.contains("home_goals_minimal_light"))
     }
 
     @Test func dailyRemembranceIsARepeatingNineAMLocalNotification() {
@@ -119,6 +299,14 @@ struct HomeSettingsParityTests {
             slots: [GoalSlot(slotType: .anytime, targetCount: 33)],
             startDate: "2026-07-15"
         )
+    }
+
+    private func settingsViewSource() throws -> String {
+        let settingsSourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Settings/SettingsView.swift")
+            .standardizedFileURL
+        return try String(contentsOf: settingsSourceURL, encoding: .utf8)
     }
 
     private func makeWird(

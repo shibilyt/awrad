@@ -105,6 +105,16 @@ fun LibraryScreen(
     val density = LocalDensity.current
     val statusBarTopPadding = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
     val navBarBottomPadding = with(density) { WindowInsets.navigationBars.getBottom(this).toDp() }
+    val headerBackgroundColor = if (isAwradDarkTheme()) {
+        MaterialTheme.colorScheme.surfaceContainer
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    val contentBackgroundColor = if (isAwradDarkTheme()) {
+        MaterialTheme.colorScheme.surface
+    } else {
+        MaterialTheme.colorScheme.surfaceContainer
+    }
 
     val tabs = listOf(
         stringResource(R.string.library_segment_dhikrs),
@@ -123,13 +133,7 @@ fun LibraryScreen(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        if (isAwradDarkTheme()) {
-                            Color.Transparent
-                        } else {
-                            MaterialTheme.colorScheme.surface
-                        },
-                    )
+                    .background(headerBackgroundColor)
                     .padding(top = statusBarTopPadding + 22.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -148,6 +152,7 @@ fun LibraryScreen(
                     pagerState = pagerState,
                     onTabSelected = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
                     onTabCenters = { tabCentersPx = it },
+                    unselectedColor = contentBackgroundColor,
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
             }
@@ -156,19 +161,13 @@ fun LibraryScreen(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .background(
-                        if (isAwradDarkTheme()) {
-                            Color.Transparent
-                        } else {
-                            MaterialTheme.colorScheme.surface
-                        },
-                    )
+                    .background(headerBackgroundColor)
                     .onGloballyPositioned { sheetLeftPx = it.positionInRoot().x },
             ) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    color = contentBackgroundColor,
                     shadowElevation = 0.dp,
                 ) {
                     PullToRefreshBox(
@@ -217,6 +216,11 @@ fun LibraryScreen(
                                         top = 18.dp,
                                         bottom = 112.dp,
                                     ),
+                                    cardContainerColor = if (isAwradDarkTheme()) {
+                                        MaterialTheme.colorScheme.surfaceContainer
+                                    } else {
+                                        MaterialTheme.colorScheme.surface
+                                    },
                                     modifier = Modifier.fillMaxSize(),
                                 )
                             }
@@ -542,7 +546,11 @@ private fun LibraryDhikrRow(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = if (isAwradDarkTheme()) {
+            MaterialTheme.colorScheme.surfaceContainer
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
     ) {
         Row(
             modifier = Modifier

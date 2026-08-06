@@ -201,7 +201,7 @@ enum SharedAwradRelationalWidgetMutation {
 
     @MainActor
     static func makeAppGroupContainer(appGroupID: String) throws -> ModelContainer {
-        let schema = SwiftData.Schema(versionedSchema: AwradSchemaV2.self)
+        let schema = SwiftData.Schema(versionedSchema: AwradSchemaV3.self)
         let configuration = ModelConfiguration(
             storeName,
             schema: schema,

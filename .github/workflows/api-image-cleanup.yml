@@ -1,0 +1,29 @@
+name: API image cleanup
+
+# Prunes old GHCR versions so the package does not grow without bound. Tagged
+# releases and `latest` are never touched.
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete untagged versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: awrad-api
+          package-type: container
+          delete-only-untagged-versions: true
+
+      - name: Keep the 20 most recent commit-tagged versions
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: awrad-api
+          package-type: container
+          min-versions-to-keep: 20
+          ignore-versions: '^(latest|main|v\\d+.*)$'

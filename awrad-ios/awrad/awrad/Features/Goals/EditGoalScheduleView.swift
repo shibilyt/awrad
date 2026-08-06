@@ -499,17 +499,7 @@ struct EditGoalScheduleView: View {
     }
 
     private func reschedule(_ goal: Goal) async -> NotificationSchedulingResult {
-        let prayerTimes = ReminderScheduleBuilder.prayerSummaries(
-            for: goal,
-            preferences: store.preferences,
-            prayerTimeService: services.prayerTimes
-        )
-        return await services.notifications.scheduleGoalReminders(
-            for: goal,
-            dhikrTitle: store.title(for: goal),
-            language: store.preferences.appLanguage,
-            prayerTimes: prayerTimes
-        )
+        await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
     }
 }
 

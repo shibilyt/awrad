@@ -93,7 +93,7 @@ private struct SyncHeader: Codable, Equatable {
     var protocolVersion = 1
     var progressModelVersion = 1
     var capabilities = [
-        "count_ledger", "entity_occ", "materialized_transfers", "unchanged_delta"
+        "count_ledger", "entity_occ", "materialized_transfers", "unchanged_delta", "dhikr_tags_v1"
     ]
 
     enum CodingKeys: String, CodingKey {
@@ -625,7 +625,10 @@ final class ProgressSyncEngine {
         while true {
             var state = try requireState(repository)
             if state.pendingTransferID == nil {
-                let kind = state.cursor == nil ? "snapshot" : "delta"
+                let kind = ProgressSyncTransferKindPolicy.kind(
+                    dhikrTagsBootstrapCompleted: state.dhikrTagsBootstrapCompleted,
+                    cursor: state.cursor
+                )
                 do {
                     let session: SyncTransferSession = try await auth.authenticatedRequest(
                         "api/sync/v1/progress/\(kind == "snapshot" ? "snapshots" : "deltas")",
@@ -725,6 +728,7 @@ final class ProgressSyncEngine {
                   let totalPages = state.pendingTransferPageCount,
                   nextPage > totalPages else { return }
             var countChanges: [ProgressSyncRemoteCountChange] = []
+            var pendingOwnedAudioCleanup: [String] = []
             try repository.performProgressSyncTransaction { context in
                 guard let row = try SharedProgressSyncPersistence.state(in: context) else { return }
                 let shouldNotify = row.pendingTransferKind == "delta" && !row.generationResetPending
@@ -745,13 +749,14 @@ final class ProgressSyncEngine {
                     throw ProgressSyncError.checksumMismatch
                 }
                 let records = try pages.flatMap { try decoder.decode([SyncTransferRecord].self, from: $0.recordsData) }
+                var sideEffects = ProgressSyncApplySideEffects()
                 if row.generationResetPending {
                     try ProgressSyncRemoteApplier.reconcileGeneration(
-                        records: records, in: context
+                        records: records, in: context, sideEffects: &sideEffects
                     )
                 }
                 let appliedCountChanges = try ProgressSyncRemoteApplier.apply(
-                    records: records, in: context, decoder: decoder
+                    records: records, in: context, decoder: decoder, sideEffects: &sideEffects
                 )
                 if shouldNotify { countChanges = appliedCountChanges }
                 row.cursor = row.pendingTransferCursor
@@ -760,6 +765,7 @@ final class ProgressSyncEngine {
                     : max(row.appliedRevision, row.pendingTransferThroughRevision ?? 0)
                 row.safeCompactionRevision = try ProgressSyncRemoteApplier.safeRevision(in: context)
                 row.generationResetPending = false
+                let completedTransferKind = row.pendingTransferKind
                 row.pendingTransferID = nil
                 row.pendingTransferKind = nil
                 row.pendingTransferCursor = nil
@@ -770,7 +776,14 @@ final class ProgressSyncEngine {
                 row.pendingTransferRecordCount = nil
                 row.lastSyncAt = Date()
                 row.lastError = nil
+                if completedTransferKind == "snapshot" {
+                    row.dhikrTagsBootstrapCompleted = true
+                }
                 pages.forEach(context.delete)
+                pendingOwnedAudioCleanup = sideEffects.ownedAudioRelativeNamesToDelete
+            }
+            if !pendingOwnedAudioCleanup.isEmpty {
+                deleteOwnedAudioFiles(pendingOwnedAudioCleanup)
             }
             recordRemoteCountChanges(countChanges)
             return
@@ -810,6 +823,30 @@ final class ProgressSyncEngine {
                     state.actorID = UUID().uuidString.lowercased()
                 }
             }
+        }
+    }
+
+    private func deleteOwnedAudioFiles(_ relativeNames: [String]) {
+        guard let containerURL = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: AwradPersistenceContainerFactory.appGroupID
+        ) else { return }
+        let store = OwnedDhikrAudioStore(
+            rootDirectory: containerURL.appendingPathComponent("DhikrOwnedAudio", isDirectory: true)
+        )
+        for name in Set(relativeNames) {
+            try? store.removeOwnedFile(
+                for: DhikrAudioAsset(
+                    id: UUID(),
+                    dhikrID: UUID(),
+                    relativeFileName: name,
+                    mimeType: "application/octet-stream",
+                    byteSize: 1,
+                    durationMs: 1,
+                    sha256: "00",
+                    source: .import,
+                    createdAt: Date()
+                )
+            )
         }
     }
 
@@ -941,6 +978,10 @@ enum ProgressSyncError: LocalizedError {
     var errorDescription: String? { "A downloaded sync page failed its integrity check." }
 }
 
+struct ProgressSyncApplySideEffects: Equatable {
+    var ownedAudioRelativeNamesToDelete: [String] = []
+}
+
 @MainActor
 enum ProgressSyncRemoteApplier {
     typealias Domain = AwradSchemaV1
@@ -949,22 +990,34 @@ enum ProgressSyncRemoteApplier {
     static func apply(
         records: [SyncTransferRecord],
         in context: ModelContext,
-        decoder: JSONDecoder
+        decoder: JSONDecoder,
+        sideEffects: inout ProgressSyncApplySideEffects
     ) throws -> [ProgressSyncRemoteCountChange] {
         var countChanges: [ProgressSyncRemoteCountChange] = []
         for record in records.sorted(by: { order($0.kind) < order($1.kind) }) {
             switch record.kind {
-            case "custom_dhikr", "goal": try applyEntity(record, in: context, decoder: decoder)
+            case "custom_dhikr", "goal", "user_tag", "dhikr_tag_assignment":
+                try applyEntity(record, in: context, decoder: decoder, sideEffects: &sideEffects)
             case "count_projection":
                 if let change = try applyCount(record, in: context) {
                     countChanges.append(change)
                 }
-            case "tombstone", "deletion_fence": try applyTombstone(record, in: context)
+            case "tombstone", "deletion_fence":
+                try applyTombstone(record, in: context, sideEffects: &sideEffects)
             case "conflict": try applyConflict(record, in: context)
             default: throw ProgressSyncPersistenceError.invalidPayload
             }
         }
         return countChanges
+    }
+
+    static func apply(
+        records: [SyncTransferRecord],
+        in context: ModelContext,
+        decoder: JSONDecoder
+    ) throws -> [ProgressSyncRemoteCountChange] {
+        var sideEffects = ProgressSyncApplySideEffects()
+        return try apply(records: records, in: context, decoder: decoder, sideEffects: &sideEffects)
     }
 
     static func resolveInitialOverlap(
@@ -1026,18 +1079,22 @@ enum ProgressSyncRemoteApplier {
               let id = payload["entity_id"]?.string,
               let state = payload["state"]?.string else { return }
         if state == "active", let document = payload["document"] {
+            var sideEffects = ProgressSyncApplySideEffects()
             try installActiveDocument(
                 type: type, id: id, documentData: JSONEncoder.sorted.encode(document),
-                decoder: decoder, in: context
+                decoder: decoder, in: context, sideEffects: &sideEffects
             )
         } else if state == "purged" {
+            var sideEffects = ProgressSyncApplySideEffects()
+            if type == "custom_dhikr" {
+                try cascadeDeleteCustomDhikr(id, in: context, sideEffects: &sideEffects)
+            }
             try purgeLocalEntity(type: type, id: id, in: context)
         } else {
             if type == "goal" { try deleteGoal(id, counts: true, in: context) }
             if type == "custom_dhikr" {
-                try context.fetch(
-                    FetchDescriptor<Domain.DhikrRecord>(predicate: #Predicate { $0.id == id })
-                ).forEach(context.delete)
+                var sideEffects = ProgressSyncApplySideEffects()
+                try cascadeDeleteCustomDhikr(id, in: context, sideEffects: &sideEffects)
             }
         }
     }
@@ -1133,11 +1190,13 @@ enum ProgressSyncRemoteApplier {
 
     static func reconcileGeneration(
         records: [SyncTransferRecord],
-        in context: ModelContext
+        in context: ModelContext,
+        sideEffects: inout ProgressSyncApplySideEffects
     ) throws {
         let entityKeys = Set(records.compactMap { record -> String? in
             switch record.kind {
-            case "custom_dhikr", "goal": return "\(record.kind):\(record.id)"
+            case "custom_dhikr", "goal", "user_tag", "dhikr_tag_assignment":
+                return "\(record.kind):\(record.id)"
             case "tombstone", "deletion_fence":
                 guard let type = record.payload.object?["entity_type"]?.string else { return nil }
                 return "\(type):\(record.id)"
@@ -1150,9 +1209,25 @@ enum ProgressSyncRemoteApplier {
             guard try !pendingEntity(type: shadow.entityType, id: shadow.entityID, in: context) else { continue }
             if shadow.entityType == "goal" { try deleteGoal(shadow.entityID, counts: true, in: context) }
             if shadow.entityType == "custom_dhikr" {
+                try cascadeDeleteCustomDhikr(
+                    shadow.entityID,
+                    in: context,
+                    sideEffects: &sideEffects
+                )
+            }
+            if shadow.entityType == "user_tag" {
                 let id = shadow.entityID
                 try context.fetch(
-                    FetchDescriptor<Domain.DhikrRecord>(predicate: #Predicate { $0.id == id })
+                    FetchDescriptor<AwradSchemaV3.UserTagRecord>(predicate: #Predicate { $0.id == id })
+                ).forEach(context.delete)
+                try context.fetch(
+                    FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>(predicate: #Predicate { $0.tagID == id })
+                ).forEach(context.delete)
+            }
+            if shadow.entityType == "dhikr_tag_assignment" {
+                let id = shadow.entityID
+                try context.fetch(
+                    FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>(predicate: #Predicate { $0.id == id })
                 ).forEach(context.delete)
             }
             context.delete(shadow)
@@ -1214,6 +1289,14 @@ enum ProgressSyncRemoteApplier {
         })
         let oldConflicts = try context.fetch(FetchDescriptor<Sync.SyncConflictRecord>())
         oldConflicts.filter { !conflictCommandIDs.contains($0.commandID) }.forEach(context.delete)
+    }
+
+    static func reconcileGeneration(
+        records: [SyncTransferRecord],
+        in context: ModelContext
+    ) throws {
+        var sideEffects = ProgressSyncApplySideEffects()
+        try reconcileGeneration(records: records, in: context, sideEffects: &sideEffects)
     }
 
     @discardableResult
@@ -1286,7 +1369,8 @@ enum ProgressSyncRemoteApplier {
     private static func applyEntity(
         _ record: SyncTransferRecord,
         in context: ModelContext,
-        decoder: JSONDecoder
+        decoder: JSONDecoder,
+        sideEffects: inout ProgressSyncApplySideEffects
     ) throws {
         guard let payload = record.payload.object,
               let version = payload["entity_version"]?.string.flatMap(Int64.init),
@@ -1315,7 +1399,7 @@ enum ProgressSyncRemoteApplier {
 
         try installActiveDocument(
             type: record.kind, id: record.id, documentData: documentData,
-            decoder: decoder, in: context
+            decoder: decoder, in: context, sideEffects: &sideEffects
         )
     }
 
@@ -1324,18 +1408,19 @@ enum ProgressSyncRemoteApplier {
         id: String,
         documentData: Data,
         decoder: JSONDecoder,
-        in context: ModelContext
+        in context: ModelContext,
+        sideEffects: inout ProgressSyncApplySideEffects
     ) throws {
         switch type {
         case "custom_dhikr":
             var dhikr = try decoder.decode(DhikrV1.self, from: documentData).nativeModel()
+            // Owned audio never rides on the sync document; keep local download flags only for catalog files.
+            dhikr.audioFileName = nil
+            dhikr.audioURL = nil
+            dhikr.isDownloaded = false
             let existing = try context.fetch(
                 FetchDescriptor<Domain.DhikrRecord>(predicate: #Predicate { $0.id == id })
             )
-            if let local = existing.first {
-                dhikr.isDownloaded = local.isDownloaded
-                if local.isDownloaded { dhikr.audioFileName = local.audioFileName }
-            }
             existing.forEach(context.delete)
             context.insert(try AwradPersistenceMapper.dhikrRecord(from: dhikr))
         case "goal":
@@ -1347,7 +1432,53 @@ enum ProgressSyncRemoteApplier {
             goal.totalCompletedCount = try entries.map(\.count).reduce(0, tryAdd)
             try deleteGoal(goalID, counts: false, in: context)
             try insert(goal: goal, in: context)
+        case "user_tag":
+            let tag = try decoder.decode(UserTagV1.self, from: documentData).nativeModel()
+            try coalesceDuplicateTags(to: tag, in: context)
+            try context.fetch(
+                FetchDescriptor<AwradSchemaV3.UserTagRecord>(predicate: #Predicate { $0.id == id })
+            ).forEach(context.delete)
+            context.insert(try AwradPersistenceMapper.userTagRecord(from: tag))
+        case "dhikr_tag_assignment":
+            let assignment = try decoder.decode(DhikrTagAssignmentV1.self, from: documentData).nativeModel()
+            try context.fetch(
+                FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>(predicate: #Predicate { $0.id == id })
+            ).forEach(context.delete)
+            context.insert(try AwradPersistenceMapper.tagAssignmentRecord(from: assignment))
         default: break
+        }
+    }
+
+    private static func coalesceDuplicateTags(to canonical: UserTag, in context: ModelContext) throws {
+        let normalized = canonical.normalizedName
+        let duplicates = try context.fetch(FetchDescriptor<AwradSchemaV3.UserTagRecord>())
+            .filter { $0.normalizedName == normalized && $0.id != canonical.id.uuidString.lowercased() }
+        for duplicate in duplicates {
+            let duplicateID = duplicate.id
+            let canonicalID = canonical.id.uuidString.lowercased()
+            let assignments = try context.fetch(
+                FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>(
+                    predicate: #Predicate { $0.tagID == duplicateID }
+                )
+            )
+            for assignment in assignments {
+                let dhikrID = assignment.dhikrID
+                let alreadyCanonical = try context.fetch(
+                    FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>(
+                        predicate: #Predicate { $0.tagID == canonicalID && $0.dhikrID == dhikrID }
+                    )
+                ).isEmpty == false
+                if alreadyCanonical {
+                    context.delete(assignment)
+                } else {
+                    assignment.tagID = canonicalID
+                    assignment.pairKey = AwradSchemaV3.DhikrTagAssignmentRecord.makePairKey(
+                        tagID: canonicalID,
+                        dhikrID: dhikrID
+                    )
+                }
+            }
+            context.delete(duplicate)
         }
     }
 
@@ -1370,7 +1501,11 @@ enum ProgressSyncRemoteApplier {
         )
     }
 
-    private static func applyTombstone(_ record: SyncTransferRecord, in context: ModelContext) throws {
+    private static func applyTombstone(
+        _ record: SyncTransferRecord,
+        in context: ModelContext,
+        sideEffects: inout ProgressSyncApplySideEffects
+    ) throws {
         guard let payload = record.payload.object,
               let type = payload["entity_type"]?.string,
               let version = payload["entity_version"]?.string.flatMap(Int64.init),
@@ -1384,6 +1519,9 @@ enum ProgressSyncRemoteApplier {
             documentData: nil, conflictData: nil, in: context
         )
         if record.kind == "deletion_fence" || payload["purged"]?.bool == true {
+            if type == "custom_dhikr" {
+                try cascadeDeleteCustomDhikr(record.id, in: context, sideEffects: &sideEffects)
+            }
             try purgeLocalEntity(type: type, id: record.id, in: context)
             return
         }
@@ -1396,11 +1534,41 @@ enum ProgressSyncRemoteApplier {
             ).forEach(context.delete)
         }
         if type == "custom_dhikr" {
+            try cascadeDeleteCustomDhikr(record.id, in: context, sideEffects: &sideEffects)
+        }
+        if type == "user_tag" {
             let id = record.id
             try context.fetch(
-                FetchDescriptor<Domain.DhikrRecord>(predicate: #Predicate { $0.id == id })
+                FetchDescriptor<AwradSchemaV3.UserTagRecord>(predicate: #Predicate { $0.id == id })
+            ).forEach(context.delete)
+            try context.fetch(
+                FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>(predicate: #Predicate { $0.tagID == id })
             ).forEach(context.delete)
         }
+        if type == "dhikr_tag_assignment" {
+            let id = record.id
+            try context.fetch(
+                FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>(predicate: #Predicate { $0.id == id })
+            ).forEach(context.delete)
+        }
+    }
+
+    private static func cascadeDeleteCustomDhikr(
+        _ id: String,
+        in context: ModelContext,
+        sideEffects: inout ProgressSyncApplySideEffects
+    ) throws {
+        let assets = try context.fetch(
+            FetchDescriptor<AwradSchemaV3.DhikrAudioAssetRecord>(predicate: #Predicate { $0.dhikrID == id })
+        )
+        sideEffects.ownedAudioRelativeNamesToDelete.append(contentsOf: assets.map(\.relativeFileName))
+        assets.forEach(context.delete)
+        try context.fetch(
+            FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>(predicate: #Predicate { $0.dhikrID == id })
+        ).forEach(context.delete)
+        try context.fetch(
+            FetchDescriptor<Domain.DhikrRecord>(predicate: #Predicate { $0.id == id })
+        ).forEach(context.delete)
     }
 
     private static func applyConflict(_ record: SyncTransferRecord, in context: ModelContext) throws {
@@ -1474,9 +1642,8 @@ enum ProgressSyncRemoteApplier {
                 .filter { $0.goalID == id }
                 .forEach(context.delete)
         } else if type == "custom_dhikr" {
-            try context.fetch(
-                FetchDescriptor<Domain.DhikrRecord>(predicate: #Predicate { $0.id == id })
-            ).forEach(context.delete)
+            var sideEffects = ProgressSyncApplySideEffects()
+            try cascadeDeleteCustomDhikr(id, in: context, sideEffects: &sideEffects)
         }
     }
 
@@ -1519,7 +1686,15 @@ enum ProgressSyncRemoteApplier {
     }
 
     private static func order(_ kind: String) -> Int {
-        switch kind { case "custom_dhikr": 0; case "goal": 1; case "count_projection": 2; case "conflict": 3; default: 4 }
+        switch kind {
+        case "user_tag": 0
+        case "custom_dhikr": 1
+        case "dhikr_tag_assignment": 2
+        case "goal": 3
+        case "count_projection": 4
+        case "conflict": 5
+        default: 6
+        }
     }
 
     private static func int64(_ value: String) throws -> Int64 {

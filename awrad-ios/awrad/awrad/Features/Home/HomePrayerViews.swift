@@ -30,9 +30,9 @@ struct HomeDateHeader: View {
             Button(action: onSettingsTap) {
                 Image(systemName: "slider.horizontal.3")
                     .font(AwradTheme.bodyFont(26, weight: .bold))
-                    .foregroundStyle(AwradTheme.sageDark)
+                    .foregroundStyle(.secondary)
                     .frame(width: 64, height: 64)
-                    .background(AwradTheme.mint.opacity(0.45), in: Circle())
+                    .background(AwradTheme.surface, in: Circle())
             }
             .buttonStyle(.plain)
             .fixedSize()

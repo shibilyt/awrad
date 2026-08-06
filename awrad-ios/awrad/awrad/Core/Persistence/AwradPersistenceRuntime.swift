@@ -60,7 +60,9 @@ final class AwradPersistenceRuntime {
         state: AwradRepositoryState,
         preferences: UserPreferences
     ) throws {
-        try AwradPersistenceValidator.validate(state: state)
+        var reconciled = state
+        AwradRepositoryState.reconcilePortableRestore(&reconciled)
+        try AwradPersistenceValidator.validate(state: reconciled)
         let preferenceIssues = AwradPersistenceValidator.preferenceIssues(preferences)
         guard preferenceIssues.isEmpty else {
             throw AwradPersistenceValidationError(issues: preferenceIssues)
@@ -69,7 +71,7 @@ final class AwradPersistenceRuntime {
         let previousState = try repository.loadState()
         let previousPreferences = try preferenceStore.load()
         do {
-            try repository.replaceAll(with: state)
+            try repository.replaceAll(with: reconciled)
             try preferenceStore.save(preferences)
         } catch {
             try? repository.replaceAll(with: previousState)

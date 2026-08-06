@@ -146,9 +146,9 @@ struct WirdListView: View {
                 guard let wird = pendingDeletion else { return }
                 guard store.wird(id: wird.id)?.isCustom == true else { return }
                 Task {
-                    _ = await services.cancelWirdReminders(wirdID: wird.id)
+                    _ = await services.refreshNotificationsAfterWirdMutation(store: store)
                     guard store.deleteWird(wird.id) else {
-                        _ = await services.rescheduleWirdReminders(for: wird, store: store)
+                        _ = await services.refreshNotificationsAfterWirdMutation(store: store)
                         return
                     }
                     pendingDeletion = nil
@@ -420,10 +420,10 @@ struct WirdDetailView: View {
         }
         guard let saved = store.setWirdReminders(wirdID: wird.id, reminders: reminders) else { return }
         Task {
-            let result = await services.rescheduleWirdReminders(for: saved, store: store)
+            let result = await services.refreshNotificationsAfterWirdMutation(store: store)
             guard !result.succeeded else { return }
             if let restored = store.setWirdReminders(wirdID: wird.id, reminders: wird.reminders) {
-                _ = await services.rescheduleWirdReminders(for: restored, store: store)
+                _ = await services.refreshNotificationsAfterWirdMutation(store: store)
             }
             reminderError = result.localizedFailureMessage(language: language)
             notificationRetry = { saveQuickReminder(at: time) }
@@ -435,10 +435,10 @@ struct WirdDetailView: View {
         let reminders = wird.reminders.filter { $0.id != quick.id }
         guard let saved = store.setWirdReminders(wirdID: wird.id, reminders: reminders) else { return }
         Task {
-            let result = await services.rescheduleWirdReminders(for: saved, store: store)
+            let result = await services.refreshNotificationsAfterWirdMutation(store: store)
             guard !result.succeeded else { return }
             if let restored = store.setWirdReminders(wirdID: wird.id, reminders: wird.reminders) {
-                _ = await services.rescheduleWirdReminders(for: restored, store: store)
+                _ = await services.refreshNotificationsAfterWirdMutation(store: store)
             }
             reminderError = result.localizedFailureMessage(language: language)
             notificationRetry = { turnOffQuickReminder(in: wird) }
@@ -463,9 +463,9 @@ struct WirdDetailView: View {
         guard store.wird(id: wirdID)?.isCustom == true else { return }
         guard let wird = store.wird(id: wirdID) else { return }
         Task {
-            _ = await services.cancelWirdReminders(wirdID: wirdID)
+            _ = await services.refreshNotificationsAfterWirdMutation(store: store)
             guard store.deleteWird(wirdID) else {
-                _ = await services.rescheduleWirdReminders(for: wird, store: store)
+                _ = await services.refreshNotificationsAfterWirdMutation(store: store)
                 return
             }
             router.pop(in: store.selectedTab)

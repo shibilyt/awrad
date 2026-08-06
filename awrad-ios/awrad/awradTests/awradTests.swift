@@ -1201,7 +1201,7 @@ struct AwradDomainTests {
                 Issue.record("Expected legacy schema version 1, got \(error)")
                 return
             }
-            #expect(error.localizedDescription.contains("pre-v5 backups cannot be imported"))
+            #expect(error.localizedDescription.contains("stable UUID identities"))
         }
     }
 
@@ -1290,10 +1290,10 @@ struct AwradDomainTests {
         let todaysWird = try #require(AwradDeepLink(url: URL(string: "awrad://todays-wird")!))
         let wirdList = try #require(AwradDeepLink(url: URL(string: "awrad://wirds")!))
 
-        #expect(counting == .counting(dhikrSlug: "surah-ikhlas"))
+        #expect(counting == .counting(dhikrID: nil, dhikrSlug: "surah-ikhlas"))
         #expect(todaysWird == .todaysWird)
         #expect(wirdList == .wirdList)
-        #expect(AwradDeepLink.counting(dhikrSlug: "surah-ikhlas").url.absoluteString == "awrad://counting?dhikr=surah-ikhlas")
+        #expect(AwradDeepLink.counting(dhikrID: nil, dhikrSlug: "surah-ikhlas").url.absoluteString == "awrad://counting?dhikr=surah-ikhlas")
         #expect(AwradDeepLink.todaysWird.url.absoluteString == "awrad://todays-wird")
         #expect(AwradDeepLink(url: URL(string: "https://example.com")!) == nil)
     }
@@ -1327,7 +1327,7 @@ struct AwradDomainTests {
         #expect(snapshot.focusTitle == dhikr.title)
         #expect(snapshot.focusSubtitle == "Today's Awrad")
         #expect(abs(snapshot.focusProgress - 0.4) < 0.001)
-        #expect(snapshot.focusDeepLink == AwradDeepLink.counting(dhikrSlug: dhikr.intentSlug).url.absoluteString)
+        #expect(snapshot.focusDeepLink == AwradDeepLink.counting(dhikrID: dhikr.id, dhikrSlug: dhikr.intentSlug).url.absoluteString)
         #expect(snapshot.wirdTitle == part.displayTitle(language: .english))
         #expect(snapshot.wirdProgress > 0)
         #expect(snapshot.wirdDeepLink == AwradDeepLink.todaysWird.url.absoluteString)

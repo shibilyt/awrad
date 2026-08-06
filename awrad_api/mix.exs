@@ -10,6 +10,7 @@ defmodule AwradApi.MixProject do
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      releases: releases(),
       listeners: [Phoenix.CodeReloader]
     ]
   end
@@ -27,6 +28,15 @@ defmodule AwradApi.MixProject do
   def cli do
     [
       preferred_envs: [precommit: :test]
+    ]
+  end
+
+  defp releases do
+    [
+      awrad_api: [
+        include_executables_for: [:unix],
+        applications: [awrad_api: :permanent]
+      ]
     ]
   end
 

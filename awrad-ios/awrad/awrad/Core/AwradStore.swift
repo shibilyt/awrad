@@ -23,11 +23,16 @@ final class AwradStore {
     var countEntries: [CountEntry] = []
     var wirds: [Wird] = []
     var wirdSessions: [WirdSession] = []
+    var userTags: [UserTag] = []
+    var tagAssignments: [DhikrTagAssignment] = []
+    var audioAssets: [DhikrAudioAsset] = []
     var preferences = UserPreferences()
     var selectedTab: AppTab = .home
     var todayKey: String = Date().dateKey
     private(set) var widgetSnapshotRevision = 0
     private(set) var syncRequestRevision = 0
+    let notificationSchedulingChanges = NotificationSchedulingChanges()
+    let ownedAudioStore: OwnedDhikrAudioStore
 
     private let snapshotURL: URL
     private let encoder: JSONEncoder
@@ -38,10 +43,14 @@ final class AwradStore {
 
     init(
         snapshotURL: URL? = nil,
-        persistenceFailureInjector: (() throws -> Void)? = nil
+        persistenceFailureInjector: (() throws -> Void)? = nil,
+        ownedAudioStore: OwnedDhikrAudioStore? = nil
     ) {
         self.snapshotURL = snapshotURL ?? Self.defaultSnapshotURL()
         self.persistenceFailureInjector = persistenceFailureInjector
+        self.ownedAudioStore = ownedAudioStore ?? OwnedDhikrAudioStore(
+            rootDirectory: Self.defaultOwnedAudioRoot()
+        )
         self.encoder = JSONEncoder()
         self.decoder = JSONDecoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -90,7 +99,17 @@ final class AwradStore {
         applyDebugLaunchStateIfNeeded()
 #endif
         refreshEffectiveDate()
+        reconcileOwnedAudioStorage()
         isReady = true
+    }
+
+    private func reconcileOwnedAudioStorage() {
+        let referenced = Set(audioAssets.map(\.relativeFileName))
+        try? ownedAudioStore.reconcileOrphans(
+            referencedRelativeFileNames: referenced,
+            now: Date(),
+            orphanGrace: 60 * 60
+        )
     }
 
     func exportBackupData() throws -> Data {
@@ -98,14 +117,22 @@ final class AwradStore {
     }
 
     func importBackupData(_ data: Data) throws {
-        let version = try Self.snapshotSchemaVersion(in: data)
-        guard version >= AwradSnapshot.currentSchemaVersion else {
-            throw AwradStoreError.legacySnapshotVersion(version)
-        }
-        guard version == AwradSnapshot.currentSchemaVersion else {
-            throw AwradStoreError.unsupportedSnapshotVersion(version)
-        }
-        let snapshot = try decoder.decode(AwradSnapshot.self, from: data)
+        var snapshot = try AwradSnapshot.decodeCompatible(from: data)
+        var portable = AwradRepositoryState(
+            dhikrs: snapshot.dhikrs,
+            goals: snapshot.goals,
+            countEntries: snapshot.countEntries,
+            seasonTemplates: seasonTemplates,
+            wirds: snapshot.wirds,
+            wirdSessions: snapshot.wirdSessions,
+            userTags: snapshot.userTags,
+            tagAssignments: snapshot.tagAssignments,
+            audioAssets: []
+        )
+        AwradRepositoryState.reconcilePortableRestore(&portable)
+        snapshot.dhikrs = portable.dhikrs
+        snapshot.userTags = portable.userTags
+        snapshot.tagAssignments = portable.tagAssignments
         let previousSnapshot = makeSnapshot()
         let previousTemplates = seasonTemplates
         apply(snapshot)
@@ -115,7 +142,9 @@ final class AwradStore {
                 try persistRelationalState(using: persistence)
                 persistenceRecovery = nil
             } else {
-                saveLegacySnapshot(to: snapshotURL)
+                guard saveLegacySnapshot(to: snapshotURL) else {
+                    throw AwradStoreError.localResetFailed
+                }
             }
         } catch {
             seasonTemplates = previousTemplates
@@ -123,6 +152,7 @@ final class AwradStore {
             throw error
         }
         isReady = true
+        notificationSchedulingChanges.emit(goalIDs: [], reason: .syncAll)
     }
 
     /// Erases only this installation and reseeds the offline library. The
@@ -150,6 +180,7 @@ final class AwradStore {
             }
             persistenceRecovery = nil
             isReady = true
+            notificationSchedulingChanges.emit(goalIDs: [], reason: .syncAll)
         } catch {
             seasonTemplates = previousTemplates
             apply(previousSnapshot)
@@ -204,6 +235,7 @@ final class AwradStore {
                 try persistRelationalState(using: persistence)
             }
             persistenceRecovery = nil
+            notificationSchedulingChanges.emit(goalIDs: [], reason: .syncAll)
         } catch {
             enterPersistenceRecovery(error: error, runtime: persistence)
         }
@@ -425,7 +457,8 @@ final class AwradStore {
         category: DhikrCategory,
         audioURL: URL? = nil,
         audioFileName: String? = nil,
-        quranRef: QuranRef? = nil
+        quranRef: QuranRef? = nil,
+        audioCountPerPlay: Int? = nil
     ) -> Dhikr? {
         guard let index = dhikrs.firstIndex(where: { $0.id == dhikrID && $0.isCustom }) else { return nil }
         let normalizedArabic = arabic.cleanedDhikrBody
@@ -450,6 +483,9 @@ final class AwradStore {
             return value.isEmpty ? nil : value
         }
         dhikrs[index].quranRef = quranRef
+        if let audioCountPerPlay {
+            dhikrs[index].audioCountPerPlay = max(audioCountPerPlay, 1)
+        }
         guard commitMutation(orRestore: previous) else { return nil }
         return dhikrs[index]
     }
@@ -460,12 +496,137 @@ final class AwradStore {
         let previous = captureMutationState()
         let removedGoalIDs = goals.filter { $0.dhikrID == dhikrID }.map(\.id)
         let removedGoalIDSet = Set(removedGoalIDs)
+        let removedAsset = audioAssets.first { $0.dhikrID == dhikrID }
 
         dhikrs.remove(at: dhikrIndex)
         goals.removeAll { $0.dhikrID == dhikrID }
         countEntries.removeAll { removedGoalIDSet.contains($0.goalID) }
+        tagAssignments.removeAll { $0.dhikrID == dhikrID }
+        audioAssets.removeAll { $0.dhikrID == dhikrID }
         guard commitMutation(orRestore: previous) else { return nil }
+        if let removedAsset {
+            try? ownedAudioStore.removeOwnedFile(for: removedAsset)
+        }
         return removedGoalIDs
+    }
+
+    @discardableResult
+    func createUserTag(name: String, now: Date = Date()) -> UserTag? {
+        guard let normalized = UserTagPolicy.normalize(name) else { return nil }
+        guard userTags.count < UserTagPolicy.maxTagsPerAccount else { return nil }
+        guard !userTags.contains(where: { $0.normalizedName == normalized.normalizedName }) else { return nil }
+        let previous = captureMutationState()
+        let tag = UserTag(
+            id: UUID(),
+            name: normalized.displayName,
+            normalizedName: normalized.normalizedName,
+            createdAt: now,
+            updatedAt: now
+        )
+        userTags.append(tag)
+        guard commitMutation(orRestore: previous) else { return nil }
+        return tag
+    }
+
+    @discardableResult
+    func renameUserTag(id tagID: AwradID, name: String, now: Date = Date()) -> UserTag? {
+        guard let index = userTags.firstIndex(where: { $0.id == tagID }) else { return nil }
+        guard let normalized = UserTagPolicy.normalize(name) else { return nil }
+        guard !userTags.contains(where: {
+            $0.id != tagID && $0.normalizedName == normalized.normalizedName
+        }) else { return nil }
+        let previous = captureMutationState()
+        userTags[index].name = normalized.displayName
+        userTags[index].normalizedName = normalized.normalizedName
+        userTags[index].updatedAt = now
+        guard commitMutation(orRestore: previous) else { return nil }
+        return userTags[index]
+    }
+
+    @discardableResult
+    func deleteUserTag(_ tagID: AwradID) -> Bool {
+        guard userTags.contains(where: { $0.id == tagID }) else { return false }
+        let previous = captureMutationState()
+        userTags.removeAll { $0.id == tagID }
+        tagAssignments.removeAll { $0.tagID == tagID }
+        return commitMutation(orRestore: previous)
+    }
+
+    @discardableResult
+    func assignTag(_ tagID: AwradID, to dhikrID: AwradID, now: Date = Date()) -> DhikrTagAssignment? {
+        guard userTags.contains(where: { $0.id == tagID }) else { return nil }
+        guard dhikrs.contains(where: { $0.id == dhikrID }) else { return nil }
+        if tagAssignments.contains(where: { $0.tagID == tagID && $0.dhikrID == dhikrID }) {
+            return tagAssignments.first { $0.tagID == tagID && $0.dhikrID == dhikrID }
+        }
+        let existingCount = tagAssignments.filter { $0.dhikrID == dhikrID }.count
+        guard existingCount < UserTagPolicy.maxTagsPerDhikr else { return nil }
+        let previous = captureMutationState()
+        let assignment = DhikrTagAssignment(
+            id: UUID(),
+            tagID: tagID,
+            dhikrID: dhikrID,
+            createdAt: now
+        )
+        tagAssignments.append(assignment)
+        guard commitMutation(orRestore: previous) else { return nil }
+        return assignment
+    }
+
+    @discardableResult
+    func unassignTag(_ tagID: AwradID, from dhikrID: AwradID) -> Bool {
+        guard tagAssignments.contains(where: { $0.tagID == tagID && $0.dhikrID == dhikrID }) else {
+            return false
+        }
+        let previous = captureMutationState()
+        tagAssignments.removeAll { $0.tagID == tagID && $0.dhikrID == dhikrID }
+        return commitMutation(orRestore: previous)
+    }
+
+    func audioAsset(for dhikrID: AwradID) -> DhikrAudioAsset? {
+        audioAssets.first { $0.dhikrID == dhikrID }
+    }
+
+    @discardableResult
+    func attachOwnedAudio(_ staged: StagedOwnedDhikrAudio, to dhikrID: AwradID) -> DhikrAudioAsset? {
+        guard dhikrs.contains(where: { $0.id == dhikrID && $0.isCustom }) else {
+            try? ownedAudioStore.discardStaged(staged)
+            return nil
+        }
+        let previous = captureMutationState()
+        let previousAsset = audioAssets.first { $0.dhikrID == dhikrID }
+        do {
+            let asset = try ownedAudioStore.commitStaged(
+                staged,
+                dhikrID: dhikrID,
+                replacing: nil
+            )
+            audioAssets.removeAll { $0.dhikrID == dhikrID }
+            audioAssets.append(asset)
+            // Owned relative paths stay only on DhikrAudioAsset — never on Dhikr sync/backup fields.
+            guard commitMutation(orRestore: previous) else {
+                try? ownedAudioStore.removeOwnedFile(for: asset)
+                return nil
+            }
+            if let previousAsset {
+                try? ownedAudioStore.removeOwnedFile(for: previousAsset)
+            }
+            return asset
+        } catch {
+            try? ownedAudioStore.discardStaged(staged)
+            restoreMutationState(previous)
+            return nil
+        }
+    }
+
+    @discardableResult
+    func removeOwnedAudio(from dhikrID: AwradID) -> Bool {
+        guard let asset = audioAssets.first(where: { $0.dhikrID == dhikrID }) else { return false }
+        let previous = captureMutationState()
+        audioAssets.removeAll { $0.dhikrID == dhikrID }
+        guard commitMutation(orRestore: previous) else { return false }
+        try? ownedAudioStore.removeOwnedFile(for: asset)
+        return true
     }
 
     func dhikr(id: AwradID) -> Dhikr? {
@@ -579,6 +740,7 @@ final class AwradStore {
         let resolvedCompletion = completionPolicy
             ?? (resolvedAutoComplete ? .whenTargetReached : .never)
 
+        let previous = captureMutationState()
         var goal = Goal(
             id: goalID,
             dhikrID: dhikrID,
@@ -597,10 +759,7 @@ final class AwradStore {
         )
         goal.updatedAt = Date()
         goals.append(goal)
-        guard save() else {
-            goals.removeAll { $0.id == goal.id }
-            return nil
-        }
+        guard commitMutation(orRestore: previous) else { return nil }
         return goal
     }
 
@@ -646,13 +805,10 @@ final class AwradStore {
         let duplicateKeys = Set(normalized.map { Self.reminderDuplicateKey($0) })
         guard duplicateKeys.count == normalized.count else { return nil }
 
-        let previous = goals[index]
+        let previous = captureMutationState()
         goals[index].reminders = normalized
         goals[index].updatedAt = Date()
-        guard save() else {
-            goals[index] = previous
-            return nil
-        }
+        guard commitMutation(orRestore: previous) else { return nil }
         return goals[index]
     }
 
@@ -713,17 +869,14 @@ final class AwradStore {
         }
 
         let aggregate = Self.aggregateCountPolicy(updatedActiveSlots, fallback: goalPolicy)
-        let previous = goals[index]
+        let previous = captureMutationState()
         goals[index].targetPolicy = targetPolicy
         goals[index].countPolicy = aggregate
         goals[index].minimumStreakCount = aggregate.minimumCount
         goals[index].slots = updatedActiveSlots + existing.archivedSlots
         goals[index].autoCompleteOnTarget = targetPolicy == .cumulativeTotal && autoCompleteOnTarget
         goals[index].updatedAt = Date()
-        guard save() else {
-            goals[index] = previous
-            return nil
-        }
+        guard commitMutation(orRestore: previous) else { return nil }
         return goals[index]
     }
 
@@ -734,7 +887,7 @@ final class AwradStore {
     @discardableResult
     func allowCountingPastTarget(goalID: AwradID, slotID: AwradID?) -> Goal? {
         guard let goalIndex = goals.firstIndex(where: { $0.id == goalID }) else { return nil }
-        let previous = goals[goalIndex]
+        let previous = captureMutationState()
         let activeSlots = goals[goalIndex].activeSlots
 
         if activeSlots.count > 1 {
@@ -765,10 +918,7 @@ final class AwradStore {
         }
 
         goals[goalIndex].updatedAt = Date()
-        guard save() else {
-            goals[goalIndex] = previous
-            return nil
-        }
+        guard commitMutation(orRestore: previous) else { return nil }
         return goals[goalIndex]
     }
 
@@ -844,7 +994,7 @@ final class AwradStore {
         }
         let activeIDs = Set(nextActive.map(\.id))
 
-        let previous = goals[index]
+        let previous = captureMutationState()
         goals[index].recurrence = recurrence
         goals[index].slots = nextActive + archived
         goals[index].reminders = existing.reminders.compactMap { reminder in
@@ -859,10 +1009,7 @@ final class AwradStore {
         goals[index].countPolicy = Self.aggregateCountPolicy(nextActive, fallback: existing.countPolicy)
         goals[index].minimumStreakCount = goals[index].countPolicy.minimumCount
         goals[index].updatedAt = Date()
-        guard save() else {
-            goals[index] = previous
-            return nil
-        }
+        guard commitMutation(orRestore: previous) else { return nil }
         return goals[index]
     }
 
@@ -1052,6 +1199,7 @@ final class AwradStore {
             countEntries.append(contentsOf: previousEntries)
             return CountApplyResult(appliedDelta: 0, capEvent: .none)
         }
+        notificationSchedulingChanges.emit(goalIDs: [goalID], reason: .countMutation)
         return CountApplyResult(appliedDelta: actualDelta, capEvent: capEvent)
     }
 
@@ -1448,8 +1596,7 @@ final class AwradStore {
     @discardableResult
     func updateWird(_ wird: Wird) -> Wird? {
         guard let index = wirds.firstIndex(where: { $0.id == wird.id && $0.isCustom }) else { return nil }
-        let previousWird = wirds[index]
-        let previousSessions = wirdSessions
+        let previous = captureMutationState()
         var updated = wird
         updated.isCustom = true
         updated.version = wirds[index].version
@@ -1474,11 +1621,7 @@ final class AwradStore {
             }
             return reconciled
         }
-        guard save() else {
-            wirds[index] = previousWird
-            wirdSessions = previousSessions
-            return nil
-        }
+        guard commitMutation(orRestore: previous) else { return nil }
         return updated
     }
 
@@ -1490,12 +1633,9 @@ final class AwradStore {
               let index = wirds.firstIndex(where: { $0.id == wirdID }) else {
             return nil
         }
-        let previous = wirds[index]
+        let previousState = captureMutationState()
         wirds[index].reminders = reminders
-        guard save() else {
-            wirds[index] = previous
-            return nil
-        }
+        guard commitMutation(orRestore: previousState) else { return nil }
         return wirds[index]
     }
 
@@ -1517,11 +1657,7 @@ final class AwradStore {
               let data = try? Data(contentsOf: url) else {
             return nil
         }
-        guard let version = try? Self.snapshotSchemaVersion(in: data),
-              version == AwradSnapshot.currentSchemaVersion else {
-            return nil
-        }
-        return try? decoder.decode(AwradSnapshot.self, from: data)
+        return try? AwradSnapshot.decodeCompatible(from: data)
     }
 
     private func apply(_ snapshot: AwradSnapshot) {
@@ -1538,6 +1674,9 @@ final class AwradStore {
         wirds = reconciledWirds.wirds
         wirdSessions = reconciledWirds.sessions
         preferences = snapshot.preferences
+        userTags = snapshot.userTags
+        tagAssignments = snapshot.tagAssignments
+        // Owned audio assets are relational/local-only and never part of portable snapshots.
     }
 
     private func apply(state: AwradRepositoryState, preferences: UserPreferences) {
@@ -1548,9 +1687,12 @@ final class AwradStore {
             countEntries: state.countEntries,
             wirds: state.wirds,
             wirdSessions: state.wirdSessions,
-            preferences: preferences
+            preferences: preferences,
+            userTags: state.userTags,
+            tagAssignments: state.tagAssignments
         )
         apply(snapshot)
+        audioAssets = state.audioAssets
     }
 
     private func seedDefaults() {
@@ -1559,6 +1701,9 @@ final class AwradStore {
         goals = []
         countEntries = []
         wirdSessions = []
+        userTags = []
+        tagAssignments = []
+        audioAssets = []
         preferences = UserPreferences()
         seasonTemplates = []
     }
@@ -1721,6 +1866,9 @@ final class AwradStore {
         var countEntries: [CountEntry]
         var wirds: [Wird]
         var wirdSessions: [WirdSession]
+        var userTags: [UserTag]
+        var tagAssignments: [DhikrTagAssignment]
+        var audioAssets: [DhikrAudioAsset]
         var preferences: UserPreferences
         var todayKey: String
     }
@@ -1732,6 +1880,9 @@ final class AwradStore {
             countEntries: countEntries,
             wirds: wirds,
             wirdSessions: wirdSessions,
+            userTags: userTags,
+            tagAssignments: tagAssignments,
+            audioAssets: audioAssets,
             preferences: preferences,
             todayKey: todayKey
         )
@@ -1743,6 +1894,9 @@ final class AwradStore {
         countEntries = state.countEntries
         wirds = state.wirds
         wirdSessions = state.wirdSessions
+        userTags = state.userTags
+        tagAssignments = state.tagAssignments
+        audioAssets = state.audioAssets
         preferences = state.preferences
         todayKey = state.todayKey
     }
@@ -1753,7 +1907,82 @@ final class AwradStore {
             restoreMutationState(previous)
             return false
         }
+        emitSchedulingChange(after: previous)
         return true
+    }
+
+    /// Emission happens only after durable persistence succeeds. Refreshing is performed
+    /// asynchronously by the app root, so an offline goal/count write cannot fail or block.
+    private func emitSchedulingChange(after previous: MutationState) {
+        let goalsChanged = previous.goals != goals
+        let countsChanged = previous.countEntries != countEntries
+        let preferencesChanged = schedulingPreferencesChanged(from: previous.preferences)
+        let wirdCapacityChanged = schedulingWirdCapacityChanged(from: previous.wirds)
+        let customTitleChangedGoalIDs = customDhikrTitleChangedGoalIDs(from: previous)
+        guard goalsChanged || countsChanged || preferencesChanged || wirdCapacityChanged || !customTitleChangedGoalIDs.isEmpty else {
+            return
+        }
+
+        var affectedGoalIDs = changedGoalIDs(from: previous, includeGoalRecords: goalsChanged)
+        affectedGoalIDs.formUnion(customTitleChangedGoalIDs)
+        let reason: NotificationSchedulingChangeReason =
+            preferencesChanged ? .preferenceMutation
+            : (goalsChanged || !customTitleChangedGoalIDs.isEmpty ? .goalMutation
+            : (countsChanged ? .countMutation : .capacityRefresh))
+        notificationSchedulingChanges.emit(
+            goalIDs: affectedGoalIDs,
+            reason: reason
+        )
+    }
+
+    private func customDhikrTitleChangedGoalIDs(from previous: MutationState) -> Set<AwradID> {
+        let previousByID = Dictionary(uniqueKeysWithValues: previous.dhikrs.map { ($0.id, $0) })
+        let changedDhikrIDs = Set(dhikrs.compactMap { current -> AwradID? in
+            guard current.isCustom, let old = previousByID[current.id], old.title != current.title else {
+                return nil
+            }
+            return current.id
+        })
+        guard !changedDhikrIDs.isEmpty else { return [] }
+        return Set(goals.filter { changedDhikrIDs.contains($0.dhikrID) }.map(\.id))
+    }
+
+    private func changedGoalIDs(from previous: MutationState, includeGoalRecords: Bool) -> Set<AwradID> {
+        let previousGoals = Dictionary(uniqueKeysWithValues: previous.goals.map { ($0.id, $0) })
+        let currentGoals = Dictionary(uniqueKeysWithValues: goals.map { ($0.id, $0) })
+        let goalIDs = Set(previousGoals.keys).union(currentGoals.keys)
+        var changed = Set<AwradID>()
+        if includeGoalRecords {
+            changed.formUnion(goalIDs.filter { previousGoals[$0] != currentGoals[$0] })
+        }
+
+        let previousEntries = Dictionary(grouping: previous.countEntries, by: \.goalID)
+        let currentEntries = Dictionary(grouping: countEntries, by: \.goalID)
+        let countedGoalIDs = Set(previousEntries.keys).union(currentEntries.keys)
+        changed.formUnion(countedGoalIDs.filter { previousEntries[$0] != currentEntries[$0] })
+        return changed
+    }
+
+    private func schedulingPreferencesChanged(from previous: UserPreferences) -> Bool {
+        previous.urgencyRemindersEnabled != preferences.urgencyRemindersEnabled ||
+            previous.appLanguage != preferences.appLanguage ||
+            previous.dayReset != preferences.dayReset ||
+            previous.latitude != preferences.latitude ||
+            previous.longitude != preferences.longitude ||
+            previous.calculationMethod != preferences.calculationMethod ||
+            previous.madhab != preferences.madhab ||
+            previous.prayerSlotDefaultLeadMinutes != preferences.prayerSlotDefaultLeadMinutes ||
+            previous.dailyReminderEnabled != preferences.dailyReminderEnabled ||
+            previous.dailyRemembranceEnabled != preferences.dailyRemembranceEnabled ||
+            previous.reminderHour != preferences.reminderHour ||
+            previous.reminderMinute != preferences.reminderMinute
+    }
+
+    private func schedulingWirdCapacityChanged(from previous: [Wird]) -> Bool {
+        guard previous.count == wirds.count else { return true }
+        return zip(previous, wirds).contains { old, current in
+            old.id != current.id || old.reminders != current.reminders
+        }
     }
 
     private func makeSnapshot(exportedAt: Date? = nil) -> AwradSnapshot {
@@ -1764,7 +1993,9 @@ final class AwradStore {
             wirds: wirds,
             wirdSessions: wirdSessions,
             preferences: preferences,
-            exportedAt: exportedAt
+            exportedAt: exportedAt,
+            userTags: userTags,
+            tagAssignments: tagAssignments
         )
     }
 
@@ -1820,7 +2051,10 @@ final class AwradStore {
             countEntries: countEntries,
             seasonTemplates: seasonTemplates,
             wirds: wirds,
-            wirdSessions: wirdSessions
+            wirdSessions: wirdSessions,
+            userTags: userTags,
+            tagAssignments: tagAssignments,
+            audioAssets: audioAssets
         )
     }
 
@@ -2004,7 +2238,10 @@ final class AwradStore {
                 countEntries: snapshot.countEntries,
                 seasonTemplates: [],
                 wirds: snapshot.wirds,
-                wirdSessions: snapshot.wirdSessions
+                wirdSessions: snapshot.wirdSessions,
+                userTags: snapshot.userTags,
+                tagAssignments: snapshot.tagAssignments,
+                audioAssets: []
             ),
             preferences: snapshot.preferences
         )
@@ -2034,6 +2271,19 @@ final class AwradStore {
         return SharedAwradWidgetMutation.legacySnapshotURL()
     }
 
+    private static func defaultOwnedAudioRoot() -> URL {
+        let base: URL
+        if let group = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: AwradPersistenceContainerFactory.appGroupID
+        ) {
+            base = group
+        } else {
+            base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+                ?? FileManager.default.temporaryDirectory
+        }
+        return base.appendingPathComponent("DhikrOwnedAudio", isDirectory: true)
+    }
+
     private static func migrateLegacySnapshotIfNeeded(to sharedURL: URL) {
         let fileManager = FileManager.default
         let legacyURL = SharedAwradWidgetMutation.legacySnapshotURL()
@@ -2057,7 +2307,7 @@ final class AwradStore {
         name.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private static func snapshotSchemaVersion(in data: Data) throws -> Int {
+    static func snapshotSchemaVersion(in data: Data) throws -> Int {
         let object = try JSONSerialization.jsonObject(with: data)
         guard let dictionary = object as? [String: Any],
               let version = dictionary["schemaVersion"] as? Int else {
@@ -2373,7 +2623,7 @@ enum AwradStoreError: LocalizedError {
         case .unsupportedSnapshotVersion(let version):
             "This backup uses schema version \(version), which is newer than this app can read."
         case .legacySnapshotVersion(let version):
-            "This backup uses schema version \(version). Awrad v5 requires stable UUID identities, so pre-v5 backups cannot be imported."
+            "This backup uses schema version \(version). Awrad requires schema v5+ with stable UUID identities, so older backups cannot be imported."
         case .persistenceUnavailable(let message):
             "The shared Awrad data store could not be opened: \(message)"
         case .localResetFailed:
@@ -2383,7 +2633,8 @@ enum AwradStoreError: LocalizedError {
 }
 
 struct AwradSnapshot: Codable {
-    static let currentSchemaVersion = 5
+    static let currentSchemaVersion = 6
+    static let minimumCompatibleSchemaVersion = 5
 
     var schemaVersion: Int
     var dhikrs: [Dhikr]
@@ -2393,6 +2644,8 @@ struct AwradSnapshot: Codable {
     var wirdSessions: [WirdSession]
     var preferences: UserPreferences
     var exportedAt: Date?
+    var userTags: [UserTag]
+    var tagAssignments: [DhikrTagAssignment]
 
     init(
         schemaVersion: Int = Self.currentSchemaVersion,
@@ -2402,7 +2655,9 @@ struct AwradSnapshot: Codable {
         wirds: [Wird],
         wirdSessions: [WirdSession],
         preferences: UserPreferences,
-        exportedAt: Date? = nil
+        exportedAt: Date? = nil,
+        userTags: [UserTag] = [],
+        tagAssignments: [DhikrTagAssignment] = []
     ) {
         self.schemaVersion = schemaVersion
         self.dhikrs = dhikrs
@@ -2412,6 +2667,8 @@ struct AwradSnapshot: Codable {
         self.wirdSessions = wirdSessions
         self.preferences = preferences
         self.exportedAt = exportedAt
+        self.userTags = userTags
+        self.tagAssignments = tagAssignments
     }
 
     enum CodingKeys: String, CodingKey {
@@ -2423,6 +2680,8 @@ struct AwradSnapshot: Codable {
         case wirdSessions
         case preferences
         case exportedAt
+        case userTags
+        case tagAssignments
     }
 
     init(from decoder: Decoder) throws {
@@ -2435,5 +2694,27 @@ struct AwradSnapshot: Codable {
         wirdSessions = try container.decodeIfPresent([WirdSession].self, forKey: .wirdSessions) ?? []
         preferences = try container.decodeIfPresent(UserPreferences.self, forKey: .preferences) ?? UserPreferences()
         exportedAt = try container.decodeIfPresent(Date.self, forKey: .exportedAt)
+        userTags = try container.decodeIfPresent([UserTag].self, forKey: .userTags) ?? []
+        tagAssignments = try container.decodeIfPresent([DhikrTagAssignment].self, forKey: .tagAssignments) ?? []
+    }
+
+    static func decodeCompatible(from data: Data) throws -> AwradSnapshot {
+        let version = try AwradStore.snapshotSchemaVersion(in: data)
+        guard version >= minimumCompatibleSchemaVersion else {
+            throw AwradStoreError.legacySnapshotVersion(version)
+        }
+        guard version <= currentSchemaVersion else {
+            throw AwradStoreError.unsupportedSnapshotVersion(version)
+        }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        var snapshot = try decoder.decode(AwradSnapshot.self, from: data)
+        if snapshot.schemaVersion < currentSchemaVersion {
+            snapshot.schemaVersion = currentSchemaVersion
+            // v5 → v6: tags default empty; owned audio is intentionally excluded.
+            if snapshot.userTags.isEmpty { snapshot.userTags = [] }
+            if snapshot.tagAssignments.isEmpty { snapshot.tagAssignments = [] }
+        }
+        return snapshot
     }
 }

@@ -1034,28 +1034,14 @@ struct OnboardingView: View {
         isCreatingGoal = true
         pendingFirstGoal = prepared
         Task {
-            let prayerTimes = ReminderScheduleBuilder.prayerSummaries(
-                for: prepared,
-                preferences: store.preferences,
-                prayerTimeService: services.prayerTimes
-            )
-            let result = await services.notifications.scheduleGoalReminders(
-                for: prepared,
-                dhikrTitle: store.title(for: prepared),
-                language: language,
-                prayerTimes: prayerTimes
-            )
-            guard result.succeeded else {
-                isCreatingGoal = false
-                reminderSchedulingError = result.localizedFailureMessage(language: language)
-                return
-            }
             guard commitOnboarding(firstGoal: prepared, reminderPresetKeys: selectedReminderPresets.map(\.rawValue)) else {
-                _ = await services.notifications.cancelGoalReminders(goalID: prepared.id)
                 isCreatingGoal = false
                 reminderSchedulingError = AwradLocalizer.localized("Couldn’t save changes. Try again.", language: language)
                 return
             }
+            let result = await services.refreshNotificationsAfterGoalMutation(goalID: prepared.id, store: store)
+            isCreatingGoal = false
+            reminderSchedulingError = result.localizedFailureMessage(language: language)
         }
     }
 

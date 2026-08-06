@@ -1,6 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.home
 
 import java.io.File
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -18,14 +19,30 @@ class HomeBackgroundTest {
     }
 
     @Test
-    fun `home status bar uses the white surface background`() {
-        val statusBarRoutes = source("MainActivity.kt").readText()
-            .substringAfter("private val surfaceStatusBarRoutes = setOf(")
-            .substringBefore("private fun String?.isSurfaceStatusBarRoute()")
+    fun `home owns its top scrim beneath the transparent status bar`() {
+        val mainActivity = source("MainActivity.kt").readText()
+        val home = source("ui/screens/home/HomeScreen.kt").readText()
+
+        assertFalse(
+            "The app shell must not cover Home's edge-to-edge content",
+            "statusBarContainerColor" in mainActivity,
+        )
+        assertTrue("Home must render its own top edge scrim", "AwradTopEdgeScrim(" in home)
+    }
+
+    @Test
+    fun `settings icon uses the muted home content color`() {
+        val header = source("ui/screens/home/HomeScreen.kt").readText()
+            .substringAfter("private fun HomeHeader(")
+            .substringBefore("private fun ContinueDhikrCard(")
 
         assertTrue(
-            "Home must use the shell's white surface status bar in light mode",
-            "AwradDestination.Home.route" in statusBarRoutes,
+            "Settings icon must use the same muted color as secondary Home content",
+            "tint = visuals.secondaryTextColor" in header,
+        )
+        assertTrue(
+            "Settings button surface must match the prayer card surface",
+            "color = MaterialTheme.colorScheme.surfaceContainer" in header,
         )
     }
 
@@ -38,6 +55,18 @@ class HomeBackgroundTest {
         assertTrue(
             "Prayer card must use the shared content-section color",
             "color = MaterialTheme.colorScheme.surfaceContainer" in prayerCard,
+        )
+    }
+
+    @Test
+    fun `prayer times prompt has the shared content background`() {
+        val prayerPrompt = source("ui/screens/home/HomeScreen.kt").readText()
+            .substringAfter("private fun PrayerTimesPromptCard(")
+            .substringBefore("private fun PrayerRhythmCard(")
+
+        assertTrue(
+            "The prayer-times prompt must remain visible against the Home surface",
+            "color = MaterialTheme.colorScheme.surfaceContainer" in prayerPrompt,
         )
     }
 

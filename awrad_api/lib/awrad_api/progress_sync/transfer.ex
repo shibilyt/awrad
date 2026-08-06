@@ -20,8 +20,9 @@ defmodule AwradApi.ProgressSync.Transfer do
   @page_size 200
   @expiry_seconds 30 * 60
   @max_active_sessions_per_user 8
-  @max_transfer_records 50_000
+  @default_max_transfer_records 50_000
   @cursor_salt "progress-sync-cursor-v1"
+  @tag_entity_types ~w(user_tag dhikr_tag_assignment)
 
   def start(scope, kind, cursor \\ nil, options \\ [])
 
@@ -35,7 +36,8 @@ defmodule AwradApi.ProgressSync.Transfer do
             kind,
             from_revision,
             requested_generation,
-            Keyword.get(options, :allow_unchanged, false)
+            Keyword.get(options, :allow_unchanged, false),
+            Keyword.get(options, :capabilities, [])
           )
         end,
         isolation: :repeatable_read
@@ -80,22 +82,36 @@ defmodule AwradApi.ProgressSync.Transfer do
 
   def page(_scope, _session_id, _page_number), do: {:error, :invalid_transfer_page}
 
-  defp start_or_materialize(user_id, "delta", from_revision, requested_generation, true) do
+  defp start_or_materialize(
+         user_id,
+         "delta",
+         from_revision,
+         requested_generation,
+         true,
+         capabilities
+       ) do
     head = ensure_head!(user_id)
 
     cond do
       requested_generation != head.generation -> Repo.rollback(:generation_reset)
       from_revision > head.revision -> Repo.rollback(:future_cursor)
       from_revision == head.revision -> unchanged_response(head)
-      true -> materialize(user_id, "delta", from_revision, requested_generation)
+      true -> materialize(user_id, "delta", from_revision, requested_generation, capabilities)
     end
   end
 
-  defp start_or_materialize(user_id, kind, from_revision, requested_generation, _allow_unchanged) do
-    materialize(user_id, kind, from_revision, requested_generation)
+  defp start_or_materialize(
+         user_id,
+         kind,
+         from_revision,
+         requested_generation,
+         _allow_unchanged,
+         capabilities
+       ) do
+    materialize(user_id, kind, from_revision, requested_generation, capabilities)
   end
 
-  defp materialize(user_id, kind, from_revision, requested_generation) do
+  defp materialize(user_id, kind, from_revision, requested_generation, capabilities) do
     now = DateTime.utc_now(:second)
 
     Repo.query!("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [
@@ -131,9 +147,9 @@ defmodule AwradApi.ProgressSync.Transfer do
       Repo.rollback(:future_cursor)
     end
 
-    records = records(user_id, kind, from_revision, head.revision)
+    records = records(user_id, kind, from_revision, head.revision, capabilities)
 
-    if length(records) > @max_transfer_records do
+    if length(records) > max_transfer_records() do
       Repo.rollback(:transfer_too_large)
     end
 
@@ -187,11 +203,20 @@ defmodule AwradApi.ProgressSync.Transfer do
     session_response(session)
   end
 
-  defp records(user_id, kind, from_revision, to_revision) do
+  defp records(user_id, kind, from_revision, to_revision, capabilities) do
+    include_tags? = "dhikr_tags_v1" in List.wrap(capabilities)
+
     entity_query =
       from entity in EntityRecord,
         where: entity.user_id == ^user_id and entity.sync_revision <= ^to_revision,
         order_by: [asc: entity.sync_revision, asc: entity.entity_type, asc: entity.entity_id]
+
+    entity_query =
+      if include_tags? do
+        entity_query
+      else
+        from entity in entity_query, where: entity.entity_type not in ^@tag_entity_types
+      end
 
     projection_query =
       from projection in CountProjection,
@@ -211,6 +236,14 @@ defmodule AwradApi.ProgressSync.Transfer do
         order_by: [asc: conflict.sync_revision, asc: conflict.id],
         select: {conflict, conflict.sync_revision, entity.entity_type, entity.entity_id}
 
+    conflict_query =
+      if include_tags? do
+        conflict_query
+      else
+        from [conflict, entity] in conflict_query,
+          where: entity.entity_type not in ^@tag_entity_types
+      end
+
     entity_query = changed_after(entity_query, kind, from_revision)
     projection_query = changed_after(projection_query, kind, from_revision)
     conflict_query = changed_conflicts(conflict_query, kind, from_revision)
@@ -222,7 +255,8 @@ defmodule AwradApi.ProgressSync.Transfer do
     (Enum.map(Repo.all(entity_query), &entity_record/1) ++
        Enum.map(Repo.all(projection_query), &projection_record/1) ++
        Enum.map(Repo.all(conflict_query), &conflict_record/1))
-    |> Enum.take(@max_transfer_records + 1)
+    |> Enum.filter(&include_transfer_record?(&1, include_tags?))
+    |> Enum.take(max_transfer_records() + 1)
     |> Enum.sort_by(
       &{
         dependency_order(&1["kind"]),
@@ -230,6 +264,24 @@ defmodule AwradApi.ProgressSync.Transfer do
         &1["id"]
       }
     )
+  end
+
+  defp include_transfer_record?(_record, true), do: true
+
+  defp include_transfer_record?(record, false) do
+    kind = record["kind"]
+
+    cond do
+      kind in ["user_tag", "dhikr_tag_assignment"] ->
+        false
+
+      kind in ["tombstone", "deletion_fence", "conflict"] and
+          record["payload"]["entity_type"] in ["user_tag", "dhikr_tag_assignment"] ->
+        false
+
+      true ->
+        true
+    end
   end
 
   defp changed_after(query, "delta", revision),
@@ -246,8 +298,19 @@ defmodule AwradApi.ProgressSync.Transfer do
   end
 
   defp limit_records(query) do
-    limit = @max_transfer_records + 1
+    limit = max_transfer_records() + 1
     from row in query, limit: ^limit
+  end
+
+  defp max_transfer_records do
+    case Application.get_env(
+           :awrad_api,
+           :progress_sync_max_transfer_records,
+           @default_max_transfer_records
+         ) do
+      value when is_integer(value) and value > 0 -> value
+      _ -> @default_max_transfer_records
+    end
   end
 
   defp entity_record(%EntityRecord{state: "active"} = entity) do
@@ -406,10 +469,12 @@ defmodule AwradApi.ProgressSync.Transfer do
 
   defp integer_revision(value), do: String.to_integer(value)
   defp dependency_order("custom_dhikr"), do: 0
-  defp dependency_order("goal"), do: 1
-  defp dependency_order("count_projection"), do: 2
-  defp dependency_order("conflict"), do: 3
-  defp dependency_order(_tombstone_or_fence), do: 4
+  defp dependency_order("user_tag"), do: 0
+  defp dependency_order("dhikr_tag_assignment"), do: 1
+  defp dependency_order("goal"), do: 2
+  defp dependency_order("count_projection"), do: 3
+  defp dependency_order("conflict"), do: 4
+  defp dependency_order(_tombstone_or_fence), do: 5
   defp normalize_transaction({:ok, response}), do: {:ok, response}
   defp normalize_transaction({:error, reason}), do: {:error, reason}
 end

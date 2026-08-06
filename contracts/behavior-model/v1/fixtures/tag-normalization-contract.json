@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "algorithm": {
+    "display": "trim_collapse_unicode_whitespace_then_nfc",
+    "normalized": "unicode_default_casefold_then_nfc",
+    "whitespace": "unicode_white_space_property",
+    "notes": "Trim leading/trailing characters with the Unicode White_Space property, collapse every internal White_Space run (including Space_Separator Zs such as NNBSP U+202F and FIGURE SPACE U+2007, and Cc whitespace such as TAB/LF) to a single U+0020, then NFC-normalize for display `name`. Derive `normalized_name` with Unicode Default Case Folding (full case fold, not simple lowercase) followed by NFC. Do not strip diacritics or Arabic marks. Empty results, names over 40 extended grapheme clusters, or over 128 UTF-8 bytes are rejected."
+  },
+  "cases": [
+    {
+      "id": "trim_collapse_ascii_spaces",
+      "input": "  Before   Sleep  ",
+      "expected_display": "Before Sleep",
+      "expected_normalized": "before sleep"
+    },
+    {
+      "id": "eszett_ss_full_casefold",
+      "input_a": "straße",
+      "input_b": "STRASSE",
+      "expected_display_a": "straße",
+      "expected_display_b": "STRASSE",
+      "expected_normalized": "strasse",
+      "notes": "Full Unicode Default Case Folding maps U+00DF LATIN SMALL LETTER SHARP S to ASCII ss, so display casing may differ while uniqueness matches."
+    },
+    {
+      "id": "dotted_capital_i_full_casefold",
+      "input": "İstanbul",
+      "expected_display": "İstanbul",
+      "expected_normalized": "i̇stanbul",
+      "notes": "U+0130 LATIN CAPITAL LETTER I WITH DOT ABOVE case-folds to U+0069 LATIN SMALL LETTER I plus U+0307 COMBINING DOT ABOVE; normalized form is then NFC."
+    },
+    {
+      "id": "nnbsp_and_figure_space_collapse",
+      "input": "Before\u202FSleep\u2007Now",
+      "expected_display": "Before Sleep Now",
+      "expected_normalized": "before sleep now",
+      "notes": "NNBSP (U+202F) and FIGURE SPACE (U+2007) are Space_Separator White_Space and must trim/collapse to U+0020."
+    }
+  ]
+}

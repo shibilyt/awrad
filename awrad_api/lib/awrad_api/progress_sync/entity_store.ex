@@ -54,6 +54,20 @@ defmodule AwradApi.ProgressSync.EntityStore do
   end
 
   defp create(user_id, %{base_version: 0, incarnation: 1} = identity, document, revision) do
+    with :ok <- maybe_coalesce_or_guard_create(user_id, identity, document) do
+      do_create(user_id, identity, document, revision)
+    else
+      {:coalesce, %EntityRecord{} = existing} ->
+        {:ok, effect(existing)}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp create(_user_id, _identity, _document, _revision), do: {:error, :invalid_create_version}
+
+  defp do_create(user_id, identity, document, revision) do
     with {:ok, _materialized} <- Materializer.put(identity.type, document, user_id),
          {:ok, entity} <-
            %EntityRecord{}
@@ -75,44 +89,197 @@ defmodule AwradApi.ProgressSync.EntityStore do
     end
   end
 
-  defp create(_user_id, _identity, _document, _revision), do: {:error, :invalid_create_version}
+  defp maybe_coalesce_or_guard_create(user_id, %{type: "user_tag"} = identity, document) do
+    lock_user_tags!(user_id)
+    normalized = document["normalized_name"]
+
+    case find_active_user_tag_by_normalized_name(user_id, normalized) do
+      %EntityRecord{entity_id: existing_id} = existing when existing_id != identity.id ->
+        {:coalesce, existing}
+
+      %EntityRecord{entity_id: id} when id == identity.id ->
+        :ok
+
+      nil ->
+        if active_entity_count(user_id, "user_tag") >= 100 do
+          {:error, :invalid_entity_document}
+        else
+          :ok
+        end
+    end
+  end
+
+  defp maybe_coalesce_or_guard_create(
+         user_id,
+         %{type: "dhikr_tag_assignment"} = identity,
+         document
+       ) do
+    lock_user_tags!(user_id)
+
+    with :ok <- validate_assignment_references(user_id, document),
+         :ok <- validate_assignment_limits(user_id, document) do
+      case find_active_assignment(user_id, document["tag_id"], document["dhikr_id"]) do
+        %EntityRecord{entity_id: existing_id} = existing when existing_id != identity.id ->
+          {:coalesce, existing}
+
+        _ ->
+          :ok
+      end
+    end
+  end
+
+  defp maybe_coalesce_or_guard_create(_user_id, _identity, _document), do: :ok
+
+  defp lock_user_tags!(user_id) do
+    Repo.query!("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [
+      "sync-dhikr-tags:" <> to_string(user_id)
+    ])
+
+    :ok
+  end
+
+  defp find_active_user_tag_by_normalized_name(user_id, normalized_name) do
+    Repo.one(
+      from entity in EntityRecord,
+        where:
+          entity.user_id == ^user_id and entity.entity_type == "user_tag" and
+            entity.state == "active" and
+            fragment("(?->>'normalized_name') = ?", entity.document, ^normalized_name),
+        lock: "FOR UPDATE"
+    )
+  end
+
+  defp find_active_assignment(user_id, tag_id, dhikr_id) do
+    Repo.one(
+      from entity in EntityRecord,
+        where:
+          entity.user_id == ^user_id and entity.entity_type == "dhikr_tag_assignment" and
+            entity.state == "active" and
+            fragment("(?->>'tag_id') = ?", entity.document, ^tag_id) and
+            fragment("(?->>'dhikr_id') = ?", entity.document, ^dhikr_id),
+        lock: "FOR UPDATE"
+    )
+  end
+
+  defp active_entity_count(user_id, type) do
+    Repo.aggregate(
+      from(entity in EntityRecord,
+        where:
+          entity.user_id == ^user_id and entity.entity_type == ^type and entity.state == "active"
+      ),
+      :count
+    )
+  end
+
+  defp validate_assignment_references(user_id, document) do
+    tag_ok =
+      Repo.exists?(
+        from entity in EntityRecord,
+          where:
+            entity.user_id == ^user_id and entity.entity_type == "user_tag" and
+              entity.entity_id == ^document["tag_id"] and entity.state == "active"
+      )
+
+    dhikr_ok = assignable_dhikr?(user_id, document["dhikr_id"])
+
+    if tag_ok and dhikr_ok, do: :ok, else: {:error, :invalid_dhikr_reference}
+  end
+
+  defp validate_assignment_limits(user_id, document) do
+    per_dhikr =
+      Repo.aggregate(
+        from(entity in EntityRecord,
+          where:
+            entity.user_id == ^user_id and entity.entity_type == "dhikr_tag_assignment" and
+              entity.state == "active" and
+              fragment("(?->>'dhikr_id') = ?", entity.document, ^document["dhikr_id"])
+        ),
+        :count
+      )
+
+    if per_dhikr >= 20, do: {:error, :invalid_entity_document}, else: :ok
+  end
+
+  defp assignable_dhikr?(user_id, dhikr_id) do
+    Repo.exists?(
+      from d in AwradApi.Dhikr.Dhikr,
+        where:
+          d.id == ^dhikr_id and is_nil(d.deleted_at) and
+            (is_nil(d.user_id) or d.user_id == ^user_id)
+    )
+  end
 
   defp update(user_id, entity, identity, document, command_id, revision) do
     document = preserve_derived_completion(entity, document)
 
-    cond do
-      entity.state == "purged" ->
-        {:reject, :gone, effect(entity)}
+    with :ok <- guard_user_tag_rename(user_id, entity, document),
+         :ok <- guard_assignment_update(user_id, entity, document) do
+      cond do
+        entity.state == "purged" ->
+          {:reject, :gone, effect(entity)}
 
-      entity.state == "deleted" ->
-        {:reject, :gone, effect(entity)}
+        entity.state == "deleted" ->
+          {:reject, :gone, effect(entity)}
 
-      identity.incarnation != entity.incarnation ->
-        {:reject, :gone, effect(entity)}
+        identity.incarnation != entity.incarnation ->
+          {:reject, :gone, effect(entity)}
 
-      identity.base_version == entity.version ->
-        accept_update(user_id, entity, document, revision)
+        identity.base_version == entity.version ->
+          accept_update(user_id, entity, document, revision)
 
-      identity.base_version < entity.version and entity.document == document ->
-        {:ok, effect(entity)}
+        identity.base_version < entity.version and entity.document == document ->
+          {:ok, effect(entity)}
 
-      identity.base_version < entity.version ->
-        with {:ok, _conflict} <-
-               preserve_conflict(
-                 user_id,
-                 entity,
-                 command_id,
-                 identity.base_version,
-                 document,
-                 revision
-               ) do
-          {:reject_with_revision, :conflict, effect(entity)}
-        end
+        identity.base_version < entity.version ->
+          with {:ok, _conflict} <-
+                 preserve_conflict(
+                   user_id,
+                   entity,
+                   command_id,
+                   identity.base_version,
+                   document,
+                   revision
+                 ) do
+            {:reject_with_revision, :conflict, effect(entity)}
+          end
 
-      true ->
-        {:error, :future_entity_version}
+        true ->
+          {:error, :future_entity_version}
+      end
     end
   end
+
+  defp guard_user_tag_rename(user_id, %EntityRecord{entity_type: "user_tag"} = entity, document) do
+    lock_user_tags!(user_id)
+    normalized = document["normalized_name"]
+
+    case find_active_user_tag_by_normalized_name(user_id, normalized) do
+      %EntityRecord{entity_id: existing_id} when existing_id != entity.entity_id ->
+        {:error, :invalid_entity_document}
+
+      _ ->
+        :ok
+    end
+  end
+
+  defp guard_user_tag_rename(_user_id, _entity, _document), do: :ok
+
+  defp guard_assignment_update(
+         user_id,
+         %EntityRecord{entity_type: "dhikr_tag_assignment"} = entity,
+         document
+       ) do
+    lock_user_tags!(user_id)
+
+    if entity.document["tag_id"] == document["tag_id"] and
+         entity.document["dhikr_id"] == document["dhikr_id"] do
+      validate_assignment_references(user_id, document)
+    else
+      {:error, :invalid_entity_document}
+    end
+  end
+
+  defp guard_assignment_update(_user_id, _entity, _document), do: :ok
 
   defp accept_update(user_id, entity, document, revision) do
     if entity.document == document do
@@ -178,9 +345,69 @@ defmodule AwradApi.ProgressSync.EntityStore do
              version: entity.version + 1,
              sync_revision: revision
            )
-           |> Repo.update() do
+           |> Repo.update(),
+         :ok <- cascade_assignment_tombstones(user_id, deleted, revision, now) do
       {:ok, effect(deleted)}
     end
+  end
+
+  defp cascade_assignment_tombstones(
+         user_id,
+         %EntityRecord{entity_type: "user_tag"} = tag,
+         revision,
+         now
+       ) do
+    soft_delete_assignments(
+      user_id,
+      from(entity in EntityRecord,
+        where:
+          entity.user_id == ^user_id and entity.entity_type == "dhikr_tag_assignment" and
+            entity.state == "active" and
+            fragment("(?->>'tag_id') = ?", entity.document, ^tag.entity_id)
+      ),
+      revision,
+      now
+    )
+  end
+
+  defp cascade_assignment_tombstones(
+         user_id,
+         %EntityRecord{entity_type: "custom_dhikr"} = dhikr,
+         revision,
+         now
+       ) do
+    soft_delete_assignments(
+      user_id,
+      from(entity in EntityRecord,
+        where:
+          entity.user_id == ^user_id and entity.entity_type == "dhikr_tag_assignment" and
+            entity.state == "active" and
+            fragment("(?->>'dhikr_id') = ?", entity.document, ^dhikr.entity_id)
+      ),
+      revision,
+      now
+    )
+  end
+
+  defp cascade_assignment_tombstones(_user_id, _entity, _revision, _now), do: :ok
+
+  defp soft_delete_assignments(_user_id, query, revision, now) do
+    assignments = Repo.all(from entity in query, lock: "FOR UPDATE")
+
+    Enum.reduce_while(assignments, :ok, fn assignment, :ok ->
+      case assignment
+           |> Ecto.Changeset.change(
+             state: "deleted",
+             deleted_at: now,
+             purge_after: DateTime.add(now, @retention_seconds, :second),
+             version: assignment.version + 1,
+             sync_revision: revision
+           )
+           |> Repo.update() do
+        {:ok, _} -> {:cont, :ok}
+        {:error, reason} -> {:halt, {:error, reason}}
+      end
+    end)
   end
 
   defp restore(user_id, attrs, revision) do
@@ -200,7 +427,8 @@ defmodule AwradApi.ProgressSync.EntityStore do
   end
 
   defp accept_restore(user_id, entity, revision) do
-    with {:ok, _materialized} <- Materializer.put(entity.entity_type, entity.document, user_id),
+    with :ok <- guard_restore(user_id, entity),
+         {:ok, _materialized} <- Materializer.put(entity.entity_type, entity.document, user_id),
          {:ok, restored} <-
            entity
            |> Ecto.Changeset.change(
@@ -215,6 +443,47 @@ defmodule AwradApi.ProgressSync.EntityStore do
       {:ok, effect(restored)}
     end
   end
+
+  defp guard_restore(user_id, %EntityRecord{entity_type: "dhikr_tag_assignment"} = entity) do
+    lock_user_tags!(user_id)
+
+    with :ok <- validate_assignment_references(user_id, entity.document),
+         :ok <- validate_assignment_limits(user_id, entity.document) do
+      case find_active_assignment(
+             user_id,
+             entity.document["tag_id"],
+             entity.document["dhikr_id"]
+           ) do
+        %EntityRecord{entity_id: existing_id} when existing_id != entity.entity_id ->
+          {:error, :invalid_entity_document}
+
+        _ ->
+          :ok
+      end
+    end
+  end
+
+  defp guard_restore(user_id, %EntityRecord{entity_type: "user_tag"} = entity) do
+    lock_user_tags!(user_id)
+    normalized = entity.document["normalized_name"]
+
+    case find_active_user_tag_by_normalized_name(user_id, normalized) do
+      %EntityRecord{entity_id: existing_id} when existing_id != entity.entity_id ->
+        {:error, :invalid_entity_document}
+
+      nil ->
+        if active_entity_count(user_id, "user_tag") >= 100 do
+          {:error, :invalid_entity_document}
+        else
+          :ok
+        end
+
+      %EntityRecord{entity_id: id} when id == entity.entity_id ->
+        :ok
+    end
+  end
+
+  defp guard_restore(_user_id, _entity), do: :ok
 
   defp lifecycle_completion(user_id, attrs, revision, completed?) do
     with {:ok, %{type: "goal"} = identity} <- identity(attrs),
@@ -292,7 +561,8 @@ defmodule AwradApi.ProgressSync.EntityStore do
   end
 
   defp identity(attrs) do
-    with type when type in ~w(custom_dhikr goal) <- value(attrs, :entity_type),
+    with type when type in ~w(custom_dhikr goal user_tag dhikr_tag_assignment) <-
+           value(attrs, :entity_type),
          {:ok, id} <- uuid_v4(value(attrs, :entity_id)),
          {:ok, base_version} <- non_negative_integer(value(attrs, :base_version)),
          {:ok, incarnation} <- positive_integer(value(attrs, :entity_incarnation)) do

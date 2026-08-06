@@ -104,12 +104,12 @@ final class awradUITests: XCTestCase {
     }
 
     @MainActor
-    func testLibraryDhikrHeaderOnlyShowsSearchAction() throws {
+    func testLibraryDhikrHeaderShowsSearchAndCreateActions() throws {
         let app = launchSeededApp()
         openDeepLink("awrad://library")
 
         XCTAssertTrue(app.buttons["Search dhikr"].waitForExistence(timeout: 4))
-        XCTAssertFalse(app.buttons["Create Dhikr"].exists)
+        XCTAssertTrue(app.buttons["Create Dhikr"].waitForExistence(timeout: 4))
 
         let dhikrsTab = app.buttons["Dhikrs"]
         let wirdsTab = app.buttons["Wirds"]

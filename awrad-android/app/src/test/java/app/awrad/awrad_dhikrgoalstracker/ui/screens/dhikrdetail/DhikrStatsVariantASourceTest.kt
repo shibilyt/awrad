@@ -275,20 +275,21 @@ class DhikrStatsVariantASourceTest {
     }
 
     @Test
-    fun `dhikr detail status bar uses the page background`() {
+    fun `dhikr detail remains beneath the transparent system status bar`() {
         val activity = sourceFile(
             "app/src/main/java/app/awrad/awrad_dhikrgoalstracker/MainActivity.kt",
         ).readText()
-        val surfaceRoutes = activity.substringAfter("private val surfaceStatusBarRoutes")
-            .substringBefore("private fun String?.isSurfaceStatusBarRoute")
+        val detail = sourceFile(
+            "app/src/main/java/app/awrad/awrad_dhikrgoalstracker/ui/screens/dhikrdetail/DhikrDetailScreen.kt",
+        ).readText()
 
-        assertTrue(
-            "App shell should continue painting the status-bar inset",
-            ".background(statusBarContainerColor(currentRoute))" in activity,
-        )
         assertFalse(
-            "Dhikr detail should inherit the page background instead of the white surface",
-            "AwradDestination.DhikrDetail.route" in surfaceRoutes,
+            "The app shell must not paint over the detail page status-bar region",
+            "statusBarContainerColor" in activity,
+        )
+        assertTrue(
+            "The detail top app bar must remain transparent beneath the system icons",
+            "containerColor = androidx.compose.ui.graphics.Color.Transparent" in detail,
         )
     }
 

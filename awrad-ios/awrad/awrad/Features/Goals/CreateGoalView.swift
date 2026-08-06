@@ -261,24 +261,14 @@ struct CreateGoalView: View {
                 dismiss()
             } else {
                 _ = store.deleteGoal(goal.id)
-                _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
+                _ = await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
                 saveError = result.localizedFailureMessage(language: language)
             }
         }
     }
 
     private func scheduleGoalReminders(for goal: Goal) async -> NotificationSchedulingResult {
-        let prayerTimes = ReminderScheduleBuilder.prayerSummaries(
-            for: goal,
-            preferences: store.preferences,
-            prayerTimeService: services.prayerTimes
-        )
-        return await services.notifications.scheduleGoalReminders(
-            for: goal,
-            dhikrTitle: store.title(for: goal),
-            language: store.preferences.appLanguage,
-            prayerTimes: prayerTimes
-        )
+        await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
     }
 }
 

@@ -52,6 +52,9 @@ struct AwradPersistenceTests {
         #expect(loaded.seasonTemplates == fixture.state.seasonTemplates)
         #expect(loaded.wirds == fixture.state.wirds)
         #expect(loaded.wirdSessions == fixture.state.wirdSessions)
+        #expect(loaded.userTags == fixture.state.userTags)
+        #expect(loaded.tagAssignments == fixture.state.tagAssignments)
+        #expect(loaded.audioAssets == fixture.state.audioAssets)
         #expect(
             try AwradSemanticChecksum.make(state: loaded, preferences: fixture.preferences)
                 == AwradSemanticChecksum.make(state: fixture.state, preferences: fixture.preferences)
@@ -62,6 +65,10 @@ struct AwradPersistenceTests {
         let fixture = makeFixture()
         var migrationState = fixture.state
         migrationState.seasonTemplates = []
+        // v5 portable snapshots do not carry relational tag/audio tables.
+        migrationState.userTags = []
+        migrationState.tagAssignments = []
+        migrationState.audioAssets = []
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("awrad-migration-tests-\(UUID().uuidString)", isDirectory: true)
         let sourceURL = directory.appendingPathComponent("awrad-snapshot.json")
@@ -70,6 +77,7 @@ struct AwradPersistenceTests {
         defer { try? FileManager.default.removeItem(at: directory) }
 
         let snapshot = AwradSnapshot(
+            schemaVersion: 5,
             dhikrs: migrationState.dhikrs,
             goals: migrationState.goals,
             countEntries: migrationState.countEntries,
@@ -290,6 +298,9 @@ struct AwradPersistenceTests {
         let partID = UUID(uuidString: "70000000-0000-4000-8000-000000000001")!
         let segmentID = UUID(uuidString: "80000000-0000-4000-8000-000000000001")!
         let sessionID = UUID(uuidString: "90000000-0000-4000-8000-000000000001")!
+        let tagID = UUID(uuidString: "a0000000-0000-4000-8000-000000000001")!
+        let assignmentID = UUID(uuidString: "b0000000-0000-4000-8000-000000000001")!
+        let audioAssetID = UUID(uuidString: "c0000000-0000-4000-8000-000000000001")!
 
         let dhikr = Dhikr(
             id: dhikrID,
@@ -302,6 +313,41 @@ struct AwradPersistenceTests {
             audioCountPerPlay: 1,
             sortOrder: 7,
             benefits: ["Test benefit"]
+        )
+        let customDhikrID = UUID(uuidString: "11000000-0000-4000-8000-000000000001")!
+        let customDhikr = Dhikr(
+            id: customDhikrID,
+            title: "Custom bedtime",
+            arabic: "ذكر",
+            transliteration: "Custom",
+            translation: "Custom",
+            category: .protection,
+            isCustom: true,
+            sortOrder: 99
+        )
+        let userTag = UserTag(
+            id: tagID,
+            name: "Family",
+            normalizedName: "family",
+            createdAt: now,
+            updatedAt: now
+        )
+        let tagAssignment = DhikrTagAssignment(
+            id: assignmentID,
+            tagID: tagID,
+            dhikrID: customDhikrID,
+            createdAt: now
+        )
+        let audioAsset = DhikrAudioAsset(
+            id: audioAssetID,
+            dhikrID: customDhikrID,
+            relativeFileName: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.wav",
+            mimeType: "audio/wav",
+            byteSize: 128,
+            durationMs: 1_000,
+            sha256: String(repeating: "ab", count: 32),
+            source: .import,
+            createdAt: now
         )
         let slot = GoalSlot(
             id: slotID,
@@ -401,12 +447,15 @@ struct AwradPersistenceTests {
 
         return (
             AwradRepositoryState(
-                dhikrs: [dhikr],
+                dhikrs: [dhikr, customDhikr],
                 goals: [goal],
                 countEntries: [entry],
                 seasonTemplates: [season],
                 wirds: [wird],
-                wirdSessions: [session]
+                wirdSessions: [session],
+                userTags: [userTag],
+                tagAssignments: [tagAssignment],
+                audioAssets: [audioAsset]
             ),
             preferences
         )
@@ -417,6 +466,7 @@ struct AwradPersistenceTests {
         preferences: UserPreferences
     ) throws -> Data {
         let snapshot = AwradSnapshot(
+            schemaVersion: 5,
             dhikrs: state.dhikrs,
             goals: state.goals,
             countEntries: state.countEntries,

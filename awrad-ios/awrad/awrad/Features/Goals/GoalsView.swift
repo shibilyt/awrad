@@ -81,25 +81,31 @@ struct GoalsView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                header
+        VStack(spacing: 0) {
+            header
+                .padding(.horizontal, 20)
+                .padding(.top, 12)
+                .padding(.bottom, 14)
+                .background(AwradTheme.background)
 
-                if store.goals.isEmpty {
-                    emptyState
-                } else {
-                    GoalSection(title: "Today's goals", kind: .today, goals: sections.today, tab: .goals)
-                    GoalSection(title: "Upcoming goals", kind: .upcoming, goals: sections.upcoming, tab: .goals)
-                    GoalSection(title: "Completed goals", kind: .completed, goals: sections.completed, tab: .goals)
-                    GoalSection(title: "Other goals", kind: .other, goals: sections.other, tab: .goals)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    if store.goals.isEmpty {
+                        emptyState
+                    } else {
+                        GoalSection(title: "Today's goals", kind: .today, goals: sections.today, tab: .goals)
+                        GoalSection(title: "Upcoming goals", kind: .upcoming, goals: sections.upcoming, tab: .goals)
+                        GoalSection(title: "Completed goals", kind: .completed, goals: sections.completed, tab: .goals)
+                        GoalSection(title: "Other goals", kind: .other, goals: sections.other, tab: .goals)
+                    }
                 }
+                .padding(20)
+                .padding(.bottom, 96)
             }
-            .padding(20)
-            .padding(.bottom, 96)
-        }
-        .refreshable {
-            guard services.auth.isLoggedIn else { return }
-            await services.progressSync.synchronize(store: store)
+            .refreshable {
+                guard services.auth.isLoggedIn else { return }
+                await services.progressSync.synchronize(store: store)
+            }
         }
         .background(AwradTheme.background)
         .navigationTitle("")

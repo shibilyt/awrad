@@ -181,6 +181,147 @@
         "error": "sequence_gap",
         "expected_sequence": "48"
       }
+    },
+    {
+      "name": "dhikr_tag_upsert_batch",
+      "definition": "command_batch",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": [
+            "count_ledger",
+            "entity_occ",
+            "materialized_transfers",
+            "dhikr_tags_v1"
+          ]
+        },
+        "installation_id": "10000000-0000-4000-8000-000000000001",
+        "commands": [
+          {
+            "type": "entity_upsert",
+            "command_id": "20000000-0000-4000-8000-000000000010",
+            "actor_id": "30000000-0000-4000-8000-000000000001",
+            "actor_sequence": "60",
+            "entity_type": "user_tag",
+            "entity_id": "70000000-0000-4000-8000-000000000001",
+            "base_version": "0",
+            "entity_incarnation": "1",
+            "proposed_document": {
+              "id": "70000000-0000-4000-8000-000000000001",
+              "name": "Before Sleep",
+              "normalized_name": "before sleep",
+              "created_at": "2026-07-24T10:00:00Z",
+              "updated_at": "2026-07-24T10:00:00Z"
+            }
+          },
+          {
+            "type": "entity_upsert",
+            "command_id": "20000000-0000-4000-8000-000000000011",
+            "actor_id": "30000000-0000-4000-8000-000000000001",
+            "actor_sequence": "61",
+            "entity_type": "dhikr_tag_assignment",
+            "entity_id": "80000000-0000-4000-8000-000000000001",
+            "base_version": "0",
+            "entity_incarnation": "1",
+            "proposed_document": {
+              "id": "80000000-0000-4000-8000-000000000001",
+              "tag_id": "70000000-0000-4000-8000-000000000001",
+              "dhikr_id": "c88b9491-40ad-4b42-a5b8-e07c4b4d31ef",
+              "created_at": "2026-07-24T10:00:00Z"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dhikr_tag_normalized_name_coalesce_receipt",
+      "definition": "command_batch_result",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": [
+            "count_ledger",
+            "entity_occ",
+            "materialized_transfers",
+            "dhikr_tags_v1"
+          ]
+        },
+        "receipts": [
+          {
+            "command_id": "20000000-0000-4000-8000-000000000012",
+            "status": "accepted",
+            "result_revision": "62",
+            "canonical_effect": {
+              "entity_type": "user_tag",
+              "entity_id": "70000000-0000-4000-8000-000000000001",
+              "entity_incarnation": "1",
+              "entity_version": "1",
+              "state": "active",
+              "document": {
+                "id": "70000000-0000-4000-8000-000000000001",
+                "name": "Before Sleep",
+                "normalized_name": "before sleep",
+                "created_at": "2026-07-24T10:00:00Z",
+                "updated_at": "2026-07-24T10:00:00Z"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "dhikr_tag_transfer_page",
+      "definition": "transfer_page",
+      "value": {
+        "header": {
+          "protocol_version": 1,
+          "progress_model_version": 1,
+          "capabilities": [
+            "count_ledger",
+            "entity_occ",
+            "materialized_transfers",
+            "dhikr_tags_v1"
+          ]
+        },
+        "transfer_id": "60000000-0000-4000-8000-000000000002",
+        "page": 1,
+        "checksum": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "records": [
+          {
+            "kind": "user_tag",
+            "id": "70000000-0000-4000-8000-000000000001",
+            "sync_revision": "10",
+            "payload": {
+              "entity_incarnation": "1",
+              "entity_version": "1",
+              "document": {
+                "id": "70000000-0000-4000-8000-000000000001",
+                "name": "Before Sleep",
+                "normalized_name": "before sleep",
+                "created_at": "2026-07-24T10:00:00Z",
+                "updated_at": "2026-07-24T10:00:00Z"
+              }
+            }
+          },
+          {
+            "kind": "dhikr_tag_assignment",
+            "id": "80000000-0000-4000-8000-000000000001",
+            "sync_revision": "11",
+            "payload": {
+              "entity_incarnation": "1",
+              "entity_version": "1",
+              "document": {
+                "id": "80000000-0000-4000-8000-000000000001",
+                "tag_id": "70000000-0000-4000-8000-000000000001",
+                "dhikr_id": "c88b9491-40ad-4b42-a5b8-e07c4b4d31ef",
+                "created_at": "2026-07-24T10:00:00Z"
+              }
+            }
+          }
+        ]
+      }
     }
   ]
 }

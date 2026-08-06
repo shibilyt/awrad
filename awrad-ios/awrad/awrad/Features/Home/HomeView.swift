@@ -314,29 +314,9 @@ struct HomeView: View {
     }
 
     private func rescheduleGoalRemindersAfterLocationChange() async {
-        let inputs = ReminderScheduleBuilder.goalInputs(
-            goals: store.goals,
-            dhikrs: store.dhikrs,
-            preferences: store.preferences,
-            prayerTimeService: services.prayerTimes
-        )
-        _ = await services.notifications.refreshScheduledReminders(
-            goalInputs: inputs,
-            dailyReminder: (
-                enabled: store.preferences.dailyReminderEnabled,
-                hour: store.preferences.reminderHour,
-                minute: store.preferences.reminderMinute,
-                language: store.preferences.appLanguage
-            ),
-            dailyRemembrance: (
-                enabled: store.preferences.dailyRemembranceEnabled,
-                language: store.preferences.appLanguage
-            ),
-            wirdInputs: ReminderScheduleBuilder.wirdInputs(
-                wirds: store.wirds,
-                preferences: store.preferences,
-                prayerTimeService: services.prayerTimes
-            )
+        _ = await services.refreshNotifications(
+            store: store,
+            change: .init(goalIDs: Set(store.goals.map(\.id)), reason: .preferenceMutation)
         )
     }
 
@@ -378,23 +358,13 @@ private struct HomeImageSet {
     let goalsImageName: String
 
     init(now: Date, prayerSummary: PrayerTimesSummary?, isDarkTheme: Bool) {
-        let isNight = Self.isNight(now: now, prayerSummary: prayerSummary)
         if isDarkTheme {
-            featuredImageName = isNight ? "home_featured_night" : "home_featured_dark_day"
-            goalsImageName = isNight ? "home_goals_night" : "home_goals_dark_day"
+            featuredImageName = "home_continue_minimal_dark"
+            goalsImageName = "home_goals_minimal_dark"
         } else {
-            featuredImageName = isNight ? "home_featured_light_night" : "home_featured_day"
-            goalsImageName = isNight ? "home_goals_light_night" : "home_goals_day"
+            featuredImageName = "home_continue_minimal_light"
+            goalsImageName = "home_goals_minimal_light"
         }
-    }
-
-    private static func isNight(now: Date, prayerSummary: PrayerTimesSummary?) -> Bool {
-        if let prayerSummary, prayerSummary.maghrib > prayerSummary.sunrise {
-            return !(now >= prayerSummary.sunrise && now < prayerSummary.maghrib)
-        }
-
-        let hour = Calendar.current.component(.hour, from: now)
-        return hour < 6 || hour >= 18
     }
 }
 
@@ -714,9 +684,9 @@ private struct FeaturedCollectionCard: View {
         case .asmaUlHusna:
             "collection_asma_ul_husna_\(suffix)"
         case .daily:
-            "collection_swalaths_\(suffix)"
-        case .swalaths:
             "collection_daily_essentials_\(suffix)"
+        case .swalaths:
+            "collection_swalaths_\(suffix)"
         case .dhikrs:
             "collection_dhikrs_\(suffix)"
         case .evening:

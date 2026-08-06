@@ -553,6 +553,7 @@ enum AwradSchemaV2: VersionedSchema {
         var pendingTransferChecksum: String?
         var pendingTransferRecordCount: Int?
         var initialImportCompleted: Bool
+        var dhikrTagsBootstrapCompleted: Bool
         var lastSyncAt: Date?
         var lastError: String?
 
@@ -576,6 +577,7 @@ enum AwradSchemaV2: VersionedSchema {
             pendingTransferChecksum: String? = nil,
             pendingTransferRecordCount: Int? = nil,
             initialImportCompleted: Bool = false,
+            dhikrTagsBootstrapCompleted: Bool = false,
             lastSyncAt: Date? = nil,
             lastError: String? = nil
         ) {
@@ -598,6 +600,7 @@ enum AwradSchemaV2: VersionedSchema {
             self.pendingTransferChecksum = pendingTransferChecksum
             self.pendingTransferRecordCount = pendingTransferRecordCount
             self.initialImportCompleted = initialImportCompleted
+            self.dhikrTagsBootstrapCompleted = dhikrTagsBootstrapCompleted
             self.lastSyncAt = lastSyncAt
             self.lastError = lastError
         }
@@ -814,12 +817,112 @@ enum AwradSchemaV2: VersionedSchema {
 
 enum AwradSchemaMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [AwradSchemaV1.self, AwradSchemaV2.self]
+        [AwradSchemaV1.self, AwradSchemaV2.self, AwradSchemaV3.self]
     }
 
     static var stages: [MigrationStage] {
         [
             .lightweight(fromVersion: AwradSchemaV1.self, toVersion: AwradSchemaV2.self),
+            .lightweight(fromVersion: AwradSchemaV2.self, toVersion: AwradSchemaV3.self),
         ]
+    }
+}
+
+/// Adds local user-tag, assignment, and owned-audio metadata. Product and sync
+/// rows keep their earlier model identities so this remains a lightweight
+/// forward-only migration; owned audio bytes stay on disk outside SwiftData.
+enum AwradSchemaV3: VersionedSchema {
+    static var versionIdentifier = Schema.Version(3, 0, 0)
+
+    static var models: [any PersistentModel.Type] {
+        AwradSchemaV2.models + [
+            UserTagRecord.self,
+            DhikrTagAssignmentRecord.self,
+            DhikrAudioAssetRecord.self,
+        ]
+    }
+
+    @Model
+    final class UserTagRecord {
+        @Attribute(.unique) var id: String
+        var name: String
+        @Attribute(.unique) var normalizedName: String
+        var createdAt: Date
+        var updatedAt: Date
+
+        init(
+            id: String,
+            name: String,
+            normalizedName: String,
+            createdAt: Date,
+            updatedAt: Date
+        ) {
+            self.id = id
+            self.name = name
+            self.normalizedName = normalizedName
+            self.createdAt = createdAt
+            self.updatedAt = updatedAt
+        }
+    }
+
+    @Model
+    final class DhikrTagAssignmentRecord {
+        @Attribute(.unique) var id: String
+        var tagID: String
+        var dhikrID: String
+        var createdAt: Date
+        @Attribute(.unique) var pairKey: String
+
+        init(
+            id: String,
+            tagID: String,
+            dhikrID: String,
+            createdAt: Date
+        ) {
+            self.id = id
+            self.tagID = tagID
+            self.dhikrID = dhikrID
+            self.createdAt = createdAt
+            self.pairKey = Self.makePairKey(tagID: tagID, dhikrID: dhikrID)
+        }
+
+        static func makePairKey(tagID: String, dhikrID: String) -> String {
+            "\(tagID)|\(dhikrID)"
+        }
+    }
+
+    @Model
+    final class DhikrAudioAssetRecord {
+        @Attribute(.unique) var id: String
+        @Attribute(.unique) var dhikrID: String
+        @Attribute(.unique) var relativeFileName: String
+        var mimeType: String
+        var byteSize: Int64
+        var durationMs: Int64
+        var sha256: String
+        var source: String
+        var createdAt: Date
+
+        init(
+            id: String,
+            dhikrID: String,
+            relativeFileName: String,
+            mimeType: String,
+            byteSize: Int64,
+            durationMs: Int64,
+            sha256: String,
+            source: String,
+            createdAt: Date
+        ) {
+            self.id = id
+            self.dhikrID = dhikrID
+            self.relativeFileName = relativeFileName
+            self.mimeType = mimeType
+            self.byteSize = byteSize
+            self.durationMs = durationMs
+            self.sha256 = sha256
+            self.source = source
+            self.createdAt = createdAt
+        }
     }
 }

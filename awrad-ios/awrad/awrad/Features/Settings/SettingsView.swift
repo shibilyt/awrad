@@ -20,6 +20,7 @@ enum SettingsParitySection: String, CaseIterable {
 struct SettingsView: View {
     @Environment(AwradStore.self) private var store
     @Environment(AppServices.self) private var services
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @Environment(\.scenePhase) private var scenePhase
     @State private var backupDocument: AwradBackupDocument?
@@ -44,7 +45,8 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section(SettingsParitySection.profile.title) {
+            Group {
+                Section(SettingsParitySection.profile.title) {
                 ProfileNameEditor(
                     name: store.preferences.userName,
                     isEditing: $isEditingProfileName,
@@ -126,6 +128,14 @@ struct SettingsView: View {
                     SettingsPreferenceLabel(
                         title: "Daily remembrance",
                         subtitle: "A devotional reminder every day at 9:00 AM."
+                    )
+                }
+                    .tint(AwradTheme.sage)
+
+                Toggle(isOn: urgencyRemindersBinding) {
+                    SettingsPreferenceLabel(
+                        title: "urgency.reminders.title",
+                        subtitle: "urgency.reminders.subtitle"
                     )
                 }
                     .tint(AwradTheme.sage)
@@ -301,21 +311,31 @@ struct SettingsView: View {
                 }
             }
 
-            Section(SettingsParitySection.about.title) {
-                HStack(spacing: 12) {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(AwradTheme.sage)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(appDisplayName)
-                            .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
-                        Text(AwradLocalizer.format("Version %@", language: language, appVersion))
-                            .font(AwradTheme.bodyFont(.footnote))
-                            .foregroundStyle(.secondary)
+                Section(SettingsParitySection.about.title) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "info.circle")
+                            .foregroundStyle(AwradTheme.sage)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(appDisplayName)
+                                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                            Text(AwradLocalizer.format("Version %@", language: language, appVersion))
+                                .font(AwradTheme.bodyFont(.footnote))
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             }
+            .listRowBackground(AwradTheme.surface)
         }
+        .scrollContentBackground(.hidden)
+        .background(AwradTheme.background)
         .navigationTitle("Settings")
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                settingsBackButton
+            }
+        }
         .task {
             await refreshNotificationAuthorization()
             refreshSyncHealth()
@@ -383,6 +403,36 @@ struct SettingsView: View {
                 Text(LocalizedStringKey(destructiveAction.messageKey))
             }
         }
+    }
+
+    @ViewBuilder
+    private var settingsBackButton: some View {
+        if #available(iOS 26.0, *) {
+            backButton
+                .buttonStyle(.glass)
+        } else {
+            backButton
+                .buttonStyle(.plain)
+                .background(.ultraThinMaterial, in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(.white.opacity(0.16), lineWidth: 0.75)
+                }
+                .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
+        }
+    }
+
+    private var backButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "chevron.backward")
+                .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                .foregroundStyle(AwradTheme.sage)
+                .frame(width: 38, height: 38)
+                .contentShape(Circle())
+        }
+        .accessibilityLabel("Back")
     }
 
     private var audioLibraryButtonTitle: String {
@@ -459,6 +509,10 @@ struct SettingsView: View {
         )
     }
 
+    private var urgencyRemindersBinding: Binding<Bool> {
+        Binding(get: { store.preferences.urgencyRemindersEnabled }, set: setUrgencyRemindersEnabled)
+    }
+
     private var notificationAuthorizationTitle: String {
         switch notificationAuthorizationState {
         case .notDetermined:
@@ -511,17 +565,10 @@ struct SettingsView: View {
         let previous = store.preferences.dailyReminderEnabled
         guard store.updatePreferences({ $0.dailyReminderEnabled = enabled }) else { return }
         Task {
-            let result = if enabled {
-                await services.notifications.scheduleDailyReminder(
-                    hour: store.preferences.reminderHour,
-                    minute: store.preferences.reminderMinute,
-                    language: store.preferences.appLanguage
-                )
-            } else {
-                services.notifications.cancelDailyReminder()
-            }
+            let result = await reconcileAllReminders()
             if !result.succeeded {
                 _ = store.updatePreferences { $0.dailyReminderEnabled = previous }
+                _ = await reconcileAllReminders()
                 showNotificationFailure(result) { setDailyReminderEnabled(enabled) }
             }
             await refreshNotificationAuthorization()
@@ -533,18 +580,47 @@ struct SettingsView: View {
         let previous = store.preferences.dailyRemembranceEnabled
         guard store.updatePreferences({ $0.dailyRemembranceEnabled = enabled }) else { return }
         Task {
-            let result = if enabled {
-                await services.notifications.scheduleDailyRemembrance(
-                    language: store.preferences.appLanguage
-                )
-            } else {
-                services.notifications.cancelDailyRemembrance()
-            }
+            let result = await reconcileAllReminders()
             if !result.succeeded {
                 _ = store.updatePreferences { $0.dailyRemembranceEnabled = previous }
+                _ = await reconcileAllReminders()
                 showNotificationFailure(result) { setDailyRemembranceEnabled(enabled) }
             }
             await refreshNotificationAuthorization()
+        }
+    }
+
+    private func setUrgencyRemindersEnabled(_ enabled: Bool) {
+        if enabled == store.preferences.urgencyRemindersEnabled {
+            guard enabled else { return }
+            retryUrgencyReminders()
+            return
+        }
+        guard store.updatePreferences({ $0.urgencyRemindersEnabled = enabled }) else { return }
+        Task {
+            let result = await services.refreshNotifications(
+                store: store,
+                change: .init(goalIDs: Set(store.goals.map(\.id)), reason: .preferenceMutation),
+                requestUrgencyAuthorization: enabled
+            )
+            await refreshNotificationAuthorization()
+            if !result.succeeded {
+                showNotificationFailure(result, retry: retryUrgencyReminders)
+            }
+        }
+    }
+
+    private func retryUrgencyReminders() {
+        Task {
+            let result = await services.refreshNotifications(
+                store: store,
+                change: .init(goalIDs: Set(store.goals.map(\.id)), reason: .preferenceMutation),
+                requestUrgencyAuthorization: true
+            )
+            await refreshNotificationAuthorization()
+            if !result.succeeded {
+                showNotificationFailure(result, retry: retryUrgencyReminders)
+            }
         }
     }
 
@@ -691,31 +767,7 @@ struct SettingsView: View {
     }
 
     private func reconcileAllReminders() async -> NotificationSchedulingResult {
-        let preferences = store.preferences
-        let inputs = ReminderScheduleBuilder.goalInputs(
-            goals: store.goals,
-            dhikrs: store.dhikrs,
-            preferences: preferences,
-            prayerTimeService: services.prayerTimes
-        )
-        return await services.notifications.refreshScheduledReminders(
-            goalInputs: inputs,
-            dailyReminder: (
-                enabled: preferences.dailyReminderEnabled,
-                hour: preferences.reminderHour,
-                minute: preferences.reminderMinute,
-                language: preferences.appLanguage
-            ),
-            dailyRemembrance: (
-                enabled: preferences.dailyRemembranceEnabled,
-                language: preferences.appLanguage
-            ),
-            wirdInputs: ReminderScheduleBuilder.wirdInputs(
-                wirds: store.wirds,
-                preferences: preferences,
-                prayerTimeService: services.prayerTimes
-            )
-        )
+        await services.refreshNotifications(store: store)
     }
 
     private func exportBackup() {
@@ -767,7 +819,7 @@ struct SettingsView: View {
         case .deleteAllGoals:
             guard store.deleteAllGoals() else { return }
             Task {
-                await services.notifications.cancelAllGoalReminders()
+                _ = await reconcileAllReminders()
             }
             showDataStatus(AwradLocalizer.localized("All goals deleted.", language: language))
         }

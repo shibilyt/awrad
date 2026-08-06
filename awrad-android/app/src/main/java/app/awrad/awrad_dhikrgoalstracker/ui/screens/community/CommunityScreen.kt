@@ -75,6 +75,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.awrad.awrad_dhikrgoalstracker.R
+import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradTopEdgeScrim
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualPrimaryButton
 import app.awrad.awrad_dhikrgoalstracker.ui.icons.phosphor.PhosphorRegular
@@ -146,7 +147,8 @@ fun CommunityScreen(
             }
         }
     }
-    BoxWithConstraints(
+    Box(modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(topBarScrollConnection)
@@ -250,6 +252,12 @@ fun CommunityScreen(
                     contentColor = MaterialTheme.colorScheme.onSurface,
                 )
             }
+        }
+        AwradTopEdgeScrim(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .zIndex(2f),
+        )
     }
 }
 

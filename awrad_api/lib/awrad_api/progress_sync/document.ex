@@ -15,6 +15,10 @@ defmodule AwradApi.ProgressSync.Document do
   @policy_keys ~w(minimum_count target_count maximum_count streak_threshold reminder_threshold completion_threshold cap_behavior)
   @recurrence_keys ~w(frequency calendar interval_days anchor_date month season_code weekdays month_days specific_dates)
   @categories ~w(morning evening after_salah forgiveness praise protection general swalaths asma_ul_husna ramadan quran)
+  @user_tag_keys ~w(id name normalized_name created_at updated_at)
+  @dhikr_tag_assignment_keys ~w(id tag_id dhikr_id created_at)
+  @max_tag_name_graphemes 40
+  @max_tag_name_bytes 128
 
   def validate("custom_dhikr", document, entity_id) do
     document = fill_nullable(document, ~w(catalog_key audio_url audio_file_name quran_ref))
@@ -74,7 +78,85 @@ defmodule AwradApi.ProgressSync.Document do
     end
   end
 
+  def validate("user_tag", document, entity_id) do
+    with :ok <- document_size(document),
+         :ok <- exact_keys(document, @user_tag_keys),
+         :ok <- uuid(value(document, "id"), entity_id),
+         {:ok, display, normalized} <- normalize_tag_name(value(document, "name")),
+         true <- value(document, "normalized_name") == normalized,
+         :ok <- timestamp(value(document, "created_at")),
+         :ok <- timestamp(value(document, "updated_at")) do
+      {:ok,
+       document
+       |> stringify_keys()
+       |> Map.put("name", display)
+       |> Map.put("normalized_name", normalized)}
+    else
+      _ -> {:error, :invalid_entity_document}
+    end
+  end
+
+  def validate("dhikr_tag_assignment", document, entity_id) do
+    with :ok <- document_size(document),
+         :ok <- exact_keys(document, @dhikr_tag_assignment_keys),
+         :ok <- uuid(value(document, "id"), entity_id),
+         :ok <- uuid(value(document, "tag_id")),
+         :ok <- uuid(value(document, "dhikr_id")),
+         :ok <- timestamp(value(document, "created_at")) do
+      {:ok, stringify_keys(document)}
+    else
+      _ -> {:error, :invalid_entity_document}
+    end
+  end
+
   def validate(_, _, _), do: {:error, :invalid_entity_document}
+
+  @doc """
+  Shared user-tag normalization.
+
+  Algorithm (locked by
+  `contracts/behavior-model/v1/fixtures/tag-normalization-contract.json`):
+
+  1. trim/collapse Unicode White_Space (`[[:space:]]`) to a single U+0020
+  2. NFC-normalize for display `name`
+  3. Unicode Default Case Fold (`:string.casefold/1`) then NFC for
+     `normalized_name`
+  """
+  def normalize_tag_name(raw) when is_binary(raw) do
+    display =
+      raw
+      |> String.trim()
+      |> String.replace(~r/[[:space:]]+/u, " ")
+      |> nfc()
+
+    with true <- is_binary(display),
+         true <- display != "",
+         true <- String.length(display) <= @max_tag_name_graphemes,
+         true <- byte_size(display) <= @max_tag_name_bytes,
+         normalized when is_binary(normalized) <- nfc(case_fold(display)) do
+      {:ok, display, normalized}
+    else
+      _ -> :error
+    end
+  end
+
+  def normalize_tag_name(_), do: :error
+
+  defp nfc(value) when is_binary(value) do
+    case :unicode.characters_to_nfc_binary(value) do
+      normalized when is_binary(normalized) -> normalized
+      _ -> :error
+    end
+  end
+
+  defp nfc(_), do: :error
+
+  defp case_fold(value) when is_binary(value) do
+    value
+    |> String.to_charlist()
+    |> :string.casefold()
+    |> List.to_string()
+  end
 
   defp slots(items, goal_id) when is_list(items) and length(items) <= 64 do
     reduce_unique(items, fn item ->

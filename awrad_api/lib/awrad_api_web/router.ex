@@ -37,6 +37,14 @@ defmodule AwradApiWeb.Router do
     get "/auth/verify-email/:token", EmailVerificationController, :verify
   end
 
+  # Unauthenticated liveness probe for the reverse proxy and container
+  # healthcheck. Kept out of every auth pipeline and free of database access.
+  scope "/", AwradApiWeb do
+    pipe_through :api
+
+    get "/up", HealthController, :show
+  end
+
   # Mobile operating systems fetch these unauthenticated JSON association files.
   scope "/.well-known", AwradApiWeb do
     pipe_through :api

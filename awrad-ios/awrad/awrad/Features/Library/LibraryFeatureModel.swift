@@ -3,6 +3,7 @@ import Foundation
 enum LibraryAudioAvailability: Equatable {
     case downloaded
     case streaming
+    case missingOwned
     case unavailable
 }
 
@@ -13,14 +14,29 @@ enum LibraryCatalogPolicy {
         _ dhikrs: [Dhikr],
         query: String,
         category: DhikrCategory?,
-        language: AppLanguage
+        language: AppLanguage,
+        collectionScope: LibraryCollectionScope = .all,
+        selectedTagIDs: Set<AwradID> = [],
+        tags: [UserTag] = [],
+        assignments: [DhikrTagAssignment] = []
     ) -> [Dhikr] {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        let tagsByID = Dictionary(uniqueKeysWithValues: tags.map { ($0.id, $0) })
+        let tagIDsByDhikr = Dictionary(grouping: assignments, by: \.dhikrID)
+            .mapValues { Set($0.map(\.tagID)) }
+
         let matches = dhikrs.filter { dhikr in
+            if collectionScope == .yourDhikrs, !dhikr.isCustom {
+                return false
+            }
             guard category == nil || dhikr.category == category else { return false }
+            if !selectedTagIDs.isEmpty {
+                let assigned = tagIDsByDhikr[dhikr.id] ?? []
+                guard selectedTagIDs.isSubset(of: assigned) else { return false }
+            }
             guard !trimmedQuery.isEmpty else { return true }
 
-            let searchableValues = [
+            var searchableValues = [
                 dhikr.title,
                 dhikr.transliteration,
                 dhikr.translation,
@@ -28,6 +44,13 @@ enum LibraryCatalogPolicy {
                 dhikr.displayTitle(language: language),
                 dhikr.displayTranslation(language: language),
             ]
+            if let assignedTagIDs = tagIDsByDhikr[dhikr.id] {
+                for tagID in assignedTagIDs {
+                    if let tag = tagsByID[tagID] {
+                        searchableValues.append(tag.name)
+                    }
+                }
+            }
             return searchableValues.contains {
                 $0.localizedCaseInsensitiveContains(trimmedQuery)
             }
@@ -54,6 +77,37 @@ enum LibraryCatalogPolicy {
             }
             return lhs.id.uuidString < rhs.id.uuidString
         }
+    }
+
+    enum OwnedAudioAvailability: Equatable {
+        case available
+        case missing
+    }
+
+    static func ownedAudioAvailability(
+        asset: DhikrAudioAsset?,
+        resolvePlayableURL: (DhikrAudioAsset) -> URL?
+    ) -> OwnedAudioAvailability? {
+        guard let asset else { return nil }
+        if resolvePlayableURL(asset) != nil {
+            return .available
+        }
+        return .missing
+    }
+
+    static func resolvedLibraryAudioAvailability(
+        dhikr: Dhikr,
+        ownedAsset: DhikrAudioAsset?,
+        resolveOwnedURL: (DhikrAudioAsset) -> URL?,
+        catalogLocalExists: Bool
+    ) -> LibraryAudioAvailability {
+        if let owned = ownedAudioAvailability(asset: ownedAsset, resolvePlayableURL: resolveOwnedURL) {
+            switch owned {
+            case .available: return .downloaded
+            case .missing: return .missingOwned
+            }
+        }
+        return audioAvailability(for: dhikr, localAudioExists: catalogLocalExists)
     }
 
     static func audioAvailability(for dhikr: Dhikr, localAudioExists: Bool) -> LibraryAudioAvailability {
@@ -127,5 +181,39 @@ enum LibraryAudioCache {
     static func removeDownloadedFile(at url: URL) throws {
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         try FileManager.default.removeItem(at: url)
+    }
+}
+
+enum LibraryTagFilterControls {
+    static func toggle(_ tagID: AwradID, in filters: inout LibraryCatalogFilters) {
+        if filters.selectedTagIDs.contains(tagID) {
+            filters.selectedTagIDs.remove(tagID)
+        } else {
+            filters.selectedTagIDs.insert(tagID)
+        }
+    }
+}
+
+enum LibraryFilterAccessibility {
+    static func summary(filters: LibraryCatalogFilters, tags: [UserTag]) -> String {
+        var parts: [String] = []
+        if filters.collectionScope == .yourDhikrs {
+            parts.append("Your Dhikrs")
+        }
+        if let category = filters.category {
+            parts.append(category.title)
+        }
+        let selectedNames = tags
+            .filter { filters.selectedTagIDs.contains($0.id) }
+            .map(\.name)
+            .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        if !selectedNames.isEmpty {
+            parts.append(selectedNames.joined(separator: ", "))
+        }
+        let query = filters.query.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !query.isEmpty {
+            parts.append(query)
+        }
+        return parts.isEmpty ? "No filters" : parts.joined(separator: " · ")
     }
 }

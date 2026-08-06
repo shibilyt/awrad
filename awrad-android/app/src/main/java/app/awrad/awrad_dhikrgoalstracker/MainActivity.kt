@@ -6,15 +6,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsTopHeight
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.DismissibleNavigationDrawer
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.rememberDrawerState
@@ -38,7 +32,6 @@ import app.awrad.awrad_dhikrgoalstracker.ui.navigation.AwradNavGraph
 import app.awrad.awrad_dhikrgoalstracker.ui.navigation.navigateSafely
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.community.CommunityDrawer
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.AwradDhikrGoalsTrackerTheme
-import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import app.awrad.awrad_dhikrgoalstracker.data.sync.ForegroundProgressSyncCoordinator
@@ -132,7 +125,6 @@ fun AwradApp(
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
-            val isOnboardingFlow = !state.isOnboarded || currentRoute == AwradDestination.Onboarding.route
 
             // Navigate to counting screen on every notification tap (cold or hot)
             LaunchedEffect(Unit) {
@@ -218,16 +210,6 @@ fun AwradApp(
                         )
                     }
 
-                    if (!isOnboardingFlow) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .fillMaxWidth()
-                                .windowInsetsTopHeight(WindowInsets.statusBars)
-                                .background(statusBarContainerColor(currentRoute)),
-                        )
-                    }
-
                     if (showBottomBar) {
                         AwradBottomBar(
                             navController = navController,
@@ -240,33 +222,3 @@ fun AwradApp(
         }
     }
 }
-
-private val surfaceStatusBarRoutes = setOf(
-    AwradDestination.Home.route,
-    AwradDestination.Goals.route,
-    AwradDestination.Library.route,
-    AwradDestination.CreateGoal.route,
-    AwradDestination.Category.route,
-    AwradDestination.Counting.route,
-    AwradDestination.GoalDetail.route,
-    AwradDestination.EditGoal.route,
-    AwradDestination.WirdList.route,
-    AwradDestination.CreateDhikr.route,
-    AwradDestination.Login.route,
-    AwradDestination.Signup.route,
-    AwradDestination.ForgotPassword.route,
-    AwradDestination.VerifyEmail.route,
-)
-
-private fun String?.isSurfaceStatusBarRoute(): Boolean =
-    this in surfaceStatusBarRoutes ||
-        this?.startsWith("create_goal") == true ||
-        this?.startsWith("create_dhikr") == true
-
-@Composable
-private fun statusBarContainerColor(route: String?) =
-    if (route.isSurfaceStatusBarRoute() && !isAwradDarkTheme() && route != AwradDestination.Counting.route) {
-        MaterialTheme.colorScheme.surface
-    } else {
-        MaterialTheme.colorScheme.background
-    }

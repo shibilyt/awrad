@@ -19,6 +19,7 @@ This is the navigation layer for repository knowledge. Keep the root [`AGENTS.md
 | Bundled Wird model v1 and generated identities | [`contracts/wird-model/v1/`](../contracts/wird-model/v1/) |
 | iOS–Android parity delivery ledger | [`ios-android-parity-ledger.md`](ios-android-parity-ledger.md) |
 | iOS parity runtime/debugger review | [`ios-parity-debugger-review.md`](ios-parity-debugger-review.md) |
+| Cross-platform urgency notification engine | [`notification-obligation-engine.md`](notification-obligation-engine.md) |
 
 ## Project guides
 

@@ -135,7 +135,7 @@
         "command_id": { "$ref": "#/definitions/uuid_v4" },
         "actor_id": { "$ref": "#/definitions/uuid_v4" },
         "actor_sequence": { "$ref": "#/definitions/positive_int64" },
-        "entity_type": { "enum": ["custom_dhikr", "goal"] },
+        "entity_type": { "enum": ["custom_dhikr", "goal", "user_tag", "dhikr_tag_assignment"] },
         "entity_id": { "$ref": "#/definitions/uuid_v4" },
         "base_version": { "$ref": "#/definitions/non_negative_int64" },
         "entity_incarnation": { "$ref": "#/definitions/positive_int64" },
@@ -154,7 +154,7 @@
         "command_id": { "$ref": "#/definitions/uuid_v4" },
         "actor_id": { "$ref": "#/definitions/uuid_v4" },
         "actor_sequence": { "$ref": "#/definitions/positive_int64" },
-        "entity_type": { "enum": ["custom_dhikr", "goal"] },
+        "entity_type": { "enum": ["custom_dhikr", "goal", "user_tag", "dhikr_tag_assignment"] },
         "entity_id": { "$ref": "#/definitions/uuid_v4" },
         "base_version": { "$ref": "#/definitions/non_negative_int64" },
         "entity_incarnation": { "$ref": "#/definitions/positive_int64" }
@@ -295,7 +295,7 @@
       "type": "object",
       "required": ["kind", "id", "sync_revision", "payload"],
       "properties": {
-        "kind": { "enum": ["custom_dhikr", "goal", "count_projection", "conflict", "tombstone", "deletion_fence"] },
+        "kind": { "enum": ["custom_dhikr", "goal", "user_tag", "dhikr_tag_assignment", "count_projection", "conflict", "tombstone", "deletion_fence"] },
         "id": { "$ref": "#/definitions/uuid_v4" },
         "sync_revision": { "$ref": "#/definitions/non_negative_int64" },
         "payload": { "type": "object" }

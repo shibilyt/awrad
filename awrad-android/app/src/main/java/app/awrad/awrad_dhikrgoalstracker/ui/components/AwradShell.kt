@@ -10,8 +10,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -27,6 +32,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
@@ -36,6 +42,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.Lifecycle
@@ -65,7 +72,7 @@ fun AwradStatusBarStyle(
 
     SideEffect {
         val window = view.context.findActivity()?.window ?: return@SideEffect
-        window.statusBarColor = color.toArgb()
+        window.statusBarColor = Color.Transparent.toArgb()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isStatusBarContrastEnforced = false
         }
@@ -81,6 +88,33 @@ fun AwradStatusBarStyle(
             }
         }
     }
+}
+
+@Composable
+fun AwradTopEdgeScrim(
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.background,
+    fadeExtentBelowStatusBar: Dp = 48.dp,
+) {
+    val statusBarInset = WindowInsets.statusBars
+        .asPaddingValues()
+        .calculateTopPadding()
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(statusBarInset + fadeExtentBelowStatusBar)
+            .background(
+                Brush.verticalGradient(
+                    colorStops = arrayOf(
+                        0f to color,
+                        0.35f to color,
+                        0.72f to color.copy(alpha = 0.72f),
+                        1f to Color.Transparent,
+                    ),
+                ),
+            ),
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

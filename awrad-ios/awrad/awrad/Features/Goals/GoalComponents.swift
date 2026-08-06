@@ -377,36 +377,16 @@ struct GoalSummaryRow: View {
 
     private func archiveGoal() {
         Task {
-            _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
-            guard store.pauseGoal(goal.id) else {
-                _ = await schedule(goal)
-                return
-            }
+            guard store.pauseGoal(goal.id) else { return }
+            _ = await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
         }
     }
 
     private func deleteGoal() {
         Task {
-            _ = await services.notifications.cancelGoalReminders(goalID: goal.id)
-            guard store.deleteGoal(goal.id) else {
-                _ = await schedule(goal)
-                return
-            }
+            guard store.deleteGoal(goal.id) else { return }
+            _ = await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
         }
-    }
-
-    private func schedule(_ candidate: Goal) async -> NotificationSchedulingResult {
-        let prayerTimes = ReminderScheduleBuilder.prayerSummaries(
-            for: candidate,
-            preferences: store.preferences,
-            prayerTimeService: services.prayerTimes
-        )
-        return await services.notifications.scheduleGoalReminders(
-            for: candidate,
-            dhikrTitle: store.title(for: candidate),
-            language: language,
-            prayerTimes: prayerTimes
-        )
     }
 }
 

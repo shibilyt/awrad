@@ -96,7 +96,8 @@ defmodule AwradApiWeb.Api.ProgressSyncController do
            Transfer.start(conn.assigns.current_scope, kind, params["cursor"],
              allow_unchanged:
                kind == "delta" and
-                 "unchanged_delta" in params["header"]["capabilities"]
+                 "unchanged_delta" in params["header"]["capabilities"],
+             capabilities: params["header"]["capabilities"]
            ) do
       json(conn, Map.put(response, "header", response_header()))
     else
@@ -219,7 +220,8 @@ defmodule AwradApiWeb.Api.ProgressSyncController do
         "count_ledger",
         "entity_occ",
         "materialized_transfers",
-        "unchanged_delta"
+        "unchanged_delta",
+        "dhikr_tags_v1"
       ]
     }
   end
