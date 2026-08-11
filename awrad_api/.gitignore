@@ -25,3 +25,12 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 awrad_api-*.tar
 
+# Compiled/digested static assets produced by `mix assets.deploy` (phx.digest).
+# The plain source copies (app.css, app.js, robots.txt, favicon.ico) stay tracked.
+/priv/static/**/*.gz
+/priv/static/**/*-*.css
+/priv/static/**/*-*.js
+/priv/static/cache_manifest.json
+/priv/static/favicon-*.ico
+/priv/static/robots-*.txt
+
