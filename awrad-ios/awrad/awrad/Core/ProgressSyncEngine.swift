@@ -1422,7 +1422,21 @@ enum ProgressSyncRemoteApplier {
                 FetchDescriptor<Domain.DhikrRecord>(predicate: #Predicate { $0.id == id })
             )
             existing.forEach(context.delete)
+            try context.fetch(
+                FetchDescriptor<AwradSchemaV4.DhikrCategoryAssignmentRecord>(
+                    predicate: #Predicate { $0.dhikrID == id }
+                )
+            ).forEach(context.delete)
             context.insert(try AwradPersistenceMapper.dhikrRecord(from: dhikr))
+            for (sortOrder, category) in dhikr.categories.enumerated() {
+                context.insert(
+                    AwradSchemaV4.DhikrCategoryAssignmentRecord(
+                        dhikrID: id,
+                        category: category.rawValue,
+                        sortOrder: sortOrder
+                    )
+                )
+            }
         case "goal":
             var goal = try decoder.decode(GoalV1.self, from: documentData).nativeModel()
             let goalID = id
@@ -1565,6 +1579,9 @@ enum ProgressSyncRemoteApplier {
         assets.forEach(context.delete)
         try context.fetch(
             FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>(predicate: #Predicate { $0.dhikrID == id })
+        ).forEach(context.delete)
+        try context.fetch(
+            FetchDescriptor<AwradSchemaV4.DhikrCategoryAssignmentRecord>(predicate: #Predicate { $0.dhikrID == id })
         ).forEach(context.delete)
         try context.fetch(
             FetchDescriptor<Domain.DhikrRecord>(predicate: #Predicate { $0.id == id })

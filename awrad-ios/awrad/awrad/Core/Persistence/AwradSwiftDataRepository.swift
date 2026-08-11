@@ -69,7 +69,8 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
             count(Schema.WirdSessionRecord.self) == 0 &&
             count(AwradSchemaV3.UserTagRecord.self) == 0 &&
             count(AwradSchemaV3.DhikrTagAssignmentRecord.self) == 0 &&
-            count(AwradSchemaV3.DhikrAudioAssetRecord.self) == 0
+            count(AwradSchemaV3.DhikrAudioAssetRecord.self) == 0 &&
+            count(AwradSchemaV4.DhikrCategoryAssignmentRecord.self) == 0
     }
 
     func replaceAll(with state: AwradRepositoryState) throws {
@@ -105,8 +106,22 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
     // MARK: DhikrRepository
 
     func fetchDhikrs() throws -> [Dhikr] {
-        try modelContext.fetch(FetchDescriptor<Schema.DhikrRecord>())
-            .map(AwradPersistenceMapper.dhikr)
+        let categoryRows = Dictionary(
+            grouping: try modelContext.fetch(FetchDescriptor<AwradSchemaV4.DhikrCategoryAssignmentRecord>()),
+            by: \.dhikrID
+        )
+        return try modelContext.fetch(FetchDescriptor<Schema.DhikrRecord>())
+            .map { record in
+                var dhikr = try AwradPersistenceMapper.dhikr(from: record)
+                let stored = categoryRows[record.id, default: []]
+                    .sorted { $0.sortOrder < $1.sortOrder }
+                    .compactMap { DhikrCategory(rawValue: $0.category) }
+                dhikr.categories = [dhikr.category] + stored.filter { $0 != dhikr.category }
+                    .reduce(into: []) { result, value in
+                        if !result.contains(value) { result.append(value) }
+                    }
+                return dhikr
+            }
             .sorted {
                 $0.sortOrder == $1.sortOrder
                     ? AwradPersistenceMapper.idString($0.id) < AwradPersistenceMapper.idString($1.id)
@@ -129,6 +144,7 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
         try performTransaction {
             try deleteDhikrRecordOnly(id: AwradPersistenceMapper.idString(dhikr.id))
             modelContext.insert(try AwradPersistenceMapper.dhikrRecord(from: dhikr))
+            insertCategoryAssignments(for: dhikr)
         }
     }
 
@@ -449,6 +465,7 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
     private func insert(_ state: AwradRepositoryState) throws {
         for dhikr in state.dhikrs {
             modelContext.insert(try AwradPersistenceMapper.dhikrRecord(from: dhikr))
+            insertCategoryAssignments(for: dhikr)
         }
         for goal in state.goals {
             try insert(goal)
@@ -508,6 +525,10 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
     }
 
     private func deleteDhikrRecordOnly(id targetID: String) throws {
+        try deleteMatching(
+            AwradSchemaV4.DhikrCategoryAssignmentRecord.self,
+            predicate: #Predicate { $0.dhikrID == targetID }
+        )
         let records = try modelContext.fetch(
             FetchDescriptor<Schema.DhikrRecord>(predicate: #Predicate { $0.id == targetID })
         )
@@ -541,6 +562,7 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
         try delete(Schema.SeasonTemplateRecord.self)
         try delete(Schema.WirdSessionRecord.self)
         try delete(Schema.WirdRecord.self)
+        try delete(AwradSchemaV4.DhikrCategoryAssignmentRecord.self)
         try delete(AwradSchemaV3.DhikrTagAssignmentRecord.self)
         try delete(AwradSchemaV3.UserTagRecord.self)
         try delete(AwradSchemaV3.DhikrAudioAssetRecord.self)
@@ -554,6 +576,19 @@ final class SwiftDataAwradRepository: AwradPersistenceRepository {
         try delete(SyncSchema.SyncInboxPageRecord.self)
         try delete(SyncSchema.SyncConflictRecord.self)
         try delete(SyncSchema.SyncStateRecord.self)
+    }
+
+    private func insertCategoryAssignments(for dhikr: Dhikr) {
+        let dhikrID = AwradPersistenceMapper.idString(dhikr.id)
+        for (sortOrder, category) in dhikr.categories.enumerated() {
+            modelContext.insert(
+                AwradSchemaV4.DhikrCategoryAssignmentRecord(
+                    dhikrID: dhikrID,
+                    category: category.rawValue,
+                    sortOrder: sortOrder
+                )
+            )
+        }
     }
 
     private func count<T: PersistentModel>(_ type: T.Type) throws -> Int {

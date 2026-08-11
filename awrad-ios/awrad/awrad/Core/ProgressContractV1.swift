@@ -25,13 +25,14 @@ struct DhikrV1: Codable, Equatable {
     var audioURL: URL?
     var audioFileName: String?
     var category: String
+    var categories: [String]?
     var audioCountPerPlay: Int
     var sortOrder: Int
     var quranRef: QuranRefV1?
     var benefits: [String]
 
     enum CodingKeys: String, CodingKey {
-        case id, title, arabic, transliteration, translation, category, benefits
+        case id, title, arabic, transliteration, translation, category, categories, benefits
         case catalogKey = "catalog_key"
         case isCustom = "is_custom"
         case audioURL = "audio_url"
@@ -211,6 +212,7 @@ extension DhikrV1 {
         try container.encode(audioURL, forKey: .audioURL)
         try container.encode(audioFileName, forKey: .audioFileName)
         try container.encode(category, forKey: .category)
+        try container.encode(categories, forKey: .categories)
         try container.encode(audioCountPerPlay, forKey: .audioCountPerPlay)
         try container.encode(sortOrder, forKey: .sortOrder)
         try container.encode(quranRef, forKey: .quranRef)
@@ -429,10 +431,14 @@ extension NativeProgressStateV1 {
 private extension DhikrV1 {
     func native() throws -> Dhikr {
         let category = try DhikrCategory.contractValue(category)
+        let categories = try (categories ?? [self.category]).map(DhikrCategory.contractValue)
+        guard categories.first == category, !categories.isEmpty, Set(categories).count == categories.count else {
+            throw ContractV1Error.invalidEnum("categories")
+        }
         return Dhikr(
             id: try ContractV1UUID.value(id), catalogKey: catalogKey, title: title, arabic: arabic,
             transliteration: transliteration, translation: translation, audioURL: audioURL,
-            audioFileName: audioFileName, category: category, isCustom: isCustom,
+            audioFileName: audioFileName, category: category, categories: categories, isCustom: isCustom,
             audioCountPerPlay: audioCountPerPlay, sortOrder: sortOrder,
             quranRef: quranRef.map { QuranRef(surah: $0.surah, ayahStart: $0.ayahStart, ayahEnd: $0.ayahEnd) },
             benefits: benefits
@@ -449,6 +455,7 @@ private extension DhikrV1 {
             title: value.title, arabic: value.arabic, transliteration: value.transliteration,
             translation: value.translation, audioURL: value.isCustom ? nil : value.audioURL,
             audioFileName: value.isCustom ? nil : value.audioFileName, category: value.category.contractWire,
+            categories: value.categories.map(\.contractWire),
             audioCountPerPlay: value.audioCountPerPlay, sortOrder: value.sortOrder,
             quranRef: value.quranRef.map { QuranRefV1(surah: $0.surah, ayahStart: $0.ayahStart, ayahEnd: $0.ayahEnd) },
             benefits: value.benefits

@@ -89,7 +89,7 @@ enum LegacySnapshotMigrationError: LocalizedError, Equatable {
         case .corruptSnapshot:
             "The legacy Awrad snapshot is not valid JSON or cannot be decoded."
         case .unsupportedSchemaVersion(let version):
-            "Legacy snapshot schema \(version) cannot be imported; schema 5 is required."
+            "Legacy snapshot schema \(version) cannot be imported; schemas \(AwradSnapshot.minimumCompatibleSchemaVersion) through \(AwradSnapshot.currentSchemaVersion) are supported."
         case .validationFailed(let issues):
             "The legacy Awrad snapshot failed validation: \(issues.joined(separator: "; "))"
         case .destinationNotEmpty:
@@ -131,7 +131,8 @@ final class LegacySnapshotMigrationStateStore {
 
 @MainActor
 final class LegacySnapshotMigrationCoordinator {
-    static let supportedSchemaVersion = 5
+    static let supportedSchemaVersions =
+        AwradSnapshot.minimumCompatibleSchemaVersion...AwradSnapshot.currentSchemaVersion
 
     private let repository: any AwradPersistenceRepository
     private let preferenceStore: any PreferenceStore
@@ -168,7 +169,9 @@ final class LegacySnapshotMigrationCoordinator {
             countEntries: snapshot.countEntries,
             seasonTemplates: [],
             wirds: snapshot.wirds,
-            wirdSessions: snapshot.wirdSessions
+            wirdSessions: snapshot.wirdSessions,
+            userTags: snapshot.userTags,
+            tagAssignments: snapshot.tagAssignments
         )
         do {
             try AwradPersistenceValidator.validate(state: state)
@@ -253,7 +256,7 @@ final class LegacySnapshotMigrationCoordinator {
             throw LegacySnapshotMigrationError.corruptSnapshot
         }
         let version = dictionary["schemaVersion"] as? Int ?? 1
-        guard version == Self.supportedSchemaVersion else {
+        guard Self.supportedSchemaVersions.contains(version) else {
             throw LegacySnapshotMigrationError.unsupportedSchemaVersion(version)
         }
         do {

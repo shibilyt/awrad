@@ -12,6 +12,7 @@ object CustomDhikrFactory {
         transliteration: String,
         translation: String,
         category: DhikrCategory,
+        categories: List<DhikrCategory> = listOf(category),
         audioCountPerPlay: Int = 1,
         id: AwradId = newAwradId(),
     ): Dhikr {
@@ -28,6 +29,7 @@ object CustomDhikrFactory {
             audioUrl = null,
             audioFileName = null,
             category = category,
+            categories = categories,
             isCustom = true,
             audioCountPerPlay = audioCountPerPlay,
         )

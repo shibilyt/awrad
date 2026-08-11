@@ -528,6 +528,7 @@ enum AppRoute: Hashable, Codable {
     case createDhikr
     case editDhikr(AwradID)
     case category(DhikrCategory)
+    case libraryCollection(LibraryFeaturedCollection)
     case dhikrDetail(AwradID)
     case quranDhikrReader(dhikrID: AwradID, goalID: AwradID?, slotID: AwradID?)
     case wirdList
@@ -547,6 +548,7 @@ struct Dhikr: Identifiable, Codable, Hashable {
     var audioURL: URL?
     var audioFileName: String?
     var category: DhikrCategory
+    var categories: [DhikrCategory]
     var isDownloaded: Bool = false
     var isCustom: Bool = false
     var audioCountPerPlay: Int = 1
@@ -564,6 +566,7 @@ struct Dhikr: Identifiable, Codable, Hashable {
         audioURL: URL? = nil,
         audioFileName: String? = nil,
         category: DhikrCategory,
+        categories: [DhikrCategory]? = nil,
         isDownloaded: Bool = false,
         isCustom: Bool = false,
         audioCountPerPlay: Int = 1,
@@ -580,6 +583,7 @@ struct Dhikr: Identifiable, Codable, Hashable {
         self.audioURL = audioURL
         self.audioFileName = audioFileName
         self.category = category
+        self.categories = Self.normalizedCategories(primary: category, values: categories)
         self.isDownloaded = isDownloaded
         self.isCustom = isCustom
         self.audioCountPerPlay = audioCountPerPlay
@@ -598,6 +602,7 @@ struct Dhikr: Identifiable, Codable, Hashable {
         case audioURL
         case audioFileName
         case category
+        case categories
         case isDownloaded
         case isCustom
         case audioCountPerPlay
@@ -617,12 +622,25 @@ struct Dhikr: Identifiable, Codable, Hashable {
         audioURL = try container.decodeIfPresent(URL.self, forKey: .audioURL)
         audioFileName = try container.decodeIfPresent(String.self, forKey: .audioFileName)
         category = try container.decodeIfPresent(DhikrCategory.self, forKey: .category) ?? .general
+        categories = Self.normalizedCategories(
+            primary: category,
+            values: try container.decodeIfPresent([DhikrCategory].self, forKey: .categories)
+        )
         isDownloaded = try container.decodeIfPresent(Bool.self, forKey: .isDownloaded) ?? false
         isCustom = try container.decodeIfPresent(Bool.self, forKey: .isCustom) ?? false
         audioCountPerPlay = try container.decodeIfPresent(Int.self, forKey: .audioCountPerPlay) ?? 1
         sortOrder = try container.decodeIfPresent(Int.self, forKey: .sortOrder) ?? 0
         quranRef = try container.decodeIfPresent(QuranRef.self, forKey: .quranRef)
         benefits = try container.decodeIfPresent([String].self, forKey: .benefits) ?? []
+    }
+
+    private static func normalizedCategories(
+        primary: DhikrCategory,
+        values: [DhikrCategory]?
+    ) -> [DhikrCategory] {
+        [primary] + (values ?? []).filter { $0 != primary }.reduce(into: []) { result, value in
+            if !result.contains(value) { result.append(value) }
+        }
     }
 }
 

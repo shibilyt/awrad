@@ -411,6 +411,7 @@ final class AwradStore {
         transliteration: String,
         translation: String,
         category: DhikrCategory,
+        categories: [DhikrCategory]? = nil,
         audioURL: URL? = nil,
         audioFileName: String? = nil,
         quranRef: QuranRef? = nil
@@ -439,6 +440,7 @@ final class AwradStore {
                 return value.isEmpty ? nil : value
             },
             category: category,
+            categories: categories,
             isCustom: true,
             quranRef: quranRef
         )
@@ -455,6 +457,7 @@ final class AwradStore {
         transliteration: String,
         translation: String,
         category: DhikrCategory,
+        categories: [DhikrCategory]? = nil,
         audioURL: URL? = nil,
         audioFileName: String? = nil,
         quranRef: QuranRef? = nil,
@@ -477,6 +480,11 @@ final class AwradStore {
         dhikrs[index].transliteration = normalizedTransliteration
         dhikrs[index].translation = normalizedTranslation
         dhikrs[index].category = category
+        dhikrs[index].categories = [category] + (categories ?? []).filter {
+            $0 != category
+        }.reduce(into: []) { result, value in
+            if !result.contains(value) { result.append(value) }
+        }
         dhikrs[index].audioURL = audioURL
         dhikrs[index].audioFileName = audioFileName.flatMap {
             let value = $0.cleanedDhikrLine
@@ -1035,6 +1043,18 @@ final class AwradStore {
         }
         guard commitMutation(orRestore: previous) else { return nil }
         return snapshot
+    }
+
+    @discardableResult
+    func archiveGoal(_ goalID: AwradID) -> Bool {
+        guard let goal = goal(id: goalID), goal.isActive, !goal.isCompleted else { return false }
+        return pauseGoal(goalID)
+    }
+
+    @discardableResult
+    func restoreArchivedGoal(_ goalID: AwradID) -> Bool {
+        guard let goal = goal(id: goalID), goal.isPaused else { return false }
+        return resumeGoal(goalID)
     }
 
     @discardableResult

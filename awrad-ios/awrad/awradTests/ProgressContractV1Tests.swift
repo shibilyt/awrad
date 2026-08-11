@@ -4,6 +4,17 @@ import Testing
 
 @MainActor
 struct ProgressContractV1Tests {
+    @Test func customDhikrCategoriesRoundTripInOrder() throws {
+        let input = try Data(contentsOf: fixtureURL("progress-state.json"))
+        let decoded = try JSONDecoder().decode(ProgressStateV1.self, from: input)
+        let custom = try #require(decoded.dhikrs.first(where: { $0.isCustom }))
+        #expect(custom.categories == ["general", "morning"])
+
+        let native = try custom.nativeModel()
+        #expect(native.categories == [.general, .morning])
+        #expect(native.category == .general)
+    }
+
     @Test func sharedFixtureRoundTripsThroughNativeModels() throws {
         let fixtureURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()

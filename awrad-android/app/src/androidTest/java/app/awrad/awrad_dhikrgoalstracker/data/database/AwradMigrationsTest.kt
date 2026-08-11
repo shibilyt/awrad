@@ -317,6 +317,38 @@ class AwradMigrationsTest {
 
     @Test
     @Throws(IOException::class)
+    fun migrate14To15_addsCategoryAssignments_andBackfillsPrimaryCategory() {
+        helper.createDatabase(TEST_DB, 14).apply {
+            execSQL(
+                "INSERT INTO dhikrs " +
+                    "(id, catalogKey, title, arabic, transliteration, translation, category, isDownloaded, isCustom, audioCountPerPlay, benefitsJson, sortOrder) " +
+                    "VALUES ('custom-1', NULL, 'Mine', 'نص', 'mine', 'mine', 'MORNING', 0, 1, 1, '[]', 0)",
+            )
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(TEST_DB, 15, true, AwradMigrations.MIGRATION_14_15)
+        helper.closeWhenFinished(db)
+
+        assertTrue(tableExists(db, "dhikr_category_assignments"))
+        assertEquals(
+            "MORNING",
+            queryString(
+                db,
+                "SELECT category FROM dhikr_category_assignments WHERE dhikrId = 'custom-1'",
+            ),
+        )
+        assertEquals(
+            0L,
+            queryLong(
+                db,
+                "SELECT sortOrder FROM dhikr_category_assignments WHERE dhikrId = 'custom-1'",
+            ),
+        )
+    }
+
+    @Test
+    @Throws(IOException::class)
     fun migrateAll1To13_appliesEveryMigration_andEndsAtSyncSchema() {
         helper.createDatabase(TEST_DB, 1).apply {
             seedDhikr(this, id = 1, title = "Istighfar")

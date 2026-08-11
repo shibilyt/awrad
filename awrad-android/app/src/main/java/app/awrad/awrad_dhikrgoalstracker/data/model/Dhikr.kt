@@ -16,4 +16,11 @@ data class Dhikr(
     val sortOrder: Int = 0,
     val quranRef: QuranRef? = null,
     val benefits: List<String> = emptyList(),
-)
+    val categories: List<DhikrCategory> = listOf(category),
+) {
+    init {
+        require(categories.isNotEmpty()) { "A dhikr must have at least one category" }
+        require(categories.first() == category) { "Primary category must be first" }
+        require(categories.distinct() == categories) { "Dhikr categories must be unique" }
+    }
+}

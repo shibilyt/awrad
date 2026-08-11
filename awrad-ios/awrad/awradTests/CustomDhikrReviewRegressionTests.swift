@@ -446,6 +446,8 @@ struct CustomDhikrReviewRegressionTests {
         #expect(try repository.modelContext.fetch(FetchDescriptor<AwradSchemaV3.UserTagRecord>()).isEmpty)
         #expect(try repository.modelContext.fetch(FetchDescriptor<AwradSchemaV3.DhikrTagAssignmentRecord>()).isEmpty)
         #expect(try repository.modelContext.fetch(FetchDescriptor<AwradSchemaV3.DhikrAudioAssetRecord>()).isEmpty)
+        #expect(try repository.modelContext.fetch(FetchDescriptor<AwradSchemaV4.DhikrCategoryAssignmentRecord>()).isEmpty)
+        #expect(try repository.fetchDhikrs().first?.categories == [.general])
     }
 
     @Test func deleteCustomDhikrWarningMentionsTagsGoalsAndOwnedAudio() {

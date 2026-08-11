@@ -33,6 +33,7 @@ data class DhikrV1(
     @SerialName("audio_url") val audioUrl: String? = null,
     @SerialName("audio_file_name") val audioFileName: String? = null,
     val category: String,
+    val categories: List<String>? = null,
     @SerialName("audio_count_per_play") val audioCountPerPlay: Int,
     @SerialName("sort_order") val sortOrder: Int,
     @SerialName("quran_ref") val quranRef: QuranRefV1? = null,
@@ -189,27 +190,35 @@ fun DhikrTagAssignmentV1.toNativeIds(): Triple<UUID, UUID, UUID> =
 fun DhikrV1.toNativeDhikr(): Dhikr = toNative()
 fun GoalV1.toNativeGoal(): Goal = toNative()
 
-private fun DhikrV1.toNative() = Dhikr(
-    id = uuid(id),
-    catalogKey = catalogKey,
-    title = title,
-    arabic = arabic,
-    transliteration = transliteration,
-    translation = translation,
-    audioUrl = audioUrl,
-    audioFileName = audioFileName,
-    category = DhikrCategory.valueOf(category.uppercase()),
-    isCustom = isCustom,
-    audioCountPerPlay = audioCountPerPlay,
-    sortOrder = sortOrder,
-    quranRef = quranRef?.let { QuranRef(it.surah, it.ayahStart, it.ayahEnd) },
-    benefits = benefits,
-)
+private fun DhikrV1.toNative(): Dhikr {
+    val primaryCategory = DhikrCategory.valueOf(category.uppercase())
+    val resolvedCategories = (categories ?: listOf(category)).map {
+        DhikrCategory.valueOf(it.uppercase())
+    }
+    return Dhikr(
+        id = uuid(id),
+        catalogKey = catalogKey,
+        title = title,
+        arabic = arabic,
+        transliteration = transliteration,
+        translation = translation,
+        audioUrl = audioUrl,
+        audioFileName = audioFileName,
+        category = primaryCategory,
+        isCustom = isCustom,
+        audioCountPerPlay = audioCountPerPlay,
+        sortOrder = sortOrder,
+        quranRef = quranRef?.let { QuranRef(it.surah, it.ayahStart, it.ayahEnd) },
+        benefits = benefits,
+        categories = resolvedCategories,
+    )
+}
 
 private fun Dhikr.toContract() = DhikrV1(
     id = id.toString(), catalogKey = catalogKey, isCustom = isCustom, title = title,
     arabic = arabic, transliteration = transliteration, translation = translation,
     audioUrl = audioUrl, audioFileName = audioFileName, category = category.name.lowercase(),
+    categories = categories.map { it.name.lowercase() },
     audioCountPerPlay = audioCountPerPlay,
     sortOrder = sortOrder,
     quranRef = quranRef?.let { QuranRefV1(it.surah, it.ayahStart, it.ayahEnd) }, benefits = benefits,

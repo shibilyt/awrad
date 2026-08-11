@@ -202,6 +202,13 @@ object AwradMigrations {
         }
     }
 
+    /** v14 -> v15: stores every selected category while preserving the legacy primary category. */
+    val MIGRATION_14_15: Migration = object : Migration(14, 15) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            migration14To15Statements().forEach(db::execSQL)
+        }
+    }
+
     /** All migrations in ascending order. Register with Room via `addMigrations(*ALL_MIGRATIONS)`. */
     val ALL_MIGRATIONS: Array<Migration> = arrayOf(
         MIGRATION_1_2,
@@ -217,6 +224,7 @@ object AwradMigrations {
         MIGRATION_11_12,
         MIGRATION_12_13,
         MIGRATION_13_14,
+        MIGRATION_14_15,
     )
 
     fun migration13To14Statements(): List<String> = listOf(
@@ -231,5 +239,12 @@ object AwradMigrations {
         "CREATE UNIQUE INDEX IF NOT EXISTS `index_dhikr_audio_assets_dhikrId` ON `dhikr_audio_assets` (`dhikrId`)",
         "CREATE UNIQUE INDEX IF NOT EXISTS `index_dhikr_audio_assets_relativeFileName` ON `dhikr_audio_assets` (`relativeFileName`)",
         "ALTER TABLE `sync_state` ADD COLUMN `dhikrTagsBootstrapCompleted` INTEGER NOT NULL DEFAULT 0",
+    )
+
+    fun migration14To15Statements(): List<String> = listOf(
+        "CREATE TABLE IF NOT EXISTS `dhikr_category_assignments` (`dhikrId` TEXT NOT NULL, `category` TEXT NOT NULL, `sortOrder` INTEGER NOT NULL, PRIMARY KEY(`dhikrId`, `category`), FOREIGN KEY(`dhikrId`) REFERENCES `dhikrs`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)",
+        "CREATE INDEX IF NOT EXISTS `index_dhikr_category_assignments_dhikrId` ON `dhikr_category_assignments` (`dhikrId`)",
+        "CREATE INDEX IF NOT EXISTS `index_dhikr_category_assignments_category` ON `dhikr_category_assignments` (`category`)",
+        "INSERT OR IGNORE INTO `dhikr_category_assignments` (`dhikrId`, `category`, `sortOrder`) SELECT `id`, `category`, 0 FROM `dhikrs`",
     )
 }

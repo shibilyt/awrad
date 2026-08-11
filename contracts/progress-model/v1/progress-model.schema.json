@@ -71,6 +71,13 @@
         "audio_url": { "type": ["string", "null"], "format": "uri", "default": null },
         "audio_file_name": { "type": ["string", "null"], "default": null },
         "category": { "enum": ["morning", "evening", "after_salah", "forgiveness", "praise", "protection", "general", "swalaths", "asma_ul_husna", "ramadan", "quran"] },
+        "categories": {
+          "type": "array",
+          "items": { "enum": ["morning", "evening", "after_salah", "forgiveness", "praise", "protection", "general", "swalaths", "asma_ul_husna", "ramadan", "quran"] },
+          "minItems": 1,
+          "maxItems": 11,
+          "uniqueItems": true
+        },
         "audio_count_per_play": { "type": "integer", "minimum": 1, "default": 1 },
         "sort_order": { "type": "integer", "minimum": 0, "default": 0 },
         "quran_ref": { "$ref": "#/$defs/quranRef", "default": null },

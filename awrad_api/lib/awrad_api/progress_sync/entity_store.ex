@@ -40,11 +40,16 @@ defmodule AwradApi.ProgressSync.EntityStore do
 
   defp upsert(user_id, attrs, command_id, revision) do
     with {:ok, identity} <- identity(attrs),
-         document when is_map(document) <- value(attrs, :proposed_document),
-         {:ok, document} <- Document.validate(identity.type, document, identity.id) do
-      case lock_entity(user_id, identity.type, identity.id) do
-        nil -> create(user_id, identity, document, revision)
-        entity -> update(user_id, entity, identity, document, command_id, revision)
+         proposed_document when is_map(proposed_document) <- value(attrs, :proposed_document) do
+      entity = lock_entity(user_id, identity.type, identity.id)
+      existing_document = if entity, do: entity.document, else: nil
+
+      with {:ok, document} <-
+             Document.validate(identity.type, proposed_document, identity.id, existing_document) do
+        case entity do
+          nil -> create(user_id, identity, document, revision)
+          entity -> update(user_id, entity, identity, document, command_id, revision)
+        end
       end
     else
       nil -> {:error, :invalid_entity_document}

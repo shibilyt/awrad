@@ -817,13 +817,14 @@ enum AwradSchemaV2: VersionedSchema {
 
 enum AwradSchemaMigrationPlan: SchemaMigrationPlan {
     static var schemas: [any VersionedSchema.Type] {
-        [AwradSchemaV1.self, AwradSchemaV2.self, AwradSchemaV3.self]
+        [AwradSchemaV1.self, AwradSchemaV2.self, AwradSchemaV3.self, AwradSchemaV4.self]
     }
 
     static var stages: [MigrationStage] {
         [
             .lightweight(fromVersion: AwradSchemaV1.self, toVersion: AwradSchemaV2.self),
             .lightweight(fromVersion: AwradSchemaV2.self, toVersion: AwradSchemaV3.self),
+            .lightweight(fromVersion: AwradSchemaV3.self, toVersion: AwradSchemaV4.self),
         ]
     }
 }
@@ -923,6 +924,35 @@ enum AwradSchemaV3: VersionedSchema {
             self.sha256 = sha256
             self.source = source
             self.createdAt = createdAt
+        }
+    }
+}
+
+/// Stores the ordered, multi-category membership for each dhikr while the V1
+/// dhikr row retains its primary category for older installations and widgets.
+enum AwradSchemaV4: VersionedSchema {
+    static var versionIdentifier = Schema.Version(4, 0, 0)
+
+    static var models: [any PersistentModel.Type] {
+        AwradSchemaV3.models + [DhikrCategoryAssignmentRecord.self]
+    }
+
+    @Model
+    final class DhikrCategoryAssignmentRecord {
+        @Attribute(.unique) var semanticKey: String
+        var dhikrID: String
+        var category: String
+        var sortOrder: Int
+
+        init(dhikrID: String, category: String, sortOrder: Int) {
+            self.semanticKey = Self.makeSemanticKey(dhikrID: dhikrID, category: category)
+            self.dhikrID = dhikrID
+            self.category = category
+            self.sortOrder = sortOrder
+        }
+
+        static func makeSemanticKey(dhikrID: String, category: String) -> String {
+            "\(dhikrID)|\(category)"
         }
     }
 }

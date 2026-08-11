@@ -4,6 +4,25 @@ import Testing
 
 @MainActor
 struct AwradPersistenceTests {
+    @Test func dhikrCategoryAssignmentsRoundTripInOrder() throws {
+        let repository = SwiftDataAwradRepository(
+            container: try AwradPersistenceContainerFactory.makeInMemoryContainer()
+        )
+        let dhikr = Dhikr(
+            title: "Evening set",
+            arabic: "ذكر",
+            transliteration: "",
+            translation: "",
+            category: .evening,
+            categories: [.evening, .afterSalah, .general],
+            isCustom: true
+        )
+
+        try repository.saveDhikr(dhikr)
+
+        #expect(try #require(repository.fetchDhikrs().first).categories == [.evening, .afterSalah, .general])
+    }
+
     @Test func schemaMatchesAndroidLogicalRecordFamiliesAndCompositeKeys() {
         #expect(AwradSchemaV1.models.count == 13)
         #expect(
@@ -115,6 +134,47 @@ struct AwradPersistenceTests {
         #expect(try coordinator.migrate(from: sourceURL, backupURL: backupURL) == .alreadyMigrated(checksum: checksum))
     }
 
+    @Test func currentSnapshotImportPreservesPortableTags() throws {
+        let fixture = makeFixture()
+        var migrationState = fixture.state
+        migrationState.seasonTemplates = []
+        migrationState.audioAssets = []
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("awrad-current-migration-tests-\(UUID().uuidString)", isDirectory: true)
+        let sourceURL = directory.appendingPathComponent("awrad-snapshot.json")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let snapshot = AwradSnapshot(
+            dhikrs: migrationState.dhikrs,
+            goals: migrationState.goals,
+            countEntries: migrationState.countEntries,
+            wirds: migrationState.wirds,
+            wirdSessions: migrationState.wirdSessions,
+            preferences: fixture.preferences,
+            userTags: migrationState.userTags,
+            tagAssignments: migrationState.tagAssignments
+        )
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        try encoder.encode(snapshot).write(to: sourceURL, options: .atomic)
+
+        let repository = SwiftDataAwradRepository(
+            container: try AwradPersistenceContainerFactory.makeInMemoryContainer()
+        )
+        let defaults = makeDefaults()
+        defer { defaults.removePersistentDomain(forName: defaultsSuite(defaults)) }
+        let coordinator = LegacySnapshotMigrationCoordinator(
+            repository: repository,
+            preferenceStore: AppGroupPreferenceStore(defaults: defaults),
+            migrationState: LegacySnapshotMigrationStateStore(defaults: defaults)
+        )
+
+        _ = try coordinator.migrate(from: sourceURL)
+
+        #expect(try repository.loadState() == migrationState)
+    }
+
     @Test func legacyImportRejectsCorruptAndFutureSnapshotsWithoutWriting() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("awrad-invalid-migration-tests-\(UUID().uuidString)", isDirectory: true)
@@ -140,13 +200,14 @@ struct AwradPersistenceTests {
         }
         #expect(try repository.isEmpty())
 
-        try JSONSerialization.data(withJSONObject: ["schemaVersion": 6])
+        let futureVersion = AwradSnapshot.currentSchemaVersion + 1
+        try JSONSerialization.data(withJSONObject: ["schemaVersion": futureVersion])
             .write(to: sourceURL, options: .atomic)
         do {
             _ = try coordinator.migrate(from: sourceURL)
             Issue.record("Expected future snapshot rejection")
         } catch let error as LegacySnapshotMigrationError {
-            #expect(error == .unsupportedSchemaVersion(6))
+            #expect(error == .unsupportedSchemaVersion(futureVersion))
         }
         #expect(try repository.isEmpty())
     }

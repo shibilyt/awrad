@@ -13,6 +13,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.dao.CountEntryDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrAudioAssetDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrTagAssignmentDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrCategoryAssignmentDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalRecurrenceDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalReminderDao
@@ -93,6 +94,10 @@ object DatabaseModule {
     @Provides
     fun provideDhikrTagAssignmentDao(database: AwradDatabase): DhikrTagAssignmentDao =
         database.dhikrTagAssignmentDao()
+
+    @Provides
+    fun provideDhikrCategoryAssignmentDao(database: AwradDatabase): DhikrCategoryAssignmentDao =
+        database.dhikrCategoryAssignmentDao()
 
     @Provides
     fun provideDhikrAudioAssetDao(database: AwradDatabase): DhikrAudioAssetDao =

@@ -176,6 +176,14 @@ conflict retention, and cursor-safe apply transactions. The server owns entity
 versions/incarnations, tombstones and purge fences, the immutable count ledger,
 derived projections, transfer quotas, retention, and bounded maintenance.
 
+Custom-dhikr documents may include an ordered, unique `categories` array. The
+existing singular `category` remains the primary category and must equal the
+first array item. New clients send both fields; the server defaults an omitted
+array to `[category]` on create and preserves additional categories when an
+older client updates only the singular field. This keeps older clients and
+materialized API rows compatible while Android and iOS persist and expose the
+full synchronized selection.
+
 Authenticated foreground clients debounce mutation-triggered sync by two
 seconds, poll with jitter at roughly 10 seconds on the counter and 60 seconds on
 other screens, and apply bounded exponential backoff after failures. Clients
@@ -197,9 +205,8 @@ record kinds unless the client advertises `dhikr_tags_v1`, and non-capable
 transfers exclude tag/assignment rows before the shared record limit so they
 cannot crowd out non-tag progress. Documented dependency order is
 `custom_dhikr`/`user_tag` (0), `dhikr_tag_assignment` (1), `goal` (2),
-`count_projection` (3), `conflict` (4), tombstone/fence (5). Custom-dhikr
-document shape is unchanged and owned audio bytes remain outside the sync
-contract. Clients that newly gain the capability must take one
+`count_projection` (3), `conflict` (4), tombstone/fence (5). Owned audio bytes
+remain outside the sync contract. Clients that newly gain the capability must take one
 capability-aware snapshot before resuming delta sync so earlier tag revisions
 are not missed.
 

@@ -482,6 +482,31 @@ defmodule AwradApi.ProgressSyncEntityTransferTest do
     assert reopened.document["completed_at"] == nil
   end
 
+  test "legacy custom dhikr updates preserve additional categories", context do
+    initial = Map.put(context.dhikr, "categories", ["general", "morning", "after_salah"])
+
+    assert {:ok, %{status: :accepted}} = put_entity(context, 1, "custom_dhikr", initial, 0)
+
+    legacy_update =
+      initial
+      |> Map.delete("categories")
+      |> Map.put("category", "evening")
+
+    assert {:ok, %{status: :accepted}} =
+             put_entity(context, 2, "custom_dhikr", legacy_update, 1)
+
+    record =
+      Repo.one!(
+        from entity in EntityRecord,
+          where:
+            entity.user_id == ^context.scope.user.id and
+              entity.entity_type == "custom_dhikr" and entity.entity_id == ^initial["id"]
+      )
+
+    assert record.document["category"] == "evening"
+    assert record.document["categories"] == ["evening", "morning", "after_salah"]
+  end
+
   defp put_entity(context, sequence, type, document, base_version) do
     ProgressSync.execute_progress_command(
       context.scope,

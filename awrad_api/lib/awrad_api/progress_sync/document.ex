@@ -8,7 +8,7 @@ defmodule AwradApi.ProgressSync.Document do
   @max_string_bytes 65_536
   @max_benefits 128
   @max_specific_dates 3_660
-  @dhikr_keys ~w(id catalog_key is_custom title arabic transliteration translation audio_url audio_file_name category audio_count_per_play sort_order quran_ref benefits)
+  @dhikr_keys ~w(id catalog_key is_custom title arabic transliteration translation audio_url audio_file_name category categories audio_count_per_play sort_order quran_ref benefits)
   @goal_keys ~w(id dhikr_id target_policy count_policy completion_policy slot_counting_policy recurrence slots reminders start_date end_date duration_days is_active completed_at created_at updated_at)
   @slot_keys ~w(id goal_id slot_type count_policy prayer_name prayer_relation start_minute end_minute start_lead_minutes_override label sort_order is_active archived_at)
   @reminder_keys ~w(id goal_id slot_id reminder_type hour minute offset_minutes enabled sort_order)
@@ -20,8 +20,13 @@ defmodule AwradApi.ProgressSync.Document do
   @max_tag_name_graphemes 40
   @max_tag_name_bytes 128
 
-  def validate("custom_dhikr", document, entity_id) do
-    document = fill_nullable(document, ~w(catalog_key audio_url audio_file_name quran_ref))
+  def validate(type, document, entity_id), do: validate(type, document, entity_id, nil)
+
+  def validate("custom_dhikr", document, entity_id, existing_document) do
+    document =
+      document
+      |> fill_nullable(~w(catalog_key audio_url audio_file_name quran_ref))
+      |> fill_dhikr_categories(existing_document)
 
     with :ok <- document_size(document),
          :ok <- exact_keys(document, @dhikr_keys),
@@ -30,6 +35,7 @@ defmodule AwradApi.ProgressSync.Document do
          true <- is_nil(value(document, "catalog_key")),
          :ok <- non_empty_strings(document, ~w(title arabic transliteration translation)),
          true <- value(document, "category") in @categories,
+         :ok <- dhikr_categories(value(document, "categories"), value(document, "category")),
          :ok <- positive_integer(value(document, "audio_count_per_play")),
          :ok <- non_negative_integer(value(document, "sort_order")),
          :ok <- benefits(value(document, "benefits")),
@@ -42,7 +48,7 @@ defmodule AwradApi.ProgressSync.Document do
     end
   end
 
-  def validate("goal", document, entity_id) do
+  def validate("goal", document, entity_id, _existing_document) do
     document = fill_nullable(document, ~w(end_date duration_days completed_at))
 
     with :ok <- document_size(document),
@@ -78,7 +84,7 @@ defmodule AwradApi.ProgressSync.Document do
     end
   end
 
-  def validate("user_tag", document, entity_id) do
+  def validate("user_tag", document, entity_id, _existing_document) do
     with :ok <- document_size(document),
          :ok <- exact_keys(document, @user_tag_keys),
          :ok <- uuid(value(document, "id"), entity_id),
@@ -96,7 +102,7 @@ defmodule AwradApi.ProgressSync.Document do
     end
   end
 
-  def validate("dhikr_tag_assignment", document, entity_id) do
+  def validate("dhikr_tag_assignment", document, entity_id, _existing_document) do
     with :ok <- document_size(document),
          :ok <- exact_keys(document, @dhikr_tag_assignment_keys),
          :ok <- uuid(value(document, "id"), entity_id),
@@ -109,7 +115,7 @@ defmodule AwradApi.ProgressSync.Document do
     end
   end
 
-  def validate(_, _, _), do: {:error, :invalid_entity_document}
+  def validate(_, _, _, _), do: {:error, :invalid_entity_document}
 
   @doc """
   Shared user-tag normalization.
@@ -403,6 +409,15 @@ defmodule AwradApi.ProgressSync.Document do
 
   defp benefits(_), do: :error
 
+  defp dhikr_categories([primary | _] = categories, primary)
+       when length(categories) <= length(@categories) do
+    if Enum.uniq(categories) == categories and Enum.all?(categories, &(&1 in @categories)),
+      do: :ok,
+      else: :error
+  end
+
+  defp dhikr_categories(_, _), do: :error
+
   defp document_size(document) when is_map(document) do
     case Jason.encode(document) do
       {:ok, encoded} when byte_size(encoded) <= @max_document_bytes -> :ok
@@ -419,6 +434,36 @@ defmodule AwradApi.ProgressSync.Document do
   end
 
   defp fill_nullable(value, _keys), do: value
+
+  defp fill_dhikr_categories(map, existing_document) when is_map(map) do
+    if Map.has_key?(map, "categories") do
+      map
+    else
+      Map.put(map, "categories", legacy_dhikr_categories(map, existing_document))
+    end
+  end
+
+  defp fill_dhikr_categories(value, _existing_document), do: value
+
+  defp legacy_dhikr_categories(document, existing_document) when is_map(existing_document) do
+    primary = value(document, "category")
+    previous_primary = value(existing_document, "category")
+
+    existing_categories =
+      case value(existing_document, "categories") do
+        categories when is_list(categories) and categories != [] -> categories
+        _ -> [previous_primary]
+      end
+
+    if primary == previous_primary do
+      existing_categories
+    else
+      [primary | Enum.reject(existing_categories, &(&1 in [primary, previous_primary]))]
+    end
+  end
+
+  defp legacy_dhikr_categories(document, _existing_document),
+    do: [value(document, "category")]
 
   defp value(map, key) when is_map(map) do
     case Map.fetch(map, key) do

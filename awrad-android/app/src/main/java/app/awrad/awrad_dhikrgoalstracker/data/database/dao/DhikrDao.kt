@@ -21,7 +21,12 @@ interface DhikrDao {
     @Query("SELECT * FROM dhikrs WHERE catalogKey = :catalogKey")
     suspend fun getDhikrByCatalogKey(catalogKey: String): DhikrEntity?
 
-    @Query("SELECT * FROM dhikrs WHERE category = :category ORDER BY sortOrder, transliteration")
+    @Query(
+        "SELECT DISTINCT dhikrs.* FROM dhikrs " +
+            "LEFT JOIN dhikr_category_assignments ON dhikr_category_assignments.dhikrId = dhikrs.id " +
+            "WHERE dhikrs.category = :category OR dhikr_category_assignments.category = :category " +
+            "ORDER BY dhikrs.sortOrder, dhikrs.transliteration",
+    )
     fun getDhikrsByCategory(category: String): Flow<List<DhikrEntity>>
 
     @Query("SELECT * FROM dhikrs WHERE title LIKE '%' || :query || '%' OR transliteration LIKE '%' || :query || '%' OR translation LIKE '%' || :query || '%' OR arabic LIKE '%' || :query || '%'")

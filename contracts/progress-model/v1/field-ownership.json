@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "shared": [
-    "dhikr.id", "dhikr.catalog_key", "dhikr.is_custom", "dhikr.content", "dhikr.category", "dhikr.audio_metadata", "dhikr.audio_count_per_play", "dhikr.sort_order", "dhikr.quran_ref", "dhikr.benefits",
+    "dhikr.id", "dhikr.catalog_key", "dhikr.is_custom", "dhikr.content", "dhikr.category", "dhikr.categories", "dhikr.audio_metadata", "dhikr.audio_count_per_play", "dhikr.sort_order", "dhikr.quran_ref", "dhikr.benefits",
     "goal.identity", "goal.policies", "goal.recurrence", "goal.slots", "goal.reminders", "goal.schedule", "goal.lifecycle", "goal.timestamps",
     "count_entry.identity", "count_entry.owner_references", "count_entry.count", "count_entry.date", "count_entry.last_updated"
   ],
@@ -51,7 +51,7 @@
     },
     "ios": {
       "shared": [
-        "Dhikr.id", "Dhikr.catalogKey", "Dhikr.title", "Dhikr.arabic", "Dhikr.transliteration", "Dhikr.translation", "Dhikr.audioURL", "Dhikr.audioFileName", "Dhikr.category", "Dhikr.isCustom", "Dhikr.audioCountPerPlay", "Dhikr.sortOrder", "Dhikr.quranRef", "Dhikr.benefits",
+        "Dhikr.id", "Dhikr.catalogKey", "Dhikr.title", "Dhikr.arabic", "Dhikr.transliteration", "Dhikr.translation", "Dhikr.audioURL", "Dhikr.audioFileName", "Dhikr.category", "Dhikr.categories", "Dhikr.isCustom", "Dhikr.audioCountPerPlay", "Dhikr.sortOrder", "Dhikr.quranRef", "Dhikr.benefits",
         "QuranRef.surah", "QuranRef.ayahStart", "QuranRef.ayahEnd",
         "CountPolicy.minimumCount", "CountPolicy.targetCount", "CountPolicy.maximumCount", "CountPolicy.streakThreshold", "CountPolicy.reminderThreshold", "CountPolicy.completionThreshold", "CountPolicy.capBehavior",
         "GoalRecurrence.frequency", "GoalRecurrence.calendar", "GoalRecurrence.intervalDays", "GoalRecurrence.anchorDate", "GoalRecurrence.month", "GoalRecurrence.weekdays", "GoalRecurrence.monthDays", "GoalRecurrence.specificDates", "GoalRecurrence.seasonCode",

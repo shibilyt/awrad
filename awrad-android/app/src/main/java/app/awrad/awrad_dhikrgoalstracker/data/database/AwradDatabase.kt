@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.CountEntryDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrAudioAssetDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrCategoryAssignmentDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrTagAssignmentDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalDao
@@ -18,6 +19,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.dao.WirdDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.WirdSessionDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.CountEntryEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrAudioAssetEntity
+import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrCategoryAssignmentEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrTagAssignmentEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.GoalEntity
@@ -58,6 +60,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.entity.WirdSessionEntity
         UserTagEntity::class,
         DhikrTagAssignmentEntity::class,
         DhikrAudioAssetEntity::class,
+        DhikrCategoryAssignmentEntity::class,
         SyncStateEntity::class,
         SyncOutboxEntity::class,
         SyncOpenCountBatchEntity::class,
@@ -66,7 +69,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.database.entity.WirdSessionEntity
         SyncCountShadowEntity::class,
         SyncConflictEntity::class,
     ],
-    version = 14,
+    version = 15,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -83,5 +86,6 @@ abstract class AwradDatabase : RoomDatabase() {
     abstract fun userTagDao(): UserTagDao
     abstract fun dhikrTagAssignmentDao(): DhikrTagAssignmentDao
     abstract fun dhikrAudioAssetDao(): DhikrAudioAssetDao
+    abstract fun dhikrCategoryAssignmentDao(): DhikrCategoryAssignmentDao
     abstract fun syncDao(): SyncDao
 }

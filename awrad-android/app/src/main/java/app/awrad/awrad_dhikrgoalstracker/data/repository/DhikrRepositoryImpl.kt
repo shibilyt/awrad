@@ -3,11 +3,13 @@ package app.awrad.awrad_dhikrgoalstracker.data.repository
 import app.awrad.awrad_dhikrgoalstracker.data.database.AwradDatabase
 import app.awrad.awrad_dhikrgoalstracker.data.database.BuiltInDhikrs
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrAudioAssetDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrCategoryAssignmentDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.DhikrTagAssignmentDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.GoalDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.UserTagDao
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrAudioAssetEntity
+import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrCategoryAssignmentEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.DhikrTagAssignmentEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.UserTagEntity
@@ -32,6 +34,7 @@ import app.awrad.awrad_dhikrgoalstracker.service.StagedOwnedAudio
 import androidx.room.withTransaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -47,32 +50,36 @@ class DhikrRepositoryImpl @Inject constructor(
     private val progressSyncRepository: ProgressSyncRepository? = null,
     private val userTagDao: UserTagDao? = null,
     private val assignmentDao: DhikrTagAssignmentDao? = null,
+    private val categoryAssignmentDao: DhikrCategoryAssignmentDao? = null,
     private val audioAssetDao: DhikrAudioAssetDao? = null,
     private val goalDao: GoalDao? = null,
     private val ownedAudioStore: CustomDhikrAudioStore? = null,
     private val notificationRequests: NotificationObligationRequestDispatcher? = null,
 ) : DhikrRepository {
 
-    override fun getAllDhikrs(): Flow<List<Dhikr>> =
-        dhikrDao.getAllDhikrs().map { entities -> entities.map { it.toDomain() } }
+    override fun getAllDhikrs(): Flow<List<Dhikr>> = observeWithCategories(dhikrDao.getAllDhikrs())
 
-    override fun getCustomDhikrs(): Flow<List<Dhikr>> =
-        dhikrDao.getCustomDhikrs().map { entities -> entities.map { it.toDomain() } }
+    override fun getCustomDhikrs(): Flow<List<Dhikr>> = observeWithCategories(dhikrDao.getCustomDhikrs())
 
     override fun getDhikrsByCategory(category: DhikrCategory): Flow<List<Dhikr>> =
-        dhikrDao.getDhikrsByCategory(category.name).map { entities -> entities.map { it.toDomain() } }
+        observeWithCategories(dhikrDao.getDhikrsByCategory(category.name))
 
     override fun searchDhikrs(query: String): Flow<List<Dhikr>> =
-        dhikrDao.searchDhikrs(query).map { entities -> entities.map { it.toDomain() } }
+        observeWithCategories(dhikrDao.searchDhikrs(query))
 
     override suspend fun getDhikrById(id: AwradId): Dhikr? =
-        dhikrDao.getDhikrById(id)?.toDomain()
+        dhikrDao.getDhikrById(id)?.toDomain(categoryAssignmentDao?.getForDhikr(id).orEmpty())
 
     override suspend fun initializeBuiltInDhikrs() {
         if (dhikrDao.getCount() == 0) {
             dhikrDao.insertAll(BuiltInDhikrs.dhikrs)
         } else {
             syncBuiltInDhikrs()
+        }
+        categoryAssignmentDao?.let { dao ->
+            BuiltInDhikrs.dhikrs.forEach { dhikr ->
+                dao.replaceForDhikr(dhikr.id, dhikr.toCategoryAssignments())
+            }
         }
     }
 
@@ -195,6 +202,7 @@ class DhikrRepositoryImpl @Inject constructor(
         val entity = custom.toEntity()
         val persist: suspend () -> Unit = {
             dhikrDao.insert(entity)
+            categoryAssignmentDao?.replaceForDhikr(entity.id, custom.toCategoryAssignments())
             progressSyncRepository?.enqueueDhikr(custom.copy(id = entity.id))
         }
         database?.withTransaction { persist() } ?: persist()
@@ -216,6 +224,7 @@ class DhikrRepositoryImpl @Inject constructor(
                 audioCountPerPlay = updated.audioCountPerPlay,
             )
             check(changed == 1)
+            categoryAssignmentDao?.replaceForDhikr(updated.id, updated.toCategoryAssignments())
             progressSyncRepository?.enqueueDhikr(updated)
         }
         database?.withTransaction { persist() } ?: persist()
@@ -440,6 +449,7 @@ class DhikrRepositoryImpl @Inject constructor(
             audioFileName = existing?.audioFileName ?: dhikr.audioFileName,
         )
         if (existing == null) dhikrDao.insert(entity) else dhikrDao.update(entity)
+        categoryAssignmentDao?.replaceForDhikr(entity.id, dhikr.toCategoryAssignments())
     }
 
     suspend fun deleteRemoteDhikr(id: AwradId) {
@@ -563,7 +573,9 @@ class DhikrRepositoryImpl @Inject constructor(
         benefitsJson = Json.encodeToString(benefits),
     )
 
-    private fun DhikrEntity.toDomain() = Dhikr(
+    private fun DhikrEntity.toDomain(
+        categoryAssignments: List<DhikrCategoryAssignmentEntity> = emptyList(),
+    ) = Dhikr(
         id = id,
         catalogKey = catalogKey,
         title = title,
@@ -583,7 +595,45 @@ class DhikrRepositoryImpl @Inject constructor(
             null
         },
         benefits = runCatching { Json.decodeFromString<List<String>>(benefitsJson) }.getOrDefault(emptyList()),
+        categories = normalizedCategories(
+            primary = category,
+            selected = categoryAssignments.sortedBy { it.sortOrder }.map { it.category },
+        ),
     )
+
+    private fun observeWithCategories(
+        entities: Flow<List<DhikrEntity>>,
+    ): Flow<List<Dhikr>> {
+        val dao = categoryAssignmentDao
+            ?: return entities.map { rows -> rows.map { it.toDomain() } }
+        return combine(entities, dao.observeAll()) { rows, assignments ->
+            val byDhikr = assignments.groupBy { it.dhikrId }
+            rows.map { it.toDomain(byDhikr[it.id].orEmpty()) }
+        }
+    }
+
+    private fun Dhikr.toCategoryAssignments(): List<DhikrCategoryAssignmentEntity> =
+        categories.mapIndexed { index, selectedCategory ->
+            DhikrCategoryAssignmentEntity(
+                dhikrId = id,
+                category = selectedCategory,
+                sortOrder = index,
+            )
+        }
+
+    private fun DhikrEntity.toCategoryAssignments(): List<DhikrCategoryAssignmentEntity> =
+        listOf(
+            DhikrCategoryAssignmentEntity(
+                dhikrId = id,
+                category = category,
+                sortOrder = 0,
+            ),
+        )
+
+    private fun normalizedCategories(
+        primary: DhikrCategory,
+        selected: List<DhikrCategory>,
+    ): List<DhikrCategory> = listOf(primary) + selected.filter { it != primary }.distinct()
 
     private fun UserTagEntity.toDomain() = UserTag(
         id = id,
