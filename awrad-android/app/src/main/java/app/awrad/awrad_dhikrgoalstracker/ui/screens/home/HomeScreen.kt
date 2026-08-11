@@ -71,10 +71,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.ui.components.DayProgressRing
+import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradTopEdgeScrim
 import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakChip
 import app.awrad.awrad_dhikrgoalstracker.ui.components.FeaturedCollectionsSection
-import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradTopEdgeScrim
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualPrimaryButton
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.library.LibraryFeaturedCollection
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdCatalogCard
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import app.awrad.awrad_dhikrgoalstracker.ui.sync.ProgressSyncRefreshViewModel
@@ -88,7 +89,7 @@ fun HomeScreen(
     onNavigateToGoal: (AwradId) -> Unit,
     onNavigateToCreateGoal: () -> Unit,
     onNavigateToGoals: () -> Unit = {},
-    onNavigateToCategory: (String) -> Unit = {},
+    onNavigateToCollection: (LibraryFeaturedCollection) -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
     onNavigateToLibrary: () -> Unit = {},
     onNavigateToWirdList: () -> Unit = {},
@@ -202,7 +203,7 @@ fun HomeScreen(
             item {
                 FeaturedCollectionsSection(
                     categoryCounts = uiState.categoryDhikrCounts,
-                    onCollectionClick = { onNavigateToCategory(it.name) },
+                    onCollectionClick = onNavigateToCollection,
                     onViewAll = onNavigateToLibrary,
                     titleRes = R.string.featured_dhikr_collections,
                 )

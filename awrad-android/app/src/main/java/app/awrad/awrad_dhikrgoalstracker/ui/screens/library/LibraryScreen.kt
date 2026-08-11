@@ -87,6 +87,7 @@ import kotlin.math.roundToInt
 @Composable
 fun LibraryScreen(
     onNavigateToCreateGoal: () -> Unit,
+    onNavigateToCollection: (LibraryFeaturedCollection) -> Unit = {},
     onNavigateToDhikrDetail: (AwradId) -> Unit = {},
     onNavigateToCreateDhikr: () -> Unit = {},
     onNavigateToWird: (String) -> Unit = {},
@@ -187,12 +188,8 @@ fun LibraryScreen(
                                     isSearchVisible = isSearchVisible,
                                     onSearchQueryChange = viewModel::onSearchQueryChanged,
                                     onClearSearch = { viewModel.onSearchQueryChanged("") },
-                                    onCollectionClick = { category ->
-                                        viewModel.onFeaturedCollectionSelected(category)
-                                        isSearchVisible = false
-                                    },
-                                    onYourDhikrsClick = {
-                                        viewModel.onYourDhikrsSelected()
+                                    onCollectionClick = { collection ->
+                                        onNavigateToCollection(collection)
                                         isSearchVisible = false
                                     },
                                     onViewAll = {
@@ -296,8 +293,7 @@ private fun DhikrLibraryPane(
     isSearchVisible: Boolean,
     onSearchQueryChange: (String) -> Unit,
     onClearSearch: () -> Unit,
-    onCollectionClick: (DhikrCategory) -> Unit,
-    onYourDhikrsClick: () -> Unit,
+    onCollectionClick: (LibraryFeaturedCollection) -> Unit,
     onViewAll: () -> Unit,
     onClearFilters: () -> Unit,
     onCreateDhikr: () -> Unit,
@@ -329,7 +325,6 @@ private fun DhikrLibraryPane(
                     categoryCounts = uiState.categoryCounts,
                     customCount = uiState.customCount,
                     onCollectionClick = onCollectionClick,
-                    onYourDhikrsClick = onYourDhikrsClick,
                     onViewAll = onViewAll,
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -533,7 +528,7 @@ private fun DhikrListHeader(
 }
 
 @Composable
-private fun LibraryDhikrRow(
+internal fun LibraryDhikrRow(
     dhikr: Dhikr,
     isPlaying: Boolean,
     canPlay: Boolean,

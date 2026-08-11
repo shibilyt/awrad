@@ -54,6 +54,38 @@ struct LibraryFeatureModelTests {
         #expect(results.map(\.id) == [arabicMatch.id])
     }
 
+    @Test func featuredCollectionsSelectTheirOwnDhikrs() {
+        let morning = dhikr(title: "Morning", category: .morning)
+        let praise = dhikr(title: "Praise", category: .praise)
+        let forgiveness = dhikr(title: "Forgiveness", category: .forgiveness)
+        let general = dhikr(title: "General", category: .general)
+        let quran = dhikr(title: "Quran", category: .quran)
+        let custom = dhikr(title: "Personal", category: .general, isCustom: true)
+        let catalog = [custom, quran, general, forgiveness, praise, morning]
+
+        #expect(
+            LibraryFeaturedCollection.dailyEssentials.dhikrs(in: catalog).map(\.id)
+                == [morning.id]
+        )
+        #expect(
+            LibraryFeaturedCollection.dhikrs.dhikrs(in: catalog).map(\.id)
+                == [forgiveness.id, general.id, custom.id, praise.id]
+        )
+        #expect(
+            LibraryFeaturedCollection.yourDhikrs.dhikrs(in: catalog).map(\.id)
+                == [custom.id]
+        )
+    }
+
+    @Test func featuredCollectionRouteRoundTripsForSceneRestoration() throws {
+        let route = AppRoute.libraryCollection(.eveningDhikrs)
+
+        let data = try JSONEncoder().encode(route)
+        let restored = try JSONDecoder().decode(AppRoute.self, from: data)
+
+        #expect(restored == route)
+    }
+
     @Test func audioAvailabilityUsesTheActualCacheBeforePersistedFlag() {
         var downloaded = dhikr(title: "Audio", category: .general)
         downloaded.audioURL = URL(string: "https://example.com/audio.mp3")

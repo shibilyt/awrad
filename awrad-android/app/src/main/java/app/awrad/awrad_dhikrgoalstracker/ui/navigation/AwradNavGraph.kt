@@ -24,6 +24,8 @@ import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.CreateGoalScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.GoalsScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.home.HomeScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.library.LibraryScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.library.LibraryCollectionScreen
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.library.LibraryFeaturedCollection
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.onboarding.OnboardingScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.settings.SettingsScreen
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.auth.ForgotPasswordScreen
@@ -104,8 +106,8 @@ fun AwradNavGraph(
                     onNavigateToGoals = {
                         navController.navigateTopLevelSafely(AwradDestination.Goals.route)
                     },
-                    onNavigateToCategory = { category ->
-                        navController.navigateSafely(AwradDestination.Category.createRoute(category))
+                    onNavigateToCollection = { collection ->
+                        navController.navigateSafely(AwradDestination.LibraryCollection.createRoute(collection))
                     },
                     onNavigateToSettings = {
                         navController.navigateSafely(AwradDestination.Settings.route)
@@ -144,6 +146,9 @@ fun AwradNavGraph(
         composable(AwradDestination.Library.route) {
             WrappedAwradDestination(navController) {
                 LibraryScreen(
+                    onNavigateToCollection = { collection ->
+                        navController.navigateSafely(AwradDestination.LibraryCollection.createRoute(collection))
+                    },
                     onNavigateToCreateGoal = {
                         navController.navigateSafely(AwradDestination.CreateGoal.createRoute())
                     },
@@ -158,6 +163,27 @@ fun AwradNavGraph(
                     },
                     onCreateWird = {
                         navController.navigateSafely(AwradDestination.WirdCreate.route)
+                    },
+                )
+            }
+        }
+
+        composable(
+            route = AwradDestination.LibraryCollection.route,
+            arguments = listOf(navArgument("collection") { type = NavType.StringType }),
+        ) { backStackEntry ->
+            val collection = LibraryFeaturedCollection.fromRouteValue(
+                backStackEntry.arguments?.getString("collection"),
+            ) ?: return@composable
+            WrappedAwradDestination(navController) {
+                LibraryCollectionScreen(
+                    collection = collection,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToDhikrDetail = { dhikrId ->
+                        navController.navigateSafely(AwradDestination.DhikrDetail.createRoute(dhikrId))
+                    },
+                    onNavigateToCreateDhikr = {
+                        navController.navigateSafely(AwradDestination.CreateDhikr.createRoute())
                     },
                 )
             }

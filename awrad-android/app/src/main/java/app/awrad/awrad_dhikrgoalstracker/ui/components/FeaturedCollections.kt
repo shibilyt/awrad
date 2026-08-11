@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.library.LibraryFeaturedCollection
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 
 enum class FeaturedCollectionTone {
@@ -55,10 +56,9 @@ enum class FeaturedCollectionTone {
 
 data class FeaturedCollectionUiModel(
     val title: String,
-    val category: DhikrCategory?,
+    val collection: LibraryFeaturedCollection,
     val count: Int,
     val tone: FeaturedCollectionTone,
-    val isYourDhikrs: Boolean = false,
 )
 
 @Composable
@@ -66,56 +66,47 @@ fun rememberFeaturedCollections(
     categoryCounts: Map<DhikrCategory, Int>,
     customCount: Int = 0,
 ): List<FeaturedCollectionUiModel> {
-    val dailyCategory = categoryCounts.preferredCategory(
-        preferred = DhikrCategory.MORNING,
-        fallback = DhikrCategory.PRAISE,
-    )
-    val dailyCount = categoryCounts[DhikrCategory.MORNING]
-        ?.takeIf { it > 0 }
-        ?: categoryCounts.countFor(DhikrCategory.PRAISE, DhikrCategory.FORGIVENESS, DhikrCategory.QURAN)
-
     return listOf(
         FeaturedCollectionUiModel(
             title = stringResource(R.string.collection_your_dhikrs),
-            category = null,
-            count = customCount,
+            collection = LibraryFeaturedCollection.YOUR_DHIKRS,
+            count = LibraryFeaturedCollection.YOUR_DHIKRS.countFrom(categoryCounts, customCount),
             tone = FeaturedCollectionTone.YourDhikrs,
-            isYourDhikrs = true,
         ),
         FeaturedCollectionUiModel(
             title = stringResource(R.string.category_asma_ul_husna),
-            category = DhikrCategory.ASMA_UL_HUSNA,
-            count = categoryCounts[DhikrCategory.ASMA_UL_HUSNA] ?: 0,
+            collection = LibraryFeaturedCollection.ASMA_UL_HUSNA,
+            count = LibraryFeaturedCollection.ASMA_UL_HUSNA.countFrom(categoryCounts, customCount),
             tone = FeaturedCollectionTone.AsmaUlHusna,
         ),
         FeaturedCollectionUiModel(
             title = stringResource(R.string.collection_daily_essentials),
-            category = dailyCategory,
-            count = dailyCount,
+            collection = LibraryFeaturedCollection.DAILY_ESSENTIALS,
+            count = LibraryFeaturedCollection.DAILY_ESSENTIALS.countFrom(categoryCounts, customCount),
             tone = FeaturedCollectionTone.Daily,
         ),
         FeaturedCollectionUiModel(
             title = stringResource(R.string.collection_swalaths),
-            category = DhikrCategory.SWALATHS,
-            count = categoryCounts[DhikrCategory.SWALATHS] ?: 0,
+            collection = LibraryFeaturedCollection.SWALATHS,
+            count = LibraryFeaturedCollection.SWALATHS.countFrom(categoryCounts, customCount),
             tone = FeaturedCollectionTone.Swalaths,
         ),
         FeaturedCollectionUiModel(
             title = stringResource(R.string.collection_dhikrs),
-            category = DhikrCategory.PRAISE,
-            count = categoryCounts.countFor(DhikrCategory.PRAISE, DhikrCategory.FORGIVENESS, DhikrCategory.GENERAL),
+            collection = LibraryFeaturedCollection.DHIKRS,
+            count = LibraryFeaturedCollection.DHIKRS.countFrom(categoryCounts, customCount),
             tone = FeaturedCollectionTone.Dhikrs,
         ),
         FeaturedCollectionUiModel(
             title = stringResource(R.string.collection_evening_dhikrs),
-            category = DhikrCategory.EVENING,
-            count = categoryCounts[DhikrCategory.EVENING] ?: 0,
+            collection = LibraryFeaturedCollection.EVENING_DHIKRS,
+            count = LibraryFeaturedCollection.EVENING_DHIKRS.countFrom(categoryCounts, customCount),
             tone = FeaturedCollectionTone.Evening,
         ),
         FeaturedCollectionUiModel(
             title = stringResource(R.string.collection_after_prayer),
-            category = DhikrCategory.AFTER_SALAH,
-            count = categoryCounts[DhikrCategory.AFTER_SALAH] ?: 0,
+            collection = LibraryFeaturedCollection.AFTER_PRAYER,
+            count = LibraryFeaturedCollection.AFTER_PRAYER.countFrom(categoryCounts, customCount),
             tone = FeaturedCollectionTone.Prayer,
         ),
     )
@@ -124,11 +115,10 @@ fun rememberFeaturedCollections(
 @Composable
 fun FeaturedCollectionsSection(
     categoryCounts: Map<DhikrCategory, Int>,
-    onCollectionClick: (DhikrCategory) -> Unit,
+    onCollectionClick: (LibraryFeaturedCollection) -> Unit,
     modifier: Modifier = Modifier,
     onViewAll: (() -> Unit)? = null,
     customCount: Int = 0,
-    onYourDhikrsClick: (() -> Unit)? = null,
     @StringRes titleRes: Int = R.string.featured_collections,
 ) {
     val collections = rememberFeaturedCollections(categoryCounts, customCount)
@@ -168,16 +158,10 @@ fun FeaturedCollectionsSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(horizontal = 20.dp),
         ) {
-            items(collections, key = { it.title }) { collection ->
+            items(collections, key = { it.collection }) { collection ->
                 FeaturedCollectionCard(
                     collection = collection,
-                    onClick = {
-                        if (collection.isYourDhikrs) {
-                            onYourDhikrsClick?.invoke()
-                        } else {
-                            collection.category?.let(onCollectionClick)
-                        }
-                    },
+                    onClick = { onCollectionClick(collection.collection) },
                 )
             }
         }
@@ -327,12 +311,3 @@ private fun collectionActionColor(
 } else {
     Color(0xE62F7D3F)
 }
-
-private fun Map<DhikrCategory, Int>.countFor(
-    vararg categories: DhikrCategory,
-): Int = categories.sumOf { this[it] ?: 0 }
-
-private fun Map<DhikrCategory, Int>.preferredCategory(
-    preferred: DhikrCategory,
-    fallback: DhikrCategory,
-): DhikrCategory = if ((this[preferred] ?: 0) > 0) preferred else fallback

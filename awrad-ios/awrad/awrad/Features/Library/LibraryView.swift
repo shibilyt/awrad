@@ -13,8 +13,6 @@ struct LibraryView: View {
     @Environment(AppServices.self) private var services
     @Environment(\.colorScheme) private var colorScheme
     @State private var searchText = ""
-    @State private var selectedCategory: DhikrCategory?
-    @State private var collectionScope: LibraryCollectionScope = .all
     @State private var selectedTagIDs: Set<AwradID> = []
     @State private var selectedSegment: Segment = .dhikrs
     @State private var pagerPosition: CGFloat = 0
@@ -27,29 +25,16 @@ struct LibraryView: View {
         LibraryCatalogPolicy.filtered(
             store.dhikrs,
             query: searchText,
-            category: selectedCategory,
+            category: nil,
             language: language,
-            collectionScope: collectionScope,
             selectedTagIDs: selectedTagIDs,
             tags: store.userTags,
             assignments: store.tagAssignments
         )
     }
 
-    private var customDhikrCount: Int {
-        store.dhikrs.filter(\.isCustom).count
-    }
-
-    private var categoryCounts: [DhikrCategory: Int] {
-        Dictionary(grouping: store.dhikrs, by: \.category)
-            .mapValues(\.count)
-    }
-
-    private var featuredCollections: [FeaturedDhikrCollection] {
-        FeaturedDhikrCollection.collections(
-            categoryCounts: categoryCounts,
-            customCount: customDhikrCount
-        )
+    private var featuredCollections: [LibraryFeaturedCollection] {
+        LibraryFeaturedCollection.allCases
     }
 
     private var shouldShowSearchField: Bool {
@@ -102,7 +87,7 @@ struct LibraryView: View {
             .background(AwradTheme.background)
             .clipShape(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28))
         }
-        .background(AwradTheme.surface)
+        .background(AwradTheme.background.ignoresSafeArea(edges: .bottom))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
@@ -235,8 +220,8 @@ struct LibraryView: View {
     private var catalogFilters: LibraryCatalogFilters {
         LibraryCatalogFilters(
             query: searchText,
-            category: selectedCategory,
-            collectionScope: collectionScope,
+            category: nil,
+            collectionScope: .all,
             selectedTagIDs: selectedTagIDs
         )
     }
@@ -301,8 +286,6 @@ struct LibraryView: View {
                 subtitle: nil,
                 actionTitle: "View all"
             ) {
-                selectedCategory = nil
-                collectionScope = .all
                 selectedTagIDs = []
                 searchText = ""
                 isSearchVisible = false
@@ -313,20 +296,11 @@ struct LibraryView: View {
                 HStack(spacing: 12) {
                     ForEach(featuredCollections) { collection in
                         Button {
-                            if collection.isYourDhikrs {
-                                collectionScope = .yourDhikrs
-                                selectedCategory = nil
-                            } else {
-                                collectionScope = .all
-                                selectedCategory = collection.category
-                            }
-                            searchText = ""
-                            selectedTagIDs = []
-                            isSearchVisible = false
-                            isSearchFocused = false
+                            router.navigate(.libraryCollection(collection), in: .library)
                         } label: {
                             LibraryFeaturedCollectionCard(
                                 collection: collection,
+                                count: collection.dhikrs(in: store.dhikrs).count,
                                 language: language,
                                 isDark: colorScheme == .dark
                             )
@@ -345,21 +319,7 @@ struct LibraryView: View {
                 count: AwradLocalizer.dhikrCount(filteredDhikrs.count, language: language)
             )
 
-            if collectionScope == .yourDhikrs, customDhikrCount == 0 {
-                EmptyStateView(
-                    symbol: "sparkles",
-                    title: "No personal dhikrs yet",
-                    message: "Create a dhikr with your own text and optional imported audio."
-                )
-                Button {
-                    router.navigate(.createDhikr, in: .library)
-                } label: {
-                    Label("Create Dhikr", systemImage: "plus.circle.fill")
-                        .frame(maxWidth: .infinity)
-                }
-                .awradPrimaryButton()
-                .accessibilityLabel("Create Dhikr")
-            } else if store.dhikrs.isEmpty {
+            if store.dhikrs.isEmpty {
                 EmptyStateView(
                     symbol: "text.book.closed",
                     title: "No dhikrs in library",
@@ -392,15 +352,10 @@ struct LibraryView: View {
     }
 
     private var listTitle: String {
-        if collectionScope == .yourDhikrs {
-            return "Your Dhikrs"
-        }
-        return selectedCategory?.title ?? "All dhikrs"
+        "All dhikrs"
     }
 
     private func clearFilters() {
-        selectedCategory = nil
-        collectionScope = .all
         selectedTagIDs = []
         searchText = ""
         isSearchVisible = false
@@ -414,96 +369,9 @@ struct LibraryView: View {
     }
 }
 
-private struct FeaturedDhikrCollection: Identifiable {
-    enum Tone {
-        case asmaUlHusna
-        case daily
-        case swalaths
-        case dhikrs
-        case evening
-        case prayer
-        case custom
-    }
-
-    let title: String
-    let category: DhikrCategory?
-    let count: Int
-    let tone: Tone
-    var isYourDhikrs: Bool = false
-
-    var id: String { title }
-
-    static func collections(
-        categoryCounts: [DhikrCategory: Int],
-        customCount: Int
-    ) -> [FeaturedDhikrCollection] {
-        let dailyCategory: DhikrCategory = (categoryCounts[.morning] ?? 0) > 0 ? .morning : .praise
-        let dailyCount = (categoryCounts[.morning] ?? 0) > 0
-            ? (categoryCounts[.morning] ?? 0)
-            : count(categoryCounts, categories: [.praise, .forgiveness, .quran])
-
-        return [
-            FeaturedDhikrCollection(
-                title: "Your Dhikrs",
-                category: nil,
-                count: customCount,
-                tone: .custom,
-                isYourDhikrs: true
-            ),
-            FeaturedDhikrCollection(
-                title: String(
-                    localized: "category.asma_ul_husna",
-                    defaultValue: "Asma-ul Husna"
-                ),
-                category: .asmaUlHusna,
-                count: categoryCounts[.asmaUlHusna] ?? 0,
-                tone: .asmaUlHusna
-            ),
-            FeaturedDhikrCollection(
-                title: "Daily Essentials",
-                category: dailyCategory,
-                count: dailyCount,
-                tone: .daily
-            ),
-            FeaturedDhikrCollection(
-                title: "Swalaths",
-                category: .swalaths,
-                count: categoryCounts[.swalaths] ?? 0,
-                tone: .swalaths
-            ),
-            FeaturedDhikrCollection(
-                title: "Dhikrs",
-                category: .praise,
-                count: count(categoryCounts, categories: [.praise, .forgiveness, .general]),
-                tone: .dhikrs
-            ),
-            FeaturedDhikrCollection(
-                title: "Evening Dhikrs",
-                category: .evening,
-                count: categoryCounts[.evening] ?? 0,
-                tone: .evening
-            ),
-            FeaturedDhikrCollection(
-                title: "After Prayer",
-                category: .afterSalah,
-                count: categoryCounts[.afterSalah] ?? 0,
-                tone: .prayer
-            )
-        ]
-    }
-
-    private static func count(
-        _ categoryCounts: [DhikrCategory: Int],
-        categories: [DhikrCategory]
-    ) -> Int {
-        categories.reduce(0) { total, category in
-            total + (categoryCounts[category] ?? 0)
-        }
-    }
-}
-
 private struct LibraryFeaturedCollectionCard: View {
-    let collection: FeaturedDhikrCollection
+    let collection: LibraryFeaturedCollection
+    let count: Int
     let language: AppLanguage
     let isDark: Bool
 
@@ -527,7 +395,7 @@ private struct LibraryFeaturedCollectionCard: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
 
-                Text(AwradLocalizer.dhikrCount(collection.count, language: language))
+                Text(AwradLocalizer.dhikrCount(count, language: language))
                     .font(AwradTheme.bodyFont(.caption, weight: .semibold))
                     .foregroundStyle(isDark ? Color.white.opacity(0.76) : .secondary)
                     .lineLimit(1)
@@ -551,20 +419,20 @@ private struct LibraryFeaturedCollectionCard: View {
 
     private var imageName: String {
         let suffix = isDark ? "dark" : "light"
-        switch collection.tone {
+        switch collection {
         case .asmaUlHusna:
             return "collection_asma_ul_husna_\(suffix)"
-        case .daily:
+        case .dailyEssentials:
             return "collection_daily_essentials_\(suffix)"
         case .swalaths:
             return "collection_swalaths_\(suffix)"
         case .dhikrs:
             return "collection_dhikrs_\(suffix)"
-        case .custom:
+        case .yourDhikrs:
             return "collection_your_dhikrs_\(suffix)"
-        case .evening:
+        case .eveningDhikrs:
             return "collection_evening_dhikrs_\(suffix)"
-        case .prayer:
+        case .afterPrayer:
             return "collection_after_prayer_\(suffix)"
         }
     }
@@ -582,6 +450,75 @@ private struct LibraryFeaturedCollectionCard: View {
                 .white.opacity(0.33),
                 .white.opacity(0)
             ]
+        }
+    }
+}
+
+struct LibraryCollectionView: View {
+    @Environment(AwradStore.self) private var store
+    @Environment(AppRouter.self) private var router
+    @Environment(AppServices.self) private var services
+    let collection: LibraryFeaturedCollection
+    @State private var showAudioError = false
+    private var language: AppLanguage { store.preferences.appLanguage }
+
+    private var collectionDhikrs: [Dhikr] {
+        collection.dhikrs(in: store.dhikrs)
+    }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 18) {
+                SectionHeader(
+                    title: collection.title,
+                    subtitle: AwradLocalizer.dhikrCount(collectionDhikrs.count, language: language),
+                    actionTitle: nil,
+                    action: nil
+                )
+
+                if collectionDhikrs.isEmpty {
+                    EmptyStateView(
+                        symbol: collection.symbol,
+                        title: collection == .yourDhikrs ? "No personal dhikrs yet" : "No dhikrs in library",
+                        message: collection == .yourDhikrs
+                            ? "Create a dhikr with your own text and optional imported audio."
+                            : "Audio files will appear here when available."
+                    )
+
+                    if collection == .yourDhikrs {
+                        Button {
+                            router.navigate(.createDhikr, in: .library)
+                        } label: {
+                            Label("Create Dhikr", systemImage: "plus.circle.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .awradPrimaryButton()
+                        .accessibilityLabel("Create Dhikr")
+                    }
+                } else {
+                    LazyVStack(spacing: 12) {
+                        ForEach(collectionDhikrs) { dhikr in
+                            DhikrCard(dhikr: dhikr, language: language) {
+                                router.navigate(.dhikrDetail(dhikr.id), in: .library)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(20)
+            .padding(.bottom, 96)
+        }
+        .background(AwradTheme.background)
+        .navigationTitle(LocalizedStringKey(collection.title))
+        .onChange(of: services.audio.errorMessage) { _, newValue in
+            showAudioError = newValue != nil
+        }
+        .alert("Audio Error", isPresented: $showAudioError) {
+            Button("OK") {
+                services.audio.stop()
+            }
+        } message: {
+            Text(services.audio.errorMessage ?? "Audio playback failed.")
         }
     }
 }
@@ -651,6 +588,7 @@ struct DhikrDetailView: View {
     @Environment(AwradStore.self) private var store
     @Environment(AppRouter.self) private var router
     @Environment(AppServices.self) private var services
+    @Environment(\.dismiss) private var dismiss
     let dhikrID: AwradID
     let onDownloadedAudioRemoved: ((AwradID) -> Bool)?
     @State private var isDownloadingAudio = false
@@ -659,8 +597,11 @@ struct DhikrDetailView: View {
     @State private var showDeleteConfirmation = false
     @State private var showRemoveAudioConfirmation = false
     @State private var showManageTags = false
+    @State private var showActions = false
     @State private var audioCacheRevision = 0
     @State private var pendingSuggestedGoal: DhikrSuggestedGoal?
+    @State private var selectedDetailTab: DhikrDetailTab = .about
+    @State private var selectedStatsRange: DhikrStatsRange = .thirtyDays
 
     private var language: AppLanguage { store.preferences.appLanguage }
 
@@ -681,45 +622,34 @@ struct DhikrDetailView: View {
         ScrollView {
             if let dhikr = store.dhikr(id: dhikrID) {
                 let language = store.preferences.appLanguage
-                let guidance = DhikrGuidanceRegistry.guidance(for: dhikr, language: language)
-                VStack(alignment: .leading, spacing: 20) {
-                    quranAwareTextCard(for: dhikr, language: language)
+                VStack(alignment: .leading, spacing: 16) {
+                    quranAwareTextCard(for: dhikr)
 
-                    audioPreviewCard(for: dhikr)
+                    DhikrDetailTabs(selection: $selectedDetailTab)
 
-                    if !guidance.benefits.isEmpty {
-                        benefitsCard(guidance.benefits)
+                    if selectedDetailTab == .insights {
+                        let goalIDs = Set(store.allGoals(for: dhikrID).map(\.id))
+                        let dailyCounts = DhikrStatsCalculator.aggregateGoalCounts(
+                            goalIDs: goalIDs,
+                            countEntries: store.countEntries
+                        )
+                        let stats = DhikrStatsCalculator.calculate(
+                            dailyCounts: dailyCounts,
+                            effectiveToday: store.todayKey,
+                            range: selectedStatsRange
+                        )
+                        DhikrStatsOverview(
+                            stats: stats,
+                            effectiveTodayKey: store.todayKey,
+                            selectedRange: $selectedStatsRange,
+                            language: language
+                        )
+                    } else {
+                        aboutContent(for: dhikr, language: language)
                     }
-
-                    if !guidance.suggestedGoals.isEmpty {
-                        suggestedGoalsCard(for: dhikr, suggestions: guidance.suggestedGoals)
-                    }
-
-                    tagsSummaryCard(for: dhikr)
-
-                    Button {
-                        showManageTags = true
-                    } label: {
-                        Label("Manage tags", systemImage: "tag.fill")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(AwradTheme.sage)
-                    .accessibilityLabel("Manage tags")
-
-                    Button {
-                        if let goal = store.goals(for: dhikr.id).first {
-                            router.navigate(.counting(goalID: goal.id, slotID: nil), in: store.selectedTab)
-                        } else {
-                            router.navigate(.createGoal(dhikrID: dhikr.id), in: store.selectedTab)
-                        }
-                    } label: {
-                        Label(store.goals(for: dhikr.id).isEmpty ? "Create Goal" : "Open Counter", systemImage: "target")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .awradPrimaryButton()
                 }
-                .padding(20)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
                 .padding(.bottom, 96)
             } else {
                 EmptyStateView(symbol: "exclamationmark.triangle", title: "Not Found", message: "This dhikr is no longer available.")
@@ -728,33 +658,72 @@ struct DhikrDetailView: View {
             }
         }
         .background(AwradTheme.background)
-        .navigationTitle(navigationTitle)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.backward")
+                        .font(AwradTheme.bodyFont(16, weight: .bold))
+                        .frame(width: 40, height: 40)
+                        .background(AwradTheme.surface, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Back")
+            }
+
+            ToolbarItem(placement: .principal) {
+                Text(navigationTitle)
+                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            }
+
             if let dhikr = store.dhikr(id: dhikrID) {
-                ToolbarItem(placement: .topBarTrailing) {
-                    if dhikr.isCustom {
-                        Menu {
-                            Button("Manage tags", systemImage: "tag.fill") {
-                                showManageTags = true
-                            }
-                            Button("Edit Dhikr", systemImage: "pencil", action: editDhikr)
-                            Button("Delete Dhikr", systemImage: "trash", role: .destructive) {
-                                showDeleteConfirmation = true
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
+                ToolbarItemGroup(placement: .topBarTrailing) {
+                    Button {
+                        createGoal(for: dhikr)
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus")
+                            Text("Goal")
                         }
-                        .accessibilityLabel("Dhikr actions")
-                    } else {
-                        Button {
-                            showManageTags = true
-                        } label: {
-                            Image(systemName: "tag.fill")
-                        }
-                        .accessibilityLabel("Manage tags")
+                            .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                            .fixedSize(horizontal: true, vertical: false)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Create Goal")
+
+                    Button {
+                        showActions = true
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(AwradTheme.bodyFont(17, weight: .bold))
+                            .frame(width: 40, height: 40)
+                            .background(AwradTheme.surface, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Dhikr actions")
+                }
+            }
+        }
+        .confirmationDialog("Dhikr actions", isPresented: $showActions, titleVisibility: .visible) {
+            if let dhikr = store.dhikr(id: dhikrID) {
+                Button("Manage tags", systemImage: "tag.fill") {
+                    showManageTags = true
+                }
+                if dhikr.isCustom {
+                    Button("Edit Dhikr", systemImage: "pencil", action: editDhikr)
+                    Button("Delete Dhikr", systemImage: "trash", role: .destructive) {
+                        showDeleteConfirmation = true
                     }
                 }
             }
+            Button("Cancel", role: .cancel) {}
         }
         .sheet(isPresented: $showManageTags) {
             ManageTagsView(dhikrID: dhikrID)
@@ -803,48 +772,55 @@ struct DhikrDetailView: View {
     }
 
     @ViewBuilder
-    private func quranAwareTextCard(for dhikr: Dhikr, language: AppLanguage) -> some View {
+    private func quranAwareTextCard(for dhikr: Dhikr) -> some View {
         let reference = dhikr.quranRef.flatMap { QuranDhikrReadingPolicy.isValid($0) ? $0 : nil }
         let splitText = QuranDhikrReadingPolicy.splitBismillah(dhikr.arabic)
         let rendersFully = reference.map {
             QuranDhikrReadingPolicy.shouldRenderFullyInline(reference: $0, arabic: dhikr.arabic)
         } ?? true
 
-        VStack(alignment: .leading, spacing: 16) {
-            AwradCard {
-                VStack(spacing: 12) {
-                    if let bismillah = splitText.bismillah {
-                        Text(bismillah)
-                            .font(AwradTheme.arabicFont(25))
-                            .multilineTextAlignment(.center)
-                            .frame(maxWidth: .infinity)
-                            .environment(\.layoutDirection, .rightToLeft)
-                    }
-
-                    Text(splitText.body)
-                        .font(AwradTheme.arabicFont(reference == nil ? 34 : 29))
+        AwradCard {
+            VStack(spacing: 12) {
+                if let bismillah = splitText.bismillah {
+                    Text(bismillah)
+                        .font(AwradTheme.arabicFont(25))
                         .multilineTextAlignment(.center)
-                        .lineSpacing(8)
-                        .lineLimit(rendersFully ? nil : 4)
-                        .truncationMode(.tail)
                         .frame(maxWidth: .infinity)
                         .environment(\.layoutDirection, .rightToLeft)
-
-                    if reference != nil, !rendersFully {
-                        Button("See full") {
-                            router.navigate(
-                                .quranDhikrReader(dhikrID: dhikr.id, goalID: nil, slotID: nil),
-                                in: store.selectedTab
-                            )
-                        }
-                        .buttonStyle(.bordered)
-                        .tint(AwradTheme.sage)
-                        .accessibilityHint("Opens the Quran reader")
-                    }
                 }
-                .padding(.vertical, 16)
-            }
 
+                Text(splitText.body)
+                    .font(AwradTheme.arabicFont(reference == nil ? 29 : 27))
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(8)
+                    .lineLimit(rendersFully ? nil : 4)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity)
+                    .environment(\.layoutDirection, .rightToLeft)
+
+                if reference != nil, !rendersFully {
+                    Button("See full") {
+                        router.navigate(
+                            .quranDhikrReader(dhikrID: dhikr.id, goalID: nil, slotID: nil),
+                            in: store.selectedTab
+                        )
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(AwradTheme.sage)
+                    .accessibilityHint("Opens the Quran reader")
+                }
+            }
+            .padding(.vertical, 18)
+        }
+        .accessibilityIdentifier("dhikr_arabic_text")
+    }
+
+    @ViewBuilder
+    private func aboutContent(for dhikr: Dhikr, language: AppLanguage) -> some View {
+        let translation = dhikr.displayTranslation(language: language)
+        let guidance = DhikrGuidanceRegistry.guidance(for: dhikr, language: language)
+
+        VStack(alignment: .leading, spacing: 16) {
             if !dhikr.transliteration.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 VStack(alignment: .leading, spacing: 5) {
                     Text("TRANSLITERATION")
@@ -858,7 +834,6 @@ struct DhikrDetailView: View {
                 }
             }
 
-            let translation = dhikr.displayTranslation(language: language)
             if !translation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
                translation != dhikr.displayTitle(language: language),
                translation != dhikr.transliteration {
@@ -872,7 +847,19 @@ struct DhikrDetailView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+
+            if audioAvailability(for: dhikr) != .unavailable {
+                audioPreviewCard(for: dhikr)
+            }
+
+            if !guidance.suggestedGoals.isEmpty {
+                suggestedGoalsCard(for: dhikr, suggestions: guidance.suggestedGoals)
+            }
         }
+    }
+
+    private func createGoal(for dhikr: Dhikr) {
+        router.navigate(.createGoal(dhikrID: dhikr.id), in: store.selectedTab)
     }
 
     private var suggestedGoalConfirmationBinding: Binding<Bool> {
@@ -890,34 +877,6 @@ struct DhikrDetailView: View {
         router.navigate(.editDhikr(dhikrID), in: store.selectedTab)
     }
 
-    private func tagsSummaryCard(for dhikr: Dhikr) -> some View {
-        let assigned = store.userTags
-            .filter { tag in
-                store.tagAssignments.contains { $0.dhikrID == dhikr.id && $0.tagID == tag.id }
-            }
-            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
-
-        return AwradCard {
-            VStack(alignment: .leading, spacing: 12) {
-                Label("Tags", systemImage: "tag.fill")
-                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
-                if assigned.isEmpty {
-                    Text("No tags assigned yet.")
-                        .font(AwradTheme.bodyFont(.subheadline))
-                        .foregroundStyle(.secondary)
-                } else {
-                    FlowTagChips(names: assigned.map(\.name))
-                }
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            assigned.isEmpty
-                ? "No tags assigned yet"
-                : "Tags: \(assigned.map(\.name).joined(separator: ", "))"
-        )
-    }
-
     private func deleteDhikr() {
         services.audio.stop()
         guard let removedGoalIDs = store.deleteCustomDhikr(dhikrID) else { return }
@@ -928,35 +887,6 @@ struct DhikrDetailView: View {
             )
         }
         router.popToRoot(in: store.selectedTab)
-    }
-
-    private func benefitsCard(_ benefits: [DhikrBenefitDetail]) -> some View {
-        AwradCard {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Benefits")
-                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
-                ForEach(benefits) { benefit in
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: "leaf.fill")
-                            .foregroundStyle(AwradTheme.sage)
-                            .frame(width: 24)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(benefit.title)
-                                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
-                                .foregroundStyle(AwradTheme.ink)
-                            Text(benefit.description)
-                                .font(AwradTheme.bodyFont(.caption))
-                                .foregroundStyle(.secondary)
-                            if let source = benefit.source {
-                                Text(source)
-                                    .font(AwradTheme.bodyFont(.caption2, weight: .semibold))
-                                    .foregroundStyle(AwradTheme.gold)
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private func suggestedGoalsCard(for dhikr: Dhikr, suggestions: [DhikrSuggestedGoal]) -> some View {
@@ -1261,6 +1191,503 @@ struct DhikrDetailView: View {
             audioErrorMessage = error.localizedDescription
             showAudioError = true
         }
+    }
+}
+
+private enum DhikrDetailTab: String, CaseIterable, Identifiable {
+    case about = "About"
+    case insights = "Insights"
+
+    var id: String { rawValue }
+}
+
+private struct DhikrDetailTabs: View {
+    @Binding var selection: DhikrDetailTab
+
+    var body: some View {
+        Picker("Dhikr detail section", selection: $selection) {
+            ForEach(DhikrDetailTab.allCases) { tab in
+                Text(LocalizedStringKey(tab.rawValue)).tag(tab)
+            }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityIdentifier("dhikr_detail_tabs")
+    }
+}
+
+private struct DhikrStatsOverview: View {
+    let stats: DhikrPracticeStats
+    let effectiveTodayKey: String
+    @Binding var selectedRange: DhikrStatsRange
+    let language: AppLanguage
+
+    private var activeDateKeys: Set<String> {
+        Set(stats.dailyCounts.lazy.filter { $0.count > 0 }.map(\.dateKey))
+    }
+
+    private var rhythmRangeLabel: String {
+        switch selectedRange {
+        case .thirtyDays: "Last 30 days"
+        case .ninetyDays: "Last 90 days"
+        case .allTime: "All time"
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            DhikrStatsRangeSelector(
+                selectedRange: $selectedRange,
+                language: language
+            )
+
+            DhikrStatsPatternSummary(stats: stats, language: language)
+            DhikrStatsSummaryPanel(stats: stats, language: language)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .firstTextBaseline) {
+                    Text(verbatim: AwradLocalizer.localized("Daily rhythm", language: language))
+                        .font(AwradTheme.bodyFont(.subheadline, weight: .bold))
+                    Spacer(minLength: 8)
+                    Text(verbatim: AwradLocalizer.localized(rhythmRangeLabel, language: language))
+                        .font(AwradTheme.bodyFont(.caption2))
+                        .foregroundStyle(.secondary)
+                }
+                DhikrStatsBarChart(dailyCounts: stats.dailyCounts)
+            }
+            .padding(16)
+            .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+
+            VStack(alignment: .leading, spacing: 12) {
+                Text(verbatim: AwradLocalizer.localized("Consistency", language: language))
+                    .font(AwradTheme.bodyFont(.subheadline, weight: .bold))
+                DhikrStatsCalendar(
+                    currentStreak: stats.currentStreak,
+                    activeDateKeys: activeDateKeys,
+                    todayKey: effectiveTodayKey,
+                    earliestDateKey: stats.dailyCounts.first?.dateKey,
+                    language: language
+                )
+            }
+            .padding(16)
+            .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+        .accessibilityIdentifier("dhikr_stats_overview")
+    }
+}
+
+private struct DhikrStatsRangeSelector: View {
+    @Binding var selectedRange: DhikrStatsRange
+    let language: AppLanguage
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(verbatim: AwradLocalizer.localized("Practice window", language: language))
+                .font(AwradTheme.bodyFont(.caption, weight: .semibold))
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 4)
+            ForEach(DhikrStatsRange.allCases) { range in
+                Button {
+                    selectedRange = range
+                } label: {
+                    Text(verbatim: AwradLocalizer.localized(label(for: range), language: language))
+                        .font(AwradTheme.bodyFont(.caption, weight: selectedRange == range ? .bold : .semibold))
+                        .foregroundStyle(selectedRange == range ? Color.white : AwradTheme.ink)
+                        .padding(.horizontal, 11)
+                        .frame(minHeight: 34)
+                        .background(
+                            selectedRange == range ? AwradTheme.sage : AwradTheme.surface,
+                            in: Capsule()
+                        )
+                }
+                .buttonStyle(.plain)
+                .accessibilityAddTraits(selectedRange == range ? .isSelected : [])
+            }
+        }
+    }
+
+    private func label(for range: DhikrStatsRange) -> String {
+        switch range {
+        case .thirtyDays: "30D"
+        case .ninetyDays: "90D"
+        case .allTime: "All"
+        }
+    }
+}
+
+private struct DhikrStatsPatternSummary: View {
+    let stats: DhikrPracticeStats
+    let language: AppLanguage
+
+    private var title: String {
+        AwradLocalizer.localized(
+            stats.activeDays > 0 ? "Your rhythm with this dhikr" : "Your practice starts here",
+            language: language
+        )
+    }
+
+    private var description: String {
+        guard stats.activeDays > 0 else {
+            return AwradLocalizer.localized(
+                "Counts for this dhikr will appear here after your first active day.",
+                language: language
+            )
+        }
+        let key = stats.activeDays == 1
+            ? "You practiced this dhikr on %d day in the selected period."
+            : "You practiced this dhikr on %d days in the selected period."
+        return AwradLocalizer.format(key, language: language, stats.activeDays)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(AwradTheme.sage)
+                    .frame(width: 8, height: 8)
+                Text(verbatim: AwradLocalizer.localized("PRACTICE PATTERN", language: language))
+                    .font(AwradTheme.bodyFont(.caption2, weight: .bold))
+                    .tracking(0.8)
+                    .foregroundStyle(AwradTheme.sage)
+            }
+            Text(verbatim: title)
+                .font(AwradTheme.displayFont(.title3, weight: .semibold))
+                .foregroundStyle(AwradTheme.ink)
+            Text(verbatim: description)
+                .font(AwradTheme.bodyFont(.caption))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 15)
+        .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+}
+
+private struct DhikrStatsSummaryPanel: View {
+    let stats: DhikrPracticeStats
+    let language: AppLanguage
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                DhikrMetricCell(
+                    label: localized("Recorded total"),
+                    value: formatted(stats.totalCount),
+                    detail: localized("Across every goal"),
+                    highlight: true
+                )
+                Divider().frame(height: 82)
+                DhikrMetricCell(
+                    label: localized("Average on active days"),
+                    value: formatted(stats.activeDayAverage),
+                    detail: localized("On days you practiced")
+                )
+            }
+            Divider().padding(.horizontal, 14)
+            HStack(spacing: 0) {
+                DhikrMetricCell(
+                    label: localized("Days counted"),
+                    value: formatted(Int64(stats.activeDays)),
+                    detail: AwradLocalizer.format(
+                        "%d%% of this window",
+                        language: language,
+                        stats.presencePercent
+                    )
+                )
+                Divider().frame(height: 82)
+                DhikrMetricCell(
+                    label: localized("Current streak"),
+                    value: AwradLocalizer.format(
+                        stats.currentStreak == 1 ? "%d day" : "%d days",
+                        language: language,
+                        stats.currentStreak
+                    ),
+                    detail: localized("Follows your practice day")
+                )
+            }
+        }
+        .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+    }
+
+    private func localized(_ key: String) -> String {
+        AwradLocalizer.localized(key, language: language)
+    }
+
+    private func formatted(_ value: Int64) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.locale = Locale(identifier: language.localeIdentifier)
+        return formatter.string(from: NSNumber(value: value)) ?? String(value)
+    }
+}
+
+private struct DhikrMetricCell: View {
+    let label: String
+    let value: String
+    let detail: String
+    var highlight = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(verbatim: label)
+                .font(AwradTheme.bodyFont(.caption2, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+            Text(verbatim: value)
+                .font(AwradTheme.displayFont(.title3, weight: .bold))
+                .foregroundStyle(highlight ? AwradTheme.sage : AwradTheme.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            Text(verbatim: detail)
+                .font(AwradTheme.bodyFont(10))
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+        }
+        .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct DhikrStatsBarChart: View {
+    let dailyCounts: [DhikrDailyCount]
+
+    var body: some View {
+        Canvas { context, size in
+            guard !dailyCounts.isEmpty else { return }
+            let maxCount = max(dailyCounts.map(\.count).max() ?? 0, 1)
+            let spacing: CGFloat = dailyCounts.count > 60 ? 0.5 : 2
+            let availableWidth = size.width - (spacing * CGFloat(max(dailyCounts.count - 1, 0)))
+            let barWidth = max(availableWidth / CGFloat(dailyCounts.count), 0.25)
+
+            for (index, day) in dailyCounts.enumerated() {
+                let fraction = day.count <= 0
+                    ? 0.025
+                    : max(CGFloat(day.count) / CGFloat(maxCount), 0.08)
+                let height = max(size.height * fraction, 2)
+                let rect = CGRect(
+                    x: CGFloat(index) * (barWidth + spacing),
+                    y: size.height - height,
+                    width: barWidth,
+                    height: height
+                )
+                let color = index >= dailyCounts.count - 7
+                    ? AwradTheme.sage
+                    : AwradTheme.sage.opacity(0.38)
+                context.fill(
+                    Path(roundedRect: rect, cornerRadius: min(3, barWidth / 2)),
+                    with: .color(color)
+                )
+            }
+        }
+        .frame(height: 88)
+        .environment(\.layoutDirection, .leftToRight)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Daily rhythm")
+    }
+}
+
+private struct DhikrStatsCalendar: View {
+    let currentStreak: Int
+    let activeDateKeys: Set<String>
+    let todayKey: String
+    let earliestDateKey: String?
+    let language: AppLanguage
+    @State private var displayedMonth: Date
+
+    init(
+        currentStreak: Int,
+        activeDateKeys: Set<String>,
+        todayKey: String,
+        earliestDateKey: String?,
+        language: AppLanguage
+    ) {
+        self.currentStreak = currentStreak
+        self.activeDateKeys = activeDateKeys
+        self.todayKey = todayKey
+        self.earliestDateKey = earliestDateKey
+        self.language = language
+        let today = DhikrStatsCalculator.date(for: todayKey) ?? Date()
+        _displayedMonth = State(initialValue: Self.monthStart(for: today))
+    }
+
+    private var calendar: Calendar { Self.calendar }
+    private var today: Date { DhikrStatsCalculator.date(for: todayKey) ?? Date() }
+    private var currentMonth: Date { Self.monthStart(for: today) }
+    private var earliestMonth: Date? {
+        guard let earliestDateKey,
+              let earliestDate = DhikrStatsCalculator.date(for: earliestDateKey) else {
+            return nil
+        }
+        return Self.monthStart(for: earliestDate)
+    }
+    private var canGoBack: Bool { earliestMonth.map { displayedMonth > $0 } ?? true }
+    private var canGoForward: Bool { displayedMonth < currentMonth }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if currentStreak > 0 {
+                HStack(spacing: 10) {
+                    Image(systemName: "flame.fill")
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(AwradTheme.gold, in: Circle())
+                    Text(
+                        verbatim: AwradLocalizer.format(
+                            currentStreak == 1 ? "%d day streak" : "%d day streak",
+                            language: language,
+                            currentStreak
+                        )
+                    )
+                    .font(AwradTheme.bodyFont(.subheadline, weight: .bold))
+                }
+            }
+
+            VStack(spacing: 4) {
+                HStack {
+                    monthButton(symbol: "chevron.backward", enabled: canGoBack) {
+                        displayedMonth = calendar.date(byAdding: .month, value: -1, to: displayedMonth)
+                            ?? displayedMonth
+                    }
+                    Spacer()
+                    Text(verbatim: monthTitle)
+                        .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                    Spacer()
+                    monthButton(symbol: "chevron.forward", enabled: canGoForward) {
+                        displayedMonth = calendar.date(byAdding: .month, value: 1, to: displayedMonth)
+                            ?? displayedMonth
+                    }
+                }
+
+                LazyVGrid(
+                    columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7),
+                    spacing: 4
+                ) {
+                    ForEach(Array(dayLabels.enumerated()), id: \.offset) { _, label in
+                        Text(verbatim: label)
+                            .font(AwradTheme.bodyFont(9, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                    }
+
+                    ForEach(Array(monthCells.enumerated()), id: \.offset) { _, date in
+                        calendarCell(for: date)
+                    }
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(AwradTheme.background, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        }
+        .onChange(of: todayKey) { _, newValue in
+            guard let date = DhikrStatsCalculator.date(for: newValue) else { return }
+            displayedMonth = Self.monthStart(for: date)
+        }
+    }
+
+    private var monthTitle: String {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: language.localeIdentifier)
+        formatter.setLocalizedDateFormatFromTemplate(
+            calendar.component(.year, from: displayedMonth) == calendar.component(.year, from: today)
+                ? "MMMM"
+                : "MMMM yyyy"
+        )
+        return formatter.string(from: displayedMonth)
+    }
+
+    private var dayLabels: [String] {
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = Locale(identifier: language.localeIdentifier)
+        let sundayFirst = formatter.veryShortStandaloneWeekdaySymbols ?? formatter.veryShortWeekdaySymbols ?? []
+        guard sundayFirst.count == 7 else { return ["M", "T", "W", "T", "F", "S", "S"] }
+        return Array(sundayFirst[1...6]) + [sundayFirst[0]]
+    }
+
+    private var monthCells: [Date?] {
+        guard let dayRange = calendar.range(of: .day, in: .month, for: displayedMonth),
+              let firstWeekday = calendar.dateComponents([.weekday], from: displayedMonth).weekday else {
+            return Array(repeating: nil, count: 42)
+        }
+        let mondayOffset = (firstWeekday + 5) % 7
+        return (0..<42).map { index in
+            let day = index - mondayOffset + 1
+            guard dayRange.contains(day) else { return nil }
+            return calendar.date(byAdding: .day, value: day - 1, to: displayedMonth)
+        }
+    }
+
+    @ViewBuilder
+    private func calendarCell(for date: Date?) -> some View {
+        if let date {
+            let key = DhikrStatsCalculator.dateKey(for: date)
+            let isActive = activeDateKeys.contains(key)
+            let isFuture = date > today
+            let isToday = key == todayKey
+            let fill = isFuture
+                ? AwradTheme.trackFill.opacity(0.35)
+                : isActive ? AwradTheme.gold : AwradTheme.trackFill
+            let textColor: Color = isFuture
+                ? .secondary.opacity(0.35)
+                : isActive ? .white : .secondary
+
+            Text(verbatim: String(calendar.component(.day, from: date)))
+                .font(AwradTheme.bodyFont(9, weight: .medium))
+                .foregroundStyle(textColor)
+                .frame(width: 26, height: 26)
+                .background(fill, in: Circle())
+                .overlay {
+                    if isToday {
+                        Circle().stroke(AwradTheme.gold.opacity(0.8), lineWidth: 1)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel(key)
+                .accessibilityValue(
+                    Text(
+                        verbatim: AwradLocalizer.localized(
+                            isActive ? "Practiced" : "No practice",
+                            language: language
+                        )
+                    )
+                )
+        } else {
+            Circle()
+                .fill(AwradTheme.trackFill.opacity(0.18))
+                .frame(width: 26, height: 26)
+                .frame(maxWidth: .infinity)
+                .accessibilityHidden(true)
+        }
+    }
+
+    private func monthButton(
+        symbol: String,
+        enabled: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(AwradTheme.bodyFont(12, weight: .bold))
+                .frame(width: 36, height: 36)
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .opacity(enabled ? 1 : 0.3)
+    }
+
+    private static var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = Locale(identifier: "en_US_POSIX")
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        return calendar
+    }
+
+    private static func monthStart(for date: Date) -> Date {
+        calendar.date(from: calendar.dateComponents([.year, .month], from: date)) ?? date
     }
 }
 

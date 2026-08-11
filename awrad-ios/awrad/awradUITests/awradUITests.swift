@@ -121,6 +121,72 @@ final class awradUITests: XCTestCase {
     }
 
     @MainActor
+    func testFeaturedCollectionOpensItsOwnDhikrListPage() throws {
+        let app = launchSeededApp()
+        openDeepLink("awrad://library")
+
+        let collectionCard = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] %@", "Asma-ul Husna")
+        ).firstMatch
+        XCTAssertTrue(collectionCard.waitForExistence(timeout: 4))
+        collectionCard.tap()
+
+        XCTAssertTrue(app.navigationBars["Asma-ul Husna"].waitForExistence(timeout: 4))
+        let firstDhikr = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Open ")
+        ).firstMatch
+        XCTAssertTrue(firstDhikr.waitForExistence(timeout: 4))
+    }
+
+    @MainActor
+    func testDhikrDetailMatchesAndroidInsightsSurface() throws {
+        let app = launchSeededApp()
+        openDeepLink("awrad://library")
+
+        let collectionCard = app.buttons.matching(
+            NSPredicate(format: "label CONTAINS[c] %@", "Asma-ul Husna")
+        ).firstMatch
+        XCTAssertTrue(collectionCard.waitForExistence(timeout: 4))
+        collectionCard.tap()
+
+        let firstDhikr = app.buttons.matching(
+            NSPredicate(format: "label BEGINSWITH %@", "Open ")
+        ).firstMatch
+        XCTAssertTrue(firstDhikr.waitForExistence(timeout: 4))
+        firstDhikr.tap()
+
+        let tabs = app.segmentedControls["dhikr_detail_tabs"]
+        XCTAssertTrue(tabs.waitForExistence(timeout: 4))
+        XCTAssertTrue(tabs.buttons["Insights"].isSelected)
+        XCTAssertTrue(app.staticTexts["Practice window"].exists)
+        XCTAssertTrue(app.staticTexts["Recorded total"].exists)
+        XCTAssertTrue(app.staticTexts["Daily rhythm"].exists)
+        XCTAssertTrue(app.staticTexts["Consistency"].exists)
+        let insightsScreenshot = XCTAttachment(screenshot: app.screenshot())
+        insightsScreenshot.name = "Dhikr detail - Insights"
+        insightsScreenshot.lifetime = .keepAlways
+        add(insightsScreenshot)
+
+        let arabicCard = app.descendants(matching: .any)["dhikr_arabic_text"]
+        XCTAssertTrue(arabicCard.waitForExistence(timeout: 2))
+        let insightsFrame = arabicCard.frame
+        tabs.buttons["About"].tap()
+        XCTAssertTrue(app.staticTexts["TRANSLITERATION"].waitForExistence(timeout: 2))
+        XCTAssertEqual(arabicCard.frame.minY, insightsFrame.minY, accuracy: 1)
+        XCTAssertEqual(arabicCard.frame.height, insightsFrame.height, accuracy: 1)
+        let aboutScreenshot = XCTAttachment(screenshot: app.screenshot())
+        aboutScreenshot.name = "Dhikr detail - About"
+        aboutScreenshot.lifetime = .keepAlways
+        add(aboutScreenshot)
+
+        let actions = app.buttons["Dhikr actions"]
+        XCTAssertTrue(actions.exists)
+        actions.tap()
+        XCTAssertTrue(app.buttons["Manage tags"].waitForExistence(timeout: 4))
+        app.buttons["Cancel"].firstMatch.tap()
+    }
+
+    @MainActor
     func testGoalsAndLibraryPagersTrackTapAndSwipeSelection() throws {
         let app = launchSeededApp()
 

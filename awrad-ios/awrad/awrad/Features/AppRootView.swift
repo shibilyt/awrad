@@ -268,7 +268,7 @@ struct AppRootView: View {
             return store.wirds.first { $0.id == wirdID }?.part(id: partID) != nil
         case .settings, .login, .signup, .forgotPassword, .verifyEmail,
              .resetPassword, .sessions, .createGoal, .createDhikr, .category,
-             .wirdList, .createWird:
+             .libraryCollection, .wirdList, .createWird:
             return true
         }
     }
@@ -638,6 +638,8 @@ private struct RouteDestinationView: View {
             CreateDhikrView(editingDhikrID: dhikrID)
         case .category(let category):
             CategoryDhikrsView(category: category)
+        case .libraryCollection(let collection):
+            LibraryCollectionView(collection: collection)
         case .dhikrDetail(let dhikrID):
             DhikrDetailView(
                 dhikrID: dhikrID,

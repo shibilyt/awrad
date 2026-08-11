@@ -1,5 +1,6 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.navigation
 
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.library.LibraryFeaturedCollection
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.UUID
@@ -22,6 +23,14 @@ class AwradDestinationTest {
         assertEquals(
             "quran_reader/$dhikrId?goalId=$goalId&slotId=$slotId",
             AwradDestination.QuranDhikrReader.createRoute(dhikrId, goalId, slotId),
+        )
+    }
+
+    @Test
+    fun `library collection route uses stable collection value`() {
+        assertEquals(
+            "library_collection/dhikrs",
+            AwradDestination.LibraryCollection.createRoute(LibraryFeaturedCollection.DHIKRS),
         )
     }
 }

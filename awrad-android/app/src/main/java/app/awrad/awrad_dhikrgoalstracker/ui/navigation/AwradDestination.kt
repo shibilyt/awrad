@@ -1,11 +1,16 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.navigation
 
 import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.library.LibraryFeaturedCollection
 
 sealed class AwradDestination(val route: String) {
     data object Home : AwradDestination("home")
     data object Goals : AwradDestination("goals")
     data object Library : AwradDestination("library")
+    data object LibraryCollection : AwradDestination("library_collection/{collection}") {
+        fun createRoute(collection: LibraryFeaturedCollection) =
+            "library_collection/${collection.routeValue}"
+    }
     data object Settings : AwradDestination("settings")
     data object Onboarding : AwradDestination("onboarding")
     data object CreateGoal : AwradDestination("create_goal?dhikrId={dhikrId}") {
