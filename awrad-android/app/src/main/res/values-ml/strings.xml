@@ -267,6 +267,15 @@
     <string name="library_filter_all">എല്ലാം</string>
     <string name="library_no_match">തിരയലുമായി ദിക്‌ർ ഒന്നും ലഭ്യമല്ല</string>
     <string name="library_no_dhikrs">ദിക്‌ർ ഒന്നും കണ്ടെത്തിയില്ല</string>
+    <string name="create_dhikr_composer_title">വാക്കുകളിൽ നിന്ന് തുടങ്ങൂ</string>
+    <string name="create_dhikr_composer_body">അറബി വാചകം മാത്രമാണ് നിർബന്ധം. ബാക്കി വിവരങ്ങൾ ഇപ്പോഴോ പിന്നീടോ ചേർക്കാം.</string>
+    <string name="create_dhikr_required">നിർബന്ധം</string>
+    <string name="create_dhikr_optional_details">ഐച്ഛിക വിവരങ്ങൾ</string>
+    <string name="create_dhikr_optional_details_body">പരിഭാഷ, വിഭാഗം, ടാഗുകൾ, ഓഡിയോ</string>
+    <string name="create_dhikr_optional_details_hint">ഇവയെല്ലാം ഐച്ഛികമാണ്. എപ്പോൾ വേണമെങ്കിലും മടങ്ങിവരാം.</string>
+    <string name="create_dhikr_private_copy">ഈ ഉപകരണത്തിൽ സ്വകാര്യമായി സൂക്ഷിക്കുന്നു</string>
+    <string name="create_dhikr_audio_label">ഓഡിയോ</string>
+    <string name="create_dhikr_audio_attached">ഓഡിയോ അറ്റാച്ച് ചെയ്തു</string>
     <string name="collection_your_dhikrs">നിങ്ങളുടെ ദിക്‌റുകൾ</string>
     <string name="your_dhikrs_empty_title">വ്യക്തിഗത ദിക്‌റുകൾ ഇന്നും ഇല്ല</string>
     <string name="your_dhikrs_empty_body">നിങ്ങളുടെ സ്വന്തം ടെക്സ്റ്റും ഓപ്ഷണൽ അപ്‌ലോഡ് ചെയ്ത ഓഡിയോയും ഉപയോഗിച്ച് ഒരു ദിക്‌ർ സൃഷ്ടിക്കുക.</string>
@@ -285,6 +294,11 @@
     <string name="audio_other_device">ഓഡിയോ നിങ്ങളുടെ മറ്റ് ഉപകരണത്തിലാണ് — ഇവിടെ അറ്റാച്ച് ചെയ്യുക</string>
     <string name="create_dhikr_counts_per_play">ഓരോ പ്ലേബാക്കിലെയും കൗണ്ട്</string>
     <string name="create_dhikr_tags_label">ടാഗുകൾ</string>
+    <string name="create_dhikr_choose_categories">വിഭാഗങ്ങൾ തിരഞ്ഞെടുക്കുക</string>
+    <string name="create_dhikr_search_categories_hint">വിഭാഗങ്ങൾ തിരയുക</string>
+    <string name="create_dhikr_categories_selected">തിരഞ്ഞെടുത്ത വിഭാഗങ്ങൾ: %1$d</string>
+    <string name="create_dhikr_search_or_add_tags_hint">ടാഗുകൾ തിരയുക അല്ലെങ്കിൽ ചേർക്കുക</string>
+    <string name="create_dhikr_add_tag">“%1$s” ചേർക്കുക</string>
     <string name="tag_name_label">ടാഗ് പേര്</string>
     <string name="create_tag">ടാഗ് സൃഷ്ടിക്കുക</string>
     <string name="tag_rename">പേര് മാറ്റുക</string>

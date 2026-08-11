@@ -231,6 +231,13 @@
 "Seasonal remembrances for Ramadan." = "റമദാനിനുള്ള സീസണൽ ദിക്‌റുകൾ.";
 "Quranic recitations and short surahs." = "ഖുർആൻ പാരായണങ്ങളും ചെറിയ സൂറത്തുകളും.";
 "Personal" = "സ്വന്തം";
+"Begin with the words" = "വാക്കുകളിൽ നിന്ന് തുടങ്ങൂ";
+"Arabic text is the only required field. Add the rest now or later." = "അറബി വാചകം മാത്രമാണ് നിർബന്ധം. ബാക്കി വിവരങ്ങൾ ഇപ്പോഴോ പിന്നീടോ ചേർക്കാം.";
+"Required" = "നിർബന്ധം";
+"Optional details" = "ഐച്ഛിക വിവരങ്ങൾ";
+"Translation, category, tags and audio" = "പരിഭാഷ, വിഭാഗം, ടാഗുകൾ, ഓഡിയോ";
+"Everything here is optional. You can come back at any time." = "ഇവയെല്ലാം ഐച്ഛികമാണ്. എപ്പോൾ വേണമെങ്കിലും മടങ്ങിവരാം.";
+"Saved privately on this device" = "ഈ ഉപകരണത്തിൽ സ്വകാര്യമായി സൂക്ഷിക്കുന്നു";
 "Arabic text" = "അറബി വാചകം";
 "Write the dhikr in Arabic" = "ദിക്‌ർ അറബിയിൽ എഴുതുക";
 "Arabic text is required" = "അറബി വാചകം ആവശ്യമാണ്";
@@ -1090,3 +1097,10 @@
 "Practiced" = "പരിശീലിച്ചു";
 "No practice" = "പരിശീലനം ഇല്ല";
 "Categories" = "വിഭാഗങ്ങൾ";
+"Selected categories: %lld" = "തിരഞ്ഞെടുത്ത വിഭാഗങ്ങൾ: %lld";
+"Choose categories" = "വിഭാഗങ്ങൾ തിരഞ്ഞെടുക്കുക";
+"Search categories" = "വിഭാഗങ്ങൾ തിരയുക";
+"No tags selected" = "ടാഗുകളൊന്നും തിരഞ്ഞെടുത്തിട്ടില്ല";
+"Selected tags: %lld" = "തിരഞ്ഞെടുത്ത ടാഗുകൾ: %lld";
+"Search or add tags" = "ടാഗുകൾ തിരയുക അല്ലെങ്കിൽ ചേർക്കുക";
+"Add “%@”" = "“%@” ചേർക്കുക";

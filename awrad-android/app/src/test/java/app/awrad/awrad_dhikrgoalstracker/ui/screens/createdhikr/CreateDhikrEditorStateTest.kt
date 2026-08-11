@@ -1,6 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.createdhikr
 
 import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.data.model.newAwradId
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -17,6 +18,19 @@ class CreateDhikrEditorStateTest {
         assertTrue(tag in selected)
         selected = CreateDhikrEditorState.toggleTag(selected, tag)
         assertFalse(tag in selected)
+    }
+
+    @Test
+    fun categorySelectionIsOrderedAndNeverBecomesEmpty() {
+        var selected = listOf(DhikrCategory.GENERAL)
+        selected = CreateDhikrEditorState.toggleCategory(selected, DhikrCategory.MORNING)
+        assertEquals(listOf(DhikrCategory.GENERAL, DhikrCategory.MORNING), selected)
+
+        selected = CreateDhikrEditorState.toggleCategory(selected, DhikrCategory.GENERAL)
+        assertEquals(listOf(DhikrCategory.MORNING), selected)
+
+        selected = CreateDhikrEditorState.toggleCategory(selected, DhikrCategory.MORNING)
+        assertEquals(listOf(DhikrCategory.MORNING), selected)
     }
 
     @Test

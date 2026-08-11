@@ -9,15 +9,19 @@ struct CreateDhikrView: View {
     @State private var arabic = ""
     @State private var transliteration = ""
     @State private var translation = ""
-    @State private var category: DhikrCategory = .general
+    @State private var selectedCategories: [DhikrCategory] = [.general]
+    @State private var categorySearchQuery = ""
+    @State private var tagSearchQuery = ""
     @State private var audioCountPerPlay = 1
     @State private var selectedTagIDs: Set<AwradID> = []
-    @State private var newTagName = ""
     @State private var tagErrorMessage: String?
     @State private var stagedAudio: StagedOwnedDhikrAudio?
     @State private var removeExistingAudio = false
     @State private var importErrorKey: String?
     @State private var isImporterPresented = false
+    @State private var isOptionalDetailsPresented = false
+    @State private var isCategorySelectorPresented = false
+    @State private var isTagSelectorPresented = false
     @State private var isSaving = false
     @State private var didHydrate = false
 
@@ -33,6 +37,10 @@ struct CreateDhikrView: View {
         editingDhikrID != nil
     }
 
+    private var category: DhikrCategory {
+        selectedCategories.first ?? .general
+    }
+
     private var saveTitle: LocalizedStringKey {
         isEditing ? "Save Dhikr" : "Create Dhikr"
     }
@@ -45,29 +53,189 @@ struct CreateDhikrView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                textFields
-                categoryPicker
-                audioSection
-                tagsSection
-                saveButton
+                composerIntro
+                essentialFields
+                optionalDetailsLauncher
             }
             .padding(20)
-            .padding(.bottom, 96)
+            .padding(.bottom, 24)
         }
         .background(AwradTheme.background)
         .navigationTitle(isEditing ? "Edit Dhikr" : "Create Dhikr")
+        .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    save()
-                } label: {
-                    Image(systemName: "checkmark.circle.fill")
-                }
-                .disabled(!canSave)
-                .accessibilityLabel(saveTitle)
+            ToolbarItem(placement: .topBarLeading) {
+                createDhikrBackButton
             }
         }
+        .scrollDismissesKeyboard(.interactively)
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: 6) {
+                saveButton
+                Label("Saved privately on this device", systemImage: "lock.fill")
+                    .font(AwradTheme.bodyFont(.caption2, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(.ultraThinMaterial)
+        }
+        .sheet(isPresented: $isOptionalDetailsPresented) {
+            optionalDetailsSheet
+        }
+        .sheet(isPresented: $isCategorySelectorPresented, onDismiss: reopenOptionalDetails) {
+            categorySelectorSheet
+        }
+        .sheet(isPresented: $isTagSelectorPresented, onDismiss: reopenOptionalDetails) {
+            tagSelectorSheet
+        }
         .onAppear(perform: hydrateIfNeeded)
+        .alert("Audio import failed", isPresented: Binding(
+            get: { importErrorKey != nil && !isOptionalDetailsPresented },
+            set: { if !$0 { importErrorKey = nil } }
+        )) {
+            Button("OK", role: .cancel) { importErrorKey = nil }
+        } message: {
+            if let importErrorKey {
+                Text(LocalizedStringKey(importErrorKey))
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var createDhikrBackButton: some View {
+        if #available(iOS 26.0, *) {
+            backButton
+                .buttonStyle(.glass)
+        } else {
+            backButton
+                .buttonStyle(.plain)
+                .background(.ultraThinMaterial, in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(.white.opacity(0.16), lineWidth: 0.75)
+                }
+                .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
+        }
+    }
+
+    private var backButton: some View {
+        Button {
+            router.pop(in: store.selectedTab)
+        } label: {
+            Image(systemName: "chevron.backward")
+                .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                .foregroundStyle(AwradTheme.sage)
+                .frame(width: 38, height: 38)
+                .contentShape(Circle())
+        }
+        .accessibilityLabel("Back")
+        .accessibilityIdentifier("dhikr-create-back-button")
+    }
+
+    private var composerIntro: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Begin with the words")
+                .font(AwradTheme.displayFont(.title2, weight: .semibold))
+                .foregroundStyle(AwradTheme.ink)
+
+            Text("Arabic text is the only required field. Add the rest now or later.")
+                .font(AwradTheme.bodyFont(.subheadline))
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var essentialFields: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            DhikrInputField(
+                title: "Arabic text",
+                placeholder: "Write the dhikr in Arabic",
+                text: $arabic,
+                axis: .vertical,
+                font: AwradTheme.arabicFont(30),
+                lineLimit: 4...9,
+                textAlignment: .trailing,
+                isRequired: true
+            )
+            .environment(\.layoutDirection, .rightToLeft)
+
+            DhikrInputField(
+                title: "Title",
+                placeholder: "Optional title",
+                text: $title
+            )
+        }
+    }
+
+    private var optionalDetailsLauncher: some View {
+        Button {
+            isOptionalDetailsPresented = true
+        } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "plus")
+                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                    .foregroundStyle(AwradTheme.sage)
+                    .frame(width: 44, height: 44)
+                    .background(AwradTheme.mint.opacity(0.32), in: Circle())
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Optional details")
+                        .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                        .foregroundStyle(AwradTheme.ink)
+                    Text("Translation, category, tags and audio")
+                        .font(AwradTheme.bodyFont(.caption))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "chevron.forward")
+                    .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(AwradTheme.outline, lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier("dhikr-optional-details")
+    }
+
+    private var optionalDetailsSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    Text("Everything here is optional. You can come back at any time.")
+                        .font(AwradTheme.bodyFont(.subheadline))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    optionalTextFields
+                    categoryPicker
+                    tagsSection
+                    audioSection
+                }
+                .padding(20)
+                .padding(.bottom, 24)
+            }
+            .background(AwradTheme.background)
+            .navigationTitle("Optional details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        isOptionalDetailsPresented = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
         .fileImporter(
             isPresented: $isImporterPresented,
             allowedContentTypes: [
@@ -94,24 +262,8 @@ struct CreateDhikrView: View {
         }
     }
 
-    private var textFields: some View {
+    private var optionalTextFields: some View {
         VStack(alignment: .leading, spacing: 14) {
-            DhikrInputField(
-                title: "Arabic text",
-                placeholder: "Write the dhikr in Arabic",
-                text: $arabic,
-                axis: .vertical,
-                font: AwradTheme.arabicFont(26),
-                lineLimit: 3...8,
-                textAlignment: .trailing
-            )
-            .environment(\.layoutDirection, .rightToLeft)
-
-            DhikrInputField(
-                title: "Title",
-                placeholder: "Optional title",
-                text: $title
-            )
 
             DhikrInputField(
                 title: "Transliteration",
@@ -130,35 +282,32 @@ struct CreateDhikrView: View {
     }
 
     private var categoryPicker: some View {
-        AwradCard {
-            VStack(alignment: .leading, spacing: 14) {
-                Label("Category", systemImage: "square.grid.2x2.fill")
-                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
-                    .foregroundStyle(AwradTheme.ink)
+        selectorLauncher(
+            title: "Categories",
+            summary: String.localizedStringWithFormat(
+                String(localized: "Selected categories: %lld"),
+                selectedCategories.count
+            ),
+            systemImage: "square.grid.2x2.fill"
+        ) {
+            categorySearchQuery = ""
+            presentSelector(afterClosingOptional: $isCategorySelectorPresented)
+        }
+    }
 
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 10)], spacing: 10) {
-                    ForEach(DhikrCategory.allCases) { option in
-                        Button {
-                            category = option
-                        } label: {
-                            Label {
-                                Text(LocalizedStringKey(option.title))
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.82)
-                            } icon: {
-                                Image(systemName: option.symbol)
-                            }
-                            .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
-                            .frame(maxWidth: .infinity, minHeight: 42)
-                            .padding(.horizontal, 12)
-                            .foregroundStyle(category == option ? .white : AwradTheme.sage)
-                            .background(
-                                category == option ? AwradTheme.sage : AwradTheme.mint.opacity(0.18),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    }
+    private var categorySelectorSheet: some View {
+        searchableSelectorSheet(
+            title: "Choose categories",
+            searchPrompt: "Search categories",
+            searchText: $categorySearchQuery
+        ) {
+            ForEach(filteredCategories) { option in
+                selectorRow(
+                    title: String(localized: String.LocalizationValue(option.title)),
+                    systemImage: option.symbol,
+                    isSelected: selectedCategories.contains(option)
+                ) {
+                    toggleCategory(option)
                 }
             }
         }
@@ -210,68 +359,40 @@ struct CreateDhikrView: View {
     }
 
     private var tagsSection: some View {
-        AwradCard {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Label("Tags", systemImage: "tag.fill")
-                        .font(AwradTheme.bodyFont(.headline, weight: .semibold))
-                    Spacer()
-                    Text("\(selectedTagIDs.count)/\(UserTagPolicy.maxTagsPerDhikr)")
-                        .font(AwradTheme.bodyFont(.caption, weight: .semibold))
-                        .foregroundStyle(.secondary)
-                        .accessibilityLabel("\(selectedTagIDs.count) of \(UserTagPolicy.maxTagsPerDhikr) tags selected")
-                }
+        selectorLauncher(
+            title: "Tags",
+            summary: selectedTagIDs.isEmpty
+                ? String(localized: "No tags selected")
+                : String.localizedStringWithFormat(String(localized: "Selected tags: %lld"), selectedTagIDs.count),
+            systemImage: "tag.fill"
+        ) {
+            tagSearchQuery = ""
+            presentSelector(afterClosingOptional: $isTagSelectorPresented)
+        }
+    }
 
-                if store.userTags.isEmpty {
-                    Text("Create a tag to organize this dhikr.")
-                        .font(AwradTheme.bodyFont(.caption))
-                        .foregroundStyle(.secondary)
-                } else {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), spacing: 8)], spacing: 8) {
-                        ForEach(sortedAssignableTags) { tag in
-                            let selected = selectedTagIDs.contains(tag.id)
-                            Button {
-                                toggleTagAssignment(tag.id)
-                            } label: {
-                                Text(tag.name)
-                                    .font(AwradTheme.bodyFont(.caption, weight: .semibold))
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 8)
-                                    .foregroundStyle(selected ? .white : AwradTheme.sage)
-                                    .background(
-                                        selected ? AwradTheme.sage : AwradTheme.mint.opacity(0.18),
-                                        in: Capsule()
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityLabel(tag.name)
-                            .accessibilityValue(selected ? "Assigned" : "Not assigned")
-                            .accessibilityHint(
-                                selected
-                                    ? "Removes this tag from the dhikr"
-                                    : "Assigns this tag to the dhikr"
-                            )
-                            .accessibilityAddTraits(selected ? .isSelected : [])
-                        }
-                    }
+    private var tagSelectorSheet: some View {
+        searchableSelectorSheet(
+            title: "Tags",
+            searchPrompt: "Search or add tags",
+            searchText: $tagSearchQuery
+        ) {
+            if canCreateSearchedTag, let candidate = UserTagPolicy.normalize(tagSearchQuery) {
+                selectorRow(
+                    title: String.localizedStringWithFormat(String(localized: "Add “%@”"), candidate.displayName),
+                    systemImage: "plus",
+                    isSelected: false
+                ) {
+                    createAndAssignTag(from: tagSearchQuery)
                 }
-
-                HStack {
-                    TextField("New tag", text: $newTagName)
-                        .textInputAutocapitalization(.words)
-                        .accessibilityLabel("New tag name")
-                    Button("Add") {
-                        createAndAssignTag()
-                    }
-                    .disabled(UserTagPolicy.normalize(newTagName) == nil)
-                    .accessibilityLabel("Create tag")
-                }
-
-                if selectedTagIDs.count >= UserTagPolicy.maxTagsPerDhikr {
-                    Text("A dhikr can have at most \(UserTagPolicy.maxTagsPerDhikr) tags.")
-                        .font(AwradTheme.bodyFont(.caption))
-                        .foregroundStyle(.secondary)
-                        .accessibilityLabel("Tag limit reached")
+            }
+            ForEach(filteredAssignableTags) { tag in
+                selectorRow(
+                    title: tag.name,
+                    systemImage: "tag",
+                    isSelected: selectedTagIDs.contains(tag.id)
+                ) {
+                    toggleTagAssignment(tag.id)
                 }
             }
         }
@@ -285,10 +406,18 @@ struct CreateDhikrView: View {
         }
     }
 
-    private var sortedAssignableTags: [UserTag] {
-        store.userTags.sorted {
+    private var filteredAssignableTags: [UserTag] {
+        store.userTags.filter {
+            tagSearchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                $0.name.localizedCaseInsensitiveContains(tagSearchQuery)
+        }.sorted {
             $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
+    }
+
+    private var canCreateSearchedTag: Bool {
+        guard let candidate = UserTagPolicy.normalize(tagSearchQuery) else { return false }
+        return !store.userTags.contains { $0.normalizedName == candidate.normalizedName }
     }
 
     private func toggleTagAssignment(_ tagID: AwradID) {
@@ -301,17 +430,145 @@ struct CreateDhikrView: View {
         }
     }
 
-    private func createAndAssignTag() {
-        guard let tag = store.createUserTag(name: newTagName) else {
+    private func createAndAssignTag(from rawName: String) {
+        guard let tag = store.createUserTag(name: rawName) else {
             tagErrorMessage = "That tag name is invalid or already exists."
             return
         }
-        newTagName = ""
+        tagSearchQuery = ""
         if selectedTagIDs.count < UserTagPolicy.maxTagsPerDhikr {
             selectedTagIDs.insert(tag.id)
         } else {
             tagErrorMessage = "Tag created. A dhikr can have at most \(UserTagPolicy.maxTagsPerDhikr) tags."
         }
+    }
+
+    private var filteredCategories: [DhikrCategory] {
+        let query = categorySearchQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        return DhikrCategory.allCases.filter {
+            query.isEmpty || String(localized: String.LocalizationValue($0.title))
+                .localizedCaseInsensitiveContains(query)
+        }
+    }
+
+    private func toggleCategory(_ option: DhikrCategory) {
+        if let index = selectedCategories.firstIndex(of: option) {
+            guard selectedCategories.count > 1 else { return }
+            selectedCategories.remove(at: index)
+        } else {
+            selectedCategories.append(option)
+        }
+    }
+
+    private func presentSelector(afterClosingOptional selector: Binding<Bool>) {
+        isOptionalDetailsPresented = false
+        Task { @MainActor in
+            await Task.yield()
+            selector.wrappedValue = true
+        }
+    }
+
+    private func reopenOptionalDetails() {
+        guard !isCategorySelectorPresented, !isTagSelectorPresented else { return }
+        isOptionalDetailsPresented = true
+    }
+
+    private func selectorLauncher(
+        title: LocalizedStringKey,
+        summary: String,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+                Image(systemName: systemImage)
+                    .foregroundStyle(AwradTheme.sage)
+                    .frame(width: 42, height: 42)
+                    .background(AwradTheme.mint.opacity(0.28), in: Circle())
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                        .foregroundStyle(AwradTheme.ink)
+                    Text(summary)
+                        .font(AwradTheme.bodyFont(.caption))
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.forward")
+                    .foregroundStyle(.secondary)
+            }
+            .padding(15)
+            .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(AwradTheme.outline, lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func searchableSelectorSheet<Content: View>(
+        title: LocalizedStringKey,
+        searchPrompt: LocalizedStringKey,
+        searchText: Binding<String>,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 10) {
+                    TextField(searchPrompt, text: searchText)
+                        .textFieldStyle(.roundedBorder)
+                        .textInputAutocapitalization(.never)
+                        .padding(.bottom, 4)
+                    content()
+                }
+                .padding(20)
+                .padding(.bottom, 24)
+            }
+            .background(AwradTheme.background)
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        isCategorySelectorPresented = false
+                        isTagSelectorPresented = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.large])
+        .presentationDragIndicator(.visible)
+    }
+
+    private func selectorRow(
+        title: String,
+        systemImage: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: systemImage)
+                    .frame(width: 24)
+                    .foregroundStyle(AwradTheme.sage)
+                Text(title)
+                    .font(AwradTheme.bodyFont(.body, weight: isSelected ? .semibold : .regular))
+                    .foregroundStyle(AwradTheme.ink)
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(AwradTheme.sage)
+                }
+            }
+            .padding(.horizontal, 16)
+            .frame(minHeight: 54)
+            .background(
+                isSelected ? AwradTheme.mint.opacity(0.32) : AwradTheme.surface,
+                in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private var saveButton: some View {
@@ -337,7 +594,7 @@ struct CreateDhikrView: View {
         arabic = dhikr.arabic
         transliteration = dhikr.transliteration
         translation = dhikr.translation
-        category = dhikr.category
+        selectedCategories = dhikr.categories
         audioCountPerPlay = max(dhikr.audioCountPerPlay, 1)
         selectedTagIDs = Set(
             store.tagAssignments.filter { $0.dhikrID == editingDhikrID }.map(\.tagID)
@@ -387,6 +644,7 @@ struct CreateDhikrView: View {
                 transliteration: transliteration,
                 translation: translation,
                 category: category,
+                categories: selectedCategories,
                 audioURL: existing.audioURL,
                 audioFileName: existing.audioFileName,
                 quranRef: existing.quranRef,
@@ -398,7 +656,8 @@ struct CreateDhikrView: View {
                 arabic: arabic,
                 transliteration: transliteration,
                 translation: translation,
-                category: category
+                category: category,
+                categories: selectedCategories
             )
             if let created = dhikr {
                 _ = store.updateDhikr(
@@ -408,6 +667,7 @@ struct CreateDhikrView: View {
                     transliteration: created.transliteration,
                     translation: created.translation,
                     category: created.category,
+                    categories: created.categories,
                     audioURL: created.audioURL,
                     audioFileName: created.audioFileName,
                     quranRef: created.quranRef,
@@ -460,6 +720,7 @@ private struct DhikrInputField: View {
     var font: Font = .body
     var closedLineLimit: ClosedRange<Int>?
     var textAlignment: TextAlignment = .leading
+    var isRequired = false
 
     init(
         title: String,
@@ -468,7 +729,8 @@ private struct DhikrInputField: View {
         axis: Axis = .horizontal,
         font: Font = .body,
         lineLimit: ClosedRange<Int>? = nil,
-        textAlignment: TextAlignment = .leading
+        textAlignment: TextAlignment = .leading,
+        isRequired: Bool = false
     ) {
         self.title = title
         self.placeholder = placeholder
@@ -477,13 +739,24 @@ private struct DhikrInputField: View {
         self.font = font
         self.closedLineLimit = lineLimit
         self.textAlignment = textAlignment
+        self.isRequired = isRequired
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(LocalizedStringKey(title))
-                .font(AwradTheme.bodyFont(.caption, weight: .semibold))
-                .foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                Text(LocalizedStringKey(title))
+                    .font(AwradTheme.bodyFont(.caption, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                if isRequired {
+                    Text("Required")
+                        .font(AwradTheme.bodyFont(.caption2, weight: .semibold))
+                        .foregroundStyle(AwradTheme.sage)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(AwradTheme.mint.opacity(0.28), in: Capsule())
+                }
+            }
 
             TextField(
                 LocalizedStringKey(title),

@@ -532,6 +532,15 @@
 
     <!-- Create Dhikr screen -->
     <string name="create_dhikr_title">Add Dhikr</string>
+    <string name="create_dhikr_composer_title">Begin with the words</string>
+    <string name="create_dhikr_composer_body">Arabic text is the only required field. Add the rest now or later.</string>
+    <string name="create_dhikr_required">Required</string>
+    <string name="create_dhikr_optional_details">Optional details</string>
+    <string name="create_dhikr_optional_details_body">Translation, category, tags and audio</string>
+    <string name="create_dhikr_optional_details_hint">Everything here is optional. You can come back at any time.</string>
+    <string name="create_dhikr_private_copy">Saved privately on this device</string>
+    <string name="create_dhikr_audio_label">Audio</string>
+    <string name="create_dhikr_audio_attached">Audio attached</string>
     <string name="create_dhikr_arabic_label">Arabic text</string>
     <string name="create_dhikr_arabic_hint">Enter the Arabic text</string>
     <string name="create_dhikr_title_label">Title</string>
@@ -541,6 +550,9 @@
     <string name="create_dhikr_translation_label">Translation</string>
     <string name="create_dhikr_translation_hint">English meaning</string>
     <string name="create_dhikr_category_label">Category</string>
+    <string name="create_dhikr_choose_categories">Choose categories</string>
+    <string name="create_dhikr_search_categories_hint">Search categories</string>
+    <string name="create_dhikr_categories_selected">Selected categories: %1$d</string>
     <string name="create_dhikr_save">Save</string>
     <string name="create_dhikr_saving">Saving\u2026</string>
     <string name="collection_your_dhikrs">Your Dhikrs</string>
@@ -561,6 +573,8 @@
     <string name="audio_other_device">Audio is stored on your other device — attach audio here</string>
     <string name="create_dhikr_counts_per_play">Counts per playback</string>
     <string name="create_dhikr_tags_label">Tags</string>
+    <string name="create_dhikr_search_or_add_tags_hint">Search or add tags</string>
+    <string name="create_dhikr_add_tag">Add “%1$s”</string>
     <string name="tag_name_label">Tag name</string>
     <string name="create_tag">Create tag</string>
     <string name="tag_rename">Rename</string>

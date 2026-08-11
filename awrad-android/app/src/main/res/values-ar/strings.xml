@@ -395,6 +395,15 @@
 
     <!-- Create Dhikr screen -->
     <string name="create_dhikr_title">إضافة ذكر</string>
+    <string name="create_dhikr_composer_title">ابدأ بالكلمات</string>
+    <string name="create_dhikr_composer_body">النص العربي هو الحقل الوحيد المطلوب. يمكنك إضافة بقية التفاصيل الآن أو لاحقًا.</string>
+    <string name="create_dhikr_required">مطلوب</string>
+    <string name="create_dhikr_optional_details">تفاصيل اختيارية</string>
+    <string name="create_dhikr_optional_details_body">الترجمة والفئة والوسوم والصوت</string>
+    <string name="create_dhikr_optional_details_hint">كل ما هنا اختياري. يمكنك العودة في أي وقت.</string>
+    <string name="create_dhikr_private_copy">يُحفظ بشكل خاص على هذا الجهاز</string>
+    <string name="create_dhikr_audio_label">الصوت</string>
+    <string name="create_dhikr_audio_attached">تم إرفاق الصوت</string>
     <string name="create_dhikr_arabic_label">النص العربي</string>
     <string name="create_dhikr_arabic_hint">أدخل النص العربي</string>
     <string name="create_dhikr_title_label">العنوان</string>
@@ -404,6 +413,9 @@
     <string name="create_dhikr_translation_label">الترجمة</string>
     <string name="create_dhikr_translation_hint">المعنى</string>
     <string name="create_dhikr_category_label">الفئة</string>
+    <string name="create_dhikr_choose_categories">اختر الفئات</string>
+    <string name="create_dhikr_search_categories_hint">ابحث في الفئات</string>
+    <string name="create_dhikr_categories_selected">الفئات المحددة: %1$d</string>
     <string name="create_dhikr_save">حفظ</string>
     <string name="create_dhikr_saving">جارٍ الحفظ\u2026</string>
     <string name="collection_your_dhikrs">أذكارك</string>
@@ -424,6 +436,8 @@
     <string name="audio_other_device">الصوت محفوظ على جهازك الآخر — أرفق الصوت هنا</string>
     <string name="create_dhikr_counts_per_play">العدّ لكل تشغيل</string>
     <string name="create_dhikr_tags_label">الوسوم</string>
+    <string name="create_dhikr_search_or_add_tags_hint">ابحث عن الوسوم أو أضفها</string>
+    <string name="create_dhikr_add_tag">إضافة «%1$s»</string>
     <string name="tag_name_label">اسم الوسم</string>
     <string name="create_tag">إنشاء وسم</string>
     <string name="tag_rename">إعادة التسمية</string>

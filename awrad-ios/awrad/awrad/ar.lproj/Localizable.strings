@@ -231,6 +231,13 @@
 "Seasonal remembrances for Ramadan." = "أذكار موسمية لشهر رمضان.";
 "Quranic recitations and short surahs." = "تلاوات قرآنية وسور قصيرة.";
 "Personal" = "شخصي";
+"Begin with the words" = "ابدأ بالكلمات";
+"Arabic text is the only required field. Add the rest now or later." = "النص العربي هو الحقل الوحيد المطلوب. يمكنك إضافة بقية التفاصيل الآن أو لاحقًا.";
+"Required" = "مطلوب";
+"Optional details" = "تفاصيل اختيارية";
+"Translation, category, tags and audio" = "الترجمة والفئة والوسوم والصوت";
+"Everything here is optional. You can come back at any time." = "كل ما هنا اختياري. يمكنك العودة في أي وقت.";
+"Saved privately on this device" = "يُحفظ بشكل خاص على هذا الجهاز";
 "Arabic text" = "النص العربي";
 "Write the dhikr in Arabic" = "اكتب الذكر بالعربية";
 "Arabic text is required" = "النص العربي مطلوب";
@@ -1095,3 +1102,10 @@
 "Practiced" = "تمّت الممارسة";
 "No practice" = "لا توجد ممارسة";
 "Categories" = "الفئات";
+"Selected categories: %lld" = "الفئات المحددة: %lld";
+"Choose categories" = "اختر الفئات";
+"Search categories" = "ابحث في الفئات";
+"No tags selected" = "لم يتم اختيار وسوم";
+"Selected tags: %lld" = "الوسوم المحددة: %lld";
+"Search or add tags" = "ابحث عن الوسوم أو أضفها";
+"Add “%@”" = "إضافة «%@»";

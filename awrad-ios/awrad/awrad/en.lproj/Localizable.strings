@@ -231,6 +231,13 @@
 "Seasonal remembrances for Ramadan." = "Seasonal remembrances for Ramadan.";
 "Quranic recitations and short surahs." = "Quranic recitations and short surahs.";
 "Personal" = "Personal";
+"Begin with the words" = "Begin with the words";
+"Arabic text is the only required field. Add the rest now or later." = "Arabic text is the only required field. Add the rest now or later.";
+"Required" = "Required";
+"Optional details" = "Optional details";
+"Translation, category, tags and audio" = "Translation, category, tags and audio";
+"Everything here is optional. You can come back at any time." = "Everything here is optional. You can come back at any time.";
+"Saved privately on this device" = "Saved privately on this device";
 "Arabic text" = "Arabic text";
 "Write the dhikr in Arabic" = "Write the dhikr in Arabic";
 "Arabic text is required" = "Arabic text is required";
@@ -1095,3 +1102,10 @@
 "Practiced" = "Practiced";
 "No practice" = "No practice";
 "Categories" = "Categories";
+"Selected categories: %lld" = "Selected categories: %lld";
+"Choose categories" = "Choose categories";
+"Search categories" = "Search categories";
+"No tags selected" = "No tags selected";
+"Selected tags: %lld" = "Selected tags: %lld";
+"Search or add tags" = "Search or add tags";
+"Add “%@”" = "Add “%@”";

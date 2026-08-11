@@ -1,0 +1,2808 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Awrad — New dhikr form prototype</title>
+  <link rel="icon" href="data:,">
+  <!--
+    THROWAWAY PROTOTYPE — not production UI.
+    Question: how should the cross-platform New Dhikr form reduce cognitive load
+    while preserving Arabic text, optional supporting text, category, tags, audio,
+    and counts per playback?
+
+    Three structurally different variants are switchable via ?variant=A|B|C.
+
+    Run from the repository root:
+      python3 -m http.server 4173
+    Then open:
+      http://localhost:4173/docs/new-dhikr-form-prototype.html?variant=A
+  -->
+  <style>
+    @font-face {
+      font-family: "Awrad Rounded";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/gflexrounded_regular.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Rounded";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/gflexrounded_medium.ttf") format("truetype");
+      font-weight: 500;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Rounded";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/gflexrounded_semibold.ttf") format("truetype");
+      font-weight: 650;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Naskh";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/notonaskharabic_regular.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Naskh";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/notonaskharabic_semibold.ttf") format("truetype");
+      font-weight: 600;
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: light;
+      --ink: #1a1c1a;
+      --subdued: #5d5f5d;
+      --quiet: #818581;
+      --background: #f0f2f0;
+      --surface: #ffffff;
+      --surface-soft: #f7f8f6;
+      --surface-high: #e3e5e3;
+      --sage: #4b7c5a;
+      --sage-dark: #2e5c3d;
+      --sage-soft: #d4e8da;
+      --sage-pale: #edf5ef;
+      --gold: #d4a843;
+      --gold-soft: #f4e8c9;
+      --error: #ba1a1a;
+      --line: #c7c9c7;
+      --line-soft: #e4e7e3;
+      --switcher: #151a17;
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 22px;
+      --radius-xl: 28px;
+      --shadow-device: 0 36px 90px rgba(34, 44, 37, .19), 0 8px 26px rgba(34, 44, 37, .1);
+      --shadow-float: 0 16px 44px rgba(21, 31, 25, .2);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-width: 320px;
+      background: #e8ece8;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 14% 6%, rgba(212, 168, 67, .12), transparent 24rem),
+        radial-gradient(circle at 88% 16%, rgba(75, 124, 90, .15), transparent 28rem),
+        linear-gradient(135deg, #e8ece8 0%, #f4f5f1 45%, #e5eae6 100%);
+      font-family: "Awrad Rounded", "Trebuchet MS", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: .25;
+      background-image:
+        linear-gradient(rgba(53, 81, 61, .05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(53, 81, 61, .05) 1px, transparent 1px);
+      background-size: 32px 32px;
+      content: "";
+      mask-image: linear-gradient(to bottom, black, transparent 78%);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+    }
+
+    button,
+    [role="button"] {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(75, 124, 90, .26);
+      outline-offset: 2px;
+    }
+
+    .prototype-banner {
+      position: fixed;
+      top: 18px;
+      left: 20px;
+      z-index: 50;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid rgba(26, 28, 26, .12);
+      border-radius: 999px;
+      color: #4b504c;
+      background: rgba(255, 255, 255, .78);
+      box-shadow: 0 8px 26px rgba(32, 41, 34, .08);
+      backdrop-filter: blur(16px);
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .prototype-banner::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+      content: "";
+      box-shadow: 0 0 0 4px rgba(212, 168, 67, .16);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(250px, 330px) minmax(360px, 420px) minmax(250px, 330px);
+      justify-content: center;
+      align-items: start;
+      gap: clamp(24px, 4vw, 64px);
+      padding: 78px 24px 150px;
+    }
+
+    .side-panel {
+      position: sticky;
+      top: 82px;
+      padding-top: 20px;
+    }
+
+    .eyebrow {
+      color: var(--sage);
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .side-panel h1 {
+      max-width: 10ch;
+      margin: 12px 0 16px;
+      font-size: clamp(34px, 3.4vw, 52px);
+      font-weight: 500;
+      line-height: .96;
+      letter-spacing: -.045em;
+    }
+
+    .side-panel > p {
+      max-width: 36ch;
+      margin: 0;
+      color: #555a56;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .question-card,
+    .inspector-card,
+    .decision-card {
+      margin-top: 26px;
+      padding: 18px;
+      border: 1px solid rgba(51, 63, 55, .12);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, .58);
+      box-shadow: 0 10px 30px rgba(42, 53, 45, .06);
+      backdrop-filter: blur(14px);
+    }
+
+    .question-card strong,
+    .inspector-card h2,
+    .decision-card h2 {
+      display: block;
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .question-card p,
+    .decision-card p {
+      margin: 0;
+      color: var(--subdued);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .thesis {
+      min-height: 116px;
+      margin-top: 28px;
+    }
+
+    .thesis h2 {
+      margin: 8px 0 8px;
+      font-size: 23px;
+      font-weight: 550;
+      letter-spacing: -.025em;
+    }
+
+    .thesis p {
+      color: var(--subdued);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .tradeoff {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      color: #505651;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .tradeoff::before {
+      flex: 0 0 auto;
+      width: 18px;
+      height: 1px;
+      margin-top: 8px;
+      background: var(--gold);
+      content: "";
+    }
+
+    .demo-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-top: 22px;
+    }
+
+    .quiet-button {
+      min-height: 42px;
+      padding: 10px 12px;
+      border: 1px solid rgba(26, 28, 26, .18);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, .56);
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      transition: transform .16s ease, background .16s ease;
+    }
+
+    .quiet-button:hover {
+      background: #fff;
+      transform: translateY(-1px);
+    }
+
+    .device {
+      position: relative;
+      height: min(852px, calc(100vh - 172px));
+      min-height: 540px;
+      overflow: hidden;
+      border: 1px solid rgba(25, 36, 28, .24);
+      border-radius: 46px;
+      background: var(--background);
+      box-shadow: var(--shadow-device);
+      isolation: isolate;
+    }
+
+    .device::before {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      z-index: 40;
+      width: 104px;
+      height: 26px;
+      border-radius: 999px;
+      background: #101411;
+      content: "";
+      transform: translateX(-50%);
+    }
+
+    .device::after {
+      position: absolute;
+      inset: 0;
+      z-index: 60;
+      border: 7px solid rgba(255, 255, 255, .28);
+      border-radius: inherit;
+      pointer-events: none;
+      content: "";
+      mix-blend-mode: soft-light;
+    }
+
+    .status-bar {
+      position: absolute;
+      top: 0;
+      right: 0;
+      left: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 48px;
+      padding: 12px 25px 4px;
+      color: var(--ink);
+      font-size: 10px;
+      font-weight: 650;
+      pointer-events: none;
+    }
+
+    .status-icons {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 9px;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      overflow: hidden;
+      padding-top: 46px;
+      background: var(--background);
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      animation: screen-in .34s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    @keyframes screen-in {
+      from {
+        opacity: 0;
+        transform: translateY(7px) scale(.992);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .app-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 58px;
+      padding: 6px 18px 8px;
+    }
+
+    .toolbar-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .toolbar-copy h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: -.025em;
+    }
+
+    .toolbar-copy p {
+      margin: 2px 0 0;
+      color: var(--subdued);
+      font-size: 10px;
+    }
+
+    .icon-button {
+      display: inline-grid;
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .72);
+      cursor: pointer;
+      transition: background .16s ease, transform .16s ease;
+    }
+
+    .icon-button:hover {
+      background: #fff;
+      transform: translateY(-1px);
+    }
+
+    .icon-button svg,
+    .inline-icon svg {
+      width: 19px;
+      height: 19px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+    }
+
+    .screen-scroll {
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: none;
+    }
+
+    .screen-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .field {
+      position: relative;
+      display: block;
+    }
+
+    .field > span,
+    .field-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 2px 7px;
+      color: #474c48;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .field small {
+      color: var(--quiet);
+      font-size: 9px;
+      font-weight: 500;
+    }
+
+    .text-input,
+    .text-area {
+      width: 100%;
+      border: 1px solid var(--line-soft);
+      border-radius: 15px;
+      color: var(--ink);
+      background: var(--surface);
+      transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .text-input {
+      height: 48px;
+      padding: 0 14px;
+      font-size: 13px;
+    }
+
+    .text-area {
+      min-height: 82px;
+      padding: 13px 14px;
+      resize: vertical;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .text-input::placeholder,
+    .text-area::placeholder {
+      color: #a2a7a2;
+    }
+
+    .text-input:focus,
+    .text-area:focus {
+      border-color: var(--sage);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(75, 124, 90, .1);
+      outline: 0;
+    }
+
+    .arabic-input {
+      min-height: 126px;
+      padding: 16px;
+      font-family: "Awrad Naskh", serif;
+      font-size: 25px;
+      line-height: 1.75;
+      text-align: right;
+    }
+
+    .primary-button,
+    .secondary-button,
+    .text-button {
+      min-height: 50px;
+      padding: 0 18px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 650;
+      transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease, background .16s ease;
+    }
+
+    .primary-button {
+      border: 0;
+      color: #fff;
+      background: var(--sage);
+      box-shadow: 0 10px 22px rgba(46, 92, 61, .2);
+    }
+
+    .primary-button:hover:not(:disabled) {
+      background: var(--sage-dark);
+      box-shadow: 0 13px 26px rgba(46, 92, 61, .24);
+      transform: translateY(-1px);
+    }
+
+    .primary-button:disabled {
+      cursor: not-allowed;
+      opacity: .38;
+      box-shadow: none;
+    }
+
+    .secondary-button {
+      border: 1px solid var(--line);
+      color: var(--sage-dark);
+      background: var(--surface);
+    }
+
+    .secondary-button:hover {
+      background: var(--sage-pale);
+      transform: translateY(-1px);
+    }
+
+    .text-button {
+      min-height: 42px;
+      padding: 0 9px;
+      border: 0;
+      color: var(--sage);
+      background: transparent;
+    }
+
+    .inline-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .section-label .inline-icon {
+      display: inline-grid;
+      width: 28px;
+      height: 28px;
+      place-items: center;
+      border-radius: 9px;
+      color: var(--sage);
+      background: var(--sage-soft);
+    }
+
+    .section-label .inline-icon svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .choice-row,
+    .tag-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 1px 4px;
+      scrollbar-width: none;
+    }
+
+    .choice-row::-webkit-scrollbar,
+    .tag-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .choice-chip,
+    .tag-chip {
+      flex: 0 0 auto;
+      min-height: 38px;
+      padding: 0 13px;
+      border: 1px solid var(--line-soft);
+      border-radius: 999px;
+      color: #555b56;
+      background: #fff;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 600;
+      transition: color .16s ease, background .16s ease, border-color .16s ease, transform .16s ease;
+    }
+
+    .choice-chip:hover,
+    .tag-chip:hover {
+      transform: translateY(-1px);
+    }
+
+    .choice-chip.selected,
+    .tag-chip.selected {
+      border-color: var(--sage);
+      color: var(--sage-dark);
+      background: var(--sage-soft);
+    }
+
+    .tag-check {
+      display: none;
+      margin-right: 5px;
+    }
+
+    .tag-chip.selected .tag-check {
+      display: inline;
+    }
+
+    .audio-card {
+      padding: 14px;
+      border: 1px dashed #b8c6ba;
+      border-radius: var(--radius-md);
+      background: #fbfcfa;
+    }
+
+    .audio-row {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .audio-symbol {
+      display: grid;
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 13px;
+      color: var(--sage);
+      background: var(--sage-soft);
+    }
+
+    .audio-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .audio-copy strong,
+    .audio-copy small {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .audio-copy strong {
+      font-size: 11px;
+    }
+
+    .audio-copy small {
+      margin-top: 2px;
+      color: var(--quiet);
+      font-size: 9px;
+    }
+
+    .mini-action {
+      min-height: 34px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      color: var(--sage-dark);
+      background: #fff;
+      cursor: pointer;
+      font-size: 9px;
+      font-weight: 650;
+    }
+
+    .count-control {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .count-control.disabled {
+      opacity: .42;
+    }
+
+    .count-control span {
+      color: var(--subdued);
+      font-size: 10px;
+    }
+
+    .stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stepper button {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      place-items: center;
+      border: 1px solid var(--line-soft);
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .stepper button:disabled {
+      cursor: not-allowed;
+      opacity: .4;
+    }
+
+    .stepper output {
+      min-width: 22px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    /* Variant A — Arabic-first composer */
+    .composer-screen {
+      background:
+        radial-gradient(circle at 85% 4%, rgba(212, 168, 67, .13), transparent 16rem),
+        var(--background);
+    }
+
+    .composer-screen .app-toolbar {
+      padding-bottom: 4px;
+    }
+
+    .draft-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      color: var(--sage-dark);
+      background: rgba(212, 232, 218, .78);
+      font-size: 9px;
+      font-weight: 650;
+    }
+
+    .draft-badge::before {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--sage);
+      content: "";
+    }
+
+    .composer-scroll {
+      padding: 7px 18px 116px;
+    }
+
+    .composer-intro {
+      margin: 10px 2px 17px;
+    }
+
+    .composer-intro h3 {
+      max-width: 12ch;
+      margin: 0;
+      font-size: 27px;
+      font-weight: 500;
+      line-height: 1.04;
+      letter-spacing: -.04em;
+    }
+
+    .composer-intro p {
+      margin: 8px 0 0;
+      color: var(--subdued);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .arabic-stage {
+      position: relative;
+      padding: 17px;
+      overflow: hidden;
+      border: 1px solid rgba(75, 124, 90, .2);
+      border-radius: 24px;
+      background: rgba(255, 255, 255, .9);
+      box-shadow: 0 15px 38px rgba(55, 78, 62, .08);
+    }
+
+    .arabic-stage::before {
+      position: absolute;
+      top: -42px;
+      right: -44px;
+      width: 126px;
+      height: 126px;
+      border: 1px solid rgba(212, 168, 67, .2);
+      border-radius: 32% 68% 43% 57%;
+      content: "";
+      transform: rotate(24deg);
+    }
+
+    .arabic-stage .field {
+      position: relative;
+      z-index: 1;
+    }
+
+    .arabic-stage .arabic-input {
+      min-height: 178px;
+      padding: 7px 2px 12px;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+      font-size: 30px;
+    }
+
+    .arabic-stage .arabic-input:focus {
+      box-shadow: none;
+    }
+
+    .required-mark {
+      color: var(--sage);
+      font-weight: 650;
+    }
+
+    .stage-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 11px;
+      border-top: 1px solid var(--line-soft);
+      color: var(--quiet);
+      font-size: 9px;
+    }
+
+    .stage-footer span:first-child {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stage-footer span:first-child::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--sage);
+      content: "";
+    }
+
+    .title-underlay {
+      margin-top: 14px;
+    }
+
+    .preview-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      padding: 11px 13px;
+      border-radius: 13px;
+      color: var(--subdued);
+      background: rgba(255, 255, 255, .6);
+      font-size: 9px;
+    }
+
+    .preview-line strong {
+      overflow: hidden;
+      color: var(--ink);
+      font-size: 10px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .details-toggle {
+      width: 100%;
+      margin-top: 17px;
+      padding: 0;
+      border: 0;
+      border-radius: 18px;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .details-toggle-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 64px;
+      padding: 12px 14px;
+      border: 1px solid var(--line-soft);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .76);
+    }
+
+    .details-toggle-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .details-toggle-copy strong,
+    .details-toggle-copy small {
+      display: block;
+    }
+
+    .details-toggle-copy strong {
+      font-size: 12px;
+    }
+
+    .details-toggle-copy small {
+      margin-top: 3px;
+      color: var(--quiet);
+      font-size: 9px;
+    }
+
+    .chevron {
+      font-size: 18px;
+      transition: transform .24s ease;
+    }
+
+    .details-toggle[aria-expanded="true"] .chevron {
+      transform: rotate(180deg);
+    }
+
+    .details-panel {
+      display: grid;
+      grid-template-rows: 0fr;
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        grid-template-rows .32s cubic-bezier(.2, .8, .2, 1),
+        opacity .2s ease,
+        visibility 0s linear .32s;
+    }
+
+    .details-panel.open {
+      grid-template-rows: 1fr;
+      opacity: 1;
+      visibility: visible;
+      transition:
+        grid-template-rows .32s cubic-bezier(.2, .8, .2, 1),
+        opacity .2s ease,
+        visibility 0s;
+    }
+
+    .details-panel-inner {
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .details-content {
+      display: grid;
+      gap: 14px;
+      padding: 15px 2px 2px;
+    }
+
+    .composer-footer {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 20;
+      padding: 17px 18px 20px;
+      background: linear-gradient(to top, var(--background) 72%, rgba(240, 242, 240, 0));
+    }
+
+    .composer-footer .primary-button {
+      width: 100%;
+    }
+
+    /* Variant B — guided steps */
+    .wizard-screen {
+      color: #f4f7f4;
+      background: var(--sage-dark);
+    }
+
+    .wizard-screen .status-bar {
+      color: #f4f7f4;
+    }
+
+    .wizard-top {
+      flex: 0 0 auto;
+      padding: 8px 20px 20px;
+      color: #f5f8f5;
+    }
+
+    .wizard-topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .wizard-topline .icon-button {
+      color: #f5f8f5;
+      background: rgba(255, 255, 255, .1);
+    }
+
+    .step-count {
+      color: rgba(255, 255, 255, .7);
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .wizard-top h2 {
+      margin: 17px 0 6px;
+      font-size: 29px;
+      font-weight: 500;
+      line-height: 1.02;
+      letter-spacing: -.04em;
+    }
+
+    .wizard-top p {
+      margin: 0;
+      color: rgba(255, 255, 255, .7);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .step-track {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+      margin-top: 18px;
+    }
+
+    .step-segment {
+      height: 4px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .16);
+    }
+
+    .step-segment::after {
+      display: block;
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--gold);
+      content: "";
+      transition: width .32s ease;
+    }
+
+    .step-segment.complete::after,
+    .step-segment.active::after {
+      width: 100%;
+    }
+
+    .wizard-sheet {
+      min-height: 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 30px 30px 0 0;
+      color: var(--ink);
+      background: #f8faf7;
+      box-shadow: 0 -10px 30px rgba(11, 28, 17, .12);
+    }
+
+    .wizard-pages {
+      min-height: 0;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .wizard-page {
+      display: none;
+      height: 100%;
+      overflow-y: auto;
+      padding: 22px 19px 100px;
+      scrollbar-width: none;
+    }
+
+    .wizard-page::-webkit-scrollbar {
+      display: none;
+    }
+
+    .wizard-page.active {
+      display: block;
+      animation: page-slide .3s cubic-bezier(.2, .8, .2, 1) both;
+    }
+
+    @keyframes page-slide {
+      from {
+        opacity: 0;
+        transform: translateX(12px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .wizard-page h3 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: -.025em;
+    }
+
+    .wizard-page > p {
+      margin: 0 0 18px;
+      color: var(--subdued);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .wizard-fields {
+      display: grid;
+      gap: 14px;
+    }
+
+    .wizard-fields .arabic-input {
+      min-height: 158px;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 9px;
+    }
+
+    .category-tile {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 55px;
+      padding: 10px;
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      color: #515752;
+      background: #fff;
+      cursor: pointer;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .category-symbol {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 10px;
+      color: var(--sage);
+      background: var(--sage-pale);
+      font-size: 13px;
+    }
+
+    .category-check {
+      margin-left: auto;
+      color: var(--sage);
+      opacity: 0;
+    }
+
+    .category-tile.selected {
+      border-color: var(--sage);
+      color: var(--sage-dark);
+      background: var(--sage-pale);
+      box-shadow: 0 0 0 3px rgba(75, 124, 90, .08);
+    }
+
+    .category-tile.selected .category-check {
+      opacity: 1;
+    }
+
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag-cloud .tag-chip {
+      flex: 0 0 auto;
+    }
+
+    .step-section {
+      margin-top: 20px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .review-card {
+      padding: 17px;
+      border: 1px solid var(--line-soft);
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: 0 10px 28px rgba(45, 64, 50, .06);
+    }
+
+    .review-kicker {
+      color: var(--sage);
+      font-size: 9px;
+      font-weight: 650;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .review-arabic {
+      min-height: 56px;
+      margin: 12px 0 4px;
+      font-family: "Awrad Naskh", serif;
+      font-size: 25px;
+      line-height: 1.6;
+      text-align: right;
+    }
+
+    .review-title {
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .review-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+    }
+
+    .review-meta span {
+      padding: 6px 8px;
+      border-radius: 8px;
+      color: var(--sage-dark);
+      background: var(--sage-pale);
+      font-size: 9px;
+      font-weight: 600;
+    }
+
+    .wizard-footer {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      padding: 14px 18px 19px;
+      border-top: 1px solid rgba(199, 201, 199, .55);
+      background: rgba(248, 250, 247, .94);
+      backdrop-filter: blur(12px);
+    }
+
+    .wizard-footer .secondary-button {
+      min-width: 88px;
+    }
+
+    /* Variant C — quick capture in context */
+    .quick-screen {
+      background: #edf0ed;
+    }
+
+    .library-backdrop {
+      min-height: 100%;
+      filter: saturate(.8);
+    }
+
+    .library-header {
+      padding: 15px 19px 13px;
+    }
+
+    .library-header .eyebrow {
+      font-size: 8px;
+    }
+
+    .library-header h2 {
+      margin: 6px 0 12px;
+      font-size: 31px;
+      font-weight: 500;
+      letter-spacing: -.045em;
+    }
+
+    .search-shell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 42px;
+      padding: 0 12px;
+      border-radius: 13px;
+      color: #878c87;
+      background: #fff;
+      font-size: 10px;
+    }
+
+    .library-list {
+      display: grid;
+      gap: 10px;
+      padding: 0 19px 300px;
+    }
+
+    .library-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 76px;
+      padding: 13px;
+      border: 1px solid rgba(199, 201, 199, .64);
+      border-radius: 17px;
+      background: rgba(255, 255, 255, .78);
+    }
+
+    .library-card-symbol {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 13px;
+      color: var(--sage);
+      background: var(--sage-soft);
+      font-family: "Awrad Naskh", serif;
+      font-size: 20px;
+    }
+
+    .library-card-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .library-card-copy strong,
+    .library-card-copy span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .library-card-copy strong {
+      font-size: 11px;
+    }
+
+    .library-card-copy span {
+      margin-top: 5px;
+      color: var(--subdued);
+      font-size: 9px;
+    }
+
+    .scene-scrim {
+      position: absolute;
+      inset: 46px 0 0;
+      z-index: 4;
+      background: rgba(34, 42, 36, .18);
+      backdrop-filter: blur(1px);
+    }
+
+    .capture-sheet {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      left: 8px;
+      z-index: 5;
+      max-height: calc(100% - 70px);
+      padding: 7px 17px 19px;
+      overflow-y: auto;
+      border: 1px solid rgba(255, 255, 255, .6);
+      border-radius: 30px 30px 37px 37px;
+      background: #fbfcfa;
+      box-shadow: 0 -18px 44px rgba(31, 47, 36, .22);
+      scrollbar-width: none;
+    }
+
+    .capture-sheet::-webkit-scrollbar {
+      display: none;
+    }
+
+    .sheet-handle {
+      width: 38px;
+      height: 4px;
+      margin: 0 auto 13px;
+      border-radius: 999px;
+      background: #c9ceca;
+    }
+
+    .capture-heading {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .capture-heading-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .capture-heading h2 {
+      margin: 0;
+      font-size: 21px;
+      font-weight: 650;
+      letter-spacing: -.03em;
+    }
+
+    .capture-heading p {
+      margin: 3px 0 0;
+      color: var(--subdued);
+      font-size: 9px;
+    }
+
+    .capture-close {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      padding: 0;
+      place-items: center;
+      border: 0;
+      border-radius: 50%;
+      color: var(--subdued);
+      background: var(--surface-high);
+      cursor: pointer;
+      font-size: 17px;
+    }
+
+    .quick-fields {
+      display: grid;
+      gap: 11px;
+      margin-top: 17px;
+    }
+
+    .quick-fields .arabic-input {
+      min-height: 116px;
+      font-size: 26px;
+    }
+
+    .quick-category {
+      margin-top: 13px;
+    }
+
+    .advanced-trigger {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      width: 100%;
+      min-height: 54px;
+      margin-top: 13px;
+      padding: 10px 12px;
+      border: 1px solid var(--line-soft);
+      border-radius: 15px;
+      color: var(--ink);
+      background: #fff;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .advanced-trigger-icon {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 11px;
+      color: var(--sage);
+      background: var(--sage-soft);
+      font-size: 18px;
+    }
+
+    .advanced-trigger-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .advanced-trigger-copy strong,
+    .advanced-trigger-copy small {
+      display: block;
+    }
+
+    .advanced-trigger-copy strong {
+      font-size: 11px;
+    }
+
+    .advanced-trigger-copy small {
+      margin-top: 2px;
+      color: var(--quiet);
+      font-size: 8px;
+    }
+
+    .quick-save-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .quick-save-row .text-button {
+      min-width: 70px;
+    }
+
+    .advanced-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: none;
+    }
+
+    .advanced-layer.open {
+      display: block;
+    }
+
+    .advanced-layer .advanced-scrim {
+      position: absolute;
+      inset: 0;
+      border: 0;
+      background: rgba(17, 25, 20, .46);
+      cursor: pointer;
+      animation: fade-in .2s ease both;
+    }
+
+    .advanced-sheet {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      max-height: 86%;
+      padding: 8px 18px 28px;
+      overflow-y: auto;
+      border-radius: 30px 30px 0 0;
+      color: var(--ink);
+      background: #fbfcfa;
+      box-shadow: 0 -20px 50px rgba(16, 28, 20, .25);
+      animation: sheet-up .32s cubic-bezier(.2, .8, .2, 1) both;
+      scrollbar-width: none;
+    }
+
+    .advanced-sheet::-webkit-scrollbar {
+      display: none;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes sheet-up {
+      from { transform: translateY(40px); opacity: 0; }
+      to { transform: none; opacity: 1; }
+    }
+
+    .advanced-sheet-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 17px;
+    }
+
+    .advanced-sheet-header h3 {
+      min-width: 0;
+      flex: 1;
+      margin: 0;
+      font-size: 19px;
+      font-weight: 650;
+    }
+
+    .advanced-fields {
+      display: grid;
+      gap: 14px;
+    }
+
+    /* Inspector */
+    .inspector-card {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .inspector-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 16px 12px;
+      border-bottom: 1px solid rgba(49, 62, 53, .1);
+    }
+
+    .inspector-head h2 {
+      margin: 0;
+    }
+
+    .live-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--sage);
+      font-size: 9px;
+      font-weight: 650;
+      text-transform: uppercase;
+    }
+
+    .live-dot::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--sage);
+      content: "";
+      box-shadow: 0 0 0 4px rgba(75, 124, 90, .12);
+    }
+
+    .state-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: rgba(49, 62, 53, .09);
+    }
+
+    .state-cell {
+      min-width: 0;
+      padding: 12px 13px;
+      background: rgba(255, 255, 255, .72);
+    }
+
+    .state-cell span,
+    .state-cell strong {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .state-cell span {
+      color: var(--quiet);
+      font-size: 8px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .state-cell strong {
+      margin-top: 4px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .state-json {
+      max-height: 184px;
+      margin: 0;
+      padding: 14px 16px 16px;
+      overflow: auto;
+      color: #526057;
+      background: rgba(245, 248, 245, .86);
+      font: 9px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace;
+      scrollbar-width: thin;
+    }
+
+    .decision-list {
+      display: grid;
+      gap: 10px;
+      margin: 12px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .decision-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      color: var(--subdued);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .decision-check {
+      flex: 0 0 auto;
+      width: 16px;
+      height: 16px;
+      border-radius: 6px;
+      color: var(--sage-dark);
+      background: var(--sage-soft);
+      text-align: center;
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 16px;
+    }
+
+    /* Prototype switcher */
+    .switcher {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      z-index: 100;
+      display: grid;
+      grid-template-columns: 46px minmax(200px, 278px) 46px;
+      align-items: center;
+      min-height: 58px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 19px;
+      color: #fff;
+      background: rgba(21, 26, 23, .96);
+      box-shadow: var(--shadow-float);
+      backdrop-filter: blur(16px);
+      transform: translateX(-50%);
+    }
+
+    .switcher button {
+      align-self: stretch;
+      padding: 0;
+      border: 0;
+      color: #fff;
+      background: transparent;
+      cursor: pointer;
+      font-size: 20px;
+      transition: background .16s ease;
+    }
+
+    .switcher button:hover {
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .switcher-label {
+      min-width: 0;
+      padding: 0 12px;
+      text-align: center;
+    }
+
+    .switcher-label strong,
+    .switcher-label small {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .switcher-label strong {
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .switcher-label small {
+      margin-top: 2px;
+      color: rgba(255, 255, 255, .55);
+      font-size: 8px;
+      letter-spacing: .04em;
+    }
+
+    .toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      z-index: 120;
+      max-width: min(340px, calc(100vw - 32px));
+      padding: 12px 15px;
+      border-radius: 14px;
+      color: #fff;
+      background: var(--sage-dark);
+      box-shadow: var(--shadow-float);
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, -14px);
+      transition: opacity .2s ease, transform .2s ease;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 1080px) {
+      .workspace {
+        grid-template-columns: minmax(230px, 300px) minmax(360px, 420px);
+      }
+
+      .inspector-panel {
+        display: none;
+      }
+    }
+
+    @media (max-width: 740px) {
+      body {
+        background: #dfe4df;
+      }
+
+      body::before,
+      .prototype-banner,
+      .brief-panel {
+        display: none;
+      }
+
+      .workspace {
+        display: block;
+        padding: 0 0 106px;
+      }
+
+      .device {
+        width: 100%;
+        height: calc(100dvh - 84px);
+        min-height: 560px;
+        border: 0;
+        border-radius: 0 0 32px 32px;
+        box-shadow: none;
+      }
+
+      .device::after {
+        display: none;
+      }
+
+      .switcher {
+        bottom: 14px;
+        width: calc(100% - 26px);
+        grid-template-columns: 48px 1fr 48px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">Throwaway interaction prototype</div>
+
+  <main class="workspace">
+    <aside class="side-panel brief-panel" aria-label="Variant design rationale">
+      <div class="eyebrow">New dhikr · three directions</div>
+      <h1 id="brief-title">Words before settings.</h1>
+      <p id="brief-summary">
+        Make the devotional text feel like the reason for the screen, then reveal the organizational tools only when they are useful.
+      </p>
+
+      <div class="question-card">
+        <strong>Design question</strong>
+        <p>How can we keep all current capabilities without asking the user to process every field at once?</p>
+      </div>
+
+      <section class="thesis">
+        <div class="eyebrow" id="variant-kicker">Variant A · Arabic-first composer</div>
+        <h2 id="variant-thesis">Focus, then enrich</h2>
+        <p id="variant-description">The required Arabic text gets a calm writing canvas. Everything optional is one clearly labeled disclosure away.</p>
+        <div class="tradeoff" id="variant-tradeoff">Best balance for repeat use; optional details may be discovered later.</div>
+      </section>
+
+      <div class="demo-actions">
+        <button class="quiet-button" type="button" data-action="load-sample">Load sample</button>
+        <button class="quiet-button" type="button" data-action="reset-draft">Reset blank</button>
+      </div>
+    </aside>
+
+    <section class="device" aria-label="Mobile new dhikr form preview">
+      <div class="status-bar" aria-hidden="true">
+        <span>9:41</span>
+        <span class="status-icons">● ◒ ▰</span>
+      </div>
+
+      <article class="screen composer-screen active" data-variant="A" aria-label="Variant A, Arabic-first composer">
+        <header class="app-toolbar">
+          <button class="icon-button" type="button" aria-label="Go back" data-action="prototype-back">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="toolbar-copy">
+            <h2>New dhikr</h2>
+            <p>Saved privately on this device</p>
+          </div>
+          <span class="draft-badge">Draft</span>
+        </header>
+
+        <div class="screen-scroll composer-scroll">
+          <div class="composer-intro">
+            <h3>Begin with the words.</h3>
+            <p>Arabic text is the only thing needed. You can organize and add audio now or later.</p>
+          </div>
+
+          <section class="arabic-stage">
+            <label class="field">
+              <span>Arabic text <small class="required-mark">Required</small></span>
+              <textarea
+                class="text-area arabic-input"
+                dir="rtl"
+                lang="ar"
+                data-field="arabic"
+                placeholder="اكتب الذكر هنا"
+                aria-label="Arabic text"
+              ></textarea>
+            </label>
+            <div class="stage-footer">
+              <span data-required-status>Ready to save</span>
+              <span><span data-character-count>0</span> characters</span>
+            </div>
+          </section>
+
+          <label class="field title-underlay">
+            <span>Give it a name <small>Optional</small></span>
+            <input class="text-input" data-field="title" type="text" placeholder="e.g. Morning tasbih">
+          </label>
+
+          <div class="preview-line">
+            <span>Library preview</span>
+            <strong data-text="displayTitle">Untitled dhikr</strong>
+            <span aria-hidden="true">→</span>
+          </div>
+
+          <button class="details-toggle" type="button" data-action="toggle-details" aria-expanded="false">
+            <span class="details-toggle-inner">
+              <span class="advanced-trigger-icon" aria-hidden="true">＋</span>
+              <span class="details-toggle-copy">
+                <strong>Add meaning, tags or audio</strong>
+                <small data-text="detailSummary">All optional · General selected</small>
+              </span>
+              <span class="chevron" aria-hidden="true">⌄</span>
+            </span>
+          </button>
+
+          <div class="details-panel" data-details-panel>
+            <div class="details-panel-inner">
+              <div class="details-content">
+                <label class="field">
+                  <span>Transliteration <small>Optional</small></span>
+                  <input class="text-input" data-field="transliteration" type="text" placeholder="How it is pronounced">
+                </label>
+
+                <label class="field">
+                  <span>Translation <small>Optional</small></span>
+                  <textarea class="text-area" data-field="translation" placeholder="Meaning in your language"></textarea>
+                </label>
+
+                <section>
+                  <div class="section-label">
+                    <span class="inline-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>
+                    </span>
+                    Category
+                  </div>
+                  <div class="choice-row" data-category-options></div>
+                </section>
+
+                <section>
+                  <div class="section-label">
+                    <span class="inline-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="m20 13-7 7-9-9V4h7z"/><path d="M8.5 8.5h.01"/></svg>
+                    </span>
+                    Tags
+                  </div>
+                  <div class="tag-row" data-tag-options></div>
+                </section>
+
+                <section class="audio-card" data-audio-card></section>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="composer-footer">
+          <button class="primary-button" type="button" data-action="save" disabled>Save dhikr</button>
+        </footer>
+      </article>
+
+      <article class="screen wizard-screen" data-variant="B" aria-label="Variant B, guided setup">
+        <section class="wizard-top">
+          <div class="wizard-topline">
+            <button class="icon-button" type="button" aria-label="Close" data-action="prototype-back">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+            </button>
+            <span class="step-count" data-wizard-count>Step 1 of 3</span>
+          </div>
+          <h2 data-wizard-heading>Add the words</h2>
+          <p data-wizard-subheading>Start with what you want to remember. Only Arabic text is required.</p>
+          <div class="step-track" aria-label="Form progress">
+            <span class="step-segment active" data-step-segment="0"></span>
+            <span class="step-segment" data-step-segment="1"></span>
+            <span class="step-segment" data-step-segment="2"></span>
+          </div>
+        </section>
+
+        <section class="wizard-sheet">
+          <div class="wizard-pages">
+            <div class="wizard-page active" data-wizard-page="0">
+              <h3>Your dhikr</h3>
+              <p>Put the essential text first. Supporting text stays in the same focused step.</p>
+              <div class="wizard-fields">
+                <label class="field">
+                  <span>Arabic text <small class="required-mark">Required</small></span>
+                  <textarea class="text-area arabic-input" dir="rtl" lang="ar" data-field="arabic" placeholder="اكتب الذكر هنا"></textarea>
+                </label>
+                <label class="field">
+                  <span>Title <small>Optional</small></span>
+                  <input class="text-input" data-field="title" type="text" placeholder="A short name">
+                </label>
+                <label class="field">
+                  <span>Transliteration <small>Optional</small></span>
+                  <input class="text-input" data-field="transliteration" type="text" placeholder="How it is pronounced">
+                </label>
+                <label class="field">
+                  <span>Translation <small>Optional</small></span>
+                  <textarea class="text-area" data-field="translation" placeholder="What it means"></textarea>
+                </label>
+              </div>
+            </div>
+
+            <div class="wizard-page" data-wizard-page="1">
+              <h3>Make it easy to find</h3>
+              <p>Choose one category and any tags that match how you practice.</p>
+
+              <div class="field-label">Category</div>
+              <div class="category-grid" data-category-tiles></div>
+
+              <section class="step-section">
+                <div class="field-label">Tags <small data-text="tagCount">0 selected</small></div>
+                <div class="tag-cloud" data-tag-options></div>
+              </section>
+            </div>
+
+            <div class="wizard-page" data-wizard-page="2">
+              <h3>Sound and review</h3>
+              <p>Add audio if it supports practice, then review the exact card that will be created.</p>
+
+              <section class="audio-card" data-audio-card></section>
+
+              <section class="step-section">
+                <div class="review-card">
+                  <div class="review-kicker">Ready for your library</div>
+                  <div class="review-arabic" dir="rtl" lang="ar" data-text="arabicPreview">Your Arabic text</div>
+                  <div class="review-title" data-text="displayTitle">Untitled dhikr</div>
+                  <div class="review-meta">
+                    <span data-text="category">General</span>
+                    <span data-text="tagCount">0 tags</span>
+                    <span data-text="audioSummary">No audio</span>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <footer class="wizard-footer">
+            <button class="secondary-button" type="button" data-action="wizard-back">Back</button>
+            <button class="primary-button" type="button" data-action="wizard-next">Continue</button>
+          </footer>
+        </section>
+      </article>
+
+      <article class="screen quick-screen" data-variant="C" aria-label="Variant C, quick capture sheet">
+        <div class="library-backdrop" aria-hidden="true">
+          <header class="library-header">
+            <div class="eyebrow">Your collection</div>
+            <h2>Dhikr library</h2>
+            <div class="search-shell">⌕&nbsp;&nbsp; Search your dhikr</div>
+          </header>
+          <div class="library-list">
+            <div class="library-card">
+              <div class="library-card-symbol">س</div>
+              <div class="library-card-copy"><strong>Morning tasbih</strong><span>Praise · practiced today</span></div>
+              <span>›</span>
+            </div>
+            <div class="library-card">
+              <div class="library-card-symbol">أ</div>
+              <div class="library-card-copy"><strong>Seeking forgiveness</strong><span>Forgiveness · 100 daily</span></div>
+              <span>›</span>
+            </div>
+            <div class="library-card">
+              <div class="library-card-symbol">ل</div>
+              <div class="library-card-copy"><strong>Tahleel</strong><span>Praise · personal</span></div>
+              <span>›</span>
+            </div>
+          </div>
+        </div>
+        <div class="scene-scrim" aria-hidden="true"></div>
+
+        <section class="capture-sheet" aria-label="Quick add dhikr">
+          <div class="sheet-handle"></div>
+          <header class="capture-heading">
+            <div class="capture-heading-copy">
+              <h2>Quick add</h2>
+              <p>Capture the words now. Refine whenever you want.</p>
+            </div>
+            <button class="capture-close" type="button" aria-label="Close" data-action="prototype-back">×</button>
+          </header>
+
+          <div class="quick-fields">
+            <label class="field">
+              <span>Arabic text <small class="required-mark">Required</small></span>
+              <textarea class="text-area arabic-input" dir="rtl" lang="ar" data-field="arabic" placeholder="اكتب الذكر هنا"></textarea>
+            </label>
+            <label class="field">
+              <span>Title <small>Optional</small></span>
+              <input class="text-input" data-field="title" type="text" placeholder="Name this dhikr">
+            </label>
+          </div>
+
+          <section class="quick-category">
+            <div class="field-label">Quick category</div>
+            <div class="choice-row" data-category-options data-category-limit="5"></div>
+          </section>
+
+          <button class="advanced-trigger" type="button" data-action="open-advanced">
+            <span class="advanced-trigger-icon" aria-hidden="true">⋯</span>
+            <span class="advanced-trigger-copy">
+              <strong>Add more details</strong>
+              <small data-text="detailSummary">Translation, tags and audio</small>
+            </span>
+            <span aria-hidden="true">›</span>
+          </button>
+
+          <div class="quick-save-row">
+            <button class="primary-button" type="button" data-action="save" disabled>Save to library</button>
+            <button class="text-button" type="button" data-action="reset-draft">Clear</button>
+          </div>
+        </section>
+
+        <div class="advanced-layer" data-advanced-layer>
+          <button class="advanced-scrim" type="button" aria-label="Close details" data-action="close-advanced"></button>
+          <section class="advanced-sheet" aria-label="Optional dhikr details">
+            <div class="sheet-handle"></div>
+            <header class="advanced-sheet-header">
+              <h3>Optional details</h3>
+              <button class="capture-close" type="button" aria-label="Done" data-action="close-advanced">✓</button>
+            </header>
+
+            <div class="advanced-fields">
+              <label class="field">
+                <span>Transliteration <small>Optional</small></span>
+                <input class="text-input" data-field="transliteration" type="text" placeholder="How it is pronounced">
+              </label>
+
+              <label class="field">
+                <span>Translation <small>Optional</small></span>
+                <textarea class="text-area" data-field="translation" placeholder="Meaning in your language"></textarea>
+              </label>
+
+              <section>
+                <div class="section-label">
+                  <span class="inline-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="m20 13-7 7-9-9V4h7z"/><path d="M8.5 8.5h.01"/></svg>
+                  </span>
+                  Tags
+                </div>
+                <div class="tag-cloud" data-tag-options></div>
+              </section>
+
+              <section class="audio-card" data-audio-card></section>
+            </div>
+          </section>
+        </div>
+      </article>
+    </section>
+
+    <aside class="side-panel inspector-panel" aria-label="Live prototype state">
+      <div class="eyebrow">What changes as you interact</div>
+      <div class="inspector-card">
+        <div class="inspector-head">
+          <h2>Shared draft state</h2>
+          <span class="live-dot">Live</span>
+        </div>
+        <div class="state-grid">
+          <div class="state-cell"><span>Can save</span><strong data-state-cell="canSave">No</strong></div>
+          <div class="state-cell"><span>Category</span><strong data-state-cell="category">General</strong></div>
+          <div class="state-cell"><span>Tags</span><strong data-state-cell="tags">0 selected</strong></div>
+          <div class="state-cell"><span>Audio</span><strong data-state-cell="audio">Not attached</strong></div>
+        </div>
+        <pre class="state-json" id="state-json" aria-label="Full form state"></pre>
+      </div>
+
+      <section class="decision-card">
+        <h2 id="decision-title">Why this is better</h2>
+        <p id="decision-summary">The current form has nine visually equal decisions. This direction makes the required decision unmistakable.</p>
+        <ul class="decision-list" id="decision-list">
+          <li>Arabic text owns the strongest visual hierarchy.</li>
+          <li>Optional settings are grouped by user intent.</li>
+          <li>Save remains reachable without a long scroll.</li>
+        </ul>
+      </section>
+    </aside>
+  </main>
+
+  <nav class="switcher" aria-label="Prototype variant switcher">
+    <button type="button" data-action="previous-variant" aria-label="Previous variant">←</button>
+    <div class="switcher-label">
+      <strong id="switcher-title">A — Arabic-first composer</strong>
+      <small>Use ← → keys · URL is shareable</small>
+    </div>
+    <button type="button" data-action="next-variant" aria-label="Next variant">→</button>
+  </nav>
+
+  <div class="toast" role="status" aria-live="polite" id="toast"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var categories = [
+        { value: "General", symbol: "✦" },
+        { value: "Morning", symbol: "☼" },
+        { value: "Evening", symbol: "☾" },
+        { value: "After salah", symbol: "◌" },
+        { value: "Praise", symbol: "✧" },
+        { value: "Forgiveness", symbol: "◦" },
+        { value: "Protection", symbol: "◇" },
+        { value: "Quran", symbol: "⌁" }
+      ];
+
+      var availableTags = ["Morning", "Daily", "Sunnah", "Personal", "Travel"];
+
+      var sampleDraft = {
+        title: "Morning tasbih",
+        arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+        transliteration: "Subḥānallāhi wa biḥamdih",
+        translation: "Glory and praise belong to Allah",
+        category: "Morning",
+        tags: ["Morning", "Sunnah"],
+        audio: null,
+        countPerPlayback: 1
+      };
+
+      var emptyDraft = {
+        title: "",
+        arabic: "",
+        transliteration: "",
+        translation: "",
+        category: "General",
+        tags: [],
+        audio: null,
+        countPerPlayback: 1
+      };
+
+      var state = Object.assign({}, sampleDraft, {
+        tags: sampleDraft.tags.slice(),
+        variant: "A",
+        detailsOpen: false,
+        wizardStep: 0,
+        advancedOpen: false,
+        lastAction: "Sample draft loaded"
+      });
+
+      var variants = ["A", "B", "C"];
+
+      var variantContent = {
+        A: {
+          switcher: "A — Arabic-first composer",
+          title: "Words before settings.",
+          summary: "Make the devotional text feel like the reason for the screen, then reveal organizational tools only when they are useful.",
+          kicker: "Variant A · Arabic-first composer",
+          thesis: "Focus, then enrich",
+          description: "The required Arabic text gets a calm writing canvas. Everything optional is one clearly labeled disclosure away.",
+          tradeoff: "Best balance for repeat use; optional details may be discovered later.",
+          decisionTitle: "Why this is better",
+          decisionSummary: "The current form has nine visually equal decisions. This direction makes the required decision unmistakable.",
+          decisions: [
+            "Arabic text owns the strongest visual hierarchy.",
+            "Optional settings are grouped by user intent.",
+            "Save remains reachable without a long scroll."
+          ]
+        },
+        B: {
+          switcher: "B — Guided three-step setup",
+          title: "One decision at a time.",
+          summary: "Turn a long form into a short guided path: write, organize, then optionally add sound and review.",
+          kicker: "Variant B · Guided setup",
+          thesis: "Confidence through sequence",
+          description: "Each step has one job and a clear completion point. The final card preview makes the outcome tangible before save.",
+          tradeoff: "Most reassuring for first-time users; slower for people who create dhikr often.",
+          decisionTitle: "Why this is better",
+          decisionSummary: "The flow reduces scanning and creates a clear mental model without changing what the app stores.",
+          decisions: [
+            "Three verbs replace one undifferentiated form.",
+            "Progress and review reduce uncertainty.",
+            "Back navigation preserves every entered value."
+          ]
+        },
+        C: {
+          switcher: "C — Quick capture in context",
+          title: "Capture now. Enrich later.",
+          summary: "Open a lightweight sheet over the Library, ask only for the essential words, and let optional details stay optional.",
+          kicker: "Variant C · In-context quick capture",
+          thesis: "Minimum friction",
+          description: "The user never loses their place in the Library. Title and Arabic stay close to the thumb; richer metadata lives in a second sheet.",
+          tradeoff: "Fastest creation path; some users may postpone useful organization.",
+          decisionTitle: "Why this is better",
+          decisionSummary: "Only Arabic is required in the data model, so the initial surface finally reflects that truth.",
+          decisions: [
+            "The Library remains visible as the destination.",
+            "Save is possible after one meaningful input.",
+            "Advanced details use a dedicated bottom sheet."
+          ]
+        }
+      };
+
+      var wizardCopy = [
+        {
+          heading: "Add the words",
+          subheading: "Start with what you want to remember. Only Arabic text is required."
+        },
+        {
+          heading: "Organize it",
+          subheading: "Make this dhikr easy to find in the moments you need it."
+        },
+        {
+          heading: "Review and save",
+          subheading: "Add optional audio and check the library card before creating it."
+        }
+      ];
+
+      function cloneDraft(source) {
+        return {
+          title: source.title,
+          arabic: source.arabic,
+          transliteration: source.transliteration,
+          translation: source.translation,
+          category: source.category,
+          tags: source.tags.slice(),
+          audio: source.audio,
+          countPerPlayback: source.countPerPlayback
+        };
+      }
+
+      function setDraft(source, actionLabel) {
+        var next = cloneDraft(source);
+        state.title = next.title;
+        state.arabic = next.arabic;
+        state.transliteration = next.transliteration;
+        state.translation = next.translation;
+        state.category = next.category;
+        state.tags = next.tags;
+        state.audio = next.audio;
+        state.countPerPlayback = next.countPerPlayback;
+        state.lastAction = actionLabel;
+        render();
+      }
+
+      function textOrFallback(value, fallback) {
+        var normalized = String(value || "").trim();
+        return normalized || fallback;
+      }
+
+      function canSave() {
+        return state.arabic.trim().length > 0;
+      }
+
+      function selectedDetailsCount() {
+        var count = 0;
+        if (state.transliteration.trim()) count += 1;
+        if (state.translation.trim()) count += 1;
+        if (state.tags.length) count += 1;
+        if (state.audio) count += 1;
+        if (state.category !== "General") count += 1;
+        return count;
+      }
+
+      function detailSummary() {
+        var count = selectedDetailsCount();
+        if (!count) return "Translation, tags and audio";
+        return count + (count === 1 ? " detail added" : " details added");
+      }
+
+      function audioMarkup() {
+        var attached = Boolean(state.audio);
+        var buttonLabel = attached ? "Remove" : "Attach sample";
+        var action = attached ? "remove-audio" : "attach-audio";
+        var headline = attached ? state.audio : "Add recitation audio";
+        var subline = attached ? "Stored on this device · ready" : "AAC, M4A, MP3 or WAV · optional";
+        var disabledClass = attached ? "" : " disabled";
+        var disabledAttribute = attached ? "" : " disabled";
+
+        return [
+          '<div class="audio-row">',
+            '<span class="audio-symbol inline-icon" aria-hidden="true">',
+              '<svg viewBox="0 0 24 24"><path d="M4 9v6M8 6v12M12 3v18M16 7v10M20 10v4"/></svg>',
+            '</span>',
+            '<span class="audio-copy"><strong>', headline, '</strong><small>', subline, '</small></span>',
+            '<button class="mini-action" type="button" data-action="', action, '">', buttonLabel, '</button>',
+          '</div>',
+          '<div class="count-control', disabledClass, '">',
+            '<span>Counts per playback</span>',
+            '<span class="stepper">',
+              '<button type="button" aria-label="Decrease counts per playback" data-action="decrease-count"', disabledAttribute, '>−</button>',
+              '<output>', state.countPerPlayback, '</output>',
+              '<button type="button" aria-label="Increase counts per playback" data-action="increase-count"', disabledAttribute, '>＋</button>',
+            '</span>',
+          '</div>'
+        ].join("");
+      }
+
+      function buildOptions() {
+        document.querySelectorAll("[data-category-options]").forEach(function (container) {
+          var limit = Number(container.getAttribute("data-category-limit") || categories.length);
+          container.innerHTML = categories.slice(0, limit).map(function (category) {
+            return '<button class="choice-chip" type="button" data-category="' +
+              category.value + '">' + category.value + '</button>';
+          }).join("");
+        });
+
+        document.querySelectorAll("[data-category-tiles]").forEach(function (container) {
+          container.innerHTML = categories.map(function (category) {
+            return '<button class="category-tile" type="button" data-category="' +
+              category.value + '">' +
+              '<span class="category-symbol" aria-hidden="true">' + category.symbol + '</span>' +
+              '<span>' + category.value + '</span>' +
+              '<span class="category-check" aria-hidden="true">✓</span>' +
+              '</button>';
+          }).join("");
+        });
+
+        document.querySelectorAll("[data-tag-options]").forEach(function (container) {
+          container.innerHTML = availableTags.map(function (tag) {
+            return '<button class="tag-chip" type="button" data-tag="' +
+              tag + '"><span class="tag-check" aria-hidden="true">✓</span>' + tag + '</button>';
+          }).join("");
+        });
+      }
+
+      function renderVariant() {
+        document.querySelectorAll("[data-variant]").forEach(function (screen) {
+          var active = screen.getAttribute("data-variant") === state.variant;
+          screen.classList.toggle("active", active);
+          screen.setAttribute("aria-hidden", active ? "false" : "true");
+        });
+
+        var content = variantContent[state.variant];
+        document.getElementById("switcher-title").textContent = content.switcher;
+        document.getElementById("brief-title").textContent = content.title;
+        document.getElementById("brief-summary").textContent = content.summary;
+        document.getElementById("variant-kicker").textContent = content.kicker;
+        document.getElementById("variant-thesis").textContent = content.thesis;
+        document.getElementById("variant-description").textContent = content.description;
+        document.getElementById("variant-tradeoff").textContent = content.tradeoff;
+        document.getElementById("decision-title").textContent = content.decisionTitle;
+        document.getElementById("decision-summary").textContent = content.decisionSummary;
+        document.getElementById("decision-list").innerHTML = content.decisions.map(function (item) {
+          return '<li><span class="decision-check" aria-hidden="true">✓</span><span>' +
+            item + "</span></li>";
+        }).join("");
+      }
+
+      function renderFields() {
+        var activeElement = document.activeElement;
+        document.querySelectorAll("[data-field]").forEach(function (field) {
+          var key = field.getAttribute("data-field");
+          if (field !== activeElement && field.value !== state[key]) {
+            field.value = state[key];
+          }
+        });
+      }
+
+      function renderText() {
+        var displayTitle = textOrFallback(state.title, "Untitled dhikr");
+        var arabicPreview = textOrFallback(state.arabic, "Your Arabic text");
+        var tagLabel = state.tags.length + (state.tags.length === 1 ? " tag" : " tags");
+        var detailLabel = detailSummary();
+        var audioLabel = state.audio ? "Audio · " + state.countPerPlayback + " count" : "No audio";
+
+        document.querySelectorAll('[data-text="displayTitle"]').forEach(function (node) {
+          node.textContent = displayTitle;
+        });
+        document.querySelectorAll('[data-text="arabicPreview"]').forEach(function (node) {
+          node.textContent = arabicPreview;
+        });
+        document.querySelectorAll('[data-text="category"]').forEach(function (node) {
+          node.textContent = state.category;
+        });
+        document.querySelectorAll('[data-text="tagCount"]').forEach(function (node) {
+          node.textContent = tagLabel;
+        });
+        document.querySelectorAll('[data-text="detailSummary"]').forEach(function (node) {
+          node.textContent = detailLabel;
+        });
+        document.querySelectorAll('[data-text="audioSummary"]').forEach(function (node) {
+          node.textContent = audioLabel;
+        });
+        document.querySelectorAll("[data-character-count]").forEach(function (node) {
+          node.textContent = state.arabic.length;
+        });
+        document.querySelectorAll("[data-required-status]").forEach(function (node) {
+          node.textContent = canSave() ? "Ready to save" : "Arabic text is required";
+        });
+      }
+
+      function renderSelections() {
+        document.querySelectorAll("[data-category]").forEach(function (button) {
+          var selected = button.getAttribute("data-category") === state.category;
+          button.classList.toggle("selected", selected);
+          button.setAttribute("aria-pressed", selected ? "true" : "false");
+        });
+
+        document.querySelectorAll("[data-tag]").forEach(function (button) {
+          var selected = state.tags.indexOf(button.getAttribute("data-tag")) !== -1;
+          button.classList.toggle("selected", selected);
+          button.setAttribute("aria-pressed", selected ? "true" : "false");
+        });
+      }
+
+      function renderAudio() {
+        document.querySelectorAll("[data-audio-card]").forEach(function (container) {
+          container.innerHTML = audioMarkup();
+        });
+      }
+
+      function renderSaveButtons() {
+        document.querySelectorAll('[data-action="save"]').forEach(function (button) {
+          button.disabled = !canSave();
+        });
+      }
+
+      function renderDetails() {
+        document.querySelectorAll('[data-action="toggle-details"]').forEach(function (button) {
+          button.setAttribute("aria-expanded", state.detailsOpen ? "true" : "false");
+        });
+        document.querySelectorAll("[data-details-panel]").forEach(function (panel) {
+          panel.classList.toggle("open", state.detailsOpen);
+          panel.inert = !state.detailsOpen;
+          panel.setAttribute("aria-hidden", state.detailsOpen ? "false" : "true");
+        });
+
+        document.querySelectorAll("[data-advanced-layer]").forEach(function (layer) {
+          layer.classList.toggle("open", state.advancedOpen);
+          layer.setAttribute("aria-hidden", state.advancedOpen ? "false" : "true");
+        });
+      }
+
+      function renderWizard() {
+        var copy = wizardCopy[state.wizardStep];
+        document.querySelector("[data-wizard-count]").textContent = "Step " + (state.wizardStep + 1) + " of 3";
+        document.querySelector("[data-wizard-heading]").textContent = copy.heading;
+        document.querySelector("[data-wizard-subheading]").textContent = copy.subheading;
+
+        document.querySelectorAll("[data-step-segment]").forEach(function (segment) {
+          var index = Number(segment.getAttribute("data-step-segment"));
+          segment.classList.toggle("complete", index < state.wizardStep);
+          segment.classList.toggle("active", index === state.wizardStep);
+        });
+
+        document.querySelectorAll("[data-wizard-page]").forEach(function (page) {
+          var active = Number(page.getAttribute("data-wizard-page")) === state.wizardStep;
+          page.classList.toggle("active", active);
+          page.setAttribute("aria-hidden", active ? "false" : "true");
+        });
+
+        var back = document.querySelector('[data-action="wizard-back"]');
+        var next = document.querySelector('[data-action="wizard-next"]');
+        back.textContent = state.wizardStep === 0 ? "Cancel" : "Back";
+        next.textContent = state.wizardStep === 2 ? "Save dhikr" : "Continue";
+        next.disabled = state.wizardStep === 0 && !canSave();
+      }
+
+      function renderInspector() {
+        document.querySelector('[data-state-cell="canSave"]').textContent = canSave() ? "Yes" : "No — Arabic needed";
+        document.querySelector('[data-state-cell="category"]').textContent = state.category;
+        document.querySelector('[data-state-cell="tags"]').textContent = state.tags.length + " selected";
+        document.querySelector('[data-state-cell="audio"]').textContent = state.audio || "Not attached";
+
+        var visibleState = {
+          variant: state.variant,
+          title: state.title,
+          arabic: state.arabic,
+          transliteration: state.transliteration,
+          translation: state.translation,
+          category: state.category,
+          tags: state.tags,
+          audio: state.audio,
+          countPerPlayback: state.countPerPlayback,
+          canSave: canSave(),
+          wizardStep: state.wizardStep + 1,
+          optionalDetailsOpen: state.variant === "A" ? state.detailsOpen : state.advancedOpen,
+          lastAction: state.lastAction
+        };
+        document.getElementById("state-json").textContent = JSON.stringify(visibleState, null, 2);
+      }
+
+      function render() {
+        renderVariant();
+        renderFields();
+        renderText();
+        renderSelections();
+        renderAudio();
+        renderSaveButtons();
+        renderDetails();
+        renderWizard();
+        renderInspector();
+      }
+
+      function switchVariant(nextVariant) {
+        if (variants.indexOf(nextVariant) === -1) nextVariant = "A";
+        state.variant = nextVariant;
+        state.advancedOpen = false;
+        state.lastAction = "Switched to variant " + nextVariant;
+
+        var url = new URL(window.location.href);
+        url.searchParams.set("variant", nextVariant);
+        history.replaceState({}, "", url);
+        render();
+
+        var activeScreen = document.querySelector('[data-variant="' + nextVariant + '"]');
+        var scroller = activeScreen && activeScreen.querySelector(".screen-scroll, .wizard-page.active, .capture-sheet");
+        if (scroller) scroller.scrollTop = 0;
+      }
+
+      function cycleVariant(direction) {
+        var index = variants.indexOf(state.variant);
+        var nextIndex = (index + direction + variants.length) % variants.length;
+        switchVariant(variants[nextIndex]);
+      }
+
+      function toggleTag(tag) {
+        var index = state.tags.indexOf(tag);
+        if (index === -1) {
+          state.tags.push(tag);
+          state.lastAction = "Added tag " + tag;
+        } else {
+          state.tags.splice(index, 1);
+          state.lastAction = "Removed tag " + tag;
+        }
+        render();
+      }
+
+      var toastTimer;
+      function showToast(message) {
+        var toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.classList.add("visible");
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(function () {
+          toast.classList.remove("visible");
+        }, 2200);
+      }
+
+      function handleAction(action) {
+        if (action === "previous-variant") {
+          cycleVariant(-1);
+          return;
+        }
+        if (action === "next-variant") {
+          cycleVariant(1);
+          return;
+        }
+        if (action === "load-sample") {
+          setDraft(sampleDraft, "Sample draft loaded");
+          showToast("Sample draft loaded");
+          return;
+        }
+        if (action === "reset-draft") {
+          setDraft(emptyDraft, "Draft reset");
+          showToast("Draft cleared");
+          return;
+        }
+        if (action === "toggle-details") {
+          state.detailsOpen = !state.detailsOpen;
+          state.lastAction = state.detailsOpen ? "Opened optional details" : "Closed optional details";
+          render();
+          return;
+        }
+        if (action === "open-advanced") {
+          state.advancedOpen = true;
+          state.lastAction = "Opened optional details sheet";
+          render();
+          return;
+        }
+        if (action === "close-advanced") {
+          state.advancedOpen = false;
+          state.lastAction = "Closed optional details sheet";
+          render();
+          return;
+        }
+        if (action === "attach-audio") {
+          state.audio = "morning-tasbih.m4a";
+          state.countPerPlayback = Math.max(1, state.countPerPlayback);
+          state.lastAction = "Attached sample audio";
+          render();
+          showToast("Sample audio attached");
+          return;
+        }
+        if (action === "remove-audio") {
+          state.audio = null;
+          state.countPerPlayback = 1;
+          state.lastAction = "Removed audio";
+          render();
+          return;
+        }
+        if (action === "increase-count" && state.audio) {
+          state.countPerPlayback = Math.min(99, state.countPerPlayback + 1);
+          state.lastAction = "Increased counts per playback";
+          render();
+          return;
+        }
+        if (action === "decrease-count" && state.audio) {
+          state.countPerPlayback = Math.max(1, state.countPerPlayback - 1);
+          state.lastAction = "Decreased counts per playback";
+          render();
+          return;
+        }
+        if (action === "wizard-back") {
+          if (state.wizardStep > 0) {
+            state.wizardStep -= 1;
+            state.lastAction = "Moved back to wizard step " + (state.wizardStep + 1);
+            render();
+          } else {
+            showToast("Prototype only — this would close the form");
+          }
+          return;
+        }
+        if (action === "wizard-next") {
+          if (state.wizardStep === 0 && !canSave()) {
+            showToast("Add Arabic text to continue");
+          } else if (state.wizardStep < 2) {
+            state.wizardStep += 1;
+            state.lastAction = "Moved to wizard step " + (state.wizardStep + 1);
+            render();
+          } else {
+            handleAction("save");
+          }
+          return;
+        }
+        if (action === "save") {
+          if (!canSave()) {
+            showToast("Arabic text is required");
+          } else {
+            state.lastAction = "Preview save completed";
+            renderInspector();
+            showToast("Prototype only — dhikr is ready to save");
+          }
+          return;
+        }
+        if (action === "prototype-back") {
+          showToast("Prototype only — this would return to the Library");
+        }
+      }
+
+      document.addEventListener("input", function (event) {
+        var field = event.target.closest("[data-field]");
+        if (!field) return;
+        var key = field.getAttribute("data-field");
+        state[key] = field.value;
+        state.lastAction = "Updated " + key;
+        render();
+      });
+
+      document.addEventListener("click", function (event) {
+        var categoryButton = event.target.closest("[data-category]");
+        if (categoryButton) {
+          state.category = categoryButton.getAttribute("data-category");
+          state.lastAction = "Selected category " + state.category;
+          render();
+          return;
+        }
+
+        var tagButton = event.target.closest("[data-tag]");
+        if (tagButton) {
+          toggleTag(tagButton.getAttribute("data-tag"));
+          return;
+        }
+
+        var actionButton = event.target.closest("[data-action]");
+        if (actionButton) {
+          handleAction(actionButton.getAttribute("data-action"));
+        }
+      });
+
+      document.addEventListener("keydown", function (event) {
+        var target = event.target;
+        var isEditing = target.matches("input, textarea, [contenteditable='true']");
+        if (isEditing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+
+        if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          cycleVariant(-1);
+        } else if (event.key === "ArrowRight") {
+          event.preventDefault();
+          cycleVariant(1);
+        } else if (event.key === "Escape" && state.advancedOpen) {
+          state.advancedOpen = false;
+          state.lastAction = "Closed optional details sheet";
+          render();
+        }
+      });
+
+      var requestedVariant = new URLSearchParams(window.location.search).get("variant");
+      if (variants.indexOf(requestedVariant) !== -1) {
+        state.variant = requestedVariant;
+      }
+
+      buildOptions();
+      render();
+    }());
+  </script>
+</body>
+</html>

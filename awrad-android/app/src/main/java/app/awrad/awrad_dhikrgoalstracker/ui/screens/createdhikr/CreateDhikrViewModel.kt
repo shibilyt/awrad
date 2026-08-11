@@ -33,7 +33,7 @@ data class CreateDhikrUiState(
     val arabic: String = "",
     val transliteration: String = "",
     val translation: String = "",
-    val category: DhikrCategory = DhikrCategory.GENERAL,
+    val selectedCategories: List<DhikrCategory> = listOf(DhikrCategory.GENERAL),
     val audioCountPerPlay: Int = 1,
     val selectedTagIds: Set<AwradId> = emptySet(),
     val ownedAudioName: String? = null,
@@ -91,7 +91,7 @@ class CreateDhikrViewModel @Inject constructor(
                 arabic = dhikr.arabic,
                 transliteration = dhikr.transliteration,
                 translation = dhikr.translation,
-                category = dhikr.category,
+                selectedCategories = dhikr.categories,
                 audioCountPerPlay = dhikr.audioCountPerPlay,
                 ownedAudioName = owned?.relativeFileName,
                 ownedAudioMissing = missing,
@@ -119,8 +119,15 @@ class CreateDhikrViewModel @Inject constructor(
         _uiState.update { it.copy(translation = value) }
     }
 
-    fun onCategoryChanged(category: DhikrCategory) {
-        _uiState.update { it.copy(category = category) }
+    fun toggleCategory(category: DhikrCategory) {
+        _uiState.update {
+            it.copy(
+                selectedCategories = CreateDhikrEditorState.toggleCategory(
+                    selected = it.selectedCategories,
+                    category = category,
+                ),
+            )
+        }
     }
 
     fun onAudioCountPerPlayChanged(value: Int) {
@@ -242,7 +249,8 @@ class CreateDhikrViewModel @Inject constructor(
                     arabic = state.arabic,
                     transliteration = state.transliteration,
                     translation = state.translation,
-                    category = state.category,
+                    category = state.selectedCategories.first(),
+                    categories = state.selectedCategories,
                     audioCountPerPlay = state.audioCountPerPlay,
                     id = state.editingDhikrId ?: java.util.UUID.randomUUID(),
                 )
