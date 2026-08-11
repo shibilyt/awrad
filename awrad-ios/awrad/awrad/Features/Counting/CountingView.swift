@@ -1544,7 +1544,7 @@ private struct DhikrPreviewCard: View {
             }
         }
         .padding(.vertical, shouldShowFullButton ? 8 : 7)
-        .modifier(GlassSurfaceModifier(cornerRadius: 22, tint: AwradTheme.mint.opacity(0.10)))
+        .background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 }
 

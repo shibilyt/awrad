@@ -42,8 +42,18 @@ import java.util.Locale
 /** Beyond this many slots the arc segments are unreadable at dot size. */
 private const val MAX_RING_SEGMENTS = 5
 
-/** Streaks longer than this many days earn the fire emoji on their compact chip. */
-private const val FIRE_STREAK_MIN_DAYS = 7
+/** Streak tiers that earn progressively more fire emojis on the compact chip. */
+private const val FIRE_STREAK_MIN_DAYS = 6
+private const val DOUBLE_FIRE_STREAK_DAYS = 21
+private const val TRIPLE_FIRE_STREAK_DAYS = 40
+
+/** How many fire emojis a streak of [streakDays] earns: 0, 1, 2, or 3. */
+private fun fireEmojiCount(streakDays: Int): Int = when {
+    streakDays >= TRIPLE_FIRE_STREAK_DAYS -> 3
+    streakDays >= DOUBLE_FIRE_STREAK_DAYS -> 2
+    streakDays >= FIRE_STREAK_MIN_DAYS -> 1
+    else -> 0
+}
 
 /**
  * A row of labelled day circles showing a goal's recent activity — the per-goal equivalent of the
@@ -317,8 +327,9 @@ internal fun compactGoalCount(count: Long): String {
 }
 
 /**
- * Compact streak label that replaces the full day strip on list rows: "12 day streak", with a
- * fire emoji once the streak passes [FIRE_STREAK_MIN_DAYS] days. Renders nothing while there is
+ * Compact streak label that replaces the full day strip on list rows: "12 day streak", with fire
+ * emojis added at streak milestones — one from [FIRE_STREAK_MIN_DAYS] days, two from
+ * [DOUBLE_FIRE_STREAK_DAYS], three from [TRIPLE_FIRE_STREAK_DAYS]. Renders nothing while there is
  * no streak so rows without one stay clean — the full history lives on the featured hero and the
  * goal detail screens.
  */
@@ -330,8 +341,9 @@ fun GoalStreakChip(
 ) {
     if (streakDays <= 0) return
     val label = stringResource(R.string.goal_streak_days, streakDays)
+    val fireCount = fireEmojiCount(streakDays)
     Text(
-        text = if (streakDays > FIRE_STREAK_MIN_DAYS) "🔥 $label" else label,
+        text = if (fireCount > 0) "${"🔥".repeat(fireCount)} $label" else label,
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.SemiBold,
         color = color,

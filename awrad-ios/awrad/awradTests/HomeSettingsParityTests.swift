@@ -59,6 +59,23 @@ struct HomeSettingsParityTests {
         #expect(homeHeaderSource.contains(".background(AwradTheme.surface, in: Circle())"))
     }
 
+    @Test func countingDhikrCardUsesTheAdaptiveLibrarySurfaceWithoutABorder() throws {
+        let countingSourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Counting/CountingView.swift")
+            .standardizedFileURL
+        let countingSource = try String(contentsOf: countingSourceURL, encoding: .utf8)
+        let dhikrCardSource = countingSource
+            .components(separatedBy: "private struct DhikrPreviewCard: View").last?
+            .components(separatedBy: "private struct CounterIconButton: View").first ?? ""
+
+        #expect(dhikrCardSource.contains(
+            ".background(AwradTheme.surface, in: RoundedRectangle(cornerRadius: 22, style: .continuous))"
+        ))
+        #expect(!dhikrCardSource.contains("GlassSurfaceModifier"))
+        #expect(!dhikrCardSource.contains(".stroke("))
+    }
+
     @Test func goalsHeaderStaysOutsideTheScrollableContent() throws {
         let goalsSourceURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -128,6 +145,29 @@ struct HomeSettingsParityTests {
         #expect(!floatingButtonSource.contains(".padding(.bottom, 100)"))
     }
 
+    @Test func goalsAndLibraryBackgroundsExtendBehindTheFloatingTabBar() throws {
+        let featureSourceURLs = [
+            URL(fileURLWithPath: #filePath)
+                .deletingLastPathComponent()
+                .appendingPathComponent("../awrad/Features/Goals/GoalsView.swift")
+                .standardizedFileURL,
+            URL(fileURLWithPath: #filePath)
+                .deletingLastPathComponent()
+                .appendingPathComponent("../awrad/Features/Library/LibraryView.swift")
+                .standardizedFileURL,
+        ]
+
+        for sourceURL in featureSourceURLs {
+            let source = try String(contentsOf: sourceURL, encoding: .utf8)
+            #expect(source.contains(
+                """
+                .background(AwradTheme.background.ignoresSafeArea(edges: .bottom))
+                        .navigationTitle(\"\")
+                """
+            ))
+        }
+    }
+
     @Test func libraryDhikrPaneDoesNotShowCategoryFilterPills() throws {
         let librarySourceURL = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
@@ -181,7 +221,7 @@ struct HomeSettingsParityTests {
             .appendingPathComponent("../awrad/Features/Library/LibraryView.swift")
             .standardizedFileURL
         let librarySource = try String(contentsOf: librarySourceURL, encoding: .utf8)
-        #expect(librarySource.contains("case .custom:\n            return \"collection_your_dhikrs_\\(suffix)\""))
+        #expect(librarySource.contains("case .yourDhikrs:\n            return \"collection_your_dhikrs_\\(suffix)\""))
     }
 
     @Test func iosHomeMapsEachFeaturedCollectionToItsAndroidArtwork() throws {

@@ -97,7 +97,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.boundsInRoot
@@ -129,6 +128,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.QuranRef
 import app.awrad.awrad_dhikrgoalstracker.service.CountingState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradStatusBarStyle
+import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakChip
 import app.awrad.awrad_dhikrgoalstracker.ui.components.StreakSection
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.QuranBodyText
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.QuranDhikrTextPreview
@@ -492,6 +492,7 @@ fun CountingScreen(
             CountingTopBar(
                 title = uiState.dhikrTranslation.ifBlank { countingState.dhikrTransliteration },
                 goalTag = uiState.goal?.let { goalTag(it) },
+                streakDays = uiState.streakDays,
                 onNavigateBack = {
                     if (countingState.isAudioMode) {
                         showStopAudioDialog = true
@@ -1025,6 +1026,7 @@ private fun TargetReachedCapCard(
 private fun CountingTopBar(
     title: String,
     goalTag: String?,
+    streakDays: Int = 0,
     onNavigateBack: () -> Unit,
     actions: @Composable RowScope.() -> Unit,
 ) {
@@ -1069,20 +1071,30 @@ private fun CountingTopBar(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                goalTag?.let { tag ->
+                if (goalTag != null || streakDays > 0) {
                     Spacer(modifier = Modifier.height(3.dp))
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                    ) {
-                        Text(
-                            text = tag,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        goalTag?.let { tag ->
+                            Surface(
+                                shape = RoundedCornerShape(20.dp),
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                            ) {
+                                Text(
+                                    text = tag,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                        if (streakDays > 0) {
+                            if (goalTag != null) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+                            GoalStreakChip(streakDays = streakDays)
+                        }
                     }
                 }
             }
@@ -1683,8 +1695,13 @@ private fun QuranDhikrPreviewCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isAwradDarkTheme()) {
+                MaterialTheme.colorScheme.surfaceContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
+        ),
     ) {
         Column(
             modifier = Modifier
@@ -1716,22 +1733,16 @@ private fun DhikrPreviewCard(
         modifier = Modifier.fillMaxWidth(),
         shape = cardShape,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
+            containerColor = if (isAwradDarkTheme()) {
+                MaterialTheme.colorScheme.surfaceContainer
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
         ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.26f),
-                            MaterialTheme.colorScheme.surfaceContainer,
-                        ),
-                    ),
-                )
                 .padding(vertical = 14.dp, horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {

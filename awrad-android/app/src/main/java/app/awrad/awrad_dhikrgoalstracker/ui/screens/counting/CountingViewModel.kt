@@ -116,6 +116,7 @@ data class CountingUiState(
     val minimumCount: Int? = null,
     val goal: Goal? = null,
     val dailyTarget: Int = 0,
+    val streakDays: Int = 0,
     // Audio estimates (pre-loaded, available before playback starts)
     val audioDurationMs: Long = 0,
     val audioCountPerPlay: Int = 1,
@@ -251,6 +252,8 @@ class CountingViewModel @Inject constructor(
     private var timingInfosValue: Map<AwradId, SlotTimingInfo> = emptyMap()
     private var recommendedSlotKey: RecommendedSlotKey? = null
     private var recommendedSlotValue: AwradId? = null
+    private var streakKey: StreakKey? = null
+    private var streakValue: Int = 0
 
     private val _historyItems = MutableStateFlow<List<CountEntry>>(emptyList())
     val historyItems: StateFlow<List<CountEntry>> = _historyItems.asStateFlow()
@@ -326,12 +329,16 @@ class CountingViewModel @Inject constructor(
     val uiState: StateFlow<CountingUiState> = combine(
         _serviceState,
         _isBound,
-        _goalInfo,
+        combine(_goalInfo, _dailyCounts) { goalInfo, dailyCounts ->
+            GoalInfoWithDailyCounts(goalInfo, dailyCounts)
+        },
         combine(_nowMillis, _slotTimingContext) { nowMillis, timingContext ->
             SlotRuntimeSnapshot(nowMillis, timingContext)
         },
         combine(_sessionCount, _sessionElapsedSeconds, _sessionComplete, _sessionTargetType, _sessionTargetValue) { a, b, c, d, e -> SessionSnapshot(a, b, c, d, e) },
-    ) { countingState, isBound, goalInfo, slotRuntime, session ->
+    ) { countingState, isBound, goalAndCounts, slotRuntime, session ->
+        val goalInfo = goalAndCounts.goalInfo
+        val dailyCounts = goalAndCounts.dailyCounts
         val dailyTarget = countingState.targetCount
         val dailyProgress = if (dailyTarget > 0)
             (countingState.currentCount.toFloat() / dailyTarget).coerceIn(0f, 1f) else 0f
@@ -405,6 +412,11 @@ class CountingViewModel @Inject constructor(
                 slotCounts = countingState.slotCounts,
             )
         } ?: capAllowsManualCount
+        val streakDays = memoizedStreakDays(
+            goal = goalInfo.goal,
+            dailyCounts = dailyCounts,
+            effectiveToday = goalInfo.effectiveToday,
+        )
 
         CountingUiState(
             countingState = countingState,
@@ -439,6 +451,7 @@ class CountingViewModel @Inject constructor(
             minimumCount = goalInfo.minimumCount,
             goal = goalInfo.goal,
             dailyTarget = goalInfo.dailyTarget,
+            streakDays = streakDays,
             audioDurationMs = goalInfo.audioDurationMs,
             audioCountPerPlay = goalInfo.audioCountPerPlay,
             hasSessionTarget = hasSession,
@@ -499,6 +512,26 @@ class CountingViewModel @Inject constructor(
         ).slotId
         recommendedSlotKey = key
         recommendedSlotValue = computed
+        return computed
+    }
+
+    private fun memoizedStreakDays(
+        goal: Goal?,
+        dailyCounts: Map<LocalDate, Long>,
+        effectiveToday: LocalDate,
+    ): Int {
+        if (goal == null) return 0
+        val key = StreakKey(goal, dailyCounts, effectiveToday)
+        streakKey?.let { if (it == key) return streakValue }
+        val computed = GoalProgressCalculator.calculateStreakWithCounts(
+            dailyCounts = dailyCounts,
+            today = effectiveToday,
+            dailyTarget = GoalProgressCalculator.getTargetCount(goal),
+            minimumStreakCount = goal.minimumStreakCount,
+            goal = goal,
+        ).currentStreak
+        streakKey = key
+        streakValue = computed
         return computed
     }
 
@@ -1283,6 +1316,17 @@ private data class RecommendedSlotKey(
     val slots: List<GoalSlot>,
     val slotCounts: Map<AwradId, Long>,
     val timingInfos: Map<AwradId, SlotTimingInfo>,
+)
+
+private data class GoalInfoWithDailyCounts(
+    val goalInfo: GoalInfoHolder,
+    val dailyCounts: Map<LocalDate, Long>,
+)
+
+private data class StreakKey(
+    val goal: Goal?,
+    val dailyCounts: Map<LocalDate, Long>,
+    val effectiveToday: LocalDate,
 )
 
 private data class GoalInfoHolder(
