@@ -59,6 +59,19 @@ class GoalsHeaderSheetLayoutTest {
     }
 
     @Test
+    fun `goals add action uses a circled button`() {
+        val source = goalsScreenSource().readText()
+        val screen = source
+            .substringAfter("fun GoalsScreen(")
+            .substringBefore("private fun ActiveGoalsPane(")
+
+        val addAction = screen.substringAfter("Text(")
+            .substringBefore("AwradPagerTabs(")
+        assertTrue("The goals add action must be a circular button", "CircleShape" in addAction)
+        assertTrue("The goals add action must show a plus icon", "Icons.Filled.Add" in addAction)
+    }
+
+    @Test
     fun `goal cards use the same container color as library dhikr cards`() {
         val goalCard = goalsScreenSource().readText()
             .substringAfter("private fun GoalListItem(")

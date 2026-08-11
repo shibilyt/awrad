@@ -127,6 +127,14 @@ class GoalRepositoryImpl @Inject constructor(
         notificationRequests.request(NotificationObligationRequestReason.GOAL_MUTATION, setOf(it.id))
     }
 
+    override suspend fun updateGoalLifecycle(validatedGoalUpdate: ValidatedGoalUpdate): Goal = database.withTransaction {
+        val goal = validatedGoalUpdate.goal
+        updateGoalAggregate(goal)
+        getGoalById(goal.id) ?: goal
+    }.also {
+        notificationRequests.request(NotificationObligationRequestReason.GOAL_MUTATION, setOf(it.id))
+    }
+
     override suspend fun updateGoalSchedule(validatedGoalUpdate: ValidatedGoalUpdate): Goal = database.withTransaction {
         val goal = validatedGoalUpdate.goal
         updateGoalAggregate(goal)

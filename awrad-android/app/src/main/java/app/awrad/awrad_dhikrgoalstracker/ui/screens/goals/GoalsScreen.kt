@@ -1,6 +1,8 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.goals
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,34 +10,46 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.outlined.Unarchive
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -49,6 +63,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -70,6 +85,7 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakChip
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualEmptyState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.SectionHeader
+import app.awrad.awrad_dhikrgoalstracker.ui.components.StreakSection
 import app.awrad.awrad_dhikrgoalstracker.ui.components.compactGoalCount
 import app.awrad.awrad_dhikrgoalstracker.ui.sync.ProgressSyncRefreshViewModel
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
@@ -106,6 +122,7 @@ fun GoalsScreen(
     val scope = rememberCoroutineScope()
     var tabCentersPx by remember { mutableStateOf(listOf<Float>()) }
     var sheetLeftPx by remember { mutableStateOf(0f) }
+    var selectedGoal by remember { mutableStateOf<GoalDisplayItem?>(null) }
     val tabs = listOf(
         stringResource(R.string.goals_tab_active),
         stringResource(R.string.goals_tab_history),
@@ -145,11 +162,17 @@ fun GoalsScreen(
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f),
                         )
-                        IconButton(onClick = onNavigateToCreateGoal) {
+                        IconButton(
+                            onClick = onNavigateToCreateGoal,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                        ) {
                             Icon(
                                 imageVector = Icons.Filled.Add,
                                 contentDescription = stringResource(R.string.cd_create_goal),
-                                tint = MaterialTheme.colorScheme.onSurface,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             )
                         }
                     }
@@ -193,13 +216,13 @@ fun GoalsScreen(
                                     0 -> ActiveGoalsPane(
                                         uiState = uiState,
                                         onNavigateToCounting = onNavigateToCounting,
-                                        onDelete = viewModel::deleteGoal,
+                                        onShowDetails = { selectedGoal = it },
                                     )
 
                                     else -> HistoryGoalsPane(
                                         uiState = uiState,
                                         onNavigateToGoalDetail = onNavigateToGoalDetail,
-                                        onDelete = viewModel::deleteGoal,
+                                        onShowDetails = { selectedGoal = it },
                                     )
                                 }
                             }
@@ -230,13 +253,32 @@ fun GoalsScreen(
             }
         }
     }
+
+    selectedGoal?.let { item ->
+        GoalDetailsBottomSheet(
+            item = item,
+            onDismiss = { selectedGoal = null },
+            onArchive = {
+                selectedGoal = null
+                viewModel.archiveGoal(item.goal)
+            },
+            onRestore = {
+                selectedGoal = null
+                viewModel.restoreGoal(item.goal)
+            },
+            onDelete = {
+                selectedGoal = null
+                viewModel.deleteGoal(item.goal.id)
+            },
+        )
+    }
 }
 
 @Composable
 private fun ActiveGoalsPane(
     uiState: GoalsUiState,
     onNavigateToCounting: (AwradId) -> Unit,
-    onDelete: (AwradId) -> Unit,
+    onShowDetails: (GoalDisplayItem) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -250,7 +292,7 @@ private fun ActiveGoalsPane(
                 GoalListItem(
                     item = item,
                     onClick = { onNavigateToCounting(item.goal.id) },
-                    onDelete = { onDelete(item.goal.id) },
+                    onShowDetails = { onShowDetails(item) },
                 )
             }
         }
@@ -264,7 +306,7 @@ private fun ActiveGoalsPane(
                 GoalListItem(
                     item = item,
                     onClick = { onNavigateToCounting(item.goal.id) },
-                    onDelete = { onDelete(item.goal.id) },
+                    onShowDetails = { onShowDetails(item) },
                 )
             }
         }
@@ -292,24 +334,57 @@ private fun ActiveGoalsPane(
 private fun HistoryGoalsPane(
     uiState: GoalsUiState,
     onNavigateToGoalDetail: (AwradId) -> Unit,
-    onDelete: (AwradId) -> Unit,
+    onShowDetails: (GoalDisplayItem) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 12.dp, bottom = 112.dp),
     ) {
-        if (uiState.historyGoals.isNotEmpty()) {
+        if (uiState.pastGoals.isNotEmpty()) {
             item {
                 SectionHeader(title = stringResource(R.string.goals_section_past))
             }
-            items(uiState.historyGoals) { item ->
+            items(uiState.pastGoals) { item ->
                 GoalListItem(
                     item = item,
                     onClick = { onNavigateToGoalDetail(item.goal.id) },
-                    onDelete = { onDelete(item.goal.id) },
+                    onShowDetails = { onShowDetails(item) },
                 )
             }
-        } else if (!uiState.isLoading) {
+        }
+
+        if (uiState.completedGoals.isNotEmpty()) {
+            item {
+                SectionHeader(title = stringResource(R.string.goals_section_completed))
+            }
+            items(uiState.completedGoals) { item ->
+                GoalListItem(
+                    item = item,
+                    onClick = { onNavigateToGoalDetail(item.goal.id) },
+                    onShowDetails = { onShowDetails(item) },
+                )
+            }
+        }
+
+        if (uiState.archivedGoals.isNotEmpty()) {
+            item {
+                SectionHeader(title = stringResource(R.string.goals_section_archived))
+            }
+            items(uiState.archivedGoals) { item ->
+                GoalListItem(
+                    item = item,
+                    onClick = { onNavigateToGoalDetail(item.goal.id) },
+                    onShowDetails = { onShowDetails(item) },
+                )
+            }
+        }
+
+        if (
+            !uiState.isLoading &&
+            uiState.pastGoals.isEmpty() &&
+            uiState.completedGoals.isEmpty() &&
+            uiState.archivedGoals.isEmpty()
+        ) {
             item {
                 RitualEmptyState(
                     title = stringResource(R.string.goals_history_empty_title),
@@ -328,10 +403,8 @@ private fun HistoryGoalsPane(
 private fun GoalListItem(
     item: GoalDisplayItem,
     onClick: () -> Unit,
-    onDelete: () -> Unit,
+    onShowDetails: () -> Unit,
 ) {
-    var menuExpanded by remember { mutableStateOf(false) }
-
     val displayCount = item.todayCount
     val displayCountLabel = remember(displayCount) { compactGoalCount(displayCount) }
 
@@ -448,50 +521,255 @@ private fun GoalListItem(
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            Box {
-                IconButton(
-                    onClick = { menuExpanded = true },
-                    modifier = Modifier.size(36.dp),
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.MoreVert,
-                        contentDescription = "More options",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp),
+            IconButton(
+                onClick = { onShowDetails() },
+                modifier = Modifier.size(36.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.MoreVert,
+                    contentDescription = stringResource(R.string.goal_details_more_options),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun GoalDetailsBottomSheet(
+    item: GoalDisplayItem,
+    onDismiss: () -> Unit,
+    onArchive: () -> Unit,
+    onRestore: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    val goalName = item.dhikrName.ifBlank { stringResource(R.string.goal_details_goal_fallback) }
+    val statement = stringResource(R.string.goal_sheet_statement, goalName, goalTag(item.goal))
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = null,
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .statusBarsPadding()
+                .navigationBarsPadding(),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 20.dp, end = 8.dp, top = 14.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.goal_details_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = goalName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
-                DropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false },
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.action_archive)) },
-                        onClick = { menuExpanded = false },
-                        leadingIcon = {
-                            Icon(Icons.Outlined.Archive, contentDescription = null)
-                        },
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                stringResource(R.string.action_delete),
-                                color = MaterialTheme.colorScheme.error,
-                            )
-                        },
-                        onClick = {
-                            menuExpanded = false
-                            onDelete()
-                        },
-                        leadingIcon = {
-                            Icon(
-                                Icons.Outlined.Delete,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error,
-                            )
-                        },
+                IconButton(onClick = onDismiss) {
+                    Icon(
+                        imageVector = Icons.Filled.Close,
+                        contentDescription = stringResource(R.string.goal_sheet_close),
                     )
                 }
             }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(20.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f),
+                ) {
+                    Text(
+                        text = statement,
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 20.dp),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(
+                        text = stringResource(R.string.goal_sheet_quick_stats),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        GoalQuickStat(
+                            label = stringResource(R.string.goal_sheet_today),
+                            value = compactGoalCount(item.todayCount),
+                            modifier = Modifier.weight(1f),
+                        )
+                        GoalQuickStat(
+                            label = stringResource(R.string.goal_sheet_current_streak),
+                            value = pluralStringResource(
+                                R.plurals.goal_sheet_days,
+                                item.streakDays,
+                                item.streakDays,
+                            ),
+                            modifier = Modifier.weight(1f),
+                        )
+                        GoalQuickStat(
+                            label = stringResource(R.string.goal_sheet_all_time),
+                            value = compactGoalCount(item.goal.totalCompletedCount),
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+
+                // History & streak card — same as the counting page's history bottom sheet.
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                    tonalElevation = 1.dp,
+                ) {
+                    StreakSection(
+                        currentStreak = item.streakInfo?.currentStreak ?: item.streakDays,
+                        activeDates = item.streakInfo?.activeDates.orEmpty(),
+                        today = item.effectiveToday,
+                        earliestDate = item.goal.startDate,
+                        streakInfo = item.streakInfo,
+                        modifier = Modifier.padding(14.dp),
+                    )
+                }
+            }
+
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                OutlinedButton(
+                    onClick = if (item.goal.isPaused) onRestore else onArchive,
+                    enabled = item.goal.isPaused || (item.goal.isActive && !item.goal.isCompleted),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
+                ) {
+                    Icon(
+                        imageVector = if (item.goal.isPaused) {
+                            Icons.Outlined.Unarchive
+                        } else {
+                            Icons.Outlined.Archive
+                        },
+                        contentDescription = null,
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        stringResource(
+                            if (item.goal.isPaused) R.string.action_restore else R.string.action_archive,
+                        ),
+                    )
+                }
+                Button(
+                    onClick = { showDeleteConfirmation = true },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) {
+                    Icon(Icons.Outlined.Delete, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.action_delete))
+                }
+            }
+        }
+    }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text(stringResource(R.string.goal_sheet_delete_title)) },
+            text = { Text(stringResource(R.string.goal_sheet_delete_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        onDelete()
+                    },
+                ) {
+                    Text(
+                        text = stringResource(R.string.action_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun GoalQuickStat(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.height(96.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }

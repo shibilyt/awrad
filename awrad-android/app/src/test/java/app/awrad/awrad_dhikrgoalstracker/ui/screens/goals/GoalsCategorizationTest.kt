@@ -72,12 +72,37 @@ class GoalsCategorizationTest {
         assertEquals(listOf(testId(4), testId(6)), sections.past.map { it.goal.id })
     }
 
+    @Test
+    fun `history separates past completed and archived goals`() {
+        val today = LocalDate.parse("2026-07-14")
+        val past = displayItem(id = 1, startDate = today.minusDays(2))
+        val completed = displayItem(
+            id = 2,
+            startDate = today.minusDays(3),
+            isActive = false,
+            completedAt = 1L,
+        )
+        val archived = displayItem(
+            id = 3,
+            startDate = today.minusDays(4),
+            isActive = false,
+        )
+
+        val sections = categorizeHistoryGoals(listOf(archived, past, completed))
+
+        assertEquals(listOf(testId(1)), sections.past.map { it.goal.id })
+        assertEquals(listOf(testId(2)), sections.completed.map { it.goal.id })
+        assertEquals(listOf(testId(3)), sections.archived.map { it.goal.id })
+    }
+
     private fun displayItem(
         id: Int,
         startDate: LocalDate,
         endDate: LocalDate? = null,
         durationDays: Int? = null,
         overallProgress: Float = 0f,
+        isActive: Boolean = true,
+        completedAt: Long? = null,
     ): GoalDisplayItem = GoalDisplayItem(
         goal = Goal(
             id = testId(id),
@@ -85,6 +110,8 @@ class GoalsCategorizationTest {
             startDate = startDate,
             endDate = endDate,
             durationDays = durationDays,
+            isActive = isActive,
+            completedAt = completedAt,
         ),
         overallProgress = overallProgress,
     )

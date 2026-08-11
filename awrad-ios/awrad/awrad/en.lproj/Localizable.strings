@@ -825,8 +825,11 @@
 "Other" = "Other";
 "Upcoming goals" = "Upcoming goals";
 "Completed goals" = "Completed goals";
+"Past goals" = "Past goals";
+"Archived goals" = "Archived goals";
 "Other goals" = "Other goals";
 "Archive Goal" = "Archive Goal";
+"Restore Goal" = "Restore Goal";
 "No target" = "No target";
 "%@ total" = "%@ total";
 "%@ per period" = "%@ per period";

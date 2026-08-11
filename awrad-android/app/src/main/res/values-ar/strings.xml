@@ -19,6 +19,23 @@
     <string name="action_save">حفظ</string>
     <string name="action_delete">حذف الهدف</string>
     <string name="action_archive">أرشفة الهدف</string>
+    <string name="action_restore">استعادة الهدف</string>
+    <string name="goal_sheet_close">إغلاق تفاصيل الهدف</string>
+    <string name="goal_sheet_statement">%1$s · %2$s</string>
+    <string name="goal_sheet_quick_stats">إحصاءات سريعة</string>
+    <string name="goal_sheet_today">اليوم</string>
+    <string name="goal_sheet_current_streak">السلسلة الحالية</string>
+    <string name="goal_sheet_all_time">الإجمالي</string>
+    <string name="goal_sheet_delete_title">هل تريد حذف هذا الهدف؟</string>
+    <string name="goal_sheet_delete_message">سيُحذف هذا الهدف وسجل العد نهائيًا، ولا يمكن التراجع عن ذلك.</string>
+    <plurals name="goal_sheet_days">
+        <item quantity="zero">%d يوم</item>
+        <item quantity="one">يوم واحد</item>
+        <item quantity="two">يومان</item>
+        <item quantity="few">%d أيام</item>
+        <item quantity="many">%d يومًا</item>
+        <item quantity="other">%d يوم</item>
+    </plurals>
     <string name="action_reset">إعادة تعيين</string>
     <string name="action_add">إضافة</string>
     <string name="action_added">تمت الإضافة</string>
@@ -90,6 +107,7 @@
     <string name="goals_section_upcoming">الأهداف القادمة</string>
     <string name="goals_section_past">الأهداف السابقة</string>
     <string name="goals_section_completed">الأهداف المكتملة</string>
+    <string name="goals_section_archived">الأهداف المؤرشفة</string>
     <string name="goals_section_other">أهداف أخرى</string>
     <string name="goals_total_count">%d هدف</string>
     <string name="goals_empty_title">لا توجد أهداف بعد</string>

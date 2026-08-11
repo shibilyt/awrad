@@ -4,12 +4,13 @@ import SwiftUI
 struct GoalPortfolioSections: Equatable {
     var today: [Goal]
     var upcoming: [Goal]
+    var past: [Goal]
     var completed: [Goal]
-    var other: [Goal]
+    var archived: [Goal]
 }
 
 enum GoalPortfolioBuilder {
-    /// Mirrors Android's four-way portfolio categorization. A recurring goal
+    /// Mirrors Android's goal portfolio categorization. A recurring goal
     /// completed for the effective day remains in Today and is ordered after
     /// unfinished goals; only a non-nil `completedAt` is permanently completed.
     static func sections(
@@ -44,8 +45,9 @@ enum GoalPortfolioBuilder {
         return GoalPortfolioSections(
             today: unfinishedToday + finishedToday,
             upcoming: upcoming,
+            past: otherActive,
             completed: completed,
-            other: otherActive + inactive
+            archived: inactive
         )
     }
 
@@ -118,7 +120,7 @@ struct GoalsView: View {
             .background(AwradTheme.background)
             .clipShape(UnevenRoundedRectangle(topLeadingRadius: 28, topTrailingRadius: 28))
         }
-        .background(AwradTheme.surface)
+        .background(AwradTheme.background.ignoresSafeArea(edges: .bottom))
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .navigationBar)
@@ -146,7 +148,7 @@ struct GoalsView: View {
     private var goalHistoryPane: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 22) {
-                if sections.completed.isEmpty, sections.other.isEmpty {
+                if sections.past.isEmpty, sections.completed.isEmpty, sections.archived.isEmpty {
                     EmptyStateView(
                         symbol: "archivebox",
                         title: "No goal history yet",
@@ -154,8 +156,9 @@ struct GoalsView: View {
                     )
                     .padding(.top, 24)
                 } else {
+                    GoalSection(title: "Past goals", kind: .other, goals: sections.past, tab: .goals)
                     GoalSection(title: "Completed goals", kind: .completed, goals: sections.completed, tab: .goals)
-                    GoalSection(title: "Other goals", kind: .other, goals: sections.other, tab: .goals)
+                    GoalSection(title: "Archived goals", kind: .other, goals: sections.archived, tab: .goals)
                 }
             }
             .padding(20)

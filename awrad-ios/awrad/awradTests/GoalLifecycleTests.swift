@@ -157,7 +157,7 @@ struct GoalLifecycleTests {
         #expect(GoalPortfolioSectionKind.other.primaryRoute(for: paused) == .goalDetail(goalID: paused.id))
     }
 
-    @Test func portfolioMatchesAndroidFourSectionOrdering() {
+    @Test func portfolioSeparatesPastCompletedAndArchivedGoals() {
         let todayKey = "2026-07-15"
         let unfinished = makeGoal(startDate: todayKey)
         let finishedToday = makeGoal(startDate: todayKey)
@@ -188,8 +188,9 @@ struct GoalLifecycleTests {
 
         #expect(sections.today.map(\.id) == [unfinished.id, finishedToday.id])
         #expect(sections.upcoming.map(\.id) == [upcoming.id])
+        #expect(sections.past.map(\.id) == [later.id])
         #expect(sections.completed.map(\.id) == [completed.id])
-        #expect(Set(sections.other.map(\.id)) == [later.id, paused.id])
+        #expect(sections.archived.map(\.id) == [paused.id])
     }
 
     @Test func scheduleEditArchivesRemovedSlotsAndKeepsHistoryResolvable() async throws {
@@ -401,6 +402,44 @@ struct GoalLifecycleTests {
         #expect(draft.builtSlots?.first?.id == slotID)
         #expect(draft.builtSlots?.first?.startMinute == 17 * 60)
         #expect(draft.validationMessage == nil)
+    }
+
+    @Test func archivedGoalCanBeRestoredWithoutLosingProgress() async throws {
+        let (store, url, dhikrID) = try await makeStore(prefix: "awrad-archive-restore")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let goal = store.createGoal(dhikrID: dhikrID, target: 33)
+        _ = store.addCount(goalID: goal.id, amount: 7)
+        let entriesBeforeArchive = store.countEntries
+
+        #expect(store.archiveGoal(goal.id))
+        let archived = try #require(store.goal(id: goal.id))
+        #expect(archived.isPaused)
+        #expect(store.count(for: archived) == 7)
+        #expect(store.countEntries == entriesBeforeArchive)
+        #expect(!store.archiveGoal(goal.id))
+
+        #expect(store.restoreArchivedGoal(goal.id))
+        let restored = try #require(store.goal(id: goal.id))
+        #expect(restored.isActive)
+        #expect(!restored.isCompleted)
+        #expect(store.count(for: restored) == 7)
+        #expect(store.countEntries == entriesBeforeArchive)
+        #expect(!store.restoreArchivedGoal(goal.id))
+    }
+
+    @Test func goalMenuOffersRestoreForArchivedGoals() throws {
+        let sourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Goals/GoalComponents.swift")
+            .standardizedFileURL
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let menu = source
+            .components(separatedBy: "private var goalMenu: some View").last?
+            .components(separatedBy: "private var accessibilityLabel").first ?? ""
+
+        #expect(menu.contains("Restore Goal"))
+        #expect(source.contains("store.restoreArchivedGoal(goal.id)"))
+        #expect(source.contains("refreshNotificationsAfterGoalMutation"))
     }
 
     private func makeStore(prefix: String) async throws -> (AwradStore, URL, AwradID) {

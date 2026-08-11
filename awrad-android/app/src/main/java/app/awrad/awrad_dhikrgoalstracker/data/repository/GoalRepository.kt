@@ -17,6 +17,10 @@ interface GoalRepository {
     suspend fun createGoal(validatedGoal: ValidatedGoal): AwradId
     suspend fun updateGoal(goal: Goal)
     suspend fun updateGoal(validatedGoalUpdate: ValidatedGoalUpdate): Goal
+    suspend fun updateGoalLifecycle(validatedGoalUpdate: ValidatedGoalUpdate): Goal {
+        updateGoal(validatedGoalUpdate.goal)
+        return getGoalById(validatedGoalUpdate.goal.id) ?: validatedGoalUpdate.goal
+    }
     suspend fun updateGoalSchedule(validatedGoalUpdate: ValidatedGoalUpdate): Goal
     suspend fun updateGoalReminders(validatedGoalUpdate: ValidatedGoalUpdate): Goal
     suspend fun deleteGoal(id: AwradId)

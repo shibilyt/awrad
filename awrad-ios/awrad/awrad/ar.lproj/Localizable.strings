@@ -840,8 +840,11 @@
 "Other" = "أخرى";
 "Upcoming goals" = "الأهداف القادمة";
 "Completed goals" = "الأهداف المكتملة";
+"Past goals" = "الأهداف السابقة";
+"Archived goals" = "الأهداف المؤرشفة";
 "Other goals" = "أهداف أخرى";
 "Archive Goal" = "أرشفة الهدف";
+"Restore Goal" = "استعادة الهدف";
 "No target" = "بدون هدف";
 "%@ total" = "%@ إجماليًا";
 "%@ per period" = "%@ لكل فترة";

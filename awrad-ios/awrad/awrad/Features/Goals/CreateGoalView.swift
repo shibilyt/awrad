@@ -52,6 +52,12 @@ struct CreateGoalView: View {
         .background(AwradTheme.background)
         .navigationTitle(selectedDhikr == nil ? "Choose Dhikr" : "Create goal")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                createGoalBackButton
+            }
+        }
         .safeAreaInset(edge: .bottom) {
             if selectedDhikr != nil {
                 GoalCreateBar(
@@ -93,6 +99,37 @@ struct CreateGoalView: View {
         } message: {
             Text(saveError ?? "")
         }
+    }
+
+    @ViewBuilder
+    private var createGoalBackButton: some View {
+        if #available(iOS 26.0, *) {
+            backButton
+                .buttonStyle(.glass)
+        } else {
+            backButton
+                .buttonStyle(.plain)
+                .background(.ultraThinMaterial, in: Circle())
+                .overlay {
+                    Circle()
+                        .stroke(.white.opacity(0.16), lineWidth: 0.75)
+                }
+                .shadow(color: .black.opacity(0.12), radius: 8, y: 4)
+        }
+    }
+
+    private var backButton: some View {
+        Button {
+            dismiss()
+        } label: {
+            Image(systemName: "chevron.backward")
+                .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                .foregroundStyle(AwradTheme.sage)
+                .frame(width: 38, height: 38)
+                .contentShape(Circle())
+        }
+        .accessibilityLabel("Back")
+        .accessibilityIdentifier("goal-create-back-button")
     }
 
     /// Step 1 — pick the dhikr to create a goal for (shown when none chosen yet).

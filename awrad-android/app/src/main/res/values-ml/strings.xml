@@ -19,6 +19,19 @@
     <string name="action_save">സേവ് ചെയ്യുക</string>
     <string name="action_delete">ലക്ഷ്യം ഇല്ലാതാക്കുക</string>
     <string name="action_archive">ലക്ഷ്യം ആർക്കൈവ് ചെയ്യുക</string>
+    <string name="action_restore">ലക്ഷ്യം പുനഃസ്ഥാപിക്കുക</string>
+    <string name="goal_sheet_close">ലക്ഷ്യ വിശദാംശങ്ങൾ അടയ്ക്കുക</string>
+    <string name="goal_sheet_statement">%1$s · %2$s</string>
+    <string name="goal_sheet_quick_stats">ദ്രുത സ്ഥിതിവിവരങ്ങൾ</string>
+    <string name="goal_sheet_today">ഇന്ന്</string>
+    <string name="goal_sheet_current_streak">നിലവിലെ തുടർച്ച</string>
+    <string name="goal_sheet_all_time">ആകെ</string>
+    <string name="goal_sheet_delete_title">ഈ ലക്ഷ്യം ഇല്ലാതാക്കണോ?</string>
+    <string name="goal_sheet_delete_message">ഈ ലക്ഷ്യവും അതിന്റെ എണ്ണൽ ചരിത്രവും ശാശ്വതമായി ഇല്ലാതാക്കും. ഇത് പഴയപടിയാക്കാനാകില്ല.</string>
+    <plurals name="goal_sheet_days">
+        <item quantity="one">%d ദിവസം</item>
+        <item quantity="other">%d ദിവസം</item>
+    </plurals>
     <string name="action_reset">പുനഃസജ്ജമാക്കുക</string>
     <string name="action_add">ചേർക്കുക</string>
     <string name="action_added">ചേർത്തു</string>
@@ -82,6 +95,7 @@
     <string name="goals_section_upcoming">വരാനിരിക്കുന്ന ലക്ഷ്യങ്ങൾ</string>
     <string name="goals_section_past">കഴിഞ്ഞ ലക്ഷ്യങ്ങൾ</string>
     <string name="goals_section_completed">പൂർത്തിയാക്കിയ ലക്ഷ്യങ്ങൾ</string>
+    <string name="goals_section_archived">ആർക്കൈവ് ചെയ്ത ലക്ഷ്യങ്ങൾ</string>
     <string name="goals_section_other">മറ്റ് ലക്ഷ്യങ്ങൾ</string>
     <string name="goals_total_count">%d ലക്ഷ്യങ്ങൾ</string>
     <string name="goals_empty_title">ഇതുവരെ ലക്ഷ്യങ്ങളൊന്നുമില്ല</string>

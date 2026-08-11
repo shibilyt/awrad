@@ -19,6 +19,19 @@
     <string name="action_save">Save</string>
     <string name="action_delete">Delete Goal</string>
     <string name="action_archive">Archive Goal</string>
+    <string name="action_restore">Restore Goal</string>
+    <string name="goal_sheet_close">Close goal details</string>
+    <string name="goal_sheet_statement">%1$s · %2$s</string>
+    <string name="goal_sheet_quick_stats">Quick stats</string>
+    <string name="goal_sheet_today">Today</string>
+    <string name="goal_sheet_current_streak">Current streak</string>
+    <string name="goal_sheet_all_time">All time</string>
+    <string name="goal_sheet_delete_title">Delete this goal?</string>
+    <string name="goal_sheet_delete_message">This goal and its count history will be permanently deleted. This cannot be undone.</string>
+    <plurals name="goal_sheet_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
     <string name="action_reset">Reset</string>
     <string name="action_add">Add</string>
     <string name="action_added">Added</string>
@@ -108,6 +121,7 @@
     <string name="goals_section_upcoming">Upcoming goals</string>
     <string name="goals_section_past">Past goals</string>
     <string name="goals_section_completed">Completed goals</string>
+    <string name="goals_section_archived">Archived goals</string>
     <string name="goals_section_other">Other goals</string>
     <string name="goals_total_count">%d goals</string>
     <string name="goals_empty_title">No goals yet</string>

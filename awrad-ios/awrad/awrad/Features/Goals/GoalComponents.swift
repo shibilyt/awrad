@@ -334,8 +334,12 @@ struct GoalSummaryRow: View {
 
     private var goalMenu: some View {
         Menu {
-            Button("Archive Goal", systemImage: "archivebox", action: archiveGoal)
-                .disabled(!goal.isActive || goal.isCompleted)
+            if goal.isPaused {
+                Button("Restore Goal", systemImage: "arrow.uturn.backward", action: restoreGoal)
+            } else {
+                Button("Archive Goal", systemImage: "archivebox", action: archiveGoal)
+                    .disabled(!goal.isActive || goal.isCompleted)
+            }
 
             Button("Delete", systemImage: "trash", role: .destructive) {
                 isShowingDeleteConfirmation = true
@@ -377,7 +381,14 @@ struct GoalSummaryRow: View {
 
     private func archiveGoal() {
         Task {
-            guard store.pauseGoal(goal.id) else { return }
+            guard store.archiveGoal(goal.id) else { return }
+            _ = await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
+        }
+    }
+
+    private func restoreGoal() {
+        Task {
+            guard store.restoreArchivedGoal(goal.id) else { return }
             _ = await services.refreshNotificationsAfterGoalMutation(goalID: goal.id, store: store)
         }
     }
