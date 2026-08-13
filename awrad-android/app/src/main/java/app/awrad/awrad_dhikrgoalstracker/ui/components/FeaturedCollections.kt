@@ -119,6 +119,7 @@ fun FeaturedCollectionsSection(
     modifier: Modifier = Modifier,
     onViewAll: (() -> Unit)? = null,
     customCount: Int = 0,
+    isLoading: Boolean = false,
     @StringRes titleRes: Int = R.string.featured_collections,
 ) {
     val collections = rememberFeaturedCollections(categoryCounts, customCount)
@@ -158,11 +159,22 @@ fun FeaturedCollectionsSection(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(horizontal = 20.dp),
         ) {
-            items(collections, key = { it.collection }) { collection ->
-                FeaturedCollectionCard(
-                    collection = collection,
-                    onClick = { onCollectionClick(collection.collection) },
-                )
+            if (isLoading) {
+                items(3) {
+                    RitualSkeleton(
+                        modifier = Modifier
+                            .width(154.dp)
+                            .height(154.dp),
+                        shape = RoundedCornerShape(22.dp),
+                    )
+                }
+            } else {
+                items(collections, key = { it.collection }) { collection ->
+                    FeaturedCollectionCard(
+                        collection = collection,
+                        onClick = { onCollectionClick(collection.collection) },
+                    )
+                }
             }
         }
     }

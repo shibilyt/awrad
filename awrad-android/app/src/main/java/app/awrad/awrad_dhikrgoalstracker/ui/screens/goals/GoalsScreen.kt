@@ -84,6 +84,7 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.DayProgressRing
 import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakChip
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualEmptyState
+import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualSkeleton
 import app.awrad.awrad_dhikrgoalstracker.ui.components.SectionHeader
 import app.awrad.awrad_dhikrgoalstracker.ui.components.StreakSection
 import app.awrad.awrad_dhikrgoalstracker.ui.components.compactGoalCount
@@ -284,49 +285,63 @@ private fun ActiveGoalsPane(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 12.dp, bottom = 112.dp),
     ) {
-        if (uiState.todayGoals.isNotEmpty()) {
-            item {
-                SectionHeader(title = stringResource(R.string.goals_section_today))
+        when (activeGoalsPaneContent(uiState)) {
+            GoalsPaneContentState.Loading -> {
+                items(3) { GoalListSkeletonItem() }
             }
-            items(uiState.todayGoals) { item ->
-                GoalListItem(
-                    item = item,
-                    onClick = { onNavigateToCounting(item.goal.id) },
-                    onShowDetails = { onShowDetails(item) },
+            GoalsPaneContentState.Content -> {
+                activeGoalsContent(
+                    uiState = uiState,
+                    onNavigateToCounting = onNavigateToCounting,
+                    onShowDetails = onShowDetails,
                 )
             }
-        }
-
-        if (uiState.upcomingGoals.isNotEmpty()) {
-            item {
-                if (uiState.todayGoals.isNotEmpty()) Spacer(modifier = Modifier.height(16.dp))
-                SectionHeader(title = stringResource(R.string.goals_section_upcoming))
-            }
-            items(uiState.upcomingGoals) { item ->
-                GoalListItem(
-                    item = item,
-                    onClick = { onNavigateToCounting(item.goal.id) },
-                    onShowDetails = { onShowDetails(item) },
-                )
-            }
-        }
-
-        if (
-            uiState.todayGoals.isEmpty() &&
-            uiState.upcomingGoals.isEmpty() &&
-            !uiState.isLoading
-        ) {
-            item {
-                RitualEmptyState(
-                    title = stringResource(R.string.goals_active_empty_title),
-                    body = stringResource(R.string.goals_active_empty_hint),
-                    icon = Icons.Filled.Add,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 28.dp),
-                )
+            GoalsPaneContentState.Empty -> {
+                item {
+                    RitualEmptyState(
+                        title = stringResource(R.string.goals_active_empty_title),
+                        body = stringResource(R.string.goals_active_empty_hint),
+                        icon = Icons.Filled.Add,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 28.dp),
+                    )
+                }
             }
         }
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
+    }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.activeGoalsContent(
+    uiState: GoalsUiState,
+    onNavigateToCounting: (AwradId) -> Unit,
+    onShowDetails: (GoalDisplayItem) -> Unit,
+) {
+    if (uiState.todayGoals.isNotEmpty()) {
+        item {
+            SectionHeader(title = stringResource(R.string.goals_section_today))
+        }
+        items(uiState.todayGoals) { item ->
+            GoalListItem(
+                item = item,
+                onClick = { onNavigateToCounting(item.goal.id) },
+                onShowDetails = { onShowDetails(item) },
+            )
+        }
+    }
+
+    if (uiState.upcomingGoals.isNotEmpty()) {
+        item {
+            if (uiState.todayGoals.isNotEmpty()) Spacer(modifier = Modifier.height(16.dp))
+            SectionHeader(title = stringResource(R.string.goals_section_upcoming))
+        }
+        items(uiState.upcomingGoals) { item ->
+            GoalListItem(
+                item = item,
+                onClick = { onNavigateToCounting(item.goal.id) },
+                onShowDetails = { onShowDetails(item) },
+            )
+        }
     }
 }
 
@@ -340,62 +355,110 @@ private fun HistoryGoalsPane(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(top = 12.dp, bottom = 112.dp),
     ) {
-        if (uiState.pastGoals.isNotEmpty()) {
-            item {
-                SectionHeader(title = stringResource(R.string.goals_section_past))
+        when (historyGoalsPaneContent(uiState)) {
+            GoalsPaneContentState.Loading -> {
+                items(3) { GoalListSkeletonItem() }
             }
-            items(uiState.pastGoals) { item ->
-                GoalListItem(
-                    item = item,
-                    onClick = { onNavigateToGoalDetail(item.goal.id) },
-                    onShowDetails = { onShowDetails(item) },
-                )
-            }
-        }
-
-        if (uiState.completedGoals.isNotEmpty()) {
-            item {
-                SectionHeader(title = stringResource(R.string.goals_section_completed))
-            }
-            items(uiState.completedGoals) { item ->
-                GoalListItem(
-                    item = item,
-                    onClick = { onNavigateToGoalDetail(item.goal.id) },
-                    onShowDetails = { onShowDetails(item) },
-                )
-            }
-        }
-
-        if (uiState.archivedGoals.isNotEmpty()) {
-            item {
-                SectionHeader(title = stringResource(R.string.goals_section_archived))
-            }
-            items(uiState.archivedGoals) { item ->
-                GoalListItem(
-                    item = item,
-                    onClick = { onNavigateToGoalDetail(item.goal.id) },
-                    onShowDetails = { onShowDetails(item) },
-                )
-            }
-        }
-
-        if (
-            !uiState.isLoading &&
-            uiState.pastGoals.isEmpty() &&
-            uiState.completedGoals.isEmpty() &&
-            uiState.archivedGoals.isEmpty()
-        ) {
-            item {
-                RitualEmptyState(
-                    title = stringResource(R.string.goals_history_empty_title),
-                    body = stringResource(R.string.goals_history_empty_hint),
-                    icon = Icons.Outlined.Archive,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 28.dp),
-                )
+            GoalsPaneContentState.Content -> historyGoalsContent(
+                uiState = uiState,
+                onNavigateToGoalDetail = onNavigateToGoalDetail,
+                onShowDetails = onShowDetails,
+            )
+            GoalsPaneContentState.Empty -> {
+                item {
+                    RitualEmptyState(
+                        title = stringResource(R.string.goals_history_empty_title),
+                        body = stringResource(R.string.goals_history_empty_hint),
+                        icon = Icons.Outlined.Archive,
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 28.dp),
+                    )
+                }
             }
         }
 
         item { Spacer(modifier = Modifier.height(16.dp)) }
+    }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.historyGoalsContent(
+    uiState: GoalsUiState,
+    onNavigateToGoalDetail: (AwradId) -> Unit,
+    onShowDetails: (GoalDisplayItem) -> Unit,
+) {
+    if (uiState.pastGoals.isNotEmpty()) {
+        item {
+            SectionHeader(title = stringResource(R.string.goals_section_past))
+        }
+        items(uiState.pastGoals) { item ->
+            GoalListItem(
+                item = item,
+                onClick = { onNavigateToGoalDetail(item.goal.id) },
+                onShowDetails = { onShowDetails(item) },
+            )
+        }
+    }
+
+    if (uiState.completedGoals.isNotEmpty()) {
+        item {
+            SectionHeader(title = stringResource(R.string.goals_section_completed))
+        }
+        items(uiState.completedGoals) { item ->
+            GoalListItem(
+                item = item,
+                onClick = { onNavigateToGoalDetail(item.goal.id) },
+                onShowDetails = { onShowDetails(item) },
+            )
+        }
+    }
+
+    if (uiState.archivedGoals.isNotEmpty()) {
+        item {
+            SectionHeader(title = stringResource(R.string.goals_section_archived))
+        }
+        items(uiState.archivedGoals) { item ->
+            GoalListItem(
+                item = item,
+                onClick = { onNavigateToGoalDetail(item.goal.id) },
+                onShowDetails = { onShowDetails(item) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun GoalListSkeletonItem() {
+    RitualCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 4.dp),
+        shape = RoundedCornerShape(22.dp),
+        containerColor = if (isAwradDarkTheme()) {
+            MaterialTheme.colorScheme.surfaceContainer
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RitualSkeleton(modifier = Modifier.size(48.dp), shape = CircleShape)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                RitualSkeleton(modifier = Modifier.width(160.dp).height(19.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    RitualSkeleton(modifier = Modifier.width(74.dp).height(22.dp), shape = RoundedCornerShape(20.dp))
+                    RitualSkeleton(modifier = Modifier.width(62.dp).height(22.dp), shape = RoundedCornerShape(20.dp))
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            RitualSkeleton(modifier = Modifier.size(28.dp), shape = CircleShape)
+        }
     }
 }
 

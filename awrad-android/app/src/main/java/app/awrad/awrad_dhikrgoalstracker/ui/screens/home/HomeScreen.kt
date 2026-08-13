@@ -75,6 +75,7 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradTopEdgeScrim
 import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakChip
 import app.awrad.awrad_dhikrgoalstracker.ui.components.FeaturedCollectionsSection
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualPrimaryButton
+import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualSkeleton
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.library.LibraryFeaturedCollection
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.wird.WirdCatalogCard
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
@@ -107,6 +108,7 @@ fun HomeScreen(
         prayerState = prayerCardState,
         isDarkTheme = isAwradDarkTheme(),
     )
+    val goalContentState = homeGoalContentState(uiState)
     val primaryGoal = uiState.suggestedGoal ?: uiState.activeGoals.firstOrNull()
     val density = LocalDensity.current
     val statusBarTopPadding = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
@@ -152,27 +154,36 @@ fun HomeScreen(
                 HomeHeader(
                     primaryDate = uiState.primaryDate,
                     secondaryDate = uiState.secondaryDate,
+                    isLoading = uiState.isLoading,
                     visuals = visuals,
                     onNavigateToSettings = onNavigateToSettings,
                 )
             }
 
             item {
-                if (primaryGoal != null) {
-                    ContinueDhikrCard(
-                        goal = primaryGoal,
-                        visuals = visuals,
-                        onClick = { onNavigateToGoal(primaryGoal.goal.id) },
-                    )
-                } else {
-                    EmptyHomeStartCard(
-                        visuals = visuals,
-                        onClick = onNavigateToCreateGoal,
-                    )
+                when (goalContentState) {
+                    HomeGoalContentState.Loading -> HomeGoalLoadingCard(visuals)
+                    HomeGoalContentState.Content -> {
+                        primaryGoal?.let { goal ->
+                            ContinueDhikrCard(
+                                goal = goal,
+                                visuals = visuals,
+                                onClick = { onNavigateToGoal(goal.goal.id) },
+                            )
+                        } ?: HomeGoalLoadingCard(visuals)
+                    }
+                    HomeGoalContentState.Empty -> {
+                        EmptyHomeStartCard(
+                            visuals = visuals,
+                            onClick = onNavigateToCreateGoal,
+                        )
+                    }
                 }
             }
 
-            if (prayerCardState.isVisible) {
+            if (prayerCardState.isLoading) {
+                item { HomeDataLoadingCard() }
+            } else if (prayerCardState.isVisible) {
                 item {
                     PrayerRhythmCard(
                         state = prayerCardState,
@@ -189,15 +200,21 @@ fun HomeScreen(
                 }
             }
 
-            if (uiState.activeGoals.isNotEmpty()) {
-                item {
-                    TodayGoalsSection(
-                        goals = uiState.activeGoals.take(3),
-                        visuals = visuals,
-                        onGoalClick = { onNavigateToGoal(it.goal.id) },
-                        onViewAll = onNavigateToGoals,
-                    )
+            when (goalContentState) {
+                HomeGoalContentState.Loading -> item { TodayGoalsLoadingSection(visuals) }
+                HomeGoalContentState.Content -> {
+                    if (uiState.activeGoals.isNotEmpty()) {
+                        item {
+                            TodayGoalsSection(
+                                goals = uiState.activeGoals.take(3),
+                                visuals = visuals,
+                                onGoalClick = { onNavigateToGoal(it.goal.id) },
+                                onViewAll = onNavigateToGoals,
+                            )
+                        }
+                    }
                 }
+                HomeGoalContentState.Empty -> Unit
             }
 
             item {
@@ -205,17 +222,21 @@ fun HomeScreen(
                     categoryCounts = uiState.categoryDhikrCounts,
                     onCollectionClick = onNavigateToCollection,
                     onViewAll = onNavigateToLibrary,
+                    isLoading = uiState.isLoading,
                     titleRes = R.string.featured_dhikr_collections,
                 )
             }
 
-            if (wirdHome.featured.isNotEmpty()) {
-                item {
-                    WirdsSection(
-                        state = wirdHome,
-                        onOpenReader = onNavigateToWirdReader,
-                        onSeeAll = onNavigateToWirdList,
-                    )
+            when {
+                wirdHome.isLoading -> item { WirdsLoadingSection() }
+                wirdHome.featured.isNotEmpty() -> {
+                    item {
+                        WirdsSection(
+                            state = wirdHome,
+                            onOpenReader = onNavigateToWirdReader,
+                            onSeeAll = onNavigateToWirdList,
+                        )
+                    }
                 }
             }
         }
@@ -306,6 +327,7 @@ private fun rememberHomeNow() = produceState(initialValue = Instant.now()) {
 private fun HomeHeader(
     primaryDate: String,
     secondaryDate: String,
+    isLoading: Boolean,
     visuals: HomeVisuals,
     onNavigateToSettings: () -> Unit,
 ) {
@@ -325,23 +347,37 @@ private fun HomeHeader(
                 maxLines = 1,
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = primaryDate,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = visuals.primaryTextColor.copy(alpha = if (visuals.isDarkTheme) 0.84f else 0.92f),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (secondaryDate.isNotBlank()) {
+            if (isLoading) {
+                RitualSkeleton(
+                    modifier = Modifier
+                        .width(196.dp)
+                        .height(20.dp),
+                )
+                Spacer(modifier = Modifier.height(5.dp))
+                RitualSkeleton(
+                    modifier = Modifier
+                        .width(138.dp)
+                        .height(16.dp),
+                )
+            } else {
                 Text(
-                    text = secondaryDate,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = visuals.secondaryTextColor,
+                    text = primaryDate,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = visuals.primaryTextColor.copy(alpha = if (visuals.isDarkTheme) 0.84f else 0.92f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 3.dp),
                 )
+                if (secondaryDate.isNotBlank()) {
+                    Text(
+                        text = secondaryDate,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = visuals.secondaryTextColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 3.dp),
+                    )
+                }
             }
         }
         Surface(
@@ -385,6 +421,93 @@ private fun HomeCardSurface(
         shadowElevation = 0.dp,
         content = content,
     )
+}
+
+@Composable
+private fun HomeGoalLoadingCard(visuals: HomeVisuals) {
+    HomeCardSurface(
+        visuals = visuals,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = visuals.elevatedCardColor,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RitualSkeleton(modifier = Modifier.size(52.dp), shape = CircleShape)
+            Spacer(modifier = Modifier.width(14.dp))
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                RitualSkeleton(modifier = Modifier.width(168.dp).height(20.dp))
+                RitualSkeleton(modifier = Modifier.width(112.dp).height(14.dp))
+            }
+            Spacer(modifier = Modifier.width(12.dp))
+            RitualSkeleton(modifier = Modifier.size(36.dp), shape = CircleShape)
+        }
+    }
+}
+
+@Composable
+private fun HomeDataLoadingCard() {
+    RitualSkeleton(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(108.dp)
+            .padding(horizontal = 20.dp),
+        shape = RoundedCornerShape(24.dp),
+    )
+}
+
+@Composable
+private fun TodayGoalsLoadingSection(visuals: HomeVisuals) {
+    HomeCardSurface(
+        visuals = visuals,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+        shape = RoundedCornerShape(24.dp),
+        color = visuals.elevatedCardColor,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 18.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                RitualSkeleton(modifier = Modifier.size(40.dp), shape = CircleShape)
+                Spacer(modifier = Modifier.width(12.dp))
+                RitualSkeleton(modifier = Modifier.width(164.dp).height(22.dp))
+            }
+            repeat(2) { index ->
+                if (index > 0) {
+                    RitualSkeleton(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp),
+                        shape = RoundedCornerShape(1.dp),
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        RitualSkeleton(modifier = Modifier.width(132.dp).height(17.dp))
+                        RitualSkeleton(modifier = Modifier.width(82.dp).height(13.dp))
+                    }
+                    RitualSkeleton(modifier = Modifier.size(46.dp), shape = CircleShape)
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -841,6 +964,36 @@ private fun TodayGoalsSection(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WirdsLoadingSection() {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        RitualSkeleton(
+            modifier = Modifier
+                .padding(horizontal = 20.dp)
+                .width(180.dp)
+                .height(24.dp),
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            repeat(2) {
+                RitualSkeleton(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(154.dp),
+                    shape = RoundedCornerShape(22.dp),
+                )
             }
         }
     }

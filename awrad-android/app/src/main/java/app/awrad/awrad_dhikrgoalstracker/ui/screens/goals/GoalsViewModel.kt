@@ -34,6 +34,25 @@ data class GoalsUiState(
     val isLoading: Boolean = true,
 )
 
+internal enum class GoalsPaneContentState {
+    Loading,
+    Empty,
+    Content,
+}
+
+internal fun activeGoalsPaneContent(state: GoalsUiState): GoalsPaneContentState = when {
+    state.isLoading -> GoalsPaneContentState.Loading
+    state.todayGoals.isNotEmpty() || state.upcomingGoals.isNotEmpty() -> GoalsPaneContentState.Content
+    else -> GoalsPaneContentState.Empty
+}
+
+internal fun historyGoalsPaneContent(state: GoalsUiState): GoalsPaneContentState = when {
+    state.isLoading -> GoalsPaneContentState.Loading
+    state.pastGoals.isNotEmpty() || state.completedGoals.isNotEmpty() || state.archivedGoals.isNotEmpty() ->
+        GoalsPaneContentState.Content
+    else -> GoalsPaneContentState.Empty
+}
+
 data class GoalDisplayItem(
     val goal: Goal,
     val dhikrName: String = "",

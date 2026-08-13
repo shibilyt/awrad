@@ -2,11 +2,16 @@ package app.awrad.awrad_dhikrgoalstracker.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -130,6 +135,42 @@ fun RitualCard(
         shadowElevation = 0.dp,
         border = if (showBorder || pressed) BorderStroke(1.dp, borderColor) else null,
         content = content,
+    )
+}
+
+/**
+ * A calm, low-contrast loading placeholder for local-first content.
+ *
+ * The placeholder keeps the surrounding layout stable while Room-backed state is arriving, so a
+ * loading screen never looks like an empty account.
+ */
+@Composable
+fun RitualSkeleton(
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(12.dp),
+) {
+    val transition = rememberInfiniteTransition(label = "ritualSkeleton")
+    val shimmerX by transition.animateFloat(
+        initialValue = -360f,
+        targetValue = 720f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1_100, easing = LinearEasing),
+        ),
+        label = "ritualSkeletonShimmer",
+    )
+    val base = MaterialTheme.colorScheme.surfaceContainerHigh
+    val highlight = MaterialTheme.colorScheme.surfaceContainerHighest
+
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(base, highlight, base),
+                    start = androidx.compose.ui.geometry.Offset(shimmerX, 0f),
+                    end = androidx.compose.ui.geometry.Offset(shimmerX + 360f, 0f),
+                ),
+            ),
     )
 }
 

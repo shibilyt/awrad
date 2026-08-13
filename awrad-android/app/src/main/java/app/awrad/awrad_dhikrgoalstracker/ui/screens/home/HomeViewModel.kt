@@ -55,8 +55,21 @@ data class HomeUiState(
     val isLoading: Boolean = true,
 )
 
+internal enum class HomeGoalContentState {
+    Loading,
+    Empty,
+    Content,
+}
+
+internal fun homeGoalContentState(state: HomeUiState): HomeGoalContentState = when {
+    state.isLoading -> HomeGoalContentState.Loading
+    state.suggestedGoal != null || state.activeGoals.isNotEmpty() -> HomeGoalContentState.Content
+    else -> HomeGoalContentState.Empty
+}
+
 data class PrayerCardState(
     val isVisible: Boolean = false,
+    val isLoading: Boolean = true,
     val nextPrayer: NextPrayer? = null,
     val cityName: String = "",
     val prayers: List<PrayerTimePoint> = emptyList(),
@@ -116,6 +129,7 @@ data class WirdHomeCard(
 data class WirdHomeUi(
     val today: List<WirdHomeCard> = emptyList(),
     val featured: List<WirdHomeCard> = emptyList(),
+    val isLoading: Boolean = true,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -246,7 +260,7 @@ class HomeViewModel @Inject constructor(
         userPreferences.calculationMethod,
         userPreferences.madhab,
     ) { lat, lng, cityName, methodStr, madhabStr ->
-        if (lat == null || lng == null) return@combine PrayerCardState()
+        if (lat == null || lng == null) return@combine PrayerCardState(isLoading = false)
         val method = try {
             CalculationMethodPref.valueOf(methodStr)
         } catch (e: IllegalArgumentException) {
@@ -264,6 +278,7 @@ class HomeViewModel @Inject constructor(
         val nextIndex = prayers.indexOfFirst { (name, _) -> name == next?.name }
         PrayerCardState(
             isVisible = true,
+            isLoading = false,
             nextPrayer = next,
             cityName = cityName,
             fajrMillis = prayerTimes.fajr?.time,
@@ -332,6 +347,7 @@ class HomeViewModel @Inject constructor(
                     .filter { it.isActiveToday }
                     .sortedBy { it.progress.progress >= 1f },
                 featured = featured,
+                isLoading = false,
             )
         }
     }.stateIn(
