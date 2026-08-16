@@ -66,6 +66,10 @@ data class GoalDisplayItem(
     val streakInfo: StreakInfo? = null,
     /** Effective "today" (respects Maghrib day-reset), used by the streak card. */
     val effectiveToday: LocalDate = LocalDate.now(),
+    /** Per-slot counts for today, powering the sessions section in the details sheet. */
+    val slotCountsToday: Map<AwradId, Long> = emptyMap(),
+    /** Per-slot counts across all time, powering archived slots in the details sheet. */
+    val slotCountsAllTime: Map<AwradId, Long> = emptyMap(),
 )
 
 internal data class ActiveGoalSections(
@@ -140,7 +144,8 @@ class GoalsViewModel @Inject constructor(
             goalRepository.getCompletedGoals(),
             dhikrRepository.getAllDhikrs(),
             goalRepository.getDailyCountsByGoal(),
-        ) { active, completedOrInactive, dhikrs, dailyCountsByGoal ->
+            goalRepository.getDailySlotCountsByGoal(),
+        ) { active, completedOrInactive, dhikrs, dailyCountsByGoal, dailySlotCountsByGoal ->
             val dhikrMap = dhikrs.associateBy { it.id }
             val effectiveDate = today.toLocalDateOr(LocalDate.now())
             fun displayItem(goal: Goal): GoalDisplayItem {
@@ -154,6 +159,12 @@ class GoalsViewModel @Inject constructor(
                     minimumStreakCount = goal.minimumStreakCount,
                     goal = goal,
                 )
+                val dailySlotCounts = dailySlotCountsByGoal[goal.id].orEmpty()
+                val slotCountsToday = dailySlotCounts[effectiveDate].orEmpty()
+                val slotCountsAllTime = dailySlotCounts.values
+                    .flatMap { it.entries }
+                    .groupingBy { it.key }
+                    .fold(0L) { total, entry -> total + entry.value }
                 return GoalDisplayItem(
                     goal = goal,
                     dhikrName = dhikr?.title.orEmpty().ifBlank { dhikr?.transliteration.orEmpty() },
@@ -164,6 +175,8 @@ class GoalsViewModel @Inject constructor(
                     streakDays = streakInfo.currentStreak,
                     streakInfo = streakInfo,
                     effectiveToday = effectiveDate,
+                    slotCountsToday = slotCountsToday,
+                    slotCountsAllTime = slotCountsAllTime,
                 )
             }
 

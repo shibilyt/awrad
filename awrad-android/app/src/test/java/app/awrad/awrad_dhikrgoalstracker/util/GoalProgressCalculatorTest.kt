@@ -182,6 +182,114 @@ class GoalProgressCalculatorTest {
         assertEquals(LocalDate.parse("2026-07-15"), window?.endInclusive)
     }
 
+    @Test
+    fun `streak counts consecutive days that meet the daily target`() {
+        val today = LocalDate.parse("2026-05-27")
+        val dailyCounts = mapOf(
+            today to 100L,
+            today.minusDays(1) to 100L,
+            today.minusDays(2) to 120L,
+            today.minusDays(3) to 50L,
+        )
+
+        val streak = GoalProgressCalculator.calculateStreakWithCounts(
+            dailyCounts = dailyCounts,
+            today = today,
+            dailyTarget = 100,
+            goal = goal(),
+        )
+
+        assertEquals(3, streak.currentStreak)
+    }
+
+    @Test
+    fun `streak skips unscheduled days but breaks on a scheduled miss`() {
+        val today = LocalDate.parse("2026-05-27") // Wednesday
+        val dailyCounts = mapOf(
+            today to 100L, // Wed
+            today.minusDays(1) to 0L, // Tue, unscheduled
+            today.minusDays(2) to 100L, // Mon
+        )
+        val weekly = goal(
+            recurrence = GoalRecurrence(
+                goalId = testId(1),
+                frequency = RecurrenceFrequency.WEEKLY,
+                weekdays = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY),
+            ),
+        )
+
+        val streak = GoalProgressCalculator.calculateStreakWithCounts(
+            dailyCounts = dailyCounts,
+            today = today,
+            dailyTarget = 100,
+            goal = weekly,
+        )
+
+        // Wed + Mon count; the Friday before had no entry, so the streak stops there.
+        assertEquals(2, streak.currentStreak)
+    }
+
+    @Test
+    fun `streak uses minimum streak count when set below the daily target`() {
+        val today = LocalDate.parse("2026-05-27")
+        val dailyCounts = mapOf(
+            today to 15L,
+            today.minusDays(1) to 20L,
+            today.minusDays(2) to 5L,
+        )
+
+        val streak = GoalProgressCalculator.calculateStreakWithCounts(
+            dailyCounts = dailyCounts,
+            today = today,
+            dailyTarget = 100,
+            minimumStreakCount = 10,
+            goal = goal(),
+        )
+
+        assertEquals(2, streak.currentStreak)
+    }
+
+    @Test
+    fun `recent activity spans the strip with today last and only today flagged`() {
+        val today = LocalDate.parse("2026-05-27")
+
+        val days = GoalProgressCalculator.recentActivity(
+            goal = goal(),
+            dailyCounts = emptyMap(),
+            today = today,
+        )
+
+        assertEquals(GoalProgressCalculator.STREAK_STRIP_DAYS, days.size)
+        assertEquals(today.minusDays(GoalProgressCalculator.STREAK_STRIP_DAYS - 1L), days.first().date)
+        assertEquals(today, days.last().date)
+        assertTrue(days.last().isToday)
+        assertEquals(1, days.count { it.isToday })
+        assertEquals(StreakDayStatus.INACTIVE, days.last().status)
+    }
+
+    @Test
+    fun `recent activity marks complete partial and inactive days by the daily target`() {
+        val today = LocalDate.parse("2026-05-27")
+        val dailyCounts = mapOf(
+            today to 100L,
+            today.minusDays(1) to 30L,
+        )
+
+        val days = GoalProgressCalculator.recentActivity(
+            goal = goal(),
+            dailyCounts = dailyCounts,
+            today = today,
+            days = 3,
+        )
+
+        assertEquals(StreakDayStatus.INACTIVE, days[0].status)
+        assertEquals(0f, days[0].progress, 0.0001f)
+        assertEquals(StreakDayStatus.PARTIAL, days[1].status)
+        assertEquals(0.3f, days[1].progress, 0.0001f)
+        assertEquals(StreakDayStatus.COMPLETE, days[2].status)
+        assertEquals(1f, days[2].progress, 0.0001f)
+    }
+
     private fun goal(
         targetPolicy: TargetPolicy = TargetPolicy.PER_DUE_DATE,
         target: Int? = 100,

@@ -28,7 +28,9 @@ import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncActivityTracker
 import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncFeedbackBus
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.AllowCountingPastTargetResult
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.AllowCountingPastTargetUseCase
+import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.GoalLifecycleUpdateFactory
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressUseCase
+import app.awrad.awrad_dhikrgoalstracker.notification.ReminderScheduler
 import app.awrad.awrad_dhikrgoalstracker.service.AudioDownloadManager
 import app.awrad.awrad_dhikrgoalstracker.service.CountingState
 import app.awrad.awrad_dhikrgoalstracker.service.DhikrCountingService
@@ -39,6 +41,7 @@ import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
 import app.awrad.awrad_dhikrgoalstracker.util.SlotTimeStatus
 import app.awrad.awrad_dhikrgoalstracker.util.SlotTimingInfo
 import app.awrad.awrad_dhikrgoalstracker.util.SlotTimingResolver
+import app.awrad.awrad_dhikrgoalstracker.util.StreakInfo
 import app.awrad.awrad_dhikrgoalstracker.util.toLocalDateOr
 import com.batoulapps.adhan.PrayerTimes
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -117,6 +120,10 @@ data class CountingUiState(
     val goal: Goal? = null,
     val dailyTarget: Int = 0,
     val streakDays: Int = 0,
+    /** Full streak info (active dates + daily counts) powering the details sheet's streak card. */
+    val streakInfo: StreakInfo? = null,
+    /** Per-slot counts across all time, powering archived slots in the details sheet. */
+    val slotCountsAllTime: Map<AwradId, Long> = emptyMap(),
     // Audio estimates (pre-loaded, available before playback starts)
     val audioDurationMs: Long = 0,
     val audioCountPerPlay: Int = 1,
@@ -171,6 +178,7 @@ class CountingViewModel @Inject constructor(
     private val allowCountingPastTargetUseCase: AllowCountingPastTargetUseCase,
     private val progressSyncActivityTracker: ProgressSyncActivityTracker,
     private val progressSyncFeedbackBus: ProgressSyncFeedbackBus,
+    private val scheduler: ReminderScheduler,
 ) : ViewModel() {
 
     fun setCountingScreenActive(active: Boolean) {
@@ -253,13 +261,16 @@ class CountingViewModel @Inject constructor(
     private var recommendedSlotKey: RecommendedSlotKey? = null
     private var recommendedSlotValue: AwradId? = null
     private var streakKey: StreakKey? = null
-    private var streakValue: Int = 0
+    private var streakValue: StreakInfo? = null
 
     private val _historyItems = MutableStateFlow<List<CountEntry>>(emptyList())
     val historyItems: StateFlow<List<CountEntry>> = _historyItems.asStateFlow()
 
     private val _dailyCounts = MutableStateFlow<Map<LocalDate, Long>>(emptyMap())
     val dailyCounts: StateFlow<Map<LocalDate, Long>> = _dailyCounts.asStateFlow()
+
+    private val _dailySlotCounts = MutableStateFlow<Map<LocalDate, Map<AwradId, Long>>>(emptyMap())
+    val dailySlotCounts: StateFlow<Map<LocalDate, Map<AwradId, Long>>> = _dailySlotCounts.asStateFlow()
 
     private val _countingAvailabilityPrompt =
         MutableStateFlow<CountingAvailabilityPromptUiState?>(null)
@@ -329,8 +340,8 @@ class CountingViewModel @Inject constructor(
     val uiState: StateFlow<CountingUiState> = combine(
         _serviceState,
         _isBound,
-        combine(_goalInfo, _dailyCounts) { goalInfo, dailyCounts ->
-            GoalInfoWithDailyCounts(goalInfo, dailyCounts)
+        combine(_goalInfo, _dailyCounts, _dailySlotCounts) { goalInfo, dailyCounts, dailySlotCounts ->
+            GoalInfoWithDailyCounts(goalInfo, dailyCounts, dailySlotCounts)
         },
         combine(_nowMillis, _slotTimingContext) { nowMillis, timingContext ->
             SlotRuntimeSnapshot(nowMillis, timingContext)
@@ -339,6 +350,7 @@ class CountingViewModel @Inject constructor(
     ) { countingState, isBound, goalAndCounts, slotRuntime, session ->
         val goalInfo = goalAndCounts.goalInfo
         val dailyCounts = goalAndCounts.dailyCounts
+        val dailySlotCounts = goalAndCounts.dailySlotCounts
         val dailyTarget = countingState.targetCount
         val dailyProgress = if (dailyTarget > 0)
             (countingState.currentCount.toFloat() / dailyTarget).coerceIn(0f, 1f) else 0f
@@ -412,11 +424,16 @@ class CountingViewModel @Inject constructor(
                 slotCounts = countingState.slotCounts,
             )
         } ?: capAllowsManualCount
-        val streakDays = memoizedStreakDays(
+        val streakInfo = memoizedStreakInfo(
             goal = goalInfo.goal,
             dailyCounts = dailyCounts,
             effectiveToday = goalInfo.effectiveToday,
         )
+        val streakDays = streakInfo?.currentStreak ?: 0
+        val slotCountsAllTime = dailySlotCounts.values
+            .flatMap { it.entries }
+            .groupingBy { it.key }
+            .fold(0L) { total, entry -> total + entry.value }
 
         CountingUiState(
             countingState = countingState,
@@ -452,6 +469,8 @@ class CountingViewModel @Inject constructor(
             goal = goalInfo.goal,
             dailyTarget = goalInfo.dailyTarget,
             streakDays = streakDays,
+            streakInfo = streakInfo,
+            slotCountsAllTime = slotCountsAllTime,
             audioDurationMs = goalInfo.audioDurationMs,
             audioCountPerPlay = goalInfo.audioCountPerPlay,
             hasSessionTarget = hasSession,
@@ -471,6 +490,29 @@ class CountingViewModel @Inject constructor(
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = CountingUiState(),
     )
+
+    fun deleteGoal(goalId: AwradId) {
+        viewModelScope.launch {
+            scheduler.cancelForGoal(goalId)
+            goalRepository.deleteGoal(goalId)
+        }
+    }
+
+    fun archiveGoal(goal: Goal) {
+        val update = GoalLifecycleUpdateFactory.archive(goal) ?: return
+        viewModelScope.launch {
+            val archived = goalRepository.updateGoalLifecycle(update)
+            scheduler.cancelForGoal(archived.id)
+        }
+    }
+
+    fun restoreGoal(goal: Goal) {
+        val update = GoalLifecycleUpdateFactory.restore(goal) ?: return
+        viewModelScope.launch {
+            val restored = goalRepository.updateGoalLifecycle(update)
+            scheduler.scheduleForGoal(restored)
+        }
+    }
 
     private var lastObservedCount: Long = -1
 
@@ -515,12 +557,12 @@ class CountingViewModel @Inject constructor(
         return computed
     }
 
-    private fun memoizedStreakDays(
+    private fun memoizedStreakInfo(
         goal: Goal?,
         dailyCounts: Map<LocalDate, Long>,
         effectiveToday: LocalDate,
-    ): Int {
-        if (goal == null) return 0
+    ): StreakInfo? {
+        if (goal == null) return null
         val key = StreakKey(goal, dailyCounts, effectiveToday)
         streakKey?.let { if (it == key) return streakValue }
         val computed = GoalProgressCalculator.calculateStreakWithCounts(
@@ -529,7 +571,7 @@ class CountingViewModel @Inject constructor(
             dailyTarget = GoalProgressCalculator.getTargetCount(goal),
             minimumStreakCount = goal.minimumStreakCount,
             goal = goal,
-        ).currentStreak
+        )
         streakKey = key
         streakValue = computed
         return computed
@@ -730,6 +772,7 @@ class CountingViewModel @Inject constructor(
                     PersistedCountingSnapshot(latestGoal, dailyCounts, dailySlotCounts, bound)
                 }.collect { snapshot ->
                     _dailyCounts.value = snapshot.dailyCounts
+                    _dailySlotCounts.value = snapshot.dailySlotCounts
                     val latestGoal = snapshot.goal ?: return@collect
                     if (!snapshot.serviceBound || service?.isCountingGoal(goalId) != true) {
                         return@collect
@@ -1321,6 +1364,7 @@ private data class RecommendedSlotKey(
 private data class GoalInfoWithDailyCounts(
     val goalInfo: GoalInfoHolder,
     val dailyCounts: Map<LocalDate, Long>,
+    val dailySlotCounts: Map<LocalDate, Map<AwradId, Long>>,
 )
 
 private data class StreakKey(

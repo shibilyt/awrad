@@ -108,8 +108,10 @@ fun CommunityScreen(
     onNavigateToSignup: () -> Unit,
     onNavigateToVerification: () -> Unit,
     onNavigateToStats: () -> Unit,
+    onNavigateToChallenges: () -> Unit,
     onNavigateToCircles: () -> Unit,
     onNavigateToSaved: () -> Unit,
+    onNavigateToCreateGoal: () -> Unit,
     onNavigateToPost: () -> Unit,
     onNavigateToMessages: () -> Unit,
     onNavigateToNotifications: () -> Unit,
@@ -121,13 +123,12 @@ fun CommunityScreen(
     val pendingVerificationEmail by authViewModel.pendingVerificationEmail.collectAsState()
     val isEmailVerified by authViewModel.isEmailVerified.collectAsState()
     val statsState by statsViewModel.uiState.collectAsState()
-    val unavailableMessage = stringResource(R.string.community_feed_destination_coming_soon)
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     var selectedFeedTab by rememberSaveable { mutableIntStateOf(0) }
-    val showUnavailableAction: () -> Unit = {
+    val showMessage: (String) -> Unit = { message ->
         coroutineScope.launch {
-            snackbarHostState.showSnackbar(unavailableMessage)
+            snackbarHostState.showSnackbar(message)
         }
     }
     LaunchedEffect(isLoggedIn, isEmailVerified) {
@@ -182,12 +183,25 @@ fun CommunityScreen(
                 } else if (isLoggedIn && isEmailVerified) {
                 when (selectedFeedTab) {
                     0 -> CommunityLandingFeed(
-                        onUnavailableAction = showUnavailableAction,
                         onOpenPost = onNavigateToPost,
+                        onNavigateToCreateGoal = onNavigateToCreateGoal,
+                        onNavigateToCircles = onNavigateToCircles,
+                        onShowMessage = showMessage,
                         modifier = Modifier.padding(horizontal = 20.dp),
                     )
-                    1 -> CommunityTabPlaceholder(title = stringResource(R.string.community_tab_explore))
-                    else -> CommunityTabPlaceholder(title = stringResource(R.string.community_tab_goals))
+                    1 -> CommunityExploreFeed(
+                        onOpenPost = onNavigateToPost,
+                        onNavigateToChallenges = onNavigateToChallenges,
+                        onNavigateToCircles = onNavigateToCircles,
+                        onShowMessage = showMessage,
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                    )
+                    else -> CommunityGoalsFeed(
+                        onNavigateToCreateGoal = onNavigateToCreateGoal,
+                        onNavigateToChallenges = onNavigateToChallenges,
+                        onShowMessage = showMessage,
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                    )
                 }
                 } else {
                 CommunityStatsSection(
@@ -776,29 +790,6 @@ private fun CommunityHeader(
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun CommunityTabPlaceholder(title: String) {
-    RitualCard(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
-        shape = RoundedCornerShape(24.dp),
-        containerColor = communityCardContainerColor(),
-    ) {
-        Column(modifier = Modifier.fillMaxWidth().padding(24.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.community_feed_destination_coming_soon),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }

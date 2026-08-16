@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -40,13 +41,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ListAlt
 import androidx.compose.material.icons.automirrored.outlined.VolumeOff
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
@@ -60,8 +61,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -92,6 +92,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Alignment
@@ -102,7 +103,9 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -115,6 +118,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -135,9 +139,17 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.QuranDhikrTextPrevi
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.SurahHeader
 import app.awrad.awrad_dhikrgoalstracker.ui.components.quran.splitBismillah
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
+import app.awrad.awrad_dhikrgoalstracker.util.GoalHistoryStatsCalculator
+import app.awrad.awrad_dhikrgoalstracker.util.GoalHistoryRange
+import app.awrad.awrad_dhikrgoalstracker.util.GoalHistoryStats
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
+import app.awrad.awrad_dhikrgoalstracker.util.GoalSessionStats
+import app.awrad.awrad_dhikrgoalstracker.util.GoalSessionStatsCalculator
+import app.awrad.awrad_dhikrgoalstracker.util.GoalTimeEstimate
 import app.awrad.awrad_dhikrgoalstracker.util.SlotTimeStatus
 import app.awrad.awrad_dhikrgoalstracker.util.toLocalDateOrNull
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.GoalDetailsBottomSheet
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.GoalSheetAction
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.goalTag
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -156,6 +168,9 @@ fun CountingScreen(
     initialSlotId: AwradId? = null,
     onNavigateBack: () -> Unit,
     onNavigateToGoalDetail: () -> Unit,
+    onNavigateToEdit: () -> Unit,
+    onNavigateToEditSchedule: () -> Unit,
+    onNavigateToEditReminders: () -> Unit,
     onNavigateToQuranReader: (dhikrId: AwradId, slotId: AwradId?) -> Unit = { _, _ -> },
     viewModel: CountingViewModel = hiltViewModel(),
 ) {
@@ -172,6 +187,7 @@ fun CountingScreen(
     var showFullDhikr by remember { mutableStateOf(false) }
     var showSessionSheet by remember { mutableStateOf(false) }
     var showEstimates by remember { mutableStateOf(false) }
+    var showGoalDetails by remember { mutableStateOf(false) }
     var isArabicOverflowing by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     var showStopAudioDialog by remember { mutableStateOf(false) }
@@ -501,50 +517,12 @@ fun CountingScreen(
                     }
                 },
                 actions = {
-                    var showMenu by remember { mutableStateOf(false) }
                     DhikrTextSizeButton(onClick = { showTextSizeSheet = true })
-                    Box {
-                        IconButton(onClick = { showMenu = true }) {
-                            Icon(
-                                Icons.Default.MoreVert,
-                                contentDescription = stringResource(R.string.cd_more_options),
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false },
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.goal_details_title)) },
-                                onClick = {
-                                    showMenu = false
-                                    onNavigateToGoalDetail()
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Info, contentDescription = null)
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.estimates_title)) },
-                                onClick = {
-                                    showEstimates = true
-                                    showMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Timer, contentDescription = null)
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.adjust_count)) },
-                                onClick = {
-                                    showAdjustCountDialog = true
-                                    showMenu = false
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Add, contentDescription = null)
-                                },
-                            )
-                        }
+                    IconButton(onClick = { showGoalDetails = true }) {
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.cd_more_options),
+                        )
                     }
                 },
             )
@@ -845,12 +823,15 @@ fun CountingScreen(
             historyItems = historyItems,
             hasMultipleCountableSlots = uiState.hasMultipleCountableSlots,
             slots = uiState.slots,
+            dhikrName = uiState.dhikrTranslation.ifBlank { countingState.dhikrTransliteration },
             goalStartDate = uiState.goalStartDate,
             effectiveToday = uiState.effectiveToday,
             dailyCounts = dailyCounts,
             dailyTarget = uiState.dailyTarget,
             minimumCount = uiState.minimumCount,
             goal = uiState.goal,
+            audioDurationMs = maxOf(countingState.audioDurationMs, uiState.audioDurationMs),
+            audioCountPerPlay = countingState.audioCountPerPlay.coerceAtLeast(uiState.audioCountPerPlay),
             onDismiss = { showHistory = false },
         )
     }
@@ -917,6 +898,57 @@ fun CountingScreen(
             playbackSpeed = countingState.playbackSpeed,
             onDismiss = { showEstimates = false },
         )
+    }
+
+    // Shared goal details sheet: same as the goals list overflow, plus per-screen actions.
+    if (showGoalDetails) {
+        uiState.goal?.let { goal ->
+            GoalDetailsBottomSheet(
+                goal = goal,
+                dhikrName = uiState.dhikrTranslation.ifBlank { countingState.dhikrTransliteration },
+                todayCount = uiState.todayCount,
+                streakDays = uiState.streakDays,
+                streakInfo = uiState.streakInfo,
+                effectiveToday = uiState.effectiveToday,
+                slotCountsToday = uiState.slotCounts,
+                slotCountsAllTime = uiState.slotCountsAllTime,
+                onDismiss = { showGoalDetails = false },
+                onArchive = {
+                    showGoalDetails = false
+                    viewModel.archiveGoal(goal)
+                },
+                onRestore = {
+                    showGoalDetails = false
+                    viewModel.restoreGoal(goal)
+                },
+                onDelete = {
+                    showGoalDetails = false
+                    viewModel.deleteGoal(goal.id)
+                    onNavigateBack()
+                },
+                onEditCounting = onNavigateToEdit,
+                onEditSchedule = onNavigateToEditSchedule,
+                onEditReminders = onNavigateToEditReminders,
+                extraActions = listOf(
+                    GoalSheetAction(
+                        label = stringResource(R.string.estimates_title),
+                        icon = Icons.Default.Timer,
+                        onClick = {
+                            showGoalDetails = false
+                            showEstimates = true
+                        },
+                    ),
+                    GoalSheetAction(
+                        label = stringResource(R.string.adjust_count),
+                        icon = Icons.Default.Add,
+                        onClick = {
+                            showGoalDetails = false
+                            showAdjustCountDialog = true
+                        },
+                    ),
+                ),
+            )
+        }
     }
 
     // Session complete dialog
@@ -2697,29 +2729,33 @@ private fun DhikrTextControlRow(
     }
 }
 
+private enum class HistorySheetTab { HISTORY, INSIGHTS }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HistoryBottomSheet(
     historyItems: List<CountEntry>,
     hasMultipleCountableSlots: Boolean,
     slots: List<GoalSlot>,
+    dhikrName: String,
     goalStartDate: LocalDate,
     effectiveToday: LocalDate,
     dailyCounts: Map<LocalDate, Long>,
     dailyTarget: Int,
     minimumCount: Int?,
     goal: Goal?,
+    audioDurationMs: Long,
+    audioCountPerPlay: Int,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var selectedTab by rememberSaveable { mutableStateOf(HistorySheetTab.HISTORY) }
+    var selectedRange by rememberSaveable { mutableStateOf(GoalHistoryRange.NINETY_DAYS) }
 
-    // Group by date, newest first
     val byDate = historyItems
         .groupBy { it.date }
         .entries
         .sortedByDescending { it.key }
-
-    // Streak calculation from daily counts
     val streakInfo = remember(dailyCounts, effectiveToday, dailyTarget, minimumCount, goal) {
         GoalProgressCalculator.calculateStreakWithCounts(
             dailyCounts = dailyCounts,
@@ -2729,60 +2765,178 @@ private fun HistoryBottomSheet(
             goal = goal,
         )
     }
+    val historyStats = remember(
+        dailyCounts,
+        effectiveToday,
+        dailyTarget,
+        minimumCount,
+        goal,
+        selectedRange,
+    ) {
+        GoalHistoryStatsCalculator.calculate(
+            dailyCounts = dailyCounts,
+            today = effectiveToday,
+            dailyTarget = dailyTarget,
+            minimumStreakCount = minimumCount,
+            goal = goal,
+            range = selectedRange,
+        )
+    }
+    val sessionStats = remember(historyItems, slots) {
+        GoalSessionStatsCalculator.calculate(historyItems, slots)
+    }
+    val insightHistoryItems = remember(
+        historyItems,
+        selectedRange,
+        goalStartDate,
+        effectiveToday,
+        goal?.endDate,
+    ) {
+        val requestedStart = selectedRange.windowDays
+            ?.let { effectiveToday.minusDays(it - 1) }
+            ?: goalStartDate
+        val rangeStart = maxOf(goalStartDate, requestedStart)
+        val rangeEnd = minOf(effectiveToday, goal?.endDate ?: effectiveToday)
+        historyItems.filter { entry ->
+            val date = entry.date.toLocalDateOrNull() ?: return@filter false
+            !date.isBefore(rangeStart) && !date.isAfter(rangeEnd)
+        }
+    }
+    val insightSessionStats = remember(insightHistoryItems, slots) {
+        GoalSessionStatsCalculator.calculate(insightHistoryItems, slots)
+    }
+    val timeEstimate = remember(
+        historyStats.totalCount,
+        historyStats.activeDays,
+        insightHistoryItems,
+        audioDurationMs,
+        audioCountPerPlay,
+    ) {
+        GoalHistoryStatsCalculator.estimateTime(
+            totalCount = historyStats.totalCount,
+            activeDays = historyStats.activeDays,
+            activeSessions = insightHistoryItems.count { it.count > 0L },
+            audioDurationMs = audioDurationMs,
+            audioCountPerPlay = audioCountPerPlay,
+        )
+    }
+    val numberFormat = remember { NumberFormat.getIntegerInstance() }
+    val goalSubtitle = goal?.let {
+        listOfNotNull(
+            dhikrName.takeIf(String::isNotBlank),
+            GoalProgressCalculator.getFormattedTarget(it),
+        ).joinToString(" · ")
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        modifier = Modifier.statusBarsPadding(),
         sheetState = sheetState,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        containerColor = MaterialTheme.colorScheme.surface,
     ) {
-        Column(
+        LazyColumn(
             modifier = Modifier
-                .fillMaxHeight(0.75f)
+                .fillMaxHeight()
+                .statusBarsPadding()
+                .navigationBarsPadding()
                 .padding(horizontal = 20.dp),
+            contentPadding = PaddingValues(top = 14.dp, bottom = 16.dp),
         ) {
-            Text(
-                text = stringResource(R.string.history_title),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
+            item(key = "history_header") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.history_stats_title),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        if (!goalSubtitle.isNullOrBlank()) {
+                            Text(
+                                text = goalSubtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    ) {
+                        Text(
+                            text = if (selectedTab == HistorySheetTab.HISTORY) {
+                                stringResource(R.string.history_stats_tab_history)
+                            } else {
+                                stringResource(R.string.history_stats_tab_insights)
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                        )
+                    }
+                }
+            }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
-                tonalElevation = 1.dp,
-            ) {
-                StreakSection(
-                    currentStreak = streakInfo.currentStreak,
-                    activeDates = streakInfo.activeDates,
-                    today = effectiveToday,
-                    earliestDate = goalStartDate,
-                    streakInfo = streakInfo,
-                    modifier = Modifier.padding(14.dp),
+            item(key = "history_tabs") {
+                HistorySheetTabs(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    modifier = Modifier.padding(top = 12.dp),
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (historyItems.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(R.string.history_no_history),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+            if (selectedTab == HistorySheetTab.HISTORY) {
+                item(key = "history_consistency") {
+                    HistoryConsistencySection(
+                        streakInfo = streakInfo,
+                        effectiveToday = effectiveToday,
+                        goalStartDate = goalStartDate,
                     )
                 }
-            } else {
-                LazyColumn(modifier = Modifier.weight(1f)) {
+                item(key = "history_sessions") {
+                    HistorySessionStatsCard(
+                        sessionStats = sessionStats,
+                        numberFormat = numberFormat,
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                }
+                item(key = "history_recent_label") {
+                    Text(
+                        text = stringResource(R.string.history_stats_section_recent),
+                        modifier = Modifier.padding(top = 18.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+
+                if (historyItems.isEmpty()) {
+                    item(key = "history_empty") {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 64.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = stringResource(R.string.history_no_history),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                } else {
                     byDate.forEach { (date, entries) ->
                         val dayTotal = entries.sumOf { it.count }
 
-                        // Date row
                         item(key = "header_$date") {
                             Row(
                                 modifier = Modifier
@@ -2798,7 +2952,7 @@ private fun HistoryBottomSheet(
                                     color = MaterialTheme.colorScheme.primary,
                                 )
                                 Text(
-                                    text = "%,d".format(dayTotal),
+                                    text = numberFormat.format(dayTotal),
                                     style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface,
@@ -2810,7 +2964,6 @@ private fun HistoryBottomSheet(
                         }
 
                         if (hasMultipleCountableSlots && slots.isNotEmpty()) {
-                            // One row per slot showing that slot's total for the day.
                             val slotMap = entries.groupBy { it.slotId }
                                 .mapValues { (_, e) -> e.sumOf { it.count } }
                             items(slots, key = { "${date}_slot_${it.id}" }) { slot ->
@@ -2828,7 +2981,7 @@ private fun HistoryBottomSheet(
                                         color = MaterialTheme.colorScheme.onSurface,
                                     )
                                     Text(
-                                        text = "$slotTotal",
+                                        text = numberFormat.format(slotTotal),
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.SemiBold,
                                         color = if (slotTotal > 0) MaterialTheme.colorScheme.primary
@@ -2839,16 +2992,777 @@ private fun HistoryBottomSheet(
                                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f),
                                 )
                             }
-                        } else {
-                            // Single-slot goals are already represented by the date header.
                         }
                     }
-                    item { Spacer(modifier = Modifier.height(16.dp)) }
+                }
+            } else if (selectedTab == HistorySheetTab.INSIGHTS) {
+                item(key = "history_insights") {
+                    HistoryInsightsSection(
+                        stats = historyStats,
+                        sessionStats = insightSessionStats,
+                        timeEstimate = timeEstimate,
+                        selectedRange = selectedRange,
+                        onRangeSelected = { selectedRange = it },
+                        numberFormat = numberFormat,
+                        goal = goal,
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            item(key = "history_bottom_spacer") {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
         }
+    }
+}
+
+@Composable
+private fun HistorySheetTabs(
+    selectedTab: HistorySheetTab,
+    onTabSelected: (HistorySheetTab) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(18.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        HistorySheetTab.values().forEach { tab ->
+            val selected = selectedTab == tab
+            Surface(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(44.dp)
+                    .clickable { onTabSelected(tab) },
+                shape = RoundedCornerShape(14.dp),
+                color = if (selected) MaterialTheme.colorScheme.surface else Color.Transparent,
+                tonalElevation = if (selected) 1.dp else 0.dp,
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = stringResource(
+                            if (tab == HistorySheetTab.HISTORY) {
+                                R.string.history_stats_tab_history
+                            } else {
+                                R.string.history_stats_tab_insights
+                            },
+                        ),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                        color = if (selected) MaterialTheme.colorScheme.onSurface
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryConsistencySection(
+    streakInfo: app.awrad.awrad_dhikrgoalstracker.util.StreakInfo,
+    effectiveToday: LocalDate,
+    goalStartDate: LocalDate,
+) {
+    Column(modifier = Modifier.padding(top = 16.dp)) {
+        Text(
+            text = stringResource(R.string.history_stats_section_consistency),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.8.sp,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            tonalElevation = 1.dp,
+        ) {
+            StreakSection(
+                currentStreak = streakInfo.currentStreak,
+                activeDates = streakInfo.activeDates,
+                today = effectiveToday,
+                earliestDate = goalStartDate,
+                streakInfo = streakInfo,
+                modifier = Modifier.padding(14.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun HistoryInsightsSection(
+    stats: GoalHistoryStats,
+    sessionStats: List<GoalSessionStats>,
+    timeEstimate: GoalTimeEstimate,
+    selectedRange: GoalHistoryRange,
+    onRangeSelected: (GoalHistoryRange) -> Unit,
+    numberFormat: NumberFormat,
+    goal: Goal?,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(top = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        HistoryInsightsRangeSelector(
+            selectedRange = selectedRange,
+            onRangeSelected = onRangeSelected,
+        )
+        Text(
+            text = stringResource(R.string.history_stats_section_practice),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.8.sp,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        HistoryStatsCard(stats = stats, numberFormat = numberFormat)
+        HistoryAffinityCard(stats = stats)
+        HistoryDailyRhythmCard(stats = stats)
+        HistoryAdherenceCard(stats = stats, goal = goal, numberFormat = numberFormat)
+        HistoryTimeSpentCard(timeEstimate = timeEstimate)
+        HistorySessionStatsCard(
+            sessionStats = sessionStats,
+            numberFormat = numberFormat,
+        )
+        val peakDay = stats.peakDay
+        if (peakDay != null && stats.peakDayCount > 0L) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Text(
+                        text = stringResource(R.string.history_stats_peak_day),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = stringResource(
+                            R.string.history_stats_peak_day_detail,
+                            HistoryDateText(peakDay.toString(), peakDay),
+                            numberFormat.format(stats.peakDayCount),
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryInsightsRangeSelector(
+    selectedRange: GoalHistoryRange,
+    onRangeSelected: (GoalHistoryRange) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.history_stats_window),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        listOf(
+            GoalHistoryRange.SEVEN_DAYS to R.string.history_stats_range_7,
+            GoalHistoryRange.THIRTY_DAYS to R.string.history_stats_range_30,
+            GoalHistoryRange.NINETY_DAYS to R.string.history_stats_range_90,
+            GoalHistoryRange.ALL_TIME to R.string.history_stats_range_all,
+        ).forEach { (range, label) ->
+            val selected = selectedRange == range
+            FilterChip(
+                selected = selected,
+                onClick = { onRangeSelected(range) },
+                shape = CircleShape,
+                border = null,
+                colors = androidx.compose.material3.FilterChipDefaults.filterChipColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                ),
+                label = {
+                    Text(
+                        text = stringResource(label),
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold,
+                    )
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun HistoryAffinityCard(stats: GoalHistoryStats) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 1.dp,
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.history_stats_affinity_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = stringResource(R.string.history_stats_affinity_description),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = 18.sp,
+                    )
+                }
+                Text(
+                    text = "${stats.affinityPercent}%",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
+            LinearProgressIndicator(
+                progress = { stats.affinityPercent / 100f },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .height(8.dp)
+                    .clip(CircleShape),
+                color = MaterialTheme.colorScheme.secondary,
+                trackColor = MaterialTheme.colorScheme.secondaryContainer,
+            )
+            Text(
+                text = stringResource(R.string.history_stats_affinity_footer),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun HistoryDailyRhythmCard(stats: GoalHistoryStats) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 1.dp,
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.history_stats_daily_rhythm),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+            )
+            if (stats.dailyCounts.isEmpty() || stats.activeDays == 0) {
+                Text(
+                    text = stringResource(R.string.history_no_history),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+            } else {
+                // Keep the all-time view readable when a goal has years of history.
+                val chartDays = stats.dailyCounts.takeLast(90)
+                val maxCount = chartDays.maxOfOrNull { it.count }?.coerceAtLeast(1L) ?: 1L
+                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(88.dp)
+                            .padding(top = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.Bottom,
+                    ) {
+                        chartDays.forEach { day ->
+                            val fraction = if (day.count <= 0L) {
+                                0.025f
+                            } else {
+                                (day.count.toFloat() / maxCount).coerceAtLeast(0.08f)
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight(fraction)
+                                    .clip(RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp))
+                                    .background(
+                                        if (day.count > 0L) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.primary.copy(alpha = 0.18f),
+                                    ),
+                            )
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = stringResource(R.string.history_stats_rhythm_less),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = stringResource(R.string.history_stats_rhythm_more),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryAdherenceCard(
+    stats: GoalHistoryStats,
+    goal: Goal?,
+    numberFormat: NumberFormat,
+) {
+    val isOneTime = goal?.isOneTime == true
+    val isTracker = goal?.isTracker == true
+    val percent = when {
+        isOneTime -> stats.goalProgressPercent
+        isTracker -> stats.presencePercent
+        else -> stats.adherencePercent
+    }
+    val title = when {
+        isOneTime -> R.string.history_stats_goal_progress
+        isTracker -> R.string.history_stats_practice_presence
+        else -> R.string.history_stats_goal_adherence
+    }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 1.dp,
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = "$percent%",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+            }
+            LinearProgressIndicator(
+                progress = { percent / 100f },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp)
+                    .height(8.dp)
+                    .clip(CircleShape),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+            )
+            if (isOneTime) {
+                Text(
+                    text = stringResource(
+                        R.string.history_stats_adherence_detail,
+                        numberFormat.format(stats.totalCount),
+                        numberFormat.format(goal?.let(GoalProgressCalculator::getTargetCount) ?: 0),
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            } else {
+                Text(
+                    text = stringResource(
+                        R.string.history_stats_adherence_detail,
+                        stats.targetMetDays,
+                        stats.scheduledDays,
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    HistoryAdherenceMetric(
+                        label = stringResource(R.string.history_stats_target_met),
+                        value = stats.targetMetDays,
+                        modifier = Modifier.weight(1f),
+                    )
+                    HistoryAdherenceMetric(
+                        label = stringResource(R.string.history_stats_partial_days),
+                        value = stats.partialDays,
+                        modifier = Modifier.weight(1f),
+                    )
+                    HistoryAdherenceMetric(
+                        label = stringResource(R.string.history_stats_missed_days),
+                        value = stats.missedDays,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryAdherenceMetric(
+    label: String,
+    value: Int,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = value.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun HistoryTimeSpentCard(timeEstimate: GoalTimeEstimate) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 1.dp,
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.history_stats_time_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                HistoryTimeMetric(
+                    label = stringResource(R.string.history_stats_time_total),
+                    value = formatDurationShort(timeEstimate.totalSeconds),
+                    modifier = Modifier.weight(1f),
+                )
+                HistoryTimeMetric(
+                    label = stringResource(R.string.history_stats_time_average_day),
+                    value = formatDurationShort(timeEstimate.averagePerDaySeconds),
+                    modifier = Modifier.weight(1f),
+                )
+                HistoryTimeMetric(
+                    label = stringResource(R.string.history_stats_time_average_session),
+                    value = formatDurationShort(timeEstimate.averagePerSessionSeconds),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Text(
+                text = stringResource(
+                    if (timeEstimate.isAudioBased) {
+                        R.string.history_stats_time_audio_note
+                    } else {
+                        R.string.history_stats_time_manual_note
+                    },
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun HistoryTimeMetric(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun HistorySessionStatsCard(
+    sessionStats: List<GoalSessionStats>,
+    numberFormat: NumberFormat,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 1.dp,
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = stringResource(R.string.history_stats_sessions_title),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+            )
+            if (sessionStats.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.history_stats_sessions_empty),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            } else {
+                Column(
+                    modifier = Modifier.padding(top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    sessionStats.forEach { stats ->
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = stats.slot.label ?: slotTimingDisplayName(stats.slot.timingValue),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Text(
+                                    text = numberFormat.format(stats.totalCount),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                            LinearProgressIndicator(
+                                progress = { stats.sharePercent / 100f },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 6.dp)
+                                    .height(6.dp)
+                                    .clip(CircleShape),
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    text = stringResource(
+                                        R.string.history_stats_session_detail,
+                                        pluralStringResource(
+                                            R.plurals.history_stats_days_value,
+                                            stats.activeDays,
+                                            stats.activeDays,
+                                        ),
+                                        numberFormat.format(stats.averageActiveDayCount),
+                                    ),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                                Text(
+                                    text = stringResource(
+                                        R.string.history_stats_session_share,
+                                        stats.sharePercent,
+                                    ),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryStatsCard(
+    stats: app.awrad.awrad_dhikrgoalstracker.util.GoalHistoryStats,
+    numberFormat: NumberFormat,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 1.dp,
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                HistoryMetricCell(
+                    label = stringResource(R.string.history_stats_recorded_total),
+                    value = numberFormat.format(stats.totalCount),
+                    detail = stringResource(R.string.history_stats_for_goal),
+                    highlight = true,
+                    modifier = Modifier.weight(1f),
+                )
+                HistoryMetricDivider()
+                HistoryMetricCell(
+                    label = stringResource(R.string.history_stats_active_day_average),
+                    value = numberFormat.format(stats.activeDayAverage),
+                    detail = stringResource(R.string.history_stats_on_counted_days),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 14.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f),
+            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                HistoryMetricCell(
+                    label = stringResource(R.string.history_stats_days_counted),
+                    value = numberFormat.format(stats.activeDays),
+                    detail = stringResource(R.string.history_stats_since_goal_start),
+                    modifier = Modifier.weight(1f),
+                )
+                HistoryMetricDivider()
+                HistoryMetricCell(
+                    label = stringResource(R.string.history_stats_current_streak),
+                    value = pluralStringResource(
+                        R.plurals.history_stats_days_value,
+                        stats.currentStreak,
+                        stats.currentStreak,
+                    ),
+                    detail = stringResource(R.string.history_stats_practice_days),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(9.dp),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondary),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "✦",
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = stringResource(R.string.history_stats_longest_streak),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = stringResource(R.string.history_stats_best_run),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                Text(
+                    text = pluralStringResource(
+                        R.plurals.history_stats_days_value,
+                        stats.longestStreak,
+                        stats.longestStreak,
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HistoryMetricDivider() {
+    Box(
+        modifier = Modifier
+            .width(1.dp)
+            .height(68.dp)
+            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)),
+    )
+}
+
+@Composable
+private fun HistoryMetricCell(
+    label: String,
+    value: String,
+    detail: String,
+    highlight: Boolean = false,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = if (highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = detail,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

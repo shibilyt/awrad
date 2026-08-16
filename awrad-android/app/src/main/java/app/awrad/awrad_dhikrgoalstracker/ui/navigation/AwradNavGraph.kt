@@ -139,6 +139,15 @@ fun AwradNavGraph(
                     onNavigateToCreateGoal = {
                         navController.navigateSafely(AwradDestination.CreateGoal.createRoute())
                     },
+                    onNavigateToEdit = { goalId ->
+                        navController.navigateSafely(AwradDestination.EditGoal.createRoute(goalId))
+                    },
+                    onNavigateToEditSchedule = { goalId ->
+                        navController.navigateSafely(AwradDestination.EditGoalSchedule.createRoute(goalId))
+                    },
+                    onNavigateToEditReminders = { goalId ->
+                        navController.navigateSafely(AwradDestination.EditGoalReminders.createRoute(goalId))
+                    },
                 )
             }
         }
@@ -231,8 +240,14 @@ fun AwradNavGraph(
                         navController.navigateSafely(AwradDestination.VerifyEmail.createRoute())
                     },
                     onNavigateToStats = { navController.navigateSafely(AwradDestination.CommunityStats.route) },
+                    onNavigateToChallenges = {
+                        navController.navigateSafely(AwradDestination.CommunityChallenges.route)
+                    },
                     onNavigateToCircles = { navController.navigateSafely(AwradDestination.CommunityCircles.route) },
                     onNavigateToSaved = { navController.navigateSafely(AwradDestination.CommunitySaved.route) },
+                    onNavigateToCreateGoal = {
+                        navController.navigateSafely(AwradDestination.CreateGoal.createRoute())
+                    },
                     onNavigateToPost = { navController.navigateSafely(AwradDestination.CommunityPostDetail.route) },
                     onNavigateToMessages = { navController.navigateSafely(AwradDestination.CommunityMessages.route) },
                     onNavigateToNotifications = {
@@ -445,6 +460,15 @@ fun AwradNavGraph(
                     },
                     onNavigateToGoalDetail = {
                         navController.navigateSafely(AwradDestination.GoalDetail.createRoute(goalId))
+                    },
+                    onNavigateToEdit = {
+                        navController.navigateSafely(AwradDestination.EditGoal.createRoute(goalId))
+                    },
+                    onNavigateToEditSchedule = {
+                        navController.navigateSafely(AwradDestination.EditGoalSchedule.createRoute(goalId))
+                    },
+                    onNavigateToEditReminders = {
+                        navController.navigateSafely(AwradDestination.EditGoalReminders.createRoute(goalId))
                     },
                     onNavigateToQuranReader = { dhikrId, slotId ->
                         navController.navigateSafely(

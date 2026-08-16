@@ -19,6 +19,9 @@ import app.awrad.awrad_dhikrgoalstracker.notification.RepositoryNotificationObli
 import app.awrad.awrad_dhikrgoalstracker.notification.ReminderScheduler
 import app.awrad.awrad_dhikrgoalstracker.notification.ReminderSchedulingGateway
 import app.awrad.awrad_dhikrgoalstracker.notification.AndroidNotificationObligationEngineErrorReporter
+import app.awrad.awrad_dhikrgoalstracker.notification.GoalReminderScheduler
+import app.awrad.awrad_dhikrgoalstracker.util.DateProvider
+import app.awrad.awrad_dhikrgoalstracker.util.EffectiveTodayProvider
 import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationEngineErrorReporter
 import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestDispatcher
 import app.awrad.awrad_dhikrgoalstracker.notification.NotificationObligationRequestSink
@@ -55,6 +58,14 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindReminderSchedulingGateway(impl: ReminderScheduler): ReminderSchedulingGateway
+
+    @Binds
+    @Singleton
+    abstract fun bindGoalReminderScheduler(impl: ReminderScheduler): GoalReminderScheduler
+
+    @Binds
+    @Singleton
+    abstract fun bindEffectiveTodayProvider(impl: DateProvider): EffectiveTodayProvider
 
     @Binds
     @Singleton

@@ -38,6 +38,7 @@ import androidx.compose.material.icons.outlined.Unarchive
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -60,6 +61,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
@@ -88,9 +90,13 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualSkeleton
 import app.awrad.awrad_dhikrgoalstracker.ui.components.SectionHeader
 import app.awrad.awrad_dhikrgoalstracker.ui.components.StreakSection
 import app.awrad.awrad_dhikrgoalstracker.ui.components.compactGoalCount
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goaldetail.DetailsDisclosure
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goaldetail.SessionsSection
 import app.awrad.awrad_dhikrgoalstracker.ui.sync.ProgressSyncRefreshViewModel
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
+import app.awrad.awrad_dhikrgoalstracker.util.StreakInfo
+import java.time.LocalDate
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -102,6 +108,9 @@ fun GoalsScreen(
     onNavigateToCounting: (AwradId) -> Unit,
     onNavigateToGoalDetail: (AwradId) -> Unit,
     onNavigateToCreateGoal: () -> Unit,
+    onNavigateToEdit: (AwradId) -> Unit,
+    onNavigateToEditSchedule: (AwradId) -> Unit,
+    onNavigateToEditReminders: (AwradId) -> Unit,
     viewModel: GoalsViewModel = hiltViewModel(),
     refreshViewModel: ProgressSyncRefreshViewModel = hiltViewModel(),
 ) {
@@ -257,7 +266,14 @@ fun GoalsScreen(
 
     selectedGoal?.let { item ->
         GoalDetailsBottomSheet(
-            item = item,
+            goal = item.goal,
+            dhikrName = item.dhikrName,
+            todayCount = item.todayCount,
+            streakDays = item.streakDays,
+            streakInfo = item.streakInfo,
+            effectiveToday = item.effectiveToday,
+            slotCountsToday = item.slotCountsToday,
+            slotCountsAllTime = item.slotCountsAllTime,
             onDismiss = { selectedGoal = null },
             onArchive = {
                 selectedGoal = null
@@ -271,6 +287,9 @@ fun GoalsScreen(
                 selectedGoal = null
                 viewModel.deleteGoal(item.goal.id)
             },
+            onEditCounting = { onNavigateToEdit(item.goal.id) },
+            onEditSchedule = { onNavigateToEditSchedule(item.goal.id) },
+            onEditReminders = { onNavigateToEditReminders(item.goal.id) },
         )
     }
 }
@@ -599,24 +618,43 @@ private fun GoalListItem(
     }
 }
 
+/** Extra per-screen actions (e.g. estimates, adjust count) surfaced inside the details sheet. */
+internal data class GoalSheetAction(
+    val label: String,
+    val icon: ImageVector,
+    val onClick: () -> Unit,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun GoalDetailsBottomSheet(
-    item: GoalDisplayItem,
+internal fun GoalDetailsBottomSheet(
+    goal: Goal,
+    dhikrName: String,
+    todayCount: Long,
+    streakDays: Int,
+    streakInfo: StreakInfo?,
+    effectiveToday: LocalDate,
+    slotCountsToday: Map<AwradId, Long>,
+    slotCountsAllTime: Map<AwradId, Long>,
     onDismiss: () -> Unit,
     onArchive: () -> Unit,
     onRestore: () -> Unit,
     onDelete: () -> Unit,
+    onEditCounting: () -> Unit,
+    onEditSchedule: () -> Unit,
+    onEditReminders: () -> Unit,
+    extraActions: List<GoalSheetAction> = emptyList(),
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showDeleteConfirmation by remember { mutableStateOf(false) }
-    val goalName = item.dhikrName.ifBlank { stringResource(R.string.goal_details_goal_fallback) }
-    val statement = stringResource(R.string.goal_sheet_statement, goalName, goalTag(item.goal))
+    val goalName = dhikrName.ifBlank { stringResource(R.string.goal_details_goal_fallback) }
+    val statement = stringResource(R.string.goal_sheet_statement, goalName, goalTag(goal))
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        modifier = Modifier.statusBarsPadding(),
         sheetState = sheetState,
-        dragHandle = null,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
         containerColor = MaterialTheme.colorScheme.surface,
     ) {
         Column(
@@ -690,21 +728,21 @@ private fun GoalDetailsBottomSheet(
                     ) {
                         GoalQuickStat(
                             label = stringResource(R.string.goal_sheet_today),
-                            value = compactGoalCount(item.todayCount),
+                            value = compactGoalCount(todayCount),
                             modifier = Modifier.weight(1f),
                         )
                         GoalQuickStat(
                             label = stringResource(R.string.goal_sheet_current_streak),
                             value = pluralStringResource(
                                 R.plurals.goal_sheet_days,
-                                item.streakDays,
-                                item.streakDays,
+                                streakDays,
+                                streakDays,
                             ),
                             modifier = Modifier.weight(1f),
                         )
                         GoalQuickStat(
                             label = stringResource(R.string.goal_sheet_all_time),
-                            value = compactGoalCount(item.goal.totalCompletedCount),
+                            value = compactGoalCount(goal.totalCompletedCount),
                             modifier = Modifier.weight(1f),
                         )
                     }
@@ -717,13 +755,49 @@ private fun GoalDetailsBottomSheet(
                     tonalElevation = 1.dp,
                 ) {
                     StreakSection(
-                        currentStreak = item.streakInfo?.currentStreak ?: item.streakDays,
-                        activeDates = item.streakInfo?.activeDates.orEmpty(),
-                        today = item.effectiveToday,
-                        earliestDate = item.goal.startDate,
-                        streakInfo = item.streakInfo,
+                        currentStreak = streakInfo?.currentStreak ?: streakDays,
+                        activeDates = streakInfo?.activeDates.orEmpty(),
+                        today = effectiveToday,
+                        earliestDate = goal.startDate,
+                        streakInfo = streakInfo,
                         modifier = Modifier.padding(14.dp),
                     )
+                }
+
+                // Sessions + details — merged from the redesigned detail screen.
+                SessionsSection(
+                    goal = goal,
+                    slotCountsToday = slotCountsToday,
+                    slotCountsAllTime = slotCountsAllTime,
+                    onEdit = { onEditSchedule() },
+                )
+
+                DetailsDisclosure(
+                    goal = goal,
+                    onEditCounting = onEditCounting,
+                    onEditSchedule = onEditSchedule,
+                    onEditReminders = onEditReminders,
+                )
+
+                if (extraActions.isNotEmpty()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        extraActions.forEach { action ->
+                            OutlinedButton(
+                                onClick = action.onClick,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(14.dp),
+                            ) {
+                                Icon(action.icon, contentDescription = null)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(action.label)
+                            }
+                        }
+                    }
                 }
             }
 
@@ -735,15 +809,15 @@ private fun GoalDetailsBottomSheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 OutlinedButton(
-                    onClick = if (item.goal.isPaused) onRestore else onArchive,
-                    enabled = item.goal.isPaused || (item.goal.isActive && !item.goal.isCompleted),
+                    onClick = if (goal.isPaused) onRestore else onArchive,
+                    enabled = goal.isPaused || (goal.isActive && !goal.isCompleted),
                     modifier = Modifier
                         .weight(1f)
                         .height(52.dp),
                     shape = RoundedCornerShape(16.dp),
                 ) {
                     Icon(
-                        imageVector = if (item.goal.isPaused) {
+                        imageVector = if (goal.isPaused) {
                             Icons.Outlined.Unarchive
                         } else {
                             Icons.Outlined.Archive
@@ -753,7 +827,7 @@ private fun GoalDetailsBottomSheet(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         stringResource(
-                            if (item.goal.isPaused) R.string.action_restore else R.string.action_archive,
+                            if (goal.isPaused) R.string.action_restore else R.string.action_archive,
                         ),
                     )
                 }
@@ -897,7 +971,7 @@ internal fun goalTag(goal: Goal): String {
 }
 
 @Composable
-private fun goalScheduleTag(goal: Goal): String? = when (goal.recurrence.frequency) {
+internal fun goalScheduleTag(goal: Goal): String? = when (goal.recurrence.frequency) {
     RecurrenceFrequency.DAILY -> null
     RecurrenceFrequency.WEEKLY -> {
         val weekdays = goal.recurrence.weekdays

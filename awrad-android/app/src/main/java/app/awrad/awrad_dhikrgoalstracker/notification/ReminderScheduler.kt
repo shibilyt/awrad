@@ -44,7 +44,7 @@ class ReminderScheduler @Inject constructor(
     private val userPreferences: UserPreferences,
     private val prayerTimeRepository: PrayerTimeRepository,
     private val occurrenceResolver: ReminderOccurrenceResolver,
-) : ReminderSchedulingGateway {
+) : ReminderSchedulingGateway, GoalReminderScheduler {
     private val alarmManager: AlarmManager =
         context.getSystemService(AlarmManager::class.java)
     private val workManager: WorkManager get() = WorkManager.getInstance(context)
@@ -70,7 +70,7 @@ class ReminderScheduler @Inject constructor(
      * Schedules alarms for a specific newly-created goal.
      * Also triggers a full reschedule to pick up prayer-linked reminders.
      */
-    fun scheduleForGoal(goal: Goal) {
+    override fun scheduleForGoal(goal: Goal) {
         if (!goal.isActive || goal.isCompleted || !goal.notificationEnabled) return
         scope.launch { rescheduleAllAlarms() }
     }
@@ -78,7 +78,7 @@ class ReminderScheduler @Inject constructor(
     /**
      * Cancels all alarms for a specific goal.
      */
-    fun cancelForGoal(goalId: AwradId) {
+    override fun cancelForGoal(goalId: AwradId) {
         cancelAlarm(AlarmRequestCodes.goalReminder(goalId))
         cancelAlarm(AlarmRequestCodes.goalFollowUp(goalId))
         // Cancel any prayer slot alarms for this goal (up to 10 slots)

@@ -8,10 +8,15 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.Goal
 import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.repository.DhikrRepository
 import app.awrad.awrad_dhikrgoalstracker.data.repository.GoalRepository
+import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.GoalLifecycleUpdateFactory
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressSummary
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressUseCase
-import app.awrad.awrad_dhikrgoalstracker.util.DateProvider
+import app.awrad.awrad_dhikrgoalstracker.notification.GoalReminderScheduler
+import app.awrad.awrad_dhikrgoalstracker.util.EffectiveTodayProvider
 import app.awrad.awrad_dhikrgoalstracker.util.GoalCountingEligibility
+import app.awrad.awrad_dhikrgoalstracker.util.GoalDayActivity
+import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
+import app.awrad.awrad_dhikrgoalstracker.util.StreakInfo
 import app.awrad.awrad_dhikrgoalstracker.util.toLocalDateOr
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
@@ -23,6 +28,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class GoalDetailUiState(
     val isLoading: Boolean = true,
@@ -33,6 +39,9 @@ data class GoalDetailUiState(
     val slotCountsToday: Map<AwradId, Long> = emptyMap(),
     val slotCountsAllTime: Map<AwradId, Long> = emptyMap(),
     val canContinueCounting: Boolean = false,
+    val streakInfo: StreakInfo? = null,
+    val recentDays: List<GoalDayActivity> = emptyList(),
+    val todayCount: Long = 0,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -41,8 +50,9 @@ class GoalDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val goalRepository: GoalRepository,
     private val dhikrRepository: DhikrRepository,
-    private val dateProvider: DateProvider,
+    private val dateProvider: EffectiveTodayProvider,
     private val goalProgressUseCase: GoalProgressUseCase,
+    private val scheduler: GoalReminderScheduler,
 ) : ViewModel() {
 
     private val goalId: AwradId = java.util.UUID.fromString(checkNotNull(savedStateHandle.get<String>("goalId")))
@@ -72,6 +82,19 @@ class GoalDetailViewModel @Inject constructor(
                 .groupingBy { it.key }
                 .fold(0L) { total, entry -> total + entry.value }
             val progress = goalProgressUseCase.summarize(goal, dailyCounts, effectiveToday)
+            val streakInfo = GoalProgressCalculator.calculateStreakWithCounts(
+                dailyCounts = dailyCounts,
+                today = effectiveToday,
+                dailyTarget = GoalProgressCalculator.getTargetCount(goal),
+                minimumStreakCount = goal.minimumStreakCount,
+                goal = goal,
+            )
+            val recentDays = GoalProgressCalculator.recentActivity(
+                goal = goal,
+                dailyCounts = dailyCounts,
+                today = effectiveToday,
+                dailySlotCounts = dailySlotCounts,
+            )
             GoalDetailUiState(
                 isLoading = false,
                 goal = goal,
@@ -85,7 +108,33 @@ class GoalDetailViewModel @Inject constructor(
                     progressCount = progress.progressCount,
                     slotCounts = slotCountsToday,
                 ),
+                streakInfo = streakInfo,
+                recentDays = recentDays,
+                todayCount = dailyCounts[effectiveToday] ?: 0L,
             )
+        }
+    }
+
+    fun deleteGoal() {
+        viewModelScope.launch {
+            scheduler.cancelForGoal(goalId)
+            goalRepository.deleteGoal(goalId)
+        }
+    }
+
+    fun archiveGoal(goal: Goal) {
+        val update = GoalLifecycleUpdateFactory.archive(goal) ?: return
+        viewModelScope.launch {
+            val archived = goalRepository.updateGoalLifecycle(update)
+            scheduler.cancelForGoal(archived.id)
+        }
+    }
+
+    fun restoreGoal(goal: Goal) {
+        val update = GoalLifecycleUpdateFactory.restore(goal) ?: return
+        viewModelScope.launch {
+            val restored = goalRepository.updateGoalLifecycle(update)
+            scheduler.scheduleForGoal(restored)
         }
     }
 }

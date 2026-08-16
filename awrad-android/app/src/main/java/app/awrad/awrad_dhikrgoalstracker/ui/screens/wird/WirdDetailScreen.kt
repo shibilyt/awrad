@@ -1,5 +1,6 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.wird
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -14,7 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,10 +25,8 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.outlined.EventRepeat
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.outlined.NotificationsOff
-import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.SelfImprovement
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -39,6 +38,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -55,10 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -75,6 +72,9 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.wird.resolve
 import app.awrad.awrad_dhikrgoalstracker.data.wird.WirdEngine
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualPrimaryButton
+import app.awrad.awrad_dhikrgoalstracker.ui.theme.NotoNaskhArabicFontFamily
+import app.awrad.awrad_dhikrgoalstracker.ui.theme.SageGreenDark
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,15 +96,17 @@ fun WirdDetailScreen(
             TopAppBar(
                 title = {
                     Text(
-                        wird?.displayName(lang).orEmpty(),
+                        stringResource(R.string.wird_details),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.action_back),
+                        )
                     }
                 },
                 actions = {
@@ -114,7 +116,10 @@ fun WirdDetailScreen(
                         }
                         val reminderEnabled = reminder?.enabled == true
                         IconButton(onClick = { showMenu = true }) {
-                            Icon(Icons.Filled.MoreVert, contentDescription = null)
+                            Icon(
+                                Icons.Filled.MoreVert,
+                                contentDescription = stringResource(R.string.wird_more_actions),
+                            )
                         }
                         DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                             DropdownMenuItem(
@@ -183,8 +188,18 @@ fun WirdDetailScreen(
 
         val activeToday = state.parts.filter { it.isActiveToday }
         val completedToday = activeToday.count { it.progress.isComplete }
-        val sectionCount = wird.parts.size
-        val recitations = wird.parts.sumOf { it.countableSegments.size }
+        val todayPart = state.parts.firstOrNull { it.part.id == state.todayPartId }
+        val todayTitle = todayPart?.part?.localizedTitle?.resolve(lang).orEmpty()
+        val reminder = wird.reminders.firstOrNull {
+            it.id == WirdDetailViewModel.QUICK_REMINDER_ID
+        }
+        val heroSource = wird.sourceAttribution?.takeIf { it.isNotBlank() }
+            ?: wird.author.takeIf { it.isNotBlank() }.orEmpty()
+        val continueLabel = if (todayPart != null && !todayPart.progress.isComplete && todayTitle.isNotBlank()) {
+            stringResource(R.string.wird_continue_section, todayTitle)
+        } else {
+            stringResource(R.string.wird_begin_recitation)
+        }
 
         Box(
             Modifier
@@ -197,36 +212,40 @@ fun WirdDetailScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 item {
-                    HeaderCard(
+                    WirdHeroCard(
                         arabic = wird.arabicName,
-                        subtitle = headerSubtitle(
-                            source = wird.author.takeIf { it.isNotBlank() }
-                                ?: wird.sourceAttribution.orEmpty(),
-                            occasion = occasionLabel(wird.schedule.defaultOccasion),
-                            occasionIsAnytime = wird.schedule.defaultOccasion == WirdOccasion.Anytime,
-                        ),
-                        description = wird.displayDescription(lang),
+                        name = wird.displayName(lang),
+                        source = heroSource,
+                        occasion = occasionLabel(wird.schedule.defaultOccasion),
+                        occasionIsAnytime = wird.schedule.defaultOccasion == WirdOccasion.Anytime,
+                        progress = state.aggregate.progress,
+                        completedToday = completedToday,
+                        totalToday = activeToday.size,
                     )
                 }
-                item {
-                    StatRow(
-                        sectionCount = sectionCount,
-                        minutes = wird.estimatedMinutes,
-                        streak = state.streak,
-                    )
+                if (todayPart != null) {
+                    item {
+                        TodayReadingCard(
+                            title = todayTitle,
+                            subtitle = todayPart.part.localizedSubtitle.resolve(lang)
+                                .ifBlank { occasionLabel(todayPart.occasion) },
+                            onClick = { onNavigateToReader(wird.id, todayPart.part.id) },
+                        )
+                    }
                 }
                 item {
-                    TodayCard(
+                    WeekActivityCard(
                         week = state.week,
                         completedToday = completedToday,
                         totalToday = activeToday.size,
                     )
                 }
                 item {
-                    SectionsHeader(sectionCount = sectionCount, recitations = recitations)
+                    ReadingPlanHeader()
                 }
-                items(state.parts, key = { it.part.id }) { row ->
+                itemsIndexed(state.parts, key = { _, row -> row.part.id }) { index, row ->
                     PartCard(
+                        index = index + 1,
                         title = row.part.localizedTitle.resolve(lang),
                         subtitle = row.part.localizedSubtitle.resolve(lang)
                             .ifBlank { occasionLabel(row.occasion) },
@@ -237,10 +256,22 @@ fun WirdDetailScreen(
                         onClick = { onNavigateToReader(wird.id, row.part.id) },
                     )
                 }
+                item {
+                    ReminderCard(
+                        enabled = reminder?.enabled == true,
+                        reminderTime = formatReminderTime(
+                            reminder?.hour ?: DEFAULT_REMINDER_HOUR,
+                            reminder?.minute ?: DEFAULT_REMINDER_MINUTE,
+                        ),
+                        onToggle = { viewModel.setReminderEnabled(it) },
+                        onEdit = { showTimePicker = true },
+                    )
+                }
             }
 
             if (wird.parts.isNotEmpty()) {
                 BeginRecitationBar(
+                    text = continueLabel,
                     onClick = {
                         val partId = state.todayPartId ?: wird.parts.firstOrNull()?.id
                         partId?.let { onNavigateToReader(wird.id, it) }
@@ -271,139 +302,40 @@ private const val DEFAULT_REMINDER_HOUR = 7
 private const val DEFAULT_REMINDER_MINUTE = 0
 
 @Composable
-private fun headerSubtitle(source: String, occasion: String, occasionIsAnytime: Boolean): String {
-    val parts = buildList {
-        if (source.isNotBlank()) add(source)
-        if (!occasionIsAnytime && occasion.isNotBlank()) add(occasion)
-    }
-    return parts.joinToString(" · ")
-}
-
-@Composable
-private fun HeaderCard(
+private fun WirdHeroCard(
     arabic: String,
-    subtitle: String,
-    description: String,
-) {
-    val colorScheme = MaterialTheme.colorScheme
-    val heroColor = lerp(colorScheme.surface, colorScheme.primaryContainer, 0.32f)
-    RitualCard(containerColor = heroColor) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 26.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            if (arabic.isNotBlank()) {
-                Text(
-                    arabic,
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = colorScheme.primary,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            if (subtitle.isNotBlank()) {
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            if (description.isNotBlank()) {
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun StatRow(
-    sectionCount: Int,
-    minutes: Int?,
-    streak: Int,
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        StatCard(
-            icon = Icons.AutoMirrored.Outlined.MenuBook,
-            value = sectionCount.toString(),
-            label = stringResource(R.string.wird_sections),
-            modifier = Modifier.weight(1f),
-        )
-        StatCard(
-            icon = Icons.Outlined.Schedule,
-            value = minutes?.let { stringResource(R.string.wird_stat_minutes, it) } ?: "—",
-            label = stringResource(R.string.wird_stat_to_recite),
-            modifier = Modifier.weight(1f),
-        )
-        StatCard(
-            icon = Icons.Outlined.EventRepeat,
-            value = streak.toString(),
-            label = stringResource(R.string.wird_stat_day_streak),
-            modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun StatCard(
-    icon: ImageVector,
-    value: String,
-    label: String,
-    modifier: Modifier = Modifier,
-) {
-    RitualCard(modifier = modifier) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(vertical = 18.dp, horizontal = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp),
-            )
-            Text(
-                value,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-            )
-            Text(
-                label,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-            )
-        }
-    }
-}
-
-@Composable
-private fun TodayCard(
-    week: List<WirdEngine.DayActivity>,
+    name: String,
+    source: String,
+    occasion: String,
+    occasionIsAnytime: Boolean,
+    progress: Float,
     completedToday: Int,
     totalToday: Int,
 ) {
-    RitualCard {
+    val colorScheme = MaterialTheme.colorScheme
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress.coerceIn(0f, 1f),
+        label = "wirdHeroProgress",
+    )
+    val progressPercent = (animatedProgress * 100).roundToInt()
+    val metadata = buildList {
+        if (source.isNotBlank()) add(source)
+        if (!occasionIsAnytime && occasion.isNotBlank()) add(occasion)
+    }.joinToString(" · ")
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(SageGreenDark, colorScheme.primary),
+                ),
+            )
+            .padding(22.dp),
+    ) {
         Column(
-            Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Row(
                 Modifier.fillMaxWidth(),
@@ -411,19 +343,203 @@ private fun TodayCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    stringResource(R.string.wird_today),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
+                    stringResource(R.string.wird_continue_your_wird),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.78f),
+                )
+                Surface(
+                    color = Color.White.copy(alpha = 0.14f),
+                    contentColor = Color.White,
+                    shape = RoundedCornerShape(50),
+                ) {
+                    Text(
+                        stringResource(R.string.wird_active),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                    )
+                }
+            }
+            Spacer(Modifier.height(18.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(18.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    if (arabic.isNotBlank()) {
+                        Text(
+                            arabic,
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontFamily = NotoNaskhArabicFontFamily,
+                            ),
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Start,
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (metadata.isNotBlank()) {
+                        Spacer(Modifier.height(5.dp))
+                        Text(
+                            metadata,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.White.copy(alpha = 0.78f),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier.size(68.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(
+                        progress = { animatedProgress },
+                        modifier = Modifier.fillMaxSize(),
+                        color = colorScheme.tertiary,
+                        trackColor = Color.White.copy(alpha = 0.18f),
+                        strokeWidth = 5.dp,
+                    )
+                    Text(
+                        "$progressPercent%",
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+                }
+            }
+            Spacer(Modifier.height(18.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    stringResource(R.string.wird_today_practice),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.78f),
                 )
                 Text(
                     stringResource(R.string.wird_today_progress, completedToday, totalToday),
                     style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun TodayReadingCard(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+) {
+    RitualCard(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        showBorder = true,
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier.size(44.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.AutoMirrored.Outlined.MenuBook, contentDescription = null)
+                }
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.wird_today_section_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    title.ifBlank { subtitle },
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (subtitle.isNotBlank() && title.isNotBlank()) {
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+            Text(
+                stringResource(R.string.wird_read),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeekActivityCard(
+    week: List<WirdEngine.DayActivity>,
+    completedToday: Int,
+    totalToday: Int,
+) {
+    RitualCard(
+        shape = RoundedCornerShape(22.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        showBorder = true,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    stringResource(R.string.wird_this_week),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                if (totalToday > 0) {
+                    Text(
+                        stringResource(R.string.wird_today_progress, completedToday, totalToday),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
             if (week.isNotEmpty()) {
-                Spacer(Modifier.height(18.dp))
+                Spacer(Modifier.height(16.dp))
                 WeekStrip(week)
             }
         }
@@ -479,8 +595,8 @@ private fun WeekDayCircle(day: WirdEngine.DayActivity) {
             modifier = Modifier
                 .size(40.dp)
                 .clip(CircleShape)
-                .background(muted.copy(alpha = 0.12f))
-                .border(1.5.dp, muted.copy(alpha = 0.4f), CircleShape),
+                .background(colorScheme.tertiary.copy(alpha = 0.18f))
+                .border(2.dp, colorScheme.tertiary, CircleShape),
         )
         else -> Box(
             modifier = Modifier
@@ -496,30 +612,29 @@ private fun WeekDayCircle(day: WirdEngine.DayActivity) {
 }
 
 @Composable
-private fun SectionsHeader(sectionCount: Int, recitations: Int) {
-    Row(
+private fun ReadingPlanHeader() {
+    Column(
         Modifier
             .fillMaxWidth()
             .padding(top = 4.dp, start = 4.dp, end = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
-            pluralStringResource(R.plurals.wird_section_count, sectionCount, sectionCount),
+            stringResource(R.string.wird_reading_plan),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
         Text(
-            stringResource(R.string.wird_recitations_count, recitations),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.primary,
+            stringResource(R.string.wird_choose_section),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
 }
 
 @Composable
 private fun BeginRecitationBar(
+    text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -535,10 +650,72 @@ private fun BeginRecitationBar(
             .padding(start = 20.dp, end = 20.dp, top = 28.dp, bottom = 24.dp),
     ) {
         RitualPrimaryButton(
-            text = stringResource(R.string.wird_begin_recitation),
+            text = text,
             onClick = onClick,
-            leadingIcon = Icons.Outlined.SelfImprovement,
+            leadingIcon = Icons.Filled.PlayArrow,
         )
+    }
+}
+
+@Composable
+private fun ReminderCard(
+    enabled: Boolean,
+    reminderTime: String,
+    onToggle: (Boolean) -> Unit,
+    onEdit: () -> Unit,
+) {
+    RitualCard(
+        onClick = onEdit,
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        showBorder = true,
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Surface(
+                color = if (enabled) {
+                    MaterialTheme.colorScheme.primaryContainer
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+                contentColor = if (enabled) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                shape = CircleShape,
+                modifier = Modifier.size(42.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.Filled.Notifications, contentDescription = null)
+                }
+            }
+            Column(Modifier.weight(1f)) {
+                Text(
+                    stringResource(R.string.wird_remind_me),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    if (enabled) {
+                        stringResource(R.string.wird_reminder_daily, reminderTime)
+                    } else {
+                        stringResource(R.string.wird_reminder_off)
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Switch(
+                checked = enabled,
+                onCheckedChange = onToggle,
+            )
+        }
     }
 }
 
@@ -580,6 +757,7 @@ private fun formatReminderTime(hour: Int, minute: Int): String =
 
 @Composable
 private fun PartCard(
+    index: Int,
     title: String,
     subtitle: String,
     isActiveToday: Boolean,
@@ -588,60 +766,104 @@ private fun PartCard(
     progress: Float,
     onClick: () -> Unit,
 ) {
-    RitualCard(onClick = onClick) {
-        Column(
+    RitualCard(
+        onClick = onClick,
+        shape = RoundedCornerShape(16.dp),
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        showBorder = true,
+    ) {
+        Row(
             Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
+            Surface(
+                color = if (isActiveToday) {
+                    MaterialTheme.colorScheme.tertiary.copy(alpha = 0.18f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+                contentColor = if (isActiveToday) {
+                    MaterialTheme.colorScheme.onSurface
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.size(40.dp),
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        index.toString().padStart(2, '0'),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+            Column(Modifier.weight(1f)) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
                         title.ifBlank { subtitle },
                         style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (isActiveToday) {
+                        Surface(
+                            color = MaterialTheme.colorScheme.tertiary,
+                            contentColor = MaterialTheme.colorScheme.onTertiary,
+                            shape = RoundedCornerShape(50),
+                        ) {
+                            Text(
+                                stringResource(R.string.wird_today),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                            )
+                        }
+                    }
+                }
+                if (subtitle.isNotBlank() && title.isNotBlank()) {
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    if (subtitle.isNotBlank() && title.isNotBlank()) {
+                }
+                if (total > 0) {
+                    Spacer(Modifier.height(10.dp))
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        LinearProgressIndicator(
+                            progress = { progress.coerceIn(0f, 1f) },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(6.dp),
+                            color = if (isActiveToday) {
+                                MaterialTheme.colorScheme.tertiary
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            },
+                        )
                         Text(
-                            subtitle,
+                            stringResource(R.string.wird_progress_count, completed, total),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
                         )
                     }
-                }
-                if (isActiveToday) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primary,
-                        contentColor = MaterialTheme.colorScheme.onPrimary,
-                        shape = RoundedCornerShape(50),
-                    ) {
-                        Text(
-                            stringResource(R.string.wird_today),
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
-                        )
-                    }
-                }
-            }
-            if (total > 0) {
-                Spacer(Modifier.height(10.dp))
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    LinearProgressIndicator(
-                        progress = { progress },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(6.dp),
-                    )
-                    Text(
-                        stringResource(R.string.wird_progress_count, completed, total),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 12.dp),
-                    )
                 }
             }
         }

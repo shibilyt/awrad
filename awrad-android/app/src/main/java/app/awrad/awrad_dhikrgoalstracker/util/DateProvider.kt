@@ -18,13 +18,13 @@ import javax.inject.Singleton
 class DateProvider @Inject constructor(
     private val userPreferences: UserPreferences,
     private val prayerTimeRepository: PrayerTimeRepository,
-) {
+) : EffectiveTodayProvider {
     /**
      * A Flow that emits the effective "today" date string whenever relevant preferences change.
      * When day reset is MAGHRIB and the current time is past Maghrib, the effective date
      * advances to the next Gregorian day.
      */
-    val effectiveToday: Flow<String> = combine(
+    override val effectiveToday: Flow<String> = combine(
         userPreferences.dayResetTime,
         userPreferences.latitude,
         userPreferences.longitude,

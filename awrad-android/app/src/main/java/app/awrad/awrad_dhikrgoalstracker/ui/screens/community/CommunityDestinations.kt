@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -19,14 +20,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import app.awrad.awrad_dhikrgoalstracker.ui.icons.phosphor.PhosphorRegular
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -36,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun CommunityStatsScreen(
@@ -85,13 +97,18 @@ internal fun CommunityStatsScreen(
 
 @Composable
 internal fun CommunityChallengesScreen(onNavigateBack: () -> Unit) {
-    CommunityPage(title = stringResource(R.string.community_challenges_title), onNavigateBack = onNavigateBack) {
-        CommunityFeatureCard(
+    val startChallengeMessage = stringResource(R.string.community_feed_start_challenge)
+
+    CommunityPage(title = stringResource(R.string.community_challenges_title), onNavigateBack = onNavigateBack) { showMessage ->
+        CommunityGoalCard(
             icon = PhosphorRegular.Trophy,
             eyebrow = stringResource(R.string.community_feed_weekly_challenge_badge),
             title = stringResource(R.string.community_feed_weekly_challenge_title),
             body = stringResource(R.string.community_feed_weekly_challenge_body),
             tint = MaterialTheme.colorScheme.secondaryContainer,
+            progress = 0.42f,
+            actionLabel = stringResource(R.string.community_feed_start_challenge),
+            onAction = { showMessage(startChallengeMessage) },
         )
         Text(
             text = stringResource(R.string.community_challenges_more),
@@ -103,33 +120,45 @@ internal fun CommunityChallengesScreen(onNavigateBack: () -> Unit) {
 
 @Composable
 internal fun CommunityCirclesScreen(onNavigateBack: () -> Unit) {
-    CommunityPage(title = stringResource(R.string.community_nav_circles), onNavigateBack = onNavigateBack) {
-        CommunityFeatureCard(
-            icon = PhosphorRegular.UsersThree,
-            eyebrow = stringResource(R.string.community_feed_circles_title),
-            title = stringResource(R.string.community_feed_circle_name),
-            body = stringResource(R.string.community_feed_circle_status),
-            tint = MaterialTheme.colorScheme.primaryContainer,
+    var familyJoined by rememberSaveable { mutableStateOf(false) }
+    var morningJoined by rememberSaveable { mutableStateOf(false) }
+    val joinedMessage = stringResource(R.string.community_feed_circle_joined)
+    val leftMessage = stringResource(R.string.community_feed_circle_left)
+
+    CommunityPage(title = stringResource(R.string.community_nav_circles), onNavigateBack = onNavigateBack) { showMessage ->
+        CommunityCircleCard(
+            name = stringResource(R.string.community_feed_circle_name),
+            status = stringResource(R.string.community_feed_circle_status),
+            joined = familyJoined,
+            onToggle = {
+                familyJoined = !familyJoined
+                showMessage(if (familyJoined) joinedMessage else leftMessage)
+            },
+        )
+        CommunityCircleCard(
+            name = stringResource(R.string.community_feed_morning_circle_name),
+            status = stringResource(R.string.community_feed_morning_circle_status),
+            joined = morningJoined,
+            onToggle = {
+                morningJoined = !morningJoined
+                showMessage(if (morningJoined) joinedMessage else leftMessage)
+            },
         )
     }
 }
 
 @Composable
 internal fun CommunitySavedScreen(onNavigateBack: () -> Unit) {
-    CommunityPage(title = stringResource(R.string.community_nav_saved), onNavigateBack = onNavigateBack) {
-        CommunityFeatureCard(
-            icon = PhosphorRegular.BookmarkSimple,
-            eyebrow = stringResource(R.string.community_nav_saved),
-            title = stringResource(R.string.community_saved_title),
-            body = stringResource(R.string.community_saved_body),
-            tint = MaterialTheme.colorScheme.surfaceContainerHigh,
-        )
+    val savedPostMessage = stringResource(R.string.community_post_title)
+
+    CommunityPage(title = stringResource(R.string.community_nav_saved), onNavigateBack = onNavigateBack) { showMessage ->
+        CommunitySavedPostCard(onOpen = { showMessage(savedPostMessage) })
     }
 }
 
 @Composable
 internal fun CommunityMessagesScreen(onNavigateBack: () -> Unit) {
-    CommunityPage(title = stringResource(R.string.community_messages), onNavigateBack = onNavigateBack) {
+    CommunityPage(title = stringResource(R.string.community_messages), onNavigateBack = onNavigateBack) { _ ->
         Text(
             text = stringResource(R.string.community_messages_subtitle),
             style = MaterialTheme.typography.bodyLarge,
@@ -161,7 +190,7 @@ internal fun CommunityMessagesScreen(onNavigateBack: () -> Unit) {
 
 @Composable
 internal fun CommunityNotificationsScreen(onNavigateBack: () -> Unit) {
-    CommunityPage(title = stringResource(R.string.community_notifications), onNavigateBack = onNavigateBack) {
+    CommunityPage(title = stringResource(R.string.community_notifications), onNavigateBack = onNavigateBack) { _ ->
         Text(
             text = stringResource(R.string.community_notifications_subtitle),
             style = MaterialTheme.typography.bodyLarge,
@@ -281,7 +310,7 @@ private fun CommunityNotificationRow(
 
 @Composable
 internal fun CommunityProfileScreen(onNavigateBack: () -> Unit) {
-    CommunityPage(title = stringResource(R.string.community_profile_title), onNavigateBack = onNavigateBack) {
+    CommunityPage(title = stringResource(R.string.community_profile_title), onNavigateBack = onNavigateBack) { _ ->
         Surface(
             modifier = Modifier.size(88.dp),
             shape = CircleShape,
@@ -301,7 +330,12 @@ internal fun CommunityProfileScreen(onNavigateBack: () -> Unit) {
 
 @Composable
 internal fun CommunityPostDetailScreen(onNavigateBack: () -> Unit) {
-    CommunityPage(title = stringResource(R.string.community_post_title), onNavigateBack = onNavigateBack) {
+    var isSaved by rememberSaveable { mutableStateOf(false) }
+    val startDhikrMessage = stringResource(R.string.community_feed_start_dhikr)
+    val savedMessage = stringResource(R.string.community_feed_post_saved)
+    val unsavedMessage = stringResource(R.string.community_feed_post_unsaved)
+
+    CommunityPage(title = stringResource(R.string.community_post_title), onNavigateBack = onNavigateBack) { showMessage ->
         CommunityFeatureCard(
             icon = PhosphorRegular.SealCheck,
             eyebrow = stringResource(R.string.community_feed_daily_dhikr_badge),
@@ -319,28 +353,170 @@ internal fun CommunityPostDetailScreen(onNavigateBack: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Button(onClick = { showMessage(startDhikrMessage) }) {
+                Text(stringResource(R.string.community_feed_start_dhikr))
+            }
+            TextButton(onClick = {
+                isSaved = !isSaved
+                showMessage(if (isSaved) savedMessage else unsavedMessage)
+            }) {
+                Icon(PhosphorRegular.BookmarkSimple, contentDescription = null)
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.community_feed_save))
+            }
+        }
     }
 }
 
 @Composable
-private fun CommunityPage(title: String, onNavigateBack: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+private fun CommunityPage(
+    title: String,
+    onNavigateBack: () -> Unit,
+    content: @Composable ColumnScope.(showMessage: (String) -> Unit) -> Unit,
+) {
     val density = LocalDensity.current
     val statusBarTopPadding = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(start = 20.dp, end = 20.dp, top = statusBarTopPadding + 8.dp, bottom = 20.dp),
-    ) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                PhosphorRegular.ArrowLeft,
-                contentDescription = stringResource(R.string.community_stats_back),
-            )
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val showMessage: (String) -> Unit = { message ->
+        coroutineScope.launch { snackbarHostState.showSnackbar(message) }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, end = 20.dp, top = statusBarTopPadding + 8.dp, bottom = 96.dp),
+        ) {
+            IconButton(onClick = onNavigateBack) {
+                Icon(
+                    PhosphorRegular.ArrowLeft,
+                    contentDescription = stringResource(R.string.community_stats_back),
+                )
+            }
+            Text(title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(24.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                content(showMessage)
+            }
         }
-        Text(title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Bold)
-        Spacer(Modifier.height(24.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(18.dp), content = content)
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(20.dp),
+        )
+    }
+}
+
+@Composable
+private fun CommunityCircleCard(
+    name: String,
+    status: String,
+    joined: Boolean,
+    onToggle: () -> Unit,
+) {
+    RitualCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        containerColor = communityCardContainerColor(),
+        showBorder = true,
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Surface(
+                    modifier = Modifier.size(52.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(PhosphorRegular.UsersThree, contentDescription = null)
+                    }
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        status,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            LinearProgressIndicator(
+                progress = { 0.67f },
+                modifier = Modifier.fillMaxWidth().height(7.dp),
+            )
+            TextButton(onClick = onToggle) {
+                Text(
+                    stringResource(
+                        if (joined) R.string.community_feed_circle_joined
+                        else R.string.community_feed_circle_join,
+                    ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommunityGoalCard(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    eyebrow: String,
+    title: String,
+    body: String,
+    tint: androidx.compose.ui.graphics.Color,
+    progress: Float,
+    actionLabel: String,
+    onAction: () -> Unit,
+) {
+    RitualCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        containerColor = communityCardContainerColor(tint),
+    ) {
+        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(icon, contentDescription = null)
+            Text(eyebrow, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+            Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text(body, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier.fillMaxWidth().height(7.dp),
+            )
+            TextButton(onClick = onAction) { Text(actionLabel) }
+        }
+    }
+}
+
+@Composable
+private fun CommunitySavedPostCard(onOpen: () -> Unit) {
+    RitualCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        containerColor = communityCardContainerColor(MaterialTheme.colorScheme.surfaceContainerHigh),
+    ) {
+        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(PhosphorRegular.BookmarkSimple, contentDescription = null)
+            Text(
+                stringResource(R.string.community_saved_title),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Text(
+                stringResource(R.string.community_saved_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            TextButton(onClick = onOpen) { Text(stringResource(R.string.community_post_title)) }
+        }
     }
 }
 

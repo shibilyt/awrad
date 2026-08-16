@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,8 +30,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.AccessTime
+import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Event
 import androidx.compose.material.icons.outlined.Flag
@@ -41,11 +45,15 @@ import androidx.compose.material.icons.outlined.Rule
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.TrackChanges
 import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.material.icons.outlined.Unarchive
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -95,18 +103,26 @@ import app.awrad.awrad_dhikrgoalstracker.data.model.ReminderType
 import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
 import app.awrad.awrad_dhikrgoalstracker.domain.usecase.GoalProgressSummary
 import app.awrad.awrad_dhikrgoalstracker.ui.components.AwradStatusBarStyle
+import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakChip
+import app.awrad.awrad_dhikrgoalstracker.ui.components.GoalStreakStrip
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualPrimaryButton
+import app.awrad.awrad_dhikrgoalstracker.ui.components.compactGoalCount
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.DhikrFullTextBottomSheet
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.nextCountingDhikrLineSpacing
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.nextCountingDhikrTextScale
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.previousCountingDhikrLineSpacing
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.counting.previousCountingDhikrTextScale
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.goalScheduleTag
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.goalTag
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.localizedName
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.localizedTitle
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.AwradDhikrGoalsTrackerTheme
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.NotoNaskhArabicFontFamily
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
+import app.awrad.awrad_dhikrgoalstracker.util.GoalDayActivity
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
+import app.awrad.awrad_dhikrgoalstracker.util.StreakDayStatus
+import app.awrad.awrad_dhikrgoalstracker.util.StreakInfo
 import java.time.DayOfWeek
 import java.time.LocalDate
 
@@ -129,6 +145,12 @@ fun GoalDetailScreen(
         onNavigateToEdit = onNavigateToEdit,
         onNavigateToEditSchedule = onNavigateToEditSchedule,
         onNavigateToEditReminders = onNavigateToEditReminders,
+        onArchive = { uiState.goal?.let(viewModel::archiveGoal) },
+        onRestore = { uiState.goal?.let(viewModel::restoreGoal) },
+        onDelete = {
+            viewModel.deleteGoal()
+            onNavigateBack()
+        },
         modifier = modifier,
     )
 }
@@ -142,6 +164,9 @@ private fun GoalDetailContent(
     onNavigateToEdit: () -> Unit,
     onNavigateToEditSchedule: () -> Unit,
     onNavigateToEditReminders: () -> Unit,
+    onArchive: () -> Unit,
+    onRestore: () -> Unit,
+    onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -152,6 +177,17 @@ private fun GoalDetailContent(
             GoalDetailTopBar(
                 title = stringResource(R.string.goal_details_title),
                 onNavigateBack = onNavigateBack,
+                actions = {
+                    val goal = uiState.goal
+                    if (goal != null) {
+                        GoalDetailMenu(
+                            goal = goal,
+                            onArchive = onArchive,
+                            onRestore = onRestore,
+                            onDelete = onDelete,
+                        )
+                    }
+                },
             )
         },
     ) { padding ->
@@ -183,6 +219,7 @@ private fun GoalDetailContent(
                 }
             }
             else -> {
+                val streakDays = uiState.streakInfo?.currentStreak ?: 0
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
@@ -194,17 +231,41 @@ private fun GoalDetailContent(
                         GoalHeroCard(
                             goal = goal,
                             dhikr = uiState.dhikr,
-                            progress = uiState.progress,
-                            canContinueCounting = uiState.canContinueCounting,
-                            onNavigateToCounting = onNavigateToCounting,
                         )
                     }
 
                     item {
-                        GoalOverviewSection(
+                        GoalProgressPanel(
                             goal = goal,
-                            onEditCounting = onNavigateToEdit,
-                            onEditSchedule = onNavigateToEditSchedule,
+                            progress = uiState.progress,
+                            streakDays = streakDays,
+                        )
+                    }
+
+                    item {
+                        RitualPrimaryButton(
+                            text = stringResource(
+                                if (uiState.canContinueCounting) {
+                                    R.string.goal_details_continue_counting
+                                } else {
+                                    R.string.goal_details_view_counting
+                                },
+                            ),
+                            onClick = onNavigateToCounting,
+                            enabled = true,
+                            leadingIcon = Icons.Rounded.PlayArrow,
+                        )
+                    }
+
+                    item {
+                        LastSevenDaysStrip(days = uiState.recentDays)
+                    }
+
+                    item {
+                        StatsRow(
+                            todayCount = uiState.todayCount,
+                            streakDays = streakDays,
+                            allTimeCount = goal.totalCompletedCount,
                         )
                     }
 
@@ -218,7 +279,12 @@ private fun GoalDetailContent(
                     }
 
                     item {
-                        RemindersSection(goal = goal, onEdit = onNavigateToEditReminders)
+                        DetailsDisclosure(
+                            goal = goal,
+                            onEditCounting = onNavigateToEdit,
+                            onEditSchedule = onNavigateToEditSchedule,
+                            onEditReminders = onNavigateToEditReminders,
+                        )
                     }
                 }
             }
@@ -230,6 +296,7 @@ private fun GoalDetailContent(
 private fun GoalDetailTopBar(
     title: String,
     onNavigateBack: () -> Unit,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     val containerColor = if (isAwradDarkTheme()) Color.Transparent else MaterialTheme.colorScheme.surfaceContainerHigh
     AwradStatusBarStyle(color = MaterialTheme.colorScheme.background)
@@ -269,8 +336,86 @@ private fun GoalDetailTopBar(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                    content = actions,
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun GoalDetailMenu(
+    goal: Goal,
+    onArchive: () -> Unit,
+    onRestore: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    var showMenu by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(onClick = { showMenu = true }) {
+            Icon(
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = stringResource(R.string.cd_more_options),
+            )
+        }
+        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+            if (goal.isPaused) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_restore)) },
+                    onClick = {
+                        showMenu = false
+                        onRestore()
+                    },
+                    leadingIcon = { Icon(Icons.Outlined.Unarchive, contentDescription = null) },
+                )
+            } else if (goal.isActive && !goal.isCompleted) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.action_archive)) },
+                    onClick = {
+                        showMenu = false
+                        onArchive()
+                    },
+                    leadingIcon = { Icon(Icons.Outlined.Archive, contentDescription = null) },
+                )
+            }
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_delete)) },
+                onClick = {
+                    showMenu = false
+                    showDeleteConfirmation = true
+                },
+                leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) },
+            )
+        }
+    }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text(stringResource(R.string.goal_sheet_delete_title)) },
+            text = { Text(stringResource(R.string.goal_sheet_delete_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirmation = false
+                    onDelete()
+                }) {
+                    Text(
+                        text = stringResource(R.string.action_delete),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirmation = false }) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
+        )
     }
 }
 
@@ -278,16 +423,8 @@ private fun GoalDetailTopBar(
 private fun GoalHeroCard(
     goal: Goal,
     dhikr: Dhikr?,
-    progress: GoalProgressSummary?,
-    canContinueCounting: Boolean,
-    onNavigateToCounting: () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
-    val progressCount = progress?.progressCount ?: 0L
-    val targetCount = progress?.targetCount ?: GoalProgressCalculator.getTargetCount(goal)
-    val fraction = progress?.progress ?: 0f
-    val isComplete = targetCount > 0 && fraction >= 1f
-    val remaining = progress?.remainingCount ?: (targetCount - progressCount).coerceAtLeast(0L)
     val displayTitle = dhikr?.transliteration?.ifBlank { dhikr.title }.orEmpty().ifBlank {
         stringResource(R.string.goal_details_goal_fallback)
     }
@@ -296,17 +433,13 @@ private fun GoalHeroCard(
     var textScale by remember { mutableStateOf(1f) }
     var lineSpacing by remember { mutableStateOf(1f) }
 
-    val animatedProgress by animateFloatAsState(
-        targetValue = fraction.coerceIn(0f, 1f),
-        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
-        label = "goalDetailProgress",
-    )
-
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            HeroTagsRow(goal = goal)
+            Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = displayTitle,
                 style = MaterialTheme.typography.headlineMedium,
@@ -331,77 +464,6 @@ private fun GoalHeroCard(
                     )
                 }
         }
-
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(22.dp),
-            color = colorScheme.primaryContainer.copy(alpha = if (isAwradDarkTheme()) 0.28f else 0.38f),
-        ) {
-            Column(
-                modifier = Modifier.padding(horizontal = 18.dp, vertical = 17.dp),
-                verticalArrangement = Arrangement.spacedBy(13.dp),
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                        Text(
-                            text = stringResource(R.string.goal_details_today_label),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = colorScheme.onSurfaceVariant,
-                        )
-                        Text(
-                            text = if (targetCount > 0) {
-                                stringResource(R.string.goal_details_progress_fraction, progressCount, targetCount)
-                            } else {
-                                stringResource(R.string.goal_details_progress_count_only, progressCount)
-                            },
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = colorScheme.onSurface,
-                        )
-                    }
-                    when {
-                        isComplete -> HeroStatusChip(
-                            text = stringResource(R.string.goal_details_complete_label),
-                            icon = Icons.Rounded.Check,
-                            emphasised = true,
-                        )
-                        targetCount > 0 && remaining > 0 -> HeroStatusChip(
-                            text = stringResource(R.string.goal_details_remaining_count, remaining),
-                            icon = null,
-                            emphasised = false,
-                        )
-                    }
-                }
-                if (targetCount > 0) {
-                    LinearProgressIndicator(
-                        progress = { animatedProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clip(RoundedCornerShape(12.dp)),
-                        color = colorScheme.primary,
-                        trackColor = colorScheme.primary.copy(alpha = 0.14f),
-                    )
-                }
-            }
-        }
-
-        RitualPrimaryButton(
-            text = stringResource(
-                if (canContinueCounting) {
-                    R.string.goal_details_continue_counting
-                } else {
-                    R.string.goal_details_view_counting
-                },
-            ),
-            onClick = onNavigateToCounting,
-            enabled = true,
-            leadingIcon = Icons.Rounded.PlayArrow,
-        )
     }
 
     if (showFullDhikr && dhikr != null) {
@@ -420,6 +482,194 @@ private fun GoalHeroCard(
             onDismiss = { showFullDhikr = false },
             showCountButton = false,
         )
+    }
+}
+
+@Composable
+private fun HeroTagsRow(goal: Goal) {
+    val scheduleTag = goalScheduleTag(goal) ?: stringResource(R.string.goal_details_schedule_daily)
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GoalTagChip(text = goalTag(goal))
+        GoalTagChip(text = scheduleTag)
+    }
+}
+
+@Composable
+private fun GoalTagChip(text: String) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.primaryContainer,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun GoalProgressPanel(
+    goal: Goal,
+    progress: GoalProgressSummary?,
+    streakDays: Int,
+) {
+    val colorScheme = MaterialTheme.colorScheme
+    val progressCount = progress?.progressCount ?: 0L
+    val targetCount = progress?.targetCount ?: GoalProgressCalculator.getTargetCount(goal)
+    val fraction = progress?.progress ?: 0f
+    val isComplete = targetCount > 0 && fraction >= 1f
+    val remaining = progress?.remainingCount ?: (targetCount - progressCount).coerceAtLeast(0L)
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = fraction.coerceIn(0f, 1f),
+        animationSpec = tween(durationMillis = 700, easing = FastOutSlowInEasing),
+        label = "goalDetailProgress",
+    )
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        color = colorScheme.primaryContainer.copy(alpha = if (isAwradDarkTheme()) 0.28f else 0.38f),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 17.dp),
+            verticalArrangement = Arrangement.spacedBy(13.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                    Text(
+                        text = stringResource(R.string.goal_details_today_label),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        text = if (targetCount > 0) {
+                            stringResource(R.string.goal_details_progress_fraction, progressCount, targetCount)
+                        } else {
+                            stringResource(R.string.goal_details_progress_count_only, progressCount)
+                        },
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = colorScheme.onSurface,
+                    )
+                }
+                when {
+                    isComplete -> HeroStatusChip(
+                        text = stringResource(R.string.goal_details_complete_label),
+                        icon = Icons.Rounded.Check,
+                        emphasised = true,
+                    )
+                    targetCount > 0 && remaining > 0 -> HeroStatusChip(
+                        text = stringResource(R.string.goal_details_remaining_count, remaining),
+                        icon = null,
+                        emphasised = false,
+                    )
+                }
+            }
+            GoalStreakChip(streakDays = streakDays)
+            if (targetCount > 0) {
+                LinearProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(12.dp)),
+                    color = colorScheme.primary,
+                    trackColor = colorScheme.primary.copy(alpha = 0.14f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LastSevenDaysStrip(days: List<GoalDayActivity>) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        SectionLabel(stringResource(R.string.goal_details_last_7_days))
+        GoalStreakStrip(
+            days = days.takeLast(7),
+            completeColor = MaterialTheme.colorScheme.primary,
+            todayColor = MaterialTheme.colorScheme.primary,
+            mutedColor = MaterialTheme.colorScheme.outlineVariant,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun StatsRow(
+    todayCount: Long,
+    streakDays: Int,
+    allTimeCount: Long,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        GoalStatTile(
+            label = stringResource(R.string.goal_sheet_today),
+            value = compactGoalCount(todayCount),
+            modifier = Modifier.weight(1f),
+        )
+        GoalStatTile(
+            label = stringResource(R.string.goal_sheet_current_streak),
+            value = pluralStringResource(R.plurals.goal_sheet_days, streakDays, streakDays),
+            modifier = Modifier.weight(1f),
+        )
+        GoalStatTile(
+            label = stringResource(R.string.goal_sheet_all_time),
+            value = compactGoalCount(allTimeCount),
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun GoalStatTile(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }
 
@@ -516,129 +766,7 @@ private fun HeroStatusChip(
 }
 
 @Composable
-private fun GoalOverviewSection(
-    goal: Goal,
-    onEditCounting: () -> Unit,
-    onEditSchedule: () -> Unit,
-) {
-    val advancedItems = listOf(
-        DetailItem(Icons.Outlined.TrackChanges, stringResource(R.string.goal_details_progress_scope), progressScopeSummary(goal.targetPolicy)),
-        DetailItem(Icons.Outlined.Shield, stringResource(R.string.goal_details_cap_behavior), capBehaviorSummary(goal.capBehavior)),
-        DetailItem(Icons.Outlined.Flag, stringResource(R.string.goal_details_completion), completionSummary(goal)),
-    )
-
-    val scheduleItems = listOf(
-        DetailItem(Icons.Outlined.CalendarMonth, stringResource(R.string.goal_details_repeats), scheduleSummary(goal)),
-        DetailItem(Icons.Outlined.AccessTime, stringResource(R.string.goal_details_timing), timingSummary(goal)),
-        DetailItem(Icons.Outlined.Event, stringResource(R.string.goal_details_duration), durationSummary(goal)),
-    )
-
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionLabel(stringResource(R.string.goal_details_overview_section))
-        DetailCard {
-            DetailSubsectionHeader(
-                title = stringResource(R.string.goal_details_counting_section),
-                onEdit = onEditCounting,
-            )
-            DetailInfoRow(
-                DetailItem(
-                    icon = Icons.Outlined.Tune,
-                    label = stringResource(R.string.goal_details_count_rule),
-                    value = countRuleSummary(goal),
-                ),
-            )
-            RowDivider()
-            DetailSubsectionHeader(
-                title = stringResource(R.string.goal_details_schedule_section),
-                onEdit = onEditSchedule,
-            )
-            scheduleItems.forEachIndexed { index, item ->
-                DetailInfoRow(item)
-                if (index != scheduleItems.lastIndex) RowDivider()
-            }
-        }
-        AdvancedDisclosure(items = advancedItems)
-    }
-}
-
-@Composable
-private fun DetailSubsectionHeader(title: String, onEdit: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 10.dp, top = 10.dp, bottom = 2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.weight(1f),
-        )
-        IconButton(onClick = onEdit, modifier = Modifier.size(40.dp)) {
-            Icon(
-                imageVector = Icons.Outlined.Edit,
-                contentDescription = stringResource(R.string.goal_details_edit_action),
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(19.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun AdvancedDisclosure(items: List<DetailItem>) {
-    var expanded by remember { mutableStateOf(false) }
-    val rotation by animateFloatAsState(
-        targetValue = if (expanded) 180f else 0f,
-        animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
-        label = "advancedChevron",
-    )
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        DetailCard {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { expanded = !expanded }
-                    .padding(horizontal = 16.dp, vertical = 16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
-            ) {
-                DetailIconTile(Icons.Outlined.Tune)
-                Text(
-                    text = stringResource(R.string.goal_details_advanced),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f),
-                )
-                Icon(
-                    imageVector = Icons.Outlined.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.rotate(rotation),
-                )
-            }
-            AnimatedVisibility(
-                visible = expanded,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut(),
-            ) {
-                Column {
-                    RowDivider()
-                    items.forEachIndexed { index, item ->
-                        DetailInfoRow(item)
-                        if (index != items.lastIndex) RowDivider()
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SessionsSection(
+internal fun SessionsSection(
     goal: Goal,
     slotCountsToday: Map<AwradId, Long>,
     slotCountsAllTime: Map<AwradId, Long>,
@@ -680,7 +808,7 @@ private fun SessionsSection(
 }
 
 @Composable
-private fun SlotDetailCard(slot: GoalSlot, count: Long) {
+internal fun SlotDetailCard(slot: GoalSlot, count: Long) {
     val colorScheme = MaterialTheme.colorScheme
     val target = slot.targetCount
     val fraction = if (target != null && target > 0) {
@@ -757,43 +885,127 @@ private fun SlotDetailCard(slot: GoalSlot, count: Long) {
 }
 
 @Composable
-private fun RemindersSection(goal: Goal, onEdit: () -> Unit) {
+internal fun DetailsDisclosure(
+    goal: Goal,
+    onEditCounting: () -> Unit,
+    onEditSchedule: () -> Unit,
+    onEditReminders: () -> Unit,
+) {
+    val advancedItems = listOf(
+        DetailItem(Icons.Outlined.TrackChanges, stringResource(R.string.goal_details_progress_scope), progressScopeSummary(goal.targetPolicy)),
+        DetailItem(Icons.Outlined.Shield, stringResource(R.string.goal_details_cap_behavior), capBehaviorSummary(goal.capBehavior)),
+        DetailItem(Icons.Outlined.Flag, stringResource(R.string.goal_details_completion), completionSummary(goal)),
+    )
+
+    val scheduleItems = listOf(
+        DetailItem(Icons.Outlined.CalendarMonth, stringResource(R.string.goal_details_repeats), scheduleSummary(goal)),
+        DetailItem(Icons.Outlined.AccessTime, stringResource(R.string.goal_details_timing), timingSummary(goal)),
+        DetailItem(Icons.Outlined.Event, stringResource(R.string.goal_details_duration), durationSummary(goal)),
+    )
+
     val reminders = goal.reminders.filter { it.enabled }.sortedBy { it.sortOrder }
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        SectionHeader(stringResource(R.string.goal_details_reminders_section), onEdit = onEdit)
-        DetailCard {
-            if (reminders.isEmpty()) {
+
+    var expanded by remember { mutableStateOf(false) }
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
+        label = "detailsChevron",
+    )
+
+    DetailCard {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded }
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            DetailIconTile(Icons.Outlined.Tune)
+            Text(
+                text = stringResource(R.string.goal_details_section),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                imageVector = Icons.Outlined.KeyboardArrowDown,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.rotate(rotation),
+            )
+        }
+        AnimatedVisibility(
+            visible = expanded,
+            enter = expandVertically() + fadeIn(),
+            exit = shrinkVertically() + fadeOut(),
+        ) {
+            Column {
+                RowDivider()
+                DetailSubsectionHeader(
+                    title = stringResource(R.string.goal_details_counting_section),
+                    onEdit = onEditCounting,
+                )
                 DetailInfoRow(
                     DetailItem(
-                        icon = Icons.Outlined.Notifications,
-                        label = stringResource(R.string.goal_details_reminders),
-                        value = stringResource(R.string.goal_summary_off),
+                        icon = Icons.Outlined.Tune,
+                        label = stringResource(R.string.goal_details_count_rule),
+                        value = countRuleSummary(goal),
                     ),
                 )
-            } else {
-                reminders.forEachIndexed { index, reminder ->
+                RowDivider()
+                DetailSubsectionHeader(
+                    title = stringResource(R.string.goal_details_schedule_section),
+                    onEdit = onEditSchedule,
+                )
+                scheduleItems.forEachIndexed { index, item ->
+                    DetailInfoRow(item)
+                    if (index != scheduleItems.lastIndex) RowDivider()
+                }
+                RowDivider()
+                advancedItems.forEachIndexed { index, item ->
+                    DetailInfoRow(item)
+                    if (index != advancedItems.lastIndex) RowDivider()
+                }
+                RowDivider()
+                DetailSubsectionHeader(
+                    title = stringResource(R.string.goal_details_reminders_section),
+                    onEdit = onEditReminders,
+                )
+                if (reminders.isEmpty()) {
                     DetailInfoRow(
                         DetailItem(
                             icon = Icons.Outlined.Notifications,
-                            label = stringResource(R.string.goal_details_reminder_number, index + 1),
-                            value = reminderSummary(reminder, goal),
+                            label = stringResource(R.string.goal_details_reminders),
+                            value = stringResource(R.string.goal_summary_off),
                         ),
                     )
-                    if (index != reminders.lastIndex) RowDivider()
+                } else {
+                    reminders.forEachIndexed { index, reminder ->
+                        DetailInfoRow(
+                            DetailItem(
+                                icon = Icons.Outlined.Notifications,
+                                label = stringResource(R.string.goal_details_reminder_number, index + 1),
+                                value = reminderSummary(reminder, goal),
+                            ),
+                        )
+                        if (index != reminders.lastIndex) RowDivider()
+                    }
                 }
             }
         }
     }
 }
 
-private data class DetailItem(
+internal data class DetailItem(
     val icon: ImageVector,
     val label: String,
     val value: String,
 )
 
 @Composable
-private fun SectionLabel(text: String) {
+internal fun SectionLabel(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.labelLarge,
@@ -805,7 +1017,7 @@ private fun SectionLabel(text: String) {
 }
 
 @Composable
-private fun SectionHeader(title: String, onEdit: () -> Unit) {
+internal fun SectionHeader(title: String, onEdit: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -817,7 +1029,7 @@ private fun SectionHeader(title: String, onEdit: () -> Unit) {
 }
 
 @Composable
-private fun EditChip(onClick: () -> Unit) {
+internal fun EditChip(onClick: () -> Unit) {
     val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier
@@ -848,7 +1060,7 @@ private fun EditChip(onClick: () -> Unit) {
 }
 
 @Composable
-private fun DetailCard(content: @Composable () -> Unit) {
+internal fun DetailCard(content: @Composable () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -862,7 +1074,7 @@ private fun DetailCard(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun DetailInfoRow(item: DetailItem) {
+internal fun DetailInfoRow(item: DetailItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -888,7 +1100,7 @@ private fun DetailInfoRow(item: DetailItem) {
 }
 
 @Composable
-private fun DetailIconTile(icon: ImageVector) {
+internal fun DetailIconTile(icon: ImageVector) {
     val colorScheme = MaterialTheme.colorScheme
     Box(
         modifier = Modifier
@@ -906,7 +1118,7 @@ private fun DetailIconTile(icon: ImageVector) {
 }
 
 @Composable
-private fun RowDivider() {
+internal fun RowDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(start = 16.dp),
         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
@@ -914,7 +1126,33 @@ private fun RowDivider() {
 }
 
 @Composable
-private fun scheduleSummary(goal: Goal): String =
+internal fun DetailSubsectionHeader(title: String, onEdit: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 10.dp, top = 10.dp, bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
+        IconButton(onClick = onEdit, modifier = Modifier.size(40.dp)) {
+            Icon(
+                imageVector = Icons.Outlined.Edit,
+                contentDescription = stringResource(R.string.goal_details_edit_action),
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(19.dp),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun scheduleSummary(goal: Goal): String =
     when (val frequency = goal.recurrence.frequency) {
         RecurrenceFrequency.DAILY -> stringResource(R.string.goal_summary_schedule_daily)
         RecurrenceFrequency.WEEKLY -> goal.recurrence.weekdays
@@ -951,7 +1189,7 @@ private fun scheduleSummary(goal: Goal): String =
     }
 
 @Composable
-private fun progressScopeSummary(policy: TargetPolicy): String =
+internal fun progressScopeSummary(policy: TargetPolicy): String =
     when (policy) {
         TargetPolicy.PER_DUE_DATE -> stringResource(R.string.goal_details_scope_due_date)
         TargetPolicy.CUMULATIVE_TOTAL -> stringResource(R.string.goal_details_scope_lifetime)
@@ -960,7 +1198,7 @@ private fun progressScopeSummary(policy: TargetPolicy): String =
     }
 
 @Composable
-private fun timingSummary(goal: Goal): String {
+internal fun timingSummary(goal: Goal): String {
     val slots = goal.activeSlots
     return when {
         slots.isEmpty() -> stringResource(R.string.goal_summary_slots_anytime)
@@ -975,7 +1213,7 @@ private fun timingSummary(goal: Goal): String {
 }
 
 @Composable
-private fun countRuleSummary(goal: Goal): String {
+internal fun countRuleSummary(goal: Goal): String {
     val target = GoalProgressCalculator.getTargetCount(goal).takeIf { it > 0 }
     return countRuleSummary(
         minimum = goal.minimumStreakCount,
@@ -988,7 +1226,7 @@ private fun countRuleSummary(goal: Goal): String {
 }
 
 @Composable
-private fun slotCountRuleSummary(slot: GoalSlot): String =
+internal fun slotCountRuleSummary(slot: GoalSlot): String =
     countRuleSummary(
         minimum = slot.minimumCount,
         target = slot.targetCount,
@@ -998,7 +1236,7 @@ private fun slotCountRuleSummary(slot: GoalSlot): String =
     )
 
 @Composable
-private fun countRuleSummary(
+internal fun countRuleSummary(
     minimum: Int?,
     target: Int?,
     maximum: Int?,
@@ -1038,7 +1276,7 @@ private fun countRuleSummary(
     }
 
 @Composable
-private fun capBehaviorSummary(behavior: CountCapBehavior): String =
+internal fun capBehaviorSummary(behavior: CountCapBehavior): String =
     when (behavior) {
         CountCapBehavior.AllowOverTarget -> stringResource(R.string.goal_details_cap_allow)
         CountCapBehavior.WarnOverTarget -> stringResource(R.string.goal_details_cap_warn)
@@ -1047,7 +1285,7 @@ private fun capBehaviorSummary(behavior: CountCapBehavior): String =
     }
 
 @Composable
-private fun completionSummary(goal: Goal): String =
+internal fun completionSummary(goal: Goal): String =
     if (goal.autoCompleteOnTarget) {
         stringResource(R.string.goal_details_completion_target)
     } else {
@@ -1055,7 +1293,7 @@ private fun completionSummary(goal: Goal): String =
     }
 
 @Composable
-private fun durationSummary(goal: Goal): String =
+internal fun durationSummary(goal: Goal): String =
     when {
         goal.durationDays != null -> stringResource(R.string.goal_summary_duration_days, goal.durationDays)
         goal.endDate != null -> stringResource(R.string.goal_details_duration_until, goal.endDate.toString())
@@ -1063,7 +1301,7 @@ private fun durationSummary(goal: Goal): String =
     }
 
 @Composable
-private fun slotTitle(slot: GoalSlot): String =
+internal fun slotTitle(slot: GoalSlot): String =
     slot.label?.takeIf { it.isNotBlank() } ?: when (slot.slotType) {
         GoalSlotType.ANYTIME -> stringResource(R.string.slot_anytime)
         GoalSlotType.PRAYER -> {
@@ -1074,7 +1312,7 @@ private fun slotTitle(slot: GoalSlot): String =
         GoalSlotType.TIME_WINDOW -> stringResource(R.string.goal_details_slot_number, slot.sortOrder + 1)
     }
 
-private fun slotTimingSubtitle(slot: GoalSlot): String =
+internal fun slotTimingSubtitle(slot: GoalSlot): String =
     when (slot.slotType) {
         GoalSlotType.ANYTIME -> ""
         GoalSlotType.PRAYER -> slot.timingValue.orEmpty().replace('_', ' ')
@@ -1086,7 +1324,7 @@ private fun slotTimingSubtitle(slot: GoalSlot): String =
     }
 
 @Composable
-private fun reminderSummary(reminder: GoalReminder, goal: Goal): String =
+internal fun reminderSummary(reminder: GoalReminder, goal: Goal): String =
     when (reminder.reminderType) {
         ReminderType.FIXED_TIME -> stringResource(
             R.string.goal_summary_reminders_time,
@@ -1171,12 +1409,34 @@ private fun GoalDetailPreview() {
                     targetDisplay = "100",
                 ),
                 effectiveToday = LocalDate.parse("2026-05-27"),
+                streakInfo = StreakInfo(
+                    currentStreak = 2,
+                    activeDates = emptySet(),
+                    dailyCounts = emptyMap(),
+                ),
+                recentDays = (0..6).map { offset ->
+                    GoalDayActivity(
+                        date = LocalDate.parse("2026-05-27").minusDays((6 - offset).toLong()),
+                        isScheduled = true,
+                        status = when {
+                            offset <= 3 -> StreakDayStatus.COMPLETE
+                            offset == 5 -> StreakDayStatus.PARTIAL
+                            else -> StreakDayStatus.INACTIVE
+                        },
+                        isToday = offset == 6,
+                        progress = if (offset <= 5) 1f else 0f,
+                    )
+                },
+                todayCount = 22,
             ),
             onNavigateBack = {},
             onNavigateToCounting = {},
             onNavigateToEdit = {},
             onNavigateToEditSchedule = {},
             onNavigateToEditReminders = {},
+            onArchive = {},
+            onRestore = {},
+            onDelete = {},
         )
     }
 }
