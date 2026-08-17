@@ -168,7 +168,19 @@ struct GoalCardPresentation: Equatable {
     private static func streakTag(days: Int, language: AppLanguage) -> String? {
         guard days > 0 else { return nil }
         let label = format("%@ day streak", days, language: language)
-        return days > 7 ? "🔥 \(label)" : label
+        let fireCount: Int
+        switch days {
+        case 30...:
+            fireCount = 3
+        case 15...:
+            fireCount = 2
+        case 3...:
+            fireCount = 1
+        default:
+            fireCount = 0
+        }
+        guard fireCount > 0 else { return label }
+        return "\(String(repeating: "🔥", count: fireCount)) \(label)"
     }
 
     private static func weekdayAbbreviation(_ weekday: Int, language: AppLanguage) -> String? {

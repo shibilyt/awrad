@@ -52,6 +52,21 @@ struct GoalLifecycleTests {
         #expect(completedPresentation.lifecycleTag == "Completed")
     }
 
+    @Test func goalCardStreakUsesThreeFireEmojiTiers() {
+        let goal = Goal(
+            dhikrID: UUID(),
+            slots: [GoalSlot(slotType: .anytime, targetCount: 100)],
+            startDate: "2026-07-15"
+        )
+
+        #expect(presentation(goal, streakDays: 2).streakTag == "2 day streak")
+        #expect(presentation(goal, streakDays: 3).streakTag == "🔥 3 day streak")
+        #expect(presentation(goal, streakDays: 14).streakTag == "🔥 14 day streak")
+        #expect(presentation(goal, streakDays: 15).streakTag == "🔥🔥 15 day streak")
+        #expect(presentation(goal, streakDays: 29).streakTag == "🔥🔥 29 day streak")
+        #expect(presentation(goal, streakDays: 30).streakTag == "🔥🔥🔥 30 day streak")
+    }
+
     @Test func goalCardPresentationMatchesTargetlessPrayerAndCompactCountStates() {
         let targetless = Goal(
             dhikrID: UUID(),
@@ -470,6 +485,16 @@ struct GoalLifecycleTests {
             currentCount: 0,
             progress: 0,
             streakDays: 0,
+            language: .english
+        )
+    }
+
+    private func presentation(_ goal: Goal, streakDays: Int) -> GoalCardPresentation {
+        GoalCardPresentation(
+            goal: goal,
+            currentCount: 0,
+            progress: 0,
+            streakDays: streakDays,
             language: .english
         )
     }
