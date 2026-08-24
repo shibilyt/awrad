@@ -149,6 +149,7 @@
     <string name="create_goal_min_streak">സ്ട്രീക്കിനുള്ള മിനിമം</string>
     <string name="create_goal_min_streak_hint">സ്ട്രീക്ക് നിലനിർത്താനുള്ള കുറഞ്ഞ എണ്ണം</string>
     <string name="create_goal_add_streak">സ്ട്രീക്ക് ആവശ്യം ചേർക്കുക</string>
+    <string name="create_goal_remove_streak">ആവശ്യം നീക്കം ചെയ്യുക</string>
     <string name="create_goal_quick_presets">ദ്രുത പ്രീസെറ്റുകൾ</string>
     <string name="create_goal_quick_title">ദ്രുത സജ്ജീകരണം</string>
     <string name="create_goal_quick_subtitle">ലക്ഷ്യത്തിന്റെ രൂപം തിരഞ്ഞെടുക്കൂ, എണ്ണം ക്രമീകരിച്ച് തുടങ്ങൂ.</string>

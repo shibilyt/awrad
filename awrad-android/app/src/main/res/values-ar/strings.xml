@@ -166,6 +166,7 @@
     <string name="create_goal_min_streak">الحد الأدنى للسلسلة</string>
     <string name="create_goal_min_streak_hint">الحد الأدنى للعدد للحفاظ على السلسلة</string>
     <string name="create_goal_add_streak">إضافة شرط للسلسلة</string>
+    <string name="create_goal_remove_streak">إزالة الشرط</string>
     <string name="create_goal_quick_presets">إعدادات سريعة</string>
     <string name="create_goal_quick_title">إنشاء سريع</string>
     <string name="create_goal_quick_subtitle">اختر أبسط شكل، واضبط العدد، وابدأ.</string>

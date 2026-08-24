@@ -1,7 +1,6 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.goals
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.BorderStroke
@@ -175,22 +173,17 @@ fun SimpleTargetPane(
                                 integratedStepper = true,
                                 onTargetChange = onTargetChange,
                             )
-                            if (draft.extras.hasMinStreak) {
-                                SimpleStreakRequirement(
-                                    value = draft.extras.minStreakCount,
-                                    integratedStepper = true,
-                                    onValueChange = { value ->
-                                        onDraftChange(draft.withStreakCount(value))
-                                    },
-                                )
-                            } else {
-                                TextButton(
-                                    onClick = { onDraftChange(draft.withStreakEnabled(true)) },
-                                    modifier = Modifier.testTag("simple-goal-add-streak"),
-                                ) {
-                                    Text(stringResource(R.string.create_goal_add_streak))
-                                }
-                            }
+                            SimpleOptionalStreakRequirement(
+                                enabled = draft.extras.hasMinStreak,
+                                value = draft.extras.minStreakCount,
+                                integratedStepper = true,
+                                onEnabledChange = { enabled ->
+                                    onDraftChange(draft.withStreakEnabled(enabled))
+                                },
+                                onValueChange = { value ->
+                                    onDraftChange(draft.withStreakCount(value))
+                                },
+                            )
                         }
                         else -> Unit
                     }
@@ -367,6 +360,7 @@ private fun SimpleStreakRequirement(
     value: String,
     integratedStepper: Boolean = false,
     onValueChange: (String) -> Unit,
+    onRemove: () -> Unit,
 ) {
     Column(
         modifier = Modifier.testTag("simple-goal-streak-input"),
@@ -384,6 +378,14 @@ private fun SimpleStreakRequirement(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        TextButton(
+            onClick = onRemove,
+            modifier = Modifier
+                .align(Alignment.End)
+                .testTag("simple-goal-remove-streak"),
+        ) {
+            Text(stringResource(R.string.create_goal_remove_streak))
+        }
     }
 }
 
@@ -396,37 +398,20 @@ private fun SimpleOptionalStreakRequirement(
     onValueChange: (String) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onEnabledChange(!enabled) }
-                .testTag("simple-goal-streak-row"),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.create_goal_min_streak),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(R.string.create_goal_min_streak_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Switch(
-                checked = enabled,
-                onCheckedChange = onEnabledChange,
-                modifier = Modifier.testTag("simple-goal-streak-switch"),
-            )
-        }
         if (enabled) {
             SimpleStreakRequirement(
                 value = value,
                 integratedStepper = integratedStepper,
                 onValueChange = onValueChange,
+                onRemove = { onEnabledChange(false) },
             )
+        } else {
+            TextButton(
+                onClick = { onEnabledChange(true) },
+                modifier = Modifier.testTag("simple-goal-add-streak"),
+            ) {
+                Text(stringResource(R.string.create_goal_add_streak))
+            }
         }
     }
 }

@@ -6,7 +6,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -76,11 +75,54 @@ class QuickCreatePaneTest {
         composeRule.onNodeWithTag("simple-goal-option-total").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("simple-goal-target").assertIsDisplayed()
-        composeRule.onNodeWithTag("simple-goal-streak-switch").assertIsOff()
+        composeRule.onAllNodesWithTag("simple-goal-streak-switch").assertCountEquals(0)
+        composeRule.onNodeWithTag("simple-goal-add-streak").assertIsDisplayed()
+        composeRule.onNodeWithTag("simple-goal-add-streak").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("simple-goal-streak-input").assertIsDisplayed()
         composeRule.onNodeWithTag("simple-goal-change-type").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("simple-goal-option-daily").assertIsDisplayed()
         composeRule.onAllNodesWithTag("simple-goal-target").assertCountEquals(0)
+    }
+
+    @Test
+    fun trackerSimplePaneUsesAddStreakRequirementAction() {
+        var draft by mutableStateOf(GoalDraftDefaults.forPreset(GoalPreset.TRACKER))
+
+        composeRule.setContent {
+            AwradDhikrGoalsTrackerTheme {
+                SimpleTargetPane(
+                    dhikr = testDhikr,
+                    audioState = PreviewPlaybackState(),
+                    draft = draft,
+                    validation = GoalDraftMapper.validate(draft, hasDhikr = true),
+                    isCreating = false,
+                    canChangeDhikr = false,
+                    onTogglePlayback = {},
+                    onShowFullQuran = {},
+                    onChangeDhikr = {},
+                    onTargetChange = {},
+                    onDraftChange = { draft = it },
+                    onCreate = {},
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithTag("simple-goal-streak-switch").assertCountEquals(0)
+        composeRule.onNodeWithTag("simple-goal-add-streak").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("simple-goal-add-streak").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("simple-goal-streak-input").assertIsDisplayed()
+        composeRule.onNodeWithText("1").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("simple-goal-remove-streak").assertIsDisplayed()
+        composeRule.onNodeWithTag("simple-goal-remove-streak").performClick()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag("simple-goal-streak-input").assertCountEquals(0)
+        composeRule.onNodeWithTag("simple-goal-add-streak").assertIsDisplayed()
+        assertEquals(false, draft.extras.hasMinStreak)
     }
 
     @Test

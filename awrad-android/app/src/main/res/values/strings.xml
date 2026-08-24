@@ -185,6 +185,7 @@
     <string name="create_goal_min_streak">Minimum for streak</string>
     <string name="create_goal_min_streak_hint">Minimum count to maintain streak</string>
     <string name="create_goal_add_streak">Add streak requirement</string>
+    <string name="create_goal_remove_streak">Remove requirement</string>
     <string name="create_goal_quick_presets">Quick presets</string>
     <string name="create_goal_advanced">Advanced</string>
     <string name="create_goal_quick_title">Quick create</string>
