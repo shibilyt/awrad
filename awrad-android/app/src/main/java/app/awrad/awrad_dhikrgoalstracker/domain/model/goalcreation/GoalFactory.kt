@@ -35,6 +35,9 @@ object GoalFactory {
     private fun validate(command: CreateGoalCommand): List<GoalCreationError> {
         val errors = mutableListOf<GoalCreationError>()
         if (command.durationDays != null && command.durationDays <= 0) errors += GoalCreationError.InvalidDuration
+        if (command.streakMinimumCount != null && command.streakMinimumCount <= 0) {
+            errors += GoalCreationError.InvalidCountPolicy
+        }
         if (!isValidSchedule(command.schedule)) errors += GoalCreationError.InvalidSchedule
         if (!isValidTiming(command)) errors += GoalCreationError.InvalidTiming
         if (!isValidCountPolicy(command.countPolicy, allowNoTarget = isTracker(command))) {
@@ -56,7 +59,7 @@ object GoalFactory {
             progressScope == ProgressScope.Period -> TargetPolicy.PERIOD_TOTAL
             else -> TargetPolicy.PER_DUE_DATE
         }
-        val slots = timing.toSlots(goalId, targetPolicy, countPolicy)
+        val slots = timing.toSlots(goalId, targetPolicy, countPolicy, streakMinimumCount)
         return Goal(
             id = goalId,
             dhikrId = dhikrId,
@@ -67,11 +70,11 @@ object GoalFactory {
             reminders = reminders.mapIndexed { index, policy -> policy.toReminder(goalId, index) },
             startDate = startDate,
             durationDays = durationDays,
-            minimumStreakCount = countPolicy.minimumCount,
+            minimumStreakCount = streakMinimumCount ?: countPolicy.minimumCount,
             targetCount = countPolicy.targetCount,
             maximumCount = slots.aggregateMaximumCount(defaultMaximum = countPolicy.maximumCount),
             capBehavior = countPolicy.capBehavior.toDataCapBehavior(),
-            streakThreshold = countPolicy.streakThreshold,
+            streakThreshold = if (streakMinimumCount != null) Threshold.Minimum else countPolicy.streakThreshold,
             reminderThreshold = countPolicy.reminderThreshold,
             completionThreshold = countPolicy.completionThreshold,
             autoCompleteOnTarget = completionPolicy == CompletionPolicy.WhenTargetReached,
@@ -125,23 +128,30 @@ object GoalFactory {
             )
         }
 
-    private fun TimingSpec.toSlots(goalId: AwradId, targetPolicy: TargetPolicy, defaultPolicy: CountPolicy): List<GoalSlot> =
+    private fun TimingSpec.toSlots(
+        goalId: AwradId,
+        targetPolicy: TargetPolicy,
+        defaultPolicy: CountPolicy,
+        streakMinimumCount: Int?,
+    ): List<GoalSlot> =
         when (this) {
             TimingSpec.Anytime -> listOf(
                 GoalSlot(
+                    // A tracker may still have a streak floor, but never a target.
+                    // Keep that floor on the slot so counting reads the same local policy.
+                    minimumCount = defaultPolicy.withStreakMinimum(streakMinimumCount).minimumCount,
                     goalId = goalId,
                     slotType = GoalSlotType.ANYTIME,
-                    minimumCount = defaultPolicy.minimumCount,
                     targetCount = defaultPolicy.targetForPersistence(targetPolicy),
                     maximumCount = defaultPolicy.maximumCount,
                     capBehavior = defaultPolicy.capBehavior.toDataCapBehavior(),
-                    streakThreshold = defaultPolicy.streakThreshold,
+                    streakThreshold = defaultPolicy.withStreakMinimum(streakMinimumCount).streakThreshold,
                     reminderThreshold = defaultPolicy.reminderThreshold,
                     completionThreshold = defaultPolicy.completionThreshold,
                 )
             )
             is TimingSpec.PrayerBased -> slots.mapIndexed { index, slot ->
-                val policy = slot.countPolicy.withFallback(defaultPolicy)
+                val policy = slot.countPolicy.withFallback(defaultPolicy).withStreakMinimum(streakMinimumCount)
                 GoalSlot(
                     goalId = goalId,
                     slotType = GoalSlotType.PRAYER,
@@ -160,7 +170,7 @@ object GoalFactory {
                 )
             }
             is TimingSpec.TimeWindows -> windows.mapIndexed { index, window ->
-                val policy = window.countPolicy.withFallback(defaultPolicy)
+                val policy = window.countPolicy.withFallback(defaultPolicy).withStreakMinimum(streakMinimumCount)
                 GoalSlot(
                     goalId = goalId,
                     slotType = GoalSlotType.TIME_WINDOW,
@@ -251,6 +261,14 @@ object GoalFactory {
             reminderThreshold = defaultPolicy.reminderThreshold,
             completionThreshold = defaultPolicy.completionThreshold,
             capBehavior = defaultPolicy.capBehavior,
+        )
+    }
+
+    private fun CountPolicy.withStreakMinimum(streakMinimumCount: Int?): CountPolicy {
+        if (streakMinimumCount == null || minimumCount != null) return this
+        return copy(
+            minimumCount = streakMinimumCount,
+            streakThreshold = Threshold.Minimum,
         )
     }
 

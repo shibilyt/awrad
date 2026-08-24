@@ -17,6 +17,11 @@ data class CreateGoalCommand(
     val timing: TimingSpec = TimingSpec.Anytime,
     val slotCountingPolicy: SlotCountingPolicy = SlotCountingPolicy.WARN_AND_ALLOW,
     val countPolicy: CountPolicy = CountPolicy(targetCount = 100),
+    /**
+     * A streak-only minimum for tracker goals. It deliberately stays separate from
+     * [countPolicy] so a tracker can protect a streak without becoming a target goal.
+     */
+    val streakMinimumCount: Int? = null,
     val progressScope: ProgressScope = ProgressScope.DueDate,
     val completionPolicy: CompletionPolicy = CompletionPolicy.Never,
     val reminders: List<ReminderPolicy> = emptyList(),

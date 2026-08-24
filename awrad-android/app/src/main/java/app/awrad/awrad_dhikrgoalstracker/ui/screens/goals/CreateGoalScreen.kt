@@ -116,7 +116,11 @@ fun CreateGoalScreen(
     }
 
     val title = when (uiState.mode) {
-        GoalCreationMode.SelectShape -> stringResource(R.string.create_goal_shape_appbar)
+        GoalCreationMode.SelectShape -> if (uiState.selectedDhikr != null && uiState.draft != null) {
+            stringResource(R.string.create_goal_simple_appbar)
+        } else {
+            stringResource(R.string.create_goal_shape_appbar)
+        }
         GoalCreationMode.SelectDhikr -> stringResource(R.string.create_goal_select_dhikr)
         GoalCreationMode.SimpleTarget -> stringResource(R.string.create_goal_simple_appbar)
         GoalCreationMode.Advanced -> stringResource(R.string.create_goal_advanced_appbar)
@@ -179,10 +183,32 @@ fun CreateGoalScreen(
             ) { mode ->
                 when (mode) {
                     GoalCreationMode.SelectShape -> {
-                        SelectGoalShapeStep(
-                            onSelectShape = viewModel::selectShape,
-                            onAdvanced = viewModel::enterAdvanced,
-                        )
+                        val dhikr = uiState.selectedDhikr
+                        val draft = uiState.draft
+                        if (dhikr != null && draft != null) {
+                            SimpleTargetPane(
+                                dhikr = dhikr,
+                                audioState = audioState,
+                                draft = draft,
+                                validation = uiState.validation,
+                                isCreating = uiState.isCreating,
+                                onTogglePlayback = viewModel::togglePlayback,
+                                onTargetChange = viewModel::updateTargetDraft,
+                                onCreate = viewModel::createGoal,
+                                onShowFullQuran = onNavigateToQuranReader,
+                                onChangeDhikr = viewModel::openDhikrPicker,
+                                canChangeDhikr = !uiState.isDhikrLocked,
+                                onSelectQuickPreset = viewModel::selectQuickPreset,
+                                onDraftChange = viewModel::updateDraft,
+                                onAdvanced = viewModel::enterAdvanced,
+                                showTypeSelector = true,
+                            )
+                        } else {
+                            SelectGoalShapeStep(
+                                onSelectShape = viewModel::selectShape,
+                                onAdvanced = viewModel::enterAdvanced,
+                            )
+                        }
                     }
                     GoalCreationMode.SelectDhikr -> {
                         SelectDhikrStep(
@@ -206,6 +232,10 @@ fun CreateGoalScreen(
                             onChangeDhikr = viewModel::openDhikrPicker,
                             onTargetChange = viewModel::updateTargetDraft,
                             onCreate = viewModel::createGoal,
+                            onSelectQuickPreset = viewModel::selectQuickPreset,
+                            onDraftChange = viewModel::updateDraft,
+                            onAdvanced = viewModel::enterAdvanced,
+                            onChangeGoalType = viewModel::openGoalTypePicker,
                         )
                     }
                     GoalCreationMode.Advanced -> {

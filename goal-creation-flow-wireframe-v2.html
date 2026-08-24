@@ -1,0 +1,1317 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Awrad — Goal creation flow v2 wireframe</title>
+  <link rel="icon" href="data:," />
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+  <style>
+    :root {
+      --bg: #ebe8e0;
+      --paper: #fffefa;
+      --paper-2: #f5f2eb;
+      --paper-3: #efebe2;
+      --ink: #203029;
+      --muted: #68746d;
+      --line: #d9d6cc;
+      --primary: #1d6b4f;
+      --primary-soft: #dceee5;
+      --primary-deep: #124b35;
+      --warning: #876016;
+      --warning-soft: #fff2c9;
+      --danger: #b33c33;
+      --danger-soft: #fce8e5;
+      --success: #1d6b4f;
+      --shadow: 0 20px 56px rgba(32, 48, 41, .16);
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--bg); }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 3px solid rgba(29, 107, 79, .28);
+      outline-offset: 2px;
+    }
+    .stage {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 28px;
+      padding: 28px 28px 104px;
+      min-height: 100vh;
+    }
+    .phone {
+      width: 394px;
+      min-width: 394px;
+      padding: 8px;
+      border: 1px solid #c9c5b8;
+      border-radius: 42px;
+      background: #dedbd2;
+      box-shadow: var(--shadow);
+    }
+    .phone-screen {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      height: 800px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      background: var(--paper);
+    }
+    .status {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 18px 5px;
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--paper);
+    }
+    .appbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--line);
+      background: var(--paper);
+      z-index: 4;
+    }
+    .appbar .back {
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 50%;
+      color: var(--ink);
+      background: var(--paper-2);
+      font-size: 19px;
+    }
+    .appbar h2 {
+      flex: 1;
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.2;
+    }
+    .appbar .status-pill {
+      color: var(--primary);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .appbar.counting {
+      align-items: flex-start;
+      padding: 13px 13px 11px;
+      border-bottom: 0;
+      background: #f1f4f1;
+    }
+    .appbar.counting .back { margin-top: 4px; color: #18231e; background: transparent; font-size: 32px; font-weight: 300; }
+    .appbar.counting h2 { overflow: hidden; font-size: 18px; line-height: 1.1; text-overflow: ellipsis; white-space: nowrap; }
+    .appbar.counting .count-title { flex: 1; min-width: 0; }
+    .appbar.counting .count-pill { display: inline-flex; margin-top: 6px; padding: 5px 12px; border-radius: 18px; color: #2d7a58; background: #cfeedd; font-size: 12px; font-weight: 800; }
+    .appbar.counting .count-actions { display: flex; align-items: center; gap: 8px; margin-left: 8px; }
+    .appbar.counting .count-action { display: grid; place-items: center; width: 43px; height: 43px; border: 0; border-radius: 14px; color: #073c26; background: #cfeedd; font-size: 21px; font-weight: 850; }
+    .appbar.counting .count-action.menu { width: 26px; color: #17241d; background: transparent; font-size: 25px; }
+    .scroll {
+      flex: 1;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    .scroll::-webkit-scrollbar { width: 0; }
+    .content {
+      padding: 16px 16px 118px;
+    }
+    .content.compact { padding: 14px 14px 116px; }
+    .kicker {
+      margin-bottom: 4px;
+      color: var(--primary);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 6px; font-size: 24px; line-height: 1.15; }
+    h3 { margin-bottom: 4px; font-size: 17px; line-height: 1.2; }
+    .lede { margin-bottom: 18px; color: var(--muted); line-height: 1.55; }
+    .subtle { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .tiny { color: var(--muted); font-size: 11px; }
+    .card {
+      margin-bottom: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: var(--paper);
+    }
+    .card.soft { background: var(--paper-2); }
+    .card.emphasis {
+      border-color: rgba(29, 107, 79, .3);
+      background: var(--primary-soft);
+    }
+    .card.warning { border-color: #e8cc82; background: var(--warning-soft); }
+    .card.error { border-color: #e7ada8; background: var(--danger-soft); }
+    .row { display: flex; align-items: center; gap: 10px; }
+    .row.start { align-items: flex-start; }
+    .row.between { justify-content: space-between; }
+    .grow { flex: 1; min-width: 0; }
+    .stack { display: flex; flex-direction: column; gap: 10px; }
+    .stack.tight { gap: 5px; }
+    .stack.loose { gap: 16px; }
+    .label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    .field { margin-top: 10px; }
+    input[type="text"], input[type="number"], input[type="date"], input[type="time"], select {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 11px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--ink);
+      background: var(--paper);
+    }
+    input[aria-invalid="true"], select[aria-invalid="true"] { border-color: var(--danger); background: #fff8f7; }
+    .button {
+      min-height: 42px;
+      padding: 9px 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--ink);
+      background: var(--paper);
+      font-weight: 750;
+    }
+    .button:hover { border-color: var(--primary); }
+    .button.primary { border-color: var(--primary); color: white; background: var(--primary); }
+    .button.primary:hover { background: var(--primary-deep); }
+    .button.tonal { border-color: transparent; color: var(--primary-deep); background: var(--primary-soft); }
+    .button.ghost { border-color: transparent; color: var(--primary); background: transparent; }
+    .button.danger { border-color: transparent; color: var(--danger); background: var(--danger-soft); }
+    .button:disabled { cursor: not-allowed; opacity: .55; }
+    .full { width: 100%; }
+    .picker-search { margin: 14px 0 12px; }
+    .dhikr {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      color: var(--ink);
+      text-align: left;
+      background: var(--paper);
+    }
+    .dhikr:hover { border-color: var(--primary); }
+    .arabic { font-size: 20px; line-height: 1.35; }
+    .dhikr .english { margin-top: 2px; color: var(--muted); font-size: 12px; }
+    .tag {
+      display: inline-flex;
+      margin-top: 7px;
+      padding: 3px 7px;
+      border-radius: 9px;
+      color: var(--primary-deep);
+      background: var(--primary-soft);
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .progress {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+      margin: 2px 0 18px;
+    }
+    .progress span { height: 4px; border-radius: 10px; background: var(--paper-3); }
+    .progress span.done, .progress span.current { background: var(--primary); }
+    .step-note {
+      margin: 12px 0 14px;
+      padding: 10px 12px;
+      border-left: 3px solid var(--primary);
+      border-radius: 10px;
+      color: var(--primary-deep);
+      background: var(--primary-soft);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .choice {
+      position: relative;
+      min-height: 94px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      color: var(--ink);
+      text-align: left;
+      background: var(--paper);
+    }
+    .choice:hover { border-color: var(--primary); }
+    .choice.selected { border: 2px solid var(--primary); padding: 11px; background: var(--primary-soft); }
+    .choice .check { position: absolute; top: 9px; right: 9px; color: var(--primary); font-weight: 900; }
+    .choice .title { display: block; padding-right: 16px; font-weight: 800; }
+    .choice .desc { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.35; }
+    .choice .example { display: inline-block; margin-top: 8px; color: var(--primary); font-size: 10px; font-weight: 800; }
+    .choice.full-choice { grid-column: 1 / -1; min-height: auto; }
+    .pill-row { display: flex; flex-wrap: wrap; gap: 7px; }
+    .pill {
+      min-height: 34px;
+      padding: 7px 10px;
+      border: 1px solid var(--line);
+      border-radius: 99px;
+      color: var(--ink);
+      background: var(--paper);
+      font-size: 12px;
+      font-weight: 750;
+    }
+    .pill.selected { border-color: var(--primary); color: white; background: var(--primary); }
+    .stepper { display: flex; align-items: stretch; gap: 5px; }
+    .stepper button { width: 42px; border: 1px solid var(--line); border-radius: 11px; color: var(--primary); background: var(--paper-2); font-size: 20px; font-weight: 800; }
+    .stepper input { min-width: 0; text-align: center; font-weight: 800; }
+    .rule-list { display: flex; flex-direction: column; gap: 8px; }
+    .rule {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      width: 100%;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      color: var(--ink);
+      text-align: left;
+      background: var(--paper);
+    }
+    .rule.selected { border-color: var(--primary); background: var(--primary-soft); }
+    .radio { width: 18px; height: 18px; margin-top: 1px; border: 2px solid var(--line); border-radius: 50%; }
+    .rule.selected .radio { border: 5px solid var(--primary); }
+    .rule .rtitle { font-weight: 800; }
+    .rule .rdesc { margin-top: 2px; color: var(--muted); font-size: 11px; }
+    .requirement-list { display: flex; flex-direction: column; gap: 8px; }
+    .requirement-card { padding: 11px; border: 1px solid var(--line); border-radius: 13px; background: var(--paper); }
+    .requirement-card .requirement-name { font-size: 12px; font-weight: 800; }
+    .requirement-card .requirement-summary { margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .requirement-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .requirement-grid .wide { grid-column: 1 / -1; }
+    .requirement-status { padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+    .requirement-status.met { border-color: rgba(29, 107, 79, .35); background: var(--primary-soft); }
+    .requirement-status .status-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .requirement-status .status-title { font-size: 12px; font-weight: 850; }
+    .status-chip { display: inline-flex; padding: 3px 7px; border-radius: 9px; color: var(--warning); background: var(--warning-soft); font-size: 10px; font-weight: 850; }
+    .status-chip.met { color: var(--primary-deep); background: white; }
+    .requirement-status .status-value { margin-top: 7px; font-size: 18px; font-weight: 850; }
+    .requirement-status .status-value span { color: var(--muted); font-size: 11px; font-weight: 600; }
+    .requirement-bar { height: 6px; margin-top: 9px; overflow: hidden; border-radius: 10px; background: var(--paper-3); }
+    .requirement-bar i { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+    .requirement-status .status-foot { display: flex; justify-content: space-between; gap: 8px; margin-top: 7px; color: var(--muted); font-size: 10px; }
+    .count-hero { margin-bottom: 12px; padding: 16px; border-radius: 17px; color: white; background: var(--primary-deep); }
+    .count-hero .label { color: #cce5d8; }
+    .count-hero strong { display: block; margin: 2px 0 12px; font-size: 34px; line-height: 1; }
+    .count-hero .subtle { color: #cce5d8; }
+    .count-entry { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+    .count-entry .button { min-width: 106px; color: var(--primary-deep); background: white; }
+    .count-quick { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+    .count-quick button { padding: 5px 8px; border: 1px solid rgba(255,255,255,.3); border-radius: 9px; color: white; background: transparent; font-size: 11px; font-weight: 800; }
+    .counting-header { margin-bottom: 12px; }
+    .counting-header h1 { margin-bottom: 5px; }
+    .counting-header .lede { margin-bottom: 0; }
+    .goal-count-screen { background: #f1f4f1; }
+    .goal-count-content { min-height: 100%; padding: 6px 18px 36px; text-align: center; }
+    .arabic-hero { display: grid; place-items: center; min-height: 92px; margin: 2px 0 14px; padding: 15px 18px; border-radius: 22px; color: #111a15; background: white; font-family: serif; font-size: 28px; line-height: 1.5; }
+    .count-action-row { display: grid; grid-template-columns: minmax(0, 1fr) 58px 58px; gap: 8px; margin-bottom: 15px; }
+    .audio-count-button { min-height: 62px; border: 0; border-radius: 30px; color: white; background: #3c865f; font-size: 16px; font-weight: 750; box-shadow: 0 5px 0 rgba(23, 88, 56, .12); }
+    .audio-count-button.active { background: #1f6845; }
+    .count-icon-button { display: grid; place-items: center; min-height: 62px; border: 0; border-radius: 22px; color: #073c26; background: #cfeedd; font-size: 23px; font-weight: 800; }
+    .count-icon-button.active { color: white; background: #3c865f; }
+    .count-ring-wrap { display: flex; flex-direction: column; align-items: center; margin: 28px 0 18px; }
+    .count-ring { --ring-progress: 22%; position: relative; display: grid; place-items: center; width: 275px; height: 275px; padding: 17px; border: 0; border-radius: 50%; background: conic-gradient(#efa900 0 var(--ring-progress), #e1e5e2 var(--ring-progress) 100%); box-shadow: 0 0 0 7px #eef1ef, 0 0 0 15px #e4e8e5; }
+    .count-ring::after { position: absolute; inset: 10px; border: 2px solid rgba(255,255,255,.75); border-radius: 50%; content: ''; pointer-events: none; }
+    .count-ring .ring-inner { display: grid; place-items: center; align-content: center; width: 100%; height: 100%; border-radius: 50%; background: #d7eee1; }
+    .count-ring .ring-current { display: block; color: #004d2c; font-size: 58px; font-weight: 850; line-height: .95; }
+    .count-ring .ring-target { display: block; margin-top: 12px; color: #656b68; font-size: 24px; font-weight: 750; }
+    .count-hint { margin-top: 19px; color: #656b68; font-size: 15px; }
+    .count-shortcuts { display: flex; justify-content: center; flex-wrap: wrap; gap: 7px; margin: 20px 0 16px; }
+    .count-shortcuts button { min-height: 36px; padding: 6px 13px; border: 1px solid #cdd9d1; border-radius: 18px; color: #236d4b; background: #e2f2e8; font-size: 12px; font-weight: 800; }
+    .count-details { margin-top: 10px; text-align: left; }
+    .count-details-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 14px 15px; border: 1px solid #d6dfd9; border-radius: 16px; color: #18372a; background: white; text-align: left; }
+    .count-details-toggle b { font-size: 13px; }
+    .count-details-toggle span { color: #648071; font-size: 11px; }
+    .count-details-body { margin-top: 8px; }
+    .count-details-body .requirement-status { background: white; }
+    .count-details-body .card.emphasis { text-align: left; }
+    .count-manual { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; margin-top: 11px; padding: 11px; border-radius: 15px; background: white; text-align: left; }
+    .count-manual .button { min-height: 42px; color: white; background: #3c865f; }
+    .milestone-panel { margin: 4px 0 16px; padding: 13px 13px 11px; border: 1px solid #d6dfd9; border-radius: 18px; background: rgba(255,255,255,.86); text-align: left; }
+    .milestone-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .milestone-heading .label { margin-bottom: 3px; color: #3c865f; }
+    .milestone-heading b { display: block; font-size: 13px; line-height: 1.25; }
+    .milestone-summary { flex: none; padding: 5px 8px; border-radius: 10px; color: #2d7a58; background: #e2f2e8; font-size: 10px; font-weight: 850; }
+    .milestone-timeline { position: relative; display: grid; gap: 4px; margin: 17px 0 10px; }
+    .milestone-timeline::before, .milestone-timeline::after { position: absolute; top: 10px; right: 16.5%; left: 16.5%; height: 3px; border-radius: 99px; content: ''; }
+    .milestone-timeline::before { background: #e0e8e2; }
+    .milestone-timeline::after { right: auto; width: var(--milestone-fill, 0%); background: #3c865f; }
+    .milestone-node-button { position: relative; z-index: 1; display: flex; min-width: 0; flex-direction: column; align-items: center; padding: 0 2px; border: 0; color: #6b7971; background: transparent; text-align: center; }
+    .milestone-node-button:focus-visible { outline-offset: 3px; }
+    .milestone-node-button.selected .milestone-dot { box-shadow: 0 0 0 4px rgba(60, 134, 95, .12); }
+    .milestone-dot { display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid #c8d8ce; border-radius: 50%; color: #6d7b73; background: #f7faf8; font-size: 10px; font-weight: 900; }
+    .milestone-node-button.complete .milestone-dot { border-color: #3c865f; color: white; background: #3c865f; }
+    .milestone-node-button.limit .milestone-dot { border-color: #e6a700; color: #8b6300; background: #fff8df; }
+    .milestone-amount { display: block; margin-top: 6px; color: #263a30; font-size: 12px; font-weight: 900; }
+    .milestone-label { display: block; max-width: 88px; margin-top: 1px; overflow: hidden; color: #718078; font-size: 9px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
+    .milestone-selected { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-height: 26px; padding: 7px 9px; border-radius: 11px; background: #f1f7f3; }
+    .milestone-selected-label { color: #526a5d; font-size: 10px; font-weight: 800; }
+    .milestone-selected strong { color: #2d7a58; font-size: 11px; }
+    .milestone-selected span:last-child { color: #718078; font-size: 10px; }
+    .milestone-selected.limit { background: #fff8df; }
+    .milestone-selected.limit strong { color: #8b6300; }
+    .milestone-note { display: flex; justify-content: space-between; gap: 5px; margin-top: 10px; color: #718078; font-size: 9px; line-height: 1.35; }
+    .divider { height: 1px; margin: 14px 0; background: var(--line); }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; }
+    .switch { position: relative; width: 45px; height: 26px; flex: none; border: 0; border-radius: 20px; background: #c9c8c0; }
+    .switch.on { background: var(--primary); }
+    .switch i { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: white; transition: left .16s ease; }
+    .switch.on i { left: 22px; }
+    .session { padding: 11px; border: 1px solid var(--line); border-radius: 13px; background: var(--paper-2); }
+    .session + .session { margin-top: 8px; }
+    .session-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .session-grid .wide { grid-column: 1 / -1; }
+    .inline-error { margin-top: 6px; color: var(--danger); font-size: 11px; font-weight: 700; }
+    .error-list { display: flex; flex-direction: column; gap: 7px; margin: 0 0 12px; }
+    .error-item { width: 100%; padding: 9px 10px; border: 1px solid #e7ada8; border-radius: 11px; color: var(--danger); text-align: left; background: var(--danger-soft); font-size: 12px; font-weight: 750; }
+    .error-item span { display: block; margin-top: 2px; color: #8d332c; font-size: 11px; font-weight: 500; }
+    .review-row { display: flex; align-items: flex-start; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+    .review-row:last-child { border-bottom: 0; }
+    .review-row .icon { width: 24px; color: var(--primary); font-weight: 900; }
+    .review-row .value { flex: 1; min-width: 0; }
+    .review-row .value b { display: block; margin-bottom: 2px; }
+    .review-row .value span { color: var(--muted); font-size: 12px; line-height: 1.4; }
+    .review-row button { border: 0; color: var(--primary); background: transparent; font-size: 12px; font-weight: 800; }
+    .contract {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      margin: -2px -2px 14px;
+      padding: 13px 14px;
+      border: 1px solid rgba(29, 107, 79, .3);
+      border-radius: 16px;
+      color: var(--primary-deep);
+      background: var(--primary-soft);
+    }
+    .contract .contract-label { margin-bottom: 4px; font-size: 10px; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
+    .contract strong { display: block; color: var(--ink); font-size: 15px; line-height: 1.4; }
+    .contract small { display: block; margin-top: 5px; color: var(--primary-deep); font-size: 11px; }
+    .bottom-bar {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 3;
+      padding: 10px 14px 14px;
+      border-top: 1px solid var(--line);
+      background: rgba(255, 254, 250, .96);
+      box-shadow: 0 -9px 24px rgba(32, 48, 41, .08);
+    }
+    .bottom-bar .secondary { margin-right: 8px; }
+    .variant-switcher {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateX(-50%);
+      padding: 7px 9px;
+      border: 1px solid #363f3a;
+      border-radius: 99px;
+      color: white;
+      background: #26332d;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .22);
+      white-space: nowrap;
+    }
+    .variant-switcher button { width: 28px; height: 28px; border: 0; border-radius: 50%; color: white; background: #3b5147; }
+    .variant-switcher b { font-size: 12px; }
+    .aside { width: 430px; max-width: min(430px, 100%); }
+    .aside h1 { max-width: 410px; }
+    .aside-card { margin-bottom: 10px; padding: 13px 14px; border: 1px solid var(--line); border-radius: 15px; background: var(--paper); }
+    .aside-card h3 { font-size: 14px; }
+    .aside-card p { margin-bottom: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .gap { display: grid; grid-template-columns: 24px 1fr; gap: 8px; margin: 10px 0; }
+    .gap:last-child { margin-bottom: 0; }
+    .gap-num { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; color: var(--primary); background: var(--primary-soft); font-size: 11px; font-weight: 900; }
+    .gap strong { display: block; font-size: 12px; }
+    .gap span { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 10px; }
+    .flow b { padding: 5px 7px; border-radius: 8px; color: var(--primary-deep); background: var(--primary-soft); font-size: 10px; }
+    .flow i { color: var(--muted); font-style: normal; }
+    .test-row { display: flex; align-items: flex-start; gap: 7px; margin-top: 8px; color: var(--muted); font-size: 11px; }
+    .test-row input { width: 15px; min-height: 15px; margin-top: 1px; accent-color: var(--primary); }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 12px; }
+    .toolbar .button { min-height: 36px; padding: 7px 10px; font-size: 11px; }
+    .restore { margin-bottom: 10px; padding: 9px 10px; border-radius: 10px; color: var(--primary-deep); background: var(--primary-soft); font-size: 11px; }
+    .modal-layer { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; padding: 22px; background: rgba(20, 31, 26, .48); }
+    .modal { width: 100%; padding: 18px; border-radius: 18px; background: var(--paper); box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+    .modal h3 { margin-bottom: 6px; }
+    .modal p { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .modal .actions { display: flex; flex-direction: column; gap: 7px; }
+    .success-screen { padding: 38px 22px 24px; text-align: center; }
+    .success-mark { display: grid; place-items: center; width: 76px; height: 76px; margin: 0 auto 16px; border-radius: 50%; color: white; background: var(--primary); font-size: 38px; font-weight: 900; }
+    .success-screen h1 { font-size: 25px; }
+    .success-screen .contract { position: static; margin: 20px 0; text-align: left; }
+    .power-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .power-card { min-height: 108px; padding: 11px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
+    .power-card.active { border-color: var(--primary); background: var(--primary-soft); }
+    .power-card .power-title { display: flex; justify-content: space-between; gap: 5px; font-weight: 800; }
+    .power-card .power-value { margin-top: 12px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .power-card button { margin-top: 9px; padding: 0; border: 0; color: var(--primary); background: transparent; font-size: 11px; font-weight: 800; }
+    .accordion { overflow: hidden; margin-bottom: 9px; border: 1px solid var(--line); border-radius: 15px; background: var(--paper); }
+    .accordion-head { width: 100%; padding: 12px; border: 0; color: var(--ink); text-align: left; background: transparent; }
+    .accordion-head .summary { margin-top: 3px; color: var(--muted); font-size: 11px; }
+    .accordion-body { padding: 0 12px 13px; }
+    @media (max-width: 900px) {
+      .stage { padding: 12px 12px 92px; }
+      .phone { width: 100%; min-width: 0; max-width: 430px; }
+      .aside { width: 100%; max-width: 430px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    const reactCreateElement = (tag, props, ...children) => {
+      if (props && (Object.prototype.hasOwnProperty.call(props, 'class') || Object.prototype.hasOwnProperty.call(props, 'for'))) {
+        props = { ...props, className: props.class ?? props.className, htmlFor: props.for ?? props.htmlFor };
+        delete props.class;
+        delete props.for;
+      }
+      const normalizedChildren = [];
+      const flatten = values => values.forEach(value => Array.isArray(value) ? flatten(value) : normalizedChildren.push(value));
+      flatten(children);
+      return React.createElement(tag, props, ...normalizedChildren);
+    };
+    const html = htm.bind(reactCreateElement);
+    const { useEffect, useMemo, useRef, useState } = React;
+
+    /* Prototype question: does a decision-led advanced flow feel clearer than the
+       current single long composer? Three variants are switchable via ?variant=. */
+    const STORAGE_KEY = 'awrad-goal-creation-wireframe-v2';
+    const VARIANTS = [
+      { id: 'guided', name: 'Guided steps', hint: 'one decision per screen' },
+      { id: 'adaptive', name: 'Adaptive builder', hint: 'progressive disclosure' },
+      { id: 'power', name: 'Power review', hint: 'configure in any order' },
+    ];
+    const STEPS = [
+      { id: 'intent', label: 'Goal type', title: 'What are you trying to accomplish?' },
+      { id: 'cadence', label: 'Schedule', title: 'When is this goal scheduled?' },
+      { id: 'timing', label: 'Practice times', title: 'When will you practice?' },
+      { id: 'success', label: 'Requirements', title: 'What must this goal achieve?' },
+      { id: 'support', label: 'Support', title: 'How should this goal be supported?' },
+    ];
+    const LIBRARY = [
+      { id: 'astaghfirullah', arabic: 'أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ', tr: 'Astaghfirullah al-ʿAẓīm', en: 'I seek forgiveness from Allah, the Magnificent', tag: 'Forgiveness' },
+      { id: 'subhanallah', arabic: 'سُبْحَانَ ٱللَّٰهِ', tr: 'Subḥān Allāh', en: 'Glory be to Allah', tag: 'Tasbih' },
+      { id: 'alhamdulillah', arabic: 'ٱلْحَمْدُ لِلَّٰهِ', tr: 'Alḥamdulillāh', en: 'All praise is for Allah', tag: 'Praise' },
+      { id: 'salawat', arabic: 'ٱللَّٰهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ', tr: 'Allāhumma ṣalli ʿalā Muḥammad', en: 'O Allah, send blessings upon Muhammad', tag: 'Salawat' },
+      { id: 'lailahaillallah', arabic: 'لَا إِلَٰهَ إِلَّا ٱللَّٰهُ', tr: 'Lā ilāha illā Allāh', en: 'There is no god but Allah', tag: 'Tawhid' },
+    ];
+    const PRAYERS = [
+      { id: 'fajr', label: 'Fajr' }, { id: 'dhuhr', label: 'Dhuhr' }, { id: 'asr', label: 'Asr' },
+      { id: 'maghrib', label: 'Maghrib' }, { id: 'isha', label: 'Isha' },
+    ];
+    const WEEKDAYS = [
+      { id: 'mon', label: 'Mon' }, { id: 'tue', label: 'Tue' }, { id: 'wed', label: 'Wed' },
+      { id: 'thu', label: 'Thu' }, { id: 'fri', label: 'Fri' }, { id: 'sat', label: 'Sat' }, { id: 'sun', label: 'Sun' },
+    ];
+    const TIMES = ['05:30', '06:00', '07:00', '08:00', '09:00', '12:00', '15:00', '18:00', '19:00', '20:00', '21:00'];
+    const REQUIREMENT_WINDOWS = [
+      ['day', 'Every day'], ['week', 'Every week'], ['month', 'Every month'], ['lifetime', 'Whole goal'],
+    ];
+    const REQUIREMENT_OPERATORS = [
+      ['atLeast', 'At least'], ['exactly', 'Exactly'], ['atMost', 'At most'],
+    ];
+
+    const clone = value => JSON.parse(JSON.stringify(value));
+    const fmt = value => Number(value || 0).toLocaleString('en-US');
+    const positive = value => Number.isInteger(Number(value)) && Number(value) > 0;
+    const clockMinutes = value => {
+      const [h, m] = String(value || '').split(':').map(Number);
+      return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : NaN;
+    };
+    const defaultPerPrayer = () => ({ fajr: '33', dhuhr: '33', asr: '33', maghrib: '33', isha: '33' });
+    const defaultSessions = () => [
+      { id: 1, label: 'Morning', start: '06:00', end: '07:00', count: '33' },
+      { id: 2, label: 'Evening', start: '18:00', end: '19:00', count: '33' },
+    ];
+    const newRequirement = (window = 'day', amount = '100', contributesToStreak = true) => ({
+      id: 'req-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      window,
+      operator: 'atLeast',
+      amount,
+      contributesToStreak,
+      purpose: contributesToStreak ? 'consistency' : 'completion',
+    });
+    const initialDraft = () => ({
+      intent: 'custom',
+      cadence: { kind: 'daily', weekdays: ['fri'], interval: '3', calendar: 'gregorian', month: '1', monthDays: ['1'], season: 'ramadan', dates: ['2026-08-20'] },
+      timing: { kind: 'anytime', relation: 'after', beforeLead: '10', prayers: PRAYERS.map(p => p.id), uniform: true, sharedCount: '33', perPrayer: defaultPerPrayer(), morning: { time: '06:00', count: '50' }, evening: { time: '18:00', count: '50' }, sessions: defaultSessions() },
+      rule: { mode: 'target', minimum: '10', target: '33', maximum: '100', cap: 'allow' },
+      requirements: [],
+      support: { reminders: false, reminderType: 'fixed', fixedTime: '08:00', offset: '10', duration: false, durationDays: '40', streak: false, streakCount: '100' },
+      startDate: '2026-08-15',
+    });
+
+    function applyIntent(draft, intent) {
+      const next = clone(draft);
+      next.intent = intent;
+      if (intent === 'daily') {
+        next.cadence = { ...next.cadence, kind: 'daily' };
+        next.timing = { ...next.timing, kind: 'anytime' };
+        next.rule = { ...next.rule, mode: 'target', target: '33' };
+      }
+      if (intent === 'prayer') {
+        next.cadence = { ...next.cadence, kind: 'daily' };
+        next.timing = { ...next.timing, kind: 'prayer', relation: 'after', prayers: PRAYERS.map(p => p.id), uniform: true, sharedCount: '33' };
+        next.rule = { ...next.rule, mode: 'target', target: '33' };
+        next.support = { ...next.support, reminders: true, reminderType: 'prayer', offset: '10' };
+      }
+      if (intent === 'sessions') {
+        next.cadence = { ...next.cadence, kind: 'daily' };
+        next.timing = { ...next.timing, kind: 'sessions', sessions: defaultSessions() };
+        next.rule = { ...next.rule, mode: 'target', target: '33' };
+        next.support = { ...next.support, reminders: true, reminderType: 'session' };
+      }
+      if (intent === 'oneTime') {
+        next.cadence = { ...next.cadence, kind: 'oneTime' };
+        next.timing = { ...next.timing, kind: 'anytime' };
+        next.rule = { ...next.rule, mode: 'target', target: '70000' };
+        next.support = { ...next.support, reminders: false, streak: false, streakCount: '100' };
+      }
+      if (intent === 'tracker') {
+        next.cadence = { ...next.cadence, kind: 'daily' };
+        next.timing = { ...next.timing, kind: 'anytime' };
+        next.rule = { ...next.rule, mode: 'tracker', target: '', minimum: '', maximum: '' };
+      }
+      return next;
+    }
+
+    function validate(draft, dhikr) {
+      const errors = [];
+      const add = (step, message, detail) => errors.push({ step, message, detail });
+      if (!dhikr) add('practice', 'Choose a dhikr', 'Select the remembrance you want to track.');
+      const cadence = draft.cadence;
+      if (cadence.kind === 'weekly' && cadence.weekdays.length === 0) add('cadence', 'Choose at least one day', 'A weekly goal needs one or more weekdays.');
+      if (cadence.kind === 'interval' && !positive(cadence.interval)) add('cadence', 'Enter a valid interval', 'Every 1 day or more.');
+      if (cadence.kind === 'monthly' && cadence.monthDays.length === 0) add('cadence', 'Choose a day of the month', 'Select at least one calendar day.');
+      if (cadence.kind === 'yearly' && cadence.monthDays.length === 0) add('cadence', 'Choose a day of the year', 'Select at least one day in the chosen month.');
+      if (cadence.kind === 'season' && !cadence.season) add('cadence', 'Choose a season', 'Select the Islamic season for this goal.');
+      if (cadence.kind === 'dates' && cadence.dates.length === 0) add('cadence', 'Add at least one date', 'A date-based goal needs a date to repeat on.');
+
+      const timing = draft.timing;
+      if (timing.kind === 'prayer') {
+        if (timing.prayers.length === 0) add('timing', 'Choose at least one prayer', 'Select where this practice belongs in the day.');
+        if ((timing.relation === 'before' || timing.relation === 'both') && (!positive(timing.beforeLead) && timing.beforeLead !== '0')) add('timing', 'Set a valid lead time', 'Enter how many minutes before prayer.');
+        if (!timing.uniform) timing.prayers.forEach(id => { if (!positive(timing.perPrayer[id])) add('timing', `${id[0].toUpperCase() + id.slice(1)} needs a count`, 'Each selected prayer needs a positive count.'); });
+        if (timing.uniform && draft.rule.mode !== 'tracker' && !positive(timing.sharedCount)) add('timing', 'Set the count per prayer', 'Use a positive number or switch to a tracker.');
+      }
+      if (timing.kind === 'morningEvening' && draft.rule.mode !== 'tracker') {
+        if (!positive(timing.morning.count)) add('timing', 'Set the morning count', 'Morning practice needs a positive count.');
+        if (!positive(timing.evening.count)) add('timing', 'Set the evening count', 'Evening practice needs a positive count.');
+      }
+      if (timing.kind === 'sessions') {
+        if (timing.sessions.length === 0) add('timing', 'Add a session', 'Custom timing needs at least one practice window.');
+        const sorted = timing.sessions.map((s, index) => ({ ...s, index, start: clockMinutes(s.start), end: clockMinutes(s.end) })).sort((a, b) => a.start - b.start);
+        sorted.forEach(s => {
+          if (!(s.start < s.end)) add('timing', `${s.label || 'Session ' + (s.index + 1)} has an invalid window`, 'End time must be after start time.');
+          if (draft.rule.mode !== 'tracker' && !positive(s.count)) add('timing', `${s.label || 'Session ' + (s.index + 1)} needs a count`, 'Each session needs a positive count.');
+        });
+        sorted.slice(1).forEach((s, i) => { if (s.start < sorted[i].end) add('timing', 'Sessions overlap', 'Adjust the windows so each session has its own time.'); });
+      }
+
+      const rule = draft.rule;
+      if (rule.mode === 'target' && !positive(rule.target)) add('success', 'Enter a target', 'The target must be a positive number.');
+      if (rule.mode === 'minimum' && !positive(rule.minimum)) add('success', 'Enter a minimum', 'The minimum must be a positive number.');
+      if (rule.mode === 'stretch') {
+        if (!positive(rule.minimum)) add('success', 'Enter a minimum', 'The minimum must be a positive number.');
+        if (!positive(rule.target)) add('success', 'Enter a target', 'The target must be a positive number.');
+        if (positive(rule.minimum) && positive(rule.target) && Number(rule.minimum) >= Number(rule.target)) add('success', 'Target must exceed minimum', 'Give the stretch target room above the minimum.');
+      }
+      if (rule.mode === 'exact' && !positive(rule.maximum)) add('success', 'Enter an exact count', 'The exact count must be positive.');
+      if (rule.mode === 'bounded') {
+        if (!positive(rule.minimum)) add('success', 'Enter a minimum', 'The minimum must be positive.');
+        if (!positive(rule.target)) add('success', 'Enter a target', 'The target must be positive.');
+        if (!positive(rule.maximum)) add('success', 'Enter a maximum', 'The maximum must be positive.');
+        if (positive(rule.minimum) && positive(rule.target) && positive(rule.maximum) && !(Number(rule.minimum) <= Number(rule.target) && Number(rule.target) <= Number(rule.maximum))) add('success', 'Keep the range ordered', 'Use minimum ≤ target ≤ maximum.');
+      }
+
+      (draft.requirements || []).forEach((requirement, index) => {
+        if (!positive(requirement.amount)) add('success', `Requirement ${index + 1} needs an amount`, 'Use a positive count for this requirement.');
+        if (requirement.contributesToStreak && requirement.window !== 'day') add('success', 'Streak requirements must be daily', 'Choose Every day or turn off streak eligibility.');
+      });
+
+      const support = draft.support;
+      if (support.reminders && (support.reminderType === 'prayer' || support.reminderType === 'session') && (!positive(support.offset) && support.offset !== '0')) add('support', 'Set a valid reminder offset', 'Use 0 or more minutes.');
+      if (support.duration && !positive(support.durationDays)) add('support', 'Set a valid duration', 'Duration must be a positive number of days.');
+      if (support.streak && !positive(support.streakCount)) add('support', 'Set a valid streak minimum', 'The streak minimum must be positive.');
+      return errors;
+    }
+
+    function cadenceSummary(c) {
+      if (c.kind === 'oneTime') return 'One-time total';
+      if (c.kind === 'daily') return 'Every day';
+      if (c.kind === 'weekly') return c.weekdays.length ? 'Every ' + c.weekdays.join(', ') : 'Choose weekdays';
+      if (c.kind === 'interval') return 'Every ' + (c.interval || '…') + ' days';
+      if (c.kind === 'monthly') return 'Monthly on day ' + (c.monthDays.join(', ') || '…');
+      if (c.kind === 'yearly') return 'Yearly on ' + c.month + '/' + (c.monthDays.join(', ') || '…');
+      if (c.kind === 'season') return c.season === 'ramadan' ? 'Throughout Ramadan' : c.season === 'last10' ? 'Last 10 nights of Ramadan' : 'Dhul-Hijjah 1–10';
+      return c.dates.length ? 'On ' + c.dates.join(', ') : 'Add specific dates';
+    }
+
+    function intentSummary(intent) {
+      return ({ daily: 'Daily habit', prayer: 'Around prayers', sessions: 'Named sessions', oneTime: 'Reach a total', tracker: 'Track practice', custom: 'Custom goal' })[intent] || 'Custom goal';
+    }
+
+    function timingSummary(t) {
+      if (t.kind === 'anytime') return 'Anytime';
+      if (t.kind === 'prayer') return (t.prayers.length ? t.prayers.map(p => p[0].toUpperCase() + p.slice(1)).join(' + ') : 'Choose prayers') + ' · ' + t.relation;
+      if (t.kind === 'morningEvening') return 'Morning at ' + t.morning.time + ' + evening at ' + t.evening.time;
+      return t.sessions.length ? t.sessions.map(s => `${s.label || 'Session'} ${s.start}–${s.end}`).join(' · ') : 'Add time windows';
+    }
+
+    function successSummary(r, t, c) {
+      if (r.mode === 'tracker') return 'Track every count · no target';
+      if (r.mode === 'minimum') return 'Do at least ' + fmt(r.minimum) + ' counts';
+      if (r.mode === 'stretch') return 'At least ' + fmt(r.minimum) + ' · aim for ' + fmt(r.target);
+      if (r.mode === 'exact') return 'Complete exactly ' + fmt(r.maximum) + ' counts';
+      if (r.mode === 'bounded') return fmt(r.minimum) + '–' + fmt(r.maximum) + ' counts · aim for ' + fmt(r.target);
+      if (t.kind === 'prayer' && !t.uniform) return 'A different target for each prayer';
+      return c?.kind === 'oneTime' ? 'Reach ' + fmt(r.target) + ' total' : 'Reach ' + fmt(r.target) + ' each time';
+    }
+
+    function primaryWindow(c) {
+      if (c.kind === 'oneTime') return 'lifetime';
+      if (c.kind === 'weekly') return 'week';
+      if (c.kind === 'monthly' || c.kind === 'yearly' || c.kind === 'season') return 'month';
+      return 'day';
+    }
+
+    function windowLabel(window) {
+      return ({ day: 'every day', week: 'every week', month: 'every month', lifetime: 'whole goal' })[window] || 'each period';
+    }
+
+    function operatorLabel(operator) {
+      return ({ atLeast: 'At least', exactly: 'Exactly', atMost: 'At most' })[operator] || 'At least';
+    }
+
+    function requirementSummary(requirement) {
+      return `${operatorLabel(requirement.operator)} ${fmt(requirement.amount)} · ${windowLabel(requirement.window)}${requirement.contributesToStreak ? ' · counts toward streak' : ''}`;
+    }
+
+    function milestoneMeta(requirement) {
+      if (requirement.operator === 'atMost') return { label: 'Daily ceiling', description: 'Optional upper limit for today', tone: 'limit' };
+      if (requirement.contributesToStreak) return { label: 'Streak minimum', description: 'The day qualifies once you reach this', tone: 'complete' };
+      return { label: 'Daily target', description: 'Your preferred count for today', tone: 'target' };
+    }
+
+    function milestoneShortLabel(requirement) {
+      if (requirement.operator === 'atMost') return 'ceiling';
+      if (requirement.contributesToStreak) return 'streak floor';
+      return 'daily target';
+    }
+
+    function milestoneState(requirement, status) {
+      if (requirement.operator === 'atMost') {
+        if (status.current > status.target) return { reached: false, tone: 'limit', label: fmt(status.current - status.target) + ' over limit', percent: 100 };
+        if (status.current === status.target) return { reached: false, tone: 'limit', label: 'Limit reached', percent: 100 };
+        return { reached: false, tone: 'limit', label: fmt(status.target - status.current) + ' room left', percent: status.percent };
+      }
+      if (status.met) return { reached: true, tone: 'complete', label: requirement.contributesToStreak ? 'Streak protected' : 'Target reached', percent: 100 };
+      return { reached: false, tone: 'target', label: '+' + fmt(status.target - status.current) + ' to unlock', percent: status.percent };
+    }
+
+    function milestoneExampleDraft() {
+      const base = initialDraft();
+      const streak = newRequirement('day', '11', true);
+      const ceiling = { ...newRequirement('day', '313', false), operator: 'atMost', purpose: 'limit' };
+      return { ...base, intent: 'daily', cadence: { ...base.cadence, kind: 'daily' }, rule: { ...base.rule, mode: 'target', target: '100' }, requirements: [streak, ceiling] };
+    }
+
+    function additionalRequirementsSummary(requirements) {
+      const items = requirements || [];
+      if (!items.length) return 'No additional requirements';
+      return items.length + ' additional requirement' + (items.length === 1 ? '' : 's') + ' · ' + items.map(requirementSummary).join(' · ');
+    }
+
+    function requirementsSummary(draft) {
+      const primary = successSummary(draft.rule, draft.timing, draft.cadence);
+      const extras = draft.requirements || [];
+      return extras.length ? primary + ' · ' + extras.map(requirementSummary).join(' · ') : primary;
+    }
+
+    function allRequirements(draft) {
+      const r = draft.rule;
+      if (r.mode === 'tracker') return draft.requirements || [];
+      const primaryAmount = r.mode === 'minimum' ? r.minimum : r.mode === 'exact' ? r.maximum : r.target;
+      return [{ id: 'primary', window: primaryWindow(draft.cadence), operator: r.mode === 'minimum' ? 'atLeast' : r.mode === 'exact' ? 'exactly' : 'atLeast', amount: primaryAmount, purpose: 'completion', contributesToStreak: false }, ...(draft.requirements || [])];
+    }
+
+    function requirementProgress(requirement, progress) {
+      return progress[requirement.window] ?? progress.day ?? 0;
+    }
+
+    function supportSummary(s, timing) {
+      const values = [];
+      if (s.reminders) values.push(s.reminderType === 'fixed' ? 'Reminder at ' + s.fixedTime : (s.reminderType === 'prayer' ? s.offset + 'm around prayers' : 'At session start'));
+      if (s.duration) values.push(s.durationDays + ' days');
+      return values.length ? values.join(' · ') : 'No reminders or limits';
+    }
+
+    function contractText(draft, dhikr) {
+      if (!dhikr) return 'Choose a dhikr to preview your goal.';
+      const extras = (draft.requirements || []).length ? ' · +' + draft.requirements.length + ' requirement' + (draft.requirements.length === 1 ? '' : 's') : '';
+      return `${dhikr.tr} · ${cadenceSummary(draft.cadence)} · ${timingSummary(draft.timing)} · ${successSummary(draft.rule, draft.timing, draft.cadence)}${extras}`;
+    }
+
+    function countingBadge(draft) {
+      const r = draft.rule;
+      if (r.mode === 'tracker') return 'Track counts';
+      const amount = r.mode === 'minimum' ? r.minimum : r.mode === 'exact' ? r.maximum : r.target;
+      if (draft.cadence.kind === 'oneTime') return fmt(amount) + ' total';
+      const suffix = ({ daily: 'times daily', weekly: 'weekly', monthly: 'monthly', yearly: 'yearly', season: 'in season' })[draft.cadence.kind] || 'per occurrence';
+      return fmt(amount) + ' ' + suffix;
+    }
+
+    function AppBar({ title, onBack, right, counting, goalPill }) {
+      return html`<div class=${'appbar' + (counting ? ' counting' : '')} data-testid=${counting ? 'goal-screen-header' : null}>
+        <button class="back" aria-label="Back" onClick=${onBack}>←</button>
+        ${counting ? html`<div class="count-title"><h2>${title}</h2><span class="count-pill">${goalPill}</span></div><div class="count-actions"><button class="count-action" aria-label="Text size">Aa</button><button class="count-action menu" aria-label="More options">⋮</button></div>` : html`<h2>${title}</h2>${right ? html`<span class="status-pill">${right}</span>` : null}`}
+      </div>`;
+    }
+
+    function keyed(nodes) {
+      return React.createElement(React.Fragment, null, nodes.map((node, index) => React.isValidElement(node) ? React.cloneElement(node, { key: index }) : node));
+    }
+
+    function StepProgress({ index }) {
+      return html`<div class="progress" aria-label=${'Step ' + (index + 1) + ' of ' + STEPS.length}>
+        ${keyed(STEPS.map((step, i) => html`<span class=${i < index ? 'done' : i === index ? 'current' : ''}></span>`))}
+      </div>`;
+    }
+
+    function StepIntro({ step, body }) {
+      return html`<div>
+        <div class="kicker">${step.label}</div>
+        <h1>${step.title}</h1>
+        <p class="lede">${body}</p>
+      </div>`;
+    }
+
+    function Choice({ selected, title, desc, example, onClick, full }) {
+      return html`<button class=${'choice' + (selected ? ' selected' : '') + (full ? ' full-choice' : '')} onClick=${onClick} aria-pressed=${selected}>
+        ${selected ? html`<span class="check">✓</span>` : null}
+        <span class="title">${title}</span>
+        ${desc ? html`<span class="desc">${desc}</span>` : null}
+        ${example ? html`<span class="example">${example}</span>` : null}
+      </button>`;
+    }
+
+    function Stepper({ value, onChange, label, quick = [] }) {
+      const current = Number(value) || 0;
+      const set = next => onChange(String(Math.max(0, Math.min(999999999, next))));
+      return html`<div>
+        ${label ? html`<span class="label">${label}</span>` : null}
+        <div class="stepper">
+          <button aria-label=${'Decrease ' + (label || 'value')} onClick=${() => set(current - 1)}>−</button>
+          <input type="number" min="0" value=${value} aria-label=${label || 'value'} onInput=${e => onChange(e.target.value.replace(/[^0-9]/g, ''))}/>
+          <button aria-label=${'Increase ' + (label || 'value')} onClick=${() => set(current + 1)}>+</button>
+        </div>
+        ${quick.length ? html`<div class="pill-row" style=${{marginTop: '7px'}}>${keyed(quick.map(n => html`<button class=${'pill' + (String(n) === String(value) ? ' selected' : '')} onClick=${() => onChange(String(n))}>${fmt(n)}</button>`))}</div>` : null}
+      </div>`;
+    }
+
+    function Switch({ checked, onChange, label, desc }) {
+      return html`<div class="toggle-row">
+        <div class="grow"><b>${label}</b>${desc ? html`<div class="subtle">${desc}</div>` : null}</div>
+        <button class=${'switch' + (checked ? ' on' : '')} role="switch" aria-checked=${checked} aria-label=${label} onClick=${() => onChange(!checked)}><i></i></button>
+      </div>`;
+    }
+
+    function DhikrItem({ dhikr, onPick }) {
+      return React.createElement('button', { className: 'dhikr', onClick: () => onPick(dhikr) },
+        React.createElement('div', { className: 'arabic' }, dhikr.arabic),
+        React.createElement('div', null,
+          React.createElement('b', null, dhikr.tr),
+          React.createElement('div', { className: 'english' }, dhikr.en),
+          React.createElement('span', { className: 'tag' }, dhikr.tag),
+        ),
+      );
+    }
+
+    function DhikrAddModal({ newName, setNewName, create, onClose }) {
+      return html`<div class="modal-layer"><div class="modal" role="dialog" aria-modal="true" aria-label="Add a new dhikr">
+        <h3>Add a new dhikr</h3><p>Prototype only: this adds a local item to the picker.</p>
+        <label class="label" for="new-dhikr">Name</label><input id="new-dhikr" value=${newName} placeholder="e.g. My morning dhikr" onInput=${e => setNewName(e.target.value)} />
+        <div class="actions" style=${{marginTop: '12px'}}><button class="button primary" disabled=${!newName.trim()} onClick=${create}>Add and select</button><button class="button ghost" onClick=${onClose}>Cancel</button></div>
+      </div></div>`;
+    }
+
+    function DhikrPicker({ library, query, setQuery, onPick, onBack, onCreate }) {
+      const [newOpen, setNewOpen] = useState(false);
+      const [newName, setNewName] = useState('');
+      const filtered = library.filter(d => [d.tr, d.en, d.arabic].some(v => v.toLowerCase().includes(query.toLowerCase())));
+      const create = () => {
+        if (!newName.trim()) return;
+        onCreate({ id: 'custom-' + Date.now(), arabic: 'ذِكْر', tr: newName.trim(), en: 'Custom dhikr', tag: 'Custom' });
+        setNewName('');
+        setNewOpen(false);
+      };
+      return html`<div class="picker-root"><div class="scroll"><div class="content">
+        <div class="kicker">Practice</div><h1>What would you like to practice?</h1>
+        <p class="lede">Choose a dhikr first. The next steps shape when and how this practice becomes a goal.</p>
+        <input class="picker-search" placeholder="Search dhikr…" value=${query} aria-label="Search dhikr" onInput=${e => setQuery(e.target.value)} />
+        ${filtered.length ? React.createElement(React.Fragment, null, filtered.map(d => React.createElement(DhikrItem, { key: d.id, dhikr: d, onPick }))) : html`<div class="card soft"><b>No dhikr found</b><p class="subtle" style=${{margin: '4px 0 12px'}}>Try another spelling or add your own remembrance.</p><button class="button tonal" onClick=${() => setNewOpen(true)}>Add a new dhikr</button></div>`}
+        ${filtered.length ? html`<button class="button ghost full" onClick=${() => setNewOpen(true)}>＋ Add a new dhikr</button>` : null}
+      </div></div>
+      ${newOpen ? React.createElement(DhikrAddModal, { newName, setNewName, create, onClose: () => setNewOpen(false) }) : null}</div>`;
+    }
+
+    function IntentStep({ draft, update }) {
+      const intents = [
+        ['daily', 'Build a daily habit', 'One clear target every day.', '100 each day'],
+        ['prayer', 'Practice around prayers', 'Create a place for dhikr around salah.', '33 after each prayer'],
+        ['sessions', 'Split it into sessions', 'Use named time windows through the day.', '50 morning + 50 evening'],
+        ['oneTime', 'Reach a total', 'One finish line, no recurring goal instances.', '70,000 total'],
+        ['tracker', 'Track without a target', 'Record every count without a denominator.', 'Just count'],
+        ['custom', 'Start from a blank canvas', 'Keep full control over every decision.', 'Custom schedule'],
+      ];
+      return html`<div class="stack loose">
+        <${StepIntro} step=${STEPS[0]} body="Start with the outcome you have in mind. We’ll use it to suggest sensible defaults; every detail stays editable."></${StepIntro}>
+        <div class="choice-grid">${keyed(intents.map(([id, title, desc, example]) => html`<${Choice} selected=${draft.intent === id} title=${title} desc=${desc} example=${example} onClick=${() => update(applyIntent(draft, id))}></${Choice}>`))}</div>
+        <div class="step-note"><b>Why this helps:</b> “Advanced” describes the app, not your intention. Choose the practice you mean; the controls appear only when they become relevant.</div>
+      </div>`;
+    }
+
+    function CadenceStep({ draft, update }) {
+      const c = draft.cadence;
+      const choose = kind => update({ ...draft, cadence: { ...c, kind } });
+      const toggleDay = day => update({ ...draft, cadence: { ...c, weekdays: c.weekdays.includes(day) ? c.weekdays.filter(x => x !== day) : [...c.weekdays, day] } });
+      const toggleMonthDay = day => update({ ...draft, cadence: { ...c, monthDays: c.monthDays.includes(day) ? c.monthDays.filter(x => x !== day) : [...c.monthDays, day] } });
+      const addDate = e => { const value = e.target.value; if (value && !c.dates.includes(value)) update({ ...draft, cadence: { ...c, dates: [...c.dates, value].sort() } }); };
+      const kinds = [
+        ['oneTime', 'One time', 'One finish line, no recurring instances'],
+        ['daily', 'Every day', 'A steady daily rhythm'], ['weekly', 'Selected weekdays', 'Every Friday or a few days'],
+        ['interval', 'Every N days', 'A repeating interval'], ['season', 'Islamic season', 'Ramadan or Dhul-Hijjah'],
+        ['monthly', 'Monthly', 'One or more calendar days'], ['yearly', 'Monthly each year', 'A yearly occasion'],
+        ['dates', 'Specific dates', 'A finite set of dates'],
+      ];
+      return html`<div class="stack loose">
+        <${StepIntro} step=${STEPS[1]} body="Choose whether this goal has one finish line or creates a recurring goal instance. Practice times and requirements are separate."></${StepIntro}>
+        <div class="choice-grid">${keyed(kinds.map(([id, title, desc]) => html`<${Choice} selected=${c.kind === id} title=${title} desc=${desc} onClick=${() => choose(id)}></${Choice}>`))}</div>
+        ${c.kind === 'oneTime' ? html`<div class="card emphasis"><b>One-time total</b><p class="subtle" style=${{margin: '4px 0 0'}}>This goal has one finish line. If you want a streak while you work toward it, add a daily minimum under Requirements.</p></div>` : null}
+        ${c.kind === 'weekly' ? html`<div class="card soft"><span class="label">Which weekdays?</span><div class="pill-row">${keyed(WEEKDAYS.map(day => html`<button class=${'pill' + (c.weekdays.includes(day.id) ? ' selected' : '')} onClick=${() => toggleDay(day.id)}>${day.label}</button>`))}</div></div>` : null}
+        ${c.kind === 'interval' ? html`<div class="card soft"><${Stepper} label="Every (days)" value=${c.interval} quick=${[2, 3, 7, 10]} onChange=${value => update({ ...draft, cadence: { ...c, interval: value } })}></${Stepper}></div>` : null}
+        ${c.kind === 'season' ? html`<div class="card soft"><span class="label">Which season?</span><div class="pill-row">${keyed([['ramadan','Ramadan'], ['last10','Last 10 nights'], ['dhulHijjah','Dhul-Hijjah 1–10']].map(([id, label]) => html`<button class=${'pill' + (c.season === id ? ' selected' : '')} onClick=${() => update({ ...draft, cadence: { ...c, season: id } })}>${label}</button>`))}</div><p class="subtle" style=${{margin: '10px 0 0'}}>A season gives the goal a meaningful window without requiring an end date.</p></div>` : null}
+        ${c.kind === 'monthly' || c.kind === 'yearly' ? html`<div class="card soft">
+          <div class="row between"><span class="label" style=${{margin: 0}}>Calendar</span><div class="pill-row"><button class=${'pill' + (c.calendar === 'gregorian' ? ' selected' : '')} onClick=${() => update({ ...draft, cadence: { ...c, calendar: 'gregorian' } })}>Gregorian</button><button class=${'pill' + (c.calendar === 'hijri' ? ' selected' : '')} onClick=${() => update({ ...draft, cadence: { ...c, calendar: 'hijri' } })}>Hijri</button></div></div>
+          ${c.kind === 'yearly' ? html`<div class="field"><label class="label">Month</label><select value=${c.month} onChange=${e => update({ ...draft, cadence: { ...c, month: e.target.value } })}>${keyed(Array.from({length: 12}, (_, i) => html`<option value=${String(i + 1)}>Month ${i + 1}</option>`))}</select></div>` : null}
+          <div class="field"><span class="label">Days of the month</span><div class="pill-row">${keyed([1, 5, 10, 15, 20, 25, 30].map(day => html`<button class=${'pill' + (c.monthDays.includes(String(day)) ? ' selected' : '')} onClick=${() => toggleMonthDay(String(day))}>${day}</button>`))}</div></div>
+        </div>` : null}
+        ${c.kind === 'dates' ? html`<div class="card soft"><label class="label" for="specific-date">Add a date</label><input id="specific-date" type="date" onChange=${addDate}/><div class="pill-row" style=${{marginTop: '9px'}}>${keyed(c.dates.map(date => html`<button class="pill selected" onClick=${() => update({ ...draft, cadence: { ...c, dates: c.dates.filter(x => x !== date) } })}>${date} ×</button>`))}</div></div>` : null}
+        <div class="step-note"><b>Preview:</b> ${cadenceSummary(c)}${c.kind === 'oneTime' ? ' · no recurring goal instances' : ' · starts ' + draft.startDate + '. Change the start date later in Support.'}</div>
+      </div>`;
+    }
+
+    function PrayerTiming({ draft, update }) {
+      const t = draft.timing;
+      const togglePrayer = id => update({ ...draft, timing: { ...t, prayers: t.prayers.includes(id) ? t.prayers.filter(x => x !== id) : [...t.prayers, id] } });
+      return html`<div class="card soft stack">
+        <span class="label">Prayer anchor</span>
+        <div class="pill-row">${keyed([['after','After'], ['before','Before'], ['both','Before + after']].map(([id, label]) => html`<button class=${'pill' + (t.relation === id ? ' selected' : '')} onClick=${() => update({ ...draft, timing: { ...t, relation: id } })}>${label}</button>`))}</div>
+        ${(t.relation === 'before' || t.relation === 'both') ? html`<${Stepper} label="Minutes before prayer" value=${t.beforeLead} quick=${[5, 10, 15]} onChange=${value => update({ ...draft, timing: { ...t, beforeLead: value } })}></${Stepper}>` : null}
+        <span class="label">Which prayers?</span><div class="pill-row">${keyed(PRAYERS.map(p => html`<button class=${'pill' + (t.prayers.includes(p.id) ? ' selected' : '')} onClick=${() => togglePrayer(p.id)}>${p.label}</button>`))}</div>
+        <div class="divider"></div>
+        <div class="row between"><div><b>Same count for all</b><div class="subtle">Or set a separate amount below.</div></div><button class=${'switch' + (t.uniform ? ' on' : '')} role="switch" aria-checked=${t.uniform} onClick=${() => update({ ...draft, timing: { ...t, uniform: !t.uniform } })}><i></i></button></div>
+        ${t.uniform ? html`<${Stepper} label="Count after each selected prayer" value=${t.sharedCount} quick=${[3, 33, 100]} onChange=${value => update({ ...draft, timing: { ...t, sharedCount: value }, rule: { ...draft.rule, target: value } })}></${Stepper}>` : html`<div class="stack">${keyed(t.prayers.map(id => html`<${Stepper} label=${id[0].toUpperCase() + id.slice(1) + ' count'} value=${t.perPrayer[id]} quick=${[3, 33, 100]} onChange=${value => update({ ...draft, timing: { ...t, perPrayer: { ...t.perPrayer, [id]: value } } })}></${Stepper}>`))}${!t.prayers.length ? html`<div class="subtle">Choose a prayer to add its count.</div>` : null}</div>`}
+      </div>`;
+    }
+
+    function SessionEditor({ draft, update }) {
+      const t = draft.timing;
+      const updateSession = (id, patch) => update({ ...draft, timing: { ...t, sessions: t.sessions.map(s => s.id === id ? { ...s, ...patch } : s) } });
+      const add = () => update({ ...draft, timing: { ...t, sessions: [...t.sessions, { id: Date.now(), label: 'New session', start: '12:00', end: '13:00', count: '33' }] } });
+      return html`<div class="card soft">
+        <div class="row between"><div><b>Named practice windows</b><div class="subtle">Each window can have its own count.</div></div><span class="tag">${t.sessions.length} slots</span></div>
+        <div style=${{marginTop: '10px'}}>${keyed(t.sessions.map((s, index) => html`<div class="session">
+          <div class="row between"><b>Session ${index + 1}</b>${t.sessions.length > 1 ? html`<button class="button ghost" style=${{minHeight: '30px', padding: '4px 7px'}} onClick=${() => update({ ...draft, timing: { ...t, sessions: t.sessions.filter(x => x.id !== s.id) } })}>Remove</button>` : null}</div>
+          <div class="field"><label class="label">Name</label><input value=${s.label} onInput=${e => updateSession(s.id, { label: e.target.value })}/></div>
+          <div class="session-grid field"><div><label class="label">Starts</label><select value=${s.start} onChange=${e => updateSession(s.id, { start: e.target.value })}>${keyed(TIMES.map(time => html`<option>${time}</option>`))}</select></div><div><label class="label">Ends</label><select value=${s.end} onChange=${e => updateSession(s.id, { end: e.target.value })}>${keyed(TIMES.concat(['22:00', '23:00']).map(time => html`<option>${time}</option>`))}</select></div><div class="wide"><${Stepper} label="Count for this session" value=${s.count} quick=${[33, 50, 100]} onChange=${value => updateSession(s.id, { count: value })}></${Stepper}></div></div>
+          ${!(clockMinutes(s.start) < clockMinutes(s.end)) ? html`<div class="inline-error">End must be after start.</div>` : null}
+        </div>`))}</div>
+        <button class="button tonal full" style=${{marginTop: '10px'}} onClick=${add}>＋ Add session</button>
+      </div>`;
+    }
+
+    function TimingStep({ draft, update }) {
+      const t = draft.timing;
+      const setKind = kind => update({ ...draft, timing: { ...t, kind } });
+      return html`<div class="stack loose">
+        <${StepIntro} step=${STEPS[2]} body="Schedule says when the goal is due. Practice times say where the remembrance fits in your day."></${StepIntro}>
+        <div class="choice-grid">
+          <${Choice} selected=${t.kind === 'anytime'} title="Anytime" desc="Leave the moment open." onClick=${() => setKind('anytime')}></${Choice}>
+          <${Choice} selected=${t.kind === 'prayer'} title="Around prayers" desc="Before, after, or both." onClick=${() => setKind('prayer')}></${Choice}>
+          <${Choice} selected=${t.kind === 'morningEvening'} title="Morning + evening" desc="Two gentle anchors." onClick=${() => setKind('morningEvening')}></${Choice}>
+          <${Choice} selected=${t.kind === 'sessions'} title="Custom windows" desc="Name your own sessions." onClick=${() => setKind('sessions')}></${Choice}>
+        </div>
+        ${t.kind === 'prayer' ? html`<${PrayerTiming} draft=${draft} update=${update}></${PrayerTiming}>` : null}
+        ${t.kind === 'morningEvening' ? html`<div class="card soft stack"><div class="row start"><div class="grow"><b>Morning</b><div class="subtle">A calm start to the day.</div></div><input type="time" value=${t.morning.time} onChange=${e => update({ ...draft, timing: { ...t, morning: { ...t.morning, time: e.target.value } } })}/></div><${Stepper} label="Morning count" value=${t.morning.count} quick=${[33, 50, 100]} onChange=${value => update({ ...draft, timing: { ...t, morning: { ...t.morning, count: value } } })}></${Stepper}><div class="divider"></div><div class="row start"><div class="grow"><b>Evening</b><div class="subtle">A closing anchor after the day.</div></div><input type="time" value=${t.evening.time} onChange=${e => update({ ...draft, timing: { ...t, evening: { ...t.evening, time: e.target.value } } })}/></div><${Stepper} label="Evening count" value=${t.evening.count} quick=${[33, 50, 100]} onChange=${value => update({ ...draft, timing: { ...t, evening: { ...t.evening, count: value } } })}></${Stepper}></div>` : null}
+        ${t.kind === 'sessions' ? html`<${SessionEditor} draft=${draft} update=${update}></${SessionEditor}>` : null}
+        <div class="step-note"><b>What changes when you choose a timing?</b> We create visible practice slots and keep the count decision separate. Switching modes is explicit; it never silently deletes a previous value.</div>
+      </div>`;
+    }
+
+    function SuccessStep({ draft, update }) {
+      const r = draft.rule;
+      const requirements = draft.requirements || [];
+      const oneTime = draft.cadence.kind === 'oneTime';
+      const setMode = mode => update({ ...draft, rule: { ...r, mode } });
+      const updateRequirement = (id, patch) => update({ ...draft, requirements: requirements.map(requirement => requirement.id === id ? { ...requirement, ...patch } : requirement) });
+      const removeRequirement = id => update({ ...draft, requirements: requirements.filter(requirement => requirement.id !== id) });
+      const addRequirement = (window = 'day', amount = '100', contributesToStreak = true) => update({ ...draft, requirements: [...requirements, newRequirement(window, amount, contributesToStreak)] });
+      const loadMilestoneLadder = () => {
+        const streak = newRequirement('day', '11', true);
+        const ceiling = { ...newRequirement('day', '313', false), operator: 'atMost', purpose: 'limit' };
+        update({ ...draft, rule: { ...r, mode: 'target', target: '100' }, requirements: [...requirements.filter(requirement => requirement.window !== 'day'), streak, ceiling] });
+      };
+      const simple = [['target', 'Reach a target', 'Complete the target to mark the occurrence done.'], ['minimum', 'Do at least', 'Any count above the minimum is enough.'], ['tracker', 'Just track', 'Record counts without a target.']];
+      const advanced = [['stretch', 'Minimum + target', 'A floor for consistency and a higher aim.'], ['exact', 'Exact count', 'Stop the goal at one exact number.'], ['bounded', 'Flexible range', 'Minimum ≤ target ≤ maximum.']];
+      return html`<div class="stack loose">
+        <${StepIntro} step=${STEPS[3]} body=${oneTime ? 'Set the finish line, then add independent daily or weekly requirements if this goal needs a rhythm while it is active.' : 'Set the primary outcome first. Add another requirement only when one target is not enough.'}></${StepIntro}>
+        ${draft.intent === 'tracker' ? html`<div class="card emphasis"><b>This is a tracker</b><p class="subtle" style=${{margin: '4px 0 0'}}>There is no denominator. Every count is recorded and the goal never blocks you at a target.</p></div>` : null}
+        <div class="rule-list">${keyed(simple.map(([mode, title, desc]) => html`<button class=${'rule' + (r.mode === mode ? ' selected' : '')} onClick=${() => setMode(mode)}><span class="radio"></span><span><span class="rtitle">${title}</span><span class="rdesc">${desc}</span></span></button>`))}</div>
+        <details open=${['stretch', 'exact', 'bounded'].includes(r.mode)}><summary class="button ghost" style=${{padding: '8px 0'}}>＋ More control</summary><div class="rule-list" style=${{marginTop: '8px'}}>${keyed(advanced.map(([mode, title, desc]) => html`<button class=${'rule' + (r.mode === mode ? ' selected' : '')} onClick=${() => setMode(mode)}><span class="radio"></span><span><span class="rtitle">${title}</span><span class="rdesc">${desc}</span></span></button>`))}</div></details>
+        ${r.mode === 'target' ? html`<div class="card soft"><${Stepper} label=${oneTime ? 'Total to reach' : 'Primary target'} value=${r.target} quick=${oneTime ? [1000, 10000, 70000] : [33, 100, 313]} onChange=${value => update({ ...draft, rule: { ...r, target: value } })}></${Stepper}></div>` : null}
+        ${r.mode === 'minimum' ? html`<div class="card soft"><${Stepper} label="Primary minimum" value=${r.minimum} quick=${[10, 33, 100]} onChange=${value => update({ ...draft, rule: { ...r, minimum: value } })}></${Stepper}></div>` : null}
+        ${r.mode === 'stretch' ? html`<div class="card soft stack"><${Stepper} label="Minimum" value=${r.minimum} quick=${[10, 33]} onChange=${value => update({ ...draft, rule: { ...r, minimum: value } })}></${Stepper}><${Stepper} label="Target" value=${r.target} quick=${[33, 100, 313]} onChange=${value => update({ ...draft, rule: { ...r, target: value } })}></${Stepper}></div>` : null}
+        ${r.mode === 'exact' ? html`<div class="card soft"><${Stepper} label="Exact count" value=${r.maximum} quick=${[33, 100, 313]} onChange=${value => update({ ...draft, rule: { ...r, maximum: value } })}></${Stepper}></div>` : null}
+        ${r.mode === 'bounded' ? html`<div class="card soft stack"><${Stepper} label="Minimum" value=${r.minimum} onChange=${value => update({ ...draft, rule: { ...r, minimum: value } })}></${Stepper}><${Stepper} label="Target" value=${r.target} onChange=${value => update({ ...draft, rule: { ...r, target: value } })}></${Stepper}><${Stepper} label="Maximum" value=${r.maximum} onChange=${value => update({ ...draft, rule: { ...r, maximum: value } })}></${Stepper}><div class="subtle">The order is enforced at review: minimum ≤ target ≤ maximum.</div></div>` : null}
+
+        <div class="card soft">
+          <div class="row between"><div><span class="label">Additional requirements</span><b>${requirements.length ? requirements.length + ' extra check' + (requirements.length === 1 ? '' : 's') : 'One target is enough'}</b><div class="subtle">Each requirement checks the same counts over its own time window.</div></div><span class="tag">${requirements.length}</span></div>
+          ${requirements.length ? html`<div class="requirement-list" style=${{marginTop: '11px'}}>${keyed(requirements.map((requirement, index) => html`<div class="requirement-card">
+            <div class="row between"><div class="grow"><div class="requirement-name">Requirement ${index + 1}</div><div class="requirement-summary">${requirementSummary(requirement)}</div></div><button class="button ghost" style=${{minHeight: '30px', padding: '4px 7px'}} aria-label=${'Remove requirement ' + (index + 1)} onClick=${() => removeRequirement(requirement.id)}>Remove</button></div>
+            <div class="requirement-grid">
+              <div><label class="label" for=${requirement.id + '-operator'}>Rule</label><select id=${requirement.id + '-operator'} value=${requirement.operator} onChange=${e => updateRequirement(requirement.id, { operator: e.target.value })}>${keyed(REQUIREMENT_OPERATORS.map(([id, label]) => html`<option value=${id}>${label}</option>`))}</select></div>
+              <div><label class="label" for=${requirement.id + '-amount'}>Amount</label><input id=${requirement.id + '-amount'} type="number" min="1" value=${requirement.amount} onInput=${e => updateRequirement(requirement.id, { amount: e.target.value.replace(/[^0-9]/g, '') })}/></div>
+              <div class="wide"><label class="label" for=${requirement.id + '-window'}>Time window</label><select id=${requirement.id + '-window'} value=${requirement.window} onChange=${e => updateRequirement(requirement.id, { window: e.target.value, contributesToStreak: e.target.value === 'day' ? requirement.contributesToStreak : false, purpose: e.target.value === 'day' && requirement.contributesToStreak ? 'consistency' : 'completion' })}>${keyed(REQUIREMENT_WINDOWS.map(([id, label]) => html`<option value=${id}>${label}</option>`))}</select></div>
+            </div>
+            <div class="field"><${Switch} label="Counts toward daily streak" desc=${requirement.window === 'day' ? 'A day qualifies once this requirement is met.' : 'Streaks are based on daily requirements.'} checked=${Boolean(requirement.contributesToStreak)} onChange=${value => updateRequirement(requirement.id, { contributesToStreak: value, purpose: value ? 'consistency' : 'completion' })}></${Switch}></div>
+          </div>`))}</div>` : html`<div class="step-note" style=${{marginTop: '10px'}}><b>Keep it simple by default.</b> Add a requirement for cases such as “at least 313 every day” alongside a larger weekly or monthly target.</div>`}
+          <div class="pill-row" style=${{marginTop: '11px'}}><button class="button tonal" onClick=${() => addRequirement('day', '100', true)}>＋ Daily minimum</button><button class="button tonal" onClick=${() => addRequirement('week', '10000', false)}>＋ Weekly target</button><button class="button tonal" onClick=${() => addRequirement('month', '100000', false)}>＋ Monthly target</button></div>
+          ${!oneTime ? html`<div class="step-note" style=${{marginTop: '10px'}}><b>Milestone ladder:</b> protect the streak at 11, aim for 100, and keep 313 as the daily ceiling. <button class="button ghost" data-testid="load-milestone-example" style=${{marginTop: '6px', padding: '5px 0'}} onClick=${loadMilestoneLadder}>Load this example →</button></div>` : null}
+          <div class="step-note" style=${{marginTop: '11px'}}><b>Same count, multiple checks:</b> a count logged today can advance the day, week, month, and lifetime requirements at the same time.</div>
+        </div>
+      </div>`;
+    }
+
+    function SupportStep({ draft, update }) {
+      const s = draft.support;
+      const setSupport = patch => update({ ...draft, support: { ...s, ...patch } });
+      return html`<div class="stack loose">
+        <${StepIntro} step=${STEPS[4]} body="Set reminders and the active period here. Progress requirements stay together so the counting screen can explain every rule in one place."></${StepIntro}>
+        <div class="card soft">
+          <${Switch} label="Reminders" desc="We’ll ask for permission only when you create the goal." checked=${s.reminders} onChange=${reminders => setSupport({ reminders })}></${Switch}>
+          ${s.reminders ? html`<div class="field"><span class="label">Remind me</span><div class="pill-row"><button class=${'pill' + (s.reminderType === 'fixed' ? ' selected' : '')} onClick=${() => setSupport({ reminderType: 'fixed' })}>At a fixed time</button><button class=${'pill' + (s.reminderType === 'prayer' ? ' selected' : '')} onClick=${() => setSupport({ reminderType: 'prayer' })}>Around prayers</button><button class=${'pill' + (s.reminderType === 'session' ? ' selected' : '')} onClick=${() => setSupport({ reminderType: 'session' })}>At session start</button></div></div>` : null}
+          ${s.reminders && s.reminderType === 'fixed' ? html`<div class="field"><label class="label">Time</label><input type="time" value=${s.fixedTime} onChange=${e => setSupport({ fixedTime: e.target.value })}/></div>` : null}
+          ${s.reminders && s.reminderType !== 'fixed' ? html`<div class="field"><${Stepper} label=${s.reminderType === 'prayer' ? 'Minutes around prayer' : 'Minutes before session'} value=${s.offset} quick=${[0, 5, 10, 15]} onChange=${offset => setSupport({ offset })}></${Stepper}></div>` : null}
+        </div>
+        <div class="card soft"><${Switch} label="Set an active period" desc=${s.duration ? s.durationDays + ' days' : 'Keep this goal ongoing'} checked=${s.duration} onChange=${duration => setSupport({ duration })}></${Switch}>${s.duration ? html`<${Stepper} label="Number of days" value=${s.durationDays} quick=${[7, 30, 40, 100]} onChange=${durationDays => setSupport({ durationDays })}></${Stepper}>` : null}</div>
+        <div class="card emphasis"><b>Streaks come from requirements</b><p class="subtle" style=${{margin: '4px 0 0'}}>Open Requirements and mark a daily requirement as “Counts toward daily streak.” This keeps reminders, active periods, and progress rules separate.</p></div>
+        <div class="card soft"><label class="label" for="start-date">Start date</label><input id="start-date" type="date" value=${draft.startDate} onChange=${e => update({ ...draft, startDate: e.target.value })}/><div class="subtle" style=${{marginTop: '6px'}}>Useful for seasonal, yearly, or date-based goals.</div></div>
+        <div class="step-note"><b>Permission promise:</b> choosing reminders does not interrupt setup. We explain why, then ask after you tap Create goal. Declining still creates the goal without reminders.</div>
+      </div>`;
+    }
+
+    function PracticeSummary({ dhikr, onChange }) {
+      return html`<div class="card soft"><div class="row start"><div class="grow"><span class="label">Practice</span><div class="arabic">${dhikr ? dhikr.arabic : '—'}</div><b>${dhikr ? dhikr.tr : 'No dhikr selected'}</b><div class="subtle">${dhikr ? dhikr.en : 'Choose a remembrance to continue.'}</div></div><button class="button ghost" onClick=${onChange}>Change</button></div></div>`;
+    }
+
+    function Review({ draft, dhikr, errors, onEdit, onCreate, saving, saveError }) {
+      return html`<div class="review-root"><div class="scroll"><div class="content">
+        <${StepIntro} step=${{label: 'Review', title: 'Review your goal'}} body="Read the contract before saving. Every row is editable, and nothing important is hidden behind the Create button."></${StepIntro}>
+        <div class="contract"><div class="contract-label">This creates</div><strong>${contractText(draft, dhikr)}</strong><small>Start: ${draft.startDate} · ${additionalRequirementsSummary(draft.requirements)} · ${supportSummary(draft.support, draft.timing)}</small></div>
+        ${saveError ? html`<div class="card error" role="alert"><b>We couldn’t save this goal.</b><p class="subtle" style=${{margin: '4px 0 10px'}}>Your draft is safe. Check again or retry when ready.</p><button class="button danger" onClick=${onCreate}>Retry create</button></div>` : null}
+        ${errors.length ? html`<div class="card error" role="alert" aria-live="polite"><b>${errors.length} item${errors.length === 1 ? '' : 's'} need attention</b><div class="error-list" style=${{marginTop: '10px'}}>${keyed(errors.map((e, i) => html`<button class="error-item" onClick=${() => onEdit(e.step)}>${e.message}<span>${e.detail} · Fix now →</span></button>`))}</div></div>` : null}
+        <div class="card"><${PracticeSummary} dhikr=${dhikr} onChange=${() => onEdit('practice')}></${PracticeSummary}><div class="review-row"><div class="icon">↻</div><div class="value"><b>Schedule</b><span>${cadenceSummary(draft.cadence)}</span></div><button onClick=${() => onEdit('cadence')}>Edit</button></div><div class="review-row"><div class="icon">◷</div><div class="value"><b>Practice times</b><span>${timingSummary(draft.timing)}</span></div><button onClick=${() => onEdit('timing')}>Edit</button></div><div class="review-row"><div class="icon">✓</div><div class="value"><b>Requirements</b><span>${requirementsSummary(draft)}</span></div><button onClick=${() => onEdit('success')}>Edit</button></div><div class="review-row"><div class="icon">⌁</div><div class="value"><b>Support</b><span>${supportSummary(draft.support, draft.timing)}</span></div><button onClick=${() => onEdit('support')}>Edit</button></div></div>
+      </div></div><div class="bottom-bar"><button class="button primary full" disabled=${saving} onClick=${onCreate}>${saving ? 'Saving…' : errors.length ? 'Review ' + errors.length + ' item' + (errors.length === 1 ? '' : 's') : 'Create goal'}</button></div></div>`;
+    }
+
+    function StepBody({ id, draft, update }) {
+      if (id === 'intent') return html`<${IntentStep} draft=${draft} update=${update}></${IntentStep}>`;
+      if (id === 'cadence') return html`<${CadenceStep} draft=${draft} update=${update}></${CadenceStep}>`;
+      if (id === 'timing') return html`<${TimingStep} draft=${draft} update=${update}></${TimingStep}>`;
+      if (id === 'success') return html`<${SuccessStep} draft=${draft} update=${update}></${SuccessStep}>`;
+      return html`<${SupportStep} draft=${draft} update=${update}></${SupportStep}>`;
+    }
+
+    function Guided({ draft, update, index, setIndex, onReview }) {
+      const step = STEPS[index];
+      const hasNextErrors = false;
+      return html`<div class="guided-root"><div class="scroll"><div class="content">
+        <${StepProgress} index=${index}></${StepProgress}>
+        <${StepBody} id=${step.id} draft=${draft} update=${update}></${StepBody}>
+      </div></div><div class="bottom-bar"><button class="button ghost secondary" disabled=${index === 0} onClick=${() => setIndex(index - 1)}>Back</button><button class="button primary" onClick=${() => index === STEPS.length - 1 ? onReview() : setIndex(index + 1)}>${index === STEPS.length - 1 ? 'Review goal' : 'Continue'} →</button></div></div>`;
+    }
+
+    function Adaptive({ draft, dhikr, update, open, setOpen, onReview }) {
+      const summaries = [
+        `Goal type: ${intentSummary(draft.intent)}`,
+        cadenceSummary(draft.cadence), timingSummary(draft.timing), requirementsSummary(draft), supportSummary(draft.support, draft.timing),
+      ];
+      return html`<div class="scroll"><div class="content compact">
+        <div class="contract"><div class="contract-label">Live goal contract</div><strong>${contractText(draft, dhikr)}</strong><small>Open any section. The rest stays quiet until it matters.</small></div>
+        ${keyed(STEPS.map((step, i) => html`<div class="accordion"><button class="accordion-head" onClick=${() => setOpen(open === step.id ? null : step.id)}><div class="row between"><b>${i + 1}. ${step.label}</b><span>${open === step.id ? '⌃' : '⌄'}</span></div><div class="summary">${summaries[i]}</div></button>${open === step.id ? html`<div class="accordion-body"><${StepBody} id=${step.id} draft=${draft} update=${update}></${StepBody}><button class="button tonal full" onClick=${() => setOpen(i < STEPS.length - 1 ? STEPS[i + 1].id : null)}>${i < STEPS.length - 1 ? 'Done — next section' : 'Done'}</button></div>` : null}</div>`))}
+        <button class="button primary full" onClick=${onReview}>Review goal →</button>
+      </div></div>`;
+    }
+
+    function Power({ draft, dhikr, update, active, setActive, onReview }) {
+      const cards = [
+        ['intent', 'Goal type', intentSummary(draft.intent)], ['cadence', 'Schedule', cadenceSummary(draft.cadence)], ['timing', 'Practice times', timingSummary(draft.timing)], ['success', 'Requirements', requirementsSummary(draft)], ['support', 'Support', supportSummary(draft.support, draft.timing)],
+      ];
+      return html`<div class="scroll"><div class="content compact">
+        <div class="kicker">Power review</div><h1>Configure in any order</h1><p class="lede">For experienced users who already know the shape of their practice. The contract stays visible while you jump between decisions.</p>
+        <div class="contract"><div class="contract-label">This creates</div><strong>${contractText(draft, dhikr)}</strong><small>Nothing is saved until Review goal → Create goal.</small></div>
+        <div class="power-grid">${keyed(cards.map(([id, title, value], i) => html`<div class=${'power-card' + (active === id ? ' active' : '')}><div class="power-title"><span>${i + 1}. ${title}</span>${active === id ? '•' : ''}</div><div class="power-value">${value}</div><button onClick=${() => setActive(active === id ? null : id)}>${active === id ? 'Close' : 'Edit'} →</button></div>`))}</div>
+        ${active ? html`<div class="card" style=${{marginTop: '10px'}}><${StepBody} id=${active} draft=${draft} update=${update}></${StepBody}><button class="button tonal full" onClick=${() => setActive(null)}>Done editing</button></div>` : html`<div class="step-note"><b>Power-user guardrail:</b> every edit updates the contract. If the contract becomes invalid, Review will name the exact decision to fix.</div>`}
+        <button class="button primary full" style=${{marginTop: '10px'}} onClick=${onReview}>Review goal →</button>
+      </div></div>`;
+    }
+
+    function CountingScreen({ draft, dhikr, onBackToGoal }) {
+      const [progress, setProgress] = useState({ day: 16, week: 8420, month: 43820, lifetime: 43820 });
+      const [entry, setEntry] = useState('33');
+      const requirements = allRequirements(draft);
+      const [detailsOpen, setDetailsOpen] = useState((draft.requirements || []).length > 0);
+      const [selectedMilestone, setSelectedMilestone] = useState(0);
+      const [audioOn, setAudioOn] = useState(false);
+      const [timerOn, setTimerOn] = useState(false);
+      const addCount = value => {
+        const amount = Number(value) || 0;
+        if (amount <= 0) return;
+        setProgress(current => Object.fromEntries(Object.entries(current).map(([key, currentValue]) => [key, currentValue + amount])));
+      };
+      const statusFor = requirement => {
+        const current = requirementProgress(requirement, progress);
+        const target = Number(requirement.amount) || 0;
+        const met = requirement.operator === 'atMost' ? current <= target : requirement.operator === 'exactly' ? current === target : current >= target;
+        const remaining = requirement.operator === 'atMost' ? (met ? 'Within limit' : fmt(current - target) + ' over limit') : requirement.operator === 'exactly' ? (met ? 'Requirement met' : current < target ? fmt(target - current) + ' remaining' : fmt(current - target) + ' over target') : met ? 'Requirement met' : fmt(target - current) + ' remaining';
+        const percent = requirement.operator === 'atMost' ? (met ? 100 : Math.max(0, Math.min(100, target / Math.max(current, 1) * 100))) : Math.max(0, Math.min(100, current / Math.max(target, 1) * 100));
+        return { current, target, met, remaining, percent };
+      };
+      const tracker = draft.rule.mode === 'tracker';
+      const primary = requirements.find(requirement => requirement.id === 'primary') || requirements[0] || { id: 'primary', window: 'day', operator: 'atLeast', amount: 0 };
+      const primaryStatus = tracker ? { current: progress.day, target: 0, met: true, remaining: 'All counts recorded', percent: 0 } : statusFor(primary);
+      const primaryWindow = tracker ? 'day' : primary.window;
+      const primaryTarget = tracker ? 'Tracked' : 'of ' + fmt(primaryStatus.target);
+      const dailyDescription = draft.cadence.kind === 'oneTime' ? 'Build your total at your own pace.' : 'Every count contributes to this goal.';
+      const dailyMilestones = requirements.filter(requirement => requirement.window === 'day').sort((a, b) => {
+        const order = requirement => requirement.operator === 'atMost' ? 2 : requirement.contributesToStreak ? 0 : 1;
+        return order(a) - order(b) || Number(a.amount) - Number(b.amount);
+      });
+      const achievedMilestones = dailyMilestones.filter(requirement => milestoneState(requirement, statusFor(requirement)).reached).length;
+      const completionMilestones = dailyMilestones.filter(requirement => requirement.operator !== 'atMost').length;
+      const lastAchievedIndex = dailyMilestones.reduce((latest, requirement, index) => milestoneState(requirement, statusFor(requirement)).reached ? index : latest, -1);
+      const timelineFill = lastAchievedIndex < 0 ? 0 : (lastAchievedIndex / Math.max(dailyMilestones.length - 1, 1)) * 100;
+      const selectedIndex = dailyMilestones.length ? Math.min(selectedMilestone, dailyMilestones.length - 1) : 0;
+      const selectedRequirement = dailyMilestones[selectedIndex];
+      const selectedStatus = selectedRequirement ? statusFor(selectedRequirement) : null;
+      const selectedMeta = selectedRequirement ? milestoneMeta(selectedRequirement) : null;
+      const selectedState = selectedRequirement && selectedStatus ? milestoneState(selectedRequirement, selectedStatus) : null;
+      const addManualCount = () => addCount(entry);
+      return html`<div class="scroll goal-count-screen" data-testid="counting-screen"><div class="goal-count-content">
+        <div class="arabic-hero" data-testid="arabic-hero">${dhikr?.arabic || 'أَسْتَغْفِرُ ٱللَّٰهُ ٱلْعَظِيمَ'}</div>
+        <div class="count-action-row">
+          <button class=${'audio-count-button' + (audioOn ? ' active' : '')} onClick=${() => setAudioOn(!audioOn)}>${audioOn ? 'Stop Audio Count' : 'Start Audio Count'}</button>
+          <button class=${'count-icon-button' + (timerOn ? ' active' : '')} aria-label="Timer" aria-pressed=${timerOn} onClick=${() => setTimerOn(!timerOn)}>⏱</button>
+          <button class=${'count-icon-button' + (detailsOpen ? ' active' : '')} aria-label="Open progress details" aria-pressed=${detailsOpen} onClick=${() => setDetailsOpen(!detailsOpen)}>▦</button>
+        </div>
+        <div class="count-ring-wrap">
+          <button class="count-ring" data-testid="tap-count-ring" type="button" aria-label=${'Count one for ' + (dhikr?.tr || 'this goal')} style=${{'--ring-progress': primaryStatus.percent + '%'}} onClick=${() => addCount(1)}>
+            <span class="ring-inner"><span class="ring-current">${fmt(primaryStatus.current)}</span><span class="ring-target">${primaryTarget}</span></span>
+          </button>
+          <div class="count-hint">Tap the circle to count</div>
+        </div>
+        ${dailyMilestones.length > 1 ? html`<div class="milestone-panel" data-testid="milestone-rail" role="region" aria-label="Today's milestones">
+          <div class="milestone-heading"><div><span class="label">Today’s milestones</span><b>One count, multiple clear milestones</b></div><span class="milestone-summary">${completionMilestones ? achievedMilestones + '/' + completionMilestones + ' achieved' : 'Limits visible'}</span></div>
+          <div class="milestone-timeline" data-testid="milestone-timeline" style=${{gridTemplateColumns: 'repeat(' + dailyMilestones.length + ', minmax(0, 1fr))', '--milestone-fill': timelineFill + '%'}}>${keyed(dailyMilestones.map((requirement, index) => { const status = statusFor(requirement); const meta = milestoneMeta(requirement); const state = milestoneState(requirement, status); return html`<button class=${'milestone-node-button ' + state.tone + (state.reached ? ' complete' : '') + (selectedIndex === index ? ' selected' : '')} type="button" aria-label=${meta.label + ', ' + state.label + ', ' + fmt(status.target)} aria-pressed=${selectedIndex === index} onClick=${() => setSelectedMilestone(index)}>
+            <span class="milestone-dot">${state.reached ? '✓' : index + 1}</span><span class="milestone-amount">${fmt(status.target)}</span><span class="milestone-label">${milestoneShortLabel(requirement)}</span>
+          </button>`; }))}</div>
+          ${selectedRequirement ? html`<div class=${'milestone-selected ' + selectedMeta.tone} data-testid="selected-milestone"><span class="milestone-selected-label">${selectedMeta.label} · ${selectedRequirement.operator === 'atMost' ? 'up to' : 'at least'} ${fmt(selectedStatus.target)}</span><strong>${selectedState.label}</strong><span>${fmt(selectedStatus.current)} today</span></div>` : null}
+          <div class="milestone-note">${keyed(dailyMilestones.map(requirement => html`<span>${fmt(requirement.amount)} ${milestoneShortLabel(requirement)}</span>`))}</div>
+        </div>` : null}
+        <div class="count-shortcuts"><button onClick=${() => addCount(33)}>+33</button><button onClick=${() => addCount(100)}>+100</button><button onClick=${() => addCount(313)}>+313</button><button onClick=${() => addCount(1000)}>+1,000</button></div>
+        ${audioOn ? html`<div class="step-note" style=${{margin: '0 0 11px', textAlign: 'left'}}><b>Audio count is on.</b> The next spoken repetition can be captured without touching the ring.</div>` : null}
+        ${timerOn ? html`<div class="step-note" style=${{margin: '0 0 11px', textAlign: 'left'}}><b>Timer ready.</b> Start a focused session from the timer control.</div>` : null}
+        <div class="count-details">
+          <button class="count-details-toggle" data-testid="toggle-progress-details" onClick=${() => setDetailsOpen(!detailsOpen)}>
+            <div><b>Progress details</b><div><span>${tracker ? 'Tracking mode · no completion target' : requirements.length + ' active requirement' + (requirements.length === 1 ? '' : 's') + ' · ' + windowLabel(primaryWindow)}</span></div></div>
+            <span>${detailsOpen ? 'Hide ↑' : 'View ↓'}</span>
+          </button>
+          ${detailsOpen ? html`<div class="count-details-body">
+            <div class="card emphasis"><b>One log, multiple updates</b><p class="subtle" style=${{margin: '4px 0 0'}}>A single tap or logged count updates every applicable requirement. Daily minimums can qualify the streak while weekly, monthly, or whole-goal totals keep accumulating.</p></div>
+            <div class="requirement-list" data-testid="requirement-status-list">${requirements.length ? keyed(requirements.map(requirement => { const status = statusFor(requirement); const withinLimit = requirement.operator === 'atMost' ? status.current <= status.target : status.met; const chipText = requirement.operator === 'atMost' ? (withinLimit ? 'Within limit' : 'Over limit') : status.met ? 'Met' : 'In progress'; return html`<div class=${'requirement-status' + (withinLimit ? ' met' : '')}>
+              <div class="status-line"><span class="status-title">${requirement.id === 'primary' ? 'Primary goal' : requirement.contributesToStreak ? 'Daily minimum' : requirement.operator === 'atMost' ? 'Daily ceiling' : 'Additional requirement'}</span><span class=${'status-chip' + (withinLimit ? ' met' : '')}>${chipText}</span></div>
+              <div class="subtle" style=${{marginTop: '3px'}}>${operatorLabel(requirement.operator)} ${fmt(status.target)} · ${windowLabel(requirement.window)}${requirement.contributesToStreak ? ' · streak' : ''}</div>
+              <div class="status-value">${fmt(status.current)} <span>/ ${fmt(status.target)}</span></div>
+              <div class="requirement-bar" role="progressbar" aria-label=${requirementSummary(requirement)} aria-valuemin="0" aria-valuemax=${status.target} aria-valuenow=${Math.min(status.current, status.target)}><i style=${{width: status.percent + '%'}}></i></div>
+              <div class="status-foot"><span>${status.remaining}</span>${requirement.contributesToStreak ? html`<span>${status.met ? '✓ Streak day qualifies' : 'Day not qualified yet'}</span>` : html`<span>${windowLabel(requirement.window)}</span>`}</div>
+            </div>`; }) ) : html`<div class="card soft"><b>Tracker mode</b><p class="subtle" style=${{margin: '4px 0 0'}}>Every count is recorded. There is no completion requirement to satisfy.</p></div>`}</div>
+            <div class="count-manual"><div><label class="label" for="count-entry">Add larger count</label><input id="count-entry" type="number" min="1" value=${entry} onInput=${e => setEntry(e.target.value.replace(/[^0-9]/g, ''))}/></div><button class="button" data-testid="log-count" onClick=${addManualCount}>Log count</button></div>
+          </div>` : null}
+        </div>
+        <p class="subtle" style=${{margin: '16px 0 0'}}>${dailyDescription}</p>
+        <button class="button ghost full" style=${{marginTop: '10px'}} onClick=${onBackToGoal}>← Back to goal</button>
+      </div></div>`;
+    }
+
+    function SuccessScreen({ draft, dhikr, onAgain, onDone, onCounting }) {
+      return html`<div class="scroll"><div class="success-screen"><div class="success-mark">✓</div><div class="kicker">Saved</div><h1>Goal created</h1><p class="lede">Your goal is ready. Counting keeps the rules visible as you make progress.</p><div class="contract"><div class="contract-label">Your goal</div><strong>${contractText(draft, dhikr)}</strong><small>${requirementsSummary(draft)} · ${supportSummary(draft.support, draft.timing)}</small></div><button class="button primary full" onClick=${onCounting}>Open counting screen →</button><button class="button tonal full" style=${{marginTop: '7px'}} onClick=${onDone}>Back to goals</button><button class="button ghost full" style=${{marginTop: '7px'}} onClick=${onAgain}>Create another goal</button><p class="subtle" style=${{marginTop: '16px'}}>The counting screen evaluates every requirement from the same entries.</p></div></div>`;
+    }
+
+    function App() {
+      const initialVariant = new URLSearchParams(location.search).get('variant') || 'guided';
+      const initialDemo = new URLSearchParams(location.search).get('demo') === 'milestones';
+      const saved = useMemo(() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'); } catch (_) { return null; } }, []);
+      const [variant, setVariant] = useState(VARIANTS.some(v => v.id === initialVariant) ? initialVariant : 'guided');
+      const [view, setView] = useState(initialDemo ? 'counting' : saved?.view || 'picker');
+      const [returnTo, setReturnTo] = useState('guided');
+      const [dhikr, setDhikr] = useState(initialDemo ? LIBRARY[0] : saved?.dhikr || null);
+      const [library, setLibrary] = useState(LIBRARY);
+      const [query, setQuery] = useState('');
+      const [draft, setDraft] = useState(initialDemo ? milestoneExampleDraft() : saved?.draft || initialDraft());
+      const [index, setIndex] = useState(saved?.index || 0);
+      const [open, setOpen] = useState('intent');
+      const [active, setActive] = useState(null);
+      const [saving, setSaving] = useState(false);
+      const [saveError, setSaveError] = useState(false);
+      const [permissionOpen, setPermissionOpen] = useState(false);
+      const [discardOpen, setDiscardOpen] = useState(false);
+      const [simulateFailure, setSimulateFailure] = useState(false);
+      const [toast, setToast] = useState(initialDemo ? '' : saved ? 'Autosaved draft restored.' : '');
+      const toastTimer = useRef(null);
+      const errors = useMemo(() => validate(draft, dhikr), [draft, dhikr]);
+      const hasWork = Boolean(dhikr) && (view !== 'picker' || JSON.stringify(draft) !== JSON.stringify(initialDraft()));
+
+      const notify = message => { setToast(message); clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 3000); };
+      const update = next => { setDraft(next); setSaveError(false); };
+      useEffect(() => {
+        if (initialDemo || !dhikr || view === 'success') return;
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ dhikr, draft, view, index })); } catch (_) {}
+      }, [dhikr, draft, view, index]);
+      useEffect(() => () => clearTimeout(toastTimer.current), []);
+      useEffect(() => {
+        const onKey = e => { if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return; if (e.key === 'ArrowLeft') cycleVariant(-1); if (e.key === 'ArrowRight') cycleVariant(1); };
+        window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey);
+      });
+
+      function cycleVariant(delta) {
+        const current = VARIANTS.findIndex(v => v.id === variant);
+        const next = VARIANTS[(current + delta + VARIANTS.length) % VARIANTS.length].id;
+        setVariant(next); history.replaceState(null, '', '?variant=' + next); notify('Switched to ' + VARIANTS.find(v => v.id === next).name + '.');
+      }
+      function pickDhikr(next) { setDhikr(next); setView(returnTo === 'picker' ? 'guided' : returnTo); setIndex(0); setOpen('intent'); notify('Practice selected.'); }
+      function startChange() { setReturnTo(view === 'review' ? 'review' : variant); setView('picker'); setQuery(''); }
+      function back() {
+        if (view === 'picker') { if (returnTo !== 'picker' && dhikr) { setView(returnTo); return; } notify('Nothing saved — left goal creation.'); return; }
+        if (view === 'review') { setView(variant); return; }
+        if (view === 'counting') { setView('success'); return; }
+        if (view === 'success') { setView('picker'); setDhikr(null); setDraft(initialDraft()); return; }
+        if (hasWork) { setDiscardOpen(true); return; }
+        setView('picker');
+      }
+      function chooseReview() { setView('review'); setSaveError(false); }
+      function editStep(step) {
+        if (step === 'practice') { startChange(); return; }
+        setView('guided'); setIndex(Math.max(0, STEPS.findIndex(s => s.id === step))); setOpen(step); setSaveError(false);
+      }
+      function createGoal() {
+        if (errors.length) { notify('Review the highlighted items first.'); if (view === 'review') return; chooseReview(); return; }
+        if (draft.support.reminders && !permissionOpen) { setPermissionOpen(true); return; }
+        saveGoal();
+      }
+      function saveGoal() {
+        setPermissionOpen(false); setSaving(true); setSaveError(false);
+        setTimeout(() => {
+          setSaving(false);
+          if (simulateFailure) { setSaveError(true); notify('Save failed — your draft is still here.'); return; }
+          try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+          setView('success'); notify('Goal created.');
+        }, 700);
+      }
+      function createWithoutReminders() { update({ ...draft, support: { ...draft.support, reminders: false } }); setPermissionOpen(false); setTimeout(saveGoal, 0); }
+      function reset() { localStorage.removeItem(STORAGE_KEY); setView('picker'); setDhikr(null); setDraft(initialDraft()); setIndex(0); setOpen('intent'); setSaveError(false); setToast('Prototype reset.'); }
+      function restore() { if (!saved) return; setDhikr(saved.dhikr); setDraft(saved.draft); setView(saved.view || 'guided'); setIndex(saved.index || 0); notify('Draft restored.'); }
+
+      const variantLabel = VARIANTS.find(v => v.id === variant).name;
+      const title = view === 'picker' ? 'New goal' : view === 'review' ? 'Review goal' : view === 'success' ? 'Goal created' : view === 'counting' ? (dhikr ? dhikr.tr : 'Your goal') : variantLabel;
+      const screen = view === 'picker'
+        ? React.createElement(DhikrPicker, { library, query, setQuery, onPick: pickDhikr, onBack: back, onCreate: item => { setLibrary([...library, item]); pickDhikr(item); } })
+        : view === 'review'
+          ? React.createElement(Review, { draft, dhikr, errors, onEdit: editStep, onCreate: createGoal, saving, saveError })
+          : view === 'counting'
+            ? React.createElement(CountingScreen, { draft, dhikr, onBackToGoal: () => setView('success') })
+          : view === 'success'
+            ? React.createElement(SuccessScreen, { draft, dhikr, onCounting: () => setView('counting'), onAgain: () => { setDraft(initialDraft()); setView(variant); setIndex(0); notify('Fresh goal — same practice kept.'); }, onDone: () => { setView('picker'); setDhikr(null); setDraft(initialDraft()); } })
+            : variant === 'guided'
+              ? React.createElement(Guided, { draft, update, index, setIndex, onReview: chooseReview })
+              : variant === 'adaptive'
+                ? React.createElement(Adaptive, { draft, dhikr, update, open, setOpen, onReview: chooseReview })
+                : React.createElement(Power, { draft, dhikr, update, active, setActive, onReview: chooseReview });
+
+      return html`<div>
+        <div class="stage">
+          <div class="phone" aria-label="Interactive goal creation wireframe">
+            <div class="phone-screen">
+              <div class="status"><span>9:41</span><span>WIREFRAME</span></div>
+              ${React.createElement(AppBar, { title, onBack: back, right: view === 'picker' ? 'Prototype' : 'Draft saved', counting: view === 'counting', goalPill: countingBadge(draft) })}
+              ${screen}
+              ${toast ? html`<div class="toast" style=${{position: 'absolute', left: '14px', right: '14px', bottom: '83px', zIndex: 8, padding: '10px 12px', borderRadius: '12px', color: 'white', background: '#26332d', fontSize: '12px', fontWeight: 700}} role="status">${toast}</div>` : null}
+              ${discardOpen ? html`<div class="modal-layer"><div class="modal" role="alertdialog" aria-modal="true"><h3>Leave this goal?</h3><p>Your draft is autosaved, but it has not been created yet. Keep it for later or leave without saving?</p><div class="actions"><button class="button primary" onClick=${() => setDiscardOpen(false)}>Keep editing</button><button class="button danger" onClick=${() => { setDiscardOpen(false); setView('picker'); setDhikr(null); notify('Draft kept for later.'); }}>Leave — keep draft</button><button class="button ghost" onClick=${() => { setDiscardOpen(false); reset(); }}>Discard draft</button></div></div></div>` : null}
+              ${permissionOpen ? html`<div class="modal-layer"><div class="modal" role="dialog" aria-modal="true"><h3>Allow reminders for this goal?</h3><p>This goal will remind you ${draft.support.reminderType === 'fixed' ? 'at ' + draft.support.fixedTime : draft.support.reminderType === 'prayer' ? 'around your selected prayers' : 'at the start of each session'}. You can change this later. We ask now because you chose reminders — never while you were making decisions.</p><div class="actions"><button class="button primary" onClick=${saveGoal}>Allow reminders &amp; create</button><button class="button tonal" onClick=${createWithoutReminders}>Create without reminders</button><button class="button ghost" onClick=${() => setPermissionOpen(false)}>Not now — keep editing</button></div></div></div>` : null}
+            </div>
+          </div>
+          <aside class="aside">
+            <div class="kicker">UX review · prototype v2</div>
+            <h1>Turn configuration into a goal contract.</h1>
+            <p class="lede">The native flow has a capable domain model, but its Advanced screen makes users understand recurrence, slots, counting rules, reminders, duration, and streaks at once. This wireframe tests a calmer decision order.</p>
+            <div class="aside-card"><h3>The core change</h3><p>Guide the user through the mental model: <b>goal type → schedule → practice times → requirements → support → review → count</b>. The advanced capability stays; the cognitive load moves later.</p><div class="flow"><b>Goal type</b><i>→</i><b>Schedule</b><i>→</i><b>Practice times</b><i>→</i><b>Requirements</b><i>→</i><b>Support</b><i>→</i><b>Review</b><i>→</i><b>Count</b></div></div>
+            <div class="aside-card"><h3>Current gaps → fixes</h3>
+              <div class="gap"><div class="gap-num">1</div><div><strong>“Advanced” is a catch-all</strong><span>Replace it with goal types: daily habit, around prayers, sessions, reach a total, tracker, custom.</span></div></div>
+              <div class="gap"><div class="gap-num">2</div><div><strong>Schedule and practice times are separate</strong><span>Offer One time alongside recurring schedules, then show daily streak consistency as its own rule.</span></div></div>
+              <div class="gap"><div class="gap-num">3</div><div><strong>Powerful count rules arrive too early</strong><span>Show target / minimum / tracker first. Put stretch, exact, and range under More control.</span></div></div>
+              <div class="gap"><div class="gap-num">4</div><div><strong>Defaults can change meaning silently</strong><span>Surface the contract and explain slot creation whenever timing changes.</span></div></div>
+              <div class="gap"><div class="gap-num">5</div><div><strong>No true review or recovery state</strong><span>Review lists every invalid decision, maps each error back to its step, and supports retry without losing the draft.</span></div></div>
+              <div class="gap"><div class="gap-num">6</div><div><strong>Complex goals disappear after creation</strong><span>Counting shows every daily, weekly, monthly, or lifetime requirement from one shared count entry.</span></div></div>
+            </div>
+            <div class="aside-card"><h3>Try these paths</h3><div class="test-row"><input type="checkbox" /> Choose a weekly target → Requirements → add a daily minimum → Review.</div><div class="test-row"><input type="checkbox" /> Create the goal → Open counting screen → log +313 → inspect every requirement.</div><div class="test-row"><input type="checkbox" /> Select “Practice around prayers” → turn off all prayers → Review goal.</div><div class="test-row"><input type="checkbox" /> Choose “Flexible range” → set minimum above maximum.</div><div class="test-row"><input type="checkbox" /> Choose “Custom windows” → make two sessions overlap.</div><div class="test-row"><input type="checkbox" /> Turn on reminders → Create goal → decline reminders.</div><div class="test-row"><input type="checkbox" /> Use the toolbar to simulate a save failure, then retry.</div></div>
+            <div class="aside-card"><h3>Prototype controls</h3><p>Use the bottom switcher to compare three interaction models. The URL is shareable with <code>?variant=guided</code>, <code>?variant=adaptive</code>, or <code>?variant=power</code>.</p><p class="subtle"><a href="?variant=power&amp;demo=milestones">Open the milestone ladder example</a> · 11 streak minimum, 100 daily target, 313 daily ceiling.</p><div class="toolbar"><button class="button" onClick=${reset}>↺ Reset demo</button><button class="button" onClick=${restore} disabled=${!saved}>Restore saved draft</button><button class=${'button ' + (simulateFailure ? 'danger' : '')} onClick=${() => setSimulateFailure(!simulateFailure)}>${simulateFailure ? '✓ Failure on' : 'Test save failure'}</button></div></div>
+            <div class="aside-card"><h3>Scope note</h3><p>React is loaded from a CDN so this remains a single reviewable HTML file. It is intentionally a wireframe: the native Android domain remains the source of truth for schedules, requirements, prayer slots, reminders, validation, persistence, and counting.</p></div>
+          </aside>
+        </div>
+        <div class="variant-switcher" aria-label="Flow variant switcher"><button aria-label="Previous variant" onClick=${() => cycleVariant(-1)}>←</button><b>${variantLabel}</b><span class="tiny" style=${{color: '#b9c6bf'}}>${VARIANTS.find(v => v.id === variant).hint}</span><button aria-label="Next variant" onClick=${() => cycleVariant(1)}>→</button></div>
+      </div>`;
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(App));
+  </script>
+</body>
+</html>

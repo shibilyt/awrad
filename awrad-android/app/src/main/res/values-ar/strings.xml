@@ -126,8 +126,8 @@
     <string name="create_goal_advanced_appbar">هدف متقدّم</string>
     <string name="create_goal_shape_title">ما نوع الهدف؟</string>
     <string name="create_goal_shape_subtitle">اختر نمطًا — يمكنك الضبط لاحقًا.</string>
-    <string name="goal_shape_daily_title">كل يوم</string>
-    <string name="goal_shape_daily_desc">عدد تبلغه كل يوم.</string>
+    <string name="goal_shape_daily_title">هدف يومي</string>
+    <string name="goal_shape_daily_desc">هدف تحققه كل يوم.</string>
     <string name="goal_shape_onetime_title">مرة واحدة</string>
     <string name="goal_shape_onetime_desc">اعمل نحو مجموع، مرة واحدة.</string>
     <string name="goal_shape_notarget_title">بلا هدف</string>
@@ -135,6 +135,7 @@
     <string name="goal_shape_advanced_title">متقدّم</string>
     <string name="goal_shape_advanced_desc">الجدول ومواقيت الصلاة وقواعد العدّ والمدة والتذكيرات.</string>
     <string name="goal_shape_or">أو</string>
+    <string name="create_goal_change_type">تغيير النوع</string>
     <string name="simple_target_daily_label">كم مرة في اليوم؟</string>
     <string name="simple_target_onetime_label">كم العدد الإجمالي؟</string>
     <string name="simple_target_dhikr_placeholder">ذكرك</string>
@@ -164,6 +165,7 @@
     <string name="create_goal_specific_days">أيام محددة</string>
     <string name="create_goal_min_streak">الحد الأدنى للسلسلة</string>
     <string name="create_goal_min_streak_hint">الحد الأدنى للعدد للحفاظ على السلسلة</string>
+    <string name="create_goal_add_streak">إضافة شرط للسلسلة</string>
     <string name="create_goal_quick_presets">إعدادات سريعة</string>
     <string name="create_goal_quick_title">إنشاء سريع</string>
     <string name="create_goal_quick_subtitle">اختر أبسط شكل، واضبط العدد، وابدأ.</string>
@@ -258,7 +260,7 @@
     <string name="quick_goal_daily_description">حدد عدداً تكرره كل يوم.</string>
     <string name="quick_goal_total_title">هدف مرة واحدة</string>
     <string name="quick_goal_total_description">حدد هدفاً تراكمياً عبر الأيام.</string>
-    <string name="quick_goal_tracker_title">عداد بدون هدف</string>
+    <string name="quick_goal_tracker_title">تتبّع فقط</string>
     <string name="quick_goal_tracker_description">سجّل كل تلاوة بدون عدد مستهدف.</string>
     <string name="preset_daily">يومي</string>
     <string name="preset_prayer_based">الصلوات</string>

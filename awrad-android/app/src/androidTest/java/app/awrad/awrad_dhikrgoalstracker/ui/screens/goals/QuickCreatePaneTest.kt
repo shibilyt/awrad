@@ -3,14 +3,19 @@ package app.awrad.awrad_dhikrgoalstracker.ui.screens.goals
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
 import app.awrad.awrad_dhikrgoalstracker.data.model.DhikrCategory
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalPreset
@@ -29,45 +34,143 @@ class QuickCreatePaneTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun quickCreateBranchesShowDailySlotsOnly() {
+    fun choosingAGoalTypeOpensItsTargetScreenAndCanReturnToTypePicker() {
         var draft by mutableStateOf(GoalDraftDefaults.forPreset(GoalPreset.DAILY))
+        var showTypeSelector by mutableStateOf(true)
 
         composeRule.setContent {
             AwradDhikrGoalsTrackerTheme {
-                QuickCreatePane(
+                SimpleTargetPane(
                     dhikr = testDhikr,
                     audioState = PreviewPlaybackState(),
                     draft = draft,
                     validation = GoalDraftMapper.validate(draft, hasDhikr = true),
                     isCreating = false,
+                    canChangeDhikr = false,
                     onTogglePlayback = {},
-                    onSelectQuickPreset = { preset -> draft = GoalDraftDefaults.forPreset(preset) },
+                    onShowFullQuran = {},
+                    onChangeDhikr = {},
+                    onSelectQuickPreset = { preset ->
+                        draft = GoalDraftDefaults.forPreset(preset)
+                        showTypeSelector = false
+                    },
                     onDraftChange = { updated: GoalDraft -> draft = updated },
                     onTargetChange = { target -> draft = draft.copy(targetDraft = target) },
                     onCreate = {},
                     onAdvanced = {},
+                    onChangeGoalType = { showTypeSelector = true },
+                    showTypeSelector = showTypeSelector,
                 )
             }
         }
 
-        composeRule.onNodeWithTag("quick-goal-option-daily").assertIsDisplayed()
-        composeRule.onNodeWithTag("quick-goal-option-total").assertIsDisplayed()
-        composeRule.onNodeWithTag("quick-goal-option-tracker").assertIsDisplayed()
-        composeRule.onNodeWithTag("quick-goal-advanced").assertIsDisplayed()
-        composeRule.onNodeWithTag("quick-timing-prayer-slots").assertIsDisplayed()
-        composeRule.onNodeWithTag("quick-timing-time-slots").assertIsDisplayed()
+        composeRule.onNodeWithTag("simple-goal-option-daily").assertIsDisplayed()
+        composeRule.onNodeWithTag("simple-goal-option-total").assertIsDisplayed()
+        composeRule.onNodeWithTag("simple-goal-option-tracker").assertIsDisplayed()
+        composeRule.onNodeWithTag("simple-goal-advanced").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("simple-goal-option-daily-selected").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Create Goal").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("simple-goal-target").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("simple-goal-streak-input").assertCountEquals(0)
 
-        composeRule.onNodeWithTag("quick-goal-option-total").performClick()
+        composeRule.onNodeWithTag("simple-goal-option-total").performClick()
         composeRule.waitForIdle()
-        composeRule.onAllNodesWithText("Total target count").assertCountEquals(2)
-        composeRule.onAllNodesWithTag("quick-timing-prayer-slots").assertCountEquals(0)
-        composeRule.onAllNodesWithTag("quick-timing-time-slots").assertCountEquals(0)
+        composeRule.onNodeWithTag("simple-goal-target").assertIsDisplayed()
+        composeRule.onNodeWithTag("simple-goal-streak-switch").assertIsOff()
+        composeRule.onNodeWithTag("simple-goal-change-type").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("simple-goal-option-daily").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("simple-goal-target").assertCountEquals(0)
+    }
 
-        composeRule.onNodeWithTag("quick-goal-option-tracker").performClick()
+    @Test
+    fun dailySimplePaneShowsTargetAndKeepsStreakRequirementOptional() {
+        val draft = GoalDraftDefaults.forPreset(GoalPreset.DAILY)
+        var currentDraft by mutableStateOf(draft)
+
+        composeRule.setContent {
+            AwradDhikrGoalsTrackerTheme {
+                SimpleTargetPane(
+                    dhikr = testDhikr,
+                    audioState = PreviewPlaybackState(),
+                    draft = currentDraft,
+                    validation = GoalDraftMapper.validate(currentDraft, hasDhikr = true),
+                    isCreating = false,
+                    canChangeDhikr = false,
+                    onTogglePlayback = {},
+                    onShowFullQuran = {},
+                    onChangeDhikr = {},
+                    onTargetChange = {},
+                    onDraftChange = { currentDraft = it },
+                    onCreate = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Daily Goal").assertIsDisplayed()
+        composeRule.onNodeWithText("Change type").assertIsDisplayed()
+        composeRule.onAllNodesWithText("Goal type").assertCountEquals(0)
+        composeRule.onAllNodesWithText("What kind of goal?").assertCountEquals(0)
+        composeRule.onNodeWithTag("simple-goal-target").assertIsDisplayed()
+        composeRule.onNodeWithTag("count-input-integrated-label").assertIsDisplayed()
+        composeRule.onNodeWithTag("count-input-integrated-stepper").assertIsDisplayed()
+        composeRule.onNodeWithTag("count-input-decrease").assertIsDisplayed()
+        composeRule.onNodeWithTag("count-input-increase").assertIsDisplayed()
+        composeRule.onNodeWithTag("count-input-quick-value-100").assertIsDisplayed()
+        val fieldBounds = composeRule.onNodeWithTag("count-input-integrated-stepper")
+            .fetchSemanticsNode().boundsInRoot
+        val labelBounds = composeRule.onNodeWithTag("count-input-integrated-label")
+            .fetchSemanticsNode().boundsInRoot
+        val decreaseBounds = composeRule.onNodeWithTag("count-input-decrease")
+            .fetchSemanticsNode().boundsInRoot
+        assertEquals(fieldBounds.left, labelBounds.left, 0.5f)
+        assertEquals(fieldBounds.height, decreaseBounds.height, 0.5f)
+        assertEquals(decreaseBounds.width, decreaseBounds.height, 0.5f)
+        val fieldPixels = composeRule.onNodeWithTag("count-input-integrated-stepper")
+            .captureToImage()
+            .toPixelMap()
+        val decreasePixels = composeRule.onNodeWithTag("count-input-decrease")
+            .captureToImage()
+            .toPixelMap()
+        assertNotEquals(fieldPixels[350, 30], decreasePixels[30, 30])
+        val buttonWidth = decreasePixels.width
+        val fieldBackground = fieldPixels[350, 30]
+        assertNotEquals(fieldBackground, fieldPixels[buttonWidth - 8, 4])
+        assertNotEquals(fieldBackground, fieldPixels[fieldPixels.width - buttonWidth + 8, 4])
+        composeRule.onAllNodesWithTag("simple-goal-streak-input").assertCountEquals(0)
+        composeRule.onNodeWithTag("simple-goal-add-streak").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("simple-goal-add-streak").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("This tracker has no target. Every count is recorded without a denominator.").assertIsDisplayed()
-        composeRule.onAllNodesWithText("Total target count").assertCountEquals(0)
-        composeRule.onAllNodesWithTag("quick-timing-prayer-slots").assertCountEquals(0)
+        composeRule.onNodeWithTag("simple-goal-streak-input").assertIsDisplayed()
+        composeRule.onNodeWithText("1").assertIsDisplayed()
+    }
+
+    @Test
+    fun goalTypePickerKeepsRequirementsOnTheNextScreen() {
+        val draft = GoalDraftDefaults.forPreset(GoalPreset.DAILY)
+
+        composeRule.setContent {
+            AwradDhikrGoalsTrackerTheme {
+                SimpleTargetPane(
+                    dhikr = testDhikr,
+                    audioState = PreviewPlaybackState(),
+                    draft = draft,
+                    validation = GoalDraftMapper.validate(draft, hasDhikr = true),
+                    isCreating = false,
+                    canChangeDhikr = false,
+                    onTogglePlayback = {},
+                    onShowFullQuran = {},
+                    onChangeDhikr = {},
+                    onTargetChange = {},
+                    onCreate = {},
+                    showTypeSelector = true,
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithTag("simple-goal-target").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("simple-goal-streak-input").assertCountEquals(0)
     }
 
     private val testDhikr = Dhikr(

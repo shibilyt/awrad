@@ -59,7 +59,7 @@ struct CreateGoalView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            if selectedDhikr != nil {
+            if selectedDhikr != nil, draft.preset == .custom {
                 GoalCreateBar(
                     sentence: goalSentence,
                     isEnabled: isCreateEnabled,
@@ -145,8 +145,34 @@ struct CreateGoalView: View {
         }
     }
 
-    /// Step 2 — the single-page goal creator for the chosen dhikr.
+    /// Step 2 — quick presets for the chosen dhikr. Advanced keeps the
+    /// existing editor below this entry point.
+    @ViewBuilder
     private var detailsPage: some View {
+        if draft.preset == .custom {
+            advancedDetailsPage
+        } else {
+            quickDetailsPage
+        }
+    }
+
+    private var quickDetailsPage: some View {
+        ScrollView(.vertical, showsIndicators: true) {
+            if let selectedDhikr {
+                GoalQuickCreateStep(
+                    dhikr: selectedDhikr,
+                    language: language,
+                    draft: $draft,
+                    onCreate: createGoal,
+                    onAdvanced: enterAdvanced
+                )
+                .padding(20)
+                .padding(.bottom, 28)
+            }
+        }
+    }
+
+    private var advancedDetailsPage: some View {
         ScrollView(.vertical, showsIndicators: true) {
             VStack(alignment: .leading, spacing: 18) {
                 dhikrSection
@@ -246,6 +272,10 @@ struct CreateGoalView: View {
         draft = GoalDraft.defaults(for: .daily)
     }
 
+    private func enterAdvanced() {
+        draft = GoalDraft.defaults(for: .custom)
+    }
+
     /// Re-pick from the "Change" sheet on the creation page.
     private func selectDhikr(_ dhikr: Dhikr) {
         let isChanging = selectedDhikrID != nil && selectedDhikrID != dhikr.id
@@ -278,7 +308,7 @@ struct CreateGoalView: View {
               let goal = store.createConfiguredGoal(
                 dhikrID: selectedDhikrID,
                 targetPolicy: configuration.targetPolicy,
-                recurrence: configuration.recurrence,
+                recurrence: configuration.recurrence(forStartDate: store.todayKey),
                 slots: configuration.slots,
                 reminders: configuration.reminders,
                 countPolicy: configuration.countPolicy,
@@ -374,9 +404,9 @@ private enum QuickGoalOption: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .daily: "Daily Goal"
-        case .oneTime: "One time target"
-        case .tracker: "No target"
+        case .daily: "Daily"
+        case .oneTime: "One-time"
+        case .tracker: "Track only"
         }
     }
 
@@ -390,9 +420,9 @@ private enum QuickGoalOption: String, CaseIterable, Identifiable {
 
     var subtitle: String {
         switch self {
-        case .daily: "Set a count to repeat every day."
-        case .oneTime: "Set one cumulative target across days."
-        case .tracker: "Track each recitation without a target."
+        case .daily: "Set a daily target and minimum for your streak."
+        case .oneTime: "Reach a total once; it does not repeat."
+        case .tracker: "Record counts without a completion target."
         }
     }
 
@@ -414,8 +444,8 @@ private enum QuickGoalOption: String, CaseIterable, Identifiable {
 
     var targetTitle: String {
         switch self {
-        case .daily: "Daily target count"
-        case .oneTime: "Total target count"
+        case .daily: "Daily target"
+        case .oneTime: "Total target"
         case .tracker: "Target count"
         }
     }
@@ -437,11 +467,7 @@ private enum QuickGoalOption: String, CaseIterable, Identifiable {
     }
 
     var createTitle: String {
-        switch self {
-        case .daily: "Create Goal"
-        case .oneTime: "Create Target"
-        case .tracker: "Create Tracker"
-        }
+        "Create goal"
     }
 }
 
@@ -552,7 +578,7 @@ private struct GoalQuickCreateStep: View {
                     .font(AwradTheme.displayFont(23, weight: .bold))
                     .foregroundStyle(AwradTheme.ink)
 
-                Text("Start with the goal shape. Targets come after the slots are clear.")
+                Text("Start with a simple setup. You can add more control later.")
                     .font(AwradTheme.bodyFont(.subheadline))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -625,40 +651,100 @@ private struct GoalQuickCreateStep: View {
     private var quickConfiguration: some View {
         switch selectedOption {
         case .daily:
-            QuickGoalTimingSection(timingMode: $draft.timingMode)
-            SlotConfigurationSection(option: selectedOption, draft: $draft)
+            TargetCountControl(
+                title: selectedOption.targetTitle,
+                text: $draft.targetText,
+                presets: selectedOption.presets
+            )
+            QuickStreakRequirementSection(
+                isEnabled: .constant(true),
+                minimumText: $draft.minimumStreakText,
+                allowsToggle: false
+            )
         case .oneTime:
             TargetCountControl(
                 title: selectedOption.targetTitle,
                 text: $draft.targetText,
                 presets: selectedOption.presets
             )
+            QuickStreakRequirementSection(
+                isEnabled: $draft.minimumStreakEnabled,
+                minimumText: $draft.minimumStreakText,
+                allowsToggle: true
+            )
         case .tracker:
             TrackerExplanationCard()
+            QuickStreakRequirementSection(
+                isEnabled: $draft.minimumStreakEnabled,
+                minimumText: $draft.minimumStreakText,
+                allowsToggle: true
+            )
         }
     }
 
     private var previewText: String {
         let title = dhikr.transliteration.isEmpty ? dhikr.displayTitle(language: language) : dhikr.transliteration
+        let streak = streakPreview
         if selectedOption == .tracker {
-            return "Track every time you recite \(title)."
+            return AwradLocalizer.format(
+                "Track every time you recite %@.",
+                language: language,
+                title
+            ) + streak
         }
 
         if selectedOption == .oneTime {
-            return "Complete \(draft.targetText) recitations of \(title)."
+            return AwradLocalizer.format(
+                "Complete %@ recitations of %@.",
+                language: language,
+                draft.targetText,
+                title
+            ) + streak
         }
 
         switch draft.resolvedTimingMode {
         case .anytime:
-            return "Recite \(title) \(draft.targetText) times every day."
+            return AwradLocalizer.format(
+                "Recite %@ %@ times every day.",
+                language: language,
+                title,
+                draft.targetText
+            ) + streak
         case .prayerBased:
             let slotCount = draft.selectedPrayers.count * (draft.prayerTiming == .beforeAndAfter ? 2 : 1)
-            return "Create \(slotCount) prayer slots for \(title), each with its own target."
+            return AwradLocalizer.format(
+                "Create %d prayer slots for %@, each with its own target.",
+                language: language,
+                slotCount,
+                title
+            )
         case .morningEvening:
-            return "Create morning and evening slots for \(title)."
+            return AwradLocalizer.format(
+                "Create morning and evening slots for %@.",
+                language: language,
+                title
+            )
         case .timeWindow:
-            return "Create \(draft.timeSlots.count) time slots for \(title), each with its own target."
+            return AwradLocalizer.format(
+                "Create %d time slots for %@, each with its own target.",
+                language: language,
+                draft.timeSlots.count,
+                title
+            )
         }
+    }
+
+    private var streakPreview: String {
+        guard draft.minimumStreakEnabled,
+              let minimum = Int(draft.minimumStreakText.trimmingCharacters(in: .whitespacesAndNewlines)),
+              minimum > 0 else {
+            return ""
+        }
+        return " " + AwradLocalizer.format(
+            "At least %d each day protects your streak.",
+            language: language,
+            minimum
+        )
     }
 }
 
@@ -1285,11 +1371,47 @@ private struct TrackerExplanationCard: View {
                 .background(AwradTheme.mint.opacity(0.22), in: Circle())
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Tracker")
+                Text("Track only")
                     .font(AwradTheme.bodyFont(.headline, weight: .semibold))
                     .foregroundStyle(AwradTheme.ink)
-                Text("This tracker has no target. Every count is recorded without a denominator.")
+                Text("This goal has no completion target. Every count is recorded.")
                     .font(AwradTheme.bodyFont(.subheadline))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .awradGlassSurface(cornerRadius: 24, tint: AwradTheme.surface.opacity(0.7))
+    }
+}
+
+private struct QuickStreakRequirementSection: View {
+    @Binding var isEnabled: Bool
+    @Binding var minimumText: String
+    let allowsToggle: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if allowsToggle {
+                Toggle("Build a daily streak", isOn: $isEnabled)
+                    .tint(AwradTheme.sage)
+                    .accessibilityIdentifier("quick-goal-streak-toggle")
+            } else {
+                Text("Minimum for streak")
+                    .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                    .foregroundStyle(AwradTheme.ink)
+            }
+
+            if isEnabled {
+                GoalNumberField(
+                    title: allowsToggle ? "Minimum per day" : "Minimum for streak",
+                    text: $minimumText
+                )
+                .accessibilityIdentifier("quick-goal-minimum-streak-field")
+
+                Text("A day counts toward your streak after this many recitations.")
+                    .font(AwradTheme.bodyFont(.caption))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }

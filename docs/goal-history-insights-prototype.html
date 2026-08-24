@@ -1,0 +1,1351 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Awrad — Goal history and insights prototype</title>
+  <link rel="icon" href="data:,">
+  <!--
+    THROWAWAY WIREFRAME — goal counting history bottom sheet.
+
+    Question this prototype explores:
+      How should a full-height goal history sheet divide History and Insights while making
+      chart, affinity, adherence, session, and time-spent information feel useful rather
+      than dashboard-heavy?
+
+    Three structural variants are available through ?variant=a|b|c and the floating switcher.
+    Open directly, or serve the repository root with:
+      python3 -m http.server 4173
+    Then open:
+      http://localhost:4173/docs/goal-history-insights-prototype.html
+
+    Assumptions called out in the prototype:
+      - “Dhikr affinity” is an encouraging composite signal based on presence, target adherence,
+        and return regularity. It is not a spiritual judgment or a social comparison.
+      - “Average time per day” needs persisted session-duration data; it is shown here as a
+        product direction, not as an existing count-history field.
+  -->
+  <style>
+    @font-face {
+      font-family: "Awrad Rounded";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/gflexrounded_regular.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Rounded";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/gflexrounded_medium.ttf") format("truetype");
+      font-weight: 500;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Rounded";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/gflexrounded_semibold.ttf") format("truetype");
+      font-weight: 650;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Naskh";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/notonaskharabic_regular.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: light;
+      --canvas: #e8eee9;
+      --canvas-deep: #dbe5dd;
+      --surface: #fcfdf9;
+      --surface-low: #f4f8f3;
+      --surface-high: #eaf2eb;
+      --surface-highest: #dfeae1;
+      --ink: #162119;
+      --ink-soft: #344239;
+      --muted: #6c796f;
+      --quiet: #8b968d;
+      --line: #d4dfd6;
+      --line-strong: #becfc1;
+      --sage: #4d805c;
+      --sage-deep: #255236;
+      --sage-light: #79a884;
+      --sage-soft: #d9eadb;
+      --sage-pale: #edf6ee;
+      --gold: #c99b3c;
+      --gold-soft: #f4e8c9;
+      --plum: #795c82;
+      --plum-soft: #eee5f0;
+      --shadow-phone: 0 44px 100px rgba(37, 65, 45, .23), 0 10px 32px rgba(37, 65, 45, .12);
+      --shadow-card: 0 13px 32px rgba(34, 62, 42, .07);
+      --font: "Awrad Rounded", "Trebuchet MS", sans-serif;
+      --arabic: "Awrad Naskh", "Times New Roman", serif;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #111814;
+      --canvas-deep: #09100c;
+      --surface: #151d18;
+      --surface-low: #19241d;
+      --surface-high: #1e2c22;
+      --surface-highest: #26392b;
+      --ink: #e3ece5;
+      --ink-soft: #c3d2c7;
+      --muted: #9aaa9e;
+      --quiet: #728176;
+      --line: #2b4232;
+      --line-strong: #3b5944;
+      --sage: #79b087;
+      --sage-deep: #2e6640;
+      --sage-light: #9bca9f;
+      --sage-soft: #294d32;
+      --sage-pale: #1b3021;
+      --gold: #e4bd64;
+      --gold-soft: #493b1c;
+      --plum: #c4a2ca;
+      --plum-soft: #3b2c3f;
+      --shadow-phone: 0 44px 120px rgba(0, 0, 0, .42), 0 12px 34px rgba(0, 0, 0, .22);
+      --shadow-card: 0 16px 40px rgba(0, 0, 0, .14);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-width: 320px; background: var(--canvas-deep); }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 7%, rgba(201, 155, 60, .13), transparent 25rem),
+        radial-gradient(circle at 91% 14%, rgba(77, 128, 92, .17), transparent 30rem),
+        linear-gradient(135deg, var(--canvas-deep), var(--canvas) 48%, var(--canvas-deep));
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      transition: background-color .24s ease, color .24s ease;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: .42;
+      background-image:
+        linear-gradient(rgba(64, 103, 75, .045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(64, 103, 75, .045) 1px, transparent 1px);
+      background-size: 32px 32px;
+      content: "";
+      mask-image: linear-gradient(to bottom, #000, transparent 76%);
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--gold) 54%, transparent);
+      outline-offset: 3px;
+    }
+
+    .prototype-banner {
+      position: fixed;
+      top: 18px;
+      left: 22px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 13px;
+      border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+      border-radius: 999px;
+      color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 82%, transparent);
+      box-shadow: 0 10px 30px rgba(31, 59, 39, .07);
+      backdrop-filter: blur(18px);
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .prototype-banner::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 17%, transparent);
+      content: "";
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(235px, 315px) 390px minmax(235px, 315px);
+      justify-content: center;
+      align-items: start;
+      gap: clamp(26px, 5vw, 76px);
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 94px 28px 148px;
+    }
+
+    .brief,
+    .spec-panel {
+      position: sticky;
+      top: 94px;
+      padding-top: 24px;
+    }
+
+    .kicker,
+    .eyebrow {
+      margin: 0;
+      color: var(--sage);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .16em;
+      line-height: 1.4;
+      text-transform: uppercase;
+    }
+
+    .brief h1 {
+      max-width: 9ch;
+      margin: 15px 0 19px;
+      font-size: clamp(38px, 4vw, 58px);
+      font-weight: 500;
+      letter-spacing: -.07em;
+      line-height: .95;
+    }
+
+    .brief > p:not(.kicker) {
+      max-width: 34ch;
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.72;
+    }
+
+    .brief-quote {
+      margin: 31px 0 0;
+      padding: 18px 0 20px;
+      border-top: 1px solid color-mix(in srgb, var(--ink) 17%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--ink) 17%, transparent);
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .brief-quote strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .brief-list,
+    .spec-list {
+      display: grid;
+      gap: 12px;
+      margin: 25px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .brief-list li,
+    .spec-list li {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 10px;
+      align-items: start;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .brief-list li::before,
+    .spec-list li::before {
+      display: grid;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      color: var(--sage-deep);
+      background: var(--sage-soft);
+      content: "·";
+      font-size: 16px;
+      font-weight: 750;
+      line-height: 1;
+    }
+
+    .brief-list strong,
+    .spec-list strong {
+      color: var(--ink-soft);
+      font-weight: 650;
+    }
+
+    .device-stage {
+      position: relative;
+    }
+
+    .device {
+      position: relative;
+      width: 390px;
+      height: 844px;
+      overflow: hidden;
+      border: 8px solid color-mix(in srgb, var(--ink) 86%, #000);
+      border-radius: 46px;
+      background: var(--surface);
+      box-shadow: var(--shadow-phone);
+    }
+
+    .device::before {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      z-index: 4;
+      width: 120px;
+      height: 25px;
+      border-radius: 0 0 18px 18px;
+      background: color-mix(in srgb, var(--ink) 86%, #000);
+      content: "";
+      transform: translateX(-50%);
+    }
+
+    .status-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 3;
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      padding: 9px 19px 0;
+      color: var(--ink);
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: .02em;
+    }
+
+    .status-icons {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      color: var(--muted);
+    }
+
+    .status-icons i {
+      display: inline-block;
+      width: 11px;
+      height: 7px;
+      border: 1px solid currentColor;
+      border-radius: 2px;
+      opacity: .75;
+    }
+
+    .underlay {
+      position: absolute;
+      inset: 0;
+      padding: 78px 20px 0;
+      background:
+        linear-gradient(180deg, var(--surface-high) 0 34%, var(--surface) 34% 100%);
+    }
+
+    .underlay-card {
+      padding: 17px;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--surface) 86%, transparent);
+      opacity: .63;
+    }
+
+    .underlay-card + .underlay-card { margin-top: 13px; }
+
+    .underlay-line {
+      width: 45%;
+      height: 9px;
+      border-radius: 99px;
+      background: var(--line-strong);
+    }
+
+    .underlay-line.short { width: 24%; margin-top: 10px; background: var(--line); }
+    .underlay-line.long { width: 74%; margin-top: 25px; background: var(--line); }
+
+    .sheet {
+      position: absolute;
+      inset: 44px 0 0;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 28px 28px 0 0;
+      background: var(--surface);
+      box-shadow: 0 -12px 36px rgba(28, 58, 37, .12);
+    }
+
+    .grabber {
+      flex: 0 0 auto;
+      width: 38px;
+      height: 4px;
+      margin: 10px auto 2px;
+      border-radius: 99px;
+      background: var(--line-strong);
+    }
+
+    .sheet-scroll {
+      min-height: 0;
+      overflow-y: auto;
+      padding: 0 18px 30px;
+      scrollbar-width: none;
+    }
+
+    .sheet-scroll::-webkit-scrollbar { display: none; }
+
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 0 13px;
+    }
+
+    .sheet-title {
+      margin: 0;
+      font-size: 23px;
+      font-weight: 650;
+      letter-spacing: -.04em;
+      line-height: 1.1;
+    }
+
+    .sheet-subtitle {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .close-button,
+    .theme-button {
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: var(--ink-soft);
+      background: var(--surface-highest);
+      cursor: pointer;
+    }
+
+    .close-button span { margin-top: -2px; font-size: 20px; font-weight: 400; }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      border-radius: 16px;
+      background: var(--surface-highest);
+    }
+
+    .tab {
+      flex: 1;
+      min-height: 42px;
+      border-radius: 12px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .tab.is-active {
+      color: var(--ink);
+      background: var(--surface);
+      box-shadow: 0 3px 10px rgba(38, 68, 45, .08);
+    }
+
+    .tab:active,
+    .filter:active,
+    .close-button:active,
+    .theme-button:active { transform: scale(.97); }
+
+    .view {
+      display: grid;
+      gap: 13px;
+      padding-top: 15px;
+    }
+
+    .section-label {
+      margin: 4px 0 -2px;
+      color: var(--sage);
+      font-size: 9px;
+      font-weight: 750;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .card {
+      border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+      border-radius: 18px;
+      background: var(--surface-low);
+      box-shadow: var(--shadow-card);
+    }
+
+    .card.pad { padding: 15px; }
+
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 13px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 650;
+      letter-spacing: -.02em;
+    }
+
+    .card-note {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.4;
+    }
+
+    .filters {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .filter {
+      padding: 7px 10px;
+      border-radius: 999px;
+      color: var(--muted);
+      background: var(--surface-highest);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 650;
+    }
+
+    .filter.is-active {
+      color: var(--surface);
+      background: var(--sage);
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+      border-radius: 18px;
+      background: var(--surface-low);
+      box-shadow: var(--shadow-card);
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 13px 14px 12px;
+    }
+
+    .metric:nth-child(odd) { border-right: 1px solid var(--line); }
+    .metric:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+
+    .metric-label {
+      display: block;
+      color: var(--muted);
+      font-size: 9px;
+      line-height: 1.3;
+    }
+
+    .metric-value {
+      display: block;
+      margin-top: 6px;
+      color: var(--ink);
+      font-size: 22px;
+      font-weight: 650;
+      letter-spacing: -.055em;
+      line-height: 1;
+    }
+
+    .metric-value.primary { color: var(--sage); }
+    .metric-detail { display: block; margin-top: 5px; color: var(--quiet); font-size: 9px; line-height: 1.3; }
+
+    .affinity {
+      position: relative;
+      overflow: hidden;
+      padding: 16px;
+      border: 1px solid color-mix(in srgb, var(--plum) 25%, var(--line));
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--plum-soft), var(--surface-low) 72%);
+    }
+
+    .affinity::after {
+      position: absolute;
+      right: -18px;
+      bottom: -33px;
+      width: 116px;
+      height: 116px;
+      border: 1px solid color-mix(in srgb, var(--plum) 25%, transparent);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .affinity-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .affinity-title { margin: 0; font-size: 14px; font-weight: 650; }
+    .affinity-copy { max-width: 25ch; margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+    .affinity-score { color: var(--plum); font-size: 21px; font-weight: 650; letter-spacing: -.05em; }
+
+    .affinity-track,
+    .progress-track {
+      height: 8px;
+      overflow: hidden;
+      margin-top: 14px;
+      border-radius: 99px;
+      background: color-mix(in srgb, var(--plum) 15%, var(--surface));
+    }
+
+    .affinity-fill {
+      width: 78%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--plum), color-mix(in srgb, var(--plum) 58%, var(--gold)));
+    }
+
+    .affinity-foot {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+      color: var(--quiet);
+      font-size: 9px;
+    }
+
+    .chart-wrap { padding: 14px 14px 12px; }
+
+    .chart {
+      display: flex;
+      gap: 5px;
+      align-items: end;
+      height: 112px;
+      padding-top: 7px;
+      border-bottom: 1px solid var(--line-strong);
+      background-image: linear-gradient(to bottom, color-mix(in srgb, var(--line) 66%, transparent) 1px, transparent 1px);
+      background-size: 100% 33.33%;
+    }
+
+    .bar-group {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      align-self: stretch;
+      justify-content: end;
+      min-width: 0;
+      gap: 5px;
+    }
+
+    .bar {
+      width: 100%;
+      min-height: 4px;
+      border-radius: 5px 5px 2px 2px;
+      background: color-mix(in srgb, var(--sage) 35%, transparent);
+    }
+
+    .bar.is-recent { background: var(--sage); }
+    .bar-label { color: var(--quiet); font-size: 8px; }
+
+    .chart-legend {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .summary-callout {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 12px 13px;
+      border-radius: 14px;
+      background: var(--sage-pale);
+    }
+
+    .summary-dot {
+      flex: 0 0 auto;
+      width: 8px;
+      height: 8px;
+      margin-top: 4px;
+      border-radius: 50%;
+      background: var(--sage);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--sage) 17%, transparent);
+    }
+
+    .summary-callout p { margin: 0; color: var(--ink-soft); font-size: 11px; line-height: 1.48; }
+
+    .adherence-head,
+    .session-head,
+    .trend-row,
+    .list-row,
+    .calendar-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .adherence-rate { color: var(--sage); font-size: 22px; font-weight: 650; letter-spacing: -.05em; }
+    .adherence-label { color: var(--muted); font-size: 10px; }
+    .progress-track { height: 9px; margin-top: 12px; background: var(--surface-highest); }
+    .progress-fill { width: 75%; height: 100%; border-radius: inherit; background: var(--sage); }
+
+    .adherence-breakdown {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .breakdown-item { padding-top: 9px; border-top: 1px solid var(--line); }
+    .breakdown-value { display: block; color: var(--ink); font-size: 14px; font-weight: 650; }
+    .breakdown-label { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.25; }
+
+    .session-list { display: grid; gap: 12px; }
+    .session-row { display: grid; grid-template-columns: 84px 1fr 38px; gap: 9px; align-items: center; }
+    .session-name { min-width: 0; overflow: hidden; color: var(--ink-soft); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+    .session-track { height: 7px; overflow: hidden; border-radius: 99px; background: var(--surface-highest); }
+    .session-fill { height: 100%; border-radius: inherit; background: var(--sage-light); }
+    .session-percent { color: var(--sage); font-size: 10px; font-weight: 650; text-align: right; }
+
+    .time-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .time-block { padding: 12px; border-radius: 14px; background: var(--surface-high); }
+    .time-value { display: block; margin-top: 4px; color: var(--ink); font-size: 20px; font-weight: 650; letter-spacing: -.05em; }
+    .time-label { color: var(--muted); font-size: 9px; line-height: 1.3; }
+
+    .trend {
+      padding: 14px;
+      border-left: 3px solid var(--gold);
+      border-radius: 0 16px 16px 0;
+      background: var(--gold-soft);
+    }
+
+    .trend strong { display: block; color: var(--ink); font-size: 12px; font-weight: 650; }
+    .trend span { display: block; margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+
+    .calendar { padding: 15px; }
+    .calendar-head { margin-bottom: 13px; }
+    .calendar-title { margin: 0; font-size: 14px; font-weight: 650; }
+    .calendar-caption { color: var(--muted); font-size: 10px; }
+    .weekday-row,
+    .heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+    .weekday-row { margin-bottom: 7px; color: var(--quiet); font-size: 8px; text-align: center; }
+    .day { position: relative; display: grid; place-items: center; aspect-ratio: 1; border-radius: 8px; color: var(--ink-soft); background: var(--surface-highest); font-size: 8px; }
+    .day.is-empty { background: transparent; }
+    .day.level-1 { color: var(--sage-deep); background: color-mix(in srgb, var(--sage) 20%, var(--surface)); }
+    .day.level-2 { color: var(--sage-deep); background: color-mix(in srgb, var(--sage) 42%, var(--surface)); }
+    .day.level-3 { color: var(--surface); background: var(--sage); }
+    .day.is-today { outline: 2px solid var(--gold); outline-offset: 2px; }
+    .calendar-legend { display: flex; gap: 7px; align-items: center; margin-top: 12px; color: var(--muted); font-size: 9px; }
+    .legend-swatch { width: 9px; height: 9px; border-radius: 3px; background: var(--surface-highest); }
+    .legend-swatch.level-1 { background: color-mix(in srgb, var(--sage) 20%, var(--surface)); }
+    .legend-swatch.level-2 { background: color-mix(in srgb, var(--sage) 42%, var(--surface)); }
+    .legend-swatch.level-3 { background: var(--sage); }
+
+    .history-session-list { display: grid; gap: 0; }
+    .history-session { display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 13px 0; border-top: 1px solid var(--line); }
+    .history-session:first-child { padding-top: 0; border-top: 0; }
+    .history-session:last-child { padding-bottom: 0; }
+    .history-session-name { color: var(--ink-soft); font-size: 11px; font-weight: 650; }
+    .history-session-detail { margin-top: 4px; color: var(--muted); font-size: 9px; }
+    .history-session-count { color: var(--sage); font-size: 17px; font-weight: 650; letter-spacing: -.04em; text-align: right; }
+    .history-session-percent { margin-top: 3px; color: var(--muted); font-size: 9px; text-align: right; }
+
+    .date-list { display: grid; gap: 0; }
+    .date-row { display: grid; grid-template-columns: 70px 1fr auto; gap: 10px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+    .date-row:first-child { border-top: 0; padding-top: 0; }
+    .date-label { color: var(--ink-soft); font-size: 10px; font-weight: 650; }
+    .date-bar { height: 7px; overflow: hidden; border-radius: 99px; background: var(--surface-highest); }
+    .date-bar span { display: block; height: 100%; border-radius: inherit; background: var(--sage); }
+    .date-count { color: var(--ink); font-size: 11px; font-weight: 650; }
+
+    .timeline { display: grid; gap: 0; }
+    .timeline-row { position: relative; display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 13px 0; border-top: 1px solid var(--line); }
+    .timeline-row:first-child { border-top: 0; padding-top: 0; }
+    .timeline-dot { width: 10px; height: 10px; margin-left: 3px; border: 2px solid var(--sage); border-radius: 50%; background: var(--surface); }
+    .timeline-row.is-best .timeline-dot { border-color: var(--gold); background: var(--gold); }
+    .timeline-date { color: var(--ink-soft); font-size: 11px; font-weight: 650; }
+    .timeline-detail { margin-top: 4px; color: var(--muted); font-size: 9px; }
+    .timeline-count { color: var(--sage); font-size: 16px; font-weight: 650; }
+
+    .hero-copy { padding: 18px; border-radius: 20px; background: var(--sage-deep); color: #f5fbf5; }
+    .hero-copy .eyebrow { color: var(--sage-soft); }
+    .hero-copy h2 { max-width: 14ch; margin: 10px 0 7px; color: #f5fbf5; font-size: 24px; font-weight: 500; letter-spacing: -.06em; line-height: 1.02; }
+    .hero-copy p { max-width: 30ch; margin: 0; color: color-mix(in srgb, #f5fbf5 74%, transparent); font-size: 10px; line-height: 1.5; }
+    .hero-stat { display: flex; justify-content: space-between; gap: 10px; align-items: end; margin-top: 18px; padding-top: 13px; border-top: 1px solid color-mix(in srgb, #fff 21%, transparent); }
+    .hero-stat strong { font-size: 30px; font-weight: 500; letter-spacing: -.06em; }
+    .hero-stat span { max-width: 14ch; color: color-mix(in srgb, #f5fbf5 70%, transparent); font-size: 9px; line-height: 1.35; text-align: right; }
+
+    .ring-row { display: grid; grid-template-columns: 90px 1fr; gap: 15px; align-items: center; }
+    .ring { position: relative; display: grid; place-items: center; width: 86px; height: 86px; border-radius: 50%; background: conic-gradient(var(--plum) 0 78%, var(--surface-highest) 78% 100%); }
+    .ring::after { position: absolute; inset: 9px; border-radius: 50%; background: var(--surface-low); content: ""; }
+    .ring strong { position: relative; z-index: 1; color: var(--plum); font-size: 20px; font-weight: 650; }
+    .ring-copy h3 { margin: 0; font-size: 14px; font-weight: 650; }
+    .ring-copy p { margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+
+    .sparkline { position: relative; height: 74px; margin-top: 10px; border-bottom: 1px solid var(--line-strong); }
+    .sparkline svg { width: 100%; height: 100%; overflow: visible; }
+    .sparkline path { fill: none; stroke: var(--sage); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .sparkline circle { fill: var(--surface-low); stroke: var(--sage); stroke-width: 2; }
+
+    .insight-pair { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+    .insight-tile { padding: 13px; border-radius: 15px; background: var(--surface-high); }
+    .insight-tile .eyebrow { color: var(--muted); font-size: 8px; letter-spacing: .12em; }
+    .insight-tile strong { display: block; margin-top: 6px; color: var(--ink); font-size: 18px; font-weight: 650; letter-spacing: -.05em; }
+    .insight-tile span { display: block; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.3; }
+
+    .variant-c .metric-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .variant-c .metric { padding: 12px 9px; border-right: 1px solid var(--line); border-bottom: 0; }
+    .variant-c .metric:nth-child(4) { border-right: 0; }
+    .variant-c .metric:nth-child(odd) { border-right: 1px solid var(--line); }
+    .variant-c .metric-value { font-size: 17px; }
+    .variant-c .metric-detail { display: none; }
+
+    .prototype-note {
+      margin-top: 19px;
+      padding: 14px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 16px;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--surface) 62%, transparent);
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .prototype-note strong { display: block; margin-bottom: 5px; color: var(--ink-soft); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+
+    .spec-panel h2 { margin: 13px 0 0; font-size: 19px; font-weight: 650; letter-spacing: -.04em; }
+    .spec-panel > p:not(.kicker) { margin: 8px 0 0; color: var(--muted); font-size: 12px; line-height: 1.62; }
+    .spec-block { margin-top: 28px; padding-top: 16px; border-top: 1px solid color-mix(in srgb, var(--ink) 17%, transparent); }
+    .spec-block h3 { margin: 0; color: var(--ink-soft); font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+    .spec-block p { margin: 8px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+
+    .prototype-switcher {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px;
+      border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+      border-radius: 999px;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      box-shadow: 0 16px 38px rgba(31, 59, 39, .17);
+      backdrop-filter: blur(20px);
+      transform: translateX(-50%);
+    }
+
+    .switch-arrow,
+    .theme-button { cursor: pointer; }
+    .switch-arrow { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--ink-soft); background: var(--surface-highest); font-size: 18px; }
+    .switch-label { min-width: 155px; padding: 0 8px; font-size: 10px; font-weight: 650; text-align: center; }
+
+    @media (max-width: 1050px) {
+      .workspace { grid-template-columns: minmax(220px, 1fr) 390px; max-width: 820px; }
+      .spec-panel { display: none; }
+    }
+
+    @media (max-width: 720px) {
+      .prototype-banner { top: 10px; left: 12px; font-size: 8px; }
+      .workspace { display: block; padding: 64px 14px 128px; }
+      .brief { position: static; max-width: 390px; margin: 0 auto 28px; padding-top: 0; }
+      .brief h1 { max-width: none; margin: 10px 0 12px; font-size: 39px; }
+      .brief-quote, .brief-list { display: none; }
+      .device-stage { display: flex; justify-content: center; }
+      .device { width: min(390px, calc(100vw - 28px)); height: min(844px, calc(100vh - 155px)); min-height: 700px; }
+      .prototype-switcher { bottom: 14px; }
+    }
+
+    @media (max-width: 410px) {
+      .device { border-width: 5px; border-radius: 36px; }
+      .sheet { border-radius: 24px 24px 0 0; }
+      .sheet-scroll { padding-right: 14px; padding-left: 14px; }
+      .switch-label { min-width: 128px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">Prototype · goal history</div>
+
+  <main class="workspace">
+    <aside class="brief">
+      <p class="kicker">Awrad / counting</p>
+      <h1>History with a little more meaning.</h1>
+      <p>
+        Three ways to make a full-height goal sheet feel like a helpful reflection on practice,
+        not a spreadsheet of repetitions.
+      </p>
+      <p class="brief-quote">
+        <strong>Design question</strong>
+        Can the Insights tab connect raw counts to consistency, time, and the user's relationship
+        with one dhikr?
+      </p>
+      <ul class="brief-list">
+        <li><span><strong>History:</strong> streak calendar, session-wise counts, and dated entries.</span></li>
+        <li><span><strong>Insights:</strong> chart, adherence, affinity, and time spent.</span></li>
+        <li><span><strong>One scroll:</strong> the sheet reaches the status bar and all content scrolls together.</span></li>
+      </ul>
+    </aside>
+
+    <section class="device-stage" aria-label="Mobile bottom sheet wireframe">
+      <div class="device" id="device">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="status-icons"><i></i><i></i><i></i></span>
+        </div>
+        <div class="underlay" aria-hidden="true">
+          <div class="underlay-card">
+            <div class="underlay-line"></div>
+            <div class="underlay-line short"></div>
+            <div class="underlay-line long"></div>
+          </div>
+          <div class="underlay-card">
+            <div class="underlay-line short"></div>
+            <div class="underlay-line long"></div>
+            <div class="underlay-line long"></div>
+          </div>
+        </div>
+        <div class="sheet">
+          <div class="grabber"></div>
+          <div class="sheet-scroll" id="sheet-scroll">
+            <header class="sheet-header">
+              <div>
+                <h2 class="sheet-title">History &amp; insights</h2>
+                <p class="sheet-subtitle">Subḥān Allāh · 100 per day</p>
+              </div>
+              <button class="close-button" type="button" aria-label="Close"><span>×</span></button>
+            </header>
+            <nav class="tabs" aria-label="History and insights tabs">
+              <button class="tab" data-tab="history" type="button">History</button>
+              <button class="tab is-active" data-tab="insights" type="button">Insights</button>
+            </nav>
+            <div id="variant-root"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="spec-panel">
+      <p class="kicker" id="variant-kicker">Variant A</p>
+      <h2 id="variant-name">Metrics first</h2>
+      <p id="variant-description">A familiar analytics stack. Best when users want to scan numbers quickly and then explore the chart.</p>
+
+      <div class="spec-block">
+        <h3>New signals</h3>
+        <ul class="spec-list">
+          <li><span><strong>Affinity:</strong> an encouraging return-and-consistency signal, not a spiritual score.</span></li>
+          <li><span><strong>Time spent:</strong> average duration per counted day and per session.</span></li>
+          <li><span><strong>Adherence:</strong> target met, partial, and missed scheduled days.</span></li>
+        </ul>
+      </div>
+
+      <div class="spec-block">
+        <h3>Data note</h3>
+        <p id="data-note">
+          Average time needs persisted session-duration data. The current count history can support
+          totals, dates, targets, streaks, and slot performance, but not reliable elapsed time.
+        </p>
+      </div>
+
+      <div class="prototype-note">
+        <strong>Try it</strong>
+        Switch tabs inside the sheet. Use the bottom arrows or keyboard ← / → to compare layouts.
+        The active variant is preserved in the URL as <code>?variant=a</code>.
+      </div>
+    </aside>
+  </main>
+
+  <nav class="prototype-switcher" aria-label="Prototype variants">
+    <button class="switch-arrow" id="previous-variant" type="button" aria-label="Previous variant">‹</button>
+    <span class="switch-label" id="switch-label">A · Metrics first</span>
+    <button class="switch-arrow" id="next-variant" type="button" aria-label="Next variant">›</button>
+    <button class="theme-button" id="theme-toggle" type="button" aria-label="Toggle theme">◐</button>
+  </nav>
+
+  <script>
+    const bars = [
+      [32, "M"], [52, "T"], [43, "W"], [68, "T"], [49, "F"], [76, "S"], [58, "S"],
+      [42, "M"], [66, "T"], [73, "W"], [53, "T"], [81, "F"], [62, "S"], [88, "S"],
+    ];
+
+    const heatmap = [
+      0, 1, 2, 3, 2, 0, 1,
+      1, 2, 3, 2, 1, 0, 2,
+      2, 3, 3, 1, 2, 1, 0,
+      0, 2, 1, 3, 3, 2, 1,
+      1, 1, 2, 3, 2, 3, 3,
+    ];
+
+    const variantMeta = {
+      a: {
+        short: "A",
+        name: "Metrics first",
+        description: "A familiar analytics stack. Best when users want to scan numbers quickly and then explore the chart.",
+      },
+      b: {
+        short: "B",
+        name: "Narrative rhythm",
+        description: "Leads with an encouraging interpretation, then lets the user inspect the supporting trend and session data.",
+      },
+      c: {
+        short: "C",
+        name: "Calendar pulse",
+        description: "Keeps the calendar language prominent and turns insights into a compact practice report.",
+      },
+    };
+
+    const variantOrder = ["a", "b", "c"];
+    const params = new URLSearchParams(window.location.search);
+    let currentVariant = variantOrder.includes(params.get("variant")) ? params.get("variant") : "a";
+    let currentTab = "insights";
+
+    function barsMarkup(kind = "bar") {
+      return bars.map(([height, label], index) => `
+        <div class="bar-group">
+          <div class="bar ${index > 9 ? "is-recent" : ""}" style="height: ${height}%"></div>
+          <span class="bar-label">${label}</span>
+        </div>
+      `).join("");
+    }
+
+    function heatmapMarkup() {
+      return heatmap.map((level, index) => {
+        const day = index + 1;
+        const today = day === 30 ? " is-today" : "";
+        return `<span class="day level-${level}${today}">${day}</span>`;
+      }).join("");
+    }
+
+    function filtersMarkup() {
+      return `
+        <div class="filters" aria-label="Insights range">
+          <button class="filter" type="button">30D</button>
+          <button class="filter is-active" type="button">90D</button>
+          <button class="filter" type="button">All</button>
+        </div>
+      `;
+    }
+
+    function affinityBarMarkup() {
+      return `
+        <section class="affinity">
+          <div class="affinity-head">
+            <div>
+              <h3 class="affinity-title">Your affinity with this dhikr</h3>
+              <p class="affinity-copy">You return to this practice regularly and keep coming back after missed days.</p>
+            </div>
+            <strong class="affinity-score">78%</strong>
+          </div>
+          <div class="affinity-track"><div class="affinity-fill"></div></div>
+          <div class="affinity-foot"><span>Building a steady relationship</span><span>Based on practice pattern</span></div>
+        </section>
+      `;
+    }
+
+    function metricsMarkup(compact = false) {
+      return `
+        <section class="metric-grid ${compact ? "compact" : ""}">
+          <div class="metric"><span class="metric-label">Recorded total</span><strong class="metric-value primary">12,480</strong><span class="metric-detail">For this goal</span></div>
+          <div class="metric"><span class="metric-label">Average active day</span><strong class="metric-value">86</strong><span class="metric-detail">Counts on practice days</span></div>
+          <div class="metric"><span class="metric-label">Days counted</span><strong class="metric-value">76</strong><span class="metric-detail">Since goal start</span></div>
+          <div class="metric"><span class="metric-label">Current streak</span><strong class="metric-value">6 days</strong><span class="metric-detail">Best: 18 days</span></div>
+        </section>
+      `;
+    }
+
+    function chartMarkup(type = "bars") {
+      if (type === "line") {
+        return `
+          <section class="card chart-wrap">
+            <div class="card-title-row"><h3 class="card-title">Daily rhythm</h3>${filtersMarkup()}</div>
+            <div class="sparkline" aria-label="Daily count trend chart">
+              <svg viewBox="0 0 340 74" role="img" aria-label="Counts rise over the selected period">
+                <path d="M0 57 L26 46 L52 52 L78 35 L104 43 L130 25 L156 38 L182 29 L208 32 L234 16 L260 26 L286 12 L312 20 L340 6"></path>
+                <circle cx="0" cy="57" r="4"></circle><circle cx="104" cy="43" r="4"></circle><circle cx="208" cy="32" r="4"></circle><circle cx="340" cy="6" r="4"></circle>
+              </svg>
+            </div>
+            <div class="chart-legend"><span>90 days ago</span><span>More counts recently</span><span>Today</span></div>
+          </section>
+        `;
+      }
+      return `
+        <section class="card chart-wrap">
+          <div class="card-title-row"><h3 class="card-title">Daily rhythm</h3>${filtersMarkup()}</div>
+          <div class="chart" aria-label="Daily count bar chart">${barsMarkup()}</div>
+          <div class="chart-legend"><span>Lower activity</span><span>Darker means more counts</span><span>Recent</span></div>
+        </section>
+      `;
+    }
+
+    function adherenceMarkup() {
+      return `
+        <section class="card pad">
+          <div class="card-title-row"><h3 class="card-title">Goal adherence</h3><span class="card-note">Last 90 days</span></div>
+          <div class="adherence-head"><div><strong class="adherence-rate">75%</strong><span class="adherence-label">of scheduled days completed</span></div><span class="card-note">18 / 24 days</span></div>
+          <div class="progress-track"><div class="progress-fill"></div></div>
+          <div class="adherence-breakdown">
+            <div class="breakdown-item"><strong class="breakdown-value">16</strong><span class="breakdown-label">Target met</span></div>
+            <div class="breakdown-item"><strong class="breakdown-value">2</strong><span class="breakdown-label">Partial</span></div>
+            <div class="breakdown-item"><strong class="breakdown-value">6</strong><span class="breakdown-label">Missed</span></div>
+          </div>
+        </section>
+      `;
+    }
+
+    function sessionMarkup() {
+      return `
+        <section class="card pad">
+          <div class="card-title-row"><h3 class="card-title">Session performance</h3><span class="card-note">Target completion</span></div>
+          <div class="session-list">
+            <div class="session-row"><span class="session-name">After Fajr</span><div class="session-track"><div class="session-fill" style="width: 86%"></div></div><strong class="session-percent">86%</strong></div>
+            <div class="session-row"><span class="session-name">After Maghrib</span><div class="session-track"><div class="session-fill" style="width: 62%"></div></div><strong class="session-percent">62%</strong></div>
+            <div class="session-row"><span class="session-name">Anytime</span><div class="session-track"><div class="session-fill" style="width: 48%"></div></div><strong class="session-percent">48%</strong></div>
+          </div>
+        </section>
+      `;
+    }
+
+    function timeMarkup() {
+      return `
+        <section class="card pad">
+          <div class="card-title-row"><h3 class="card-title">Time with this goal</h3><span class="card-note">Estimated practice time</span></div>
+          <div class="time-grid">
+            <div class="time-block"><span class="time-label">Average per counted day</span><strong class="time-value">4m 18s</strong></div>
+            <div class="time-block"><span class="time-label">Average per session</span><strong class="time-value">2m 09s</strong></div>
+          </div>
+        </section>
+      `;
+    }
+
+    function historyCalendarMarkup() {
+      return `
+        <section class="card calendar">
+          <div class="calendar-head"><div><h3 class="calendar-title">Consistency calendar</h3><span class="card-note">Last 5 weeks</span></div><span class="card-note">Current: 6 days</span></div>
+          <div class="weekday-row"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          <div class="heatmap">${heatmapMarkup()}</div>
+          <div class="calendar-legend"><span>Less</span><i class="legend-swatch"></i><i class="legend-swatch level-1"></i><i class="legend-swatch level-2"></i><i class="legend-swatch level-3"></i><span>More</span></div>
+        </section>
+      `;
+    }
+
+    function sessionHistoryMarkup() {
+      return `
+        <section class="card pad">
+          <div class="card-title-row"><h3 class="card-title">Session-wise count</h3><span class="card-note">All time</span></div>
+          <div class="history-session-list">
+            <div class="history-session"><div><div class="history-session-name">After Fajr</div><div class="history-session-detail">42 practice days · Avg 54 per day</div></div><div><div class="history-session-count">6,840</div><div class="history-session-percent">55% of total</div></div></div>
+            <div class="history-session"><div><div class="history-session-name">After Maghrib</div><div class="history-session-detail">31 practice days · Avg 48 per day</div></div><div><div class="history-session-count">4,020</div><div class="history-session-percent">32% of total</div></div></div>
+            <div class="history-session"><div><div class="history-session-name">Anytime</div><div class="history-session-detail">18 practice days · Avg 90 per day</div></div><div><div class="history-session-count">1,620</div><div class="history-session-percent">13% of total</div></div></div>
+          </div>
+        </section>
+      `;
+    }
+
+    function datedHistoryMarkup() {
+      return `
+        <section class="card pad">
+          <div class="card-title-row"><h3 class="card-title">Recent history</h3><span class="card-note">Newest first</span></div>
+          <div class="date-list">
+            <div class="date-row"><span class="date-label">Today</span><div class="date-bar"><span style="width: 82%"></span></div><strong class="date-count">82</strong></div>
+            <div class="date-row"><span class="date-label">Yesterday</span><div class="date-bar"><span style="width: 100%"></span></div><strong class="date-count">100</strong></div>
+            <div class="date-row"><span class="date-label">Mon, Aug 10</span><div class="date-bar"><span style="width: 54%"></span></div><strong class="date-count">54</strong></div>
+            <div class="date-row"><span class="date-label">Sun, Aug 9</span><div class="date-bar"><span style="width: 76%"></span></div><strong class="date-count">76</strong></div>
+          </div>
+        </section>
+      `;
+    }
+
+    function historyTimelineMarkup() {
+      return `
+        <section class="card pad">
+          <div class="card-title-row"><h3 class="card-title">Practice sessions</h3><span class="card-note">Newest first</span></div>
+          <div class="timeline">
+            <div class="timeline-row is-best"><i class="timeline-dot"></i><div><div class="timeline-date">Today · After Fajr</div><div class="timeline-detail">82 counts · 4m 02s</div></div><strong class="timeline-count">82</strong></div>
+            <div class="timeline-row"><i class="timeline-dot"></i><div><div class="timeline-date">Yesterday · After Maghrib</div><div class="timeline-detail">100 counts · 4m 48s</div></div><strong class="timeline-count">100</strong></div>
+            <div class="timeline-row"><i class="timeline-dot"></i><div><div class="timeline-date">Mon, Aug 10 · Anytime</div><div class="timeline-detail">54 counts · 2m 31s</div></div><strong class="timeline-count">54</strong></div>
+            <div class="timeline-row"><i class="timeline-dot"></i><div><div class="timeline-date">Sun, Aug 9 · After Fajr</div><div class="timeline-detail">76 counts · 3m 56s</div></div><strong class="timeline-count">76</strong></div>
+          </div>
+        </section>
+      `;
+    }
+
+    function historyA() {
+      return `
+        <div class="view variant-a">
+          <p class="section-label">Consistency</p>
+          ${historyCalendarMarkup()}
+          <p class="section-label">Sessions</p>
+          ${sessionHistoryMarkup()}
+          ${datedHistoryMarkup()}
+        </div>
+      `;
+    }
+
+    function historyB() {
+      return `
+        <div class="view variant-b">
+          <p class="section-label">Your practice</p>
+          ${historyCalendarMarkup()}
+          <div class="summary-callout"><span class="summary-dot"></span><p>You have practiced for six days in a row. Your strongest session is <strong>After Fajr</strong>.</p></div>
+          <p class="section-label">Session timeline</p>
+          ${historyTimelineMarkup()}
+        </div>
+      `;
+    }
+
+    function historyC() {
+      return `
+        <div class="view variant-c">
+          <p class="section-label">Practice pulse</p>
+          ${historyCalendarMarkup()}
+          <div class="metric-grid">
+            <div class="metric"><span class="metric-label">Current</span><strong class="metric-value">6d</strong></div>
+            <div class="metric"><span class="metric-label">Best</span><strong class="metric-value">18d</strong></div>
+            <div class="metric"><span class="metric-label">Counted</span><strong class="metric-value">76</strong></div>
+            <div class="metric"><span class="metric-label">Total</span><strong class="metric-value primary">12.4k</strong></div>
+          </div>
+          <p class="section-label">Session-wise count</p>
+          ${sessionHistoryMarkup()}
+        </div>
+      `;
+    }
+
+    function insightsA() {
+      return `
+        <div class="view variant-a">
+          ${filtersMarkup()}
+          <p class="section-label">Practice snapshot</p>
+          ${metricsMarkup()}
+          ${affinityBarMarkup()}
+          ${chartMarkup("bars")}
+          <p class="section-label">Goal health</p>
+          ${adherenceMarkup()}
+          ${timeMarkup()}
+          ${sessionMarkup()}
+          <div class="trend"><strong>Your average is trending up.</strong><span>+18% compared with the previous 30 days.</span></div>
+        </div>
+      `;
+    }
+
+    function insightsB() {
+      return `
+        <div class="view variant-b">
+          <div class="hero-copy"><p class="eyebrow">Practice pattern</p><h2>Your rhythm with this dhikr is becoming steady.</h2><p>You practiced on 18 of the last 24 scheduled days, with your mornings carrying most of the practice.</p><div class="hero-stat"><strong>78%</strong><span>affinity based on return regularity and goal adherence</span></div></div>
+          ${chartMarkup("line")}
+          <div class="insight-pair"><div class="insight-tile"><p class="eyebrow">Average day</p><strong>4m 18s</strong><span>time spent per counted day</span></div><div class="insight-tile"><p class="eyebrow">Best session</p><strong>After Fajr</strong><span>86% target completion</span></div></div>
+          ${adherenceMarkup()}
+          ${sessionMarkup()}
+          <div class="summary-callout"><span class="summary-dot"></span><p>Your next useful step is simple: protect the After Maghrib session, where most missed days happen.</p></div>
+        </div>
+      `;
+    }
+
+    function insightsC() {
+      return `
+        <div class="view variant-c">
+          ${filtersMarkup()}
+          <p class="section-label">At a glance</p>
+          ${metricsMarkup(true)}
+          <div class="ring-row card pad"><div class="ring"><strong>78%</strong></div><div class="ring-copy"><h3>Dhikr affinity</h3><p>A gentle signal of how regularly you return to this dhikr and keep its goal alive.</p><div class="affinity-track"><div class="affinity-fill"></div></div></div></div>
+          ${chartMarkup("bars")}
+          <p class="section-label">What the numbers say</p>
+          ${adherenceMarkup()}
+          ${timeMarkup()}
+          ${sessionMarkup()}
+          <div class="insight-pair"><div class="insight-tile"><p class="eyebrow">Best day</p><strong>143</strong><span>Tuesday, Aug 12</span></div><div class="insight-tile"><p class="eyebrow">Long gap</p><strong>3 days</strong><span>Longest break in this range</span></div></div>
+        </div>
+      `;
+    }
+
+    const variants = {
+      a: { history: historyA, insights: insightsA },
+      b: { history: historyB, insights: insightsB },
+      c: { history: historyC, insights: insightsC },
+    };
+
+    function updateUrl() {
+      const next = new URL(window.location.href);
+      next.searchParams.set("variant", currentVariant);
+      window.history.replaceState({}, "", next);
+    }
+
+    function render() {
+      document.body.className = `variant-${currentVariant}`;
+      document.getElementById("variant-root").innerHTML = variants[currentVariant][currentTab]();
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.classList.toggle("is-active", tab.dataset.tab === currentTab);
+      });
+      const meta = variantMeta[currentVariant];
+      document.getElementById("variant-kicker").textContent = `Variant ${meta.short}`;
+      document.getElementById("variant-name").textContent = meta.name;
+      document.getElementById("variant-description").textContent = meta.description;
+      document.getElementById("switch-label").textContent = `${meta.short} · ${meta.name}`;
+      updateUrl();
+      document.getElementById("sheet-scroll").scrollTop = 0;
+    }
+
+    function setVariant(nextVariant) {
+      currentVariant = nextVariant;
+      render();
+    }
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        currentTab = tab.dataset.tab;
+        render();
+      });
+    });
+
+    document.getElementById("previous-variant").addEventListener("click", () => {
+      const index = variantOrder.indexOf(currentVariant);
+      setVariant(variantOrder[(index - 1 + variantOrder.length) % variantOrder.length]);
+    });
+
+    document.getElementById("next-variant").addEventListener("click", () => {
+      const index = variantOrder.indexOf(currentVariant);
+      setVariant(variantOrder[(index + 1) % variantOrder.length]);
+    });
+
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+      document.documentElement.dataset.theme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    });
+
+    window.addEventListener("keydown", (event) => {
+      const tagName = document.activeElement?.tagName?.toLowerCase();
+      if (["input", "textarea", "select"].includes(tagName) || document.activeElement?.isContentEditable) return;
+      if (event.key === "ArrowLeft") document.getElementById("previous-variant").click();
+      if (event.key === "ArrowRight") document.getElementById("next-variant").click();
+    });
+
+    render();
+  </script>
+</body>
+</html>

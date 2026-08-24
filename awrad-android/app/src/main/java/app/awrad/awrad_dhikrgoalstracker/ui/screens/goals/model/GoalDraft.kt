@@ -246,6 +246,7 @@ object GoalDraftDefaults {
                 countRule = CountRuleDraft.target("100").copy(capBehavior = CapBehavior.BlockAtTarget),
                 slotTargetMode = SlotTargetMode.PerSlot,
                 timeSlots = defaultTimeSlots(targetCount = "100"),
+                extras = ExtrasDraft(minStreakCount = "1"),
             )
             GoalPreset.PRAYER_BASED -> GoalDraft(
                 preset = preset,
@@ -272,6 +273,7 @@ object GoalDraftDefaults {
                 slotTargetMode = SlotTargetMode.Same,
                 customTargetPolicy = TargetPolicy.CUMULATIVE_TOTAL,
                 timeSlots = defaultTimeSlots(targetCount = "1000"),
+                extras = ExtrasDraft(minStreakCount = "1"),
             )
             GoalPreset.WEEKLY -> GoalDraft(
                 preset = preset,
@@ -318,6 +320,7 @@ object GoalDraftDefaults {
                 slotTargetMode = SlotTargetMode.Same,
                 customTargetPolicy = TargetPolicy.NONE,
                 timeSlots = defaultTimeSlots(targetCount = ""),
+                extras = ExtrasDraft(minStreakCount = "1"),
             )
             GoalPreset.CUSTOM -> GoalDraft(
                 preset = preset,
@@ -385,10 +388,11 @@ object GoalDraftMapper {
         return CreateGoalCommand(
             dhikrId = dhikrId,
             startDate = startDate,
-            schedule = scheduleSpecFor(draft),
+            schedule = scheduleSpecFor(draft, startDate),
             timing = timingSpecFor(draft),
             slotCountingPolicy = draft.extras.slotCountingPolicy,
             countPolicy = countPolicyFor(draft, targetPolicy),
+            streakMinimumCount = streakMinimumCountFor(draft, targetPolicy),
             progressScope = progressScopeFor(targetPolicy),
             completionPolicy = if (targetPolicy == TargetPolicy.CUMULATIVE_TOTAL) {
                 CompletionPolicy.WhenTargetReached
@@ -770,8 +774,13 @@ object GoalDraftMapper {
         }
     }
 
-    private fun scheduleSpecFor(draft: GoalDraft): ScheduleSpec =
-        when (val frequency = draft.frequencyDraft) {
+    private fun scheduleSpecFor(draft: GoalDraft, startDate: LocalDate): ScheduleSpec {
+        // A quick one-time goal is a single anchored occurrence. If the user opts into
+        // a daily streak, the existing daily draft frequency becomes intentional.
+        if (draft.preset == GoalPreset.ONE_TIME && !draft.extras.hasMinStreak) {
+            return ScheduleSpec.SpecificDates(setOf(startDate))
+        }
+        return when (val frequency = draft.frequencyDraft) {
             FrequencyDraft.Daily -> ScheduleSpec.Daily
             is FrequencyDraft.Weekly -> ScheduleSpec.Weekly(frequency.days)
             is FrequencyDraft.Monthly -> ScheduleSpec.Monthly(
@@ -791,6 +800,7 @@ object GoalDraftMapper {
                 dates = parseSpecificDates(frequency.dateText).toSet(),
             )
         }
+    }
 
     private fun timingSpecFor(draft: GoalDraft): TimingSpec {
         val slots = buildSlots(draft)
@@ -889,6 +899,14 @@ object GoalDraftMapper {
             )
         }
     }
+
+    /** Keeps a tracker targetless while allowing its daily activity to protect a streak. */
+    private fun streakMinimumCountFor(draft: GoalDraft, targetPolicy: TargetPolicy): Int? =
+        if (targetPolicy == TargetPolicy.NONE && draft.extras.hasMinStreak) {
+            positiveInt(draft.extras.minStreakCount)
+        } else {
+            null
+        }
 
     private fun GoalSlot.countPolicy(mode: CountRuleMode): CountPolicy =
         if (minimumCount != null || targetCount != null || maximumCount != null) {

@@ -101,6 +101,7 @@ struct GoalTimeSlotDraft: Identifiable, Hashable {
 struct GoalCreationConfiguration: Hashable {
     var targetPolicy: TargetPolicy
     var recurrence: GoalRecurrence
+    var isOneTime: Bool
     var slots: [GoalSlot]
     var reminders: [GoalReminder]
     var countPolicy: CountPolicy
@@ -109,6 +110,20 @@ struct GoalCreationConfiguration: Hashable {
     var durationDays: Int?
     var minimumStreakCount: Int?
     var autoCompleteOnTarget: Bool
+
+    /// Resolves the one-time quick preset without introducing a new persisted
+    /// recurrence value. A one-time goal is a single occurrence unless the
+    /// user explicitly enables a daily streak requirement.
+    func recurrence(forStartDate startDate: String) -> GoalRecurrence {
+        guard isOneTime else { return recurrence }
+        if minimumStreakCount != nil {
+            return GoalRecurrence(frequency: .daily)
+        }
+        return GoalRecurrence(
+            frequency: .specificDates,
+            specificDates: [GoalSpecificDate(date: startDate)]
+        )
+    }
 }
 
 struct GoalDraft: Hashable {
@@ -361,6 +376,7 @@ struct GoalDraft: Hashable {
         return GoalCreationConfiguration(
             targetPolicy: policy,
             recurrence: buildRecurrence(),
+            isOneTime: preset == .oneTime,
             slots: slots,
             reminders: buildReminders(slots: slots),
             countPolicy: buildCountPolicy(slots: slots),
@@ -442,8 +458,8 @@ struct GoalDraft: Hashable {
             prayerReminderOffset: 10,
             durationEnabled: false,
             durationDaysText: "",
-            minimumStreakEnabled: false,
-            minimumStreakText: ""
+            minimumStreakEnabled: preset == .daily,
+            minimumStreakText: "1"
         )
     }
 

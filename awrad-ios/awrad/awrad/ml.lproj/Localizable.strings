@@ -327,6 +327,27 @@
 "Prayer location set" = "നമസ്കാര സ്ഥലം സജ്ജമാക്കി";
 "Start with a small daily count, then add prayer-based slots when the habit is stable." = "ചെറിയ ദൈനംദിന എണ്ണത്തിൽ തുടങ്ങുക; ശീലം ഉറച്ചാൽ നമസ്കാര സ്ലോട്ടുകൾ ചേർക്കുക.";
 "Create goal" = "ലക്ഷ്യം ഉണ്ടാക്കുക";
+/* ദ്രുത ലക്ഷ്യ സജ്ജീകരണം */
+"Choose goal type" = "ലക്ഷ്യത്തിന്റെ തരം തിരഞ്ഞെടുക്കുക";
+"Start with a simple setup. You can add more control later." = "ലളിതമായ സജ്ജീകരണത്തോടെ തുടങ്ങുക. പിന്നീട് കൂടുതൽ നിയന്ത്രണം ചേർക്കാം.";
+"One-time" = "ഒരിക്കൽ മാത്രം";
+"Track only" = "ട്രാക്ക് മാത്രം";
+"Set a daily target and minimum for your streak." = "ദൈനംദിന ലക്ഷ്യവും തുടർച്ചയ്ക്കുള്ള കുറഞ്ഞ എണ്ണവും നിശ്ചയിക്കുക.";
+"Reach a total once; it does not repeat." = "ഒരു ആകെ എണ്ണം ഒരിക്കൽ പൂർത്തിയാക്കുക; ഇത് ആവർത്തിക്കില്ല.";
+"Record counts without a completion target." = "പൂർത്തീകരണ ലക്ഷ്യമില്ലാതെ എണ്ണങ്ങൾ രേഖപ്പെടുത്തുക.";
+"Total target" = "ആകെ ലക്ഷ്യം";
+"Build a daily streak" = "ദൈനംദിന തുടർച്ച സൃഷ്ടിക്കുക";
+"Minimum for streak" = "തുടർച്ചയ്ക്കുള്ള കുറഞ്ഞ എണ്ണം";
+"Minimum per day" = "പ്രതിദിന കുറഞ്ഞ എണ്ണം";
+"A day counts toward your streak after this many recitations." = "ഈ എണ്ണം പാരായണം ചെയ്താൽ ദിവസം നിങ്ങളുടെ തുടർച്ചയിൽ ഉൾപ്പെടും.";
+"At least %d each day protects your streak." = "തുടർച്ച നിലനിർത്താൻ ഓരോ ദിവസവും കുറഞ്ഞത് %d തവണ ചൊല്ലുക.";
+"This goal has no completion target. Every count is recorded." = "ഈ ലക്ഷ്യത്തിന് പൂർത്തീകരണ ലക്ഷ്യമില്ല. എല്ലാ എണ്ണങ്ങളും രേഖപ്പെടുത്തും.";
+"Track every time you recite %@." = "%@ ചൊല്ലുന്ന ഓരോ തവണയും രേഖപ്പെടുത്തുക.";
+"Complete %@ recitations of %@." = "%@ എന്ന ദിക്ർ %@ തവണ പൂർത്തിയാക്കുക.";
+"Recite %@ %@ times every day." = "എല്ലാ ദിവസവും %@ %@ തവണ ചൊല്ലുക.";
+"Create %d prayer slots for %@, each with its own target." = "%@ക്കായി %d നമസ്കാര സ്ലോട്ടുകൾ സൃഷ്ടിക്കുക; ഓരോന്നിനും സ്വന്തം ലക്ഷ്യമുണ്ട്.";
+"Create morning and evening slots for %@." = "%@ക്കായി രാവിലെയും വൈകുന്നേരവും സ്ലോട്ടുകൾ സൃഷ്ടിക്കുക.";
+"Create %d time slots for %@, each with its own target." = "%@ക്കായി %d സമയ സ്ലോട്ടുകൾ സൃഷ്ടിക്കുക; ഓരോന്നിനും സ്വന്തം ലക്ഷ്യമുണ്ട്.";
 "Reset today" = "ഇന്ന് പുനഃസജ്ജമാക്കുക";
 "Split after the five prayers" = "അഞ്ചു നമസ്കാരങ്ങൾക്ക് ശേഷം വിഭജിക്കുക";
 "Goal reminder" = "ലക്ഷ്യ ഓർമ്മപ്പെടുത്തൽ";

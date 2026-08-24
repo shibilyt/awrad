@@ -141,8 +141,8 @@
     <string name="create_goal_advanced_appbar">Advanced goal</string>
     <string name="create_goal_shape_title">What kind of goal?</string>
     <string name="create_goal_shape_subtitle">Pick a shape — you can fine-tune later.</string>
-    <string name="goal_shape_daily_title">Every day</string>
-    <string name="goal_shape_daily_desc">A number to reach each day.</string>
+    <string name="goal_shape_daily_title">Daily goal</string>
+    <string name="goal_shape_daily_desc">A target to reach each day.</string>
     <string name="goal_shape_onetime_title">One time</string>
     <string name="goal_shape_onetime_desc">Work toward a total, once.</string>
     <string name="goal_shape_notarget_title">No target</string>
@@ -150,6 +150,7 @@
     <string name="goal_shape_advanced_title">Advanced</string>
     <string name="goal_shape_advanced_desc">Schedule, prayer timing, counting rules, duration &amp; reminders.</string>
     <string name="goal_shape_or">or</string>
+    <string name="create_goal_change_type">Change type</string>
     <string name="simple_target_daily_label">How many, each day?</string>
     <string name="simple_target_onetime_label">How many, in total?</string>
     <string name="simple_target_dhikr_placeholder">your dhikr</string>
@@ -183,6 +184,7 @@
     <string name="create_goal_specific_days">Specific days</string>
     <string name="create_goal_min_streak">Minimum for streak</string>
     <string name="create_goal_min_streak_hint">Minimum count to maintain streak</string>
+    <string name="create_goal_add_streak">Add streak requirement</string>
     <string name="create_goal_quick_presets">Quick presets</string>
     <string name="create_goal_advanced">Advanced</string>
     <string name="create_goal_quick_title">Quick create</string>
@@ -308,7 +310,7 @@
     <string name="quick_goal_daily_description">Set a count to repeat every day.</string>
     <string name="quick_goal_total_title">One time target</string>
     <string name="quick_goal_total_description">Set one cumulative target across days.</string>
-    <string name="quick_goal_tracker_title">No target</string>
+    <string name="quick_goal_tracker_title">Track only</string>
     <string name="quick_goal_tracker_description">Track each recitation without a target.</string>
     <string name="preset_daily">Daily</string>
     <string name="preset_prayer_based">Prayers</string>

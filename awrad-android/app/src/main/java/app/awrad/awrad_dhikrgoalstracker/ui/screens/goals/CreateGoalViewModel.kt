@@ -55,6 +55,8 @@ data class CreateGoalUiState(
      * from a later screen returns to that screen.
      */
     val dhikrReturnMode: GoalCreationMode = GoalCreationMode.SelectShape,
+    /** When the type picker was opened from a configured simple goal, return here on back. */
+    val goalTypeReturnMode: GoalCreationMode? = null,
     val isCreating: Boolean = false,
     val createdGoalId: AwradId? = null,
     val validation: GoalValidationResult = GoalValidationResult(
@@ -91,6 +93,7 @@ class CreateGoalViewModel @Inject constructor(
                         _state.value.copy(
                             selectedDhikr = dhikr,
                             mode = GoalCreationMode.SelectShape,
+                            draft = GoalDraftDefaults.forPreset(GoalPreset.DAILY),
                             isDhikrLocked = true,
                         )
                     )
@@ -129,12 +132,33 @@ class CreateGoalViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
-    /** Simple path: choose a goal shape, then collect the target on [GoalCreationMode.SimpleTarget]. */
+    /** Legacy entry point retained for callers that still separate shape and target steps. */
     fun selectShape(preset: GoalPreset) {
         setState(
             _state.value.copy(
                 draft = GoalDraftDefaults.forPreset(preset),
                 mode = GoalCreationMode.SimpleTarget,
+            )
+        )
+    }
+
+    /** Select a simple goal type, then open its focused target/requirement screen. */
+    fun selectQuickPreset(preset: GoalPreset) {
+        setState(
+            _state.value.copy(
+                draft = GoalDraftDefaults.forPreset(preset),
+                mode = GoalCreationMode.SimpleTarget,
+                goalTypeReturnMode = null,
+            )
+        )
+    }
+
+    /** Return to the simple type picker without discarding the current draft. */
+    fun openGoalTypePicker() {
+        setState(
+            _state.value.copy(
+                mode = GoalCreationMode.SelectShape,
+                goalTypeReturnMode = GoalCreationMode.SimpleTarget,
             )
         )
     }
@@ -152,6 +176,7 @@ class CreateGoalViewModel @Inject constructor(
                 draft = GoalDraftDefaults.forPreset(GoalPreset.CUSTOM),
                 mode = next,
                 dhikrReturnMode = GoalCreationMode.Advanced,
+                goalTypeReturnMode = null,
             )
         )
     }
@@ -159,12 +184,24 @@ class CreateGoalViewModel @Inject constructor(
     /** Open the shared dhikr picker, returning to whichever screen requested it. */
     fun openDhikrPicker() {
         val state = _state.value
-        setState(state.copy(mode = GoalCreationMode.SelectDhikr, dhikrReturnMode = state.mode))
+        setState(
+            state.copy(
+                mode = GoalCreationMode.SelectDhikr,
+                dhikrReturnMode = state.mode,
+                goalTypeReturnMode = null,
+            )
+        )
     }
 
     fun selectDhikr(dhikr: Dhikr) {
         val state = _state.value
-        setState(state.copy(selectedDhikr = dhikr, mode = state.dhikrReturnMode))
+        setState(
+            state.copy(
+                selectedDhikr = dhikr,
+                draft = state.draft ?: GoalDraftDefaults.forPreset(GoalPreset.DAILY),
+                mode = state.dhikrReturnMode,
+            )
+        )
     }
 
     fun updateDraft(draft: GoalDraft) {
@@ -239,13 +276,25 @@ class CreateGoalViewModel @Inject constructor(
                         setState(state.copy(mode = state.dhikrReturnMode))
                         false
                     }
+                    GoalCreationMode.SelectShape -> {
+                        if (state.selectedDhikr != null) {
+                            setState(state.copy(mode = GoalCreationMode.SelectShape))
+                            false
+                        } else {
+                            true
+                        }
+                    }
                     else -> true
                 }
             }
             GoalCreationMode.SelectShape -> {
-                // First screen when a dhikr was pre-supplied (locked) → exit; otherwise step
-                // back to the entry dhikr picker.
-                if (state.isDhikrLocked) {
+                val returnMode = state.goalTypeReturnMode
+                if (returnMode != null) {
+                    setState(state.copy(mode = returnMode, goalTypeReturnMode = null))
+                    false
+                } else if (state.isDhikrLocked) {
+                    // First screen when a dhikr was pre-supplied (locked) → exit; otherwise step
+                    // back to the entry dhikr picker.
                     true
                 } else {
                     setState(state.copy(mode = GoalCreationMode.SelectDhikr, dhikrReturnMode = GoalCreationMode.SelectShape))
@@ -254,7 +303,7 @@ class CreateGoalViewModel @Inject constructor(
             }
             GoalCreationMode.SimpleTarget,
             GoalCreationMode.Advanced -> {
-                setState(state.copy(mode = GoalCreationMode.SelectShape))
+                setState(state.copy(mode = GoalCreationMode.SelectShape, goalTypeReturnMode = null))
                 false
             }
         }

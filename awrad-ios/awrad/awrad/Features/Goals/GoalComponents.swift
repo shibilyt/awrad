@@ -14,6 +14,31 @@ enum GoalPortfolioSectionKind: String, CaseIterable {
     }
 }
 
+enum GoalStreakFireTier: String, Equatable {
+    case none
+    case amber
+    case orange
+    case red
+
+    var iconCount: Int {
+        switch self {
+        case .none: 0
+        case .amber: 1
+        case .orange: 2
+        case .red: 3
+        }
+    }
+
+    var tint: Color {
+        switch self {
+        case .none: .clear
+        case .amber: AwradTheme.flameAmber
+        case .orange: AwradTheme.flameOrange
+        case .red: AwradTheme.flameRed
+        }
+    }
+}
+
 struct GoalCardPresentation: Equatable {
     enum CenterContent: Equatable {
         case count(String)
@@ -28,6 +53,7 @@ struct GoalCardPresentation: Equatable {
     let targetTag: String
     let scheduleTag: String?
     let streakTag: String?
+    let streakFireTier: GoalStreakFireTier
     let lifecycleTag: String?
 
     init(
@@ -53,6 +79,7 @@ struct GoalCardPresentation: Equatable {
         targetTag = Self.targetTag(goal: goal, target: target, language: language)
         scheduleTag = Self.scheduleTag(goal: goal, language: language)
         streakTag = Self.streakTag(days: streakDays, language: language)
+        streakFireTier = Self.fireTier(days: streakDays)
         lifecycleTag = completed
             ? AwradLocalizer.localized("Completed", language: language)
             : (goal.isPaused ? AwradLocalizer.localized("Paused", language: language) : nil)
@@ -167,20 +194,20 @@ struct GoalCardPresentation: Equatable {
 
     private static func streakTag(days: Int, language: AppLanguage) -> String? {
         guard days > 0 else { return nil }
-        let label = format("%@ day streak", days, language: language)
-        let fireCount: Int
+        return format("%@ day streak", days, language: language)
+    }
+
+    private static func fireTier(days: Int) -> GoalStreakFireTier {
         switch days {
         case 30...:
-            fireCount = 3
+            return .red
         case 15...:
-            fireCount = 2
+            return .orange
         case 3...:
-            fireCount = 1
+            return .amber
         default:
-            fireCount = 0
+            return .none
         }
-        guard fireCount > 0 else { return label }
-        return "\(String(repeating: "🔥", count: fireCount)) \(label)"
     }
 
     private static func weekdayAbbreviation(_ weekday: Int, language: AppLanguage) -> String? {
@@ -337,7 +364,15 @@ struct GoalSummaryRow: View {
     }
 
     private func streakLabel(_ streak: String) -> some View {
-        Text(streak)
+        HStack(spacing: 3) {
+            ForEach(0..<presentation.streakFireTier.iconCount, id: \.self) { _ in
+                Image(systemName: "flame.fill")
+                    .font(AwradTheme.bodyFont(.caption2, weight: .semibold))
+                    .foregroundStyle(presentation.streakFireTier.tint)
+                    .accessibilityHidden(true)
+            }
+            Text(streak)
+        }
             .font(AwradTheme.bodyFont(.caption, weight: .semibold))
             .foregroundStyle(AwradTheme.sage)
             .lineLimit(1)

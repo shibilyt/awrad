@@ -33,7 +33,7 @@ struct GoalLifecycleTests {
             language: .english
         )
         #expect(reached.centerContent == .checkmark)
-        #expect(reached.streakTag == "🔥 8 day streak")
+        #expect(reached.streakTag == "8 day streak")
 
         var completed = active
         completed.completedAt = Date()
@@ -52,7 +52,7 @@ struct GoalLifecycleTests {
         #expect(completedPresentation.lifecycleTag == "Completed")
     }
 
-    @Test func goalCardStreakUsesThreeFireEmojiTiers() {
+    @Test func goalCardStreakUsesThreeFireIconTiers() {
         let goal = Goal(
             dhikrID: UUID(),
             slots: [GoalSlot(slotType: .anytime, targetCount: 100)],
@@ -60,11 +60,30 @@ struct GoalLifecycleTests {
         )
 
         #expect(presentation(goal, streakDays: 2).streakTag == "2 day streak")
-        #expect(presentation(goal, streakDays: 3).streakTag == "🔥 3 day streak")
-        #expect(presentation(goal, streakDays: 14).streakTag == "🔥 14 day streak")
-        #expect(presentation(goal, streakDays: 15).streakTag == "🔥🔥 15 day streak")
-        #expect(presentation(goal, streakDays: 29).streakTag == "🔥🔥 29 day streak")
-        #expect(presentation(goal, streakDays: 30).streakTag == "🔥🔥🔥 30 day streak")
+        #expect(presentation(goal, streakDays: 2).streakFireTier == .none)
+        #expect(presentation(goal, streakDays: 3).streakTag == "3 day streak")
+        #expect(presentation(goal, streakDays: 3).streakFireTier == .amber)
+        #expect(presentation(goal, streakDays: 14).streakTag == "14 day streak")
+        #expect(presentation(goal, streakDays: 15).streakTag == "15 day streak")
+        #expect(presentation(goal, streakDays: 15).streakFireTier == .orange)
+        #expect(presentation(goal, streakDays: 29).streakTag == "29 day streak")
+        #expect(presentation(goal, streakDays: 30).streakTag == "30 day streak")
+        #expect(presentation(goal, streakDays: 30).streakFireTier == .red)
+    }
+
+    @Test func goalCardUsesTintableFlameSymbols() throws {
+        let sourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Goals/GoalComponents.swift")
+            .standardizedFileURL
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+
+        #expect(source.contains("Image(systemName: \"flame.fill\")"))
+        #expect(source.contains("presentation.streakFireTier.tint"))
+        #expect(source.contains("AwradTheme.flameAmber"))
+        #expect(source.contains("AwradTheme.flameOrange"))
+        #expect(source.contains("AwradTheme.flameRed"))
+        #expect(!source.contains("String(repeating: \"🔥\""))
     }
 
     @Test func goalCardPresentationMatchesTargetlessPrayerAndCompactCountStates() {

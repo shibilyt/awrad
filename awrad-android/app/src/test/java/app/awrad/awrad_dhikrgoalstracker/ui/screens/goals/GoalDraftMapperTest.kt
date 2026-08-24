@@ -809,7 +809,7 @@ class GoalDraftMapperTest {
 
     @Test
     fun `simple every day flow with edited target maps to that per due date count`() {
-        // Mirrors SimpleTargetPane: choose the Every-day shape, then set a custom count.
+        // Mirrors SimpleTargetPane: choose the Daily goal type, then set a custom count.
         val target = TargetDraft.Fixed("313")
         val draft = GoalDraftDefaults.forPreset(GoalPreset.DAILY).let {
             it.copy(targetDraft = target, countRule = it.countRule.syncedWithTargetDraft(target))

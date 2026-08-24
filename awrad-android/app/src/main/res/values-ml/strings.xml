@@ -107,6 +107,23 @@
 
     <!-- Create Goal screen -->
     <string name="create_goal_select_dhikr">ദിക്‌ർ തിരഞ്ഞെടുക്കുക</string>
+    <string name="create_goal_shape_appbar">പുതിയ ലക്ഷ്യം</string>
+    <string name="create_goal_simple_appbar">ലക്ഷ്യം ക്രമീകരിക്കുക</string>
+    <string name="create_goal_shape_title">ഏത് തരത്തിലുള്ള ലക്ഷ്യം?</string>
+    <string name="create_goal_shape_subtitle">ഒരു രീതി തിരഞ്ഞെടുക്കൂ — പിന്നീട് മാറ്റാം.</string>
+    <string name="goal_shape_daily_title">ദൈനംദിന ലക്ഷ്യം</string>
+    <string name="goal_shape_daily_desc">ഓരോ ദിവസവും എത്തേണ്ട ലക്ഷ്യം.</string>
+    <string name="goal_shape_onetime_title">ഒറ്റത്തവണ</string>
+    <string name="goal_shape_onetime_desc">ഒരിക്കൽ പൂർത്തിയാക്കേണ്ട മൊത്തം എണ്ണം.</string>
+    <string name="goal_shape_notarget_title">ലക്ഷ്യമില്ലാതെ ട്രാക്ക് ചെയ്യുക</string>
+    <string name="goal_shape_notarget_desc">ലക്ഷ്യസംഖ്യയില്ലാതെ മാത്രം എണ്ണുക.</string>
+    <string name="goal_shape_advanced_title">വിപുലമായ</string>
+    <string name="goal_shape_advanced_desc">ഷെഡ്യൂൾ, നമസ്കാര സമയം, എണ്ണൽ നിയമങ്ങൾ, ദൈർഘ്യം, ഓർമ്മപ്പെടുത്തലുകൾ.</string>
+    <string name="goal_shape_or">അല്ലെങ്കിൽ</string>
+    <string name="create_goal_change_type">തരം മാറ്റുക</string>
+    <string name="simple_target_daily_label">ഓരോ ദിവസവും എത്ര?</string>
+    <string name="simple_target_onetime_label">മൊത്തം എത്ര?</string>
+    <string name="simple_target_dhikr_placeholder">നിങ്ങളുടെ ദിക്‌ർ</string>
     <string name="create_goal_configure">ലക്ഷ്യം ക്രമീകരിക്കുക</string>
     <string name="create_goal_search_hint">ദിക്‌ർ തിരയുക\u2026</string>
     <string name="create_goal_goal_type">ലക്ഷ്യ തരം</string>
@@ -131,8 +148,21 @@
     <string name="create_goal_specific_days">നിർദ്ദിഷ്ട ദിവസങ്ങൾ</string>
     <string name="create_goal_min_streak">സ്ട്രീക്കിനുള്ള മിനിമം</string>
     <string name="create_goal_min_streak_hint">സ്ട്രീക്ക് നിലനിർത്താനുള്ള കുറഞ്ഞ എണ്ണം</string>
+    <string name="create_goal_add_streak">സ്ട്രീക്ക് ആവശ്യം ചേർക്കുക</string>
     <string name="create_goal_quick_presets">ദ്രുത പ്രീസെറ്റുകൾ</string>
+    <string name="create_goal_quick_title">ദ്രുത സജ്ജീകരണം</string>
+    <string name="create_goal_quick_subtitle">ലക്ഷ്യത്തിന്റെ രൂപം തിരഞ്ഞെടുക്കൂ, എണ്ണം ക്രമീകരിച്ച് തുടങ്ങൂ.</string>
     <string name="create_goal_advanced">വിപുലമായ</string>
+    <string name="create_goal_advanced_subtitle">ഷെഡ്യൂൾ, സമയം, ഓർമ്മപ്പെടുത്തലുകൾ, ദൈർഘ്യം, സ്ട്രീക്ക് നിയമങ്ങൾ ക്രമീകരിക്കുക.</string>
+    <string name="create_goal_daily_target_count">ദൈനംദിന ലക്ഷ്യ എണ്ണം</string>
+    <string name="create_goal_total_target_count">മൊത്തം ലക്ഷ്യ എണ്ണം</string>
+    <string name="quick_goal_daily_title">ദൈനംദിന ലക്ഷ്യം</string>
+    <string name="quick_goal_daily_description">ഓരോ ദിവസവും ആവർത്തിക്കാനുള്ള എണ്ണം നിശ്ചയിക്കുക.</string>
+    <string name="quick_goal_total_title">ഒറ്റത്തവണ ലക്ഷ്യം</string>
+    <string name="quick_goal_total_description">ദിവസങ്ങളിലായി ഒരു മൊത്തം ലക്ഷ്യം നിശ്ചയിക്കുക.</string>
+    <string name="quick_goal_tracker_title">ട്രാക്ക് മാത്രം</string>
+    <string name="quick_goal_tracker_description">ലക്ഷ്യമില്ലാതെ ഓരോ പാരായണവും രേഖപ്പെടുത്തുക.</string>
+    <string name="composer_change_dhikr">മാറ്റുക</string>
     <string name="preset_daily">ദൈനംദിനം</string>
     <string name="preset_prayer_based">നമസ്കാരം</string>
     <string name="preset_one_time">ഒരിക്കൽ</string>

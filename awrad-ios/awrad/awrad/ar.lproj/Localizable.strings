@@ -327,6 +327,27 @@
 "Prayer location set" = "تم تحديد موقع الصلاة";
 "Start with a small daily count, then add prayer-based slots when the habit is stable." = "ابدأ بعدد يومي صغير، ثم أضف خانات مرتبطة بالصلاة عندما تستقر العادة.";
 "Create goal" = "إنشاء هدف";
+/* إعداد الهدف السريع */
+"Choose goal type" = "اختر نوع الهدف";
+"Start with a simple setup. You can add more control later." = "ابدأ بإعداد بسيط. يمكنك إضافة مزيد من التحكم لاحقًا.";
+"One-time" = "مرة واحدة";
+"Track only" = "للتتبع فقط";
+"Set a daily target and minimum for your streak." = "حدد هدفًا يوميًا وحدًا أدنى لتتابعك.";
+"Reach a total once; it does not repeat." = "حقق إجماليًا مرة واحدة؛ لا يتكرر.";
+"Record counts without a completion target." = "سجّل الأعداد دون هدف للإكمال.";
+"Total target" = "الهدف الإجمالي";
+"Build a daily streak" = "أنشئ تتابعًا يوميًا";
+"Minimum for streak" = "الحد الأدنى للتتابع";
+"Minimum per day" = "الحد الأدنى يوميًا";
+"A day counts toward your streak after this many recitations." = "يُحتسب اليوم في تتابعك بعد هذا العدد من التلاوات.";
+"At least %d each day protects your streak." = "للحفاظ على تتابعك، كرر %d مرة على الأقل يوميًا.";
+"This goal has no completion target. Every count is recorded." = "لا يملك هذا الهدف هدف إكمال. سيتم تسجيل كل عدد.";
+"Track every time you recite %@." = "سجّل كل مرة تتلو فيها %@.";
+"Complete %@ recitations of %@." = "أكمل %@ تلاوة من %@.";
+"Recite %@ %@ times every day." = "اتلُ %@ عدد %@ مرة كل يوم.";
+"Create %d prayer slots for %@, each with its own target." = "أنشئ %d خانات للصلاة لـ%@، ولكل منها هدفها.";
+"Create morning and evening slots for %@." = "أنشئ خانات صباحية ومسائية لـ%@.";
+"Create %d time slots for %@, each with its own target." = "أنشئ %d خانات زمنية لـ%@، ولكل منها هدفها.";
 "Reset today" = "إعادة تعيين اليوم";
 "Split after the five prayers" = "قسّم بعد الصلوات الخمس";
 "Goal reminder" = "تذكير الهدف";

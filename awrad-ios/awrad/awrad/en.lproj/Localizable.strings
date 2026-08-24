@@ -327,6 +327,27 @@
 "Prayer location set" = "Prayer location set";
 "Start with a small daily count, then add prayer-based slots when the habit is stable." = "Start with a small daily count, then add prayer-based slots when the habit is stable.";
 "Create goal" = "Create goal";
+/* Goal quick setup */
+"Choose goal type" = "Choose goal type";
+"Start with a simple setup. You can add more control later." = "Start with a simple setup. You can add more control later.";
+"One-time" = "One-time";
+"Track only" = "Track only";
+"Set a daily target and minimum for your streak." = "Set a daily target and minimum for your streak.";
+"Reach a total once; it does not repeat." = "Reach a total once; it does not repeat.";
+"Record counts without a completion target." = "Record counts without a completion target.";
+"Total target" = "Total target";
+"Build a daily streak" = "Build a daily streak";
+"Minimum for streak" = "Minimum for streak";
+"Minimum per day" = "Minimum per day";
+"A day counts toward your streak after this many recitations." = "A day counts toward your streak after this many recitations.";
+"At least %d each day protects your streak." = "At least %d each day protects your streak.";
+"This goal has no completion target. Every count is recorded." = "This goal has no completion target. Every count is recorded.";
+"Track every time you recite %@." = "Track every time you recite %@.";
+"Complete %@ recitations of %@." = "Complete %@ recitations of %@.";
+"Recite %@ %@ times every day." = "Recite %@ %@ times every day.";
+"Create %d prayer slots for %@, each with its own target." = "Create %d prayer slots for %@, each with its own target.";
+"Create morning and evening slots for %@." = "Create morning and evening slots for %@.";
+"Create %d time slots for %@, each with its own target." = "Create %d time slots for %@, each with its own target.";
 "Reset today" = "Reset today";
 "Split after the five prayers" = "Split after the five prayers";
 "Goal reminder" = "Goal reminder";

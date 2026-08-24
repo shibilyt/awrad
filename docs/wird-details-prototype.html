@@ -1,0 +1,1758 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Awrad — Wird details wireframe</title>
+  <link rel="icon" href="data:,">
+  <!--
+    THROWAWAY WIREFRAME — visual reference for the mobile Wird details page.
+    Open directly, or serve the repository root with:
+      python3 -m http.server 4173
+    Then open:
+      http://localhost:4173/docs/wird-details-prototype.html
+
+    The prototype is intentionally self-contained. It reuses Awrad's shipped font files and
+    mirrors the current Wird detail content model: identity, stats, recent activity, sections,
+    reminders, and a sticky reader entry point.
+  -->
+  <style>
+    @font-face {
+      font-family: "Awrad Rounded";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/gflexrounded_regular.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Rounded";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/gflexrounded_medium.ttf") format("truetype");
+      font-weight: 500;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Rounded";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/gflexrounded_semibold.ttf") format("truetype");
+      font-weight: 650;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Rounded";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/gflexrounded_bold.ttf") format("truetype");
+      font-weight: 750;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Naskh";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/notonaskharabic_regular.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "Awrad Naskh";
+      src: url("../awrad-ios/awrad/awrad/Resources/Fonts/notonaskharabic_semibold.ttf") format("truetype");
+      font-weight: 600;
+      font-display: swap;
+    }
+
+    :root {
+      color-scheme: light;
+      --canvas: #e7ede9;
+      --canvas-deep: #dce5df;
+      --surface: #fcfdf9;
+      --surface-low: #f6f8f5;
+      --surface-high: #edf3ee;
+      --surface-highest: #e1eae3;
+      --ink: #17211b;
+      --ink-soft: #344139;
+      --muted: #69766d;
+      --quiet: #88948b;
+      --line: #d7e1d9;
+      --line-strong: #c1d0c4;
+      --sage: #4b7c5a;
+      --sage-deep: #244c34;
+      --sage-light: #6b9e7a;
+      --sage-soft: #d6e8da;
+      --sage-pale: #edf6ef;
+      --gold: #d4a843;
+      --gold-soft: #f3e7c6;
+      --danger: #a84840;
+      --shadow-phone: 0 44px 100px rgba(39, 63, 47, .22), 0 10px 32px rgba(39, 63, 47, .11);
+      --shadow-card: 0 14px 34px rgba(34, 62, 42, .07);
+      --phone-radius: 42px;
+      --card-radius: 22px;
+      --small-radius: 14px;
+      --font: "Awrad Rounded", "Trebuchet MS", sans-serif;
+      --arabic: "Awrad Naskh", "Times New Roman", serif;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --canvas: #111814;
+      --canvas-deep: #0a100d;
+      --surface: #151d18;
+      --surface-low: #19231d;
+      --surface-high: #1c2a21;
+      --surface-highest: #24362a;
+      --ink: #e1eae3;
+      --ink-soft: #c2d1c5;
+      --muted: #9aaa9d;
+      --quiet: #728176;
+      --line: #2b4232;
+      --line-strong: #3b5944;
+      --sage: #6b9e7a;
+      --sage-deep: #2d5d3c;
+      --sage-light: #88b996;
+      --sage-soft: #274c32;
+      --sage-pale: #1b3021;
+      --gold: #e4bd64;
+      --gold-soft: #493b1c;
+      --danger: #f1a69e;
+      --shadow-phone: 0 44px 120px rgba(0, 0, 0, .38), 0 12px 34px rgba(0, 0, 0, .22);
+      --shadow-card: 0 16px 40px rgba(0, 0, 0, .13);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-width: 320px; background: var(--canvas-deep); }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 7%, rgba(212, 168, 67, .13), transparent 25rem),
+        radial-gradient(circle at 91% 14%, rgba(75, 124, 90, .17), transparent 30rem),
+        linear-gradient(135deg, var(--canvas-deep), var(--canvas) 48%, var(--canvas-deep));
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      transition: background-color .24s ease, color .24s ease;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      opacity: .42;
+      background-image:
+        linear-gradient(rgba(64, 103, 75, .045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(64, 103, 75, .045) 1px, transparent 1px);
+      background-size: 32px 32px;
+      content: "";
+      mask-image: linear-gradient(to bottom, #000, transparent 76%);
+    }
+
+    button {
+      border: 0;
+      color: inherit;
+      font: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--gold) 54%, transparent);
+      outline-offset: 3px;
+    }
+
+    .prototype-banner {
+      position: fixed;
+      top: 18px;
+      left: 22px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 13px;
+      border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+      border-radius: 999px;
+      color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 82%, transparent);
+      box-shadow: 0 10px 30px rgba(31, 59, 39, .07);
+      backdrop-filter: blur(18px);
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .prototype-banner::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 17%, transparent);
+      content: "";
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(235px, 315px) 390px minmax(235px, 315px);
+      justify-content: center;
+      align-items: start;
+      gap: clamp(26px, 5vw, 76px);
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 94px 28px 148px;
+    }
+
+    .brief,
+    .spec-panel {
+      position: sticky;
+      top: 94px;
+      padding-top: 24px;
+    }
+
+    .kicker,
+    .eyebrow {
+      margin: 0;
+      color: var(--sage);
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .16em;
+      line-height: 1.4;
+      text-transform: uppercase;
+    }
+
+    .brief h1 {
+      max-width: 8ch;
+      margin: 15px 0 19px;
+      font-size: clamp(38px, 4vw, 58px);
+      font-weight: 500;
+      letter-spacing: -.07em;
+      line-height: .95;
+    }
+
+    .brief > p:not(.kicker) {
+      max-width: 33ch;
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.72;
+    }
+
+    .brief-quote {
+      margin: 31px 0 0;
+      padding: 18px 0 20px;
+      border-top: 1px solid color-mix(in srgb, var(--ink) 17%, transparent);
+      border-bottom: 1px solid color-mix(in srgb, var(--ink) 17%, transparent);
+      color: var(--ink-soft);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .brief-quote strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .brief-list {
+      display: grid;
+      gap: 12px;
+      margin: 27px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .brief-list li {
+      display: grid;
+      grid-template-columns: 24px 1fr;
+      gap: 11px;
+      align-items: start;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .brief-list li::before {
+      display: grid;
+      width: 22px;
+      height: 22px;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      color: var(--sage);
+      content: attr(data-number);
+      font-size: 9px;
+      font-weight: 750;
+    }
+
+    .stage {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .stage-toolbar {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .stage-toolbar button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 7px 10px;
+      border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+      border-radius: 999px;
+      color: var(--ink-soft);
+      background: color-mix(in srgb, var(--surface) 72%, transparent);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 650;
+      letter-spacing: .02em;
+      text-transform: none;
+    }
+
+    .stage-toolbar button::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      content: "";
+    }
+
+    .phone {
+      position: relative;
+      width: 390px;
+      height: 844px;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+      border-radius: var(--phone-radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-phone);
+      isolation: isolate;
+    }
+
+    .phone::before {
+      position: absolute;
+      top: 11px;
+      left: 50%;
+      z-index: 8;
+      width: 95px;
+      height: 25px;
+      border-radius: 999px;
+      background: #111511;
+      content: "";
+      transform: translateX(-50%);
+    }
+
+    .phone-screen {
+      height: 100%;
+      overflow-x: hidden;
+      overflow-y: auto;
+      scrollbar-width: none;
+      background: var(--surface);
+    }
+
+    .phone-screen::-webkit-scrollbar { display: none; }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px 5px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    .status-icons {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .status-icons svg { width: 13px; height: 13px; }
+
+    .app-bar {
+      display: flex;
+      min-height: 60px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 18px 7px 16px;
+      background: linear-gradient(to bottom, var(--surface) 64%, transparent);
+    }
+
+    .app-bar-copy {
+      display: grid;
+      gap: 2px;
+      padding-left: 5px;
+    }
+
+    .app-bar-copy strong {
+      color: var(--ink);
+      font-size: 16px;
+      font-weight: 650;
+      letter-spacing: -.02em;
+    }
+
+    .app-bar-copy span {
+      color: var(--quiet);
+      font-size: 9px;
+      font-weight: 650;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .app-bar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .icon-button {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      place-items: center;
+      border-radius: 50%;
+      color: var(--ink-soft);
+      background: transparent;
+      cursor: pointer;
+      transition: background-color .18s ease, color .18s ease, transform .18s ease;
+    }
+
+    .icon-button:hover {
+      background: var(--surface-high);
+      color: var(--sage-deep);
+      transform: translateY(-1px);
+    }
+
+    .icon-button svg { width: 20px; height: 20px; }
+
+    .screen-content {
+      display: grid;
+      gap: 16px;
+      padding: 2px 16px 122px;
+    }
+
+    .hero-card {
+      position: relative;
+      min-height: 266px;
+      overflow: hidden;
+      padding: 20px;
+      border-radius: var(--card-radius);
+      color: #f3f8f3;
+      background:
+        radial-gradient(circle at 91% 18%, rgba(212, 168, 67, .2), transparent 9rem),
+        radial-gradient(circle at 18% 110%, rgba(107, 158, 122, .26), transparent 12rem),
+        linear-gradient(145deg, #1c3c28, #2f6241 60%, #224b31);
+      box-shadow: var(--shadow-card);
+    }
+
+    .hero-card::before {
+      position: absolute;
+      right: -31px;
+      bottom: -61px;
+      width: 222px;
+      height: 222px;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .hero-card::after {
+      position: absolute;
+      right: 20px;
+      bottom: -30px;
+      width: 184px;
+      height: 184px;
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 50%;
+      content: "";
+    }
+
+    .hero-top,
+    .hero-bottom,
+    .hero-copy,
+    .hero-progress {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-top,
+    .hero-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hero-top .eyebrow { color: rgba(243, 248, 243, .68); }
+
+    .active-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 999px;
+      color: #f7e7ba;
+      background: rgba(255, 255, 255, .08);
+      font-size: 9px;
+      font-weight: 750;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .active-pill::before {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 0 4px rgba(212, 168, 67, .16);
+      content: "";
+    }
+
+    .hero-copy { padding: 24px 0 21px; }
+
+    .arabic-title {
+      margin: 0;
+      color: #fffaf0;
+      direction: rtl;
+      font-family: var(--arabic);
+      font-size: 37px;
+      font-weight: 600;
+      letter-spacing: .01em;
+      line-height: 1.38;
+      text-align: center;
+      text-wrap: balance;
+    }
+
+    .english-title {
+      margin: 5px 0 0;
+      color: rgba(243, 248, 243, .95);
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: -.035em;
+      text-align: center;
+    }
+
+    .hero-source {
+      margin: 8px 0 0;
+      color: rgba(243, 248, 243, .65);
+      font-size: 11px;
+      letter-spacing: .01em;
+      text-align: center;
+    }
+
+    .hero-progress {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .hero-progress-copy {
+      display: grid;
+      gap: 3px;
+    }
+
+    .hero-progress-copy strong {
+      color: #fffaf0;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .hero-progress-copy span {
+      color: rgba(243, 248, 243, .62);
+      font-size: 10px;
+    }
+
+    .progress-ring {
+      position: relative;
+      display: grid;
+      width: 58px;
+      height: 58px;
+      place-items: center;
+    }
+
+    .progress-ring svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring circle {
+      fill: none;
+      stroke-width: 4;
+    }
+
+    .progress-ring .track { stroke: rgba(255, 255, 255, .15); }
+
+    .progress-ring .value {
+      stroke: var(--gold);
+      stroke-linecap: round;
+      stroke-dasharray: 150;
+      stroke-dashoffset: 45;
+    }
+
+    .progress-ring span {
+      position: relative;
+      color: #fffaf0;
+      font-size: 13px;
+      font-weight: 750;
+    }
+
+    .hero-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: rgba(243, 248, 243, .64);
+      font-size: 10px;
+    }
+
+    .hero-status svg { width: 14px; height: 14px; color: var(--gold); }
+
+    .today-card,
+    .week-card,
+    .section-row,
+    .schedule-card {
+      border: 1px solid var(--line);
+      background: var(--surface-low);
+    }
+
+    .today-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 72px;
+      padding: 12px 12px 12px 13px;
+      border-radius: var(--small-radius);
+      transition: border-color .18s ease, background-color .18s ease;
+    }
+
+    .today-card:hover { border-color: var(--line-strong); background: var(--surface-high); }
+
+    .calendar-tile,
+    .schedule-icon {
+      display: grid;
+      flex: 0 0 auto;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 14px;
+      color: var(--sage-deep);
+      background: var(--sage-soft);
+    }
+
+    .calendar-tile svg,
+    .schedule-icon svg { width: 20px; height: 20px; }
+
+    .today-copy,
+    .schedule-copy {
+      display: grid;
+      min-width: 0;
+      gap: 3px;
+    }
+
+    .today-copy strong,
+    .schedule-copy strong {
+      overflow: hidden;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .today-copy span,
+    .schedule-copy span {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .today-action {
+      display: inline-flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      padding: 8px 9px;
+      border-radius: 10px;
+      color: var(--sage-deep);
+      background: var(--sage-pale);
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 750;
+    }
+
+    .today-action svg { width: 14px; height: 14px; }
+
+    .card-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      padding: 2px 2px 0;
+    }
+
+    .card-heading h2,
+    .section-heading h2 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 650;
+      letter-spacing: -.015em;
+    }
+
+    .card-heading span,
+    .section-heading span {
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .week-card {
+      padding: 16px 14px 14px;
+      border-radius: var(--card-radius);
+    }
+
+    .week-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .week-header strong {
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .week-header span {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--sage);
+      font-size: 10px;
+      font-weight: 650;
+    }
+
+    .week-header svg { width: 13px; height: 13px; color: var(--gold); }
+
+    .week-track {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-top: 14px;
+    }
+
+    .day {
+      display: grid;
+      justify-items: center;
+      gap: 7px;
+      color: var(--quiet);
+      font-size: 9px;
+      font-weight: 650;
+    }
+
+    .day-dot {
+      position: relative;
+      display: grid;
+      width: 29px;
+      height: 29px;
+      place-items: center;
+      border: 1px solid var(--line-strong);
+      border-radius: 50%;
+      color: var(--muted);
+      background: var(--surface);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .day.complete .day-dot {
+      border-color: var(--sage);
+      color: #fff;
+      background: var(--sage);
+    }
+
+    .day.complete .day-dot svg { width: 13px; height: 13px; }
+
+    .day.today { color: var(--ink); }
+
+    .day.today .day-dot {
+      border: 2px solid var(--gold);
+      color: var(--sage-deep);
+      background: var(--gold-soft);
+      box-shadow: 0 0 0 4px color-mix(in srgb, var(--gold) 13%, transparent);
+    }
+
+    .history-toggle {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 14px;
+      padding: 10px 0 0;
+      border-top: 1px solid var(--line);
+      color: var(--sage);
+      background: transparent;
+      cursor: pointer;
+      font-size: 10px;
+      font-weight: 650;
+      text-align: left;
+    }
+
+    .history-toggle svg { width: 15px; height: 15px; transition: transform .2s ease; }
+
+    .history-toggle[aria-expanded="true"] svg { transform: rotate(180deg); }
+
+    .history-extra {
+      display: none;
+      gap: 8px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .history-extra.open { display: grid; }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 10px;
+    }
+
+    .history-item strong { color: var(--ink-soft); font-weight: 650; }
+
+    .history-item em {
+      color: var(--sage);
+      font-size: 9px;
+      font-style: normal;
+      font-weight: 650;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      padding: 4px 2px 0;
+    }
+
+    .section-heading-copy {
+      display: grid;
+      gap: 3px;
+    }
+
+    .section-heading span { font-size: 9px; }
+
+    .section-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .section-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: 33px minmax(0, 1fr) 20px;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+      padding: 12px 12px 11px 11px;
+      border-radius: var(--small-radius);
+      cursor: pointer;
+      text-align: left;
+      transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+    }
+
+    .section-row:hover {
+      border-color: var(--line-strong);
+      background: var(--surface-high);
+      transform: translateY(-1px);
+    }
+
+    .section-row.selected {
+      border-color: color-mix(in srgb, var(--sage) 60%, var(--line));
+      background: var(--sage-pale);
+    }
+
+    .section-row.selected::before {
+      position: absolute;
+      top: 11px;
+      bottom: 11px;
+      left: -1px;
+      width: 3px;
+      border-radius: 0 5px 5px 0;
+      background: var(--gold);
+      content: "";
+    }
+
+    .section-index {
+      display: grid;
+      width: 33px;
+      height: 33px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--sage);
+      background: var(--surface);
+      font-size: 10px;
+      font-weight: 750;
+    }
+
+    .section-row.selected .section-index {
+      border-color: var(--sage);
+      color: #fff;
+      background: var(--sage);
+    }
+
+    .section-copy {
+      display: grid;
+      min-width: 0;
+      gap: 6px;
+    }
+
+    .section-title-line {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .section-title-line strong {
+      overflow: hidden;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 650;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .section-title-line span {
+      display: inline-flex;
+      flex: 0 0 auto;
+      padding: 4px 6px;
+      border-radius: 6px;
+      color: var(--sage-deep);
+      background: var(--sage-soft);
+      font-size: 8px;
+      font-weight: 750;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .section-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .section-meta strong { color: var(--ink-soft); font-weight: 650; }
+
+    .progress-meter {
+      height: 4px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: var(--surface-highest);
+    }
+
+    .progress-meter span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--sage);
+    }
+
+    .section-row.selected .progress-meter span { background: var(--gold); }
+
+    .section-arrow {
+      display: grid;
+      width: 20px;
+      height: 20px;
+      place-items: center;
+      color: var(--quiet);
+    }
+
+    .section-arrow svg { width: 16px; height: 16px; }
+
+    .schedule-card {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 12px;
+      border-radius: var(--small-radius);
+    }
+
+    .schedule-icon {
+      width: 39px;
+      height: 39px;
+      border-radius: 12px;
+      color: var(--gold);
+      background: var(--gold-soft);
+    }
+
+    .schedule-icon svg { width: 18px; height: 18px; }
+
+    .schedule-copy { gap: 2px; }
+
+    .schedule-copy strong { font-size: 12px; }
+
+    .schedule-copy span { font-size: 9px; }
+
+    .switch {
+      position: relative;
+      display: inline-flex;
+      flex: 0 0 auto;
+      width: 42px;
+      height: 25px;
+      margin-left: auto;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      background: var(--surface-highest);
+      cursor: pointer;
+      transition: background-color .18s ease;
+    }
+
+    .switch::after {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: var(--quiet);
+      content: "";
+      transition: transform .18s ease, background-color .18s ease;
+    }
+
+    .switch[aria-checked="true"] { background: var(--sage); }
+
+    .switch[aria-checked="true"]::after {
+      background: #fff;
+      transform: translateX(17px);
+    }
+
+    .bottom-cta {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 6;
+      padding: 13px 16px 18px;
+      background: linear-gradient(to bottom, color-mix(in srgb, var(--surface) 0%, transparent), var(--surface) 26%);
+    }
+
+    .primary-cta {
+      display: flex;
+      width: 100%;
+      min-height: 54px;
+      align-items: center;
+      gap: 11px;
+      padding: 9px 13px 9px 9px;
+      border-radius: 17px;
+      color: #fff;
+      background: var(--sage);
+      box-shadow: 0 10px 18px color-mix(in srgb, var(--sage) 25%, transparent);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 650;
+      text-align: left;
+      transition: background-color .18s ease, transform .18s ease, box-shadow .18s ease;
+    }
+
+    .primary-cta:hover {
+      background: var(--sage-deep);
+      box-shadow: 0 13px 24px color-mix(in srgb, var(--sage) 31%, transparent);
+      transform: translateY(-1px);
+    }
+
+    .cta-icon {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border-radius: 12px;
+      color: var(--sage-deep);
+      background: var(--gold);
+    }
+
+    .cta-icon svg { width: 16px; height: 16px; }
+
+    .primary-cta .cta-label { flex: 1; }
+
+    .primary-cta .cta-subtitle {
+      display: block;
+      margin-top: 2px;
+      color: rgba(255, 255, 255, .69);
+      font-size: 9px;
+      font-weight: 400;
+    }
+
+    .cta-arrow { opacity: .72; }
+
+    .cta-arrow svg { width: 18px; height: 18px; }
+
+    .overflow-menu {
+      position: absolute;
+      top: 71px;
+      right: 18px;
+      z-index: 10;
+      display: none;
+      width: 196px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: 0 18px 36px rgba(23, 47, 30, .18);
+    }
+
+    .overflow-menu.open { display: grid; }
+
+    .menu-item {
+      display: flex;
+      width: 100%;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 9px;
+      border-radius: 10px;
+      color: var(--ink-soft);
+      background: transparent;
+      cursor: pointer;
+      font-size: 11px;
+      text-align: left;
+    }
+
+    .menu-item:hover { background: var(--surface-high); }
+
+    .menu-item svg { width: 17px; height: 17px; color: var(--sage); }
+
+    .menu-divider { height: 1px; margin: 4px 9px; background: var(--line); }
+
+    .toast {
+      position: absolute;
+      right: 16px;
+      bottom: 86px;
+      left: 16px;
+      z-index: 8;
+      padding: 10px 12px;
+      border: 1px solid color-mix(in srgb, var(--sage) 33%, var(--line));
+      border-radius: 12px;
+      color: var(--sage-deep);
+      background: color-mix(in srgb, var(--sage-soft) 92%, var(--surface));
+      box-shadow: 0 10px 24px rgba(33, 72, 44, .13);
+      font-size: 10px;
+      font-weight: 650;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity .18s ease, transform .18s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .stage-caption {
+      max-width: 34ch;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    .spec-panel h2 {
+      margin: 10px 0 8px;
+      color: var(--ink);
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: -.03em;
+    }
+
+    .spec-panel > p:not(.kicker) {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .spec-card {
+      margin-top: 24px;
+      padding: 15px;
+      border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--surface) 57%, transparent);
+    }
+
+    .spec-card h3 {
+      margin: 0 0 13px;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .11em;
+      text-transform: uppercase;
+    }
+
+    .token-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 8px 0;
+      border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .token-row:last-child { border-bottom: 0; }
+
+    .token-name { display: inline-flex; align-items: center; gap: 7px; }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+      border-radius: 5px;
+    }
+
+    .swatch.sage { background: var(--sage); }
+    .swatch.gold { background: var(--gold); }
+    .swatch.surface { background: var(--surface); }
+    .swatch.ink { background: var(--ink); }
+
+    .token-row code {
+      color: var(--ink-soft);
+      font: 650 10px/1 var(--font);
+    }
+
+    .state-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .state-chip {
+      padding: 7px 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: var(--surface-low);
+      font-size: 10px;
+    }
+
+    .interaction-note {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      gap: 9px;
+      align-items: start;
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.5;
+    }
+
+    .interaction-note strong {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .interaction-note::before {
+      display: grid;
+      width: 22px;
+      height: 22px;
+      place-items: center;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      color: var(--gold);
+      content: "↗";
+      font-size: 11px;
+      font-weight: 750;
+    }
+
+    @media (max-width: 1080px) {
+      .workspace {
+        grid-template-columns: minmax(220px, 285px) 390px;
+        gap: 36px;
+      }
+
+      .spec-panel { display: none; }
+    }
+
+    @media (max-width: 760px) {
+      .prototype-banner { position: absolute; }
+
+      .workspace {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 78px 18px 70px;
+      }
+
+      .brief {
+        position: static;
+        width: min(390px, 100%);
+        padding: 0;
+        text-align: center;
+      }
+
+      .brief h1,
+      .brief > p:not(.kicker) { margin-right: auto; margin-left: auto; }
+
+      .brief h1 { max-width: 10ch; }
+
+      .brief-quote,
+      .brief-list { display: none; }
+
+      .stage { order: -1; width: min(390px, 100%); }
+
+      .phone {
+        width: 100%;
+        height: min(844px, calc(100vh - 118px));
+        min-height: 700px;
+        border-radius: 34px;
+      }
+
+      .phone::before { top: 9px; }
+    }
+
+    @media (max-width: 430px) {
+      .workspace { padding-right: 10px; padding-left: 10px; }
+
+      .brief { display: none; }
+
+      .stage-toolbar { padding: 0 3px; }
+
+      .phone { border-right: 0; border-left: 0; border-radius: 28px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .001ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-banner">Elite wireframe <span>·</span> Material 3</div>
+
+  <main class="workspace">
+    <aside class="brief" aria-label="Design direction">
+      <p class="kicker">Wird detail / 01</p>
+      <h1>A quiet place to return to.</h1>
+      <p>
+        A focused home for a daily practice: identity first, today’s next step second, and the
+        full reading plan always within reach.
+      </p>
+
+      <p class="brief-quote">
+        <strong>Design thesis</strong>
+        The page should feel like opening a familiar prayer book — calm, substantial, and ready for
+        the next recitation without asking the user to re-orient themselves.
+      </p>
+
+      <ol class="brief-list">
+        <li data-number="01">The dark sage hero makes the Wird feel like a distinct ritual object.</li>
+        <li data-number="02">Progress is visible at a glance, but never competes with the Arabic title.</li>
+        <li data-number="03">The reader CTA follows the selected section so the detail page stays actionable.</li>
+      </ol>
+    </aside>
+
+    <section class="stage" aria-label="Wird detail mobile wireframe">
+      <div class="stage-toolbar">
+        <span>Android / 390 × 844</span>
+        <button id="themeToggle" type="button" aria-pressed="false">Dark preview</button>
+      </div>
+
+      <div class="phone" id="phone">
+        <div class="phone-screen" id="phoneScreen">
+          <div class="status-bar" aria-hidden="true">
+            <span>9:41</span>
+            <span class="status-icons">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M4 17h2M8 14h2M12 11h2M16 8h2"/>
+              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M4 10a10 10 0 0 1 16 0M7 13a6 6 0 0 1 10 0M10 16a2.5 2.5 0 0 1 4 0"/>
+              </svg>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+                <rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 10v4"/>
+              </svg>
+            </span>
+          </div>
+
+          <header class="app-bar">
+            <button class="icon-button" id="backButton" type="button" aria-label="Go back">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5M11 18l-6-6 6-6"/>
+              </svg>
+            </button>
+            <div class="app-bar-copy">
+              <span>Library</span>
+              <strong>Wird details</strong>
+            </div>
+            <div class="app-bar-actions">
+              <button class="icon-button" id="menuButton" type="button" aria-label="Open more options" aria-expanded="false">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
+          </header>
+
+          <div class="overflow-menu" id="overflowMenu" role="menu" aria-label="Wird actions">
+            <button class="menu-item" type="button" role="menuitem" data-toast="Reminder is set for 7:00 AM.">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>
+              </svg>
+              <span>Manage reminder</span>
+            </button>
+            <button class="menu-item" type="button" role="menuitem" data-toast="Reader settings are ready to refine.">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M4 6h16M4 12h16M4 18h16M8 4v4M15 10v4M11 16v4"/>
+              </svg>
+              <span>Reader preferences</span>
+            </button>
+            <div class="menu-divider" role="separator"></div>
+            <button class="menu-item" type="button" role="menuitem" data-toast="Built-in Wird · editing is disabled.">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3 4 7v5c0 4.8 3.4 8.3 8 9 4.6-.7 8-4.2 8-9V7l-8-4Z"/><path d="m9 12 2 2 4-4"/>
+              </svg>
+              <span>About this Wird</span>
+            </button>
+          </div>
+
+          <div class="screen-content">
+            <section class="hero-card" aria-labelledby="wirdTitle">
+              <div class="hero-top">
+                <p class="eyebrow">Continue your Wird</p>
+                <span class="active-pill">Active</span>
+              </div>
+              <div class="hero-copy">
+                <h1 class="arabic-title" id="wirdTitle" lang="ar">دلائل الخيرات</h1>
+                <p class="english-title">Dalail al-Khayrat</p>
+                <p class="hero-source">Imam Muhammad ibn Sulayman al-Jazuli</p>
+              </div>
+              <div class="hero-bottom">
+                <div class="hero-progress">
+                  <div class="progress-ring" aria-label="Today's progress: 67 percent">
+                    <svg viewBox="0 0 58 58" aria-hidden="true">
+                      <circle class="track" cx="29" cy="29" r="24"/>
+                      <circle class="value" cx="29" cy="29" r="24"/>
+                    </svg>
+                    <span>67%</span>
+                  </div>
+                  <div class="hero-progress-copy">
+                    <strong>Today’s practice</strong>
+                    <span>1 of 1 section · in progress</span>
+                  </div>
+                </div>
+                <div class="hero-status">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/>
+                  </svg>
+                  Anytime
+                </div>
+              </div>
+            </section>
+
+            <section class="today-card" aria-label="Today's reading">
+              <div class="calendar-tile">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16"/><path d="m9 15 2 2 4-4"/>
+                </svg>
+              </div>
+              <div class="today-copy">
+                <strong>Thursday · Hizb 04</strong>
+                <span>One section is waiting for you</span>
+              </div>
+              <button class="today-action" type="button" data-toast="Opening today’s section…">
+                Open
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h13M13 6l6 6-6 6"/>
+                </svg>
+              </button>
+            </section>
+
+            <section class="week-card" aria-labelledby="weekHeading">
+              <div class="week-header">
+                <strong id="weekHeading">This week</strong>
+                <span>
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 2 1.8 6.1L20 10l-6.2 1.9L12 18l-1.8-6.1L4 10l6.2-1.9L12 2Zm6.3 13.2.8 2.6 2.6.8-2.6.8-.8 2.6-.8-2.6-2.6-.8 2.6-.8.8-2.6Z"/></svg>
+              </div>
+              <div class="week-track" aria-label="Recent activity, Monday through Sunday">
+                <div class="day complete"><span>Mon</span><span class="day-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12 4 4 8-8"/></svg></span></div>
+                <div class="day complete"><span>Tue</span><span class="day-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12 4 4 8-8"/></svg></span></div>
+                <div class="day complete"><span>Wed</span><span class="day-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 12 4 4 8-8"/></svg></span></div>
+                <div class="day today"><span>Thu</span><span class="day-dot">67</span></div>
+                <div class="day"><span>Fri</span><span class="day-dot">·</span></div>
+                <div class="day"><span>Sat</span><span class="day-dot">·</span></div>
+                <div class="day"><span>Sun</span><span class="day-dot">·</span></div>
+              </div>
+              <button class="history-toggle" id="historyToggle" type="button" aria-expanded="false" aria-controls="historyExtra">
+                <span>View practice history</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <div class="history-extra" id="historyExtra">
+                <div class="history-item"><strong>Wednesday · Hizb 03</strong><em>Complete</em></div>
+                <div class="history-item"><strong>Tuesday · Hizb 02</strong><em>Complete</em></div>
+                <div class="history-item"><strong>Monday · Hizb 01</strong><em>Complete</em></div>
+              </div>
+            </section>
+
+            <div class="section-heading">
+              <div class="section-heading-copy">
+                <h2>Reading plan</h2>
+                <span>Choose a section to continue</span>
+              </div>
+              <span>Tap a section to begin</span>
+            </div>
+
+            <section class="section-list" aria-label="Wird reading sections">
+              <button class="section-row" type="button" data-section="Monday · First" data-cta="Open Monday · First" aria-pressed="false">
+                <span class="section-index">01</span>
+                <span class="section-copy">
+                  <span class="section-title-line"><strong>Monday · First</strong></span>
+                  <span class="section-meta"><span>Opening and intention</span><strong>100%</strong></span>
+                  <span class="progress-meter"><span style="width: 100%"></span></span>
+                </span>
+                <span class="section-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+              </button>
+              <button class="section-row" type="button" data-section="Monday · Second" data-cta="Open Monday · Second" aria-pressed="false">
+                <span class="section-index">02</span>
+                <span class="section-copy">
+                  <span class="section-title-line"><strong>Monday · Second</strong></span>
+                  <span class="section-meta"><span>First Hizb continuation</span><strong>100%</strong></span>
+                  <span class="progress-meter"><span style="width: 100%"></span></span>
+                </span>
+                <span class="section-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+              </button>
+              <button class="section-row" type="button" data-section="Tuesday" data-cta="Open Tuesday" aria-pressed="false">
+                <span class="section-index">03</span>
+                <span class="section-copy">
+                  <span class="section-title-line"><strong>Tuesday</strong></span>
+                  <span class="section-meta"><span>Second Hizb</span><strong>100%</strong></span>
+                  <span class="progress-meter"><span style="width: 100%"></span></span>
+                </span>
+                <span class="section-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+              </button>
+              <button class="section-row" type="button" data-section="Wednesday" data-cta="Open Wednesday" aria-pressed="false">
+                <span class="section-index">04</span>
+                <span class="section-copy">
+                  <span class="section-title-line"><strong>Wednesday</strong></span>
+                  <span class="section-meta"><span>Third Hizb</span><strong>100%</strong></span>
+                  <span class="progress-meter"><span style="width: 100%"></span></span>
+                </span>
+                <span class="section-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+              </button>
+              <button class="section-row selected" type="button" data-section="Thursday" data-cta="Continue Thursday" aria-pressed="true">
+                <span class="section-index">05</span>
+                <span class="section-copy">
+                  <span class="section-title-line"><strong>Thursday</strong><span>Today</span></span>
+                  <span class="section-meta"><span>Fourth Hizb</span><strong>67%</strong></span>
+                  <span class="progress-meter"><span style="width: 67%"></span></span>
+                </span>
+                <span class="section-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+              </button>
+              <button class="section-row" type="button" data-section="Friday" data-cta="Open Friday" aria-pressed="false">
+                <span class="section-index">06</span>
+                <span class="section-copy">
+                  <span class="section-title-line"><strong>Friday</strong></span>
+                  <span class="section-meta"><span>Fifth Hizb</span><strong>0%</strong></span>
+                  <span class="progress-meter"><span style="width: 0%"></span></span>
+                </span>
+                <span class="section-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+              </button>
+              <button class="section-row" type="button" data-section="Saturday" data-cta="Open Saturday" aria-pressed="false">
+                <span class="section-index">07</span>
+                <span class="section-copy">
+                  <span class="section-title-line"><strong>Saturday</strong></span>
+                  <span class="section-meta"><span>Sixth Hizb</span><strong>0%</strong></span>
+                  <span class="progress-meter"><span style="width: 0%"></span></span>
+                </span>
+                <span class="section-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+              </button>
+              <button class="section-row" type="button" data-section="Sunday" data-cta="Open Sunday" aria-pressed="false">
+                <span class="section-index">08</span>
+                <span class="section-copy">
+                  <span class="section-title-line"><strong>Sunday</strong></span>
+                  <span class="section-meta"><span>Seventh Hizb</span><strong>0%</strong></span>
+                  <span class="progress-meter"><span style="width: 0%"></span></span>
+                </span>
+                <span class="section-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+              </button>
+            </section>
+
+            <section class="schedule-card" aria-label="Reminder settings">
+              <div class="schedule-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>
+                </svg>
+              </div>
+              <div class="schedule-copy">
+                <strong>Daily reminder</strong>
+                <span id="reminderText">Every day at 7:00 AM</span>
+              </div>
+              <button class="switch" id="reminderSwitch" type="button" role="switch" aria-checked="true" aria-label="Toggle daily reminder"></button>
+            </section>
+          </div>
+        </div>
+
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+        <div class="bottom-cta">
+          <button class="primary-cta" id="continueButton" type="button">
+            <span class="cta-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8.1 5.2a1 1 0 0 1 1.5-.86l8.2 6.8a1.1 1.1 0 0 1 0 1.72l-8.2 6.8a1 1 0 0 1-1.6-.78V5.2Z"/></svg>
+            </span>
+            <span class="cta-label" id="ctaLabel">Continue Thursday<span class="cta-subtitle">Resume where you left off</span></span>
+            <span class="cta-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg></span>
+          </button>
+        </div>
+      </div>
+
+      <p class="stage-caption">A mobile-first detail surface that keeps the next recitation one calm tap away.</p>
+    </section>
+
+    <aside class="spec-panel" aria-label="Prototype specification">
+      <p class="kicker">Material 3 / Direction</p>
+      <h2>Calm clarity, with ritual weight.</h2>
+      <p>
+        A flat surface system, expressive Arabic typography, and one gold accent reserved for
+        progress and the moment of action.
+      </p>
+
+      <section class="spec-card">
+        <h3>Surface roles</h3>
+        <div class="token-row"><span class="token-name"><i class="swatch sage"></i>Primary sage</span><code>#4B7C5A</code></div>
+        <div class="token-row"><span class="token-name"><i class="swatch gold"></i>Ritual accent</span><code>#D4A843</code></div>
+        <div class="token-row"><span class="token-name"><i class="swatch surface"></i>Reading surface</span><code>#FCFDF9</code></div>
+        <div class="token-row"><span class="token-name"><i class="swatch ink"></i>Ink</span><code>#17211B</code></div>
+      </section>
+
+      <section class="spec-card">
+        <h3>Included states</h3>
+        <div class="state-chips">
+          <span class="state-chip">Active today</span>
+          <span class="state-chip">In progress</span>
+          <span class="state-chip">Completed</span>
+          <span class="state-chip">Reminder on</span>
+          <span class="state-chip">Dark preview</span>
+        </div>
+      </section>
+
+      <div class="interaction-note">
+        <div><strong>Try the surface</strong>Tap a section to move the primary action. Open history, toggle the reminder, or use the appearance control above the phone.</div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const themeToggle = document.querySelector("#themeToggle");
+    const menuButton = document.querySelector("#menuButton");
+    const overflowMenu = document.querySelector("#overflowMenu");
+    const historyToggle = document.querySelector("#historyToggle");
+    const historyExtra = document.querySelector("#historyExtra");
+    const reminderSwitch = document.querySelector("#reminderSwitch");
+    const reminderText = document.querySelector("#reminderText");
+    const continueButton = document.querySelector("#continueButton");
+    const ctaLabel = document.querySelector("#ctaLabel");
+    const toast = document.querySelector("#toast");
+    let toastTimer;
+
+    function showToast(message) {
+      window.clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.classList.add("show");
+      toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    function setTheme(dark) {
+      root.dataset.theme = dark ? "dark" : "light";
+      themeToggle.setAttribute("aria-pressed", String(dark));
+      themeToggle.textContent = dark ? "Light preview" : "Dark preview";
+    }
+
+    themeToggle.addEventListener("click", () => setTheme(root.dataset.theme !== "dark"));
+
+    menuButton.addEventListener("click", () => {
+      const isOpen = overflowMenu.classList.toggle("open");
+      menuButton.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    document.addEventListener("click", (event) => {
+      if (!overflowMenu.contains(event.target) && !menuButton.contains(event.target)) {
+        overflowMenu.classList.remove("open");
+        menuButton.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    historyToggle.addEventListener("click", () => {
+      const isOpen = historyToggle.getAttribute("aria-expanded") === "true";
+      historyToggle.setAttribute("aria-expanded", String(!isOpen));
+      historyExtra.classList.toggle("open", !isOpen);
+    });
+
+    document.querySelectorAll(".section-row").forEach((row) => {
+      row.addEventListener("click", () => {
+        document.querySelectorAll(".section-row").forEach((item) => {
+          item.classList.remove("selected");
+          item.setAttribute("aria-pressed", "false");
+        });
+        row.classList.add("selected");
+        row.setAttribute("aria-pressed", "true");
+        ctaLabel.firstChild.textContent = row.dataset.cta;
+        ctaLabel.querySelector(".cta-subtitle").textContent = row.dataset.section === "Thursday"
+          ? "Resume where you left off"
+          : "Open this section in the reader";
+        showToast(`${row.dataset.section} selected.`);
+      });
+    });
+
+    reminderSwitch.addEventListener("click", () => {
+      const isEnabled = reminderSwitch.getAttribute("aria-checked") === "true";
+      reminderSwitch.setAttribute("aria-checked", String(!isEnabled));
+      reminderText.textContent = isEnabled ? "Reminders are turned off" : "Every day at 7:00 AM";
+      showToast(isEnabled ? "Daily reminder turned off." : "Daily reminder turned on.");
+    });
+
+    document.querySelectorAll("[data-toast]").forEach((item) => {
+      item.addEventListener("click", () => {
+        overflowMenu.classList.remove("open");
+        menuButton.setAttribute("aria-expanded", "false");
+        showToast(item.dataset.toast);
+      });
+    });
+
+    continueButton.addEventListener("click", () => {
+      const selected = document.querySelector(".section-row.selected");
+      showToast(`Opening ${selected?.dataset.section || "today’s section"} in the reader…`);
+    });
+
+    document.querySelector(".today-action").addEventListener("click", (event) => {
+      showToast(event.currentTarget.dataset.toast);
+    });
+
+    document.querySelector("#backButton").addEventListener("click", () => showToast("Back to your library."));
+  </script>
+</body>
+</html>

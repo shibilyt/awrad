@@ -49,7 +49,7 @@ class AdvancedGoalFlowPaneTest {
             }
         }
 
-        composeRule.onNodeWithTag("quick-goal-advanced").performClick()
+        composeRule.onNodeWithTag("simple-goal-advanced").performClick()
         composeRule.runOnIdle {
             assertTrue(advancedOpened)
         }

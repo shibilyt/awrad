@@ -1,0 +1,4334 @@
+<!-- PROTOTYPE — Three Community tab directions, with an interactive Awrad-aligned light/dark preview. -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='9' fill='%234b7c5a'/><text x='16' y='22' text-anchor='middle' fill='white' font-family='Arial' font-size='20'>a</text></svg>">
+  <title>Awrad — Community Direction Lab</title>
+  <style>
+    :root {
+      --canvas: #141714;
+      --canvas-soft: #1b1f1b;
+      --canvas-line: rgba(237, 242, 233, .1);
+      --ink: #edf1ea;
+      --muted: #9fa99d;
+      --quiet-green: #47785a;
+      --quiet-deep: #183d2a;
+      --quiet-mint: #d9eadb;
+      --quiet-paper: #f4f5ee;
+      --pulse-black: #08110d;
+      --pulse-green: #9ce7b4;
+      --pulse-lime: #d4f47e;
+      --atlas-ink: #242823;
+      --atlas-muted: #7b8277;
+      --atlas-sage: #557b5f;
+      --atlas-paper: #f6f5ed;
+      --app-light-background: #f4f6f2;
+      --app-light-surface: #ffffff;
+      --app-light-surface-high: #eef2ed;
+      --app-light-ink: #253128;
+      --app-light-muted: #6f7c72;
+      --app-light-primary: #4b7c5a;
+      --app-dark-background: #121412;
+      --app-dark-surface: #1e201e;
+      --app-dark-surface-high: #252825;
+      --app-dark-ink: #edf1ea;
+      --app-dark-muted: #afb7b0;
+      --app-dark-primary: #73ad87;
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --shadow-soft: 0 18px 46px rgba(0, 0, 0, .18);
+      --shadow-device: 0 40px 90px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .1);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { color-scheme: dark; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(91, 126, 92, .16), transparent 38rem),
+        var(--canvas);
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI", ui-rounded, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button {
+      border: 0;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:focus-visible {
+      outline: 2px solid #c4e5bf;
+      outline-offset: 3px;
+    }
+
+    .icon-sprite {
+      position: absolute;
+      width: 0;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .icon {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+      flex: 0 0 auto;
+    }
+
+    .lab-shell {
+      display: grid;
+      grid-template-columns: minmax(238px, 278px) minmax(480px, 1fr) minmax(272px, 318px);
+      min-height: 100vh;
+    }
+
+    .lab-rail,
+    .lab-inspector {
+      padding: 32px 24px 112px;
+      background: rgba(16, 19, 16, .58);
+    }
+
+    .lab-rail {
+      border-right: 1px solid var(--canvas-line);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .lab-inspector {
+      border-left: 1px solid var(--canvas-line);
+    }
+
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 38px;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(196, 229, 191, .34);
+      border-radius: 11px;
+      color: #c4e5bf;
+      background: rgba(94, 135, 91, .18);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -.05em;
+    }
+
+    .brand-lockup span {
+      color: #d9e4d6;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.03em;
+    }
+
+    .eyebrow,
+    .stage-kicker,
+    .section-label,
+    .micro-label {
+      color: #8fa28e;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }
+
+    .lab-rail h1 {
+      max-width: 230px;
+      margin: 10px 0 14px;
+      color: #f0f4ec;
+      font-size: clamp(30px, 3vw, 42px);
+      letter-spacing: -.075em;
+      line-height: .96;
+    }
+
+    .lab-rail h1 em {
+      color: #9ac59a;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+    }
+
+    .lede {
+      max-width: 225px;
+      margin: 0;
+      color: #a5afa2;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .question-card {
+      margin: 30px 0 32px;
+      padding: 16px;
+      border: 1px solid rgba(196, 229, 191, .16);
+      border-radius: 17px;
+      background: rgba(196, 229, 191, .06);
+    }
+
+    .question-card p {
+      margin: 9px 0 0;
+      color: #d9e4d6;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 17px;
+      line-height: 1.3;
+    }
+
+    .section-label {
+      margin-bottom: 10px;
+    }
+
+    .variant-index {
+      display: grid;
+      gap: 7px;
+    }
+
+    .variant-option {
+      display: grid;
+      grid-template-columns: 29px 1fr;
+      gap: 10px;
+      width: 100%;
+      padding: 11px 10px;
+      border: 1px solid transparent;
+      border-radius: 15px;
+      color: #aeb8ab;
+      text-align: left;
+      background: transparent;
+      transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease;
+    }
+
+    .variant-option:hover {
+      border-color: rgba(214, 233, 208, .14);
+      background: rgba(255, 255, 255, .035);
+      color: #ecf3e9;
+      transform: translateX(2px);
+    }
+
+    .variant-option[aria-pressed="true"] {
+      border-color: rgba(196, 229, 191, .24);
+      background: rgba(196, 229, 191, .1);
+      color: #f0f4ec;
+    }
+
+    .variant-key {
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, .07);
+      color: #bfceb9;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .variant-option[aria-pressed="true"] .variant-key {
+      background: #c4e5bf;
+      color: #193121;
+    }
+
+    .variant-copy {
+      display: grid;
+      gap: 2px;
+      align-content: center;
+    }
+
+    .variant-copy strong {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .variant-copy small {
+      color: #899489;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .variant-option[aria-pressed="true"] .variant-copy small {
+      color: #b9cdb8;
+    }
+
+    .rail-foot {
+      margin-top: auto;
+      padding-top: 32px;
+      color: #657064;
+      font-size: 10px;
+      letter-spacing: .08em;
+      line-height: 1.7;
+      text-transform: uppercase;
+    }
+
+    .lab-stage {
+      position: relative;
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      padding: 28px clamp(24px, 5vw, 72px) 116px;
+      background:
+        linear-gradient(90deg, transparent 49.9%, rgba(205, 221, 199, .035) 50%, transparent 50.1%),
+        radial-gradient(circle at 50% 36%, rgba(87, 125, 89, .08), transparent 26rem);
+    }
+
+    .stage-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 42px;
+    }
+
+    .stage-header .stage-kicker {
+      color: #a9bda5;
+    }
+
+    .stage-header h2 {
+      margin: 5px 0 0;
+      color: #eff4ed;
+      font-size: 15px;
+      font-weight: 650;
+      letter-spacing: -.03em;
+    }
+
+    .stage-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ghost-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 12px;
+      border: 1px solid rgba(234, 241, 229, .14);
+      border-radius: 999px;
+      color: #aeb9aa;
+      background: rgba(255, 255, 255, .035);
+      font-size: 11px;
+      transition: background .18s ease, color .18s ease;
+    }
+
+    .ghost-control:hover {
+      color: #eff4ed;
+      background: rgba(255, 255, 255, .09);
+    }
+
+    .theme-control {
+      min-width: 116px;
+      justify-content: center;
+    }
+
+    .theme-control .icon { width: 15px; height: 15px; }
+
+    .stage-canvas {
+      display: grid;
+      flex: 1;
+      place-items: center;
+      min-height: 760px;
+      padding: 44px 0 32px;
+    }
+
+    .device-wrap {
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .device-wrap::before,
+    .device-wrap::after {
+      position: absolute;
+      z-index: 0;
+      color: rgba(216, 230, 213, .26);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .device-wrap::before {
+      top: 12%;
+      right: calc(100% + 26px);
+      content: "the product surface";
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+    }
+
+    .device-wrap::after {
+      bottom: -30px;
+      left: 50%;
+      content: "390 × 844 mobile viewport";
+      transform: translateX(-50%);
+    }
+
+    .device {
+      position: relative;
+      z-index: 1;
+      width: min(390px, 78vw);
+      height: min(844px, calc(100vh - 146px));
+      min-height: 620px;
+      overflow: hidden;
+      border: 6px solid #2c312d;
+      border-radius: 47px;
+      background: #e9eee7;
+      box-shadow: var(--shadow-device);
+    }
+
+    .device::before {
+      position: absolute;
+      z-index: 5;
+      top: 9px;
+      left: 50%;
+      width: 104px;
+      height: 24px;
+      border-radius: 999px;
+      background: #111410;
+      content: "";
+      transform: translateX(-50%);
+    }
+
+    .device::after {
+      position: absolute;
+      z-index: 5;
+      right: 22px;
+      bottom: 8px;
+      left: 22px;
+      height: 4px;
+      border-radius: 999px;
+      background: currentColor;
+      content: "";
+      opacity: .72;
+      pointer-events: none;
+    }
+
+    .phone-status {
+      position: absolute;
+      z-index: 4;
+      top: 12px;
+      right: 23px;
+      left: 23px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: currentColor;
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: .01em;
+      pointer-events: none;
+    }
+
+    .status-signals {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .status-signals .icon {
+      width: 12px;
+      height: 12px;
+      stroke-width: 2;
+    }
+
+    .phone-scroll {
+      height: 100%;
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+
+    .phone-scroll::-webkit-scrollbar { display: none; }
+
+    .phone-icon {
+      display: block;
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+    }
+
+    .phone-button {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      color: currentColor;
+      background: transparent;
+    }
+
+    .phone-button:hover { background: rgba(80, 100, 80, .09); }
+
+    .phone-wordmark {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .phone-wordmark strong {
+      font-size: 16px;
+      letter-spacing: -.07em;
+      line-height: 1;
+    }
+
+    .phone-wordmark span {
+      font-size: 7px;
+      font-weight: 800;
+      letter-spacing: .19em;
+      opacity: .58;
+    }
+
+    .phone-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 47px 18px 12px;
+    }
+
+    .phone-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+      margin: 0 12px 8px;
+      border-bottom: 1px solid rgba(65, 84, 66, .14);
+    }
+
+    .phone-tabs[hidden] { display: none; }
+
+    .phone-tabs button {
+      position: relative;
+      min-height: 42px;
+      padding: 0 4px;
+      color: currentColor;
+      background: transparent;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      opacity: .48;
+      text-transform: uppercase;
+    }
+
+    .phone-tabs button::after {
+      position: absolute;
+      right: 13px;
+      bottom: -1px;
+      left: 13px;
+      height: 3px;
+      border-radius: 999px 999px 0 0;
+      background: transparent;
+      content: "";
+    }
+
+    .phone-tabs button:hover,
+    .phone-tabs button[aria-selected="true"] {
+      opacity: 1;
+    }
+
+    .phone-tabs button[aria-selected="true"]::after {
+      background: var(--preview-primary);
+    }
+
+    .phone-tabs button:focus-visible,
+    .phone-bottom-nav button:focus-visible,
+    .phone-button:focus-visible {
+      outline-color: var(--app-dark-primary);
+    }
+
+    .phone-header-actions {
+      display: flex;
+      gap: 1px;
+    }
+
+    .phone-bottom-nav {
+      position: sticky;
+      bottom: 0;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2px;
+      padding: 9px 10px 20px;
+      border-top: 1px solid rgba(65, 84, 66, .1);
+      background: color-mix(in srgb, currentColor 3%, transparent);
+      backdrop-filter: blur(18px);
+    }
+
+    .phone-bottom-nav button {
+      display: grid;
+      place-items: center;
+      gap: 4px;
+      min-height: 42px;
+      padding: 4px 2px;
+      border-radius: 13px;
+      color: currentColor;
+      background: transparent;
+      opacity: .48;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .phone-bottom-nav button.active {
+      opacity: 1;
+      background: color-mix(in srgb, var(--preview-primary) 14%, transparent);
+      color: var(--preview-primary);
+    }
+
+    .phone-bottom-nav button:hover { opacity: 1; }
+
+    .phone-bottom-nav .icon { width: 17px; height: 17px; }
+
+    .phone-drawer-backdrop,
+    .phone-drawer {
+      position: absolute;
+      z-index: 8;
+      inset: 0;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity .2s ease, visibility .2s ease, transform .2s ease;
+    }
+
+    .phone-drawer-backdrop {
+      background: rgba(9, 13, 10, .42);
+    }
+
+    .phone-drawer {
+      top: 0;
+      right: auto;
+      width: min(78%, 296px);
+      padding: 53px 15px 24px;
+      color: var(--preview-ink);
+      background: var(--preview-surface-high);
+      box-shadow: 24px 0 54px rgba(0, 0, 0, .28);
+      transform: translateX(-105%);
+    }
+
+    .phone-drawer.is-open,
+    .phone-drawer-backdrop.is-open {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .phone-drawer.is-open { transform: translateX(0); }
+
+    .phone-drawer-head,
+    .phone-drawer-link {
+      display: flex;
+      align-items: center;
+    }
+
+    .phone-drawer-head {
+      justify-content: space-between;
+      margin-bottom: 23px;
+    }
+
+    .phone-drawer-head strong {
+      font-size: 19px;
+      letter-spacing: -.06em;
+    }
+
+    .phone-drawer-head span {
+      display: block;
+      margin-top: 4px;
+      color: var(--preview-muted);
+      font-size: 9px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+
+    .phone-drawer-link {
+      width: 100%;
+      gap: 12px;
+      min-height: 47px;
+      padding: 0 12px;
+      border-radius: 14px;
+      color: var(--preview-muted);
+      background: transparent;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .phone-drawer-link:hover,
+    .phone-drawer-link.active {
+      color: var(--preview-ink);
+      background: color-mix(in srgb, var(--preview-primary) 14%, transparent);
+    }
+
+    .phone-drawer-link .icon { width: 17px; height: 17px; }
+
+    .phone-drawer-note {
+      margin: 27px 12px 0;
+      padding-top: 18px;
+      border-top: 1px solid rgba(237, 241, 234, .12);
+      color: var(--preview-muted);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    /* Variant A — Ritual Lounge */
+    .quiet-shell {
+      --preview-bg: #f7f8f1;
+      --preview-surface: rgba(255, 255, 255, .66);
+      --preview-surface-high: #eef3eb;
+      --preview-ink: #223127;
+      --preview-muted: #6c7b6d;
+      --preview-primary: #47785a;
+      height: 100%;
+      overflow: hidden;
+      min-height: 100%;
+      color: #223127;
+      background:
+        radial-gradient(circle at 92% 14%, rgba(178, 210, 177, .46), transparent 14rem),
+        linear-gradient(180deg, #f7f8f1 0%, #eef3eb 100%);
+    }
+
+    .quiet-shell .phone-header {
+      color: #29422f;
+    }
+
+    .quiet-shell .phone-button:hover { background: rgba(75, 124, 90, .1); }
+
+    .quiet-main {
+      padding: 6px 18px 24px;
+    }
+
+    .quiet-intro {
+      padding: 11px 5px 21px;
+    }
+
+    .quiet-intro .eyebrow { color: #668269; }
+
+    .quiet-intro h1 {
+      max-width: 310px;
+      margin: 10px 0 10px;
+      color: #183c29;
+      font-size: 34px;
+      font-weight: 730;
+      letter-spacing: -.075em;
+      line-height: .98;
+    }
+
+    .quiet-intro h1 em {
+      color: #64856a;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+    }
+
+    .quiet-intro p {
+      max-width: 270px;
+      margin: 0;
+      color: #6c7b6d;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .quiet-ritual-card {
+      position: relative;
+      overflow: hidden;
+      padding: 21px;
+      border-radius: 28px;
+      color: #f3faf1;
+      background:
+        radial-gradient(circle at 88% 4%, rgba(187, 230, 174, .38), transparent 10rem),
+        linear-gradient(145deg, #17442e, #285c3d 72%, #396c48);
+      box-shadow: 0 20px 32px rgba(36, 86, 49, .18);
+    }
+
+    .quiet-ritual-card::after {
+      position: absolute;
+      right: -41px;
+      bottom: -58px;
+      width: 170px;
+      height: 170px;
+      border: 1px solid rgba(227, 247, 219, .2);
+      border-radius: 50%;
+      box-shadow: 0 0 0 22px rgba(227, 247, 219, .045), 0 0 0 46px rgba(227, 247, 219, .035);
+      content: "";
+    }
+
+    .quiet-card-top,
+    .quiet-card-bottom,
+    .quiet-personal-bar {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .quiet-card-top .micro-label { color: #c5dfbf; }
+
+    .quiet-card-top .phone-button {
+      width: 28px;
+      height: 28px;
+      color: #d8eed1;
+    }
+
+    .quiet-arabic {
+      position: relative;
+      z-index: 1;
+      margin: 34px 0 9px;
+      color: #f1f6ec;
+      direction: rtl;
+      font-family: "Noto Naskh Arabic", "Geeza Pro", serif;
+      font-size: 31px;
+      font-weight: 700;
+      letter-spacing: 0;
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    .quiet-transliteration {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      color: #d2e9ce;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 17px;
+      font-style: italic;
+      text-align: center;
+    }
+
+    .quiet-meaning {
+      position: relative;
+      z-index: 1;
+      margin: 7px auto 0;
+      max-width: 235px;
+      color: rgba(239, 249, 235, .7);
+      font-size: 11px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .quiet-personal-bar {
+      position: relative;
+      z-index: 1;
+      margin: 25px 0 19px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(224, 244, 217, .19);
+      color: #d8ecd3;
+      font-size: 10px;
+    }
+
+    .quiet-progress {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 126px;
+    }
+
+    .quiet-progress span {
+      width: 75px;
+      height: 5px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(237, 249, 232, .2);
+    }
+
+    .quiet-progress span::after {
+      display: block;
+      width: 42%;
+      height: 100%;
+      border-radius: inherit;
+      background: #bde6b0;
+      content: "";
+    }
+
+    .quiet-cta {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 48px;
+      border-radius: 15px;
+      color: #173b28;
+      background: #e1f0d5;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: -.01em;
+    }
+
+    .quiet-cta:hover { background: #f0f7e7; }
+
+    .quiet-stat-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 13px 0 23px;
+    }
+
+    .quiet-stat {
+      padding: 14px 15px;
+      border: 1px solid rgba(78, 112, 82, .1);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .52);
+    }
+
+    .quiet-stat strong {
+      display: block;
+      color: #1f442d;
+      font-size: 20px;
+      letter-spacing: -.06em;
+    }
+
+    .quiet-stat span {
+      display: block;
+      margin-top: 3px;
+      color: #7a897b;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .quiet-section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin: 0 2px 10px;
+    }
+
+    .quiet-section-head h2 {
+      margin: 0;
+      color: #26432e;
+      font-size: 15px;
+      letter-spacing: -.035em;
+    }
+
+    .quiet-section-head button {
+      padding: 0;
+      color: #66866a;
+      background: transparent;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .quiet-circle-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px;
+      border: 1px solid rgba(78, 112, 82, .11);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, .66);
+    }
+
+    .avatar-stack {
+      display: flex;
+      min-width: 61px;
+    }
+
+    .avatar-stack span,
+    .mini-avatar {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      margin-right: -7px;
+      border: 2px solid #f1f5ec;
+      border-radius: 50%;
+      color: #29422d;
+      background: #cde3c9;
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .avatar-stack span:nth-child(2) { background: #e8c8ad; }
+    .avatar-stack span:nth-child(3) { background: #d3c6e7; }
+    .avatar-stack span:nth-child(4) { background: #f0dfa9; }
+
+    .quiet-circle-copy {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .quiet-circle-copy strong {
+      display: block;
+      overflow: hidden;
+      color: #2e4b35;
+      font-size: 11px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .quiet-circle-copy span {
+      display: block;
+      margin-top: 4px;
+      color: #819083;
+      font-size: 9px;
+    }
+
+    .quiet-circle-arrow {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      color: #54775b;
+      background: #e4eee1;
+    }
+
+    .quiet-quote {
+      margin-top: 21px;
+      padding: 16px 17px;
+      border-radius: 20px;
+      color: #36533d;
+      background: #dfeedd;
+    }
+
+    .quiet-quote p {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 15px;
+      line-height: 1.35;
+    }
+
+    .quiet-quote span {
+      display: block;
+      margin-top: 10px;
+      color: #6d866f;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    /* Variant B — Pulse */
+    .pulse-shell {
+      --preview-bg: #09110d;
+      --preview-surface: rgba(217, 240, 215, .055);
+      --preview-surface-high: rgba(229, 242, 225, .075);
+      --preview-ink: #e8f3e9;
+      --preview-muted: #8fa69a;
+      --preview-primary: #d3f18b;
+      height: 100%;
+      overflow: hidden;
+      min-height: 100%;
+      color: #e8f3e9;
+      background:
+        radial-gradient(circle at 13% 17%, rgba(132, 229, 173, .16), transparent 15rem),
+        radial-gradient(circle at 94% 30%, rgba(193, 226, 92, .1), transparent 12rem),
+        #09110d;
+    }
+
+    .pulse-shell .phone-header {
+      color: #d8eddc;
+    }
+
+    .pulse-shell .phone-button:hover { background: rgba(175, 235, 184, .1); }
+
+    .pulse-main {
+      padding: 10px 17px 22px;
+    }
+
+    .pulse-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 9px 8px 22px;
+    }
+
+    .pulse-orb {
+      position: absolute;
+      top: 65px;
+      right: -61px;
+      width: 205px;
+      height: 205px;
+      border: 1px solid rgba(188, 239, 164, .19);
+      border-radius: 50%;
+      box-shadow: 0 0 0 24px rgba(188, 239, 164, .045), 0 0 0 50px rgba(188, 239, 164, .028);
+    }
+
+    .pulse-orb::after {
+      position: absolute;
+      top: 31px;
+      left: 38px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #d3f18b;
+      box-shadow: 0 0 24px #d3f18b;
+      content: "";
+    }
+
+    .pulse-label {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: #a5ddb2;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .pulse-live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #c8ef84;
+      box-shadow: 0 0 0 4px rgba(200, 239, 132, .12);
+    }
+
+    .pulse-hero h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 290px;
+      margin: 24px 0 13px;
+      color: #eef9ed;
+      font-size: 40px;
+      font-weight: 700;
+      letter-spacing: -.09em;
+      line-height: .92;
+    }
+
+    .pulse-hero h1 span {
+      color: #aeeeb8;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+    }
+
+    .pulse-hero > p {
+      position: relative;
+      z-index: 1;
+      max-width: 245px;
+      margin: 0;
+      color: #8fa69a;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .pulse-stat {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: end;
+      gap: 9px;
+      margin-top: 27px;
+    }
+
+    .pulse-stat strong {
+      color: #d3f18b;
+      font-size: 52px;
+      font-weight: 650;
+      letter-spacing: -.1em;
+      line-height: .8;
+    }
+
+    .pulse-stat span {
+      max-width: 76px;
+      color: #89a594;
+      font-size: 9px;
+      line-height: 1.25;
+    }
+
+    .pulse-avatars {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      margin-top: 24px;
+    }
+
+    .pulse-avatars .mini-avatar {
+      width: 25px;
+      height: 25px;
+      margin-right: -5px;
+      border-color: #09110d;
+      color: #163222;
+      background: #b2e5b2;
+    }
+
+    .pulse-avatars .mini-avatar:nth-child(2) { background: #f0c6a6; }
+    .pulse-avatars .mini-avatar:nth-child(3) { background: #cfc1e6; }
+    .pulse-avatars .mini-avatar:nth-child(4) { background: #f0dd9c; }
+    .pulse-avatars .mini-avatar:last-child { background: #6b866f; color: #e4f3e4; }
+
+    .pulse-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin: 5px 0 16px;
+      padding: 4px;
+      border-radius: 14px;
+      background: rgba(229, 242, 225, .075);
+    }
+
+    .pulse-tabs button {
+      min-height: 32px;
+      border-radius: 10px;
+      color: #789083;
+      background: transparent;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .pulse-tabs button.active {
+      color: #173021;
+      background: #d3f18b;
+    }
+
+    .pulse-activity {
+      display: flex;
+      gap: 9px;
+      overflow: hidden;
+      margin: 0 -17px 18px;
+      padding: 2px 17px 5px;
+    }
+
+    .pulse-activity article {
+      min-width: 122px;
+      padding: 12px;
+      border: 1px solid rgba(206, 236, 204, .1);
+      border-radius: 17px;
+      background: rgba(217, 240, 215, .055);
+    }
+
+    .pulse-activity .mini-avatar {
+      width: 24px;
+      height: 24px;
+      margin: 0 0 10px;
+      border: 0;
+    }
+
+    .pulse-activity strong {
+      display: block;
+      color: #dbeadb;
+      font-size: 10px;
+      line-height: 1.25;
+    }
+
+    .pulse-activity span {
+      display: block;
+      margin-top: 5px;
+      color: #7e9987;
+      font-size: 8px;
+    }
+
+    .pulse-circle-card {
+      padding: 17px;
+      border-radius: 22px;
+      color: #143022;
+      background: linear-gradient(145deg, #d8f0d1, #bde4c5);
+    }
+
+    .pulse-card-top {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .pulse-card-top .micro-label { color: #4c7859; }
+
+    .pulse-circle-card h2 {
+      margin: 11px 0 6px;
+      font-size: 20px;
+      letter-spacing: -.06em;
+      line-height: 1;
+    }
+
+    .pulse-circle-card p {
+      max-width: 220px;
+      margin: 0;
+      color: #53735e;
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .pulse-member-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 19px 0 9px;
+      color: #52735a;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .pulse-member-row .avatar-stack span {
+      width: 24px;
+      height: 24px;
+      border-color: #c9e8ca;
+      margin-right: -7px;
+    }
+
+    .pulse-progress {
+      height: 7px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(41, 91, 51, .13);
+    }
+
+    .pulse-progress::after {
+      display: block;
+      width: 67%;
+      height: 100%;
+      border-radius: inherit;
+      background: #3e7951;
+      content: "";
+    }
+
+    .pulse-join {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 42px;
+      margin-top: 16px;
+      border-radius: 13px;
+      color: #eef9ed;
+      background: #173e2b;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .pulse-join:hover { background: #0d2c1d; }
+
+    .pulse-feed-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 23px 1px 10px;
+    }
+
+    .pulse-feed-label h2 {
+      margin: 0;
+      color: #dcebdd;
+      font-size: 14px;
+      letter-spacing: -.04em;
+    }
+
+    .pulse-feed-label button {
+      padding: 0;
+      color: #88ac91;
+      background: transparent;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .pulse-feed-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(214, 239, 211, .1);
+    }
+
+    .pulse-feed-row .mini-avatar {
+      width: 30px;
+      height: 30px;
+      margin: 0;
+      border: 0;
+      background: #d1beea;
+    }
+
+    .pulse-feed-row:nth-child(3) .mini-avatar { background: #efc7aa; }
+
+    .pulse-feed-row p {
+      flex: 1;
+      margin: 0;
+      color: #9db2a2;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    .pulse-feed-row p strong {
+      color: #dfeade;
+      font-weight: 700;
+    }
+
+    .pulse-feed-row time {
+      color: #698072;
+      font-size: 8px;
+    }
+
+    .pulse-shell .phone-bottom-nav {
+      border-color: rgba(214, 239, 211, .1);
+      background: rgba(8, 17, 13, .8);
+    }
+
+    .pulse-shell .phone-bottom-nav button { color: #c8ddca; }
+
+    .pulse-shell .phone-bottom-nav button.active {
+      color: #18351f;
+      background: #d3f18b;
+    }
+
+    /* Variant C — Atlas */
+    .atlas-shell {
+      --preview-bg: #f2f1e9;
+      --preview-surface: #fffdf5;
+      --preview-surface-high: rgba(255, 255, 255, .34);
+      --preview-ink: #242823;
+      --preview-muted: #7b8277;
+      --preview-primary: #557b5f;
+      height: 100%;
+      overflow: hidden;
+      min-height: 100%;
+      color: var(--atlas-ink);
+      background:
+        radial-gradient(circle at 95% 8%, rgba(221, 219, 178, .5), transparent 12rem),
+        #f2f1e9;
+    }
+
+    .atlas-shell .phone-header { color: #344237; }
+
+    .atlas-shell .phone-button:hover { background: rgba(76, 114, 80, .1); }
+
+    .atlas-main { padding: 7px 17px 24px; }
+
+    .atlas-intro {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      padding: 12px 4px 21px;
+    }
+
+    .atlas-intro .eyebrow { color: #73836f; }
+
+    .atlas-intro h1 {
+      margin: 9px 0 0;
+      color: #243228;
+      font-size: 34px;
+      font-weight: 700;
+      letter-spacing: -.085em;
+      line-height: .94;
+    }
+
+    .atlas-intro h1 em {
+      color: #71816b;
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+    }
+
+    .atlas-avatar {
+      display: grid;
+      place-items: center;
+      width: 39px;
+      height: 39px;
+      border: 3px solid #edf0e6;
+      border-radius: 50%;
+      color: #f5f5ea;
+      background: #587c5e;
+      box-shadow: 0 0 0 1px rgba(79, 112, 82, .15);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .atlas-map {
+      position: relative;
+      min-height: 177px;
+      overflow: hidden;
+      padding: 17px;
+      border-radius: 24px;
+      color: #f1f5e9;
+      background:
+        linear-gradient(rgba(224, 244, 221, .09) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(224, 244, 221, .09) 1px, transparent 1px),
+        radial-gradient(circle at 27% 45%, rgba(194, 240, 158, .35), transparent 4rem),
+        #395d45;
+      background-size: 25px 25px, 25px 25px, auto, auto;
+      box-shadow: 0 18px 30px rgba(60, 94, 65, .16);
+    }
+
+    .atlas-map::before,
+    .atlas-map::after {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      border: 2px solid #e2f0cc;
+      border-radius: 50%;
+      background: #8fd29b;
+      box-shadow: 0 0 0 6px rgba(181, 236, 158, .13);
+      content: "";
+    }
+
+    .atlas-map::before { top: 31px; right: 54px; }
+    .atlas-map::after { right: 118px; bottom: 37px; background: #e4c67f; }
+
+    .atlas-map-line {
+      position: absolute;
+      top: 73px;
+      right: 51px;
+      width: 160px;
+      height: 73px;
+      border-top: 1px solid rgba(225, 242, 212, .52);
+      border-radius: 50%;
+      transform: rotate(-20deg);
+    }
+
+    .atlas-map-label {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(235, 246, 222, .78);
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .atlas-map-label .icon { width: 13px; height: 13px; }
+
+    .atlas-map-copy {
+      position: absolute;
+      z-index: 1;
+      bottom: 17px;
+      left: 17px;
+    }
+
+    .atlas-map-copy strong {
+      display: block;
+      font-size: 33px;
+      letter-spacing: -.1em;
+      line-height: .9;
+    }
+
+    .atlas-map-copy span {
+      display: block;
+      margin-top: 6px;
+      color: rgba(236, 247, 226, .73);
+      font-size: 9px;
+    }
+
+    .atlas-map-cta {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 32px;
+      padding: 0 10px;
+      border-radius: 10px;
+      color: #2a4c33;
+      background: #e2efcc;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .atlas-map-cta:hover { background: #f3f8e8; }
+
+    .atlas-toolbar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin: 18px 0 15px;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+
+    .atlas-toolbar::-webkit-scrollbar { display: none; }
+
+    .atlas-toolbar button {
+      flex: 0 0 auto;
+      min-height: 31px;
+      padding: 0 12px;
+      border: 1px solid rgba(70, 104, 74, .15);
+      border-radius: 999px;
+      color: #7a8878;
+      background: rgba(255, 255, 255, .34);
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .atlas-toolbar button.active {
+      border-color: #496f50;
+      color: #f5f8ef;
+      background: #496f50;
+    }
+
+    .atlas-feature {
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+      border: 1px solid rgba(72, 101, 74, .14);
+      border-radius: 23px;
+      background: #fffdf5;
+    }
+
+    .atlas-feature::after {
+      position: absolute;
+      top: -42px;
+      right: -34px;
+      width: 130px;
+      height: 130px;
+      border: 1px solid rgba(83, 123, 89, .16);
+      border-radius: 50%;
+      box-shadow: 0 0 0 21px rgba(83, 123, 89, .055), 0 0 0 42px rgba(83, 123, 89, .04);
+      content: "";
+    }
+
+    .atlas-feature > * { position: relative; z-index: 1; }
+
+    .atlas-feature .micro-label { color: #6d856d; }
+
+    .atlas-feature h2 {
+      margin: 12px 0 8px;
+      color: #293d2c;
+      font-size: 23px;
+      letter-spacing: -.07em;
+      line-height: .98;
+    }
+
+    .atlas-feature p {
+      max-width: 218px;
+      margin: 0;
+      color: #768375;
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .atlas-feature-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 19px;
+    }
+
+    .atlas-feature-bottom span {
+      color: #668068;
+      font-size: 9px;
+      font-weight: 700;
+    }
+
+    .atlas-feature-bottom button {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 34px;
+      padding: 0 11px;
+      border-radius: 11px;
+      color: #f5f8ef;
+      background: #496f50;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .atlas-feature-bottom button:hover { background: #345d3d; }
+
+    .atlas-bento {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 9px;
+      margin-top: 10px;
+    }
+
+    .atlas-bento-card {
+      min-height: 98px;
+      padding: 14px;
+      border-radius: 18px;
+      background: #e4ecdc;
+    }
+
+    .atlas-bento-card:nth-child(2) { background: #e8e1cf; }
+
+    .atlas-bento-card strong {
+      display: block;
+      margin-top: 20px;
+      color: #344e38;
+      font-size: 23px;
+      letter-spacing: -.08em;
+    }
+
+    .atlas-bento-card span {
+      display: block;
+      margin-top: 3px;
+      color: #758276;
+      font-size: 9px;
+      line-height: 1.2;
+    }
+
+    .atlas-bento-card .icon { color: #69836b; width: 15px; height: 15px; }
+
+    .atlas-list-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin: 22px 2px 9px;
+    }
+
+    .atlas-list-head h2 {
+      margin: 0;
+      color: #334537;
+      font-size: 14px;
+      letter-spacing: -.04em;
+    }
+
+    .atlas-list-head button {
+      padding: 0;
+      color: #68816a;
+      background: transparent;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .atlas-suggestion {
+      display: grid;
+      grid-template-columns: 31px 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 0;
+      border-top: 1px solid rgba(75, 106, 77, .12);
+    }
+
+    .atlas-suggestion-mark {
+      display: grid;
+      place-items: center;
+      width: 31px;
+      height: 31px;
+      border-radius: 11px;
+      color: #3d6545;
+      background: #d4e4ce;
+    }
+
+    .atlas-suggestion:nth-child(3) .atlas-suggestion-mark { background: #eadfc5; }
+    .atlas-suggestion-copy strong {
+      display: block;
+      color: #405343;
+      font-size: 10px;
+    }
+
+    .atlas-suggestion-copy span {
+      display: block;
+      margin-top: 3px;
+      color: #879286;
+      font-size: 8px;
+    }
+
+    .atlas-suggestion > button {
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      color: #557a5b;
+      background: #e0ead9;
+    }
+
+    .atlas-shell .phone-bottom-nav {
+      border-color: rgba(72, 101, 74, .12);
+      background: rgba(242, 241, 233, .85);
+    }
+
+    .atlas-shell .phone-bottom-nav button { color: #668068; }
+
+    .atlas-shell .phone-bottom-nav button.active {
+      color: #f6faf1;
+      background: #507459;
+    }
+
+    .stage-caption {
+      position: absolute;
+      bottom: 34px;
+      left: 50%;
+      max-width: 420px;
+      color: #758174;
+      font-size: 11px;
+      line-height: 1.55;
+      text-align: center;
+      transform: translateX(-50%);
+    }
+
+    .lab-inspector h2 {
+      margin: 8px 0 7px;
+      color: #f0f4ec;
+      font-size: 25px;
+      letter-spacing: -.07em;
+      line-height: .98;
+    }
+
+    .inspector-lede {
+      margin: 0;
+      color: #9da99a;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .inspector-card {
+      margin-top: 28px;
+      padding: 16px;
+      border: 1px solid rgba(194, 225, 190, .15);
+      border-radius: 19px;
+      background: rgba(217, 239, 212, .055);
+    }
+
+    .inspector-card strong {
+      display: block;
+      color: #d8ead4;
+      font-size: 12px;
+    }
+
+    .inspector-card p {
+      margin: 8px 0 0;
+      color: #9ba899;
+      font-size: 11px;
+      line-height: 1.55;
+    }
+
+    .inspector-section {
+      margin-top: 29px;
+    }
+
+    .inspector-section h3 {
+      margin: 0 0 12px;
+      color: #e5eee2;
+      font-size: 11px;
+      letter-spacing: .02em;
+    }
+
+    .inspector-list {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .inspector-list li {
+      display: grid;
+      grid-template-columns: 17px 1fr;
+      gap: 7px;
+      color: #a4afa0;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .inspector-list li::before {
+      display: grid;
+      place-items: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 5px;
+      color: #c4e5bf;
+      background: rgba(196, 229, 191, .1);
+      content: "•";
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .inspector-list.trade li::before {
+      color: #e6c997;
+      background: rgba(230, 201, 151, .1);
+      content: "↗";
+      font-size: 10px;
+    }
+
+    .inspector-rule {
+      height: 1px;
+      margin: 27px 0;
+      background: var(--canvas-line);
+    }
+
+    .score-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin: 11px 0;
+      color: #a4afa0;
+      font-size: 10px;
+    }
+
+    .score {
+      display: flex;
+      gap: 3px;
+    }
+
+    .score i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #344037;
+    }
+
+    .score i.on { background: #c4e5bf; }
+
+    .inspector-footer {
+      margin-top: 31px;
+      padding: 15px;
+      border-radius: 16px;
+      color: #b4c4b1;
+      background: rgba(196, 229, 191, .07);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .prototype-switcher {
+      position: fixed;
+      z-index: 20;
+      bottom: 22px;
+      left: 50%;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px;
+      border: 1px solid rgba(224, 239, 220, .18);
+      border-radius: 999px;
+      background: rgba(21, 26, 21, .92);
+      box-shadow: 0 15px 45px rgba(0, 0, 0, .3);
+      backdrop-filter: blur(20px);
+      transform: translateX(-50%);
+    }
+
+    .prototype-switcher button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 33px;
+      height: 33px;
+      border-radius: 50%;
+      color: #a5b0a2;
+      background: transparent;
+    }
+
+    .prototype-switcher button:hover {
+      color: #eff7ec;
+      background: rgba(255, 255, 255, .1);
+    }
+
+    .prototype-switcher .switcher-label {
+      min-width: 158px;
+      padding: 0 11px;
+      color: #e8f1e4;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: -.01em;
+      text-align: center;
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 30;
+      bottom: 77px;
+      left: 50%;
+      padding: 10px 14px;
+      border: 1px solid rgba(220, 240, 215, .16);
+      border-radius: 999px;
+      color: #e8f1e4;
+      background: rgba(31, 43, 32, .94);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, .25);
+      font-size: 11px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translate(-50%, 10px);
+      transition: opacity .2s ease, transform .2s ease;
+    }
+
+    .toast.is-visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    /* Shared product primitives — used by every direction. */
+    .community-post,
+    .community-goal-card {
+      margin: 20px 0;
+      padding: 16px;
+      border: 1px solid color-mix(in srgb, var(--preview-primary) 18%, transparent);
+      border-radius: 22px;
+      color: var(--preview-ink);
+      background: var(--preview-surface);
+      box-shadow: 0 12px 24px rgba(20, 50, 29, .06);
+    }
+
+    .post-head,
+    .goal-card-top,
+    .post-actions,
+    .goal-card-meta {
+      display: flex;
+      align-items: center;
+    }
+
+    .post-head,
+    .goal-card-top,
+    .goal-card-meta {
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .post-author {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .post-avatar {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      color: #24482e;
+      background: #cde3c9;
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .post-author strong,
+    .post-author span,
+    .goal-card-meta span {
+      display: block;
+    }
+
+    .post-author strong {
+      font-size: 10px;
+      letter-spacing: -.01em;
+    }
+
+    .post-author span,
+    .goal-card-meta span {
+      margin-top: 3px;
+      color: var(--preview-muted);
+      font-size: 8px;
+    }
+
+    .post-kind,
+    .goal-kind {
+      color: var(--preview-primary);
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .post-copy {
+      margin: 15px 0 13px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 15px;
+      line-height: 1.38;
+    }
+
+    .post-copy em { color: var(--preview-primary); }
+
+    .post-actions {
+      gap: 5px;
+      margin: 0 -5px -5px;
+      padding-top: 11px;
+      border-top: 1px solid color-mix(in srgb, var(--preview-primary) 13%, transparent);
+    }
+
+    .post-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 30px;
+      padding: 0 8px;
+      border-radius: 9px;
+      color: var(--preview-muted);
+      background: transparent;
+      font-size: 9px;
+      font-weight: 750;
+    }
+
+    .post-action:hover,
+    .post-action.is-active {
+      color: var(--preview-primary);
+      background: color-mix(in srgb, var(--preview-primary) 11%, transparent);
+    }
+
+    .post-action .icon { width: 15px; height: 15px; }
+
+    .goal-card-top { align-items: start; }
+
+    .goal-card-top .icon {
+      width: 18px;
+      height: 18px;
+      color: var(--preview-primary);
+    }
+
+    .goal-title {
+      margin: 12px 0 5px;
+      font-size: 17px;
+      letter-spacing: -.05em;
+      line-height: 1.02;
+    }
+
+    .goal-card-meta { margin-top: 15px; }
+
+    .goal-progress {
+      height: 7px;
+      overflow: hidden;
+      margin-top: 11px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--preview-primary) 14%, transparent);
+    }
+
+    .goal-progress::after {
+      display: block;
+      width: 58%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--preview-primary);
+      content: "";
+    }
+
+    .goal-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 34px;
+      margin-top: 13px;
+      padding: 0 11px;
+      border-radius: 10px;
+      color: var(--preview-ink);
+      background: color-mix(in srgb, var(--preview-primary) 13%, transparent);
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .goal-cta:hover,
+    .goal-cta.is-active {
+      color: var(--preview-surface);
+      background: var(--preview-primary);
+    }
+
+    .goal-cta .icon { width: 13px; height: 13px; }
+
+    .device[data-preview-theme="dark"] {
+      --preview-bg: var(--app-dark-background);
+      --preview-surface: var(--app-dark-surface);
+      --preview-surface-high: var(--app-dark-surface-high);
+      --preview-ink: var(--app-dark-ink);
+      --preview-muted: var(--app-dark-muted);
+      --preview-primary: var(--app-dark-primary);
+      border-color: #2c312d;
+      background: var(--app-dark-background);
+    }
+
+    .device[data-preview-theme="light"] {
+      --preview-bg: var(--app-light-background);
+      --preview-surface: var(--app-light-surface);
+      --preview-surface-high: var(--app-light-surface-high);
+      --preview-ink: var(--app-light-ink);
+      --preview-muted: var(--app-light-muted);
+      --preview-primary: var(--app-light-primary);
+      border-color: #dfe7df;
+      background: var(--app-light-background);
+    }
+
+    .device[data-preview-theme="dark"] .quiet-shell,
+    .device[data-preview-theme="dark"] .atlas-shell {
+      --preview-bg: var(--app-dark-background);
+      --preview-surface: var(--app-dark-surface);
+      --preview-surface-high: var(--app-dark-surface-high);
+      --preview-ink: var(--app-dark-ink);
+      --preview-muted: var(--app-dark-muted);
+      --preview-primary: var(--app-dark-primary);
+      color: var(--preview-ink);
+      background: var(--preview-bg);
+    }
+
+    .device[data-preview-theme="light"] .pulse-shell {
+      --preview-bg: var(--app-light-background);
+      --preview-surface: var(--app-light-surface);
+      --preview-surface-high: var(--app-light-surface-high);
+      --preview-ink: var(--app-light-ink);
+      --preview-muted: var(--app-light-muted);
+      --preview-primary: var(--app-light-primary);
+      color: var(--preview-ink);
+      background: var(--preview-bg);
+    }
+
+    .device[data-preview-theme] .phone-header,
+    .device[data-preview-theme] .phone-bottom-nav {
+      color: var(--preview-ink);
+    }
+
+    .device[data-preview-theme] .phone-bottom-nav {
+      border-color: color-mix(in srgb, var(--preview-ink) 13%, transparent);
+      background: color-mix(in srgb, var(--preview-bg) 86%, transparent);
+    }
+
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-intro h1,
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-section-head h2,
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-stat strong,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-intro h1,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-list-head h2 {
+      color: var(--preview-ink);
+    }
+
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-intro p,
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-stat span,
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-circle-copy span,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-feature p,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-suggestion-copy span {
+      color: var(--preview-muted);
+    }
+
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-stat,
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-circle-card,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-feature,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-suggestion,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-bento-card {
+      border-color: color-mix(in srgb, var(--preview-ink) 13%, transparent);
+      background: var(--preview-surface);
+    }
+
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-circle-arrow,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-toolbar button,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-bento-card {
+      color: var(--preview-muted);
+      background: var(--preview-surface-high);
+    }
+
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-quote {
+      color: var(--preview-ink);
+      background: color-mix(in srgb, var(--preview-primary) 17%, var(--preview-bg));
+    }
+
+    .device[data-preview-theme="dark"] .quiet-shell .quiet-quote span {
+      color: var(--preview-muted);
+    }
+
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-feature h2,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-suggestion-copy strong,
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-bento-card strong {
+      color: var(--preview-ink);
+    }
+
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-toolbar button {
+      border-color: color-mix(in srgb, var(--preview-ink) 14%, transparent);
+    }
+
+    .device[data-preview-theme="dark"] .atlas-shell .atlas-toolbar button.active {
+      color: #102218;
+      background: var(--preview-primary);
+    }
+
+    .device[data-preview-theme="light"] .pulse-shell .pulse-hero h1,
+    .device[data-preview-theme="light"] .pulse-shell .pulse-feed-label h2,
+    .device[data-preview-theme="light"] .pulse-shell .pulse-feed-row p strong {
+      color: var(--preview-ink);
+    }
+
+    .device[data-preview-theme="light"] .pulse-shell .pulse-hero > p,
+    .device[data-preview-theme="light"] .pulse-shell .pulse-feed-row p,
+    .device[data-preview-theme="light"] .pulse-shell .pulse-feed-row time {
+      color: var(--preview-muted);
+    }
+
+    .device[data-preview-theme="light"] .pulse-shell .pulse-tabs,
+    .device[data-preview-theme="light"] .pulse-shell .pulse-activity article {
+      background: var(--preview-surface-high);
+    }
+
+    .device[data-preview-theme="light"] .pulse-shell .pulse-tabs button {
+      color: var(--preview-muted);
+    }
+
+    .device[data-preview-theme="light"] .pulse-shell .pulse-tabs button.active {
+      color: #f4f8f3;
+      background: var(--preview-primary);
+    }
+
+    .device[data-preview-theme="light"] .pulse-shell .pulse-feed-row {
+      border-color: color-mix(in srgb, var(--preview-ink) 13%, transparent);
+    }
+
+    .device[data-preview-theme="light"] .pulse-shell .phone-bottom-nav {
+      background: color-mix(in srgb, var(--preview-bg) 90%, transparent);
+    }
+
+    /* Real destination surfaces — tabs and bottom navigation switch these views. */
+    .app-page[hidden] { display: none; }
+
+    .app-page {
+      min-height: 100%;
+      padding: 16px 17px 28px;
+      color: var(--preview-ink);
+      background: var(--preview-bg);
+    }
+
+    .community-detail-page {
+      padding-top: 19px;
+    }
+
+    .detail-page-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 30px;
+      padding: 0 2px;
+      color: var(--preview-primary);
+      background: transparent;
+      font-size: 9px;
+      font-weight: 850;
+    }
+
+    .detail-page-back .icon {
+      width: 13px;
+      height: 13px;
+      transform: rotate(180deg);
+    }
+
+    .detail-page-hero {
+      padding: 24px 3px 19px;
+    }
+
+    .detail-page-kicker {
+      color: var(--preview-primary);
+      font-size: 9px;
+      font-weight: 850;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .detail-page-heading {
+      display: flex;
+      align-items: flex-start;
+      gap: 11px;
+      margin-top: 12px;
+    }
+
+    .detail-page-mark {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 auto;
+      border-radius: 15px;
+      color: var(--preview-ink);
+      background: color-mix(in srgb, var(--preview-primary) 18%, transparent);
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .detail-page-hero h1 {
+      margin: 0;
+      color: var(--preview-ink);
+      font-size: 29px;
+      letter-spacing: -.075em;
+      line-height: .98;
+    }
+
+    .detail-page-hero p {
+      max-width: 254px;
+      margin: 9px 0 0;
+      color: var(--preview-muted);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .detail-page-meta {
+      margin: 18px 0 0;
+    }
+
+    .detail-page-surface {
+      padding: 15px;
+      border: 1px solid color-mix(in srgb, var(--preview-primary) 17%, transparent);
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--preview-primary) 11%, var(--preview-surface));
+    }
+
+    .detail-page-surface-head,
+    .detail-page-stat-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .detail-page-surface-head strong {
+      color: var(--preview-ink);
+      font-size: 13px;
+      letter-spacing: -.03em;
+    }
+
+    .detail-page-surface-head span,
+    .detail-page-stat-row span {
+      color: var(--preview-muted);
+      font-size: 9px;
+    }
+
+    .detail-page-progress {
+      height: 8px;
+      margin-top: 14px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--preview-primary) 14%, transparent);
+    }
+
+    .detail-page-progress span {
+      display: block;
+      width: var(--progress, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: var(--preview-primary);
+    }
+
+    .detail-page-stat-row {
+      justify-content: flex-start;
+      margin-top: 10px;
+    }
+
+    .detail-page-stat-row strong {
+      color: var(--preview-ink);
+      font-size: 10px;
+    }
+
+    .detail-page-section {
+      margin-top: 22px;
+    }
+
+    .detail-page-section h2 {
+      margin: 0 0 8px;
+      color: var(--preview-ink);
+      font-size: 15px;
+      letter-spacing: -.045em;
+    }
+
+    .detail-page-section p {
+      margin: 0;
+      color: var(--preview-muted);
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    .detail-page-cta {
+      width: 100%;
+      min-height: 42px;
+      margin-top: 19px;
+      border-radius: 12px;
+      font-size: 10px;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 4px 19px;
+    }
+
+    .page-kicker {
+      color: var(--preview-primary);
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .page-header h1 {
+      max-width: 275px;
+      margin: 9px 0 8px;
+      color: var(--preview-ink);
+      font-size: 31px;
+      font-weight: 730;
+      letter-spacing: -.08em;
+      line-height: .96;
+    }
+
+    .page-header h1 em {
+      color: var(--preview-primary);
+      font-family: Georgia, "Times New Roman", serif;
+      font-weight: 400;
+    }
+
+    .page-header p {
+      max-width: 270px;
+      margin: 0;
+      color: var(--preview-muted);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .page-header-action {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      color: var(--preview-primary);
+      background: color-mix(in srgb, var(--preview-primary) 12%, transparent);
+    }
+
+    .page-header-action:hover { background: color-mix(in srgb, var(--preview-primary) 20%, transparent); }
+
+    .page-header-action .icon { width: 17px; height: 17px; }
+
+    .page-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      margin: 0 0 15px;
+      padding: 0 12px;
+      border: 1px solid color-mix(in srgb, var(--preview-primary) 15%, transparent);
+      border-radius: 13px;
+      color: var(--preview-muted);
+      background: var(--preview-surface);
+    }
+
+    .page-search .icon { width: 16px; height: 16px; }
+
+    .page-search input {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      color: var(--preview-ink);
+      background: transparent;
+      font: inherit;
+      font-size: 11px;
+    }
+
+    .page-search input::placeholder { color: var(--preview-muted); }
+
+    .page-filter-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      margin: 0 0 17px;
+      padding: 4px;
+      border-radius: 13px;
+      background: color-mix(in srgb, var(--preview-ink) 7%, transparent);
+    }
+
+    .page-filter-tabs button {
+      min-height: 31px;
+      border-radius: 9px;
+      color: var(--preview-muted);
+      background: transparent;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .page-filter-tabs button:hover,
+    .page-filter-tabs button.active {
+      color: var(--preview-ink);
+      background: var(--preview-surface);
+      box-shadow: 0 3px 10px rgba(20, 50, 29, .08);
+    }
+
+    .page-section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 2px 10px;
+    }
+
+    .page-section-head h2 {
+      margin: 0;
+      color: var(--preview-ink);
+      font-size: 15px;
+      letter-spacing: -.045em;
+    }
+
+    .page-section-head span {
+      color: var(--preview-muted);
+      font-size: 9px;
+    }
+
+    .explore-list,
+    .goal-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .circle-list-card,
+    .goal-list-card,
+    .library-list-card,
+    .home-list-card {
+      border: 1px solid color-mix(in srgb, var(--preview-primary) 16%, transparent);
+      border-radius: 18px;
+      background: var(--preview-surface);
+    }
+
+    .circle-list-card[hidden],
+    .goal-list-card[hidden] { display: none; }
+
+    .circle-list-card {
+      display: grid;
+      grid-template-columns: 38px 1fr;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .circle-avatar {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      color: var(--preview-ink);
+      background: color-mix(in srgb, var(--preview-primary) 18%, transparent);
+      font-size: 10px;
+      font-weight: 850;
+    }
+
+    .circle-list-copy { min-width: 0; }
+
+    .circle-list-copy h3 {
+      overflow: hidden;
+      margin: 1px 0 4px;
+      color: var(--preview-ink);
+      font-size: 12px;
+      letter-spacing: -.025em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .circle-list-copy p {
+      margin: 0;
+      color: var(--preview-muted);
+      font-size: 9px;
+      line-height: 1.35;
+    }
+
+    .circle-list-actions {
+      display: flex;
+      grid-column: 1 / -1;
+      gap: 7px;
+      margin-top: 2px;
+    }
+
+    .circle-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 31px;
+      padding: 0 10px;
+      border-radius: 9px;
+      color: var(--preview-muted);
+      background: color-mix(in srgb, var(--preview-primary) 8%, transparent);
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .circle-action.primary,
+    .circle-action.is-active {
+      color: var(--preview-surface);
+      background: var(--preview-primary);
+    }
+
+    .circle-action:hover { color: var(--preview-ink); }
+
+    .circle-action.primary:hover,
+    .circle-action.is-active:hover { color: var(--preview-surface); }
+
+    .circle-action .icon { width: 13px; height: 13px; }
+
+    .circle-detail-panel .circle-action { margin-top: 14px; }
+
+    .circle-detail-panel {
+      margin: 0 0 16px;
+      padding: 15px;
+      border-radius: 20px;
+      color: var(--preview-ink);
+      background: color-mix(in srgb, var(--preview-primary) 16%, var(--preview-bg));
+    }
+
+    .circle-detail-panel[hidden] { display: none; }
+
+    .explore-mode-panel[hidden],
+    .challenge-detail-panel[hidden] { display: none; }
+
+    .circle-detail-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0;
+      color: var(--preview-primary);
+      background: transparent;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .circle-detail-back .icon { width: 13px; height: 13px; transform: rotate(180deg); }
+
+    .circle-detail-panel h2 {
+      margin: 19px 0 6px;
+      font-size: 23px;
+      letter-spacing: -.07em;
+      line-height: .98;
+    }
+
+    .circle-detail-panel p {
+      margin: 0;
+      color: var(--preview-muted);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .circle-detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin: 15px 0 0;
+    }
+
+    .circle-detail-meta span {
+      padding: 5px 8px;
+      border-radius: 999px;
+      color: var(--preview-primary);
+      background: color-mix(in srgb, var(--preview-primary) 11%, transparent);
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .circle-hero-card,
+    .challenge-spotlight,
+    .challenge-list-card {
+      border: 1px solid color-mix(in srgb, var(--preview-primary) 19%, transparent);
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--preview-primary) 12%, var(--preview-surface));
+    }
+
+    .circle-hero-card {
+      margin-bottom: 17px;
+      padding: 16px;
+    }
+
+    .circle-hero-top,
+    .challenge-spotlight-top,
+    .challenge-card-top,
+    .circle-hero-member-row,
+    .challenge-detail-progress-copy {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .circle-hero-badge,
+    .challenge-badge {
+      padding: 5px 8px;
+      border-radius: 999px;
+      color: var(--preview-primary);
+      background: color-mix(in srgb, var(--preview-primary) 13%, transparent);
+      font-size: 8px;
+      font-weight: 800;
+    }
+
+    .circle-hero-card h2,
+    .challenge-spotlight h2 {
+      margin: 19px 0 7px;
+      color: var(--preview-ink);
+      font-size: 23px;
+      letter-spacing: -.07em;
+      line-height: .98;
+    }
+
+    .circle-hero-card p,
+    .challenge-spotlight p {
+      max-width: 260px;
+      margin: 0;
+      color: var(--preview-muted);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .circle-hero-member-row {
+      justify-content: flex-start;
+      margin-top: 17px;
+    }
+
+    .circle-hero-member-row .avatar-stack {
+      min-width: 70px;
+    }
+
+    .circle-hero-member-row .avatar-stack span {
+      border-color: var(--preview-surface);
+    }
+
+    .circle-hero-member-row > span:last-child {
+      color: var(--preview-muted);
+      font-size: 9px;
+    }
+
+    .circle-hero-member-row strong,
+    .challenge-stat-row strong {
+      color: var(--preview-ink);
+      font-size: 10px;
+    }
+
+    .circle-hero-progress,
+    .challenge-progress,
+    .challenge-mini-progress,
+    .challenge-detail-progress {
+      height: 7px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--preview-primary) 14%, transparent);
+    }
+
+    .circle-hero-progress,
+    .challenge-progress { margin-top: 14px; }
+
+    .circle-hero-progress span,
+    .challenge-progress span,
+    .challenge-mini-progress span,
+    .challenge-detail-progress span {
+      display: block;
+      width: var(--progress, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: var(--preview-primary);
+    }
+
+    .circle-hero-actions,
+    .challenge-spotlight-actions,
+    .challenge-card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 14px;
+    }
+
+    .circle-hero-actions .circle-action,
+    .challenge-spotlight-actions .circle-action,
+    .challenge-card-actions .circle-action { flex: 1 1 auto; }
+
+    .circle-list-heading,
+    .challenge-list-heading { margin-top: 18px; }
+
+    .circle-create-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      min-height: 36px;
+      margin-top: 13px;
+      border: 1px dashed color-mix(in srgb, var(--preview-primary) 30%, transparent);
+      border-radius: 11px;
+      color: var(--preview-primary);
+      background: transparent;
+      font-size: 9px;
+      font-weight: 800;
+    }
+
+    .circle-create-link:hover { background: color-mix(in srgb, var(--preview-primary) 8%, transparent); }
+
+    .circle-create-link .icon { width: 13px; height: 13px; }
+
+    .challenge-spotlight {
+      margin-bottom: 17px;
+      padding: 16px;
+    }
+
+    .challenge-stat-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 17px;
+      color: var(--preview-muted);
+      font-size: 9px;
+    }
+
+    .challenge-stat-row span {
+      padding: 9px 10px;
+      border-radius: 11px;
+      background: color-mix(in srgb, var(--preview-bg) 60%, transparent);
+    }
+
+    .challenge-list {
+      display: grid;
+      gap: 9px;
+    }
+
+    .challenge-list-card[hidden] { display: none; }
+
+    .challenge-list-card {
+      padding: 13px;
+      background: var(--preview-surface);
+    }
+
+    .challenge-card-top .circle-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 11px;
+      font-size: 9px;
+    }
+
+    .challenge-list-card h3 {
+      margin: 12px 0 5px;
+      color: var(--preview-ink);
+      font-size: 16px;
+      letter-spacing: -.06em;
+      line-height: 1;
+    }
+
+    .challenge-list-card p {
+      margin: 0;
+      color: var(--preview-muted);
+      font-size: 9px;
+      line-height: 1.4;
+    }
+
+    .challenge-mini-progress { margin-top: 13px; }
+
+    .challenge-card-actions { margin-top: 11px; }
+
+    .challenge-spotlight-actions .goal-cta { margin-top: 0; }
+
+    .challenge-detail-panel {
+      margin: 0 0 16px;
+      padding: 15px;
+      border-radius: 20px;
+      color: var(--preview-ink);
+      background: color-mix(in srgb, var(--preview-primary) 16%, var(--preview-bg));
+    }
+
+    .challenge-detail-kicker { margin-top: 22px; }
+
+    .challenge-detail-panel h2 {
+      margin: 9px 0 6px;
+      font-size: 24px;
+      letter-spacing: -.075em;
+      line-height: .98;
+    }
+
+    .challenge-detail-panel p {
+      margin: 0;
+      color: var(--preview-muted);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .challenge-detail-progress { margin-top: 17px; }
+
+    .challenge-detail-progress-copy {
+      margin-top: 7px;
+      color: var(--preview-muted);
+      font-size: 9px;
+    }
+
+    .challenge-detail-progress-copy strong {
+      color: var(--preview-ink);
+      font-size: 10px;
+    }
+
+    .challenge-detail-panel .goal-cta { margin-top: 14px; }
+
+    .goal-list-card,
+    .library-list-card,
+    .home-list-card {
+      padding: 14px;
+    }
+
+    .goal-list-card .goal-card-top,
+    .home-list-card .goal-card-top { margin-bottom: 2px; }
+
+    .goal-list-card h3,
+    .library-list-card h3,
+    .home-list-card h3 {
+      margin: 11px 0 5px;
+      color: var(--preview-ink);
+      font-size: 16px;
+      letter-spacing: -.055em;
+      line-height: 1;
+    }
+
+    .goal-list-card p,
+    .library-list-card p,
+    .home-list-card p {
+      margin: 0;
+      color: var(--preview-muted);
+      font-size: 10px;
+      line-height: 1.45;
+    }
+
+    .goal-list-card .goal-progress { margin-top: 14px; }
+
+    .goal-list-card .goal-cta { margin-top: 12px; }
+
+    .page-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin: 0 0 17px;
+    }
+
+    .page-stat {
+      padding: 13px;
+      border-radius: 16px;
+      background: color-mix(in srgb, var(--preview-primary) 10%, var(--preview-bg));
+    }
+
+    .page-stat strong {
+      display: block;
+      color: var(--preview-primary);
+      font-size: 24px;
+      letter-spacing: -.08em;
+    }
+
+    .page-stat span {
+      display: block;
+      margin-top: 3px;
+      color: var(--preview-muted);
+      font-size: 9px;
+    }
+
+    .home-hero {
+      margin-bottom: 17px;
+      padding: 18px;
+      border-radius: 23px;
+      color: var(--preview-ink);
+      background: color-mix(in srgb, var(--preview-primary) 18%, var(--preview-bg));
+    }
+
+    .home-hero h2 {
+      max-width: 220px;
+      margin: 11px 0 8px;
+      font-size: 25px;
+      letter-spacing: -.075em;
+      line-height: .98;
+    }
+
+    .home-hero p {
+      max-width: 235px;
+      margin: 0;
+      color: var(--preview-muted);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .home-hero .goal-cta { margin-top: 16px; }
+
+    .library-list-card {
+      display: grid;
+      grid-template-columns: 32px 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .library-list-card .circle-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      font-size: 9px;
+    }
+
+    .library-list-card h3 {
+      margin: 0 0 4px;
+      font-size: 12px;
+    }
+
+    .library-list-card p { font-size: 9px; }
+
+    .library-list-card .icon { width: 16px; height: 16px; color: var(--preview-primary); }
+
+    .page-empty {
+      margin-top: 14px;
+      padding: 18px;
+      border-radius: 18px;
+      color: var(--preview-muted);
+      background: color-mix(in srgb, var(--preview-ink) 5%, transparent);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 13px;
+      line-height: 1.4;
+      text-align: center;
+    }
+
+    @media (max-width: 1120px) {
+      .lab-shell {
+        grid-template-columns: 235px minmax(420px, 1fr);
+      }
+
+      .lab-inspector {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: minmax(220px, .75fr) 1.25fr;
+        gap: 26px;
+        padding-top: 26px;
+        border-top: 1px solid var(--canvas-line);
+        border-left: 0;
+      }
+
+      .lab-inspector > * { margin-top: 0; }
+
+      .inspector-card { align-self: start; }
+    }
+
+    @media (max-width: 760px) {
+      .lab-shell { display: block; }
+
+      .lab-rail,
+      .lab-inspector {
+        padding: 22px 18px;
+        border: 0;
+      }
+
+      .lab-rail {
+        display: block;
+        border-bottom: 1px solid var(--canvas-line);
+      }
+
+      .brand-lockup { margin-bottom: 24px; }
+
+      .lab-rail h1 { font-size: 34px; }
+
+      .lede { max-width: 330px; }
+
+      .question-card { margin: 22px 0; }
+
+      .variant-index {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .variant-option {
+        grid-template-columns: 1fr;
+        gap: 7px;
+        padding: 10px;
+      }
+
+      .variant-key { width: 24px; height: 24px; }
+
+      .rail-foot { display: none; }
+
+      .lab-stage {
+        padding: 22px 16px 98px;
+      }
+
+      .stage-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .stage-canvas {
+        min-height: 0;
+        padding: 28px 0 47px;
+      }
+
+      .device {
+        width: min(390px, calc(100vw - 32px));
+        height: min(844px, calc(100vh - 120px));
+        min-height: 620px;
+      }
+
+      .device-wrap::before,
+      .device-wrap::after,
+      .stage-caption { display: none; }
+
+      .lab-inspector {
+        display: block;
+        border-top: 1px solid var(--canvas-line);
+      }
+
+      .lab-inspector > * { margin-top: 20px; }
+
+      .inspector-card { margin-top: 22px; }
+
+      .prototype-switcher {
+        bottom: 13px;
+        max-width: calc(100vw - 24px);
+      }
+
+      .prototype-switcher .switcher-label {
+        min-width: 128px;
+        font-size: 10px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <svg class="icon-sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M19 4H5a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3h3l4 3 4-3h3a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3Z"/><path d="M7 11h.01M12 11h.01M17 11h.01"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h7A2.5 2.5 0 0 1 18 4.5V21l-6-3.5L6 21V4.5Z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m9 5 10 7-10 7V5Z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M20.8 8.8c0 5.4-8.8 10.2-8.8 10.2S3.2 14.2 3.2 8.8A4.8 4.8 0 0 1 12 6.3a4.8 4.8 0 0 1 8.8 2.5Z"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 20v-1.5A3.5 3.5 0 0 0 12.5 15h-5A3.5 3.5 0 0 0 4 18.5V20M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM17 4.5a3.2 3.2 0 0 1 0 6.1M20 18.8v-.5a3.5 3.5 0 0 0-2.5-3.4"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15.6 8.4-2.1 5.1-5.1 2.1 2.1-5.1 5.1-2.1Z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9Z"/><path d="M9 21v-6h6v6"/></symbol>
+    <symbol id="i-library" viewBox="0 0 24 24"><rect x="5" y="4" width="12" height="15" rx="2"/><path d="M9 7h5M9 11h5M9 15h3M8 20h11a2 2 0 0 0 2-2V7"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20v-7"/><path d="M3 20h18"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2ZM19 16l.7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-wifi" viewBox="0 0 24 24"><path d="M3 8.5a14 14 0 0 1 18 0M6.5 12a8.7 8.7 0 0 1 11 0M10 15.5a3.7 3.7 0 0 1 4 0M12 19h.01"/></symbol>
+    <symbol id="i-signal" viewBox="0 0 24 24"><path d="M4 20v-3M9 20v-6M14 20v-9M19 20V7"/></symbol>
+  </svg>
+
+  <div class="lab-shell">
+    <aside class="lab-rail">
+      <div class="brand-lockup">
+        <div class="brand-mark">a</div>
+        <span>awrad / studio</span>
+      </div>
+
+      <div class="eyebrow">Community / product question</div>
+      <h1>Make belonging<br><em>feel quiet.</em></h1>
+      <p class="lede">Three possible ways to make Community feel intentional, alive, and still unmistakably Awrad.</p>
+
+      <div class="question-card">
+        <div class="section-label">The test</div>
+        <p>What should someone feel in the first five seconds?</p>
+      </div>
+
+      <div class="section-label">Three hypotheses</div>
+      <nav class="variant-index" aria-label="Community wireframe variants">
+        <button class="variant-option" type="button" data-variant="quiet" aria-pressed="true">
+          <span class="variant-key">A</span>
+          <span class="variant-copy"><strong>Ritual Lounge</strong><small>Calm practice first</small></span>
+        </button>
+        <button class="variant-option" type="button" data-variant="pulse" aria-pressed="false">
+          <span class="variant-key">B</span>
+          <span class="variant-copy"><strong>The Pulse</strong><small>Belonging in motion</small></span>
+        </button>
+        <button class="variant-option" type="button" data-variant="atlas" aria-pressed="false">
+          <span class="variant-key">C</span>
+          <span class="variant-copy"><strong>Practice Atlas</strong><small>Discover your people</small></span>
+        </button>
+      </nav>
+
+      <div class="rail-foot">Interactive prototype<br>Light + dark preview · 14 Aug 2026</div>
+    </aside>
+
+    <main class="lab-stage">
+      <header class="stage-header">
+        <div>
+          <div class="stage-kicker">Live wireframe / authenticated state</div>
+          <h2 id="stageTitle">Ritual Lounge · calm practice first</h2>
+        </div>
+        <div class="stage-controls">
+          <button class="ghost-control theme-control" type="button" id="themeToggle" aria-pressed="true">
+            <span data-icon="sun"></span><span id="themeToggleLabel">Light preview</span>
+          </button>
+          <button class="ghost-control" type="button" id="copyLink" aria-label="Copy variant link">
+            <span data-icon="share"></span> Copy variant link
+          </button>
+        </div>
+      </header>
+
+      <div class="stage-canvas">
+        <div class="device-wrap">
+          <div class="device" id="phoneApp" aria-label="Community mobile screen preview"></div>
+        </div>
+      </div>
+
+      <p class="stage-caption" id="stageCaption">A single meaningful practice is the hero. Community is felt through the people around it, not a noisy feed.</p>
+    </main>
+
+    <aside class="lab-inspector">
+      <div>
+        <div class="eyebrow">Direction <span id="variantKeyLabel">A</span></div>
+        <h2 id="inspectorTitle">Ritual Lounge</h2>
+        <p class="inspector-lede" id="inspectorLede">The community tab becomes a calm room: one shared practice, one gentle invitation, and proof that other people are here.</p>
+
+        <div class="inspector-card">
+          <strong id="inspectorHypothesis">Lead with ritual; let belonging arrive softly.</strong>
+          <p id="inspectorAudience">Best for people who open Awrad to practice first and want community to add warmth, not pressure.</p>
+        </div>
+      </div>
+
+      <div class="inspector-section">
+        <h3>What this direction keeps</h3>
+        <ul class="inspector-list" id="inspectorKeeps"></ul>
+      </div>
+
+      <div class="inspector-section">
+        <h3>What it trades away</h3>
+        <ul class="inspector-list trade" id="inspectorTrades"></ul>
+      </div>
+
+      <div class="inspector-section">
+        <h3>Quick read</h3>
+        <div class="score-row"><span>Ritual clarity</span><span class="score" data-score="ritual"></span></div>
+        <div class="score-row"><span>Belonging signal</span><span class="score" data-score="belonging"></span></div>
+        <div class="score-row"><span>Discovery depth</span><span class="score" data-score="discovery"></span></div>
+        <div class="score-row"><span>Build complexity</span><span class="score" data-score="complexity"></span></div>
+      </div>
+
+      <div class="inspector-rule"></div>
+
+      <div class="inspector-footer">Elite is not “more content.” It is one strong feeling, one obvious next action, and enough depth to reward a second visit.</div>
+    </aside>
+  </div>
+
+  <div class="prototype-switcher" aria-label="Prototype variant switcher">
+    <button type="button" id="prevVariant" aria-label="Previous variant">&larr;</button>
+    <span class="switcher-label" id="switcherLabel">A · Ritual Lounge</span>
+    <button type="button" id="nextVariant" aria-label="Next variant">&rarr;</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const order = ["quiet", "pulse", "atlas"];
+    const meta = {
+      quiet: {
+        key: "A",
+        name: "Ritual Lounge",
+        short: "calm practice first",
+        lede: "The community tab becomes a calm room: one shared practice, one gentle invitation, and proof that other people are here.",
+        hypothesis: "Lead with ritual; let belonging arrive softly.",
+        audience: "Best for people who open Awrad to practice first and want community to add warmth, not pressure.",
+        caption: "A single meaningful practice is the hero. Community is felt through the people around it, not a noisy feed.",
+        keeps: ["Awrad’s quiet, devotional tone", "One clear primary action", "Shared stats without turning them into a scoreboard"],
+        trades: ["Less immediate social velocity", "Discovery moves one level deeper", "Requires a strong daily editorial pick"],
+        scores: { ritual: 5, belonging: 3, discovery: 2, complexity: 3 }
+      },
+      pulse: {
+        key: "B",
+        name: "The Pulse",
+        short: "belonging in motion",
+        lede: "The first fold proves that the user is part of a living practice, then turns that energy into circles, activity, and gentle momentum.",
+        hypothesis: "Show movement; make the community feel alive without making it competitive.",
+        audience: "Best for returning users who need a reason to come back and people who are motivated by shared momentum.",
+        caption: "A dark, high-contrast pulse makes the social promise unmistakable: your practice joins a living rhythm.",
+        keeps: ["A strong emotional hook above the fold", "Circles as the main social unit", "Small activity beats instead of a generic feed"],
+        trades: ["Higher emotional intensity", "Needs careful moderation and privacy states", "Dark surface is a larger visual departure"],
+        scores: { ritual: 3, belonging: 5, discovery: 3, complexity: 4 }
+      },
+      atlas: {
+        key: "C",
+        name: "Practice Atlas",
+        short: "discover your people",
+        lede: "Community becomes a navigable landscape: circles, challenges, and shared goals are visible as places to explore rather than a feed to scroll.",
+        hypothesis: "Give the whole surface a point of view: find a practice, find your people, find your next step.",
+        audience: "Best for a growing product where circles, challenges, and stats are becoming a meaningful destination.",
+        caption: "A map-like hierarchy makes Community feel like a place with depth, not a placeholder tab with cards stacked vertically.",
+        keeps: ["Clear navigation between community modes", "A visible reason to explore", "Bento surfaces for stats and recommendations"],
+        trades: ["More product surface to explain", "Less immediately intimate", "Needs real destination content to avoid empty states"],
+        scores: { ritual: 3, belonging: 4, discovery: 5, complexity: 5 }
+      }
+    };
+
+    const variants = {
+      quiet: () => `
+        <div class="quiet-shell">
+          <div class="phone-status">
+            <span>9:41</span>
+            <span class="status-signals"><span data-icon="signal"></span><span data-icon="wifi"></span><span>▰</span></span>
+          </div>
+          <div class="phone-scroll">
+            <header class="phone-header">
+              <button class="phone-button" type="button" aria-label="Open Community menu" data-action="Open Community menu"><span data-icon="menu"></span></button>
+              <div class="phone-wordmark"><strong>awrad</strong><span>COMMUNITY</span></div>
+              <div class="phone-header-actions">
+                <button class="phone-button" type="button" aria-label="Notifications" data-action="Open notifications"><span data-icon="bell"></span></button>
+                <button class="phone-button" type="button" aria-label="Messages" data-action="Open messages"><span data-icon="message"></span></button>
+              </div>
+            </header>
+
+            <nav class="phone-tabs" data-tab-group="community" aria-label="Community sections">
+              <button type="button" role="tab" data-tab aria-selected="true">For you</button>
+              <button type="button" role="tab" data-tab aria-selected="false">Explore</button>
+              <button type="button" role="tab" data-tab aria-selected="false">Goals</button>
+            </nav>
+
+            <main class="quiet-main">
+              <section class="quiet-intro">
+                <div class="eyebrow">FRIDAY · 14 AUGUST</div>
+                <h1>A softer place<br><em>to return to.</em></h1>
+                <p>One small practice becomes a shared rhythm.</p>
+              </section>
+
+              <section class="quiet-ritual-card">
+                <div class="quiet-card-top">
+                  <span class="micro-label">TODAY’S SHARED PRACTICE</span>
+                  <button class="phone-button" type="button" aria-label="Save practice" data-toggle-save><span data-icon="bookmark"></span></button>
+                </div>
+                <div class="quiet-arabic">أَسْتَغْفِرُ اللَّهَ</div>
+                <p class="quiet-transliteration">Astaghfirullāh</p>
+                <p class="quiet-meaning">I seek forgiveness from Allah.</p>
+                <div class="quiet-personal-bar">
+                  <span>1,284 people are here today</span>
+                  <div class="quiet-progress"><span></span><b>42 / 100</b></div>
+                </div>
+                <button class="quiet-cta" type="button" data-action="Begin dhikr">Begin dhikr <span data-icon="arrow"></span></button>
+              </section>
+
+              <article class="community-post" data-post>
+                <div class="post-head">
+                  <div class="post-author">
+                    <span class="post-avatar">AR</span>
+                    <span><strong>Aisha Rahman</strong><span>Morning circle · 2 min ago</span></span>
+                  </div>
+                  <span class="post-kind">Reflection</span>
+                </div>
+                <p class="post-copy">“A little, every day, becomes a life.” I finished my morning wird with the circle today.</p>
+                <div class="post-actions">
+                  <button class="post-action" type="button" data-like aria-pressed="false"><span data-icon="heart"></span><span data-count>28</span></button>
+                  <button class="post-action" type="button" data-toggle-save aria-pressed="false"><span data-icon="bookmark"></span><span>Save</span></button>
+                  <button class="post-action" type="button" data-action="Share Aisha's post"><span data-icon="share"></span><span>Share</span></button>
+                </div>
+              </article>
+
+              <section class="community-goal-card" aria-label="Suggested community goal">
+                <div class="goal-card-top"><span class="goal-kind">Suggested goal</span><span data-icon="target"></span></div>
+                <h2 class="goal-title">70 istighfar, together.</h2>
+                <div class="goal-card-meta"><span>18 people · 4 days left</span><span>58% complete</span></div>
+                <div class="goal-progress" aria-label="58 percent complete"></div>
+                <button class="goal-cta" type="button" data-toggle-join data-join-default="Join this goal" data-join-active="Joined · view goal" aria-pressed="false"><span data-join-label>Join this goal</span><span data-icon="arrow"></span></button>
+              </section>
+
+              <section class="quiet-stat-row" aria-label="Shared community estimates">
+                <div class="quiet-stat"><strong>948</strong><span>shared repetitions</span></div>
+                <div class="quiet-stat"><strong>12</strong><span>tracked goals</span></div>
+              </section>
+
+              <div class="quiet-section-head">
+                <h2>A room for everyone</h2>
+                <button type="button" data-action="Explore circles">See all</button>
+              </div>
+              <button class="quiet-circle-card" type="button" data-action="Open Weekend Dhikr Circle">
+                <span class="avatar-stack"><span>AR</span><span>YK</span><span>NA</span><span>+8</span></span>
+                <span class="quiet-circle-copy"><strong>Weekend Dhikr Circle</strong><span>18 people · 67% through this week</span></span>
+                <span class="quiet-circle-arrow"><span data-icon="chevron"></span></span>
+              </button>
+
+              <section class="quiet-quote">
+                <p>“A little, every day, becomes a life.”</p>
+                <span>Shared by Aisha · 2 min ago</span>
+              </section>
+            </main>
+
+            <nav class="phone-bottom-nav" aria-label="Primary">
+              <button type="button" data-action="Open Home"><span data-icon="home"></span><span>Home</span></button>
+              <button type="button" data-action="Open Goals"><span data-icon="target"></span><span>Goals</span></button>
+              <button type="button" data-action="Open Library"><span data-icon="library"></span><span>Library</span></button>
+              <button type="button" class="active" aria-current="page" data-action="Open Community"><span data-icon="users"></span><span>Community</span></button>
+            </nav>
+          </div>
+        </div>
+      `,
+      pulse: () => `
+        <div class="pulse-shell">
+          <div class="phone-status">
+            <span>9:41</span>
+            <span class="status-signals"><span data-icon="signal"></span><span data-icon="wifi"></span><span>▰</span></span>
+          </div>
+          <div class="phone-scroll">
+            <header class="phone-header">
+              <button class="phone-button" type="button" aria-label="Open Community menu" data-action="Open Community menu"><span data-icon="menu"></span></button>
+              <div class="phone-wordmark"><strong>awrad</strong><span>COMMUNITY</span></div>
+              <div class="phone-header-actions">
+                <button class="phone-button" type="button" aria-label="Notifications" data-action="Open notifications"><span data-icon="bell"></span></button>
+                <button class="phone-button" type="button" aria-label="Messages" data-action="Open messages"><span data-icon="message"></span></button>
+              </div>
+            </header>
+
+            <nav class="phone-tabs" data-tab-group="community" aria-label="Community sections">
+              <button type="button" role="tab" data-tab aria-selected="true">For you</button>
+              <button type="button" role="tab" data-tab aria-selected="false">Explore</button>
+              <button type="button" role="tab" data-tab aria-selected="false">Goals</button>
+            </nav>
+
+            <main class="pulse-main">
+              <section class="pulse-hero">
+                <div class="pulse-orb"></div>
+                <div class="pulse-label"><span class="pulse-live-dot"></span> COMMUNITY / LIVE</div>
+                <h1>A living<br><span>practice.</span></h1>
+                <p>Every quiet return adds to a rhythm that other people can feel.</p>
+                <div class="pulse-stat"><strong>948</strong><span>shared repetitions<br>across Awrad</span></div>
+                <div class="pulse-avatars" aria-label="People practicing today"><span class="mini-avatar">AR</span><span class="mini-avatar">YK</span><span class="mini-avatar">NA</span><span class="mini-avatar">SM</span><span class="mini-avatar">+1.2k</span></div>
+              </section>
+
+              <div class="pulse-tabs" data-tab-group="pulse">
+                <button type="button" class="active" data-tab aria-selected="true">Feed</button>
+                <button type="button" data-tab aria-selected="false">Circles</button>
+                <button type="button" data-tab aria-selected="false">Goals</button>
+              </div>
+
+              <section class="pulse-activity" aria-label="Community activity">
+                <article><span class="mini-avatar">AR</span><strong>Aisha finished 70 istighfar</strong><span>2 min ago</span></article>
+                <article><span class="mini-avatar">YK</span><strong>Yusuf joined a circle</strong><span>8 min ago</span></article>
+                <article><span class="mini-avatar">NA</span><strong>Nadia shared a note</strong><span>14 min ago</span></article>
+              </section>
+
+              <section class="pulse-circle-card">
+                <div class="pulse-card-top"><span class="micro-label">YOUR NEXT CIRCLE</span><span data-icon="users"></span></div>
+                <h2>Weekend Dhikr Circle</h2>
+                <p>A low-pressure, seven-day rhythm with people who want to keep showing up.</p>
+                <div class="pulse-member-row"><span class="avatar-stack"><span>AR</span><span>YK</span><span>NA</span><span>+15</span></span><span>67% complete</span></div>
+                <div class="pulse-progress"></div>
+                <button class="pulse-join" type="button" data-action="Join Weekend Dhikr Circle" data-toggle-join data-join-default="Join the circle" data-join-active="Joined · view circle" aria-pressed="false"><span data-join-label>Join the circle</span><span data-icon="arrow"></span></button>
+              </section>
+
+              <div class="pulse-feed-label"><h2>From your people</h2><button type="button" data-action="Open all activity">See all</button></div>
+              <article class="pulse-feed-row"><span class="mini-avatar">SM</span><p><strong>Sara</strong> completed her morning wird with 14 others.</p><time>9m</time></article>
+              <article class="pulse-feed-row"><span class="mini-avatar">YK</span><p><strong>Yusuf</strong> invited you to Weekend Dhikr Circle.</p><time>22m</time></article>
+            </main>
+
+            <nav class="phone-bottom-nav" aria-label="Primary">
+              <button type="button" data-action="Open Home"><span data-icon="home"></span><span>Home</span></button>
+              <button type="button" data-action="Open Goals"><span data-icon="target"></span><span>Goals</span></button>
+              <button type="button" data-action="Open Library"><span data-icon="library"></span><span>Library</span></button>
+              <button type="button" class="active" aria-current="page" data-action="Open Community"><span data-icon="users"></span><span>Community</span></button>
+            </nav>
+          </div>
+        </div>
+      `,
+      atlas: () => `
+        <div class="atlas-shell">
+          <div class="phone-status">
+            <span>9:41</span>
+            <span class="status-signals"><span data-icon="signal"></span><span data-icon="wifi"></span><span>▰</span></span>
+          </div>
+          <div class="phone-scroll">
+            <header class="phone-header">
+              <button class="phone-button" type="button" aria-label="Open Community menu" data-action="Open Community menu"><span data-icon="menu"></span></button>
+              <div class="phone-wordmark"><strong>awrad</strong><span>COMMUNITY</span></div>
+              <div class="phone-header-actions">
+                <button class="phone-button" type="button" aria-label="Notifications" data-action="Open notifications"><span data-icon="bell"></span></button>
+                <button class="phone-button" type="button" aria-label="Messages" data-action="Open messages"><span data-icon="message"></span></button>
+              </div>
+            </header>
+
+            <nav class="phone-tabs" data-tab-group="community" aria-label="Community sections">
+              <button type="button" role="tab" data-tab aria-selected="true">For you</button>
+              <button type="button" role="tab" data-tab aria-selected="false">Explore</button>
+              <button type="button" role="tab" data-tab aria-selected="false">Goals</button>
+            </nav>
+
+            <main class="atlas-main">
+              <section class="atlas-intro">
+                <div><div class="eyebrow">THE COMMUNITY</div><h1>Find your<br><em>rhythm.</em></h1></div>
+                <button class="atlas-avatar" type="button" aria-label="Open profile" data-action="Open profile">AW</button>
+              </section>
+
+              <section class="atlas-map">
+                <div class="atlas-map-line"></div>
+                <div class="atlas-map-label"><span data-icon="compass"></span> YOUR PRACTICE MAP</div>
+                <div class="atlas-map-copy"><strong>12</strong><span>tracked goals · 3 circles nearby</span></div>
+                <button class="atlas-map-cta" type="button" data-action="Explore circles">Explore <span data-icon="arrow"></span></button>
+              </section>
+
+              <div class="atlas-toolbar" data-tab-group="atlas">
+                <button type="button" class="active" data-tab aria-selected="true">For you</button>
+                <button type="button" data-tab aria-selected="false">Circles</button>
+                <button type="button" data-tab aria-selected="false">Challenges</button>
+              </div>
+
+              <section class="atlas-feature">
+                <div class="micro-label">FEATURED TODAY</div>
+                <h2>70 istighfar,<br>together.</h2>
+                <p>A simple shared goal for the next seven days. Private by default, open when you want company.</p>
+                <div class="atlas-feature-bottom"><span>18 people · 67% complete</span><button type="button" data-action="Join the shared goal" data-toggle-join data-join-default="Join" data-join-active="Joined" aria-pressed="false"><span data-join-label>Join</span><span data-icon="arrow"></span></button></div>
+              </section>
+
+              <section class="atlas-bento" aria-label="Community overview">
+                <div class="atlas-bento-card"><span data-icon="chart"></span><strong>948</strong><span>shared repetitions</span></div>
+                <div class="atlas-bento-card"><span data-icon="users"></span><strong>0.3h</strong><span>shared practice time</span></div>
+              </section>
+
+              <div class="atlas-list-head"><h2>Suggested for you</h2><button type="button" data-action="See all suggestions">See all</button></div>
+              <article class="atlas-suggestion"><span class="atlas-suggestion-mark"><span data-icon="spark"></span></span><span class="atlas-suggestion-copy"><strong>Morning Wird Circle</strong><span>12 people · begins at sunrise</span></span><button type="button" aria-label="Open Morning Wird Circle" data-action="Open Morning Wird Circle"><span data-icon="chevron"></span></button></article>
+              <article class="atlas-suggestion"><span class="atlas-suggestion-mark"><span data-icon="target"></span></span><span class="atlas-suggestion-copy"><strong>Small & steady</strong><span>Challenge · 7 days · private</span></span><button type="button" aria-label="Open Small and steady" data-action="Open Small and steady"><span data-icon="chevron"></span></button></article>
+            </main>
+
+            <nav class="phone-bottom-nav" aria-label="Primary">
+              <button type="button" data-action="Open Home"><span data-icon="home"></span><span>Home</span></button>
+              <button type="button" data-action="Open Goals"><span data-icon="target"></span><span>Goals</span></button>
+              <button type="button" data-action="Open Library"><span data-icon="library"></span><span>Library</span></button>
+              <button type="button" class="active" aria-current="page" data-action="Open Community"><span data-icon="users"></span><span>Community</span></button>
+            </nav>
+          </div>
+        </div>
+      `
+    };
+
+    function drawerMarkup() {
+      return `
+        <div class="phone-drawer-backdrop" data-drawer-close></div>
+        <aside class="phone-drawer" aria-label="Community navigation" aria-hidden="true">
+          <div class="phone-drawer-head">
+            <div><strong>awrad</strong><span>community</span></div>
+            <button class="phone-button" type="button" aria-label="Close Community menu" data-drawer-close><span data-icon="close"></span></button>
+          </div>
+          <nav aria-label="Community destinations">
+            <button class="phone-drawer-link active" type="button" data-action="Open Community"><span data-icon="users"></span><span>Community</span></button>
+            <button class="phone-drawer-link" type="button" data-action="Open Goals"><span data-icon="target"></span><span>Goals</span></button>
+            <button class="phone-drawer-link" type="button" data-action="Open Library"><span data-icon="library"></span><span>Library</span></button>
+            <button class="phone-drawer-link" type="button" data-action="Open Saved posts"><span data-icon="bookmark"></span><span>Saved posts</span></button>
+          </nav>
+          <p class="phone-drawer-note">Quiet practice can still have company.</p>
+        </aside>
+      `;
+    }
+
+    function destinationMarkup() {
+      return `
+        <main class="app-page community-page" data-app-page="community-explore" data-community-page="explore" data-community-explore hidden>
+          <header class="page-header">
+            <div><div class="page-kicker" data-explore-kicker>Explore together</div><h1 data-explore-title>Find your<br><em>circle.</em></h1><p data-explore-copy>Choose a gentle rhythm, meet people with the same intention, and join when it feels right.</p></div>
+            <button class="page-header-action" type="button" aria-label="Refresh suggestions" data-explore-refresh data-action="Refresh explore"><span data-icon="spark"></span></button>
+          </header>
+          <label class="page-search"><span data-icon="search"></span><input type="search" aria-label="Search circles" data-explore-search placeholder="Search circles and challenges"></label>
+          <div class="page-filter-tabs" data-filter-group="explore" data-active-filter="all" aria-label="Explore filters">
+            <button type="button" class="active" data-filter="all">All</button>
+            <button type="button" data-filter="circles">Circles</button>
+            <button type="button" data-filter="challenges">Challenges</button>
+          </div>
+
+          <section class="explore-mode-panel" data-explore-panel="all" data-count-label="rooms">
+            <div class="page-section-head"><h2>Suggested for you</h2><span data-explore-count>3 rooms</span></div>
+            <div class="explore-list">
+              <article class="circle-list-card" data-explore-searchable data-filter-tags="circles" data-circle-title="Morning Wird Circle" data-circle-copy="A small sunrise room for people who want to begin the day with one steady practice." data-circle-members="12 people">
+                <span class="circle-avatar">MW</span>
+                <div class="circle-list-copy"><h3>Morning Wird Circle</h3><p>12 people · sunrise practice · 67% this week</p></div>
+                <div class="circle-list-actions"><button class="circle-action" type="button" aria-label="Open Morning Wird Circle" data-open-circle="Morning Wird Circle">Open circle <span data-icon="arrow"></span></button><button class="circle-action primary" type="button" data-toggle-circle data-join-default="Join circle" data-join-active="Joined" aria-pressed="false"><span data-join-label>Join circle</span></button></div>
+              </article>
+              <article class="circle-list-card" data-explore-searchable data-filter-tags="circles" data-circle-title="Weekend Dhikr Circle" data-circle-copy="A low-pressure seven-day rhythm with people who want to keep showing up together." data-circle-members="18 people">
+                <span class="circle-avatar">WD</span>
+                <div class="circle-list-copy"><h3>Weekend Dhikr Circle</h3><p>18 people · 4 days left · 67% complete</p></div>
+                <div class="circle-list-actions"><button class="circle-action" type="button" aria-label="Open Weekend Dhikr Circle" data-open-circle="Weekend Dhikr Circle">Open circle <span data-icon="arrow"></span></button><button class="circle-action primary" type="button" data-toggle-circle data-join-default="Join circle" data-join-active="Joined" aria-pressed="false"><span data-join-label>Join circle</span></button></div>
+              </article>
+              <article class="circle-list-card" data-explore-searchable data-filter-tags="challenges" data-challenge-title="Small & steady" data-challenge-copy="A private seven-day challenge for building a practice that can stay with you." data-challenge-meta="7 day challenge" data-challenge-members="24 people" data-challenge-progress="58" data-challenge-progress-label="4 of 7 days complete">
+                <span class="circle-avatar">SS</span>
+                <div class="circle-list-copy"><h3>Small &amp; steady</h3><p>Challenge · 7 days · private by default</p></div>
+                <div class="circle-list-actions"><button class="circle-action" type="button" aria-label="Open Small and steady challenge" data-open-challenge="Small & steady">Open challenge <span data-icon="arrow"></span></button><button class="circle-action primary" type="button" data-toggle-challenge data-join-default="Join challenge" data-join-active="Joined" aria-pressed="false"><span data-join-label>Join challenge</span></button></div>
+              </article>
+            </div>
+            <div class="page-empty" data-explore-empty hidden>Nothing here yet. Try a different search or make room for a new rhythm.</div>
+            <div class="page-empty">You can leave any circle quietly. Your practice stays yours.</div>
+          </section>
+
+          <section class="explore-mode-panel" data-explore-panel="circles" data-count-label="rooms" hidden>
+            <div class="page-section-head"><h2>Your circles</h2><span>1 active</span></div>
+            <article class="circle-hero-card" data-explore-searchable data-explore-countable="false" data-circle-title="Weekend Dhikr Circle" data-circle-copy="A low-pressure seven-day rhythm with people who want to keep showing up together." data-circle-members="18 people">
+              <div class="circle-hero-top"><span class="goal-kind">Your circle</span><span class="circle-hero-badge">4 days left</span></div>
+              <h2>Weekend Dhikr Circle</h2>
+              <p>A gentle room for returning to the same practice, together.</p>
+              <div class="circle-hero-member-row"><span class="avatar-stack" aria-label="18 people in this circle"><span>AR</span><span>YK</span><span>NA</span><span>+15</span></span><span><strong>67%</strong> complete this week</span></div>
+              <div class="circle-hero-progress" style="--progress: 67%"><span></span></div>
+              <div class="circle-hero-actions"><button class="circle-action" type="button" aria-label="Open Weekend Dhikr Circle" data-open-circle="Weekend Dhikr Circle">Open circle <span data-icon="arrow"></span></button><button class="circle-action primary is-active" type="button" data-toggle-circle data-join-default="Join circle" data-join-active="Joined · open circle" aria-pressed="true"><span data-join-label>Joined · open circle</span></button></div>
+            </article>
+            <div class="page-section-head circle-list-heading"><h2>Find a room</h2><span data-explore-count>2 rooms</span></div>
+            <div class="explore-list">
+              <article class="circle-list-card" data-explore-searchable data-circle-title="Morning Wird Circle" data-circle-copy="A small sunrise room for people who want to begin the day with one steady practice." data-circle-members="12 people">
+                <span class="circle-avatar">MW</span>
+                <div class="circle-list-copy"><h3>Morning Wird Circle</h3><p>12 people · sunrise practice · 67% this week</p></div>
+                <div class="circle-list-actions"><button class="circle-action" type="button" aria-label="Open Morning Wird Circle" data-open-circle="Morning Wird Circle">Open circle <span data-icon="arrow"></span></button><button class="circle-action primary" type="button" data-toggle-circle data-join-default="Join circle" data-join-active="Joined" aria-pressed="false"><span data-join-label>Join circle</span></button></div>
+              </article>
+              <article class="circle-list-card" data-explore-searchable data-circle-title="Nightly Istighfar Circle" data-circle-copy="A quiet end-of-day room for letting the day settle with one final remembrance." data-circle-members="9 people">
+                <span class="circle-avatar">NI</span>
+                <div class="circle-list-copy"><h3>Nightly Istighfar Circle</h3><p>9 people · evening practice · open tonight</p></div>
+                <div class="circle-list-actions"><button class="circle-action" type="button" aria-label="Open Nightly Istighfar Circle" data-open-circle="Nightly Istighfar Circle">Open circle <span data-icon="arrow"></span></button><button class="circle-action primary" type="button" data-toggle-circle data-join-default="Join circle" data-join-active="Joined" aria-pressed="false"><span data-join-label>Join circle</span></button></div>
+              </article>
+            </div>
+            <div class="page-empty" data-explore-empty hidden>No circles match that search. Try a practice, a time of day, or a gentler phrase.</div>
+            <button class="circle-create-link" type="button" data-action="Create a circle"><span data-icon="plus"></span> Create a circle for your people</button>
+          </section>
+
+          <section class="explore-mode-panel" data-explore-panel="challenges" data-count-label="challenges" hidden>
+            <article class="challenge-spotlight" data-explore-searchable data-explore-countable="false" data-challenge-title="Small & steady" data-challenge-copy="A private seven-day challenge for building a practice that can stay with you." data-challenge-meta="7 day challenge" data-challenge-members="24 people" data-challenge-progress="58" data-challenge-progress-label="4 of 7 days complete">
+              <div class="challenge-spotlight-top"><span class="goal-kind">This week</span><span class="challenge-badge">Private by default</span></div>
+              <h2>Small &amp; steady</h2>
+              <p>Four minutes a day. Seven days. Enough structure to help a new rhythm take root.</p>
+              <div class="challenge-stat-row"><span><strong>4 / 7</strong> days complete</span><span><strong>24</strong> people</span></div>
+              <div class="challenge-progress" style="--progress: 58%"><span></span></div>
+              <div class="challenge-spotlight-actions"><button class="circle-action" type="button" aria-label="Open Small and steady challenge" data-open-challenge="Small & steady">View challenge <span data-icon="arrow"></span></button><button class="goal-cta is-active" type="button" data-toggle-challenge data-join-default="Join challenge" data-join-active="Joined · view progress" aria-pressed="true"><span data-join-label>Joined · view progress</span></button></div>
+            </article>
+            <div class="page-section-head challenge-list-heading"><h2>More challenges</h2><span data-explore-count>2 challenges</span></div>
+            <div class="challenge-list">
+              <article class="challenge-list-card" data-explore-searchable data-challenge-title="70 istighfar together" data-challenge-copy="A simple shared goal for the next seven days, with room to keep it private or invite company." data-challenge-meta="7 day challenge" data-challenge-members="18 people" data-challenge-progress="32" data-challenge-progress-label="2 of 7 days complete">
+                <div class="challenge-card-top"><span class="circle-avatar">70</span><span class="challenge-badge">7 days</span></div>
+                <h3>70 istighfar together</h3><p>18 people · 2 days in · open when you want company</p>
+                <div class="challenge-mini-progress" style="--progress: 32%"><span></span></div>
+                <div class="challenge-card-actions"><button class="circle-action" type="button" aria-label="Open 70 istighfar together challenge" data-open-challenge="70 istighfar together">View <span data-icon="arrow"></span></button><button class="circle-action primary" type="button" data-toggle-challenge data-join-default="Join" data-join-active="Joined" aria-pressed="false"><span data-join-label>Join</span></button></div>
+              </article>
+              <article class="challenge-list-card" data-explore-searchable data-challenge-title="Dawn to dusk" data-challenge-copy="Carry one short remembrance from the first light of day to the moment you put it down for the night." data-challenge-meta="14 day challenge" data-challenge-members="41 people" data-challenge-progress="21" data-challenge-progress-label="3 of 14 days complete">
+                <div class="challenge-card-top"><span class="circle-avatar">DD</span><span class="challenge-badge">14 days</span></div>
+                <h3>Dawn to dusk</h3><p>41 people · 3 days in · a longer, slower rhythm</p>
+                <div class="challenge-mini-progress" style="--progress: 21%"><span></span></div>
+                <div class="challenge-card-actions"><button class="circle-action" type="button" aria-label="Open Dawn to dusk challenge" data-open-challenge="Dawn to dusk">View <span data-icon="arrow"></span></button><button class="circle-action primary" type="button" data-toggle-challenge data-join-default="Join" data-join-active="Joined" aria-pressed="false"><span data-join-label>Join</span></button></div>
+              </article>
+            </div>
+            <div class="page-empty" data-explore-empty hidden>No challenges match that search. Try a practice, a time span, or a smaller promise.</div>
+            <button class="circle-create-link" type="button" data-action="Create a challenge"><span data-icon="plus"></span> Start a challenge with your people</button>
+          </section>
+
+        </main>
+
+        <main class="app-page community-detail-page" data-app-page="community-circle-detail" data-community-detail="circle" hidden>
+          <button class="detail-page-back" type="button" aria-label="Back to circles" data-close-circle><span data-icon="arrow"></span> Back to circles</button>
+          <div class="detail-page-hero">
+            <div class="detail-page-kicker">Community circle</div>
+            <div class="detail-page-heading"><span class="detail-page-mark" data-circle-mark>WD</span><div><h1 data-circle-name>Weekend Dhikr Circle</h1><p data-circle-copy>A low-pressure seven-day rhythm with people who want to keep showing up together.</p></div></div>
+            <div class="circle-detail-meta detail-page-meta"><span data-circle-members>18 people</span><span>Starts at sunrise</span><span>Private by default</span></div>
+          </div>
+          <section class="detail-page-surface" aria-label="Circle progress">
+            <div class="detail-page-surface-head"><strong>This week's rhythm</strong><span>4 days left</span></div>
+            <div class="detail-page-progress" data-circle-progress-bar style="--progress: 67%"><span></span></div>
+            <div class="detail-page-stat-row"><span><strong data-circle-progress-value>67%</strong> complete</span><span>18 people checking in</span></div>
+          </section>
+          <button class="circle-action primary detail-page-cta" type="button" data-toggle-circle data-join-default="Join circle" data-join-active="Joined · open circle" aria-pressed="false"><span data-join-label>Join circle</span><span data-icon="arrow"></span></button>
+          <section class="detail-page-section"><h2>Make room for return</h2><p>There is no feed to keep up with here. Open the circle when you want company, check in when you can, and leave quietly whenever your practice needs more space.</p></section>
+        </main>
+
+        <main class="app-page community-detail-page" data-app-page="community-challenge-detail" data-community-detail="challenge" hidden>
+          <button class="detail-page-back" type="button" aria-label="Back to challenges" data-close-challenge><span data-icon="arrow"></span> Back to challenges</button>
+          <div class="detail-page-hero">
+            <div class="detail-page-kicker">Shared challenge</div>
+            <div class="detail-page-heading"><span class="detail-page-mark" data-challenge-mark>SS</span><div><h1 data-challenge-name>Small &amp; steady</h1><p data-challenge-copy>A private seven-day challenge for building a practice that can stay with you.</p></div></div>
+            <div class="circle-detail-meta detail-page-meta"><span data-challenge-meta>7 day challenge</span><span data-challenge-members>24 people</span><span>Private by default</span></div>
+          </div>
+          <section class="detail-page-surface" aria-label="Challenge progress">
+            <div class="detail-page-surface-head"><strong>Your progress</strong><span data-challenge-progress-value>58%</span></div>
+            <div class="detail-page-progress" data-challenge-progress-bar style="--progress: 58%"><span></span></div>
+            <div class="detail-page-stat-row"><span><strong data-challenge-progress-label>4 of 7 days complete</strong></span><span>Return tomorrow</span></div>
+          </section>
+          <button class="goal-cta is-active detail-page-cta" type="button" data-toggle-challenge data-join-default="Join challenge" data-join-active="Joined · view progress" aria-pressed="true"><span data-join-label>Joined · view progress</span><span data-icon="arrow"></span></button>
+          <section class="detail-page-section"><h2>Small enough to keep</h2><p>Four minutes a day is the whole invitation. Let the shared rhythm make the next return easier, without turning your practice into another thing to perform.</p></section>
+        </main>
+
+        <main class="app-page community-page" data-app-page="community-goals" data-community-page="goals" hidden>
+          <header class="page-header">
+            <div><div class="page-kicker">Your shared goals</div><h1>Keep it<br><em>steady.</em></h1><p>Small commitments become easier to keep when the next step is visible.</p></div>
+            <button class="page-header-action" type="button" aria-label="Create a goal" data-action="Create a goal"><span data-icon="plus"></span></button>
+          </header>
+          <div class="page-stat-grid"><div class="page-stat"><strong>2</strong><span>active goals</span></div><div class="page-stat"><strong>58%</strong><span>shared progress</span></div></div>
+          <div class="page-section-head"><h2>In progress</h2><span>Updated today</span></div>
+          <div class="goal-list">
+            <article class="goal-list-card">
+              <div class="goal-card-top"><span class="goal-kind">Community goal</span><span data-icon="users"></span></div>
+              <h3>70 istighfar, together.</h3><p>18 people · 4 days left · private by default</p><div class="goal-progress" aria-label="58 percent complete"></div>
+              <button class="goal-cta" type="button" data-toggle-join data-join-default="Join this goal" data-join-active="Joined · view goal" aria-pressed="false"><span data-join-label>Join this goal</span><span data-icon="arrow"></span></button>
+            </article>
+            <article class="goal-list-card">
+              <div class="goal-card-top"><span class="goal-kind">Personal goal</span><span data-icon="target"></span></div>
+              <h3>Morning wird · 7 days</h3><p>4 of 7 days complete · You are on track</p><div class="goal-progress" aria-label="57 percent complete"></div>
+              <button class="goal-cta is-active" type="button" data-action="Continue morning wird"><span>Continue practice</span><span data-icon="arrow"></span></button>
+            </article>
+          </div>
+          <div class="page-empty">No pressure to add more. One goal you can return to is enough.</div>
+        </main>
+
+        <main class="app-page app-destination" data-app-page="home" hidden>
+          <header class="page-header"><div><div class="page-kicker">Today · Friday, 14 August</div><h1>Welcome<br><em>back.</em></h1><p>Your practice is waiting in the same quiet place.</p></div><button class="page-header-action" type="button" aria-label="Open profile" data-action="Open profile"><span data-icon="user"></span></button></header>
+          <section class="home-hero"><div class="page-kicker">Next in your rhythm</div><h2>Return to Astaghfirullāh.</h2><p>I seek forgiveness from Allah. Start with one deliberate minute.</p><button class="goal-cta" type="button" data-toggle-practice aria-pressed="false"><span data-practice-label>Begin practice</span><span data-icon="arrow"></span></button></section>
+          <div class="page-section-head"><h2>Recent movement</h2><span>Today</span></div>
+          <article class="home-list-card"><div class="goal-card-top"><span class="goal-kind">Your practice</span><span data-icon="check"></span></div><h3>Morning wird</h3><p>70 repetitions · completed yesterday</p></article>
+        </main>
+
+        <main class="app-page app-destination" data-app-page="library" hidden>
+          <header class="page-header"><div><div class="page-kicker">Your library</div><h1>Keep what<br><em>stays with you.</em></h1><p>Saved practices, reflections, and circles in one gentle shelf.</p></div><button class="page-header-action" type="button" aria-label="Search library" data-action="Search library"><span data-icon="search"></span></button></header>
+          <div class="page-section-head"><h2>Saved for later</h2><span>2 items</span></div>
+          <div class="explore-list">
+            <article class="library-list-card"><span class="circle-avatar">ذ</span><div><h3>Astaghfirullāh</h3><p>Shared practice · saved today</p></div><span data-icon="bookmark"></span></article>
+            <article class="library-list-card"><span class="circle-avatar">AR</span><div><h3>A little, every day</h3><p>Reflection by Aisha · saved 2 min ago</p></div><span data-icon="bookmark"></span></article>
+          </div>
+          <div class="page-empty">Your library is private. Save something when it feels worth returning to.</div>
+        </main>
+      `;
+    }
+
+    const phoneApp = document.getElementById("phoneApp");
+    const stageTitle = document.getElementById("stageTitle");
+    const stageCaption = document.getElementById("stageCaption");
+    const inspectorTitle = document.getElementById("inspectorTitle");
+    const inspectorLede = document.getElementById("inspectorLede");
+    const inspectorHypothesis = document.getElementById("inspectorHypothesis");
+    const inspectorAudience = document.getElementById("inspectorAudience");
+    const inspectorKeeps = document.getElementById("inspectorKeeps");
+    const inspectorTrades = document.getElementById("inspectorTrades");
+    const switcherLabel = document.getElementById("switcherLabel");
+    const variantKeyLabel = document.getElementById("variantKeyLabel");
+    const themeToggle = document.getElementById("themeToggle");
+    const themeToggleLabel = document.getElementById("themeToggleLabel");
+    const toast = document.getElementById("toast");
+    const query = new URLSearchParams(window.location.search);
+    let currentVariant = query.get("variant");
+    let previewTheme = query.get("theme");
+    let activeAppView = "community-for-you";
+    let activeCommunityPage = "for-you";
+    let activeNavDestination = "Community";
+    let toastTimer;
+
+    if (!order.includes(currentVariant)) currentVariant = order[0];
+    if (previewTheme !== "light" && previewTheme !== "dark") previewTheme = "dark";
+
+    function icon(name) {
+      return '<svg class="icon" aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
+    }
+
+    function hydrateIcons(root) {
+      root.querySelectorAll("[data-icon]").forEach(function (node) {
+        node.innerHTML = icon(node.getAttribute("data-icon"));
+      });
+    }
+
+    function setDrawer(open) {
+      const drawer = phoneApp.querySelector(".phone-drawer");
+      const backdrop = phoneApp.querySelector(".phone-drawer-backdrop");
+      if (!drawer || !backdrop) return;
+      drawer.classList.toggle("is-open", open);
+      backdrop.classList.toggle("is-open", open);
+      drawer.setAttribute("aria-hidden", open ? "false" : "true");
+    }
+
+    function updateTheme(writeUrl) {
+      phoneApp.dataset.previewTheme = previewTheme;
+      themeToggle.setAttribute("aria-pressed", previewTheme === "dark" ? "true" : "false");
+      themeToggle.setAttribute("aria-label", "Switch to " + (previewTheme === "dark" ? "light" : "dark") + " preview");
+      themeToggleLabel.textContent = previewTheme === "dark" ? "Light preview" : "Dark preview";
+      if (writeUrl) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("variant", currentVariant);
+        url.searchParams.set("theme", previewTheme);
+        window.history.replaceState({}, "", url);
+      }
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("is-visible");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () {
+        toast.classList.remove("is-visible");
+      }, 1800);
+    }
+
+    function updateScores(scores) {
+      document.querySelectorAll("[data-score]").forEach(function (score) {
+        const amount = scores[score.getAttribute("data-score")];
+        score.innerHTML = "";
+        for (let i = 1; i <= 5; i += 1) {
+          const dot = document.createElement("i");
+          if (i <= amount) dot.className = "on";
+          score.appendChild(dot);
+        }
+      });
+    }
+
+    function installDestinations() {
+      const scroll = phoneApp.querySelector(".phone-scroll");
+      const originalMain = scroll.querySelector("main");
+      const nav = scroll.querySelector(".phone-bottom-nav");
+      originalMain.dataset.appPage = "community-for-you";
+      originalMain.dataset.communityPage = "for-you";
+      const holder = document.createElement("div");
+      holder.innerHTML = destinationMarkup();
+      while (holder.firstElementChild) scroll.insertBefore(holder.firstElementChild, nav);
+      hydrateIcons(phoneApp);
+    }
+
+    function syncBottomNavigation() {
+      const nav = phoneApp.querySelector(".phone-bottom-nav");
+      if (!nav) return;
+      nav.querySelectorAll("button").forEach(function (button) {
+        const selected = button.textContent.trim() === activeNavDestination;
+        button.classList.toggle("active", selected);
+        if (selected) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      });
+      const drawer = phoneApp.querySelector(".phone-drawer");
+      if (drawer) {
+        drawer.querySelectorAll("[data-action]").forEach(function (button) {
+          button.classList.toggle("active", button.textContent.trim() === activeNavDestination);
+        });
+      }
+      const wordmark = phoneApp.querySelector(".phone-wordmark span");
+      if (wordmark) wordmark.textContent = activeNavDestination.toUpperCase();
+    }
+
+    function renderAppView(view, announce, navDestination) {
+      activeAppView = view;
+      activeNavDestination = navDestination || (view === "home" ? "Home" : view === "library" ? "Library" : "Community");
+      const scroll = phoneApp.querySelector(".phone-scroll");
+      scroll.querySelectorAll("[data-app-page]").forEach(function (page) {
+        page.hidden = page.getAttribute("data-app-page") !== view;
+      });
+      const tabs = scroll.querySelector(".phone-tabs");
+      const isCommunitySurface = ["community-for-you", "community-explore", "community-goals"].includes(view);
+      if (tabs) tabs.hidden = !isCommunitySurface;
+      if (tabs && isCommunitySurface) {
+        const communityPage = view.replace("community-", "");
+        activeCommunityPage = communityPage;
+        tabs.querySelectorAll("[data-tab]").forEach(function (tab) {
+          const selected = tab.textContent.trim().toLowerCase().replace(/\s+/g, "-") === communityPage;
+          tab.classList.toggle("active", selected);
+          tab.setAttribute("aria-selected", selected ? "true" : "false");
+        });
+      }
+      syncBottomNavigation();
+      scroll.scrollTop = 0;
+      setDrawer(false);
+      if (announce) showToast(activeNavDestination + " opened");
+    }
+
+    function setCommunityPage(page, announce, navDestination) {
+      if (!["for-you", "explore", "goals"].includes(page)) page = "for-you";
+      const wasExplore = activeAppView === "community-explore";
+      activeCommunityPage = page;
+      const tabs = phoneApp.querySelector(".phone-tabs");
+      if (tabs) {
+        tabs.querySelectorAll("[data-tab]").forEach(function (tab) {
+          const selected = tab.textContent.trim().toLowerCase().replace(/\s+/g, "-") === page;
+          tab.classList.toggle("active", selected);
+          tab.setAttribute("aria-selected", selected ? "true" : "false");
+        });
+      }
+      renderAppView("community-" + page, false, navDestination || "Community");
+      if (page === "explore" && !wasExplore) setExploreMode("all", false);
+      if (announce) showToast(page === "for-you" ? "For you view opened" : page.charAt(0).toUpperCase() + page.slice(1) + " view opened");
+    }
+
+    function setExploreMode(mode, announce) {
+      const page = phoneApp.querySelector('[data-app-page="community-explore"]');
+      if (!page) return;
+      const modes = {
+        all: {
+          kicker: "Explore together",
+          title: "Find your<br><em>circle.</em>",
+          copy: "Choose a gentle rhythm, meet people with the same intention, and join when it feels right.",
+          placeholder: "Search circles and challenges",
+          label: "Search circles and challenges",
+          toast: "All suggestions shown"
+        },
+        circles: {
+          kicker: "Your circles",
+          title: "Find your<br><em>people.</em>",
+          copy: "Rooms for steady practice, with enough space to show up as yourself.",
+          placeholder: "Search circles",
+          label: "Search circles",
+          toast: "Circles shown"
+        },
+        challenges: {
+          kicker: "Weekly challenges",
+          title: "Choose your<br><em>next step.</em>",
+          copy: "Small, shared commitments that help a practice become part of the week.",
+          placeholder: "Search challenges",
+          label: "Search challenges",
+          toast: "Challenges shown"
+        }
+      };
+      if (!modes[mode]) mode = "all";
+      const copy = modes[mode];
+      page.dataset.exploreMode = mode;
+      const group = page.querySelector("[data-filter-group]");
+      if (group) {
+        group.dataset.activeFilter = mode;
+        group.querySelectorAll("[data-filter]").forEach(function (filter) {
+          const selected = filter.dataset.filter === mode;
+          filter.classList.toggle("active", selected);
+          filter.setAttribute("aria-pressed", selected ? "true" : "false");
+        });
+      }
+      const kicker = page.querySelector("[data-explore-kicker]");
+      const title = page.querySelector("[data-explore-title]");
+      const description = page.querySelector("[data-explore-copy]");
+      const search = page.querySelector("[data-explore-search]");
+      const refresh = page.querySelector("[data-explore-refresh]");
+      if (kicker) kicker.textContent = copy.kicker;
+      if (title) title.innerHTML = copy.title;
+      if (description) description.textContent = copy.copy;
+      if (refresh) refresh.setAttribute("aria-label", mode === "circles" ? "Refresh circles" : mode === "challenges" ? "Refresh challenges" : "Refresh suggestions");
+      if (search) {
+        search.placeholder = copy.placeholder;
+        search.setAttribute("aria-label", copy.label);
+      }
+      page.querySelectorAll("[data-explore-panel]").forEach(function (panel) {
+        panel.hidden = panel.dataset.explorePanel !== mode;
+      });
+      filterExplore();
+      if (announce) showToast(copy.toast);
+    }
+
+    function filterExplore() {
+      const page = phoneApp.querySelector('[data-app-page="community-explore"]');
+      if (!page) return;
+      const group = page.querySelector("[data-filter-group]");
+      const activeFilter = page.dataset.exploreMode || (group ? group.dataset.activeFilter || "all" : "all");
+      const queryText = (page.querySelector("[data-explore-search]")?.value || "").trim().toLowerCase();
+      const panel = page.querySelector('[data-explore-panel="' + activeFilter + '"]');
+      if (!panel) return;
+      let visibleCount = 0;
+      let visibleMatches = 0;
+      panel.querySelectorAll("[data-explore-searchable]").forEach(function (card) {
+        const tags = (card.dataset.filterTags || "").split(" ");
+        const searchable = card.textContent.toLowerCase();
+        const matchesFilter = activeFilter === "all" ? tags.includes("circles") || tags.includes("challenges") : !card.dataset.filterTags || tags.includes(activeFilter);
+        const matchesSearch = !queryText || searchable.includes(queryText);
+        card.hidden = !(matchesFilter && matchesSearch);
+        if (!card.hidden) {
+          visibleMatches += 1;
+          if (card.dataset.exploreCountable !== "false") visibleCount += 1;
+        }
+      });
+      const count = panel.querySelector("[data-explore-count]");
+      const countLabel = panel.dataset.countLabel || "rooms";
+      if (count) {
+        const amount = queryText ? visibleMatches : visibleCount;
+        count.textContent = amount + " " + (queryText ? (amount === 1 ? "match" : "matches") : countLabel);
+      }
+      const empty = panel.querySelector("[data-explore-empty]");
+      if (empty) empty.hidden = visibleMatches > 0;
+    }
+
+    function openCircle(name) {
+      setCommunityPage("explore", false, "Community");
+      setExploreMode("circles", false);
+      const explorePage = phoneApp.querySelector('[data-app-page="community-explore"]');
+      const card = Array.from(explorePage.querySelectorAll("[data-circle-title]")).find(function (item) { return item.dataset.circleTitle === name && !item.hidden && item.offsetParent !== null; });
+      const detail = phoneApp.querySelector('[data-app-page="community-circle-detail"]');
+      if (!card || !detail) return;
+      renderAppView("community-circle-detail", false, "Community");
+      detail.dataset.circleName = name;
+      detail.querySelector("[data-circle-name]").textContent = card.dataset.circleTitle;
+      detail.querySelector("[data-circle-copy]").textContent = card.dataset.circleCopy;
+      detail.querySelector("[data-circle-members]").textContent = card.dataset.circleMembers;
+      const mark = detail.querySelector("[data-circle-mark]");
+      const sourceMark = card.querySelector(".circle-avatar");
+      if (mark && sourceMark) mark.textContent = sourceMark.textContent.trim();
+      const sourceToggle = card.querySelector("[data-toggle-circle]");
+      const detailToggle = detail.querySelector("[data-toggle-circle]");
+      if (sourceToggle && detailToggle) {
+        const active = sourceToggle.getAttribute("aria-pressed") === "true";
+        detailToggle.classList.toggle("is-active", active);
+        detailToggle.setAttribute("aria-pressed", active ? "true" : "false");
+        const label = detailToggle.querySelector("[data-join-label]");
+        if (label) label.textContent = active ? detailToggle.dataset.joinActive : detailToggle.dataset.joinDefault;
+      }
+      showToast(name + " opened");
+    }
+
+    function openChallenge(name) {
+      setCommunityPage("explore", false, "Community");
+      setExploreMode("challenges", false);
+      const explorePage = phoneApp.querySelector('[data-app-page="community-explore"]');
+      const card = Array.from(explorePage.querySelectorAll("[data-challenge-title]")).find(function (item) { return item.dataset.challengeTitle === name && !item.hidden && item.offsetParent !== null; });
+      const detail = phoneApp.querySelector('[data-app-page="community-challenge-detail"]');
+      if (!card || !detail) return;
+      renderAppView("community-challenge-detail", false, "Community");
+      detail.dataset.challengeName = name;
+      detail.hidden = false;
+      detail.querySelector("[data-challenge-name]").textContent = card.dataset.challengeTitle;
+      detail.querySelector("[data-challenge-copy]").textContent = card.dataset.challengeCopy;
+      detail.querySelector("[data-challenge-meta]").textContent = card.dataset.challengeMeta || "Shared challenge";
+      detail.querySelector("[data-challenge-members]").textContent = card.dataset.challengeMembers || "A few people";
+      detail.querySelector("[data-challenge-progress-bar]").style.setProperty("--progress", (card.dataset.challengeProgress || "0") + "%");
+      detail.querySelector("[data-challenge-progress-label]").textContent = card.dataset.challengeProgressLabel || "In progress";
+      detail.querySelector("[data-challenge-progress-value]").textContent = (card.dataset.challengeProgress || "0") + "%";
+      const mark = detail.querySelector("[data-challenge-mark]");
+      const sourceMark = card.querySelector(".circle-avatar");
+      if (mark && sourceMark) mark.textContent = sourceMark.textContent.trim();
+      const sourceToggle = card.querySelector("[data-toggle-challenge]");
+      const detailToggle = detail.querySelector("[data-toggle-challenge]");
+      if (sourceToggle && detailToggle) {
+        const active = sourceToggle.getAttribute("aria-pressed") === "true";
+        detailToggle.classList.toggle("is-active", active);
+        detailToggle.setAttribute("aria-pressed", active ? "true" : "false");
+        const label = detailToggle.querySelector("[data-join-label]");
+        if (label) label.textContent = active ? detailToggle.dataset.joinActive : detailToggle.dataset.joinDefault;
+      }
+      showToast(name + " opened");
+    }
+
+    function routeAction(actionName) {
+      if (actionName === "Open Home") { renderAppView("home", false, "Home"); return true; }
+      if (actionName === "Open Library" || actionName === "Open Saved posts") { renderAppView("library", false, "Library"); return true; }
+      if (actionName === "Open Goals") { renderAppView("community-goals", false, "Goals"); return true; }
+      if (actionName === "Open Community") { setCommunityPage("for-you", false, "Community"); return true; }
+      if (actionName === "Explore circles") { setCommunityPage("explore", false, "Community"); setExploreMode("circles", false); return true; }
+      if (["See all suggestions", "Open all activity", "Refresh explore"].includes(actionName)) { setCommunityPage("explore", false, "Community"); return true; }
+      if (actionName === "Open circles") { setCommunityPage("explore", false, "Community"); setExploreMode("circles", false); return true; }
+      if (actionName === "Open challenges") { setCommunityPage("explore", false, "Community"); setExploreMode("challenges", false); return true; }
+      if (["Open Morning Wird Circle", "Open Weekend Dhikr Circle", "Open Nightly Istighfar Circle"].includes(actionName)) { openCircle(actionName.replace(/^Open /, "")); return true; }
+      if (["Open Small & steady challenge", "Open Small and steady"].includes(actionName)) { openChallenge("Small & steady"); return true; }
+      return false;
+    }
+
+    function updateVariant(key, writeUrl) {
+      currentVariant = key;
+      const item = meta[key];
+      phoneApp.innerHTML = variants[key]() + drawerMarkup();
+      updateTheme(false);
+      hydrateIcons(phoneApp);
+      activeAppView = "community-for-you";
+      activeCommunityPage = "for-you";
+      activeNavDestination = "Community";
+      installDestinations();
+      document.body.dataset.variant = key;
+      stageTitle.textContent = item.name + " · " + item.short;
+      stageCaption.textContent = item.caption;
+      variantKeyLabel.textContent = item.key;
+      inspectorTitle.textContent = item.name;
+      inspectorLede.textContent = item.lede;
+      inspectorHypothesis.textContent = item.hypothesis;
+      inspectorAudience.textContent = item.audience;
+      inspectorKeeps.innerHTML = item.keeps.map(function (value) { return "<li>" + value + "</li>"; }).join("");
+      inspectorTrades.innerHTML = item.trades.map(function (value) { return "<li>" + value + "</li>"; }).join("");
+      switcherLabel.textContent = item.key + " · " + item.name;
+      updateScores(item.scores);
+      document.querySelectorAll("[data-variant]").forEach(function (button) {
+        button.setAttribute("aria-pressed", button.getAttribute("data-variant") === key ? "true" : "false");
+      });
+      if (writeUrl) {
+        const url = new URL(window.location.href);
+        url.searchParams.set("variant", key);
+        url.searchParams.set("theme", previewTheme);
+        window.history.replaceState({}, "", url);
+      }
+      renderAppView("community-for-you", false, "Community");
+      setDrawer(false);
+    }
+
+    function stepVariant(direction) {
+      const index = order.indexOf(currentVariant);
+      updateVariant(order[(index + direction + order.length) % order.length], true);
+    }
+
+    document.querySelectorAll("[data-variant]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        updateVariant(button.getAttribute("data-variant"), true);
+      });
+    });
+
+    document.getElementById("prevVariant").addEventListener("click", function () { stepVariant(-1); });
+    document.getElementById("nextVariant").addEventListener("click", function () { stepVariant(1); });
+
+    themeToggle.addEventListener("click", function () {
+      previewTheme = previewTheme === "dark" ? "light" : "dark";
+      updateTheme(true);
+      showToast((previewTheme === "dark" ? "Dark" : "Light") + " preview enabled");
+    });
+
+    document.getElementById("copyLink").addEventListener("click", function () {
+      const url = new URL(window.location.href);
+      url.searchParams.set("variant", currentVariant);
+      url.searchParams.set("theme", previewTheme);
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url.toString()).then(function () {
+          showToast("Variant link copied");
+        }).catch(function () {
+          showToast("Share URL copied as ?variant=" + currentVariant + "&theme=" + previewTheme);
+        });
+      } else {
+        showToast("Share URL: ?variant=" + currentVariant + "&theme=" + previewTheme);
+      }
+    });
+
+    document.addEventListener("click", function (event) {
+      const drawerClose = event.target.closest("[data-drawer-close]");
+      if (drawerClose) {
+        setDrawer(false);
+        return;
+      }
+
+      const action = event.target.closest("[data-action]");
+      if (action) {
+        const actionName = action.getAttribute("data-action");
+        if (actionName === "Open Community menu") {
+          setDrawer(true);
+          return;
+        }
+        if (action.closest(".phone-drawer")) setDrawer(false);
+        const routed = routeAction(actionName);
+        showToast(routed ? actionName.replace(/^Open /, "") + " opened" : actionName + " · wireframe only");
+      }
+
+      const like = event.target.closest("[data-like]");
+      if (like) {
+        const active = like.classList.toggle("is-active");
+        like.setAttribute("aria-pressed", active ? "true" : "false");
+        const count = like.querySelector("[data-count]");
+        if (count) {
+          const base = Number(count.dataset.base || count.textContent);
+          count.dataset.base = base;
+          count.textContent = String(base + (active ? 1 : 0));
+        }
+        showToast(active ? "Liked post" : "Like removed");
+      }
+
+      const save = event.target.closest("[data-toggle-save]");
+      if (save) {
+        const active = save.classList.toggle("is-saved");
+        save.classList.toggle("is-active", active);
+        save.setAttribute("aria-pressed", active ? "true" : "false");
+        showToast(active ? "Saved to your practice" : "Removed from saved");
+      }
+
+      const circleToggle = event.target.closest("[data-toggle-circle]");
+      if (circleToggle) {
+        const active = circleToggle.classList.toggle("is-active");
+        circleToggle.setAttribute("aria-pressed", active ? "true" : "false");
+        const label = circleToggle.querySelector("[data-join-label]");
+        if (label) label.textContent = active ? (circleToggle.dataset.joinActive || "Joined") : (circleToggle.dataset.joinDefault || "Join circle");
+        const detailPage = circleToggle.closest('[data-community-detail="circle"]');
+        if (detailPage) {
+          const name = detailPage.dataset.circleName;
+          const sourceCard = Array.from(phoneApp.querySelectorAll("[data-circle-title]")).find(function (item) { return item.dataset.circleTitle === name; });
+          const sourceToggle = sourceCard && sourceCard.querySelector("[data-toggle-circle]");
+          if (sourceToggle) {
+            sourceToggle.classList.toggle("is-active", active);
+            sourceToggle.setAttribute("aria-pressed", active ? "true" : "false");
+            const sourceLabel = sourceToggle.querySelector("[data-join-label]");
+            if (sourceLabel) sourceLabel.textContent = active ? (sourceToggle.dataset.joinActive || "Joined") : (sourceToggle.dataset.joinDefault || "Join circle");
+          }
+        }
+        showToast(active ? "Joined circle" : "Left circle");
+        return;
+      }
+
+      const challengeToggle = event.target.closest("[data-toggle-challenge]");
+      if (challengeToggle) {
+        const active = challengeToggle.classList.toggle("is-active");
+        challengeToggle.setAttribute("aria-pressed", active ? "true" : "false");
+        const label = challengeToggle.querySelector("[data-join-label]");
+        if (label) label.textContent = active ? (challengeToggle.dataset.joinActive || "Joined") : (challengeToggle.dataset.joinDefault || "Join challenge");
+        const detailPage = challengeToggle.closest('[data-community-detail="challenge"]');
+        if (detailPage) {
+          const name = detailPage.dataset.challengeName;
+          const sourceCard = Array.from(phoneApp.querySelectorAll("[data-challenge-title]")).find(function (item) { return item.dataset.challengeTitle === name; });
+          const sourceToggle = sourceCard && sourceCard.querySelector("[data-toggle-challenge]");
+          if (sourceToggle) {
+            sourceToggle.classList.toggle("is-active", active);
+            sourceToggle.setAttribute("aria-pressed", active ? "true" : "false");
+            const sourceLabel = sourceToggle.querySelector("[data-join-label]");
+            if (sourceLabel) sourceLabel.textContent = active ? (sourceToggle.dataset.joinActive || "Joined") : (sourceToggle.dataset.joinDefault || "Join challenge");
+          }
+        }
+        showToast(active ? "Joined challenge" : "Left challenge");
+        return;
+      }
+
+      const join = event.target.closest("[data-toggle-join]");
+      if (join) {
+        const active = join.classList.toggle("is-active");
+        join.setAttribute("aria-pressed", active ? "true" : "false");
+        const label = join.querySelector("[data-join-label]");
+        if (label) label.textContent = active ? (join.dataset.joinActive || "Joined") : (join.dataset.joinDefault || "Join");
+        showToast(active ? "Joined community goal" : "Left community goal");
+      }
+
+      const practice = event.target.closest("[data-toggle-practice]");
+      if (practice) {
+        const active = practice.classList.toggle("is-active");
+        practice.setAttribute("aria-pressed", active ? "true" : "false");
+        const label = practice.querySelector("[data-practice-label]");
+        if (label) label.textContent = active ? "Practice started" : "Begin practice";
+        showToast(active ? "Practice started" : "Practice paused");
+      }
+
+      const openCircleButton = event.target.closest("[data-open-circle]");
+      if (openCircleButton) {
+        openCircle(openCircleButton.getAttribute("data-open-circle"));
+        return;
+      }
+
+      const openChallengeButton = event.target.closest("[data-open-challenge]");
+      if (openChallengeButton) {
+        openChallenge(openChallengeButton.getAttribute("data-open-challenge"));
+        return;
+      }
+
+      const closeCircleButton = event.target.closest("[data-close-circle]");
+      if (closeCircleButton) {
+        const detailPage = closeCircleButton.closest('[data-community-detail="circle"]');
+        if (detailPage) {
+          renderAppView("community-explore", false, "Community");
+          setExploreMode("circles", false);
+          showToast("Back to circles");
+        }
+        return;
+      }
+
+      const closeChallengeButton = event.target.closest("[data-close-challenge]");
+      if (closeChallengeButton) {
+        const detailPage = closeChallengeButton.closest('[data-community-detail="challenge"]');
+        if (detailPage) {
+          renderAppView("community-explore", false, "Community");
+          setExploreMode("challenges", false);
+          showToast("Back to challenges");
+        }
+        return;
+      }
+
+      const filter = event.target.closest("[data-filter]");
+      if (filter) {
+        setExploreMode(filter.dataset.filter, true);
+        return;
+      }
+
+      const tab = event.target.closest("[data-tab]");
+      if (tab) {
+        const group = tab.closest("[data-tab-group]");
+        if (!group) return;
+        if (group.getAttribute("data-tab-group") === "community") {
+          setCommunityPage(tab.textContent.trim().toLowerCase().replace(/\s+/g, "-"), true, "Community");
+          return;
+        }
+        group.querySelectorAll("[data-tab]").forEach(function (item) {
+          const selected = item === tab;
+          item.classList.toggle("active", selected);
+          item.setAttribute("aria-selected", selected ? "true" : "false");
+        });
+        showToast(tab.textContent.trim() + " view · wireframe only");
+      }
+    });
+
+    document.addEventListener("input", function (event) {
+      if (event.target.closest("[data-explore-search]")) filterExplore();
+    });
+
+    document.addEventListener("keydown", function (event) {
+      const tag = document.activeElement && document.activeElement.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || document.activeElement.isContentEditable) return;
+      if (event.key === "Escape") {
+        setDrawer(false);
+        return;
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        stepVariant(-1);
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        stepVariant(1);
+      }
+    });
+
+    hydrateIcons(document);
+    updateVariant(currentVariant, false);
+  </script>
+</body>
+</html>
