@@ -3,6 +3,7 @@ package app.awrad.awrad_dhikrgoalstracker
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -52,7 +53,10 @@ class MainActivity : AppCompatActivity() {
         handleNotificationIntent(intent)
         enableEdgeToEdge()
         setContent {
-            AwradApp(mainViewModel = mainViewModel)
+            AwradApp(
+                mainViewModel = mainViewModel,
+                onExitApp = ::finish,
+            )
         }
     }
 
@@ -100,6 +104,7 @@ class MainActivity : AppCompatActivity() {
 @Composable
 fun AwradApp(
     mainViewModel: MainViewModel = hiltViewModel(),
+    onExitApp: () -> Unit,
 ) {
     val mainState by mainViewModel.uiState.collectAsState()
 
@@ -125,6 +130,13 @@ fun AwradApp(
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
+
+            BackHandler(enabled = currentRoute == AwradDestination.Home.route) {
+                while (navController.popBackStack()) {
+                    // Clear every active destination before leaving the activity.
+                }
+                onExitApp()
+            }
 
             // Navigate to counting screen on every notification tap (cold or hot)
             LaunchedEffect(Unit) {

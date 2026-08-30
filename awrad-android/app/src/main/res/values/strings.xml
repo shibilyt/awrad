@@ -70,7 +70,6 @@
     <string name="greeting_evening">Good Evening</string>
 
     <!-- Home screen -->
-    <string name="home_today">Today</string>
     <string name="home_jump_back_in">Resume Counting</string>
     <string name="home_explore">Collections</string>
     <string name="home_remaining">%d remaining</string>
@@ -213,16 +212,32 @@
     <string name="composer_advanced_basis">What is this goal based on?</string>
     <string name="composer_advanced_prayers">Your prayers</string>
     <string name="composer_advanced_schedule">A schedule</string>
-    <string name="composer_count_each_time">How many each time?</string>
     <string name="composer_prayers_all">All prayers</string>
     <string name="composer_count_daily">How many each day?</string>
     <string name="composer_count_total">Total to reach</string>
     <string name="composer_count_each_prayer">How many after each prayer?</string>
     <string name="composer_prayer_which">Which prayers?</string>
     <string name="composer_prayer_when">When?</string>
+    <string name="composer_prayer_before_all">Before all</string>
+    <string name="composer_prayer_after_all">After all</string>
+    <string name="composer_prayer_select_relation">Select Before or After for at least one prayer before closing.</string>
     <string name="composer_tracker_note">Just count — no fixed target. Perfect for building a steady habit.</string>
     <string name="composer_customize">More options: per-prayer counts, custom sessions &amp; rules</string>
     <string name="composer_change_dhikr">Change</string>
+    <string name="composer_schedule_question">How often to count?</string>
+    <string name="composer_timing_question">When to count?</string>
+    <string name="composer_target_question">What is your target?</string>
+    <string name="composer_target_different_sessions">Set a different target for each session</string>
+    <string name="composer_target_label">Target</string>
+    <string name="composer_continue">Continue</string>
+    <string name="composer_set_timings">Set timings</string>
+    <string name="composer_set_days">Set days</string>
+    <string name="composer_schedule_details_weekly">Which days?</string>
+    <string name="composer_schedule_details_monthly">Which days of the month?</string>
+    <string name="composer_schedule_details_specific_dates">Which dates?</string>
+    <string name="composer_schedule_details_interval">How many days apart?</string>
+    <string name="composer_schedule_details_yearly">Which month and days?</string>
+    <string name="composer_schedule_details_season">Which season?</string>
     <string name="composer_finetune">Fine-tune</string>
     <string name="composer_schedule_season">Islamic season</string>
     <string name="composer_reminder_auto_note">We\'ll remind you around each prayer or session time.</string>
@@ -234,6 +249,7 @@
     <string name="composer_per_prayer">Different count per prayer</string>
     <string name="composer_timing_morning_evening">Morning &amp; evening</string>
     <string name="composer_timing_custom">Custom sessions</string>
+    <string name="composer_timing_custom_desc">Set one or more custom sessions during the day</string>
     <string name="composer_morning">Morning</string>
     <string name="composer_evening">Evening</string>
     <string name="composer_add_session">Add session</string>
@@ -1474,6 +1490,8 @@
     <string name="goal_sentence_morning_evening">Recite %1$s: %2$s in the morning and evening.</string>
     <string name="goal_sentence_default">Recite %1$s: %2$s, %3$s.</string>
     <string name="goal_sentence_default_timed">Recite %1$s: %2$s, %3$s, %4$s.</string>
+    <string name="goal_sentence_default_no_schedule">Recite %1$s: %2$s.</string>
+    <string name="goal_sentence_default_timed_no_schedule">Recite %1$s: %2$s, %3$s.</string>
     <string name="goal_summary_no_target">No target</string>
     <string name="goal_summary_target_total">%1$s total</string>
     <string name="goal_summary_target_period">%1$s per period</string>
@@ -1511,6 +1529,7 @@
     <string name="goal_summary_slots_prayer_not_configured">Prayer slots not configured</string>
     <string name="goal_summary_slots_each_prayer">each prayer</string>
     <string name="goal_summary_slots_prayer">%1$s %2$s</string>
+    <string name="goal_summary_slots_prayer_mixed">Before some and after others: %1$s</string>
     <string name="goal_summary_off">Off</string>
     <string name="goal_summary_reminders_prayer">10 min after prayer times</string>
     <string name="goal_summary_reminders_window_start">At window start</string>

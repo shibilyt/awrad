@@ -169,16 +169,43 @@ class CreateGoalViewModel @Inject constructor(
         val next = if (state.selectedDhikr == null) {
             GoalCreationMode.SelectDhikr
         } else {
-            GoalCreationMode.Advanced
+            GoalCreationMode.AdvancedSchedule
         }
         setState(
             state.copy(
                 draft = GoalDraftDefaults.forPreset(GoalPreset.CUSTOM),
                 mode = next,
-                dhikrReturnMode = GoalCreationMode.Advanced,
+                dhikrReturnMode = GoalCreationMode.AdvancedSchedule,
                 goalTypeReturnMode = null,
             )
         )
+    }
+
+    /** Continue from cadence selection, pausing for any schedule-specific values when needed. */
+    fun continueFromAdvancedSchedule() {
+        val state = _state.value
+        val draft = state.draft
+        val next = if (draft == null || draft.preset == GoalPreset.ONE_TIME || draft.frequencyDraft is FrequencyDraft.Daily) {
+            GoalCreationMode.AdvancedTiming
+        } else {
+            GoalCreationMode.AdvancedScheduleDetails
+        }
+        setState(state.copy(mode = next))
+    }
+
+    /** Continue from the schedule-specific step to the timing screen. */
+    fun enterAdvancedTiming() {
+        setState(_state.value.copy(mode = GoalCreationMode.AdvancedTiming))
+    }
+
+    /** Continue from timing/session selection to the target screen. */
+    fun enterAdvancedTarget() {
+        setState(_state.value.copy(mode = GoalCreationMode.AdvancedTarget))
+    }
+
+    /** Continue from target selection to the remaining goal fields. */
+    fun enterAdvancedDetails() {
+        setState(_state.value.copy(mode = GoalCreationMode.Advanced))
     }
 
     /** Open the shared dhikr picker, returning to whichever screen requested it. */
@@ -272,7 +299,12 @@ class CreateGoalViewModel @Inject constructor(
                 // The entry picker (returns forward to SelectShape) exits on back. A "change
                 // dhikr" detour returns to the screen that opened it.
                 when (state.dhikrReturnMode) {
-                    GoalCreationMode.SimpleTarget, GoalCreationMode.Advanced -> {
+                    GoalCreationMode.SimpleTarget,
+                    GoalCreationMode.AdvancedSchedule,
+                    GoalCreationMode.AdvancedScheduleDetails,
+                    GoalCreationMode.AdvancedTiming,
+                    GoalCreationMode.AdvancedTarget,
+                    GoalCreationMode.Advanced -> {
                         setState(state.copy(mode = state.dhikrReturnMode))
                         false
                     }
@@ -297,13 +329,49 @@ class CreateGoalViewModel @Inject constructor(
                     // back to the entry dhikr picker.
                     true
                 } else {
-                    setState(state.copy(mode = GoalCreationMode.SelectDhikr, dhikrReturnMode = GoalCreationMode.SelectShape))
+                    // Clear the selection so Back from this entry/backtracking picker exits the
+                    // create flow. The explicit Change action keeps the selection and can return
+                    // to this screen when cancelled.
+                    setState(
+                        state.copy(
+                            mode = GoalCreationMode.SelectDhikr,
+                            selectedDhikr = null,
+                            dhikrReturnMode = GoalCreationMode.SelectShape,
+                        )
+                    )
                     false
                 }
             }
-            GoalCreationMode.SimpleTarget,
-            GoalCreationMode.Advanced -> {
+            GoalCreationMode.SimpleTarget -> {
                 setState(state.copy(mode = GoalCreationMode.SelectShape, goalTypeReturnMode = null))
+                false
+            }
+            GoalCreationMode.AdvancedSchedule -> {
+                setState(state.copy(mode = GoalCreationMode.SelectShape, goalTypeReturnMode = null))
+                false
+            }
+            GoalCreationMode.AdvancedScheduleDetails -> {
+                setState(state.copy(mode = GoalCreationMode.AdvancedSchedule, goalTypeReturnMode = null))
+                false
+            }
+            GoalCreationMode.AdvancedTiming -> {
+                val previousMode = if (
+                    state.draft?.preset == GoalPreset.ONE_TIME ||
+                    state.draft?.frequencyDraft is FrequencyDraft.Daily
+                ) {
+                    GoalCreationMode.AdvancedSchedule
+                } else {
+                    GoalCreationMode.AdvancedScheduleDetails
+                }
+                setState(state.copy(mode = previousMode, goalTypeReturnMode = null))
+                false
+            }
+            GoalCreationMode.AdvancedTarget -> {
+                setState(state.copy(mode = GoalCreationMode.AdvancedTiming, goalTypeReturnMode = null))
+                false
+            }
+            GoalCreationMode.Advanced -> {
+                setState(state.copy(mode = GoalCreationMode.AdvancedTarget, goalTypeReturnMode = null))
                 false
             }
         }

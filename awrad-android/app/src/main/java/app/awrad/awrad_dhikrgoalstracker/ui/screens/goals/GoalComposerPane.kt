@@ -50,6 +50,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -65,6 +66,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,6 +76,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -85,16 +88,15 @@ import kotlinx.coroutines.launch
 import app.awrad.awrad_dhikrgoalstracker.R
 import app.awrad.awrad_dhikrgoalstracker.data.model.CalendarSystem
 import app.awrad.awrad_dhikrgoalstracker.data.model.Dhikr
-import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalPreset
 import app.awrad.awrad_dhikrgoalstracker.data.model.Prayer
+import app.awrad.awrad_dhikrgoalstracker.data.model.PrayerRelation
 import app.awrad.awrad_dhikrgoalstracker.data.model.SeasonTemplateCode
+import app.awrad.awrad_dhikrgoalstracker.data.model.TargetPolicy
 import app.awrad.awrad_dhikrgoalstracker.data.model.TimingType
 import app.awrad.awrad_dhikrgoalstracker.domain.model.goalcreation.CapBehavior
-import app.awrad.awrad_dhikrgoalstracker.service.PreviewPlaybackState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualPrimaryButton
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.components.CountInputField
-import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.components.DhikrHeaderCard
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.CountRuleDraft
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.CountRuleMode
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.SlotTargetMode
@@ -107,7 +109,12 @@ import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.GoalDraftMapper
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.GoalTimeSlotDraft
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.GoalTimingDraft
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.GoalValidationResult
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.PrayerSlotTargetKey
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.TargetDraft
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.eveningRule
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.morningRule
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.withEveningRule
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.model.withMorningRule
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import app.awrad.awrad_dhikrgoalstracker.util.DateUtils
 import java.time.DayOfWeek
@@ -140,16 +147,21 @@ private fun composerTypeFor(preset: GoalPreset): ComposerType = when (preset) {
 
 // ─── Pane ──────────────────────────────────────────────────────────────────
 
+enum class AdvancedComposerStep {
+    Schedule,
+    ScheduleDetails,
+    Timing,
+    Target,
+    Details,
+}
+
 @Composable
 fun GoalComposerPane(
     dhikr: Dhikr,
-    audioState: PreviewPlaybackState,
     draft: GoalDraft,
     validation: GoalValidationResult,
     isCreating: Boolean,
     canChangeDhikr: Boolean,
-    onTogglePlayback: () -> Unit,
-    onShowFullQuran: (AwradId) -> Unit,
     onChangeDhikr: () -> Unit,
     onSelectPreset: (GoalPreset) -> Unit,
     onTargetChange: (TargetDraft) -> Unit,
@@ -159,6 +171,9 @@ fun GoalComposerPane(
     onCreate: () -> Unit,
     modifier: Modifier = Modifier,
     showTypeSelector: Boolean = true,
+    showTimingSelector: Boolean = true,
+    step: AdvancedComposerStep = AdvancedComposerStep.Details,
+    onNext: () -> Unit = {},
 ) {
     val dhikrName = dhikr.transliteration.ifBlank { dhikr.title }
     val selectedType = composerTypeFor(draft.preset)
@@ -177,6 +192,20 @@ fun GoalComposerPane(
                 sentence = goalSentence(dhikrName, draft),
                 collapsed = previewCollapsed,
             )
+            if (!previewCollapsed && canChangeDhikr) {
+                TextButton(
+                    onClick = onChangeDhikr,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(end = 20.dp),
+                ) {
+                    Text(
+                        text = stringResourceCompat(R.string.composer_change_dhikr),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
 
             Column(
                 modifier = Modifier
@@ -187,76 +216,972 @@ fun GoalComposerPane(
                     .padding(top = 4.dp, bottom = 116.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                ComposerEntry(0) {
-                    Column {
-                        DhikrHeaderCard(
-                            dhikr = dhikr,
-                            audioState = audioState,
-                            onTogglePlayback = onTogglePlayback,
-                            onShowFullQuran = { onShowFullQuran(dhikr.id) },
-                            collapsed = true,
-                        )
-                        if (canChangeDhikr) {
-                            TextButton(
-                                onClick = onChangeDhikr,
-                                modifier = Modifier.align(Alignment.End),
-                            ) {
-                                Text(
-                                    text = stringResourceCompat(R.string.composer_change_dhikr),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        }
-                    }
-                }
-
-                if (showTypeSelector) {
-                    ComposerEntry(1) {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            SectionLabel(stringResourceCompat(R.string.composer_type_question))
-                            GoalTypeGrid(selected = selectedType, onSelect = { onSelectPreset(it.defaultPreset) })
-                        }
-                    }
-                }
-
-                ComposerEntry(2) {
-                    AnimatedContent(
-                        targetState = selectedType,
-                        transitionSpec = {
-                            (fadeIn(tween(220)) + slideInVertically(tween(260, easing = FastOutSlowInEasing)) { it / 12 })
-                                .togetherWith(fadeOut(tween(140)))
-                        },
-                        label = "composerConfig",
-                    ) { type ->
-                        ComposerConfig(
-                            type = type,
+                if (step == AdvancedComposerStep.Schedule) {
+                    ComposerEntry(0) {
+                        AdvancedScheduleStep(
                             draft = draft,
-                            onTargetChange = onTargetChange,
+                            onSelect = { onDraftChange(draft.withScheduleStepOption(it)) },
+                        )
+                    }
+                } else if (step == AdvancedComposerStep.ScheduleDetails) {
+                    ComposerEntry(0) {
+                        ScheduleDetailsStep(
+                            draft = draft,
                             onFrequencyChange = onFrequencyChange,
+                        )
+                    }
+                } else if (step == AdvancedComposerStep.Timing) {
+                    ComposerEntry(0) {
+                        AdvancedTimingStep(
+                            draft = draft,
                             onDraftChange = onDraftChange,
                         )
                     }
-                }
-
-                ComposerEntry(3) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionLabel(stringResourceCompat(R.string.composer_finetune))
-                        FineTuneSection(
+                } else if (step == AdvancedComposerStep.Target) {
+                    ComposerEntry(0) {
+                        AdvancedTargetStep(
                             draft = draft,
-                            onExtrasChange = onExtrasChange,
+                            onDraftChange = onDraftChange,
                         )
+                    }
+                } else {
+                    if (showTypeSelector) {
+                        ComposerEntry(0) {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                SectionLabel(stringResourceCompat(R.string.composer_type_question))
+                                GoalTypeGrid(selected = selectedType, onSelect = { onSelectPreset(it.defaultPreset) })
+                            }
+                        }
+                    }
+
+                    ComposerEntry(1) {
+                        AnimatedContent(
+                            targetState = selectedType,
+                            transitionSpec = {
+                                (fadeIn(tween(220)) + slideInVertically(tween(260, easing = FastOutSlowInEasing)) { it / 12 })
+                                    .togetherWith(fadeOut(tween(140)))
+                            },
+                            label = "composerConfig",
+                        ) { type ->
+                            ComposerConfig(
+                                type = type,
+                                draft = draft,
+                                onTargetChange = onTargetChange,
+                                onFrequencyChange = onFrequencyChange,
+                                onDraftChange = onDraftChange,
+                                includeSchedule = false,
+                                showTimingSelector = showTimingSelector,
+                            )
+                        }
+                    }
+
+                    ComposerEntry(2) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            SectionLabel(stringResourceCompat(R.string.composer_finetune))
+                            FineTuneSection(
+                                draft = draft,
+                                onExtrasChange = onExtrasChange,
+                            )
+                        }
                     }
                 }
             }
         }
 
-        ComposerCreateBar(
-            validation = validation,
-            isCreating = isCreating,
-            onCreate = onCreate,
-            modifier = Modifier.align(Alignment.BottomCenter),
+        if (step == AdvancedComposerStep.Schedule) {
+            ComposerNextBar(
+                labelRes = scheduleStepCtaLabelRes(draft.frequencyDraft),
+                onNext = onNext,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        } else if (step == AdvancedComposerStep.ScheduleDetails) {
+            ComposerNextBar(
+                onNext = onNext,
+                enabled = draft.scheduleDetailsReady(),
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        } else if (step == AdvancedComposerStep.Timing) {
+            ComposerNextBar(
+                onNext = onNext,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        } else if (step == AdvancedComposerStep.Target) {
+            ComposerNextBar(
+                labelRes = R.string.composer_continue,
+                enabled = draft.targetStepReady(),
+                onNext = onNext,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        } else {
+            ComposerCreateBar(
+                validation = validation,
+                isCreating = isCreating,
+                onCreate = onCreate,
+                modifier = Modifier.align(Alignment.BottomCenter),
+            )
+        }
+    }
+}
+
+private data class TimingStepOption(
+    val timing: GoalTimingDraft,
+    val titleRes: Int,
+    val descriptionRes: Int,
+)
+
+private val ADVANCED_TIMING_OPTIONS = listOf(
+    TimingStepOption(
+        timing = GoalTimingDraft.Anytime,
+        titleRes = R.string.timing_anytime,
+        descriptionRes = R.string.timing_anytime_desc,
+    ),
+    TimingStepOption(
+        timing = GoalTimingDraft.PrayerBased,
+        titleRes = R.string.timing_prayer_based,
+        descriptionRes = R.string.timing_prayer_desc,
+    ),
+    TimingStepOption(
+        timing = GoalTimingDraft.CustomSlots,
+        titleRes = R.string.composer_timing_custom,
+        descriptionRes = R.string.composer_timing_custom_desc,
+    ),
+)
+
+@Composable
+private fun AdvancedTimingStep(
+    draft: GoalDraft,
+    onDraftChange: (GoalDraft) -> Unit,
+) {
+    val selected = GoalDraftMapper.effectiveTiming(draft)
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = stringResourceCompat(R.string.composer_timing_question),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
         )
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            ADVANCED_TIMING_OPTIONS.forEach { option ->
+                TimingStepOptionCard(
+                    option = option,
+                    selected = option.timing == selected,
+                    onClick = {
+                        if (option.timing != selected) {
+                            applyTimingSelection(draft, option.timing, onDraftChange)
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimingStepOptionCard(
+    option: TimingStepOption,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val accent = composerAccent()
+    val container = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = if (isAwradDarkTheme()) 0.5f else 0.7f)
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLow
+    }
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = container,
+        border = BorderStroke(
+            width = if (selected) 1.5.dp else 1.dp,
+            color = if (selected) accent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 17.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = stringResourceCompat(option.titleRes),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = stringResourceCompat(option.descriptionRes),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+    }
+}
+
+private enum class TargetSessionBucket {
+    Anytime,
+    Morning,
+    Evening,
+    Prayer,
+    Custom,
+}
+
+private data class TargetSessionRef(
+    val bucket: TargetSessionBucket,
+    val index: Int = -1,
+    val prayer: Prayer? = null,
+    val relation: PrayerRelation? = null,
+    val label: String? = null,
+    val labelRes: Int? = null,
+)
+
+@Composable
+private fun AdvancedTargetStep(
+    draft: GoalDraft,
+    onDraftChange: (GoalDraft) -> Unit,
+) {
+    val sessions = targetSessionRefs(draft)
+    val hasMultipleSessions = sessions.size > 1
+    val perSession = hasMultipleSessions && draft.slotTargetMode == SlotTargetMode.PerSlot
+
+    Column(
+        modifier = Modifier.testTag("advanced-target-step"),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            text = stringResourceCompat(R.string.composer_target_question),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+
+        if (!perSession) {
+            GoalTargetInput(
+                value = draft.targetInputValue(),
+                labelRes = R.string.composer_target_label,
+                quickValues = listOf(33, 100, 1000, 10000),
+                integratedStepper = true,
+                onValueChange = { onDraftChange(draft.withSharedTargetInputValue(it)) },
+                testTag = "advanced-target-shared",
+            )
+            if (draft.countRule.mode == CountRuleMode.Target) {
+                AdvancedMinimumTargetOption(
+                    enabled = draft.extras.hasMinStreak,
+                    value = draft.extras.minStreakCount,
+                    onEnabledChange = { enabled ->
+                        onDraftChange(draft.withSharedMinimumTarget(enabled))
+                    },
+                    onValueChange = { value ->
+                        onDraftChange(draft.withSharedMinimumTarget(true, value))
+                    },
+                    testTag = "advanced-target-shared-minimum",
+                )
+            }
+        }
+
+        if (hasMultipleSessions) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
+                    .clickable {
+                        onDraftChange(draft.withPerSessionTargets(!perSession, sessions))
+                    }
+                    .testTag("advanced-target-different-sessions"),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(
+                    checked = perSession,
+                    onCheckedChange = null,
+                )
+                Text(
+                    text = stringResourceCompat(R.string.composer_target_different_sessions),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+
+        if (perSession) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                sessions.forEachIndexed { index, session ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Text(
+                                text = session.localizedLabel(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            GoalTargetInput(
+                                value = draft.targetValueFor(session),
+                                labelRes = R.string.composer_target_label,
+                                quickValues = listOf(33, 100, 1000),
+                                integratedStepper = true,
+                                onValueChange = { onDraftChange(draft.withSessionTarget(session, it)) },
+                                testTag = "advanced-target-session-$index",
+                            )
+                            if (draft.countRule.mode == CountRuleMode.Target) {
+                                AdvancedMinimumTargetOption(
+                                    enabled = draft.hasMinimumTargetFor(session),
+                                    value = draft.minimumTargetValueFor(session),
+                                    onEnabledChange = { enabled ->
+                                        onDraftChange(draft.withSessionMinimumTarget(session, enabled))
+                                    },
+                                    onValueChange = { value ->
+                                        onDraftChange(draft.withSessionMinimumTarget(session, value))
+                                    },
+                                    testTag = "advanced-target-session-$index-minimum",
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AdvancedMinimumTargetOption(
+    enabled: Boolean,
+    value: String,
+    onEnabledChange: (Boolean) -> Unit,
+    onValueChange: (String) -> Unit,
+    testTag: String,
+) {
+    Column(
+        modifier = Modifier.testTag(testTag),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (enabled) {
+            GoalTargetInput(
+                value = value,
+                labelRes = R.string.create_goal_min_streak,
+                quickValues = listOf(1, 10, 33, 100),
+                integratedStepper = true,
+                onValueChange = onValueChange,
+                testTag = "$testTag-input",
+            )
+            Text(
+                text = stringResourceCompat(R.string.create_goal_min_streak_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            TextButton(
+                onClick = { onEnabledChange(false) },
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .testTag("$testTag-remove"),
+            ) {
+                Text(stringResourceCompat(R.string.create_goal_remove_streak))
+            }
+        } else {
+            TextButton(
+                onClick = { onEnabledChange(true) },
+                modifier = Modifier.testTag("$testTag-add"),
+            ) {
+                Text(stringResourceCompat(R.string.create_goal_add_streak))
+            }
+        }
+    }
+}
+
+private fun targetSessionRefs(draft: GoalDraft): List<TargetSessionRef> = when (GoalDraftMapper.effectiveTiming(draft)) {
+    GoalTimingDraft.Anytime -> listOf(
+        TargetSessionRef(
+            bucket = TargetSessionBucket.Anytime,
+            labelRes = R.string.timing_anytime,
+        )
+    )
+    GoalTimingDraft.MorningEvening -> listOf(
+        TargetSessionRef(TargetSessionBucket.Morning, labelRes = R.string.composer_morning),
+        TargetSessionRef(TargetSessionBucket.Evening, labelRes = R.string.composer_evening),
+    )
+    GoalTimingDraft.PrayerBased -> {
+        val target = draft.targetDraft as? TargetDraft.PrayerBased
+        if (target == null) {
+            emptyList()
+        } else {
+            Prayer.entries
+                .filter { it in target.selectedPrayers }
+                .flatMap { prayer ->
+                    PrayerRelation.entries
+                        .filter { it in target.relationsFor(prayer) }
+                        .map { relation ->
+                            TargetSessionRef(
+                                bucket = TargetSessionBucket.Prayer,
+                                prayer = prayer,
+                                relation = relation,
+                            )
+                        }
+                    }
+                }
+    }
+    GoalTimingDraft.CustomSlots -> draft.timeSlots.mapIndexed { index, slot ->
+        TargetSessionRef(
+            bucket = TargetSessionBucket.Custom,
+            index = index,
+            label = slot.displayLabel(index + 1),
+        )
+    }
+}
+
+@Composable
+private fun TargetSessionRef.localizedLabel(): String = when {
+    prayer != null && relation != null -> relation.localizedSlotTitle(prayer)
+    labelRes != null -> stringResourceCompat(labelRes)
+    else -> label.orEmpty()
+}
+
+private fun CountRuleDraft.targetInputValue(): String = when (mode) {
+    CountRuleMode.Minimum -> minimumCount
+    CountRuleMode.Exact -> maximumCount
+    CountRuleMode.Tracker,
+    CountRuleMode.Target,
+    CountRuleMode.Stretch,
+    CountRuleMode.Bounded -> targetCount
+}
+
+private fun CountRuleDraft.withTargetInputValue(value: String): CountRuleDraft = when (mode) {
+    CountRuleMode.Minimum -> copy(minimumCount = value)
+    CountRuleMode.Exact -> copy(maximumCount = value)
+    CountRuleMode.Tracker,
+    CountRuleMode.Target,
+    CountRuleMode.Stretch,
+    CountRuleMode.Bounded -> copy(targetCount = value)
+}
+
+private fun GoalTimeSlotDraft.targetInputValue(): String = when (mode) {
+    CountRuleMode.Minimum -> minimumCount
+    CountRuleMode.Exact -> maximumCount
+    CountRuleMode.Tracker,
+    CountRuleMode.Target,
+    CountRuleMode.Stretch,
+    CountRuleMode.Bounded -> targetCount
+}
+
+private fun GoalTimeSlotDraft.withTargetInputValue(value: String): GoalTimeSlotDraft = when (mode) {
+    CountRuleMode.Minimum -> copy(minimumCount = value)
+    CountRuleMode.Exact -> copy(maximumCount = value)
+    CountRuleMode.Tracker,
+    CountRuleMode.Target,
+    CountRuleMode.Stretch,
+    CountRuleMode.Bounded -> copy(targetCount = value)
+}
+
+private fun GoalDraft.targetInputValue(): String {
+    val count = countRule.targetInputValue()
+    if (count.isNotBlank()) return count
+    return when (val target = targetDraft) {
+        is TargetDraft.Fixed -> target.count
+        is TargetDraft.PrayerBased -> target.uniformCount
+        TargetDraft.None -> ""
+    }
+}
+
+private fun GoalDraft.minimumTargetValueFor(session: TargetSessionRef): String = when (session.bucket) {
+    TargetSessionBucket.Anytime -> extras.minStreakCount.takeIf { extras.hasMinStreak }.orEmpty()
+    TargetSessionBucket.Morning -> morningRule().minimumCount
+    TargetSessionBucket.Evening -> eveningRule().minimumCount
+    TargetSessionBucket.Custom -> timeSlots.getOrNull(session.index)?.minimumCount.orEmpty()
+    TargetSessionBucket.Prayer -> {
+        val target = targetDraft as? TargetDraft.PrayerBased
+        val prayer = session.prayer
+        val relation = session.relation
+        if (target == null || prayer == null || relation == null) {
+            ""
+        } else {
+            target.minimumFor(prayer, relation, "")
+        }
+    }
+}
+
+private fun GoalDraft.hasMinimumTargetFor(session: TargetSessionRef): Boolean =
+    minimumTargetValueFor(session).isNotBlank()
+
+private fun GoalDraft.targetValueFor(session: TargetSessionRef): String = when (session.bucket) {
+    TargetSessionBucket.Anytime -> targetInputValue()
+    TargetSessionBucket.Morning -> morningRule().targetInputValue()
+    TargetSessionBucket.Evening -> eveningRule().targetInputValue()
+    TargetSessionBucket.Custom -> timeSlots.getOrNull(session.index)?.targetInputValue().orEmpty()
+    TargetSessionBucket.Prayer -> {
+        val target = targetDraft as? TargetDraft.PrayerBased
+        val prayer = session.prayer
+        val relation = session.relation
+        if (target == null || prayer == null || relation == null) {
+            targetInputValue()
+        } else {
+            when (countRule.mode) {
+                CountRuleMode.Minimum -> target.minimumFor(prayer, relation, countRule.minimumCount)
+                CountRuleMode.Exact -> target.maximumFor(prayer, relation, countRule.maximumCount)
+                CountRuleMode.Tracker,
+                CountRuleMode.Target,
+                CountRuleMode.Stretch,
+                CountRuleMode.Bounded -> target.countFor(prayer, relation)
+            }
+        }
+    }
+}
+
+private fun GoalDraft.withSharedTargetInputValue(value: String): GoalDraft {
+    val nextTarget = when (val target = targetDraft) {
+        is TargetDraft.Fixed -> target.copy(count = value)
+        is TargetDraft.PrayerBased -> target.copy(
+            uniform = true,
+            uniformCount = value,
+            perPrayerCounts = emptyMap(),
+            perPrayerRelationCounts = emptyMap(),
+        )
+        TargetDraft.None -> targetDraft
+    }
+    return copy(
+        targetDraft = nextTarget,
+        countRule = countRule.withTargetInputValue(value),
+        morningTargetCount = value,
+        eveningTargetCount = value,
+        timeSlots = timeSlots.map { it.withTargetInputValue(value) },
+        slotTargetMode = SlotTargetMode.Same,
+    )
+}
+
+private fun GoalDraft.withSharedMinimumTarget(
+    enabled: Boolean,
+    value: String = extras.minStreakCount,
+): GoalDraft = copy(
+    extras = extras.copy(
+        hasMinStreak = enabled,
+        minStreakCount = if (enabled && value.isBlank()) "1" else value,
+    ),
+)
+
+private fun GoalDraft.withPerSessionTargets(
+    enabled: Boolean,
+    sessions: List<TargetSessionRef>,
+): GoalDraft {
+    if (enabled) {
+        val nextTarget = (targetDraft as? TargetDraft.PrayerBased)?.copy(uniform = false) ?: targetDraft
+        var next = copy(slotTargetMode = SlotTargetMode.PerSlot, targetDraft = nextTarget)
+        if (extras.hasMinStreak && extras.minStreakCount.isNotBlank()) {
+            sessions.forEach { session ->
+                if (!next.hasMinimumTargetFor(session)) {
+                    next = next.withSessionMinimumTarget(session, extras.minStreakCount)
+                }
+            }
+        }
+        return next
+    }
+    val sharedValue = sessions.firstOrNull()?.let { targetValueFor(it) } ?: targetInputValue()
+    val sharedMinimum = sessions.firstOrNull()?.let { minimumTargetValueFor(it) }.orEmpty()
+    return copy(slotTargetMode = SlotTargetMode.Same)
+        .withSharedTargetInputValue(sharedValue)
+        .withSharedMinimumTarget(sharedMinimum.isNotBlank(), sharedMinimum)
+}
+
+private fun GoalDraft.withSessionTarget(session: TargetSessionRef, value: String): GoalDraft = when (session.bucket) {
+    TargetSessionBucket.Anytime -> withSharedTargetInputValue(value)
+    TargetSessionBucket.Morning -> copy(
+        slotTargetMode = SlotTargetMode.PerSlot,
+    ).withMorningRule(morningRule().withTargetInputValue(value))
+    TargetSessionBucket.Evening -> copy(
+        slotTargetMode = SlotTargetMode.PerSlot,
+    ).withEveningRule(eveningRule().withTargetInputValue(value))
+    TargetSessionBucket.Custom -> {
+        val nextSlots = timeSlots.mapIndexed { index, slot ->
+            if (index == session.index) slot.withTargetInputValue(value) else slot
+        }
+        copy(slotTargetMode = SlotTargetMode.PerSlot, timeSlots = nextSlots)
+    }
+    TargetSessionBucket.Prayer -> {
+        val target = targetDraft as? TargetDraft.PrayerBased
+        val prayer = session.prayer
+        val relation = session.relation
+        if (target == null || prayer == null || relation == null) {
+            this
+        } else {
+            val nextTarget = when (countRule.mode) {
+                CountRuleMode.Minimum -> target.withMinimumFor(prayer, relation, value)
+                CountRuleMode.Exact -> target.withMaximumFor(prayer, relation, value)
+                CountRuleMode.Tracker,
+                CountRuleMode.Target,
+                CountRuleMode.Stretch,
+                CountRuleMode.Bounded -> target.withCountFor(prayer, relation, value)
+            }
+            copy(slotTargetMode = SlotTargetMode.PerSlot, targetDraft = nextTarget)
+        }
+    }
+}
+
+private fun GoalDraft.withSessionMinimumTarget(
+    session: TargetSessionRef,
+    enabled: Boolean,
+): GoalDraft {
+    val value = if (enabled) {
+        minimumTargetValueFor(session)
+            .ifBlank { extras.minStreakCount.takeIf { extras.hasMinStreak }.orEmpty() }
+            .ifBlank { "1" }
+    } else {
+        ""
+    }
+    return withSessionMinimumTarget(session, value)
+}
+
+private fun GoalDraft.withSessionMinimumTarget(
+    session: TargetSessionRef,
+    value: String,
+): GoalDraft = when (session.bucket) {
+    TargetSessionBucket.Anytime -> withSharedMinimumTarget(value.isNotBlank(), value)
+    TargetSessionBucket.Morning -> copy(slotTargetMode = SlotTargetMode.PerSlot)
+        .withMorningRule(morningRule().copy(minimumCount = value))
+    TargetSessionBucket.Evening -> copy(slotTargetMode = SlotTargetMode.PerSlot)
+        .withEveningRule(eveningRule().copy(minimumCount = value))
+    TargetSessionBucket.Custom -> copy(
+        slotTargetMode = SlotTargetMode.PerSlot,
+        timeSlots = timeSlots.mapIndexed { index, slot ->
+            if (index == session.index) slot.copy(minimumCount = value) else slot
+        },
+    )
+    TargetSessionBucket.Prayer -> {
+        val target = targetDraft as? TargetDraft.PrayerBased
+        val prayer = session.prayer
+        val relation = session.relation
+        if (target == null || prayer == null || relation == null) {
+            this
+        } else {
+            val key = PrayerSlotTargetKey(prayer, relation)
+            val nextTarget = if (value.isBlank()) {
+                target.copy(perPrayerRelationMinimumCounts = target.perPrayerRelationMinimumCounts + (key to ""))
+            } else {
+                target.withMinimumFor(prayer, relation, value)
+            }
+            copy(slotTargetMode = SlotTargetMode.PerSlot, targetDraft = nextTarget)
+        }
+    }
+}
+
+private fun GoalDraft.targetStepReady(): Boolean {
+    val sessions = targetSessionRefs(this)
+    val perSession = sessions.size > 1 && slotTargetMode == SlotTargetMode.PerSlot
+    return if (perSession) {
+        sessions.all { session ->
+            val target = targetValueFor(session).toIntOrNull()
+            val minimum = minimumTargetValueFor(session).toIntOrNull()
+            target != null && target > 0 && (minimum == null || (minimum > 0 && minimum <= target))
+        }
+    } else {
+        val target = targetInputValue().toIntOrNull()
+        val minimum = if (countRule.mode == CountRuleMode.Target && extras.hasMinStreak) {
+            extras.minStreakCount.toIntOrNull()
+        } else {
+            null
+        }
+        target != null && target > 0 &&
+            (!extras.hasMinStreak || (minimum != null && minimum > 0 && minimum <= target))
+    }
+}
+
+@Composable
+private fun AdvancedScheduleStep(
+    draft: GoalDraft,
+    onSelect: (ScheduleStepOption) -> Unit,
+) {
+    val selected = draft.scheduleStepOption()
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = stringResourceCompat(R.string.composer_schedule_question),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            ScheduleStepOption.entries.forEach { option ->
+                ScheduleStepOptionCard(
+                    option = option,
+                    selected = option == selected,
+                    onClick = { onSelect(option) },
+                )
+            }
+        }
+    }
+}
+
+internal fun scheduleStepCtaLabelRes(frequency: FrequencyDraft): Int =
+    if (frequency is FrequencyDraft.Daily) {
+        R.string.composer_set_timings
+    } else {
+        R.string.composer_set_days
+    }
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ScheduleDetailsStep(
+    draft: GoalDraft,
+    onFrequencyChange: (FrequencyDraft) -> Unit,
+) {
+    when (val frequency = draft.frequencyDraft) {
+        is FrequencyDraft.Weekly -> ScheduleDetailsSection(
+            title = stringResourceCompat(R.string.composer_schedule_details_weekly),
+        ) {
+            DayOfWeek.entries.chunked(2).forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    row.forEach { day ->
+                        ScheduleDetailChoice(
+                            text = day.localizedFullName(),
+                            selected = day in frequency.days,
+                            onClick = {
+                                val next = if (day in frequency.days) frequency.days - day else frequency.days + day
+                                onFrequencyChange(frequency.copy(days = next))
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    if (row.size == 1) Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+        is FrequencyDraft.Monthly -> ScheduleDetailsSection(
+            title = stringResourceCompat(R.string.composer_schedule_details_monthly),
+        ) {
+            CalendarToggle(
+                calendar = frequency.calendar,
+                onChange = { onFrequencyChange(frequency.copy(calendar = it)) },
+            )
+            ScheduleDetailDayGrid(
+                selected = frequency.daysOfMonth,
+                onToggle = { day ->
+                    val next = if (day in frequency.daysOfMonth) frequency.daysOfMonth - day else frequency.daysOfMonth + day
+                    onFrequencyChange(frequency.copy(daysOfMonth = next))
+                },
+            )
+        }
+        is FrequencyDraft.SpecificDates -> ScheduleDetailsSection(
+            title = stringResourceCompat(R.string.composer_schedule_details_specific_dates),
+        ) {
+            OutlinedTextField(
+                value = frequency.dateText,
+                onValueChange = { onFrequencyChange(FrequencyDraft.SpecificDates(it)) },
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(stringResourceCompat(R.string.preset_specific_dates)) },
+                placeholder = { Text(stringResourceCompat(R.string.composer_specific_hint)) },
+                shape = RoundedCornerShape(16.dp),
+                singleLine = false,
+                minLines = 3,
+            )
+        }
+        is FrequencyDraft.Interval -> ScheduleDetailsSection(
+            title = stringResourceCompat(R.string.composer_schedule_details_interval),
+        ) {
+            CountInputField(
+                value = frequency.intervalDays,
+                onValueChange = { onFrequencyChange(FrequencyDraft.Interval(it)) },
+                label = stringResourceCompat(R.string.create_goal_days_label),
+                quickValues = listOf(2, 3, 7, 10),
+            )
+        }
+        is FrequencyDraft.Yearly -> ScheduleDetailsSection(
+            title = stringResourceCompat(R.string.composer_schedule_details_yearly),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SectionLabel(stringResourceCompat(R.string.composer_month))
+                Spacer(modifier = Modifier.weight(1f))
+                CalendarToggle(
+                    calendar = frequency.calendar,
+                    onChange = { onFrequencyChange(frequency.copy(calendar = it)) },
+                )
+            }
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                (1..12).forEach { month ->
+                    ScheduleDetailChoice(
+                        text = monthLabel(month, frequency.calendar),
+                        selected = month == frequency.month,
+                        onClick = { onFrequencyChange(frequency.copy(month = month)) },
+                    )
+                }
+            }
+            SectionLabel(stringResourceCompat(R.string.create_goal_pick_days_month))
+            ScheduleDetailDayGrid(
+                selected = frequency.days,
+                onToggle = { day ->
+                    val next = if (day in frequency.days) frequency.days - day else frequency.days + day
+                    onFrequencyChange(frequency.copy(days = next))
+                },
+            )
+        }
+        is FrequencyDraft.Season -> ScheduleDetailsSection(
+            title = stringResourceCompat(R.string.composer_schedule_details_season),
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SeasonTemplateCode.entries.forEach { season ->
+                    ScheduleDetailChoice(
+                        text = season.localizedName(),
+                        selected = season == frequency.seasonTemplateCode,
+                        onClick = { onFrequencyChange(FrequencyDraft.Season(season, isConfigured = true)) },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            }
+        }
+        FrequencyDraft.Daily -> Unit
+    }
+}
+
+@Composable
+private fun ScheduleDetailsSection(
+    title: String,
+    content: @Composable () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        content()
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ScheduleDetailDayGrid(
+    selected: Set<Int>,
+    onToggle: (Int) -> Unit,
+) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        (1..31).forEach { day ->
+            ScheduleDetailChoice(
+                text = day.toString(),
+                selected = day in selected,
+                onClick = { onToggle(day) },
+                modifier = Modifier.width(48.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScheduleDetailChoice(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val accent = composerAccent()
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(14.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
+        color = if (selected) {
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = if (isAwradDarkTheme()) 0.5f else 0.7f)
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
+        border = BorderStroke(
+            width = if (selected) 1.5.dp else 1.dp,
+            color = if (selected) accent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+        ),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 13.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ScheduleStepOptionCard(
+    option: ScheduleStepOption,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val accent = composerAccent()
+    val container = if (selected) {
+        MaterialTheme.colorScheme.primaryContainer.copy(alpha = if (isAwradDarkTheme()) 0.5f else 0.7f)
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLow
+    }
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = container,
+        border = BorderStroke(
+            width = if (selected) 1.5.dp else 1.dp,
+            color = if (selected) accent else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f),
+        ),
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 17.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResourceCompat(option.labelRes),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+            if (selected) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
     }
 }
 
@@ -424,6 +1349,8 @@ private fun ComposerConfig(
     onTargetChange: (TargetDraft) -> Unit,
     onFrequencyChange: (FrequencyDraft) -> Unit,
     onDraftChange: (GoalDraft) -> Unit,
+    includeSchedule: Boolean,
+    showTimingSelector: Boolean,
 ) {
     when (type) {
         ComposerType.Daily -> CountTimingConfig(
@@ -431,12 +1358,23 @@ private fun ComposerConfig(
             quickValues = listOf(33, 70, 100, 313),
             onTargetChange = onTargetChange,
             onDraftChange = onDraftChange,
+            showTimingSelector = showTimingSelector,
         )
-        ComposerType.OneTime -> ConfigCard {
-            AnytimeBucketEditor(
+        ComposerType.OneTime -> if (showTimingSelector) {
+            ConfigCard {
+                AnytimeBucketEditor(
+                    draft = draft,
+                    quickValues = listOf(1000, 10000, 33000, 70000),
+                    onDraftChange = onDraftChange,
+                )
+            }
+        } else {
+            CountTimingConfig(
                 draft = draft,
                 quickValues = listOf(1000, 10000, 33000, 70000),
+                onTargetChange = onTargetChange,
                 onDraftChange = onDraftChange,
+                showTimingSelector = false,
             )
         }
         ComposerType.Tracker -> TrackerNote()
@@ -445,6 +1383,8 @@ private fun ComposerConfig(
             onTargetChange = onTargetChange,
             onFrequencyChange = onFrequencyChange,
             onDraftChange = onDraftChange,
+            includeSchedule = includeSchedule,
+            showTimingSelector = showTimingSelector,
         )
     }
 }
@@ -456,12 +1396,16 @@ private fun AdvancedConfig(
     onTargetChange: (TargetDraft) -> Unit,
     onFrequencyChange: (FrequencyDraft) -> Unit,
     onDraftChange: (GoalDraft) -> Unit,
+    includeSchedule: Boolean,
+    showTimingSelector: Boolean,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ConfigCard {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionLabel(stringResourceCompat(R.string.review_section_schedule))
-                ScheduleEditor(draft = draft, onFrequencyChange = onFrequencyChange)
+        if (includeSchedule) {
+            ConfigCard {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionLabel(stringResourceCompat(R.string.review_section_schedule))
+                    ScheduleEditor(draft = draft, onFrequencyChange = onFrequencyChange)
+                }
             }
         }
         CountTimingConfig(
@@ -469,6 +1413,7 @@ private fun AdvancedConfig(
             quickValues = listOf(33, 100, 1000, 10000),
             onTargetChange = onTargetChange,
             onDraftChange = onDraftChange,
+            showTimingSelector = showTimingSelector,
         )
     }
 }
@@ -515,22 +1460,25 @@ private fun CountTimingConfig(
     quickValues: List<Int>,
     onTargetChange: (TargetDraft) -> Unit,
     onDraftChange: (GoalDraft) -> Unit,
+    showTimingSelector: Boolean,
 ) {
     val timing = GoalDraftMapper.effectiveTiming(draft)
     ConfigCard {
         Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SectionLabel(stringResourceCompat(R.string.create_goal_timing))
-                ComposerSelect(
-                    options = listOf(
-                        SelectOption(GoalTimingDraft.Anytime, stringResourceCompat(R.string.timing_anytime), stringResourceCompat(R.string.timing_anytime_desc)),
-                        SelectOption(GoalTimingDraft.PrayerBased, stringResourceCompat(R.string.timing_prayer_based), stringResourceCompat(R.string.timing_prayer_desc)),
-                        SelectOption(GoalTimingDraft.CustomSlots, stringResourceCompat(R.string.composer_timing_custom)),
-                    ),
-                    selected = timing,
-                    sheetTitle = stringResourceCompat(R.string.create_goal_timing),
-                    onSelect = { selection -> if (selection != timing) applyTimingSelection(draft, selection, onDraftChange) },
-                )
+            if (showTimingSelector) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    SectionLabel(stringResourceCompat(R.string.create_goal_timing))
+                    ComposerSelect(
+                        options = listOf(
+                            SelectOption(GoalTimingDraft.Anytime, stringResourceCompat(R.string.timing_anytime), stringResourceCompat(R.string.timing_anytime_desc)),
+                            SelectOption(GoalTimingDraft.PrayerBased, stringResourceCompat(R.string.timing_prayer_based), stringResourceCompat(R.string.timing_prayer_desc)),
+                            SelectOption(GoalTimingDraft.CustomSlots, stringResourceCompat(R.string.composer_timing_custom)),
+                        ),
+                        selected = timing,
+                        sheetTitle = stringResourceCompat(R.string.create_goal_timing),
+                        onSelect = { selection -> if (selection != timing) applyTimingSelection(draft, selection, onDraftChange) },
+                    )
+                }
             }
             when (timing) {
                 GoalTimingDraft.Anytime -> AnytimeBucketEditor(draft, quickValues, onDraftChange)
@@ -561,6 +1509,7 @@ private fun applyTimingSelection(
             draft.copy(
                 timingType = TimingType.ANYTIME,
                 advancedTiming = GoalTimingDraft.Anytime,
+                slotTargetMode = SlotTargetMode.Same,
                 targetDraft = fixedTargetFrom(draft),
             )
         )
@@ -568,19 +1517,20 @@ private fun applyTimingSelection(
             draft.copy(
                 timingType = TimingType.PRAYER_BASED,
                 advancedTiming = GoalTimingDraft.PrayerBased,
-                slotTargetMode = SlotTargetMode.PerSlot,
-                targetDraft = draft.targetDraft as? TargetDraft.PrayerBased ?: TargetDraft.PrayerBased(
-                    timing = PrayerTiming.AFTER,
-                    selectedPrayers = Prayer.entries.toSet(),
-                    uniformCount = draft.countRule.targetCount.ifBlank { "33" },
-                ),
+                slotTargetMode = SlotTargetMode.Same,
+                targetDraft = (draft.targetDraft as? TargetDraft.PrayerBased
+                    ?: TargetDraft.PrayerBased(
+                        timing = PrayerTiming.AFTER,
+                        selectedPrayers = Prayer.entries.toSet(),
+                        uniformCount = draft.countRule.targetCount.ifBlank { "33" },
+                    )).copy(uniform = true),
             )
         )
         GoalTimingDraft.CustomSlots -> onDraftChange(
             draft.copy(
                 timingType = TimingType.TIME_BASED,
                 advancedTiming = GoalTimingDraft.CustomSlots,
-                slotTargetMode = SlotTargetMode.PerSlot,
+                slotTargetMode = SlotTargetMode.Same,
                 targetDraft = fixedTargetFrom(draft),
             )
         )
@@ -902,90 +1852,236 @@ private fun PrayerBucketEditor(
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         // Which prayers (multi-select)
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SectionLabel(stringResourceCompat(R.string.composer_prayer_which))
-                ComposerMultiSelect(
-                    options = Prayer.entries.map { SelectOption(it, it.localizedName()) },
-                    selected = target.selectedPrayers,
-                    sheetTitle = stringResourceCompat(R.string.composer_prayer_which),
-                    summary = prayersSummary(target.selectedPrayers),
-                    onToggle = { prayer ->
-                        val next = if (prayer in target.selectedPrayers) {
-                            target.selectedPrayers - prayer
-                        } else {
-                            target.selectedPrayers + prayer
-                        }
-                        if (next.isNotEmpty()) onTargetChange(target.copy(selectedPrayers = next))
-                    },
-                )
-            }
-            // When
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                SectionLabel(stringResourceCompat(R.string.composer_prayer_when))
-                ComposerSelect(
-                    options = PrayerTiming.entries.map { SelectOption(it, it.localizedTitle()) },
-                    selected = target.timing,
-                    sheetTitle = stringResourceCompat(R.string.composer_prayer_when),
-                    onSelect = { onTargetChange(target.copy(timing = it)) },
-                )
-            }
-            // Per-prayer toggle
-            SwitchRow(
-                label = stringResourceCompat(R.string.composer_per_prayer),
-                checked = !target.uniform,
-                onCheckedChange = { perPrayer ->
-                    if (perPrayer) {
-                        onTargetChange(target.copy(uniform = false))
-                    } else {
-                        onTargetChange(
-                            target.copy(
-                                uniform = true,
-                                perPrayerCounts = emptyMap(),
-                                perPrayerRelationCounts = emptyMap(),
-                            )
-                        )
-                    }
-                },
+            SectionLabel(stringResourceCompat(R.string.composer_prayer_which))
+            PrayerRelationsSheet(
+                target = target,
+                onTargetChange = { onTargetChange(it) },
             )
-            // Count(s)
-            if (target.uniform) {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    SectionLabel(stringResourceCompat(R.string.composer_count_each_prayer))
-                    CountInputField(
-                        value = target.uniformCount,
-                        onValueChange = { onTargetChange(target.copy(uniformCount = it)) },
-                        label = "",
-                        quickValues = listOf(3, 33, 100, 313),
+        }
+        // Per-prayer toggle
+        SwitchRow(
+            label = stringResourceCompat(R.string.composer_per_prayer),
+            checked = !target.uniform,
+            onCheckedChange = { perPrayer ->
+                if (perPrayer) {
+                    onTargetChange(target.copy(uniform = false))
+                } else {
+                    onTargetChange(
+                        target.copy(
+                            uniform = true,
+                            perPrayerCounts = emptyMap(),
+                            perPrayerRelationCounts = emptyMap(),
+                        )
                     )
                 }
+            },
+        )
+        // Count(s)
+        if (target.uniform) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                SectionLabel(stringResourceCompat(R.string.composer_count_each_prayer))
+                CountInputField(
+                    value = target.uniformCount,
+                    onValueChange = { onTargetChange(target.copy(uniformCount = it)) },
+                    label = "",
+                    quickValues = listOf(3, 33, 100, 313),
+                )
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionLabel(stringResourceCompat(R.string.composer_count_each_prayer))
+                Prayer.entries.filter { it in target.selectedPrayers }.forEach { prayer ->
+                    CompactCountRow(
+                        label = prayer.localizedName(),
+                        value = target.countFor(prayer),
+                        onChange = { onTargetChange(target.withCountFor(prayer, it)) },
+                    )
+                }
+            }
+        }
+        // Before-prayer lead overrides (only when counting before prayers)
+        if (target.selectedPrayers.any { PrayerRelation.BEFORE in target.relationsFor(it) }) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SectionLabel(stringResourceCompat(R.string.composer_lead_before))
+                Prayer.entries.filter {
+                    it in target.selectedPrayers && PrayerRelation.BEFORE in target.relationsFor(it)
+                }.forEach { prayer ->
+                    CompactCountRow(
+                        label = prayer.localizedName(),
+                        value = target.beforePrayerLeadOverrides[prayer] ?: "10",
+                        onChange = {
+                            onTargetChange(
+                                target.copy(beforePrayerLeadOverrides = target.beforePrayerLeadOverrides + (prayer to it)),
+                            )
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PrayerRelationsSheet(
+    target: TargetDraft.PrayerBased,
+    onTargetChange: (TargetDraft.PrayerBased) -> Unit,
+) {
+    var open by remember { mutableStateOf(false) }
+    var showSelectionError by remember { mutableStateOf(false) }
+    val hasActiveSelection = rememberUpdatedState(target.selectedPrayers.isNotEmpty())
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { value ->
+            if (value == SheetValue.Hidden && !hasActiveSelection.value) {
+                showSelectionError = true
+                false
             } else {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SectionLabel(stringResourceCompat(R.string.composer_count_each_prayer))
-                    Prayer.entries.filter { it in target.selectedPrayers }.forEach { prayer ->
-                        CompactCountRow(
-                            label = prayer.localizedName(),
-                            value = target.countFor(prayer),
-                            onChange = { onTargetChange(target.withCountFor(prayer, it)) },
-                        )
-                    }
-                }
+                true
             }
-            // Before-prayer lead overrides (only when counting before prayers)
-            if (target.timing == PrayerTiming.BEFORE || target.timing == PrayerTiming.BOTH) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SectionLabel(stringResourceCompat(R.string.composer_lead_before))
-                    Prayer.entries.filter { it in target.selectedPrayers }.forEach { prayer ->
-                        CompactCountRow(
-                            label = prayer.localizedName(),
-                            value = target.beforePrayerLeadOverrides[prayer] ?: "10",
-                            onChange = {
-                                onTargetChange(
-                                    target.copy(beforePrayerLeadOverrides = target.beforePrayerLeadOverrides + (prayer to it)),
+        },
+    )
+    val dismissSheet = {
+        if (!hasActiveSelection.value) {
+            showSelectionError = true
+        } else {
+            showSelectionError = false
+            open = false
+        }
+    }
+
+    LaunchedEffect(target.selectedPrayers.isNotEmpty()) {
+        if (target.selectedPrayers.isNotEmpty()) showSelectionError = false
+    }
+
+    SelectField(
+        text = prayersSummary(target.selectedPrayers),
+        onClick = {
+            showSelectionError = false
+            open = true
+        },
+    )
+
+    if (open) {
+        ModalBottomSheet(
+            onDismissRequest = dismissSheet,
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp)
+                    .padding(bottom = 20.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                SheetHeader(title = stringResourceCompat(R.string.composer_prayer_which))
+                if (showSelectionError) {
+                    Text(
+                        text = stringResourceCompat(R.string.composer_prayer_select_relation),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                PrayerRelationSwitch(
+                    label = stringResourceCompat(R.string.composer_prayer_before_all),
+                    checked = Prayer.entries.all { PrayerRelation.BEFORE in target.relationsFor(it) },
+                    onCheckedChange = { enabled ->
+                        val next = target.withRelationForAll(PrayerRelation.BEFORE, enabled)
+                        onTargetChange(next)
+                    },
+                )
+                PrayerRelationSwitch(
+                    label = stringResourceCompat(R.string.composer_prayer_after_all),
+                    checked = Prayer.entries.all { PrayerRelation.AFTER in target.relationsFor(it) },
+                    onCheckedChange = { enabled ->
+                        val next = target.withRelationForAll(PrayerRelation.AFTER, enabled)
+                        onTargetChange(next)
+                    },
+                )
+                Prayer.entries.forEach { prayer ->
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            Text(
+                                text = prayer.localizedName(),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                val relations = target.relationsFor(prayer)
+                                PrayerRelationSwitch(
+                                    label = stringResourceCompat(R.string.prayer_relation_before),
+                                    checked = PrayerRelation.BEFORE in relations,
+                                    modifier = Modifier.weight(1f),
+                                    onCheckedChange = { checked ->
+                                        val nextRelations = if (checked) {
+                                            relations + PrayerRelation.BEFORE
+                                        } else {
+                                            relations - PrayerRelation.BEFORE
+                                        }
+                                        val next = target.withRelationsFor(prayer, nextRelations)
+                                        onTargetChange(next)
+                                    },
                                 )
-                            },
-                        )
+                                PrayerRelationSwitch(
+                                    label = stringResourceCompat(R.string.prayer_relation_after),
+                                    checked = PrayerRelation.AFTER in relations,
+                                    modifier = Modifier.weight(1f),
+                                    onCheckedChange = { checked ->
+                                        val nextRelations = if (checked) {
+                                            relations + PrayerRelation.AFTER
+                                        } else {
+                                            relations - PrayerRelation.AFTER
+                                        }
+                                        val next = target.withRelationsFor(prayer, nextRelations)
+                                        onTargetChange(next)
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun PrayerRelationSwitch(
+    label: String,
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Checkbox(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 
@@ -1296,7 +2392,7 @@ private fun ScheduleEditor(
                     options = SeasonTemplateCode.entries.map { SelectOption(it, it.localizedName()) },
                     selected = frequency.seasonTemplateCode,
                     sheetTitle = stringResourceCompat(R.string.composer_schedule_season),
-                    onSelect = { onFrequencyChange(FrequencyDraft.Season(it)) },
+                    onSelect = { onFrequencyChange(FrequencyDraft.Season(it, isConfigured = true)) },
                 )
             }
             is FrequencyDraft.Monthly -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1585,6 +2681,33 @@ private fun ComposerCreateBar(
     }
 }
 
+@Composable
+private fun ComposerNextBar(
+    onNext: () -> Unit,
+    enabled: Boolean = true,
+    labelRes: Int = R.string.composer_set_timings,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shadowElevation = 12.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp, vertical = 14.dp),
+        ) {
+            RitualPrimaryButton(
+                text = stringResourceCompat(labelRes),
+                onClick = onNext,
+                enabled = enabled,
+            )
+        }
+    }
+}
+
 // ─── Small shared pieces ─────────────────────────────────────────────────────
 
 @Composable
@@ -1836,76 +2959,6 @@ private fun <T> SelectSheetContent(
     }
 }
 
-// ─── Bottom-sheet multi-select ───────────────────────────────────────────────
-
-/** Like [ComposerSelect] but allows multiple values; the field shows a summary. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun <T> ComposerMultiSelect(
-    options: List<SelectOption<T>>,
-    selected: Set<T>,
-    sheetTitle: String,
-    summary: String,
-    onToggle: (T) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var open by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-
-    SelectField(text = summary, onClick = { open = true }, modifier = modifier)
-
-    if (open) {
-        ModalBottomSheet(
-            onDismissRequest = { open = false },
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .navigationBarsPadding()
-                    .padding(horizontal = 20.dp)
-                    .padding(bottom = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Text(
-                    text = sheetTitle,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(bottom = 8.dp),
-                )
-                options.forEach { option ->
-                    val checked = option.value in selected
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .clickable { onToggle(option.value) },
-                        shape = RoundedCornerShape(16.dp),
-                        color = Color.Transparent,
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text = option.label,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = if (checked) FontWeight.SemiBold else FontWeight.Normal,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.weight(1f),
-                            )
-                            Checkbox(checked = checked, onCheckedChange = { onToggle(option.value) })
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 /** Multi-select whose sheet shows a wrap of selectable chips (good for day grids). */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -2062,6 +3115,85 @@ private fun ComposerTimePickerDialog(
 
 // ─── Schedule mode mapping ───────────────────────────────────────────────────
 
+private enum class ScheduleStepOption(val labelRes: Int) {
+    OneTime(R.string.composer_type_onetime_title),
+    Daily(R.string.composer_type_daily_title),
+    Weekly(R.string.preset_weekly),
+    Monthly(R.string.preset_monthly_gregorian),
+    SpecificDates(R.string.preset_specific_dates),
+    Interval(R.string.preset_interval),
+    Yearly(R.string.composer_schedule_yearly),
+    Season(R.string.composer_schedule_season),
+}
+
+private fun GoalDraft.scheduleDetailsReady(): Boolean = when (val frequency = frequencyDraft) {
+    FrequencyDraft.Daily -> true
+    is FrequencyDraft.Weekly -> frequency.days.isNotEmpty()
+    is FrequencyDraft.Monthly -> frequency.daysOfMonth.isNotEmpty()
+    is FrequencyDraft.SpecificDates -> frequency.dateText.isNotBlank()
+    is FrequencyDraft.Interval -> frequency.intervalDays.toIntOrNull()?.let { it > 0 } == true
+    is FrequencyDraft.Yearly -> frequency.days.isNotEmpty()
+    is FrequencyDraft.Season -> frequency.isConfigured
+}
+
+private fun GoalDraft.scheduleStepOption(): ScheduleStepOption =
+    if (preset == GoalPreset.ONE_TIME) {
+        ScheduleStepOption.OneTime
+    } else {
+        when (frequencyDraft) {
+            is FrequencyDraft.Daily -> ScheduleStepOption.Daily
+            is FrequencyDraft.Weekly -> ScheduleStepOption.Weekly
+            is FrequencyDraft.Interval -> ScheduleStepOption.Interval
+            is FrequencyDraft.Monthly -> ScheduleStepOption.Monthly
+            is FrequencyDraft.Yearly -> ScheduleStepOption.Yearly
+            is FrequencyDraft.Season -> ScheduleStepOption.Season
+            is FrequencyDraft.SpecificDates -> ScheduleStepOption.SpecificDates
+        }
+    }
+
+private fun GoalDraft.withScheduleStepOption(option: ScheduleStepOption): GoalDraft = when (option) {
+    ScheduleStepOption.OneTime -> copy(
+        preset = GoalPreset.ONE_TIME,
+        frequencyDraft = FrequencyDraft.Daily,
+        customTargetPolicy = TargetPolicy.CUMULATIVE_TOTAL,
+    )
+    ScheduleStepOption.Daily -> copy(
+        preset = GoalPreset.CUSTOM,
+        frequencyDraft = FrequencyDraft.Daily,
+        customTargetPolicy = TargetPolicy.PER_DUE_DATE,
+    )
+    ScheduleStepOption.Weekly -> copy(
+        preset = GoalPreset.CUSTOM,
+        frequencyDraft = defaultFrequencyFor(ScheduleMode.Weekly),
+        customTargetPolicy = TargetPolicy.PER_DUE_DATE,
+    )
+    ScheduleStepOption.Monthly -> copy(
+        preset = GoalPreset.CUSTOM,
+        frequencyDraft = defaultFrequencyFor(ScheduleMode.Monthly),
+        customTargetPolicy = TargetPolicy.PER_DUE_DATE,
+    )
+    ScheduleStepOption.SpecificDates -> copy(
+        preset = GoalPreset.CUSTOM,
+        frequencyDraft = defaultFrequencyFor(ScheduleMode.SpecificDates),
+        customTargetPolicy = TargetPolicy.PER_DUE_DATE,
+    )
+    ScheduleStepOption.Interval -> copy(
+        preset = GoalPreset.CUSTOM,
+        frequencyDraft = defaultFrequencyFor(ScheduleMode.Interval),
+        customTargetPolicy = TargetPolicy.PER_DUE_DATE,
+    )
+    ScheduleStepOption.Yearly -> copy(
+        preset = GoalPreset.CUSTOM,
+        frequencyDraft = defaultFrequencyFor(ScheduleMode.Yearly),
+        customTargetPolicy = TargetPolicy.PER_DUE_DATE,
+    )
+    ScheduleStepOption.Season -> copy(
+        preset = GoalPreset.CUSTOM,
+        frequencyDraft = defaultFrequencyFor(ScheduleMode.Season),
+        customTargetPolicy = TargetPolicy.PER_DUE_DATE,
+    )
+}
+
 private enum class ScheduleMode { Daily, Weekly, Interval, Monthly, Yearly, Season, SpecificDates }
 
 private fun FrequencyDraft.scheduleMode(): ScheduleMode = when (this) {
@@ -2076,10 +3208,10 @@ private fun FrequencyDraft.scheduleMode(): ScheduleMode = when (this) {
 
 private fun defaultFrequencyFor(mode: ScheduleMode): FrequencyDraft = when (mode) {
     ScheduleMode.Daily -> FrequencyDraft.Daily
-    ScheduleMode.Weekly -> FrequencyDraft.Weekly(setOf(DayOfWeek.FRIDAY))
-    ScheduleMode.Interval -> FrequencyDraft.Interval("3")
-    ScheduleMode.Monthly -> FrequencyDraft.Monthly(daysOfMonth = setOf(1))
-    ScheduleMode.Yearly -> FrequencyDraft.Yearly(month = 1, days = setOf(1))
+    ScheduleMode.Weekly -> FrequencyDraft.Weekly(emptySet())
+    ScheduleMode.Interval -> FrequencyDraft.Interval("")
+    ScheduleMode.Monthly -> FrequencyDraft.Monthly(daysOfMonth = emptySet())
+    ScheduleMode.Yearly -> FrequencyDraft.Yearly(month = 1, days = emptySet())
     ScheduleMode.Season -> FrequencyDraft.Season(SeasonTemplateCode.RAMADAN)
     ScheduleMode.SpecificDates -> FrequencyDraft.SpecificDates("")
 }

@@ -63,7 +63,6 @@
     <string name="greeting_evening">مساء الخير</string>
 
     <!-- Home screen -->
-    <string name="home_today">اليوم</string>
     <string name="home_jump_back_in">استكمل ذكرك</string>
     <string name="home_explore">استكشف</string>
     <string name="home_remaining">%d متبقٍ</string>
@@ -192,16 +191,32 @@
     <string name="composer_advanced_basis">على أي أساس يقوم هذا الهدف؟</string>
     <string name="composer_advanced_prayers">صلواتك</string>
     <string name="composer_advanced_schedule">جدول زمني</string>
-    <string name="composer_count_each_time">كم مرة في كل مرة؟</string>
     <string name="composer_prayers_all">كل الصلوات</string>
     <string name="composer_count_daily">كم مرة كل يوم؟</string>
     <string name="composer_count_total">الإجمالي المطلوب</string>
     <string name="composer_count_each_prayer">كم مرة بعد كل صلاة؟</string>
     <string name="composer_prayer_which">أي الصلوات؟</string>
     <string name="composer_prayer_when">متى؟</string>
+    <string name="composer_prayer_before_all">قبل كل الصلوات</string>
+    <string name="composer_prayer_after_all">بعد كل الصلوات</string>
+    <string name="composer_prayer_select_relation">اختر «قبل» أو «بعد» لصلاة واحدة على الأقل قبل الإغلاق.</string>
     <string name="composer_tracker_note">عُدّ فقط — بلا هدف محدد. مثالي لبناء عادة ثابتة.</string>
     <string name="composer_customize">خيارات أكثر: أعداد لكل صلاة، جلسات مخصّصة وقواعد</string>
     <string name="composer_change_dhikr">تغيير</string>
+    <string name="composer_schedule_question">كم مرة تريد العد؟</string>
+    <string name="composer_timing_question">متى تريد العد؟</string>
+    <string name="composer_target_question">ما هدفك؟</string>
+    <string name="composer_target_different_sessions">تعيين هدف مختلف لكل جلسة</string>
+    <string name="composer_target_label">الهدف</string>
+    <string name="composer_continue">متابعة</string>
+    <string name="composer_set_timings">تعيين الأوقات</string>
+    <string name="composer_set_days">تعيين الأيام</string>
+    <string name="composer_schedule_details_weekly">ما الأيام؟</string>
+    <string name="composer_schedule_details_monthly">ما أيام الشهر؟</string>
+    <string name="composer_schedule_details_specific_dates">ما التواريخ؟</string>
+    <string name="composer_schedule_details_interval">كل كم يومًا؟</string>
+    <string name="composer_schedule_details_yearly">ما الشهر والأيام؟</string>
+    <string name="composer_schedule_details_season">أي موسم؟</string>
     <string name="composer_finetune">ضبط دقيق</string>
     <string name="composer_schedule_season">موسم إسلامي</string>
     <string name="composer_reminder_auto_note">سنذكّرك عند وقت كل صلاة أو جلسة.</string>
@@ -213,6 +228,7 @@
     <string name="composer_per_prayer">عدد مختلف لكل صلاة</string>
     <string name="composer_timing_morning_evening">الصباح والمساء</string>
     <string name="composer_timing_custom">جلسات مخصّصة</string>
+    <string name="composer_timing_custom_desc">حدّد جلسة مخصّصة واحدة أو أكثر خلال اليوم</string>
     <string name="composer_morning">الصباح</string>
     <string name="composer_evening">المساء</string>
     <string name="composer_add_session">إضافة جلسة</string>
@@ -1291,6 +1307,8 @@
     <string name="goal_sentence_morning_evening">اقرأ %1$s: %2$s صباحًا ومساءً.</string>
     <string name="goal_sentence_default">اقرأ %1$s: %2$s، %3$s.</string>
     <string name="goal_sentence_default_timed">اقرأ %1$s: %2$s، %3$s، %4$s.</string>
+    <string name="goal_sentence_default_no_schedule">اقرأ %1$s: %2$s.</string>
+    <string name="goal_sentence_default_timed_no_schedule">اقرأ %1$s: %2$s، %3$s.</string>
     <string name="goal_summary_no_target">بدون هدف</string>
     <string name="goal_summary_target_total">%1$s إجماليًا</string>
     <string name="goal_summary_target_period">%1$s لكل فترة</string>
@@ -1328,6 +1346,7 @@
     <string name="goal_summary_slots_prayer_not_configured">خانات الصلاة غير مهيأة</string>
     <string name="goal_summary_slots_each_prayer">كل صلاة</string>
     <string name="goal_summary_slots_prayer">%1$s %2$s</string>
+    <string name="goal_summary_slots_prayer_mixed">قبل بعض الصلوات وبعد بعضها: %1$s</string>
     <string name="goal_summary_off">إيقاف</string>
     <string name="goal_summary_reminders_prayer">بعد أوقات الصلاة بـ 10 دقائق</string>
     <string name="goal_summary_reminders_window_start">عند بداية النافذة</string>

@@ -16,6 +16,9 @@ sealed class FrequencyDraft {
         val days: Set<Int> = emptySet(),
         val calendar: String = "gregorian",
     ) : FrequencyDraft()
-    data class Season(val seasonTemplateCode: SeasonTemplateCode = SeasonTemplateCode.RAMADAN) : FrequencyDraft()
+    data class Season(
+        val seasonTemplateCode: SeasonTemplateCode = SeasonTemplateCode.RAMADAN,
+        val isConfigured: Boolean = false,
+    ) : FrequencyDraft()
     data class SpecificDates(val dateText: String = "") : FrequencyDraft()
 }

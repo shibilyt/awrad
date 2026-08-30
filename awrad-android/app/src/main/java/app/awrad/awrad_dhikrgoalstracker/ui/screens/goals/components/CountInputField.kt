@@ -29,10 +29,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -77,10 +79,10 @@ fun CountInputField(
             } else {
                 Color.White
             }
-            val buttonBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.72f)
+            val stepperBorderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.72f)
             val buttonBackgroundColor = MaterialTheme.colorScheme.primary.copy(
                 alpha = if (isAwradDarkTheme()) 0.16f else 0.12f,
-            )
+            ).compositeOver(MaterialTheme.colorScheme.background)
             val stepperRadius = 12.dp
             val stepperShape = RoundedCornerShape(stepperRadius)
             val decreaseButtonShape = RoundedCornerShape(
@@ -112,6 +114,7 @@ fun CountInputField(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(64.dp)
+                        .border(Dp.Hairline, stepperBorderColor, stepperShape)
                         .testTag("count-input-integrated-stepper"),
                     leadingIcon = {
                         IconButton(
@@ -120,7 +123,7 @@ fun CountInputField(
                             modifier = Modifier
                                 .size(64.dp)
                                 .background(buttonBackgroundColor, decreaseButtonShape)
-                                .border(1.dp, buttonBorderColor, decreaseButtonShape)
+                                .border(Dp.Hairline, stepperBorderColor, decreaseButtonShape)
                                 .testTag("count-input-decrease"),
                         ) {
                             Icon(
@@ -135,7 +138,7 @@ fun CountInputField(
                             modifier = Modifier
                                 .size(64.dp)
                                 .background(buttonBackgroundColor, increaseButtonShape)
-                                .border(1.dp, buttonBorderColor, increaseButtonShape)
+                                .border(Dp.Hairline, stepperBorderColor, increaseButtonShape)
                                 .testTag("count-input-increase"),
                         ) {
                             Icon(
@@ -151,8 +154,9 @@ fun CountInputField(
                         focusedContainerColor = fieldColor,
                         unfocusedContainerColor = fieldColor,
                         disabledContainerColor = fieldColor,
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        focusedBorderColor = Color.Transparent,
+                        unfocusedBorderColor = Color.Transparent,
+                        disabledBorderColor = Color.Transparent,
                     ),
                     textStyle = MaterialTheme.typography.headlineSmall.copy(
                         textAlign = TextAlign.Center,

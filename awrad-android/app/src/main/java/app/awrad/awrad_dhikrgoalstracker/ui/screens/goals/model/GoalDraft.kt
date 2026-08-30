@@ -288,7 +288,10 @@ object GoalDraftDefaults {
             )
             GoalPreset.ISLAMIC_SEASON -> GoalDraft(
                 preset = preset,
-                frequencyDraft = FrequencyDraft.Season(SeasonTemplateCode.RAMADAN),
+                frequencyDraft = FrequencyDraft.Season(
+                    SeasonTemplateCode.RAMADAN,
+                    isConfigured = true,
+                ),
                 timingType = TimingType.ANYTIME,
                 advancedTiming = GoalTimingDraft.Anytime,
                 targetDraft = TargetDraft.Fixed("10000"),
@@ -462,7 +465,12 @@ object GoalDraftMapper {
             RecurrenceFrequency.MONTHLY -> if (recurrence.monthDays.isEmpty()) errors[GoalDraftSection.Schedule] = GoalValidationMessage.SelectMonthDay
             RecurrenceFrequency.YEARLY -> if (recurrence.monthDays.isEmpty()) errors[GoalDraftSection.Schedule] = GoalValidationMessage.SelectYearDay
             RecurrenceFrequency.SPECIFIC_DATES -> if (recurrence.specificDates.isEmpty()) errors[GoalDraftSection.Schedule] = GoalValidationMessage.AddDate
-            RecurrenceFrequency.SEASON -> if (recurrence.seasonTemplateCode == null) errors[GoalDraftSection.Schedule] = GoalValidationMessage.SelectSeason
+            RecurrenceFrequency.SEASON -> {
+                val season = draft.frequencyDraft as? FrequencyDraft.Season
+                if (season?.isConfigured != true) {
+                    errors[GoalDraftSection.Schedule] = GoalValidationMessage.SelectSeason
+                }
+            }
             RecurrenceFrequency.INTERVAL -> {
                 val interval = (draft.frequencyDraft as? FrequencyDraft.Interval)?.intervalDays?.toIntOrNull() ?: 0
                 if (interval <= 0) errors[GoalDraftSection.Schedule] = GoalValidationMessage.PositiveInterval
@@ -573,8 +581,7 @@ object GoalDraftMapper {
             GoalTimingDraft.Anytime -> listOf(draft.countRule.mode)
             GoalTimingDraft.PrayerBased -> {
                 val target = draft.targetDraft as? TargetDraft.PrayerBased ?: return emptyList()
-                val relationCount = if (target.timing == PrayerTiming.BOTH) 2 else 1
-                List(target.selectedPrayers.size * relationCount) { draft.countRule.mode }
+                List(target.selectedPrayers.sumOf { target.relationsFor(it).size }) { draft.countRule.mode }
             }
             GoalTimingDraft.MorningEvening -> listOf(draft.morningMode, draft.eveningMode)
             GoalTimingDraft.CustomSlots -> draft.timeSlots.map { it.mode }
@@ -710,17 +717,12 @@ object GoalDraftMapper {
         policy: TargetPolicy,
         goalId: AwradId,
     ): List<GoalSlot> {
-        val relations = when (target.timing) {
-            PrayerTiming.BEFORE -> listOf(PrayerRelation.BEFORE)
-            PrayerTiming.AFTER -> listOf(PrayerRelation.AFTER)
-            PrayerTiming.BOTH -> listOf(PrayerRelation.BEFORE, PrayerRelation.AFTER)
-        }
         var sortOrder = 0
         val sharedPolicy = countPolicyFor(draft, policy)
         return Prayer.entries
             .filter { it in target.selectedPrayers }
             .flatMap { prayer ->
-                relations.map { relation ->
+                PrayerRelation.entries.filter { it in target.relationsFor(prayer) }.map { relation ->
                     val fallbackMinimum = draft.countRule.minimumCount
                     val fallbackTarget = target.countFor(prayer, relation).ifBlank { draft.countRule.targetCount }
                     val fallbackMaximum = draft.countRule.maximumCount.ifBlank { fallbackTarget }
@@ -1021,12 +1023,16 @@ object GoalDraftMapper {
                 reminderThreshold = Threshold.Minimum,
                 completionThreshold = Threshold.Minimum,
             )
-            CountRuleMode.Target -> CountPolicy(
-                targetCount = positiveInt(target),
-                streakThreshold = Threshold.Target,
-                reminderThreshold = Threshold.Target,
-                completionThreshold = Threshold.Target,
-            )
+            CountRuleMode.Target -> {
+                val minimumCount = positiveInt(minimum)
+                CountPolicy(
+                    minimumCount = minimumCount,
+                    targetCount = positiveInt(target),
+                    streakThreshold = if (minimumCount != null) Threshold.Minimum else Threshold.Target,
+                    reminderThreshold = Threshold.Target,
+                    completionThreshold = Threshold.Target,
+                )
+            }
             CountRuleMode.Stretch -> CountPolicy(
                 minimumCount = positiveInt(minimum),
                 targetCount = positiveInt(target),
@@ -1060,7 +1066,9 @@ object GoalDraftMapper {
         when (mode) {
             CountRuleMode.Tracker -> true
             CountRuleMode.Minimum -> minimumCount != null && minimumCount > 0
-            CountRuleMode.Target -> targetCount != null && targetCount > 0
+            CountRuleMode.Target -> targetCount != null &&
+                targetCount > 0 &&
+                (minimumCount == null || (minimumCount > 0 && minimumCount <= targetCount))
             CountRuleMode.Stretch -> minimumCount != null && targetCount != null && minimumCount > 0 && minimumCount < targetCount
             CountRuleMode.Exact -> targetCount != null && maximumCount != null && targetCount > 0 && targetCount == maximumCount
             CountRuleMode.Bounded -> minimumCount != null &&

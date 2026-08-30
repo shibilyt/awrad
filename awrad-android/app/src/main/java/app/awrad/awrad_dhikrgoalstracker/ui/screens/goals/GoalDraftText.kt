@@ -73,11 +73,19 @@ fun goalSentence(dhikrName: String, draft: GoalDraft?): String {
         GoalPreset.TRACKER -> stringResource(R.string.goal_sentence_tracker, dhikrName)
         GoalPreset.MORNING_EVENING -> stringResource(R.string.goal_sentence_morning_evening, dhikrName, target)
         else -> if (GoalDraftMapper.effectiveTiming(draft) == GoalTimingDraft.Anytime) {
-            stringResource(R.string.goal_sentence_default, dhikrName, target, schedule)
+            if (schedule.isBlank()) {
+                stringResource(R.string.goal_sentence_default_no_schedule, dhikrName, target)
+            } else {
+                stringResource(R.string.goal_sentence_default, dhikrName, target, schedule)
+            }
         } else {
             // Advanced goals can also pin a timing (prayer windows, custom slots). Surface it so
             // the preview reflects choices like "after Dhuhr" instead of only the schedule day.
-            stringResource(R.string.goal_sentence_default_timed, dhikrName, target, slots, schedule)
+            if (schedule.isBlank()) {
+                stringResource(R.string.goal_sentence_default_timed_no_schedule, dhikrName, target, slots)
+            } else {
+                stringResource(R.string.goal_sentence_default_timed, dhikrName, target, slots, schedule)
+            }
         }
     }
 }
@@ -165,7 +173,7 @@ fun scheduleSummary(draft: GoalDraft): String {
         FrequencyDraft.Daily -> stringResource(R.string.goal_summary_schedule_daily)
         is FrequencyDraft.Weekly -> {
             if (frequency.days.isEmpty()) {
-                stringResource(R.string.goal_summary_schedule_no_weekdays)
+                ""
             } else {
                 val days = frequency.days.sortedBy { it.value }
                     .map { it.localizedFullName() }
@@ -176,24 +184,28 @@ fun scheduleSummary(draft: GoalDraft): String {
         is FrequencyDraft.Monthly -> {
             val calendar = localizedCalendar(frequency.calendar)
             if (frequency.daysOfMonth.isEmpty()) {
-                stringResource(R.string.goal_summary_schedule_monthly, calendar)
+                ""
             } else {
                 stringResource(R.string.goal_summary_schedule_monthly_on, calendar, frequency.daysOfMonth.sorted().joinToString(", "))
             }
         }
-        is FrequencyDraft.Interval -> stringResource(R.string.goal_summary_schedule_interval, frequency.intervalDays.ifBlank { "?" })
-        is FrequencyDraft.Yearly -> {
-            val calendar = localizedCalendar(frequency.calendar)
-            stringResource(
-                R.string.goal_summary_schedule_yearly,
-                calendar,
-                frequency.month,
-                frequency.days.sorted().joinToString(", ").ifBlank { stringResource(R.string.goal_summary_not_set) },
-            )
+        is FrequencyDraft.Interval -> if (frequency.intervalDays.isBlank()) "" else {
+            stringResource(R.string.goal_summary_schedule_interval, frequency.intervalDays)
         }
-        is FrequencyDraft.Season -> frequency.seasonTemplateCode.localizedName()
-        is FrequencyDraft.SpecificDates -> parseSpecificDates(frequency.dateText).joinToString(", ").ifBlank {
-            stringResource(R.string.goal_summary_schedule_no_dates)
+        is FrequencyDraft.Yearly -> {
+            if (frequency.days.isEmpty()) "" else {
+                val calendar = localizedCalendar(frequency.calendar)
+                stringResource(
+                    R.string.goal_summary_schedule_yearly,
+                    calendar,
+                    frequency.month,
+                    frequency.days.sorted().joinToString(", "),
+                )
+            }
+        }
+        is FrequencyDraft.Season -> if (frequency.isConfigured) frequency.seasonTemplateCode.localizedName() else ""
+        is FrequencyDraft.SpecificDates -> if (frequency.dateText.isBlank()) "" else {
+            parseSpecificDates(frequency.dateText).joinToString(", ")
         }
     }
 }
@@ -211,7 +223,6 @@ fun slotsSummary(draft: GoalDraft): String {
         GoalTimingDraft.PrayerBased -> {
             val target = draft.targetDraft as? TargetDraft.PrayerBased
                 ?: return stringResource(R.string.goal_summary_slots_prayer_not_configured)
-            val relation = target.timing.localizedSummary()
             // On a Friday-only schedule the Dhuhr prayer is the Jumuʿah (Friday) prayer.
             val fridayOnly = (draft.frequencyDraft as? FrequencyDraft.Weekly)
                 ?.let { it.days.size == 1 && it.days.first() == DayOfWeek.FRIDAY } == true
@@ -228,7 +239,16 @@ fun slotsSummary(draft: GoalDraft): String {
                     }
                     .joinToString(", ")
             }
-            stringResource(R.string.goal_summary_slots_prayer, relation, prayers)
+            if (target.selectedPrayers.map { target.relationsFor(it) }.distinct().size > 1) {
+                val mixedPrayerSummary = if (target.selectedPrayers.size == Prayer.entries.size) {
+                    stringResource(R.string.composer_prayers_all)
+                } else {
+                    prayers
+                }
+                stringResource(R.string.goal_summary_slots_prayer_mixed, mixedPrayerSummary)
+            } else {
+                stringResource(R.string.goal_summary_slots_prayer, target.timing.localizedSummary(), prayers)
+            }
         }
     }
 }

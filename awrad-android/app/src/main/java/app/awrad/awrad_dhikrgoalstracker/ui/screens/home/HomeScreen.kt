@@ -109,7 +109,6 @@ fun HomeScreen(
         isDarkTheme = isAwradDarkTheme(),
     )
     val goalContentState = homeGoalContentState(uiState)
-    val primaryGoal = uiState.suggestedGoal ?: uiState.activeGoals.firstOrNull()
     val density = LocalDensity.current
     val statusBarTopPadding = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
 
@@ -160,19 +159,22 @@ fun HomeScreen(
                 )
             }
 
-            item {
-                when (goalContentState) {
-                    HomeGoalContentState.Loading -> HomeGoalLoadingCard(visuals)
-                    HomeGoalContentState.Content -> {
-                        primaryGoal?.let { goal ->
-                            ContinueDhikrCard(
-                                goal = goal,
+            when (goalContentState) {
+                HomeGoalContentState.Loading -> item { TodayGoalsLoadingSection(visuals) }
+                HomeGoalContentState.Content -> {
+                    if (uiState.activeGoals.isNotEmpty()) {
+                        item {
+                            TodayGoalsSection(
+                                goals = uiState.activeGoals.take(3),
                                 visuals = visuals,
-                                onClick = { onNavigateToGoal(goal.goal.id) },
+                                onGoalClick = { onNavigateToGoal(it.goal.id) },
+                                onViewAll = onNavigateToGoals,
                             )
-                        } ?: HomeGoalLoadingCard(visuals)
+                        }
                     }
-                    HomeGoalContentState.Empty -> {
+                }
+                HomeGoalContentState.Empty -> {
+                    item {
                         EmptyHomeStartCard(
                             visuals = visuals,
                             onClick = onNavigateToCreateGoal,
@@ -198,23 +200,6 @@ fun HomeScreen(
                         onEnable = enablePrayerTimes,
                     )
                 }
-            }
-
-            when (goalContentState) {
-                HomeGoalContentState.Loading -> item { TodayGoalsLoadingSection(visuals) }
-                HomeGoalContentState.Content -> {
-                    if (uiState.activeGoals.isNotEmpty()) {
-                        item {
-                            TodayGoalsSection(
-                                goals = uiState.activeGoals.take(3),
-                                visuals = visuals,
-                                onGoalClick = { onNavigateToGoal(it.goal.id) },
-                                onViewAll = onNavigateToGoals,
-                            )
-                        }
-                    }
-                }
-                HomeGoalContentState.Empty -> Unit
             }
 
             item {
@@ -339,14 +324,6 @@ private fun HomeHeader(
         Column(
             modifier = Modifier.align(Alignment.CenterStart),
         ) {
-            Text(
-                text = stringResource(R.string.home_today),
-                style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Bold,
-                color = visuals.primaryTextColor,
-                maxLines = 1,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
             if (isLoading) {
                 RitualSkeleton(
                     modifier = Modifier

@@ -745,6 +745,36 @@ class GoalDraftMapperTest {
     }
 
     @Test
+    fun `per session target minimum becomes each custom slot streak floor`() {
+        val draft = GoalDraftDefaults.forPreset(GoalPreset.CUSTOM).copy(
+            timingType = TimingType.TIME_BASED,
+            advancedTiming = GoalTimingDraft.CustomSlots,
+            slotTargetMode = SlotTargetMode.PerSlot,
+            timeSlots = listOf(
+                GoalTimeSlotDraft(
+                    id = "morning",
+                    label = "Morning",
+                    startHour = 6,
+                    targetCount = "33",
+                    minimumCount = "10",
+                ),
+                GoalTimeSlotDraft(
+                    id = "evening",
+                    label = "Evening",
+                    startHour = 18,
+                    targetCount = "66",
+                    minimumCount = "20",
+                ),
+            ),
+        )
+
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
+
+        assertEquals(listOf(10, 20), goal.slots.map { it.minimumCount })
+        assertTrue(goal.slots.all { it.streakThreshold == Threshold.Minimum })
+    }
+
+    @Test
     fun `advanced prayer before after targets can differ by relation`() {
         val draft = GoalDraftDefaults.forPreset(GoalPreset.CUSTOM).copy(
             timingType = TimingType.PRAYER_BASED,
@@ -768,6 +798,51 @@ class GoalDraftMapperTest {
         assertEquals(2, goal.slots.size)
         assertEquals(11, goal.slots.first { it.prayerRelation == PrayerRelation.BEFORE }.targetCount)
         assertEquals(22, goal.slots.first { it.prayerRelation == PrayerRelation.AFTER }.targetCount)
+    }
+
+    @Test
+    fun `per prayer relations create only the selected before or after slots`() {
+        val draft = GoalDraftDefaults.forPreset(GoalPreset.CUSTOM).copy(
+            timingType = TimingType.PRAYER_BASED,
+            advancedTiming = GoalTimingDraft.PrayerBased,
+            slotTargetMode = SlotTargetMode.PerSlot,
+            targetDraft = TargetDraft.PrayerBased(
+                selectedPrayers = setOf(Prayer.FAJR, Prayer.DHUHR),
+                prayerRelations = mapOf(
+                    Prayer.FAJR to setOf(PrayerRelation.BEFORE),
+                    Prayer.DHUHR to setOf(PrayerRelation.AFTER),
+                ),
+                uniformCount = "33",
+            ),
+        )
+
+        val validation = GoalDraftMapper.validate(draft, hasDhikr = true)
+        val goal = GoalDraftMapper.toGoal(testId(1), draft, LocalDate.parse("2026-05-27"))
+
+        assertTrue(validation.isValid)
+        assertEquals(2, goal.slots.size)
+        assertEquals(Prayer.FAJR, goal.slots[0].prayerName)
+        assertEquals(PrayerRelation.BEFORE, goal.slots[0].prayerRelation)
+        assertEquals(Prayer.DHUHR, goal.slots[1].prayerName)
+        assertEquals(PrayerRelation.AFTER, goal.slots[1].prayerRelation)
+    }
+
+    @Test
+    fun `clearing every prayer relation keeps after Fajr as the fallback`() {
+        val target = TargetDraft.PrayerBased(
+            timing = PrayerTiming.BOTH,
+            selectedPrayers = Prayer.entries.toSet(),
+            prayerRelations = Prayer.entries.associateWith {
+                setOf(PrayerRelation.BEFORE, PrayerRelation.AFTER)
+            },
+        )
+
+        val cleared = target
+            .withRelationForAll(PrayerRelation.BEFORE, enabled = false)
+            .withRelationForAll(PrayerRelation.AFTER, enabled = false)
+
+        assertEquals(setOf(Prayer.FAJR), cleared.selectedPrayers)
+        assertEquals(setOf(PrayerRelation.AFTER), cleared.relationsFor(Prayer.FAJR))
     }
 
     @Test

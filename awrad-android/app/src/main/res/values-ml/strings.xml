@@ -59,7 +59,6 @@
     <string name="greeting_evening">ശുഭ സന്ധ്യ</string>
 
     <!-- Home screen -->
-    <string name="home_today">ഇന്ന്</string>
     <string name="home_jump_back_in">തുടരുക</string>
     <string name="home_explore">പര്യവേഷണം</string>
     <string name="home_remaining">%d ബാക്കി</string>
@@ -164,6 +163,25 @@
     <string name="quick_goal_tracker_title">ട്രാക്ക് മാത്രം</string>
     <string name="quick_goal_tracker_description">ലക്ഷ്യമില്ലാതെ ഓരോ പാരായണവും രേഖപ്പെടുത്തുക.</string>
     <string name="composer_change_dhikr">മാറ്റുക</string>
+    <string name="composer_schedule_question">എത്ര തവണ എണ്ണണം?</string>
+    <string name="composer_timing_question">എപ്പോൾ എണ്ണണം?</string>
+    <string name="composer_target_question">നിങ്ങളുടെ ലക്ഷ്യം എന്താണ്?</string>
+    <string name="composer_target_different_sessions">ഓരോ സെഷനും വ്യത്യസ്ത ലക്ഷ്യം ക്രമീകരിക്കുക</string>
+    <string name="composer_target_label">ലക്ഷ്യം</string>
+    <string name="composer_continue">തുടരുക</string>
+    <string name="composer_set_timings">സമയങ്ങൾ ക്രമീകരിക്കുക</string>
+    <string name="composer_set_days">ദിവസങ്ങൾ ക്രമീകരിക്കുക</string>
+    <string name="composer_timing_custom">ഇഷ്ടാനുസൃത സെഷനുകൾ</string>
+    <string name="composer_timing_custom_desc">ദിവസത്തിൽ ഒന്നോ അതിലധികമോ ഇഷ്ടാനുസൃത സെഷനുകൾ ക്രമീകരിക്കുക</string>
+    <string name="composer_schedule_details_weekly">ഏത് ദിവസങ്ങൾ?</string>
+    <string name="composer_schedule_details_monthly">മാസത്തിലെ ഏത് ദിവസങ്ങൾ?</string>
+    <string name="composer_schedule_details_specific_dates">ഏത് തീയതികൾ?</string>
+    <string name="composer_schedule_details_interval">എത്ര ദിവസത്തിന് ഇടവിട്ട്?</string>
+    <string name="composer_schedule_details_yearly">ഏത് മാസവും ദിവസങ്ങളും?</string>
+    <string name="composer_schedule_details_season">ഏത് സീസൺ?</string>
+    <string name="composer_prayer_before_all">എല്ലാ നമസ്കാരങ്ങൾക്കും മുമ്പ്</string>
+    <string name="composer_prayer_after_all">എല്ലാ നമസ്കാരങ്ങൾക്കും ശേഷം</string>
+    <string name="composer_prayer_select_relation">അടയ്ക്കുന്നതിന് മുമ്പ് കുറഞ്ഞത് ഒരു നമസ്കാരത്തിന് മുമ്പ് അല്ലെങ്കിൽ ശേഷം തിരഞ്ഞെടുക്കുക.</string>
     <string name="preset_daily">ദൈനംദിനം</string>
     <string name="preset_prayer_based">നമസ്കാരം</string>
     <string name="preset_one_time">ഒരിക്കൽ</string>
@@ -856,6 +874,8 @@
     <string name="goal_sentence_tracker">%1$s ചൊല്ലുന്ന ഓരോ തവണയും രേഖപ്പെടുത്തുക.</string>
     <string name="goal_sentence_morning_evening">%1$s ചൊല്ലുക: %2$s പ്രഭാതത്തിലും സന്ധ്യയിലും.</string>
     <string name="goal_sentence_default">%1$s ചൊല്ലുക: %2$s, %3$s.</string>
+    <string name="goal_sentence_default_no_schedule">%1$s ചൊല്ലുക: %2$s.</string>
+    <string name="goal_sentence_default_timed_no_schedule">%1$s ചൊല്ലുക: %2$s, %3$s.</string>
     <string name="goal_summary_no_target">ലക്ഷ്യമില്ല</string>
     <string name="goal_summary_target_total">%1$s മൊത്തം</string>
     <string name="goal_summary_target_period">ഓരോ കാലയളവിലും %1$s</string>
@@ -892,6 +912,7 @@
     <string name="goal_summary_slots_prayer_not_configured">നമസ്കാര സ്ലോട്ടുകൾ ക്രമീകരിച്ചിട്ടില്ല</string>
     <string name="goal_summary_slots_each_prayer">ഓരോ നമസ്കാരവും</string>
     <string name="goal_summary_slots_prayer">%1$s %2$s</string>
+    <string name="goal_summary_slots_prayer_mixed">ചില നമസ്കാരങ്ങൾക്ക് മുമ്പും മറ്റുള്ളവയ്ക്ക് ശേഷവും: %1$s</string>
     <string name="goal_summary_off">ഓഫ്</string>
     <string name="goal_summary_reminders_prayer">നമസ്കാര സമയത്തിനു 10 മിനിറ്റിനു ശേഷം</string>
     <string name="goal_summary_reminders_window_start">വിൻഡോ തുടങ്ങുമ്പോൾ</string>

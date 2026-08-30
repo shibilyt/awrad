@@ -146,7 +146,7 @@ fun SimpleTargetPane(
                             )
                         }
                         GoalPreset.ONE_TIME -> {
-                            SimpleCountField(
+                            GoalTargetInput(
                                 draft = draft,
                                 labelRes = R.string.simple_target_onetime_label,
                                 quickValues = listOf(1000, 10000, 70000),
@@ -166,7 +166,7 @@ fun SimpleTargetPane(
                             )
                         }
                         GoalPreset.DAILY -> {
-                            SimpleCountField(
+                            GoalTargetInput(
                                 draft = draft,
                                 labelRes = R.string.simple_target_daily_label,
                                 quickValues = listOf(33, 100, 313),
@@ -203,12 +203,13 @@ fun SimpleTargetPane(
 }
 
 @Composable
-private fun SimpleCountField(
+internal fun GoalTargetInput(
     draft: GoalDraft,
     labelRes: Int,
     quickValues: List<Int>,
     integratedStepper: Boolean = false,
     onTargetChange: (TargetDraft) -> Unit,
+    testTag: String = "simple-goal-target",
 ) {
     val count = (draft.targetDraft as? TargetDraft.Fixed)?.count ?: ""
     CountInputField(
@@ -217,7 +218,27 @@ private fun SimpleCountField(
         label = stringResource(labelRes),
         quickValues = quickValues,
         integratedStepper = integratedStepper,
-        modifier = Modifier.testTag("simple-goal-target"),
+        modifier = Modifier.testTag(testTag),
+    )
+}
+
+/** The shared target field styling used by both quick goals and advanced steps. */
+@Composable
+internal fun GoalTargetInput(
+    value: String,
+    labelRes: Int,
+    quickValues: List<Int>,
+    integratedStepper: Boolean = false,
+    onValueChange: (String) -> Unit,
+    testTag: String = "simple-goal-target",
+) {
+    CountInputField(
+        value = value,
+        onValueChange = onValueChange,
+        label = stringResource(labelRes),
+        quickValues = quickValues,
+        integratedStepper = integratedStepper,
+        modifier = Modifier.testTag(testTag),
     )
 }
 

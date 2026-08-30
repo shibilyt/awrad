@@ -123,6 +123,7 @@ fun FeaturedCollectionsSection(
     @StringRes titleRes: Int = R.string.featured_collections,
 ) {
     val collections = rememberFeaturedCollections(categoryCounts, customCount)
+        .filter { it.count > 0 }
 
     Column(
         modifier = modifier.fillMaxWidth(),

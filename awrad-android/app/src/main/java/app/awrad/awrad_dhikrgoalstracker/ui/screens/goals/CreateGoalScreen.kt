@@ -74,7 +74,11 @@ private fun goalModeDepth(mode: GoalCreationMode): Int = when (mode) {
     GoalCreationMode.SelectDhikr -> 0
     GoalCreationMode.SelectShape -> 1
     GoalCreationMode.SimpleTarget -> 2
-    GoalCreationMode.Advanced -> 2
+    GoalCreationMode.AdvancedSchedule -> 2
+    GoalCreationMode.AdvancedScheduleDetails -> 3
+    GoalCreationMode.AdvancedTiming -> 4
+    GoalCreationMode.AdvancedTarget -> 5
+    GoalCreationMode.Advanced -> 6
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -123,6 +127,10 @@ fun CreateGoalScreen(
         }
         GoalCreationMode.SelectDhikr -> stringResource(R.string.create_goal_select_dhikr)
         GoalCreationMode.SimpleTarget -> stringResource(R.string.create_goal_simple_appbar)
+        GoalCreationMode.AdvancedSchedule -> stringResource(R.string.create_goal_advanced_appbar)
+        GoalCreationMode.AdvancedScheduleDetails -> stringResource(R.string.create_goal_advanced_appbar)
+        GoalCreationMode.AdvancedTiming -> stringResource(R.string.create_goal_advanced_appbar)
+        GoalCreationMode.AdvancedTarget -> stringResource(R.string.create_goal_advanced_appbar)
         GoalCreationMode.Advanced -> stringResource(R.string.create_goal_advanced_appbar)
     }
 
@@ -238,18 +246,15 @@ fun CreateGoalScreen(
                             onChangeGoalType = viewModel::openGoalTypePicker,
                         )
                     }
-                    GoalCreationMode.Advanced -> {
+                    GoalCreationMode.AdvancedSchedule -> {
                         val dhikr = uiState.selectedDhikr ?: return@AnimatedContent
                         val draft = uiState.draft ?: return@AnimatedContent
                         GoalComposerPane(
                             dhikr = dhikr,
-                            audioState = audioState,
                             draft = draft,
                             validation = uiState.validation,
                             isCreating = uiState.isCreating,
                             canChangeDhikr = !uiState.isDhikrLocked,
-                            onTogglePlayback = viewModel::togglePlayback,
-                            onShowFullQuran = onNavigateToQuranReader,
                             onChangeDhikr = viewModel::openDhikrPicker,
                             onSelectPreset = {},
                             onTargetChange = viewModel::updateTargetDraft,
@@ -258,6 +263,94 @@ fun CreateGoalScreen(
                             onDraftChange = viewModel::updateDraft,
                             onCreate = viewModel::createGoal,
                             showTypeSelector = false,
+                            step = AdvancedComposerStep.Schedule,
+                            onNext = viewModel::continueFromAdvancedSchedule,
+                        )
+                    }
+                    GoalCreationMode.AdvancedScheduleDetails -> {
+                        val dhikr = uiState.selectedDhikr ?: return@AnimatedContent
+                        val draft = uiState.draft ?: return@AnimatedContent
+                        GoalComposerPane(
+                            dhikr = dhikr,
+                            draft = draft,
+                            validation = uiState.validation,
+                            isCreating = uiState.isCreating,
+                            canChangeDhikr = !uiState.isDhikrLocked,
+                            onChangeDhikr = viewModel::openDhikrPicker,
+                            onSelectPreset = {},
+                            onTargetChange = viewModel::updateTargetDraft,
+                            onFrequencyChange = viewModel::updateFrequencyDraft,
+                            onExtrasChange = viewModel::updateExtras,
+                            onDraftChange = viewModel::updateDraft,
+                            onCreate = viewModel::createGoal,
+                            showTypeSelector = false,
+                            step = AdvancedComposerStep.ScheduleDetails,
+                            onNext = viewModel::enterAdvancedTiming,
+                        )
+                    }
+                    GoalCreationMode.AdvancedTiming -> {
+                        val dhikr = uiState.selectedDhikr ?: return@AnimatedContent
+                        val draft = uiState.draft ?: return@AnimatedContent
+                        GoalComposerPane(
+                            dhikr = dhikr,
+                            draft = draft,
+                            validation = uiState.validation,
+                            isCreating = uiState.isCreating,
+                            canChangeDhikr = !uiState.isDhikrLocked,
+                            onChangeDhikr = viewModel::openDhikrPicker,
+                            onSelectPreset = {},
+                            onTargetChange = viewModel::updateTargetDraft,
+                            onFrequencyChange = viewModel::updateFrequencyDraft,
+                            onExtrasChange = viewModel::updateExtras,
+                            onDraftChange = viewModel::updateDraft,
+                            onCreate = viewModel::createGoal,
+                            showTypeSelector = false,
+                            showTimingSelector = true,
+                            step = AdvancedComposerStep.Timing,
+                            onNext = viewModel::enterAdvancedTarget,
+                        )
+                    }
+                    GoalCreationMode.AdvancedTarget -> {
+                        val dhikr = uiState.selectedDhikr ?: return@AnimatedContent
+                        val draft = uiState.draft ?: return@AnimatedContent
+                        GoalComposerPane(
+                            dhikr = dhikr,
+                            draft = draft,
+                            validation = uiState.validation,
+                            isCreating = uiState.isCreating,
+                            canChangeDhikr = !uiState.isDhikrLocked,
+                            onChangeDhikr = viewModel::openDhikrPicker,
+                            onSelectPreset = {},
+                            onTargetChange = viewModel::updateTargetDraft,
+                            onFrequencyChange = viewModel::updateFrequencyDraft,
+                            onExtrasChange = viewModel::updateExtras,
+                            onDraftChange = viewModel::updateDraft,
+                            onCreate = viewModel::createGoal,
+                            showTypeSelector = false,
+                            showTimingSelector = false,
+                            step = AdvancedComposerStep.Target,
+                            onNext = viewModel::enterAdvancedDetails,
+                        )
+                    }
+                    GoalCreationMode.Advanced -> {
+                        val dhikr = uiState.selectedDhikr ?: return@AnimatedContent
+                        val draft = uiState.draft ?: return@AnimatedContent
+                        GoalComposerPane(
+                            dhikr = dhikr,
+                            draft = draft,
+                            validation = uiState.validation,
+                            isCreating = uiState.isCreating,
+                            canChangeDhikr = !uiState.isDhikrLocked,
+                            onChangeDhikr = viewModel::openDhikrPicker,
+                            onSelectPreset = {},
+                            onTargetChange = viewModel::updateTargetDraft,
+                            onFrequencyChange = viewModel::updateFrequencyDraft,
+                            onExtrasChange = viewModel::updateExtras,
+                            onDraftChange = viewModel::updateDraft,
+                            onCreate = viewModel::createGoal,
+                            showTypeSelector = false,
+                            showTimingSelector = false,
+                            step = AdvancedComposerStep.Details,
                         )
                     }
                 }
