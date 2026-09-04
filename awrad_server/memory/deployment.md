@@ -46,6 +46,10 @@ into the entrypoint, so concurrent replicas cannot race the same migration.
   optionally set `MAIL_FROM_NAME` (default `Awrad`). The `MAIL_FROM` domain must
   be verified in Resend before registration, magic-link, and password-reset
   emails can be delivered.
+- The Phoenix app owns the root domain (`example.com`) for both the web
+  companion and API; there is no separate marketing site or `app.`/`api.`
+  subdomain. Set `PHX_HOST=example.com`, point the root DNS record at Dokploy,
+  and use `https://example.com/` as the mobile release API base URL.
 - Healthcheck / Traefik probe: `GET /up`, unauthenticated and DB-free, so a
   transient Postgres blip cannot evict a healthy node. `config/prod.exs`
   excludes `/up` from `force_ssl` because the probe arrives over plain HTTP with

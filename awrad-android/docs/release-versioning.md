@@ -5,7 +5,7 @@ Release builds must provide an explicit app version.
 Use a `versionCode` that is higher than the previous Play Store release and a user-visible `versionName`:
 
 ```bash
-AWRAD_RELEASE_API_BASE_URL=https://api.example.com \
+AWRAD_RELEASE_API_BASE_URL=https://example.com \
 ./gradlew assembleRelease \
   -PAWRAD_VERSION_CODE=2 \
   -PAWRAD_VERSION_NAME=1.1.0

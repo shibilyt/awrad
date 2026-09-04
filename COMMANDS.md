@@ -78,7 +78,7 @@ AWRAD_DEBUG_API_BASE_URL=http://192.168.1.10:4000/ ./gradlew :app:assembleDebug
 Release builds require an HTTPS API URL and explicit version values:
 
 ```bash
-AWRAD_RELEASE_API_BASE_URL=https://api.example.com/ \
+AWRAD_RELEASE_API_BASE_URL=https://example.com/ \
 AWRAD_VERSION_CODE=2 \
 AWRAD_VERSION_NAME=1.1.0 \
 ./gradlew :app:assembleRelease
