@@ -241,6 +241,38 @@ button, a {
   margin: 0 auto;
   padding: 56px 56px 72px;
 }
+.awrad-home-content {
+  width: min(100%, 640px);
+  margin-inline: auto;
+}
+.awrad-home-content .awrad-page-intro {
+  max-width: none;
+}
+.awrad-home-summary {
+  margin-top: 32px;
+}
+.awrad-home-summary .awrad-metric-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 0;
+}
+.awrad-home-summary .awrad-metric-card {
+  min-height: 112px;
+  padding: 18px;
+}
+.awrad-home-summary .awrad-metric-card:first-child {
+  grid-column: 1 / -1;
+  min-height: 128px;
+  border-color: rgba(75, 124, 90, 0.12);
+  background: var(--awrad-sage-container);
+}
+.awrad-home-summary .awrad-metric-card:first-child .awrad-metric-label, .awrad-home-summary .awrad-metric-card:first-child .awrad-metric-hint {
+  color: var(--awrad-sage-dark);
+}
+.awrad-home-content .awrad-goal-grid {
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
 .awrad-brand {
   display: inline-flex;
   align-items: center;

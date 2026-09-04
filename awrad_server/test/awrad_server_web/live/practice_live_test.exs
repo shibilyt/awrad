@@ -27,6 +27,15 @@ defmodule AwradServerWeb.PracticeLiveTest do
     assert html =~ ~p"/library"
   end
 
+  test "keeps the sidebar while placing home content in a mobile-like column", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/home")
+
+    assert has_element?(view, "#awrad-app-shell .awrad-sidebar")
+    assert has_element?(view, "#main-content .awrad-home-content")
+    assert has_element?(view, "#main-content .awrad-home-content .awrad-home-summary")
+    assert has_element?(view, "#main-content .awrad-home-content #due-goals-heading")
+  end
+
   test "renders an empty state for a user without goals", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/goals")
 
