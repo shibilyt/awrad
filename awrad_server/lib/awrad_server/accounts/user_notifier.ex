@@ -9,7 +9,9 @@ defmodule AwradServer.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"AwradServer", "contact@example.com"})
+      |> from(
+        Application.get_env(:awrad_server, :mailer_from, {"AwradServer", "contact@example.com"})
+      )
       |> subject(subject)
       |> text_body(body)
 

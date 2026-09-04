@@ -16,7 +16,7 @@ end
 |---|---|---|
 | Dev | `Swoosh.Adapters.Local` | http://localhost:4000/dev/mailbox |
 | Test | `Swoosh.Adapters.Test` | Assertions via `Swoosh.TestAssertions` |
-| Prod | Configure in `config/runtime.exs` | (e.g., Mailgun, SES, Resend) |
+| Prod | `Swoosh.Adapters.Resend` | `RESEND_API_KEY`, `MAIL_FROM`, and optional `MAIL_FROM_NAME` |
 
 ## User Notifier
 
@@ -30,7 +30,8 @@ UserNotifier.deliver_login_instructions(user, magic_link_url)
 UserNotifier.deliver_update_email_instructions(user, confirmation_url)
 ```
 
-Emails are plain text, delivered via `Mailer.deliver/1`.
+Emails are plain text, delivered via `Mailer.deliver/1`. Production delivery uses
+Resend's API and requires a sender address from a verified Resend domain.
 
 ## Reference Files
 

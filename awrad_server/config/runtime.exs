@@ -89,6 +89,17 @@ if config_env() == :prod do
     android_package: "app.awrad.awrad_dhikrgoalstracker",
     android_sha256_cert_fingerprints: Enum.map(android_fingerprints, &String.upcase/1)
 
+  resend_api_key =
+    System.get_env("RESEND_API_KEY") ||
+      raise "environment variable RESEND_API_KEY is missing"
+
+  mail_from =
+    System.get_env("MAIL_FROM") ||
+      raise "environment variable MAIL_FROM is missing"
+
+  config :awrad_server, AwradServer.Mailer, api_key: resend_api_key
+  config :awrad_server, :mailer_from, {System.get_env("MAIL_FROM_NAME", "Awrad"), mail_from}
+
   jwt_secret =
     System.get_env("JWT_SIGNING_SECRET") ||
       raise """
@@ -162,22 +173,4 @@ if config_env() == :prod do
   #       force_ssl: [hsts: true]
   #
   # Check `Plug.SSL` for all available options in `force_ssl`.
-
-  # ## Configuring the mailer
-  #
-  # In production you need to configure the mailer to use a different adapter.
-  # Here is an example configuration for Mailgun:
-  #
-  #     config :awrad_server, AwradServer.Mailer,
-  #       adapter: Swoosh.Adapters.Mailgun,
-  #       api_key: System.get_env("MAILGUN_API_KEY"),
-  #       domain: System.get_env("MAILGUN_DOMAIN")
-  #
-  # Most non-SMTP adapters require an API client. Swoosh supports Req, Hackney,
-  # and Finch out-of-the-box. This configuration is typically done at
-  # compile-time in your config/prod.exs:
-  #
-  #     config :swoosh, :api_client, Swoosh.ApiClient.Req
-  #
-  # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
 end

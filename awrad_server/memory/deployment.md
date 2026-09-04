@@ -42,6 +42,10 @@ into the entrypoint, so concurrent replicas cannot race the same migration.
   GHCR registry credential holding a PAT scoped to `read:packages`.
 - Postgres is a Dokploy-managed database service; `DATABASE_URL` uses its
   internal service hostname.
+- Product emails use Resend. Set `RESEND_API_KEY` and `MAIL_FROM` in Dokploy;
+  optionally set `MAIL_FROM_NAME` (default `Awrad`). The `MAIL_FROM` domain must
+  be verified in Resend before registration, magic-link, and password-reset
+  emails can be delivered.
 - Healthcheck / Traefik probe: `GET /up`, unauthenticated and DB-free, so a
   transient Postgres blip cannot evict a healthy node. `config/prod.exs`
   excludes `/up` from `force_ssl` because the probe arrives over plain HTTP with
@@ -64,8 +68,8 @@ Required repository secrets: `DOKPLOY_URL`, `DOKPLOY_API_TOKEN`,
 - CI: Buildx layer cache uses `type=gha`, which GitHub evicts on its own 10 GB
   budget.
 
-## Known gap
+## Email delivery
 
-`AwradServer.Mailer` still uses `Swoosh.Adapters.Local` in production, so
-verification and password-reset emails are not delivered. A real adapter is
-deferred and must be wired before the auth flows are considered live.
+`AwradServer.Mailer` uses `Swoosh.Adapters.Resend` in production. The API key is
+read from `RESEND_API_KEY` at release boot, while the sender is configured with
+`MAIL_FROM` and `MAIL_FROM_NAME`. Development keeps the local mailbox adapter.

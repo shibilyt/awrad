@@ -157,7 +157,11 @@ mix test
 mix precommit
 ```
 
-Production runtime requires at least `DATABASE_URL`, `SECRET_KEY_BASE`, and `JWT_SIGNING_SECRET`. See `awrad_server/config/runtime.exs` for the authoritative list and constraints, and `awrad_server/.env.example` for the deployment-facing template.
+Production runtime requires `DATABASE_URL`, `SECRET_KEY_BASE`, `PHX_HOST`, the
+mobile app-link values, the auth secrets, `RESEND_API_KEY`, and `MAIL_FROM`.
+See `awrad_server/config/runtime.exs` for the authoritative list and
+constraints, and `awrad_server/.env.example` for the deployment-facing
+template.
 
 Release image, built by CI and pulled by Dokploy. See `awrad_server/memory/deployment.md`.
 

@@ -17,6 +17,10 @@ config :awrad_server, AwradServerWeb.Endpoint,
 # Configure Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Req
 
+# Product email delivery uses the Resend API. The API key is injected at
+# runtime so it never needs to be compiled into the release.
+config :awrad_server, AwradServer.Mailer, adapter: Swoosh.Adapters.Resend
+
 # Disable Swoosh Local Memory Storage
 config :swoosh, local: false
 
