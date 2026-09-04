@@ -243,7 +243,12 @@ private class FakeGoalRepository(
         return goal
     }
     override suspend fun deleteGoal(id: UUID) = unsupported()
-    override suspend fun addCount(goalId: UUID, slotId: UUID?, count: Long): Long = unsupported()
+    override suspend fun addCount(
+        goalId: UUID,
+        slotId: UUID?,
+        count: Long,
+        date: String?,
+    ): Long = unsupported()
     override fun getTotalCountForDate(goalId: UUID, date: String): Flow<Long?> = flowOf(0)
     override fun getTotalCount(goalId: UUID): Flow<Long?> = flowOf(0)
     override suspend fun getCountForSlotAndDate(goalId: UUID, slotId: UUID, date: String): Long = 0

@@ -1,0 +1,52 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="awrad-auth-card">
+    <div class="awrad-auth-mark" aria-hidden="true">A</div>
+    <div class="text-center">
+      <.header>
+        Reset password
+        <:subtitle>Enter your new password below.</:subtitle>
+      </.header>
+    </div>
+
+    <div :if={assigns[:errors]} class="alert alert-error">
+      <.icon name="hero-exclamation-circle" class="size-6 shrink-0" />
+      <div>
+        <%= for {field, messages} <- @errors do %>
+          <p :for={msg <- messages}>
+            <%= Phoenix.Naming.humanize(field) %>: <%= msg %>
+          </p>
+        <% end %>
+      </div>
+    </div>
+
+    <.form :let={f} for={@form} as={:user} action={~p"/users/reset-password"} method="put" class="awrad-auth-form">
+      <input type="hidden" name="user[token]" value={f[:token].value} />
+      <.input
+        field={f[:password]}
+        type="password"
+        label="New password"
+        autocomplete="new-password"
+        spellcheck="false"
+        required
+        phx-mounted={JS.focus()}
+      />
+      <.input
+        field={f[:password_confirmation]}
+        type="password"
+        label="Confirm new password"
+        autocomplete="new-password"
+        spellcheck="false"
+        required
+      />
+      <.button class="btn btn-primary w-full">
+        Reset password <span aria-hidden="true">→</span>
+      </.button>
+    </.form>
+
+    <p class="text-center text-sm">
+      <.link navigate={~p"/users/log-in"} class="font-semibold text-brand hover:underline">
+        Back to log in
+      </.link>
+    </p>
+  </div>
+</Layouts.app>

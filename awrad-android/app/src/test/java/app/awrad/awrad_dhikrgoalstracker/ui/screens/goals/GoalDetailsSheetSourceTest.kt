@@ -6,15 +6,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GoalDetailsSheetSourceTest {
+    private fun detailsSheetSource(): String = sourceFile("GoalsScreen.kt").readText()
+        .substringAfter("internal fun GoalDetailsBottomSheet(")
+        .substringBefore("@Composable\ninternal fun goalTag(")
+
     @Test
     fun `overflow opens a full height goal details sheet instead of a dropdown`() {
         val source = sourceFile("GoalsScreen.kt").readText()
         val goalCard = source
             .substringAfter("private fun GoalListItem(")
             .substringBefore("internal fun GoalDetailsBottomSheet(")
-        val detailsSheet = source
-            .substringAfter("internal fun GoalDetailsBottomSheet(")
-            .substringBefore("private fun GoalQuickStat(")
+        val detailsSheet = detailsSheetSource()
 
         assertTrue("The overflow action must open goal details", "onShowDetails()" in goalCard)
         assertFalse("The overflow action must not open the old dropdown", "DropdownMenu(" in goalCard)
@@ -25,9 +27,7 @@ class GoalDetailsSheetSourceTest {
 
     @Test
     fun `goal details content stays below the status bar`() {
-        val detailsSheet = sourceFile("GoalsScreen.kt").readText()
-            .substringAfter("internal fun GoalDetailsBottomSheet(")
-            .substringBefore("private fun GoalQuickStat(")
+        val detailsSheet = detailsSheetSource()
 
         assertTrue(
             "The full-height sheet must inset its content below the status bar",
@@ -37,9 +37,7 @@ class GoalDetailsSheetSourceTest {
 
     @Test
     fun `goal details sheet surface is status safe and shows a drag handle`() {
-        val detailsSheet = sourceFile("GoalsScreen.kt").readText()
-            .substringAfter("internal fun GoalDetailsBottomSheet(")
-            .substringBefore("private fun GoalQuickStat(")
+        val detailsSheet = detailsSheetSource()
         val sheetCall = detailsSheet.substringAfter("ModalBottomSheet(").substringBefore(") {")
 
         assertTrue(
@@ -53,30 +51,27 @@ class GoalDetailsSheetSourceTest {
     }
 
     @Test
-    fun `goal details sheet shows statement directly with streak and quick stats`() {
-        val source = sourceFile("GoalsScreen.kt").readText()
-        val detailsSheet = source
-            .substringAfter("internal fun GoalDetailsBottomSheet(")
-            .substringBefore("private fun GoalQuickStat(")
+    fun `goal details sheet keeps the statement and editable details without progress data`() {
+        val detailsSheet = detailsSheetSource()
 
         assertFalse(
             "The statement must not repeat a redundant heading",
             "R.string.goal_sheet_statement_label" in detailsSheet,
         )
         assertTrue("The sheet must render the goal statement", "R.string.goal_sheet_statement" in detailsSheet)
-        assertTrue("The sheet must show today's count", "R.string.goal_sheet_today" in detailsSheet)
-        assertTrue("The sheet must show the current streak", "R.string.goal_sheet_current_streak" in detailsSheet)
-        assertTrue("The sheet must show the all-time count", "R.string.goal_sheet_all_time" in detailsSheet)
-        assertTrue("The sheet must read the streak param", "streakDays," in detailsSheet)
-        assertTrue("The sheet must read the goal's lifetime count", "goal.totalCompletedCount" in detailsSheet)
+        assertTrue("The sheet must keep editable goal details", "DetailsDisclosure(" in detailsSheet)
+        assertFalse("The sheet must not render quick stats", "GoalQuickStat(" in detailsSheet)
+        assertFalse("The sheet must not render quick-stat labels", "R.string.goal_sheet_quick_stats" in detailsSheet)
+        assertFalse("The sheet must not render a streak calendar", "StreakSection(" in detailsSheet)
+        assertFalse("The sheet must not render session data", "SessionsSection(" in detailsSheet)
+        assertFalse("The sheet must not receive streak data", "streakInfo:" in detailsSheet)
+        assertFalse("The sheet must not receive session count data", "slotCountsToday:" in detailsSheet)
+        assertFalse("The sheet must not receive all-time session data", "slotCountsAllTime:" in detailsSheet)
     }
 
     @Test
     fun `sheet offers archive restore and confirmed delete actions`() {
-        val screen = sourceFile("GoalsScreen.kt").readText()
-        val detailsSheet = screen
-            .substringAfter("internal fun GoalDetailsBottomSheet(")
-            .substringBefore("private fun GoalQuickStat(")
+        val detailsSheet = detailsSheetSource()
         val viewModel = sourceFile("GoalsViewModel.kt").readText()
 
         assertTrue("The sheet must offer Archive", "R.string.action_archive" in detailsSheet)
@@ -97,50 +92,6 @@ class GoalDetailsSheetSourceTest {
         )
         assertTrue("Archive must cancel scheduled reminders", "scheduler.cancelForGoal(" in viewModel)
         assertTrue("Restore must reschedule reminders", "scheduler.scheduleForGoal(" in viewModel)
-    }
-
-    @Test
-    fun `merged sheet keeps the redesigned sessions and details sections`() {
-        val source = sourceFile("GoalsScreen.kt").readText()
-        val detailsSheet = source
-            .substringAfter("internal fun GoalDetailsBottomSheet(")
-            .substringBefore("private fun GoalQuickStat(")
-        val viewModel = sourceFile("GoalsViewModel.kt").readText()
-
-        assertTrue(
-            "The sheet must reuse the redesigned sessions section",
-            "SessionsSection(" in detailsSheet,
-        )
-        assertTrue(
-            "The sheet must reuse the redesigned details disclosure",
-            "DetailsDisclosure(" in detailsSheet,
-        )
-        assertTrue(
-            "Sessions must show today's per-slot counts",
-            "slotCountsToday = slotCountsToday" in detailsSheet,
-        )
-        assertTrue(
-            "Sessions must show archived slots' all-time counts",
-            "slotCountsAllTime = slotCountsAllTime" in detailsSheet,
-        )
-        assertTrue(
-            "The sessions edit action must open the schedule editor",
-            "onEdit = { onEditSchedule() }" in detailsSheet,
-        )
-        assertTrue(
-            "Details must thread counting/schedule/reminders edit actions",
-            "onEditCounting = onEditCounting" in detailsSheet &&
-                "onEditSchedule = onEditSchedule" in detailsSheet &&
-                "onEditReminders = onEditReminders" in detailsSheet,
-        )
-        assertTrue(
-            "The list view model must expose per-slot counts for today",
-            "val slotCountsToday: Map<AwradId, Long>" in viewModel,
-        )
-        assertTrue(
-            "The list view model must expose per-slot all-time counts",
-            "val slotCountsAllTime: Map<AwradId, Long>" in viewModel,
-        )
     }
 
     private fun sourceFile(name: String): File {

@@ -1139,6 +1139,7 @@ final class AwradStore {
     struct CountApplyResult: Equatable {
         var appliedDelta: Int64
         var capEvent: CountCapEvent
+        var targetReachedNow: Bool = false
     }
 
     @discardableResult
@@ -1159,6 +1160,8 @@ final class AwradStore {
         guard let resolvedSlotID = Self.resolvedCountSlotID(for: goal, requestedSlotID: slotID) else {
             return CountApplyResult(appliedDelta: 0, capEvent: .none)
         }
+        let countContext = Self.capContext(for: goal, resolvedSlotID: resolvedSlotID)
+        let previousCount = count(for: goal, slotID: resolvedSlotID)
         // `all-time` is retained only for legacy aggregate imports. New counts
         // always keep their effective local date so the operation can be
         // synchronized and reconciled without losing daily provenance.
@@ -1168,12 +1171,10 @@ final class AwradStore {
         var capEvent: CountCapEvent = .none
 
         if amount > 0 {
-            let cap = Self.capContext(for: goal, resolvedSlotID: resolvedSlotID)
-            let current = count(for: goal, slotID: resolvedSlotID)
             (appliedAmount, capEvent) = Self.applyCap(
                 amount: amount,
-                current: current,
-                context: cap
+                current: previousCount,
+                context: countContext
             )
             guard appliedAmount > 0 else {
                 return CountApplyResult(appliedDelta: 0, capEvent: capEvent)
@@ -1220,7 +1221,14 @@ final class AwradStore {
             return CountApplyResult(appliedDelta: 0, capEvent: .none)
         }
         notificationSchedulingChanges.emit(goalIDs: [goalID], reason: .countMutation)
-        return CountApplyResult(appliedDelta: actualDelta, capEvent: capEvent)
+        let targetReachedNow = countContext.target.map {
+            previousCount < $0 && previousCount + actualDelta >= $0
+        } ?? false
+        return CountApplyResult(
+            appliedDelta: actualDelta,
+            capEvent: capEvent,
+            targetReachedNow: targetReachedNow
+        )
     }
 
     /// The effective (capBehavior, target, maximum) for a count context.

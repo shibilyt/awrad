@@ -22,7 +22,6 @@
     <string name="action_restore">استعادة الهدف</string>
     <string name="goal_sheet_close">إغلاق تفاصيل الهدف</string>
     <string name="goal_sheet_statement">%1$s · %2$s</string>
-    <string name="goal_sheet_quick_stats">إحصاءات سريعة</string>
     <string name="goal_sheet_today">اليوم</string>
     <string name="goal_sheet_current_streak">السلسلة الحالية</string>
     <string name="goal_sheet_all_time">الإجمالي</string>
@@ -774,6 +773,8 @@
     <string name="action_stop_and_go_back">إيقاف والرجوع</string>
     <string name="action_keep_counting">متابعة العد</string>
     <string name="adjust_count">تعديل العدد</string>
+    <string name="adjust_count_choose_action">ماذا تريد أن تفعل؟</string>
+    <string name="adjust_count_date">التاريخ: %1$s</string>
     <string name="adjust_count_hint">أدخل العدد</string>
     <string name="action_add_count">إضافة</string>
     <string name="action_subtract_count">طرح</string>

@@ -116,6 +116,7 @@ import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.goalScheduleTag
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.goalTag
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.localizedName
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.localizedTitle
+import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.usesDailyTargetSummary
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.AwradDhikrGoalsTrackerTheme
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.NotoNaskhArabicFontFamily
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
@@ -1220,7 +1221,7 @@ internal fun countRuleSummary(goal: Goal): String {
         target = target,
         maximum = goal.maximumCount,
         capBehavior = goal.capBehavior,
-        daily = goal.recurrence.frequency == RecurrenceFrequency.DAILY,
+        daily = usesDailyTargetSummary(goal),
         fallbackNoTarget = stringResource(R.string.goal_summary_no_target),
     )
 }

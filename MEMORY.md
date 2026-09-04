@@ -4,10 +4,10 @@ This file stores durable repository facts and a concise append-only change log. 
 
 ## Durable facts
 
-- The repository contains three independently buildable projects: `awrad-android`, `awrad-ios`, and `awrad_api`.
+- The repository contains three independently buildable projects: `awrad-android`, `awrad-ios`, and `awrad_server`.
 - Git operations run at the umbrella root; Gradle, Xcode, and Mix commands run inside their project roots.
 - Both mobile apps are designed to remain useful without a network connection.
-- The Phoenix API currently owns accounts, browser session authentication, and mobile JSON authentication.
+- The Phoenix server currently owns accounts, browser session authentication, and mobile JSON authentication.
 - Android persists app data with Room. Exported Room schemas are committed migration evidence.
 - iOS exposes app state through `AwradStore`, persists the product graph in an App Group SwiftData repository, and shares a compact projection plus relational mutations with its widget extension. Snapshot v5 is migration/backup input.
 - The API persists server data with Ecto/PostgreSQL and uses timestamped migrations.
@@ -73,7 +73,7 @@ Use this format:
 
 - Area: API | Documentation
 - Change: Documented API trust boundaries, authentication/session invariants, public-auth abuse controls, authorization rules, production proxy requirements, endpoint review steps, and current security follow-up items; implemented shared browser-auth abuse limits and generic registration responses.
-- Evidence: `awrad_api/memory/security.md`, `awrad_api/lib/awrad_api_web/browser_auth_protection.ex`, browser-auth controller tests, `TESTING.md`
+- Evidence: `awrad_server/memory/security.md`, `awrad_server/lib/awrad_server_web/browser_auth_protection.ex`, browser-auth controller tests, `TESTING.md`
 - Commit: uncommitted
 
 ### 2026-07-15 — Implemented the iOS Android-parity architecture

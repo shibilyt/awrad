@@ -33,10 +33,10 @@ python3 scripts/validate_android_urgency_resources.py --self-test
 python3 scripts/validate_progress_sync.py
 
 # Validate Phoenix ordering, idempotency, and immutable count-ledger behavior.
-(cd awrad_api && mix test test/awrad_api/progress_sync_test.exs test/awrad_api/progress_sync_count_ledger_test.exs)
+(cd awrad_server && mix test test/awrad_server/progress_sync_test.exs test/awrad_server/progress_sync_count_ledger_test.exs)
 
 # Validate capability-gated dhikr tag entities, coalescing, cascades, and transfer filtering.
-(cd awrad_api && mix test test/awrad_api/progress_sync_document_test.exs test/awrad_api/progress_sync_dhikr_tags_test.exs test/awrad_api/progress_sync_entity_transfer_test.exs)
+(cd awrad_server && mix test test/awrad_server/progress_sync_document_test.exs test/awrad_server/progress_sync_dhikr_tags_test.exs test/awrad_server/progress_sync_entity_transfer_test.exs)
 ```
 
 The root is not itself a build project. The parity command intentionally enters the Android and iOS projects. Set `AWRAD_IOS_TEST_DESTINATION` to an `xcodebuild` destination string when automatic iPhone Simulator selection is not appropriate.
@@ -129,9 +129,9 @@ The widget also has the shared scheme `AwradWidgetExtension`. Use the main `awra
 
 The default development API URL is `http://127.0.0.1:4000/` in `AuthService`. Tests and composition code may inject another URL.
 
-## API
+## Phoenix server
 
-Working directory: `awrad_api/`
+Working directory: `awrad_server/`
 
 Prerequisites: Elixir compatible with `mix.exs` and PostgreSQL reachable with the development/test configuration.
 
@@ -157,12 +157,12 @@ mix test
 mix precommit
 ```
 
-Production runtime requires at least `DATABASE_URL`, `SECRET_KEY_BASE`, and `JWT_SIGNING_SECRET`. See `awrad_api/config/runtime.exs` for the authoritative list and constraints, and `awrad_api/.env.example` for the deployment-facing template.
+Production runtime requires at least `DATABASE_URL`, `SECRET_KEY_BASE`, and `JWT_SIGNING_SECRET`. See `awrad_server/config/runtime.exs` for the authoritative list and constraints, and `awrad_server/.env.example` for the deployment-facing template.
 
-Release image, built by CI and pulled by Dokploy. See `awrad_api/memory/deployment.md`.
+Release image, built by CI and pulled by Dokploy. See `awrad_server/memory/deployment.md`.
 
 ```bash
-# Build the production image locally (context is awrad_api/)
+# Build the production image locally (context is awrad_server/)
 docker build --platform linux/amd64 -t awrad-api:local .
 
 # Run it against a reachable Postgres, then probe the healthcheck
@@ -176,7 +176,7 @@ curl -fsS http://localhost:4000/up
 ## Local integration
 
 1. Start PostgreSQL.
-2. From `awrad_api/`, run `mix setup` once and then `mix phx.server`.
+2. From `awrad_server/`, run `mix setup` once and then `mix phx.server`.
 3. Android emulator builds use `10.0.2.2:4000` by default.
 4. iOS Simulator builds use `127.0.0.1:4000` by default.
 5. A physical device needs a host address reachable from that device; inject/override the mobile base URL instead of changing production defaults casually.

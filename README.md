@@ -1,6 +1,6 @@
 # Awrad
 
-Awrad is an umbrella repository for the Android app, iOS app, and Phoenix API that power the Awrad dhikr and wird experience.
+Awrad is an umbrella repository for the Android app, iOS app, and Phoenix server that power the Awrad dhikr and wird experience.
 
 ## Projects
 
@@ -8,7 +8,7 @@ Awrad is an umbrella repository for the Android app, iOS app, and Phoenix API th
 |---|---|---|
 | [`awrad-android/`](awrad-android/) | Kotlin, Jetpack Compose, Room, Hilt | Android app, local goals/counting, reminders, audio, and mobile API client |
 | [`awrad-ios/`](awrad-ios/) | SwiftUI, XCTest, WidgetKit | iOS app, local goals/counting, widgets, deep links, and mobile API client |
-| [`awrad_api/`](awrad_api/) | Elixir, Phoenix 1.8, Ecto, PostgreSQL | Browser experience, account system, and JSON authentication API |
+| [`awrad_server/`](awrad_server/) | Elixir, Phoenix 1.8, Ecto, PostgreSQL | Browser experience, account system, and JSON authentication API |
 
 The mobile apps are local-first today. Authentication is connected to the API, while general goal, count, dhikr, and wird synchronization remains planned work. See [`CONTRACTS.md`](CONTRACTS.md).
 
@@ -26,7 +26,7 @@ For developers:
 
 - Android commands run from `awrad-android/`.
 - iOS commands run from `awrad-ios/awrad/`.
-- API commands run from `awrad_api/`.
+- Server commands run from `awrad_server/`.
 
 ## Documentation
 
@@ -43,7 +43,7 @@ The progressive documentation map is [`docs/index.md`](docs/index.md). It routes
 | [`TESTING.md`](TESTING.md) | Validation matrix and escalation rules |
 | [`DECISIONS.md`](DECISIONS.md) | Decision-record index and ADR template |
 
-Detailed platform documentation remains close to its code. Android PRDs live under [`awrad-android/prd/`](awrad-android/prd/), iOS architecture notes live under [`awrad-ios/awrad/docs/`](awrad-ios/awrad/docs/), and API implementation memory lives under [`awrad_api/memory/`](awrad_api/memory/).
+Detailed platform documentation remains close to its code. Android PRDs live under [`awrad-android/prd/`](awrad-android/prd/), iOS architecture notes live under [`awrad-ios/awrad/docs/`](awrad-ios/awrad/docs/), and server implementation memory lives under [`awrad_server/memory/`](awrad_server/memory/).
 
 ## Repository hygiene
 

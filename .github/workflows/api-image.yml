@@ -1,16 +1,16 @@
-name: API image
+name: Awrad server image
 
-# Builds and publishes the awrad_api release image to GHCR. Dokploy pulls the
+# Builds and publishes the Awrad server release image to GHCR. Dokploy pulls the
 # immutable `sha-<short>` tag; it never builds from source.
 on:
   push:
     branches: [main]
     paths:
-      - "awrad_api/**"
+      - "awrad_server/**"
       - ".github/workflows/api-image.yml"
   pull_request:
     paths:
-      - "awrad_api/**"
+      - "awrad_server/**"
       - ".github/workflows/api-image.yml"
   workflow_dispatch:
 
@@ -40,7 +40,7 @@ jobs:
           --health-retries 10
     defaults:
       run:
-        working-directory: awrad_api
+        working-directory: awrad_server
     steps:
       - uses: actions/checkout@v4
 
@@ -53,9 +53,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            awrad_api/deps
-            awrad_api/_build
-          key: ${{ runner.os }}-mix-test-${{ hashFiles('awrad_api/mix.lock') }}
+            awrad_server/deps
+            awrad_server/_build
+          key: ${{ runner.os }}-mix-test-${{ hashFiles('awrad_server/mix.lock') }}
           restore-keys: ${{ runner.os }}-mix-test-
 
       - run: mix deps.get
@@ -99,7 +99,7 @@ jobs:
 
       - uses: docker/build-push-action@v6
         with:
-          context: awrad_api
+          context: awrad_server
           platforms: linux/amd64
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}

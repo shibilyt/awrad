@@ -4,6 +4,90 @@ import Testing
 
 @MainActor
 struct GoalLifecycleTests {
+    @Test func targetReachedMessageIsAttachedToCountCircle() throws {
+        let sourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Counting/CountingView.swift")
+            .standardizedFileURL
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let countButtonSource = source
+            .components(separatedBy: "private struct CountCircleButton: View")
+            .last ?? ""
+        let sourceBeforeCountButton = source
+            .components(separatedBy: "private struct CountCircleButton: View")
+            .first ?? ""
+
+        #expect(countButtonSource.contains("TargetReachedCircleMessage"))
+        #expect(countButtonSource.contains("Button(\"Keep counting\""))
+        #expect(countButtonSource.contains("if showsTargetReachedAlert"))
+        #expect(!countButtonSource.contains("TargetReachedCircleAlert"))
+        #expect(!sourceBeforeCountButton.contains("TargetReachedCapCard("))
+
+        let messageSource = countButtonSource
+            .components(separatedBy: "private struct TargetReachedCircleMessage: View")
+            .last ?? ""
+        #expect(messageSource.contains(".foregroundStyle(AwradTheme.ink"))
+        #expect(!messageSource.contains(".foregroundStyle(.secondary)"))
+    }
+
+    @Test func countingPageUsesTwoRingSegments() throws {
+        let sourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Counting/CountingView.swift")
+            .standardizedFileURL
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+        let countButtonSource = source
+            .components(separatedBy: "private struct CountCircleButton: View")
+            .last ?? ""
+
+        #expect(countButtonSource.contains("let minimumSegmentProgress: Double?"))
+        #expect(countButtonSource.contains("let remainingSegmentProgress: Double?"))
+        #expect(countButtonSource.contains("minimumCheckpoint"))
+        #expect(!countButtonSource.contains("allowsHitTesting(false)"))
+        let goldRail = countButtonSource.range(of: ".stroke(AwradTheme.gold")
+        let sageRail = countButtonSource.range(of: ".stroke(AwradTheme.sage")
+        #expect(goldRail != nil)
+        #expect(sageRail != nil)
+        if let goldRail, let sageRail {
+            #expect(goldRail.lowerBound < sageRail.lowerBound)
+        }
+    }
+
+    @Test func countingRingUsesMinimumThenFinalTargetWithAFixedCheckpoint() {
+        let beforeMinimum = countingRingProgress(
+            currentCount: 2,
+            minimumCount: 5,
+            maximumCount: 10
+        )
+        #expect(abs(beforeMinimum.progress - 0.4) < 0.0001)
+        #expect(abs((beforeMinimum.minimumSegmentProgress ?? 0) - 0.4) < 0.0001)
+        #expect(abs((beforeMinimum.remainingSegmentProgress ?? 0) - 0) < 0.0001)
+        #expect(abs((beforeMinimum.minimumCheckpoint ?? 0) - 0.5) < 0.0001)
+        #expect(beforeMinimum.activeTarget == 5)
+
+        let atMinimum = countingRingProgress(
+            currentCount: 5,
+            minimumCount: 5,
+            maximumCount: 10
+        )
+        #expect(abs(atMinimum.progress - 0.5) < 0.0001)
+        #expect(abs((atMinimum.minimumSegmentProgress ?? 0) - 0.5) < 0.0001)
+        #expect(abs((atMinimum.remainingSegmentProgress ?? 0) - 0) < 0.0001)
+        #expect(abs((atMinimum.minimumCheckpoint ?? 0) - 0.5) < 0.0001)
+        #expect(atMinimum.activeTarget == 10)
+
+        let afterMinimum = countingRingProgress(
+            currentCount: 7,
+            minimumCount: 5,
+            maximumCount: 10
+        )
+        #expect(abs(afterMinimum.progress - 0.7) < 0.0001)
+        #expect(abs((afterMinimum.minimumSegmentProgress ?? 0) - 0.5) < 0.0001)
+        #expect(abs((afterMinimum.remainingSegmentProgress ?? 0) - 0.2) < 0.0001)
+        #expect(abs((afterMinimum.minimumCheckpoint ?? 0) - 0.5) < 0.0001)
+        #expect(afterMinimum.activeTarget == 10)
+    }
+
     @Test func goalCardPresentationMatchesAndroidRingStates() {
         let active = Goal(
             dhikrID: UUID(),
@@ -405,6 +489,40 @@ struct GoalLifecycleTests {
 
         #expect(crossing.appliedDelta == 1)
         #expect(crossing.capEvent == .warnedOverTarget)
+        #expect(!crossing.targetReachedNow)
+
+        let afterTarget = store.applyCount(goalID: goal.id, slotID: slotID)
+        #expect(!afterTarget.targetReachedNow)
+    }
+
+    @Test func targetReachedSignalsOnlyOnTheFirstCrossing() async throws {
+        let (store, url, dhikrID) = try await makeStore(prefix: "goal-target-crossing")
+        defer { try? FileManager.default.removeItem(at: url) }
+        let goal = try #require(store.createConfiguredGoal(
+            dhikrID: dhikrID,
+            targetPolicy: .perDueDate,
+            recurrence: GoalRecurrence(frequency: .daily),
+            slots: [GoalSlot(slotType: .anytime, targetCount: 3)],
+            countPolicy: CountPolicy(targetCount: 3, capBehavior: .allowOverTarget)
+        ))
+
+        #expect(!store.applyCount(goalID: goal.id, amount: 2).targetReachedNow)
+        #expect(store.applyCount(goalID: goal.id).targetReachedNow)
+        #expect(!store.applyCount(goalID: goal.id).targetReachedNow)
+    }
+
+    @Test func targetReachedVibrationUsesOneSecondAndTheExistingPreference() throws {
+        let sourceURL = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .appendingPathComponent("../awrad/Features/Counting/CountingView.swift")
+            .standardizedFileURL
+        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+
+        #expect(source.contains("CHHapticEvent(eventType: .hapticContinuous"))
+        #expect(source.contains("duration: targetReachedVibrationDuration"))
+        #expect(source.contains("targetReachedVibrationDuration = 1.0"))
+        #expect(source.contains("result.targetReachedNow"))
+        #expect(source.contains("store.preferences.vibrateOnCount"))
     }
 
     @Test func scheduleDraftRoundTripsAndroidRecurrenceAndStableSlotIDs() {

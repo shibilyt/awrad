@@ -32,8 +32,8 @@ This umbrella repository contains independently deployable Android, iOS, and Pho
 | Durable facts and known gaps | [`MEMORY.md`](MEMORY.md), [`DECISIONS.md`](DECISIONS.md) |
 | Android architecture and rules | [`awrad-android/AGENTS.md`](awrad-android/AGENTS.md), `awrad-android/docs/`, `awrad-android/prd/` |
 | iOS architecture and rules | [`awrad-ios/AGENTS.md`](awrad-ios/AGENTS.md), `awrad-ios/awrad/docs/` |
-| API architecture and rules | [`awrad_api/AGENTS.md`](awrad_api/AGENTS.md), `awrad_api/memory/` |
-| API routes | `awrad_api/lib/awrad_api_web/router.ex` |
+| Server/API architecture and rules | [`awrad_server/AGENTS.md`](awrad_server/AGENTS.md), `awrad_server/memory/` |
+| API routes | `awrad_server/lib/awrad_server_web/router.ex` |
 | Android network and Room | `awrad-android/app/src/main/java/.../data/network/`, `.../data/database/`, `app/schemas/` |
 | iOS network and persistence | `awrad-ios/awrad/awrad/Core/AuthService.swift`, `AwradDomain.swift`, `AwradStore.swift` |
 

@@ -9,6 +9,8 @@ import android.content.Intent
 import android.media.RingtoneManager
 import android.os.Binder
 import android.os.IBinder
+import android.os.VibrationEffect
+import android.os.Vibrator
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import androidx.media3.common.MediaItem
@@ -40,8 +42,12 @@ import android.util.Log
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
 import app.awrad.awrad_dhikrgoalstracker.data.model.GoalSlotType
 import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
+import app.awrad.awrad_dhikrgoalstracker.data.preferences.UserPreferences
 import kotlin.math.roundToInt
 import app.awrad.awrad_dhikrgoalstracker.util.CountCapCalculator
+import kotlinx.coroutines.flow.first
+
+internal const val TARGET_REACHED_VIBRATION_DURATION_MS = 1_000L
 
 @AndroidEntryPoint
 class DhikrCountingService : Service() {
@@ -51,6 +57,9 @@ class DhikrCountingService : Service() {
 
     @Inject
     lateinit var scheduler: ReminderScheduler
+
+    @Inject
+    lateinit var userPreferences: UserPreferences
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var player: ExoPlayer? = null
@@ -446,7 +455,10 @@ class DhikrCountingService : Service() {
             _countingState.value = _countingState.value.copy(
                 goalReached = true,
             )
-            if (transition.targetReachedNow) playGoalReachedSound()
+            if (transition.targetReachedNow) {
+                playGoalReachedSound()
+                playGoalReachedVibration()
+            }
             val allSlotsComplete = current.activeSlotId == null || current.slots.isEmpty() ||
                 current.slots.all { slot ->
                     val target = slot.targetCount ?: 0
@@ -489,6 +501,24 @@ class DhikrCountingService : Service() {
             RingtoneManager.getRingtone(this, uri)?.play()
         } catch (_: Exception) {
             // Ignore if sound can't be played
+        }
+    }
+
+    private fun playGoalReachedVibration() {
+        serviceScope.launch {
+            val enabled = runCatching { userPreferences.vibrateOnCount.first() }
+                .getOrDefault(false)
+            if (!enabled) return@launch
+
+            val vibrator = getSystemService(Vibrator::class.java) ?: return@launch
+            if (!vibrator.hasVibrator()) return@launch
+
+            vibrator.vibrate(
+                VibrationEffect.createOneShot(
+                    TARGET_REACHED_VIBRATION_DURATION_MS,
+                    VibrationEffect.DEFAULT_AMPLITUDE,
+                )
+            )
         }
     }
 

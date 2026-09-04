@@ -24,7 +24,13 @@ interface GoalRepository {
     suspend fun updateGoalSchedule(validatedGoalUpdate: ValidatedGoalUpdate): Goal
     suspend fun updateGoalReminders(validatedGoalUpdate: ValidatedGoalUpdate): Goal
     suspend fun deleteGoal(id: AwradId)
-    suspend fun addCount(goalId: AwradId, slotId: AwradId?, count: Long = 1): Long
+    /** Applies a count delta for [date], defaulting to the app's effective today. */
+    suspend fun addCount(
+        goalId: AwradId,
+        slotId: AwradId?,
+        count: Long = 1,
+        date: String? = null,
+    ): Long
     fun getTotalCountForDate(goalId: AwradId, date: String): Flow<Long?>
     fun getTotalCount(goalId: AwradId): Flow<Long?>
     suspend fun getCountForSlotAndDate(goalId: AwradId, slotId: AwradId, date: String): Long

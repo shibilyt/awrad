@@ -135,6 +135,30 @@ class GoalRepositoryImplCountCapTest {
     }
 
     @Test
+    fun explicitDateAdjustmentWritesProgressToTheSelectedDay() = runTest {
+        val goalId = createGoal(countPolicy = CountPolicy(targetCount = 20))
+        val selectedDate = LocalDate.now().minusDays(1)
+
+        assertEquals(
+            4L,
+            repository.addCount(
+                goalId = goalId,
+                slotId = null,
+                count = 4,
+                date = selectedDate.toString(),
+            ),
+        )
+        assertEquals(
+            4L,
+            repository.getTotalCountForDate(goalId, selectedDate.toString()).first(),
+        )
+        assertEquals(
+            0L,
+            repository.getTotalCountForDate(goalId, LocalDate.now().toString()).first() ?: 0L,
+        )
+    }
+
+    @Test
     fun boundedGoalCanPassTargetButNotMaximum() = runTest {
         val goalId = createGoal(
             countPolicy = CountPolicy(

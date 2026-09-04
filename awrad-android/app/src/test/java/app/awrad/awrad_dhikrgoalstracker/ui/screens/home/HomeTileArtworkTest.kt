@@ -30,6 +30,20 @@ class HomeTileArtworkTest {
     }
 
     @Test
+    fun `todays goals header does not render an icon badge`() {
+        val screen = source("main/java/app/awrad/awrad_dhikrgoalstracker/ui/screens/home/HomeScreen.kt")
+            .readText()
+        val goalsSection = screen
+            .substringAfter("private fun TodayGoalsSection(")
+            .substringBefore("@Composable\nprivate fun WirdsLoadingSection(")
+
+        assertFalse(
+            "Today's Goals header should not render an icon badge",
+            "GoalIconBadge(" in goalsSection,
+        )
+    }
+
+    @Test
     fun `home cards use dedicated minimal artwork for light and dark themes`() {
         val visuals = source("main/java/app/awrad/awrad_dhikrgoalstracker/ui/screens/home/HomeVisuals.kt")
             .readText()

@@ -21,7 +21,7 @@ ANDROID = (
     / "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/database/AsmaUlHusnaSeed.kt"
 )
 IOS = ROOT / "awrad-ios/awrad/awrad/Core/AsmaUlHusnaSeed.swift"
-API = ROOT / "awrad_api/priv/asma-ul-husna.json"
+API = ROOT / "awrad_server/priv/asma-ul-husna.json"
 
 
 def quoted(value: str) -> str:

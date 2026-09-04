@@ -65,7 +65,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -88,15 +87,11 @@ import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualCard
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualEmptyState
 import app.awrad.awrad_dhikrgoalstracker.ui.components.RitualSkeleton
 import app.awrad.awrad_dhikrgoalstracker.ui.components.SectionHeader
-import app.awrad.awrad_dhikrgoalstracker.ui.components.StreakSection
 import app.awrad.awrad_dhikrgoalstracker.ui.components.compactGoalCount
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goaldetail.DetailsDisclosure
-import app.awrad.awrad_dhikrgoalstracker.ui.screens.goaldetail.SessionsSection
 import app.awrad.awrad_dhikrgoalstracker.ui.sync.ProgressSyncRefreshViewModel
 import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 import app.awrad.awrad_dhikrgoalstracker.util.GoalProgressCalculator
-import app.awrad.awrad_dhikrgoalstracker.util.StreakInfo
-import java.time.LocalDate
 import kotlinx.coroutines.launch
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -268,12 +263,6 @@ fun GoalsScreen(
         GoalDetailsBottomSheet(
             goal = item.goal,
             dhikrName = item.dhikrName,
-            todayCount = item.todayCount,
-            streakDays = item.streakDays,
-            streakInfo = item.streakInfo,
-            effectiveToday = item.effectiveToday,
-            slotCountsToday = item.slotCountsToday,
-            slotCountsAllTime = item.slotCountsAllTime,
             onDismiss = { selectedGoal = null },
             onArchive = {
                 selectedGoal = null
@@ -630,12 +619,6 @@ internal data class GoalSheetAction(
 internal fun GoalDetailsBottomSheet(
     goal: Goal,
     dhikrName: String,
-    todayCount: Long,
-    streakDays: Int,
-    streakInfo: StreakInfo?,
-    effectiveToday: LocalDate,
-    slotCountsToday: Map<AwradId, Long>,
-    slotCountsAllTime: Map<AwradId, Long>,
     onDismiss: () -> Unit,
     onArchive: () -> Unit,
     onRestore: () -> Unit,
@@ -714,63 +697,6 @@ internal fun GoalDetailsBottomSheet(
                         color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
-
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(
-                        text = stringResource(R.string.goal_sheet_quick_stats),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        GoalQuickStat(
-                            label = stringResource(R.string.goal_sheet_today),
-                            value = compactGoalCount(todayCount),
-                            modifier = Modifier.weight(1f),
-                        )
-                        GoalQuickStat(
-                            label = stringResource(R.string.goal_sheet_current_streak),
-                            value = pluralStringResource(
-                                R.plurals.goal_sheet_days,
-                                streakDays,
-                                streakDays,
-                            ),
-                            modifier = Modifier.weight(1f),
-                        )
-                        GoalQuickStat(
-                            label = stringResource(R.string.goal_sheet_all_time),
-                            value = compactGoalCount(goal.totalCompletedCount),
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                }
-
-                // History & streak card — same as the counting page's history bottom sheet.
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
-                    tonalElevation = 1.dp,
-                ) {
-                    StreakSection(
-                        currentStreak = streakInfo?.currentStreak ?: streakDays,
-                        activeDates = streakInfo?.activeDates.orEmpty(),
-                        today = effectiveToday,
-                        earliestDate = goal.startDate,
-                        streakInfo = streakInfo,
-                        modifier = Modifier.padding(14.dp),
-                    )
-                }
-
-                // Sessions + details — merged from the redesigned detail screen.
-                SessionsSection(
-                    goal = goal,
-                    slotCountsToday = slotCountsToday,
-                    slotCountsAllTime = slotCountsAllTime,
-                    onEdit = { onEditSchedule() },
-                )
 
                 DetailsDisclosure(
                     goal = goal,
@@ -878,40 +804,6 @@ internal fun GoalDetailsBottomSheet(
 }
 
 @Composable
-private fun GoalQuickStat(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier,
-) {
-    Surface(
-        modifier = modifier.height(96.dp),
-        shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 14.dp),
-            verticalArrangement = Arrangement.SpaceBetween,
-        ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-    }
-}
-
-@Composable
 internal fun goalTag(goal: Goal): String {
     if (goal.targetPolicy == TargetPolicy.NONE) {
         return stringResource(R.string.goal_summary_no_target)
@@ -933,7 +825,7 @@ internal fun goalTag(goal: Goal): String {
     val target = GoalProgressCalculator.getTargetCount(goal)
     val minimum = goal.minimumStreakCount
     val maximum = goal.maximumCount
-    val isDaily = goal.recurrence.frequency == RecurrenceFrequency.DAILY
+    val isDaily = usesDailyTargetSummary(goal)
     return when {
         goal.capBehavior == CountCapBehavior.BlockAtMaximum &&
             minimum != null && maximum != null && minimum < target && target < maximum ->
@@ -971,24 +863,30 @@ internal fun goalTag(goal: Goal): String {
 }
 
 @Composable
-internal fun goalScheduleTag(goal: Goal): String? = when (goal.recurrence.frequency) {
-    RecurrenceFrequency.DAILY -> null
-    RecurrenceFrequency.WEEKLY -> {
-        val weekdays = goal.recurrence.weekdays
-            .sortedBy { it.value }
-            .joinToString(", ") { it.name.take(3).lowercase().replaceFirstChar { char -> char.uppercase() } }
-        if (weekdays.isBlank()) stringResource(R.string.goal_summary_schedule_weekly)
-        else stringResource(R.string.goal_summary_schedule_weekly_every, weekdays)
+internal fun goalScheduleTag(goal: Goal): String? {
+    if (goal.isOneTime && goal.recurrence.frequency == RecurrenceFrequency.DAILY) {
+        return stringResource(R.string.goal_type_one_time)
     }
-    RecurrenceFrequency.MONTHLY -> stringResource(
-        R.string.goal_summary_schedule_monthly,
-        goal.recurrence.calendar.name.lowercase().replaceFirstChar { it.uppercase() },
-    )
-    RecurrenceFrequency.INTERVAL -> stringResource(
-        R.string.goal_summary_schedule_interval,
-        goal.recurrence.intervalDays ?: 1,
-    )
-    RecurrenceFrequency.YEARLY -> stringResource(R.string.goal_summary_schedule_yearly_short)
-    RecurrenceFrequency.SEASON -> stringResource(R.string.goal_summary_schedule_season_short)
-    RecurrenceFrequency.SPECIFIC_DATES -> stringResource(R.string.goal_summary_schedule_dates_short)
+
+    return when (goal.recurrence.frequency) {
+        RecurrenceFrequency.DAILY -> null
+        RecurrenceFrequency.WEEKLY -> {
+            val weekdays = goal.recurrence.weekdays
+                .sortedBy { it.value }
+                .joinToString(", ") { it.name.take(3).lowercase().replaceFirstChar { char -> char.uppercase() } }
+            if (weekdays.isBlank()) stringResource(R.string.goal_summary_schedule_weekly)
+            else stringResource(R.string.goal_summary_schedule_weekly_every, weekdays)
+        }
+        RecurrenceFrequency.MONTHLY -> stringResource(
+            R.string.goal_summary_schedule_monthly,
+            goal.recurrence.calendar.name.lowercase().replaceFirstChar { it.uppercase() },
+        )
+        RecurrenceFrequency.INTERVAL -> stringResource(
+            R.string.goal_summary_schedule_interval,
+            goal.recurrence.intervalDays ?: 1,
+        )
+        RecurrenceFrequency.YEARLY -> stringResource(R.string.goal_summary_schedule_yearly_short)
+        RecurrenceFrequency.SEASON -> stringResource(R.string.goal_summary_schedule_season_short)
+        RecurrenceFrequency.SPECIFIC_DATES -> stringResource(R.string.goal_summary_schedule_dates_short)
+    }
 }

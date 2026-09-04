@@ -38,14 +38,14 @@ This is the navigation layer for repository knowledge. Keep the root [`AGENTS.md
 - Network contract: `awrad-ios/awrad/awrad/Core/AuthService.swift`
 - Local state: `awrad-ios/awrad/awrad/Core/AwradStore.swift`
 
-### API
+### Phoenix server
 
-- Agent rules: [`awrad_api/AGENTS.md`](../awrad_api/AGENTS.md)
-- Master map: [`awrad_api/memory/README.md`](../awrad_api/memory/README.md)
-- Security baseline: [`awrad_api/memory/security.md`](../awrad_api/memory/security.md)
-- Feature and pattern maps: [`awrad_api/memory/features/`](../awrad_api/memory/features/) and [`awrad_api/memory/patterns/`](../awrad_api/memory/patterns/)
-- Router: `awrad_api/lib/awrad_api_web/router.ex`
-- Persistence: `awrad_api/priv/repo/migrations/` and Ecto schemas under `awrad_api/lib/`
+- Agent rules: [`awrad_server/AGENTS.md`](../awrad_server/AGENTS.md)
+- Master map: [`awrad_server/memory/README.md`](../awrad_server/memory/README.md)
+- Security baseline: [`awrad_server/memory/security.md`](../awrad_server/memory/security.md)
+- Feature and pattern maps: [`awrad_server/memory/features/`](../awrad_server/memory/features/) and [`awrad_server/memory/patterns/`](../awrad_server/memory/patterns/)
+- Router: `awrad_server/lib/awrad_server_web/router.ex`
+- Persistence: `awrad_server/priv/repo/migrations/` and Ecto schemas under `awrad_server/lib/`
 
 ## Setup gaps to close incrementally
 

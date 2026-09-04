@@ -6,7 +6,7 @@ Use decision records for choices that must remain understandable after the imple
 
 - Android product and data decisions: [`awrad-android/prd/decisions/`](awrad-android/prd/decisions/)
 - Android goal schema decision: [`awrad-android/docs/decisions/goal-schema.md`](awrad-android/docs/decisions/goal-schema.md)
-- API architecture decisions: [`awrad_api/memory/decisions/`](awrad_api/memory/decisions/)
+- API architecture decisions: [`awrad_server/memory/decisions/`](awrad_server/memory/decisions/)
 - iOS architecture and implementation status: [`awrad-ios/awrad/docs/ios-architecture.md`](awrad-ios/awrad/docs/ios-architecture.md)
 
 Android files under `docs/superpowers/plans/` are historical implementation plans, not accepted cross-project decisions.
@@ -51,13 +51,13 @@ Both mobile clients understand verification and session-bearing responses. Legac
 
 ### Evidence
 
-- `awrad_api/lib/awrad_api/accounts/token.ex`
-- `awrad_api/lib/awrad_api_web/controllers/api/auth_controller.ex`
+- `awrad_server/lib/awrad_server/accounts/token.ex`
+- `awrad_server/lib/awrad_server_web/controllers/api/auth_controller.ex`
 - `awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/network/TokenAuthenticator.kt`
 
 ### Supersedes
 
-The mobile-token portions of `awrad_api/memory/decisions/dual-auth.md` and `refresh-token-rotation.md`; browser sessions remain unchanged.
+The mobile-token portions of `awrad_server/memory/decisions/dual-auth.md` and `refresh-token-rotation.md`; browser sessions remain unchanged.
 
 ## ADR-2026-07-13: UUIDv4 progress identity and native model parity
 
@@ -81,7 +81,7 @@ Android Room v5 and iOS snapshot v5 reset pre-v5 development product data becaus
 - `check-mobile-model-parity`
 - `awrad-android/app/schemas/app.awrad.awrad_dhikrgoalstracker.data.database.AwradDatabase/5.json`
 - `awrad-ios/awrad/awrad/Core/ProgressContractV1.swift`
-- `awrad_api/priv/repo/migrations/20260713125755_align_progress_model_v1.exs`
+- `awrad_server/priv/repo/migrations/20260713125755_align_progress_model_v1.exs`
 
 ### Supersedes
 
@@ -109,7 +109,7 @@ Android and iOS automatically merge the collection into existing local product s
 - `scripts/generate_asma_ul_husna.py`
 - `awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/database/AsmaUlHusnaSeed.kt`
 - `awrad-ios/awrad/awrad/Core/AsmaUlHusnaSeed.swift`
-- `awrad_api/priv/asma-ul-husna.json`
+- `awrad_server/priv/asma-ul-husna.json`
 
 ### Supersedes
 
@@ -244,11 +244,11 @@ Counting never depends on connectivity, retries cannot duplicate accepted progre
 - `docs/progress-sync-architecture.md`
 - `contracts/progress-sync/v1/`
 - `scripts/validate_progress_sync.py`
-- `awrad_api/lib/awrad_api/progress_sync.ex`
-- `awrad_api/priv/repo/migrations/20260716053734_create_progress_sync_foundation.exs`
-- `awrad_api/priv/repo/migrations/20260716055321_create_progress_sync_count_ledger.exs`
-- `awrad_api/test/awrad_api/progress_sync_test.exs`
-- `awrad_api/test/awrad_api/progress_sync_count_ledger_test.exs`
+- `awrad_server/lib/awrad_server/progress_sync.ex`
+- `awrad_server/priv/repo/migrations/20260716053734_create_progress_sync_foundation.exs`
+- `awrad_server/priv/repo/migrations/20260716055321_create_progress_sync_count_ledger.exs`
+- `awrad_server/test/awrad_server/progress_sync_test.exs`
+- `awrad_server/test/awrad_server/progress_sync_count_ledger_test.exs`
 
 ### Supersedes
 
@@ -275,11 +275,57 @@ Server and contracts can roll out ahead of native tag UI/sync. Older clients rem
 - `contracts/progress-sync/v1/progress-sync.schema.json`
 - `contracts/progress-sync/v1/README.md`
 - `contracts/behavior-model/v1/fixtures/tag-normalization-contract.json`
-- `awrad_api/lib/awrad_api/progress_sync/document.ex`
-- `awrad_api/lib/awrad_api/progress_sync/entity_store.ex`
-- `awrad_api/lib/awrad_api/progress_sync/transfer.ex`
-- `awrad_api/test/awrad_api/progress_sync_dhikr_tags_test.exs`
-- `awrad_api/priv/repo/migrations/20260724065752_expand_progress_sync_entity_types_for_dhikr_tags.exs`
+- `awrad_server/lib/awrad_server/progress_sync/document.ex`
+- `awrad_server/lib/awrad_server/progress_sync/entity_store.ex`
+- `awrad_server/lib/awrad_server/progress_sync/transfer.ex`
+- `awrad_server/test/awrad_server/progress_sync_dhikr_tags_test.exs`
+- `awrad_server/priv/repo/migrations/20260724065752_expand_progress_sync_entity_types_for_dhikr_tags.exs`
+
+### Supersedes
+
+None.
+
+## ADR-2026-09-04: Browser companion actors use the existing sync ledger
+
+Status: Accepted
+
+### Context
+
+The desktop/tablet web companion needs authenticated count buttons that update
+the same canonical ledger as Android and iOS. A browser must not be trusted to
+choose a user, actor, sequence, or ownership field, and two accounts may use
+the same browser.
+
+### Decision
+
+Use the existing `progress_sync_actors` table with a server-generated UUIDv4
+browser installation identifier stored in the signed, host-only, `HttpOnly`
+Phoenix session cookie. Resolve actors by `(user_id, installation_id)` so tabs
+share one account stream while account switches remain isolated. The
+`AwradServer.WebSync` adapter is the only browser mutation boundary; it validates
+browser-local date and web-supported slot eligibility, then lets
+`AwradServer.ProgressSync` lock the user head and actor, allocate the next
+sequence, execute the canonical count command, and return the idempotent
+receipt. Canonical reads acknowledge and renew the actor. Expired actors roll
+to a new incarnation without changing historical progress. No migration,
+IndexedDB outbox, service worker, public JSON route, or mobile contract change
+is introduced.
+
+### Consequences
+
+Web counts converge with mobile counts through `CountLedger`, projections, and
+the existing mobile-visible delta path. Same-browser account isolation and
+duplicate-click safety are server-enforced. The web companion remains
+online-first and supports only manual counts for active anytime slots in v1;
+prayer-relative and time-window slots stay view-only.
+
+### Evidence
+
+- `awrad_server/lib/awrad_server/web_sync.ex`
+- `awrad_server/lib/awrad_server/progress_sync.ex`
+- `awrad_server/lib/awrad_server_web/web_installation.ex`
+- `awrad_server/test/awrad_server/web_sync_test.exs`
+- `awrad_server/test/awrad_server_web/web_installation_test.exs`
 
 ### Supersedes
 

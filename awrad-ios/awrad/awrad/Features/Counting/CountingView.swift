@@ -3,7 +3,38 @@ import Combine
 
 #if os(iOS)
 import AudioToolbox
+import CoreHaptics
 import UIKit
+#endif
+
+#if os(iOS)
+private final class TargetReachedHapticController {
+    private let targetReachedVibrationDuration = 1.0
+    private var engine: CHHapticEngine?
+    private var player: CHHapticPatternPlayer?
+
+    func play() {
+        guard CHHapticEngine.capabilitiesForHardware().supportsHaptics else { return }
+
+        do {
+            let engine = try CHHapticEngine()
+            let event = CHHapticEvent(eventType: .hapticContinuous, parameters: [
+                CHHapticEventParameter(parameterID: .hapticIntensity, value: 1.0),
+                CHHapticEventParameter(parameterID: .hapticSharpness, value: 0.5)
+            ], relativeTime: 0, duration: targetReachedVibrationDuration)
+            let pattern = try CHHapticPattern(events: [event], parameters: [])
+            let player = try engine.makePlayer(with: pattern)
+
+            self.engine = engine
+            self.player = player
+            try engine.start()
+            try player.start(atTime: 0)
+        } catch {
+            player = nil
+            engine = nil
+        }
+    }
+}
 #endif
 
 private enum CounterSheet: String, Identifiable {
@@ -15,6 +46,38 @@ private enum CounterSheet: String, Identifiable {
     case playbackSpeed
 
     var id: String { rawValue }
+}
+
+struct CountingRingProgress: Equatable {
+    let progress: Double
+    let minimumSegmentProgress: Double?
+    let remainingSegmentProgress: Double?
+    let minimumCheckpoint: Double?
+    let activeTarget: Int64
+}
+
+func countingRingProgress(
+    currentCount: Int64,
+    minimumCount: Int,
+    maximumCount: Int
+) -> CountingRingProgress {
+    precondition(minimumCount > 0, "minimumCount must be positive")
+    precondition(maximumCount >= minimumCount, "maximumCount must be at least minimumCount")
+
+    let activeTarget = currentCount < Int64(minimumCount) ? minimumCount : maximumCount
+    let progress = min(max(Double(currentCount) / Double(activeTarget), 0), 1)
+    let minimumCheckpoint = min(max(Double(minimumCount) / Double(maximumCount), 0), 1)
+    let hasReachedMinimum = currentCount >= Int64(minimumCount)
+
+    return CountingRingProgress(
+        progress: progress,
+        minimumSegmentProgress: hasReachedMinimum ? minimumCheckpoint : progress,
+        remainingSegmentProgress: hasReachedMinimum
+            ? min(max(progress - minimumCheckpoint, 0), 1)
+            : 0,
+        minimumCheckpoint: minimumCheckpoint,
+        activeTarget: Int64(activeTarget)
+    )
 }
 
 enum AudioCountingLoopPolicy {
@@ -93,6 +156,9 @@ struct CountingView: View {
     @State private var liveActivity = CountingLiveActivityController()
     @State private var syncFeedback: CountingSyncFeedbackState?
     @State private var lastHandledRemoteCountEventID: UUID?
+#if os(iOS)
+    @State private var targetReachedHapticController = TargetReachedHapticController()
+#endif
 
     private let minuteTicker = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
@@ -166,12 +232,6 @@ struct CountingView: View {
 
                         countingActionRow(goal: goal, dhikr: dhikr)
 
-                        if isPausedAtTarget(goal) {
-                            TargetReachedCapCard {
-                                showAllowPastTargetConfirmation = true
-                            }
-                        }
-
                         if services.audio.isCounting(goalID: goal.id) {
                             CompactAudioStatus(
                                 isPlaying: services.audio.isPlaying,
@@ -194,13 +254,18 @@ struct CountingView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
 
+                    let ringProgress = countingRingPresentation(for: goal)
                     CountCircleButton(
                         isEnabled: !services.audio.isCounting(goalID: goal.id) && countButtonEnabled(for: goal),
-                        primaryProgress: primaryRingProgress(for: goal),
-                        minimumProgress: minimumRingProgress(for: goal),
+                        primaryProgress: sessionTarget != nil ? heroProgress(for: goal) : ringProgress?.progress,
+                        minimumSegmentProgress: ringProgress?.minimumSegmentProgress,
+                        remainingSegmentProgress: ringProgress?.remainingSegmentProgress,
+                        minimumCheckpoint: ringProgress?.minimumCheckpoint,
+                        showsTargetReachedAlert: isPausedAtTarget(goal),
                         countText: formattedNumber(heroCurrentCount(for: goal)),
                         targetText: heroDenominatorText(for: goal).map { "of \($0)" },
-                        onCount: { add(1) }
+                        onCount: { add(1) },
+                        onKeepCounting: { showAllowPastTargetConfirmation = true }
                     )
                     .padding(.horizontal, 20)
                     .padding(.top, 8)
@@ -554,6 +619,9 @@ struct CountingView: View {
 
     private func heroDenominatorText(for goal: Goal) -> String? {
         guard heroMilestoneText(for: goal) == nil else { return nil }
+        if let ringProgress = countingRingPresentation(for: goal) {
+            return formattedNumber(ringProgress.activeTarget)
+        }
         return heroTarget(for: goal).map(formattedNumber)
     }
 
@@ -609,23 +677,33 @@ struct CountingView: View {
     private func usesRangeProgress(_ goal: Goal) -> Bool {
         let policy = activeCountPolicy(for: goal)
         guard sessionTarget == nil,
-              let minimum = policy.minimumCount, minimum > 0,
+              let minimum = policy.minimumCount, minimum > 1,
               let upper = policy.maximumCount ?? policy.targetCount else { return false }
         return upper >= minimum
     }
 
-    private func primaryRingProgress(for goal: Goal) -> Double? {
-        if sessionTarget != nil { return heroProgress(for: goal) }
+    private func countingRingPresentation(for goal: Goal) -> CountingRingProgress? {
+        guard sessionTarget == nil else { return nil }
         let policy = activeCountPolicy(for: goal)
         guard let upper = policy.maximumCount ?? policy.targetCount, upper > 0 else { return nil }
-        return min(Double(displayedCount(for: goal)) / Double(upper), 1)
-    }
 
-    private func minimumRingProgress(for goal: Goal) -> Double? {
-        guard usesRangeProgress(goal) else { return nil }
-        let policy = activeCountPolicy(for: goal)
-        guard let minimum = policy.minimumCount, minimum > 0 else { return nil }
-        return min(Double(displayedCount(for: goal)) / Double(minimum), 1)
+        if let minimum = policy.minimumCount,
+           minimum > 1,
+           upper >= minimum {
+            return countingRingProgress(
+                currentCount: displayedCount(for: goal),
+                minimumCount: minimum,
+                maximumCount: upper
+            )
+        }
+
+        return CountingRingProgress(
+            progress: min(max(Double(displayedCount(for: goal)) / Double(upper), 0), 1),
+            minimumSegmentProgress: nil,
+            remainingSegmentProgress: nil,
+            minimumCheckpoint: nil,
+            activeTarget: Int64(upper)
+        )
     }
 
     private func isPausedAtTarget(_ goal: Goal) -> Bool {
@@ -747,7 +825,11 @@ struct CountingView: View {
         let result = store.applyCount(goalID: goalID, slotID: resolvedSlotID, amount: Int64(amount))
         #if os(iOS)
         if store.preferences.vibrateOnCount, result.appliedDelta > 0 {
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            if result.targetReachedNow {
+                targetReachedHapticController.play()
+            } else {
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            }
         }
         if store.preferences.soundOnCount, result.appliedDelta > 0 {
             AudioServicesPlaySystemSound(1104)
@@ -2045,10 +2127,14 @@ private struct CountingHintOrSyncAlert: View {
 private struct CountCircleButton: View {
     let isEnabled: Bool
     let primaryProgress: Double?
-    let minimumProgress: Double?
+    let minimumSegmentProgress: Double?
+    let remainingSegmentProgress: Double?
+    let minimumCheckpoint: Double?
+    let showsTargetReachedAlert: Bool
     let countText: String
     let targetText: String?
     let onCount: () -> Void
+    let onKeepCounting: () -> Void
 
     var body: some View {
         GeometryReader { proxy in
@@ -2057,49 +2143,66 @@ private struct CountCircleButton: View {
                 if let primaryProgress {
                     Circle()
                         .stroke(AwradTheme.mint.opacity(0.42), lineWidth: 9)
-                    Circle()
-                        .trim(from: 0, to: min(max(primaryProgress, 0), 1))
-                        .stroke(AwradTheme.gold, style: StrokeStyle(lineWidth: 9, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .animation(.easeOut(duration: 0.24), value: primaryProgress)
-                }
 
-                if let minimumProgress {
-                    Circle()
-                        .inset(by: 15)
-                        .stroke(AwradTheme.sage.opacity(0.16), lineWidth: 8)
-                    Circle()
-                        .inset(by: 15)
-                        .trim(from: 0, to: min(max(minimumProgress, 0), 1))
-                        .stroke(AwradTheme.sage, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
-                        .animation(.easeOut(duration: 0.24), value: minimumProgress)
-                }
+                    if let minimumSegmentProgress,
+                       let remainingSegmentProgress,
+                       let minimumCheckpoint {
+                        Circle()
+                            .trim(from: 0, to: min(max(minimumSegmentProgress, 0), 1))
+                            .stroke(AwradTheme.gold, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                            .animation(.easeOut(duration: 0.24), value: minimumSegmentProgress)
 
-                Button(action: onCount) {
-                    VStack(spacing: 2) {
-                        Text(countText)
-                            .font(AwradTheme.bodyFont(64, weight: .bold))
-                            .monospacedDigit()
-                        if let targetText {
-                            Text(targetText)
-                                .font(AwradTheme.bodyFont(28, weight: .semibold))
-                                .monospacedDigit()
+                        let remainingStart = min(max(minimumCheckpoint, 0), 1)
+                        let remainingEnd = min(
+                            max(minimumCheckpoint + remainingSegmentProgress, remainingStart),
+                            1
+                        )
+                        if remainingEnd > remainingStart {
+                            Circle()
+                                .trim(from: remainingStart, to: remainingEnd)
+                                .stroke(AwradTheme.sage, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
+                                .animation(.easeOut(duration: 0.24), value: remainingSegmentProgress)
                         }
+                    } else {
+                        Circle()
+                            .trim(from: 0, to: min(max(primaryProgress, 0), 1))
+                            .stroke(AwradTheme.gold, style: StrokeStyle(lineWidth: 9, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                            .animation(.easeOut(duration: 0.24), value: primaryProgress)
                     }
-                    .foregroundStyle(AwradTheme.ink)
+                }
+
+                if showsTargetReachedAlert {
+                    TargetReachedCircleMessage(onKeepCounting: onKeepCounting)
+                        .frame(width: max(buttonSize - 44, 0))
+                } else {
+                    Button(action: onCount) {
+                        VStack(spacing: 2) {
+                            Text(countText)
+                                .font(AwradTheme.bodyFont(64, weight: .bold))
+                                .monospacedDigit()
+                            if let targetText {
+                                Text(targetText)
+                                    .font(AwradTheme.bodyFont(28, weight: .semibold))
+                                    .monospacedDigit()
+                            }
+                        }
+                        .foregroundStyle(AwradTheme.ink)
                         .frame(
-                            width: max(buttonSize - (minimumProgress == nil ? 26 : 54), 0),
-                            height: max(buttonSize - (minimumProgress == nil ? 26 : 54), 0)
+                            width: max(buttonSize - 26, 0),
+                            height: max(buttonSize - 26, 0)
                         )
                         .modifier(GlassCircleControlModifier(tint: AwradTheme.mint.opacity(0.72)))
                         .opacity(isEnabled ? 1 : 0.45)
                         .coachAnchor("tap")
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!isEnabled)
+                    .accessibilityLabel(Text("Count"))
+                    .accessibilityValue(Text(targetText.map { "\(countText) \($0)" } ?? countText))
                 }
-                .buttonStyle(.plain)
-                .disabled(!isEnabled)
-                .accessibilityLabel(Text("Count"))
-                .accessibilityValue(Text(targetText.map { "\(countText) \($0)" } ?? countText))
             }
             .frame(width: buttonSize, height: buttonSize)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -2109,25 +2212,25 @@ private struct CountCircleButton: View {
     }
 }
 
-private struct TargetReachedCapCard: View {
-    let onAllowPastTarget: () -> Void
+private struct TargetReachedCircleMessage: View {
+    let onKeepCounting: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(spacing: 4) {
             Text("Target reached")
-                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
-                .foregroundStyle(AwradTheme.sageDark)
+                .font(AwradTheme.bodyFont(.headline, weight: .semibold))
+                .multilineTextAlignment(.center)
             Text("Counting is paused because this goal stops at its target.")
                 .font(AwradTheme.bodyFont(.caption))
-                .foregroundStyle(.secondary)
-            Button("Allow counting past target", action: onAllowPastTarget)
-                .font(AwradTheme.bodyFont(.caption, weight: .semibold))
-                .frame(minHeight: 44)
+                .foregroundStyle(AwradTheme.ink.opacity(0.78))
+                .multilineTextAlignment(.center)
+                .lineLimit(3)
+            Button("Keep counting", action: onKeepCounting)
+                .font(AwradTheme.bodyFont(.subheadline, weight: .semibold))
+                .buttonStyle(.plain)
+                .foregroundStyle(AwradTheme.sage)
+                .padding(.vertical, 4)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AwradTheme.mint.opacity(0.34), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 }
 

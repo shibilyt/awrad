@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
@@ -31,18 +32,24 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +60,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -113,6 +119,7 @@ fun HomeScreen(
     val statusBarTopPadding = with(density) { WindowInsets.statusBars.getTop(this).toDp() }
 
     val context = LocalContext.current
+    var showPrayerTimesSheet by remember { mutableStateOf(false) }
     val locationPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
     ) { granted ->
@@ -190,14 +197,14 @@ fun HomeScreen(
                     PrayerRhythmCard(
                         state = prayerCardState,
                         visuals = visuals,
-                        onClick = onNavigateToSettings,
+                        onClick = { showPrayerTimesSheet = true },
                     )
                 }
             } else {
                 item {
                     PrayerTimesPromptCard(
                         visuals = visuals,
-                        onEnable = enablePrayerTimes,
+                        onEnable = { showPrayerTimesSheet = true },
                     )
                 }
             }
@@ -231,6 +238,13 @@ fun HomeScreen(
                 .align(Alignment.TopCenter)
                 .zIndex(1f),
         )
+        if (showPrayerTimesSheet) {
+            PrayerTimesBottomSheet(
+                state = prayerCardState,
+                onSetLocation = enablePrayerTimes,
+                onDismiss = { showPrayerTimesSheet = false },
+            )
+        }
     }
 }
 }
@@ -787,6 +801,142 @@ private fun PrayerRhythmCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PrayerTimesBottomSheet(
+    state: PrayerCardState,
+    onSetLocation: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = { BottomSheetDefaults.DragHandle() },
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 28.dp),
+        ) {
+            if (state.isVisible) {
+                Text(
+                    text = stringResource(R.string.home_prayer_rhythm),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                if (state.cityName.isNotBlank()) {
+                    Text(
+                        text = state.cityName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+                Spacer(modifier = Modifier.height(18.dp))
+                state.prayers.forEach { prayer ->
+                    HomePrayerTimeRow(prayer = prayer)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            } else {
+                Text(
+                    text = stringResource(R.string.home_enable_prayer_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = stringResource(R.string.home_enable_prayer_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(modifier = Modifier.height(18.dp))
+                RitualPrimaryButton(
+                    text = stringResource(R.string.settings_use_current_location),
+                    onClick = onSetLocation,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomePrayerTimeRow(prayer: PrayerTimePoint) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = if (prayer.isNext) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = homePrayerName(prayer.name),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = if (prayer.isNext) FontWeight.Bold else FontWeight.SemiBold,
+                    color = if (prayer.isNext) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+                )
+                if (prayer.isNext) {
+                    Text(
+                        text = stringResource(R.string.home_next_prayer),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+            }
+            Text(
+                text = prayer.timeFormatted,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = if (prayer.isNext) {
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                } else {
+                    MaterialTheme.colorScheme.onSurface
+                },
+            )
+            if (prayer.isComplete) {
+                Spacer(modifier = Modifier.width(10.dp))
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun homePrayerName(name: String): String = when (name) {
+    "Fajr" -> stringResource(R.string.prayer_fajr)
+    "Dhuhr" -> stringResource(R.string.prayer_dhuhr)
+    "Asr" -> stringResource(R.string.prayer_asr)
+    "Maghrib" -> stringResource(R.string.prayer_maghrib)
+    "Isha" -> stringResource(R.string.prayer_isha)
+    else -> name
+}
+
 @Composable
 private fun PrayerIconBadge(
     visuals: HomeVisuals,
@@ -893,8 +1043,6 @@ private fun TodayGoalsSection(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.weight(1f),
                     ) {
-                        GoalIconBadge(visuals = visuals)
-                        Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             text = stringResource(R.string.home_todays_goals),
                             style = MaterialTheme.typography.titleLarge,
@@ -972,39 +1120,6 @@ private fun WirdsLoadingSection() {
                     shape = RoundedCornerShape(22.dp),
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun GoalIconBadge(
-    visuals: HomeVisuals,
-) {
-    Surface(
-        modifier = Modifier.size(40.dp),
-        shape = CircleShape,
-        color = visuals.goalAccentColor.copy(alpha = if (visuals.isDarkTheme) 0.16f else 0.12f),
-        border = BorderStroke(1.dp, visuals.goalAccentColor.copy(alpha = 0.28f)),
-    ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val center = Offset(size.width / 2f, size.height / 2f)
-            drawCircle(
-                color = visuals.goalAccentColor,
-                radius = size.minDimension * 0.2f,
-                center = center,
-                style = Stroke(width = 4f),
-            )
-            drawCircle(
-                color = visuals.goalAccentColor,
-                radius = size.minDimension * 0.05f,
-                center = center + Offset(size.width * 0.13f, -size.height * 0.13f),
-            )
-            drawLine(
-                color = visuals.goalAccentColor,
-                start = center,
-                end = center + Offset(size.width * 0.18f, -size.height * 0.18f),
-                strokeWidth = 3f,
-            )
         }
     }
 }

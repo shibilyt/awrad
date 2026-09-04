@@ -22,7 +22,6 @@
     <string name="action_restore">Restore Goal</string>
     <string name="goal_sheet_close">Close goal details</string>
     <string name="goal_sheet_statement">%1$s · %2$s</string>
-    <string name="goal_sheet_quick_stats">Quick stats</string>
     <string name="goal_sheet_today">Today</string>
     <string name="goal_sheet_current_streak">Current streak</string>
     <string name="goal_sheet_all_time">All time</string>
@@ -953,6 +952,8 @@
     <string name="action_stop_and_go_back">Stop &amp; Go Back</string>
     <string name="action_keep_counting">Keep Counting</string>
     <string name="adjust_count">Adjust Count</string>
+    <string name="adjust_count_choose_action">What would you like to do?</string>
+    <string name="adjust_count_date">Date: %1$s</string>
     <string name="adjust_count_hint">Enter count</string>
     <string name="action_add_count">Add</string>
     <string name="action_subtract_count">Subtract</string>

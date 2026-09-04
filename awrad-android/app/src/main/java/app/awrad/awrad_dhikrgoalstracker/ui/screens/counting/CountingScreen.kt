@@ -9,6 +9,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -55,6 +56,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.CloudDone
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -62,6 +64,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -76,6 +80,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedIconButton
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
@@ -83,6 +88,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -98,7 +104,11 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -152,6 +162,8 @@ import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.GoalDetailsBottomSheet
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.GoalSheetAction
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.goals.goalTag
 import java.time.LocalDate
+import java.time.Instant
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.text.NumberFormat
@@ -160,6 +172,16 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 
 private val CountRingAccent = Color(0xFFD9A72E)
+
+private data class PendingCountAdjustment(
+    val amount: Int,
+    val date: LocalDate,
+)
+
+private enum class CountAdjustmentMode {
+    ADD,
+    SUBTRACT,
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -192,7 +214,7 @@ fun CountingScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     var showStopAudioDialog by remember { mutableStateOf(false) }
     var showAdjustCountDialog by remember { mutableStateOf(false) }
-    var showSubtractConfirm by remember { mutableStateOf<Int?>(null) }
+    var showSubtractConfirm by remember { mutableStateOf<PendingCountAdjustment?>(null) }
     var showAllowPastTargetDialog by remember { mutableStateOf(false) }
     var showGoalReachedDialog by remember(goalId) { mutableStateOf(false) }
     var previousCompletionBlock by remember(goalId) { mutableStateOf<Boolean?>(null) }
@@ -286,67 +308,171 @@ fun CountingScreen(
 
     if (showAdjustCountDialog) {
         var inputText by remember { mutableStateOf("") }
+        var adjustmentMode by remember { mutableStateOf<CountAdjustmentMode?>(null) }
+        var selectedDate by remember { mutableStateOf(uiState.effectiveToday) }
+        var showDatePicker by remember { mutableStateOf(false) }
+        val selectedDateText = selectedDate.format(DateTimeFormatter.ofPattern("EEE, d MMM yyyy"))
         AlertDialog(
             onDismissRequest = { showAdjustCountDialog = false },
             title = { Text(stringResource(R.string.adjust_count)) },
             text = {
-                OutlinedTextField(
-                    value = inputText,
-                    onValueChange = { inputText = it.filter { c -> c.isDigit() } },
-                    label = { Text(stringResource(R.string.adjust_count_hint)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
+                if (adjustmentMode == null) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(stringResource(R.string.adjust_count_choose_action))
+                        FilledTonalButton(
+                            onClick = { adjustmentMode = CountAdjustmentMode.ADD },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.action_add_count))
+                        }
+                        OutlinedButton(
+                            onClick = { adjustmentMode = CountAdjustmentMode.SUBTRACT },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.action_subtract_count))
+                        }
+                    }
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = inputText,
+                            onValueChange = { inputText = it.filter { c -> c.isDigit() } },
+                            label = { Text(stringResource(R.string.adjust_count_hint)) },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedButton(
+                            onClick = { showDatePicker = true },
+                            shape = OutlinedTextFieldDefaults.shape,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Icon(Icons.Outlined.CalendarMonth, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(stringResource(R.string.adjust_count_date, selectedDateText))
+                        }
+                    }
+                }
             },
             confirmButton = {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FilledTonalButton(
-                        onClick = {
-                            val amount = inputText.toLongOrNull() ?: 0L
-                            if (amount > 0) {
-                                viewModel.adjustExternalCount(amount)
-                                showAdjustCountDialog = false
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = (inputText.toLongOrNull() ?: 0L) > 0,
-                    ) {
-                        Text(stringResource(R.string.action_add_count))
+                if (adjustmentMode == null) {
+                    TextButton(onClick = { showAdjustCountDialog = false }) {
+                        Text(stringResource(R.string.action_cancel))
                     }
-                    OutlinedButton(
-                        onClick = {
-                            val amount = inputText.toIntOrNull() ?: 0
-                            if (amount > 0) {
-                                showAdjustCountDialog = false
-                                showSubtractConfirm = amount
-                            }
-                        },
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = MaterialTheme.colorScheme.error,
-                        ),
+                } else {
+                    val canSubmit = when (adjustmentMode) {
+                        CountAdjustmentMode.ADD -> (inputText.toLongOrNull() ?: 0L) > 0
+                        CountAdjustmentMode.SUBTRACT -> (inputText.toIntOrNull() ?: 0) > 0
+                        null -> false
+                    }
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = (inputText.toLongOrNull() ?: 0L) > 0,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Text(stringResource(R.string.action_subtract_count))
+                        FilledTonalButton(
+                            onClick = {
+                                when (adjustmentMode) {
+                                    CountAdjustmentMode.ADD -> {
+                                        val amount = inputText.toLongOrNull() ?: 0L
+                                        if (amount > 0) {
+                                            viewModel.adjustExternalCount(amount, selectedDate)
+                                            showAdjustCountDialog = false
+                                        }
+                                    }
+                                    CountAdjustmentMode.SUBTRACT -> {
+                                        val amount = inputText.toIntOrNull() ?: 0
+                                        if (amount > 0) {
+                                            showAdjustCountDialog = false
+                                            showSubtractConfirm = PendingCountAdjustment(amount, selectedDate)
+                                        }
+                                    }
+                                    null -> Unit
+                                }
+                            },
+                            colors = if (adjustmentMode == CountAdjustmentMode.SUBTRACT) {
+                                ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.errorContainer,
+                                    contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                )
+                            } else {
+                                ButtonDefaults.filledTonalButtonColors()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = canSubmit,
+                        ) {
+                            Text(
+                                stringResource(
+                                    if (adjustmentMode == CountAdjustmentMode.ADD) {
+                                        R.string.action_add_count
+                                    } else {
+                                        R.string.action_subtract_count
+                                    },
+                                ),
+                            )
+                        }
+                        TextButton(
+                            onClick = {
+                                adjustmentMode = null
+                                inputText = ""
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            Text(stringResource(R.string.action_back))
+                        }
                     }
                 }
             },
         )
+
+        if (showDatePicker) {
+            val datePickerState = rememberDatePickerState(
+                initialSelectedDateMillis = selectedDate
+                    .atStartOfDay(ZoneOffset.UTC)
+                    .toInstant()
+                    .toEpochMilli(),
+            )
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            datePickerState.selectedDateMillis?.let { selectedDateMillis ->
+                                selectedDate = Instant.ofEpochMilli(selectedDateMillis)
+                                    .atZone(ZoneOffset.UTC)
+                                    .toLocalDate()
+                            }
+                            showDatePicker = false
+                        },
+                    ) {
+                        Text(stringResource(R.string.action_done))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text(stringResource(R.string.action_cancel))
+                    }
+                },
+            ) {
+                DatePicker(state = datePickerState)
+            }
+        }
     }
 
-    showSubtractConfirm?.let { amount ->
+    showSubtractConfirm?.let { pending ->
         AlertDialog(
             onDismissRequest = { showSubtractConfirm = null },
             title = { Text(stringResource(R.string.action_subtract_count)) },
-            text = { Text(stringResource(R.string.subtract_warning, amount)) },
+            text = { Text(stringResource(R.string.subtract_warning, pending.amount)) },
             confirmButton = {
                 FilledTonalButton(
                     onClick = {
-                        viewModel.adjustExternalCount(-amount.toLong())
+                        viewModel.adjustExternalCount(-pending.amount.toLong(), pending.date)
                         showSubtractConfirm = null
                     },
                     colors = ButtonDefaults.filledTonalButtonColors(
@@ -675,14 +801,6 @@ fun CountingScreen(
                 }
             }
 
-            if (uiState.isBlockedAtTarget) {
-                Spacer(modifier = Modifier.height(12.dp))
-                TargetReachedCapCard(
-                    isUpdating = isUpdatingCap,
-                    onAllowPastTarget = { showAllowPastTargetDialog = true },
-                )
-            }
-
             // Audio player row (below controls, only when audio counting is active)
             if (countingState.isAudioMode) {
                 Spacer(modifier = Modifier.height(10.dp))
@@ -761,6 +879,9 @@ fun CountingScreen(
                         onCount = viewModel::onManualTap,
                         canCount = uiState.canManualCount && !countingState.isAudioMode,
                         syncFeedback = syncFeedback,
+                        isTargetBlocked = uiState.isBlockedAtTarget,
+                        isUpdatingCap = isUpdatingCap,
+                        onKeepCounting = { showAllowPastTargetDialog = true },
                     )
                 } else {
                     CountingHeroPanel(
@@ -771,6 +892,9 @@ fun CountingScreen(
                         onCount = viewModel::onManualTap,
                         canCount = uiState.canManualCount && !countingState.isAudioMode,
                         syncFeedback = syncFeedback,
+                        isTargetBlocked = uiState.isBlockedAtTarget,
+                        isUpdatingCap = isUpdatingCap,
+                        onKeepCounting = { showAllowPastTargetDialog = true },
                     )
                 }
             }
@@ -906,12 +1030,6 @@ fun CountingScreen(
             GoalDetailsBottomSheet(
                 goal = goal,
                 dhikrName = uiState.dhikrTranslation.ifBlank { countingState.dhikrTransliteration },
-                todayCount = uiState.todayCount,
-                streakDays = uiState.streakDays,
-                streakInfo = uiState.streakInfo,
-                effectiveToday = uiState.effectiveToday,
-                slotCountsToday = uiState.slotCounts,
-                slotCountsAllTime = uiState.slotCountsAllTime,
                 onDismiss = { showGoalDetails = false },
                 onArchive = {
                     showGoalDetails = false
@@ -999,57 +1117,55 @@ internal fun shouldShowGoalReachedDialog(
 ): Boolean = previousCompletionBlock == false && isCompletionBlocked
 
 @Composable
-private fun TargetReachedCapCard(
+private fun TargetReachedCircleMessage(
     isUpdating: Boolean,
-    onAllowPastTarget: () -> Unit,
+    onKeepCounting: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-        ),
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+        Text(
+            text = stringResource(R.string.counting_target_reached_title),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = stringResource(R.string.counting_target_reached_blocked_body),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+        )
+        TextButton(
+            onClick = onKeepCounting,
+            enabled = !isUpdating,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
         ) {
-            Text(
-                text = stringResource(R.string.counting_target_reached_title),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-            Text(
-                text = stringResource(R.string.counting_target_reached_blocked_body),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.78f),
-            )
-            TextButton(
-                onClick = onAllowPastTarget,
-                enabled = !isUpdating,
-                contentPadding = PaddingValues(horizontal = 0.dp, vertical = 4.dp),
-            ) {
-                if (isUpdating) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                Text(
-                    text = stringResource(
-                        if (isUpdating) {
-                            R.string.goal_edit_saving
-                        } else {
-                            R.string.counting_allow_past_target_action
-                        },
-                    ),
+            if (isUpdating) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary,
                 )
+                Spacer(modifier = Modifier.width(6.dp))
             }
+            Text(
+                text = stringResource(
+                    if (isUpdating) {
+                        R.string.goal_edit_saving
+                    } else {
+                        R.string.action_keep_counting
+                    },
+                ),
+                maxLines = 1,
+            )
         }
     }
 }
@@ -1228,6 +1344,9 @@ private fun CountingHeroPanel(
     onCount: () -> Unit,
     canCount: Boolean,
     syncFeedback: CountingSyncFeedback?,
+    isTargetBlocked: Boolean,
+    isUpdatingCap: Boolean,
+    onKeepCounting: () -> Unit,
 ) {
     val totalSessionSeconds = uiState.sessionTargetValue * 60L
     val activeSlotPolicy = uiState.slots.firstOrNull { it.id == countingState.activeSlotId }
@@ -1237,9 +1356,9 @@ private fun CountingHeroPanel(
         targetCount = countingState.targetCount,
         maximumCount = maximumCount,
     )
-    val dualRingProgress = if (
+    val ringProgress = if (
         !uiState.hasSessionTarget &&
-        minimumCount != null && minimumCount > 0 &&
+        minimumCount != null && minimumCount > 1 &&
         ringUpperBound != null && ringUpperBound >= minimumCount
     ) {
         countingRingProgress(countingState.currentCount, minimumCount, ringUpperBound)
@@ -1255,6 +1374,7 @@ private fun CountingHeroPanel(
             }
         uiState.hasSessionTarget && uiState.sessionTargetValue > 0 ->
             (uiState.sessionCount.toFloat() / uiState.sessionTargetValue).coerceIn(0f, 1f)
+        ringProgress != null -> ringProgress.progress
         countingState.targetCount > 0 -> uiState.dailyProgress
         else -> 0f
     }
@@ -1263,15 +1383,15 @@ private fun CountingHeroPanel(
         animationSpec = tween(durationMillis = 260),
         label = "countingHeroProgress",
     )
-    val animatedMinimumProgress by animateFloatAsState(
-        targetValue = dualRingProgress?.minimum ?: 0f,
+    val animatedMinimumSegmentProgress by animateFloatAsState(
+        targetValue = ringProgress?.minimumSegmentProgress ?: 0f,
         animationSpec = tween(durationMillis = 260),
-        label = "countingHeroMinimumProgress",
+        label = "countingHeroMinimumSegmentProgress",
     )
-    val animatedMaximumProgress by animateFloatAsState(
-        targetValue = dualRingProgress?.maximum ?: 0f,
+    val animatedRemainingSegmentProgress by animateFloatAsState(
+        targetValue = ringProgress?.remainingSegmentProgress ?: 0f,
         animationSpec = tween(durationMillis = 260),
-        label = "countingHeroMaximumProgress",
+        label = "countingHeroRemainingSegmentProgress",
     )
     val primaryCount = when {
         uiState.hasSessionTarget && uiState.sessionTargetType == SessionTargetType.TIMER ->
@@ -1283,7 +1403,7 @@ private fun CountingHeroPanel(
         uiState.hasSessionTarget && uiState.sessionTargetType == SessionTargetType.TIMER ->
             formatElapsed(totalSessionSeconds)
         uiState.hasSessionTarget -> "%,d".format(uiState.sessionTargetValue)
-        dualRingProgress != null -> "%,d".format(ringUpperBound)
+        ringProgress != null -> "%,d".format(ringProgress.activeTarget)
         countingState.targetCount > 0 -> "%,d".format(countingState.targetCount)
         else -> null
     }
@@ -1291,7 +1411,7 @@ private fun CountingHeroPanel(
         currentCount = countingState.currentCount,
         targetCount = countingState.targetCount.toLong(),
         hasSessionTarget = uiState.hasSessionTarget,
-        usesRangeProgress = dualRingProgress != null,
+        usesRangeProgress = ringProgress != null,
     )
     Column(
         modifier = Modifier
@@ -1328,38 +1448,38 @@ private fun CountingHeroPanel(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(if (dualRingProgress != null) 28.dp else 18.dp)
+                    .padding(18.dp)
                     .background(
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f),
                         shape = CircleShape,
                     ),
             )
-            if (dualRingProgress != null) {
-                DualCountingProgressRings(
-                    minimumProgress = animatedMinimumProgress,
-                    maximumProgress = animatedMaximumProgress,
+            CountingProgressRing(
+                progress = animatedProgress,
+                minimumSegmentProgress = ringProgress?.let { animatedMinimumSegmentProgress },
+                remainingSegmentProgress = ringProgress?.let { animatedRemainingSegmentProgress },
+                minimumCheckpoint = ringProgress?.minimumCheckpoint,
+            )
+            if (isTargetBlocked) {
+                TargetReachedCircleMessage(
+                    isUpdating = isUpdatingCap,
+                    onKeepCounting = onKeepCounting,
+                    modifier = Modifier.padding(horizontal = 28.dp),
                 )
             } else {
-                CircularProgressIndicator(
-                    progress = { animatedProgress },
-                    modifier = Modifier.fillMaxSize(),
-                    color = CountRingAccent,
-                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    strokeWidth = 10.dp,
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = primaryCount,
-                    style = MaterialTheme.typography.displayLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    maxLines = 1,
-                )
-                CountingProgressCaption(
-                    denominator = denominator,
-                    targetMilestone = targetMilestone,
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = primaryCount,
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        maxLines = 1,
+                    )
+                    CountingProgressCaption(
+                        denominator = denominator,
+                        targetMilestone = targetMilestone,
+                    )
+                }
             }
         }
 
@@ -1474,26 +1594,80 @@ private fun CountingHintOrSyncAlert(
 }
 
 @Composable
-private fun DualCountingProgressRings(
-    minimumProgress: Float,
-    maximumProgress: Float,
+private fun CountingProgressRing(
+    progress: Float,
+    minimumSegmentProgress: Float?,
+    remainingSegmentProgress: Float?,
+    minimumCheckpoint: Float?,
 ) {
-    CircularProgressIndicator(
-        progress = { maximumProgress },
-        modifier = Modifier.fillMaxSize(),
-        color = CountRingAccent,
-        trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-        strokeWidth = 9.dp,
-    )
-    CircularProgressIndicator(
-        progress = { minimumProgress },
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(15.dp),
-        color = MaterialTheme.colorScheme.primary,
-        trackColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f),
-        strokeWidth = 9.dp,
-    )
+    val strokeWidth = 10.dp
+    val trackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val minimumRailColor = CountRingAccent
+    val remainingRailColor = MaterialTheme.colorScheme.primary
+
+    Canvas(modifier = Modifier.fillMaxSize()) {
+        val strokePx = strokeWidth.toPx()
+        val diameter = (size.minDimension - strokePx).coerceAtLeast(0f)
+        val arcTopLeft = Offset(
+            x = (size.width - diameter) / 2f,
+            y = (size.height - diameter) / 2f,
+        )
+        val arcSize = Size(diameter, diameter)
+
+        drawArc(
+            color = trackColor,
+            startAngle = -90f,
+            sweepAngle = 360f,
+            useCenter = false,
+            topLeft = arcTopLeft,
+            size = arcSize,
+            style = Stroke(width = strokePx),
+        )
+
+        if (minimumSegmentProgress != null &&
+            remainingSegmentProgress != null &&
+            minimumCheckpoint != null
+        ) {
+            val minimumSweep = minimumSegmentProgress.coerceIn(0f, 1f) * 360f
+            val checkpoint = minimumCheckpoint.coerceIn(0f, 1f)
+            val remainingSweep = remainingSegmentProgress
+                .coerceIn(0f, 1f)
+                .coerceAtMost(1f - checkpoint) * 360f
+
+            if (minimumSweep > 0f) {
+                drawArc(
+                    color = minimumRailColor,
+                    startAngle = -90f,
+                    sweepAngle = minimumSweep,
+                    useCenter = false,
+                    topLeft = arcTopLeft,
+                    size = arcSize,
+                    style = Stroke(width = strokePx, cap = StrokeCap.Round),
+                )
+            }
+            if (remainingSweep > 0f) {
+                drawArc(
+                    color = remainingRailColor,
+                    startAngle = -90f + checkpoint * 360f,
+                    sweepAngle = remainingSweep,
+                    useCenter = false,
+                    topLeft = arcTopLeft,
+                    size = arcSize,
+                    style = Stroke(width = strokePx, cap = StrokeCap.Round),
+                )
+            }
+        } else if (progress > 0f) {
+            drawArc(
+                color = CountRingAccent,
+                startAngle = -90f,
+                sweepAngle = progress.coerceIn(0f, 1f) * 360f,
+                useCenter = false,
+                topLeft = arcTopLeft,
+                size = arcSize,
+                style = Stroke(width = strokePx, cap = StrokeCap.Round),
+            )
+        }
+    }
 }
 
 @Composable
@@ -1507,6 +1681,9 @@ private fun SlotProgressCard(
     onCount: () -> Unit,
     canCount: Boolean,
     syncFeedback: CountingSyncFeedback?,
+    isTargetBlocked: Boolean,
+    isUpdatingCap: Boolean,
+    onKeepCounting: () -> Unit,
 ) {
     val totalSessionSeconds = uiState.sessionTargetValue * 60L
     val activeSlotPolicy = uiState.slots.firstOrNull { it.id == countingState.activeSlotId }
@@ -1516,9 +1693,9 @@ private fun SlotProgressCard(
         targetCount = countingState.targetCount,
         maximumCount = maximumCount,
     )
-    val dualRingProgress = if (
+    val ringProgress = if (
         !uiState.hasSessionTarget &&
-        minimumCount != null && minimumCount > 0 &&
+        minimumCount != null && minimumCount > 1 &&
         ringUpperBound != null && ringUpperBound >= minimumCount
     ) {
         countingRingProgress(countingState.currentCount, minimumCount, ringUpperBound)
@@ -1534,6 +1711,7 @@ private fun SlotProgressCard(
             }
         uiState.hasSessionTarget && uiState.sessionTargetValue > 0 ->
             (uiState.sessionCount.toFloat() / uiState.sessionTargetValue).coerceIn(0f, 1f)
+        ringProgress != null -> ringProgress.progress
         countingState.targetCount > 0 -> uiState.dailyProgress
         else -> 0f
     }
@@ -1542,15 +1720,15 @@ private fun SlotProgressCard(
         animationSpec = tween(durationMillis = 260),
         label = "slotProgressCardProgress",
     )
-    val animatedMinimumProgress by animateFloatAsState(
-        targetValue = dualRingProgress?.minimum ?: 0f,
+    val animatedMinimumSegmentProgress by animateFloatAsState(
+        targetValue = ringProgress?.minimumSegmentProgress ?: 0f,
         animationSpec = tween(durationMillis = 260),
-        label = "slotProgressCardMinimumProgress",
+        label = "slotMinimumSegmentProgress",
     )
-    val animatedMaximumProgress by animateFloatAsState(
-        targetValue = dualRingProgress?.maximum ?: 0f,
+    val animatedRemainingSegmentProgress by animateFloatAsState(
+        targetValue = ringProgress?.remainingSegmentProgress ?: 0f,
         animationSpec = tween(durationMillis = 260),
-        label = "slotProgressCardMaximumProgress",
+        label = "slotRemainingSegmentProgress",
     )
     val primaryCount = when {
         uiState.hasSessionTarget && uiState.sessionTargetType == SessionTargetType.TIMER ->
@@ -1562,7 +1740,7 @@ private fun SlotProgressCard(
         uiState.hasSessionTarget && uiState.sessionTargetType == SessionTargetType.TIMER ->
             formatElapsed(totalSessionSeconds)
         uiState.hasSessionTarget -> "%,d".format(uiState.sessionTargetValue)
-        dualRingProgress != null -> "%,d".format(ringUpperBound)
+        ringProgress != null -> "%,d".format(ringProgress.activeTarget)
         countingState.targetCount > 0 -> "%,d".format(countingState.targetCount)
         else -> null
     }
@@ -1570,7 +1748,7 @@ private fun SlotProgressCard(
         currentCount = countingState.currentCount,
         targetCount = countingState.targetCount.toLong(),
         hasSessionTarget = uiState.hasSessionTarget,
-        usesRangeProgress = dualRingProgress != null,
+        usesRangeProgress = ringProgress != null,
     )
 
     Column(
@@ -1618,38 +1796,38 @@ private fun SlotProgressCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(if (dualRingProgress != null) 28.dp else 18.dp)
+                    .padding(18.dp)
                     .background(
                         color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.82f),
                         shape = CircleShape,
                     ),
             )
-            if (dualRingProgress != null) {
-                DualCountingProgressRings(
-                    minimumProgress = animatedMinimumProgress,
-                    maximumProgress = animatedMaximumProgress,
+            CountingProgressRing(
+                progress = animatedProgress,
+                minimumSegmentProgress = ringProgress?.let { animatedMinimumSegmentProgress },
+                remainingSegmentProgress = ringProgress?.let { animatedRemainingSegmentProgress },
+                minimumCheckpoint = ringProgress?.minimumCheckpoint,
+            )
+            if (isTargetBlocked) {
+                TargetReachedCircleMessage(
+                    isUpdating = isUpdatingCap,
+                    onKeepCounting = onKeepCounting,
+                    modifier = Modifier.padding(horizontal = 28.dp),
                 )
             } else {
-                CircularProgressIndicator(
-                    progress = { animatedProgress },
-                    modifier = Modifier.fillMaxSize(),
-                    color = CountRingAccent,
-                    trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                    strokeWidth = 10.dp,
-                )
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = primaryCount,
-                    style = MaterialTheme.typography.displayLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                )
-                CountingProgressCaption(
-                    denominator = denominator,
-                    targetMilestone = targetMilestone,
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = primaryCount,
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                    )
+                    CountingProgressCaption(
+                        denominator = denominator,
+                        targetMilestone = targetMilestone,
+                    )
+                }
             }
         }
 

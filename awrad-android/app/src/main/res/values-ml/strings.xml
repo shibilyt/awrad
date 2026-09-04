@@ -22,7 +22,6 @@
     <string name="action_restore">ലക്ഷ്യം പുനഃസ്ഥാപിക്കുക</string>
     <string name="goal_sheet_close">ലക്ഷ്യ വിശദാംശങ്ങൾ അടയ്ക്കുക</string>
     <string name="goal_sheet_statement">%1$s · %2$s</string>
-    <string name="goal_sheet_quick_stats">ദ്രുത സ്ഥിതിവിവരങ്ങൾ</string>
     <string name="goal_sheet_today">ഇന്ന്</string>
     <string name="goal_sheet_current_streak">നിലവിലെ തുടർച്ച</string>
     <string name="goal_sheet_all_time">ആകെ</string>
@@ -633,6 +632,8 @@
     <string name="action_stop_and_go_back">നിർത്തി തിരികെ പോകൂ</string>
     <string name="action_keep_counting">എണ്ണൽ തുടരൂ</string>
     <string name="adjust_count">എണ്ണം ക്രമീകരിക്കുക</string>
+    <string name="adjust_count_choose_action">നിങ്ങൾ എന്താണ് ചെയ്യാൻ ആഗ്രഹിക്കുന്നത്?</string>
+    <string name="adjust_count_date">തീയതി: %1$s</string>
     <string name="adjust_count_hint">എണ്ണം നൽകുക</string>
     <string name="action_add_count">ചേർക്കുക</string>
     <string name="action_subtract_count">കുറയ്ക്കുക</string>

@@ -6,13 +6,14 @@ This document is the implementation source of truth for synchronizing custom dhi
 
 ## Implementation status
 
-Phoenix, Android, and iOS implement the v1 engine end to end. This includes
+Phoenix, Android, iOS, and the authenticated web companion implement the v1
+engine end to end. This includes
 durable native outboxes and canonical shadows, atomic snapshot/delta staging,
 per-user revisions, actor recovery, idempotent receipts, the immutable count
 ledger, entity OCC/conflicts, tombstones/restoration fences, generation reset,
 checksummed transfer sessions, actor acknowledgements, projection repair,
-retention, and bounded background compaction. The server feature flag can stop
-network synchronization without affecting offline counting.
+retention, bounded background compaction, and browser-scoped actors. The server
+feature flag can stop network synchronization without affecting offline counting.
 
 The next protocol version may add streaming transfers beyond the v1 50,000-row
 session bound and more granular conflict presentation. Those are extensions,
@@ -53,7 +54,41 @@ Background push -----------> Phoenix command transaction
 Materialized bootstrap/delta pages
 ```
 
-The UI never writes through the API. Android uses Room; iOS synchronized state must have one App Group transactional persistence authority. Phoenix is the durable meeting point between devices, not a runtime dependency for counting.
+Native UI never writes through the API directly: Android uses Room and iOS
+synchronized state must have one App Group transactional persistence authority.
+The web companion is intentionally online-first and writes only through its
+LiveView `WebSync` adapter. Phoenix is the durable meeting point between
+devices, not a runtime dependency for native offline counting.
+
+## Browser companion actors
+
+The authenticated web companion reuses the existing `progress_sync_actors`
+table and does not add a migration or a public JSON route. The browser pipeline
+creates a server-generated UUIDv4 `web_installation_id` in the signed,
+host-only, `HttpOnly` Phoenix session cookie. The value is never read from or
+accepted from browser JavaScript as an ownership field.
+
+`WebSync.increment/3` is the only browser write boundary. It derives ownership
+from the authenticated scope, validates the browser-local ISO date and the
+supported goal/slot policy, resolves an actor by `(user_id, installation_id)`,
+and delegates sequence allocation and idempotent execution to
+`ProgressSync`. A stable command UUID per click means retries return the
+original receipt without creating another count. The user head and actor are
+locked in the same transaction before the next sequence is allocated.
+
+Tabs in one account share the same actor. Signing into a second account in the
+same browser resolves a separate actor because the user ID is part of the
+lookup. An expired actor is never resurrected; the next request receives a new
+incarnation while historical credits remain attached to the old one. Canonical
+reads acknowledge the actor at the current head and renew its lease so browser
+activity does not hold back compaction.
+
+The web UI sends the browser's local calendar date and IANA timezone on socket
+initialization and at midnight rollover. V1 has no IndexedDB, service worker,
+or browser outbox. Daily, one-time, and advanced goals expose manual counting
+only for active anytime slots; prayer-relative and time-window slots remain
+read-only. Mobile clients continue using the existing API and native sync
+contract unchanged.
 
 ## Identities and ordering
 

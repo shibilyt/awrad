@@ -6,7 +6,7 @@
 awrad/
 ├── awrad-android/   Android application and tests
 ├── awrad-ios/       iOS application, widget, and tests
-├── awrad_api/       Phoenix web/API application and PostgreSQL migrations
+├── awrad_server/       Phoenix web/API application and PostgreSQL migrations
 ├── AGENTS.md        Shared agent policy
 ├── LOOPS.md         Repeatable work loops
 ├── CONTRACTS.md     Cross-project interfaces
@@ -49,15 +49,15 @@ Project root: `awrad-ios/awrad/`
 
 The most detailed current architecture narrative is [`awrad-ios/awrad/docs/ios-architecture.md`](awrad-ios/awrad/docs/ios-architecture.md).
 
-## API
+## Phoenix server
 
-Root: `awrad_api/`
+Root: `awrad_server/`
 
-- OTP entry: `lib/awrad_api/application.ex`.
-- Business contexts and schemas: `lib/awrad_api/`, currently including accounts, dhikr, and tracking.
-- HTTP entry and routing: `lib/awrad_api_web/endpoint.ex` and `router.ex`.
-- JSON API controllers: `lib/awrad_api_web/controllers/api/`.
-- Browser UI: LiveView, controllers, templates, layouts, and shared components under `lib/awrad_api_web/`.
+- OTP entry: `lib/awrad_server/application.ex`.
+- Business contexts and schemas: `lib/awrad_server/`, currently including accounts, dhikr, and tracking.
+- HTTP entry and routing: `lib/awrad_server_web/endpoint.ex` and `router.ex`.
+- JSON API controllers: `lib/awrad_server_web/controllers/api/`.
+- Browser UI: LiveView, controllers, templates, layouts, and shared components under `lib/awrad_server_web/`.
 - Authentication: session auth for browser routes; JWT access tokens and rotating database-backed refresh tokens for mobile API routes.
 - Persistence: Ecto schemas and timestamped migrations under `priv/repo/migrations/`.
 - Tests: context and web tests under `test/`.
@@ -86,4 +86,4 @@ Do not edit or commit `.gradle/`, Android `build/`, `.idea/`, `local.properties`
 - Detailed Android product intent: `awrad-android/prd/`.
 - Historical Android implementation plans: `awrad-android/docs/superpowers/plans/`; consult for context only.
 - iOS implementation status: `awrad-ios/awrad/docs/ios-architecture.md` plus code/tests.
-- API implementation patterns and decisions: `awrad_api/memory/` plus code/tests.
+- Server/API implementation patterns and decisions: `awrad_server/memory/` plus code/tests.

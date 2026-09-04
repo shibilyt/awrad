@@ -1,6 +1,7 @@
 package app.awrad.awrad_dhikrgoalstracker.service
 
 import app.awrad.awrad_dhikrgoalstracker.data.model.CountCapBehavior
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -47,6 +48,11 @@ class CountProgressTransitionTest {
 
         assertTrue(first.targetReachedNow)
         assertFalse(later.targetReachedNow)
+    }
+
+    @Test
+    fun `target reached vibration lasts one second`() {
+        assertEquals(1_000L, TARGET_REACHED_VIBRATION_DURATION_MS)
     }
 
     private fun transition(

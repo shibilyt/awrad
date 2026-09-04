@@ -4,7 +4,7 @@ This document records interfaces that cross project boundaries. It describes imp
 
 ## Mobile authentication API
 
-The authoritative route declarations are in `awrad_api/lib/awrad_api_web/router.ex`.
+The authoritative route declarations are in `awrad_server/lib/awrad_server_web/router.ex`.
 
 | Method | Path | Authentication | Current consumer |
 |---|---|---|---|
@@ -37,7 +37,7 @@ Production API startup requires `PHX_HOST`, a valid 10-character `IOS_APP_TEAM_I
 
 Contract owners:
 
-- Server: `AwradApiWeb.Api.AuthController` and Accounts token modules.
+- Server: `AwradServerWeb.Api.AuthController` and Accounts token modules.
 - Android: `AwradApiService`, `AuthRepository`, `TokenAuthenticator`, and token storage.
 - iOS: `AuthService` request/response types and storage.
 

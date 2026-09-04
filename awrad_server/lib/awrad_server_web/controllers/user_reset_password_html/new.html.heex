@@ -1,0 +1,32 @@
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <div class="awrad-auth-card">
+    <div class="awrad-auth-mark" aria-hidden="true">A</div>
+    <div class="text-center">
+      <.header>
+        Forgot your password?
+        <:subtitle>We'll send a password reset link to your email address.</:subtitle>
+      </.header>
+    </div>
+
+    <.form :let={f} for={%{}} as={:user} action={~p"/users/reset-password"} class="awrad-auth-form">
+      <.input
+        field={f[:email]}
+        type="email"
+        label="Email"
+        autocomplete="username"
+        spellcheck="false"
+        required
+        phx-mounted={JS.focus()}
+      />
+      <.button class="btn btn-primary w-full">
+        Send reset instructions <span aria-hidden="true">→</span>
+      </.button>
+    </.form>
+
+    <p class="text-center text-sm">
+      <.link navigate={~p"/users/log-in"} class="font-semibold text-brand hover:underline">
+        Back to log in
+      </.link>
+    </p>
+  </div>
+</Layouts.app>

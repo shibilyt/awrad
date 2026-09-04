@@ -1005,14 +1005,34 @@ class CountingViewModel @Inject constructor(
         service?.clearAudioError()
     }
 
-    fun adjustExternalCount(amount: Long) {
+    fun adjustExternalCount(amount: Long, date: LocalDate = uiState.value.effectiveToday) {
+        if (date != uiState.value.effectiveToday) {
+            adjustExternalCountForDate(amount, date)
+            return
+        }
         if (amount > 0) {
             viewModelScope.launch {
-                runWithSlotTimingGuard(PendingCountAction.Adjust(amount))
+                runWithSlotTimingGuard(PendingCountAction.Adjust(amount, date))
             }
             return
         }
-        adjustExternalCountUnchecked(amount)
+        adjustExternalCountUnchecked(amount, date)
+    }
+
+    private fun adjustExternalCountForDate(amount: Long, date: LocalDate) {
+        if (amount == 0L) return
+        val state = _serviceState.value
+        val goalId = state.goalId ?: return
+        viewModelScope.launch {
+            runCatching {
+                goalRepository.addCount(
+                    goalId = goalId,
+                    slotId = state.activeSlotId,
+                    count = amount,
+                    date = date.toString(),
+                )
+            }
+        }
     }
 
     fun confirmCountingAvailability() {
@@ -1150,7 +1170,7 @@ class CountingViewModel @Inject constructor(
                 service?.incrementCount()
                 _countFeedbackEvents.trySend(Unit)
             }
-            is PendingCountAction.Adjust -> adjustExternalCountUnchecked(action.amount)
+            is PendingCountAction.Adjust -> adjustExternalCountUnchecked(action.amount, action.date)
             PendingCountAction.StartAudio -> startAudioCountingUnchecked()
             PendingCountAction.ResumeAudio -> service?.togglePlayPause()
         }
@@ -1181,7 +1201,10 @@ class CountingViewModel @Inject constructor(
         service?.startAudioPlayback(url, remaining)
     }
 
-    private fun adjustExternalCountUnchecked(amount: Long) {
+    private fun adjustExternalCountUnchecked(
+        amount: Long,
+        date: LocalDate = uiState.value.effectiveToday,
+    ) {
         if (amount == 0L) return
         val current = _serviceState.value
         val activeSlotId = current.activeSlotId
@@ -1220,7 +1243,12 @@ class CountingViewModel @Inject constructor(
         val goalId = current.goalId ?: return
         viewModelScope.launch {
             val persistedDelta = runCatching {
-                goalRepository.addCount(goalId, activeSlotId, optimisticAmount)
+                goalRepository.addCount(
+                    goalId = goalId,
+                    slotId = activeSlotId,
+                    count = optimisticAmount,
+                    date = date.toString(),
+                )
             }.getOrDefault(0L)
             applyRepositoryCorrection(
                 goalId = goalId,
@@ -1323,7 +1351,7 @@ class CountingViewModel @Inject constructor(
         data object ManualTap : PendingCountAction
         data object StartAudio : PendingCountAction
         data object ResumeAudio : PendingCountAction
-        data class Adjust(val amount: Long) : PendingCountAction
+        data class Adjust(val amount: Long, val date: LocalDate) : PendingCountAction
     }
 }
 

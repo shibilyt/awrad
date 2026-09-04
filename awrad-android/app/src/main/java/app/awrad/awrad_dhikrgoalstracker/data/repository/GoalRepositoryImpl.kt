@@ -249,16 +249,21 @@ class GoalRepositoryImpl @Inject constructor(
         notificationRequests.request(NotificationObligationRequestReason.GOAL_MUTATION, setOf(id))
     }
 
-    override suspend fun addCount(goalId: AwradId, slotId: AwradId?, count: Long): Long = database.withTransaction {
-        val today = dateProvider.getEffectiveToday()
+    override suspend fun addCount(
+        goalId: AwradId,
+        slotId: AwradId?,
+        count: Long,
+        date: String?,
+    ): Long = database.withTransaction {
+        val countDate = date ?: dateProvider.getEffectiveToday()
         // Counting hot path: load only the goal fields + slots + recurrence the cap/completion
         // logic reads (no dhikr, no reminders), and load them exactly once per tap.
         val goal = loadGoalForCounting(goalId) ?: return@withTransaction 0L
         val normalizedSlotId = goal.normalizedCountSlotId(slotId)
-        val before = countEntryDao.getCountValueForSlot(goalId, normalizedSlotId, today) ?: 0L
+        val before = countEntryDao.getCountValueForSlot(goalId, normalizedSlotId, countDate) ?: 0L
         val appliedDelta = if (count > 0L) {
             val slot = goal.slots.firstOrNull { it.id == normalizedSlotId }
-            val currentForCap = currentCountForCap(goal, normalizedSlotId, before, today)
+            val currentForCap = currentCountForCap(goal, normalizedSlotId, before, countDate)
             val targetForCap = slot?.targetCount ?: GoalProgressCalculator.getTargetCount(goal).takeIf { it > 0 }
             val maximumForCap = slot?.maximumCount ?: goal.maximumCount
             val capBehavior = slot?.capBehavior ?: goal.capBehavior
@@ -274,9 +279,9 @@ class GoalRepositoryImpl @Inject constructor(
         }
         if (appliedDelta == 0L) return@withTransaction 0L
         val now = System.currentTimeMillis()
-        countEntryDao.upsertCount(goalId, normalizedSlotId, today, appliedDelta, now)
+        countEntryDao.upsertCount(goalId, normalizedSlotId, countDate, appliedDelta, now)
         goalDao.incrementTotalCount(goalId, appliedDelta, now)
-        progressSyncRepository?.recordCountDelta(goalId, normalizedSlotId, today, appliedDelta)
+        progressSyncRepository?.recordCountDelta(goalId, normalizedSlotId, countDate, appliedDelta)
         // Auto-completion only reads totalCompletedCount (just changed) + already-loaded fields,
         // so recompute from `goal` instead of a second full re-fetch. The clamp mirrors the
         // `incrementTotalCount` CASE so the in-memory value matches the persisted row exactly.
@@ -485,7 +490,7 @@ class GoalRepositoryImpl @Inject constructor(
     /**
      * Loads only what [addCount] needs: goal core fields, active/archived slots, and recurrence
      * (for cap windows). Skips the dhikr lookup and reminder query that [getGoalById] performs,
-     * keeping the per-tap hot path to a single lightweight fetch.
+     * keeping the per-count hot path to a single lightweight fetch.
      */
     private suspend fun loadGoalForCounting(goalId: AwradId): Goal? {
         val entity = goalDao.getGoalById(goalId) ?: return null
@@ -564,7 +569,7 @@ class GoalRepositoryImpl @Inject constructor(
         updatedAt = System.currentTimeMillis(),
     )
 
-    private suspend fun currentCountForCap(goal: Goal, slotId: AwradId?, currentEntryCount: Long, today: String): Long {
+    private suspend fun currentCountForCap(goal: Goal, slotId: AwradId?, currentEntryCount: Long, date: String): Long {
         val slot = slotId?.let { id -> goal.slots.firstOrNull { it.id == id } }
         if (slot != null && goal.slots.size > 1) return currentEntryCount
         if (slot != null && slot.slotType != GoalSlotType.ANYTIME) return currentEntryCount
@@ -572,7 +577,7 @@ class GoalRepositoryImpl @Inject constructor(
             TargetPolicy.CUMULATIVE_TOTAL -> goal.totalCompletedCount
             TargetPolicy.PERIOD_TOTAL -> GoalProgressCalculator.currentProgressWindow(
                 goal = goal,
-                today = today.toLocalDateOr(goal.startDate),
+                today = date.toLocalDateOr(goal.startDate),
             )?.let { window ->
                 countEntryDao.getTotalCountBetween(goal.id, window.start.toString(), window.endInclusive.toString()) ?: 0L
             } ?: currentEntryCount

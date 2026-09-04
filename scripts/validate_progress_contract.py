@@ -196,11 +196,11 @@ def validate_registries(expected: set[tuple[str, str]]) -> None:
         ],
         "API": [
             (
-                ROOT / "awrad_api/lib/awrad_api/dhikr/built_in_registry.ex",
+                ROOT / "awrad_server/lib/awrad_server/dhikr/built_in_registry.ex",
                 r'catalog_key:\s*"([a-z0-9-]+)".*?id:\s*"([0-9a-f-]+)"',
             ),
             (
-                ROOT / "awrad_api/priv/asma-ul-husna.json",
+                ROOT / "awrad_server/priv/asma-ul-husna.json",
                 r'"catalog_key":\s*"([a-z0-9-]+)".*?"id":\s*"([0-9a-f-]+)"',
             ),
         ],
@@ -379,11 +379,11 @@ def ios_persisted_fields() -> set[str]:
 
 def api_persisted_fields() -> set[str]:
     files = {
-        "Dhikr": ROOT / "awrad_api/lib/awrad_api/dhikr/dhikr.ex",
-        "Goal": ROOT / "awrad_api/lib/awrad_api/tracking/goal.ex",
-        "GoalSlot": ROOT / "awrad_api/lib/awrad_api/tracking/goal_slot.ex",
-        "GoalReminder": ROOT / "awrad_api/lib/awrad_api/tracking/goal_reminder.ex",
-        "CountEntry": ROOT / "awrad_api/lib/awrad_api/tracking/count_entry.ex",
+        "Dhikr": ROOT / "awrad_server/lib/awrad_server/dhikr/dhikr.ex",
+        "Goal": ROOT / "awrad_server/lib/awrad_server/tracking/goal.ex",
+        "GoalSlot": ROOT / "awrad_server/lib/awrad_server/tracking/goal_slot.ex",
+        "GoalReminder": ROOT / "awrad_server/lib/awrad_server/tracking/goal_reminder.ex",
+        "CountEntry": ROOT / "awrad_server/lib/awrad_server/tracking/count_entry.ex",
     }
     fields = set()
     for name, path in files.items():
