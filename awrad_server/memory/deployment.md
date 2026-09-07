@@ -57,9 +57,10 @@ into the entrypoint, so concurrent replicas cannot race the same migration.
   no `x-forwarded-proto`.
 - Environment variables: see [`../.env.example`](../.env.example). Every secret
   is validated at boot in `config/runtime.exs`; a missing or short one crashes
-  the release immediately rather than starting insecurely. `IOS_APP_TEAM_ID` is
-  optional until an iOS app is ready; omitting it disables iOS Universal Link
-  entries while leaving Android App Links enabled.
+  the release immediately rather than starting insecurely. The mobile
+  association variables are optional until their signed builds are ready;
+  omitting either disables that platform's app-link entries while leaving the
+  API and web companion enabled.
 
 Required repository secrets: `DOKPLOY_URL`, `DOKPLOY_API_TOKEN`,
 `DOKPLOY_APPLICATION_ID`, `GHCR_PULL_TOKEN`.

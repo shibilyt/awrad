@@ -93,8 +93,7 @@ if config_env() == :prod do
 
   fingerprint_pattern = ~r/^(?:[0-9A-Fa-f]{2}:){31}[0-9A-Fa-f]{2}$/
 
-  if android_fingerprints == [] or
-       Enum.any?(android_fingerprints, &(not Regex.match?(fingerprint_pattern, &1))) do
+  if Enum.any?(android_fingerprints, &(not Regex.match?(fingerprint_pattern, &1))) do
     raise "ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS must contain comma-separated SHA-256 fingerprints"
   end
 

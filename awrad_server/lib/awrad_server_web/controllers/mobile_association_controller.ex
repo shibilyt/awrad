@@ -26,17 +26,23 @@ defmodule AwradServerWeb.MobileAssociationController do
 
   def android(conn, _params) do
     config = Application.fetch_env!(:awrad_server, :mobile_app_links)
+    fingerprints = Keyword.get(config, :android_sha256_cert_fingerprints, [])
 
-    association = [
-      %{
-        relation: ["delegate_permission/common.handle_all_urls"],
-        target: %{
-          namespace: "android_app",
-          package_name: Keyword.fetch!(config, :android_package),
-          sha256_cert_fingerprints: Keyword.fetch!(config, :android_sha256_cert_fingerprints)
-        }
-      }
-    ]
+    association =
+      if fingerprints == [] do
+        []
+      else
+        [
+          %{
+            relation: ["delegate_permission/common.handle_all_urls"],
+            target: %{
+              namespace: "android_app",
+              package_name: Keyword.fetch!(config, :android_package),
+              sha256_cert_fingerprints: fingerprints
+            }
+          }
+        ]
+      end
 
     association_json(conn, association)
   end
