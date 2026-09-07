@@ -70,32 +70,12 @@ if config_env() == :prod do
     web: "https://#{web_host}",
     api: "https://#{host}"
 
-  ios_app_id =
-    case System.get_env("IOS_APP_TEAM_ID") do
-      nil ->
-        nil
-
-      "" ->
-        nil
-
-      ios_team_id ->
-        unless Regex.match?(~r/^[A-Z0-9]{10}$/, ios_team_id) do
-          raise "IOS_APP_TEAM_ID must be the 10-character Apple Team ID"
-        end
-
-        "#{ios_team_id}.app.awrad.awrad"
-    end
+  ios_app_id = AwradServer.MobileAppLinks.ios_app_id(System.get_env("IOS_APP_TEAM_ID"))
 
   android_fingerprints =
-    System.get_env("ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS", "")
-    |> String.split(",", trim: true)
-    |> Enum.map(&String.trim/1)
-
-  fingerprint_pattern = ~r/^(?:[0-9A-Fa-f]{2}:){31}[0-9A-Fa-f]{2}$/
-
-  if Enum.any?(android_fingerprints, &(not Regex.match?(fingerprint_pattern, &1))) do
-    raise "ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS must contain comma-separated SHA-256 fingerprints"
-  end
+    AwradServer.MobileAppLinks.android_sha256_cert_fingerprints(
+      System.get_env("ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS", "")
+    )
 
   config :awrad_server, :mobile_app_links,
     ios_app_id: ios_app_id,
