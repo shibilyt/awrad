@@ -18,6 +18,7 @@ import javax.inject.Inject
 data class AuthUiState(
     val isLoading: Boolean = false,
     val error: String? = null,
+    val passwordSetupRequired: Boolean = false,
     val forgotPasswordSent: Boolean = false,
     val isVerifying: Boolean = false,
     val isResending: Boolean = false,
@@ -72,6 +73,9 @@ class AuthViewModel @Inject constructor(
                     _uiState.value = AuthUiState()
                     onVerificationRequired(result.context)
                 }
+                is AuthResult.PasswordSetupRequired -> {
+                    _uiState.value = AuthUiState(passwordSetupRequired = true)
+                }
                 is AuthResult.Error -> {
                     _uiState.value = AuthUiState(error = result.message)
                 }
@@ -96,6 +100,9 @@ class AuthViewModel @Inject constructor(
                     _uiState.value = AuthUiState()
                     onVerificationRequired(result.context)
                 }
+                is AuthResult.PasswordSetupRequired -> {
+                    _uiState.value = AuthUiState(passwordSetupRequired = true)
+                }
                 is AuthResult.Error -> {
                     _uiState.value = AuthUiState(error = result.message)
                 }
@@ -113,6 +120,9 @@ class AuthViewModel @Inject constructor(
                 is AuthResult.Error -> {
                     _uiState.value = AuthUiState(error = result.message)
                 }
+                is AuthResult.PasswordSetupRequired -> {
+                    _uiState.value = AuthUiState(passwordSetupRequired = true)
+                }
                 is AuthResult.VerificationRequired -> Unit
             }
         }
@@ -128,6 +138,9 @@ class AuthViewModel @Inject constructor(
                     onSuccess()
                 }
                 is AuthResult.Error -> _uiState.value = AuthUiState(error = result.message)
+                is AuthResult.PasswordSetupRequired -> {
+                    _uiState.value = AuthUiState(passwordSetupRequired = true)
+                }
                 is AuthResult.VerificationRequired -> Unit
             }
         }
@@ -142,6 +155,9 @@ class AuthViewModel @Inject constructor(
                     _uiState.value = AuthUiState(verificationEmailSent = true)
                 }
                 is AuthResult.Error -> _uiState.value = AuthUiState(error = result.message)
+                is AuthResult.PasswordSetupRequired -> {
+                    _uiState.value = AuthUiState(passwordSetupRequired = true)
+                }
                 is AuthResult.VerificationRequired -> Unit
             }
         }
@@ -158,6 +174,7 @@ class AuthViewModel @Inject constructor(
             when (val result = authRepository.sessions()) {
                 is AuthResult.Success -> _sessions.value = result.data
                 is AuthResult.Error -> Unit
+                is AuthResult.PasswordSetupRequired -> Unit
                 is AuthResult.VerificationRequired -> Unit
             }
         }
@@ -170,6 +187,6 @@ class AuthViewModel @Inject constructor(
     }
 
     fun clearError() {
-        _uiState.value = _uiState.value.copy(error = null)
+        _uiState.value = _uiState.value.copy(error = null, passwordSetupRequired = false)
     }
 }

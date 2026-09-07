@@ -570,6 +570,7 @@ private fun EmailAuthSheet(
                     text = when (error) {
                         null -> ""
                         AUTH_ERROR_FIELDS -> stringResource(R.string.onboarding_auth_error_fields)
+                        AUTH_ERROR_PASSWORD_SETUP -> stringResource(R.string.onboarding_auth_password_setup_required)
                         else -> error
                     },
                     modifier = Modifier.padding(top = 10.dp),

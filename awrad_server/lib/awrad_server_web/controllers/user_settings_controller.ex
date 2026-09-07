@@ -74,5 +74,6 @@ defmodule AwradServerWeb.UserSettingsController do
     conn
     |> assign(:email_changeset, Accounts.change_user_email(user))
     |> assign(:password_changeset, Accounts.change_user_password(user))
+    |> assign(:password_setup_required, Accounts.password_setup_required?(user.email))
   end
 end

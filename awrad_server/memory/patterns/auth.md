@@ -29,6 +29,8 @@ plug :redirect_if_user_is_authenticated # redirects to / if already logged in
 1. **Magic link** (default): user enters email → receives link → clicks link → session created
 2. **Password**: user enters email + password → session created
 
+Confirmed web accounts may have no password. The mobile API preserves that web-first flow and returns `403` with `error_code: "password_setup_required"` when password login is attempted for one of these accounts. Android and iOS direct the user to the generic forgot-password flow; completing the reset establishes the password needed for mobile login.
+
 ### Session Token Flow
 
 ```elixir
@@ -102,6 +104,7 @@ Accounts.register_user(%{email: "..."})
 
 # Login
 Accounts.get_user_by_email_and_password(email, password)
+Accounts.password_setup_required?(email)
 
 # Session management
 Accounts.generate_user_session_token(user)

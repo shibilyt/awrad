@@ -33,4 +33,16 @@ class AwradDestinationTest {
             AwradDestination.LibraryCollection.createRoute(LibraryFeaturedCollection.DHIKRS),
         )
     }
+
+    @Test
+    fun `forgot password route preserves the account email when provided`() {
+        assertEquals(
+            "forgot_password?email=person%40example.com",
+            AwradDestination.ForgotPassword.createRoute("person@example.com"),
+        )
+        assertEquals(
+            "forgot_password",
+            AwradDestination.ForgotPassword.createRoute(),
+        )
+    }
 }

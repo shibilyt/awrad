@@ -983,6 +983,7 @@
     <string name="onboarding_auth_subtitle">Your goals and streaks will follow you to any device.</string>
     <string name="onboarding_auth_email_hint">Email</string>
     <string name="onboarding_auth_password_hint">Password</string>
+    <string name="onboarding_auth_password_setup_required">This account uses email sign-in. Set a password from Forgot password before signing in on mobile.</string>
     <string name="onboarding_auth_toggle_password">Toggle password visibility</string>
     <string name="onboarding_auth_sign_in_action">Sign in</string>
     <string name="onboarding_auth_create_action">Create account</string>
@@ -1326,6 +1327,8 @@
     <string name="auth_logging_in">Logging in\u2026</string>
     <string name="auth_signing_up">Creating account\u2026</string>
     <string name="auth_forgot_password">Forgot password?</string>
+    <string name="auth_password_setup_required">This account uses email sign-in. Set a password to use Awrad on mobile.</string>
+    <string name="auth_set_up_mobile_login">Set up mobile login</string>
     <string name="auth_forgot_title">Reset Password</string>
     <string name="auth_forgot_subtitle">Enter your email and we\'ll send you a link to reset your password.</string>
     <string name="auth_send_reset_link">Send Reset Link</string>

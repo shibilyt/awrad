@@ -54,3 +54,7 @@ Rejected. Adds complexity for the web side where Phoenix sessions work perfectly
 - Two auth code paths to maintain (session plugs + JWT plug)
 - Token revocation for API requires a refresh token endpoint (access tokens can't be revoked until they expire)
 - Must keep JWT signing secret secure in production
+
+### Passwordless web accounts and mobile login
+
+Web magic-link accounts remain allowed to stay passwordless. This avoids forcing a password onto users who only use the browser, while still giving mobile users a clear recovery path. After the normal API login rate limits run, a confirmed account without a password receives `403` with `error_code: "password_setup_required"`. Mobile clients send the user through the existing generic forgot-password flow; consuming the reset token sets the first password and invalidates the account's existing tokens. No schema migration is required.

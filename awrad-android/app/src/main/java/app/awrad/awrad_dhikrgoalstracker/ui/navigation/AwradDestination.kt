@@ -2,6 +2,7 @@ package app.awrad.awrad_dhikrgoalstracker.ui.navigation
 
 import app.awrad.awrad_dhikrgoalstracker.data.model.AwradId
 import app.awrad.awrad_dhikrgoalstracker.ui.screens.library.LibraryFeaturedCollection
+import java.net.URLEncoder
 
 sealed class AwradDestination(val route: String) {
     data object Home : AwradDestination("home")
@@ -92,5 +93,12 @@ sealed class AwradDestination(val route: String) {
             token?.takeIf { it.isNotBlank() }?.let { "verify_email?token=${android.net.Uri.encode(it)}" }
                 ?: "verify_email"
     }
-    data object ForgotPassword : AwradDestination("forgot_password")
+    data object ForgotPassword : AwradDestination("forgot_password?email={email}") {
+        fun createRoute(email: String? = null): String {
+            val encodedEmail = email
+                ?.takeIf { it.isNotBlank() }
+                ?.let { URLEncoder.encode(it, Charsets.UTF_8.name()).replace("+", "%20") }
+            return encodedEmail?.let { "forgot_password?email=$it" } ?: "forgot_password"
+        }
+    }
 }

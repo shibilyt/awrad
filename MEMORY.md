@@ -20,6 +20,7 @@ This file stores durable repository facts and a concise append-only change log. 
 - API access JWTs are bound to active device sessions; refresh rotation is transactional and detects replay.
 - API JSON and browser registration, password-login, magic-link, and password-reset routes have explicit repository-owned IP/account abuse limits; browser registration returns a generic response for existing and unused emails.
 - Forgot-password requests are implemented for both mobile clients and the API.
+- Confirmed passwordless web accounts return a structured `password_setup_required` mobile-login state; web settings and Android guide users through the existing generic password-reset flow without a schema migration.
 - Authenticated logout is implemented by the API and both mobile clients.
 - Android credentials use an Android Keystore-backed AES-GCM store and refresh is serialized across concurrent failures.
 - Android debug builds default to the emulator host API address; release builds require an explicit HTTPS API URL.
@@ -82,3 +83,10 @@ Use this format:
 - Change: Froze Android `2f56aa4` as the iOS behavior baseline; added the App Group SwiftData repository/migration boundary, canonical progress/behavior/Wird contracts, Android-equivalent iOS route families, Keychain authentication with single-flight refresh, and an explicit runtime/physical-device acceptance ledger.
 - Evidence: `awrad-ios/awrad/awrad/Core/Persistence/`, `awrad-ios/awrad/awrad/Core/AwradStore.swift`, `awrad-ios/awrad/awrad/Features/`, `contracts/behavior-model/v1/`, `contracts/wird-model/v1/`, `docs/ios-android-parity-ledger.md`, `docs/ios-parity-debugger-review.md`
 - Commit: uncommitted
+
+### 2026-09-07 — Added password setup handoff for passwordless web accounts
+
+- Area: Cross-project | Documentation
+- Change: Mobile password login now identifies confirmed web accounts without a password, while web settings explains the requirement and Android opens the existing reset flow with the email prefilled. The additive error code keeps existing clients compatible.
+- Evidence: `awrad_server/lib/awrad_server_web/controllers/api/auth_controller.ex`, `awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/ui/screens/auth/LoginScreen.kt`, `CONTRACTS.md`
+- Commit: 4228364

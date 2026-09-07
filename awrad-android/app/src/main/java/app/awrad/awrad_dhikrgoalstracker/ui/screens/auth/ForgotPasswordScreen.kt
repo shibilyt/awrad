@@ -49,10 +49,11 @@ import app.awrad.awrad_dhikrgoalstracker.ui.theme.isAwradDarkTheme
 @Composable
 fun ForgotPasswordScreen(
     onNavigateBack: () -> Unit,
+    initialEmail: String = "",
     viewModel: AuthViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var email by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf(initialEmail) }
     val focusManager = LocalFocusManager.current
 
     Scaffold(

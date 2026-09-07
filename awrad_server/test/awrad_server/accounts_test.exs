@@ -35,6 +35,23 @@ defmodule AwradServer.AccountsTest do
     end
   end
 
+  describe "password_setup_required?/1" do
+    test "returns true for confirmed passwordless users" do
+      user = user_fixture()
+
+      assert Accounts.password_setup_required?(user.email)
+    end
+
+    test "returns false for unknown, unconfirmed, and password users" do
+      unconfirmed = unconfirmed_user_fixture()
+      password_user = user_fixture() |> set_password()
+
+      refute Accounts.password_setup_required?("unknown@example.com")
+      refute Accounts.password_setup_required?(unconfirmed.email)
+      refute Accounts.password_setup_required?(password_user.email)
+    end
+  end
+
   describe "get_user!/1" do
     test "raises if id is invalid" do
       assert_raise Ecto.NoResultsError, fn ->

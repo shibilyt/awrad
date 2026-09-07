@@ -24,6 +24,7 @@ import javax.inject.Singleton
 sealed class AuthResult<out T> {
     data class Success<T>(val data: T) : AuthResult<T>()
     data class VerificationRequired(val context: PendingVerificationContext) : AuthResult<Nothing>()
+    data class PasswordSetupRequired(val email: String) : AuthResult<Nothing>()
     data class Error(val message: String) : AuthResult<Nothing>()
 }
 
@@ -35,6 +36,15 @@ data class PendingVerificationContext(
     val mode: VerificationMode,
     val origin: VerificationOrigin,
 )
+
+internal fun mapLoginError(
+    email: String,
+    message: String,
+    errorCode: String?,
+): AuthResult<Nothing> = when (errorCode) {
+    "password_setup_required" -> AuthResult.PasswordSetupRequired(email)
+    else -> AuthResult.Error(message)
+}
 
 @Singleton
 class AuthRepository @Inject constructor(
@@ -95,7 +105,7 @@ class AuthRepository @Inject constructor(
                 if (parsed.errorCode == "email_verification_required") {
                     verificationRequired(normalizedEmail, VerificationMode.Login, origin)
                 } else {
-                    AuthResult.Error(parsed.message)
+                    mapLoginError(normalizedEmail, parsed.message, parsed.errorCode)
                 }
             }
         } catch (e: Exception) {

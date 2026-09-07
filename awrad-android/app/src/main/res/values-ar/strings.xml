@@ -803,6 +803,7 @@
     <string name="onboarding_auth_subtitle">سترافقك أهدافك وسلاسلك إلى أي جهاز.</string>
     <string name="onboarding_auth_email_hint">البريد الإلكتروني</string>
     <string name="onboarding_auth_password_hint">كلمة المرور</string>
+    <string name="onboarding_auth_password_setup_required">يستخدم هذا الحساب تسجيل الدخول عبر البريد الإلكتروني. عيّن كلمة مرور من «نسيت كلمة المرور» قبل تسجيل الدخول على الهاتف.</string>
     <string name="onboarding_auth_toggle_password">تبديل إظهار كلمة المرور</string>
     <string name="onboarding_auth_sign_in_action">تسجيل الدخول</string>
     <string name="onboarding_auth_create_action">إنشاء حساب</string>
@@ -1144,6 +1145,8 @@
     <string name="auth_logging_in">جارٍ تسجيل الدخول\u2026</string>
     <string name="auth_signing_up">جارٍ إنشاء الحساب\u2026</string>
     <string name="auth_forgot_password">نسيت كلمة المرور؟</string>
+    <string name="auth_password_setup_required">يستخدم هذا الحساب تسجيل الدخول عبر البريد الإلكتروني. عيّن كلمة مرور لاستخدام أوراد على الهاتف.</string>
+    <string name="auth_set_up_mobile_login">إعداد تسجيل الدخول على الهاتف</string>
     <string name="auth_forgot_title">إعادة تعيين كلمة المرور</string>
     <string name="auth_forgot_subtitle">أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.</string>
     <string name="auth_send_reset_link">إرسال رابط إعادة التعيين</string>

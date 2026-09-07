@@ -660,6 +660,7 @@
     <string name="onboarding_auth_subtitle">നിങ്ങളുടെ ലക്ഷ്യങ്ങളും സ്ട്രീക്കുകളും ഏത് ഉപകരണത്തിലും നിങ്ങളോടൊപ്പം ഉണ്ടാകും.</string>
     <string name="onboarding_auth_email_hint">ഇമെയിൽ</string>
     <string name="onboarding_auth_password_hint">പാസ്‌വേഡ്</string>
+    <string name="onboarding_auth_password_setup_required">ഈ അക്കൗണ്ട് ഇമെയിൽ സൈൻ-ഇൻ ഉപയോഗിക്കുന്നു. മൊബൈലിൽ പ്രവേശിക്കുന്നതിന് മുമ്പ് “പാസ്‌വേഡ് മറന്നോ” വഴി ഒരു പാസ്‌വേഡ് സജ്ജമാക്കുക.</string>
     <string name="auth_password_hint">15–128 അക്ഷരങ്ങൾ; പൊതുവായതോ ചോർന്നതോ ആയ പാസ്‌വേഡുകൾ ഒഴിവാക്കുക</string>
     <string name="onboarding_auth_toggle_password">പാസ്‌വേഡ് ദൃശ്യത മാറ്റുക</string>
     <string name="onboarding_auth_sign_in_action">സൈൻ ഇൻ ചെയ്യുക</string>
@@ -667,6 +668,8 @@
     <string name="onboarding_auth_switch_to_create">അവ്‌റാദിൽ പുതിയ ആളാണോ? അക്കൗണ്ട് സൃഷ്ടിക്കുക</string>
     <string name="onboarding_auth_switch_to_sign_in">ഇതിനകം അക്കൗണ്ട് ഉണ്ടോ? സൈൻ ഇൻ ചെയ്യുക</string>
     <string name="onboarding_auth_error_fields">തുടരാൻ നിങ്ങളുടെ ഇമെയിലും പാസ്‌വേഡും നൽകുക.</string>
+    <string name="auth_password_setup_required">ഈ അക്കൗണ്ട് ഇമെയിൽ സൈൻ-ഇൻ ഉപയോഗിക്കുന്നു. മൊബൈലിൽ Awrad ഉപയോഗിക്കാൻ ഒരു പാസ്‌വേഡ് സജ്ജമാക്കുക.</string>
+    <string name="auth_set_up_mobile_login">മൊബൈൽ ലോഗിൻ സജ്ജമാക്കുക</string>
     <!-- Name scene -->
     <string name="onboarding_name_title">നിങ്ങളെ എന്ത് വിളിക്കണം?</string>
     <string name="onboarding_name_subtitle">നിങ്ങളുടെ അനുഭവം വ്യക്തിഗതമാക്കാൻ ഞങ്ങൾ നിങ്ങളുടെ പേര് ഉപയോഗിക്കും.</string>

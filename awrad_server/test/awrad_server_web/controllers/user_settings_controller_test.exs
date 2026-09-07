@@ -13,6 +13,13 @@ defmodule AwradServerWeb.UserSettingsControllerTest do
       assert response =~ "Settings"
     end
 
+    test "explains password setup for passwordless accounts", %{conn: conn} do
+      conn = get(conn, ~p"/users/settings")
+
+      assert html_response(conn, 200) =~
+               "Set a password to use Awrad on Android and iOS."
+    end
+
     test "redirects if user is not logged in" do
       conn = build_conn()
       conn = get(conn, ~p"/users/settings")

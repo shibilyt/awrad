@@ -618,6 +618,36 @@ struct AuthServiceTests {
         #expect(restored.pendingVerificationContext == service.pendingVerificationContext)
     }
 
+    @Test func passwordlessLoginPreservesSetupRequiredErrorCode() async {
+        MockAuthURLProtocol.install { request in
+            if request.url?.path == "/api/auth/login" {
+                return .json(
+                    status: 403,
+                    body: #"{"error":"password setup required","error_code":"password_setup_required"}"#
+                )
+            }
+            return .json(status: 404, body: #"{"error":"missing"}"#)
+        }
+        defer { MockAuthURLProtocol.reset() }
+
+        let service = AuthService(
+            baseURL: testBaseURL,
+            session: mockSession(),
+            defaults: isolatedDefaults(),
+            credentialStore: InMemoryAuthCredentialStore()
+        )
+
+        do {
+            try await service.login(email: "person@example.com", password: "Strong-password1")
+            Issue.record("Expected password setup to be required")
+        } catch let AuthServiceError.http(statusCode, _, errorCode) {
+            #expect(statusCode == 403)
+            #expect(errorCode == "password_setup_required")
+        } catch {
+            Issue.record("Unexpected auth error: \(error)")
+        }
+    }
+
     @Test func signupWaitsForVerificationAndVerificationSavesTheSession() async throws {
         let recorder = AuthRequestRecorder()
         MockAuthURLProtocol.install { request in

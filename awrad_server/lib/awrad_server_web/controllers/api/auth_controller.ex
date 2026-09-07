@@ -52,7 +52,16 @@ defmodule AwradServerWeb.Api.AuthController do
           end
 
         {:error, :invalid_credentials} ->
-          conn |> put_status(:unauthorized) |> json(%{error: "invalid email or password"})
+          if Accounts.password_setup_required?(email) do
+            conn
+            |> put_status(:forbidden)
+            |> json(%{
+              error: "password setup required",
+              error_code: "password_setup_required"
+            })
+          else
+            conn |> put_status(:unauthorized) |> json(%{error: "invalid email or password"})
+          end
       end
     else
       {:rate_limited, retry_after} -> rate_limited(conn, retry_after)

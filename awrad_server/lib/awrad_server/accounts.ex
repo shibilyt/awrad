@@ -27,6 +27,23 @@ defmodule AwradServer.Accounts do
   end
 
   @doc """
+  Returns whether a confirmed account still needs a password to use password auth.
+
+  Web accounts may remain passwordless because they can authenticate with a magic
+  link. Mobile clients use this signal to direct those users through the existing
+  password-reset flow to establish their first password.
+  """
+  def password_setup_required?(email) when is_binary(email) do
+    case get_user_by_email(email) do
+      %User{confirmed_at: confirmed_at, hashed_password: nil} when not is_nil(confirmed_at) ->
+        true
+
+      _ ->
+        false
+    end
+  end
+
+  @doc """
   Gets a user by email and password.
 
   ## Examples

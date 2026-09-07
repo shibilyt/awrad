@@ -79,6 +79,13 @@ budgets before account creation, password verification, token creation, or mail
 delivery. Limit exhaustion returns `429` with `Retry-After`. Browser registration
 uses the same generic redirect for a successful registration and duplicate email.
 
+The mobile password-login controller intentionally returns the additive
+`password_setup_required` state for a confirmed magic-link account without a
+password, after the normal login limits run. This is the documented product
+tradeoff that lets a real web-created user recover into mobile access; keep the
+response limited to this login path and preserve generic responses on registration,
+verification delivery, and password-reset discovery surfaces.
+
 Remaining work:
 
 - Persist production reverse-proxy/origin-network assumptions and verify forwarded headers are overwritten at the trusted boundary.

@@ -382,6 +382,11 @@ class OnboardingViewModel @Inject constructor(
                         it.copy(isAuthenticating = false, authError = result.message)
                     }
                 }
+                is AuthResult.PasswordSetupRequired -> {
+                    _uiState.update {
+                        it.copy(isAuthenticating = false, authError = AUTH_ERROR_PASSWORD_SETUP)
+                    }
+                }
                 is AuthResult.VerificationRequired -> {
                     awaitingVerificationMode = state.authMode
                     _uiState.update {
@@ -841,3 +846,4 @@ class OnboardingViewModel @Inject constructor(
 
 /** Sentinel understood by the account scene: blank-field validation error. */
 internal const val AUTH_ERROR_FIELDS = "__fields__"
+internal const val AUTH_ERROR_PASSWORD_SETUP = "__password_setup__"

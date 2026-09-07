@@ -8,6 +8,10 @@
     </.header>
   </div>
 
+  <p :if={@password_setup_required} class="alert alert-outline mt-6">
+    Set a password to use Awrad on Android and iOS.
+  </p>
+
   <.form :let={f} for={@email_changeset} action={~p"/users/settings"} id="update_email" class="awrad-auth-form">
     <input type="hidden" name="action" value="update_email" />
 

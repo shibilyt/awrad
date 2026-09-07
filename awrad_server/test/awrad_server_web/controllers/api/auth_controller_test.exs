@@ -57,6 +57,35 @@ defmodule AwradServerWeb.Api.AuthControllerTest do
     assert json_response(reused, 422)["error"] =~ "invalid"
   end
 
+  test "verified passwordless users are told to set up a password", %{conn: conn} do
+    user = user_fixture()
+
+    denied =
+      post(conn, ~p"/api/auth/login", %{
+        email: user.email,
+        password: @password,
+        device: @device
+      })
+
+    assert json_response(denied, 403) == %{
+             "error" => "password setup required",
+             "error_code" => "password_setup_required"
+           }
+  end
+
+  test "password users keep the generic response for invalid credentials", %{conn: conn} do
+    user = user_fixture() |> set_password()
+
+    denied =
+      post(conn, ~p"/api/auth/login", %{
+        email: user.email,
+        password: "not-the-password",
+        device: @device
+      })
+
+    assert json_response(denied, 401) == %{"error" => "invalid email or password"}
+  end
+
   test "verification resend stays generic and rate limited", %{conn: conn} do
     {:ok, user} =
       Accounts.register_password_user(%{email: unique_user_email(), password: @password})

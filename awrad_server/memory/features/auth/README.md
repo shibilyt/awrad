@@ -48,12 +48,12 @@ graph TB
 
 | Feature | Description | Doc |
 |---|---|---|
-| Web registration | Email-based registration with optional password | Built into phx.gen.auth |
+| Web registration | Email-based registration; password is optional for magic-link users | Built into phx.gen.auth |
 | Magic link login | Passwordless login via email link (15 min expiry) | Built into phx.gen.auth |
 | Password login | Email + password login | Built into phx.gen.auth |
 | Settings | Change email, set/change password | Built into phx.gen.auth |
 | API registration | `POST /api/auth/register` with email + password | `auth_controller.ex` |
-| API login | `POST /api/auth/login` returns token pair | `auth_controller.ex` |
+| API login | `POST /api/auth/login` returns a token pair, or `password_setup_required` for confirmed passwordless web accounts | `auth_controller.ex` |
 | Token refresh | `POST /api/auth/refresh` with rotation | [token-design.md](token-design.md) |
 | API forgot password | `POST /api/auth/forgot-password` sends reset instructions without revealing account existence | `auth_controller.ex` |
 | API reset password | `POST /api/auth/reset-password` consumes a reset token and new password | `auth_controller.ex` |
@@ -61,10 +61,10 @@ graph TB
 
 ## Password Rules
 
-- Minimum: 12 characters
-- Maximum: 72 bytes (bcrypt limit)
-- Hashing: bcrypt via `bcrypt_elixir`
-- Dev/test: bcrypt log_rounds = 1 (fast)
+- Minimum: 15 characters
+- Maximum: 128 characters
+- Hashing: Argon2id; existing bcrypt hashes are upgraded after successful login
+- Password reset tokens are single-use and expire all existing account tokens when consumed
 
 ## Key Files
 

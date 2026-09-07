@@ -308,8 +308,8 @@ fun AwradNavGraph(
                             popUpTo(AwradDestination.Community.route)
                         }
                     },
-                    onNavigateToForgotPassword = {
-                        navController.navigateSafely(AwradDestination.ForgotPassword.route)
+                    onNavigateToForgotPassword = { email ->
+                        navController.navigateSafely(AwradDestination.ForgotPassword.createRoute(email))
                     },
                     onLoginSuccess = {
                         if (loginOrigin == VerificationOrigin.Onboarding) {
@@ -329,10 +329,18 @@ fun AwradNavGraph(
             }
         }
 
-        composable(AwradDestination.ForgotPassword.route) {
+        composable(
+            route = AwradDestination.ForgotPassword.route,
+            arguments = listOf(navArgument("email") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            }),
+        ) { backStackEntry ->
             WrappedAwradDestination(navController) {
                 ForgotPasswordScreen(
                     onNavigateBack = { navController.popBackStack() },
+                    initialEmail = backStackEntry.arguments?.getString("email").orEmpty(),
                 )
             }
         }

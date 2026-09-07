@@ -55,7 +55,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.repository.VerificationOrigin
 fun LoginScreen(
     onNavigateBack: () -> Unit,
     onNavigateToSignup: () -> Unit,
-    onNavigateToForgotPassword: () -> Unit,
+    onNavigateToForgotPassword: (String?) -> Unit,
     onLoginSuccess: () -> Unit,
     onVerificationRequired: (PendingVerificationContext) -> Unit,
     initialEmail: String = "",
@@ -177,7 +177,7 @@ fun LoginScreen(
             Spacer(Modifier.height(4.dp))
 
             TextButton(
-                onClick = onNavigateToForgotPassword,
+                onClick = { onNavigateToForgotPassword(null) },
                 modifier = Modifier.align(Alignment.End),
             ) {
                 Text(
@@ -186,7 +186,20 @@ fun LoginScreen(
                 )
             }
 
-            if (uiState.error != null) {
+            if (uiState.passwordSetupRequired) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.auth_password_setup_required),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                TextButton(
+                    onClick = { onNavigateToForgotPassword(email.trim()) },
+                    modifier = Modifier.align(Alignment.Start),
+                ) {
+                    Text(stringResource(R.string.auth_set_up_mobile_login))
+                }
+            } else if (uiState.error != null) {
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = uiState.error!!,
