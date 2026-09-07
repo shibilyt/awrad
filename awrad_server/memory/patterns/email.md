@@ -32,6 +32,8 @@ UserNotifier.deliver_update_email_instructions(user, confirmation_url)
 
 Emails are plain text, delivered via `Mailer.deliver/1`. Production delivery uses
 Resend's API and requires a sender address from a verified Resend domain.
+Browser-facing auth links use `WEB_HOST`; mobile verification links use
+`PHX_HOST`.
 
 ## Reference Files
 

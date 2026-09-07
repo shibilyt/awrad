@@ -3,6 +3,7 @@ defmodule AwradServerWeb.Api.AuthController do
 
   alias AwradServer.Accounts
   alias AwradServer.Accounts.{AuthRateLimiter, Token}
+  alias AwradServerWeb.PublicUrls
 
   @generic_registration "If the address can be registered, verification instructions will arrive shortly."
   @generic_verification "If the account exists, verification instructions will arrive shortly."
@@ -144,7 +145,7 @@ defmodule AwradServerWeb.Api.AuthController do
       if user = Accounts.get_user_by_email(email) do
         Accounts.deliver_user_reset_password_instructions(
           user,
-          &url(~p"/users/reset-password/#{&1}")
+          &PublicUrls.web(~p"/users/reset-password/#{&1}")
         )
       end
 
@@ -215,7 +216,7 @@ defmodule AwradServerWeb.Api.AuthController do
   end
 
   defp ip_subject(conn), do: conn.remote_ip |> :inet.ntoa() |> to_string()
-  defp verification_url(token), do: url(~p"/auth/mobile/verify-email/#{token}")
+  defp verification_url(token), do: PublicUrls.api(~p"/auth/mobile/verify-email/#{token}")
 
   defp registration_accepted(conn),
     do:

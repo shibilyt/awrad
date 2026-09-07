@@ -3,6 +3,7 @@ defmodule AwradServerWeb.UserSessionController do
 
   alias AwradServer.Accounts
   alias AwradServerWeb.BrowserAuthProtection
+  alias AwradServerWeb.PublicUrls
   alias AwradServerWeb.UserAuth
 
   def new(conn, _params) do
@@ -59,7 +60,7 @@ defmodule AwradServerWeb.UserSessionController do
       if user = Accounts.get_user_by_email(email) do
         Accounts.deliver_login_instructions(
           user,
-          &url(~p"/users/log-in/#{&1}")
+          &PublicUrls.web(~p"/users/log-in/#{&1}")
         )
       end
 

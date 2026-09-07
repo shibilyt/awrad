@@ -2,10 +2,11 @@ defmodule AwradServerWeb.EmailVerificationController do
   use AwradServerWeb, :controller
 
   alias AwradServer.Accounts
+  alias AwradServerWeb.PublicUrls
 
   def mobile(conn, %{"token" => token}) do
     custom_url = "awrad://verify-email?" <> URI.encode_query(%{"token" => token})
-    legacy_url = url(~p"/auth/verify-email/#{token}")
+    legacy_url = PublicUrls.web(~p"/auth/verify-email/#{token}")
     nonce = 18 |> :crypto.strong_rand_bytes() |> Base.url_encode64(padding: false)
 
     html = """

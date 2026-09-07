@@ -2,6 +2,7 @@ defmodule AwradServerWeb.UserSettingsController do
   use AwradServerWeb, :controller
 
   alias AwradServer.Accounts
+  alias AwradServerWeb.PublicUrls
   alias AwradServerWeb.UserAuth
 
   import AwradServerWeb.UserAuth, only: [require_sudo_mode: 2]
@@ -22,7 +23,7 @@ defmodule AwradServerWeb.UserSettingsController do
         Accounts.deliver_user_update_email_instructions(
           Ecto.Changeset.apply_action!(changeset, :insert),
           user.email,
-          &url(~p"/users/settings/confirm-email/#{&1}")
+          &PublicUrls.web(~p"/users/settings/confirm-email/#{&1}")
         )
 
         conn

@@ -27,6 +27,11 @@ config :awrad_server, AwradServerWeb.Endpoint,
   secret_key_base: "/4VQN3t7Ogf4RWZNFHp0YkVOUR5VPyAgSBW61C8JdpfdRuLLoIUrvfA6VlpeGpyg",
   server: false
 
+# Absolute hosts used by URL generation tests.
+config :awrad_server, :public_urls,
+  web: "https://example.com",
+  api: "https://api.example.com"
+
 # JWT signing secret for tests
 config :awrad_server, AwradServer.Accounts.Token,
   signing_secret: "test-only-jwt-secret-at-least-32-characters!",

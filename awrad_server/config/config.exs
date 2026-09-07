@@ -31,6 +31,12 @@ config :awrad_server, :mobile_app_links,
     "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
   ]
 
+# Configure public absolute URLs. Production overrides these with the web and
+# API hosts in config/runtime.exs.
+config :awrad_server, :public_urls,
+  web: "http://localhost:4000",
+  api: "http://localhost:4000"
+
 # Configure the endpoint
 config :awrad_server, AwradServerWeb.Endpoint,
   url: [host: "localhost"],

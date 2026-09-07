@@ -3,6 +3,7 @@ defmodule AwradServerWeb.UserVerificationController do
 
   alias AwradServer.Accounts
   alias AwradServerWeb.BrowserAuthProtection
+  alias AwradServerWeb.PublicUrls
 
   def resend(conn, _params) do
     user = conn.assigns.current_scope.user
@@ -15,7 +16,7 @@ defmodule AwradServerWeb.UserVerificationController do
         _ =
           Accounts.deliver_user_verification_instructions(
             user,
-            &url(~p"/auth/verify-email/#{&1}")
+            &PublicUrls.web(~p"/auth/verify-email/#{&1}")
           )
 
         conn

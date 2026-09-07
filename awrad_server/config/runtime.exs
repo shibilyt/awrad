@@ -64,13 +64,27 @@ if config_env() == :prod do
       """
 
   host = System.get_env("PHX_HOST") || raise "environment variable PHX_HOST is missing"
+  web_host = System.get_env("WEB_HOST") || raise "environment variable WEB_HOST is missing"
 
-  ios_team_id =
-    System.get_env("IOS_APP_TEAM_ID") || raise "environment variable IOS_APP_TEAM_ID is missing"
+  config :awrad_server, :public_urls,
+    web: "https://#{web_host}",
+    api: "https://#{host}"
 
-  unless Regex.match?(~r/^[A-Z0-9]{10}$/, ios_team_id) do
-    raise "IOS_APP_TEAM_ID must be the 10-character Apple Team ID"
-  end
+  ios_app_id =
+    case System.get_env("IOS_APP_TEAM_ID") do
+      nil ->
+        nil
+
+      "" ->
+        nil
+
+      ios_team_id ->
+        unless Regex.match?(~r/^[A-Z0-9]{10}$/, ios_team_id) do
+          raise "IOS_APP_TEAM_ID must be the 10-character Apple Team ID"
+        end
+
+        "#{ios_team_id}.app.awrad.awrad"
+    end
 
   android_fingerprints =
     System.get_env("ANDROID_APP_LINK_SHA256_CERT_FINGERPRINTS", "")
@@ -85,7 +99,7 @@ if config_env() == :prod do
   end
 
   config :awrad_server, :mobile_app_links,
-    ios_app_id: "#{ios_team_id}.app.awrad.awrad",
+    ios_app_id: ios_app_id,
     android_package: "app.awrad.awrad_dhikrgoalstracker",
     android_sha256_cert_fingerprints: Enum.map(android_fingerprints, &String.upcase/1)
 

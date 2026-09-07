@@ -5,11 +5,19 @@ defmodule AwradServerWeb.MobileAssociationController do
 
   def apple(conn, _params) do
     config = Application.fetch_env!(:awrad_server, :mobile_app_links)
+    ios_app_id = Keyword.get(config, :ios_app_id)
+
+    details =
+      if ios_app_id do
+        [%{appID: ios_app_id, paths: @verification_paths}]
+      else
+        []
+      end
 
     association = %{
       applinks: %{
         apps: [],
-        details: [%{appID: Keyword.fetch!(config, :ios_app_id), paths: @verification_paths}]
+        details: details
       }
     }
 

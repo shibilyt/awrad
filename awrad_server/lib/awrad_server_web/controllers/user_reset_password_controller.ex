@@ -3,6 +3,7 @@ defmodule AwradServerWeb.UserResetPasswordController do
 
   alias AwradServer.Accounts
   alias AwradServerWeb.BrowserAuthProtection
+  alias AwradServerWeb.PublicUrls
 
   def new(conn, _params) do
     render(conn, :new)
@@ -13,7 +14,7 @@ defmodule AwradServerWeb.UserResetPasswordController do
       if user = Accounts.get_user_by_email(email) do
         Accounts.deliver_user_reset_password_instructions(
           user,
-          &url(~p"/users/reset-password/#{&1}")
+          &PublicUrls.web(~p"/users/reset-password/#{&1}")
         )
       end
 

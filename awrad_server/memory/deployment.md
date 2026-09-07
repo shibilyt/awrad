@@ -46,17 +46,20 @@ into the entrypoint, so concurrent replicas cannot race the same migration.
   optionally set `MAIL_FROM_NAME` (default `Awrad`). The `MAIL_FROM` domain must
   be verified in Resend before registration, magic-link, and password-reset
   emails can be delivered.
-- The Phoenix app owns the root domain (`example.com`) for both the web
-  companion and API; there is no separate marketing site or `app.`/`api.`
-  subdomain. Set `PHX_HOST=example.com`, point the root DNS record at Dokploy,
-  and use `https://example.com/` as the mobile release API base URL.
+- The web companion uses the root domain (`example.com`) and the API/mobile
+  contract uses `api.example.com`; there is no separate marketing site. Set
+  `WEB_HOST=example.com` and `PHX_HOST=api.example.com`, point both DNS names
+  at the same Dokploy service, and use `https://api.example.com/` as the mobile
+  release API base URL.
 - Healthcheck / Traefik probe: `GET /up`, unauthenticated and DB-free, so a
   transient Postgres blip cannot evict a healthy node. `config/prod.exs`
   excludes `/up` from `force_ssl` because the probe arrives over plain HTTP with
   no `x-forwarded-proto`.
 - Environment variables: see [`../.env.example`](../.env.example). Every secret
   is validated at boot in `config/runtime.exs`; a missing or short one crashes
-  the release immediately rather than starting insecurely.
+  the release immediately rather than starting insecurely. `IOS_APP_TEAM_ID` is
+  optional until an iOS app is ready; omitting it disables iOS Universal Link
+  entries while leaving Android App Links enabled.
 
 Required repository secrets: `DOKPLOY_URL`, `DOKPLOY_API_TOKEN`,
 `DOKPLOY_APPLICATION_ID`, `GHCR_PULL_TOKEN`.

@@ -4,6 +4,7 @@ defmodule AwradServerWeb.UserRegistrationController do
   alias AwradServer.Accounts
   alias AwradServer.Accounts.User
   alias AwradServerWeb.BrowserAuthProtection
+  alias AwradServerWeb.PublicUrls
 
   @generic_registration "If the address can be registered, instructions will arrive shortly."
 
@@ -21,7 +22,7 @@ defmodule AwradServerWeb.UserRegistrationController do
           {:ok, _} =
             Accounts.deliver_login_instructions(
               user,
-              &url(~p"/users/log-in/#{&1}")
+              &PublicUrls.web(~p"/users/log-in/#{&1}")
             )
 
           registration_accepted(conn)
