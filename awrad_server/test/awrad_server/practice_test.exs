@@ -53,6 +53,25 @@ defmodule AwradServer.PracticeTest do
     assert Enum.all?(results, &is_binary(&1.title))
   end
 
+  test "builds mobile-ordered categories without leaking another user's dhikr" do
+    scope = user_scope_fixture()
+    other_scope = user_scope_fixture()
+
+    insert_dhikr(nil, "Morning remembrance", "morning")
+    insert_dhikr(scope.user.id, "Morning protection", "morning")
+    insert_dhikr(scope.user.id, "Evening remembrance", "evening")
+    insert_dhikr(other_scope.user.id, "Private praise", "praise")
+
+    categories = Practice.categories(scope)
+
+    assert Enum.take(categories, 2) == [
+             %{key: "morning", count: 2},
+             %{key: "evening", count: 1}
+           ]
+
+    refute Enum.any?(categories, &(&1.key == "praise"))
+  end
+
   test "returns one owned dhikr detail and hides another user's custom dhikr" do
     scope = user_scope_fixture()
     other_scope = user_scope_fixture()
@@ -112,11 +131,14 @@ defmodule AwradServer.PracticeTest do
              email: email,
              date: ~D[2026-07-16],
              due_goals: [%{id: goal_id, today_count: 7}],
-             total_today_count: 7
+             total_today_count: 7,
+             featured_wirds: [%{slug: "dalail-al-khayrat"} | _],
+             categories: categories
            } = Practice.home(scope, ~D[2026-07-16])
 
     assert email == scope.user.email
     assert goal_id == goal.id
+    assert %{key: "morning", count: 1} in categories
   end
 
   test "includes a current streak and recent contribution dates" do

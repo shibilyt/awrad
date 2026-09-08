@@ -16,6 +16,32 @@ defmodule AwradServer.Practice do
   alias AwradServer.Repo
   alias AwradServer.Tracking.{Goal, GoalSlot}
 
+  @category_order ~w(
+    morning
+    evening
+    after_salah
+    forgiveness
+    praise
+    protection
+    general
+    swalaths
+    asma_ul_husna
+    ramadan
+    quran
+  )
+
+  @featured_wirds [
+    %{
+      slug: "dalail-al-khayrat",
+      title: "Dalail al-Khayrat",
+      arabic_title: "دلائل الخيرات",
+      description: "A complete Arabic wird of prayers and blessings upon the Prophet Muhammad ﷺ.",
+      tag: "Salawat",
+      schedule: "Sections by weekday",
+      estimated_minutes: 60
+    }
+  ]
+
   @doc "Searches built-in dhikr and custom dhikr owned by the caller."
   def search_dhikr(%Scope{user: %User{id: user_id}}, filters) when is_map(filters) do
     query = filters |> value(:query) |> to_string() |> String.trim()
@@ -97,6 +123,31 @@ defmodule AwradServer.Practice do
     end
   end
 
+  @doc "Returns the caller-visible dhikr categories with their current library counts."
+  def categories(%Scope{user: %User{id: user_id}}) do
+    counts =
+      Repo.all(
+        from dhikr in Dhikr,
+          where:
+            is_nil(dhikr.deleted_at) and
+              (is_nil(dhikr.user_id) or dhikr.user_id == ^user_id),
+          group_by: dhikr.category,
+          select: {dhikr.category, count(dhikr.id)}
+      )
+      |> Map.new()
+
+    @category_order
+    |> Enum.flat_map(fn key ->
+      case Map.get(counts, key, 0) do
+        0 -> []
+        count -> [%{key: key, count: count}]
+      end
+    end)
+  end
+
+  @doc "Returns the bundled featured Wird catalog for the mobile-parity home section."
+  def featured_wirds(%Scope{}, %Date{}), do: @featured_wirds
+
   @doc "Builds the authenticated user's browser-local home snapshot."
   def home(%Scope{} = scope, %Date{} = date) do
     goals = list_goals(scope, date)
@@ -111,7 +162,9 @@ defmodule AwradServer.Practice do
       total_today_count: Enum.sum(Enum.map(due_goals, & &1.today_count)),
       active_goal_count: Enum.count(goals, &(&1.status == :active)),
       current_streak: current_streak(contribution_counts, date),
-      contribution_dates: Enum.map(contribution_counts, &elem(&1, 0))
+      contribution_dates: Enum.map(contribution_counts, &elem(&1, 0)),
+      featured_wirds: featured_wirds(scope, date),
+      categories: categories(scope)
     }
   end
 

@@ -97,12 +97,50 @@ a {
 }
 
 .awrad-home-content {
-  width: min(100%, 640px);
+  width: min(100%, 480px);
   margin-inline: auto;
 }
 
 .awrad-home-content .awrad-page-intro {
   max-width: none;
+}
+
+.awrad-home-content .awrad-home-header {
+  display: block;
+}
+
+.awrad-home-content .awrad-home-header h1 {
+  margin-top: 0;
+  color: var(--awrad-sage-dark);
+  font-size: 22px;
+  letter-spacing: -0.055em;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.awrad-home-content .awrad-home-header .awrad-page-subtitle {
+  margin-top: 4px;
+  color: var(--awrad-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.awrad-home-quick-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--awrad-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.awrad-home-quick-stats strong {
+  color: var(--awrad-ink);
+  font-family: "Manrope", "Avenir Next", ui-sans-serif, sans-serif;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .awrad-home-summary {
@@ -135,6 +173,316 @@ a {
 .awrad-home-content .awrad-goal-grid {
   grid-template-columns: 1fr;
   gap: 12px;
+}
+
+.awrad-home-section {
+  margin-top: 34px;
+}
+
+.awrad-home-content .awrad-home-section .awrad-section-heading {
+  align-items: flex-end;
+}
+
+.awrad-home-content .awrad-home-section .awrad-section-heading h2 {
+  margin-top: 0;
+  color: var(--awrad-ink);
+  font-size: 24px;
+  letter-spacing: -0.055em;
+  line-height: 1.15;
+}
+
+.awrad-home-content .awrad-home-section .awrad-section-heading .awrad-eyebrow {
+  margin-bottom: 5px;
+  color: var(--awrad-sage);
+  font-size: 10px;
+}
+
+.awrad-home-goal-stack {
+  position: relative;
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(75, 124, 90, 0.12);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 96% 84%, rgba(212, 168, 67, 0.2), transparent 26%),
+    linear-gradient(135deg, #f5f8f5 0%, #fffdfa 68%, #f6efe0 100%);
+  box-shadow: var(--awrad-shadow-soft);
+}
+
+.awrad-home-goal-stack::after {
+  position: absolute;
+  right: -22px;
+  bottom: -46px;
+  width: 128px;
+  height: 178px;
+  border: 1px solid rgba(75, 124, 90, 0.14);
+  border-radius: 70% 10% 70% 10%;
+  content: "";
+  opacity: 0.62;
+  pointer-events: none;
+  transform: rotate(27deg);
+}
+
+.awrad-home-goal-stack-empty {
+  padding: 4px;
+}
+
+.awrad-home-goal-row {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px 22px;
+  align-items: center;
+  gap: 10px;
+  min-height: 68px;
+  color: var(--awrad-sage-dark);
+  text-decoration: none;
+}
+
+.awrad-home-goal-row + .awrad-home-goal-row {
+  border-top: 1px solid rgba(75, 124, 90, 0.16);
+}
+
+.awrad-home-goal-row:hover .awrad-home-goal-name {
+  color: var(--awrad-sage);
+}
+
+.awrad-home-goal-name {
+  overflow: hidden;
+  font-family: "Manrope", "Avenir Next", ui-sans-serif, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+
+.awrad-home-goal-ring {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 4px solid var(--awrad-sage-container);
+  border-radius: 50%;
+  background: var(--awrad-white);
+  color: var(--awrad-sage-dark);
+  font-family: "Manrope", "Avenir Next", ui-sans-serif, sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(75, 124, 90, 0.06);
+}
+
+.awrad-home-goal-ring[aria-valuenow]:not([aria-valuenow="0"]) {
+  border-color: transparent;
+  background:
+    radial-gradient(circle at center, var(--awrad-white) 58%, transparent 59%),
+    conic-gradient(var(--awrad-sage-light) var(--awrad-progress), var(--awrad-sage-container) 0);
+}
+
+.awrad-home-goal-row .hero-arrow-right {
+  color: var(--awrad-sage);
+  font-size: 0;
+}
+
+.awrad-home-goal-row .hero-arrow-right::before,
+.awrad-inline-link .hero-arrow-right::before {
+  content: "›";
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.awrad-inline-link .hero-arrow-right {
+  font-size: 0;
+}
+
+.awrad-wird-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.awrad-wird-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 176px;
+  padding: 20px;
+  border: 1px solid var(--awrad-line);
+  border-radius: var(--awrad-radius-xl);
+  background: var(--awrad-container);
+  color: var(--awrad-ink);
+  box-shadow: var(--awrad-shadow-soft);
+}
+
+.awrad-wird-card::after {
+  position: absolute;
+  right: -28px;
+  bottom: -62px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(107, 158, 122, 0.22), rgba(107, 158, 122, 0));
+  content: "";
+  pointer-events: none;
+}
+
+.awrad-wird-card-topline,
+.awrad-wird-card-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.awrad-wird-kicker {
+  color: #b9cdbd;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.awrad-wird-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(75, 124, 90, 0.2);
+  border-radius: 50%;
+  color: var(--awrad-sage);
+  font-family: "Noto Naskh Arabic", "Amiri", serif;
+  font-size: 22px;
+}
+
+.awrad-wird-card-copy {
+  position: relative;
+  z-index: 1;
+  padding: 10px 0 18px;
+}
+
+.awrad-wird-card-copy h3 {
+  margin: 0;
+  color: var(--awrad-ink);
+  font-family: "Manrope", "Avenir Next", ui-sans-serif, sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.awrad-wird-arabic {
+  display: none;
+}
+
+.awrad-wird-card-copy > p:last-child {
+  max-width: 40ch;
+  margin: 10px 0 0;
+  color: var(--awrad-muted);
+  font-size: 13px;
+}
+
+.awrad-wird-card-footer {
+  justify-content: flex-start;
+  color: var(--awrad-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.awrad-wird-tag {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--awrad-sage-container);
+  color: var(--awrad-sage-dark);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.awrad-category-scroller {
+  display: grid;
+  grid-auto-columns: 188px;
+  grid-auto-flow: column;
+  gap: 12px;
+  margin-top: 14px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
+  scrollbar-width: thin;
+}
+
+.awrad-category-card {
+  display: flex;
+  min-height: 188px;
+  flex-direction: column;
+  padding: 18px;
+  border: 1px solid var(--awrad-line);
+  border-radius: var(--awrad-radius-xl);
+  background: var(--awrad-white);
+  box-shadow: var(--awrad-shadow-soft);
+  text-decoration: none;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.awrad-category-card:hover {
+  border-color: rgba(75, 124, 90, 0.42);
+  box-shadow: 0 14px 28px rgba(26, 28, 26, 0.08);
+  transform: translateY(-2px);
+}
+
+.awrad-category-icon {
+  display: inline-grid;
+  place-items: center;
+  align-self: flex-end;
+  width: 84px;
+  height: 84px;
+  margin-top: auto;
+  border-radius: 50%;
+  background: var(--awrad-gold-container);
+  color: #94701e;
+  font-size: 32px;
+  box-shadow: 0 8px 18px rgba(148, 112, 30, 0.12);
+}
+
+.awrad-category-card-title {
+  margin-top: 4px;
+  color: var(--awrad-ink);
+  font-family: "Manrope", "Avenir Next", ui-sans-serif, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.awrad-category-card-count {
+  margin-top: 5px;
+  color: var(--awrad-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.awrad-category-card .hero-arrow-up-right {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--awrad-sage);
+  color: var(--awrad-white);
+  font-size: 0;
+}
+
+.awrad-category-card .hero-arrow-up-right::before {
+  content: "›";
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .awrad-brand {
@@ -1373,6 +1721,40 @@ a {
 
   .awrad-page-intro h1 {
     font-size: 37px;
+  }
+
+  .awrad-home-content {
+    width: 100%;
+  }
+
+  .awrad-home-content .awrad-home-header h1 {
+    font-size: 27px;
+    white-space: normal;
+  }
+
+  .awrad-home-content .awrad-home-section {
+    margin-top: 28px;
+  }
+
+  .awrad-home-content .awrad-home-section .awrad-section-heading h2 {
+    font-size: 22px;
+  }
+
+  .awrad-home-goal-stack {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  .awrad-home-goal-name {
+    font-size: 17px;
+  }
+
+  .awrad-category-scroller {
+    grid-auto-columns: 176px;
+  }
+
+  .awrad-category-card {
+    min-height: 176px;
   }
 
   .awrad-page-subtitle {

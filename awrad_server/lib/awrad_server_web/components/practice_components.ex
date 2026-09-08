@@ -80,6 +80,76 @@ defmodule AwradServerWeb.PracticeComponents do
     """
   end
 
+  attr :goal, :map, required: true
+
+  def home_goal_row(assigns) do
+    ~H"""
+    <.link
+      navigate={~p"/count/#{@goal.id}"}
+      class="awrad-home-goal-row"
+      aria-label={@goal.title}
+      title={gettext("Count")}
+    >
+      <span class="awrad-home-goal-name">{@goal.title}</span>
+      <span
+        class="awrad-home-goal-ring"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow={home_progress_percent(@goal)}
+        style={"--awrad-progress: #{home_progress_percent(@goal)}%"}
+      >
+        <span>{@goal.today_count}</span>
+      </span>
+      <.icon name="hero-arrow-right" class="size-5" />
+    </.link>
+    """
+  end
+
+  attr :wird, :map, required: true
+
+  def wird_card(assigns) do
+    ~H"""
+    <article class="awrad-wird-card" data-wird-slug={@wird.slug}>
+      <div class="awrad-wird-card-topline">
+        <span class="awrad-wird-kicker">{gettext("Featured Wird")}</span>
+        <span class="awrad-wird-mark" aria-hidden="true">و</span>
+      </div>
+
+      <div class="awrad-wird-card-copy">
+        <h3>{@wird.title}</h3>
+        <p class="awrad-arabic awrad-wird-arabic" dir="rtl" lang="ar">{@wird.arabic_title}</p>
+        <p>{@wird.description}</p>
+      </div>
+
+      <div class="awrad-wird-card-footer">
+        <span class="awrad-wird-tag">{@wird.tag}</span>
+        <span>{@wird.schedule}</span>
+        <span>{wird_duration(@wird.estimated_minutes)}</span>
+      </div>
+    </article>
+    """
+  end
+
+  attr :category, :map, required: true
+
+  def category_card(assigns) do
+    ~H"""
+    <.link
+      navigate={~p"/library?category=#{@category.key}"}
+      class="awrad-category-card"
+      data-category-key={@category.key}
+    >
+      <span class="awrad-category-icon" aria-hidden="true">✦</span>
+      <span class="awrad-category-card-title">{category_label(@category.key)}</span>
+      <span class="awrad-category-card-count">
+        {@category.count} {ngettext("remembrance", "remembrances", @category.count)}
+      </span>
+      <.icon name="hero-arrow-up-right" class="size-4" />
+    </.link>
+    """
+  end
+
   attr :dhikr, :map, required: true
 
   def dhikr_card(assigns) do
@@ -163,6 +233,12 @@ defmodule AwradServerWeb.PracticeComponents do
 
   defp progress_percent(_goal), do: 0
 
+  defp home_progress_percent(%{target_count: target, today_count: count}) when target > 0 do
+    min(round(count / target * 100), 100)
+  end
+
+  defp home_progress_percent(_goal), do: 0
+
   defp progress_label(%{target_count: target, count: count}) when target > 0,
     do: "#{count}/#{target}"
 
@@ -175,4 +251,9 @@ defmodule AwradServerWeb.PracticeComponents do
   defp slot_support_label(%{web_block_reason: :unsupported_slot}), do: gettext("View only")
   defp slot_support_label(%{web_block_reason: :off_recurrence}), do: gettext("Not due")
   defp slot_support_label(_slot), do: gettext("Unavailable")
+
+  defp category_label(category), do: Phoenix.Naming.humanize(category)
+
+  defp wird_duration(nil), do: nil
+  defp wird_duration(minutes), do: "#{minutes} min"
 end

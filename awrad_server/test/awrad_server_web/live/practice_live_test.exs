@@ -27,13 +27,74 @@ defmodule AwradServerWeb.PracticeLiveTest do
     assert html =~ ~p"/library"
   end
 
-  test "keeps the sidebar while placing home content in a mobile-like column", %{conn: conn} do
-    {:ok, view, _html} = live(conn, ~p"/home")
+  test "mirrors the mobile home with today's goals, featured wirds, and categories", %{conn: conn} do
+    %Dhikr{}
+    |> Dhikr.changeset(%{arabic: "ذِكْر الصباح", catalog_key: "home-morning", category: "morning"})
+    |> Repo.insert!()
+
+    {:ok, view, html} = live(conn, ~p"/home")
+
+    assert has_element?(view, "#due-goals-heading", "Today's goals")
+    assert html =~ "Today"
+    assert html =~ "Featured Wirds"
+    assert html =~ "Categories"
+    assert has_element?(view, "#home-todays-goals")
+    assert has_element?(view, "#home-wirds")
+    assert has_element?(view, "#home-categories")
+    assert has_element?(view, "[data-wird-slug=\"dalail-al-khayrat\"]")
+    assert has_element?(view, "[data-category-key=\"morning\"]")
+  end
+
+  test "keeps the sidebar while placing home content in a compact mobile hierarchy", %{conn: conn} do
+    {:ok, view, html} = live(conn, ~p"/home")
 
     assert has_element?(view, "#awrad-app-shell .awrad-sidebar")
     assert has_element?(view, "#main-content .awrad-home-content")
-    assert has_element?(view, "#main-content .awrad-home-content .awrad-home-summary")
+    assert has_element?(view, "#main-content .awrad-home-content .awrad-home-quick-stats")
+    assert has_element?(view, "#main-content .awrad-home-content .awrad-home-goal-stack")
+    refute has_element?(view, "#main-content .awrad-home-content .awrad-home-summary")
     assert has_element?(view, "#main-content .awrad-home-content #due-goals-heading")
+
+    {goals_index, _} = :binary.match(html, "home-todays-goals")
+    {categories_index, _} = :binary.match(html, "home-categories")
+    {wirds_index, _} = :binary.match(html, "home-wirds")
+
+    assert goals_index < categories_index
+    assert categories_index < wirds_index
+  end
+
+  test "renders due goals as compact mobile-style count rows", %{conn: conn, user: user} do
+    dhikr =
+      %Dhikr{}
+      |> Dhikr.changeset(%{arabic: "ذِكْر", catalog_key: "compact-home-goal"})
+      |> Repo.insert!()
+
+    {:ok, goal} =
+      Tracking.create_goal(Scope.for_user(user), %{
+        id: Ecto.UUID.generate(),
+        dhikr_id: dhikr.id,
+        start_date: ~D[2026-07-01],
+        target_count: 10
+      })
+
+    {:ok, _slot} = Tracking.create_slot(Scope.for_user(user), goal.id, %{target_count: 10})
+
+    Repo.insert!(%EntityRecord{
+      user_id: user.id,
+      entity_type: "goal",
+      entity_id: goal.id,
+      incarnation: 1,
+      version: 1,
+      sync_revision: 1,
+      document: %{},
+      state: "active"
+    })
+
+    {:ok, view, _html} = live(conn, ~p"/home")
+
+    assert has_element?(view, ".awrad-home-goal-stack")
+    assert has_element?(view, ".awrad-home-goal-row", "compact-home-goal")
+    assert has_element?(view, ".awrad-home-goal-ring[role=progressbar]")
   end
 
   test "renders an empty state for a user without goals", %{conn: conn} do
