@@ -26,3 +26,6 @@ awrad-android/opensrc/
 **/.agents/
 **/.omc/
 **/.kotlin/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
