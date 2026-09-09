@@ -13,8 +13,10 @@ import app.awrad.awrad_dhikrgoalstracker.data.network.AuthResponse
 import app.awrad.awrad_dhikrgoalstracker.data.preferences.AuthTokenManager
 import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncRepository
 import app.awrad.awrad_dhikrgoalstracker.data.sync.ProgressSyncScheduler
+import app.awrad.awrad_dhikrgoalstracker.data.sync.PracticeSettingsRepository
 import app.awrad.awrad_dhikrgoalstracker.data.sync.SyncAccountMismatchException
 import com.google.gson.Gson
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -52,6 +54,7 @@ class AuthRepository @Inject constructor(
     private val tokenManager: AuthTokenManager,
     private val progressSyncRepository: ProgressSyncRepository,
     private val progressSyncScheduler: ProgressSyncScheduler,
+    private val practiceSettingsRepository: PracticeSettingsRepository,
 ) {
     val isLoggedIn: Flow<Boolean> = tokenManager.isLoggedIn
     val userEmail: Flow<String?> = tokenManager.userEmail
@@ -223,6 +226,13 @@ class AuthRepository @Inject constructor(
             response.user.emailVerified,
             response.session.id,
         )
+        try {
+            practiceSettingsRepository.synchronize()
+        } catch (error: CancellationException) {
+            throw error
+        } catch (_: Exception) {
+            // Settings sync is retried by the foreground/background worker.
+        }
         progressSyncScheduler.enqueue()
         return AuthResult.Success(Unit)
     }

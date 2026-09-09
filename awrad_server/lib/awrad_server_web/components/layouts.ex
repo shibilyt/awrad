@@ -9,6 +9,8 @@ defmodule AwradServerWeb.Layouts do
   attr :page_title, :string, default: "Awrad"
   attr :show_navigation, :boolean, default: false
   attr :active_nav, :atom, default: nil
+  attr :practice_policy, :map, default: nil
+  attr :device_context, :map, default: nil
   attr :inner_content, :any, default: nil
   slot :inner_block
 
@@ -18,6 +20,13 @@ defmodule AwradServerWeb.Layouts do
       id={if @show_navigation, do: "awrad-app-shell", else: "awrad-auth-shell"}
       class={["awrad-app-shell", @show_navigation && "has-navigation"]}
       data-browser-clock={@show_navigation && "true"}
+      data-day-reset={@practice_policy && @practice_policy.day_reset}
+      data-calculation-method={@practice_policy && @practice_policy.calculation_method}
+      data-madhab={@practice_policy && @practice_policy.madhab}
+      data-location-latitude={@device_context && @device_context.latitude}
+      data-location-longitude={@device_context && @device_context.longitude}
+      data-location-name={@device_context && @device_context.location_name}
+      data-location-source={@device_context && @device_context.location_source}
       phx-hook={@show_navigation && "BrowserClock"}
     >
       <%= if @show_navigation do %>

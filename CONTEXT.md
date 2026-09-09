@@ -28,6 +28,20 @@ _Avoid_: Duration when referring to a single session
 A derived progress view showing consecutive scheduled periods in which a selected daily requirement was satisfied.
 _Avoid_: A separate goal target
 
+## Practice settings language
+
+**Account practice policy**:
+The account-shared choices that shape practice interpretation across devices: day-end rule, prayer calculation method, and madhab. It has one canonical revision per account.
+_Avoid_: Device settings, location profile
+
+**Device context**:
+The settings owned by one authenticated installation, including browser timezone, latitude, longitude, accuracy, and location source. A device context is keyed by the account and installation, so another device or another account in the same browser cannot inherit it.
+_Avoid_: Account location, global location
+
+**Effective practice day**:
+The day used to evaluate a goal after combining the account practice policy with the current device context and browser-local time. Two devices may therefore show different current prayer-relative context without changing the account policy or historical count dates.
+_Avoid_: Server date
+
 ## Future scope
 
 **Practice plan**:

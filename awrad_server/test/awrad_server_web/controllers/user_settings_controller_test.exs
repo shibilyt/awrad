@@ -106,6 +106,32 @@ defmodule AwradServerWeb.UserSettingsControllerTest do
     end
   end
 
+  describe "PUT /users/settings (practice policy form)" do
+    test "updates the shared practice policy", %{conn: conn, user: user} do
+      conn =
+        put(conn, ~p"/users/settings", %{
+          "action" => "update_practice_policy",
+          "practice_policy" => %{
+            "day_reset" => "maghrib",
+            "calculation_method" => "umm_al_qura",
+            "madhab" => "hanafi"
+          }
+        })
+
+      assert redirected_to(conn) == ~p"/users/settings"
+
+      assert %{policy: policy} =
+               AwradServer.PracticeSettings.snapshot(
+                 AwradServer.Accounts.Scope.for_user(user),
+                 get_session(conn, :web_installation_id)
+               )
+
+      assert policy.day_reset == "maghrib"
+      assert policy.calculation_method == "umm_al_qura"
+      assert policy.madhab == "hanafi"
+    end
+  end
+
   describe "GET /users/settings/confirm-email/:token" do
     setup %{user: user} do
       email = unique_user_email()

@@ -53,6 +53,8 @@ defmodule AwradServerWeb.LibraryLive do
       page_title={gettext("Library")}
       show_navigation={true}
       active_nav={:library}
+      practice_policy={@practice_policy}
+      device_context={@device_context}
     >
       <.page_intro
         eyebrow={gettext("Words to return to")}

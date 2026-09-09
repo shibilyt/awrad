@@ -87,8 +87,10 @@ defmodule AwradServerWeb.CountingLive do
         command_id: command_id,
         goal_id: goal_id,
         slot_id: slot_id,
-        local_date: socket.assigns.browser_date,
-        timezone: socket.assigns.browser_timezone
+        local_date: socket.assigns.effective_date,
+        civil_date: socket.assigns.browser_date,
+        timezone: socket.assigns.browser_timezone,
+        maghrib_at: socket.assigns.browser_maghrib_at
       })
 
     socket = socket |> assign(:pending?, false) |> load_counter()
@@ -117,6 +119,8 @@ defmodule AwradServerWeb.CountingLive do
       page_title={gettext("Count")}
       show_navigation={true}
       active_nav={:goals}
+      practice_policy={@practice_policy}
+      device_context={@device_context}
     >
       <.link navigate={~p"/goals"} class="awrad-back-link">
         <.icon name="hero-arrow-left" class="size-4" />
@@ -241,7 +245,7 @@ defmodule AwradServerWeb.CountingLive do
       Practice.counter(
         socket.assigns.current_scope,
         socket.assigns.goal_id,
-        socket.assigns.browser_date,
+        socket.assigns.effective_date,
         socket.assigns.selected_slot_id
       )
 

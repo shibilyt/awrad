@@ -1,5 +1,6 @@
 package app.awrad.awrad_dhikrgoalstracker.data.sync
 
+import android.util.Log
 import androidx.room.withTransaction
 import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.DhikrTagAssignmentV1
 import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.DhikrV1
@@ -41,6 +42,7 @@ import java.security.MessageDigest
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -61,6 +63,7 @@ class ProgressSyncEngine @Inject constructor(
     private val tokenManager: AuthTokenManager,
     private val feedbackBus: ProgressSyncFeedbackBus,
     private val notificationRequests: NotificationObligationRequestDispatcher,
+    private val practiceSettingsRepository: PracticeSettingsRepository,
 ) {
     private val gson = Gson()
     private val contractJson = Json {
@@ -80,6 +83,13 @@ class ProgressSyncEngine @Inject constructor(
     private suspend fun synchronizeOnce() {
         val userId = tokenManager.userId.first() ?: return
         val state = syncRepository.bind(userId, tokenManager.installationId())
+        try {
+            practiceSettingsRepository.synchronize()
+        } catch (error: CancellationException) {
+            throw error
+        } catch (error: Exception) {
+            Log.w("ProgressSyncEngine", "Practice settings synchronization failed", error)
+        }
         // A process may have died after sealing a request but before handling
         // its response. The payload is immutable while `sending`, so releasing
         // it here makes the next attempt an exact idempotent replay.

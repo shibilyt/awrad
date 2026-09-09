@@ -1,0 +1,1350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Awrad — Web companion wireframe</title>
+    <style>
+      :root {
+        --canvas: #18201a;
+        --canvas-soft: #202a21;
+        --canvas-line: rgb(231 241 231 / 12%);
+        --canvas-ink: #f1f5ef;
+        --canvas-muted: #aab7aa;
+        --paper: #f4f6f2;
+        --surface: #ffffff;
+        --surface-soft: #eef2ed;
+        --surface-warm: #fff9ed;
+        --ink: #1a1c1a;
+        --muted: #6f776f;
+        --line: #dce2dc;
+        --sage: #4b7c5a;
+        --sage-dark: #2e5c3d;
+        --sage-soft: #d4e8da;
+        --gold: #d4a843;
+        --gold-soft: #fff0d4;
+        --blue-focus: #2d6cdf;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 18px;
+        --radius-xl: 26px;
+        --shadow-stage: 0 28px 72px rgb(0 0 0 / 28%);
+        --shadow-card: 0 8px 24px rgb(26 28 26 / 6%);
+      }
+
+      * { box-sizing: border-box; }
+
+      html { min-width: 320px; background: var(--canvas); }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--canvas-ink);
+        background:
+          radial-gradient(circle at 72% -10%, rgb(101 150 111 / 16%), transparent 32rem),
+          var(--canvas);
+        font-family: "Avenir Next", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      button,
+      a,
+      input,
+      select { font: inherit; }
+
+      button {
+        border: 0;
+        cursor: pointer;
+      }
+
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      select:focus-visible {
+        outline: 3px solid var(--blue-focus);
+        outline-offset: 3px;
+      }
+
+      a { color: inherit; }
+
+      .lab-header {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        min-height: 84px;
+        padding: 18px 36px;
+        border-bottom: 1px solid var(--canvas-line);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #dbe9dc;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: -.04em;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 32px;
+        height: 32px;
+        place-items: center;
+        border: 1px solid rgb(218 236 218 / 28%);
+        border-radius: 10px;
+        color: #d7f0d8;
+        background: rgb(105 156 114 / 20%);
+        font-size: 14px;
+        letter-spacing: -.08em;
+      }
+
+      .lab-heading {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .lab-heading p,
+      .stage-copy p,
+      .inspector-card p { margin: 0; }
+
+      .lab-kicker,
+      .stage-kicker,
+      .inspector-kicker,
+      .mock-eyebrow,
+      .mock-label {
+        color: #9bb29d;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: .16em;
+        line-height: 1.2;
+        text-transform: uppercase;
+      }
+
+      .lab-heading h1 {
+        margin: 4px 0 0;
+        color: var(--canvas-ink);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 25px;
+        font-weight: 400;
+        letter-spacing: -.045em;
+      }
+
+      .lab-heading h1 em { color: #a7d1a9; }
+
+      .lab-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .lab-actions a,
+      .viewport-button,
+      .screen-tab {
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid var(--canvas-line);
+        border-radius: 999px;
+        color: var(--canvas-muted);
+        background: transparent;
+        font-size: 12px;
+        text-decoration: none;
+        transition: background .18s ease, border-color .18s ease, color .18s ease;
+      }
+
+      .lab-actions a:hover,
+      .viewport-button:hover,
+      .screen-tab:hover { border-color: rgb(231 241 231 / 30%); color: var(--canvas-ink); }
+
+      .viewport-switcher,
+      .screen-tabs {
+        display: inline-flex;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--canvas-line);
+        border-radius: 999px;
+        background: rgb(0 0 0 / 12%);
+      }
+
+      .viewport-button,
+      .screen-tab {
+        min-height: 30px;
+        border-color: transparent;
+        padding: 0 10px;
+        font-size: 11px;
+      }
+
+      .viewport-button.is-active,
+      .screen-tab.is-active {
+        color: var(--canvas);
+        background: #dbe9dc;
+      }
+
+      .lab-main {
+        width: min(1480px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 48px 0 80px;
+      }
+
+      .lab-intro {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(260px, 400px);
+        gap: 40px;
+        align-items: end;
+        margin-bottom: 32px;
+      }
+
+      .lab-intro h2 {
+        max-width: 750px;
+        margin: 10px 0 0;
+        color: #f0f5ef;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(42px, 6vw, 78px);
+        font-weight: 400;
+        letter-spacing: -.085em;
+        line-height: .94;
+      }
+
+      .lab-intro h2 em { color: #9ac59a; }
+
+      .lab-intro-copy {
+        max-width: 390px;
+        color: var(--canvas-muted);
+        font-size: 14px;
+        line-height: 1.7;
+      }
+
+      .stage-shell {
+        overflow: hidden;
+        border: 1px solid var(--canvas-line);
+        border-radius: var(--radius-xl);
+        background: rgb(6 12 8 / 20%);
+        box-shadow: var(--shadow-stage);
+      }
+
+      .stage-header {
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 20px;
+        border-bottom: 1px solid var(--canvas-line);
+      }
+
+      .stage-copy { min-width: 0; }
+
+      .stage-copy h3 {
+        margin: 4px 0 0;
+        color: #eef4ed;
+        font-size: 15px;
+        letter-spacing: -.02em;
+      }
+
+      .stage-copy p:last-child {
+        margin-top: 3px;
+        color: var(--canvas-muted);
+        font-size: 11px;
+      }
+
+      .stage-tools {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .stage-tools .screen-tab { color: var(--canvas-muted); }
+
+      .viewport-wrap {
+        display: grid;
+        place-items: center;
+        padding: 48px 28px 56px;
+        background:
+          linear-gradient(90deg, rgb(255 255 255 / 2%) 1px, transparent 1px),
+          linear-gradient(rgb(255 255 255 / 2%) 1px, transparent 1px),
+          var(--canvas-soft);
+        background-size: 24px 24px;
+      }
+
+      .viewport-frame {
+        width: min(100%, 1320px);
+        overflow: hidden;
+        border: 1px solid rgb(26 28 26 / 30%);
+        border-radius: 16px;
+        background: var(--paper);
+        box-shadow: 0 18px 44px rgb(0 0 0 / 26%);
+        color: var(--ink);
+        transition: max-width .24s ease, border-radius .24s ease;
+      }
+
+      .viewport-frame[data-viewport="tablet"] { max-width: 960px; }
+      .viewport-frame[data-viewport="narrow"] { max-width: 390px; border-radius: 28px; }
+
+      .viewport-chrome {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 30px;
+        padding: 0 12px;
+        border-bottom: 1px solid #dfe5df;
+        background: #f0f3ef;
+      }
+
+      .chrome-dot { width: 7px; height: 7px; border-radius: 50%; background: #c7d0c7; }
+
+      .chrome-url {
+        width: min(320px, 50%);
+        margin: 0 auto;
+        padding: 3px 10px;
+        border-radius: 999px;
+        color: #7a837b;
+        background: #e4e9e4;
+        font-size: 9px;
+        text-align: center;
+      }
+
+      .mock-app {
+        display: grid;
+        grid-template-columns: 206px minmax(0, 1fr);
+        min-height: 735px;
+      }
+
+      .mock-rail {
+        display: flex;
+        flex-direction: column;
+        padding: 26px 16px 18px;
+        border-right: 1px solid var(--line);
+        background: #edf1ec;
+      }
+
+      .mock-brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        color: var(--sage-dark);
+        font-size: 17px;
+        font-weight: 800;
+        letter-spacing: -.05em;
+      }
+
+      .mock-brand-mark {
+        display: grid;
+        width: 29px;
+        height: 29px;
+        place-items: center;
+        border-radius: 9px;
+        color: white;
+        background: var(--sage);
+        font-size: 13px;
+      }
+
+      .mock-nav {
+        display: grid;
+        gap: 5px;
+        margin-top: 50px;
+      }
+
+      .mock-nav a,
+      .mock-rail-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 38px;
+        padding: 0 11px;
+        border-radius: 10px;
+        color: #687168;
+        font-size: 12px;
+        text-decoration: none;
+      }
+
+      .mock-nav a::before {
+        content: "";
+        width: 15px;
+        height: 15px;
+        border: 1.5px solid currentColor;
+        border-radius: 4px;
+        opacity: .75;
+      }
+
+      .mock-nav a:first-child::before { border-radius: 50%; }
+
+      .mock-nav a.is-active {
+        color: var(--sage-dark);
+        background: var(--sage-soft);
+        font-weight: 800;
+      }
+
+      .mock-rail-rule { height: 1px; margin: 28px 10px; background: var(--line); }
+
+      .mock-rail-note {
+        padding: 12px;
+        border: 1px solid #dbe3da;
+        border-radius: 12px;
+        color: #758078;
+        background: rgb(255 255 255 / 50%);
+        font-size: 10px;
+        line-height: 1.55;
+      }
+
+      .mock-rail-note strong { display: block; margin-bottom: 5px; color: var(--ink); font-size: 11px; }
+
+      .mock-rail-account {
+        display: grid;
+        gap: 3px;
+        margin-top: auto;
+        padding: 12px 10px 0;
+        color: #7b847b;
+        font-size: 10px;
+      }
+
+      .mock-rail-account strong { color: #404840; font-size: 11px; }
+
+      .mock-main { min-width: 0; background: var(--paper); }
+
+      .mock-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 62px;
+        padding: 0 34px;
+        border-bottom: 1px solid var(--line);
+        color: var(--muted);
+        background: rgb(255 255 255 / 52%);
+        font-size: 11px;
+      }
+
+      .mock-topbar-left,
+      .mock-topbar-right,
+      .mock-sync,
+      .mock-avatar,
+      .mock-inline {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .mock-topbar-left { color: #687168; font-weight: 700; }
+
+      .mock-topbar-left::before {
+        content: "";
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--sage);
+      }
+
+      .mock-sync {
+        padding: 5px 9px;
+        border: 1px solid #d8e5da;
+        border-radius: 999px;
+        color: var(--sage-dark);
+        background: #f0f7f1;
+        font-size: 10px;
+      }
+
+      .mock-sync::before { content: "✓"; font-weight: 800; }
+
+      .mock-avatar {
+        width: 27px;
+        height: 27px;
+        justify-content: center;
+        border-radius: 50%;
+        color: var(--sage-dark);
+        background: var(--gold-soft);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .screen {
+        display: none;
+        padding: 42px 46px 54px;
+      }
+
+      .screen.is-active { display: block; }
+
+      .screen-intro {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 26px;
+      }
+
+      .screen-intro h1 {
+        margin: 7px 0 0;
+        color: var(--ink);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 39px;
+        font-weight: 400;
+        letter-spacing: -.075em;
+        line-height: 1;
+      }
+
+      .screen-intro p {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .screen-action,
+      .wire-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 36px;
+        padding: 0 14px;
+        border-radius: 10px;
+        color: #fff;
+        background: var(--sage);
+        font-size: 11px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .screen-action::after { content: "↗"; margin-left: 9px; font-size: 13px; }
+
+      .wire-card,
+      .wire-panel {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        box-shadow: var(--shadow-card);
+      }
+
+      .wire-card { padding: 18px; }
+
+      .wire-panel { padding: 20px; }
+
+      .wire-card-header,
+      .wire-panel-header,
+      .wire-row-top,
+      .library-card-footer,
+      .count-context-top,
+      .count-status-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .wire-card-title { color: var(--ink); font-size: 13px; font-weight: 800; }
+
+      .wire-card-caption,
+      .wire-muted,
+      .goal-meta,
+      .library-meta,
+      .count-muted {
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .home-hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(215px, .72fr);
+        gap: 14px;
+        margin-bottom: 26px;
+      }
+
+      .hero-card {
+        min-height: 198px;
+        padding: 22px;
+        border: 1px solid #cbdfcf;
+        border-radius: var(--radius-lg);
+        background: var(--sage-soft);
+      }
+
+      .hero-card .wire-card-title { color: var(--sage-dark); }
+
+      .hero-card-body {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr) auto;
+        gap: 20px;
+        align-items: center;
+        margin-top: 22px;
+      }
+
+      .hero-ring {
+        display: grid;
+        width: 86px;
+        height: 86px;
+        place-items: center;
+        border: 8px solid #b8d5bd;
+        border-right-color: var(--sage);
+        border-bottom-color: var(--sage);
+        border-radius: 50%;
+        color: var(--sage-dark);
+        background: #e9f3ea;
+        font-size: 19px;
+        font-weight: 800;
+      }
+
+      .hero-stat h3 {
+        margin: 2px 0 5px;
+        color: var(--sage-dark);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 27px;
+        font-weight: 400;
+        letter-spacing: -.06em;
+      }
+
+      .hero-stat p { max-width: 260px; margin: 0; color: #55705c; font-size: 11px; line-height: 1.55; }
+
+      .hero-stat .wire-button { margin-top: 15px; background: var(--sage-dark); }
+
+      .signal-card { display: grid; gap: 15px; }
+
+      .signal-number { color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 30px; letter-spacing: -.06em; }
+
+      .signal-number small { color: var(--muted); font-family: inherit; font-size: 11px; letter-spacing: 0; }
+
+      .signal-rule { height: 1px; background: var(--line); }
+
+      .signal-list { display: grid; gap: 8px; }
+
+      .signal-list div { display: flex; justify-content: space-between; color: var(--muted); font-size: 10px; }
+
+      .signal-list strong { color: var(--ink); font-size: 11px; }
+
+      .section-heading {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+      }
+
+      .section-heading h2 {
+        margin: 6px 0 0;
+        color: var(--ink);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 23px;
+        font-weight: 400;
+        letter-spacing: -.06em;
+      }
+
+      .text-link { color: var(--sage-dark); font-size: 11px; font-weight: 800; text-decoration: none; }
+
+      .goal-queue { display: grid; gap: 8px; }
+
+      .goal-row {
+        display: grid;
+        grid-template-columns: 26px minmax(150px, 1.1fr) minmax(125px, .75fr) auto;
+        gap: 14px;
+        align-items: center;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: var(--surface);
+      }
+
+      .goal-row:first-child { border-color: #cbdaca; box-shadow: 0 6px 20px rgb(75 124 90 / 8%); }
+
+      .goal-index { color: #93a095; font-family: Georgia, "Times New Roman", serif; font-size: 14px; }
+
+      .goal-title { color: var(--ink); font-size: 12px; font-weight: 800; }
+
+      .goal-arabic,
+      .detail-arabic {
+        direction: rtl;
+        font-family: "Noto Naskh Arabic", "Amiri", "Geeza Pro", serif;
+      }
+
+      .goal-arabic { margin-top: 3px; color: #69746b; font-size: 13px; }
+
+      .progress-line { height: 6px; overflow: hidden; border-radius: 999px; background: #e5ebe5; }
+
+      .progress-line span { display: block; width: 24%; height: 100%; border-radius: inherit; background: var(--sage); }
+
+      .progress-line.is-half span { width: 49%; }
+      .progress-line.is-low span { width: 8%; }
+
+      .progress-copy { display: flex; justify-content: space-between; margin-top: 6px; color: var(--muted); font-size: 9px; }
+
+      .goal-row .wire-button { min-height: 30px; padding: 0 11px; font-size: 10px; }
+
+      .goals-summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 9px;
+        margin-bottom: 20px;
+      }
+
+      .summary-cell { padding: 14px 15px; border: 1px solid var(--line); border-radius: 13px; background: var(--surface); }
+
+      .summary-cell strong { display: block; margin-top: 7px; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 25px; font-weight: 400; letter-spacing: -.05em; }
+
+      .summary-cell p { margin: 2px 0 0; color: var(--muted); font-size: 10px; }
+
+      .filter-row { display: flex; align-items: center; gap: 6px; margin-bottom: 14px; }
+
+      .filter-chip { min-height: 29px; padding: 0 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); background: var(--surface); font-size: 10px; }
+
+      .filter-chip.is-active { border-color: var(--sage); color: var(--sage-dark); background: var(--sage-soft); font-weight: 800; }
+
+      .goal-table { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+
+      .goal-table-head,
+      .goal-table-row {
+        display: grid;
+        grid-template-columns: minmax(150px, 1.6fr) minmax(90px, .8fr) minmax(90px, .7fr) 72px;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 16px;
+      }
+
+      .goal-table-head { border-bottom: 1px solid var(--line); color: #8a938a; font-size: 9px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+
+      .goal-table-row + .goal-table-row { border-top: 1px solid #edf0ed; }
+
+      .goal-table-row strong { display: block; color: var(--ink); font-size: 11px; }
+
+      .goal-table-row small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+
+      .status-pill { width: fit-content; padding: 4px 7px; border-radius: 999px; color: var(--sage-dark); background: var(--sage-soft); font-size: 9px; font-weight: 800; }
+
+      .status-pill.muted { color: #707870; background: #eef0ee; }
+
+      .library-toolbar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .search-wire,
+      .select-wire {
+        display: flex;
+        align-items: center;
+        min-height: 40px;
+        padding: 0 13px;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        color: #899289;
+        background: var(--surface);
+        font-size: 11px;
+      }
+
+      .search-wire::before { content: "⌕"; margin-right: 8px; color: var(--sage); font-size: 16px; }
+
+      .select-wire::after { content: "⌄"; margin-left: 18px; color: var(--sage); }
+
+      .library-feature {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 160px;
+        gap: 18px;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 19px;
+        border: 1px solid #eadfbd;
+        border-radius: 16px;
+        background: var(--surface-warm);
+      }
+
+      .library-feature h2 { margin: 6px 0 7px; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 25px; font-weight: 400; letter-spacing: -.06em; }
+
+      .library-feature p { max-width: 390px; margin: 0; color: #76705d; font-size: 11px; line-height: 1.55; }
+
+      .feature-arabic { padding: 16px 13px; border: 1px dashed #dfc985; border-radius: 12px; color: #755d20; background: rgb(255 255 255 / 50%); font-size: 24px; text-align: center; }
+
+      .dhikr-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+
+      .dhikr-card { min-height: 160px; padding: 15px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+
+      .dhikr-card h3 { margin: 15px 0 5px; color: var(--ink); font-size: 12px; }
+
+      .dhikr-card .detail-arabic { min-height: 32px; color: var(--sage-dark); font-size: 22px; }
+
+      .dhikr-card p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+
+      .library-card-footer { margin-top: 15px; }
+
+      .audio-wire { color: var(--sage-dark); font-size: 10px; font-weight: 800; }
+
+      .counter-breadcrumb { margin-bottom: 17px; color: var(--sage-dark); font-size: 10px; font-weight: 800; }
+
+      .count-layout {
+        display: grid;
+        grid-template-columns: 205px minmax(265px, 1fr) 190px;
+        gap: 12px;
+        align-items: stretch;
+      }
+
+      .count-context,
+      .count-stage,
+      .count-aside { min-height: 420px; }
+
+      .count-context h2 { margin: 12px 0 5px; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 27px; font-weight: 400; letter-spacing: -.07em; }
+
+      .count-context p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.55; }
+
+      .count-context .detail-arabic { margin: 26px 0 20px; padding: 13px 8px; border: 1px dashed var(--line); border-radius: 11px; color: var(--sage-dark); font-size: 23px; text-align: center; }
+
+      .slot-list { display: grid; gap: 6px; }
+
+      .slot-item { display: flex; align-items: center; justify-content: space-between; padding: 9px 10px; border: 1px solid var(--line); border-radius: 9px; color: var(--muted); font-size: 10px; }
+
+      .slot-item.is-selected { border-color: #b9d4bc; color: var(--sage-dark); background: #f0f7f1; font-weight: 800; }
+
+      .count-stage { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: var(--surface); }
+
+      .count-stage .mock-eyebrow { color: var(--sage); }
+
+      .count-stage h2 { margin: 8px 0 0; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 19px; font-weight: 400; letter-spacing: -.05em; }
+
+      .count-orbit {
+        display: grid;
+        width: 190px;
+        height: 190px;
+        place-items: center;
+        margin: 18px 0 17px;
+        border: 12px solid #edf3ed;
+        border-top-color: #b7d3ba;
+        border-right-color: var(--sage);
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 1px #d9e3da;
+      }
+
+      .count-orbit strong { display: block; color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 47px; font-weight: 400; letter-spacing: -.08em; line-height: .9; }
+
+      .count-orbit span { display: block; margin-top: 7px; color: var(--muted); font-size: 10px; }
+
+      .count-cta { min-width: 145px; min-height: 42px; border-radius: 12px; color: #fff; background: var(--sage); font-size: 11px; font-weight: 800; }
+
+      .count-cta::before { content: "+"; margin-right: 7px; font-size: 17px; font-weight: 400; vertical-align: -1px; }
+
+      .count-shortcuts { margin-top: 12px; color: var(--muted); font-size: 9px; }
+
+      .count-aside { display: grid; align-content: start; gap: 15px; }
+
+      .count-aside .wire-card-title { margin-bottom: 13px; }
+
+      .count-stat { display: flex; align-items: baseline; justify-content: space-between; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+
+      .count-stat strong { color: var(--ink); font-family: Georgia, "Times New Roman", serif; font-size: 25px; font-weight: 400; }
+
+      .count-stat span { color: var(--muted); font-size: 9px; }
+
+      .count-status-row { padding: 8px 9px; border-radius: 9px; color: var(--sage-dark); background: #eff7f0; font-size: 10px; font-weight: 800; }
+
+      .count-status-row::before { content: "✓"; }
+
+      .wire-note { padding: 11px 12px; border: 1px dashed #cfdacf; border-radius: 10px; color: var(--muted); background: #f8faf8; font-size: 9px; line-height: 1.55; }
+
+      .mock-bottom-nav { display: none; }
+
+      /* The viewport switcher is a design tool, so narrow mode must stay mobile
+         even when the surrounding design lab is open on a wide monitor. */
+      .viewport-frame[data-viewport="narrow"] .viewport-chrome { display: none; }
+      .viewport-frame[data-viewport="narrow"] .mock-app { display: block; min-height: 720px; }
+      .viewport-frame[data-viewport="narrow"] .mock-rail { display: none; }
+      .viewport-frame[data-viewport="narrow"] .mock-main { position: relative; min-height: 720px; }
+      .viewport-frame[data-viewport="narrow"] .mock-topbar { height: 58px; padding: 0 18px; }
+      .viewport-frame[data-viewport="narrow"] .mock-topbar-left { font-size: 10px; }
+      .viewport-frame[data-viewport="narrow"] .mock-topbar-right > span.mock-sync { display: flex; }
+      .viewport-frame[data-viewport="narrow"] .mock-topbar-right > span.mock-avatar { display: flex; }
+      .viewport-frame[data-viewport="narrow"] .screen { padding: 26px 17px 90px; }
+      .viewport-frame[data-viewport="narrow"] .screen-intro { margin-bottom: 19px; }
+      .viewport-frame[data-viewport="narrow"] .screen-intro h1 { font-size: 34px; }
+      .viewport-frame[data-viewport="narrow"] .screen-action { min-height: 32px; padding: 0 9px; font-size: 9px; }
+      .viewport-frame[data-viewport="narrow"] .home-hero-grid { grid-template-columns: 1fr; gap: 9px; margin-bottom: 22px; }
+      .viewport-frame[data-viewport="narrow"] .hero-card { min-height: 220px; padding: 16px; }
+      .viewport-frame[data-viewport="narrow"] .hero-card-body { grid-template-columns: 76px minmax(0, 1fr); gap: 13px; margin-top: 18px; }
+      .viewport-frame[data-viewport="narrow"] .hero-ring { width: 70px; height: 70px; border-width: 6px; font-size: 16px; }
+      .viewport-frame[data-viewport="narrow"] .hero-stat h3 { font-size: 24px; }
+      .viewport-frame[data-viewport="narrow"] .hero-stat .wire-button { margin-top: 12px; }
+      .viewport-frame[data-viewport="narrow"] .hero-card-body > .wire-button { grid-column: 1 / -1; width: 100%; }
+      .viewport-frame[data-viewport="narrow"] .goal-row { grid-template-columns: 20px minmax(0, 1fr) auto; gap: 9px; padding: 11px; }
+      .viewport-frame[data-viewport="narrow"] .goal-row > .goal-progress { grid-column: 2 / -1; }
+      .viewport-frame[data-viewport="narrow"] .goal-row > .wire-button { grid-column: 3; grid-row: 1; width: 68px; min-width: 68px; min-height: 28px; padding: 0 8px; border-radius: 9px; }
+      .viewport-frame[data-viewport="narrow"] .goals-summary { gap: 5px; }
+      .viewport-frame[data-viewport="narrow"] .summary-cell { padding: 11px 9px; }
+      .viewport-frame[data-viewport="narrow"] .summary-cell strong { font-size: 21px; }
+      .viewport-frame[data-viewport="narrow"] .goal-table-head { display: none; }
+      .viewport-frame[data-viewport="narrow"] .goal-table-row { grid-template-columns: 1fr auto; gap: 8px; padding: 13px; }
+      .viewport-frame[data-viewport="narrow"] .goal-table-row > :nth-child(2),
+      .viewport-frame[data-viewport="narrow"] .goal-table-row > :nth-child(3) { grid-column: 1; }
+      .viewport-frame[data-viewport="narrow"] .goal-table-row > :last-child { grid-column: 2; grid-row: 1 / span 3; }
+      .viewport-frame[data-viewport="narrow"] .library-toolbar { grid-template-columns: 1fr; }
+      .viewport-frame[data-viewport="narrow"] .library-feature { grid-template-columns: 1fr; gap: 12px; }
+      .viewport-frame[data-viewport="narrow"] .dhikr-grid { grid-template-columns: 1fr 1fr; }
+      .viewport-frame[data-viewport="narrow"] .dhikr-card { min-height: 145px; padding: 12px; }
+      .viewport-frame[data-viewport="narrow"] .count-layout { display: flex; flex-direction: column; gap: 9px; }
+      .viewport-frame[data-viewport="narrow"] .count-context,
+      .viewport-frame[data-viewport="narrow"] .count-stage,
+      .viewport-frame[data-viewport="narrow"] .count-aside { min-height: auto; }
+      .viewport-frame[data-viewport="narrow"] .count-context { padding: 15px; }
+      .viewport-frame[data-viewport="narrow"] .count-context .detail-arabic { margin: 16px 0; }
+      .viewport-frame[data-viewport="narrow"] .count-stage { padding: 26px 15px; }
+      .viewport-frame[data-viewport="narrow"] .count-orbit { width: 176px; height: 176px; margin: 15px 0; }
+      .viewport-frame[data-viewport="narrow"] .count-aside { display: grid; grid-template-columns: 1fr 1fr; }
+      .viewport-frame[data-viewport="narrow"] .count-aside .wire-card { min-height: 105px; padding: 14px; }
+      .viewport-frame[data-viewport="narrow"] .count-aside .wire-note { grid-column: 1 / -1; }
+      .viewport-frame[data-viewport="narrow"] .mock-bottom-nav {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        height: 66px;
+        border-top: 1px solid var(--line);
+        background: rgb(255 255 255 / 94%);
+      }
+      .viewport-frame[data-viewport="narrow"] .mock-bottom-nav a {
+        display: grid;
+        place-items: center;
+        align-content: center;
+        gap: 4px;
+        color: #7a837b;
+        font-size: 9px;
+        text-decoration: none;
+      }
+      .viewport-frame[data-viewport="narrow"] .mock-bottom-nav a.is-active { color: var(--sage-dark); font-weight: 800; }
+      .viewport-frame[data-viewport="narrow"] .mock-bottom-nav a::before { content: ""; width: 15px; height: 15px; border: 1.5px solid currentColor; border-radius: 5px; }
+      .viewport-frame[data-viewport="narrow"] .mock-bottom-nav a:first-child::before { border-radius: 50%; }
+
+      .inspector-grid {
+        display: grid;
+        grid-template-columns: 1.15fr .85fr;
+        gap: 14px;
+        padding: 14px;
+        border-top: 1px solid var(--canvas-line);
+        background: rgb(0 0 0 / 9%);
+      }
+
+      .inspector-card {
+        min-height: 132px;
+        padding: 18px;
+        border: 1px solid var(--canvas-line);
+        border-radius: 15px;
+        background: rgb(255 255 255 / 3%);
+      }
+
+      .inspector-card h3 { margin: 7px 0 7px; color: #edf4ed; font-size: 14px; letter-spacing: -.02em; }
+
+      .inspector-card p { max-width: 680px; color: var(--canvas-muted); font-size: 11px; line-height: 1.6; }
+
+      .inspector-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+
+      .inspector-pills span { padding: 5px 8px; border: 1px solid var(--canvas-line); border-radius: 999px; color: #b8c6b8; font-size: 9px; }
+
+      .legend { display: grid; gap: 8px; margin-top: 11px; }
+
+      .legend-row { display: flex; align-items: center; gap: 8px; color: var(--canvas-muted); font-size: 10px; }
+
+      .legend-swatch { width: 18px; height: 10px; border-radius: 3px; background: var(--sage-soft); }
+
+      .legend-swatch.outline { border: 1px solid #8da693; background: transparent; }
+
+      .legend-swatch.dashed { border: 1px dashed #8da693; background: transparent; }
+
+      @media (max-width: 980px) {
+        .lab-header { flex-wrap: wrap; gap: 14px; padding: 16px 22px; }
+        .lab-heading { order: 3; flex-basis: 100%; }
+        .lab-actions { margin-left: auto; }
+        .lab-main { width: min(100% - 32px, 860px); padding-top: 34px; }
+        .lab-intro { grid-template-columns: 1fr; gap: 16px; }
+        .lab-intro-copy { max-width: 560px; }
+        .stage-header { align-items: flex-start; flex-direction: column; }
+        .stage-tools { width: 100%; justify-content: space-between; }
+        .viewport-wrap { padding: 30px 16px 40px; }
+        .mock-app { grid-template-columns: 76px minmax(0, 1fr); }
+        .mock-rail { align-items: center; padding: 22px 8px; }
+        .mock-brand span, .mock-nav a span, .mock-rail-note, .mock-rail-account { display: none; }
+        .mock-nav { width: 100%; margin-top: 42px; }
+        .mock-nav a { justify-content: center; padding: 0; }
+        .mock-nav a::before { width: 17px; height: 17px; }
+        .mock-rail-rule { width: 36px; margin: 24px 0; }
+        .home-hero-grid { grid-template-columns: 1fr; }
+        .goal-row { grid-template-columns: 24px minmax(130px, 1fr) minmax(110px, .8fr) auto; }
+        .count-layout { grid-template-columns: minmax(180px, .75fr) minmax(245px, 1fr); }
+        .count-aside { grid-column: 1 / -1; min-height: auto; grid-template-columns: repeat(3, 1fr); }
+        .count-aside .wire-card { min-height: 120px; }
+        .count-aside .wire-note { align-self: stretch; }
+      }
+
+      @media (max-width: 680px) {
+        .lab-header { min-height: 76px; }
+        .lab-actions a { display: none; }
+        .viewport-switcher { margin-left: auto; }
+        .lab-main { width: min(100% - 20px, 520px); padding-top: 25px; }
+        .lab-intro h2 { font-size: 49px; }
+        .stage-shell { border-radius: 20px; }
+        .stage-tools { align-items: flex-start; flex-direction: column; }
+        .screen-tabs { max-width: 100%; overflow-x: auto; }
+        .screen-tab { flex: 0 0 auto; }
+        .viewport-wrap { padding: 22px 9px 30px; }
+        .viewport-frame[data-viewport="narrow"] { width: 390px; max-width: 100%; }
+        .viewport-frame[data-viewport="narrow"] .viewport-chrome { display: none; }
+        .viewport-frame[data-viewport="narrow"] .mock-app { display: block; min-height: 720px; }
+        .viewport-frame[data-viewport="narrow"] .mock-rail { display: none; }
+        .viewport-frame[data-viewport="narrow"] .mock-topbar { height: 58px; padding: 0 18px; }
+        .viewport-frame[data-viewport="narrow"] .mock-topbar-left { font-size: 10px; }
+        .viewport-frame[data-viewport="narrow"] .mock-topbar-right > span { display: none; }
+        .viewport-frame[data-viewport="narrow"] .screen { padding: 26px 17px 90px; }
+        .viewport-frame[data-viewport="narrow"] .screen-intro { margin-bottom: 19px; }
+        .viewport-frame[data-viewport="narrow"] .screen-intro h1 { font-size: 34px; }
+        .viewport-frame[data-viewport="narrow"] .screen-action { min-height: 32px; padding: 0 9px; font-size: 9px; }
+        .viewport-frame[data-viewport="narrow"] .home-hero-grid { gap: 9px; margin-bottom: 22px; }
+        .viewport-frame[data-viewport="narrow"] .hero-card { min-height: 220px; padding: 16px; }
+        .viewport-frame[data-viewport="narrow"] .hero-card-body { grid-template-columns: 76px minmax(0, 1fr); gap: 13px; margin-top: 18px; }
+        .viewport-frame[data-viewport="narrow"] .hero-ring { width: 70px; height: 70px; border-width: 6px; font-size: 16px; }
+        .viewport-frame[data-viewport="narrow"] .hero-stat h3 { font-size: 24px; }
+        .viewport-frame[data-viewport="narrow"] .hero-stat .wire-button { margin-top: 12px; }
+        .viewport-frame[data-viewport="narrow"] .hero-card-body > .wire-button { grid-column: 1 / -1; width: 100%; }
+        .viewport-frame[data-viewport="narrow"] .goal-row { grid-template-columns: 20px minmax(0, 1fr) auto; gap: 9px; padding: 11px; }
+        .viewport-frame[data-viewport="narrow"] .goal-row > .goal-progress { grid-column: 2 / -1; }
+        .viewport-frame[data-viewport="narrow"] .goal-row .wire-button { min-height: 28px; padding: 0 8px; }
+        .viewport-frame[data-viewport="narrow"] .goals-summary { gap: 5px; }
+        .viewport-frame[data-viewport="narrow"] .summary-cell { padding: 11px 9px; }
+        .viewport-frame[data-viewport="narrow"] .summary-cell strong { font-size: 21px; }
+        .viewport-frame[data-viewport="narrow"] .goal-table-head { display: none; }
+        .viewport-frame[data-viewport="narrow"] .goal-table-row { grid-template-columns: 1fr auto; gap: 8px; padding: 13px; }
+        .viewport-frame[data-viewport="narrow"] .goal-table-row > :nth-child(2),
+        .viewport-frame[data-viewport="narrow"] .goal-table-row > :nth-child(3) { grid-column: 1; }
+        .viewport-frame[data-viewport="narrow"] .goal-table-row > :last-child { grid-column: 2; grid-row: 1 / span 3; }
+        .viewport-frame[data-viewport="narrow"] .library-toolbar { grid-template-columns: 1fr; }
+        .viewport-frame[data-viewport="narrow"] .library-feature { grid-template-columns: 1fr; gap: 12px; }
+        .viewport-frame[data-viewport="narrow"] .dhikr-grid { grid-template-columns: 1fr 1fr; }
+        .viewport-frame[data-viewport="narrow"] .dhikr-card { min-height: 145px; padding: 12px; }
+        .viewport-frame[data-viewport="narrow"] .count-layout { display: flex; flex-direction: column; gap: 9px; }
+        .viewport-frame[data-viewport="narrow"] .count-context,
+        .viewport-frame[data-viewport="narrow"] .count-stage,
+        .viewport-frame[data-viewport="narrow"] .count-aside { min-height: auto; }
+        .viewport-frame[data-viewport="narrow"] .count-context { padding: 15px; }
+        .viewport-frame[data-viewport="narrow"] .count-context .detail-arabic { margin: 16px 0; }
+        .viewport-frame[data-viewport="narrow"] .count-stage { padding: 26px 15px; }
+        .viewport-frame[data-viewport="narrow"] .count-orbit { width: 176px; height: 176px; margin: 15px 0; }
+        .viewport-frame[data-viewport="narrow"] .count-aside { display: grid; grid-template-columns: 1fr 1fr; }
+        .viewport-frame[data-viewport="narrow"] .count-aside .wire-card { min-height: 105px; padding: 14px; }
+        .viewport-frame[data-viewport="narrow"] .count-aside .wire-note { grid-column: 1 / -1; }
+        .mock-bottom-nav {
+          position: absolute;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          height: 66px;
+          border-top: 1px solid var(--line);
+          background: rgb(255 255 255 / 94%);
+        }
+        .mock-bottom-nav a { display: grid; place-items: center; align-content: center; gap: 4px; color: #7a837b; font-size: 9px; text-decoration: none; }
+        .mock-bottom-nav a.is-active { color: var(--sage-dark); font-weight: 800; }
+        .mock-bottom-nav a::before { content: ""; width: 15px; height: 15px; border: 1.5px solid currentColor; border-radius: 5px; }
+        .mock-bottom-nav a:first-child::before { border-radius: 50%; }
+        .mock-main { position: relative; min-height: 720px; }
+        .inspector-grid { grid-template-columns: 1fr; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="lab-header">
+      <a class="brand" href="awrad-web-companion-wireframe.md">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span>Awrad / design lab</span>
+      </a>
+      <div class="lab-heading">
+        <p class="lab-kicker">Structural exploration · round 01</p>
+        <h1>Mobile-first focus for a <em>living practice.</em></h1>
+      </div>
+      <div class="lab-actions">
+        <a href="awrad-web-companion-wireframe.md">Design notes</a>
+        <div class="viewport-switcher" aria-label="Choose wireframe viewport">
+          <button class="viewport-button is-active" type="button" data-viewport-button="narrow" aria-pressed="true">Mobile first</button>
+          <button class="viewport-button" type="button" data-viewport-button="tablet" aria-pressed="false">Tablet</button>
+          <button class="viewport-button" type="button" data-viewport-button="desktop" aria-pressed="false">Desktop</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="lab-main">
+      <section class="lab-intro" aria-labelledby="lab-title">
+        <div>
+          <p class="lab-kicker">Awrad web companion</p>
+          <h2 id="lab-title">The next count should feel <em>close.</em></h2>
+        </div>
+        <p class="lab-intro-copy">
+          A mobile-first wireframe for the web companion’s core loop: arrive, see what is due, count once, and know it is saved. Larger screens add breathing room, not dashboard density.
+        </p>
+      </section>
+
+      <section class="stage-shell" aria-labelledby="stage-title">
+        <div class="stage-header">
+          <div class="stage-copy">
+            <p class="stage-kicker">Live wireframe</p>
+            <h3 id="stage-title">Today / mobile first</h3>
+            <p id="stage-subtitle">390 × 844 · bottom dock · vertical practice feed</p>
+          </div>
+          <div class="stage-tools">
+            <div class="screen-tabs" aria-label="Choose wireframe screen">
+              <button class="screen-tab is-active" type="button" data-screen-tab="home" aria-pressed="true">Today</button>
+              <button class="screen-tab" type="button" data-screen-tab="goals" aria-pressed="false">Goals</button>
+              <button class="screen-tab" type="button" data-screen-tab="library" aria-pressed="false">Library</button>
+              <button class="screen-tab" type="button" data-screen-tab="count" aria-pressed="false">Count</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="viewport-wrap">
+          <div class="viewport-frame" id="viewport-frame" data-viewport="narrow">
+            <div class="viewport-chrome" aria-hidden="true">
+              <span class="chrome-dot"></span><span class="chrome-dot"></span><span class="chrome-dot"></span>
+              <span class="chrome-url">app.awrad.local / home</span>
+            </div>
+
+            <div class="mock-app">
+              <aside class="mock-rail" aria-label="Wireframe primary navigation">
+                <div class="mock-brand"><span class="mock-brand-mark">A</span><span>Awrad</span></div>
+                <nav class="mock-nav">
+                  <a href="#home" class="is-active"><span>Today</span></a>
+                  <a href="#goals"><span>Goals</span></a>
+                  <a href="#library"><span>Library</span></a>
+                </nav>
+                <div class="mock-rail-rule"></div>
+                <div class="mock-rail-note">
+                  <strong>Private by design</strong>
+                  Your practice is synced to your account. Goal editing stays in the mobile apps.
+                </div>
+                <div class="mock-rail-account">
+                  <span>Signed in as</span>
+                  <strong>you@example.com</strong>
+                  <span>Settings · Log out</span>
+                </div>
+              </aside>
+
+              <div class="mock-main">
+                <header class="mock-topbar">
+                  <div class="mock-topbar-left">Friday · September 4, 2026</div>
+                  <div class="mock-topbar-right">
+                    <span class="mock-sync">Saved</span>
+                    <span class="mock-avatar" aria-label="Account">YS</span>
+                  </div>
+                </header>
+
+                <article class="screen is-active" data-screen="home" aria-labelledby="today-screen-title">
+                  <div class="screen-intro">
+                    <div>
+                      <p class="mock-eyebrow">Your practice</p>
+                      <h1 id="today-screen-title">Today</h1>
+                      <p>Make a little room for remembrance.</p>
+                    </div>
+                    <a href="#goals" class="screen-action">All goals</a>
+                  </div>
+
+                  <div class="home-hero-grid">
+                    <section class="hero-card" aria-label="Today at a glance">
+                      <div class="wire-card-header">
+                        <span class="wire-card-title">Today at a glance</span>
+                        <span class="wire-card-caption">12 counted</span>
+                      </div>
+                      <div class="hero-card-body">
+                        <div class="hero-ring">24%</div>
+                        <div class="hero-stat">
+                          <h3>Keep the thread.</h3>
+                          <p>Four active goals are waiting. Continue with the first due practice and keep your attention in one place.</p>
+                          <button class="wire-button" type="button">Continue practice</button>
+                        </div>
+                      </div>
+                    </section>
+                    <aside class="wire-card signal-card" aria-label="Progress signal">
+                      <div class="wire-card-header"><span class="wire-card-title">Progress signal</span><span class="wire-card-caption">canonical</span></div>
+                      <div class="signal-number">1 <small>day streak</small></div>
+                      <div class="signal-rule"></div>
+                      <div class="signal-list">
+                        <div><span>Active goals</span><strong>4</strong></div>
+                        <div><span>Due today</span><strong>4</strong></div>
+                        <div><span>Recent days</span><strong>● ● ● ○ ○ ○ ○</strong></div>
+                      </div>
+                    </aside>
+                  </div>
+
+                  <section aria-labelledby="today-queue-title">
+                    <div class="section-heading">
+                      <div><p class="mock-eyebrow">Start here</p><h2 id="today-queue-title">Due today</h2></div>
+                      <a href="#goals" class="text-link">View all goals →</a>
+                    </div>
+                    <div class="goal-queue">
+                      <div class="goal-row">
+                        <span class="goal-index">01</span>
+                        <div><div class="goal-title">Isthighfar</div><div class="goal-arabic" lang="ar">أَسْتَغْفِرُ ٱللَّٰهَ</div></div>
+                        <div class="goal-progress"><div class="progress-line"><span></span></div><div class="progress-copy"><span>3 of 70</span><span>Anytime</span></div></div>
+                        <button class="wire-button" type="button">Count</button>
+                      </div>
+                      <div class="goal-row">
+                        <span class="goal-index">02</span>
+                        <div><div class="goal-title">Ya Allah</div><div class="goal-arabic" lang="ar">يَا ٱللَّٰهُ</div></div>
+                        <div class="goal-progress"><div class="progress-line is-low"><span></span></div><div class="progress-copy"><span>3 of 100</span><span>Anytime</span></div></div>
+                        <button class="wire-button" type="button">Count</button>
+                      </div>
+                      <div class="goal-row">
+                        <span class="goal-index">03</span>
+                        <div><div class="goal-title">Ya Rahman</div><div class="goal-arabic" lang="ar">يَا رَحْمَٰنُ</div></div>
+                        <div class="goal-progress"><div class="progress-line is-low"><span></span></div><div class="progress-copy"><span>3 of 100</span><span>Anytime</span></div></div>
+                        <button class="wire-button" type="button">Count</button>
+                      </div>
+                      <div class="goal-row">
+                        <span class="goal-index">04</span>
+                        <div><div class="goal-title">Ya Raheem</div><div class="goal-arabic" lang="ar">يَا رَحِيمُ</div></div>
+                        <div class="goal-progress"><div class="progress-line is-low"><span></span></div><div class="progress-copy"><span>3 of 100</span><span>Anytime</span></div></div>
+                        <button class="wire-button" type="button">Count</button>
+                      </div>
+                    </div>
+                  </section>
+                </article>
+
+                <article class="screen" data-screen="goals" aria-labelledby="goals-screen-title">
+                  <div class="screen-intro">
+                    <div><p class="mock-eyebrow">Your commitments</p><h1 id="goals-screen-title">Goals</h1><p>See the shape of your practice at a glance.</p></div>
+                    <span class="status-pill">Read-only on web</span>
+                  </div>
+                  <div class="goals-summary" aria-label="Goal summary">
+                    <div class="summary-cell"><span class="mock-label">Active</span><strong>4</strong><p>Ready to practice</p></div>
+                    <div class="summary-cell"><span class="mock-label">Due today</span><strong>4</strong><p>With active slots</p></div>
+                    <div class="summary-cell"><span class="mock-label">Completed</span><strong>0</strong><p>Keep building</p></div>
+                  </div>
+                  <div class="filter-row" role="toolbar" aria-label="Goal filters">
+                    <button class="filter-chip is-active" type="button" aria-pressed="true">Active</button>
+                    <button class="filter-chip" type="button" aria-pressed="false">Completed</button>
+                    <button class="filter-chip" type="button" aria-pressed="false">All goals</button>
+                  </div>
+                  <div class="goal-table">
+                    <div class="goal-table-head"><span>Goal</span><span>Schedule</span><span>Progress</span><span>Status</span></div>
+                    <div class="goal-table-row"><div><strong>Isthighfar</strong><small lang="ar" class="goal-arabic">أَسْتَغْفِرُ ٱللَّٰهَ</small></div><div><strong>Daily</strong><small>Anytime · 70 target</small></div><div><strong>3 / 70</strong><small>3 today</small></div><span class="status-pill">Web count</span></div>
+                    <div class="goal-table-row"><div><strong>Ya Allah</strong><small lang="ar" class="goal-arabic">يَا ٱللَّٰهُ</small></div><div><strong>Daily</strong><small>Anytime · 100 target</small></div><div><strong>3 / 100</strong><small>3 today</small></div><span class="status-pill">Web count</span></div>
+                    <div class="goal-table-row"><div><strong>Ya Rahman</strong><small lang="ar" class="goal-arabic">يَا رَحْمَٰنُ</small></div><div><strong>Daily</strong><small>Anytime · 100 target</small></div><div><strong>3 / 100</strong><small>3 today</small></div><span class="status-pill">Web count</span></div>
+                    <div class="goal-table-row"><div><strong>Ya Raheem</strong><small lang="ar" class="goal-arabic">يَا رَحِيمُ</small></div><div><strong>Daily</strong><small>Anytime · 100 target</small></div><div><strong>3 / 100</strong><small>3 today</small></div><span class="status-pill">Web count</span></div>
+                  </div>
+                </article>
+
+                <article class="screen" data-screen="library" aria-labelledby="library-screen-title">
+                  <div class="screen-intro">
+                    <div><p class="mock-eyebrow">Words to return to</p><h1 id="library-screen-title">Dhikr library</h1><p>Read, listen, and find the remembrance behind each goal.</p></div>
+                    <span class="wire-card-caption">113 remembrances</span>
+                  </div>
+                  <div class="library-toolbar" role="search">
+                    <div class="search-wire">Search Arabic, transliteration, or translation</div>
+                    <div class="select-wire">All categories</div>
+                  </div>
+                  <section class="library-feature" aria-label="Featured dhikr">
+                    <div><p class="mock-eyebrow">A gentle place to begin</p><h2>Return to the words.</h2><p>Keep the Arabic visible, let the meaning lead, and choose a dhikr that meets you where you are.</p></div>
+                    <div class="feature-arabic detail-arabic" lang="ar">يَا ٱللَّٰهُ</div>
+                  </section>
+                  <div class="dhikr-grid">
+                    <article class="dhikr-card"><div class="mock-label">General</div><div class="detail-arabic" lang="ar">أَسْتَغْفِرُ ٱللَّٰهَ</div><h3>Isthighfar</h3><p>Seeking forgiveness from Allah.</p><div class="library-card-footer"><span class="audio-wire">Audio unavailable</span><span class="library-meta">Open →</span></div></article>
+                    <article class="dhikr-card"><div class="mock-label">Asma ul husna</div><div class="detail-arabic" lang="ar">يَا ٱللَّٰهُ</div><h3>Ya Allah</h3><p>The Proper Name of God.</p><div class="library-card-footer"><span class="audio-wire">Audio unavailable</span><span class="library-meta">Open →</span></div></article>
+                    <article class="dhikr-card"><div class="mock-label">Asma ul husna</div><div class="detail-arabic" lang="ar">يَا رَحْمَٰنُ</div><h3>Ya Rahman</h3><p>The Most Merciful.</p><div class="library-card-footer"><span class="audio-wire">Audio unavailable</span><span class="library-meta">Open →</span></div></article>
+                  </div>
+                </article>
+
+                <article class="screen" data-screen="count" aria-labelledby="count-screen-title">
+                  <div class="counter-breadcrumb">← Back to goals <span class="wire-muted">· web session saved</span></div>
+                  <div class="count-layout">
+                    <section class="wire-panel count-context" aria-label="Goal context">
+                      <div class="count-context-top"><span class="mock-eyebrow">Daily goal</span><span class="status-pill">Active</span></div>
+                      <h2 id="count-screen-title">Isthighfar</h2>
+                      <p>70 times daily · Anytime slot</p>
+                      <div class="detail-arabic" lang="ar">أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ</div>
+                      <div class="slot-list"><div class="slot-item is-selected"><span>Anytime</span><strong>3 / 70</strong></div><div class="slot-item"><span>Prayer-relative</span><span>View only</span></div></div>
+                    </section>
+                    <section class="wire-panel count-stage" aria-label="Counting action">
+                      <p class="mock-eyebrow">Today’s count</p>
+                      <h2>One small return at a time.</h2>
+                      <div class="count-orbit"><div><strong>3</strong><span>of 70 counted</span></div></div>
+                      <button class="count-cta" type="button" aria-label="Add one count">Add one</button>
+                      <p class="count-shortcuts">Click · Space · Enter</p>
+                    </section>
+                    <aside class="count-aside" aria-label="Count status">
+                      <div class="wire-panel"><div class="wire-card-title">Session</div><div class="count-stat"><strong>4%</strong><span>daily progress</span></div><div class="count-stat"><strong>1</strong><span>day streak</span></div></div>
+                      <div class="wire-panel"><div class="wire-card-title">Saved status</div><div class="count-status-row">Saved to account</div><p class="count-muted">Canonical receipt confirmed.</p></div>
+                      <div class="wire-note">If the connection drops, the count stays provisional and the retry action remains visible. Mobile changes appear after refresh.</div>
+                    </aside>
+                  </div>
+                </article>
+
+                <nav class="mock-bottom-nav" aria-label="Wireframe mobile navigation">
+                  <a href="#home" class="is-active">Today</a>
+                  <a href="#goals">Goals</a>
+                  <a href="#library">Library</a>
+                </nav>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="inspector-grid">
+          <section class="inspector-card">
+            <p class="inspector-kicker">Design thesis</p>
+            <h3>One obvious next action, with the truth close behind it.</h3>
+            <p>The vertical feed is the product. Supporting metrics are present but subordinate; sync state lives in the same visual system as the primary action instead of hiding in a toast.</p>
+            <div class="inspector-pills"><span>mobile first</span><span>bottom dock</span><span>canonical status</span><span>Arabic-safe</span></div>
+          </section>
+          <section class="inspector-card">
+            <p class="inspector-kicker">Wireframe key</p>
+            <div class="legend">
+              <div class="legend-row"><span class="legend-swatch"></span>primary practice path</div>
+              <div class="legend-row"><span class="legend-swatch outline"></span>supporting information</div>
+              <div class="legend-row"><span class="legend-swatch dashed"></span>system boundary or unavailable state</div>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const frame = document.querySelector("#viewport-frame");
+      const stageTitle = document.querySelector("#stage-title");
+      const stageSubtitle = document.querySelector("#stage-subtitle");
+      const viewportLabels = { desktop: "desktop", tablet: "tablet", narrow: "mobile first" };
+      const viewportSizes = { desktop: "1440 × 960", tablet: "1024 × 960", narrow: "390 × 844" };
+      const screenLabels = { home: "Today", goals: "Goals", library: "Library", count: "Count" };
+      const screenDescriptions = {
+        home: "bottom dock · vertical practice feed",
+        goals: "filterable read-only commitments",
+        library: "searchable Arabic-safe content grid",
+        count: "central action · visible canonical status"
+      };
+
+      function updateStage() {
+        const viewport = frame.dataset.viewport;
+        const activeScreen = document.querySelector(".screen.is-active").dataset.screen;
+        stageTitle.textContent = `${screenLabels[activeScreen]} / ${viewportLabels[viewport]}`;
+        stageSubtitle.textContent = `${viewportSizes[viewport]} · ${screenDescriptions[activeScreen]}`;
+      }
+
+      document.querySelectorAll("[data-viewport-button]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const viewport = button.dataset.viewportButton;
+          frame.dataset.viewport = viewport;
+          document.querySelectorAll("[data-viewport-button]").forEach((item) => {
+            const isActive = item === button;
+            item.classList.toggle("is-active", isActive);
+            item.setAttribute("aria-pressed", String(isActive));
+          });
+          updateStage();
+        });
+      });
+
+      document.querySelectorAll("[data-screen-tab]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const screen = button.dataset.screenTab;
+          document.querySelectorAll("[data-screen]").forEach((item) => item.classList.toggle("is-active", item.dataset.screen === screen));
+          document.querySelectorAll("[data-screen-tab]").forEach((item) => {
+            const isActive = item === button;
+            item.classList.toggle("is-active", isActive);
+            item.setAttribute("aria-pressed", String(isActive));
+          });
+          document.querySelectorAll(".mock-nav a, .mock-bottom-nav a").forEach((item) => item.classList.toggle("is-active", item.getAttribute("href") === `#${screen}`));
+          updateStage();
+        });
+      });
+
+      updateStage();
+    </script>
+  </body>
+</html>

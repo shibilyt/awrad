@@ -45,6 +45,38 @@ Contract owners:
 
 Any request/response or status-code change requires server tests and review of both consumers. Add compatibility behavior before removing or renaming a field used by a released client.
 
+## Practice settings synchronization
+
+The verified mobile settings contract is additive and lives under the existing
+sync API namespace. It does not change progress-sync envelopes or require
+clients to send user IDs.
+
+| Method | Path | Authentication | Purpose |
+|---|---|---|---|
+| `GET` | `/api/sync/v1/practice-settings?installation_id=<uuidv4>` | Verified bearer; installation-bound | Read the account policy and this installation's device context |
+| `PUT` | `/api/sync/v1/practice-settings/policy` | Verified bearer; installation-bound | Write the shared policy with `expected_revision` |
+| `PUT` | `/api/sync/v1/practice-settings/device-context` | Verified bearer; installation-bound | Write this installation's timezone and optional location |
+
+The policy payload is `{day_reset, calculation_method, madhab}` using the
+server's lowercase values (`midnight`/`maghrib`, the calculation-method
+slugs, and `shafi`/`hanafi`). A successful response returns the policy,
+revision, and the requested installation's device context. Device context may
+also include the optional `location_name` display label. Latitude and
+longitude remain the calculation source; the label is presentation metadata
+and is scoped to the same installation.
+
+Policy updates are optimistic-concurrency guarded. A stale
+`expected_revision` returns `409` with `error: "practice_policy_conflict"`
+and the current `policy`; clients apply that server policy and do not retry
+the stale write. On first account binding, a non-default anonymous local
+policy may initialize an untouched server-default policy. Once an account is
+bound, the server wins account-switch and revision-conflict cases.
+
+`installation_id` must be the installation bound to the bearer session. The
+server derives the account from the token, and location/timezone are stored per
+`(user_id, installation_id)`; one browser, phone, or tablet cannot overwrite a
+different installation's context.
+
 ## Token lifecycle
 
 - Browser authentication uses Phoenix session cookies and `current_scope`.

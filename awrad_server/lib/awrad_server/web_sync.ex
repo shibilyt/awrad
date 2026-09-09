@@ -10,7 +10,9 @@ defmodule AwradServer.WebSync do
   import Ecto.Query
 
   alias AwradServer.Accounts.Scope
+  alias AwradServer.PracticeDay
   alias AwradServer.Practice.Eligibility
+  alias AwradServer.PracticeSettings
   alias AwradServer.ProgressSync
   alias AwradServer.ProgressSync.EntityRecord
   alias AwradServer.ProgressSync.CountProjection
@@ -26,11 +28,17 @@ defmodule AwradServer.WebSync do
          {:ok, command_id} <- uuid_v4(value(attrs, :command_id)),
          {:ok, goal_id} <- uuid_v4(value(attrs, :goal_id)),
          {:ok, slot_id} <- uuid_v4(value(attrs, :slot_id)),
-         {:ok, local_date} <- local_date(value(attrs, :local_date)),
+         {:ok, claimed_date} <- local_date(value(attrs, :local_date)),
+         {:ok, civil_date} <- local_date(value(attrs, :civil_date) || value(attrs, :local_date)),
          :ok <- valid_timezone(value(attrs, :timezone)),
+         {:ok, practice_date} <-
+           resolve_practice_date(scope, installation_id, civil_date, attrs),
+         :ok <- validate_practice_date(claimed_date, practice_date),
          {:ok, %{goal: goal, slot: slot, entity_incarnation: entity_incarnation}} <-
            load_bucket(user.id, goal_id, slot_id),
-         :ok <- eligibility_allows?(goal, slot, local_date) do
+         :ok <- eligibility_allows?(goal, slot, practice_date) do
+      record_device_context(scope, installation_id, value(attrs, :timezone))
+
       with {:ok, actor} <- ProgressSync.ensure_actor(scope, installation_id),
            {:ok, result} <-
              ProgressSync.execute_next_count_command(
@@ -42,7 +50,7 @@ defmodule AwradServer.WebSync do
                    "type" => "increment",
                    "goal_id" => goal_id,
                    "slot_id" => slot_id,
-                   "local_date" => Date.to_iso8601(local_date),
+                   "local_date" => Date.to_iso8601(practice_date),
                    "amount" => "1",
                    "entity_incarnation" => Integer.to_string(entity_incarnation)
                  }
@@ -56,14 +64,14 @@ defmodule AwradServer.WebSync do
                        }} <-
                         load_bucket(user.id, goal_id, slot_id),
                       true <- current_incarnation == entity_incarnation,
-                      :ok <- eligibility_allows?(current_goal, current_slot, local_date),
+                      :ok <- eligibility_allows?(current_goal, current_slot, practice_date),
                       :ok <-
                         cap_allows?(
                           user.id,
                           current_goal,
                           current_slot,
                           current_incarnation,
-                          local_date
+                          practice_date
                         ) do
                    :ok
                  else
@@ -131,6 +139,37 @@ defmodule AwradServer.WebSync do
     end
   end
 
+  defp resolve_practice_date(scope, installation_id, civil_date, attrs) do
+    %{policy: policy, device_context: device_context} =
+      PracticeSettings.snapshot(scope, installation_id)
+
+    maghrib_at =
+      if location_available?(device_context), do: value(attrs, :maghrib_at), else: nil
+
+    PracticeDay.resolve(%{
+      civil_date: civil_date,
+      day_reset: policy.day_reset,
+      maghrib_at: maghrib_at,
+      now: DateTime.utc_now(:second)
+    })
+    |> case do
+      {:ok, %{effective_date: effective_date}} -> {:ok, effective_date}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp location_available?(%{latitude: latitude, longitude: longitude})
+       when is_number(latitude) and is_number(longitude),
+       do: true
+
+  defp location_available?(_device_context), do: false
+
+  defp validate_practice_date(claimed_date, practice_date) when claimed_date == practice_date,
+    do: :ok
+
+  defp validate_practice_date(_claimed_date, _practice_date),
+    do: {:error, :practice_date_mismatch}
+
   defp current_cap_count(user_id, %{target_policy: "cumulative_total"}, slot, incarnation, _date) do
     Repo.one(
       from projection in CountProjection,
@@ -163,6 +202,15 @@ defmodule AwradServer.WebSync do
 
   defp valid_timezone(value) when is_binary(value) and byte_size(value) in 1..128, do: :ok
   defp valid_timezone(_value), do: {:error, :invalid_timezone}
+
+  defp record_device_context(scope, installation_id, timezone) do
+    _result =
+      PracticeSettings.upsert_device_context(scope, installation_id, %{
+        timezone: timezone
+      })
+
+    :ok
+  end
 
   defp uuid_v4(value) when is_binary(value) do
     with {:ok, normalized} <- Ecto.UUID.cast(value),

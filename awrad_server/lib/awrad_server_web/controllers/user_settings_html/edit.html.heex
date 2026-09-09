@@ -4,7 +4,7 @@
     <div class="text-center">
     <.header>
       Account Settings
-      <:subtitle>Manage your account email address and password settings</:subtitle>
+      <:subtitle>Manage your account, shared practice policy, and this browser's context</:subtitle>
     </.header>
   </div>
 
@@ -25,6 +25,40 @@
     />
 
     <.button variant="primary" phx-disable-with="Changing...">Change Email</.button>
+  </.form>
+
+  <div class="divider" />
+
+  <.form :let={f} for={@practice_policy_form} action={~p"/users/settings"} id="update_practice_policy" class="awrad-auth-form">
+    <input type="hidden" name="action" value="update_practice_policy" />
+
+    <fieldset>
+      <legend class="mb-3 text-sm font-bold">Shared practice policy</legend>
+
+      <label for={f[:day_reset].id} class="block text-sm font-semibold leading-6">Day ends</label>
+      <select id={f[:day_reset].id} name={f[:day_reset].name} class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:ring-brand">
+        <option :for={value <- @practice_day_resets} value={value} selected={value == f[:day_reset].value}>
+          {String.capitalize(value)}
+        </option>
+      </select>
+
+      <label for={f[:calculation_method].id} class="mt-4 block text-sm font-semibold leading-6">Prayer calculation method</label>
+      <select id={f[:calculation_method].id} name={f[:calculation_method].name} class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:ring-brand">
+        <option :for={value <- @practice_calculation_methods} value={value} selected={value == f[:calculation_method].value}>
+          {String.capitalize(String.replace(value, "_", " "))}
+        </option>
+      </select>
+
+      <label for={f[:madhab].id} class="mt-4 block text-sm font-semibold leading-6">Asr calculation preference</label>
+      <select id={f[:madhab].id} name={f[:madhab].name} class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-brand focus:ring-brand">
+        <option :for={value <- @practice_madhabs} value={value} selected={value == f[:madhab].value}>
+          {String.capitalize(value)}
+        </option>
+      </select>
+    </fieldset>
+
+    <p class="mt-3 text-xs text-gray-500">These choices sync to your account. Location and timezone remain specific to each device.</p>
+    <.button variant="primary" phx-disable-with="Saving...">Save Practice Policy</.button>
   </.form>
 
   <div class="divider" />

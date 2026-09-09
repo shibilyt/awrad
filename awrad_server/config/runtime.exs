@@ -23,6 +23,10 @@ end
 config :awrad_server, AwradServerWeb.Endpoint,
   http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+config :awrad_server, :location_search,
+  base_url: System.get_env("LOCATION_GEOCODING_URL", "https://nominatim.openstreetmap.org"),
+  user_agent: System.get_env("LOCATION_GEOCODING_USER_AGENT", "Awrad/0.1 (+https://awrad.app)")
+
 # Operational kill switch: mobile clients keep their durable outboxes and
 # continue offline while every progress-sync route returns retryable 503.
 if value = System.get_env("PROGRESS_SYNC_ENABLED") do

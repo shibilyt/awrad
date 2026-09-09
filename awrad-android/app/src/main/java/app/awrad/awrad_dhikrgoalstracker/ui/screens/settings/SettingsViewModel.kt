@@ -450,6 +450,7 @@ class SettingsViewModel @Inject constructor(
                     locationSearchResults = emptyList(),
                 )
             }
+            progressSyncScheduler.enqueue()
             reminderScheduler.rescheduleAll()
         }
     }
@@ -466,6 +467,7 @@ class SettingsViewModel @Inject constructor(
                     locationSearchResults = emptyList(),
                 )
             }
+            progressSyncScheduler.enqueue()
             reminderScheduler.rescheduleAll()
         }
     }
@@ -473,6 +475,7 @@ class SettingsViewModel @Inject constructor(
     fun onCalculationMethodChanged(method: CalculationMethodPref) {
         viewModelScope.launch {
             userPreferences.setCalculationMethod(method.name)
+            progressSyncScheduler.enqueue()
             reminderScheduler.rescheduleAll()
         }
     }
@@ -480,12 +483,16 @@ class SettingsViewModel @Inject constructor(
     fun onMadhabChanged(madhab: MadhabPref) {
         viewModelScope.launch {
             userPreferences.setMadhab(madhab.name)
+            progressSyncScheduler.enqueue()
             reminderScheduler.rescheduleAll()
         }
     }
 
     fun onDayResetChanged(option: DayResetOption) {
-        viewModelScope.launch { userPreferences.setDayResetTime(option.name) }
+        viewModelScope.launch {
+            userPreferences.setDayResetTime(option.name)
+            progressSyncScheduler.enqueue()
+        }
     }
 
     fun onCalendarSystemChanged(system: CalendarSystem) {

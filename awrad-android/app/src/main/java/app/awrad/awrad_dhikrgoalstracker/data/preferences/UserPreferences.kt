@@ -42,6 +42,9 @@ class UserPreferences @Inject constructor(
         private val KEY_CALCULATION_METHOD = stringPreferencesKey("calculation_method")
         private val KEY_MADHAB = stringPreferencesKey("madhab")
         private val KEY_DAY_RESET_TIME = stringPreferencesKey("day_reset_time")
+        private val KEY_PRACTICE_POLICY_OWNER = stringPreferencesKey("practice_policy_owner_user_id")
+        private val KEY_PRACTICE_POLICY_REVISION = intPreferencesKey("practice_policy_server_revision")
+        private val KEY_PRACTICE_POLICY_DIRTY = booleanPreferencesKey("practice_policy_dirty")
         private val KEY_CALENDAR_SYSTEM = stringPreferencesKey("calendar_system")
         private val KEY_PRAYER_SLOT_DEFAULT_LEAD_MINUTES = intPreferencesKey("prayer_slot_default_lead_minutes")
         private val KEY_READER_FONT_SCALE = floatPreferencesKey("wird_reader_font_scale")
@@ -69,6 +72,9 @@ class UserPreferences @Inject constructor(
     val calculationMethod: Flow<String> = dataStore.data.map { it[KEY_CALCULATION_METHOD] ?: "KARACHI" }
     val madhab: Flow<String> = dataStore.data.map { it[KEY_MADHAB] ?: "SHAFI" }
     val dayResetTime: Flow<String> = dataStore.data.map { it[KEY_DAY_RESET_TIME] ?: "MIDNIGHT" }
+    val practicePolicyOwnerUserId: Flow<String?> = dataStore.data.map { it[KEY_PRACTICE_POLICY_OWNER] }
+    val practicePolicyServerRevision: Flow<Int> = dataStore.data.map { it[KEY_PRACTICE_POLICY_REVISION] ?: 0 }
+    val practicePolicyDirty: Flow<Boolean> = dataStore.data.map { it[KEY_PRACTICE_POLICY_DIRTY] ?: false }
     val calendarSystem: Flow<String> = dataStore.data.map { it[KEY_CALENDAR_SYSTEM] ?: "GREGORIAN" }
     val prayerSlotDefaultLeadMinutes: Flow<Int> = dataStore.data.map { it[KEY_PRAYER_SLOT_DEFAULT_LEAD_MINUTES] ?: 30 }
     val readerFontScale: Flow<Float> = dataStore.data.map { it[KEY_READER_FONT_SCALE] ?: 1f }
@@ -140,17 +146,51 @@ class UserPreferences @Inject constructor(
     }
 
     suspend fun setCalculationMethod(method: String) {
-        dataStore.edit { it[KEY_CALCULATION_METHOD] = method }
+        dataStore.edit {
+            it[KEY_CALCULATION_METHOD] = method
+            it[KEY_PRACTICE_POLICY_DIRTY] = true
+        }
         notificationRequests.request(NotificationObligationRequestReason.DAY_RESET_OR_LOCATION)
     }
 
     suspend fun setMadhab(madhab: String) {
-        dataStore.edit { it[KEY_MADHAB] = madhab }
+        dataStore.edit {
+            it[KEY_MADHAB] = madhab
+            it[KEY_PRACTICE_POLICY_DIRTY] = true
+        }
         notificationRequests.request(NotificationObligationRequestReason.DAY_RESET_OR_LOCATION)
     }
 
     suspend fun setDayResetTime(value: String) {
-        dataStore.edit { it[KEY_DAY_RESET_TIME] = value }
+        dataStore.edit {
+            it[KEY_DAY_RESET_TIME] = value
+            it[KEY_PRACTICE_POLICY_DIRTY] = true
+        }
+        notificationRequests.request(NotificationObligationRequestReason.DAY_RESET_OR_LOCATION)
+    }
+
+    suspend fun practicePolicy(): app.awrad.awrad_dhikrgoalstracker.data.sync.PracticePolicyValues =
+        dataStore.data.map {
+            app.awrad.awrad_dhikrgoalstracker.data.sync.PracticePolicyValues(
+                dayReset = it[KEY_DAY_RESET_TIME] ?: "MIDNIGHT",
+                calculationMethod = it[KEY_CALCULATION_METHOD] ?: "KARACHI",
+                madhab = it[KEY_MADHAB] ?: "SHAFI",
+            )
+        }.first()
+
+    suspend fun applySyncedPracticePolicy(
+        policy: app.awrad.awrad_dhikrgoalstracker.data.sync.PracticePolicyValues,
+        revision: Int,
+        ownerUserId: String,
+    ) {
+        dataStore.edit {
+            it[KEY_DAY_RESET_TIME] = policy.dayReset
+            it[KEY_CALCULATION_METHOD] = policy.calculationMethod
+            it[KEY_MADHAB] = policy.madhab
+            it[KEY_PRACTICE_POLICY_OWNER] = ownerUserId
+            it[KEY_PRACTICE_POLICY_REVISION] = revision
+            it[KEY_PRACTICE_POLICY_DIRTY] = false
+        }
         notificationRequests.request(NotificationObligationRequestReason.DAY_RESET_OR_LOCATION)
     }
 

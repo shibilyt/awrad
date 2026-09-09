@@ -13,7 +13,10 @@ defmodule AwradServerWeb.DhikrDetailLive do
     {:ok,
      socket
      |> assign(:dhikr, dhikr)
-     |> assign(:used_in_goals, used_in_goals(socket.assigns.current_scope, dhikr))}
+     |> assign(
+       :used_in_goals,
+       used_in_goals(socket.assigns.current_scope, dhikr, socket.assigns.effective_date)
+     )}
   end
 
   def handle_event("browser_context", params, socket) do
@@ -23,7 +26,11 @@ defmodule AwradServerWeb.DhikrDetailLive do
          assign(
            socket,
            :used_in_goals,
-           used_in_goals(socket.assigns.current_scope, socket.assigns.dhikr)
+           used_in_goals(
+             socket.assigns.current_scope,
+             socket.assigns.dhikr,
+             socket.assigns.effective_date
+           )
          )}
 
       :error ->
@@ -39,6 +46,8 @@ defmodule AwradServerWeb.DhikrDetailLive do
       page_title={gettext("Dhikr")}
       show_navigation={true}
       active_nav={:library}
+      practice_policy={@practice_policy}
+      device_context={@device_context}
     >
       <.link navigate={~p"/library"} class="awrad-back-link">
         <.icon name="hero-arrow-left" class="size-4" />
@@ -90,10 +99,10 @@ defmodule AwradServerWeb.DhikrDetailLive do
     """
   end
 
-  defp used_in_goals(_scope, nil), do: []
+  defp used_in_goals(_scope, nil, _date), do: []
 
-  defp used_in_goals(scope, dhikr) do
-    Practice.list_goals(scope, Date.utc_today())
+  defp used_in_goals(scope, dhikr, date) do
+    Practice.list_goals(scope, date)
     |> Enum.filter(&(&1.dhikr_id == dhikr.id))
   end
 end

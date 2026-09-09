@@ -242,11 +242,358 @@ button, a {
   padding: 56px 56px 72px;
 }
 .awrad-home-content {
-  width: min(100%, 640px);
+  width: min(100%, 480px);
   margin-inline: auto;
 }
 .awrad-home-content .awrad-page-intro {
   max-width: none;
+}
+.awrad-home-content .awrad-home-header {
+  display: block;
+}
+.awrad-home-content .awrad-home-header h1 {
+  margin-top: 0;
+  color: var(--awrad-sage-dark);
+  font-size: 22px;
+  letter-spacing: -0.055em;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+.awrad-home-content .awrad-home-header .awrad-page-subtitle {
+  margin-top: 4px;
+  color: var(--awrad-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+.awrad-home-quick-stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--awrad-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.awrad-home-quick-stats strong {
+  color: var(--awrad-ink);
+  font-family: "Manrope", "Avenir Next", ui-sans-serif, sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+}
+.awrad-device-context-card {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 22px;
+  padding: 16px 18px;
+  border: 1px solid rgba(75, 124, 90, 0.16);
+  border-radius: 18px;
+  background: var(--awrad-sage-container);
+}
+.awrad-device-context-card > div:first-child {
+  min-width: 0;
+  flex: 1 1 220px;
+}
+.awrad-device-context-card h2 {
+  margin-top: 3px;
+  color: var(--awrad-ink);
+  font-size: 16px;
+  letter-spacing: -0.04em;
+}
+.awrad-device-context-value {
+  margin-top: 8px;
+  color: var(--awrad-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+.awrad-device-context-detail {
+  margin-top: 4px;
+  color: var(--awrad-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+.awrad-secondary-button {
+  flex: none;
+  min-height: 38px;
+  padding: 9px 12px;
+  border: 1px solid rgba(46, 92, 61, 0.24);
+  border-radius: 12px;
+  background: rgba(250, 251, 250, 0.72);
+  color: var(--awrad-sage-dark);
+  font-size: 11px;
+  font-weight: 800;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+.awrad-secondary-button:hover, .awrad-secondary-button:focus-visible {
+  border-color: var(--awrad-sage);
+  background: var(--awrad-paper);
+}
+.awrad-manual-location {
+  flex: 1 0 100%;
+  border-top: 1px solid rgba(46, 92, 61, 0.14);
+  padding-top: 10px;
+}
+.awrad-manual-location summary {
+  cursor: pointer;
+  color: var(--awrad-sage-dark);
+  font-size: 11px;
+  font-weight: 800;
+}
+.awrad-manual-location form {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+.awrad-manual-location-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  flex: 1;
+}
+.awrad-manual-location label {
+  display: grid;
+  gap: 4px;
+  color: var(--awrad-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+.awrad-manual-location input {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid var(--awrad-line);
+  border-radius: 10px;
+  background: var(--awrad-paper);
+  color: var(--awrad-ink);
+  font-size: 12px;
+}
+.awrad-manual-location input:focus-visible {
+  outline: 2px solid var(--awrad-sage);
+  outline-offset: 2px;
+}
+.awrad-location-error {
+  margin-top: 8px;
+  color: var(--awrad-danger, #a43d32);
+  font-size: 11px;
+  font-weight: 700;
+}
+.awrad-location-search {
+  display: grid;
+  flex: 1 0 100%;
+  gap: 7px;
+  border-top: 1px solid rgba(46, 92, 61, 0.14);
+  padding-top: 12px;
+}
+.awrad-location-search > label {
+  color: var(--awrad-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+.awrad-location-search-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+.awrad-location-search-row > .space-y-1 {
+  min-width: 0;
+  flex: 1;
+}
+.awrad-location-search-row input {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--awrad-line);
+  border-radius: 11px;
+  background: var(--awrad-paper);
+  color: var(--awrad-ink);
+  font-size: 12px;
+}
+.awrad-location-search-row input:focus-visible {
+  outline: 2px solid var(--awrad-sage);
+  outline-offset: 2px;
+}
+.awrad-location-search-row .awrad-secondary-button {
+  display: inline-flex;
+  width: auto;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.awrad-location-results {
+  display: grid;
+  flex: 1 0 100%;
+  gap: 1px;
+  margin: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgba(46, 92, 61, 0.12);
+  border-radius: 13px;
+  background: rgba(46, 92, 61, 0.1);
+  list-style: none;
+}
+.awrad-location-result {
+  display: grid;
+  width: 100%;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 0;
+  background: var(--awrad-paper);
+  color: var(--awrad-ink);
+  text-align: left;
+  transition: background 160ms ease;
+}
+.awrad-location-result:hover, .awrad-location-result:focus-visible {
+  background: var(--awrad-sage-container);
+}
+.awrad-location-result-name {
+  font-size: 12px;
+  font-weight: 800;
+}
+.awrad-location-result-detail {
+  overflow: hidden;
+  color: var(--awrad-muted);
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.awrad-location-attribution {
+  flex: 1 0 100%;
+  color: var(--awrad-muted);
+  font-size: 9px;
+  line-height: 1.4;
+}
+.awrad-location-attribution a {
+  color: var(--awrad-sage-dark);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.awrad-prayer-times-card {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+  padding: 16px 18px;
+  border: 1px solid var(--awrad-line);
+  border-radius: 18px;
+  background: var(--awrad-paper);
+  box-shadow: var(--awrad-shadow-soft);
+}
+.awrad-prayer-times-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.awrad-prayer-times-title-group {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+.awrad-prayer-times-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgba(75, 124, 90, 0.2);
+  border-radius: 50%;
+  background: rgba(212, 232, 218, 0.7);
+  color: var(--awrad-sage);
+}
+.awrad-prayer-times-location {
+  overflow: hidden;
+  margin-top: 2px;
+  color: var(--awrad-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.awrad-next-prayer {
+  display: grid;
+  flex: none;
+  gap: 2px;
+  max-width: 52%;
+  color: var(--awrad-sage);
+  text-align: right;
+}
+.awrad-next-prayer span {
+  color: var(--awrad-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+.awrad-next-prayer strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.awrad-next-prayer small {
+  font-size: 10px;
+  font-weight: 800;
+}
+.awrad-prayer-times-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.awrad-prayer-time-row {
+  display: grid;
+  min-width: 0;
+  min-height: 74px;
+  align-content: center;
+  justify-items: center;
+  gap: 4px;
+  padding: 9px 5px;
+  border: 1px solid var(--awrad-line);
+  border-radius: 13px;
+  background: var(--awrad-container);
+  color: var(--awrad-ink);
+  text-align: center;
+}
+.awrad-prayer-time-row.is-next {
+  border-color: rgba(75, 124, 90, 0.42);
+  background: var(--awrad-sage-container);
+}
+.awrad-prayer-time-name {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.awrad-prayer-time-name > span {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.awrad-prayer-time-name small {
+  color: var(--awrad-sage-dark);
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+}
+.awrad-prayer-time-row time {
+  color: var(--awrad-muted);
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.awrad-prayer-time-row.is-next time, .awrad-prayer-time-row.is-next .awrad-prayer-time-name > span {
+  color: var(--awrad-sage-dark);
+}
+.awrad-prayer-complete {
+  color: var(--awrad-sage);
+}
+.awrad-practice-day-status {
+  margin-top: 10px;
+  color: var(--awrad-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
 }
 .awrad-home-summary {
   margin-top: 32px;
@@ -272,6 +619,274 @@ button, a {
 .awrad-home-content .awrad-goal-grid {
   grid-template-columns: 1fr;
   gap: 12px;
+}
+.awrad-home-section {
+  margin-top: 34px;
+}
+.awrad-home-content .awrad-home-section .awrad-section-heading {
+  align-items: flex-end;
+}
+.awrad-home-content .awrad-home-section .awrad-section-heading h2 {
+  margin-top: 0;
+  color: var(--awrad-ink);
+  font-size: 24px;
+  letter-spacing: -0.055em;
+  line-height: 1.15;
+}
+.awrad-home-content .awrad-home-section .awrad-section-heading .awrad-eyebrow {
+  margin-bottom: 5px;
+  color: var(--awrad-sage);
+  font-size: 10px;
+}
+.awrad-home-goal-stack {
+  position: relative;
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(75, 124, 90, 0.12);
+  border-radius: 26px;
+  background: radial-gradient(circle at 96% 84%, rgba(212, 168, 67, 0.2), transparent 26%), linear-gradient(135deg, #f5f8f5 0%, #fffdfa 68%, #f6efe0 100%);
+  box-shadow: var(--awrad-shadow-soft);
+}
+.awrad-home-goal-stack::after {
+  position: absolute;
+  right: -22px;
+  bottom: -46px;
+  width: 128px;
+  height: 178px;
+  border: 1px solid rgba(75, 124, 90, 0.14);
+  border-radius: 70% 10% 70% 10%;
+  content: "";
+  opacity: 0.62;
+  pointer-events: none;
+  transform: rotate(27deg);
+}
+.awrad-home-goal-stack-empty {
+  padding: 4px;
+}
+.awrad-home-goal-row {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px 22px;
+  align-items: center;
+  gap: 10px;
+  min-height: 68px;
+  color: var(--awrad-sage-dark);
+  text-decoration: none;
+}
+.awrad-home-goal-row + .awrad-home-goal-row {
+  border-top: 1px solid rgba(75, 124, 90, 0.16);
+}
+.awrad-home-goal-row:hover .awrad-home-goal-name {
+  color: var(--awrad-sage);
+}
+.awrad-home-goal-name {
+  overflow: hidden;
+  font-family: "Manrope", "Avenir Next", ui-sans-serif, sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+.awrad-home-goal-ring {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 4px solid var(--awrad-sage-container);
+  border-radius: 50%;
+  background: var(--awrad-white);
+  color: var(--awrad-sage-dark);
+  font-family: "Manrope", "Avenir Next", ui-sans-serif, sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(75, 124, 90, 0.06);
+}
+.awrad-home-goal-ring[aria-valuenow]:not([aria-valuenow="0"]) {
+  border-color: transparent;
+  background: radial-gradient(circle at center, var(--awrad-white) 58%, transparent 59%), conic-gradient(var(--awrad-sage-light) var(--awrad-progress), var(--awrad-sage-container) 0);
+}
+.awrad-home-goal-row .hero-arrow-right {
+  color: var(--awrad-sage);
+  font-size: 0;
+}
+.awrad-home-goal-row .hero-arrow-right::before, .awrad-inline-link .hero-arrow-right::before {
+  content: "›";
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+}
+.awrad-inline-link .hero-arrow-right {
+  font-size: 0;
+}
+.awrad-wird-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+.awrad-wird-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 176px;
+  padding: 20px;
+  border: 1px solid var(--awrad-line);
+  border-radius: var(--awrad-radius-xl);
+  background: var(--awrad-container);
+  color: var(--awrad-ink);
+  box-shadow: var(--awrad-shadow-soft);
+}
+.awrad-wird-card::after {
+  position: absolute;
+  right: -28px;
+  bottom: -62px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(107, 158, 122, 0.22), rgba(107, 158, 122, 0));
+  content: "";
+  pointer-events: none;
+}
+.awrad-wird-card-topline, .awrad-wird-card-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.awrad-wird-kicker {
+  color: #b9cdbd;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.awrad-wird-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(75, 124, 90, 0.2);
+  border-radius: 50%;
+  color: var(--awrad-sage);
+  font-family: "Noto Naskh Arabic", "Amiri", serif;
+  font-size: 22px;
+}
+.awrad-wird-card-copy {
+  position: relative;
+  z-index: 1;
+  padding: 10px 0 18px;
+}
+.awrad-wird-card-copy h3 {
+  margin: 0;
+  color: var(--awrad-ink);
+  font-family: "Manrope", "Avenir Next", ui-sans-serif, sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+.awrad-wird-arabic {
+  display: none;
+}
+.awrad-wird-card-copy > p:last-child {
+  max-width: 40ch;
+  margin: 10px 0 0;
+  color: var(--awrad-muted);
+  font-size: 13px;
+}
+.awrad-wird-card-footer {
+  justify-content: flex-start;
+  color: var(--awrad-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.awrad-wird-tag {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--awrad-sage-container);
+  color: var(--awrad-sage-dark);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.awrad-category-scroller {
+  display: grid;
+  grid-auto-columns: 188px;
+  grid-auto-flow: column;
+  gap: 12px;
+  margin-top: 14px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
+  scrollbar-width: thin;
+}
+.awrad-category-card {
+  display: flex;
+  min-height: 188px;
+  flex-direction: column;
+  padding: 18px;
+  border: 1px solid var(--awrad-line);
+  border-radius: var(--awrad-radius-xl);
+  background: var(--awrad-white);
+  box-shadow: var(--awrad-shadow-soft);
+  text-decoration: none;
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+.awrad-category-card:hover {
+  border-color: rgba(75, 124, 90, 0.42);
+  box-shadow: 0 14px 28px rgba(26, 28, 26, 0.08);
+  transform: translateY(-2px);
+}
+.awrad-category-icon {
+  display: inline-grid;
+  place-items: center;
+  align-self: flex-end;
+  width: 84px;
+  height: 84px;
+  margin-top: auto;
+  border-radius: 50%;
+  background: var(--awrad-gold-container);
+  color: #94701e;
+  font-size: 32px;
+  box-shadow: 0 8px 18px rgba(148, 112, 30, 0.12);
+}
+.awrad-category-card-title {
+  margin-top: 4px;
+  color: var(--awrad-ink);
+  font-family: "Manrope", "Avenir Next", ui-sans-serif, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.awrad-category-card-count {
+  margin-top: 5px;
+  color: var(--awrad-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+.awrad-category-card .hero-arrow-up-right {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--awrad-sage);
+  color: var(--awrad-white);
+  font-size: 0;
+}
+.awrad-category-card .hero-arrow-up-right::before {
+  content: "›";
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
 }
 .awrad-brand {
   display: inline-flex;
@@ -1300,6 +1915,62 @@ button, a {
   }
   .awrad-page-intro h1 {
     font-size: 37px;
+  }
+  .awrad-home-content {
+    width: 100%;
+  }
+  .awrad-home-content .awrad-home-header h1 {
+    font-size: 27px;
+    white-space: normal;
+  }
+  .awrad-device-context-card {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .awrad-device-context-card > div:first-child, .awrad-location-search, .awrad-location-results, .awrad-location-attribution, .awrad-manual-location {
+    width: 100%;
+    flex-basis: auto;
+  }
+  .awrad-prayer-times-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .awrad-next-prayer {
+    max-width: 100%;
+    text-align: left;
+  }
+  .awrad-prayer-times-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .awrad-secondary-button {
+    width: 100%;
+  }
+  .awrad-manual-location-fields {
+    grid-template-columns: 1fr;
+  }
+  .awrad-manual-location form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .awrad-home-content .awrad-home-section {
+    margin-top: 28px;
+  }
+  .awrad-home-content .awrad-home-section .awrad-section-heading h2 {
+    font-size: 22px;
+  }
+  .awrad-home-goal-stack {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+  .awrad-home-goal-name {
+    font-size: 17px;
+  }
+  .awrad-category-scroller {
+    grid-auto-columns: 176px;
+  }
+  .awrad-category-card {
+    min-height: 176px;
   }
   .awrad-page-subtitle {
     font-size: 14px;

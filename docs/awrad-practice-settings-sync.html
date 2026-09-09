@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Awrad practice settings sync</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    :root {
+      --paper: #fafbfa;
+      --paper-2: #f0f2f0;
+      --ink: #1a1c1a;
+      --muted: #727472;
+      --soft: #454745;
+      --rule: rgba(26, 28, 26, 0.12);
+      --rule-solid: #c8d2c9;
+      --accent: #4b7c5a;
+      --accent-tint: #d4e8da;
+      --link: #2e5c3d;
+      --sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+      --display: 'Manrope', system-ui, sans-serif;
+      --serif: 'Instrument Serif', Georgia, serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+      padding: 48px 32px;
+    }
+
+    .container { max-width: 1240px; margin: 0 auto; }
+
+    .header { margin-bottom: 40px; max-width: 820px; }
+    .eyebrow, .figure-kicker, .footer, .legend-label {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .eyebrow { margin: 0 0 12px; }
+    h1 {
+      margin: 0 0 12px;
+      font-family: var(--display);
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.08;
+    }
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+      max-width: 68ch;
+    }
+
+    .figure-section { margin-top: 48px; }
+    .figure-heading { margin-bottom: 16px; }
+    .figure-kicker { margin: 0 0 8px; color: var(--accent); }
+    h2 {
+      margin: 0;
+      font-family: var(--display);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+    .figure-note {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+      max-width: 88ch;
+    }
+
+    .diagram-container {
+      overflow-x: auto;
+      padding: 0;
+    }
+    svg { display: block; width: 100%; min-width: 960px; height: auto; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr 0.9fr;
+      gap: 16px;
+      margin-top: 48px;
+    }
+    .card {
+      min-height: 148px;
+      padding: 20px;
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+    }
+    .card:nth-child(2) { background: var(--paper-2); }
+    .card:nth-child(3) { border-color: var(--accent); }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .card-dot { width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto; }
+    .card-dot.ink { background: var(--ink); }
+    .card-dot.muted { background: var(--muted); }
+    .card-dot.accent { background: var(--accent); }
+    .card h3 { margin: 0; font-size: 14px; font-weight: 700; }
+    .card ul { margin: 0; padding: 0; list-style: none; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .card li { position: relative; padding-left: 16px; margin: 4px 0; }
+    .card li::before { content: '—'; position: absolute; left: 0; color: var(--accent); }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 48px;
+      padding-top: 16px;
+      border-top: 1px solid var(--rule);
+      line-height: 1.5;
+      letter-spacing: 0.08em;
+    }
+    .footer span:last-child { color: var(--soft); text-transform: none; letter-spacing: 0.02em; }
+
+    @media (max-width: 720px) {
+      body { padding: 32px 20px; }
+      .cards { grid-template-columns: 1fr; }
+      .footer { display: block; }
+      .footer span { display: block; margin-bottom: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <p class="eyebrow">Awrad · domain model · 09 Sep 2026</p>
+      <h1>Shared practice rules, local device context</h1>
+      <p class="subtitle">Account policy becomes canonical after login. Each device retains its own location and timezone; prayer times and the effective practice day are derived from that local context.</p>
+    </header>
+
+    <section class="figure-section" aria-labelledby="architecture-heading">
+      <div class="figure-heading">
+        <p class="figure-kicker">01 / Architecture</p>
+        <h2 id="architecture-heading">Shared policy in the middle; each device resolves its own day</h2>
+      </div>
+      <div class="diagram-container">
+        <svg viewBox="0 0 1200 480" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="practice-architecture-title practice-architecture-desc">
+          <title id="practice-architecture-title">Awrad practice settings sync architecture</title>
+          <desc id="practice-architecture-desc">Android, iOS, and web devices keep their own location and timezone while synchronizing a shared account policy and counts; each device resolves its own effective practice day.</desc>
+          <defs>
+            <marker id="arch-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#727472"/></marker>
+            <marker id="arch-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5c3d"/></marker>
+            <marker id="arch-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b7c5a"/></marker>
+          </defs>
+
+          <rect width="100%" height="100%" fill="#fafbfa"/>
+
+          <!-- Zones -->
+          <rect x="24" y="56" width="264" height="340" rx="8" fill="rgba(26,28,26,0.02)" stroke="rgba(26,28,26,0.12)" stroke-width="0.8"/>
+          <rect x="316" y="56" width="444" height="340" rx="8" fill="rgba(26,28,26,0.02)" stroke="rgba(26,28,26,0.12)" stroke-width="0.8"/>
+          <rect x="788" y="56" width="388" height="340" rx="8" fill="rgba(26,28,26,0.02)" stroke="rgba(26,28,26,0.12)" stroke-width="0.8"/>
+          <rect x="40" y="60" width="112" height="12" rx="2" fill="#fafbfa"/>
+          <text x="96" y="69" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">DEVICE CONTEXTS</text>
+          <rect x="332" y="60" width="144" height="12" rx="2" fill="#fafbfa"/>
+          <text x="404" y="69" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">CANONICAL ACCOUNT</text>
+          <rect x="804" y="60" width="156" height="12" rx="2" fill="#fafbfa"/>
+          <text x="882" y="69" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.14em">DERIVED EXPERIENCE</text>
+
+          <!-- Connectors: orthogonal, behind nodes -->
+          <path d="M244 126 H288 Q296 126 296 134 V196 Q296 204 304 204 H352" fill="none" stroke="#2e5c3d" stroke-width="1.2" marker-end="url(#arch-arrow-link)"/>
+          <path d="M244 214 H272 Q280 214 280 222 V222 Q280 230 288 230 H352" fill="none" stroke="#2e5c3d" stroke-width="1.2" marker-end="url(#arch-arrow-link)"/>
+          <path d="M244 302 H272 Q280 302 280 294 V260 Q280 252 288 252 H352" fill="none" stroke="#2e5c3d" stroke-width="1.2" marker-end="url(#arch-arrow-link)"/>
+          <path d="M528 214 H544 Q552 214 552 206 V168 Q552 160 560 160 H568" fill="none" stroke="#4b7c5a" stroke-width="1.2" marker-end="url(#arch-arrow-accent)"/>
+          <path d="M528 246 H544 Q552 246 552 254 V308 Q552 316 560 316 H568" fill="none" stroke="#727472" stroke-width="1.2" marker-end="url(#arch-arrow)"/>
+          <line x1="744" y1="166" x2="816" y2="166" stroke="#4b7c5a" stroke-width="1.2" marker-end="url(#arch-arrow-accent)"/>
+          <line x1="1020" y1="166" x2="996" y2="166" stroke="#727472" stroke-width="1.2" marker-end="url(#arch-arrow)"/>
+          <line x1="906" y1="208" x2="906" y2="280" stroke="#4b7c5a" stroke-width="1.2" marker-end="url(#arch-arrow-accent)"/>
+          <line x1="744" y1="314" x2="816" y2="314" stroke="#727472" stroke-width="1.2" marker-end="url(#arch-arrow)"/>
+
+          <!-- Connector labels with paper masks -->
+          <rect x="232" y="80" width="128" height="12" rx="2" fill="#fafbfa"/>
+          <text x="296" y="89" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">REGISTER CONTEXT</text>
+          <rect x="448" y="128" width="104" height="12" rx="2" fill="#fafbfa"/>
+          <text x="500" y="137" fill="#4b7c5a" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">UPSERT POLICY</text>
+          <rect x="748" y="144" width="64" height="12" rx="2" fill="#fafbfa"/>
+          <text x="780" y="153" fill="#4b7c5a" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">RESOLVE</text>
+          <rect x="918" y="232" width="72" height="12" rx="2" fill="#fafbfa"/>
+          <text x="954" y="241" fill="#4b7c5a" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CONTEXT</text>
+
+          <!-- Nodes -->
+          <rect x="52" y="96" width="192" height="60" rx="6" fill="#fafbfa"/>
+          <rect x="52" y="96" width="192" height="60" rx="6" fill="rgba(114,116,114,0.10)" stroke="#454745" stroke-width="1"/>
+          <rect x="64" y="104" width="48" height="12" rx="2" fill="transparent" stroke="rgba(69,71,69,0.4)" stroke-width="0.8"/>
+          <text x="88" y="113" fill="#454745" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DEVICE</text>
+          <text x="148" y="132" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Android context</text>
+          <text x="148" y="148" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">location + timezone</text>
+
+          <rect x="52" y="184" width="192" height="60" rx="6" fill="#fafbfa"/>
+          <rect x="52" y="184" width="192" height="60" rx="6" fill="rgba(114,116,114,0.10)" stroke="#454745" stroke-width="1"/>
+          <rect x="64" y="192" width="48" height="12" rx="2" fill="transparent" stroke="rgba(69,71,69,0.4)" stroke-width="0.8"/>
+          <text x="88" y="201" fill="#454745" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DEVICE</text>
+          <text x="148" y="220" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">iOS context</text>
+          <text x="148" y="236" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">location + timezone</text>
+
+          <rect x="52" y="272" width="192" height="60" rx="6" fill="#fafbfa"/>
+          <rect x="52" y="272" width="192" height="60" rx="6" fill="rgba(114,116,114,0.10)" stroke="#454745" stroke-width="1"/>
+          <rect x="64" y="280" width="36" height="12" rx="2" fill="transparent" stroke="rgba(69,71,69,0.4)" stroke-width="0.8"/>
+          <text x="82" y="289" fill="#454745" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">WEB</text>
+          <text x="148" y="308" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Web context</text>
+          <text x="148" y="324" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">location + timezone</text>
+
+          <rect x="352" y="196" width="176" height="68" rx="6" fill="#fafbfa"/>
+          <rect x="352" y="196" width="176" height="68" rx="6" fill="#ffffff" stroke="#1a1c1a" stroke-width="1"/>
+          <rect x="364" y="204" width="72" height="12" rx="2" fill="transparent" stroke="rgba(26,28,26,0.4)" stroke-width="0.8"/>
+          <text x="400" y="213" fill="#454745" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">ADAPTER</text>
+          <text x="440" y="234" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">ProgressSync</text>
+          <text x="440" y="250" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">+ WebSync</text>
+
+          <rect x="568" y="124" width="176" height="84" rx="6" fill="#fafbfa"/>
+          <rect x="568" y="124" width="176" height="84" rx="6" fill="#d4e8da" stroke="#4b7c5a" stroke-width="1.2"/>
+          <rect x="580" y="132" width="52" height="12" rx="2" fill="transparent" stroke="rgba(75,124,90,0.55)" stroke-width="0.8"/>
+          <text x="606" y="141" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">CANON</text>
+          <text x="656" y="164" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">AccountPracticePolicy</text>
+          <text x="656" y="180" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">versioned account document</text>
+          <text x="656" y="196" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">day reset · method · madhab</text>
+
+          <rect x="568" y="280" width="176" height="68" rx="6" fill="#fafbfa"/>
+          <rect x="568" y="280" width="176" height="68" rx="6" fill="rgba(26,28,26,0.05)" stroke="#727472" stroke-width="1"/>
+          <rect x="580" y="288" width="52" height="12" rx="2" fill="transparent" stroke="rgba(114,116,114,0.4)" stroke-width="0.8"/>
+          <text x="606" y="297" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">LEDGER</text>
+          <text x="656" y="318" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">CountLedger</text>
+          <text x="656" y="334" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">immutable credits + projections</text>
+
+          <rect x="816" y="124" width="180" height="84" rx="6" fill="#fafbfa"/>
+          <rect x="816" y="124" width="180" height="84" rx="6" fill="#d4e8da" stroke="#4b7c5a" stroke-width="1.2"/>
+          <rect x="828" y="132" width="60" height="12" rx="2" fill="transparent" stroke="rgba(75,124,90,0.55)" stroke-width="0.8"/>
+          <text x="858" y="141" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DOMAIN</text>
+          <text x="906" y="164" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">PracticeContext</text>
+          <text x="906" y="180" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">policy + this device</text>
+          <text x="906" y="196" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">effective date + boundary</text>
+
+          <rect x="1020" y="124" width="132" height="84" rx="6" fill="#fafbfa"/>
+          <rect x="1020" y="124" width="132" height="84" rx="6" fill="rgba(26,28,26,0.05)" stroke="#727472" stroke-width="1"/>
+          <rect x="1032" y="132" width="52" height="12" rx="2" fill="transparent" stroke="rgba(114,116,114,0.4)" stroke-width="0.8"/>
+          <text x="1058" y="141" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">DERIVED</text>
+          <text x="1086" y="164" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Prayer times</text>
+          <text x="1086" y="180" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">daily cache</text>
+          <text x="1086" y="196" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">this device’s context</text>
+
+          <rect x="816" y="280" width="336" height="68" rx="6" fill="#fafbfa"/>
+          <rect x="816" y="280" width="336" height="68" rx="6" fill="#ffffff" stroke="#1a1c1a" stroke-width="1"/>
+          <rect x="828" y="288" width="72" height="12" rx="2" fill="transparent" stroke="rgba(26,28,26,0.4)" stroke-width="0.8"/>
+          <text x="864" y="297" fill="#454745" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.08em">SURFACES</text>
+          <text x="984" y="318" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Home + Goals + Counter</text>
+          <text x="984" y="334" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">show the same effective practice day</text>
+
+          <!-- Legend -->
+          <line x1="32" y1="432" x2="1168" y2="432" stroke="rgba(26,28,26,0.12)" stroke-width="0.8"/>
+          <text x="32" y="456" fill="#727472" font-size="8" font-family="ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+          <line x1="112" y1="452" x2="152" y2="452" stroke="#2e5c3d" stroke-width="1.2" marker-end="url(#arch-arrow-link)"/>
+          <text x="164" y="456" fill="#727472" font-size="8" font-family="ui-monospace, monospace">CONTEXT / SYNC</text>
+          <rect x="280" y="446" width="12" height="12" rx="2" fill="#d4e8da" stroke="#4b7c5a" stroke-width="1"/>
+          <text x="304" y="456" fill="#727472" font-size="8" font-family="ui-monospace, monospace">SHARED POLICY</text>
+          <rect x="472" y="446" width="12" height="12" rx="2" fill="rgba(26,28,26,0.05)" stroke="#727472" stroke-width="1"/>
+          <text x="496" y="456" fill="#727472" font-size="8" font-family="ui-monospace, monospace">DERIVED / STORED</text>
+        </svg>
+      </div>
+      <p class="figure-note">The account policy syncs to every device. Each device registers its own location and timezone and resolves its own effective practice day; two devices may legitimately be on different practice dates at the same instant.</p>
+    </section>
+
+    <section class="figure-section" aria-labelledby="sequence-heading">
+      <div class="figure-heading">
+        <p class="figure-kicker">02 / First-login sequence</p>
+        <h2 id="sequence-heading">Local settings are a draft until the account is bound</h2>
+      </div>
+      <div class="diagram-container">
+        <svg viewBox="0 0 1200 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="practice-sequence-title practice-sequence-desc">
+          <title id="practice-sequence-title">First login settings reconciliation</title>
+          <desc id="practice-sequence-desc">A sequence showing a user changing local policy before login, the mobile store loading the account policy, and separate handling when remote policy is absent or already exists while device context remains local.</desc>
+          <defs>
+            <marker id="seq-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#727472"/></marker>
+            <marker id="seq-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5c3d"/></marker>
+            <marker id="seq-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b7c5a"/></marker>
+          </defs>
+          <rect width="100%" height="100%" fill="#fafbfa"/>
+
+          <!-- Branch frame -->
+          <rect x="32" y="344" width="980" height="284" rx="4" fill="rgba(26,28,26,0.02)" stroke="rgba(26,28,26,0.22)" stroke-width="1"/>
+          <rect x="32" y="344" width="48" height="16" rx="2" fill="#fafbfa" stroke="rgba(26,28,26,0.22)" stroke-width="1"/>
+          <text x="56" y="356" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.12em">ALT</text>
+          <text x="92" y="380" fill="#727472" font-size="8" font-family="ui-monospace, monospace" letter-spacing="0.04em">[no remote policy]</text>
+          <line x1="40" y1="484" x2="1004" y2="484" stroke="rgba(26,28,26,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="92" y="516" fill="#727472" font-size="8" font-family="ui-monospace, monospace" letter-spacing="0.04em">[remote policy exists]</text>
+
+          <!-- Lifelines -->
+          <line x1="112" y1="116" x2="112" y2="696" stroke="rgba(26,28,26,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="332" y1="116" x2="332" y2="696" stroke="rgba(26,28,26,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="552" y1="116" x2="552" y2="696" stroke="rgba(26,28,26,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="772" y1="116" x2="772" y2="696" stroke="rgba(26,28,26,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="992" y1="116" x2="992" y2="696" stroke="rgba(26,28,26,0.20)" stroke-width="1" stroke-dasharray="3,3"/>
+
+          <!-- Activation bars -->
+          <rect x="328" y="176" width="8" height="456" fill="rgba(26,28,26,0.06)" stroke="#727472" stroke-width="0.8"/>
+          <rect x="548" y="192" width="8" height="48" fill="rgba(26,28,26,0.06)" stroke="#727472" stroke-width="0.8"/>
+          <rect x="768" y="260" width="8" height="412" fill="rgba(26,28,26,0.06)" stroke="#727472" stroke-width="0.8"/>
+          <rect x="988" y="316" width="8" height="148" fill="rgba(26,28,26,0.06)" stroke="#727472" stroke-width="0.8"/>
+
+          <!-- Messages -->
+          <line x1="112" y1="156" x2="332" y2="156" stroke="#727472" stroke-width="1.2" marker-end="url(#seq-arrow)"/>
+          <line x1="112" y1="196" x2="552" y2="196" stroke="#2e5c3d" stroke-width="1.2" marker-end="url(#seq-arrow-link)"/>
+          <line x1="552" y1="236" x2="112" y2="236" stroke="#727472" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#seq-arrow)"/>
+          <line x1="332" y1="280" x2="772" y2="280" stroke="#2e5c3d" stroke-width="1.2" marker-end="url(#seq-arrow-link)"/>
+          <line x1="772" y1="316" x2="992" y2="316" stroke="#727472" stroke-width="1.2" marker-end="url(#seq-arrow)"/>
+
+          <line x1="772" y1="412" x2="992" y2="412" stroke="#4b7c5a" stroke-width="1.2" marker-end="url(#seq-arrow-accent)"/>
+          <line x1="992" y1="448" x2="772" y2="448" stroke="#727472" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#seq-arrow)"/>
+
+          <line x1="772" y1="548" x2="332" y2="548" stroke="#727472" stroke-width="1.2" marker-end="url(#seq-arrow)"/>
+          <line x1="112" y1="584" x2="332" y2="584" stroke="#727472" stroke-width="1.2" marker-end="url(#seq-arrow)"/>
+          <line x1="332" y1="616" x2="772" y2="616" stroke="#4b7c5a" stroke-width="1.2" marker-end="url(#seq-arrow-accent)"/>
+          <line x1="772" y1="664" x2="332" y2="664" stroke="#727472" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#seq-arrow)"/>
+
+          <!-- Message labels; masks sit clear of the message lines -->
+          <rect x="160" y="128" width="104" height="12" rx="2" fill="#fafbfa"/><text x="212" y="137" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SET LOCALLY</text>
+          <rect x="296" y="168" width="72" height="12" rx="2" fill="#fafbfa"/><text x="332" y="177" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">LOGIN</text>
+          <rect x="288" y="208" width="104" height="12" rx="2" fill="#fafbfa"/><text x="340" y="217" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SESSION OK</text>
+          <rect x="512" y="252" width="88" height="12" rx="2" fill="#fafbfa"/><text x="556" y="261" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">BOOTSTRAP</text>
+          <rect x="812" y="288" width="136" height="12" rx="2" fill="#fafbfa"/><text x="880" y="297" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">LOAD POLICY + LEDGER</text>
+          <rect x="816" y="384" width="112" height="12" rx="2" fill="#fafbfa"/><text x="872" y="393" fill="#4b7c5a" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CREATE POLICY</text>
+          <rect x="816" y="420" width="96" height="12" rx="2" fill="#fafbfa"/><text x="864" y="429" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">POLICY VERSION 1</text>
+          <rect x="488" y="520" width="96" height="12" rx="2" fill="#fafbfa"/><text x="536" y="529" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">SHOW POLICY DIFF</text>
+          <rect x="160" y="556" width="96" height="12" rx="2" fill="#fafbfa"/><text x="208" y="565" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">CHOOSE POLICY</text>
+          <rect x="504" y="588" width="96" height="12" rx="2" fill="#fafbfa"/><text x="552" y="597" fill="#4b7c5a" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">UPSERT POLICY</text>
+          <rect x="444" y="636" width="216" height="12" rx="2" fill="#fafbfa"/><text x="552" y="645" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">MERGE COUNTS + REGISTER CONTEXT</text>
+
+          <!-- Actors -->
+          <rect x="32" y="48" width="160" height="56" rx="6" fill="#fafbfa"/>
+          <rect x="32" y="48" width="160" height="56" rx="6" fill="rgba(114,116,114,0.10)" stroke="#454745" stroke-width="1"/>
+          <text x="112" y="72" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">User</text>
+          <text x="112" y="88" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">intent + choice</text>
+
+          <rect x="252" y="48" width="160" height="56" rx="6" fill="#fafbfa"/>
+          <rect x="252" y="48" width="160" height="56" rx="6" fill="rgba(26,28,26,0.05)" stroke="#727472" stroke-width="1"/>
+          <text x="332" y="72" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Mobile store</text>
+          <text x="332" y="88" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">local policy + context</text>
+
+          <rect x="472" y="48" width="160" height="56" rx="6" fill="#fafbfa"/>
+          <rect x="472" y="48" width="160" height="56" rx="6" fill="rgba(75,124,90,0.05)" stroke="rgba(75,124,90,0.55)" stroke-width="1"/>
+          <text x="552" y="72" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Auth</text>
+          <text x="552" y="88" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">verified session</text>
+
+          <rect x="692" y="48" width="160" height="56" rx="6" fill="#fafbfa"/>
+          <rect x="692" y="48" width="160" height="56" rx="6" fill="#ffffff" stroke="#1a1c1a" stroke-width="1"/>
+          <text x="772" y="72" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Sync API</text>
+          <text x="772" y="88" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">bind + register context</text>
+
+          <rect x="912" y="48" width="160" height="56" rx="6" fill="#fafbfa"/>
+          <rect x="912" y="48" width="160" height="56" rx="6" fill="rgba(26,28,26,0.05)" stroke="#727472" stroke-width="1"/>
+          <text x="992" y="72" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Account state</text>
+          <text x="992" y="88" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">policy + ledger</text>
+
+          <!-- Legend -->
+          <line x1="32" y1="716" x2="1168" y2="716" stroke="rgba(26,28,26,0.12)" stroke-width="0.8"/>
+          <text x="32" y="740" fill="#727472" font-size="8" font-family="ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+          <line x1="112" y1="736" x2="152" y2="736" stroke="#727472" stroke-width="1.2" marker-end="url(#seq-arrow)"/>
+          <text x="164" y="740" fill="#727472" font-size="8" font-family="ui-monospace, monospace">CALL</text>
+          <line x1="240" y1="736" x2="280" y2="736" stroke="#727472" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#seq-arrow)"/>
+          <text x="292" y="740" fill="#727472" font-size="8" font-family="ui-monospace, monospace">RETURN</text>
+          <rect x="400" y="730" width="12" height="12" rx="2" fill="rgba(26,28,26,0.02)" stroke="rgba(26,28,26,0.22)" stroke-width="1"/>
+          <text x="424" y="740" fill="#727472" font-size="8" font-family="ui-monospace, monospace">EXPLICIT DECISION</text>
+        </svg>
+      </div>
+      <p class="figure-note">Only AccountPracticePolicy participates in the conflict. The current device’s location and timezone are retained and registered separately; counts continue through the ledger and merge independently.</p>
+    </section>
+
+    <section class="figure-section" aria-labelledby="state-heading">
+      <div class="figure-heading">
+        <p class="figure-kicker">03 / State machine</p>
+      <h2 id="state-heading">An account policy can become canonical, conflict, or stop</h2>
+      </div>
+      <div class="diagram-container">
+        <svg viewBox="0 0 1200 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="practice-state-title practice-state-desc">
+          <title id="practice-state-title">Account practice policy states</title>
+          <desc id="practice-state-desc">A state machine showing a shared account policy moving from local draft through remote adoption, explicit reconciliation, synchronization, or an account mismatch stop while device context stays separate.</desc>
+          <defs>
+            <marker id="state-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#727472"/></marker>
+            <marker id="state-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b7c5a"/></marker>
+          </defs>
+          <rect width="100%" height="100%" fill="#fafbfa"/>
+
+          <!-- Transitions -->
+          <line x1="68" y1="260" x2="96" y2="260" stroke="#727472" stroke-width="1.2" marker-end="url(#state-arrow)"/>
+          <path d="M256 260 H280 Q288 260 288 252 V132 Q288 124 296 124 H552" fill="none" stroke="#727472" stroke-width="1.2" marker-end="url(#state-arrow)"/>
+          <line x1="256" y1="260" x2="324" y2="260" stroke="#727472" stroke-width="1.2" marker-end="url(#state-arrow)"/>
+          <path d="M484 260 H508 Q516 260 516 252 V132 Q516 124 524 124 H552" fill="none" stroke="#4b7c5a" stroke-width="1.2" marker-end="url(#state-arrow-accent)"/>
+          <line x1="484" y1="260" x2="552" y2="260" stroke="#727472" stroke-width="1.2" marker-end="url(#state-arrow)"/>
+          <path d="M404 296 V332 Q404 340 412 340 H632 Q640 340 640 348 V376" fill="none" stroke="#727472" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#state-arrow)"/>
+          <path d="M728 124 H756 Q764 124 764 132 V252 Q764 260 772 260 H804" fill="none" stroke="#4b7c5a" stroke-width="1.2" marker-end="url(#state-arrow-accent)"/>
+          <line x1="728" y1="260" x2="804" y2="260" stroke="#4b7c5a" stroke-width="1.2" marker-end="url(#state-arrow-accent)"/>
+          <line x1="640" y1="448" x2="640" y2="492" stroke="#727472" stroke-width="1.2" marker-end="url(#state-arrow)"/>
+
+          <!-- Transition labels -->
+          <rect x="228" y="188" width="128" height="12" rx="2" fill="#fafbfa"/><text x="292" y="197" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">LOGIN / REMOTE POLICY</text>
+          <rect x="264" y="244" width="88" height="12" rx="2" fill="#fafbfa"/><text x="308" y="253" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">EDIT POLICY LOCALLY</text>
+          <rect x="480" y="96" width="120" height="12" rx="2" fill="#fafbfa"/><text x="540" y="105" fill="#4b7c5a" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">REMOTE ABSENT / PROMOTE</text>
+          <rect x="488" y="244" width="120" height="12" rx="2" fill="#fafbfa"/><text x="548" y="253" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">BOTH CHANGED / ASK</text>
+          <rect x="444" y="328" width="168" height="12" rx="2" fill="#fafbfa"/><text x="528" y="337" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">OTHER ACCOUNT + DURABLE DATA</text>
+          <rect x="724" y="180" width="152" height="12" rx="2" fill="#fafbfa"/><text x="800" y="189" fill="#4b7c5a" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">INSTALL REMOTE POLICY</text>
+          <rect x="724" y="204" width="128" height="12" rx="2" fill="#fafbfa"/><text x="788" y="213" fill="#4b7c5a" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle" letter-spacing="0.04em">USER CHOOSES POLICY</text>
+
+          <!-- Start / end -->
+          <circle cx="68" cy="260" r="6" fill="#1a1c1a"/>
+          <circle cx="640" cy="504" r="8" fill="#fafbfa" stroke="#727472" stroke-width="1"/>
+          <circle cx="640" cy="504" r="5" fill="#727472"/>
+
+          <!-- State boxes -->
+          <rect x="96" y="224" width="160" height="72" rx="8" fill="#fafbfa"/>
+          <rect x="96" y="224" width="160" height="72" rx="8" fill="rgba(26,28,26,0.05)" stroke="#727472" stroke-width="1"/>
+          <text x="176" y="252" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Default policy</text>
+          <text x="176" y="270" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">untouched local values</text>
+
+          <rect x="324" y="224" width="160" height="72" rx="8" fill="#fafbfa"/>
+          <rect x="324" y="224" width="160" height="72" rx="8" fill="rgba(26,28,26,0.05)" stroke="#727472" stroke-width="1"/>
+          <text x="404" y="252" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Local policy draft</text>
+          <text x="404" y="270" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">pre-auth policy edits</text>
+
+          <rect x="552" y="88" width="176" height="72" rx="8" fill="#fafbfa"/>
+          <rect x="552" y="88" width="176" height="72" rx="8" fill="rgba(26,28,26,0.05)" stroke="#727472" stroke-width="1"/>
+          <text x="640" y="116" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Remote policy</text>
+          <text x="640" y="134" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">account policy loaded</text>
+
+          <rect x="552" y="224" width="176" height="72" rx="8" fill="#fafbfa"/>
+          <rect x="552" y="224" width="176" height="72" rx="8" fill="rgba(26,28,26,0.05)" stroke="#727472" stroke-width="1"/>
+          <text x="640" y="252" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Policy reconcile</text>
+          <text x="640" y="270" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">preserve both proposals</text>
+
+          <rect x="804" y="224" width="160" height="72" rx="8" fill="#fafbfa"/>
+          <rect x="804" y="224" width="160" height="72" rx="8" fill="#d4e8da" stroke="#4b7c5a" stroke-width="1.2"/>
+          <text x="884" y="252" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Synced policy</text>
+          <text x="884" y="270" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">one canonical revision</text>
+
+          <rect x="552" y="376" width="176" height="72" rx="8" fill="#fafbfa"/>
+          <rect x="552" y="376" width="176" height="72" rx="8" fill="rgba(26,28,26,0.02)" stroke="#727472" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="640" y="404" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif" text-anchor="middle">Account mismatch</text>
+          <text x="640" y="422" fill="#727472" font-size="8" font-family="ui-monospace, monospace" text-anchor="middle">stop; re-auth or export</text>
+
+          <!-- Device context is intentionally orthogonal to the policy state machine -->
+          <rect x="804" y="376" width="336" height="72" rx="6" fill="rgba(26,28,26,0.02)" stroke="rgba(26,28,26,0.12)" stroke-width="1"/>
+          <text x="820" y="400" fill="#2e5c3d" font-size="8" font-family="ui-monospace, monospace" letter-spacing="0.12em">DEVICE CONTEXT</text>
+          <text x="820" y="420" fill="#1a1c1a" font-size="12" font-weight="600" font-family="'Plus Jakarta Sans', sans-serif">location + timezone stay local</text>
+          <text x="820" y="436" fill="#727472" font-size="8" font-family="ui-monospace, monospace">policy sync does not overwrite them</text>
+
+          <!-- Legend -->
+          <line x1="32" y1="528" x2="1168" y2="528" stroke="rgba(26,28,26,0.12)" stroke-width="0.8"/>
+          <text x="32" y="552" fill="#727472" font-size="8" font-family="ui-monospace, monospace" letter-spacing="0.14em">LEGEND</text>
+          <circle cx="112" cy="548" r="6" fill="#1a1c1a"/><text x="128" y="552" fill="#727472" font-size="8" font-family="ui-monospace, monospace">START</text>
+          <rect x="208" y="542" width="12" height="12" rx="2" fill="#d4e8da" stroke="#4b7c5a" stroke-width="1"/><text x="232" y="552" fill="#727472" font-size="8" font-family="ui-monospace, monospace">CANONICAL</text>
+          <rect x="344" y="542" width="12" height="12" rx="2" fill="rgba(26,28,26,0.02)" stroke="#727472" stroke-width="1" stroke-dasharray="4,3"/><text x="368" y="552" fill="#727472" font-size="8" font-family="ui-monospace, monospace">HARD STOP</text>
+          <circle cx="488" cy="548" r="8" fill="#fafbfa" stroke="#727472" stroke-width="1"/><circle cx="488" cy="548" r="5" fill="#727472"/><text x="504" y="552" fill="#727472" font-size="8" font-family="ui-monospace, monospace">END</text>
+        </svg>
+      </div>
+      <p class="figure-note">This state machine covers the shared policy only. Location and timezone live in each device context and never enter the policy conflict. A second account never silently inherits the first account’s local store.</p>
+    </section>
+
+    <section class="cards" aria-label="Design rules">
+      <article class="card">
+        <div class="card-header"><span class="card-dot accent"></span><h3>Policy has one owner</h3></div>
+        <ul>
+          <li>Before login: local policy is a draft.</li>
+          <li>After login: account policy is canonical.</li>
+          <li>Location and timezone stay per device.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <div class="card-header"><span class="card-dot muted"></span><h3>Counts keep provenance</h3></div>
+        <ul>
+          <li>Count credits merge through the existing ledger.</li>
+          <li>Historical dates are never re-bucketed.</li>
+          <li>New counts carry policy + device context revisions.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <div class="card-header"><span class="card-dot ink"></span><h3>Context stays private</h3></div>
+        <ul>
+          <li>Each device keeps its own location.</li>
+          <li>Web may use manual or browser location.</li>
+          <li>Account switching never silently rebinds data.</li>
+        </ul>
+      </article>
+    </section>
+
+    <footer class="footer">
+      <span>AWRAD / PRACTICE SETTINGS SYNC</span>
+      <span>Conceptual model — account policy + device context</span>
+    </footer>
+  </main>
+</body>
+</html>

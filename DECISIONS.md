@@ -331,6 +331,97 @@ prayer-relative and time-window slots stay view-only.
 
 None.
 
+## ADR-2026-09-09: Separate account practice policy from device context
+
+Status: Accepted
+
+### Context
+
+Day-end behavior, prayer calculation method, and madhab should be consistent
+for one account, while timezone and location can legitimately differ between a
+phone, tablet, and browser. Treating all of these as one shared settings row
+would make one device silently change another device's prayer context.
+
+### Decision
+
+Persist one canonical `AccountPracticePolicy` per user for day reset,
+calculation method, madhab, and its revision. Persist one `DeviceContext` per
+`(user_id, installation_id)` for timezone and optional location metadata. A
+browser records its context only after authenticated LiveView initialization,
+browser geolocation permission, manual coordinate entry, or a count command;
+location never overwrites another installation's context. For a Maghrib day
+reset, the browser calculates the boundary locally with the bundled Adhan JS
+calculator; the server compares the reported UTC instant with its own clock,
+accepts only the matching effective date, and falls back to midnight when this
+installation has no usable location. Historical progress keeps its accepted
+local date and is not rebucketed when a device context changes.
+
+### Consequences
+
+Account policy is reconciled across native and web clients through an additive
+verified API contract, while location remains device-local. Existing progress
+sync envelopes remain unchanged. Mobile clients use optimistic policy
+revisions; a stale mobile write adopts the current server policy.
+
+### Evidence
+
+- `awrad_server/lib/awrad_server/practice_settings.ex`
+- `awrad_server/lib/awrad_server/practice_settings/account_practice_policy.ex`
+- `awrad_server/lib/awrad_server/practice_settings/device_context.ex`
+- `awrad_server/lib/awrad_server_web/live/practice_live_support.ex`
+- `awrad_server/lib/awrad_server/practice_day.ex`
+- `awrad_server/assets/js/practice_day.js`
+- `awrad_server/test/awrad_server/practice_day_test.exs`
+- `awrad_server/test/awrad_server/practice_settings_test.exs`
+- `awrad_server/lib/awrad_server_web/controllers/api/practice_settings_controller.ex`
+- `awrad_server/test/awrad_server_web/controllers/api/practice_settings_controller_test.exs`
+- `awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/sync/PracticeSettingsRepository.kt`
+- `awrad-ios/awrad/awrad/Core/PracticeSettingsSync.swift`
+
+### Supersedes
+
+None.
+
+## ADR-2026-09-09: Merge local and remote practice settings at account binding
+
+Status: Accepted
+
+### Context
+
+Mobile settings can be chosen before sign-in, while the same account may
+already have a policy set on the web or another mobile installation. Blindly
+uploading local values would let a new device overwrite an established
+account, and blindly discarding them would lose intentional first-run choices.
+
+### Decision
+
+Fetch the server policy before applying or uploading mobile values. A local
+policy with no account owner may initialize only a revision-one server-default
+policy. After binding, a local change uploads with the last server revision;
+if the revision has moved, the server snapshot wins. The authenticated user ID
+is stored with the local settings metadata so switching accounts in one
+installation cannot carry the previous account's policy across. Every sync
+also sends timezone and optional location to the installation-specific device
+context endpoint.
+
+### Consequences
+
+The account policy is deterministic and conflict-safe without making network
+access a prerequisite for native counting. Local settings remain immediately
+usable offline; a failed settings request is retried by the existing foreground
+and background progress-sync cadence. Location never becomes account-global.
+
+### Evidence
+
+- `awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/sync/PracticeSettingsReconciliation.kt`
+- `awrad-ios/awrad/awrad/Core/PracticeSettingsSync.swift`
+- `awrad_server/lib/awrad_server/practice_settings.ex`
+- `CONTRACTS.md`
+
+### Supersedes
+
+None.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

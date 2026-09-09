@@ -37,6 +37,8 @@ defmodule AwradServerWeb.GoalsLive do
       page_title={gettext("Goals")}
       show_navigation={true}
       active_nav={:goals}
+      practice_policy={@practice_policy}
+      device_context={@device_context}
     >
       <.page_intro
         eyebrow={gettext("Your commitments")}
@@ -87,7 +89,7 @@ defmodule AwradServerWeb.GoalsLive do
     assign(
       socket,
       :goals,
-      Practice.list_goals(socket.assigns.current_scope, socket.assigns.browser_date)
+      Practice.list_goals(socket.assigns.current_scope, socket.assigns.effective_date)
     )
   end
 

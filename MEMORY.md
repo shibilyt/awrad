@@ -26,11 +26,12 @@ This file stores durable repository facts and a concise append-only change log. 
 - Android debug builds default to the emulator host API address; release builds require an explicit HTTPS API URL.
 - iOS `AuthService` defaults to a loopback development API URL and supports dependency injection of another base URL.
 - iOS credentials are stored in Keychain, and protected requests use single-flight refresh-and-retry while local devotional workflows remain available offline.
+- Practice settings synchronization is implemented additively for Android and iOS: account-wide day reset/calculation method/madhab use optimistic server revisions, while timezone and location are stored per installation. Anonymous non-default local choices can seed only a new server-default account; established-account conflicts resolve server-first.
 
 ## Known gaps and cautions
 
 - General cloud synchronization for goals, counts, dhikrs, and wirds is planned, not an implemented repository-wide contract.
-- API dhikr/tracking schemas should not be described as a complete sync surface until routes, ownership rules, revision semantics, and mobile consumers exist.
+- API dhikr/tracking schemas outside progress and practice settings should not be described as a complete sync surface until routes, ownership rules, revision semantics, and mobile consumers exist.
 - Some API memory documents and Android plans are historical snapshots. Verify current routes and behavior in code before relying on them.
 - Full API tests require PostgreSQL. Android instrumentation requires an emulator/device. iOS UI/runtime validation requires an available simulator.
 - Notification delivery, audio-route interruptions, signed App Group widget/App Intent mutation, Live Activity lifecycle, real location accuracy, and keep-awake/haptics require physical-device validation; simulator evidence is not equivalent.
@@ -90,3 +91,17 @@ Use this format:
 - Change: Mobile password login now identifies confirmed web accounts without a password, while web settings explains the requirement and Android opens the existing reset flow with the email prefilled. The additive error code keeps existing clients compatible.
 - Evidence: `awrad_server/lib/awrad_server_web/controllers/api/auth_controller.ex`, `awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/ui/screens/auth/LoginScreen.kt`, `CONTRACTS.md`
 - Commit: c576514
+
+### 2026-09-09 — Added cross-client practice settings synchronization
+
+- Area: Android | iOS | API | Cross-project | Documentation
+- Change: Added verified mobile GET/PUT practice settings routes, revision-checked account policy writes, per-installation device-context writes, and native reconciliation on authentication/foreground sync. Existing progress-sync routes and envelopes remain unchanged.
+- Evidence: `awrad_server/lib/awrad_server_web/controllers/api/practice_settings_controller.ex`, `awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/sync/PracticeSettingsRepository.kt`, `awrad-ios/awrad/awrad/Core/PracticeSettingsSync.swift`, `CONTRACTS.md`
+- Commit: uncommitted
+
+### 2026-09-09 — Added browser Maghrib effective-day resolution
+
+- Area: Web | API | Documentation
+- Change: The authenticated web companion now calculates Maghrib locally with bundled Adhan JS, resolves the per-device effective practice date, uses it across read models and counting, and validates the claimed date in `WebSync`; missing location or unavailable prayer times fall back explicitly to midnight.
+- Evidence: `awrad_server/assets/js/practice_day.js`, `awrad_server/lib/awrad_server/practice_day.ex`, `awrad_server/lib/awrad_server/web_sync.ex`, `docs/progress-sync-architecture.md`
+- Commit: uncommitted

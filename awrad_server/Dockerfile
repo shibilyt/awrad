@@ -6,7 +6,7 @@ ARG RUNNER_IMAGE=debian:trixie-slim
 FROM ${ELIXIR_IMAGE} AS builder
 
 RUN apt-get update -y \
-  && apt-get install -y --no-install-recommends build-essential git \
+  && apt-get install -y --no-install-recommends build-essential git nodejs npm \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -33,6 +33,7 @@ COPY priv priv
 COPY lib lib
 COPY assets assets
 
+RUN npm ci --prefix assets --omit=dev
 RUN mix assets.deploy
 RUN mix compile
 

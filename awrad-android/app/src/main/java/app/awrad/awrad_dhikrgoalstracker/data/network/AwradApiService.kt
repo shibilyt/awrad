@@ -8,6 +8,8 @@ import retrofit2.http.Header
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.POST
+import retrofit2.http.PUT
+import retrofit2.http.Query
 
 data class RegisterRequest(
     @SerializedName("email") val email: String,
@@ -70,6 +72,54 @@ data class ErrorResponse(
     @SerializedName("error") val error: String? = null,
     @SerializedName("errors") val errors: Map<String, List<String>>? = null,
     @SerializedName("error_code") val errorCode: String? = null,
+)
+
+data class PracticePolicyDto(
+    @SerializedName("day_reset") val dayReset: String,
+    @SerializedName("calculation_method") val calculationMethod: String,
+    @SerializedName("madhab") val madhab: String,
+    @SerializedName("revision") val revision: Int,
+)
+
+data class PracticeDeviceContextDto(
+    @SerializedName("installation_id") val installationId: String,
+    @SerializedName("timezone") val timezone: String,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null,
+    @SerializedName("accuracy_m") val accuracyM: Double? = null,
+    @SerializedName("location_source") val locationSource: String,
+    @SerializedName("revision") val revision: Int,
+    @SerializedName("last_seen_at") val lastSeenAt: String? = null,
+)
+
+data class PracticeSettingsResponse(
+    @SerializedName("policy") val policy: PracticePolicyDto,
+    @SerializedName("device_context") val deviceContext: PracticeDeviceContextDto? = null,
+)
+
+data class PracticePolicyUpdateDto(
+    @SerializedName("day_reset") val dayReset: String,
+    @SerializedName("calculation_method") val calculationMethod: String,
+    @SerializedName("madhab") val madhab: String,
+)
+
+data class PracticePolicyUpdateRequest(
+    @SerializedName("installation_id") val installationId: String,
+    @SerializedName("expected_revision") val expectedRevision: Int,
+    @SerializedName("policy") val policy: PracticePolicyUpdateDto,
+)
+
+data class PracticeDeviceContextUpdateRequest(
+    @SerializedName("installation_id") val installationId: String,
+    @SerializedName("device_context") val deviceContext: PracticeDeviceContextUpdateDto,
+)
+
+data class PracticeDeviceContextUpdateDto(
+    @SerializedName("timezone") val timezone: String,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null,
+    @SerializedName("accuracy_m") val accuracyM: Double? = null,
+    @SerializedName("location_source") val locationSource: String = "manual",
 )
 
 interface AwradApiService {
@@ -138,4 +188,19 @@ interface AwradApiService {
     suspend fun acknowledgeProgressActor(
         @Body request: SyncActorAckRequest,
     ): Response<SyncActorAckResponse>
+
+    @GET("api/sync/v1/practice-settings")
+    suspend fun practiceSettings(
+        @Query("installation_id") installationId: String,
+    ): Response<PracticeSettingsResponse>
+
+    @PUT("api/sync/v1/practice-settings/policy")
+    suspend fun updatePracticePolicy(
+        @Body request: PracticePolicyUpdateRequest,
+    ): Response<PracticeSettingsResponse>
+
+    @PUT("api/sync/v1/practice-settings/device-context")
+    suspend fun updatePracticeDeviceContext(
+        @Body request: PracticeDeviceContextUpdateRequest,
+    ): Response<PracticeSettingsResponse>
 }

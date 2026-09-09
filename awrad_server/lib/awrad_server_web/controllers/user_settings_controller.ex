@@ -2,6 +2,8 @@ defmodule AwradServerWeb.UserSettingsController do
   use AwradServerWeb, :controller
 
   alias AwradServer.Accounts
+  alias AwradServer.PracticeSettings
+  alias AwradServer.PracticeSettings.AccountPracticePolicy
   alias AwradServerWeb.PublicUrls
   alias AwradServerWeb.UserAuth
 
@@ -38,6 +40,23 @@ defmodule AwradServerWeb.UserSettingsController do
     end
   end
 
+  def update(conn, %{"action" => "update_practice_policy"} = params) do
+    policy_params = Map.get(params, "practice_policy", %{})
+
+    case PracticeSettings.update_policy(conn.assigns.current_scope, policy_params) do
+      {:ok, _policy} ->
+        conn
+        |> put_flash(:info, "Practice settings updated successfully.")
+        |> redirect(to: ~p"/users/settings")
+
+      {:error, changeset} ->
+        render(conn, :edit,
+          practice_policy_form:
+            Phoenix.Component.to_form(%{changeset | action: :update}, as: "practice_policy")
+        )
+    end
+  end
+
   def update(conn, %{"action" => "update_password"} = params) do
     %{"user" => user_params} = params
     user = conn.assigns.current_scope.user
@@ -70,10 +89,21 @@ defmodule AwradServerWeb.UserSettingsController do
 
   defp assign_email_and_password_changesets(conn, _opts) do
     user = conn.assigns.current_scope.user
+    policy = PracticeSettings.policy(conn.assigns.current_scope)
 
     conn
     |> assign(:email_changeset, Accounts.change_user_email(user))
     |> assign(:password_changeset, Accounts.change_user_password(user))
     |> assign(:password_setup_required, Accounts.password_setup_required?(user.email))
+    |> assign(:practice_policy, policy)
+    |> assign(
+      :practice_policy_form,
+      Phoenix.Component.to_form(PracticeSettings.policy_changeset(policy, %{}),
+        as: "practice_policy"
+      )
+    )
+    |> assign(:practice_day_resets, AccountPracticePolicy.day_resets())
+    |> assign(:practice_calculation_methods, AccountPracticePolicy.calculation_methods())
+    |> assign(:practice_madhabs, AccountPracticePolicy.madhabs())
   end
 end

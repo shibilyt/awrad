@@ -126,6 +126,16 @@ defmodule AwradServerWeb.Router do
     get "/deltas/:id/pages/:page", ProgressSyncController, :page
   end
 
+  # Practice policy is account-canonical; timezone and location are scoped to
+  # the authenticated installation that owns the bearer session.
+  scope "/api/sync/v1/practice-settings", AwradServerWeb.Api do
+    pipe_through :api_auth_verified
+
+    get "/", PracticeSettingsController, :show
+    put "/policy", PracticeSettingsController, :update_policy
+    put "/device-context", PracticeSettingsController, :update_device_context
+  end
+
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:awrad_server, :dev_routes) do
     import Phoenix.LiveDashboard.Router

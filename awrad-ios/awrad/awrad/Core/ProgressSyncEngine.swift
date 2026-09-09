@@ -248,6 +248,7 @@ final class ProgressSyncEngine {
     private let auth: AuthService
     private let repository: SwiftDataAwradRepository?
     private let defaults: UserDefaults
+    private let practiceSettingsSync: PracticeSettingsSyncService
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
     private(set) var remoteCountEvents: [RemoteCountSyncEvent] = []
@@ -258,11 +259,16 @@ final class ProgressSyncEngine {
     init(
         auth: AuthService,
         repository: SwiftDataAwradRepository?,
-        defaults: UserDefaults = .standard
+        defaults: UserDefaults = .standard,
+        practiceSettingsSync: PracticeSettingsSyncService? = nil
     ) {
         self.auth = auth
         self.repository = repository
         self.defaults = defaults
+        self.practiceSettingsSync = practiceSettingsSync ?? PracticeSettingsSyncService(
+            auth: auth,
+            defaults: defaults
+        )
         encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         decoder = JSONDecoder()
@@ -389,6 +395,13 @@ final class ProgressSyncEngine {
                 userID: userID, installationID: installationID, in: context
             )
             if !state.initialImportCompleted { initialState = try repository.loadState() }
+        }
+
+        do {
+            try await practiceSettingsSync.synchronize(store: store)
+        } catch {
+            // Practice settings must not prevent offline/local progress from
+            // reaching the existing sync pipeline.
         }
 
         do {

@@ -4,6 +4,8 @@ defmodule AwradServer.WebSyncTest do
   import Ecto.Query
 
   alias AwradServer.Dhikr.Dhikr
+  alias AwradServer.PracticeSettings.DeviceContext
+  alias AwradServer.PracticeSettings
   alias AwradServer.ProgressSync
   alias AwradServer.ProgressSync.{Actor, CountCredit, CountProjection, EntityRecord}
   alias AwradServer.Tracking
@@ -41,6 +43,19 @@ defmodule AwradServer.WebSyncTest do
 
     assert user_id == scope.user.id
     assert Repo.aggregate(CountCredit, :count) == 1
+
+    assert %DeviceContext{
+             timezone: "Asia/Kolkata",
+             latitude: nil,
+             longitude: nil,
+             location_source: "browser"
+           } =
+             Repo.one!(
+               from context in DeviceContext,
+                 where:
+                   context.user_id == ^scope.user.id and
+                     context.installation_id == ^installation_id
+             )
 
     assert %CountProjection{count: 1} =
              Repo.one!(
@@ -159,6 +174,97 @@ defmodule AwradServer.WebSyncTest do
              )
 
     assert Repo.aggregate(CountCredit, :count) == 1
+  end
+
+  test "derives the canonical count date after the browser Maghrib boundary" do
+    scope = user_scope_fixture()
+    {goal, slot} = create_bucket(scope)
+    assert {:ok, _policy} = PracticeSettings.update_policy(scope, %{day_reset: "maghrib"})
+
+    installation_id = Ecto.UUID.generate()
+    civil_date = ~D[2026-07-16]
+    effective_date = Date.add(civil_date, 1)
+    maghrib_at = DateTime.add(DateTime.utc_now(:second), -60, :second)
+
+    assert {:ok, _context} =
+             PracticeSettings.upsert_device_context(scope, installation_id, %{
+               timezone: "Asia/Kolkata",
+               latitude: 12.9716,
+               longitude: 77.5946,
+               location_source: "manual"
+             })
+
+    assert {:ok, %{status: :accepted}} =
+             WebSync.increment(
+               scope,
+               installation_id,
+               increment_attrs(Ecto.UUID.generate(), goal.id, slot.id)
+               |> Map.merge(%{
+                 civil_date: civil_date,
+                 local_date: effective_date,
+                 maghrib_at: DateTime.to_iso8601(maghrib_at)
+               })
+             )
+
+    assert %CountProjection{local_date: ^effective_date, count: 1} =
+             Repo.one!(
+               from projection in CountProjection,
+                 where:
+                   projection.user_id == ^scope.user.id and
+                     projection.goal_id == ^goal.id and projection.slot_id == ^slot.id
+             )
+  end
+
+  test "rejects a browser count whose date disagrees with the Maghrib boundary" do
+    scope = user_scope_fixture()
+    {goal, slot} = create_bucket(scope)
+    assert {:ok, _policy} = PracticeSettings.update_policy(scope, %{day_reset: "maghrib"})
+
+    civil_date = ~D[2026-07-16]
+    maghrib_at = DateTime.add(DateTime.utc_now(:second), -60, :second)
+
+    assert {:error, :practice_date_mismatch} =
+             WebSync.increment(
+               scope,
+               Ecto.UUID.generate(),
+               increment_attrs(Ecto.UUID.generate(), goal.id, slot.id)
+               |> Map.merge(%{
+                 civil_date: civil_date,
+                 local_date: Date.add(civil_date, 2),
+                 maghrib_at: DateTime.to_iso8601(maghrib_at)
+               })
+             )
+
+    assert Repo.aggregate(CountCredit, :count) == 0
+  end
+
+  test "falls back to the civil date when Maghrib has no device location" do
+    scope = user_scope_fixture()
+    {goal, slot} = create_bucket(scope)
+    assert {:ok, _policy} = PracticeSettings.update_policy(scope, %{day_reset: "maghrib"})
+
+    civil_date = ~D[2026-07-16]
+    maghrib_at = DateTime.add(DateTime.utc_now(:second), -60, :second)
+
+    assert {:ok, %{status: :accepted}} =
+             WebSync.increment(
+               scope,
+               Ecto.UUID.generate(),
+               increment_attrs(Ecto.UUID.generate(), goal.id, slot.id)
+               |> Map.merge(%{
+                 civil_date: civil_date,
+                 local_date: civil_date,
+                 maghrib_at: DateTime.to_iso8601(maghrib_at)
+               })
+             )
+
+    assert %CountProjection{local_date: ^civil_date, count: 1} =
+             Repo.one!(
+               from projection in CountProjection,
+                 where:
+                   projection.user_id == ^scope.user.id and
+                     projection.goal_id == ^goal.id and projection.slot_id == ^slot.id
+             )
   end
 
   test "rolls an expired browser actor to a new incarnation" do

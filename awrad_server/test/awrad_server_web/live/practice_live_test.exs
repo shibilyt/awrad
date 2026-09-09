@@ -5,6 +5,8 @@ defmodule AwradServerWeb.PracticeLiveTest do
 
   alias AwradServer.Dhikr.Dhikr
   alias AwradServer.Accounts.Scope
+  alias AwradServer.PracticeSettings.DeviceContext
+  alias AwradServer.PracticeSettings
   alias AwradServer.ProgressSync.EntityRecord
   alias AwradServer.Tracking
   alias AwradServer.AccountsFixtures
@@ -163,6 +165,133 @@ defmodule AwradServerWeb.PracticeLiveTest do
     assert html =~ "Saved to your account"
     assert html =~ "1/3"
     assert slot.id
+  end
+
+  test "persists browser location as device context without sharing it across accounts", %{
+    conn: conn
+  } do
+    {:ok, view, _html} = live(conn, ~p"/home")
+
+    render_hook(view, "browser_context", %{
+      "date" => "2026-07-16",
+      "timezone" => "Asia/Kolkata",
+      "latitude" => 10.1234,
+      "longitude" => 76.5678,
+      "accuracy_m" => 18.5,
+      "location_source" => "browser"
+    })
+
+    html = render(view)
+
+    assert has_element?(view, "#browser-location")
+    assert html =~ "10.1234"
+    assert html =~ "Asia/Kolkata"
+  end
+
+  test "renders mobile-style prayer times for the selected browser location", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/home")
+
+    render_hook(view, "browser_context", %{
+      "date" => "2026-09-09",
+      "timezone" => "Asia/Kolkata",
+      "latitude" => 11.4408,
+      "longitude" => 75.6954,
+      "location_name" => "Koyilandy, Kerala, India",
+      "prayer_times" => [
+        %{
+          "name" => "Fajr",
+          "time" => "5:03 AM",
+          "at" => "2026-09-09T23:33:00.000Z",
+          "is_complete" => true,
+          "is_next" => false
+        },
+        %{
+          "name" => "Dhuhr",
+          "time" => "12:22 PM",
+          "at" => "2026-09-09T06:52:00.000Z",
+          "is_complete" => true,
+          "is_next" => false
+        },
+        %{
+          "name" => "Asr",
+          "time" => "3:45 PM",
+          "at" => "2026-09-09T10:15:00.000Z",
+          "is_complete" => false,
+          "is_next" => true
+        },
+        %{
+          "name" => "Maghrib",
+          "time" => "6:32 PM",
+          "at" => "2026-09-09T13:02:00.000Z",
+          "is_complete" => false,
+          "is_next" => false
+        },
+        %{
+          "name" => "Isha",
+          "time" => "7:48 PM",
+          "at" => "2026-09-09T14:18:00.000Z",
+          "is_complete" => false,
+          "is_next" => false
+        }
+      ],
+      "next_prayer" => %{
+        "name" => "Asr",
+        "time" => "3:45 PM",
+        "at" => "2026-09-09T10:15:00.000Z",
+        "countdown" => "in 2h 15m"
+      }
+    })
+
+    assert has_element?(view, "#home-prayer-times", "Prayer times")
+    assert has_element?(view, "#home-prayer-times", "Koyilandy, Kerala, India")
+    assert has_element?(view, "#home-prayer-times [data-prayer-name=\"Asr\"]", "Asr")
+    assert has_element?(view, "#home-prayer-times [data-prayer-time=\"Asr\"]", "3:45 PM")
+    assert has_element?(view, "#home-prayer-times .is-next", "Next prayer")
+    assert render(view) =~ "in 2h 15m"
+  end
+
+  test "uses the browser Maghrib boundary for the account's practice date", %{
+    conn: conn,
+    user: user
+  } do
+    scope = Scope.for_user(user)
+    assert {:ok, _policy} = PracticeSettings.update_policy(scope, %{day_reset: "maghrib"})
+
+    civil_date = Date.utc_today()
+    maghrib_at = DateTime.add(DateTime.utc_now(:second), -60, :second)
+    {:ok, view, _html} = live(conn, ~p"/home")
+
+    render_hook(view, "browser_context", %{
+      "date" => Date.to_iso8601(civil_date),
+      "timezone" => "UTC",
+      "latitude" => 12.9716,
+      "longitude" => 77.5946,
+      "maghrib_at" => DateTime.to_iso8601(maghrib_at)
+    })
+
+    assert render(view) =~ Calendar.strftime(Date.add(civil_date, 1), "%A, %B %-d, %Y")
+  end
+
+  test "allows manual coordinates when browser location is unavailable", %{conn: conn, user: user} do
+    {:ok, view, _html} = live(conn, ~p"/home")
+
+    render_hook(view, "browser_context", %{
+      "date" => "2026-07-16",
+      "timezone" => "Asia/Kolkata"
+    })
+
+    render_submit(element(view, "#manual-browser-location"), %{
+      "latitude" => "10.1234",
+      "longitude" => "76.5678"
+    })
+
+    assert render(view) =~ "10.1234"
+
+    assert %DeviceContext{
+             latitude: 10.1234,
+             longitude: 76.5678,
+             location_source: "manual"
+           } = Repo.get_by!(DeviceContext, user_id: user.id)
   end
 
   test "shows the verification gate for an unconfirmed account", %{conn: conn} do

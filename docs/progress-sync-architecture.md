@@ -12,8 +12,11 @@ durable native outboxes and canonical shadows, atomic snapshot/delta staging,
 per-user revisions, actor recovery, idempotent receipts, the immutable count
 ledger, entity OCC/conflicts, tombstones/restoration fences, generation reset,
 checksummed transfer sessions, actor acknowledgements, projection repair,
-retention, bounded background compaction, and browser-scoped actors. The server
-feature flag can stop network synchronization without affecting offline counting.
+retention, bounded background compaction, and browser-scoped actors. It also
+includes the additive verified practice-settings contract: account policy is
+revisioned and shared, while device context remains installation-specific. The
+server feature flag can stop network synchronization without affecting offline
+counting.
 
 The next protocol version may add streaming transfers beyond the v1 50,000-row
 session bound and more granular conflict presentation. Those are extensions,
@@ -63,7 +66,7 @@ devices, not a runtime dependency for native offline counting.
 ## Browser companion actors
 
 The authenticated web companion reuses the existing `progress_sync_actors`
-table and does not add a migration or a public JSON route. The browser pipeline
+table and does not add a migration. The browser pipeline
 creates a server-generated UUIDv4 `web_installation_id` in the signed,
 host-only, `HttpOnly` Phoenix session cookie. The value is never read from or
 accepted from browser JavaScript as an ownership field.
@@ -84,11 +87,32 @@ reads acknowledge the actor at the current head and renew its lease so browser
 activity does not hold back compaction.
 
 The web UI sends the browser's local calendar date and IANA timezone on socket
-initialization and at midnight rollover. V1 has no IndexedDB, service worker,
-or browser outbox. Daily, one-time, and advanced goals expose manual counting
-only for active anytime slots; prayer-relative and time-window slots remain
-read-only. Mobile clients continue using the existing API and native sync
-contract unchanged.
+initialization and at calendar or Maghrib rollover. When the account policy
+uses Maghrib, the bundled Adhan JS calculator resolves Maghrib from this
+installation's coordinates and sends the resulting UTC instant. The server's
+`PracticeDay` resolver compares that instant with the server clock, uses the
+effective date for reads and writes, and rejects a count whose claimed date is
+stale. If the installation has no coordinates or prayer calculation fails,
+the resolver explicitly falls back to midnight and exposes that state to the
+web UI. Historical ledger dates are never rebucketed. V1 has no IndexedDB,
+service worker, or browser outbox. Daily, one-time, and advanced goals expose
+manual counting only for active anytime slots; prayer-relative and time-window
+slots remain read-only.
+
+Practice interpretation is split into two durable scopes. The account owns one
+versioned practice policy for day reset, prayer calculation method, and madhab.
+Each authenticated installation owns a separate device context for timezone,
+latitude, longitude, accuracy, location name, and location source. The browser
+records its timezone during LiveView initialization, keeps an allowed
+geolocation result in the active LiveView hook, and persists it only after the
+user grants permission (or accepts a named place or manually entered
+coordinates). It refreshes the same context on a count command. A second
+device or a second account using the same browser cannot inherit that location.
+Changing device context does not rewrite historical local dates or rebucket
+ledger credits. Mobile clients use the additive verified
+`/api/sync/v1/practice-settings` contract to reconcile the shared policy without
+making location account-global. Existing progress-sync envelopes remain
+unchanged.
 
 ## Identities and ordering
 
@@ -329,6 +353,23 @@ POST /actors/ack
 ```
 
 Protocol envelopes carry protocol version, progress-model version, and client capabilities. Ownership comes only from authenticated scope. Routes and body/batch/decompressed response work are bounded before public rollout.
+
+Practice settings use the same verified bearer pipeline but are not part of the
+progress envelope:
+
+```text
+GET /api/sync/v1/practice-settings?installation_id=<uuidv4>
+PUT /api/sync/v1/practice-settings/policy
+PUT /api/sync/v1/practice-settings/device-context
+```
+
+The server derives the user from the bearer session and verifies that the
+installation matches the session's device hash. Policy writes lock the account
+policy row and require `expected_revision`; a stale write returns
+`practice_policy_conflict` with the current policy. Mobile clients apply that
+snapshot. A first-run non-default local policy is allowed to initialize only a
+revision-one default account. Device context writes carry timezone and optional
+location and are stored by `(user_id, installation_id)`.
 
 ## Foreground synchronization cadence
 
