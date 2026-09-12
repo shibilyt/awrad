@@ -791,12 +791,13 @@
     <string name="onboarding_language_title">اختر لغتك</string>
     <string name="onboarding_language_subtitle">يمكنك تغييرها في أي وقت من الإعدادات.</string>
     <!-- Account scene -->
-    <string name="onboarding_account_eyebrow">حسابك</string>
-    <string name="onboarding_account_title">حافظ على تقدمك بأمان</string>
-    <string name="onboarding_account_subtitle">سجّل الدخول لمزامنة أهدافك وسلاسلك عبر أجهزتك.</string>
+    <string name="onboarding_account_eyebrow">بداية هادئة</string>
+    <string name="onboarding_account_title">ابدأ من حيث أنت</string>
+    <string name="onboarding_account_subtitle">لا تحتاج إلى حساب للبدء. أنشئ حسابًا لاحقًا لمزامنة أهدافك وسلاسلك عبر أجهزتك.</string>
     <string name="onboarding_account_google">المتابعة باستخدام Google</string>
     <string name="onboarding_account_email">المتابعة بالبريد الإلكتروني</string>
     <string name="onboarding_account_guest">المتابعة كضيف</string>
+    <string name="onboarding_account_guest_note">تبقى ممارستك محفوظة على هذا الجهاز، حتى دون حساب.</string>
     <string name="onboarding_account_signed_in_title">تم تسجيل دخولك</string>
     <string name="onboarding_auth_sign_in_title">مرحبًا بعودتك</string>
     <string name="onboarding_auth_create_title">أنشئ حسابك</string>
@@ -822,8 +823,15 @@
     <string name="onboarding_goalintro_hadith_ref">صحيح البخاري · ٦٣٠٧</string>
     <string name="onboarding_goalintro_close">ابدأ من حيث بدأ ﷺ — بالاستغفار.</string>
     <string name="onboarding_goal_title">هدف الذكر الأول</string>
-    <string name="onboarding_goal_subtitle">نقرة واحدة، ويصبح وِرد النبي ﷺ اليومي وِردك أنت أيضًا.</string>
-    <string name="onboarding_goal_hadith_note">سبعون استغفارًا في اليوم — العدد الذي ذكره النبي ﷺ بنفسه. أبقِ عليه، أو اختر وتيرتك الخاصة.</string>
+    <string name="onboarding_goal_subtitle">اختر وتيرة يسهل عليك العودة إليها كل يوم. يمكنك تغييرها في أي وقت.</string>
+    <string name="onboarding_goal_hadith_note">السبعون بداية جميلة، لكن أفضل هدف هو ما يمكنك المواظبة عليه.</string>
+    <string name="onboarding_goal_starter_label">بداية بسيطة</string>
+    <string name="onboarding_goal_recommended">موصى به</string>
+    <string name="onboarding_goal_choose_pace">اختر وتيرة البداية</string>
+    <string name="onboarding_goal_count_unit">يوميًا</string>
+    <string name="onboarding_goal_quick_hint">اضغط رقمًا أو عدّله</string>
+    <string name="onboarding_goal_custom_note">هذه الوتيرة لك. ابدأ بالقليل، وداوم، وعدّلها متى شئت.</string>
+    <string name="onboarding_goal_custom_label">وتيرتك المختارة</string>
     <string name="onboarding_goal_preset_istighfar_name">الاستغفار</string>
     <string name="onboarding_goal_preset_istighfar_meaning">طلب المغفرة من الله</string>
     <string name="onboarding_goal_count_label">العدد اليومي</string>
@@ -841,8 +849,6 @@
     <string name="coach_tap_title">انقر للعد</string>
     <string name="coach_tap_body">انقر الدائرة مرة واحدة لكل ذكر — تُحسب نقراتك فعلياً. جرّب ثلاثاً للمتابعة.</string>
     <string name="coach_count_progress">%1$d من %2$d</string>
-    <string name="coach_progress_title">تابع تقدمك</string>
-    <string name="coach_progress_body">يمتلئ هذا كلما تقدمت، لتعرف دائماً مدى قربك من هدفك اليومي.</string>
     <string name="coach_session_title">حدّد هدف جلسة</string>
     <string name="coach_session_body">اسعَ إلى هدف أصغر في جلسة واحدة — إنجاز سريع في طريقك إلى مجموعك اليومي.</string>
     <string name="coach_history_title">راجع سجلّك</string>
@@ -925,6 +931,8 @@
     <string name="onboarding_back">رجوع</string>
     <string name="onboarding_skip">تخطي</string>
     <string name="onboarding_continue">متابعة</string>
+    <string name="onboarding_progress">الخطوة %1$d من %2$d</string>
+    <string name="onboarding_progress_hint">يمكنك تعديل هذا لاحقًا</string>
 
     <!-- Wird / Collections -->
     <string name="wird_list_title">الأوراد</string>

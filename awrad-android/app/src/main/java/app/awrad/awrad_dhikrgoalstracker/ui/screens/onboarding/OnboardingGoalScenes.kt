@@ -1,20 +1,16 @@
 package app.awrad.awrad_dhikrgoalstracker.ui.screens.onboarding
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,8 +25,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -170,148 +165,271 @@ internal fun FirstGoalScene(
 ) {
     val preset = FirstGoalPresets.starter
     OnboardingScene(
-        icon = {
-            AwradLogoMark(modifier = Modifier.size(96.dp))
-        },
+        // The starter card already carries the dhikr identity; keep this step
+        // focused on the choice rather than repeating the brand mark.
+        icon = {},
         title = stringResource(R.string.onboarding_goal_title),
         subtitle = stringResource(R.string.onboarding_goal_subtitle),
+        topSpacerHeight = 0.dp,
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             AnimatedEntry(delayMillis = 120) {
-                GoalCard(preset = preset, count = count, onCountChanged = onCountChanged)
+                StarterDhikrCard(preset = preset)
             }
 
-            AnimatedEntry(delayMillis = 220) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = stringResource(R.string.onboarding_goal_hadith_note),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 4.dp),
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    HadithReferenceChip()
-                }
+            AnimatedEntry(delayMillis = 240) {
+                GoalCountPicker(
+                    count = count,
+                    preset = preset,
+                    onCountChanged = onCountChanged,
+                )
+            }
+
+            AnimatedEntry(delayMillis = 360) {
+                GoalContextNote(
+                    count = count,
+                    recommendedCount = preset.defaultCount,
+                )
             }
         }
     }
 }
 
-/** Non-selectable presentation of the single starter goal, with an inline count stepper. */
 @Composable
-private fun GoalCard(
-    preset: FirstGoalPreset,
-    count: Int,
-    onCountChanged: (Int) -> Unit,
-) {
+private fun StarterDhikrCard(preset: FirstGoalPreset) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        color = greenContainerColor(),
-        border = BorderStroke(1.5.dp, greenAccent()),
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)),
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(R.string.onboarding_goal_starter_label),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             Text(
                 text = preset.arabic,
+                modifier = Modifier.fillMaxWidth(),
                 fontFamily = NotoNaskhArabicFontFamily,
                 style = MaterialTheme.typography.headlineSmall,
-                lineHeight = 44.sp,
+                lineHeight = 42.sp,
                 color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
             )
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(preset.nameRes),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
             )
             Text(
                 text = stringResource(preset.meaningRes),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
             )
-            Spacer(modifier = Modifier.height(14.dp))
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-            Spacer(modifier = Modifier.height(14.dp))
-            CountStepper(count = count, onCountChanged = onCountChanged)
         }
     }
 }
 
 @Composable
-private fun CountStepper(
+private fun GoalCountPicker(
     count: Int,
+    preset: FirstGoalPreset,
     onCountChanged: (Int) -> Unit,
 ) {
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("onboarding-goal-count-picker"),
+        shape = RoundedCornerShape(28.dp),
+        color = greenContainerColor().copy(alpha = 0.46f),
+        border = BorderStroke(1.dp, greenAccent().copy(alpha = 0.28f)),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(
-                text = stringResource(R.string.onboarding_goal_count_label),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.onboarding_goal_count_label),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Text(
+                        text = stringResource(R.string.onboarding_goal_choose_pace),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (count == preset.defaultCount) {
+                    Text(
+                        text = stringResource(R.string.onboarding_goal_recommended),
+                        modifier = Modifier.testTag("onboarding-goal-recommended"),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = greenAccent(),
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(164.dp),
+            ) {
+                Surface(
+                    modifier = Modifier
+                        .size(148.dp)
+                        .align(Alignment.Center),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(1.dp, greenAccent().copy(alpha = 0.24f)),
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(
+                            text = count.toString(),
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text = stringResource(R.string.onboarding_goal_count_unit),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = greenAccent(),
+                        )
+                    }
+                }
+
                 StepperButton(
                     icon = Icons.Filled.Remove,
                     contentDescription = stringResource(R.string.onboarding_goal_decrease),
-                    onClick = { onCountChanged(count - 1) },
-                )
-                Text(
-                    text = count.toString(),
+                    enabled = count > FirstGoalPresets.MIN_COUNT,
                     modifier = Modifier
-                        .defaultMinSize(minWidth = 56.dp)
-                        .padding(horizontal = 8.dp),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
+                        .align(Alignment.CenterStart)
+                        .padding(start = 2.dp),
+                    onClick = { onCountChanged(count - 1) },
                 )
                 StepperButton(
                     icon = Icons.Filled.Add,
                     contentDescription = stringResource(R.string.onboarding_goal_increase),
+                    enabled = count < FirstGoalPresets.MAX_COUNT,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 2.dp),
                     onClick = { onCountChanged(count + 1) },
                 )
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            FirstGoalPresets.quickCounts.forEach { value ->
-                val active = value == count
-                Surface(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable { onCountChanged(value) },
-                    shape = RoundedCornerShape(14.dp),
-                    color = if (active) greenAccent() else MaterialTheme.colorScheme.surfaceContainerHighest,
-                ) {
-                    Text(
-                        text = value.toString(),
-                        modifier = Modifier.padding(vertical = 10.dp),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center,
-                        color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                    )
+            Text(
+                text = stringResource(R.string.onboarding_goal_quick_hint),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                FirstGoalPresets.quickCounts.forEach { value ->
+                    val active = value == count
+                    Surface(
+                        onClick = { onCountChanged(value) },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(54.dp)
+                            .testTag("onboarding-goal-preset-$value"),
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (active) greenAccent() else MaterialTheme.colorScheme.surface.copy(alpha = 0.78f),
+                        border = if (active) null else BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                        ),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = value.toString(),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = if (active) {
+                                    MaterialTheme.colorScheme.onPrimary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
+                            )
+                        }
+                    }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun GoalContextNote(
+    count: Int,
+    recommendedCount: Int,
+) {
+    val isRecommended = count == recommendedCount
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerLow.copy(alpha = 0.82f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.42f)),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 13.dp)) {
+            Text(
+                text = stringResource(
+                    if (isRecommended) {
+                        R.string.onboarding_goal_hadith_note
+                    } else {
+                        R.string.onboarding_goal_custom_note
+                    },
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = stringResource(
+                    if (isRecommended) {
+                        R.string.onboarding_goalintro_hadith_ref
+                    } else {
+                        R.string.onboarding_goal_custom_label
+                    },
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = greenAccent(),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
@@ -320,19 +438,24 @@ private fun CountStepper(
 private fun StepperButton(
     icon: ImageVector,
     contentDescription: String,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     Surface(
-        modifier = Modifier.size(40.dp).clickable(onClick = onClick),
-        shape = CircleShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+        onClick = onClick,
+        enabled = enabled,
+        modifier = modifier.size(52.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = if (enabled) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surface.copy(alpha = 0.58f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)),
     ) {
         Box(contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = icon,
                 contentDescription = contentDescription,
                 modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.35f),
             )
         }
     }

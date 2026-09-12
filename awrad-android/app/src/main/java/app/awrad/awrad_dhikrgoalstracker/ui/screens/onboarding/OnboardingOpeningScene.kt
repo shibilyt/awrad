@@ -58,8 +58,8 @@ private const val PHASE_BISMILLAH = 0
 private const val PHASE_REVEAL = 1
 private const val PHASE_READY = 2
 
-private const val BISMILLAH_HOLD_MS = 3100L
-private const val REVEAL_HOLD_MS = 1200L
+private const val BISMILLAH_HOLD_MS = 1800L
+private const val REVEAL_HOLD_MS = 700L
 
 @Composable
 internal fun OpeningScene(
@@ -127,7 +127,7 @@ internal fun OpeningScene(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                shape = RoundedCornerShape(22.dp),
+                shape = RoundedCornerShape(18.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = greenAccent(),
                     contentColor = MaterialTheme.colorScheme.onPrimary,

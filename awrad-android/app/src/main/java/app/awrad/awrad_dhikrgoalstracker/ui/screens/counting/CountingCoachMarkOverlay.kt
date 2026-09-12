@@ -47,7 +47,6 @@ import app.awrad.awrad_dhikrgoalstracker.R
 /** Screen-space bounds (px, relative to root) of the elements the guide highlights. */
 data class CoachMarkTargets(
     val countButton: Rect? = null,
-    val heroPanel: Rect? = null,
     val sessionTargetButton: Rect? = null,
     val historyButton: Rect? = null,
     val audioButton: Rect? = null,
@@ -86,14 +85,6 @@ fun CountingCoachMarkOverlay(
                     circle = true,
                     titleRes = R.string.coach_tap_title,
                     bodyRes = R.string.coach_tap_body,
-                ),
-            )
-            add(
-                CoachStep(
-                    target = targets.heroPanel,
-                    circle = false,
-                    titleRes = R.string.coach_progress_title,
-                    bodyRes = R.string.coach_progress_body,
                 ),
             )
             if (targets.sessionTargetButton != null) {

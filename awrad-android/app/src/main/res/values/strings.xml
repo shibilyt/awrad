@@ -971,12 +971,13 @@
     <string name="onboarding_language_title">Choose your language</string>
     <string name="onboarding_language_subtitle">You can change this anytime in Settings.</string>
     <!-- Account scene -->
-    <string name="onboarding_account_eyebrow">Your account</string>
-    <string name="onboarding_account_title">Keep your progress safe</string>
-    <string name="onboarding_account_subtitle">Sign in to sync goals and streaks across your devices.</string>
+    <string name="onboarding_account_eyebrow">A gentle start</string>
+    <string name="onboarding_account_title">Start where you are</string>
+    <string name="onboarding_account_subtitle">No account is needed to begin. Create one later to sync goals and streaks across devices.</string>
     <string name="onboarding_account_google">Continue with Google</string>
     <string name="onboarding_account_email">Continue with email</string>
     <string name="onboarding_account_guest">Continue as guest</string>
+    <string name="onboarding_account_guest_note">Your practice stays on this device, even without an account.</string>
     <string name="onboarding_account_signed_in_title">You\'re signed in</string>
     <string name="onboarding_auth_sign_in_title">Welcome back</string>
     <string name="onboarding_auth_create_title">Create your account</string>
@@ -1003,8 +1004,15 @@
     <string name="onboarding_goalintro_hadith_ref">Sahih al-Bukhari · 6307</string>
     <string name="onboarding_goalintro_close">Begin where he began — with istighfar.</string>
     <string name="onboarding_goal_title">Your first dhikr goal</string>
-    <string name="onboarding_goal_subtitle">One tap, and the Prophet\'s ﷺ daily practice becomes yours too.</string>
-    <string name="onboarding_goal_hadith_note">Seventy istighfar a day — the number the Prophet ﷺ himself named. Keep it, or set your own pace.</string>
+    <string name="onboarding_goal_subtitle">Choose a pace that feels easy to return to. You can change it anytime.</string>
+    <string name="onboarding_goal_hadith_note">Seventy is a beautiful starting point — but the best goal is one you can keep.</string>
+    <string name="onboarding_goal_starter_label">A simple place to begin</string>
+    <string name="onboarding_goal_recommended">Recommended</string>
+    <string name="onboarding_goal_choose_pace">Choose a starting pace</string>
+    <string name="onboarding_goal_count_unit">each day</string>
+    <string name="onboarding_goal_quick_hint">Tap a number or adjust it</string>
+    <string name="onboarding_goal_custom_note">This pace is yours to shape. Start small, stay steady, and adjust anytime.</string>
+    <string name="onboarding_goal_custom_label">Your chosen pace</string>
     <string name="onboarding_goal_preset_istighfar_name">Istighfar</string>
     <string name="onboarding_goal_preset_istighfar_meaning">Seeking Allah\'s forgiveness</string>
     <string name="onboarding_goal_count_label">Daily count</string>
@@ -1022,8 +1030,6 @@
     <string name="coach_tap_title">Tap to count</string>
     <string name="coach_tap_body">Tap the circle once for each dhikr — your taps count for real. Try three to continue.</string>
     <string name="coach_count_progress">%1$d of %2$d</string>
-    <string name="coach_progress_title">Watch your progress</string>
-    <string name="coach_progress_body">This fills as you go, so you always know how close you are to your daily goal.</string>
     <string name="coach_session_title">Set a session target</string>
     <string name="coach_session_body">Aim for a smaller goal in one sitting — a quick win on the way to your daily total.</string>
     <string name="coach_history_title">Review your history</string>
@@ -1106,6 +1112,8 @@
     <string name="onboarding_back">Back</string>
     <string name="onboarding_skip">Skip</string>
     <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_progress">Step %1$d of %2$d</string>
+    <string name="onboarding_progress_hint">You can adjust this later</string>
 
     <!-- Wird / Collections -->
     <string name="wird_list_title">Wirds</string>

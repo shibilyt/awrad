@@ -263,8 +263,17 @@ internal fun AccountScene(
                 )
             }
         } else {
+            AnimatedEntry(delayMillis = 330) {
+                AccountPrimaryButton(
+                    text = stringResource(R.string.onboarding_account_guest),
+                    onClick = onContinueAsGuest,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
             if (SHOW_GOOGLE_SIGN_IN) {
-                AnimatedEntry(delayMillis = 330) {
+                AnimatedEntry(delayMillis = 440) {
                     AccountChoiceButton(
                         label = stringResource(R.string.onboarding_account_google),
                         leading = {
@@ -292,10 +301,10 @@ internal fun AccountScene(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
-            AnimatedEntry(delayMillis = if (SHOW_GOOGLE_SIGN_IN) 440 else 330) {
+            AnimatedEntry(delayMillis = if (SHOW_GOOGLE_SIGN_IN) 550 else 440) {
                 AccountChoiceButton(
                     label = stringResource(R.string.onboarding_account_email),
                     leading = {
@@ -303,35 +312,29 @@ internal fun AccountScene(
                             imageVector = Icons.Outlined.MailOutline,
                             contentDescription = null,
                             modifier = Modifier.size(22.dp),
-                            tint = onGreenContainerColor(),
+                            tint = greenAccent(),
                         )
                     },
-                    container = greenContainerColor(),
-                    contentColor = onGreenContainerColor(),
+                    container = MaterialTheme.colorScheme.surfaceContainerLow,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
                     onClick = onContinueWithEmail,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            AnimatedEntry(delayMillis = if (SHOW_GOOGLE_SIGN_IN) 660 else 550) {
+                Text(
+                    text = stringResource(R.string.onboarding_account_guest_note),
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                 )
             }
         }
 
         Spacer(modifier = Modifier.weight(1f))
-
-        if (!isSignedIn) {
-            AnimatedEntry(delayMillis = 520) {
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    TextButton(onClick = onContinueAsGuest) {
-                        Text(
-                            text = stringResource(R.string.onboarding_account_guest),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = greenAccent(),
-                        )
-                    }
-                }
-            }
-        }
 
         Spacer(modifier = Modifier.height(8.dp))
     }
@@ -410,8 +413,8 @@ private fun AccountChoiceButton(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(58.dp),
-        shape = RoundedCornerShape(29.dp),
+            .height(54.dp),
+        shape = RoundedCornerShape(18.dp),
         color = container,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
         onClick = onClick,

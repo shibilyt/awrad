@@ -22,14 +22,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,6 +49,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -113,8 +115,10 @@ fun OnboardingScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.refreshReminderReliability()
+    LaunchedEffect(uiState.usesReturningUserFlow) {
+        if (uiState.usesReturningUserFlow) {
+            viewModel.refreshReminderReliability()
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -144,6 +148,13 @@ fun OnboardingScreen(
             )
 
             Column(modifier = Modifier.fillMaxSize()) {
+                if (uiState.currentStep != OnboardingViewModel.OPENING_STEP_INDEX) {
+                    OnboardingProgressHeader(
+                        currentStep = visibleStepIndex,
+                        totalSteps = visibleSteps.size,
+                    )
+                }
+
                 AnimatedContent(
                     targetState = uiState.currentStep,
                     modifier = Modifier
@@ -254,7 +265,6 @@ fun OnboardingScreen(
                 if (uiState.currentStep != OnboardingViewModel.OPENING_STEP_INDEX) {
                     BottomControls(
                         currentStep = visibleStepIndex,
-                        totalSteps = visibleSteps.size,
                         canAdvance = when (uiState.currentStep) {
                             OnboardingViewModel.NAME_STEP_INDEX -> uiState.userName.isNotBlank()
                             OnboardingViewModel.AUDIO_STEP_INDEX -> uiState.audioSetupStatus != AudioSetupStatus.Downloading
@@ -319,6 +329,7 @@ internal fun OnboardingScene(
         AnimatedEntry(delayMillis = 120) {
             Text(
                 text = title,
+                modifier = Modifier.widthIn(max = 440.dp),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -331,6 +342,7 @@ internal fun OnboardingScene(
         AnimatedEntry(delayMillis = 240) {
             Text(
                 text = subtitle,
+                modifier = Modifier.widthIn(max = 440.dp),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -722,9 +734,53 @@ private fun AudioSecondaryButton(text: String, onClick: () -> Unit) {
 // ─── Bottom Controls ────────────────────────────────────────────────────────
 
 @Composable
-private fun BottomControls(
+private fun OnboardingProgressHeader(
     currentStep: Int,
     totalSteps: Int,
+) {
+    val safeTotalSteps = totalSteps.coerceAtLeast(1)
+    val progress = ((currentStep + 1).toFloat() / safeTotalSteps).coerceIn(0f, 1f)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .statusBarsPadding()
+            .padding(horizontal = 24.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = stringResource(R.string.onboarding_progress, currentStep + 1, safeTotalSteps),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(R.string.onboarding_progress_hint),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
+            )
+        }
+
+        LinearProgressIndicator(
+            progress = { progress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(RoundedCornerShape(2.dp)),
+            color = greenAccent(),
+            trackColor = greenContainerColor(),
+        )
+    }
+}
+
+@Composable
+private fun BottomControls(
+    currentStep: Int,
     canAdvance: Boolean,
     isLastStep: Boolean,
     hideForwardControls: Boolean,
@@ -740,89 +796,85 @@ private fun BottomControls(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp, vertical = 16.dp),
+            .padding(horizontal = 24.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        OnboardingProgressBeads(currentStep = currentStep, totalSteps = totalSteps)
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        if (isLastStep) {
-            Button(
-                onClick = onFinish,
-                enabled = finishEnabled,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(22.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = greenAccent(),
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                ),
-            ) {
-                Text(
-                    text = finishLabel,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (currentStep > 0) {
-                    TextButton(onClick = onBack, modifier = Modifier.height(48.dp)) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.onboarding_back),
-                            modifier = Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = stringResource(R.string.onboarding_back),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                } else {
-                    Spacer(modifier = Modifier.width(1.dp))
+        if (!hideForwardControls) {
+            if (isLastStep) {
+                Button(
+                    onClick = onFinish,
+                    enabled = finishEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = greenAccent(),
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                ) {
+                    Text(
+                        text = finishLabel,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+            } else {
+                Button(
+                    onClick = onNext,
+                    enabled = canAdvance,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = greenAccent(),
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                ) {
+                    Text(text = nextLabel, style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = nextLabel,
+                        modifier = Modifier.size(18.dp),
+                    )
                 }
 
-                if (!hideForwardControls) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (showSkip) {
-                            TextButton(onClick = onSkip) {
-                                Text(
-                                    text = stringResource(R.string.onboarding_skip),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(8.dp))
-                        }
-                        Button(
-                            onClick = onNext,
-                            enabled = canAdvance,
-                            modifier = Modifier
-                                .height(48.dp)
-                                .defaultMinSize(minWidth = 140.dp),
-                            shape = RoundedCornerShape(20.dp),
-                        ) {
-                            Text(text = nextLabel, style = MaterialTheme.typography.titleSmall)
-                            Spacer(modifier = Modifier.width(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (currentStep > 0) {
+                        TextButton(onClick = onBack, modifier = Modifier.height(44.dp)) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = nextLabel,
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.onboarding_back),
                                 modifier = Modifier.size(18.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = stringResource(R.string.onboarding_back),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.width(1.dp))
+                    }
+
+                    if (showSkip) {
+                        TextButton(onClick = onSkip, modifier = Modifier.height(44.dp)) {
+                            Text(
+                                text = stringResource(R.string.onboarding_skip),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }

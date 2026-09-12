@@ -96,10 +96,7 @@ internal fun AnimatedEntry(
 
 // ─── Cinematic backdrop ──────────────────────────────────────────────────────
 
-/**
- * Simple, static full-bleed gradient backdrop behind the scene content.
- * A soft sage→background vertical wash — no animation, nothing fancy.
- */
+/** A quiet, static wash that gives every step a shared visual home. */
 @Composable
 internal fun CinematicBackdrop(
     stepIndex: Int,
@@ -108,78 +105,25 @@ internal fun CinematicBackdrop(
 ) {
     val accent = greenAccent()
     val background = MaterialTheme.colorScheme.background
+    val progress = if (totalSteps <= 1) 0f else stepIndex.toFloat() / (totalSteps - 1)
+    val topAlpha = (0.12f - progress * 0.035f).coerceAtLeast(0.07f)
+    val bottomAlpha = (0.025f + progress * 0.02f).coerceAtMost(0.05f)
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(
+                Brush.linearGradient(
                     colors = listOf(
-                        accent.copy(alpha = 0.10f),
+                        accent.copy(alpha = topAlpha),
                         background,
-                        background,
+                        accent.copy(alpha = bottomAlpha),
                     ),
+                    start = Offset.Zero,
+                    end = Offset(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY),
                 ),
             ),
     )
-}
-
-// ─── Progress beads (misbaha strand) ─────────────────────────────────────────
-
-@Composable
-internal fun OnboardingProgressBeads(
-    currentStep: Int,
-    totalSteps: Int,
-    modifier: Modifier = Modifier,
-) {
-    val accent = greenAccent()
-    val track = MaterialTheme.colorScheme.outlineVariant
-    val pulse = rememberInfiniteTransition(label = "beadPulse")
-    val halo by pulse.animateFloat(
-        initialValue = 0.45f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 1100, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "beadHalo",
-    )
-
-    Canvas(
-        modifier = modifier
-            .size(width = (totalSteps * 16).dp, height = 16.dp),
-    ) {
-        val n = totalSteps
-        val spacing = size.width / n
-        val cy = size.height / 2f
-        repeat(n) { i ->
-            val cx = spacing * (i + 0.5f)
-            when {
-                i < currentStep -> drawCircle(
-                    color = accent,
-                    radius = 3.dp.toPx(),
-                    center = Offset(cx, cy),
-                )
-                i == currentStep -> {
-                    drawCircle(
-                        color = accent.copy(alpha = 0.25f * halo),
-                        radius = 7.dp.toPx(),
-                        center = Offset(cx, cy),
-                    )
-                    drawCircle(
-                        color = accent,
-                        radius = 4.dp.toPx(),
-                        center = Offset(cx, cy),
-                    )
-                }
-                else -> drawCircle(
-                    color = track,
-                    radius = 2.5.dp.toPx(),
-                    center = Offset(cx, cy),
-                )
-            }
-        }
-    }
 }
 
 // ─── Shared selection indicator ──────────────────────────────────────────────
@@ -327,4 +271,3 @@ internal fun PrayerTimeGlyph(modifier: Modifier = Modifier) {
         }
     }
 }
-

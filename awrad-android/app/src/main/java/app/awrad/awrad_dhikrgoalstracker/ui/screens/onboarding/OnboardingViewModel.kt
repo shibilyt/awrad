@@ -134,7 +134,10 @@ class OnboardingViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(
         OnboardingUiState(
-            currentStep = savedStateHandle.get<Int>(KEY_CURRENT_STEP) ?: OPENING_STEP_INDEX,
+            currentStep = restoredStep(
+                savedStep = savedStateHandle.get<Int>(KEY_CURRENT_STEP),
+                returningUser = savedStateHandle.get<Boolean>(KEY_RETURNING_USER_FLOW) ?: false,
+            ),
             languageTag = currentLanguageTag(),
             usesReturningUserFlow = savedStateHandle.get<Boolean>(KEY_RETURNING_USER_FLOW) ?: false,
         ),
@@ -178,14 +181,36 @@ class OnboardingViewModel @Inject constructor(
             AUDIO_STEP_INDEX,
         )
 
+        /**
+         * First-run setup should get a user to a real dhikr goal quickly. Profile
+         * details, device permissions, reminder reliability, and the audio library
+         * remain available after the first session.
+         */
+        private val FIRST_RUN_STEPS = listOf(
+            OPENING_STEP_INDEX,
+            LANGUAGE_STEP_INDEX,
+            ACCOUNT_STEP_INDEX,
+            FIRST_GOAL_STEP_INDEX,
+        )
+
         internal fun visibleSteps(returningUser: Boolean): List<Int> =
-            if (returningUser) RETURNING_USER_STEPS else (0 until TOTAL_STEPS).toList()
+            if (returningUser) RETURNING_USER_STEPS else FIRST_RUN_STEPS
 
         internal fun nextStepIndex(current: Int, returningUser: Boolean): Int? =
             adjacentStepIndex(current, offset = 1, returningUser = returningUser)
 
         internal fun previousStepIndex(current: Int, returningUser: Boolean): Int? =
             adjacentStepIndex(current, offset = -1, returningUser = returningUser)
+
+        /** Keep users who were mid-way through the previous longer flow moving forward. */
+        internal fun restoredStep(savedStep: Int?, returningUser: Boolean): Int {
+            if (savedStep == null || savedStep in visibleSteps(returningUser)) return savedStep ?: OPENING_STEP_INDEX
+            return if (returningUser || savedStep <= ACCOUNT_STEP_INDEX) {
+                OPENING_STEP_INDEX
+            } else {
+                FIRST_GOAL_STEP_INDEX
+            }
+        }
 
         private fun adjacentStepIndex(current: Int, offset: Int, returningUser: Boolean): Int? {
             val route = visibleSteps(returningUser)
@@ -458,7 +483,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun goToStep(step: Int) {
-        if (step in 0 until TOTAL_STEPS) {
+        if (step in visibleSteps(_uiState.value.usesReturningUserFlow)) {
             setStep(step)
         }
     }

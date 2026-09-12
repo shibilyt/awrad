@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -105,6 +106,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -227,7 +229,6 @@ fun CountingScreen(
     // First-run counting coach marks
     val hasSeenCountingGuide by viewModel.hasSeenCountingGuide.collectAsStateWithLifecycle()
     var countButtonRect by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
-    var heroPanelRect by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var sessionTargetButtonRect by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var historyButtonRect by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
     var audioButtonRect by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
@@ -860,13 +861,11 @@ fun CountingScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
             androidx.compose.foundation.layout.Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .onGloballyPositioned { heroPanelRect = it.boundsInRoot() },
-                contentAlignment = Alignment.BottomCenter,
+                    .weight(1f),
+                contentAlignment = Alignment.Center,
             ) {
                 if (uiState.hasSlotProgress && summarySlot != null) {
                     SlotProgressCard(
@@ -877,6 +876,7 @@ fun CountingScreen(
                         onClearSession = viewModel::clearSessionTarget,
                         onOpenSlots = { showSlots = true },
                         onCount = viewModel::onManualTap,
+                        onCounterPositioned = { countButtonRect = it },
                         canCount = uiState.canManualCount && !countingState.isAudioMode,
                         syncFeedback = syncFeedback,
                         isTargetBlocked = uiState.isBlockedAtTarget,
@@ -890,6 +890,7 @@ fun CountingScreen(
                         activeSlot = activeSlot,
                         onClearSession = viewModel::clearSessionTarget,
                         onCount = viewModel::onManualTap,
+                        onCounterPositioned = { countButtonRect = it },
                         canCount = uiState.canManualCount && !countingState.isAudioMode,
                         syncFeedback = syncFeedback,
                         isTargetBlocked = uiState.isBlockedAtTarget,
@@ -906,11 +907,10 @@ fun CountingScreen(
         // First-run guide: shown once, after layout is measured. It deliberately
         // stays mounted through audio mode so the audio hint can watch the audio
         // count reach its target before finishing.
-        if (hasSeenCountingGuide == false && (countButtonRect != null || heroPanelRect != null)) {
+        if (hasSeenCountingGuide == false && countButtonRect != null) {
             CountingCoachMarkOverlay(
                 targets = CoachMarkTargets(
-                    countButton = countButtonRect ?: heroPanelRect,
-                    heroPanel = heroPanelRect,
+                    countButton = countButtonRect,
                     sessionTargetButton = sessionTargetButtonRect,
                     historyButton = historyButtonRect,
                     audioButton = audioButtonRect,
@@ -1342,6 +1342,7 @@ private fun CountingHeroPanel(
     activeSlot: SlotCountingUiModel?,
     onClearSession: () -> Unit,
     onCount: () -> Unit,
+    onCounterPositioned: (Rect) -> Unit,
     canCount: Boolean,
     syncFeedback: CountingSyncFeedback?,
     isTargetBlocked: Boolean,
@@ -1439,9 +1440,11 @@ private fun CountingHeroPanel(
 
         Box(
             modifier = Modifier
+                .widthIn(max = 320.dp)
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .clip(CircleShape)
+                .onGloballyPositioned { onCounterPositioned(it.boundsInRoot()) }
                 .clickable(enabled = canCount, onClick = onCount),
             contentAlignment = Alignment.Center,
         ) {
@@ -1679,6 +1682,7 @@ private fun SlotProgressCard(
     onClearSession: () -> Unit,
     onOpenSlots: () -> Unit,
     onCount: () -> Unit,
+    onCounterPositioned: (Rect) -> Unit,
     canCount: Boolean,
     syncFeedback: CountingSyncFeedback?,
     isTargetBlocked: Boolean,
@@ -1787,9 +1791,11 @@ private fun SlotProgressCard(
 
         Box(
             modifier = Modifier
+                .widthIn(max = 320.dp)
                 .fillMaxWidth()
                 .aspectRatio(1f)
                 .clip(CircleShape)
+                .onGloballyPositioned { onCounterPositioned(it.boundsInRoot()) }
                 .clickable(enabled = canCount, onClick = onCount),
             contentAlignment = Alignment.Center,
         ) {

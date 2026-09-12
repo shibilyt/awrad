@@ -28,14 +28,49 @@ class OnboardingStepOrderTest {
     }
 
     @Test
-    fun `first goal is the final step, right after its cinematic intro`() {
+    fun `stable scene slots keep the first goal index after its legacy intro`() {
         assertEquals(OnboardingViewModel.GOAL_INTRO_STEP_INDEX + 1, OnboardingViewModel.FIRST_GOAL_STEP_INDEX)
         assertEquals(OnboardingViewModel.TOTAL_STEPS - 1, OnboardingViewModel.FIRST_GOAL_STEP_INDEX)
     }
 
     @Test
-    fun `onboarding has ten scenes`() {
+    fun `first run keeps only the core setup path before the first goal`() {
+        assertEquals(
+            listOf(
+                OnboardingViewModel.OPENING_STEP_INDEX,
+                OnboardingViewModel.LANGUAGE_STEP_INDEX,
+                OnboardingViewModel.ACCOUNT_STEP_INDEX,
+                OnboardingViewModel.FIRST_GOAL_STEP_INDEX,
+            ),
+            OnboardingViewModel.visibleSteps(returningUser = false),
+        )
+        assertEquals(
+            OnboardingViewModel.FIRST_GOAL_STEP_INDEX,
+            OnboardingViewModel.nextStepIndex(OnboardingViewModel.ACCOUNT_STEP_INDEX, returningUser = false),
+        )
+        assertNull(
+            OnboardingViewModel.nextStepIndex(OnboardingViewModel.FIRST_GOAL_STEP_INDEX, returningUser = false),
+        )
+    }
+
+    @Test
+    fun `onboarding keeps ten stable scene slots for saved state compatibility`() {
         assertEquals(10, OnboardingViewModel.TOTAL_STEPS)
+    }
+
+    @Test
+    fun `legacy first-run device setup resumes at the first goal`() {
+        assertEquals(
+            OnboardingViewModel.FIRST_GOAL_STEP_INDEX,
+            OnboardingViewModel.restoredStep(
+                savedStep = OnboardingViewModel.AUDIO_STEP_INDEX,
+                returningUser = false,
+            ),
+        )
+        assertEquals(
+            OnboardingViewModel.OPENING_STEP_INDEX,
+            OnboardingViewModel.restoredStep(savedStep = null, returningUser = false),
+        )
     }
 
     @Test
