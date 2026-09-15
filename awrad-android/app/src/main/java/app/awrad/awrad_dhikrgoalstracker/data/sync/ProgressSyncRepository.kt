@@ -365,11 +365,18 @@ class ProgressSyncRepository @Inject constructor(
                 val hasConflict = unresolved.any {
                     it.state == "conflict" && it.entityType == entityType && it.entityId == entityId
                 }
-                if (ProgressSyncRepairPolicy.shouldRequeue(
-                        failedAttempts,
-                        syncDao.activeEntityCommand(entityType, entityId) != null,
-                        hasConflict,
-                ) && syncDao.shadow(entityType, entityId) == null
+                val hasActiveCommand = syncDao.activeEntityCommand(entityType, entityId) != null
+                val canRequeue = ProgressSyncRepairPolicy.shouldRequeue(
+                    failedAttempts,
+                    hasActiveCommand,
+                    hasConflict,
+                ) || ProgressSyncRepairPolicy.shouldRequeueHistoricalInvalidFailure(
+                    failedAttempts = failedAttempts,
+                    hasInvalidFailure = failed.any { it.lastError == "invalid" },
+                    hasActiveCommand = hasActiveCommand,
+                    hasConflict = hasConflict,
+                )
+                if (canRequeue && syncDao.shadow(entityType, entityId) == null
                 ) {
                     failed.forEach { syncDao.deleteOutbox(it.commandId) }
                     changed = enqueueEntityLocked(
@@ -400,11 +407,20 @@ class ProgressSyncRepository @Inject constructor(
                     val failed = unresolvedCounts.filter { it.state == "failed" }
                     val failedAttempts = failed.maxOfOrNull { it.attemptCount } ?: 0
                     val hasConflict = unresolvedCounts.any { it.state == "conflict" }
-                    if (!ProgressSyncRepairPolicy.shouldRequeue(
-                            failedAttempts,
-                            unresolvedCounts.any { it.state == "pending" || it.state == "sending" },
-                            hasConflict,
-                        )
+                    val hasActiveCommand = unresolvedCounts.any {
+                        it.state == "pending" || it.state == "sending"
+                    }
+                    val canRequeue = ProgressSyncRepairPolicy.shouldRequeue(
+                        failedAttempts,
+                        hasActiveCommand,
+                        hasConflict,
+                    ) || ProgressSyncRepairPolicy.shouldRequeueHistoricalInvalidFailure(
+                        failedAttempts = failedAttempts,
+                        hasInvalidFailure = failed.any { it.lastError == "invalid" },
+                        hasActiveCommand = hasActiveCommand,
+                        hasConflict = hasConflict,
+                    )
+                    if (!canRequeue
                     ) return@forEach
 
                     failed.filter {

@@ -47,6 +47,12 @@ class ProgressSyncRecoveryPolicyTest {
             hasActiveCommand = false,
             hasConflict = false,
         ))
+        assertTrue(ProgressSyncRepairPolicy.shouldRequeueCustomDhikrValidationFailure(
+            failedAttempts = 4,
+            hasInvalidFailure = true,
+            hasActiveCommand = false,
+            hasConflict = false,
+        ))
         assertFalse(ProgressSyncRepairPolicy.shouldRequeueCustomDhikrValidationFailure(
             failedAttempts = 2,
             hasInvalidFailure = false,
@@ -58,6 +64,46 @@ class ProgressSyncRecoveryPolicyTest {
             hasInvalidFailure = true,
             hasActiveCommand = false,
             hasConflict = false,
+        ))
+        assertFalse(ProgressSyncRepairPolicy.shouldRequeueCustomDhikrValidationFailure(
+            failedAttempts = 6,
+            hasInvalidFailure = true,
+            hasActiveCommand = false,
+            hasConflict = false,
+        ))
+    }
+
+    @Test
+    fun historicalInvalidGoalAndCountStateGetsOneRecoveryRetry() {
+        assertTrue(ProgressSyncRepairPolicy.shouldRequeueHistoricalInvalidFailure(
+            failedAttempts = 2,
+            hasInvalidFailure = true,
+            hasActiveCommand = false,
+            hasConflict = false,
+        ))
+        assertFalse(ProgressSyncRepairPolicy.shouldRequeueHistoricalInvalidFailure(
+            failedAttempts = 4,
+            hasInvalidFailure = true,
+            hasActiveCommand = false,
+            hasConflict = false,
+        ))
+        assertFalse(ProgressSyncRepairPolicy.shouldRequeueHistoricalInvalidFailure(
+            failedAttempts = 2,
+            hasInvalidFailure = false,
+            hasActiveCommand = false,
+            hasConflict = false,
+        ))
+        assertFalse(ProgressSyncRepairPolicy.shouldRequeueHistoricalInvalidFailure(
+            failedAttempts = 2,
+            hasInvalidFailure = true,
+            hasActiveCommand = true,
+            hasConflict = false,
+        ))
+        assertFalse(ProgressSyncRepairPolicy.shouldRequeueHistoricalInvalidFailure(
+            failedAttempts = 2,
+            hasInvalidFailure = true,
+            hasActiveCommand = false,
+            hasConflict = true,
         ))
     }
 

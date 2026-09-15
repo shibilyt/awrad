@@ -1129,6 +1129,11 @@ internal object ProgressSyncImportMath {
 
 internal object ProgressSyncRepairPolicy {
     private const val maxAutomaticFailedAttempts = 1
+    private const val terminalFailureAttempt = maxAutomaticFailedAttempts + 1
+    // A failed send advances the attempt counter once when claimed and once
+    // when its terminal receipt is applied. Custom dhikrs that already used
+    // the compatibility retry therefore need one final recovery at 4.
+    private const val postCompatibilityFailureAttempt = terminalFailureAttempt + 2
 
     fun shouldRequeue(
         failedAttempts: Int,
@@ -1138,16 +1143,28 @@ internal object ProgressSyncRepairPolicy {
         failedAttempts <= maxAutomaticFailedAttempts
 
     /**
-     * Retries custom dhikrs rejected by the old server validator once after
-     * the optional display fields contract is corrected server-side.
+     * Retries custom dhikrs rejected by the old server validator, including
+     * rows that already consumed the first compatibility retry before the
+     * optional display fields contract was corrected server-side.
      */
     fun shouldRequeueCustomDhikrValidationFailure(
         failedAttempts: Int,
         hasInvalidFailure: Boolean,
         hasActiveCommand: Boolean,
         hasConflict: Boolean,
+    ): Boolean {
+        if (hasActiveCommand || hasConflict || !hasInvalidFailure) return false
+        return failedAttempts == terminalFailureAttempt ||
+            failedAttempts == postCompatibilityFailureAttempt
+    }
+
+    fun shouldRequeueHistoricalInvalidFailure(
+        failedAttempts: Int,
+        hasInvalidFailure: Boolean,
+        hasActiveCommand: Boolean,
+        hasConflict: Boolean,
     ): Boolean = !hasActiveCommand && !hasConflict && hasInvalidFailure &&
-        failedAttempts == maxAutomaticFailedAttempts + 1
+        failedAttempts == terminalFailureAttempt
 }
 
 internal object ProgressSyncConflictDelta {
