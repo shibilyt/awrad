@@ -122,6 +122,12 @@ abstract class SyncDao {
     @Query("SELECT * FROM sync_outbox WHERE entityType = :entityType AND entityId = :entityId AND state = 'pending' ORDER BY actorSequence DESC LIMIT 1")
     abstract suspend fun pendingEntityCommand(entityType: String, entityId: String): SyncOutboxEntity?
 
+    @Query("SELECT * FROM sync_outbox WHERE entityType = :entityType AND entityId = :entityId AND state IN ('pending', 'sending') ORDER BY actorSequence DESC LIMIT 1")
+    abstract suspend fun activeEntityCommand(entityType: String, entityId: String): SyncOutboxEntity?
+
+    @Query("SELECT * FROM sync_outbox WHERE entityType = :entityType AND entityId = :entityId AND state IN ('pending', 'sending', 'failed', 'conflict') ORDER BY actorSequence DESC LIMIT 1")
+    abstract suspend fun unresolvedEntityCommand(entityType: String, entityId: String): SyncOutboxEntity?
+
     @Query("DELETE FROM sync_outbox WHERE commandId = :commandId")
     abstract suspend fun deleteOutbox(commandId: String)
 
@@ -133,6 +139,16 @@ abstract class SyncDao {
 
     @Query("DELETE FROM sync_outbox WHERE goalId = :goalId")
     abstract suspend fun deleteCountOutboxForGoal(goalId: String)
+
+    @Query(
+        "DELETE FROM sync_outbox WHERE goalId = :goalId AND slotId = :slotId " +
+            "AND localDate = :localDate AND state = 'failed' AND countDelta = 0",
+    )
+    abstract suspend fun deleteSupersededCountCommands(
+        goalId: String,
+        slotId: String,
+        localDate: String,
+    )
 
     @Query("UPDATE sync_outbox SET state = :state, attemptCount = attemptCount + 1, lastAttemptAt = :now, lastError = :error WHERE commandId = :commandId")
     abstract suspend fun markOutbox(commandId: String, state: String, now: Long, error: String?)
@@ -159,6 +175,13 @@ abstract class SyncDao {
         localDate: String,
     ): List<SyncOutboxEntity>
 
+    @Query("SELECT * FROM sync_outbox WHERE goalId = :goalId AND slotId = :slotId AND localDate = :localDate AND state IN ('pending', 'sending', 'failed', 'conflict') ORDER BY actorSequence")
+    protected abstract suspend fun unresolvedCountCommands(
+        goalId: String,
+        slotId: String,
+        localDate: String,
+    ): List<SyncOutboxEntity>
+
     suspend fun pendingCountDelta(
         goalId: String,
         slotId: String,
@@ -166,6 +189,22 @@ abstract class SyncDao {
         incarnation: Long,
     ): Long = pendingCountCommands(goalId, slotId, localDate)
         .filter { it.payloadIncarnation() == incarnation }
+        .fold(0L) { total, command -> Math.addExact(total, command.countDelta ?: 0L) }
+
+    suspend fun unresolvedCountCommands(
+        goalId: String,
+        slotId: String,
+        localDate: String,
+        incarnation: Long,
+    ): List<SyncOutboxEntity> = unresolvedCountCommands(goalId, slotId, localDate)
+        .filter { it.payloadIncarnation() == incarnation }
+
+    suspend fun unresolvedCountDelta(
+        goalId: String,
+        slotId: String,
+        localDate: String,
+        incarnation: Long,
+    ): Long = unresolvedCountCommands(goalId, slotId, localDate, incarnation)
         .fold(0L) { total, command -> Math.addExact(total, command.countDelta ?: 0L) }
 
     suspend fun observedCreditIds(

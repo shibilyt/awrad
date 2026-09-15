@@ -429,6 +429,145 @@ enum ProgressSyncLocalStore {
         }
     }
 
+    /// Rebuilds local upload work after a terminal command rejection. Initial
+    /// import is marked complete before receipts arrive, so a failed first
+    /// command otherwise has no path back into the outbox. Product rows remain
+    /// authoritative; only local-only goals are used to reconstruct counts.
+    static func repairLocalState(
+        state: AwradRepositoryState,
+        in context: ModelContext
+    ) throws {
+        guard try SharedProgressSyncPersistence.state(in: context) != nil else { return }
+
+        let outbox = try context.fetch(FetchDescriptor<SyncSchema.SyncOutboxRecord>())
+        let unresolved = outbox.filter {
+            $0.status == "pending" || $0.status == "sending" ||
+                $0.status == "failed" || $0.status == "conflict"
+        }
+
+        for dhikr in state.dhikrs where dhikr.isCustom {
+            let entityType = "custom_dhikr"
+            let entityID = dhikr.id.uuidString.lowercased()
+            let failed = unresolved.filter {
+                $0.status == "failed" && $0.entityType == entityType && $0.entityID == entityID
+            }
+            let failedAttempts = failed.map(\.attemptCount).max() ?? 0
+            let hasConflict = unresolved.contains {
+                $0.status == "conflict" && $0.entityType == entityType && $0.entityID == entityID
+            }
+            let hasActiveCommand = unresolved.contains {
+                ($0.status == "pending" || $0.status == "sending") &&
+                    $0.entityType == entityType && $0.entityID == entityID
+            }
+            guard shouldRequeue(
+                failedAttempts: failedAttempts,
+                hasActiveCommand: hasActiveCommand,
+                hasConflict: hasConflict
+            ), try SharedProgressSyncPersistence.shadow(
+                entityType: entityType, entityID: entityID, in: context
+            ) == nil else { continue }
+            failed.forEach(context.delete)
+            try enqueueUpsert(
+                entityType: entityType,
+                entityID: entityID,
+                document: dhikr.progressContractV1(),
+                in: context,
+                attemptCount: failedAttempts
+            )
+        }
+
+        for goal in state.goals {
+            let entityType = "goal"
+            let entityID = goal.id.uuidString.lowercased()
+            let failed = unresolved.filter {
+                $0.status == "failed" && $0.entityType == entityType && $0.entityID == entityID
+            }
+            let failedAttempts = failed.map(\.attemptCount).max() ?? 0
+            let hasConflict = unresolved.contains {
+                $0.status == "conflict" && $0.entityType == entityType && $0.entityID == entityID
+            }
+            let hasActiveCommand = unresolved.contains {
+                ($0.status == "pending" || $0.status == "sending") &&
+                    $0.entityType == entityType && $0.entityID == entityID
+            }
+            guard shouldRequeue(
+                failedAttempts: failedAttempts,
+                hasActiveCommand: hasActiveCommand,
+                hasConflict: hasConflict
+            ), try SharedProgressSyncPersistence.shadow(
+                entityType: entityType, entityID: entityID, in: context
+            ) == nil else { continue }
+            failed.forEach(context.delete)
+            try enqueueUpsert(
+                entityType: entityType,
+                entityID: entityID,
+                document: goal.progressContractV1(),
+                in: context,
+                attemptCount: failedAttempts
+            )
+        }
+
+        let localOnlyGoalIDs: Set<AwradID> = try Set(state.goals.compactMap { goal in
+            guard try SharedProgressSyncPersistence.shadow(
+                entityType: "goal", entityID: goal.id.uuidString.lowercased(), in: context
+            ) == nil else { return nil }
+            return goal.id
+        })
+        for entry in state.countEntries where entry.count > 0 && localOnlyGoalIDs.contains(entry.goalID) {
+            let key = CountKey(entry)
+            let incarnation = try SharedProgressSyncPersistence.shadow(
+                entityType: "goal", entityID: key.goalID, in: context
+            )?.incarnation ?? 1
+            let unresolvedCounts = unresolved.filter {
+                $0.goalID == key.goalID && $0.slotID == key.slotID &&
+                    $0.localDate == key.localDate && countIncarnation($0) == incarnation
+            }
+            let failed = unresolvedCounts.filter { $0.status == "failed" }
+            let failedAttempts = failed.map(\.attemptCount).max() ?? 0
+            let hasConflict = unresolvedCounts.contains { $0.status == "conflict" }
+            let hasActiveCommand = unresolvedCounts.contains {
+                $0.status == "pending" || $0.status == "sending"
+            }
+            guard shouldRequeue(
+                failedAttempts: failedAttempts,
+                hasActiveCommand: hasActiveCommand,
+                hasConflict: hasConflict
+            ) else { continue }
+
+            failed.filter {
+                $0.countDelta != 0 || $0.lastError != "repair_superseded"
+            }.forEach {
+                $0.countDelta = 0
+                $0.lastError = "repair_superseded"
+            }
+            let active = try unresolvedCounts
+                .filter { $0.status == "pending" || $0.status == "sending" }
+                .compactMap(\.countDelta)
+                .reduce(0, add)
+            let open = try context.fetch(FetchDescriptor<SyncSchema.SyncOpenCountBatchRecord>())
+                .filter {
+                    $0.goalID == key.goalID && $0.slotID == key.slotID &&
+                        $0.localDate == key.localDate && $0.entityIncarnation == incarnation
+                }
+                .map(\.amount)
+                .reduce(0, add)
+            let amount = max(try subtract(entry.count, try add(active, open)), 0)
+            if amount > 0 {
+                if failed.isEmpty {
+                    try recordCountDelta(key: key, amount: amount, now: entry.lastUpdated, in: context)
+                } else {
+                    try enqueueRepairIncrement(
+                        key: key,
+                        amount: amount,
+                        now: entry.lastUpdated,
+                        attemptCount: failedAttempts,
+                        in: context
+                    )
+                }
+            }
+        }
+    }
+
     static func sealOpenBatches(in context: ModelContext) throws {
         let batches = try context.fetch(FetchDescriptor<SyncSchema.SyncOpenCountBatchRecord>())
         for batch in batches.sorted(by: { $0.createdAt < $1.createdAt }) {
@@ -462,7 +601,8 @@ enum ProgressSyncLocalStore {
         entityType: String,
         entityID: String,
         document: Document,
-        in context: ModelContext
+        in context: ModelContext,
+        attemptCount: Int = 0
     ) throws {
         let pending = try pendingEntity(entityType: entityType, entityID: entityID, in: context)
         let shadow = try SharedProgressSyncPersistence.shadow(
@@ -492,7 +632,8 @@ enum ProgressSyncLocalStore {
                 type: payload.type,
                 payloadData: try encoder.encode(payload),
                 entityType: entityType,
-                entityID: entityID
+                entityID: entityID,
+                attemptCount: attemptCount
             )
         )
     }
@@ -548,9 +689,6 @@ enum ProgressSyncLocalStore {
         try sealOpenBatches(in: context)
         guard let state = try SharedProgressSyncPersistence.state(in: context),
               let sequence = try SharedProgressSyncPersistence.nextSequence(in: context) else { return }
-        let goalID = key.goalID
-        let slotID = key.slotID
-        let localDate = key.localDate
         let incarnation = try SharedProgressSyncPersistence.shadow(
             entityType: "goal", entityID: key.goalID, in: context
         )?.incarnation ?? 1
@@ -583,6 +721,41 @@ enum ProgressSyncLocalStore {
         )
     }
 
+    private static func enqueueRepairIncrement(
+        key: CountKey,
+        amount: Int64,
+        now: Date,
+        attemptCount: Int,
+        in context: ModelContext
+    ) throws {
+        guard let sequence = try SharedProgressSyncPersistence.nextSequence(in: context) else { return }
+        let incarnation = try SharedProgressSyncPersistence.shadow(
+            entityType: "goal", entityID: key.goalID, in: context
+        )?.incarnation ?? 1
+        let payload = IncrementPayload(
+            type: "increment",
+            goalID: key.goalID,
+            slotID: key.slotID,
+            localDate: key.localDate,
+            amount: String(amount),
+            entityIncarnation: String(incarnation)
+        )
+        context.insert(
+            SyncSchema.SyncOutboxRecord(
+                commandID: UUID().uuidString.lowercased(),
+                actorSequence: sequence,
+                type: payload.type,
+                payloadData: try encoder.encode(payload),
+                goalID: key.goalID,
+                slotID: key.slotID,
+                localDate: key.localDate,
+                countDelta: amount,
+                createdAt: now,
+                attemptCount: attemptCount
+            )
+        )
+    }
+
     private static func pendingEntity(
         entityType: String,
         entityID: String,
@@ -596,6 +769,14 @@ enum ProgressSyncLocalStore {
                 sortBy: [SortDescriptor(\.actorSequence, order: .reverse)]
             )
         ).first
+    }
+
+    private static func shouldRequeue(
+        failedAttempts: Int,
+        hasActiveCommand: Bool,
+        hasConflict: Bool
+    ) -> Bool {
+        !hasActiveCommand && !hasConflict && failedAttempts <= 1
     }
 
     private static func countMap(_ entries: [CountEntry]) -> [CountKey: Int64] {
@@ -638,6 +819,19 @@ enum ProgressSyncLocalStore {
         let (result, overflow) = lhs.subtractingReportingOverflow(rhs)
         guard !overflow else { throw ProgressSyncPersistenceError.countOverflow }
         return result
+    }
+
+    private static func add(_ lhs: Int64, _ rhs: Int64) throws -> Int64 {
+        let (result, overflow) = lhs.addingReportingOverflow(rhs)
+        guard !overflow else { throw ProgressSyncPersistenceError.countOverflow }
+        return result
+    }
+
+    private static func countIncarnation(_ row: SyncSchema.SyncOutboxRecord) -> Int64? {
+        guard row.countDelta != nil,
+              let value = try? JSONDecoder().decode(JSONValue.self, from: row.payloadData),
+              let raw = value.object?["entity_incarnation"]?.string else { return nil }
+        return Int64(raw)
     }
 
     private static func negate(_ value: Int64) throws -> Int64 {

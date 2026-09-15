@@ -5,6 +5,7 @@ import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.DhikrTagAssignmentV1
 import app.awrad.awrad_dhikrgoalstracker.data.contract.v1.toProgressContractV1
 import app.awrad.awrad_dhikrgoalstracker.data.database.AwradDatabase
 import app.awrad.awrad_dhikrgoalstracker.data.database.dao.SyncDao
+import app.awrad.awrad_dhikrgoalstracker.data.database.entity.CountEntryEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncOpenCountBatchEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncOutboxEntity
 import app.awrad.awrad_dhikrgoalstracker.data.database.entity.SyncStateEntity
@@ -258,37 +259,193 @@ class ProgressSyncRepository @Inject constructor(
 
     suspend fun enqueueEntity(entityType: String, entityId: String, document: JsonObject) {
         database.withTransaction {
-            val state = syncDao.state() ?: return@withTransaction
-            val shadow = syncDao.shadow(entityType, entityId)
-            val existing = syncDao.pendingEntityCommand(entityType, entityId)
-            val payload = JsonObject().apply {
-                addProperty("type", "entity_upsert")
-                addProperty("entity_type", entityType)
-                addProperty("entity_id", entityId)
-                addProperty("base_version", (shadow?.version ?: 0).toString())
-                addProperty("entity_incarnation", (shadow?.incarnation ?: 1).toString())
-                add("proposed_document", document)
-            }
-
-            if (existing != null && existing.type == "entity_upsert") {
-                syncDao.putOutbox(existing.copy(payloadJson = gson.toJson(payload), lastError = null))
-            } else {
-                val sequence = syncDao.allocateSequence()
-                syncDao.insertOutbox(
-                    SyncOutboxEntity(
-                        commandId = UUID.randomUUID().toString(),
-                        actorSequence = sequence,
-                        type = "entity_upsert",
-                        payloadJson = gson.toJson(payload),
-                        entityType = entityType,
-                        entityId = entityId,
-                        createdAt = System.currentTimeMillis(),
-                    ),
-                )
-            }
-            check(syncDao.state()?.actorId == state.actorId)
+            enqueueEntityLocked(entityType, entityId, document)
         }
         requestSync()
+    }
+
+    private suspend fun enqueueEntityLocked(
+        entityType: String,
+        entityId: String,
+        document: JsonObject,
+        attemptCount: Int = 0,
+    ): Boolean {
+        val state = syncDao.state() ?: return false
+        val shadow = syncDao.shadow(entityType, entityId)
+        val existing = syncDao.pendingEntityCommand(entityType, entityId)
+        val payload = JsonObject().apply {
+            addProperty("type", "entity_upsert")
+            addProperty("entity_type", entityType)
+            addProperty("entity_id", entityId)
+            addProperty("base_version", (shadow?.version ?: 0).toString())
+            addProperty("entity_incarnation", (shadow?.incarnation ?: 1).toString())
+            add("proposed_document", document)
+        }
+
+        if (existing != null && existing.type == "entity_upsert") {
+            syncDao.putOutbox(existing.copy(payloadJson = gson.toJson(payload), lastError = null))
+        } else {
+            val sequence = syncDao.allocateSequence()
+            syncDao.insertOutbox(
+                SyncOutboxEntity(
+                    commandId = UUID.randomUUID().toString(),
+                    actorSequence = sequence,
+                    type = "entity_upsert",
+                    payloadJson = gson.toJson(payload),
+                    entityType = entityType,
+                    entityId = entityId,
+                    createdAt = System.currentTimeMillis(),
+                    attemptCount = attemptCount,
+                ),
+            )
+        }
+        check(syncDao.state()?.actorId == state.actorId)
+        return true
+    }
+
+    /**
+     * Rebuilds the local upload frontier after a terminal command rejection.
+     * Initial import is marked complete before receipts arrive, so a failed
+     * first command otherwise becomes invisible to future syncs. The current
+     * product rows remain the source of truth; failed entity commands are
+     * rebuilt from those rows, while failed counts are replaced only for a
+     * goal that still has no canonical shadow.
+     */
+    suspend fun repairLocalState(
+        dhikrs: List<Dhikr>,
+        goals: List<Goal>,
+        counts: List<CountEntryEntity>,
+    ) {
+        val repaired = database.withTransaction {
+            if (syncDao.state() == null) return@withTransaction false
+            var changed = false
+            val unresolved = syncDao.unresolvedOutbox()
+
+            dhikrs.filter { it.isCustom }.forEach { dhikr ->
+                val entityType = "custom_dhikr"
+                val entityId = dhikr.id.toString()
+                val failed = unresolved.filter {
+                    it.state == "failed" && it.entityType == entityType && it.entityId == entityId
+                }
+                val failedAttempts = failed.maxOfOrNull { it.attemptCount } ?: 0
+                val hasConflict = unresolved.any {
+                    it.state == "conflict" && it.entityType == entityType && it.entityId == entityId
+                }
+                val hasActiveCommand = syncDao.activeEntityCommand(entityType, entityId) != null
+                val canRequeue = ProgressSyncRepairPolicy.shouldRequeue(
+                    failedAttempts,
+                    hasActiveCommand,
+                    hasConflict,
+                ) || ProgressSyncRepairPolicy.shouldRequeueCustomDhikrValidationFailure(
+                    failedAttempts = failedAttempts,
+                    hasInvalidFailure = failed.any { it.lastError == "invalid" },
+                    hasActiveCommand = hasActiveCommand,
+                    hasConflict = hasConflict,
+                )
+                if (canRequeue && syncDao.shadow(entityType, entityId) == null) {
+                    failed.forEach { syncDao.deleteOutbox(it.commandId) }
+                    changed = enqueueEntityLocked(
+                        entityType,
+                        entityId,
+                        JsonParser.parseString(
+                            contractJson.encodeToString(dhikr.toProgressContractV1()),
+                        ).asJsonObject,
+                        attemptCount = failedAttempts,
+                    ) || changed
+                }
+            }
+
+            goals.forEach { goal ->
+                val entityType = "goal"
+                val entityId = goal.id.toString()
+                val failed = unresolved.filter {
+                    it.state == "failed" && it.entityType == entityType && it.entityId == entityId
+                }
+                val failedAttempts = failed.maxOfOrNull { it.attemptCount } ?: 0
+                val hasConflict = unresolved.any {
+                    it.state == "conflict" && it.entityType == entityType && it.entityId == entityId
+                }
+                if (ProgressSyncRepairPolicy.shouldRequeue(
+                        failedAttempts,
+                        syncDao.activeEntityCommand(entityType, entityId) != null,
+                        hasConflict,
+                ) && syncDao.shadow(entityType, entityId) == null
+                ) {
+                    failed.forEach { syncDao.deleteOutbox(it.commandId) }
+                    changed = enqueueEntityLocked(
+                        entityType,
+                        entityId,
+                        JsonParser.parseString(
+                            contractJson.encodeToString(goal.toProgressContractV1()),
+                        ).asJsonObject,
+                        attemptCount = failedAttempts,
+                    ) || changed
+                }
+            }
+
+            val localOnlyGoalIDs = goals.map { it.id.toString() }
+                .filter { syncDao.shadow("goal", it) == null }
+                .toSet()
+            counts.filter { it.count > 0L && it.goalId.toString() in localOnlyGoalIDs }
+                .forEach { entry ->
+                    val goalId = entry.goalId.toString()
+                    val slotId = entry.slotId.toString()
+                    val incarnation = syncDao.shadow("goal", goalId)?.incarnation ?: 1L
+                    val unresolvedCounts = syncDao.unresolvedCountCommands(
+                        goalId,
+                        slotId,
+                        entry.date,
+                        incarnation,
+                    )
+                    val failed = unresolvedCounts.filter { it.state == "failed" }
+                    val failedAttempts = failed.maxOfOrNull { it.attemptCount } ?: 0
+                    val hasConflict = unresolvedCounts.any { it.state == "conflict" }
+                    if (!ProgressSyncRepairPolicy.shouldRequeue(
+                            failedAttempts,
+                            unresolvedCounts.any { it.state == "pending" || it.state == "sending" },
+                            hasConflict,
+                        )
+                    ) return@forEach
+
+                    failed.filter {
+                        it.countDelta != 0L || it.lastError != "repair_superseded"
+                    }.forEach {
+                        syncDao.putOutbox(
+                            it.copy(countDelta = 0L, lastError = "repair_superseded"),
+                        )
+                        changed = true
+                    }
+                    val alreadyQueued = Math.addExact(
+                        syncDao.pendingCountDelta(goalId, slotId, entry.date, incarnation),
+                        syncDao.openBatchAmount(goalId, slotId, entry.date, incarnation),
+                    )
+                    val amount = Math.subtractExact(entry.count, alreadyQueued).coerceAtLeast(0L)
+                    if (amount > 0L) {
+                        if (failed.isEmpty()) {
+                            putOpenCountBatchLocked(
+                                goalId = goalId,
+                                slotId = slotId,
+                                localDate = entry.date,
+                                incarnation = incarnation,
+                                amount = amount,
+                                now = System.currentTimeMillis(),
+                            )
+                        } else {
+                            enqueueRepairCountLocked(
+                                goalId = goalId,
+                                slotId = slotId,
+                                localDate = entry.date,
+                                incarnation = incarnation,
+                                amount = amount,
+                                attemptCount = failedAttempts,
+                            )
+                        }
+                        changed = true
+                    }
+                }
+            changed
+        }
+        if (repaired) requestSync()
     }
 
     /**
@@ -371,21 +528,13 @@ class ProgressSyncRepository @Inject constructor(
             syncDao.state() ?: return@withTransaction
             val incarnation = syncDao.shadow("goal", goalId.toString())?.incarnation ?: 1L
             if (appliedDelta > 0) {
-                val existing = syncDao.openBatch(goalId.toString(), slotId.toString(), localDate, incarnation)
-                val now = System.currentTimeMillis()
-                val amount = Math.addExact(existing?.amount ?: 0L, appliedDelta)
-                syncDao.putOpenBatch(
-                    existing?.copy(amount = amount, updatedAt = now)
-                        ?: SyncOpenCountBatchEntity(
-                            id = UUID.randomUUID().toString(),
-                            goalId = goalId.toString(),
-                            slotId = slotId.toString(),
-                            localDate = localDate,
-                            entityIncarnation = incarnation,
-                            amount = amount,
-                            createdAt = now,
-                            updatedAt = now,
-                        ),
+                putOpenCountBatchLocked(
+                    goalId = goalId.toString(),
+                    slotId = slotId.toString(),
+                    localDate = localDate,
+                    incarnation = incarnation,
+                    amount = appliedDelta,
+                    now = System.currentTimeMillis(),
                 )
             } else {
                 sealOpenBatchesLocked()
@@ -422,6 +571,64 @@ class ProgressSyncRepository @Inject constructor(
             }
         }
         requestSync()
+    }
+
+    private suspend fun putOpenCountBatchLocked(
+        goalId: String,
+        slotId: String,
+        localDate: String,
+        incarnation: Long,
+        amount: Long,
+        now: Long,
+    ) {
+        val existing = syncDao.openBatch(goalId, slotId, localDate, incarnation)
+        val total = Math.addExact(existing?.amount ?: 0L, amount)
+        syncDao.putOpenBatch(
+            existing?.copy(amount = total, updatedAt = now)
+                ?: SyncOpenCountBatchEntity(
+                    id = UUID.randomUUID().toString(),
+                    goalId = goalId,
+                    slotId = slotId,
+                    localDate = localDate,
+                    entityIncarnation = incarnation,
+                    amount = total,
+                    createdAt = now,
+                    updatedAt = now,
+                ),
+        )
+    }
+
+    private suspend fun enqueueRepairCountLocked(
+        goalId: String,
+        slotId: String,
+        localDate: String,
+        incarnation: Long,
+        amount: Long,
+        attemptCount: Int,
+    ) {
+        val sequence = syncDao.allocateSequence()
+        val payload = JsonObject().apply {
+            addProperty("type", "increment")
+            addProperty("goal_id", goalId)
+            addProperty("slot_id", slotId)
+            addProperty("local_date", localDate)
+            addProperty("amount", amount.toString())
+            addProperty("entity_incarnation", incarnation.toString())
+        }
+        syncDao.insertOutbox(
+            SyncOutboxEntity(
+                commandId = UUID.randomUUID().toString(),
+                actorSequence = sequence,
+                type = "increment",
+                payloadJson = gson.toJson(payload),
+                goalId = goalId,
+                slotId = slotId,
+                localDate = localDate,
+                countDelta = amount,
+                createdAt = System.currentTimeMillis(),
+                attemptCount = attemptCount,
+            ),
+        )
     }
 
     /** Adds the legacy portion of a captured bucket exactly once during first import. */

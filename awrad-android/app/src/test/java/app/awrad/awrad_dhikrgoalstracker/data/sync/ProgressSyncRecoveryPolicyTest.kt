@@ -16,6 +16,52 @@ class ProgressSyncRecoveryPolicyTest {
     }
 
     @Test
+    fun localRepairRetriesAFailedCommandOnceButNeverOverwritesActiveOrConflictedWork() {
+        assertTrue(ProgressSyncRepairPolicy.shouldRequeue(
+            failedAttempts = 1,
+            hasActiveCommand = false,
+            hasConflict = false,
+        ))
+        assertFalse(ProgressSyncRepairPolicy.shouldRequeue(
+            failedAttempts = 2,
+            hasActiveCommand = false,
+            hasConflict = false,
+        ))
+        assertFalse(ProgressSyncRepairPolicy.shouldRequeue(
+            failedAttempts = 0,
+            hasActiveCommand = true,
+            hasConflict = false,
+        ))
+        assertFalse(ProgressSyncRepairPolicy.shouldRequeue(
+            failedAttempts = 0,
+            hasActiveCommand = false,
+            hasConflict = true,
+        ))
+    }
+
+    @Test
+    fun customDhikrValidationFixGetsOneCompatibilityRetry() {
+        assertTrue(ProgressSyncRepairPolicy.shouldRequeueCustomDhikrValidationFailure(
+            failedAttempts = 2,
+            hasInvalidFailure = true,
+            hasActiveCommand = false,
+            hasConflict = false,
+        ))
+        assertFalse(ProgressSyncRepairPolicy.shouldRequeueCustomDhikrValidationFailure(
+            failedAttempts = 2,
+            hasInvalidFailure = false,
+            hasActiveCommand = false,
+            hasConflict = false,
+        ))
+        assertFalse(ProgressSyncRepairPolicy.shouldRequeueCustomDhikrValidationFailure(
+            failedAttempts = 3,
+            hasInvalidFailure = true,
+            hasActiveCommand = false,
+            hasConflict = false,
+        ))
+    }
+
+    @Test
     fun conflictDeltaDefaultsToUnresolvedAndRecognizesResolution() {
         assertFalse(ProgressSyncConflictDelta.isResolved(JsonObject()))
         assertFalse(

@@ -33,7 +33,8 @@ defmodule AwradServer.ProgressSync.Document do
          :ok <- uuid(value(document, "id"), entity_id),
          true <- value(document, "is_custom") == true,
          true <- is_nil(value(document, "catalog_key")),
-         :ok <- non_empty_strings(document, ~w(title arabic transliteration translation)),
+         :ok <- non_empty_strings(document, ~w(title arabic)),
+         :ok <- strings(document, ~w(transliteration translation)),
          true <- value(document, "category") in @categories,
          :ok <- dhikr_categories(value(document, "categories"), value(document, "category")),
          :ok <- positive_integer(value(document, "audio_count_per_play")),
@@ -396,6 +397,17 @@ defmodule AwradServer.ProgressSync.Document do
         Enum.all?(keys, fn key ->
           item = value(map, key)
           is_binary(item) and item != "" and byte_size(item) <= @max_string_bytes
+        end),
+        do: :ok,
+        else: :error
+      )
+
+  defp strings(map, keys),
+    do:
+      if(
+        Enum.all?(keys, fn key ->
+          item = value(map, key)
+          is_binary(item) and byte_size(item) <= @max_string_bytes
         end),
         do: :ok,
         else: :error

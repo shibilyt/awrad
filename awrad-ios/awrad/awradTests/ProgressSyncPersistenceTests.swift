@@ -440,6 +440,106 @@ struct ProgressSyncPersistenceTests {
     }
 
     @Test
+    func generationReconcileRetainsFailedLocalCountUntilItCanBeRepaired() throws {
+        let fixture = try makeGoalFixture()
+        try fixture.repository.performProgressSyncTransaction { context in
+            _ = try ProgressSyncLocalStore.bind(
+                userID: UUID().uuidString.lowercased(),
+                installationID: UUID().uuidString.lowercased(), in: context
+            )
+            context.insert(AwradSchemaV2.SyncEntityShadowRecord(
+                entityType: "goal", entityID: fixture.goalID,
+                version: 1, incarnation: 1, syncRevision: 1,
+                state: "active", documentData: nil
+            ))
+            context.insert(AwradSchemaV2.SyncCountShadowRecord(
+                goalID: fixture.goalID, slotID: fixture.slotID,
+                localDate: "2026-07-16", entityIncarnation: 1,
+                canonicalCount: 0, syncRevision: 1
+            ))
+            let failed = countOutbox(
+                sequence: 1, incarnation: 1, amount: 7,
+                goalID: fixture.goalID, slotID: fixture.slotID
+            )
+            failed.status = "failed"
+            context.insert(failed)
+            context.insert(AwradSchemaV1.CountEntryRecord(
+                id: UUID().uuidString.lowercased(), goalID: fixture.goalID,
+                slotID: fixture.slotID, count: 7,
+                dateKey: "2026-07-16", lastUpdated: Date()
+            ))
+
+            try ProgressSyncRemoteApplier.reconcileGeneration(
+                records: [SyncTransferRecord(
+                    kind: "goal", id: fixture.goalID, syncRevision: "2",
+                    payload: .object([:])
+                )], in: context
+            )
+        }
+
+        let entries = try fixture.repository.modelContext.fetch(
+            FetchDescriptor<AwradSchemaV1.CountEntryRecord>()
+        )
+        #expect(entries.first?.count == 7)
+    }
+
+    @Test
+    func repairRequeuesFailedCustomDhikrGoalAndCountFromCurrentLocalRows() throws {
+        let fixture = try makeGoalFixture()
+        let localState = try fixture.repository.loadState()
+        let dhikrID = try #require(localState.dhikrs.first?.id.uuidString.lowercased())
+        let goalID = try #require(localState.goals.first?.id.uuidString.lowercased())
+        try fixture.repository.performProgressSyncTransaction { context in
+            let syncState = try ProgressSyncLocalStore.bind(
+                userID: UUID().uuidString.lowercased(),
+                installationID: UUID().uuidString.lowercased(), in: context
+            )
+            syncState.nextActorSequence = 4
+            for (sequence, type, id) in [(1, "custom_dhikr", dhikrID), (2, "goal", goalID)] {
+                context.insert(AwradSchemaV2.SyncOutboxRecord(
+                    commandID: UUID().uuidString.lowercased(), actorSequence: Int64(sequence),
+                    type: "entity_upsert",
+                    payloadData: Data("{}".utf8), entityType: type, entityID: id,
+                    status: "failed"
+                ))
+            }
+            let failedCount = countOutbox(
+                sequence: 3, incarnation: 1, amount: 7,
+                goalID: fixture.goalID, slotID: fixture.slotID
+            )
+            failedCount.status = "failed"
+            failedCount.attemptCount = 1
+            context.insert(failedCount)
+            context.insert(AwradSchemaV1.CountEntryRecord(
+                id: UUID().uuidString.lowercased(), goalID: fixture.goalID,
+                slotID: fixture.slotID, count: 7,
+                dateKey: "2026-07-16", lastUpdated: Date()
+            ))
+
+            try ProgressSyncLocalStore.repairLocalState(
+                state: try fixture.repository.loadState(), in: context
+            )
+        }
+
+        let commands = try fixture.repository.modelContext.fetch(
+            FetchDescriptor<AwradSchemaV2.SyncOutboxRecord>()
+        )
+        #expect(commands.contains { $0.status == "pending" && $0.entityType == "custom_dhikr" })
+        #expect(commands.contains { $0.status == "pending" && $0.entityType == "goal" })
+        #expect(commands.contains {
+            $0.type == "increment" && $0.status == "pending" &&
+                $0.countDelta == 7 && $0.attemptCount == 1
+        })
+        #expect(commands.contains {
+            $0.type == "increment" && $0.status == "failed" && $0.countDelta == 0
+        })
+        let batches = try fixture.repository.modelContext.fetch(
+            FetchDescriptor<AwradSchemaV2.SyncOpenCountBatchRecord>()
+        )
+        #expect(batches.isEmpty)
+    }
+
+    @Test
     func goneOldIncarnationReceiptImmediatelyRestoresCurrentCanonicalCount() throws {
         let fixture = try makeGoalFixture()
         let commandID = UUID().uuidString.lowercased()

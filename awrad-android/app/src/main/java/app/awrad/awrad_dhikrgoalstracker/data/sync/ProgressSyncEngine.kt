@@ -102,6 +102,11 @@ class ProgressSyncEngine @Inject constructor(
                 check(syncDao.completeInitialImport() == 1)
             }
         }
+        syncRepository.repairLocalState(
+            dhikrs = dhikrRepository.getAllDhikrs().first(),
+            goals = goalRepository.getAllGoals().first(),
+            counts = countEntryDao.allForInitialSync(),
+        )
         syncRepository.sealOpenBatches()
         pushPending()
         resumeOrPull()
@@ -323,6 +328,7 @@ class ProgressSyncEngine @Inject constructor(
 
     private suspend fun applyReceipts(receipts: List<SyncReceiptDto>) {
         var schedulingRelevantChanged = false
+        var terminalRepairNeeded = false
         val countChanges = database.withTransaction {
             val changes = mutableListOf<ProgressSyncCountChange>()
             receipts.forEach { receipt ->
@@ -341,6 +347,11 @@ class ProgressSyncEngine @Inject constructor(
                         when {
                             outbox.goalId != null && receipt.canonicalEffect.has("count") -> {
                                 syncDao.deleteOutbox(outbox.commandId)
+                                syncDao.deleteSupersededCountCommands(
+                                    outbox.goalId,
+                                    requireNotNull(outbox.slotId),
+                                    requireNotNull(outbox.localDate),
+                                )
                                 installCanonicalCount(
                                     outbox.goalId,
                                     requireNotNull(outbox.slotId),
@@ -397,6 +408,7 @@ class ProgressSyncEngine @Inject constructor(
                         installCanonicalCountEffect(receipt.canonicalEffect, revision)
                     }
                     "invalid", "gone", "blocked_dependency" -> {
+                        terminalRepairNeeded = true
                         syncDao.markOutbox(
                             outbox.commandId,
                             "failed",
@@ -426,6 +438,9 @@ class ProgressSyncEngine @Inject constructor(
             changes
         }
         feedbackBus.publish(countChanges)
+        if (terminalRepairNeeded) {
+            database.withTransaction { syncDao.requestSync() }
+        }
         if (countChanges.isNotEmpty() || schedulingRelevantChanged) {
             notificationRequests.request(
                 NotificationObligationRequestReason.SYNC_IMPORT,
@@ -832,7 +847,7 @@ class ProgressSyncEngine @Inject constructor(
                 syncRevision = revision,
             ),
         )
-        val pending = syncDao.pendingCountDelta(goalId, slotId, localDate, incarnation)
+        val pending = syncDao.unresolvedCountDelta(goalId, slotId, localDate, incarnation)
         val open = syncDao.openBatchAmount(goalId, slotId, localDate, incarnation)
         val visible = Math.addExact(canonical, Math.addExact(pending, open)).coerceAtLeast(0)
         val goalUuid = UUID.fromString(goalId)
@@ -960,7 +975,7 @@ class ProgressSyncEngine @Inject constructor(
             }
         }.toSet()
         syncDao.shadows().filter { it.key !in entityKeys }.forEach { shadow ->
-            if (syncDao.pendingEntityCommand(shadow.entityType, shadow.entityId) == null) {
+            if (syncDao.unresolvedEntityCommand(shadow.entityType, shadow.entityId) == null) {
                 val id = UUID.fromString(shadow.entityId)
                 if (shadow.entityType == "goal") goalRepository.deleteRemoteGoal(id)
                 if (shadow.entityType == "custom_dhikr") dhikrRepository.deleteRemoteDhikr(id)
@@ -977,7 +992,7 @@ class ProgressSyncEngine @Inject constructor(
             "${payload["goal_id"].asString}:${payload["slot_id"].asString}:${payload["local_date"].asString}:${payload["entity_incarnation"].asString}"
         }.toSet()
         syncDao.countShadows().filter { it.key !in countKeys }.forEach { shadow ->
-            val pending = syncDao.pendingCountDelta(
+            val pending = syncDao.unresolvedCountDelta(
                 shadow.goalId,
                 shadow.slotId,
                 shadow.localDate,
@@ -1110,6 +1125,29 @@ internal object ProgressSyncPageIntegrity {
 internal object ProgressSyncImportMath {
     fun legacyAmount(visibleLocalCount: Long, alreadyQueuedDelta: Long): Long =
         Math.subtractExact(visibleLocalCount, alreadyQueuedDelta).coerceAtLeast(0L)
+}
+
+internal object ProgressSyncRepairPolicy {
+    private const val maxAutomaticFailedAttempts = 1
+
+    fun shouldRequeue(
+        failedAttempts: Int,
+        hasActiveCommand: Boolean,
+        hasConflict: Boolean,
+    ): Boolean = !hasActiveCommand && !hasConflict &&
+        failedAttempts <= maxAutomaticFailedAttempts
+
+    /**
+     * Retries custom dhikrs rejected by the old server validator once after
+     * the optional display fields contract is corrected server-side.
+     */
+    fun shouldRequeueCustomDhikrValidationFailure(
+        failedAttempts: Int,
+        hasInvalidFailure: Boolean,
+        hasActiveCommand: Boolean,
+        hasConflict: Boolean,
+    ): Boolean = !hasActiveCommand && !hasConflict && hasInvalidFailure &&
+        failedAttempts == maxAutomaticFailedAttempts + 1
 }
 
 internal object ProgressSyncConflictDelta {

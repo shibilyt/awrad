@@ -18,6 +18,17 @@ defmodule AwradServer.ProgressSyncCategoryTest do
     assert normalized["categories"] == ["general"]
   end
 
+  test "custom dhikr allows optional transliteration and translation to be blank" do
+    document =
+      custom_dhikr()
+      |> Map.put("transliteration", "")
+      |> Map.put("translation", "")
+
+    assert {:ok, normalized} = Document.validate("custom_dhikr", document, @dhikr_id)
+    assert normalized["transliteration"] == ""
+    assert normalized["translation"] == ""
+  end
+
   test "custom dhikr rejects empty duplicate mismatched or unknown categories" do
     invalid_lists = [
       [],

@@ -430,6 +430,14 @@ final class ProgressSyncEngine {
                 }
             }
 
+            let currentLocalState = try repository.loadState()
+            try repository.performProgressSyncTransaction { context in
+                try ProgressSyncLocalStore.repairLocalState(
+                    state: currentLocalState,
+                    in: context
+                )
+            }
+
             try repository.performProgressSyncTransaction { context in
                 let interrupted = try context.fetch(
                     FetchDescriptor<AwradSchemaV2.SyncOutboxRecord>(
@@ -548,6 +556,7 @@ final class ProgressSyncEngine {
         repository: SwiftDataAwradRepository
     ) throws {
         var countChanges: [ProgressSyncRemoteCountChange] = []
+        var terminalRepairNeeded = false
         try repository.performProgressSyncTransaction { context in
             guard let state = try SharedProgressSyncPersistence.state(in: context) else { return }
             for receipt in receipts {
@@ -587,6 +596,9 @@ final class ProgressSyncEngine {
                               let slotID = outbox.slotID,
                               let localDate = outbox.localDate,
                               let count = receipt.canonicalEffect.object?["count"]?.string {
+                        try ProgressSyncRemoteApplier.deleteSupersededCountCommands(
+                            goalID: goalID, slotID: slotID, localDate: localDate, in: context
+                        )
                         if let change = try ProgressSyncRemoteApplier.installCanonicalCount(
                             goalID: goalID, slotID: slotID, localDate: localDate,
                             canonical: Self.int64(count), incarnation: nil,
@@ -609,6 +621,7 @@ final class ProgressSyncEngine {
                     outbox.status = "conflict"
                     outbox.lastError = "stale_basis"
                 case "invalid", "gone", "blocked_dependency":
+                    terminalRepairNeeded = true
                     if receipt.canonicalEffect.object?["entity_type"] != nil {
                         try ProgressSyncRemoteApplier.installEntityEffect(
                             effect: receipt.canonicalEffect, revision: revision,
@@ -631,6 +644,7 @@ final class ProgressSyncEngine {
                 }
             }
         }
+        if terminalRepairNeeded { needsAnotherRun = true }
         recordRemoteCountChanges(countChanges)
     }
 
@@ -1219,7 +1233,7 @@ enum ProgressSyncRemoteApplier {
 
         let oldShadows = try context.fetch(FetchDescriptor<Sync.SyncEntityShadowRecord>())
         for shadow in oldShadows where !entityKeys.contains(shadow.key) {
-            guard try !pendingEntity(type: shadow.entityType, id: shadow.entityID, in: context) else { continue }
+            guard try !unresolvedEntity(type: shadow.entityType, id: shadow.entityID, in: context) else { continue }
             if shadow.entityType == "goal" { try deleteGoal(shadow.entityID, counts: true, in: context) }
             if shadow.entityType == "custom_dhikr" {
                 try cascadeDeleteCustomDhikr(
@@ -1257,7 +1271,8 @@ enum ProgressSyncRemoteApplier {
 
         let oldCounts = try context.fetch(FetchDescriptor<Sync.SyncCountShadowRecord>())
         let pendingRows = try context.fetch(FetchDescriptor<Sync.SyncOutboxRecord>(predicate: #Predicate {
-            $0.status == "pending" || $0.status == "sending"
+            $0.status == "pending" || $0.status == "sending" ||
+                $0.status == "failed" || $0.status == "conflict"
         }))
         let openRows = try context.fetch(FetchDescriptor<Sync.SyncOpenCountBatchRecord>())
         for shadow in oldCounts where !countKeys.contains(shadow.key) {
@@ -1312,6 +1327,19 @@ enum ProgressSyncRemoteApplier {
         try reconcileGeneration(records: records, in: context, sideEffects: &sideEffects)
     }
 
+    static func deleteSupersededCountCommands(
+        goalID: String,
+        slotID: String,
+        localDate: String,
+        in context: ModelContext
+    ) throws {
+        let rows = try context.fetch(FetchDescriptor<Sync.SyncOutboxRecord>())
+        rows.filter {
+            $0.status == "failed" && $0.countDelta == 0 &&
+                $0.goalID == goalID && $0.slotID == slotID && $0.localDate == localDate
+        }.forEach(context.delete)
+    }
+
     @discardableResult
     static func installCanonicalCount(
         goalID: String,
@@ -1341,7 +1369,8 @@ enum ProgressSyncRemoteApplier {
         ))
         let pendingRows = try context.fetch(
             FetchDescriptor<Sync.SyncOutboxRecord>(predicate: #Predicate {
-                $0.status == "pending" || $0.status == "sending"
+                $0.status == "pending" || $0.status == "sending" ||
+                    $0.status == "failed" || $0.status == "conflict"
             })
         )
         let pending = try pendingRows
@@ -1644,6 +1673,14 @@ enum ProgressSyncRemoteApplier {
                 $0.status == "pending" && $0.entityType == type && $0.entityID == id
             })
         ) > 0
+    }
+
+    private static func unresolvedEntity(type: String, id: String, in context: ModelContext) throws -> Bool {
+        try context.fetch(FetchDescriptor<Sync.SyncOutboxRecord>()).contains {
+            ($0.status == "pending" || $0.status == "sending" ||
+                $0.status == "failed" || $0.status == "conflict") &&
+                $0.entityType == type && $0.entityID == id
+        }
     }
 
     /// A purge fence is terminal for an entity UUID. Unlike a recoverable
