@@ -59,6 +59,8 @@ jobs:
           restore-keys: ${{ runner.os }}-mix-test-
 
       - run: mix deps.get
+      - name: Install JavaScript dependencies
+        run: npm ci --prefix assets
       - run: mix precommit
         env:
           MIX_ENV: test
