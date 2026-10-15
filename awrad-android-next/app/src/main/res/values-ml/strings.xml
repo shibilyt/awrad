@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Awrad Next</string>
+    <string name="home_placeholder_title">എല്ലാം തയ്യാറാണ്</string>
+    <string name="home_placeholder_body">ഇത് Awrad Next-ന്റെ അടിസ്ഥാന ഘടനയാണ്. ഫീച്ചറുകൾ ഓരോന്നായി ഇവിടെ ചേർക്കും.</string>
+    <string name="home_placeholder_restart">ഓൺബോർഡിംഗ് വീണ്ടും തുടങ്ങുക</string>
+</resources>

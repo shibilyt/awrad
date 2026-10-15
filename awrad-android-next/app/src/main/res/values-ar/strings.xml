@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">أوراد نكست</string>
+    <string name="home_placeholder_title">كل شيء جاهز</string>
+    <string name="home_placeholder_body">هذا هو الهيكل الأساسي لأوراد نكست. ستُضاف الميزات هنا تباعًا.</string>
+    <string name="home_placeholder_restart">إعادة بدء التهيئة</string>
+</resources>

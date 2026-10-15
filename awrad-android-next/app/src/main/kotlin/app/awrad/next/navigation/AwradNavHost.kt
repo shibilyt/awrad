@@ -1,0 +1,60 @@
+package app.awrad.next.navigation
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import app.awrad.feature.onboarding.OnboardingDestination
+import app.awrad.feature.onboarding.onboardingScreen
+import app.awrad.next.AppShellViewModel
+import app.awrad.next.StartDestination
+import app.awrad.next.home.HomeDestination
+import app.awrad.next.home.HomePlaceholderRoute
+
+/**
+ * Wires features together. Each feature contributes one `NavGraphBuilder`
+ * extension; this file only decides how they connect.
+ */
+@Composable
+fun AwradNavHost(
+    modifier: Modifier = Modifier,
+    shell: AppShellViewModel = hiltViewModel(),
+) {
+    val start by shell.startDestination.collectAsStateWithLifecycle()
+    val navController = rememberNavController()
+    val startRoute: Any? = remember(start != null) {
+        when (start) {
+            StartDestination.Onboarding -> OnboardingDestination
+            StartDestination.Home -> HomeDestination
+            null -> null
+        }
+    }
+    if (startRoute == null) {
+        // DataStore answers within a frame or two; keep the window background meanwhile.
+        Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+        return
+    }
+    NavHost(navController = navController, startDestination = startRoute, modifier = modifier) {
+        onboardingScreen(onFinish = { navController.replaceStackWith(HomeDestination) })
+        composable<HomeDestination> {
+            HomePlaceholderRoute(onRestartOnboarding = { navController.replaceStackWith(OnboardingDestination) })
+        }
+    }
+}
+
+private fun NavHostController.replaceStackWith(destination: Any) {
+    navigate(destination) {
+        popUpTo(graph.id) { inclusive = true }
+        launchSingleTop = true
+    }
+}

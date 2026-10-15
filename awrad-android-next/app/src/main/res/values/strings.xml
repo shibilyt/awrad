@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Awrad Next</string>
+    <string name="home_placeholder_title">You\'re all set</string>
+    <string name="home_placeholder_body">This is the Awrad Next scaffold. Features land here slice by slice.</string>
+    <string name="home_placeholder_restart">Restart onboarding</string>
+</resources>
