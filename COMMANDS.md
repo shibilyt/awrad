@@ -21,7 +21,7 @@ git diff --stat
 ./scripts/generate_wird_model.py --check
 
 # Validate progress/Wird contracts, generated registries/assets, and both native suites.
-./check-mobile-model-parity
+scripts/check-mobile-model-parity
 
 # Validate shared behavior fixtures and malformed-case rejection only.
 python3 scripts/validate_behavior_fixtures.py --self-test

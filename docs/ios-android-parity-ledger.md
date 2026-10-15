@@ -97,5 +97,5 @@ A row closes only when all of the following are true:
 2. All applicable data, network, permission, mutation, navigation, and presentation states are recorded in [`ios-parity-debugger-review.md`](ios-parity-debugger-review.md); skipped cells say why.
 3. User-facing copy exists in English, Arabic, and Malayalam resources, including validation and recovery messages.
 4. iOS 26 Liquid Glass and iOS 18 fallback are reviewed in light/dark mode, Arabic RTL, large Dynamic Type, VoiceOver, Reduce Motion, and Reduce Transparency.
-5. `./check-mobile-model-parity`, the focused and broad iOS tests chosen in [`TESTING.md`](../TESTING.md), localization key/parse checks, and `git diff --check` have recorded results.
+5. `scripts/check-mobile-model-parity`, the focused and broad iOS tests chosen in [`TESTING.md`](../TESTING.md), localization key/parse checks, and `git diff --check` have recorded results.
 6. Physical-device requirements are either passed on the target hardware or left explicitly open for release sign-off; simulator evidence must not be substituted.

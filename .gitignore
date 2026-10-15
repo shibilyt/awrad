@@ -21,6 +21,9 @@ awrad-android/opensrc/
 **/Pods/
 
 # Local tooling and agent state
+.freebuff/
+.playwright-cli/
+/output/
 **/.claude/
 **/.codex/
 **/.agents/

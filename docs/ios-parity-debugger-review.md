@@ -23,7 +23,7 @@ Runtime and automated evidence for the iOS parity implementation against Android
 |---|---|---|
 | Generic simulator build-for-testing | **Pass** | `xcodebuild -project awrad.xcodeproj -scheme awrad -destination 'generic/platform=iOS Simulator' build-for-testing` |
 | Generic physical-device compile | **Pass** | `xcodebuild ... -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build`; app and widget compile for arm64 iOS 18+, embedded widget validation passes, Live Activity/background-audio keys are present, and App Intents metadata is generated. |
-| Shared model/content parity | **Pass** | `./check-mobile-model-parity`: 100 Asma, 113 built-ins, one canonical Wird with 8 parts and 452 segments, 18 behavior cases across 7 calculators; Android 12/12 and iOS parity 15/15 |
+| Shared model/content parity | **Pass** | `scripts/check-mobile-model-parity`: 100 Asma, 113 built-ins, one canonical Wird with 8 parts and 452 segments, 18 behavior cases across 7 calculators; Android 12/12 and iOS parity 15/15 |
 | Full iOS unit/integration target | **Pass** | 174 tests in 17 suites; `/tmp/awrad-final-derived/Logs/Test/Test-awrad-2026.07.15_12-03-25-+0530.xcresult` |
 | Full non-performance UI target | **Pass** | 10/10 tests; `/tmp/awrad-final-derived/Logs/Test/Test-awrad-2026.07.15_07-07-21-+0530.xcresult` |
 | Localization parse/key parity | **Pass** | App `en`/`ar`/`ml`: 856 unique keys each and no key differences. Widget: 15 unique keys each and no key differences. All six strings files parse with `plutil`. |

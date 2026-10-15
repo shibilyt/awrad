@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Awrad Android — local-first architecture",
+    "output": "architecture.html",
+    "quality_profile": "showcase"
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [40, 70],
+    "cols": 5,
+    "gapX": 25,
+    "gapY": 104,
+    "cellW": 154,
+    "cellH": 66
+  },
+  "components": [
+    { "id": "person", "type": "external", "label": "Person", "sublabel": "Android user", "row": 0, "col": 0 },
+    { "id": "compose", "type": "frontend", "label": "Compose UI", "sublabel": "Routes · screens · sheets", "row": 0, "col": 1 },
+    { "id": "domain", "type": "backend", "label": "ViewModels + domain", "sublabel": "State · validation · rules", "row": 0, "col": 2 },
+    { "id": "repositories", "type": "backend", "label": "Repositories", "sublabel": "Feature data access", "row": 0, "col": 3 },
+    { "id": "room", "type": "database", "label": "Room", "sublabel": "Practice + sync state", "row": 0, "col": 4 },
+    { "id": "preferences", "type": "database", "label": "DataStore", "sublabel": "User + practice preferences", "row": 1, "col": 1 },
+    { "id": "media", "type": "external", "label": "Media3 + app files", "sublabel": "Audio playback / cache", "row": 1, "col": 2 },
+    { "id": "scheduling", "type": "cloud", "label": "Android scheduling", "sublabel": "Alarms · WorkManager · notices", "row": 1, "col": 3 },
+    { "id": "network", "type": "security", "label": "Retrofit / OkHttp", "sublabel": "Auth · stats · sync", "row": 1, "col": 4 },
+    { "id": "keystore", "type": "security", "label": "Token storage", "sublabel": "Android Keystore + AES/GCM", "row": 2, "col": 3 },
+    { "id": "api", "type": "backend", "label": "Awrad API", "sublabel": "Phoenix · HTTPS", "row": 2, "col": 4 }
+  ],
+  "connections": [
+    { "id": "person-compose", "from": "person", "to": "compose", "label": "uses" },
+    { "id": "compose-domain", "from": "compose", "to": "domain", "label": "actions" },
+    { "id": "domain-repositories", "from": "domain", "to": "repositories", "label": "rules" },
+    { "id": "repositories-room", "from": "repositories", "to": "room", "label": "I/O", "variant": "emphasis" },
+    { "id": "domain-preferences", "from": "domain", "to": "preferences", "label": "settings" },
+    { "id": "domain-media", "from": "domain", "to": "media", "label": "counting / preview audio", "labelDy": 24 },
+    { "id": "repositories-scheduling", "from": "repositories", "to": "scheduling", "label": "reminder plans", "labelDy": 24 },
+    { "id": "room-network", "from": "room", "to": "network", "label": "durable sync state", "variant": "dashed", "labelDy": 24 },
+    { "id": "network-keystore", "from": "network", "to": "keystore", "label": "token lifecycle", "variant": "security", "fromSide": "bottom", "toSide": "right" },
+    { "id": "network-api", "from": "network", "to": "api", "label": "HTTPS / JSON", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelDy": 24, "labelDx": 72 }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "Local practice", "items": ["Goals, counts, dhikr, and Wird remain locally usable", "Room repositories own durable practice state"] },
+    { "dot": "cyan", "title": "Selective network", "items": ["Auth, community statistics, practice settings, and progress sync use the API", "Network access is not required for ordinary local counting"] },
+    { "dot": "amber", "title": "Android runtime", "items": ["Alarm and WorkManager scheduling is lifecycle-aware", "Media3 serves playback; credentials use encrypted app storage"] }
+  ]
+}

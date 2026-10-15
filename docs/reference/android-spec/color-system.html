@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Awrad Android · Color system</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f4f6f2;
+      --panel: #fff;
+      --panel-muted: #edf1eb;
+      --ink: #17221a;
+      --muted: #667168;
+      --line: #dbe2d9;
+      --brand: #315d40;
+      --brand-soft: #e1eee3;
+      --shadow: 0 18px 50px rgb(29 47 33 / 8%);
+      --code: #f1f4ef;
+    }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --page: #111713;
+      --panel: #19221c;
+      --panel-muted: #202c24;
+      --ink: #ecf2ed;
+      --muted: #a7b4a9;
+      --line: #344238;
+      --brand: #9cc8a5;
+      --brand-soft: #243a2c;
+      --shadow: 0 18px 50px rgb(0 0 0 / 24%);
+      --code: #202b23;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      transition: background .2s ease, color .2s ease;
+    }
+    button { font: inherit; }
+    .shell { width: min(1240px, calc(100% - 48px)); margin: 0 auto; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center;
+      min-height: 72px; border-bottom: 1px solid var(--line);
+    }
+    .wordmark { display: flex; align-items: center; gap: 11px; font-weight: 750; letter-spacing: -.03em; }
+    .mark { width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; color: #fff; background: #4b7c5a; font-size: 17px; }
+    .top-meta { color: var(--muted); font-size: 12px; letter-spacing: .09em; text-transform: uppercase; }
+    .hero { display: grid; grid-template-columns: 1fr auto; gap: 32px; align-items: end; padding: 58px 0 40px; }
+    .eyebrow { color: var(--brand); font-size: 12px; font-weight: 750; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { margin: 9px 0 12px; max-width: 760px; font-size: clamp(38px, 5vw, 62px); line-height: 1.03; letter-spacing: -.055em; }
+    .intro { max-width: 710px; margin: 0; color: var(--muted); font-size: 16px; }
+    .mode-switch { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: var(--shadow); }
+    .mode-switch button { border: 0; border-radius: 10px; background: transparent; padding: 9px 13px; color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 650; }
+    .mode-switch button[aria-pressed="true"] { background: var(--brand); color: #fff; }
+    [data-theme="dark"] .mode-switch button[aria-pressed="true"] { color: #102016; }
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 0 0 48px; }
+    .stat { padding: 17px 19px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+    .stat strong { display: block; font-size: 24px; line-height: 1.1; letter-spacing: -.04em; }
+    .stat span { color: var(--muted); font-size: 12px; }
+    main { padding-bottom: 74px; }
+    section { margin: 54px 0 0; scroll-margin-top: 24px; }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 18px; }
+    h2 { margin: 0; font-size: 27px; letter-spacing: -.04em; }
+    h3 { margin: 0; font-size: 17px; letter-spacing: -.025em; }
+    .section-note { max-width: 570px; margin: 5px 0 0; color: var(--muted); }
+    .source-tag { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; white-space: nowrap; }
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+    .panel { border: 1px solid var(--line); border-radius: 20px; background: var(--panel); box-shadow: var(--shadow); overflow: hidden; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 19px 21px; border-bottom: 1px solid var(--line); }
+    .panel-head p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
+    .mode-label { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); font-size: 11px; font-weight: 700; }
+    .mode-label i { width: 8px; height: 8px; border-radius: 50%; background: #f0c54f; box-shadow: 0 0 0 3px rgb(240 197 79 / 15%); }
+    .mode-label.dark i { background: #7885c8; box-shadow: 0 0 0 3px rgb(120 133 200 / 16%); }
+    .token-list { padding: 7px 20px 15px; }
+    .token-row { display: grid; grid-template-columns: minmax(124px, .92fr) minmax(120px, 1fr) minmax(106px, auto); align-items: center; gap: 12px; min-height: 53px; border-bottom: 1px solid var(--line); }
+    .token-row:last-child { border-bottom: 0; }
+    .token-name { font-size: 13px; font-weight: 700; }
+    .token-desc { display: block; color: var(--muted); font-size: 11px; font-weight: 450; }
+    .color-value { display: flex; align-items: center; gap: 9px; min-width: 0; }
+    .swatch { width: 30px; height: 30px; flex: 0 0 30px; border: 1px solid rgb(20 30 20 / 13%); border-radius: 9px; background-color: var(--swatch); background-image: linear-gradient(45deg, rgb(120 130 120 / 10%) 25%, transparent 25%, transparent 75%, rgb(120 130 120 / 10%) 75%), linear-gradient(45deg, rgb(120 130 120 / 10%) 25%, transparent 25%, transparent 75%, rgb(120 130 120 / 10%) 75%); background-position: 0 0, 5px 5px; background-size: 10px 10px; }
+    code { padding: 4px 6px; border-radius: 6px; background: var(--code); color: var(--ink); font: 11px/1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; }
+    .copy-btn { display: inline-grid; width: 29px; height: 29px; flex: 0 0 29px; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--muted); cursor: pointer; }
+    .copy-btn:hover { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+    .copy-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+    .copy-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+    .copy-btn.is-copied { border-color: #6b9e7a; background: #e1eee3; color: #315d40; font-size: 16px; font-weight: 800; }
+    .copy-btn.copy-failed { border-color: #ba1a1a; color: #ba1a1a; font-weight: 800; }
+    .token-use { color: var(--muted); font-size: 11px; text-align: right; }
+    .subsection { margin: 19px 20px 0; padding-top: 17px; border-top: 1px solid var(--line); }
+    .subsection h3 { margin-bottom: 10px; font-size: 13px; }
+    .chip-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding-bottom: 18px; }
+    .chip-token { display: flex; align-items: center; gap: 9px; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 12px; }
+    .chip-copy { min-width: 0; }
+    .chip-copy b { display: block; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .chip-code { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+    .ramp-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .ramp-item, .palette-card { border: 1px solid var(--line); border-radius: 15px; background: var(--panel); overflow: hidden; }
+    .ramp-color { height: 74px; border-bottom: 1px solid var(--line); background: var(--swatch); }
+    .ramp-copy { padding: 10px 11px 12px; }
+    .ramp-copy b { display: block; margin-bottom: 5px; font-size: 12px; }
+    .ramp-copy small { color: var(--muted); font-size: 10px; }
+    .ramp-actions { display: flex; align-items: center; justify-content: space-between; gap: 5px; margin-top: 6px; }
+    .palette-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
+    .palette-card { padding: 15px; }
+    .palette-card h3 { margin-bottom: 10px; }
+    .gradient-sample { height: 70px; margin-bottom: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--gradient); }
+    .palette-token { display: grid; grid-template-columns: 20px 1fr auto 29px; gap: 7px; align-items: center; padding: 5px 0; }
+    .palette-token .swatch { width: 20px; height: 20px; min-width: 20px; flex-basis: 20px; border-radius: 6px; }
+    .palette-token span { color: var(--muted); font-size: 11px; }
+    .screen-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .screen-card { padding: 18px; border: 1px solid var(--line); border-radius: 17px; background: var(--panel); }
+    .screen-card h3 { margin-bottom: 12px; }
+    .screen-card .token-row { grid-template-columns: minmax(110px, 1fr) auto; min-height: 46px; }
+    .screen-card .token-use { display: none; }
+    .badge { display: inline-block; margin-left: 6px; padding: 2px 6px; border-radius: 5px; background: var(--brand-soft); color: var(--brand); font-size: 9px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; vertical-align: 1px; }
+    .merge-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .merge-item { padding: 16px 18px; border: 1px solid var(--line); border-radius: 15px; background: var(--panel); }
+    .merge-item strong { display: block; margin-bottom: 5px; font-size: 13px; }
+    .merge-item p { margin: 0; color: var(--muted); font-size: 12px; }
+    .callout { margin-top: 14px; padding: 15px 18px; border-left: 3px solid #6b9e7a; border-radius: 0 12px 12px 0; background: var(--brand-soft); color: var(--ink); font-size: 12px; }
+    .footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; margin-top: 52px; padding: 20px 0 30px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; }
+      .mode-grid { grid-template-columns: 1fr; }
+      .screen-grid { grid-template-columns: 1fr; }
+      .section-head { align-items: start; flex-direction: column; gap: 6px; }
+    }
+    @media (max-width: 620px) {
+      .shell { width: min(100% - 28px, 520px); }
+      .top-meta { display: none; }
+      .hero { padding: 38px 0 28px; }
+      .stats { gap: 7px; margin-bottom: 35px; }
+      .stat { padding: 12px; }
+      .stat strong { font-size: 19px; }
+      .stat span { font-size: 10px; }
+      .token-row { grid-template-columns: minmax(100px, 1fr) auto; gap: 8px; }
+      .token-row .token-use { display: none; }
+      .chip-list, .palette-grid, .merge-list { grid-template-columns: 1fr; }
+      .ramp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .ramp-grid .ramp-item:last-child { grid-column: span 2; }
+    }
+    @media print {
+      :root, [data-theme="dark"] { --page: #fff; --panel: #fff; --panel-muted: #edf1eb; --ink: #17221a; --muted: #667168; --line: #dbe2d9; --brand: #315d40; --brand-soft: #e1eee3; --shadow: none; --code: #f1f4ef; }
+      .mode-switch { display: none; }
+      .panel, .stat { box-shadow: none; break-inside: avoid; }
+      section { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body data-theme="light">
+  <div class="shell">
+    <header class="topbar">
+      <div class="wordmark"><span class="mark">أ</span><span>Awrad <span style="font-weight:450;color:var(--muted)">/ Android</span></span></div>
+      <div class="top-meta">Product reverse engineering · visual system</div>
+    </header>
+
+    <div class="hero">
+      <div>
+        <div class="eyebrow">Color foundations</div>
+        <h1>A calm palette for daily remembrance.</h1>
+        <p class="intro">A source-based inventory of the Android app’s colors, paired with the simplified light and dark palette selected for reconstruction. Semantic names describe how colors are used; current source literals remain below for traceability.</p>
+      </div>
+      <div class="mode-switch" role="group" aria-label="Preview document appearance">
+        <button type="button" data-set-theme="light" aria-pressed="true">Light preview</button>
+        <button type="button" data-set-theme="dark" aria-pressed="false">Dark preview</button>
+      </div>
+    </div>
+
+    <div class="stats" aria-label="Palette summary">
+      <div class="stat"><strong>2</strong><span>Material color schemes</span></div>
+      <div class="stat"><strong>24</strong><span>Central palette constants</span></div>
+      <div class="stat"><strong>Screen-specific</strong><span>Home, collection, reader & counter colors</span></div>
+    </div>
+
+    <main>
+      <section id="core-palette">
+        <div class="section-head">
+          <div><h2>Selected core palette</h2><p class="section-note">The small set of canonical colors for the reconstruction. Dark values reuse the current Android theme.</p></div>
+          <span class="source-tag">Target palette · product decision</span>
+        </div>
+        <div class="mode-grid">
+          <article class="panel">
+            <div class="panel-head"><div><h3>Light mode</h3><p>Green primary · soft neutral surface</p></div><span class="mode-label"><i></i>Light</span></div>
+            <div id="core-light" class="token-list"></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><h3>Dark mode</h3><p>Muted sage primary · charcoal surface</p></div><span class="mode-label dark"><i></i>Dark</span></div>
+            <div id="core-dark" class="token-list"></div>
+          </article>
+        </div>
+        <div class="callout"><strong>Usage:</strong> keep <code>#1A3D26</code> and <code>#E3E5E3</code> for normal text on their respective surfaces. Use the primary color for actions and emphasis. Borders are subtle separators; use primary for an edge that must stand out. White is shared for high-emphasis icons/highlights and light elevated surfaces. On a dark primary fill, use the dark surface color for labels and icons.</div>
+        <div class="callout"><strong>Contrast check:</strong> light primary on its surface is 4.09:1, so reserve it for accents or controls rather than small body text. White content on the light primary is 4.85:1. White on the dark primary is only 3.09:1; dark surface content on it is 5.99:1. The selected borders are intentionally low contrast: 1.08:1 in light mode and 1.97:1 in dark mode.</div>
+      </section>
+
+      <section id="semantic">
+        <div class="section-head">
+          <div><h2>Current Android semantic roles</h2><p class="section-note">The values currently assigned to Material 3 roles; this broader inventory is retained for implementation traceability.</p></div>
+          <span class="source-tag">ui/theme/Theme.kt · Color.kt</span>
+        </div>
+        <div class="mode-grid">
+          <article class="panel">
+            <div class="panel-head"><div><h3>Light mode</h3><p>Bright surfaces · deep green primary text</p></div><span class="mode-label"><i></i>Light</span></div>
+            <div id="light-roles" class="token-list"></div>
+            <div class="subsection"><h3>Surface container levels</h3><div id="light-containers" class="chip-list"></div></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><h3>Dark mode</h3><p>Muted green accents · neutral charcoal surfaces</p></div><span class="mode-label dark"><i></i>Dark</span></div>
+            <div id="dark-roles" class="token-list"></div>
+            <div class="subsection"><h3>Surface container levels</h3><div id="dark-containers" class="chip-list"></div></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="ramps">
+        <div class="section-head">
+          <div><h2>Foundation ramps</h2><p class="section-note">Shared brand and neutral colors used as the source palette for the semantic roles.</p></div>
+          <span class="source-tag">ui/theme/Color.kt</span>
+        </div>
+        <h3 style="margin:0 0 12px">Sage green</h3>
+        <div id="sage-ramp" class="ramp-grid"></div>
+        <h3 style="margin:28px 0 12px">Neutral scale</h3>
+        <div id="neutral-ramp" class="ramp-grid"></div>
+        <div class="callout">The neutral values are kept as a tonal scale because the light and dark themes use different stops for text, borders, and surfaces. Similar appearance alone is not enough reason to collapse contrast steps.</div>
+      </section>
+
+      <section id="home-light">
+        <div class="section-head">
+          <div><h2>Home palette · light mode</h2><p class="section-note">The home screen uses a time-of-day backdrop on top of the shared semantic theme.</p></div>
+          <span class="source-tag">ui/screens/home/HomeVisuals.kt</span>
+        </div>
+        <div id="light-home-palettes" class="palette-grid"></div>
+        <div class="panel" style="margin-top:14px"><div class="panel-head"><div><h3>Shared light home roles</h3><p>Cards, labels, chips and goal progress</p></div></div><div id="light-home-roles" class="token-list"></div></div>
+      </section>
+
+      <section id="home-dark">
+        <div class="section-head">
+          <div><h2>Home palette · dark mode</h2><p class="section-note">Dark home visuals introduce a deep green-black gradient and translucent cards.</p></div>
+          <span class="source-tag">ui/screens/home/HomeVisuals.kt</span>
+        </div>
+        <div class="panel"><div class="panel-head"><div><h3>Dark home roles</h3><p>Backdrop, text, cards, chips and goal progress</p></div></div><div id="dark-home-roles" class="token-list"></div></div>
+      </section>
+
+      <section id="screens">
+        <div class="section-head">
+          <div><h2>Screen-specific colors</h2><p class="section-note">Additional literals used for image scrims, ritual-reading backdrops and the counting ring.</p></div>
+          <span class="source-tag">Compose screen components</span>
+        </div>
+        <div class="screen-grid">
+          <article class="screen-card"><h3>Ritual & wird reader <span class="badge">Dark</span></h3><div id="ritual-colors" class="token-list"></div></article>
+          <article class="screen-card"><h3>Featured collection card</h3><div id="collection-colors" class="token-list"></div></article>
+          <article class="screen-card"><h3>Home image scrims</h3><div id="home-scrims" class="token-list"></div></article>
+          <article class="screen-card"><h3>Dhikr goal counter</h3><div id="counter-colors" class="token-list"></div></article>
+          <article class="screen-card"><h3>Compose color primitives</h3><div id="primitive-colors" class="token-list"></div></article>
+        </div>
+      </section>
+
+      <section id="resources">
+        <div class="section-head">
+          <div><h2>Android resources & legacy values</h2><p class="section-note">XML colors outside the Compose theme, including launcher/splash assets and template-era values.</p></div>
+          <span class="source-tag">app/src/main/res</span>
+        </div>
+        <div class="screen-grid">
+          <article class="screen-card"><h3>Platform resources</h3><div id="platform-colors" class="token-list"></div></article>
+          <article class="screen-card"><h3>Legacy template palette <span class="badge">Review use</span></h3><div id="legacy-colors" class="token-list"></div><p style="margin:9px 0 0;color:var(--muted);font-size:11px">Purple and teal values remain defined in XML. They were not present in the indexed app UI color usages reviewed for this inventory.</p></article>
+        </div>
+      </section>
+
+      <section id="merge">
+        <div class="section-head">
+          <div><h2>Consolidation opportunities</h2><p class="section-note">Candidates to simplify the source palette while preserving clear visual roles.</p></div>
+          <span class="source-tag">Review before changing app code</span>
+        </div>
+        <div class="merge-list">
+          <div class="merge-item"><strong>Reuse exact semantic colors</strong><p>Home accent, goal accent, and chip values already match the theme’s sage tokens. The light splash also matches the light surface container value.</p></div>
+          <div class="merge-item"><strong>Share repeated reader backdrop</strong><p>Ritual and wird reader use the same three dark gradient stops. Keep one named screen token source for both surfaces.</p></div>
+          <div class="merge-item"><strong>Review near-white surface pairs</strong><p><code>#F0F2F0</code> / <code>#F1F3F1</code> and <code>#FCFDFC</code> / <code>#FDFEFB</code> are close. Compare actual component hierarchy and contrast before merging.</p></div>
+          <div class="merge-item"><strong>Consolidate light home card tints</strong><p>Dawn, day, dusk and night cards use four subtle, translucent near-white fills. A shared card token could reduce drift if time-of-day tint is not intentional.</p></div>
+          <div class="merge-item"><strong>Audit ad-hoc text and border colors</strong><p>Home uses custom text and border colors such as <code>#103C1D</code>, <code>#656763</code> and <code>#E0E6D6</code>. Map these to semantic roles where contrast remains suitable.</p></div>
+          <div class="merge-item"><strong>Confirm unused template values</strong><p>Verify XML resource references/build variants before deleting purple and teal resources. Keep launcher and notification colors tied to their asset needs.</p></div>
+        </div>
+        <div class="callout"><strong>Keep distinct:</strong> error colors, on-color pairs, and neutral tonal steps have different contrast jobs. Do not merge them only because their hues look similar.</div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>Source: current Awrad Android Compose theme, screen visuals, and resource XML.</span><span>Alpha values use Android ARGB order: 0xAARRGGBB.</span></footer>
+  </div>
+
+  <script>
+    const schemes = {
+      light: [
+        ["primary", "FF4B7C5A", "Main brand actions"], ["onPrimary", "FFFFFFFF", "Content on primary"],
+        ["primaryContainer", "FFD4E8DA", "Soft primary surface"], ["onPrimaryContainer", "FF1A3D26", "Content on container"],
+        ["secondary", "FF4B7C5A", "Supporting actions"], ["onSecondary", "FFFFFFFF", "Content on secondary"],
+        ["secondaryContainer", "FFD4E8DA", "Soft secondary surface"], ["onSecondaryContainer", "FF1A3D26", "Content on container"],
+        ["tertiary", "FF6B9E7A", "Supporting accent"], ["onTertiary", "FFFFFFFF", "Content on tertiary"],
+        ["background", "FFF0F2F0", "App background"], ["onBackground", "FF1A1C1A", "Text on background"],
+        ["surface", "FFFFFFFF", "Cards and sheets"], ["onSurface", "FF1A1C1A", "Primary surface text"],
+        ["surfaceVariant", "FFF0F2F0", "Variant surface"], ["onSurfaceVariant", "FF5D5F5D", "Secondary surface text"],
+        ["outline", "FF909290", "Component outline"], ["outlineVariant", "FFC7C9C7", "Soft outline"],
+        ["error", "FFBA1A1A", "Error foreground"], ["onError", "FFFFFFFF", "Content on error"],
+        ["errorContainer", "FFFFDAD6", "Error surface"], ["onErrorContainer", "FF410002", "Content on error surface"]
+      ],
+      dark: [
+        ["primary", "FF6B9E7A", "Main brand actions"], ["onPrimary", "FF2E5C3D", "Content on primary"],
+        ["primaryContainer", "FF2E5C3D", "Primary container"], ["onPrimaryContainer", "FFD4E8DA", "Content on container"],
+        ["secondary", "FF6B9E7A", "Supporting actions"], ["onSecondary", "FF1A3D26", "Content on secondary"],
+        ["secondaryContainer", "FF2E5C3D", "Secondary container"], ["onSecondaryContainer", "FFD4E8DA", "Content on container"],
+        ["tertiary", "FF4B7C5A", "Supporting accent"], ["onTertiary", "FFFFFFFF", "Content on tertiary"],
+        ["background", "FF121412", "App background"], ["onBackground", "FFE3E5E3", "Text on background"],
+        ["surface", "FF121412", "Cards and sheets"], ["onSurface", "FFE3E5E3", "Primary surface text"],
+        ["surfaceVariant", "FF1E201E", "Variant surface"], ["onSurfaceVariant", "FFABADAB", "Secondary surface text"],
+        ["outline", "FF767876", "Component outline"], ["outlineVariant", "FF454745", "Soft outline"],
+        ["error", "FFFFB4AB", "Error foreground"], ["onError", "FF690005", "Content on error"],
+        ["errorContainer", "FF93000A", "Error surface"], ["onErrorContainer", "FFFFB4AB", "Content on error surface"]
+      ]
+    };
+    const targetCore = {
+      light: [["Primary", "FF4B7C5A", "Brand actions and emphasis"], ["Text on surfaces", "FF1A3D26", "Main text and icons"], ["Surface", "FFE8EDE9", "Main app surface"], ["Border · optional", "FFD4E8DA", "Subtle separators"], ["White · shared", "FFFFFFFF", "Highlights and elevated surfaces"]],
+      dark: [["Primary", "FF6B9E7A", "Brand actions and emphasis"], ["Text on surfaces", "FFE3E5E3", "Main text and icons"], ["Surface", "FF121412", "Main app surface"], ["Border · optional", "FF454745", "Subtle separators"], ["White · shared", "FFFFFFFF", "High-emphasis highlights"]]
+    };
+    const containers = {
+      light: [["Lowest", "FFFDFEFB"], ["Low", "FFFFFFFF"], ["Default", "FFF0F2F0"], ["High", "FFF1F3F1"], ["Highest", "FFE3E5E3"]],
+      dark: [["Lowest", "FF0E100E"], ["Low", "FF181A18"], ["Default", "FF1E201E"], ["High", "FF282A28"], ["Highest", "FF2F312F"]]
+    };
+    const sage = [["SageGreen", "FF4B7C5A"], ["SageGreenLight", "FF6B9E7A"], ["SageGreenDark", "FF2E5C3D"], ["SageGreenContainer", "FFD4E8DA"], ["OnSageGreenContainer", "FF1A3D26"]];
+    const neutrals = [["Neutral10", "FF1A1C1A"], ["Neutral20", "FF2F312F"], ["Neutral30", "FF454745"], ["Neutral40", "FF5D5F5D"], ["Neutral50", "FF767876"], ["Neutral60", "FF909290"], ["Neutral70", "FFABADAB"], ["Neutral80", "FFC7C9C7"], ["Neutral90", "FFE3E5E3"], ["Neutral95", "FFF1F3F1"], ["Neutral99", "FFFCFDFC"]];
+    const homeLight = [
+      {name:"Dawn", gradient:["FFFFFBF2","FFF4F6EA","FFFFFBF6"], card:"F7FFFDF7"},
+      {name:"Day", gradient:["FFFFFCF5","FFF4F8EE","FFFEFCF7"], card:"F8FFFDF8"},
+      {name:"Dusk", gradient:["FFFFF6EA","FFF3F1E4","FFFEF9F1"], card:"F6FFF9F0"},
+      {name:"Night · light theme", gradient:["FFF9FBF6","FFEFF5EF","FFFFFAF4"], card:"F8FEFCF8"}
+    ];
+    const lightHomeRoles = [["Card border", "FFE0E6D6"], ["Elevated card", "FFFFFFFF"], ["Primary text", "FF103C1D"], ["Secondary text", "FF656763"], ["Accent / goal", "FF4B7C5A"], ["Chip", "FFD4E8DA"], ["Chip content", "FF1A3D26"], ["Progress track", "FFD6E4C7"]];
+    const darkHomeRoles = [["Backdrop · stop 1", "FF010707"], ["Backdrop · stop 2", "FF061814"], ["Backdrop · stop 3", "FF010909"], ["Card fill", "D90B1715"], ["Card border", "FF1D5E48"], ["Elevated card", "DE101C1E"], ["Primary text", "FFF9FAF4"], ["Secondary text", "FFC5CCC8"], ["Accent / goal", "FF6B9E7A"], ["Chip", "FF0D3326"], ["Chip content", "FFD4E8DA"], ["Progress track", "FF18523E"]];
+    const ritual = [["Backdrop · stop 1", "FF020706"], ["Backdrop · stop 2", "FF061410"], ["Backdrop · stop 3", "FF020807"]];
+    const collection = [["Photo scrim · dark 60%", "99000000"], ["Photo scrim · dark 27%", "44000000"], ["Photo scrim · dark 7%", "11000000"], ["Photo scrim · light 72%", "B8FFFFFF"], ["Photo scrim · light 33%", "55FFFFFF"], ["Photo scrim · clear", "00FFFFFF"], ["Title · dark theme", "FFF8FAF4"], ["Title · light theme", "FF103C1D"], ["Action fill · dark", "E60F5B38"], ["Action fill · light", "E62F7D3F"], ["Action icon", "FFFFFFFF"]];
+    const homeScrims = [["Dark · alpha C9", "C90A1118"], ["Dark · alpha 62", "620A1118"], ["Dark · alpha D9", "D90A1118"], ["Dark · alpha 8A", "8A0A1118"], ["Dark · alpha 33", "330A1118"], ["White · alpha EF", "EFFFFFFF"], ["White · alpha B8", "B8FFFFFF"], ["White · alpha F2", "F2FFFFFF"], ["White · alpha C7", "C7FFFFFF"], ["White · alpha 66", "66FFFFFF"]];
+    const platform = [["Launcher background", "FFD5FFDC"], ["Light splash background", "FFF0F2F0"], ["Night splash background", "FF121412"], ["XML black / icon tint", "FF000000"], ["XML white / icon fill", "FFFFFFFF"]];
+    const legacy = [["purple_200", "FFBB86FC"], ["purple_500", "FF6200EE"], ["purple_700", "FF3700B3"], ["teal_200", "FF03DAC5"], ["teal_700", "FF018786"]];
+
+    function cssColor(argb) {
+      const s = argb.toUpperCase();
+      const a = parseInt(s.slice(0, 2), 16) / 255;
+      const r = parseInt(s.slice(2, 4), 16), g = parseInt(s.slice(4, 6), 16), b = parseInt(s.slice(6, 8), 16);
+      return a === 1 ? `rgb(${r} ${g} ${b})` : `rgb(${r} ${g} ${b} / ${a.toFixed(3)})`;
+    }
+    function valueText(argb) { return argb.slice(0,2) === "FF" ? `#${argb.slice(2)}` : `0x${argb}`; }
+    const copyIcon = '<svg viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="7" width="9" height="10" rx="1.5"></rect><path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v8A1.5 1.5 0 0 0 4.5 14H7"></path></svg>';
+    function copyButton(argb) {
+      const value = valueText(argb);
+      return `<button type="button" class="copy-btn" data-copy="${value}" title="Copy ${value}" aria-label="Copy ${value}">${copyIcon}</button>`;
+    }
+    function swatch(argb, extra="") { return `<span class="swatch ${extra}" style="--swatch:${cssColor(argb)}" aria-hidden="true"></span>`; }
+    function roleRows(items) {
+      return items.map(([name, value, desc=""]) => `<div class="token-row"><div class="token-name">${name}${desc ? `<span class="token-desc">${desc}</span>` : ""}</div><div class="color-value">${swatch(value)}<code>${valueText(value)}</code>${copyButton(value)}</div><div class="token-use">${value.slice(0,2) === "FF" ? "Solid" : `Alpha ${Math.round(parseInt(value.slice(0,2),16)/255*100)}%`}</div></div>`).join("");
+    }
+    function chips(items) {
+      return items.map(([name,value]) => `<div class="chip-token">${swatch(value)}<div class="chip-copy"><b>${name}</b><div class="chip-code"><code>${valueText(value)}</code>${copyButton(value)}</div></div></div>`).join("");
+    }
+    function renderRamp(items, target, descriptor) {
+      document.getElementById(target).innerHTML = items.map(([name,value],i) => `<div class="ramp-item"><div class="ramp-color" style="--swatch:${cssColor(value)}"></div><div class="ramp-copy"><b>${name}</b><small>${descriptor ? descriptor(i) : "Color token"}</small><div class="ramp-actions"><code>${valueText(value)}</code>${copyButton(value)}</div></div></div>`).join("");
+    }
+    document.getElementById("core-light").innerHTML = roleRows(targetCore.light);
+    document.getElementById("core-dark").innerHTML = roleRows(targetCore.dark);
+    document.getElementById("light-roles").innerHTML = roleRows(schemes.light);
+    document.getElementById("dark-roles").innerHTML = roleRows(schemes.dark);
+    document.getElementById("light-containers").innerHTML = chips(containers.light);
+    document.getElementById("dark-containers").innerHTML = chips(containers.dark);
+    renderRamp(sage, "sage-ramp", (_,i) => ["Primary sage", "Accent", "Deep green", "Soft container", "Container content"][i]);
+    renderRamp(neutrals, "neutral-ramp", i => `Neutral ${[10,20,30,40,50,60,70,80,90,95,99][i]}`);
+    document.getElementById("light-home-palettes").innerHTML = homeLight.map(p => `<article class="palette-card"><h3>${p.name}</h3><div class="gradient-sample" style="--gradient:linear-gradient(115deg,${p.gradient.map(cssColor).join(",")})"></div>${p.gradient.map((v,i)=>`<div class="palette-token">${swatch(v)}<span>Gradient stop ${i+1}</span><code>${valueText(v)}</code>${copyButton(v)}</div>`).join("")}<div class="palette-token">${swatch(p.card)}<span>Translucent card fill</span><code>${valueText(p.card)}</code>${copyButton(p.card)}</div></article>`).join("");
+    document.getElementById("light-home-roles").innerHTML = roleRows(lightHomeRoles);
+    document.getElementById("dark-home-roles").innerHTML = roleRows(darkHomeRoles);
+    document.getElementById("ritual-colors").innerHTML = roleRows(ritual);
+    document.getElementById("collection-colors").innerHTML = roleRows(collection);
+    document.getElementById("home-scrims").innerHTML = roleRows(homeScrims);
+    document.getElementById("counter-colors").innerHTML = roleRows([["Goal ring accent", "FFD9A72E", "Counting progress ring"]]);
+    document.getElementById("primitive-colors").innerHTML = roleRows([["Black", "FF000000", "Color.Black"], ["White", "FFFFFFFF", "Color.White"], ["Transparent", "00000000", "Color.Transparent"], ["Gray · 50% alpha", "80888888", "Color.Gray.copy(alpha = 0.5f)"]]);
+    document.getElementById("platform-colors").innerHTML = roleRows(platform);
+    document.getElementById("legacy-colors").innerHTML = roleRows(legacy);
+    document.addEventListener("click", async event => {
+      const button = event.target.closest("[data-copy]");
+      if (!button) return;
+      const value = button.dataset.copy;
+      try {
+        try {
+          if (!navigator.clipboard?.writeText) throw new Error("Clipboard API unavailable");
+          await navigator.clipboard.writeText(value);
+        } catch {
+          const field = document.createElement("textarea");
+          field.value = value;
+          field.style.position = "fixed";
+          field.style.opacity = "0";
+          document.body.appendChild(field);
+          field.select();
+          const copied = document.execCommand("copy");
+          field.remove();
+          if (!copied) throw new Error("Copy command failed");
+        }
+        button.classList.add("is-copied");
+        button.textContent = "✓";
+        button.title = `Copied ${value}`;
+        button.setAttribute("aria-label", `Copied ${value}`);
+      } catch {
+        button.classList.add("copy-failed");
+        button.textContent = "!";
+        button.title = "Unable to copy color";
+        button.setAttribute("aria-label", "Unable to copy color");
+      }
+      window.setTimeout(() => {
+        button.classList.remove("is-copied", "copy-failed");
+        button.innerHTML = copyIcon;
+        button.title = `Copy ${value}`;
+        button.setAttribute("aria-label", `Copy ${value}`);
+      }, 1400);
+    });
+    document.querySelectorAll("[data-set-theme]").forEach(button => button.addEventListener("click", () => {
+      document.body.dataset.theme = button.dataset.setTheme;
+      document.querySelectorAll("[data-set-theme]").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
+    }));
+  </script>
+</body>
+</html>

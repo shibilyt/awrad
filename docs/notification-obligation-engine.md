@@ -46,7 +46,7 @@ iOS local notifications cannot run application code immediately before system pr
 
 - Root contract checks: `python3 scripts/validate_behavior_fixtures.py --self-test`
 - Android resource parity: `python3 scripts/validate_android_urgency_resources.py --self-test`
-- Cross-platform model checks: `./check-mobile-model-parity`
+- Cross-platform model checks: `scripts/check-mobile-model-parity`
 - Android: `cd awrad-android && ./gradlew :app:testDebugUnitTest :app:assembleDebug`
 - iOS: run the `awrad` test target or `xcodebuild ... test` against an available simulator.
 

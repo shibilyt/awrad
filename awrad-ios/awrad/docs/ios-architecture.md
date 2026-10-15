@@ -116,7 +116,7 @@ All user-facing strings belong in `en.lproj`, `ar.lproj`, and `ml.lproj`. The se
 
 ## Verification boundary
 
-The root `./check-mobile-model-parity` command validates the progress, behavior, and bundled-Wird contracts, generated content, registry parity, fixtures, and focused native model suites. Persistence tests exercise valid migration, duplicate/broken data, corruption, future versions, rollback, retry, relaunch, import/export, and widget mutation. Focused feature tests exercise goals, counting, Library/Quran/audio, Wird, auth, Home, Settings, deep links, and localization. Test existence is not runtime acceptance; command results belong in the handoff and debugger review.
+The root `scripts/check-mobile-model-parity` command validates the progress, behavior, and bundled-Wird contracts, generated content, registry parity, fixtures, and focused native model suites. Persistence tests exercise valid migration, duplicate/broken data, corruption, future versions, rollback, retry, relaunch, import/export, and widget mutation. Focused feature tests exercise goals, counting, Library/Quran/audio, Wird, auth, Home, Settings, deep links, and localization. Test existence is not runtime acceptance; command results belong in the handoff and debugger review.
 
 Runtime review is recorded in `docs/ios-parity-debugger-review.md` for iOS 26 Liquid Glass and iOS 18 fallback. Notification delivery, audio sessions, widgets, App Intents, Live Activity, and physical-device-only behavior remain explicitly reported when the simulator cannot prove them.
 

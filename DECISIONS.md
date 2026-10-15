@@ -78,7 +78,7 @@ Android Room v5 and iOS snapshot v5 reset pre-v5 development product data becaus
 ### Evidence
 
 - `contracts/progress-model/v1/`
-- `check-mobile-model-parity`
+- `scripts/check-mobile-model-parity`
 - `awrad-android/app/schemas/app.awrad.awrad_dhikrgoalstracker.data.database.AwradDatabase/5.json`
 - `awrad-ios/awrad/awrad/Core/ProgressContractV1.swift`
 - `awrad_server/priv/repo/migrations/20260713125755_align_progress_model_v1.exs`

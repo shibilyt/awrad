@@ -168,7 +168,7 @@ transfer sessions and pages, actor acknowledgements, native durable outboxes,
 tombstones, conservative first import, generation reconciliation, and entity
 conflict resolution. Ownership is always derived from authenticated scope.
 
-Run `./check-mobile-model-parity` at the root for schema/fixture validation, exact persisted-field classification, three-way built-in registry comparison, and the Android and iOS contract suites. A progress-model change is incomplete unless its schema, fixtures, native mappers, API representation, and tests change together.
+Run `scripts/check-mobile-model-parity` at the root for schema/fixture validation, exact persisted-field classification, three-way built-in registry comparison, and the Android and iOS contract suites. A progress-model change is incomplete unless its schema, fixtures, native mappers, API representation, and tests change together.
 
 ## Bundled Wird model v1
 
@@ -182,7 +182,7 @@ Run `./scripts/generate_wird_model.py --check` to validate the source and reject
 
 `contracts/behavior-model/v1/fixtures/behavior-cases.json` is a deterministic cross-platform acceptance fixture. Its case families cover recurrence, effective-day resolution, count limits, slot selection, streaks, reminder plans, notification obligations, and Wird cadence. Notification-obligation cases lock target-policy continuity, deadline formulas, suppression, lifecycle separation, cumulative bounds, slot conjunction, and the global urgency toggle. Optional `tag_normalization` and `tag_filter` families lock baseline user-tag display/normalized uniqueness rules and AND filter composition for the custom-dhikr expansion; the exact Unicode White_Space / full Default Case Fold contract (ß↔SS, dotted capital I, NNBSP/figure space) lives in `contracts/behavior-model/v1/fixtures/tag-normalization-contract.json`. Native calculators adopt those sections when tag UI ships. It is product-behavior evidence rather than a persistence or network wire format.
 
-`scripts/validate_behavior_fixtures.py` validates the fixture structure. Android `BehaviorFixtureParityTest` and iOS `BehaviorParityTests` consume it alongside platform-specific edge cases and execute native production semantics for every notification-obligation case. The root `./check-mobile-model-parity` command runs all three checks; a behavior change is incomplete when only one native calculator changes. See [`docs/notification-obligation-engine.md`](docs/notification-obligation-engine.md) for the runtime architecture and platform constraints.
+`scripts/validate_behavior_fixtures.py` validates the fixture structure. Android `BehaviorFixtureParityTest` and iOS `BehaviorParityTests` consume it alongside platform-specific edge cases and execute native production semantics for every notification-obligation case. The root `scripts/check-mobile-model-parity` command runs all three checks; a behavior change is incomplete when only one native calculator changes. See [`docs/notification-obligation-engine.md`](docs/notification-obligation-engine.md) for the runtime architecture and platform constraints.
 
 ## Product parity
 
