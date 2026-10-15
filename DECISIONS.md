@@ -422,6 +422,126 @@ and background progress-sync cadence. Location never becomes account-global.
 
 None.
 
+## ADR-2026-10-14: Rebuild Awrad as four contract-first projects
+
+Status: Accepted
+
+### Context
+
+Awrad hasn't been released. An architecture review of `awrad-android` found domain rules copied across UI, repositories and notifications, plus very large files. The API contract lives in prose (`CONTRACTS.md`) and can drift from the three consumers. Rather than restructure in place, the platform is being rebuilt while there are still no users to protect.
+
+### Decision
+
+- **Four new projects** replace the current three:
+
+  | New project | Replaces | Notes |
+  |---|---|---|
+  | `awrad-server-next/` | `awrad_server/` | API only: no LiveView or HTML |
+  | `awrad-android-next/` | `awrad-android/` | Scaffold exists |
+  | `awrad-ios-next/` | `awrad-ios/` | |
+  | `awrad-web-next/` | the LiveView web UI | A React client of the same API |
+
+  The current projects are **frozen as reference**: their code and tests describe current behaviour, and fixes go only into the new projects.
+- **Contract first.** A root `contract/` directory becomes the single source of truth shared by all four:
+  - an OpenAPI spec for routes, JSON, errors and auth;
+  - language-neutral behaviour fixtures that every platform's domain tests must pass;
+  - the domain language (`CONTEXT.md`).
+
+  Clients generate or check their network types against the spec; the server validates against it.
+- **Vertical slices.** Each slice goes contract → server → Android → iOS → web before the next starts:
+  1. domain foundation and contract skeleton;
+  2. accounts;
+  3. goals;
+  4. counting and progress sync;
+  5. then onboarding, wird, library, reminders and community.
+- **Shared identity still holds:** built-in content identity (ADR-2026-07-13) and the verified-account and device-session model (ADR-2026-07-12) carry over unless a later ADR supersedes them.
+
+### Consequences
+
+- The contract can be redesigned freely now, but once a slice ships across all four projects it is binding for every consumer.
+- Each domain rule is implemented on each platform (no Kotlin Multiplatform; see `awrad-android-next/docs/adr/0002`). Shared fixtures are what keep the implementations aligned.
+- `CONTRACTS.md` gives way to `contract/` as each slice lands.
+- `STRUCTURE.md` and `docs/index.md` gain each new project when it is created.
+
+### Evidence
+
+- `awrad-android-next/ARCHITECTURE.md` and `awrad-android-next/docs/adr/`
+
+### Supersedes
+
+None yet. Platform ADRs and `CONTRACTS.md` sections are superseded slice by slice.
+
+## ADR-2026-10-14: Technology stack for the rebuild
+
+Status: Accepted
+
+### Context
+
+The rebuild is a chance to change stacks. The decisive server requirement is many concurrent users counting on a single shared public counter, with live totals, while the team is one developer plus AI agents today, with more developers later.
+
+### Decision
+
+| Project | Stack |
+|---|---|
+| Server | Elixir / Phoenix 1.8, Ecto, Postgres, Oban for background jobs. JSON API plus Phoenix Channels for live data. No Redis or Kafka: ETS and PubSub cover caching and fan-out |
+| Android | Kotlin, Jetpack Compose, Hilt, Room, DataStore, multi-module with build-enforced rules |
+| iOS | Swift, SwiftUI, SwiftData, Observation, minimum iOS 18. The stack is unchanged; the rebuild targets structure and code quality |
+| Web | React, TypeScript, Vite, TanStack Query and Router, with a client generated from the OpenAPI spec. Online-only: no offline counting in the browser |
+
+- **Phoenix stays the core.** If a specific heavy-load path ever outgrows it, that path becomes a separate service behind the same contract, in whatever technology fits best, rather than a rewrite of the whole server.
+- **Phoenix's long-term risks are managed, not ignored:**
+  - Hiring: hire for backend skill; Elixir is learnable in weeks.
+  - Agent proficiency and weaker static typing: Credo strict, Dialyzer, warnings as errors, enforced context boundaries, and contract validation at the API edge.
+
+### Consequences
+
+- The shared-counter design (append-only contributions ledger, group commit, in-memory live deltas, throttled PubSub broadcast, periodic rollups) needs its own ADR once its product semantics are settled: scale target, overshoot at targets, late offline contributions, guest participation and rate caps.
+- Browser authentication is settled by ADR-2026-10-15: Phoenix cookie sessions.
+- The server becomes API-only, so the LiveView, templates and asset pipeline from `awrad_server/` are not carried over.
+
+### Evidence
+
+- `awrad_server/lib/awrad_server/community.ex` (aggregates on every request today; the motivating scaling gap)
+
+### Supersedes
+
+None.
+
+## ADR-2026-10-15: Browser clients use Phoenix cookie sessions
+
+Status: Accepted
+
+### Context
+
+`awrad-web-next` is a React client of the API-only `awrad-server-next`. Browsers shouldn't hold bearer tokens in JavaScript-readable storage, where any XSS can steal them. Mobile clients keep using bearer tokens under ADR-2026-07-12.
+
+### Decision
+
+- The browser authenticates with **Phoenix's default `phx.gen.auth` session**:
+  - an httpOnly, Secure session cookie and the remember-me cookie;
+  - tokens stored in `users_tokens`.
+
+  The generated `Accounts`, `UserToken` and `UserAuth` session plugs are kept as generated, apart from deliberate security changes.
+- Because the server is API-only, the generated HTML/LiveView pages are replaced by **JSON endpoints** for log in, log out, register, confirm and reset. They use the same `Accounts` functions and session plugs.
+- The router keeps **two separate pipelines** that resolve to the same accounts: browser (session cookie and CSRF protection) and mobile (bearer token and device session). Neither accepts the other's credential.
+- **Same site, not cross-origin:** the web app is served from the same site as the API, so `SameSite=Lax` cookies work without credentialed CORS. That means either Phoenix serves the built app, or a proxy puts both under one origin.
+- **CSRF:** state-changing browser requests send Phoenix's CSRF token in a request header. The web app gets the token from a small endpoint that is only available to session-cookie requests.
+
+### Consequences
+
+- No tokens in `localStorage` or JavaScript memory on the web; XSS can't read the session.
+- The OpenAPI contract describes both security schemes: `cookieAuth` plus the CSRF header for the web, `bearerAuth` for mobile.
+- Hosting must keep the web app and the API on the same site. Splitting them across sites later would need a new ADR covering credentialed CORS and `SameSite=None`.
+- Server tests cover each pipeline rejecting the other's credentials.
+
+### Evidence
+
+- To be added with the accounts slice (`awrad-server-next` router and `UserAuth`).
+
+### Supersedes
+
+The open "browser authentication" item in ADR-2026-10-14 (technology stack).
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

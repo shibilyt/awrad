@@ -5,6 +5,7 @@
 ```text
 awrad/
 ├── awrad-android/   Android application and tests
+├── awrad-android-next/  Android rebuild; will replace awrad-android (pre-release)
 ├── awrad-ios/       iOS application, widget, and tests
 ├── awrad_server/       Phoenix web/API application and PostgreSQL migrations
 ├── AGENTS.md        Shared agent policy
@@ -14,6 +15,10 @@ awrad/
 ```
 
 Each project owns its toolchain and can be built independently. The root owns Git history and shared documentation; it is not a Gradle, Xcode, or Mix project.
+
+## Android (experimental rework)
+
+Root: `awrad-android-next/`. A multi-module rebuild with build-enforced standards that will replace `awrad-android`. Neither app is released. It must not change `awrad-android/`, the API, or `CONTRACTS.md`. Start with `awrad-android-next/ARCHITECTURE.md`.
 
 ## Android
 
