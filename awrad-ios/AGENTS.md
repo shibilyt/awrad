@@ -1,5 +1,7 @@
 # iOS agent instructions
 
+> **Frozen reference (ADR-2026-10-14).** Being replaced by [`awrad-ios-next`](../awrad-ios-next/). Read this project to learn current behaviour; don't add features or fixes here. See [`docs/rebuild-plan.md`](../docs/rebuild-plan.md).
+
 These instructions apply inside `awrad-ios/` and extend the repository-wide rules in [`../AGENTS.md`](../AGENTS.md).
 
 ## Architecture

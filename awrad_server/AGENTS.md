@@ -1,5 +1,7 @@
 # API agent instructions
 
+> **Frozen reference (ADR-2026-10-14).** Being replaced by [`awrad-server-next`](../awrad-server-next/). Read this project to learn current behaviour; don't add features or fixes here. See [`docs/rebuild-plan.md`](../docs/rebuild-plan.md).
+
 These instructions apply inside `awrad_server/` and extend the repository-wide rules in [`../AGENTS.md`](../AGENTS.md). This is the Phoenix web application and JSON API for the umbrella repository.
 
 Before changing API routes, JSON fields, token behavior, identifiers, or ownership rules:

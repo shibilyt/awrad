@@ -1,5 +1,7 @@
 # Android agent instructions
 
+> **Frozen reference (ADR-2026-10-14).** Being replaced by [`awrad-android-next`](../awrad-android-next/). Read this project to learn current behaviour; don't add features or fixes here. See [`docs/rebuild-plan.md`](../docs/rebuild-plan.md).
+
 These instructions apply inside `awrad-android/` and extend the repository-wide rules in [`../AGENTS.md`](../AGENTS.md).
 
 ## Architecture
