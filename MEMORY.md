@@ -180,7 +180,7 @@ Use this format:
 - Area: Cross-project | Documentation
 - Change:
   - Added `.github/workflows/ci.yml`: change detection, per-project jobs (`contracts`, `contracts_v1`, `android_next`) running each validation command on `mise.toml` toolchains, and a `ci_ok` gate job.
-  - The frozen server's `api-image.yml` is unchanged. It auto-deploys to Dokploy on any `awrad_server/**` change, including docs. The run triggered by the frozen-project banner commit was cancelled before anything was built or deployed.
+  - The frozen server's `api-image.yml` used to auto-deploy to Dokploy on any `awrad_server/**` push, including docs. A run triggered by the frozen-project banner commit was cancelled before anything was built. The workflow is now **manual-deploy only** (`workflow_dispatch` from `main`); pull requests still test and build.
 - `main` is protected: `ci_ok` required, no force pushes or deletion; admins may push directly.
 - Evidence: `.github/workflows/ci.yml`, `docs/rebuild-plan.md`
 - Commit: see git log

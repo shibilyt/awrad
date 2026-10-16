@@ -71,7 +71,7 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 - [x] First run on GitHub passed: all jobs green, Android in about 6 minutes (run 38916817752).
 - [x] Branch protection on `main`: `ci_ok` required, force pushes and deletion blocked. Admin direct pushes are still allowed for solo work; revisit when other developers join.
 - [x] The frozen server keeps `api-image.yml` until it's replaced.
-- [ ] **Deploy trap:** `api-image.yml` builds and **deploys to Dokploy** on every push to `main` touching `awrad_server/**`, including doc-only edits. A frozen-project banner commit triggered it on 2026-10-16; the run was cancelled before anything was built or deployed. Decide: ignore doc paths, make deploys manual, or retire the workflow.
+- [x] **Deploy trap closed:** `api-image.yml` no longer runs on pushes, so deploys of the frozen server are manual only (Run workflow from `main`). Pull requests touching `awrad_server/` still test and build. Context: a doc-only banner commit had triggered a deploy run on 2026-10-16, cancelled before anything was built.
 - New projects add a filter line in `changes`, a job, and an entry in `ci_ok.needs`.
 
 ### 0.7 Standards and scaffolds (scaffold only, no features)

@@ -17,7 +17,7 @@ builds from source, so a deploy is a registry pull of an immutable tag.
 3. `deploy` — sets the application's Docker image to the new `sha-` tag via
    `application.saveDockerProvider`, then calls `application.deploy`.
 
-Pull requests run steps 1 and 2 without pushing or deploying.
+Deploys are **manual only** (2026-10-16): pushes to `main` no longer trigger this workflow. Run it from `main` with **Actions → Awrad server image → Run workflow** to test, build, push and deploy. Pull requests run steps 1 and 2 without pushing or deploying.
 
 Rollback is a redeploy of an older `sha-` tag from the Dokploy UI. Nothing is
 rebuilt, so the rolled-back artifact is bit-identical to what was live before.

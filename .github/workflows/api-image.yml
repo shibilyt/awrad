@@ -2,12 +2,13 @@ name: Awrad server image
 
 # Builds and publishes the Awrad server release image to GHCR. Dokploy pulls the
 # immutable `sha-<short>` tag; it never builds from source.
+#
+# Deploys are manual only (2026-10-16): run this workflow from `main` via
+# Actions -> "Awrad server image" -> Run workflow. Pull requests touching the
+# server still test and build without pushing or deploying. There is no push
+# trigger: awrad_server/ is frozen reference, and doc edits there must not
+# redeploy production.
 on:
-  push:
-    branches: [main]
-    paths:
-      - "awrad_server/**"
-      - ".github/workflows/api-image.yml"
   pull_request:
     paths:
       - "awrad_server/**"
