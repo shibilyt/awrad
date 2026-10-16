@@ -24,6 +24,7 @@ The navigation layer for repository knowledge. Keep the root [`AGENTS.md`](../AG
 | Progress sync v1: wire protocol and reducer scenarios | [`contracts/progress-sync/v1/`](../contracts/progress-sync/v1/) |
 | Behaviour model v1: shared behaviour cases | [`contracts/behavior-model/v1/`](../contracts/behavior-model/v1/) |
 | Wird model v1: bundled wird and generated identities | [`contracts/wird-model/v1/`](../contracts/wird-model/v1/) |
+| API style guide | [`contracts/api/STYLE.md`](../contracts/api/STYLE.md) |
 | API spec (OpenAPI) | Planned under `contracts/api/` (rebuild plan 0.4) |
 | Current API wire contract, in prose (frozen server) | [`CONTRACTS.md`](../CONTRACTS.md). Replaced by `contracts/` slice by slice |
 

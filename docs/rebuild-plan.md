@@ -38,12 +38,12 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 - [x] `README.md` rewritten; `CONTRACTS.md` labelled as the frozen server's contract.
 
 ### 0.3 API style guide (ADR)
-- [ ] Versioning: path prefix `/api/v1`, and what counts as a breaking change.
-- [ ] Error format, for example RFC 9457 `application/problem+json` with stable error codes.
-- [ ] Naming: snake_case JSON (already in `CONTRACTS.md`), enum wire values, nullability vs omitted fields.
-- [ ] IDs (UUIDv4, ADR-2026-07-13), timestamps (UTC, RFC 3339), local dates, and timezone rules for the effective practice day.
-- [ ] Idempotency keys for writes; pagination style; how deletions and tombstones look.
-- [ ] Auth schemes: `cookieAuth` plus a CSRF header for the web (ADR-2026-10-15), `bearerAuth` for mobile (ADR-2026-07-12).
+- [x] [`contracts/api/STYLE.md`](../contracts/api/STYLE.md) accepted as root ADR-2026-10-16. It covers:
+  - versioning (`/api/v1`, `/socket/v1`) and paths;
+  - resources and actions, with one ledger write path for progress;
+  - JSON naming and shape; IDs (client UUIDv4, built-in deterministic); whole-number counts as JSON integers; time formats and the effective practice day;
+  - RFC 9457 errors with stable codes; cursor pagination; `expected_revision` conflicts; `Idempotency-Key`;
+  - the two auth schemes; caching and rate-limit headers; Channels conventions; evolution rules.
 
 ### 0.4 Contract tooling
 - [ ] `contracts/api/` OpenAPI layout, built on the existing `contracts/*/v1` schemas rather than restating them.

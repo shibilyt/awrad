@@ -143,4 +143,13 @@ Use this format:
   - Frozen-app maps moved to `docs/reference/legacy-*.md`.
   - `CONTRACTS.md` is labelled as the frozen server's contract.
 - Evidence: `AGENTS.md`, `STRUCTURE.md`, `LOOPS.md`, `docs/reference/`
-- Commit: uncommitted
+- Commit: 5e2b905
+
+### 2026-10-16 — API style guide adopted
+
+- Area: Cross-project | Documentation
+- Change:
+  - `contracts/api/STYLE.md` defines the rules for every `awrad-server-next` endpoint: one `/api/v1` prefix; one ledger write path for progress; RFC 9457 errors with stable codes; `expected_revision` conflicts; whole-number counts as JSON integers; cursor pagination; `Idempotency-Key`.
+  - The new API defines its own schemas; `contracts/*/v1` stay as frozen reference.
+- Evidence: `contracts/api/STYLE.md`, `DECISIONS.md` (ADR-2026-10-16)
+- Commit: see git log

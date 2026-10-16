@@ -542,6 +542,40 @@ Status: Accepted
 
 The open "browser authentication" item in ADR-2026-10-14 (technology stack).
 
+## ADR-2026-10-16: API style guide for the rebuild
+
+Status: Accepted
+
+### Context
+
+The frozen API has four error shapes (in some, `error` holds a human message, in others a machine code), three versioning patterns, and both snake_case and camelCase schemas. The rebuild's API will serve three clients (Android, iOS, web), so a single set of rules is needed before the first endpoint is specified.
+
+### Decision
+
+Adopt [`contracts/api/STYLE.md`](contracts/api/STYLE.md) for every `awrad-server-next` endpoint. Its four contested choices:
+
+1. **One write path for user progress.** The web calls resource endpoints that the server turns into the same command-ledger commands mobile sends (continuing ADR-2026-09-04). Nothing writes progress tables directly.
+2. **Errors are RFC 9457 `application/problem+json`**, with a required stable `code`. Clients switch only on `code` and localize it; `title` and `detail` are English and never shown to users.
+3. **Optimistic concurrency uses `expected_revision`** in the body, with `409 revision_conflict` returning the current resource. This is the same model as the sync protocol.
+4. **One `/api/v1` prefix** for the whole API (plus `/socket/v1` for Channels). Optional features are negotiated with capability flags.
+
+### Consequences
+
+- Clients get one error parser and one conflict path. The UI never displays server English.
+- Server code can't take shortcuts around the ledger for web writes. The web pays a small cost in server-side translation.
+- The style guide is enforced by a Spectral ruleset in CI (rebuild plan 0.4). Until then, it's enforced in review.
+- The wird model moves to snake_case when it's exposed through the API.
+- Counts are whole numbers everywhere. Counts, revisions and sequences are plain JSON integers, bounded by 2⁵³ − 1. This replaces the integer strings of the frozen sync contract.
+
+### Evidence
+
+- `contracts/api/STYLE.md`
+- Frozen inconsistencies: `awrad_server/lib/awrad_server_web/controllers/api/auth_controller.ex`, `practice_settings_controller.ex`, `progress_sync_controller.ex`, `error_json.ex`
+
+### Supersedes
+
+None. Applies only to `awrad-server-next`; the frozen API keeps its shapes.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

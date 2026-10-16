@@ -26,7 +26,7 @@ Projects marked "not created yet" are planned under ADR-2026-10-14. Their sectio
 
 ## contracts
 
-The shared source of truth for all four projects. Versioned folders, each with a JSON Schema, fixtures and a README:
+The shared source of truth for all four projects. Versioned folders, each with a JSON Schema, fixtures and a README. The existing `v1` folders describe the frozen apps. The rebuild adds new versions that follow [`api/STYLE.md`](contracts/api/STYLE.md) as slices need them, while the `v1` built-in content identities stay binding:
 
 | Folder | Holds |
 |---|---|
@@ -34,7 +34,7 @@ The shared source of truth for all four projects. Versioned folders, each with a
 | `progress-sync/v1/` | Sync protocol schema, protocol examples, count-reducer scenarios |
 | `behavior-model/v1/` | Language-neutral behaviour cases that every platform's domain tests must pass |
 | `wird-model/v1/` | Canonical wird model, manifest and fixtures |
-| `api/` (planned) | OpenAPI spec for routes, JSON, errors and auth (plan item 0.4) |
+| `api/` | [`STYLE.md`](contracts/api/STYLE.md), the API style guide (ADR-2026-10-16); the OpenAPI spec is planned (plan item 0.4) |
 
 Generators and validators live in `scripts/`. `scripts/check-mobile-model-parity` also runs the frozen apps' native contract suites.
 
