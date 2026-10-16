@@ -68,9 +68,10 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
   - Each job runs its project's validation command with toolchains from `mise.toml`.
   - Not one workflow per project, because path-filtered workflows can't be required checks: pull requests that don't touch them wait forever.
 - [x] `ci_ok` is the single gate job: it passes only when every job that ran passed. The change detection and the gate were tested locally against real commits.
-- [ ] First run on GitHub (needs a push).
-- [ ] Branch protection on `main` requiring `ci_ok` (a repository setting change).
+- [x] First run on GitHub passed: all jobs green, Android in about 6 minutes (run 38916817752).
+- [x] Branch protection on `main`: `ci_ok` required, force pushes and deletion blocked. Admin direct pushes are still allowed for solo work; revisit when other developers join.
 - [x] The frozen server keeps `api-image.yml` until it's replaced.
+- [ ] **Deploy trap:** `api-image.yml` builds and **deploys to Dokploy** on every push to `main` touching `awrad_server/**`, including doc-only edits. A frozen-project banner commit triggered it on 2026-10-16; the run was cancelled before anything was built or deployed. Decide: ignore doc paths, make deploys manual, or retire the workflow.
 - New projects add a filter line in `changes`, a job, and an entry in `ci_ok.needs`.
 
 ### 0.7 Standards and scaffolds (scaffold only, no features)
