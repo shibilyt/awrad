@@ -1,0 +1,74 @@
+# Deliberately breaks every awrad-* rule once. api/tests/check-rules.mjs asserts
+# each rule fires here, so a rule that silently stops working fails the build.
+openapi: 3.1.0
+info:
+  title: Violations
+  version: "0"
+  description: Test fixture for the Spectral ruleset.
+  license: { name: Proprietary, identifier: LicenseRef-Proprietary }
+servers:
+  - url: http://localhost:4000
+tags:
+  - name: t
+    description: t
+paths:
+  /goals/{id}:                                   # awrad-paths-under-api-v1, awrad-path-segments
+    patch:                                       # awrad-no-patch
+      operationId: patchGoal                     # awrad-operation-id-snake-case
+      description: d
+      tags: [t]
+      security: []
+      responses:
+        "204":
+          description: ok
+          headers:
+            Cache-Control: { schema: { type: string } }
+            x-request-id: { schema: { type: string } }
+  /api/v1/goals:
+    post:                                        # awrad-idempotency-key-on-post, awrad-security-declared
+      operationId: create_goal
+      description: d
+      tags: [t]
+      requestBody:
+        content:
+          application/json:                      # awrad-examples-present (no example)
+            schema:                              # awrad-request-unknown-fields-rejected
+              type: object
+              properties:
+                dailyTarget:                     # awrad-property-names-snake-case
+                  type: integer                  # awrad-numbers (no bounds)
+                progress:
+                  type: number                   # awrad-numbers (fractional)
+                kind:
+                  type: string
+                  enum: [Daily]                  # awrad-enum-values-snake-case
+      responses:                                 # awrad-error-codes-documented (422 without x-error-codes)
+        "200":
+          description: ok                        # awrad-cache-control-declared, awrad-request-id-declared
+          content:
+            text/plain:                          # awrad-response-content-type
+              schema: { type: string }
+              example: ok
+        "201":
+          description: created
+          headers:
+            Cache-Control: { schema: { type: string } }
+            x-request-id: { schema: { type: string } }
+          content:
+            application/json:
+              schema:                            # awrad-response-fields-always-present, awrad-lists-have-cursor
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { type: string }
+              example: { items: [] }
+        "422":
+          description: invalid
+          headers:
+            Cache-Control: { schema: { type: string } }
+            x-request-id: { schema: { type: string } }
+          content:
+            application/json:                    # awrad-response-content-type (not problem+json)
+              schema: { type: object }
+              example: {}

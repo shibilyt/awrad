@@ -46,12 +46,12 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
   - the two auth schemes; caching and rate-limit headers; Channels conventions; evolution rules.
 
 ### 0.4 Contract tooling
-- [ ] `contracts/api/` OpenAPI layout, built on the existing `contracts/*/v1` schemas rather than restating them.
-- [ ] Spec linting in CI (for example Spectral, configured with the style guide).
-- [ ] Server: request/response validation against the spec (for example `open_api_spex`), plus contract tests.
-- [ ] Web: generated types (`openapi-typescript`).
-- [ ] Android and iOS: decide generated models vs. hand-written models checked against the spec (ADR).
-- [ ] One behaviour-fixture runner per platform that loads `contracts/**/fixtures` (Kotlin, Swift, Elixir, TypeScript where relevant).
+- [x] `contracts/api/` OpenAPI 3.1 layout: an `openapi.yaml` root with shared components (auth schemes, Problem, IDs, time types, integer counts, standard error responses) and `paths/<area>.yaml` files. Redocly bundles them into the committed `openapi.bundled.json`.
+- [x] Spec linting: `contracts/api/spectral.mjs` enforces `STYLE.md` with 17 custom rules. `api/tests/` proves every rule fires and the bundle is fresh. Wiring it into CI is item 0.6.
+- [ ] Server: request/response validation against the spec (for example `open_api_spex`) plus contract tests. Built with the server scaffold.
+- [ ] Web: generated types (`openapi-typescript`). Built with the web scaffold.
+- [x] Android and iOS: hand-written classes plus spec-example contract tests (root ADR-2026-10-16, client types). The tests themselves are built with each project's network module.
+- [x] Fixture format `awrad-fixture/1` (`contracts/FIXTURES.md`, `fixture.schema.json`, `tools/check-fixtures.mjs`). Platform runners land with the first real fixtures in slice 1.
 
 ### 0.5 Toolchains and local environment
 - [ ] Root `mise.toml` pinning Erlang, Elixir, Node and JDK.

@@ -34,9 +34,10 @@ The shared source of truth for all four projects. Versioned folders, each with a
 | `progress-sync/v1/` | Sync protocol schema, protocol examples, count-reducer scenarios |
 | `behavior-model/v1/` | Language-neutral behaviour cases that every platform's domain tests must pass |
 | `wird-model/v1/` | Canonical wird model, manifest and fixtures |
-| `api/` | [`STYLE.md`](contracts/api/STYLE.md), the API style guide (ADR-2026-10-16); the OpenAPI spec is planned (plan item 0.4) |
+| `api/` | OpenAPI 3.1 spec (`openapi.yaml` plus `paths/`, bundled into `openapi.bundled.json`), the [`STYLE.md`](contracts/api/STYLE.md) rules and their Spectral ruleset. See [`api/README.md`](contracts/api/README.md) |
+| `fixture.schema.json`, `tools/` | The `awrad-fixture/1` behaviour-fixture format and its checker ([`FIXTURES.md`](contracts/FIXTURES.md)) |
 
-Generators and validators live in `scripts/`. `scripts/check-mobile-model-parity` also runs the frozen apps' native contract suites.
+Node tooling (pinned in `contracts/package.json`) covers the API spec and the new fixture format: `cd contracts && npm test`. The Python generators and validators for the v1 folders live in `scripts/`; `scripts/check-mobile-model-parity` also runs the frozen apps' native contract suites.
 
 ## awrad-server-next
 

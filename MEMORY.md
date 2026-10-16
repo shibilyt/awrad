@@ -153,3 +153,13 @@ Use this format:
   - The new API defines its own schemas; `contracts/*/v1` stay as frozen reference.
 - Evidence: `contracts/api/STYLE.md`, `DECISIONS.md` (ADR-2026-10-16)
 - Commit: see git log
+
+### 2026-10-16 — Contract tooling for the API spec and fixtures
+
+- Area: Cross-project | Documentation
+- Change:
+  - Added the OpenAPI 3.1 skeleton (`contracts/api/openapi.yaml`, bundled into `openapi.bundled.json`), plus a Spectral ruleset enforcing `STYLE.md` with tests proving each rule fires.
+  - Added the `awrad-fixture/1` format with its checker.
+  - Recorded how clients get types: the web generates them; mobile hand-writes classes covered by spec-example contract tests.
+- Evidence: `contracts/api/`, `contracts/FIXTURES.md`, `contracts/package.json`, `DECISIONS.md` (ADR-2026-10-16, client types)
+- Commit: see git log

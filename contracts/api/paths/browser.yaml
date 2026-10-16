@@ -1,0 +1,33 @@
+csrf_token:
+  get:
+    operationId: get_browser_csrf_token
+    tags: [browser]
+    summary: Get the CSRF token for this browser session
+    description: >-
+      Only available to cookie sessions (ADR-2026-10-15). The web app sends the
+      returned token in `X-CSRF-Token` on every state-changing request.
+    security:
+      - cookieAuth: []
+    x-error-codes: [unauthenticated]
+    responses:
+      "200":
+        description: The session's CSRF token.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [csrf_token]
+              properties:
+                csrf_token:
+                  type: string
+                  minLength: 16
+            example:
+              csrf_token: SXlPVEZ3Zm9MUw4JHQ0rNTI8KyorFxUZ
+      "401":
+        $ref: "../openapi.yaml#/components/responses/Unauthorized"

@@ -1,0 +1,284 @@
+openapi: 3.1.0
+info:
+  title: Awrad API
+  version: 1.0.0-pre
+  summary: JSON API served by awrad-server-next to the Android, iOS and web clients.
+  description: |
+    Follows `contracts/api/STYLE.md` (ADR-2026-10-16). Rules are enforced by
+    `contracts/api/spectral.mjs`; run `npm test` in `contracts/`.
+
+    Paths are added slice by slice (`docs/rebuild-plan.md`). Shared building
+    blocks live under `components` and are referenced, never copied.
+  license:
+    name: Proprietary
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: "{base_url}"
+    description: The deployment's API origin. Web clients use their own origin (same site).
+    variables:
+      base_url:
+        default: http://localhost:4000
+tags:
+  - name: browser
+    description: Endpoints only browser (cookie-session) clients use.
+
+paths:
+  /api/v1/browser/csrf_token:
+    $ref: paths/browser.yaml#/csrf_token
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Mobile clients. Short-lived access token bound to a device session (ADR-2026-07-12).
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: _awrad_session
+      description: >-
+        Browser clients. Phoenix session cookie: httpOnly, Secure, SameSite=Lax (ADR-2026-10-15).
+        The cookie name is a placeholder until the server scaffold fixes it.
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Required with cookieAuth on every state-changing request. Fetch it from `get_browser_csrf_token`.
+
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+      pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+      description: Lowercase, hyphenated UUID. User-owned entities use client-generated UUIDv4 (STYLE §4).
+      examples: ["3285e014-551b-46a4-aedc-8b6664b59bc7"]
+    Instant:
+      type: string
+      format: date-time
+      pattern: "Z$"
+      description: RFC 3339 instant in UTC with a `Z` suffix. Field names end in `_at`.
+      examples: ["2026-10-16T08:00:00Z"]
+    LocalDate:
+      type: string
+      format: date
+      description: Calendar day `YYYY-MM-DD`. Field names end in `_date`; practice days use `local_date`.
+      examples: ["2026-10-16"]
+    LocalTime:
+      type: string
+      pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+      description: Local time of day, 24-hour `HH:MM`. Field names end in `_time`.
+      examples: ["06:15"]
+    Timezone:
+      type: string
+      minLength: 1
+      maxLength: 64
+      description: IANA timezone name.
+      examples: ["Asia/Kolkata"]
+    Count:
+      type: integer
+      minimum: 0
+      maximum: 9007199254740991
+      description: A whole-number count (STYLE §5). Never fractional.
+      examples: [313]
+    CountDelta:
+      type: integer
+      minimum: -9007199254740991
+      maximum: 9007199254740991
+      description: A signed whole-number change to a count, for example -3 to undo three taps.
+      examples: [-3]
+    Revision:
+      type: integer
+      minimum: 0
+      maximum: 9007199254740991
+      description: Monotonic resource revision used with `expected_revision` (STYLE §9).
+      examples: [12]
+    Cursor:
+      type: string
+      minLength: 1
+      maxLength: 512
+      description: Opaque pagination cursor. Clients must not parse or build it.
+      examples: ["c2lnbmVkLWN1cnNvcg"]
+    Problem:
+      type: object
+      description: RFC 9457 problem details (STYLE §7). Clients switch on `code` only.
+      additionalProperties: true
+      required: [type, title, status, code, detail, errors]
+      properties:
+        type:
+          type: string
+          pattern: "^urn:awrad:problem:[a-z][a-z0-9_]*$"
+        title:
+          type: string
+          description: English, for logs. Never shown to users.
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        code:
+          type: string
+          pattern: "^[a-z][a-z0-9_]*$"
+          description: Stable machine code. Clients map it to localized text.
+        detail:
+          type: string
+          description: English, for logs. Never shown to users.
+        errors:
+          type: array
+          description: Field validation errors. Empty when the problem isn't about specific fields.
+          items:
+            $ref: "#/components/schemas/FieldError"
+    FieldError:
+      type: object
+      additionalProperties: false
+      required: [field, code, detail]
+      properties:
+        field:
+          type: string
+          description: JSON Pointer into the request body, for example `/daily_target`.
+        code:
+          type: string
+          pattern: "^[a-z][a-z0-9_]*$"
+        detail:
+          type: string
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST.
+      schema:
+        $ref: "#/components/schemas/Uuid"
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        $ref: "#/components/schemas/Cursor"
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Page size. Each list operation documents its own default and maximum.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+
+  headers:
+    CacheControl:
+      description: Every response states its caching (STYLE §12).
+      schema:
+        type: string
+      example: no-store
+    RequestId:
+      description: Correlates the request in server logs. Include it in bug reports.
+      schema:
+        type: string
+      example: F-8kq2Yc3xVf1QAAABx
+    RetryAfter:
+      description: Seconds to wait before retrying.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 86400
+      example: 30
+
+  responses:
+    BadRequest:
+      description: Malformed request, wrong types, or unknown fields.
+      headers: &problem_headers
+        Cache-Control:
+          $ref: "#/components/headers/CacheControl"
+        x-request-id:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:malformed_request
+            title: Malformed request
+            status: 400
+            code: malformed_request
+            detail: unknown field "daily_targett"
+            errors: []
+    Unauthorized:
+      description: Not authenticated, credential expired, or the wrong scheme for this pipeline.
+      headers: *problem_headers
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:unauthenticated
+            title: Authentication required
+            status: 401
+            code: unauthenticated
+            detail: no valid session
+            errors: []
+    Forbidden:
+      description: Authenticated but not allowed, including an unverified email.
+      headers: *problem_headers
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:email_verification_required
+            title: Email verification required
+            status: 403
+            code: email_verification_required
+            detail: verify the account email first
+            errors: []
+    NotFound:
+      description: Doesn't exist, or isn't visible to this caller. Doesn't say which.
+      headers: *problem_headers
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:not_found
+            title: Not found
+            status: 404
+            code: not_found
+            detail: no such resource
+            errors: []
+    UnprocessableContent:
+      description: Well-formed but fails validation.
+      headers: *problem_headers
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:validation_failed
+            title: Request validation failed
+            status: 422
+            code: validation_failed
+            detail: daily_target must be between 1 and 100000
+            errors:
+              - field: /daily_target
+                code: out_of_range
+                detail: must be between 1 and 100000
+    TooManyRequests:
+      description: Rate limited.
+      headers:
+        Cache-Control:
+          $ref: "#/components/headers/CacheControl"
+        x-request-id:
+          $ref: "#/components/headers/RequestId"
+        Retry-After:
+          $ref: "#/components/headers/RetryAfter"
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:rate_limited
+            title: Too many requests
+            status: 429
+            code: rate_limited
+            detail: retry later
+            errors: []

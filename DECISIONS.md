@@ -576,6 +576,39 @@ Adopt [`contracts/api/STYLE.md`](contracts/api/STYLE.md) for every `awrad-server
 
 None. Applies only to `awrad-server-next`; the frozen API keeps its shapes.
 
+## ADR-2026-10-16: How clients get API types
+
+Status: Accepted
+
+### Context
+
+The OpenAPI 3.1 spec (`contracts/api/`) is the API source of truth for three clients. Code generators fit unevenly:
+- Android's main generator supports OpenAPI 3.1 only partially, and produces verbose Kotlin that clashes with `awrad-android-next`'s strict lint and explicit-API rules.
+- Generators handle the sync protocol's many-variant payloads poorly on both mobile platforms.
+- The API is small, probably 30–50 operations.
+
+### Decision
+
+- **Web:** generated TypeScript types with `openapi-typescript` (types only, no runtime code).
+- **Android and iOS:** hand-written request/response classes in each app's network module, mapped to domain types there. Kotlin uses `@Serializable` data classes; Swift uses `Codable` structs.
+- **Drift protection on mobile:** a contract test decodes and re-encodes every example in `openapi.bundled.json`, and fails on any difference, or on an operation the app uses that has no example. `STYLE.md` §15 already requires examples on every operation.
+- **Server:** validates requests and responses against the same bundled spec in contract tests.
+
+### Consequences
+
+- No generator machinery in the mobile builds, and mobile network code follows each project's normal standards.
+- Mobile classes take a little hand-writing. Contract tests catch drift in CI rather than at compile time.
+- Revisit if the API grows well past about 50 operations, or if drift bugs get past the contract tests.
+
+### Evidence
+
+- `contracts/api/README.md`
+- `contracts/api/STYLE.md` §15
+
+### Supersedes
+
+None.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

@@ -1,0 +1,26 @@
+{
+  "name": "awrad-contracts",
+  "private": true,
+  "description": "Tooling for the shared Awrad contracts: OpenAPI lint/bundle and fixture-format checks.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "bundle": "REDOCLY_TELEMETRY=off REDOCLY_SUPPRESS_UPDATE_NOTICE=true redocly bundle api/openapi.yaml -o api/openapi.bundled.json",
+    "lint:api": "spectral lint api/openapi.bundled.json --ruleset api/spectral.mjs --fail-severity=warn",
+    "check:bundle": "node api/tests/check-bundle.mjs",
+    "check:rules": "node api/tests/check-rules.mjs",
+    "check:fixtures": "node tools/check-fixtures.mjs",
+    "check:fixture-format": "node tools/tests/check-fixture-format.mjs",
+    "test": "npm run check:bundle && npm run lint:api && npm run check:rules && npm run check:fixtures && npm run check:fixture-format"
+  },
+  "devDependencies": {
+    "@redocly/cli": "2.64.1",
+    "@stoplight/spectral-cli": "6.17.0",
+    "@stoplight/spectral-functions": "1.11.0",
+    "@stoplight/spectral-rulesets": "1.23.0",
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1"
+  }
+}

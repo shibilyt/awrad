@@ -10,7 +10,8 @@ Each project has one validation command that CI will run (plan item 0.6). It inc
 
 | Project | Validation command | Run from |
 |---|---|---|
-| `contracts/` | `python3 scripts/validate_progress_contract.py && python3 scripts/validate_progress_sync.py && python3 scripts/validate_behavior_fixtures.py && python3 scripts/generate_wird_model.py --check && python3 scripts/generate_asma_ul_husna.py --check` | root |
+| `contracts/` (API spec, new fixtures) | `npm ci && npm test` | `contracts/` |
+| `contracts/` (v1 legacy folders) | `python3 scripts/validate_progress_contract.py && python3 scripts/validate_progress_sync.py && python3 scripts/validate_behavior_fixtures.py && python3 scripts/generate_wird_model.py --check && python3 scripts/generate_asma_ul_husna.py --check` | root |
 | `awrad-android-next/` | `./gradlew assembleDebug testDebugUnitTest :core:domain:test detekt verifySourceFileSize lintDebug` | `awrad-android-next/` |
 | `awrad-server-next/` | Defined by its scaffold | – |
 | `awrad-ios-next/` | Defined by its scaffold | – |
@@ -20,7 +21,9 @@ Each project has one validation command that CI will run (plan item 0.6). It inc
 
 | Change | Focused check | Broader check when warranted |
 |---|---|---|
-| Shared schema, catalog or fixture in `contracts/` | The matching validator script | Full `contracts/` command, plus each new project's fixture tests |
+| API spec (`contracts/api/`) | `npm run bundle && npm test` in `contracts/` | Server contract tests; mobile example round-trip tests; web type check |
+| New fixture file (`awrad-fixture/1`) | `npm run check:fixtures` in `contracts/` | Each platform's fixture runner for that rule |
+| v1 schema, catalog or fixture | The matching validator script | Full v1 command, plus `scripts/check-mobile-model-parity` |
 | Behaviour rule (any platform) | That platform's fixture-runner test plus the focused unit test | The same fixtures on every platform that implements the rule |
 | Android-next domain (`:core:domain`) | `./gradlew :core:domain:test` | Project validation command |
 | Android-next feature or ViewModel | `./gradlew :feature:<name>:testDebugUnitTest` | Project validation command; emulator smoke for navigation or UI flows |

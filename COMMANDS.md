@@ -12,10 +12,22 @@ git diff --check
 git diff --stat
 ```
 
-### contracts/
+### contracts/: API spec and new fixtures (Node)
+
+Working directory: `contracts/`. Prerequisite: Node 22.
 
 ```bash
-# Validate everything in contracts/ (the contracts validation command)
+npm ci                       # once: install the pinned tools
+npm run bundle               # regenerate api/openapi.bundled.json after editing openapi.yaml or paths/
+npm test                     # bundle fresh, spec lint clean, every rule fires, fixtures valid
+npm run lint:api             # just the Spectral lint
+npm run check:fixtures       # just the awrad-fixture/1 files
+```
+
+### contracts/: v1 legacy folders (Python)
+
+```bash
+# Validate the v1 folders
 python3 scripts/validate_progress_contract.py && python3 scripts/validate_progress_sync.py && python3 scripts/validate_behavior_fixtures.py && python3 scripts/generate_wird_model.py --check && python3 scripts/generate_asma_ul_husna.py --check
 
 # Individual validators

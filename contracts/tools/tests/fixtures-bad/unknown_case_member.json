@@ -1,0 +1,57 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "unknown_case_member",
+  "description": "Format example only (not a real rule): a daily target is clamped into 1..100000.",
+  "references": [
+    "contracts/FIXTURES.md"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "requested"
+    ],
+    "properties": {
+      "requested": {
+        "type": "integer"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "daily_target"
+    ],
+    "properties": {
+      "daily_target": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 100000
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "below_minimum",
+      "description": "Zero clamps up to one.",
+      "given": {
+        "requested": 0
+      },
+      "expect": {
+        "daily_target": 1
+      },
+      "expected": {}
+    },
+    {
+      "id": "in_range",
+      "description": "In-range values are unchanged.",
+      "given": {
+        "requested": 70
+      },
+      "expect": {
+        "daily_target": 70
+      }
+    }
+  ]
+}
