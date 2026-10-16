@@ -1,94 +1,96 @@
 # Repository structure
 
-## Top-level ownership
+## Top level
 
 ```text
 awrad/
-├── awrad-android/   Android application and tests
-├── awrad-android-next/  Android rebuild; will replace awrad-android (pre-release)
-├── awrad-ios/       iOS application, widget, and tests
-├── awrad_server/       Phoenix web/API application and PostgreSQL migrations
-├── AGENTS.md        Shared agent policy
-├── LOOPS.md         Repeatable work loops
-├── CONTRACTS.md     Cross-project interfaces
-└── MEMORY.md        Durable facts and change log
+├── contracts/            Shared source of truth: schemas, fixtures, content, (planned) OpenAPI spec
+├── awrad-server-next/    Phoenix JSON API + Channels                  (not created yet)
+├── awrad-android-next/   Android app, multi-module                    (scaffold)
+├── awrad-ios-next/       iOS app                                      (not created yet)
+├── awrad-web-next/       React web app on the same API                (not created yet)
+├── awrad-android/        Frozen reference: old Android app
+├── awrad-ios/            Frozen reference: old iOS app
+├── awrad_server/         Frozen reference: old Phoenix app (API + LiveView)
+├── docs/                 Plan, cross-project docs, reference material
+├── scripts/              Contract generators and validators
+├── AGENTS.md             Agent rules and routing
+├── CONTEXT.md            Domain language
+├── DECISIONS.md          Cross-project ADRs
+└── PRODUCT.md            Product intent and design principles
 ```
 
-Each project owns its toolchain and can be built independently. The root owns Git history and shared documentation; it is not a Gradle, Xcode, or Mix project.
+Each project owns its toolchain and builds independently. The root owns Git history, `contracts/` and shared docs; it isn't a Gradle, Xcode, Mix or npm project.
 
-## Android (experimental rework)
+Projects marked "not created yet" are planned under ADR-2026-10-14. Their sections describe the decided stack only. Each section is replaced with a real map when the project's scaffold lands (see [`docs/rebuild-plan.md`](docs/rebuild-plan.md), item 0.7).
 
-Root: `awrad-android-next/`. A multi-module rebuild with build-enforced standards that will replace `awrad-android`. Neither app is released. It must not change `awrad-android/`, the API, or `CONTRACTS.md`. Start with `awrad-android-next/ARCHITECTURE.md`.
+## contracts
 
-## Android
+The shared source of truth for all four projects. Versioned folders, each with a JSON Schema, fixtures and a README:
 
-Root: `awrad-android/`
+| Folder | Holds |
+|---|---|
+| `progress-model/v1/` | Progress entity schemas, field ownership, built-in dhikr catalog (113 entries), Asma-ul Husna (100) |
+| `progress-sync/v1/` | Sync protocol schema, protocol examples, count-reducer scenarios |
+| `behavior-model/v1/` | Language-neutral behaviour cases that every platform's domain tests must pass |
+| `wird-model/v1/` | Canonical wird model, manifest and fixtures |
+| `api/` (planned) | OpenAPI spec for routes, JSON, errors and auth (plan item 0.4) |
 
-- Entry points: `AwradApplication.kt`, `MainActivity.kt`, and `MainViewModel.kt`.
-- Navigation: `ui/navigation/AwradDestination.kt` and `AwradNavGraph.kt`.
-- UI: Compose screens under `ui/screens/` and reusable elements under `ui/components/`.
-- Domain: goal-creation models and use cases under `domain/`.
-- Persistence: Room database, entities, DAOs, and repositories under `data/database/` and `data/repository/`.
-- API/auth: Retrofit service, interceptors, token storage, and repository under `data/network/` and `data/preferences/`.
-- Background behavior: alarms, WorkManager, notification receivers, audio, and counting service under `notification/` and `service/`.
-- Bundled content: `app/src/main/assets/wird_library/` and built-in content code.
-- Tests: local JVM tests in `app/src/test/`; emulator/instrumentation tests in `app/src/androidTest/`.
-- Room schema history: `app/schemas/` is source-controlled and must remain consistent with migrations.
+Generators and validators live in `scripts/`. `scripts/check-mobile-model-parity` also runs the frozen apps' native contract suites.
 
-The app is one Gradle module, `:app`. Detailed product rules and historical decisions live under `prd/` and `docs/`.
+## awrad-server-next
 
-## iOS
+Not created yet. Decided stack (ADR-2026-10-14, ADR-2026-10-15):
 
-Project root: `awrad-ios/awrad/`
+- Elixir / Phoenix 1.8, Ecto, Postgres, Oban; Phoenix Channels for live data. No Redis or Kafka.
+- JSON API only: no LiveView, templates or asset pipeline.
+- Two auth pipelines: browser cookie session plus CSRF (`phx.gen.auth` core with JSON endpoints), and mobile bearer token plus device session.
+- Context boundaries enforced (planned: Credo strict, Dialyzer, `boundary`).
 
-- App entry: `awrad/awradApp.swift` and root composition under `awrad/App/` and `awrad/Features/`.
-- Routing/deep links: `awrad/Core/AppRouter.swift` and `AwradDeepLink.swift`.
-- Domain and calculations: `awrad/Core/AwradDomain.swift` and `AwradCalculators.swift`.
-- Persistence and app state: `awrad/Core/AwradStore.swift` and service composition in `AppServices.swift`.
-- API/auth: `awrad/Core/AuthService.swift`.
-- Design system: `awrad/DesignSystem/`.
-- Localized resources: `awrad/{en,ar,ml}.lproj/` plus widget localization directories.
-- Widget/shared state: `AwradWidgetExtension/` and `Shared/`.
-- Tests: `awradTests/` and `awradUITests/`.
-- Xcode project: `awrad.xcodeproj`; schemes are `awrad` and `AwradWidgetExtension`.
+## awrad-android-next
 
-The most detailed current architecture narrative is [`awrad-ios/awrad/docs/ios-architecture.md`](awrad-ios/awrad/docs/ios-architecture.md).
+Root: `awrad-android-next/`. Start with its [`ARCHITECTURE.md`](awrad-android-next/ARCHITECTURE.md) and [`docs/adr/`](awrad-android-next/docs/adr/README.md).
 
-## Phoenix server
+| Module | Holds |
+|---|---|
+| `:app` | Application, single activity, nav host, app shell |
+| `:feature:*` | One module per feature (ADR 0001). Only `:feature:onboarding` exists, as a placeholder |
+| `:core:domain` | Pure Kotlin: domain types, rules, ports (interfaces) |
+| `:core:data` | Adapters for the ports (Room, DataStore) and Hilt bindings |
+| `:core:database` | Room database; schema exported to `core/database/schemas/` |
+| `:core:designsystem` | Theme, fonts, shared components |
+| `:core:testing` | One fake per port, test rules |
+| `build-logic/` | Convention plugins and the build-enforced standards |
 
-Root: `awrad_server/`
+Features see only `:core:domain` and `:core:designsystem`. The build fails on any other dependency (`ModuleRulesConventionPlugin`).
 
-- OTP entry: `lib/awrad_server/application.ex`.
-- Business contexts and schemas: `lib/awrad_server/`, currently including accounts, dhikr, and tracking.
-- HTTP entry and routing: `lib/awrad_server_web/endpoint.ex` and `router.ex`.
-- JSON API controllers: `lib/awrad_server_web/controllers/api/`.
-- Browser UI: LiveView, controllers, templates, layouts, and shared components under `lib/awrad_server_web/`.
-- Authentication: session auth for browser routes; JWT access tokens and rotating database-backed refresh tokens for mobile API routes.
-- Persistence: Ecto schemas and timestamped migrations under `priv/repo/migrations/`.
-- Tests: context and web tests under `test/`.
-- Detailed implementation memory: `memory/`.
+## awrad-ios-next
 
-The API exposes implemented authentication endpoints. The presence of dhikr and tracking schemas does not by itself mean full mobile synchronization is implemented.
+Not created yet. Decided stack: Swift, SwiftUI, SwiftData, Observation, minimum iOS 18. The rebuild targets structure and code quality; planned modules are Swift packages (domain / data / design system / features), with SwiftLint, SwiftFormat and Swift 6 strict concurrency.
 
-## Cross-project seams
+## awrad-web-next
 
-| Seam | API owner | Android consumer | iOS consumer |
-|---|---|---|---|
-| Auth routes and JSON | Router and `Api.AuthController` | `AwradApiService` and `AuthRepository` | `AuthService` |
-| Token lifecycle | Accounts token modules | interceptor, authenticator, token storage | `AuthService` storage and requests |
-| Base URL | Phoenix endpoint | Gradle `API_BASE_URL` | `AuthService` initializer |
-| Product parity | No canonical sync API yet | Room/domain models | `AwradDomain`/`AwradStore` |
+Not created yet. Decided stack: React, TypeScript, Vite, TanStack Query and Router, with an API client generated from the OpenAPI spec. Online only. Served from the same site as the API so the cookie session works without credentialed CORS (ADR-2026-10-15).
 
-See [`CONTRACTS.md`](CONTRACTS.md) before editing any seam.
+## docs
+
+| Path | Holds |
+|---|---|
+| [`docs/index.md`](docs/index.md) | Documentation map |
+| [`docs/rebuild-plan.md`](docs/rebuild-plan.md) | Rebuild checklist |
+| `docs/*.md` | Cross-project architecture notes, some describing the frozen apps (labelled in the index) |
+| [`docs/reference/`](docs/reference/) | Frozen-app maps (`legacy-*.md`) and the reverse-engineered Android spec (`android-spec/`) |
+| `docs/design/archive/` | Old wireframes |
+
+## Frozen reference projects
+
+`awrad-android/`, `awrad-ios/` and `awrad_server/` are read-only (see the banner in each `AGENTS.md`). Their code and tests are the evidence for current behaviour. To find your way around them, use [`docs/reference/legacy-structure.md`](docs/reference/legacy-structure.md) and run them with [`docs/reference/legacy-commands.md`](docs/reference/legacy-commands.md).
 
 ## Generated and local-only paths
 
-Do not edit or commit `.gradle/`, Android `build/`, `.idea/`, `local.properties`, keystores, Xcode `DerivedData/`, `xcuserdata/`, `.build/`, API `_build/`, API `deps/`, tool session state, or machine-local secrets. Exported Room schemas and committed source resources are not disposable build output.
+Never edit or commit:
+- build output: Gradle `build/` and `.gradle/`, Xcode `DerivedData/`, Swift `.build/`, Mix `_build/`, `deps/`, `node_modules/`, web build output;
+- local config and state: `.idea/`, `.kotlin/`, `local.properties`, keystores, `xcuserdata/`, tool session state;
+- machine-local secrets.
 
-## Documentation authority
-
-- Current architecture and contracts: root documents and scoped `AGENTS.md` files.
-- Detailed Android product intent: `awrad-android/prd/`.
-- Historical Android implementation plans: `awrad-android/docs/superpowers/plans/`; consult for context only.
-- iOS implementation status: `awrad-ios/awrad/docs/ios-architecture.md` plus code/tests.
-- Server/API implementation patterns and decisions: `awrad_server/memory/` plus code/tests.
+Exported Room schemas and committed source resources aren't disposable build output.

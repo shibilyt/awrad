@@ -1,5 +1,7 @@
 # Cross-project contracts
 
+> **Frozen contract (ADR-2026-10-14).** This describes the API of the frozen `awrad_server/` and its two mobile clients. The rebuild's contract lives in [`contracts/`](contracts/): schemas and fixtures now, an OpenAPI spec planned. It replaces this file slice by slice. Use this file as evidence of current behaviour, not as the target design.
+
 This document records interfaces that cross project boundaries. It describes implemented behavior only unless a section is explicitly marked planned.
 
 ## Mobile authentication API

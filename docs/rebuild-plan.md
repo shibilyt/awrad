@@ -30,11 +30,12 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 - [x] Frozen projects labelled as reference: a banner at the top of each project's `AGENTS.md`.
 
 ### 0.2 Root agent docs describe the rebuild
-- [ ] `AGENTS.md`: route agents to the `-next` projects, mark frozen ones read-only, and replace the old-project hard invariants with the rebuild's.
-- [ ] `STRUCTURE.md`: all four new projects plus `contracts/`. Android is listed already.
-- [ ] `docs/index.md`: link this plan and the new projects.
-- [ ] `LOOPS.md`, `TESTING.md`, `COMMANDS.md`: commands for the new projects; old ones marked reference-only.
-- [ ] `MEMORY.md`: a change-log entry for the rebuild decision.
+- [x] `AGENTS.md`: routes to the `-next` projects; frozen projects read-only; rebuild invariants.
+- [x] `STRUCTURE.md`: all four new projects plus `contracts/`; old maps moved to `docs/reference/legacy-structure.md`.
+- [x] `docs/index.md`: links this plan and the new projects; frozen-app docs grouped as reference.
+- [x] `LOOPS.md`, `TESTING.md`, `COMMANDS.md`: rebuild loops and validation; old matrix and commands moved to `docs/reference/legacy-*.md`.
+- [x] `MEMORY.md`: rebuild facts and change-log entries; old facts kept under "Frozen apps".
+- [x] `README.md` rewritten; `CONTRACTS.md` labelled as the frozen server's contract.
 
 ### 0.3 API style guide (ADR)
 - [ ] Versioning: path prefix `/api/v1`, and what counts as a breaking change.

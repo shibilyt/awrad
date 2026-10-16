@@ -1,111 +1,96 @@
 # Work loops
 
-These loops are default execution patterns. Skip a step only when it is clearly irrelevant, and explain material omissions in the handoff.
+Default execution patterns for the rebuild. Skip a step only when it clearly doesn't apply, and explain material omissions in the handoff.
 
-## 1. Orientation and discovery
+## 1. Orientation
 
-1. Run `git status --short` at the root; identify user-owned changes.
-2. Read root and nearest scoped `AGENTS.md` files.
-3. Classify the task as Android, iOS, API, documentation, or cross-project.
-4. Use the codebase graph to find definitions, routes, callers, and entry points. Use `rg` for literals, resources, and configuration.
-5. Read the smallest set of owning files and focused tests.
-6. Check [`CONTRACTS.md`](CONTRACTS.md) for a cross-project seam.
-7. State the intended behavior and narrow validation before editing.
+1. Run `git status --short` at the root and note changes you didn't make.
+2. Read the root and nearest scoped `AGENTS.md`, plus the project's `ARCHITECTURE.md` and `docs/adr/` when they exist.
+3. Classify the task: contract, one `-next` project, a whole slice, docs, or research on a frozen app.
+4. Use graft for definitions, callers and routes; use `rg` for literals, resources and config.
+5. Check [`docs/rebuild-plan.md`](docs/rebuild-plan.md) for where the task sits, and [`DECISIONS.md`](DECISIONS.md) for constraints.
+6. State the intended behaviour and the focused check before editing.
 
-Exit condition: the owner, affected consumers, source of truth, and focused check are known.
+Exit condition: the owning project, the affected contracts and consumers, and the focused check are known.
 
-## 2. Focused implementation
+## 2. Slice delivery
 
-1. Reuse the current abstraction: repository/store, context, DTO, component, route group, or service.
-2. Make the smallest coherent change; avoid drive-by refactors.
-3. Add or update a focused test near the behavior.
-4. Run the focused check immediately.
-5. Inspect the diff for accidental generated files or unrelated churn.
-6. Escalate validation according to [`TESTING.md`](TESTING.md).
-7. Update current documentation only when a durable interface or fact changed.
+A slice is one capability (for example accounts or goals) delivered end to end. Each step builds on the one before it.
 
-Exit condition: requested behavior works, focused evidence passes, and the diff is explainable.
+1. **Study:** run loop 3 on the frozen apps for this capability, and record keep / change / drop decisions.
+2. **Domain:** update `CONTEXT.md` terms; add or extend behaviour fixtures in `contracts/` for every rule.
+3. **Contract:** update the API spec and schemas in `contracts/` (loop 4).
+4. **Server:** implement against the spec; contract tests and fixture tests pass.
+5. **Android, then iOS:** domain rules pass the shared fixtures; data adapters match the spec; screens follow the project's UI pattern.
+6. **Web:** generated client from the spec; online-only screens.
+7. **Close:** tick the slice in the rebuild plan, add a `MEMORY.md` log entry, and record any decisions as ADRs.
 
-## 3. API contract change
+Exit condition: every project in the slice passes its validation command and the shared fixtures, and the contract describes exactly what was built.
 
-1. Read the live Phoenix router/controller and both mobile client contracts.
-2. Write down current and desired method, path, auth requirement, request JSON, response JSON, errors, and compatibility behavior.
-3. Decide whether the change is additive, backward compatible, or coordinated/breaking. Do not leave this implicit.
-4. Implement server behavior and controller/plug tests.
-5. Update Android Retrofit DTOs, storage/retry behavior, and tests when affected.
-6. Update iOS Codable DTOs, storage/retry behavior, and tests when affected.
-7. Run focused server and client checks; perform local integration when feasible.
-8. Update [`CONTRACTS.md`](CONTRACTS.md), [`MEMORY.md`](MEMORY.md), and a root decision when compatibility or ownership changed.
+## 3. Study a frozen app (behaviour research)
 
-Exit condition: server and all affected consumers agree on the wire contract, with rollout behavior documented.
+1. Find the behaviour in the frozen code and its tests: start from [`docs/reference/`](docs/reference/) and graft.
+2. Compare platforms by semantics, not class names: defaults, validation, day boundary, recurrence, count caps, reminders, lifecycle, localization.
+3. Write down the rule in domain language, citing the old code and tests as evidence.
+4. Decide keep, change or drop. "Change" and "drop" need a reason in the slice notes or an ADR.
+5. Never edit the frozen project, even to fix a bug you found; carry the fix into the new implementation.
 
-## 4. Android/iOS parity change
+Exit condition: each behaviour in scope has a written rule, evidence and a decision.
 
-1. Trace the current behavior on each platform from UI through domain/persistence.
-2. Compare semantics, not class names: defaults, validation, day boundary, recurrence, count cap, reminders, lifecycle, and localization.
-3. Identify the intended shared rule and any deliberate platform difference.
-4. Change each platform through its native architecture rather than copying implementation structure.
-5. Add equivalent behavior-level tests on both platforms.
-6. Run focused checks independently.
-7. Record intentional differences and remaining gaps.
+## 4. Contract change
 
-Exit condition: equivalent user-visible behavior is proven or the difference is explicit.
+1. Read the current spec, schemas and fixtures in `contracts/`, and every consumer that exists.
+2. Write down method, path, auth scheme (cookie or bearer), request and response JSON, errors, and idempotency behaviour.
+3. Update the spec or schema and its fixtures first; validators must pass.
+4. Implement the server, then each existing client. Generated clients are regenerated, not hand-edited.
+5. Once a slice has shipped across all projects, its contract binds every consumer: changes must be additive, or coordinated with a decision record.
 
-## 5. Database or persisted-schema change
+Exit condition: spec, fixtures, server and every affected client agree, and the validators pass.
 
-### Android Room
+## 5. Focused implementation (one project)
 
-1. Update entities/DAOs and increment the database version.
-2. Add a forward migration; never rewrite an applied migration to hide a change.
-3. Export and commit the new Room schema JSON.
-4. Add migration and repository behavior tests.
-5. Verify upgrade behavior as well as clean creation.
+1. Reuse the project's existing patterns and modules; don't add abstractions the project's architecture doc doesn't call for.
+2. Make the smallest coherent change, with no drive-by refactors.
+3. Add or update a focused test next to the behaviour; domain rules also get fixture cases.
+4. Run the focused check, then the project's validation command from [`TESTING.md`](TESTING.md).
+5. Inspect the diff for generated files or unrelated churn.
 
-### API Ecto
+Exit condition: the behaviour works, the build-enforced standards pass, and the diff is explainable.
 
-1. Generate a timestamped migration with `mix ecto.gen.migration`.
-2. Update schemas, changesets, contexts, and ownership scoping.
-3. Add context/controller tests as appropriate.
-4. Verify migration on an existing database and clean test database.
-5. Do not expose new schema fields as API contracts accidentally.
+## 6. Persisted-schema change
 
-### iOS snapshots
+Nothing is released, so the policy is set per project:
 
-1. Identify the persisted Codable shape and widget/shared copies.
-2. Choose explicit backward-compatible decoding, schema migration, or intentional reset behavior.
-3. Update app and widget readers/writers together.
-4. Add old-snapshot decoding and round-trip tests.
+- **Android Room:** stays at version 1 until the first release. Edit version 1 and re-export the schema; no migrations (Android ADR 0003).
+- **Server Ecto:** timestamped migrations as usual (`mix ecto.gen.migration`). They're cheap and keep dev databases reproducible. Never expose schema fields as API contract by accident.
+- **iOS SwiftData:** decided by the iOS scaffold ADR. Until then, ask before choosing.
 
-Exit condition: existing user data has a tested path to the new representation.
+Exit condition: the schema change and its exported or migrated form are committed together.
 
-## 6. Localization or bundled-content change
+## 7. Localization or bundled content
 
-1. Identify every affected locale and platform resource owner.
-2. Add semantic keys rather than embedding display text in code.
-3. Preserve placeholders, plural/count behavior, Unicode, and RTL layout assumptions.
-4. For bundled dhikr/wird content, preserve stable logical IDs and source/version metadata.
-5. Validate parsing/resource compilation and compare locale key sets.
-6. Smoke-test Arabic directionality and any affected dynamic formatting when UI changed.
+1. Add semantic keys in every locale (en, ar, ml) together; never embed display text in code.
+2. Preserve placeholders, plural handling and RTL layout.
+3. Built-in dhikr and wird content comes from `contracts/`, keeping stable catalog keys and UUIDs (ADR-2026-07-13).
+4. Validate resource compilation and compare key sets across locales.
 
-Exit condition: resources compile, keys and placeholders align, and content remains addressable across upgrades.
+Exit condition: resources compile, keys and placeholders align, and content identity is unchanged.
 
-## 7. Notification, audio, widget, or background change
+## 8. Notifications, audio, widgets, background work
 
-1. Trace lifecycle entry points, permissions, persisted state, and rescheduling/recovery paths.
-2. Keep pure timing/policy calculations separate from platform effects where possible.
-3. Test policy logic without sleeps; use platform integration only for the final boundary.
-4. Check reboot/relaunch, cancellation, stale work, missing permission, and offline behavior.
-5. For widget changes, update app and extension shared contracts together.
+1. Keep timing and policy logic pure and testable, separate from platform effects.
+2. Test policy without sleeps; reserve device or simulator runs for the platform boundary.
+3. Check relaunch or reboot, cancellation, stale work, missing permission and offline behaviour.
 
-Exit condition: deterministic logic is covered and the platform boundary has appropriate smoke evidence.
+Exit condition: deterministic logic is covered, and the platform boundary has appropriate smoke evidence.
 
-## 8. Verification and handoff
+## 9. Verification and handoff
 
-1. Run the narrowest relevant tests, then broaden based on risk.
-2. Run `git diff --check` and inspect `git status --short` and `git diff --stat`.
-3. Verify no secrets, machine paths, generated builds, or unrelated changes entered the diff.
-4. Update contract, memory, or decision docs only where the change made them stale.
-5. Report the outcome first, then changed areas, verification, and any unrun environment-bound checks.
-6. Do not commit, push, deploy, migrate shared environments, or publish unless explicitly requested.
+1. Run the narrowest relevant checks, then broaden based on risk.
+2. Run `git diff --check`, and inspect `git status --short` and `git diff --stat`.
+3. Make sure no secrets, machine paths, generated builds or unrelated changes are in the diff.
+4. Update `contracts/`, `MEMORY.md`, the rebuild plan or ADRs only where the change made them stale.
+5. Report the outcome first, then changed areas, verification, and any checks you couldn't run.
+6. Don't commit, push, deploy or publish unless asked.
 
 Exit condition: another engineer or agent can continue without reconstructing hidden context.

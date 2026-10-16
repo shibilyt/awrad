@@ -1,45 +1,53 @@
 # Awrad agent map
 
-This umbrella repository contains independently deployable Android, iOS, and Phoenix API projects. Git runs at the root; platform commands run in the owning project directory. Start with [`docs/index.md`](docs/index.md) for the repository map.
+Awrad is being **rebuilt** as four contract-first projects (root ADR-2026-10-14). Nothing is released, so there are no installed users to keep compatible. Start with [`docs/index.md`](docs/index.md) for the map and [`docs/rebuild-plan.md`](docs/rebuild-plan.md) for what's in progress.
 
-## Before changing code
+| Project | Role | State |
+|---|---|---|
+| [`contracts/`](contracts/) | Shared source of truth: schemas, behaviour fixtures, API spec | v1 schemas and fixtures exist; API spec planned |
+| [`awrad-server-next/`](STRUCTURE.md#awrad-server-next) | Phoenix JSON API and Channels | Not created yet |
+| [`awrad-android-next/`](awrad-android-next/AGENTS.md) | Android app | Scaffold |
+| [`awrad-ios-next/`](STRUCTURE.md#awrad-ios-next) | iOS app | Not created yet |
+| [`awrad-web-next/`](STRUCTURE.md#awrad-web-next) | React web app on the same API | Not created yet |
+| `awrad-android/`, `awrad-ios/`, `awrad_server/` | **Frozen reference** | Read-only |
+
+## Before changing anything
 
 1. Run `git status --short` at the root and preserve unrelated work.
-2. Read the nearest scoped agent file and the relevant map in [`docs/index.md`](docs/index.md).
-3. Use the indexed code graph for symbols, callers, routes, and architecture; use `rg` for literals, resources, configuration, and non-code files.
-4. Identify the smallest owning subsystem, affected consumers, and focused validation command.
-5. Read [`CONTRACTS.md`](CONTRACTS.md) before changing a cross-project interface.
+2. Read the nearest scoped `AGENTS.md`, plus the project's `ARCHITECTURE.md` and `docs/adr/` when they exist.
+3. Use the indexed code graph (graft, below) for symbols, callers and routes; use `rg` for literals, resources and config.
+4. For anything crossing projects, read the relevant part of [`contracts/`](contracts/) and the root [`DECISIONS.md`](DECISIONS.md) first.
+5. Pick the loop from [`LOOPS.md`](LOOPS.md) and the focused checks from [`TESTING.md`](TESTING.md).
 
 ## Hard invariants
 
-- Keep Android, iOS, and API behavior separate unless parity or a contract change is explicit.
-- Preserve offline local dhikr, wird, goal, and counting behavior; authentication may require the API.
-- Treat executable code, schemas, migrations, and tests as authoritative over stale prose.
-- Never silently change routes, JSON fields, token rules, identifiers, or base URLs; review both mobile clients for API changes.
-- Preserve migration history: add forward Room/Ecto migrations and committed Room schemas.
-- Put user-facing strings in platform localization resources, not inline UI code.
-- Reuse existing stores, repositories, DTOs, route groups, and design components before adding abstractions.
-- Do not commit secrets, generated builds, IDE state, SDK paths, signing data, caches, simulator state, or dependency trees.
-- Treat Android plans and screenshots as historical unless current code and tests confirm them.
+- **Frozen projects are read-only.** `awrad-android/`, `awrad-ios/` and `awrad_server/` describe current behaviour; their code and tests are evidence, not places to fix or extend. Behaviour you keep gets re-implemented in a `-next` project.
+- **Contract first.** A change to routes, JSON, auth, IDs or shared domain behaviour lands in `contracts/` (spec, schema or fixture) before or with the implementation, never after.
+- **Shared fixtures are the parity test.** A domain rule implemented on more than one platform needs fixture cases in `contracts/`, and every platform runs them.
+- **Shared identity is binding:** built-in content catalog keys and UUIDv4 IDs (ADR-2026-07-13), and the account/device-session model (ADR-2026-07-12).
+- **Offline-first mobile:** dhikr, goals, counting and wird work without a network; only account features may require the API. The web app is online-only.
+- **Auth surfaces stay separate:** browsers use Phoenix cookie sessions plus CSRF (ADR-2026-10-15); mobile uses bearer tokens with device sessions. Neither pipeline accepts the other's credential.
+- **Accepted ADRs aren't re-argued.** Supersede them with a new ADR instead.
+- **Strings live in localization resources** (en, ar, ml together), never inline in UI code.
+- **Don't commit** secrets, signing data, generated builds, IDE state, caches, simulator state or dependency trees.
 
 ## Where to look
 
 | Question | Source of truth |
 |---|---|
 | Repository map and ownership | [`STRUCTURE.md`](STRUCTURE.md) |
-| Cross-project routes and JSON | [`CONTRACTS.md`](CONTRACTS.md), API router, mobile network clients |
-| Workflow and validation | [`LOOPS.md`](LOOPS.md), [`TESTING.md`](TESTING.md), [`COMMANDS.md`](COMMANDS.md) |
-| Durable facts and known gaps | [`MEMORY.md`](MEMORY.md), [`DECISIONS.md`](DECISIONS.md) |
-| Android architecture and rules | [`awrad-android/AGENTS.md`](awrad-android/AGENTS.md), `awrad-android/docs/`, `awrad-android/prd/` |
-| iOS architecture and rules | [`awrad-ios/AGENTS.md`](awrad-ios/AGENTS.md), `awrad-ios/awrad/docs/` |
-| Server/API architecture and rules | [`awrad_server/AGENTS.md`](awrad_server/AGENTS.md), `awrad_server/memory/` |
-| API routes | `awrad_server/lib/awrad_server_web/router.ex` |
-| Android network and Room | `awrad-android/app/src/main/java/.../data/network/`, `.../data/database/`, `app/schemas/` |
-| iOS network and persistence | `awrad-ios/awrad/awrad/Core/AuthService.swift`, `AwradDomain.swift`, `AwradStore.swift` |
+| What's being built, in what order | [`docs/rebuild-plan.md`](docs/rebuild-plan.md) |
+| Cross-project decisions | [`DECISIONS.md`](DECISIONS.md) |
+| Shared schemas, fixtures, content | [`contracts/`](contracts/) |
+| Domain language | [`CONTEXT.md`](CONTEXT.md) |
+| Product intent and principles | [`PRODUCT.md`](PRODUCT.md) |
+| Workflows and validation | [`LOOPS.md`](LOOPS.md), [`TESTING.md`](TESTING.md), [`COMMANDS.md`](COMMANDS.md) |
+| Durable facts and change log | [`MEMORY.md`](MEMORY.md) |
+| Current behaviour of the old apps | [`docs/reference/`](docs/reference/) and the frozen projects' own docs |
 
 ## Completion bar
 
-Keep the patch narrow, add focused tests or checks, inspect the diff for generated or unrelated files, update current docs when behavior or contracts change, and report what ran plus any environment-bound checks that were skipped. Use the loop and test matrix in the linked docs; do not run broad release workflows unless requested.
+Keep the patch narrow, add focused tests or checks, inspect the diff for generated or unrelated files, update current docs when behaviour or contracts change, and report what ran plus any environment-bound checks that were skipped. Don't commit, push or deploy unless asked.
 
 <!-- graft:start -->
 ## Graft — repo context graph

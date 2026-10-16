@@ -4,6 +4,21 @@ This file stores durable repository facts and a concise append-only change log. 
 
 ## Durable facts
 
+- Awrad isn't released: no installed users, so there's no upgrade or data-migration compatibility to keep.
+- Awrad is being rebuilt as four contract-first projects: `awrad-server-next`, `awrad-android-next`, `awrad-ios-next` and `awrad-web-next` (ADR-2026-10-14). Only `awrad-android-next` exists, as a scaffold.
+- `contracts/` is the shared source of truth: schemas, behaviour fixtures and built-in content, with an OpenAPI spec planned.
+- Git runs at the root; each project's toolchain runs inside its own directory.
+- Mobile apps are offline-first for dhikr, goals, counting and wird. The web app is online-only.
+- Browsers authenticate with Phoenix cookie sessions plus CSRF; mobile with bearer tokens bound to device sessions (ADR-2026-10-15, ADR-2026-07-12).
+- `awrad-android-next` keeps Room at version 1 until the first release (its ADR 0003).
+- Content is localized in English, Arabic and Malayalam.
+
+## Frozen apps (reference)
+
+`awrad-android/`, `awrad-ios/` and `awrad_server/` are read-only. The facts below describe their current behaviour and are the evidence base for the rebuild.
+
+### Facts
+
 - The repository contains three independently buildable projects: `awrad-android`, `awrad-ios`, and `awrad_server`.
 - Git operations run at the umbrella root; Gradle, Xcode, and Mix commands run inside their project roots.
 - Both mobile apps are designed to remain useful without a network connection.
@@ -14,7 +29,8 @@ This file stores durable repository facts and a concise append-only change log. 
 - User-facing content is localized in English, Arabic, and Malayalam where platform resources exist.
 - Android and iOS retain native implementations. Android commit `2f56aa4` is the frozen behavior baseline for the current iOS parity release; later Android changes require a separately reviewed delta.
 
-## Implemented cross-project capabilities
+### Implemented cross-project capabilities
+
 
 - Mobile registration is verification-first and creates a revocable device session only after email verification.
 - API access JWTs are bound to active device sessions; refresh rotation is transactional and detects replay.
@@ -28,7 +44,8 @@ This file stores durable repository facts and a concise append-only change log. 
 - iOS credentials are stored in Keychain, and protected requests use single-flight refresh-and-retry while local devotional workflows remain available offline.
 - Practice settings synchronization is implemented additively for Android and iOS: account-wide day reset/calculation method/madhab use optimistic server revisions, while timezone and location are stored per installation. Anonymous non-default local choices can seed only a new server-default account; established-account conflicts resolve server-first.
 
-## Known gaps and cautions
+### Known gaps and cautions
+
 
 - General cloud synchronization for goals, counts, dhikrs, and wirds is planned, not an implemented repository-wide contract.
 - API dhikr/tracking schemas outside progress and practice settings should not be described as a complete sync surface until routes, ownership rules, revision semantics, and mobile consumers exist.
@@ -104,4 +121,26 @@ Use this format:
 - Area: Web | API | Documentation
 - Change: The authenticated web companion now calculates Maghrib locally with bundled Adhan JS, resolves the per-device effective practice date, uses it across read models and counting, and validates the claimed date in `WebSync`; missing location or unavailable prayer times fall back explicitly to midnight.
 - Evidence: `awrad_server/assets/js/practice_day.js`, `awrad_server/lib/awrad_server/practice_day.ex`, `awrad_server/lib/awrad_server/web_sync.ex`, `docs/progress-sync-architecture.md`
+- Commit: uncommitted
+
+### 2026-10-15 — Started the four-project rebuild
+
+- Area: Cross-project | Android | Documentation
+- Change:
+  - Decided to rebuild Awrad as four contract-first projects in vertical slices, with the old three frozen as reference.
+  - Recorded the stack: Phoenix API-only, Compose, SwiftUI/SwiftData, React.
+  - Browsers use Phoenix cookie sessions.
+  - Added the `awrad-android-next` scaffold with build-enforced standards.
+  - Cleaned up the repo root.
+- Evidence: `DECISIONS.md` (ADR-2026-10-14 ×2, ADR-2026-10-15), `docs/rebuild-plan.md`, `awrad-android-next/`, `docs/reference/android-spec/`
+- Commit: dd2a944, af8fcb6, e06bd7b, c787b32
+
+### 2026-10-15 — Root docs rewritten for the rebuild
+
+- Area: Documentation
+- Change:
+  - `AGENTS.md`, `STRUCTURE.md`, `LOOPS.md`, `TESTING.md`, `COMMANDS.md`, `README.md` and `docs/index.md` now describe the rebuild.
+  - Frozen-app maps moved to `docs/reference/legacy-*.md`.
+  - `CONTRACTS.md` is labelled as the frozen server's contract.
+- Evidence: `AGENTS.md`, `STRUCTURE.md`, `LOOPS.md`, `docs/reference/`
 - Commit: uncommitted
