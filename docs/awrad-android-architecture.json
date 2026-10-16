@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Awrad Android Architecture",
+    "output": "awrad-android-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/shibilyt/awrad.git",
+      "revision": "3bbb586e2a201ec0499d1ad5ff0dbe6a7562b802"
+    },
+    "views": [
+      {
+        "id": "local-practice",
+        "label": "Local practice path",
+        "focus": ["person", "compose", "viewmodels", "feature-data", "room"],
+        "note": "Core dhikr, goals, counting, and wird use local state."
+      },
+      {
+        "id": "account-sync",
+        "label": "Account and sync",
+        "focus": ["viewmodels", "feature-data", "room", "sync", "network", "phoenix"],
+        "note": "Authentication and optional sync cross the API boundary."
+      },
+      {
+        "id": "platform-work",
+        "label": "Android background work",
+        "focus": ["feature-data", "platform-work", "room", "sync"],
+        "note": "Startup coordinates reminder, worker, foreground sync, and cleanup work."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "person",
+      "type": "external",
+      "label": "Person",
+      "sublabel": "reads · counts",
+      "pos": [20, 330],
+      "size": [110, 80]
+    },
+    {
+      "id": "compose",
+      "type": "frontend",
+      "label": "Compose UI",
+      "sublabel": "Home · Goals · Library",
+      "pos": [185, 320],
+      "size": [150, 100],
+      "sources": [
+        { "path": "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/MainActivity.kt", "line": 104, "label": "app shell" },
+        { "path": "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/ui/navigation/BottomNavItem.kt", "line": 14, "label": "four tabs" }
+      ]
+    },
+    {
+      "id": "viewmodels",
+      "type": "frontend",
+      "label": "ViewModels",
+      "sublabel": "StateFlow · UI state",
+      "pos": [395, 320],
+      "size": [140, 100]
+    },
+    {
+      "id": "feature-data",
+      "type": "backend",
+      "label": "Domain + repos",
+      "sublabel": "rules · persistence",
+      "pos": [595, 320],
+      "size": [180, 100]
+    },
+    {
+      "id": "room",
+      "type": "database",
+      "label": "Room database",
+      "sublabel": "practice · sync state",
+      "pos": [835, 320],
+      "size": [140, 100],
+      "sources": [
+        { "path": "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/database/AwradDatabase.kt", "line": 45, "label": "Room boundary" },
+        { "path": "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/di/DatabaseModule.kt", "line": 36, "label": "Hilt setup" }
+      ]
+    },
+    {
+      "id": "sync",
+      "type": "backend",
+      "label": "Progress sync",
+      "sublabel": "optional account transfer",
+      "pos": [835, 85],
+      "size": [140, 80]
+    },
+    {
+      "id": "network",
+      "type": "security",
+      "label": "API client",
+      "sublabel": "Retrofit · OkHttp",
+      "pos": [1000, 85],
+      "size": [120, 80],
+      "sources": [
+        { "path": "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/di/NetworkModule.kt", "line": 21, "end_line": 56, "label": "network DI" },
+        { "path": "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/network/AuthInterceptor.kt", "line": 10, "label": "bearer auth" }
+      ]
+    },
+    {
+      "id": "phoenix",
+      "type": "external",
+      "label": "Awrad API",
+      "sublabel": "auth · stats · sync",
+      "pos": [1000, 500],
+      "size": [120, 80]
+    },
+    {
+      "id": "platform-work",
+      "type": "backend",
+      "label": "Platform services",
+      "sublabel": "alarms · workers · audio",
+      "pos": [595, 510],
+      "size": [180, 80],
+      "sources": [
+        { "path": "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/AwradApplication.kt", "line": 20, "end_line": 50, "label": "startup wiring" }
+      ]
+    }
+  ],
+  "connections": [
+    { "id": "person-to-compose", "from": "person", "to": "compose", "label": "uses", "variant": "emphasis" },
+    { "id": "compose-to-viewmodels", "from": "compose", "to": "viewmodels", "label": "state" },
+    { "id": "viewmodels-to-data", "from": "viewmodels", "to": "feature-data", "label": "rules" },
+    { "id": "data-to-room", "from": "feature-data", "to": "room", "label": "local state", "variant": "emphasis" },
+    { "id": "data-to-platform", "from": "feature-data", "to": "platform-work", "label": "schedule · audio", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "room-to-sync", "from": "room", "to": "sync", "label": "pending changes", "fromSide": "top", "toSide": "bottom" },
+    { "id": "sync-to-network", "from": "sync", "to": "network" },
+    { "id": "network-to-api", "from": "network", "to": "phoenix", "label": "HTTPS API", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelDy": 24 }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Local-first core",
+      "items": [
+        "Dhikr, goals, counting, and wird reading use local Room state.",
+        "Repositories own database behavior; composables render ViewModel state."
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Product surfaces",
+      "items": [
+        "Home · goals and counting · dhikr library · wird reader · settings.",
+        "Community stats are API-backed; several social destinations remain demo surfaces."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Platform boundaries",
+      "items": [
+        "Hilt and AwradApplication compose startup services and workers.",
+        "Auth, sync, alarms, notifications, audio, and background work use service seams."
+      ]
+    }
+  ]
+}
