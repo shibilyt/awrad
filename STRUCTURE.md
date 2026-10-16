@@ -13,7 +13,10 @@ awrad/
 ├── awrad-ios/            Frozen reference: old iOS app
 ├── awrad_server/         Frozen reference: old Phoenix app (API + LiveView)
 ├── docs/                 Plan, cross-project docs, reference material
-├── scripts/              Contract generators and validators
+├── scripts/              Contract generators/validators, check-toolchain
+├── mise.toml             Pinned runtimes (Erlang, Elixir, Node, JDK)
+├── compose.yaml          Local services (Postgres 18)
+├── .xcode-version        Pinned Xcode
 ├── AGENTS.md             Agent rules and routing
 ├── CONTEXT.md            Domain language
 ├── DECISIONS.md          Cross-project ADRs

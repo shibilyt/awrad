@@ -11,6 +11,7 @@ This file stores durable repository facts and a concise append-only change log. 
 - Mobile apps are offline-first for dhikr, goals, counting and wird. The web app is online-only.
 - Browsers authenticate with Phoenix cookie sessions plus CSRF; mobile with bearer tokens bound to device sessions (ADR-2026-10-15, ADR-2026-07-12).
 - `awrad-android-next` keeps Room at version 1 until the first release (its ADR 0003).
+- Toolchains are pinned at the root: `mise.toml` (OTP 29.1.2, Elixir 1.20.4, Node 24.22.0, Zulu JDK 17), `.xcode-version` (26.2), and `compose.yaml` (Postgres 18.6 on port 5433, the fallback). Postgres major 18 is the target for local, CI and the Dokploy database. The default local database is the machine's own Postgres 18 on 5432; new-server databases are `awrad_next_dev` / `awrad_next_test`.
 - Content is localized in English, Arabic and Malayalam.
 
 ## Frozen apps (reference)
@@ -162,4 +163,14 @@ Use this format:
   - Added the `awrad-fixture/1` format with its checker.
   - Recorded how clients get types: the web generates them; mobile hand-writes classes covered by spec-example contract tests.
 - Evidence: `contracts/api/`, `contracts/FIXTURES.md`, `contracts/package.json`, `DECISIONS.md` (ADR-2026-10-16, client types)
+- Commit: see git log
+
+### 2026-10-16 — Pinned toolchains and local Postgres
+
+- Area: Cross-project | Documentation
+- Change:
+  - Added the root `mise.toml` (Erlang 29.1.2, Elixir 1.20.4, Node 24.22.0, Zulu JDK 17), `.xcode-version` (26.2), and `compose.yaml` (Postgres 18.6 on 5433, the fallback when there's no local Postgres 18).
+  - Added `scripts/check-toolchain`.
+  - `contracts/` and `awrad-android-next/` validation pass on the pinned runtimes.
+- Evidence: `mise.toml`, `compose.yaml`, `scripts/check-toolchain`, `COMMANDS.md`
 - Commit: see git log

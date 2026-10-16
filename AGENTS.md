@@ -13,7 +13,7 @@ Awrad is being **rebuilt** as four contract-first projects (root ADR-2026-10-14)
 
 ## Before changing anything
 
-1. Run `git status --short` at the root and preserve unrelated work.
+1. Run `git status --short` at the root and preserve unrelated work. On a new machine, run `mise install` and `scripts/check-toolchain` first.
 2. Read the nearest scoped `AGENTS.md`, plus the project's `ARCHITECTURE.md` and `docs/adr/` when they exist.
 3. Use the indexed code graph (graft, below) for symbols, callers and routes; use `rg` for literals, resources and config.
 4. For anything crossing projects, read the relevant part of [`contracts/`](contracts/) and the root [`DECISIONS.md`](DECISIONS.md) first.

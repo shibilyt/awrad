@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# Verifies this machine matches the pinned toolchains (mise.toml, .xcode-version, compose.yaml).
+# Usage: scripts/check-toolchain [--skip-xcode] [--skip-docker] [--skip-postgres]
+set -uo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+failures=0
+ok()   { printf '  ok    %s\n' "$1"; }
+fail() { printf '  FAIL  %s\n        fix: %s\n' "$1" "$2"; failures=$((failures + 1)); }
+warn() { printf '  warn  %s\n        fix: %s\n' "$1" "$2"; }
+
+skip_xcode=false; skip_docker=false; skip_postgres=false
+for arg in "$@"; do
+  case "$arg" in
+    --skip-xcode) skip_xcode=true ;;
+    --skip-docker) skip_docker=true ;;
+    --skip-postgres) skip_postgres=true ;;
+    *) echo "unknown option: $arg" >&2; exit 2 ;;
+  esac
+done
+
+echo "mise runtimes (mise.toml)"
+if ! command -v mise >/dev/null 2>&1; then
+  fail "mise is not installed" "brew install mise, then: mise install"
+else
+  while read -r tool pinned; do
+    case "$tool" in
+      erlang) actual="$(mise exec -- erl -noshell -eval 'io:format("~s", [erlang:system_info(otp_release)]), halt().' 2>/dev/null)"; want="${pinned%%.*}" ;;
+      elixir) actual="$(mise exec -- elixir -e 'IO.write(System.version())' 2>/dev/null)"; want="${pinned%%-*}" ;;
+      node)   actual="$(mise exec -- node -p 'process.versions.node' 2>/dev/null)"; want="$pinned" ;;
+      java)   actual="$(mise exec -- java -version 2>&1 | head -n 1)"; want="17." ;;
+    esac
+    if [[ -n "$actual" && "$actual" == *"$want"* ]]; then ok "$tool $pinned"
+    else fail "$tool: expected $pinned, got '${actual:-not installed}'" "mise install"; fi
+  done < <(python3 -c '
+import tomllib
+for tool, version in tomllib.load(open("mise.toml", "rb"))["tools"].items():
+    print(tool, version)')
+fi
+
+if ! $skip_xcode; then
+  echo "Xcode (.xcode-version)"
+  want="$(tr -d '[:space:]' < .xcode-version)"
+  have="$(xcodebuild -version 2>/dev/null | head -n 1 | awk '{print $2}')"
+  if [[ "$have" == "$want" ]]; then ok "Xcode $want"
+  else fail "Xcode: expected $want, got '${have:-none}'" "install Xcode $want and run: sudo xcode-select -s /Applications/Xcode.app"; fi
+fi
+
+if ! $skip_postgres; then
+  port="${AWRAD_POSTGRES_PORT:-5432}"
+  echo "Postgres (major 18 on 127.0.0.1:$port)"
+  if ! command -v psql >/dev/null 2>&1; then
+    warn "psql isn't on PATH, so Postgres can't be checked" "install Postgres.app or Homebrew postgresql@18, or use compose.yaml"
+  else
+    version="$(PGPASSWORD="${PGPASSWORD:-postgres}" psql -h 127.0.0.1 -p "$port" -U postgres -d postgres -tAc 'show server_version_num' 2>/dev/null | tr -d '[:space:]')"
+    if [[ -z "$version" ]]; then
+      warn "no Postgres reachable as postgres@127.0.0.1:$port" "start Postgres.app (port 5432), or: docker compose up -d --wait postgres && export AWRAD_POSTGRES_PORT=5433"
+    elif [[ "${version:0:2}" == "18" ]]; then ok "Postgres ${version:0:2}.$((10#${version:2:4})) on port $port"
+    else fail "Postgres on port $port is major ${version:0:2}, expected 18" "use Postgres 18 (Postgres.app, Homebrew postgresql@18, or compose.yaml)"; fi
+  fi
+fi
+
+if ! $skip_docker; then
+  echo "Docker (compose.yaml)"
+  if docker compose version >/dev/null 2>&1; then ok "docker compose $(docker compose version --short 2>/dev/null)"
+  else fail "docker compose is not available" "install Docker Desktop (or Docker Engine with the compose plugin)"; fi
+  if docker info >/dev/null 2>&1; then ok "docker daemon running"
+  else warn "docker daemon isn't running (only needed for compose.yaml Postgres)" "start Docker Desktop, then: docker compose up -d --wait postgres"; fi
+fi
+
+echo
+if (( failures > 0 )); then echo "$failures problem(s)"; exit 1; fi
+echo "toolchain matches the pins"

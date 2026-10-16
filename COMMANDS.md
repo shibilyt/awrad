@@ -14,7 +14,7 @@ git diff --stat
 
 ### contracts/: API spec and new fixtures (Node)
 
-Working directory: `contracts/`. Prerequisite: Node 22.
+Working directory: `contracts/`. Prerequisite: Node 24 (from `mise.toml`).
 
 ```bash
 npm ci                       # once: install the pinned tools
@@ -44,7 +44,7 @@ python3 scripts/generate_wird_model.py
 
 ## awrad-android-next
 
-Working directory: `awrad-android-next/`. Prerequisites: JDK 17 and the Android SDK. Point `local.properties` (`sdk.dir=…`) or `ANDROID_HOME` at the SDK. An emulator or device is only needed for instrumented tests and installs.
+Working directory: `awrad-android-next/`. Prerequisites: JDK 17 (from `mise.toml`) and the Android SDK. Point `local.properties` (`sdk.dir=…`) or `ANDROID_HOME` at the SDK. An emulator or device is only needed for instrumented tests and installs.
 
 ```bash
 # Full validation: build, unit tests, detekt, file-size limit, lint (warnings are errors)
@@ -65,6 +65,30 @@ Working directory: `awrad-android-next/`. Prerequisites: JDK 17 and the Android 
 
 Not created yet. Each scaffold adds its section here: prerequisites, first run, validation command, focused checks.
 
-## Toolchains
+## Toolchains and local services
 
-The pinned toolchains (`mise.toml` for Erlang, Elixir, Node and JDK; the Xcode version; Docker Compose for Postgres) are rebuild plan item 0.5. Until then, use the versions in each project's own config.
+Pinned in one place each:
+
+| What | Pinned in | Versions |
+|---|---|---|
+| Erlang, Elixir, Node, JDK | `mise.toml` | OTP 29.1.2, Elixir 1.20.4, Node 24.22.0, Zulu JDK 17 |
+| Xcode | `.xcode-version` | 26.2 |
+| Postgres | Your local server (default), or `compose.yaml` | Major 18. Local default `127.0.0.1:5432`; compose runs 18.6 on `127.0.0.1:5433` |
+
+```bash
+brew install mise            # once per machine
+mise install                 # install the pinned runtimes; mise activates them inside this repo
+scripts/check-toolchain      # verify this machine matches every pin (add --skip-xcode / --skip-docker)
+
+# Postgres: use your local Postgres 18 (Postgres.app or Homebrew) on 5432 with the postgres/postgres role.
+# No local Postgres? Run the container instead and point tools at it:
+docker compose up -d --wait postgres   # Postgres 18.6 on 127.0.0.1:5433 (needs Docker Desktop running)
+export AWRAD_POSTGRES_PORT=5433
+docker compose down                    # stop it; data stays in the postgres_data volume
+```
+
+To make mise switch versions automatically, add `eval "$(mise activate zsh)"` to `~/.zshrc`. Without it, prefix commands with `mise exec --`.
+
+`AWRAD_POSTGRES_PORT` (default 5432) tells `scripts/check-toolchain`, and later `awrad-server-next`'s dev config, where Postgres is. Credentials are `postgres`/`postgres`, dev-only. The compose container is reachable from this machine only.
+
+The new server's databases are namespaced `awrad_next_dev` and `awrad_next_test`, so they never collide with the frozen server's `awrad_api_*` databases on a shared local Postgres.

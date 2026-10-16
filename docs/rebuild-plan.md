@@ -54,10 +54,12 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 - [x] Fixture format `awrad-fixture/1` (`contracts/FIXTURES.md`, `fixture.schema.json`, `tools/check-fixtures.mjs`). Platform runners land with the first real fixtures in slice 1.
 
 ### 0.5 Toolchains and local environment
-- [ ] Root `mise.toml` pinning Erlang, Elixir, Node and JDK.
-- [ ] Xcode version recorded and checked in the iOS validation command.
-- [ ] `docker compose` for local Postgres (plus anything the server needs).
-- [ ] One documented "first run" per project in `COMMANDS.md`.
+- [x] Root `mise.toml` pins Erlang 29.1.2, Elixir 1.20.4 (OTP 29), Node 24.22.0 and Zulu JDK 17.0.20.
+- [x] `.xcode-version` pins Xcode 26.2; `scripts/check-toolchain` checks it, along with mise and Docker. The iOS validation command will call it when the iOS scaffold lands.
+- [x] `compose.yaml` runs Postgres 18.6 on `127.0.0.1:5433`, for machines without a local Postgres 18. Postgres major 18 everywhere, including CI and the Dokploy database.
+- [x] "Toolchains and local services" section in `COMMANDS.md`; each project's own first-run steps are added with its scaffold.
+- [x] Local Postgres verified: Postgres.app 18.4 on 5432, `postgres` role login works. It's the default dev database; `scripts/check-toolchain` checks it. New-server databases are namespaced `awrad_next_dev` / `awrad_next_test`.
+- [ ] Optional: verify the `compose.yaml` container path once Docker Desktop is running (the file passes `docker compose config`).
 
 ### 0.6 CI skeleton
 - [ ] One workflow per project, triggered only by changes to that project, running its validation command.

@@ -4,7 +4,7 @@
   "description": "Tooling for the shared Awrad contracts: OpenAPI lint/bundle and fixture-format checks.",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "bundle": "REDOCLY_TELEMETRY=off REDOCLY_SUPPRESS_UPDATE_NOTICE=true redocly bundle api/openapi.yaml -o api/openapi.bundled.json",
