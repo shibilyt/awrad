@@ -6,7 +6,7 @@ For the frozen apps' test matrix, see [`docs/reference/legacy-testing.md`](docs/
 
 ## Validation per project
 
-Each project has one validation command that CI will run (plan item 0.6). It includes the project's build-enforced standards, so a passing command means the change meets them.
+Each project has one validation command, and CI runs it (`.github/workflows/ci.yml`: one job per project, only when that project or a shared input changed). The command includes the project's build-enforced standards, so a passing command means the change meets them. `ci_ok` is the single required check.
 
 | Project | Validation command | Run from |
 |---|---|---|

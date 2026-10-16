@@ -62,9 +62,16 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 - [ ] Optional: verify the `compose.yaml` container path once Docker Desktop is running (the file passes `docker compose config`).
 
 ### 0.6 CI skeleton
-- [ ] One workflow per project, triggered only by changes to that project, running its validation command.
-- [ ] A contracts workflow: spec lint, schema validation, fixtures run on all platforms.
-- [ ] Required checks on `main`; keep the existing `api-image.yml` for the frozen server until it's replaced.
+- [x] `.github/workflows/ci.yml`: one workflow with one job per project.
+  - A `changes` job runs only the jobs whose project (or a shared input such as `mise.toml`) changed.
+  - Jobs today: `contracts`, `contracts_v1`, `android_next`.
+  - Each job runs its project's validation command with toolchains from `mise.toml`.
+  - Not one workflow per project, because path-filtered workflows can't be required checks: pull requests that don't touch them wait forever.
+- [x] `ci_ok` is the single gate job: it passes only when every job that ran passed. The change detection and the gate were tested locally against real commits.
+- [ ] First run on GitHub (needs a push).
+- [ ] Branch protection on `main` requiring `ci_ok` (a repository setting change).
+- [x] The frozen server keeps `api-image.yml` until it's replaced.
+- New projects add a filter line in `changes`, a job, and an entry in `ci_ok.needs`.
 
 ### 0.7 Standards and scaffolds (scaffold only, no features)
 - [x] Android: modules, convention plugins, module rules, explicit API, detekt plus compose-rules, lint, a 400-line file limit (`awrad-android-next/`).

@@ -174,3 +174,12 @@ Use this format:
   - `contracts/` and `awrad-android-next/` validation pass on the pinned runtimes.
 - Evidence: `mise.toml`, `compose.yaml`, `scripts/check-toolchain`, `COMMANDS.md`
 - Commit: see git log
+
+### 2026-10-16 — CI skeleton for the rebuild projects
+
+- Area: Cross-project | Documentation
+- Change:
+  - Added `.github/workflows/ci.yml`: change detection, per-project jobs (`contracts`, `contracts_v1`, `android_next`) running each validation command on `mise.toml` toolchains, and a `ci_ok` gate job.
+  - The frozen server's `api-image.yml` is unchanged.
+- Evidence: `.github/workflows/ci.yml`, `docs/rebuild-plan.md`
+- Commit: see git log

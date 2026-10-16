@@ -1,0 +1,134 @@
+# CI for the rebuild projects (docs/rebuild-plan.md, item 0.6).
+#
+# One workflow, one job per project. The `changes` job decides which projects a
+# push or pull request touches, and only those jobs run. `ci_ok` is the single
+# required status check: it passes when every job that ran passed, so pull
+# requests touching only one project never wait on skipped jobs.
+#
+# Each project job runs that project's validation command from TESTING.md.
+# Toolchains come from the root mise.toml, the same pins as local machines.
+# The frozen awrad_server keeps its own api-image.yml.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: Detect changed projects
+    runs-on: ubuntu-latest
+    outputs:
+      contracts: ${{ steps.filter.outputs.contracts }}
+      android_next: ${{ steps.filter.outputs.android_next }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: filter
+        name: Classify changed paths
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          # Manual runs, new branches and unknown bases check everything.
+          if [[ "$EVENT" == "workflow_dispatch" || -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]] \
+             || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            echo "contracts=true" >> "$GITHUB_OUTPUT"
+            echo "android_next=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          printf 'Changed files:\n%s\n' "$changed"
+          # Shared inputs that can affect every project.
+          shared='^(mise\.toml|\.github/workflows/ci\.yml)$'
+          match() { grep -Eq "$1" <<< "$changed" && echo true || echo false; }
+          echo "contracts=$(match "^(contracts/|scripts/)|$shared")" >> "$GITHUB_OUTPUT"
+          echo "android_next=$(match "^awrad-android-next/|$shared")" >> "$GITHUB_OUTPUT"
+
+  contracts:
+    name: contracts (API spec, fixtures)
+    needs: changes
+    if: needs.changes.outputs.contracts == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v5
+        with:
+          install_args: node
+      - run: npm ci
+      - run: npm test
+      - name: Fail if npm test changed tracked files (stale bundle)
+        run: git diff --exit-code
+
+  contracts_v1:
+    name: contracts (v1 legacy validators)
+    needs: changes
+    if: needs.changes.outputs.contracts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate v1 schemas, fixtures and generated content
+        run: |
+          set -euo pipefail
+          python3 scripts/validate_progress_contract.py
+          python3 scripts/validate_progress_sync.py
+          python3 scripts/validate_behavior_fixtures.py
+          python3 scripts/generate_wird_model.py --check
+          python3 scripts/generate_asma_ul_husna.py --check
+
+  android_next:
+    name: awrad-android-next
+    needs: changes
+    if: needs.changes.outputs.android_next == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: awrad-android-next
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v5
+        with:
+          install_args: java
+      # Caches Gradle and validates the committed wrapper jar.
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Validate (build, unit tests, detekt, file size, lint)
+        run: ./gradlew assembleDebug testDebugUnitTest :core:domain:test detekt verifySourceFileSize lintDebug --console=plain
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-next-reports
+          path: |
+            awrad-android-next/**/build/reports/
+          retention-days: 7
+
+  ci_ok:
+    name: ci_ok
+    if: always()
+    needs: [changes, contracts, contracts_v1, android_next]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job that ran passed
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: |
+          echo "Job results: $RESULTS"
+          if grep -Eq '"(failure|cancelled)"' <<< "$RESULTS"; then
+            echo "A required job failed or was cancelled." >&2
+            exit 1
+          fi
