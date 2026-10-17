@@ -9,7 +9,7 @@ This umbrella repository is mid-rebuild. Nothing is released yet. The platform i
 | Directory | Stack | Status |
 |---|---|---|
 | [`contracts/`](contracts/) | JSON Schema, fixtures, OpenAPI (planned) | Shared source of truth for all projects |
-| `awrad-server-next/` | Elixir, Phoenix 1.8, Ecto, Postgres, Oban, Channels | Not created yet |
+| [`awrad-server-next/`](awrad-server-next/) | Elixir 1.20, Phoenix 1.8, Ecto, Postgres 18, Channels (Oban arrives with the first background job) | Scaffold |
 | [`awrad-android-next/`](awrad-android-next/) | Kotlin, Jetpack Compose, Hilt, Room, multi-module | Scaffold |
 | `awrad-ios-next/` | Swift, SwiftUI, SwiftData, iOS 18 | Not created yet |
 | `awrad-web-next/` | React, TypeScript, Vite, TanStack | Not created yet |

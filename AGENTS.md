@@ -4,8 +4,8 @@ Awrad is being **rebuilt** as four contract-first projects (root ADR-2026-10-14)
 
 | Project | Role | State |
 |---|---|---|
-| [`contracts/`](contracts/) | Shared source of truth: schemas, behaviour fixtures, API spec | v1 schemas and fixtures exist; API spec planned |
-| [`awrad-server-next/`](STRUCTURE.md#awrad-server-next) | Phoenix JSON API and Channels | Not created yet |
+| [`contracts/`](contracts/) | Shared source of truth: schemas, behaviour fixtures, API spec | v1 schemas and fixtures; OpenAPI skeleton and style guide |
+| [`awrad-server-next/`](awrad-server-next/AGENTS.md) | Phoenix JSON API and Channels | Scaffold |
 | [`awrad-android-next/`](awrad-android-next/AGENTS.md) | Android app | Scaffold |
 | [`awrad-ios-next/`](STRUCTURE.md#awrad-ios-next) | iOS app | Not created yet |
 | [`awrad-web-next/`](STRUCTURE.md#awrad-web-next) | React web app on the same API | Not created yet |

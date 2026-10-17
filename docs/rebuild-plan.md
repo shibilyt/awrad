@@ -9,7 +9,7 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 
 | Project | Replaces | Stack | State |
 |---|---|---|---|
-| `awrad-server-next/` | `awrad_server/` | Phoenix 1.8, Ecto, Postgres, Oban, Channels. API only | Not started |
+| `awrad-server-next/` | `awrad_server/` | Phoenix 1.8, Ecto, Postgres, Oban, Channels. API only | Scaffold |
 | `awrad-android-next/` | `awrad-android/` | Kotlin, Compose, Hilt, Room, multi-module | Scaffold built, not committed |
 | `awrad-ios-next/` | `awrad-ios/` | Swift, SwiftUI, SwiftData, Observation, iOS 18 | Not started |
 | `awrad-web-next/` | LiveView UI in `awrad_server/` | React, TypeScript, Vite, TanStack. Online only | Not started |
@@ -48,7 +48,7 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 ### 0.4 Contract tooling
 - [x] `contracts/api/` OpenAPI 3.1 layout: an `openapi.yaml` root with shared components (auth schemes, Problem, IDs, time types, integer counts, standard error responses) and `paths/<area>.yaml` files. Redocly bundles them into the committed `openapi.bundled.json`.
 - [x] Spec linting: `contracts/api/spectral.mjs` enforces `STYLE.md` with 17 custom rules. `api/tests/` proves every rule fires and the bundle is fresh. Wiring it into CI is item 0.6.
-- [ ] Server: request/response validation against the spec (for example `open_api_spex`) plus contract tests. Built with the server scaffold.
+- [x] Server: response contract tests against the bundled spec (JSV, JSON Schema 2020-12) plus route/spec coverage (`awrad-server-next` ADR 0002). Request validation is per endpoint.
 - [ ] Web: generated types (`openapi-typescript`). Built with the web scaffold.
 - [x] Android and iOS: hand-written classes plus spec-example contract tests (root ADR-2026-10-16, client types). The tests themselves are built with each project's network module.
 - [x] Fixture format `awrad-fixture/1` (`contracts/FIXTURES.md`, `fixture.schema.json`, `tools/check-fixtures.mjs`). Platform runners land with the first real fixtures in slice 1.
@@ -77,7 +77,11 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 ### 0.7 Standards and scaffolds (scaffold only, no features)
 - [x] Android: modules, convention plugins, module rules, explicit API, detekt plus compose-rules, lint, a 400-line file limit (`awrad-android-next/`).
 - [ ] Commit the Android scaffold.
-- [ ] Server: `mix phx.new --no-html --no-assets` style API project, Credo strict, Dialyzer, `boundary` for context dependencies, warnings as errors, formatter check.
+- [x] Server: `awrad-server-next/`, an API-only Phoenix 1.8.15 app on Elixir 1.20 / OTP 29.
+  - Warnings as errors; Boundary-enforced contexts; Credo strict plus the 400-line limit; Sobelow; Dialyzer; format check. All run by `mix validate`.
+  - RFC 9457 errors, `no-store` and `x-request-id` on every response.
+  - One spec operation, contract-tested.
+  - CI job `server_next` with a Postgres 18 service.
 - [ ] iOS: Swift packages as modules (domain / data / design system / features), SwiftLint plus SwiftFormat, Swift 6 strict concurrency, warnings as errors.
 - [ ] Web: Vite + React + TS strict, ESLint, Prettier, dependency-cruiser module rules, TanStack Query/Router, a generated API client.
 - [ ] Each project gets `AGENTS.md`, `ARCHITECTURE.md` and `docs/adr/`, following the Android project's pattern.

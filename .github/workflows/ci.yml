@@ -30,6 +30,7 @@ jobs:
     outputs:
       contracts: ${{ steps.filter.outputs.contracts }}
       android_next: ${{ steps.filter.outputs.android_next }}
+      server_next: ${{ steps.filter.outputs.server_next }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -47,6 +48,7 @@ jobs:
              || ! git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
             echo "contracts=true" >> "$GITHUB_OUTPUT"
             echo "android_next=true" >> "$GITHUB_OUTPUT"
+            echo "server_next=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
@@ -56,6 +58,8 @@ jobs:
           match() { grep -Eq "$1" <<< "$changed" && echo true || echo false; }
           echo "contracts=$(match "^(contracts/|scripts/)|$shared")" >> "$GITHUB_OUTPUT"
           echo "android_next=$(match "^awrad-android-next/|$shared")" >> "$GITHUB_OUTPUT"
+          # The server's contract tests read contracts/api/openapi.bundled.json.
+          echo "server_next=$(match "^(awrad-server-next/|contracts/api/)|$shared")" >> "$GITHUB_OUTPUT"
 
   contracts:
     name: contracts (API spec, fixtures)
@@ -117,10 +121,51 @@ jobs:
             awrad-android-next/**/build/reports/
           retention-days: 7
 
+  server_next:
+    name: awrad-server-next
+    needs: changes
+    if: needs.changes.outputs.server_next == 'true'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.6
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: awrad-server-next
+    env:
+      MIX_ENV: test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v5
+        with:
+          install_args: erlang elixir
+      - name: Cache deps, build and Dialyzer PLTs
+        uses: actions/cache@v6
+        with:
+          path: |
+            awrad-server-next/deps
+            awrad-server-next/_build
+            awrad-server-next/priv/plts
+          key: server-next-${{ runner.os }}-${{ hashFiles('mise.toml', 'awrad-server-next/mix.lock') }}
+          restore-keys: server-next-${{ runner.os }}-
+      - run: mix local.hex --force --if-missing
+      - run: mix deps.get
+      - name: Validate (compile, boundaries, format, Credo, Sobelow, Dialyzer, tests)
+        run: mix validate
+
   ci_ok:
     name: ci_ok
     if: always()
-    needs: [changes, contracts, contracts_v1, android_next]
+    needs: [changes, contracts, contracts_v1, android_next, server_next]
     runs-on: ubuntu-latest
     steps:
       - name: Every job that ran passed

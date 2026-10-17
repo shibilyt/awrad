@@ -61,7 +61,21 @@ Working directory: `awrad-android-next/`. Prerequisites: JDK 17 (from `mise.toml
 ./gradlew :app:installDebug
 ```
 
-## awrad-server-next, awrad-ios-next, awrad-web-next
+## awrad-server-next
+
+Working directory: `awrad-server-next/`. Prerequisites: Erlang and Elixir from `mise.toml`, and Postgres 18 (the machine's own on 5432, or `compose.yaml` with `AWRAD_POSTGRES_PORT=5433`).
+
+```bash
+mix setup                       # deps, then create and migrate awrad_next_dev
+mix phx.server                  # http://localhost:4000
+mix test test/path/file_test.exs   # focused tests
+mix validate                    # full validation (never modifies files; what CI runs)
+mix precommit                   # format, then validate
+```
+
+The first `mix validate` builds Dialyzer's cache into `priv/plts/` (git-ignored, about a minute). Later runs reuse it.
+
+## awrad-ios-next, awrad-web-next
 
 Not created yet. Each scaffold adds its section here: prerequisites, first run, validation command, focused checks.
 

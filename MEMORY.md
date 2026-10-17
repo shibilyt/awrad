@@ -5,7 +5,7 @@ This file stores durable repository facts and a concise append-only change log. 
 ## Durable facts
 
 - Awrad isn't released: no installed users, so there's no upgrade or data-migration compatibility to keep.
-- Awrad is being rebuilt as four contract-first projects: `awrad-server-next`, `awrad-android-next`, `awrad-ios-next` and `awrad-web-next` (ADR-2026-10-14). Only `awrad-android-next` exists, as a scaffold.
+- Awrad is being rebuilt as four contract-first projects: `awrad-server-next`, `awrad-android-next`, `awrad-ios-next` and `awrad-web-next` (ADR-2026-10-14). `awrad-android-next` and `awrad-server-next` exist as scaffolds.
 - `contracts/` is the shared source of truth: schemas, behaviour fixtures and built-in content, with an OpenAPI spec planned.
 - Git runs at the root; each project's toolchain runs inside its own directory.
 - Mobile apps are offline-first for dhikr, goals, counting and wird. The web app is online-only.
@@ -183,4 +183,15 @@ Use this format:
   - The frozen server's `api-image.yml` used to auto-deploy to Dokploy on any `awrad_server/**` push, including docs. A run triggered by the frozen-project banner commit was cancelled before anything was built. The workflow is now **manual-deploy only** (`workflow_dispatch` from `main`); pull requests still test and build.
 - `main` is protected: `ci_ok` required, no force pushes or deletion; admins may push directly.
 - Evidence: `.github/workflows/ci.yml`, `docs/rebuild-plan.md`
+- Commit: see git log
+
+### 2026-10-17 — awrad-server-next scaffold
+
+- Area: API | Cross-project | Documentation
+- Change:
+  - Added `awrad-server-next/`: API-only Phoenix 1.8.15 on Elixir 1.20.4 / OTP 29, enforced by `mix validate` (warnings as errors, Boundary, Credo strict plus the 400-line limit, Sobelow, Dialyzer, format check).
+  - RFC 9457 errors and standard headers on every response; the session cookie is `_awrad_session`.
+  - `get_browser_csrf_token` is contract-tested against `contracts/api/openapi.bundled.json`.
+  - CI `server_next` job added.
+- Evidence: `awrad-server-next/`, `.github/workflows/ci.yml`
 - Commit: see git log

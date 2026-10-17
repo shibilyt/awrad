@@ -5,7 +5,7 @@
 ```text
 awrad/
 ├── contracts/            Shared source of truth: schemas, fixtures, content, (planned) OpenAPI spec
-├── awrad-server-next/    Phoenix JSON API + Channels                  (not created yet)
+├── awrad-server-next/    Phoenix JSON API + Channels                  (scaffold)
 ├── awrad-android-next/   Android app, multi-module                    (scaffold)
 ├── awrad-ios-next/       iOS app                                      (not created yet)
 ├── awrad-web-next/       React web app on the same API                (not created yet)
@@ -44,12 +44,19 @@ Node tooling (pinned in `contracts/package.json`) covers the API spec and the ne
 
 ## awrad-server-next
 
-Not created yet. Decided stack (ADR-2026-10-14, ADR-2026-10-15):
+Root: `awrad-server-next/`. Start with its [`ARCHITECTURE.md`](awrad-server-next/ARCHITECTURE.md) and [`docs/adr/`](awrad-server-next/docs/adr/README.md).
 
-- Elixir / Phoenix 1.8, Ecto, Postgres, Oban; Phoenix Channels for live data. No Redis or Kafka.
-- JSON API only: no LiveView, templates or asset pipeline.
-- Two auth pipelines: browser cookie session plus CSRF (`phx.gen.auth` core with JSON endpoints), and mobile bearer token plus device session.
-- Context boundaries enforced (planned: Credo strict, Dialyzer, `boundary`).
+| Path | Holds |
+|---|---|
+| `lib/awrad/` | The domain boundary `Awrad`: contexts, schemas, `Repo`, `Mailer`. Contexts arrive in slices |
+| `lib/awrad_web/` | The HTTP boundary `AwradWeb`: endpoint, router, controllers, plugs, `Problem` (RFC 9457 errors), `ErrorJSON` |
+| `lib/awrad/application.ex` | The top-level boundary that wires the domain and web together |
+| `test/support/contract.ex` | `assert_conforms/2`: validates responses against `contracts/api/openapi.bundled.json` |
+| `credo/` | Custom Credo checks (the 400-line file limit) |
+
+- **Boundary:** `Awrad` never references `AwradWeb`; violations fail the build.
+- **Contract coverage:** routes and spec operations must match exactly.
+- **Databases:** `awrad_next_dev` and `awrad_next_test` on the machine's Postgres 18.
 
 ## awrad-android-next
 

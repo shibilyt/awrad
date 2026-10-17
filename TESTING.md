@@ -13,7 +13,7 @@ Each project has one validation command, and CI runs it (`.github/workflows/ci.y
 | `contracts/` (API spec, new fixtures) | `npm ci && npm test` | `contracts/` |
 | `contracts/` (v1 legacy folders) | `python3 scripts/validate_progress_contract.py && python3 scripts/validate_progress_sync.py && python3 scripts/validate_behavior_fixtures.py && python3 scripts/generate_wird_model.py --check && python3 scripts/generate_asma_ul_husna.py --check` | root |
 | `awrad-android-next/` | `./gradlew assembleDebug testDebugUnitTest :core:domain:test detekt verifySourceFileSize lintDebug` | `awrad-android-next/` |
-| `awrad-server-next/` | Defined by its scaffold | – |
+| `awrad-server-next/` | `mix validate` (needs Postgres 18) | `awrad-server-next/` |
 | `awrad-ios-next/` | Defined by its scaffold | – |
 | `awrad-web-next/` | Defined by its scaffold | – |
 
@@ -30,6 +30,8 @@ Each project has one validation command, and CI runs it (`.github/workflows/ci.y
 | Android-next Room schema | Unit tests plus a re-exported schema committed | Instrumented DAO tests on an emulator |
 | Android-next resources or localization | `./gradlew lintDebug` (warnings are errors) | Runtime smoke in ar (RTL) and ml |
 | Android-next build logic or module rules | `./gradlew help` (rules run at configuration) | Project validation command |
+| Server-next domain or web code | `mix test test/path/to/file_test.exs` | `mix validate` |
+| Server-next endpoint | Its controller test calling `assert_conforms(conn, "<operation_id>")` for success and each documented error | `mix validate`, plus `npm test` in `contracts/` if the spec changed |
 | Docs only | Link and path audit, `git diff --check` | – |
 
 New projects add their rows when their scaffolds land.
