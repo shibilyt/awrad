@@ -12,6 +12,7 @@ erlang = "29.1.2"
 elixir = "1.20.4-otp-29"
 node = "24.22.0"
 java = "zulu-17.68.17.0"   # Gradle and AGP; awrad-android-next targets JVM 17
+swiftlint = "0.65.1"        # awrad-ios-next lint (macOS only)
 
 [settings]
 # Fail loudly instead of silently falling back to a system install.

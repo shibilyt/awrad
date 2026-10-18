@@ -1,0 +1,7 @@
+build/
+DerivedData/
+AwradKit/.build/
+AwradKit/.swiftpm/
+.swiftpm/
+xcuserdata/
+*.xcuserstate

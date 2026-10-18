@@ -7,7 +7,7 @@ awrad/
 ├── contracts/            Shared source of truth: schemas, fixtures, content, (planned) OpenAPI spec
 ├── awrad-server-next/    Phoenix JSON API + Channels                  (scaffold)
 ├── awrad-android-next/   Android app, multi-module                    (scaffold)
-├── awrad-ios-next/       iOS app                                      (not created yet)
+├── awrad-ios-next/       iOS app                                      (scaffold)
 ├── awrad-web-next/       React web app on the same API                (not created yet)
 ├── awrad-android/        Frozen reference: old Android app
 ├── awrad-ios/            Frozen reference: old iOS app
@@ -77,7 +77,18 @@ Features see only `:core:domain` and `:core:designsystem`. The build fails on an
 
 ## awrad-ios-next
 
-Not created yet. Decided stack: Swift, SwiftUI, SwiftData, Observation, minimum iOS 18. The rebuild targets structure and code quality; planned modules are Swift packages (domain / data / design system / features), with SwiftLint, SwiftFormat and Swift 6 strict concurrency.
+Root: `awrad-ios-next/`. Start with its [`ARCHITECTURE.md`](awrad-ios-next/ARCHITECTURE.md) and [`docs/adr/`](awrad-ios-next/docs/adr/README.md).
+
+| Path | Holds |
+|---|---|
+| `AwradKit/` | The local Swift package with all code: `AwradDomain`, `AwradData`, `AwradDesignSystem`, `Feature*`, `AwradTesting` |
+| `AwradNext/` | Thin app target: composition root (`AppComposition`), `RootView`, app strings, assets |
+| `AwradNext.xcodeproj` | Committed project with a shared `AwradNext` scheme |
+| `scripts/` | `validate`, `check-module-rules.py`, `check-strings.py` |
+
+- **Enforced graph:** features see only `AwradDomain` and `AwradDesignSystem`.
+- **Swift 6** with complete concurrency checking; warnings are errors.
+- **Fast tests:** the package also builds for macOS, so `swift test` needs no simulator.
 
 ## awrad-web-next
 

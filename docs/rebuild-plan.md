@@ -11,7 +11,7 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 |---|---|---|---|
 | `awrad-server-next/` | `awrad_server/` | Phoenix 1.8, Ecto, Postgres, Oban, Channels. API only | Scaffold |
 | `awrad-android-next/` | `awrad-android/` | Kotlin, Compose, Hilt, Room, multi-module | Scaffold built, not committed |
-| `awrad-ios-next/` | `awrad-ios/` | Swift, SwiftUI, SwiftData, Observation, iOS 18 | Not started |
+| `awrad-ios-next/` | `awrad-ios/` | Swift, SwiftUI, SwiftData, Observation, iOS 18 | Scaffold |
 | `awrad-web-next/` | LiveView UI in `awrad_server/` | React, TypeScript, Vite, TanStack. Online only | Not started |
 | `contracts/` | Prose parts of `CONTRACTS.md` | JSON Schema, fixtures, OpenAPI | Partly exists (schemas and fixtures v1) |
 
@@ -82,7 +82,12 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
   - RFC 9457 errors, `no-store` and `x-request-id` on every response.
   - One spec operation, contract-tested.
   - CI job `server_next` with a Postgres 18 service.
-- [ ] iOS: Swift packages as modules (domain / data / design system / features), SwiftLint plus SwiftFormat, Swift 6 strict concurrency, warnings as errors.
+- [x] iOS: `awrad-ios-next/`, a thin committed Xcode project plus the local `AwradKit` package.
+  - Modules: `AwradDomain`, `AwradData`, `AwradDesignSystem`, `Feature*`, `AwradTesting`, with the graph enforced by the compiler and `check-module-rules.py`.
+  - Swift 6 with complete concurrency checking; warnings as errors; `swift format` plus SwiftLint (strict, 400-line limit); a translation check.
+  - SwiftData pre-release policy (iOS ADR 0002).
+  - Placeholder onboarding and home screens verified on a simulator in en and ar.
+  - CI job `ios_next` on `macos-26`.
 - [ ] Web: Vite + React + TS strict, ESLint, Prettier, dependency-cruiser module rules, TanStack Query/Router, a generated API client.
 - [ ] Each project gets `AGENTS.md`, `ARCHITECTURE.md` and `docs/adr/`, following the Android project's pattern.
 
@@ -97,7 +102,7 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 | Extend `CONTEXT.md`: Dhikr, Wird, Count, Count session, Collective counter, Account, Device | Slice 1, gradually | [ ] |
 | Behaviour inventory per feature: keep / change / drop, with old tests as evidence | Each slice, before its contract | [ ] |
 | One source for translations (en/ar/ml) exported to Android XML, iOS string catalogs and web JSON | Slice 2 | [ ] |
-| Design tokens from one source exported to Compose, SwiftUI and CSS | Slice 2 | [ ] |
+| Design tokens from one source exported to Compose, SwiftUI and CSS. Includes the Arabic interface font: Manrope has no Arabic glyphs, so iOS falls back to the system Arabic font | Slice 2 | [ ] |
 | Shared-counter behaviour ADR: scale target, overshoot, late offline contributions, guests, rate caps | Counting slice | [ ] |
 | Content pipeline: built-in dhikr and wird content from `contracts/` into each app at build time | Goals / wird slices | [ ] |
 | Staging environment: server and web on the same site via Dokploy | Accounts slice | [ ] |
@@ -118,7 +123,7 @@ Each slice goes contract → server → Android → iOS → web and is done only
 ## Before the first release
 
 - [ ] Final application and bundle IDs, signing, versioning scheme (ADR).
-- [ ] Switch Room and SwiftData to forward-only migrations (ADR; see Android ADR 0003).
+- [ ] Switch Room and SwiftData to forward-only migrations (ADR; see Android ADR 0003). Remove the iOS store-recreation fallback in `AwradStore.persistent()` (iOS ADR 0002).
 - [ ] In-app account deletion, data export, privacy policy.
 - [ ] Light threat model, rate limits (carry over `awrad_server/memory/security.md`), dependency scanning.
 - [ ] Push notifications (APNs/FCM), if reminders move server-side.

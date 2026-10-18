@@ -40,8 +40,13 @@ The navigation layer for repository knowledge. Keep the root [`AGENTS.md`](../AG
 - Architecture: [`awrad-server-next/ARCHITECTURE.md`](../awrad-server-next/ARCHITECTURE.md)
 - Decisions: [`awrad-server-next/docs/adr/`](../awrad-server-next/docs/adr/README.md)
 
-### awrad-ios-next, awrad-web-next
-Not created yet. See their sections in [`STRUCTURE.md`](../STRUCTURE.md) for the decided stacks.
+### awrad-ios-next
+- Agent rules: [`awrad-ios-next/AGENTS.md`](../awrad-ios-next/AGENTS.md)
+- Architecture: [`awrad-ios-next/ARCHITECTURE.md`](../awrad-ios-next/ARCHITECTURE.md)
+- Decisions: [`awrad-ios-next/docs/adr/`](../awrad-ios-next/docs/adr/README.md)
+
+### awrad-web-next
+Not created yet. See its section in [`STRUCTURE.md`](../STRUCTURE.md) for the decided stack.
 
 ## Reference: current behaviour of the frozen apps
 

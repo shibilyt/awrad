@@ -1,0 +1,43 @@
+# SwiftLint covers rules swift-format doesn't (sizes, complexity, safety).
+# swift-format owns layout, so layout rules are disabled here to avoid fights.
+included:
+  - AwradKit/Sources
+  - AwradKit/Tests
+  - AwradNext
+excluded:
+  - AwradKit/.build
+  - build
+
+strict: true   # every warning fails, same as the compiler
+
+disabled_rules:
+  - trailing_comma
+  - opening_brace
+  - line_length          # swift-format wraps at 120
+  - identifier_name      # short names like `id`, `ui` are fine
+
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - fatal_error_message
+  - discouraged_optional_boolean
+  - empty_count
+  - first_where
+  - sorted_imports
+  - unowned_variable_capture
+  - private_swiftui_state
+
+# Same limit as awrad-android-next and awrad-server-next.
+file_length:
+  warning: 400
+  error: 400
+  ignore_comment_only_lines: false
+function_body_length:
+  warning: 60
+  error: 60
+type_body_length:
+  warning: 300
+  error: 300
+cyclomatic_complexity:
+  warning: 12
+  error: 12

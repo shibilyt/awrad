@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# The awrad-ios-next validation command (TESTING.md, CI). Never modifies files.
+set -euo pipefail
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+SOURCES=(AwradKit/Sources AwradKit/Tests AwradKit/Package.swift AwradNext)
+step() { printf '\n==> %s\n' "$1"; }
+
+step "Xcode version (.xcode-version)"
+want="$(tr -d '[:space:]' < ../.xcode-version)"
+have="$(xcodebuild -version | head -n 1 | awk '{print $2}')"
+[[ "$have" == "$want" ]] || { echo "Xcode $want required, found $have" >&2; exit 1; }
+echo "Xcode $have"
+
+step "Module rules";            python3 -I scripts/check-module-rules.py
+step "Translations (en/ar/ml)"; python3 -I scripts/check-strings.py
+step "swift format";            swift format lint --strict --recursive "${SOURCES[@]}"
+step "SwiftLint (strict)";      mise exec -- swiftlint lint --strict --quiet
+step "AwradKit build and tests (macOS, warnings as errors)"
+( cd AwradKit && swift build --build-tests -Xswiftc -warnings-as-errors && swift test --skip-build )
+step "App build (iOS Simulator, warnings as errors)"
+xcodebuild -project AwradNext.xcodeproj -scheme AwradNext \
+  -destination 'generic/platform=iOS Simulator' -derivedDataPath build/DerivedData \
+  CODE_SIGNING_ALLOWED=NO -quiet build
+
+printf '\nawrad-ios-next: all checks passed\n'

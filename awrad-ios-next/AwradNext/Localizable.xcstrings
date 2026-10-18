@@ -1,0 +1,30 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "home.placeholder.body" : {
+      "comment" : "Body of the placeholder home screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "هذا هو الهيكل الأساسي لأوراد نكست. ستُضاف الميزات هنا تباعًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This is the Awrad Next scaffold. Features land here slice by slice." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇത് Awrad Next-ന്റെ അടിസ്ഥാന ഘടനയാണ്. ഫീച്ചറുകൾ ഓരോന്നായി ഇവിടെ ചേർക്കും." } }
+      }
+    },
+    "home.placeholder.restart" : {
+      "comment" : "Button that resets onboarding, for development.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إعادة بدء التهيئة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Restart onboarding" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഓൺബോർഡിംഗ് വീണ്ടും തുടങ്ങുക" } }
+      }
+    },
+    "home.placeholder.title" : {
+      "comment" : "Title of the placeholder home screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كل شيء جاهز" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "You're all set" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "എല്ലാം തയ്യാറാണ്" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

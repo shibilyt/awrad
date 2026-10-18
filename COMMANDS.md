@@ -75,9 +75,21 @@ mix precommit                   # format, then validate
 
 The first `mix validate` builds Dialyzer's cache into `priv/plts/` (git-ignored, about a minute). Later runs reuse it.
 
-## awrad-ios-next, awrad-web-next
+## awrad-ios-next
 
-Not created yet. Each scaffold adds its section here: prerequisites, first run, validation command, focused checks.
+Working directory: `awrad-ios-next/`. Prerequisites: Xcode 26.2 (`.xcode-version`) and SwiftLint from `mise.toml`. A simulator is only needed for UI checks.
+
+```bash
+open AwradNext.xcodeproj                              # develop in Xcode
+scripts/validate                                      # full validation (never modifies files; what CI runs)
+(cd AwradKit && swift test)                           # all package tests on macOS
+(cd AwradKit && swift test --filter OnboardingModelTests)
+swift format -i -r AwradKit/Sources AwradKit/Tests AwradKit/Package.swift AwradNext   # fix layout
+```
+
+## awrad-web-next
+
+Not created yet. Its scaffold adds a section here: prerequisites, first run, validation command, focused checks.
 
 ## Toolchains and local services
 
@@ -85,7 +97,7 @@ Pinned in one place each:
 
 | What | Pinned in | Versions |
 |---|---|---|
-| Erlang, Elixir, Node, JDK | `mise.toml` | OTP 29.1.2, Elixir 1.20.4, Node 24.22.0, Zulu JDK 17 |
+| Erlang, Elixir, Node, JDK, SwiftLint | `mise.toml` | OTP 29.1.2, Elixir 1.20.4, Node 24.22.0, Zulu JDK 17, SwiftLint 0.65.1 |
 | Xcode | `.xcode-version` | 26.2 |
 | Postgres | Your local server (default), or `compose.yaml` | Major 18. Local default `127.0.0.1:5432`; compose runs 18.6 on `127.0.0.1:5433` |
 

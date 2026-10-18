@@ -30,6 +30,7 @@ else
       elixir) actual="$(mise exec -- elixir -e 'IO.write(System.version())' 2>/dev/null)"; want="${pinned%%-*}" ;;
       node)   actual="$(mise exec -- node -p 'process.versions.node' 2>/dev/null)"; want="$pinned" ;;
       java)   actual="$(mise exec -- java -version 2>&1 | head -n 1)"; want="17." ;;
+      swiftlint) actual="$(mise exec -- swiftlint version 2>/dev/null)"; want="$pinned" ;;
     esac
     if [[ -n "$actual" && "$actual" == *"$want"* ]]; then ok "$tool $pinned"
     else fail "$tool: expected $pinned, got '${actual:-not installed}'" "mise install"; fi

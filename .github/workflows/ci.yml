@@ -31,6 +31,7 @@ jobs:
       contracts: ${{ steps.filter.outputs.contracts }}
       android_next: ${{ steps.filter.outputs.android_next }}
       server_next: ${{ steps.filter.outputs.server_next }}
+      ios_next: ${{ steps.filter.outputs.ios_next }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -49,6 +50,7 @@ jobs:
             echo "contracts=true" >> "$GITHUB_OUTPUT"
             echo "android_next=true" >> "$GITHUB_OUTPUT"
             echo "server_next=true" >> "$GITHUB_OUTPUT"
+            echo "ios_next=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
@@ -60,6 +62,7 @@ jobs:
           echo "android_next=$(match "^awrad-android-next/|$shared")" >> "$GITHUB_OUTPUT"
           # The server's contract tests read contracts/api/openapi.bundled.json.
           echo "server_next=$(match "^(awrad-server-next/|contracts/api/)|$shared")" >> "$GITHUB_OUTPUT"
+          echo "ios_next=$(match "^(awrad-ios-next/|\.xcode-version$)|$shared")" >> "$GITHUB_OUTPUT"
 
   contracts:
     name: contracts (API spec, fixtures)
@@ -162,10 +165,32 @@ jobs:
       - name: Validate (compile, boundaries, format, Credo, Sobelow, Dialyzer, tests)
         run: mix validate
 
+  ios_next:
+    name: awrad-ios-next
+    needs: changes
+    if: needs.changes.outputs.ios_next == 'true'
+    runs-on: macos-26
+    defaults:
+      run:
+        working-directory: awrad-ios-next
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select the pinned Xcode (.xcode-version)
+        run: |
+          set -euo pipefail
+          version="$(tr -d '[:space:]' < ../.xcode-version)"
+          sudo xcode-select -s "/Applications/Xcode_${version}.app"
+          xcodebuild -version
+      - uses: jdx/mise-action@v5
+        with:
+          install_args: swiftlint
+      - name: Validate (module rules, translations, swift format, SwiftLint, package tests, app build)
+        run: scripts/validate
+
   ci_ok:
     name: ci_ok
     if: always()
-    needs: [changes, contracts, contracts_v1, android_next, server_next]
+    needs: [changes, contracts, contracts_v1, android_next, server_next, ios_next]
     runs-on: ubuntu-latest
     steps:
       - name: Every job that ran passed

@@ -5,13 +5,13 @@ This file stores durable repository facts and a concise append-only change log. 
 ## Durable facts
 
 - Awrad isn't released: no installed users, so there's no upgrade or data-migration compatibility to keep.
-- Awrad is being rebuilt as four contract-first projects: `awrad-server-next`, `awrad-android-next`, `awrad-ios-next` and `awrad-web-next` (ADR-2026-10-14). `awrad-android-next` and `awrad-server-next` exist as scaffolds.
+- Awrad is being rebuilt as four contract-first projects: `awrad-server-next`, `awrad-android-next`, `awrad-ios-next` and `awrad-web-next` (ADR-2026-10-14). `awrad-android-next`, `awrad-server-next` and `awrad-ios-next` exist as scaffolds.
 - `contracts/` is the shared source of truth: schemas, behaviour fixtures and built-in content, with an OpenAPI spec planned.
 - Git runs at the root; each project's toolchain runs inside its own directory.
 - Mobile apps are offline-first for dhikr, goals, counting and wird. The web app is online-only.
 - Browsers authenticate with Phoenix cookie sessions plus CSRF; mobile with bearer tokens bound to device sessions (ADR-2026-10-15, ADR-2026-07-12).
 - `awrad-android-next` keeps Room at version 1 until the first release (its ADR 0003).
-- Toolchains are pinned at the root: `mise.toml` (OTP 29.1.2, Elixir 1.20.4, Node 24.22.0, Zulu JDK 17), `.xcode-version` (26.2), and `compose.yaml` (Postgres 18.6 on port 5433, the fallback). Postgres major 18 is the target for local, CI and the Dokploy database. The default local database is the machine's own Postgres 18 on 5432; new-server databases are `awrad_next_dev` / `awrad_next_test`.
+- Toolchains are pinned at the root: `mise.toml` (OTP 29.1.2, Elixir 1.20.4, Node 24.22.0, Zulu JDK 17, SwiftLint 0.65.1), `.xcode-version` (26.2), and `compose.yaml` (Postgres 18.6 on port 5433, the fallback). Postgres major 18 is the target for local, CI and the Dokploy database. The default local database is the machine's own Postgres 18 on 5432; new-server databases are `awrad_next_dev` / `awrad_next_test`.
 - Content is localized in English, Arabic and Malayalam.
 
 ## Frozen apps (reference)
@@ -194,4 +194,15 @@ Use this format:
   - `get_browser_csrf_token` is contract-tested against `contracts/api/openapi.bundled.json`.
   - CI `server_next` job added.
 - Evidence: `awrad-server-next/`, `.github/workflows/ci.yml`
+- Commit: see git log
+
+### 2026-10-17 — awrad-ios-next scaffold
+
+- Area: iOS | Cross-project | Documentation
+- Change:
+  - Added `awrad-ios-next/`: a thin Xcode project plus the local `AwradKit` package (domain, data, design system, features, testing), with the module graph enforced by the compiler and a rules check.
+  - Swift 6 with complete concurrency checking and warnings as errors; `swift format` plus SwiftLint strict; an en/ar/ml translation check; the SwiftData pre-release policy.
+  - Placeholder flow verified on an iOS 26.2 simulator in English and Arabic.
+  - CI `ios_next` job on `macos-26`.
+- Evidence: `awrad-ios-next/`, `.github/workflows/ci.yml`
 - Commit: see git log

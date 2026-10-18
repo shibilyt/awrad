@@ -1,0 +1,22 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "onboarding.placeholder.get_started" : {
+      "comment" : "Primary button on the placeholder onboarding screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ابدأ" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Get started" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ആരംഭിക്കുക" } }
+      }
+    },
+    "onboarding.placeholder.title" : {
+      "comment" : "Greeting on the placeholder onboarding screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "السلام عليكم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "As-salamu alaykum" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അസ്സലാമു അലൈക്കും" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}
