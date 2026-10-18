@@ -7,7 +7,9 @@ step() { printf '\n==> %s\n' "$1"; }
 
 step "Xcode version (.xcode-version)"
 want="$(tr -d '[:space:]' < ../.xcode-version)"
-have="$(xcodebuild -version | head -n 1 | awk '{print $2}')"
+# Capture everything first: piping xcodebuild into `head` crashes it with a broken pipe.
+version_output="$(xcodebuild -version)"
+have="$(awk 'NR == 1 {print $2}' <<< "$version_output")"
 [[ "$have" == "$want" ]] || { echo "Xcode $want required, found $have" >&2; exit 1; }
 echo "Xcode $have"
 

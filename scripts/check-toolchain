@@ -29,7 +29,7 @@ else
       erlang) actual="$(mise exec -- erl -noshell -eval 'io:format("~s", [erlang:system_info(otp_release)]), halt().' 2>/dev/null)"; want="${pinned%%.*}" ;;
       elixir) actual="$(mise exec -- elixir -e 'IO.write(System.version())' 2>/dev/null)"; want="${pinned%%-*}" ;;
       node)   actual="$(mise exec -- node -p 'process.versions.node' 2>/dev/null)"; want="$pinned" ;;
-      java)   actual="$(mise exec -- java -version 2>&1 | head -n 1)"; want="17." ;;
+      java)   actual="$(mise exec -- java -version 2>&1)"; actual="${actual%%$'\n'*}"; want="17." ;;
       swiftlint) actual="$(mise exec -- swiftlint version 2>/dev/null)"; want="$pinned" ;;
     esac
     if [[ -n "$actual" && "$actual" == *"$want"* ]]; then ok "$tool $pinned"
@@ -43,7 +43,9 @@ fi
 if ! $skip_xcode; then
   echo "Xcode (.xcode-version)"
   want="$(tr -d '[:space:]' < .xcode-version)"
-  have="$(xcodebuild -version 2>/dev/null | head -n 1 | awk '{print $2}')"
+  # Capture everything first: piping xcodebuild into `head` crashes it with a broken pipe.
+  version_output="$(xcodebuild -version 2>/dev/null || true)"
+  have="$(awk 'NR == 1 {print $2}' <<< "$version_output")"
   if [[ "$have" == "$want" ]]; then ok "Xcode $want"
   else fail "Xcode: expected $want, got '${have:-none}'" "install Xcode $want and run: sudo xcode-select -s /Applications/Xcode.app"; fi
 fi
