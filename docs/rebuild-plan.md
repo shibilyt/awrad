@@ -124,11 +124,14 @@ Each slice goes contract → server → Android → iOS → web and is done only
 
 | # | Slice | Status |
 |---|---|---|
-| 1 | Foundation: domain model and fixtures for Goal, Requirement, Schedule, Session, Streak; contract skeleton | [ ] |
+| 1a | Domain foundation, Gregorian: goal rules as shared fixtures plus runners on Android, iOS and server ([brief](slices/01-domain-foundation.md)). Includes the new "days per period" requirement | [ ] |
+| 1b | Domain foundation, Hijri: Hijri calendar, yearly and season schedules | [ ] |
 | 2 | Accounts: register, verify, sign in, device sessions (mobile), cookie session (web) | [ ] |
 | 3 | Goals: create, edit, evaluate; offline-first on mobile | [ ] |
 | 4 | Counting and progress sync | [ ] |
 | 5+ | Onboarding, wird, library, reminders, community / collective counters | [ ] |
+| later | Sequenced dhikr in one goal (e.g. Tasbih Fatimah 33/33/34): its own brief; relates to "Practice plan" | [ ] |
+| later | Carry-over / make-up rule: a missed amount moves to the next due day | [ ] |
 
 ## Before the first release
 
