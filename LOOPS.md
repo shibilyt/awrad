@@ -15,7 +15,7 @@ Exit condition: the owning project, the affected contracts and consumers, and th
 
 ## 2. Slice delivery
 
-A slice is one capability (for example accounts or goals) delivered end to end. Each step builds on the one before it.
+A slice is one capability (for example accounts or goals) delivered end to end. Each step builds on the one before it. The full procedure, with outputs, the definition of done and how to run platform work in parallel, is in [`docs/slice-playbook.md`](docs/slice-playbook.md); start each slice from [`docs/slices/_template.md`](docs/slices/_template.md).
 
 1. **Study:** run loop 3 on the frozen apps for this capability, and record keep / change / drop decisions.
 2. **Domain:** update `CONTEXT.md` terms; add or extend behaviour fixtures in `contracts/` for every rule.

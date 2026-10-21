@@ -15,7 +15,7 @@ Awrad is being **rebuilt** as four contract-first projects (root ADR-2026-10-14)
 
 1. Run `git status --short` at the root and preserve unrelated work. On a new machine, run `mise install` and `scripts/check-toolchain` first.
 2. Read the nearest scoped `AGENTS.md`, plus the project's `ARCHITECTURE.md` and `docs/adr/` when they exist.
-3. Use the indexed code graph (graft, below) for symbols, callers and routes; use `rg` for literals, resources and config.
+3. Use the indexed code graph (graft, below) for symbols, callers and routes; use `rg` for literals, resources and config. When building, scope queries to the project (`graft ask "…" --in awrad-<x>-next/`); hits from `awrad-android/`, `awrad-ios/` or `awrad_server/` are evidence of current behaviour, never code to copy or edit.
 4. For anything crossing projects, read the relevant part of [`contracts/`](contracts/) and the root [`DECISIONS.md`](DECISIONS.md) first.
 5. Pick the loop from [`LOOPS.md`](LOOPS.md) and the focused checks from [`TESTING.md`](TESTING.md).
 
@@ -37,6 +37,7 @@ Awrad is being **rebuilt** as four contract-first projects (root ADR-2026-10-14)
 |---|---|
 | Repository map and ownership | [`STRUCTURE.md`](STRUCTURE.md) |
 | What's being built, in what order | [`docs/rebuild-plan.md`](docs/rebuild-plan.md) |
+| How a slice is built, and when it's done | [`docs/slice-playbook.md`](docs/slice-playbook.md), briefs in [`docs/slices/`](docs/slices/) |
 | Cross-project decisions | [`DECISIONS.md`](DECISIONS.md) |
 | Shared schemas, fixtures, content | [`contracts/`](contracts/) |
 | Domain language | [`CONTEXT.md`](CONTEXT.md) |

@@ -217,3 +217,13 @@ Use this format:
   - Web ADR 0001 fixes one-origin hosting through a reverse proxy.
 - Evidence: `awrad-web-next/`, `.github/workflows/ci.yml`
 - Commit: see git log
+
+### 2026-10-21 — Slice playbook and agent workflow
+
+- Area: Documentation
+- Change:
+  - Added `docs/slice-playbook.md` (the procedure from brief to closed slice, the definition of done, parallel per-project agents, approval points) and the brief template `docs/slices/_template.md`.
+  - `AGENTS.md` now scopes graft queries to `-next` projects and treats frozen-project hits as evidence only.
+  - Phase 0 complete.
+- Evidence: `docs/slice-playbook.md`, `docs/slices/_template.md`, `AGENTS.md`
+- Commit: see git log

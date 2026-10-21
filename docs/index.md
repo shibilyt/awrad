@@ -7,6 +7,7 @@ The navigation layer for repository knowledge. Keep the root [`AGENTS.md`](../AG
 | Need | Read |
 |---|---|
 | What's being built, in what order | [`rebuild-plan.md`](rebuild-plan.md) |
+| How to build a slice; definition of done | [`slice-playbook.md`](slice-playbook.md), briefs in [`slices/`](slices/) |
 | Orientation and ownership | [`STRUCTURE.md`](../STRUCTURE.md) |
 | Cross-project decisions | [`DECISIONS.md`](../DECISIONS.md) |
 | Domain language | [`CONTEXT.md`](../CONTEXT.md) |

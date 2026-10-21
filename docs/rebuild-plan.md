@@ -76,7 +76,7 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 
 ### 0.7 Standards and scaffolds (scaffold only, no features)
 - [x] Android: modules, convention plugins, module rules, explicit API, detekt plus compose-rules, lint, a 400-line file limit (`awrad-android-next/`).
-- [ ] Commit the Android scaffold.
+- [x] Commit the Android scaffold (`c787b32`).
 - [x] Server: `awrad-server-next/`, an API-only Phoenix 1.8.15 app on Elixir 1.20 / OTP 29.
   - Warnings as errors; Boundary-enforced contexts; Credo strict plus the 400-line limit; Sobelow; Dialyzer; format check. All run by `mix validate`.
   - RFC 9457 errors, `no-store` and `x-request-id` on every response.
@@ -92,11 +92,18 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
   - Checks: ESLint strict type-checked plus hooks, jsx-a11y, no hard-coded text and 400-line files; Prettier; dependency-cruiser module rules; a translation check; an API-types freshness check.
   - Placeholder page verified in a browser against `mix phx.server`: real 401 problem, en and ar (RTL).
   - CI job `web_next`. Web ADRs 0001–0003 (one-origin proxy, TS 6, React Aria).
-- [ ] Each project gets `AGENTS.md`, `ARCHITECTURE.md` and `docs/adr/`, following the Android project's pattern.
+- [x] Each project has `AGENTS.md`, `ARCHITECTURE.md` and `docs/adr/`, following the Android project's pattern.
 
 ### 0.8 Agent workflow
-- [ ] Slice playbook (`docs/slice-playbook.md`): the steps from contract → server → Android → iOS → web, and the definition of done.
-- [ ] graft re-indexed to include the new projects; frozen projects tagged as reference.
+- [x] Slice playbook ([`slice-playbook.md`](slice-playbook.md)):
+  - steps brief → study → domain and fixtures → contract → parallel platform work → integrate → close;
+  - the definition of done;
+  - one agent per project in step 5;
+  - user approval points.
+
+  Brief template: [`slices/_template.md`](slices/_template.md).
+- [x] graft covers the four new projects. Its graph is in sync (`graft check`), and scoped queries (`--in awrad-<x>-next/`) work. graft can't exclude or label directories, and the frozen projects must stay searchable as evidence, so "reference" is a rule in `AGENTS.md` and the playbook: frozen-project hits are evidence, never code to copy or edit. The deep LLM layer isn't built (it needs an API key).
+- [x] graft upgraded 0.16 → 0.23 (2026-10-21); it works with the existing graph.
 
 ## Before the slice that needs it
 
