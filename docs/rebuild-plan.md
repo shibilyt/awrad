@@ -12,7 +12,7 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 | `awrad-server-next/` | `awrad_server/` | Phoenix 1.8, Ecto, Postgres, Oban, Channels. API only | Scaffold |
 | `awrad-android-next/` | `awrad-android/` | Kotlin, Compose, Hilt, Room, multi-module | Scaffold built, not committed |
 | `awrad-ios-next/` | `awrad-ios/` | Swift, SwiftUI, SwiftData, Observation, iOS 18 | Scaffold |
-| `awrad-web-next/` | LiveView UI in `awrad_server/` | React, TypeScript, Vite, TanStack. Online only | Not started |
+| `awrad-web-next/` | LiveView UI in `awrad_server/` | React, TypeScript, Vite, TanStack. Online only | Scaffold |
 | `contracts/` | Prose parts of `CONTRACTS.md` | JSON Schema, fixtures, OpenAPI | Partly exists (schemas and fixtures v1) |
 
 **Frozen projects stay where they are** (`awrad-android/`, `awrad-ios/`, `awrad_server/`). They are read-only reference: their code and tests describe current behaviour. Fixes go into the new projects only.
@@ -49,7 +49,7 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 - [x] `contracts/api/` OpenAPI 3.1 layout: an `openapi.yaml` root with shared components (auth schemes, Problem, IDs, time types, integer counts, standard error responses) and `paths/<area>.yaml` files. Redocly bundles them into the committed `openapi.bundled.json`.
 - [x] Spec linting: `contracts/api/spectral.mjs` enforces `STYLE.md` with 17 custom rules. `api/tests/` proves every rule fires and the bundle is fresh. Wiring it into CI is item 0.6.
 - [x] Server: response contract tests against the bundled spec (JSV, JSON Schema 2020-12) plus route/spec coverage (`awrad-server-next` ADR 0002). Request validation is per endpoint.
-- [ ] Web: generated types (`openapi-typescript`). Built with the web scaffold.
+- [x] Web: generated types (`openapi-typescript` into `src/shared/api/schema.gen.ts`, checked fresh) plus `openapi-fetch`; MSW mocks built from the spec's examples.
 - [x] Android and iOS: hand-written classes plus spec-example contract tests (root ADR-2026-10-16, client types). The tests themselves are built with each project's network module.
 - [x] Fixture format `awrad-fixture/1` (`contracts/FIXTURES.md`, `fixture.schema.json`, `tools/check-fixtures.mjs`). Platform runners land with the first real fixtures in slice 1.
 
@@ -88,7 +88,10 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
   - SwiftData pre-release policy (iOS ADR 0002).
   - Placeholder onboarding and home screens verified on a simulator in en and ar.
   - CI job `ios_next` on `macos-26`.
-- [ ] Web: Vite + React + TS strict, ESLint, Prettier, dependency-cruiser module rules, TanStack Query/Router, a generated API client.
+- [x] Web: `awrad-web-next/`, React 19 + TypeScript 6.0 (strictest) + Vite 8 with the React Compiler, TanStack Router (file-based) and Query, React Aria plus Tailwind tokens, i18next en/ar/ml.
+  - Checks: ESLint strict type-checked plus hooks, jsx-a11y, no hard-coded text and 400-line files; Prettier; dependency-cruiser module rules; a translation check; an API-types freshness check.
+  - Placeholder page verified in a browser against `mix phx.server`: real 401 problem, en and ar (RTL).
+  - CI job `web_next`. Web ADRs 0001–0003 (one-origin proxy, TS 6, React Aria).
 - [ ] Each project gets `AGENTS.md`, `ARCHITECTURE.md` and `docs/adr/`, following the Android project's pattern.
 
 ### 0.8 Agent workflow
@@ -105,7 +108,7 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 | Design tokens from one source exported to Compose, SwiftUI and CSS. Includes the Arabic interface font: Manrope has no Arabic glyphs, so iOS falls back to the system Arabic font | Slice 2 | [ ] |
 | Shared-counter behaviour ADR: scale target, overshoot, late offline contributions, guests, rate caps | Counting slice | [ ] |
 | Content pipeline: built-in dhikr and wird content from `contracts/` into each app at build time | Goals / wird slices | [ ] |
-| Staging environment: server and web on the same site via Dokploy | Accounts slice | [ ] |
+| Staging environment: server and web on one origin via Dokploy, including the web reverse-proxy container (web ADR 0001) | Accounts slice | [ ] |
 | Error and crash reporting on all four; server logs and metrics | First external testers | [ ] |
 
 ## Slices

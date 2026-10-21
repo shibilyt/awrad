@@ -8,7 +8,7 @@ Awrad is being **rebuilt** as four contract-first projects (root ADR-2026-10-14)
 | [`awrad-server-next/`](awrad-server-next/AGENTS.md) | Phoenix JSON API and Channels | Scaffold |
 | [`awrad-android-next/`](awrad-android-next/AGENTS.md) | Android app | Scaffold |
 | [`awrad-ios-next/`](awrad-ios-next/AGENTS.md) | iOS app | Scaffold |
-| [`awrad-web-next/`](STRUCTURE.md#awrad-web-next) | React web app on the same API | Not created yet |
+| [`awrad-web-next/`](awrad-web-next/AGENTS.md) | React web app on the same API | Scaffold |
 | `awrad-android/`, `awrad-ios/`, `awrad_server/` | **Frozen reference** | Read-only |
 
 ## Before changing anything

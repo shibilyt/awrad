@@ -32,6 +32,7 @@ jobs:
       android_next: ${{ steps.filter.outputs.android_next }}
       server_next: ${{ steps.filter.outputs.server_next }}
       ios_next: ${{ steps.filter.outputs.ios_next }}
+      web_next: ${{ steps.filter.outputs.web_next }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -51,6 +52,7 @@ jobs:
             echo "android_next=true" >> "$GITHUB_OUTPUT"
             echo "server_next=true" >> "$GITHUB_OUTPUT"
             echo "ios_next=true" >> "$GITHUB_OUTPUT"
+            echo "web_next=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
           changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
@@ -63,6 +65,8 @@ jobs:
           # The server's contract tests read contracts/api/openapi.bundled.json.
           echo "server_next=$(match "^(awrad-server-next/|contracts/api/)|$shared")" >> "$GITHUB_OUTPUT"
           echo "ios_next=$(match "^(awrad-ios-next/|\.xcode-version$)|$shared")" >> "$GITHUB_OUTPUT"
+          # The web app's generated types and test mocks come from contracts/api/openapi.bundled.json.
+          echo "web_next=$(match "^(awrad-web-next/|contracts/api/)|$shared")" >> "$GITHUB_OUTPUT"
 
   contracts:
     name: contracts (API spec, fixtures)
@@ -187,10 +191,29 @@ jobs:
       - name: Validate (module rules, translations, swift format, SwiftLint, package tests, app build)
         run: scripts/validate
 
+  web_next:
+    name: awrad-web-next
+    needs: changes
+    if: needs.changes.outputs.web_next == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: awrad-web-next
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v5
+        with:
+          install_args: node
+      - run: npm ci
+      - name: Validate (API types, translations, typecheck, lint, format, module rules, tests, build)
+        run: npm run validate
+      - name: Fail if the build regenerated tracked files (route tree)
+        run: git diff --exit-code
+
   ci_ok:
     name: ci_ok
     if: always()
-    needs: [changes, contracts, contracts_v1, android_next, server_next, ios_next]
+    needs: [changes, contracts, contracts_v1, android_next, server_next, ios_next, web_next]
     runs-on: ubuntu-latest
     steps:
       - name: Every job that ran passed

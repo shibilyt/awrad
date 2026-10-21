@@ -12,7 +12,7 @@ This umbrella repository is mid-rebuild. Nothing is released yet. The platform i
 | [`awrad-server-next/`](awrad-server-next/) | Elixir 1.20, Phoenix 1.8, Ecto, Postgres 18, Channels (Oban arrives with the first background job) | Scaffold |
 | [`awrad-android-next/`](awrad-android-next/) | Kotlin, Jetpack Compose, Hilt, Room, multi-module | Scaffold |
 | [`awrad-ios-next/`](awrad-ios-next/) | Swift 6, SwiftUI, SwiftData, Observation, iOS 18 | Scaffold |
-| `awrad-web-next/` | React, TypeScript, Vite, TanStack | Not created yet |
+| [`awrad-web-next/`](awrad-web-next/) | React 19, TypeScript 6, Vite 8, TanStack Router and Query, React Aria, Tailwind 4 | Scaffold |
 | [`awrad-android/`](awrad-android/), [`awrad-ios/`](awrad-ios/), [`awrad_server/`](awrad_server/) | Previous apps | Frozen reference, read-only |
 
 ## Start here

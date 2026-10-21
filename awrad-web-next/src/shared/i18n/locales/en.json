@@ -1,0 +1,19 @@
+{
+  "app": {
+    "name": "Awrad",
+    "title": "As-salamu alaykum",
+    "language": "Language"
+  },
+  "session": {
+    "checking": "Checking your session…",
+    "signed_in": "You're signed in.",
+    "signed_out": "You're not signed in. Sign-in arrives with the accounts slice.",
+    "unavailable": "Couldn't reach Awrad. Try again in a moment.",
+    "retry": "Try again"
+  },
+  "language": {
+    "en": "English",
+    "ar": "العربية",
+    "ml": "മലയാളം"
+  }
+}

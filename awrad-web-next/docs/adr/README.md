@@ -1,0 +1,10 @@
+# Architecture decision records
+
+Web-only decisions for `awrad-web-next`. Cross-project decisions live in the root [`DECISIONS.md`](../../../DECISIONS.md). Accepted ADRs aren't re-argued: supersede them with a new one.
+
+| ADR                                      | Title                                                       | Status   |
+| ---------------------------------------- | ----------------------------------------------------------- | -------- |
+| [0001](0001-one-origin-reverse-proxy.md) | One origin: a reverse proxy in front of the app and the API | Accepted |
+| [0002](0002-typescript-6-for-tooling.md) | TypeScript 6.0 until the tooling supports TypeScript 7      | Accepted |
+| [0003](0003-react-aria-and-tailwind.md)  | React Aria Components with Tailwind design tokens           | Accepted |
+| [0004](0004-typed-api-client.md)         | Typed API client: openapi-typescript + openapi-fetch        | Accepted |

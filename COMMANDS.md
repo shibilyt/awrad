@@ -89,7 +89,16 @@ swift format -i -r AwradKit/Sources AwradKit/Tests AwradKit/Package.swift AwradN
 
 ## awrad-web-next
 
-Not created yet. Its scaffold adds a section here: prerequisites, first run, validation command, focused checks.
+Working directory: `awrad-web-next/`. Prerequisite: Node 24 from `mise.toml`. Run `awrad-server-next` (`mix phx.server`) for real API calls.
+
+```bash
+npm ci                         # install pinned dependencies
+npm run dev                    # http://localhost:5173; /api and /socket proxy to Phoenix on :4000 (AWRAD_API_ORIGIN overrides)
+npm run validate               # full validation (what CI runs)
+npm test                       # tests only
+npm run api:types              # regenerate src/shared/api/schema.gen.ts after a spec change
+npm run format                 # fix formatting
+```
 
 ## Toolchains and local services
 

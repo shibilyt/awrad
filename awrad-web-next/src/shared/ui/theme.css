@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+/* Fonts: Manrope for interface text, Noto Naskh Arabic for Arabic (same files as Android and iOS). */
+@font-face {
+  font-family: "Manrope";
+  src: url("/fonts/manrope_regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("/fonts/manrope_medium.ttf") format("truetype");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("/fonts/manrope_semibold.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("/fonts/manrope_bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Naskh Arabic";
+  src: url("/fonts/notonaskharabic_regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Naskh Arabic";
+  src: url("/fonts/notonaskharabic_semibold.ttf") format("truetype");
+  font-weight: 600;
+  font-display: swap;
+}
+
+/*
+ * Design tokens: the same sage palette as Android and iOS. Components use these
+ * roles (bg-primary, text-on-surface, …), never raw colours, and never check the
+ * colour scheme themselves.
+ */
+@theme {
+  --font-sans: "Manrope", system-ui, sans-serif;
+  --font-arabic: "Noto Naskh Arabic", "Manrope", serif;
+
+  --color-primary: light-dark(#4b7c5a, #6b9e7a);
+  --color-on-primary: light-dark(#ffffff, #2e5c3d);
+  --color-primary-container: light-dark(#d4e8da, #2e5c3d);
+  --color-on-primary-container: light-dark(#1a3d26, #d4e8da);
+  --color-background: light-dark(#f0f2f0, #121412);
+  --color-surface: light-dark(#ffffff, #121412);
+  --color-on-surface: light-dark(#1a1c1a, #e3e5e3);
+  --color-on-surface-variant: light-dark(#5d5f5d, #abadab);
+  --color-outline-variant: light-dark(#c7c9c7, #454745);
+  --color-error: light-dark(#ba1a1a, #ffb4ab);
+}
+
+:root {
+  color-scheme: light dark;
+}
+
+/* Arabic text uses Noto Naskh Arabic for both content and interface on the web. */
+:lang(ar) {
+  font-family: var(--font-arabic);
+}
+
+body {
+  @apply bg-background font-sans text-on-surface antialiased;
+}

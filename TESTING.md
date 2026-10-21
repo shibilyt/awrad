@@ -15,7 +15,7 @@ Each project has one validation command, and CI runs it (`.github/workflows/ci.y
 | `awrad-android-next/` | `./gradlew assembleDebug testDebugUnitTest :core:domain:test detekt verifySourceFileSize lintDebug` | `awrad-android-next/` |
 | `awrad-server-next/` | `mix validate` (needs Postgres 18) | `awrad-server-next/` |
 | `awrad-ios-next/` | `scripts/validate` (needs Xcode from `.xcode-version`) | `awrad-ios-next/` |
-| `awrad-web-next/` | Defined by its scaffold | – |
+| `awrad-web-next/` | `npm ci && npm run validate` | `awrad-web-next/` |
 
 ## Change-to-validation matrix
 
@@ -34,9 +34,11 @@ Each project has one validation command, and CI runs it (`.github/workflows/ci.y
 | Server-next endpoint | Its controller test calling `assert_conforms(conn, "<operation_id>")` for success and each documented error | `mix validate`, plus `npm test` in `contracts/` if the spec changed |
 | iOS-next domain, data or model | `swift test --filter <Suite>` in `awrad-ios-next/AwradKit` | `scripts/validate` |
 | iOS-next screens or app target | `scripts/validate` (builds the app) | Simulator smoke in en and ar (RTL) |
+| Web-next feature or component | `npx vitest run src/features/<name>` | `npm run validate`; browser check in en and ar (RTL) against `mix phx.server` |
+| API spec change affecting the web | `npm run api:types && npm run validate` in `awrad-web-next/` | – |
 | Docs only | Link and path audit, `git diff --check` | – |
 
-New projects add their rows when their scaffolds land.
+All four project scaffolds exist; add rows as new kinds of change appear.
 
 ## Rules that apply everywhere
 

@@ -5,7 +5,7 @@ This file stores durable repository facts and a concise append-only change log. 
 ## Durable facts
 
 - Awrad isn't released: no installed users, so there's no upgrade or data-migration compatibility to keep.
-- Awrad is being rebuilt as four contract-first projects: `awrad-server-next`, `awrad-android-next`, `awrad-ios-next` and `awrad-web-next` (ADR-2026-10-14). `awrad-android-next`, `awrad-server-next` and `awrad-ios-next` exist as scaffolds.
+- Awrad is being rebuilt as four contract-first projects: `awrad-server-next`, `awrad-android-next`, `awrad-ios-next` and `awrad-web-next` (ADR-2026-10-14). All four rebuild projects exist as scaffolds: `awrad-server-next`, `awrad-android-next`, `awrad-ios-next`, `awrad-web-next`.
 - `contracts/` is the shared source of truth: schemas, behaviour fixtures and built-in content, with an OpenAPI spec planned.
 - Git runs at the root; each project's toolchain runs inside its own directory.
 - Mobile apps are offline-first for dhikr, goals, counting and wird. The web app is online-only.
@@ -205,4 +205,15 @@ Use this format:
   - Placeholder flow verified on an iOS 26.2 simulator in English and Arabic.
   - CI `ios_next` job on `macos-26`.
 - Evidence: `awrad-ios-next/`, `.github/workflows/ci.yml`
+- Commit: see git log
+
+### 2026-10-21 — awrad-web-next scaffold
+
+- Area: Web | Cross-project | Documentation
+- Change:
+  - Added `awrad-web-next/`: React 19, TypeScript 6.0, Vite 8 with the React Compiler, TanStack Router and Query, `openapi-fetch` on generated spec types, React Aria plus Tailwind tokens, i18next en/ar/ml.
+  - Enforced by `npm run validate`: types fresh, translations, typecheck, lint (strict type-checked, a11y, no hard-coded text, 400 lines), Prettier, dependency-cruiser module rules, tests, build.
+  - Verified in a browser against `awrad-server-next` (401 problem, RTL).
+  - Web ADR 0001 fixes one-origin hosting through a reverse proxy.
+- Evidence: `awrad-web-next/`, `.github/workflows/ci.yml`
 - Commit: see git log

@@ -8,7 +8,7 @@ awrad/
 ├── awrad-server-next/    Phoenix JSON API + Channels                  (scaffold)
 ├── awrad-android-next/   Android app, multi-module                    (scaffold)
 ├── awrad-ios-next/       iOS app                                      (scaffold)
-├── awrad-web-next/       React web app on the same API                (not created yet)
+├── awrad-web-next/       React web app on the same API                (scaffold)
 ├── awrad-android/        Frozen reference: old Android app
 ├── awrad-ios/            Frozen reference: old iOS app
 ├── awrad_server/         Frozen reference: old Phoenix app (API + LiveView)
@@ -92,7 +92,20 @@ Root: `awrad-ios-next/`. Start with its [`ARCHITECTURE.md`](awrad-ios-next/ARCHI
 
 ## awrad-web-next
 
-Not created yet. Decided stack: React, TypeScript, Vite, TanStack Query and Router, with an API client generated from the OpenAPI spec. Online only. Served from the same site as the API so the cookie session works without credentialed CORS (ADR-2026-10-15).
+Root: `awrad-web-next/`. Start with its [`ARCHITECTURE.md`](awrad-web-next/ARCHITECTURE.md) and [`docs/adr/`](awrad-web-next/docs/adr/README.md).
+
+| Path | Holds |
+|---|---|
+| `src/routes/` | File-based TanStack Router routes: thin, URL → feature page |
+| `src/features/<name>/` | Pages, hooks and components per feature |
+| `src/shared/api/` | Generated API types (`schema.gen.ts`), the `api` client (CSRF, same origin), `ApiProblem` |
+| `src/shared/ui/` | Design tokens (`theme.css`) and React Aria based components |
+| `src/shared/i18n/` | i18next with en, ar and ml; sets `<html lang dir>` |
+| `src/test/` | Spec-example API mocks (`specHandler`) and test setup |
+
+- **Module rules** are enforced by dependency-cruiser.
+- **One origin:** a reverse proxy in production; Vite's proxy to Phoenix in development (web ADR 0001).
+- **Online-only:** no offline storage.
 
 ## docs
 
