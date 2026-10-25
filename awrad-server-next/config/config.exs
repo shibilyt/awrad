@@ -39,6 +39,11 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# IANA time zones for the goal rules (ADR 0003). The data is compiled into the
+# `tz` dependency; it's updated by bumping `tz`, never at runtime, so
+# Tz.UpdatePeriodically / Tz.WatchPeriodically are deliberately not started.
+config :elixir, :time_zone_database, Tz.TimeZoneDatabase
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

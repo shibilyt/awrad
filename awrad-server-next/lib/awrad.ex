@@ -8,5 +8,6 @@ defmodule Awrad do
   into each other's internals either.
   """
 
-  use Boundary, deps: [], exports: [Mailer, Repo]
+  # Each context sub-boundary is exported with its own exports ({Context, []}).
+  use Boundary, deps: [], exports: [Mailer, Repo, {Goals, []}]
 end
