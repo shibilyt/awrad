@@ -23,7 +23,7 @@ Applies inside `awrad-server-next/` and extends [`../AGENTS.md`](../AGENTS.md). 
 - **Errors go through `AwradWeb.Problem`**, as RFC 9457 problems with a stable `code`. Never `json(conn, %{error: ...})`.
 - **Ownership comes from the authenticated scope**, never from request parameters (`contracts/api/STYLE.md` §4).
 - **Progress writes (goals, counts, custom dhikr, tags) go only through the progress command ledger** (STYLE.md §2). Web resource endpoints translate into ledger commands.
-- **New contexts** are sub-modules of `Awrad` (`Awrad.Accounts`, …) with `use Boundary, exports: [...]`, and are added to `Awrad`'s deps.
+- **New contexts** are sub-modules of `Awrad` (`Awrad.Accounts`, …) with `use Boundary, exports: [...]`, and are added to `Awrad`'s exports as `{Context, []}` (a parent can't depend on its sub-boundaries; it re-exports them).
 - **Migrations:** timestamped Ecto migrations (`mix ecto.gen.migration`). Never expose a schema field as API by accident; map explicitly in the view or JSON module.
 - **Security:** carry over `../awrad_server/memory/security.md` deliberately, slice by slice. Don't assume it.
 
