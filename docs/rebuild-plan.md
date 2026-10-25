@@ -133,6 +133,8 @@ Each slice goes contract → server → Android → iOS → web and is done only
 | later | Sequenced dhikr in one goal (e.g. Tasbih Fatimah 33/33/34): its own brief; relates to "Practice plan" | [ ] |
 | later | Carry-over / make-up rule: a missed amount moves to the next due day | [ ] |
 
+**Revisit as slices progress:** the six provisional judgment calls in [slice 1's fixtures](slices/01-domain-foundation.md#judgment-calls-accepted-provisionally-2026-10-25): partial-period required days, future counts ignored, `not_due` outside the period, anchor after start, missing streak-threshold value, one-time = cumulative. Re-check each one when slice 3 (goals) builds validation and screens.
+
 ## Before the first release
 
 - [ ] Final application and bundle IDs, signing, versioning scheme (ADR).

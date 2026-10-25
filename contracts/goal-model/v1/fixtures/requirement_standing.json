@@ -1,0 +1,1203 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "requirement_standing",
+  "description": "Where a goal stands against its requirement on a day: the window it's judged over, progress (counts in the window up to the day), the target, and whether it's met. With sessions, each session must meet its own target. Days per period has its own file.",
+  "references": [
+    "CONTEXT.md#goal-language (Requirement, Session, Count policy)",
+    "docs/slices/01-domain-foundation.md rows 9-13",
+    "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/domain/usecase/GoalProgressUseCase.kt:102-115",
+    "awrad-ios/awrad/awrad/Core/AwradCalculators.swift:21-66,189-228"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goal",
+      "counts",
+      "date",
+      "week_start"
+    ],
+    "properties": {
+      "goal": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal"
+      },
+      "counts": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/count_entry"
+        }
+      },
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      },
+      "week_start": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/week_start"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "status",
+      "window",
+      "progress",
+      "target",
+      "sessions"
+    ],
+    "properties": {
+      "status": {
+        "enum": [
+          "met",
+          "not_met",
+          "not_due"
+        ]
+      },
+      "window": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/window"
+      },
+      "progress": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/count"
+      },
+      "target": {
+        "oneOf": [
+          {
+            "$ref": "urn:awrad:goal-model:1#/$defs/count"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "null for trackers and for goals with sessions (see sessions)."
+      },
+      "sessions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "progress",
+            "target",
+            "status"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "progress": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/count"
+            },
+            "target": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/count"
+            },
+            "status": {
+              "enum": [
+                "met",
+                "not_met"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "per_due_date_target_met",
+      "description": "313 of 313.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 313
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 313,
+        "target": 313,
+        "sessions": []
+      }
+    },
+    {
+      "id": "per_due_date_one_short",
+      "description": "312 of 313 isn't met.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 312
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 312,
+        "target": 313,
+        "sessions": []
+      }
+    },
+    {
+      "id": "per_due_date_above_target",
+      "description": "Going over the target is still met.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 400
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 400,
+        "target": 313,
+        "sessions": []
+      }
+    },
+    {
+      "id": "per_due_date_only_that_day_counts",
+      "description": "Yesterday's 500 doesn't help today.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 500
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 100,
+        "target": 313,
+        "sessions": []
+      }
+    },
+    {
+      "id": "per_due_date_minimum_is_not_the_target",
+      "description": "Reaching the minimum (100) doesn't meet the target (313).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": 100,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 150
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 150,
+        "target": 313,
+        "sessions": []
+      }
+    },
+    {
+      "id": "per_due_date_not_due_day",
+      "description": "Wednesday isn't scheduled for a Monday-only goal.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "monday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 313
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_due",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 313,
+        "target": 313,
+        "sessions": []
+      }
+    },
+    {
+      "id": "sessions_each_met",
+      "description": "Fajr 33/33 and Maghrib 40/33.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 66,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "maghrib",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-14",
+            "session": "fajr",
+            "count": 33
+          },
+          {
+            "date": "2026-10-14",
+            "session": "maghrib",
+            "count": 40
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 73,
+        "target": null,
+        "sessions": [
+          {
+            "id": "fajr",
+            "progress": 33,
+            "target": 33,
+            "status": "met"
+          },
+          {
+            "id": "maghrib",
+            "progress": 40,
+            "target": 33,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sessions_total_enough_but_one_session_empty",
+      "description": "66 all after Fajr doesn't meet a goal of 33 after each of two prayers.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 66,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "maghrib",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-14",
+            "session": "fajr",
+            "count": 66
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 66,
+        "target": null,
+        "sessions": [
+          {
+            "id": "fajr",
+            "progress": 66,
+            "target": 33,
+            "status": "met"
+          },
+          {
+            "id": "maghrib",
+            "progress": 0,
+            "target": 33,
+            "status": "not_met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cumulative_progress_so_far",
+      "description": "7,000 of 10,000 by 10 October; the 20 October count isn't counted yet.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 10000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 4000
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 3000
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 5000
+          }
+        ],
+        "date": "2026-10-10",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-01",
+          "to": "2026-10-10"
+        },
+        "progress": 7000,
+        "target": 10000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "cumulative_reached",
+      "description": "12,000 of 10,000 by 20 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 10000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 4000
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 3000
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 5000
+          }
+        ],
+        "date": "2026-10-20",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-01",
+          "to": "2026-10-20"
+        },
+        "progress": 12000,
+        "target": 10000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "cumulative_ignores_counts_before_start",
+      "description": "Counts before the start date aren't part of the goal.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 10000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-09-30",
+            "session": null,
+            "count": 9000
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 1000
+          }
+        ],
+        "date": "2026-10-02",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-01",
+          "to": "2026-10-02"
+        },
+        "progress": 1000,
+        "target": 10000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "before_active_period",
+      "description": "Before the start date, a goal isn't due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 10000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never"
+        },
+        "counts": [],
+        "date": "2026-09-30",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_due",
+        "window": {
+          "from": "2026-09-30",
+          "to": "2026-09-30"
+        },
+        "progress": 0,
+        "target": 10000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "week_total_monday_week",
+      "description": "Monday-start week of 12–18 October: 300 + 400.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 200
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 500
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 300
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 400
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-12",
+          "to": "2026-10-18"
+        },
+        "progress": 700,
+        "target": 1000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "week_total_saturday_week",
+      "description": "Saturday-start week of 10–16 October: 200 + 500 + 300 + 400.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 200
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 500
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 300
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 400
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "saturday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-10",
+          "to": "2026-10-16"
+        },
+        "progress": 1400,
+        "target": 1000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "week_total_sunday_week",
+      "description": "Sunday-start week of 11–17 October: 500 + 300 + 400.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 200
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 500
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 300
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 400
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "sunday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-11",
+          "to": "2026-10-17"
+        },
+        "progress": 1200,
+        "target": 1000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "month_total_counts_up_to_the_day",
+      "description": "October so far: the 1 October count only (30 September is another month; 31 October is later).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 5000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "month"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-09-30",
+            "session": null,
+            "count": 9000
+          },
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 2000
+          },
+          {
+            "date": "2026-10-31",
+            "session": null,
+            "count": 4000
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-01",
+          "to": "2026-10-31"
+        },
+        "progress": 2000,
+        "target": 5000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "week_window_clipped_to_start",
+      "description": "A goal starting Wednesday 14 October: its first week is 14–18 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-14",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 900
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-18"
+        },
+        "progress": 100,
+        "target": 1000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "week_window_clipped_to_last_day",
+      "description": "A 15-day goal ends on 15 October, so its last week is 12–15 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 15
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 1000
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-12",
+          "to": "2026-10-15"
+        },
+        "progress": 1000,
+        "target": 1000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "tracker_any_count",
+      "description": "A tracker is met by any count.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 1
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 1,
+        "target": null,
+        "sessions": []
+      }
+    },
+    {
+      "id": "tracker_no_count",
+      "description": "A tracker with no count today isn't met.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never"
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 0,
+        "target": null,
+        "sessions": []
+      }
+    }
+  ]
+}

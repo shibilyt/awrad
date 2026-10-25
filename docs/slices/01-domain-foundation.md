@@ -1,6 +1,6 @@
 # Slice 01: Domain foundation (goal rules)
 
-Status: Agreed (scope). Step 2 study done and decided 2026-10-21. Next: step 3, domain and fixtures
+Status: In progress. Step 3 fixtures accepted 2026-10-25. Next: step 5, platform implementations
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 1
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 
@@ -87,16 +87,30 @@ Abbreviations:
 
 ## Domain and fixtures (step 3)
 
-Planned fixture files, in a new `contracts/goal-model/v1/fixtures/` (final list once the Requirement types are settled):
+Done 2026-10-25. Reviewed: the judgment calls below are **accepted provisionally** and revisited as later slices exercise them (rebuild plan).
 
-| Rule | File | Covers |
-|---|---|---|
-| Effective practice day | `effective_practice_day.json` | Midnight and Maghrib day reset, timezone, the moment of change |
-| Schedule | `goal_is_due.json` | Each kept frequency, start and end of the active period |
-| Requirement standing | `requirement_standing.json` | Per due date, cumulative total, period total, none: met, not met, which period window |
-| Days per period | `days_per_period.json` | Qualifying days counted in a week or month window; partial windows at the start and end of the active period |
-| Completion | `goal_completion.json` | Each completion policy |
-| Streak | `goal_streak.json` | Thresholds, gaps, non-due days, today in progress |
+- **`CONTEXT.md`** now defines: the one-time schedule, month-end clamping, paused days, per-session targets, count policy and streak threshold, days per period, derived completion, the streak rule, week start in the practice policy, and the exact Maghrib boundary.
+- **[`contracts/goal-model/v1/`](../../contracts/goal-model/v1/README.md)** holds the shared goal schema plus **100 cases across six rules**:
+
+  | Rule | Cases |
+  |---|---|
+  | effective day | 10 |
+  | is due | 29 |
+  | requirement standing | 20 |
+  | days per period | 11 |
+  | completion | 9 |
+  | streak | 21 |
+
+  Every expected value was written by hand and cross-checked against an independent throwaway implementation: 0 mismatches. `npm test` in `contracts/` validates every case against the schema.
+
+### Judgment calls (accepted provisionally, 2026-10-25)
+
+1. **Partial periods for days per period:** the required days are capped by the days actually available. A goal starting on Thursday needs 4 of the first week's 4 days, not 5.
+2. **Counts after the evaluated date are ignored**, even when they fall in the same week or month.
+3. **Outside the active period, or on an unscheduled day**, standing is `not_due`, not `not_met`.
+4. **An explicit anchor after the start date:** an "every N days" goal isn't due between its start date and its anchor.
+5. **A streak threshold whose value is missing** (e.g. "minimum" with no minimum set) can never be met, so the streak is 0. Goal validation should prevent that combination in slice 3.
+6. **A one-time goal** is modelled as a cumulative goal with the `one_time` schedule. Validation in slice 3 should require that pairing.
 
 ## Contract (step 4)
 

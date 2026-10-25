@@ -21,9 +21,27 @@ function* jsonFiles(dir, top) {
   }
 }
 
+/**
+ * Shared model schemas (`<model>/v<N>/*.schema.json` with a `urn:awrad:` $id and draft 2020-12),
+ * so fixture files can reference common definitions, e.g. `urn:awrad:goal-model:1#/$defs/goal`.
+ */
+const sharedSchemas = readdirSync(root)
+  .filter((name) => !SKIP.has(name) && statSync(join(root, name)).isDirectory())
+  .flatMap((model) =>
+    readdirSync(join(root, model))
+      .filter((version) => /^v\d+$/.test(version))
+      .flatMap((version) =>
+        readdirSync(join(root, model, version))
+          .filter((file) => file.endsWith(".schema.json"))
+          .map((file) => JSON.parse(readFileSync(join(root, model, version, file), "utf8"))),
+      ),
+  )
+  .filter((schema) => String(schema.$id ?? "").startsWith("urn:awrad:") && String(schema.$schema).includes("2020-12"));
+
 function newAjv() {
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   addFormats(ajv);
+  for (const schema of sharedSchemas) ajv.addSchema(schema);
   return ajv;
 }
 

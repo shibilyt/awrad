@@ -1,0 +1,190 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "effective_practice_day",
+  "description": "The effective practice day for an instant: the local calendar date, or the next date from that day's Maghrib onwards when the day resets at Maghrib.",
+  "references": [
+    "CONTEXT.md#practice-settings-language (Effective practice day)",
+    "docs/slices/01-domain-foundation.md rows 1-3",
+    "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/util/EffectiveDayWindowResolver.kt:16-32",
+    "awrad-ios/awrad/awrad/Core/AwradCalculators.swift:3-13"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "instant",
+      "timezone",
+      "day_reset",
+      "maghrib"
+    ],
+    "properties": {
+      "instant": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/instant"
+      },
+      "timezone": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/timezone"
+      },
+      "day_reset": {
+        "enum": [
+          "midnight",
+          "maghrib"
+        ]
+      },
+      "maghrib": {
+        "description": "Maghrib on the instant's local calendar date; null when unknown (no location).",
+        "oneOf": [
+          {
+            "$ref": "urn:awrad:goal-model:1#/$defs/instant"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "date"
+    ],
+    "properties": {
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "midnight_uses_local_date_not_utc",
+      "description": "01:30 in Kolkata is already the next local day, though still the previous day in UTC.",
+      "given": {
+        "instant": "2026-10-14T20:00:00Z",
+        "timezone": "Asia/Kolkata",
+        "day_reset": "midnight",
+        "maghrib": null
+      },
+      "expect": {
+        "date": "2026-10-15"
+      }
+    },
+    {
+      "id": "midnight_one_minute_before_local_midnight",
+      "description": "23:59 local stays on the same day.",
+      "given": {
+        "instant": "2026-10-14T18:29:00Z",
+        "timezone": "Asia/Kolkata",
+        "day_reset": "midnight",
+        "maghrib": null
+      },
+      "expect": {
+        "date": "2026-10-14"
+      }
+    },
+    {
+      "id": "local_date_behind_utc",
+      "description": "Evening in Los Angeles is the previous day in UTC terms the other way round.",
+      "given": {
+        "instant": "2026-10-15T02:00:00Z",
+        "timezone": "America/Los_Angeles",
+        "day_reset": "midnight",
+        "maghrib": null
+      },
+      "expect": {
+        "date": "2026-10-14"
+      }
+    },
+    {
+      "id": "dst_fall_back_evening_before",
+      "description": "Just before local midnight on the night clocks fall back in New York.",
+      "given": {
+        "instant": "2026-11-01T03:59:00Z",
+        "timezone": "America/New_York",
+        "day_reset": "midnight",
+        "maghrib": null
+      },
+      "expect": {
+        "date": "2026-10-31"
+      }
+    },
+    {
+      "id": "dst_fall_back_after_midnight",
+      "description": "After local midnight, during the repeated hour.",
+      "given": {
+        "instant": "2026-11-01T05:30:00Z",
+        "timezone": "America/New_York",
+        "day_reset": "midnight",
+        "maghrib": null
+      },
+      "expect": {
+        "date": "2026-11-01"
+      }
+    },
+    {
+      "id": "maghrib_one_minute_before",
+      "description": "One minute before Maghrib (17:40 Riyadh) it's still the same day.",
+      "given": {
+        "instant": "2026-10-14T14:39:00Z",
+        "timezone": "Asia/Riyadh",
+        "day_reset": "maghrib",
+        "maghrib": "2026-10-14T14:40:00Z"
+      },
+      "expect": {
+        "date": "2026-10-14"
+      }
+    },
+    {
+      "id": "maghrib_instant_starts_the_new_day",
+      "description": "The Maghrib instant itself belongs to the new day.",
+      "given": {
+        "instant": "2026-10-14T14:40:00Z",
+        "timezone": "Asia/Riyadh",
+        "day_reset": "maghrib",
+        "maghrib": "2026-10-14T14:40:00Z"
+      },
+      "expect": {
+        "date": "2026-10-15"
+      }
+    },
+    {
+      "id": "after_maghrib_is_next_day",
+      "description": "19:00 Riyadh, after Maghrib.",
+      "given": {
+        "instant": "2026-10-14T16:00:00Z",
+        "timezone": "Asia/Riyadh",
+        "day_reset": "maghrib",
+        "maghrib": "2026-10-14T14:40:00Z"
+      },
+      "expect": {
+        "date": "2026-10-15"
+      }
+    },
+    {
+      "id": "after_local_midnight_before_that_days_maghrib",
+      "description": "00:30 local is compared with the new local date's Maghrib, so it isn't advanced twice.",
+      "given": {
+        "instant": "2026-10-14T21:30:00Z",
+        "timezone": "Asia/Riyadh",
+        "day_reset": "maghrib",
+        "maghrib": "2026-10-15T14:39:00Z"
+      },
+      "expect": {
+        "date": "2026-10-15"
+      }
+    },
+    {
+      "id": "maghrib_unknown_falls_back_to_midnight",
+      "description": "Maghrib reset without a known Maghrib (no location) behaves like midnight.",
+      "given": {
+        "instant": "2026-10-14T16:00:00Z",
+        "timezone": "Asia/Riyadh",
+        "day_reset": "maghrib",
+        "maghrib": null
+      },
+      "expect": {
+        "date": "2026-10-14"
+      }
+    }
+  ]
+}

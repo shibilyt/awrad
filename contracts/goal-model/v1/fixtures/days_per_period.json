@@ -1,0 +1,877 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "days_per_period",
+  "description": "Days per period: how many qualifying days (a due day meeting the daily target; with sessions, every session) a week or month has, against the days required. The required number is capped by the due days the window actually has (a partial first week, pauses, a weekday schedule).",
+  "references": [
+    "CONTEXT.md#goal-language (Requirement: days per period)",
+    "docs/slices/01-domain-foundation.md row 23, decision 3A"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goal",
+      "counts",
+      "date",
+      "week_start"
+    ],
+    "properties": {
+      "goal": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal"
+      },
+      "counts": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/count_entry"
+        }
+      },
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      },
+      "week_start": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/week_start"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "status",
+      "window",
+      "qualifying_days",
+      "required_days"
+    ],
+    "properties": {
+      "status": {
+        "enum": [
+          "met",
+          "not_met",
+          "not_due"
+        ]
+      },
+      "window": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/window"
+      },
+      "qualifying_days": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "required_days": {
+        "type": "integer",
+        "minimum": 0
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "five_of_seven",
+      "description": "Five days at 100 in the week of 12–18 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 5
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-18",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-12",
+          "to": "2026-10-18"
+        },
+        "qualifying_days": 5,
+        "required_days": 5
+      }
+    },
+    {
+      "id": "four_of_seven_not_enough",
+      "description": "Four qualifying days of five.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 5
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-18",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-12",
+          "to": "2026-10-18"
+        },
+        "qualifying_days": 4,
+        "required_days": 5
+      }
+    },
+    {
+      "id": "day_below_target_does_not_qualify",
+      "description": "99 on Friday doesn't qualify.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 5
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 99
+          }
+        ],
+        "date": "2026-10-18",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-12",
+          "to": "2026-10-18"
+        },
+        "qualifying_days": 4,
+        "required_days": 5
+      }
+    },
+    {
+      "id": "only_days_up_to_the_date",
+      "description": "On Thursday 15 October, Friday's count hasn't happened yet.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 5
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-15",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-12",
+          "to": "2026-10-18"
+        },
+        "qualifying_days": 4,
+        "required_days": 5
+      }
+    },
+    {
+      "id": "saturday_week",
+      "description": "Saturday-start week of 10–16 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 5
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-16",
+        "week_start": "saturday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-10",
+          "to": "2026-10-16"
+        },
+        "qualifying_days": 5,
+        "required_days": 5
+      }
+    },
+    {
+      "id": "partial_first_week_requires_only_available_days",
+      "description": "Starting Thursday 15 October leaves 4 days in the first week, so 4 are required.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-15",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 5
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-18",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-15",
+          "to": "2026-10-18"
+        },
+        "qualifying_days": 4,
+        "required_days": 4
+      }
+    },
+    {
+      "id": "partial_first_week_not_met",
+      "description": "Three of the four available days.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-15",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 5
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-18",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-15",
+          "to": "2026-10-18"
+        },
+        "qualifying_days": 3,
+        "required_days": 4
+      }
+    },
+    {
+      "id": "unscheduled_days_do_not_qualify",
+      "description": "Saturday isn't on a weekday-only schedule, so it doesn't qualify.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "monday",
+              "tuesday",
+              "wednesday",
+              "thursday",
+              "friday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 3
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-18",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-12",
+          "to": "2026-10-18"
+        },
+        "qualifying_days": 2,
+        "required_days": 3
+      }
+    },
+    {
+      "id": "paused_days_reduce_required",
+      "description": "Pausing 14–16 October leaves 4 due days, so 4 are required.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-14",
+              "to": "2026-10-16"
+            }
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 5
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-18",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-12",
+          "to": "2026-10-18"
+        },
+        "qualifying_days": 4,
+        "required_days": 4
+      }
+    },
+    {
+      "id": "month_period",
+      "description": "20 days in October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "month",
+            "days": 20
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-01",
+          "to": "2026-10-31"
+        },
+        "qualifying_days": 20,
+        "required_days": 20
+      }
+    },
+    {
+      "id": "with_sessions_every_session_must_meet",
+      "description": "Only Monday had both sessions at 33.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 66,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "isha",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 2
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": "fajr",
+            "count": 33
+          },
+          {
+            "date": "2026-10-12",
+            "session": "isha",
+            "count": 33
+          },
+          {
+            "date": "2026-10-13",
+            "session": "fajr",
+            "count": 66
+          }
+        ],
+        "date": "2026-10-18",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-10-12",
+          "to": "2026-10-18"
+        },
+        "qualifying_days": 1,
+        "required_days": 2
+      }
+    }
+  ]
+}

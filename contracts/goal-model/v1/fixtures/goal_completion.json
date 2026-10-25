@@ -1,0 +1,390 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "goal_completion",
+  "description": "Whether a goal is completed on a day. Completion is derived from the completion policy, never stored by counting code, so dropping below the target un-completes it.",
+  "references": [
+    "CONTEXT.md#goal-language (Completion)",
+    "docs/slices/01-domain-foundation.md rows 19-21",
+    "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/repository/GoalRepositoryImpl.kt:224-300",
+    "awrad-ios/awrad/awrad/Core/AwradStore.swift:1212-1216"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goal",
+      "counts",
+      "date"
+    ],
+    "properties": {
+      "goal": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal"
+      },
+      "counts": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/count_entry"
+        }
+      },
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "completed"
+    ],
+    "properties": {
+      "completed": {
+        "type": "boolean"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "never_policy_at_target",
+      "description": "A goal that never completes stays open at its target.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 1000
+          }
+        ],
+        "date": "2026-10-05"
+      },
+      "expect": {
+        "completed": false
+      }
+    },
+    {
+      "id": "target_reached",
+      "description": "600 + 400 reaches 1,000.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "when_target_reached"
+        },
+        "counts": [
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 600
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 400
+          }
+        ],
+        "date": "2026-10-08"
+      },
+      "expect": {
+        "completed": true
+      }
+    },
+    {
+      "id": "target_not_yet_reached",
+      "description": "On 7 October only 600 is counted.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "when_target_reached"
+        },
+        "counts": [
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 600
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 400
+          }
+        ],
+        "date": "2026-10-07"
+      },
+      "expect": {
+        "completed": false
+      }
+    },
+    {
+      "id": "drops_below_target_after_correction",
+      "description": "A correction leaves 900, so the goal isn't completed any more.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "when_target_reached"
+        },
+        "counts": [
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 600
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 300
+          }
+        ],
+        "date": "2026-10-10"
+      },
+      "expect": {
+        "completed": false
+      }
+    },
+    {
+      "id": "duration_ended",
+      "description": "A 7-day goal is completed from 8 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 7
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "when_duration_ended"
+        },
+        "counts": [],
+        "date": "2026-10-08"
+      },
+      "expect": {
+        "completed": true
+      }
+    },
+    {
+      "id": "duration_last_day_not_yet_ended",
+      "description": "On its last day the goal isn't over yet.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 7
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "when_duration_ended"
+        },
+        "counts": [],
+        "date": "2026-10-07"
+      },
+      "expect": {
+        "completed": false
+      }
+    },
+    {
+      "id": "end_date_passed",
+      "description": "The day after the end date.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "when_duration_ended"
+        },
+        "counts": [],
+        "date": "2026-10-11"
+      },
+      "expect": {
+        "completed": true
+      }
+    },
+    {
+      "id": "open_ended_never_ends",
+      "description": "Without an end date or duration, it never ends.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "when_duration_ended"
+        },
+        "counts": [],
+        "date": "2027-01-01"
+      },
+      "expect": {
+        "completed": false
+      }
+    },
+    {
+      "id": "one_time_goal_reaches_target",
+      "description": "A one-time goal of 313, done on 3 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "one_time"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "when_target_reached"
+        },
+        "counts": [
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 313
+          }
+        ],
+        "date": "2026-10-03"
+      },
+      "expect": {
+        "completed": true
+      }
+    }
+  ]
+}

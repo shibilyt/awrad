@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:awrad:goal-model:1",
+  "title": "Awrad goal model v1: rule inputs",
+  "description": "The language-neutral goal shape the rule fixtures use (CONTEXT.md). Fixture files reference these definitions from their given_schema and expect_schema.",
+  "$defs": {
+    "date": { "type": "string", "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$", "description": "Calendar day, YYYY-MM-DD." },
+    "instant": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?Z$", "description": "RFC 3339 instant in UTC." },
+    "timezone": { "type": "string", "minLength": 1, "description": "IANA timezone name." },
+    "count": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "weekday": { "enum": ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] },
+    "week_start": { "enum": ["saturday", "sunday", "monday"] },
+    "schedule": {
+      "description": "Which days the goal is due (Gregorian; Hijri, yearly and seasons follow in 1b).",
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "const": "every_day" } } },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "weekdays"],
+          "properties": { "kind": { "const": "weekdays" }, "weekdays": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/weekday" } } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "every", "anchor_date"],
+          "properties": {
+            "kind": { "const": "every_n_days" },
+            "every": { "type": "integer", "minimum": 1, "maximum": 366 },
+            "anchor_date": { "oneOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }], "description": "null means the start date." }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "days"],
+          "properties": { "kind": { "const": "month_days" }, "days": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "integer", "minimum": 1, "maximum": 31 } } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["kind", "dates"],
+          "properties": { "kind": { "const": "specific_dates" }, "dates": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/date" } } }
+        },
+        { "type": "object", "additionalProperties": false, "required": ["kind"], "properties": { "kind": { "const": "one_time" } } }
+      ]
+    },
+    "active_period": {
+      "type": "object", "additionalProperties": false, "required": ["start_date", "end_date", "duration_days"],
+      "properties": {
+        "start_date": { "$ref": "#/$defs/date" },
+        "end_date": { "oneOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }] },
+        "duration_days": { "oneOf": [{ "type": "integer", "minimum": 1, "maximum": 36600 }, { "type": "null" }] }
+      }
+    },
+    "paused_range": {
+      "type": "object", "additionalProperties": false, "required": ["from", "to"],
+      "properties": { "from": { "$ref": "#/$defs/date" }, "to": { "oneOf": [{ "$ref": "#/$defs/date" }, { "type": "null" }], "description": "Inclusive; null = still paused." } }
+    },
+    "count_policy": {
+      "type": "object", "additionalProperties": false, "required": ["minimum", "target", "maximum", "streak_threshold"],
+      "properties": {
+        "minimum": { "oneOf": [{ "$ref": "#/$defs/count" }, { "type": "null" }] },
+        "target": { "oneOf": [{ "$ref": "#/$defs/count" }, { "type": "null" }] },
+        "maximum": { "oneOf": [{ "$ref": "#/$defs/count" }, { "type": "null" }] },
+        "streak_threshold": { "enum": ["any_count", "minimum", "target", "maximum"] }
+      }
+    },
+    "session": {
+      "type": "object", "additionalProperties": false, "required": ["id", "count_policy"],
+      "properties": { "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" }, "count_policy": { "$ref": "#/$defs/count_policy" } }
+    },
+    "requirement": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["type"], "properties": { "type": { "enum": ["per_due_date", "cumulative_total", "tracker"] } } },
+        {
+          "type": "object", "additionalProperties": false, "required": ["type", "period"],
+          "properties": { "type": { "const": "period_total" }, "period": { "enum": ["week", "month"] } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["type", "period", "days"],
+          "properties": { "type": { "const": "days_per_period" }, "period": { "enum": ["week", "month"] }, "days": { "type": "integer", "minimum": 1, "maximum": 31 } }
+        }
+      ]
+    },
+    "goal": {
+      "description": "Targets come from count_policy (or each session's, when sessions exist). Cumulative and period totals use count_policy.target as the total; days-per-period uses it as the daily target.",
+      "type": "object", "additionalProperties": false,
+      "required": ["schedule", "active_period", "paused", "count_policy", "sessions", "requirement", "completion"],
+      "properties": {
+        "schedule": { "$ref": "#/$defs/schedule" },
+        "active_period": { "$ref": "#/$defs/active_period" },
+        "paused": { "type": "array", "items": { "$ref": "#/$defs/paused_range" } },
+        "count_policy": { "$ref": "#/$defs/count_policy" },
+        "sessions": { "type": "array", "items": { "$ref": "#/$defs/session" } },
+        "requirement": { "$ref": "#/$defs/requirement" },
+        "completion": { "enum": ["never", "when_target_reached", "when_duration_ended"] }
+      }
+    },
+    "count_entry": {
+      "description": "A day's total for the goal (session null) or for one session, on an effective practice day.",
+      "type": "object", "additionalProperties": false, "required": ["date", "session", "count"],
+      "properties": { "date": { "$ref": "#/$defs/date" }, "session": { "oneOf": [{ "type": "string" }, { "type": "null" }] }, "count": { "$ref": "#/$defs/count" } }
+    },
+    "window": {
+      "type": "object", "additionalProperties": false, "required": ["from", "to"],
+      "properties": { "from": { "$ref": "#/$defs/date" }, "to": { "$ref": "#/$defs/date" } }
+    }
+  }
+}

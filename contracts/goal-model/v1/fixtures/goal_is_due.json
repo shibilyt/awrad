@@ -1,0 +1,1036 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "goal_is_due",
+  "description": "Whether a goal is due on a day: inside its active period, not paused, and on its schedule (Gregorian kinds). Completion is evaluated separately (goal_completion).",
+  "references": [
+    "CONTEXT.md#goal-language (Schedule, Active period, Paused)",
+    "docs/slices/01-domain-foundation.md rows 4-8, 17, 21",
+    "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/util/GoalProgressCalculator.kt:46-106",
+    "awrad-ios/awrad/awrad/Core/AwradCalculators.swift:79-187"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goal",
+      "date"
+    ],
+    "properties": {
+      "goal": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal"
+      },
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "due"
+    ],
+    "properties": {
+      "due": {
+        "type": "boolean"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "every_day_on_start_date",
+      "description": "The start date is inclusive.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-01"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "before_start_date",
+      "description": "Not due before the start date.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-09-30"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "on_end_date",
+      "description": "The end date is inclusive.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-10"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "after_end_date",
+      "description": "Not due after the end date.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-11"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "duration_last_day",
+      "description": "A 7-day duration from 1 October ends on 7 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 7
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-07"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "duration_day_after",
+      "description": "The day after a 7-day duration.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 7
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-08"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "end_date_earlier_than_duration",
+      "description": "The earlier bound wins: the end date.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-05",
+            "duration_days": 30
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-06"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "duration_earlier_than_end_date",
+      "description": "The earlier bound wins: the duration (last day 3 October).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-31",
+            "duration_days": 3
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-04"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "weekdays_selected_day",
+      "description": "Wednesday 14 October is selected.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "monday",
+              "wednesday",
+              "friday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-14"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "weekdays_unselected_day",
+      "description": "Thursday 15 October isn't selected.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "monday",
+              "wednesday",
+              "friday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-15"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "every_n_days_from_start",
+      "description": "Every 3 days from the start (1 Oct): 7 Oct is 6 days on.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_n_days",
+            "every": 3,
+            "anchor_date": null
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-07"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "every_n_days_off_day",
+      "description": "8 Oct is 7 days on: not a multiple of 3.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_n_days",
+            "every": 3,
+            "anchor_date": null
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-08"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "every_n_days_before_anchor",
+      "description": "The start date is before an explicit anchor (2 Oct), so it isn't due yet.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_n_days",
+            "every": 2,
+            "anchor_date": "2026-10-02"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-01"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "every_n_days_on_anchor_cycle",
+      "description": "4 Oct is 2 days after the anchor.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_n_days",
+            "every": 2,
+            "anchor_date": "2026-10-02"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-04"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "month_day_selected",
+      "description": "The 14th.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "month_days",
+            "days": [
+              14
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-14"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "month_day_other_day",
+      "description": "The 15th isn't selected.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "month_days",
+            "days": [
+              14
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-15"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "month_day_31_falls_on_30th_in_november",
+      "description": "November has 30 days, so the 31st falls on the 30th.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "month_days",
+            "days": [
+              31
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-11-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-11-30"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "month_day_31_not_on_29th",
+      "description": "Only the month's last day takes the place of the 31st.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "month_days",
+            "days": [
+              31
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-11-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-11-29"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "month_day_30_in_february",
+      "description": "February 2027 has 28 days, so the 30th falls on the 28th.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "month_days",
+            "days": [
+              30
+            ]
+          },
+          "active_period": {
+            "start_date": "2027-02-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2027-02-28"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "month_day_29_in_leap_february",
+      "description": "February 2028 has a 29th.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "month_days",
+            "days": [
+              29
+            ]
+          },
+          "active_period": {
+            "start_date": "2028-02-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2028-02-29"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "month_day_29_not_on_28th_in_leap_year",
+      "description": "In a leap year the 29th exists, so the 28th isn't due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "month_days",
+            "days": [
+              29
+            ]
+          },
+          "active_period": {
+            "start_date": "2028-02-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2028-02-28"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "specific_date_listed",
+      "description": "27 October is listed.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "specific_dates",
+            "dates": [
+              "2026-10-20",
+              "2026-10-27"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-27"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "specific_date_not_listed",
+      "description": "21 October isn't listed.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "specific_dates",
+            "dates": [
+              "2026-10-20",
+              "2026-10-27"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-21"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "one_time_due_within_period",
+      "description": "A one-time goal is due every day of its active period.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "one_time"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 7
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "when_target_reached"
+        },
+        "date": "2026-10-05"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "one_time_after_period",
+      "description": "Not due once the active period is over.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "one_time"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 7
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "when_target_reached"
+        },
+        "date": "2026-10-08"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "paused_day",
+      "description": "A paused day isn't due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-10",
+              "to": "2026-10-12"
+            }
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-11"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "pause_last_day_inclusive",
+      "description": "The pause's last day is still paused.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-10",
+              "to": "2026-10-12"
+            }
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-12"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "day_after_pause",
+      "description": "Due again the day after the pause ends.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-10",
+              "to": "2026-10-12"
+            }
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-13"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "open_ended_pause",
+      "description": "A pause without an end continues.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-10",
+              "to": null
+            }
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-20"
+      },
+      "expect": {
+        "due": false
+      }
+    }
+  ]
+}
