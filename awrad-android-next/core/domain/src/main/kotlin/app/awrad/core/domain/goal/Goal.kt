@@ -1,34 +1,32 @@
 package app.awrad.core.domain.goal
 
 import app.awrad.core.domain.AwradId
-import java.time.LocalDate
 
 /**
- * A single measurable objective attached to one dhikr (see CONTEXT.md).
- * This slice only models the every-day Requirement created during onboarding.
+ * A single measurable objective attached to one dhikr or tracked amal (CONTEXT.md, "Goal").
+ * Identity lives here; everything the goal rules read lives in [definition].
  */
 public data class Goal(
     val id: AwradId,
     val dhikrCatalogKey: String,
-    val dailyTarget: DailyTarget,
-    val startDate: LocalDate,
+    val definition: GoalDefinition,
 )
 
-/** How many counts a day satisfies the Requirement. Always within [MIN]..[MAX]. */
-@JvmInline
-public value class DailyTarget private constructor(public val count: Int) {
-
-    public operator fun plus(delta: Int): DailyTarget = of(count + delta)
-
-    public val canDecrease: Boolean get() = count > MIN
-    public val canIncrease: Boolean get() = count < MAX
-
-    public companion object {
-        public const val MIN: Int = 1
-        public const val MAX: Int = 100_000
-
-        /** Clamps instead of failing: a stepper or chip can never produce an invalid target. */
-        public fun of(count: Int): DailyTarget = DailyTarget(count.coerceIn(MIN, MAX))
+/**
+ * What a goal asks for: the shape of `goal` in `contracts/goal-model/v1/goal-model.schema.json`.
+ * The rules in `app.awrad.core.domain.goal.rules` evaluate it.
+ */
+public data class GoalDefinition(
+    val schedule: Schedule,
+    val activePeriod: ActivePeriod,
+    val paused: List<PausedRange> = emptyList(),
+    val countPolicy: CountPolicy,
+    val sessions: List<Session> = emptyList(),
+    val requirement: Requirement,
+    val completion: CompletionPolicy = CompletionPolicy.NEVER,
+) {
+    init {
+        require(sessions.map { it.id }.toSet().size == sessions.size) { "Session ids must be unique" }
     }
 }
 
