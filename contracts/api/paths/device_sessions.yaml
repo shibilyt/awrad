@@ -1,0 +1,134 @@
+# Mobile device sessions (slice 2a, ADR-2026-07-12). Browsers use browser.yaml instead.
+
+device_sessions:
+  post:
+    operationId: create_device_session
+    tags: [device_sessions]
+    summary: Sign in on a mobile device
+    description: >-
+      Creates a device session and returns its tokens. Signing in again from the same installation replaces
+      that installation's session. If the password is right but the email isn't verified, the response is
+      `403 email_verification_required` and the server emails a fresh code (rate-limited), so the client can go
+      straight to the code screen.
+    security: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+      - $ref: "../openapi.yaml#/components/parameters/AcceptLanguage"
+    x-error-codes: [malformed_request, validation_failed, invalid_credentials, email_verification_required, rate_limited]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [email, password, device]
+            properties:
+              email:
+                $ref: "../openapi.yaml#/components/schemas/Email"
+              password:
+                type: string
+                minLength: 1
+                maxLength: 1024
+                description: Not checked against the password rules here; a wrong one is `invalid_credentials`.
+              device:
+                $ref: "../openapi.yaml#/components/schemas/DeviceInfo"
+          example:
+            email: amina@example.com
+            password: a long passphrase
+            device:
+              installation_id: 5f0c3b52-8d2e-4e57-9f0a-6b1d2c3e4f50
+              name: Pixel 9
+              platform: android
+    responses:
+      "201":
+        $ref: "../openapi.yaml#/components/responses/DeviceSessionGranted"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../openapi.yaml#/components/responses/InvalidCredentials"
+      "403":
+        $ref: "../openapi.yaml#/components/responses/Forbidden"
+      "422":
+        $ref: "../openapi.yaml#/components/responses/UnprocessableContent"
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+refresh:
+  post:
+    operationId: refresh_device_session
+    tags: [device_sessions]
+    summary: Rotate the refresh token and get a new access token
+    description: >-
+      Each refresh token works once. `Idempotency-Key` is **required** here: a retry with the same key within
+      60 seconds returns the same new tokens, so a lost response doesn't sign the device out. Reusing a spent
+      token any other way is `refresh_reuse_detected` and revokes the session. Clients run at most one
+      refresh at a time, keep their tokens on network errors, and drop them only on `401`.
+    security: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/RequiredIdempotencyKey"
+    x-error-codes: [malformed_request, refresh_token_invalid, refresh_reuse_detected, idempotency_key_reused, rate_limited]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/RefreshTokenOnly"
+          example:
+            refresh_token: Q2hhbmdlTWVJbkEtcmVmcmVzaC10b2tlbi1leGFtcGxlMTIz
+    responses:
+      "200":
+        $ref: "../openapi.yaml#/components/responses/DeviceSessionGranted"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "401":
+        description: >-
+          `refresh_token_invalid` (unknown, expired, or its session ended) or `refresh_reuse_detected`
+          (the session is now revoked). Either way the device is signed out.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/problem+json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/Problem"
+            example:
+              type: urn:awrad:problem:refresh_token_invalid
+              title: Refresh token invalid
+              status: 401
+              code: refresh_token_invalid
+              detail: the refresh token is unknown or its session has ended
+              errors: []
+      "422":
+        $ref: "../openapi.yaml#/components/responses/UnprocessableContent"
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+sign_out:
+  post:
+    operationId: sign_out_device_session
+    tags: [device_sessions]
+    summary: Sign out this device
+    description: >-
+      Revokes the session that owns the refresh token. It takes the refresh token rather than the access
+      token, so it works after an app restart when no access token is held. Always `204`, also for an unknown
+      or already revoked token, so clients can retry it until it succeeds.
+    security: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+    x-error-codes: [malformed_request]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/RefreshTokenOnly"
+          example:
+            refresh_token: Q2hhbmdlTWVJbkEtcmVmcmVzaC10b2tlbi1leGFtcGxlMTIz
+    responses:
+      "204":
+        $ref: "../openapi.yaml#/components/responses/NoContent"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"

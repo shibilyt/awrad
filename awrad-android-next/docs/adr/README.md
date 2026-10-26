@@ -11,3 +11,5 @@ Accepted ADRs are not re-argued in reviews. Change one by adding a new ADR that 
 | [0002](0002-no-kotlin-multiplatform.md) | Plain Kotlin/JVM domain, no Kotlin Multiplatform | Accepted |
 | [0003](0003-replace-awrad-android.md) | awrad-android-next replaces awrad-android | Accepted |
 | [0004](0004-conventions-enforced-by-the-build.md) | Conventions are enforced by the build, not by memory | Accepted |
+| [0005](0005-network-module-and-okhttp.md) | A `:core:network` module on OkHttp, without Retrofit | Accepted |
+| [0006](0006-account-credential-storage.md) | Account credentials in Keystore-encrypted files | Accepted |

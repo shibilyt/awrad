@@ -1,0 +1,273 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "email_input",
+  "description": "What a client sends for a typed email: surrounding spaces trimmed (Unicode White_Space, zero-width space, BOM), then a basic shape check. Case is kept; the server compares emails case-insensitively. The server is the authority; this check only gives early feedback.",
+  "references": [
+    "docs/slices/02-accounts.md (decisions 2, 3)",
+    "contracts/api/openapi.yaml (Email, Password, EmailCode)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "input"
+    ],
+    "properties": {
+      "input": {
+        "type": "string"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "valid",
+      "email"
+    ],
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      },
+      "email": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "plain",
+      "description": "A normal address.",
+      "given": {
+        "input": "amina@example.com"
+      },
+      "expect": {
+        "valid": true,
+        "email": "amina@example.com"
+      }
+    },
+    {
+      "id": "case_kept",
+      "description": "Case isn't changed.",
+      "given": {
+        "input": "Amina@Example.COM"
+      },
+      "expect": {
+        "valid": true,
+        "email": "Amina@Example.COM"
+      }
+    },
+    {
+      "id": "trims_spaces",
+      "description": "Leading and trailing spaces.",
+      "given": {
+        "input": "  amina@example.com "
+      },
+      "expect": {
+        "valid": true,
+        "email": "amina@example.com"
+      }
+    },
+    {
+      "id": "trims_tab_and_newline",
+      "description": "Pasted with a tab and a newline.",
+      "given": {
+        "input": "\tamina@example.com\n"
+      },
+      "expect": {
+        "valid": true,
+        "email": "amina@example.com"
+      }
+    },
+    {
+      "id": "trims_no_break_space",
+      "description": "No-break spaces from a copied email.",
+      "given": {
+        "input": " amina@example.com "
+      },
+      "expect": {
+        "valid": true,
+        "email": "amina@example.com"
+      }
+    },
+    {
+      "id": "trims_zero_width_space",
+      "description": "Zero-width space and BOM.",
+      "given": {
+        "input": "​amina@example.com﻿"
+      },
+      "expect": {
+        "valid": true,
+        "email": "amina@example.com"
+      }
+    },
+    {
+      "id": "subdomain",
+      "description": "Several domain labels.",
+      "given": {
+        "input": "a@mail.example.co.uk"
+      },
+      "expect": {
+        "valid": true,
+        "email": "a@mail.example.co.uk"
+      }
+    },
+    {
+      "id": "plus_address",
+      "description": "A plus tag in the local part.",
+      "given": {
+        "input": "amina+awrad@example.com"
+      },
+      "expect": {
+        "valid": true,
+        "email": "amina+awrad@example.com"
+      }
+    },
+    {
+      "id": "non_ascii",
+      "description": "Non-ASCII local part and domain are allowed.",
+      "given": {
+        "input": "أمينة@مثال.com"
+      },
+      "expect": {
+        "valid": true,
+        "email": "أمينة@مثال.com"
+      }
+    },
+    {
+      "id": "empty",
+      "description": "Empty.",
+      "given": {
+        "input": ""
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    },
+    {
+      "id": "only_spaces",
+      "description": "Only spaces.",
+      "given": {
+        "input": "   "
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    },
+    {
+      "id": "no_at",
+      "description": "No @.",
+      "given": {
+        "input": "amina.example.com"
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    },
+    {
+      "id": "two_ats",
+      "description": "Two @.",
+      "given": {
+        "input": "amina@home@example.com"
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    },
+    {
+      "id": "empty_local",
+      "description": "Nothing before @.",
+      "given": {
+        "input": "@example.com"
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    },
+    {
+      "id": "no_dot_in_domain",
+      "description": "The domain needs a dot.",
+      "given": {
+        "input": "amina@localhost"
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    },
+    {
+      "id": "empty_domain_label",
+      "description": "An empty label in the domain.",
+      "given": {
+        "input": "amina@example..com"
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    },
+    {
+      "id": "domain_ends_with_dot",
+      "description": "A trailing dot.",
+      "given": {
+        "input": "amina@example.com."
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    },
+    {
+      "id": "inner_space",
+      "description": "A space inside.",
+      "given": {
+        "input": "amina @example.com"
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    },
+    {
+      "id": "inner_no_break_space",
+      "description": "A no-break space inside.",
+      "given": {
+        "input": "amina @example.com"
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    },
+    {
+      "id": "max_length",
+      "description": "160 characters is allowed.",
+      "given": {
+        "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com"
+      },
+      "expect": {
+        "valid": true,
+        "email": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com"
+      }
+    },
+    {
+      "id": "too_long",
+      "description": "161 characters isn't.",
+      "given": {
+        "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com"
+      },
+      "expect": {
+        "valid": false,
+        "email": null
+      }
+    }
+  ]
+}

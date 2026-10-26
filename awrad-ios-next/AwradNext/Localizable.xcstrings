@@ -1,6 +1,14 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "home.placeholder.account" : {
+      "comment" : "Button on the placeholder home screen that opens the account screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Account" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട്" } }
+      }
+    },
     "home.placeholder.body" : {
       "comment" : "Body of the placeholder home screen.",
       "localizations" : {

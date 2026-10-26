@@ -15,8 +15,9 @@ defmodule Awrad.Application do
       Awrad.Repo,
       {DNSCluster, query: Application.get_env(:awrad, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Awrad.PubSub},
-      # Start a worker by calling: Awrad.Worker.start_link(arg)
-      # {Awrad.Worker, arg},
+      # Background email delivery (Awrad.Accounts.UserNotifier).
+      {Task.Supervisor, name: Awrad.TaskSupervisor},
+      Awrad.Pruner,
       # Start to serve requests, typically the last entry
       AwradWeb.Endpoint
     ]

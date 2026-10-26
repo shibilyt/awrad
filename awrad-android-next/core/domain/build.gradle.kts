@@ -43,6 +43,9 @@ tasks.test {
     inputs.files(fileTree(rootDir.resolve("../contracts/hijri-calendar")))
         .withPropertyName("hijriCalendarFixtures")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(fileTree(rootDir.resolve("../contracts/account-model")))
+        .withPropertyName("accountModelFixtures")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     // Print the whole assertion, which names every failing case id, in the build log.
     testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 }

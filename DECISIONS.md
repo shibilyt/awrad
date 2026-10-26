@@ -650,6 +650,46 @@ Hijri goals (white days, Ramadan, Arafah, six days of Shawwal) must be due on th
 
 None. It replaces the frozen apps' platform Hijri calendars (`awrad-android/prd/decisions/015-dual-calendar-system.md` accepted sighting differences without an adjustment).
 
+## ADR-2026-10-26: Accounts use passwords and emailed codes
+
+Status: Accepted
+
+### Context
+
+The frozen apps verified emails and reset passwords with links, and the web also offered magic-link sign-in. The study for slice 2 found that:
+- Password reset only worked on the web, and didn't revoke mobile sessions.
+- The apps and the server enforced different password rules.
+- Links needed app links, universal links and fallback web pages on every platform.
+
+### Decision
+
+- **Sign-in is by email and password on every client.** There are no magic links. Sign in with Apple and Google come later, together.
+- **Codes, not links:**
+  - Verification and password reset use a **6-digit emailed code**, typed into the app. It lasts 15 minutes and allows 5 tries, and a new code cancels the old one.
+  - A reset revokes every session of the account, and also verifies the email.
+- **Passwords:** 12 to 128 Unicode code points after NFC, with no composition rules. The server also rejects common passwords. Clients check only the length, using the shared fixtures in `contracts/account-model/v1/`.
+- **Verifying doesn't sign in.** The client signs in afterwards with the password it already has. One verify operation then serves mobile and the web.
+- **Mobile token handling** (this refines ADR-2026-07-12):
+  - Refresh uses a **required `Idempotency-Key`**, replacing the optional `request_id`.
+  - Sign-out takes the refresh token, so it works without an access token.
+  - Public operations never receive a bearer token.
+
+### Consequences
+
+- The same flow on three clients, with no deep-link setup and no web-only pages.
+- The generated `phx.gen.auth` magic-link and confirmation-link code is replaced by code-based functions on the same tables.
+- Account recovery depends on email access, as before.
+
+### Evidence
+
+- `contracts/api/paths/accounts.yaml`, `device_sessions.yaml`, `browser.yaml`
+- `contracts/account-model/v1/`
+- `docs/slices/02-accounts.md`
+
+### Supersedes
+
+The verification-link and request-id parts of the frozen implementation. ADR-2026-07-12 and ADR-2026-10-15 otherwise stand.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

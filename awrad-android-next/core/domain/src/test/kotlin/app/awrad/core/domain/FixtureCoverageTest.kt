@@ -37,4 +37,16 @@ class FixtureCoverageTest {
             FixtureRunner.rules(FixtureModel.HIJRI_CALENDAR),
         )
     }
+
+    @Test
+    fun `every account-model rule file has a runner`() {
+        assertEquals(
+            setOf(
+                "email_input", // account.EmailInputFixtureTest
+                "password_policy", // account.PasswordPolicyFixtureTest
+                "email_code_input", // account.EmailCodeInputFixtureTest
+            ),
+            FixtureRunner.rules(FixtureModel.ACCOUNT_MODEL),
+        )
+    }
 }

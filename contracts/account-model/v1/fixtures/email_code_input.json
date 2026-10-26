@@ -1,0 +1,193 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "email_code_input",
+  "description": "What a client sends for a typed 6-digit code: spaces (as for emails) and hyphens removed, Arabic-Indic, Eastern Arabic-Indic and fullwidth digits converted to ASCII. Anything that isn't then exactly 6 ASCII digits is null, and the client doesn't send it.",
+  "references": [
+    "docs/slices/02-accounts.md (decisions 2, 3)",
+    "contracts/api/openapi.yaml (Email, Password, EmailCode)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "input"
+    ],
+    "properties": {
+      "input": {
+        "type": "string"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "code"
+    ],
+    "properties": {
+      "code": {
+        "oneOf": [
+          {
+            "type": "string",
+            "pattern": "^[0-9]{6}$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "ascii",
+      "description": "Six ASCII digits.",
+      "given": {
+        "input": "482913"
+      },
+      "expect": {
+        "code": "482913"
+      }
+    },
+    {
+      "id": "leading_zero",
+      "description": "Leading zeros are kept.",
+      "given": {
+        "input": "004213"
+      },
+      "expect": {
+        "code": "004213"
+      }
+    },
+    {
+      "id": "spaces",
+      "description": "Spaces anywhere.",
+      "given": {
+        "input": " 482 913 "
+      },
+      "expect": {
+        "code": "482913"
+      }
+    },
+    {
+      "id": "hyphen",
+      "description": "A hyphen in the middle.",
+      "given": {
+        "input": "482-913"
+      },
+      "expect": {
+        "code": "482913"
+      }
+    },
+    {
+      "id": "no_break_space",
+      "description": "A no-break space from a pasted email.",
+      "given": {
+        "input": "482 913"
+      },
+      "expect": {
+        "code": "482913"
+      }
+    },
+    {
+      "id": "arabic_indic",
+      "description": "Arabic-Indic digits.",
+      "given": {
+        "input": "٤٨٢٩١٣"
+      },
+      "expect": {
+        "code": "482913"
+      }
+    },
+    {
+      "id": "eastern_arabic_indic",
+      "description": "Eastern Arabic-Indic (Persian, Urdu) digits.",
+      "given": {
+        "input": "۴۸۲۹۱۳"
+      },
+      "expect": {
+        "code": "482913"
+      }
+    },
+    {
+      "id": "fullwidth",
+      "description": "Fullwidth digits.",
+      "given": {
+        "input": "４８２９１３"
+      },
+      "expect": {
+        "code": "482913"
+      }
+    },
+    {
+      "id": "mixed_scripts",
+      "description": "Mixed digit scripts.",
+      "given": {
+        "input": "48٢9۱3"
+      },
+      "expect": {
+        "code": "482913"
+      }
+    },
+    {
+      "id": "five_digits",
+      "description": "Too few.",
+      "given": {
+        "input": "48291"
+      },
+      "expect": {
+        "code": null
+      }
+    },
+    {
+      "id": "seven_digits",
+      "description": "Too many.",
+      "given": {
+        "input": "4829134"
+      },
+      "expect": {
+        "code": null
+      }
+    },
+    {
+      "id": "letter",
+      "description": "A letter.",
+      "given": {
+        "input": "48291a"
+      },
+      "expect": {
+        "code": null
+      }
+    },
+    {
+      "id": "other_punctuation",
+      "description": "Only spaces and hyphens are removed.",
+      "given": {
+        "input": "482.913"
+      },
+      "expect": {
+        "code": null
+      }
+    },
+    {
+      "id": "en_dash",
+      "description": "Only the ASCII hyphen-minus is removed, not an en dash.",
+      "given": {
+        "input": "482–913"
+      },
+      "expect": {
+        "code": null
+      }
+    },
+    {
+      "id": "empty",
+      "description": "Empty.",
+      "given": {
+        "input": ""
+      },
+      "expect": {
+        "code": null
+      }
+    }
+  ]
+}

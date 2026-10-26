@@ -9,7 +9,10 @@ defmodule AwradWeb.Endpoint do
     # Matches cookieAuth in contracts/api/openapi.yaml (ADR-2026-10-15).
     key: "_awrad_session",
     signing_salt: "yjQEFkGi",
-    same_site: "Lax"
+    same_site: "Lax",
+    http_only: true,
+    # Secure in production (config/prod.exs); plain-http localhost in development.
+    secure: Application.compile_env(:awrad, :secure_cookies, false)
   ]
 
   # socket "/live", Phoenix.LiveView.Socket,

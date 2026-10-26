@@ -75,6 +75,19 @@ mix precommit                   # format, then validate
 
 The first `mix validate` builds Dialyzer's cache into `priv/plts/` (git-ignored, about a minute). Later runs reuse it.
 
+**Account emails in development.** Nothing is really sent: every email (verification and reset codes) lands in Swoosh's local mailbox while `mix phx.server` runs, and is lost on restart.
+
+```bash
+open http://localhost:4000/dev/mailbox                       # every sent email, newest first
+curl -s http://localhost:4000/dev/mailbox/json               # the same as JSON, for scripts
+curl -s http://localhost:4000/dev/mailbox/json \
+  | python3 -c 'import json,re,sys; print(re.search(r"\b\d{6}\b", json.load(sys.stdin)["data"][0]["text_body"])[0])'   # the latest code
+```
+
+Email language follows the request's `Accept-Language` (`en`, `ar`, `ml`; default `en`). Account rate limits apply in development too (for example 5 registrations an hour per email); `mix ecto.reset` clears them.
+
+**macOS 27 with Command Line Tools 27:** `argon2_elixir` compiles a NIF, and the Command Line Tools linker can't link against the macOS 27 SDK. Build it once with Xcode's toolchain: `SDKROOT="$(xcrun --sdk macosx --show-sdk-path)" CC="$(xcrun -f clang)" mix deps.compile argon2_elixir` (once per `MIX_ENV`, e.g. also with `MIX_ENV=test`).
+
 ## awrad-ios-next
 
 Working directory: `awrad-ios-next/`. Prerequisites: Xcode 26.2 (`.xcode-version`) and SwiftLint from `mise.toml`. A simulator is only needed for UI checks.

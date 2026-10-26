@@ -36,6 +36,10 @@ defmodule AwradWeb.ConnCase do
 
   setup tags do
     Awrad.DataCase.setup_sandbox(tags)
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+
+    # A distinct client IP per test: per-IP rate-limit windows then never
+    # collide (or wait on each other's sandbox transactions) across async tests.
+    <<a, b, c>> = :crypto.strong_rand_bytes(3)
+    {:ok, conn: %{Phoenix.ConnTest.build_conn() | remote_ip: {10, a, b, c}}}
   end
 end

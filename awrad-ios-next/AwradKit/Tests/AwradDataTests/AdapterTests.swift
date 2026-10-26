@@ -32,3 +32,30 @@ struct UserDefaultsOnboardingStatusStoreTests {
         #expect(await !store.isOnboarded())
     }
 }
+
+struct DeviceNameTests {
+    @Test func knownModelsGetTheirMarketingName() {
+        #expect(DeviceName.readable(modelIdentifier: "iPhone17,1", family: "iPhone") == "iPhone 16 Pro")
+        #expect(DeviceName.readable(modelIdentifier: "iPad16,3", family: "iPad") == "iPad Pro 11-inch (M4)")
+    }
+
+    @Test func unknownModelsKeepTheirFamilyAndIdentifier() {
+        #expect(DeviceName.readable(modelIdentifier: "iPhone99,9", family: "iPhone") == "iPhone (iPhone99,9)")
+        #expect(DeviceName.readable(modelIdentifier: "", family: "iPad") == "iPad")
+    }
+
+    @Test @MainActor func thisDeviceHasARealName() {
+        let name = DeviceName.current()
+        #expect(!name.isEmpty && name.count <= DeviceName.maximumLength)
+        #expect(name != "Apple device")
+    }
+}
+
+struct InstallationMarkerTests {
+    @Test func marksOnce() {
+        let marker = UserDefaultsInstallationMarker(suiteName: "awrad.tests.\(UUID().uuidString)")
+        #expect(!marker.isMarked())
+        marker.mark()
+        #expect(marker.isMarked())
+    }
+}

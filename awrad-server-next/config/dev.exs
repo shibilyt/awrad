@@ -52,6 +52,13 @@ config :awrad, AwradWeb.Endpoint,
 # configured to run both http and https servers on
 # different ports.
 
+# Development-only secrets for accounts (Awrad.Secrets). Production reads them from
+# the environment in runtime.exs; never reuse these values.
+config :awrad, Awrad.Secrets,
+  access_token_secret: "dev-access-token-secret-not-for-production-use-0001",
+  hmac_pepper: "dev-hmac-pepper-not-for-production-use-0002",
+  encryption_secret: "dev-encryption-secret-not-for-production-use-0003"
+
 # Enable dev routes for dashboard and mailbox
 config :awrad, dev_routes: true
 

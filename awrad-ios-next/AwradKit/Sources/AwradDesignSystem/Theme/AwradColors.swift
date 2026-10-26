@@ -20,14 +20,24 @@ public enum AwradColors {
     public static let outlineVariant = adaptive(light: 0xC7C9C7, dark: 0x454745)
     public static let error = adaptive(light: 0xBA1A1A, dark: 0xFFB4AB)
 
+    // The provider closures are `@Sendable` and only pick between colours made up front: UIKit and
+    // SwiftUI resolve dynamic colours off the main thread, so a closure inferred as main-actor
+    // isolated (this module's default) traps at runtime.
     private static func adaptive(light: UInt32, dark: UInt32) -> Color {
         #if canImport(UIKit)
-            Color(uiColor: UIColor { $0.userInterfaceStyle == .dark ? UIColor(rgb: dark) : UIColor(rgb: light) })
+            let lightColor = UIColor(rgb: light)
+            let darkColor = UIColor(rgb: dark)
+            return Color(
+                uiColor: UIColor { @Sendable traits in
+                    traits.userInterfaceStyle == .dark ? darkColor : lightColor
+                }
+            )
         #else
-            Color(
-                nsColor: NSColor(name: nil) { appearance in
-                    appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
-                        ? NSColor(rgb: dark) : NSColor(rgb: light)
+            let lightColor = NSColor(rgb: light)
+            let darkColor = NSColor(rgb: dark)
+            return Color(
+                nsColor: NSColor(name: nil) { @Sendable appearance in
+                    appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? darkColor : lightColor
                 }
             )
         #endif

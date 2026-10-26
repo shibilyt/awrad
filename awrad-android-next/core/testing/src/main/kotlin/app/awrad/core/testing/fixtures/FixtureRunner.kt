@@ -24,6 +24,7 @@ public data class FixtureCase(
 public enum class FixtureModel(public val directory: String) {
     GOAL_MODEL("goal-model"),
     HIJRI_CALENDAR("hijri-calendar"),
+    ACCOUNT_MODEL("account-model"),
 }
 
 /**
@@ -46,6 +47,10 @@ public object FixtureRunner {
     /** Runs every case of the hijri-calendar [rule]; returns how many ran. Fails if any case fails. */
     public fun runHijriCalendar(rule: String, evaluate: (given: JsonObject) -> JsonObject): Int =
         run(FixtureModel.HIJRI_CALENDAR, rule, evaluate)
+
+    /** Runs every case of the account-model [rule]; returns how many ran. Fails if any case fails. */
+    public fun runAccountModel(rule: String, evaluate: (given: JsonObject) -> JsonObject): Int =
+        run(FixtureModel.ACCOUNT_MODEL, rule, evaluate)
 
     /** Loads `contracts/<model>/v1/fixtures/<rule>.json`. */
     public fun cases(model: FixtureModel, rule: String): List<FixtureCase> =

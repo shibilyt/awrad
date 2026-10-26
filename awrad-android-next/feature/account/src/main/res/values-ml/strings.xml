@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Titles -->
+    <string name="account_title_sign_in">സൈൻ ഇൻ ചെയ്യുക</string>
+    <string name="account_title_register">അക്കൗണ്ട് സൃഷ്ടിക്കുക</string>
+    <string name="account_title_verify">നിങ്ങളുടെ ഇമെയിൽ സ്ഥിരീകരിക്കുക</string>
+    <string name="account_title_forgot">പാസ്‌വേഡ് റീസെറ്റ് ചെയ്യുക</string>
+    <string name="account_title_reset">പുതിയ പാസ്‌വേഡ് തിരഞ്ഞെടുക്കുക</string>
+    <string name="account_title_signed_in">നിങ്ങളുടെ അക്കൗണ്ട്</string>
+
+    <!-- Body text -->
+    <string name="account_intro">അക്കൗണ്ട് നിർബന്ധമല്ല. അതില്ലാതെയും ഈ ഉപകരണത്തിൽ എല്ലാം പ്രവർത്തിക്കും.</string>
+    <string name="account_forgot_body">നിങ്ങളുടെ അക്കൗണ്ടിന്റെ ഇമെയിൽ നൽകുക. പാസ്‌വേഡ് റീസെറ്റ് ചെയ്യാനുള്ള കോഡ് ഞങ്ങൾ അയയ്ക്കും.</string>
+    <string name="account_code_sent_to">%1$s എന്ന വിലാസത്തിലേക്ക് ഞങ്ങൾ അയച്ച 6 അക്ക കോഡ് നൽകുക. ഇത് 15 മിനിറ്റ് സാധുവാണ്.</string>
+    <string name="account_signed_in_as">സൈൻ ഇൻ ചെയ്തിരിക്കുന്നത്</string>
+    <string name="account_signed_in_body">നിങ്ങളുടെ പരിശീലനം ഈ ഉപകരണത്തിൽ തന്നെ നിലനിൽക്കും. സൈൻ ഔട്ട് ചെയ്താലും അത് നീക്കം ചെയ്യപ്പെടില്ല.</string>
+
+    <!-- Fields -->
+    <string name="account_field_email">ഇമെയിൽ</string>
+    <string name="account_field_password">പാസ്‌വേഡ്</string>
+    <string name="account_field_new_password">പുതിയ പാസ്‌വേഡ്</string>
+    <string name="account_field_code">6 അക്ക കോഡ്</string>
+
+    <!-- Actions -->
+    <string name="account_action_sign_in">സൈൻ ഇൻ ചെയ്യുക</string>
+    <string name="account_action_register">അക്കൗണ്ട് സൃഷ്ടിക്കുക</string>
+    <string name="account_action_verify">സ്ഥിരീകരിക്കുക</string>
+    <string name="account_action_send_code">കോഡ് അയയ്ക്കുക</string>
+    <string name="account_action_reset_password">പുതിയ പാസ്‌വേഡ് സജ്ജമാക്കുക</string>
+    <string name="account_action_resend">പുതിയ കോഡ് അയയ്ക്കുക</string>
+    <string name="account_action_resend_wait">പുതിയ കോഡ് അയയ്ക്കുക (%1$s)</string>
+    <string name="account_action_forgot_password">പാസ്‌വേഡ് മറന്നോ?</string>
+    <string name="account_action_go_register">അക്കൗണ്ട് സൃഷ്ടിക്കുക</string>
+    <string name="account_action_go_sign_in">എനിക്ക് ഇതിനകം അക്കൗണ്ട് ഉണ്ട്</string>
+    <string name="account_action_sign_out">സൈൻ ഔട്ട് ചെയ്യുക</string>
+    <string name="account_action_back">തിരികെ</string>
+    <string name="account_action_show_password">പാസ്‌വേഡ് കാണിക്കുക</string>
+    <string name="account_action_hide_password">പാസ്‌വേഡ് മറയ്ക്കുക</string>
+
+    <!-- Notices -->
+    <string name="account_notice_code_sent">ഞങ്ങൾ നിങ്ങൾക്ക് ഒരു കോഡ് ഇമെയിൽ ചെയ്തിട്ടുണ്ട്.</string>
+    <string name="account_notice_verification_required">ആദ്യം നിങ്ങളുടെ ഇമെയിൽ സ്ഥിരീകരിക്കുക. ഞങ്ങൾ പുതിയൊരു കോഡ് അയച്ചിട്ടുണ്ട്.</string>
+    <string name="account_notice_email_verified">നിങ്ങളുടെ ഇമെയിൽ സ്ഥിരീകരിച്ചു. തുടരാൻ സൈൻ ഇൻ ചെയ്യുക.</string>
+    <string name="account_notice_password_changed">പാസ്‌വേഡ് മാറ്റി. പുതിയ പാസ്‌വേഡ് ഉപയോഗിച്ച് സൈൻ ഇൻ ചെയ്യുക.</string>
+    <string name="account_notice_signed_out">നിങ്ങൾ സൈൻ ഔട്ട് ചെയ്തു. നിങ്ങളുടെ പരിശീലനം ഇപ്പോഴും ഈ ഉപകരണത്തിലുണ്ട്.</string>
+
+    <!-- Field problems -->
+    <string name="account_error_email_invalid">സാധുവായ ഒരു ഇമെയിൽ വിലാസം നൽകുക.</string>
+    <string name="account_error_password_too_common">ഈ പാസ്‌വേഡ് വളരെ സാധാരണമാണ്. മറ്റൊന്ന് തിരഞ്ഞെടുക്കുക.</string>
+    <string name="account_error_code_format">ഇമെയിലിലെ 6 അക്ക കോഡ് നൽകുക.</string>
+
+    <!-- Errors, one per problem code -->
+    <string name="account_error_invalid_input">നൽകിയ വിവരങ്ങൾ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="account_error_verification_code_invalid">ആ കോഡ് തെറ്റാണ് അല്ലെങ്കിൽ കാലഹരണപ്പെട്ടു. ഇമെയിൽ പരിശോധിക്കുക, അല്ലെങ്കിൽ പുതിയ കോഡ് അയയ്ക്കുക.</string>
+    <string name="account_error_reset_code_invalid">ആ കോഡ് തെറ്റാണ് അല്ലെങ്കിൽ കാലഹരണപ്പെട്ടു. ഇമെയിൽ പരിശോധിക്കുക, അല്ലെങ്കിൽ പുതിയ കോഡ് അയയ്ക്കുക.</string>
+    <string name="account_error_invalid_credentials">ഇമെയിലോ പാസ്‌വേഡോ തെറ്റാണ്.</string>
+    <string name="account_error_session_ended">ഈ ഉപകരണത്തിൽ നിങ്ങൾ സൈൻ ഔട്ട് ആയി. വീണ്ടും സൈൻ ഇൻ ചെയ്യുക.</string>
+    <string name="account_error_rate_limited">വളരെയധികം ശ്രമങ്ങൾ. അൽപ്പസമയം കാത്തിരുന്ന് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="account_error_request_rejected">ആപ്പിന് ആ അഭ്യർത്ഥന പൂർത്തിയാക്കാനായില്ല. ആപ്പ് അപ്‌ഡേറ്റ് ചെയ്ത് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="account_error_no_connection">കണക്ഷൻ ഇല്ല. ഇന്റർനെറ്റ് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="account_error_unexpected">ഞങ്ങളുടെ ഭാഗത്ത് എന്തോ പിശക് സംഭവിച്ചു. പിന്നീട് വീണ്ടും ശ്രമിക്കുക.</string>
+
+    <!-- Counts of characters (the password policy) -->
+    <plurals name="account_hint_password">
+        <item quantity="one">കുറഞ്ഞത് %1$d അക്ഷരം. ഓർമ്മയിൽ നിൽക്കുന്ന കുറച്ച് വാക്കുകൾ നല്ലതാണ്.</item>
+        <item quantity="other">കുറഞ്ഞത് %1$d അക്ഷരങ്ങൾ. ഓർമ്മയിൽ നിൽക്കുന്ന കുറച്ച് വാക്കുകൾ നല്ലതാണ്.</item>
+    </plurals>
+    <plurals name="account_error_password_too_short">
+        <item quantity="one">കുറഞ്ഞത് %1$d അക്ഷരം ഉപയോഗിക്കുക.</item>
+        <item quantity="other">കുറഞ്ഞത് %1$d അക്ഷരങ്ങൾ ഉപയോഗിക്കുക.</item>
+    </plurals>
+    <plurals name="account_error_password_too_long">
+        <item quantity="one">പരമാവധി %1$d അക്ഷരം ഉപയോഗിക്കുക.</item>
+        <item quantity="other">പരമാവധി %1$d അക്ഷരങ്ങൾ ഉപയോഗിക്കുക.</item>
+    </plurals>
+</resources>
