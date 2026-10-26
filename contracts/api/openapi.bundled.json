@@ -1660,7 +1660,8 @@
         "description": "One place the account is signed in.",
         "properties": {
           "id": {
-            "$ref": "#/components/schemas/Uuid"
+            "$ref": "#/components/schemas/Uuid",
+            "description": "For a device session, the same `id` as `DeviceSession.id` in its sign-in grant."
           },
           "kind": {
             "type": "string",

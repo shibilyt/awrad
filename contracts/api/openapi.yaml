@@ -235,6 +235,7 @@ components:
       properties:
         id:
           $ref: "#/components/schemas/Uuid"
+          description: For a device session, the same `id` as `DeviceSession.id` in its sign-in grant.
         kind:
           type: string
           enum: [device, browser]
