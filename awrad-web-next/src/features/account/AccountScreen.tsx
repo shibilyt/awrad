@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { Form } from "react-aria-components";
 import { PrimaryButton } from "@/shared/ui/Button";
+import { useFill } from "@/shared/ui/Surface";
 
 /** The frame every account screen shares: a heading, an optional intro, the content, then links. */
 export function AccountScreen({
@@ -24,11 +25,12 @@ export function AccountScreen({
   );
 }
 
-/** A request-level message. `role="alert"` announces it when it appears. */
+/** A request-level message, filled (no outline) in `error` text. `role="alert"` announces it when it appears. */
 export function FormAlert({ message }: { message: string | null }): ReactElement | null {
+  const fill = useFill();
   if (message === null) return null;
   return (
-    <p role="alert" className="rounded-xl border border-error px-4 py-3 text-sm text-error">
+    <p role="alert" className={`rounded-xl px-4 py-3 text-sm text-error ${fill}`}>
       {message}
     </p>
   );

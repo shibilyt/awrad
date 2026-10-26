@@ -3,6 +3,7 @@ import { useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { InlineButton, PrimaryButton, SecondaryButton } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { OnSurface } from "@/shared/ui/Surface";
 import { FormAlert, FormNotice } from "../AccountScreen";
 import { problemKey } from "../problems";
 import { accountSessionsQuery, type AccountSession } from "./api";
@@ -65,13 +66,12 @@ function SessionList({ sessions }: { sessions: AccountSession[] }): ReactElement
     <>
       <FormNotice message={actions.message?.kind === "notice" ? actions.message.text : null} />
       <FormAlert message={actions.message?.kind === "alert" ? actions.message.text : null} />
-      <ul
-        aria-label={t("account.devices.listLabel")}
-        className="flex flex-col divide-y divide-outline rounded-2xl bg-surface"
-      >
-        {sessions.map((session) => (
-          <SessionRow key={session.id} session={session} now={now} onSignOut={actions.ask} />
-        ))}
+      <ul aria-label={t("account.devices.listLabel")} className="flex flex-col rounded-2xl bg-surface">
+        <OnSurface>
+          {sessions.map((session) => (
+            <SessionRow key={session.id} session={session} now={now} onSignOut={actions.ask} />
+          ))}
+        </OnSurface>
       </ul>
       {hasOthers ? (
         <SecondaryButton onPress={actions.askOthers}>{t("account.devices.signOutOthers")}</SecondaryButton>

@@ -2,8 +2,9 @@
 /*
  * Colours: the shared roles from contracts/design-tokens/v1/colors.json, generated
  * (light and dark) with their Tailwind names; Tailwind's default palette is removed.
- * Components use the roles (bg-surface, text-on-surface, border-outline-strong,
+ * Components use the roles (bg-surface, text-on-surface, bg-primary-container,
  * text-accent, …), never raw colours, and never check the colour scheme themselves.
+ * No outlines: controls are filled (Surface.tsx); see ARCHITECTURE.md for the few lines kept.
  */
 @import "./colors.gen.css";
 
