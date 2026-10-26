@@ -10,7 +10,7 @@
   --awrad-color-surface-bar: #F9FBFA;
   --awrad-color-on-surface: #000000;
   --awrad-color-on-surface-variant: #000000A6;
-  --awrad-color-outline: #E8EDE9;
+  --awrad-color-outline: #0000001A;
   --awrad-color-outline-strong: #00000080;
   --awrad-color-primary: #23553C;
   --awrad-color-on-primary: #FFFFFF;
@@ -20,6 +20,7 @@
   --awrad-color-progress: #23553C;
   --awrad-color-error: #B3261E;
   --awrad-color-on-error: #FFFFFF;
+  --awrad-color-scrim: #00000066;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -39,6 +40,7 @@
     --awrad-color-progress: #E3E5E3;
     --awrad-color-error: #F2B8B5;
     --awrad-color-on-error: #000000;
+    --awrad-color-scrim: #00000066;
   }
 }
 
@@ -60,4 +62,5 @@
   --color-progress: var(--awrad-color-progress);
   --color-error: var(--awrad-color-error);
   --color-on-error: var(--awrad-color-on-error);
+  --color-scrim: var(--awrad-color-scrim);
 }

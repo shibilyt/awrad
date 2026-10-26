@@ -47,9 +47,9 @@ class AwradColorSchemeTest {
     }
 
     @Test
-    fun scrimIsBlackInBothThemes() {
-        assertEquals(Color.Black, light.scrim)
-        assertEquals(Color.Black, dark.scrim)
+    fun scrimIsTheScrimRole() {
+        assertEquals(LightAwradColors.scrim, light.scrim)
+        assertEquals(DarkAwradColors.scrim, dark.scrim)
     }
 
     @Test
@@ -60,7 +60,7 @@ class AwradColorSchemeTest {
 
     private fun AwradColors.roles(): List<Color> = listOf(
         background, surface, surfaceBar, onSurface, onSurfaceVariant, outline, outlineStrong, primary, onPrimary,
-        primaryContainer, onPrimaryContainer, accent, progress, error, onError,
+        primaryContainer, onPrimaryContainer, accent, progress, error, onError, scrim,
     )
 
     /** Every colour property of [ColorScheme] by name. `Color` is an inline class, so its getters return long. */

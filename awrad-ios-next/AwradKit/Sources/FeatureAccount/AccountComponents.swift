@@ -17,7 +17,7 @@ struct AccountForm<Fields: View, Actions: View>: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text(title)
                     .font(AwradFonts.headline())
-                    .foregroundStyle(AwradColors.accent)
+                    .foregroundStyle(AwradColors.onSurface)
                 if let message {
                     Text(message)
                         .font(AwradFonts.body())

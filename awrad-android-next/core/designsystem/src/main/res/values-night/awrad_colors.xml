@@ -17,4 +17,5 @@
     <color name="awrad_progress">#FFE3E5E3</color>
     <color name="awrad_error">#FFF2B8B5</color>
     <color name="awrad_on_error">#FF000000</color>
+    <color name="awrad_scrim">#66000000</color>
 </resources>

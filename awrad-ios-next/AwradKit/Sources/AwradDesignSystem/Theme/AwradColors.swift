@@ -17,8 +17,8 @@ public enum AwradColors {
     public static let onSurface = adaptive(light: 0x000000FF, dark: 0xE3E5E3FF)
     /// Secondary text: subtitles, counts, labels.
     public static let onSurfaceVariant = adaptive(light: 0x000000A6, dark: 0xE3E5E3A6)
-    /// Decorative dividers.
-    public static let outline = adaptive(light: 0xE8EDE9FF, dark: 0x313B34FF)
+    /// Decorative dividers between rows, and the track of progress rings and bars.
+    public static let outline = adaptive(light: 0x0000001A, dark: 0x313B34FF)
     /// Borders that identify a control: text fields, outlined buttons.
     public static let outlineStrong = adaptive(light: 0x00000080, dark: 0xE3E5E380)
     /// Brand fills: main buttons, arrow buttons.
@@ -37,6 +37,8 @@ public enum AwradColors {
     public static let error = adaptive(light: 0xB3261EFF, dark: 0xF2B8B5FF)
     /// Text and icons on an error fill.
     public static let onError = adaptive(light: 0xFFFFFFFF, dark: 0x000000FF)
+    /// Dimmed backdrop behind dialogs and sheets.
+    public static let scrim = adaptive(light: 0x00000066, dark: 0x00000066)
 
     /// Every role by its contract name, for tests that check the values against the contract.
     static let roles: KeyValuePairs<String, Color> = [
@@ -55,5 +57,6 @@ public enum AwradColors {
         "progress": progress,
         "error": error,
         "onError": onError,
+        "scrim": scrim,
     ]
 }

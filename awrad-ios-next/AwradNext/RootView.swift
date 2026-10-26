@@ -51,7 +51,7 @@ struct HomePlaceholderView: View {
         VStack(spacing: 12) {
             Text("home.placeholder.title")
                 .font(AwradFonts.headline())
-                .foregroundStyle(AwradColors.accent)
+                .foregroundStyle(AwradColors.onSurface)
             Text("home.placeholder.body")
                 .font(AwradFonts.body())
                 .foregroundStyle(AwradColors.onSurfaceVariant)

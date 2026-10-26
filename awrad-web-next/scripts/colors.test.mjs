@@ -16,7 +16,7 @@ describe("colors.gen.css", () => {
   });
 
   test("has every role, light in :root and dark under prefers-color-scheme, alpha kept", () => {
-    expect(roles).toHaveLength(15);
+    expect(roles).toHaveLength(Object.keys(tokens.roles).length);
     expect(light).toContain(":root {");
     for (const [role, value] of roles) {
       expect(light).toContain(`--awrad-color-${kebab(role)}: ${value.light};`);

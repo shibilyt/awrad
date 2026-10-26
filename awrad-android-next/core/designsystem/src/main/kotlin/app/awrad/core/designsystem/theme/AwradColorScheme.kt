@@ -1,7 +1,6 @@
 package app.awrad.core.designsystem.theme
 
 import androidx.compose.material3.ColorScheme
-import androidx.compose.ui.graphics.luminance
 
 /*
  * Material reads colours from a ColorScheme; this fills every slot from the shared roles, so no Material
@@ -44,7 +43,7 @@ internal fun colorSchemeOf(colors: AwradColors, inverse: AwradColors): ColorSche
     outline = colors.outline,
     outlineVariant = colors.outline,
     // The darker of surface and text: black in both themes (light text, dark cards).
-    scrim = minOf(colors.surface, colors.onSurface, compareBy { it.luminance() }),
+    scrim = colors.scrim,
     surfaceBright = colors.surfaceBar,
     surfaceDim = colors.surface,
     // Filled cards and filled fields are surfaces; sheets, menus, the navigation bar and dialogs are bars.

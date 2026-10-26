@@ -35,7 +35,7 @@ struct OnboardingScreen: View {
                 .frame(width: 148, height: 148)
             Text(Strings.title)
                 .font(AwradFonts.headline())
-                .foregroundStyle(AwradColors.accent)
+                .foregroundStyle(AwradColors.onSurface)
                 .multilineTextAlignment(.center)
             Spacer()
             AwradPrimaryButton(Strings.getStarted, isEnabled: !state.isFinishing) {

@@ -24,7 +24,7 @@ public class AwradColors internal constructor(
     public val onSurface: Color,
     /** Secondary text: subtitles, counts, labels. */
     public val onSurfaceVariant: Color,
-    /** Decorative dividers. */
+    /** Decorative dividers between rows, and the track of progress rings and bars. */
     public val outline: Color,
     /** Borders that identify a control: text fields, outlined buttons. */
     public val outlineStrong: Color,
@@ -44,6 +44,8 @@ public class AwradColors internal constructor(
     public val error: Color,
     /** Text and icons on an error fill. */
     public val onError: Color,
+    /** Dimmed backdrop behind dialogs and sheets. */
+    public val scrim: Color,
 )
 
 internal val LightAwradColors: AwradColors = AwradColors(
@@ -52,7 +54,7 @@ internal val LightAwradColors: AwradColors = AwradColors(
     surfaceBar = Color(0xFFF9FBFA),
     onSurface = Color(0xFF000000),
     onSurfaceVariant = Color(0xA6000000),
-    outline = Color(0xFFE8EDE9),
+    outline = Color(0x1A000000),
     outlineStrong = Color(0x80000000),
     primary = Color(0xFF23553C),
     onPrimary = Color(0xFFFFFFFF),
@@ -62,6 +64,7 @@ internal val LightAwradColors: AwradColors = AwradColors(
     progress = Color(0xFF23553C),
     error = Color(0xFFB3261E),
     onError = Color(0xFFFFFFFF),
+    scrim = Color(0x66000000),
 )
 
 internal val DarkAwradColors: AwradColors = AwradColors(
@@ -80,4 +83,5 @@ internal val DarkAwradColors: AwradColors = AwradColors(
     progress = Color(0xFFE3E5E3),
     error = Color(0xFFF2B8B5),
     onError = Color(0xFF000000),
+    scrim = Color(0x66000000),
 )
