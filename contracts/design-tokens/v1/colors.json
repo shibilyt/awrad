@@ -41,8 +41,8 @@
       "dark": "#E3E5E3A6"
     },
     "outline": {
-      "use": "Decorative dividers",
-      "light": "#E8EDE9",
+      "use": "Decorative dividers between rows, and the track of progress rings and bars",
+      "light": "#0000001A",
       "dark": "#313B34"
     },
     "outlineStrong": {
@@ -89,6 +89,11 @@
       "use": "Text and icons on an error fill",
       "light": "#FFFFFF",
       "dark": "#000000"
+    },
+    "scrim": {
+      "use": "Dimmed backdrop behind dialogs and sheets",
+      "light": "#00000066",
+      "dark": "#00000066"
     }
   },
   "contrast": [
