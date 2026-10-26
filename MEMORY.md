@@ -250,3 +250,15 @@ Use this format:
   - CI now re-runs Android, iOS and the server when `contracts/goal-model/` or `contracts/hijri-calendar/` change.
 - Evidence: `contracts/hijri-calendar/v1/`, `docs/slices/01b-domain-hijri.md`
 - Commit: see git log
+
+### 2026-10-26 — Slice 2a: accounts
+
+- Area: Cross-project
+- Change:
+  - Email and password accounts on the server, Android, iOS and the web. Verification and password reset use 6-digit emailed codes, with no links. Mobile uses device sessions with rotating refresh tokens (refresh needs `Idempotency-Key`; sign-out takes the refresh token). The web uses a Phoenix cookie session plus CSRF. Reset revokes every session.
+  - Shared input rules (`contracts/account-model/v1/`): email trimming, password length in code points after NFC, and code digits in any script.
+  - Checked end to end on the emulator, the simulator and the browser in en and ar.
+  - Two iOS bugs found and fixed: a main-actor colour-provider crash, and dropped keystrokes from async edits.
+  - Arabic and Malayalam texts still need native review.
+- Evidence: `docs/slices/02-accounts.md`, root ADR-2026-10-26 (accounts)
+- Commit: see git log

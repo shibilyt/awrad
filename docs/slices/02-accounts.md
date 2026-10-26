@@ -1,6 +1,6 @@
 # Slice 02: Accounts
 
-Status: In progress. Scope agreed 2026-10-26; contract and fixtures drafted for review
+Status: 2a done 2026-10-26 (pending CI on main); 2b next
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 2
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 Decided already: ADR-2026-07-12 (verified accounts, device sessions, rotating refresh tokens), ADR-2026-10-15 (browser cookie sessions), `contracts/api/STYLE.md` §7, §11, §12
@@ -25,7 +25,7 @@ Proposed split, so each part finishes in days:
 | Sign in with Apple or Google | A later slice (question 2) |
 | Production email delivery and deployment | When `awrad-server-next` is first deployed. Dev uses Swoosh's local mailbox |
 
-Platforms: server ☐ · Android ☐ · iOS ☐ · web ☐
+Platforms: server ☑ · Android ☑ · iOS ☑ · web ☑ (2a)
 
 ## Decisions (answered 2026-10-26)
 
@@ -78,7 +78,7 @@ Drafted 2026-10-26, for review.
 - **`contracts/account-model/v1/`:** client-side input rules, run by every client and the server.
   - `email_input`, 21 cases: trimming and a basic shape check.
   - `password_policy`, 12 cases: code points after NFC, so emoji, combining marks and Arabic all count the same.
-  - `email_code_input`, 14 cases: Arabic-Indic, Eastern Arabic-Indic and fullwidth digits, spaces, hyphens.
+  - `email_code_input`, 15 cases: Arabic-Indic, Eastern Arabic-Indic and fullwidth digits, spaces, hyphens.
 - **Root ADR-2026-10-26** (accounts): passwords plus emailed codes; refresh with a required `Idempotency-Key`; sign-out by refresh token.
 
 ## Contract (step 4)
@@ -111,18 +111,49 @@ Error codes clients handle:
 
 | Project | Work | Validation | Status |
 |---|---|---|---|
-| awrad-server-next | `Awrad.Accounts`, mobile pipeline, JSON browser endpoints, migrations | `mix validate` | ☐ |
-| awrad-android-next | `:core:network` auth, token storage, `:feature:account` | Gradle validation | ☐ |
-| awrad-ios-next | The same in `AwradKit` | `scripts/validate` | ☐ |
-| awrad-web-next | `src/features/account`, session handling | `npm run validate` | ☐ |
+| awrad-server-next | `Awrad.Accounts` (users, email codes, device sessions, refresh tokens, rate limits), `Awrad.Idempotency`, browser session JSON endpoints, emails in en/ar/ml; server ADRs 0005–0007 | `mix validate` (413 tests) | ☑ 2026-10-26 |
+| awrad-android-next | Input rules + fixtures in `:core:domain`; new `:core:network` (OkHttp, hand-written classes, spec-example round trip); Keystore credential storage; `:feature:account`; ADRs 0005–0006 | Gradle validation | ☑ 2026-10-26 |
+| awrad-ios-next | Input rules + fixtures in `AwradDomain`; network and session in `AwradData`; Keychain credentials; `FeatureAccount`; ADRs 0004–0005 | `scripts/validate` | ☑ 2026-10-26 |
+| awrad-web-next | Input rules + fixtures; cookie session and CSRF in the API client; `src/features/account` and routes | `npm run validate` | ☑ 2026-10-26 |
 
 ## Integration evidence (step 6)
 
-| Flow | Android | iOS | Web | Notes |
-|---|---|---|---|---|
-| Sign up, verify, signed in (en) | ☐ | ☐ | ☐ | |
-| Sign in, sign out (ar, RTL) | ☐ | ☐ | ☐ | |
+Run 2026-10-26 against `mix phx.server` on port 4100 (4000 was taken by an unrelated local app), with the emails read from the dev mailbox.
+
+| Flow | Android (Pixel 8, API 36) | iOS (iPhone 16 Pro, 18.4) | Web (dev server + proxy) |
+|---|---|---|---|
+| Register, emailed code, automatic sign-in (en) | ☑ code typed with a space; 8-character password stopped on the client | – (system strong-password autofill blocks automation; covered by the Arabic run below) | ☑ code typed in Arabic-Indic digits |
+| Sign in with a wrong password, then the right one (ar, RTL) | ☑ localized error, mirrored back arrow | – | ☑ `dir="rtl"`, localized error |
+| Sign in to an unverified account → code screen → verify → signed in (ar) | – | ☑ Arabic email received (`Accept-Language`) | – |
+| Sign in with an account made on another client | ☑ (web account) | ☑ (web account), device name "iPhone 16 Pro" | ☑ |
+| Sign out revokes the server session | ☑ **after an app restart** (`signed_out`) | ☑ (`signed_out`) | ☑ |
+| Password reset revokes every session | ☑ the Android session became `password_reset`, and the app showed "signed out" | – | ☑ reset on the web, then signed in with the new password |
+
+Bugs found and fixed during integration (iOS, commit "iOS: fix two bugs found running slice 2a on the simulator"):
+- **Crash on opening Account.** `AwradColors`' dynamic colour provider was inferred main-actor isolated, and SwiftUI resolves it off the main thread.
+- **Dropped keystrokes.** Every edit went through `Task { await send }`. Edits now apply synchronously, and iOS `AGENTS.md` records the rule.
+
+Follow-ups, not blocking:
+- **Translations:** the ar and ml strings (app screens and server emails) were written by agents and need a native speaker's review.
+- **iOS verify screen:** the email inside the Arabic sentence is shown as a blue link and broken across lines; it needs bidi isolation and no link detection. Digits mix Western and Arabic-Indic in the same screen.
+- **iOS:** the navigation back button uses the system blue instead of the app's sage.
+- **Web:** the language choice doesn't survive a full page reload.
+- **Contract notes from the server agent:**
+  - `create_browser_session` re-signs in rather than replaying a stored response for a repeated `Idempotency-Key`;
+  - only successful results are stored for `Idempotency-Key`;
+  - field codes `installation_id_invalid`, `device_name_invalid` and `platform_invalid` exist but aren't listed in the spec.
+
+  STYLE §10 and the spec should say these.
+- **Rate limits by IP** need a trusted proxy header before deployment (server `ARCHITECTURE.md`).
 
 ## Definition of done
 
-Copy the checklist from the playbook and tick it here before closing.
+- [x] In-scope 2a items built on the server, Android, iOS and the web.
+- [x] Shared input rules have fixtures (48 cases), run by every client and the server (the server runs `email_input` and `password_policy`; `email_code_input` is client-only by design).
+- [x] Every operation has spec examples, `assert_conforms` server tests, and client round-trip tests (mobile) or spec-example mocks (web).
+- [ ] `ci_ok` green on `main` (after the push).
+- [x] Main flows checked on running builds in English and Arabic (above).
+- [x] All user-facing text in en, ar and ml, with translation checks passing (native review pending).
+- [x] Decisions recorded: root ADR-2026-10-26 (accounts), server ADRs 0005–0007, Android ADRs 0005–0006, iOS ADRs 0004–0005.
+- [x] Docs updated: `CONTEXT.md`, `COMMANDS.md`, each project's `ARCHITECTURE.md`.
+- [x] Nothing changed in the frozen projects.
