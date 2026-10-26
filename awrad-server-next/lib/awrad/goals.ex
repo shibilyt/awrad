@@ -12,7 +12,7 @@ defmodule Awrad.Goals do
   """
 
   use Boundary,
-    deps: [],
+    deps: [Awrad.Hijri],
     exports: [
       ActivePeriod,
       CountEntry,

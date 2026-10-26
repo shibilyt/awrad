@@ -2,7 +2,7 @@
 
 The Awrad iOS app, rebuilt to replace `awrad-ios/` (root ADR-2026-10-14).
 - **Stack:** SwiftUI, SwiftData and Observation on iOS 18, built with Xcode 26.2 / Swift 6.2.
-- **Status:** scaffold plus the slice 1 goal rules. A placeholder onboarding screen and home screen prove the wiring; features arrive in slices (`../docs/rebuild-plan.md`).
+- **Status:** scaffold plus the slice 1 goal rules and the slice 1b Hijri calendar. A placeholder onboarding screen and home screen prove the wiring; features arrive in slices (`../docs/rebuild-plan.md`).
 
 ## Modules
 
@@ -44,6 +44,15 @@ flowchart TD
 - **Fixture runner:** `AwradTesting/FixtureLoader.swift` reads `contracts/<model>/v<N>/fixtures/<rule>.json` from the repository (found by walking up from `#filePath`) and fails on a missing file, zero cases or a case that won't decode. `GoalModelFixtures` decodes each rule's `given` into domain values. `AwradDomainTests/GoalModelFixtureTests` runs every case as a parameterized test named by case ID.
 
 The fixtures are the spec. Persistence of the full goal is slice 3; `GoalRecord` stores only a placeholder subset until then.
+
+## Hijri calendar (slice 1b)
+
+Hijri dates come from the shared Umm al-Qura table of [`contracts/hijri-calendar/v1`](../contracts/hijri-calendar/v1/README.md) (root ADR-2026-10-26), never from Foundation's `.islamicUmmAlQura`.
+- **Bundling:** `scripts/generate-hijri-table.py` compiles `umm-al-qura.json` into `AwradDomain/UmmAlQuraTable.swift` (month starts as days since 1970-01-01), so the app works offline and nothing reads `contracts/` at runtime. Never edit the generated file; rerun the script.
+- **Freshness check:** `scripts/validate` runs the script with `--check`, which fails when the Swift file differs from what the contract generates. `UmmAlQuraTableTests` also checks every decoded month start against the JSON.
+- **Corrections:** `HijriCorrections` is a valid set of month-start corrections. Its initializer `throws(HijriCorrectionsValidationError)` with the contract's codes, so an invalid set can't exist. Its `calendar` (a `HijriCalendar`) is the table with them applied: `date(of:)` and `month(containing:)` return `nil` outside the table.
+- **Rules:** the schedule kinds `hijriMonthDays` and `yearly` (Gregorian or Hijri `YearlyRange`s) and the period `hijriMonth`. Every rule that reads Hijri dates takes `hijriCorrections:` (default `.none`).
+- **Runner:** `HijriCalendarFixtures` runs `hijri-calendar/v1/fixtures/`. `FixtureRunnerTests` fails if either fixture directory has a file no rule runs.
 
 ## Screens
 

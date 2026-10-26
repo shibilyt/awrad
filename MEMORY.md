@@ -238,3 +238,15 @@ Use this format:
   - Server `plug_crypto` moved to 2.2.1 (CVE-2026-105963).
 - Evidence: `contracts/goal-model/v1/`, `docs/slices/01-domain-foundation.md`
 - Commit: see git log
+
+### 2026-10-26 — Slice 1b: Hijri calendar, yearly schedules, goal presets
+
+- Area: Cross-project
+- Change:
+  - Hijri dates come from one shared Umm al-Qura table (`contracts/hijri-calendar/v1/`, 1400–1500 AH) plus the account's month-start corrections for moon sighting (at most 2 days from the table; every month 29 or 30 days). No platform uses a Hijri library for rules (root ADR-2026-10-26).
+  - Each platform bundles the table and fails validation if its copy drifts: generated Kotlin (`verifyUmmAlQuraTable`), generated Swift (`scripts/validate`), a `priv/` copy compiled in (server ADR 0004).
+  - New schedules `hijri_month_days` and `yearly` (Gregorian or Hijri), and the `hijri_month` period. Seasons are label-only presets (`contracts/goal-presets/v1/`), not a schedule kind.
+  - 211 shared cases, passed by Android, iOS and the server.
+  - CI now re-runs Android, iOS and the server when `contracts/goal-model/` or `contracts/hijri-calendar/` change.
+- Evidence: `contracts/hijri-calendar/v1/`, `docs/slices/01b-domain-hijri.md`
+- Commit: see git log

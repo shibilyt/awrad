@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:awrad:hijri-calendar:1",
+  "title": "Awrad Hijri calendar v1",
+  "description": "The Umm al-Qura month table and month-start corrections (moon sighting). See README.md and ADR-2026-10-26.",
+  "$defs": {
+    "hijri_year": { "type": "integer", "minimum": 1400, "maximum": 1500 },
+    "hijri_month": { "type": "integer", "minimum": 1, "maximum": 12 },
+    "hijri_date": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["year", "month", "day"],
+      "properties": {
+        "year": { "$ref": "#/$defs/hijri_year" },
+        "month": { "$ref": "#/$defs/hijri_month" },
+        "day": { "type": "integer", "minimum": 1, "maximum": 30 }
+      }
+    },
+    "correction_shape": {
+      "description": "A month-start correction before validation. Platforms reject invalid ones with the hijri_corrections_validity error codes.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["year", "month", "offset_days"],
+      "properties": {
+        "year": { "type": "integer" },
+        "month": { "type": "integer" },
+        "offset_days": { "type": "integer" }
+      }
+    },
+    "correction": {
+      "description": "Moves the start of a Hijri month, and every later month until the next correction, by offset_days from the table (positive = later).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["year", "month", "offset_days"],
+      "properties": {
+        "year": { "$ref": "#/$defs/hijri_year" },
+        "month": { "$ref": "#/$defs/hijri_month" },
+        "offset_days": { "type": "integer", "minimum": -2, "maximum": 2 }
+      }
+    },
+    "corrections_shape": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/correction_shape" }
+    },
+    "corrections": {
+      "description": "A valid set of corrections: at most one per month, and every adjusted month is 29 or 30 days. Order doesn't matter.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/correction" }
+    },
+    "table": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["calendar", "version", "description", "source", "first_year", "last_year", "end_exclusive", "month_starts"],
+      "properties": {
+        "calendar": { "const": "umm_al_qura" },
+        "version": { "const": 1 },
+        "description": { "type": "string" },
+        "source": { "type": "string" },
+        "first_year": { "$ref": "#/$defs/hijri_year" },
+        "last_year": { "$ref": "#/$defs/hijri_year" },
+        "end_exclusive": { "type": "string", "format": "date" },
+        "month_starts": {
+          "type": "object",
+          "propertyNames": { "pattern": "^1[45][0-9]{2}$" },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 12,
+            "maxItems": 12,
+            "items": { "type": "string", "format": "date" }
+          }
+        }
+      }
+    }
+  }
+}

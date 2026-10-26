@@ -17,8 +17,7 @@ public enum GoalModelRule: String, CaseIterable, Sendable {
 
     /// `contracts/goal-model/v1/fixtures/<rule>.json` in this repository.
     public func fixtureFile(from filePath: String = #filePath) throws -> URL {
-        try FixtureLoader.contractsDirectory(holding: "goal-model", from: filePath)
-            .appending(path: "goal-model/v1/fixtures/\(rawValue).json")
+        try FixtureLoader.fixturesDirectory(model: "goal-model", from: filePath).appending(path: "\(rawValue).json")
     }
 
     public func cases<Given: Decodable & Sendable, Expect: Decodable & Sendable>(
@@ -89,9 +88,11 @@ public struct GoalOnDay: Decodable, Sendable {
     public let date: CalendarDay
     /// Absent for rules that don't use weeks (is due, completion).
     public let weekStart: WeekStart?
+    /// The account's Hijri corrections; absent means none. Invalid ones fail the case.
+    public let hijriCorrections: HijriCorrections
 
     private enum CodingKeys: String, CodingKey {
-        case goal, counts, date, weekStart
+        case goal, counts, date, weekStart, hijriCorrections
     }
 
     public init(from decoder: any Decoder) throws {
@@ -102,6 +103,8 @@ public struct GoalOnDay: Decodable, Sendable {
         weekStart = try values.decodeIfPresent(String.self, forKey: .weekStart).map {
             try FixtureValue.require(WeekStart(rawValue: $0), "week_start \($0)")
         }
+        let corrections = try values.decodeIfPresent([CorrectionShape].self, forKey: .hijriCorrections) ?? []
+        hijriCorrections = try HijriCorrections(corrections.map(\.correction))
     }
 }
 
@@ -204,12 +207,14 @@ public struct ValidityExpect: Decodable, Equatable, Sendable {
 
     public init(_ construction: Result<Goal, GoalValidationError>) {
         switch construction {
-        case .success:
-            valid = true
-            errors = []
-        case .failure(let error):
-            valid = false
-            errors = error.codes.map(\.rawValue)
+        case .success: self.init(errors: [])
+        case .failure(let error): self.init(errors: error.codes.map(\.rawValue))
         }
+    }
+
+    /// Valid exactly when `errors` is empty.
+    public init(errors: [String]) {
+        valid = errors.isEmpty
+        self.errors = errors
     }
 }

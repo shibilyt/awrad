@@ -2,6 +2,7 @@ package app.awrad.core.testing.fixtures
 
 import app.awrad.core.domain.goal.ActivePeriod
 import app.awrad.core.domain.goal.CalendarPeriod
+import app.awrad.core.domain.goal.CalendarSystem
 import app.awrad.core.domain.goal.CompletionPolicy
 import app.awrad.core.domain.goal.CountEntry
 import app.awrad.core.domain.goal.CountPolicy
@@ -13,6 +14,8 @@ import app.awrad.core.domain.goal.Requirement
 import app.awrad.core.domain.goal.Schedule
 import app.awrad.core.domain.goal.Session
 import app.awrad.core.domain.goal.StreakThreshold
+import app.awrad.core.domain.goal.YearlyDay
+import app.awrad.core.domain.goal.YearlyRange
 import app.awrad.core.domain.practice.WeekStart
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -85,8 +88,18 @@ private fun JsonObject.toSchedule(): Schedule = when (val kind = string("kind"))
     "month_days" -> Schedule.MonthDays(getValue("days").jsonArray.map { it.jsonPrimitive.int }.toSet())
     "specific_dates" -> Schedule.SpecificDates(getValue("dates").jsonArray.map { LocalDate.parse(it.content) }.toSet())
     "one_time" -> Schedule.OneTime
+    "hijri_month_days" -> Schedule.HijriMonthDays(getValue("days").jsonArray.map { it.jsonPrimitive.int }.toSet())
+    "yearly" -> Schedule.Yearly(
+        calendar = enumOf<CalendarSystem>(string("calendar")),
+        ranges = getValue("ranges").jsonArray.map {
+            YearlyRange(start = it.jsonObject.yearlyDay("start"), end = it.jsonObject.yearlyDay("end"))
+        },
+    )
     else -> error("Unknown schedule kind: $kind")
 }
+
+private fun JsonObject.yearlyDay(key: String): YearlyDay =
+    getValue(key).jsonObject.let { YearlyDay(month = it.int("month"), day = it.int("day")) }
 
 private fun JsonObject.toActivePeriod(): ActivePeriod = ActivePeriod(
     startDate = date("start_date"),
@@ -116,7 +129,7 @@ private fun JsonObject.toRequirement(): Requirement = when (val type = string("t
     else -> error("Unknown requirement type: $type")
 }
 
-private fun JsonObject.int(key: String): Int = getValue(key).jsonPrimitive.int
+internal fun JsonObject.int(key: String): Int = getValue(key).jsonPrimitive.int
 
 private fun JsonObject.long(key: String): Long = getValue(key).jsonPrimitive.long
 

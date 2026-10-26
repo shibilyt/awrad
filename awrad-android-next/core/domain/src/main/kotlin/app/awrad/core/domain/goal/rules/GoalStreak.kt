@@ -5,6 +5,8 @@ import app.awrad.core.domain.goal.CountEntry
 import app.awrad.core.domain.goal.DateWindow
 import app.awrad.core.domain.goal.GoalDefinition
 import app.awrad.core.domain.goal.Requirement
+import app.awrad.core.domain.hijri.HijriCalendar
+import app.awrad.core.domain.hijri.HijriCorrections
 import app.awrad.core.domain.practice.WeekStart
 import java.time.LocalDate
 
@@ -13,17 +15,25 @@ import java.time.LocalDate
  *
  * - Per-due-date, cumulative and tracker goals count consecutive **due days** meeting the
  *   streak threshold (with sessions, each session's own).
- * - Period-total and days-per-period goals count consecutive **weeks or months** meeting
+ * - Period-total and days-per-period goals count consecutive **weeks, months or Hijri months** meeting
  *   their requirement.
- * - Units that aren't due (unscheduled, paused, outside the active period) are skipped.
+ * - Units that aren't due (unscheduled, paused, outside the active period or the Hijri table) are skipped.
  * - The unit containing [date] is in progress: it adds 1 once met and never breaks the streak.
+ *
+ * Hijri schedules and Hijri months read [hijriCorrections].
  */
-public fun GoalDefinition.streakOn(date: LocalDate, counts: List<CountEntry>, weekStart: WeekStart): Int {
+public fun GoalDefinition.streakOn(
+    date: LocalDate,
+    counts: List<CountEntry>,
+    weekStart: WeekStart,
+    hijriCorrections: HijriCorrections,
+): Int {
     val index = CountIndex(counts)
+    val calendar = PeriodCalendar(weekStart, HijriCalendar(hijriCorrections))
     return when (val requirement = requirement) {
-        is Requirement.PeriodTotal -> periodStreak(date, index, requirement.period, weekStart)
-        is Requirement.DaysPerPeriod -> periodStreak(date, index, requirement.period, weekStart)
-        Requirement.PerDueDate, Requirement.CumulativeTotal, Requirement.Tracker -> dayStreak(date, index)
+        is Requirement.PeriodTotal -> periodStreak(date, index, requirement.period, calendar)
+        is Requirement.DaysPerPeriod -> periodStreak(date, index, requirement.period, calendar)
+        Requirement.PerDueDate, Requirement.CumulativeTotal, Requirement.Tracker -> dayStreak(date, index, calendar)
     }
 }
 
@@ -32,11 +42,11 @@ private data class StreakUnit(val isInProgress: Boolean, val isMet: Boolean)
 private fun Sequence<StreakUnit>.consecutiveMet(): Int =
     dropWhile { it.isInProgress && !it.isMet }.takeWhile { it.isMet }.count()
 
-private fun GoalDefinition.dayStreak(date: LocalDate, counts: CountIndex): Int {
+private fun GoalDefinition.dayStreak(date: LocalDate, counts: CountIndex, calendar: PeriodCalendar): Int {
     val latest = activePeriod.lastDay?.let { minOf(date, it) } ?: date
     return generateSequence(latest) { it.minusDays(1) }
         .takeWhile { !it.isBefore(activePeriod.startDate) }
-        .filter { isDueOn(it) }
+        .filter { isDueOn(it, calendar.hijri) }
         .map { StreakUnit(isInProgress = it == date, isMet = dayMeets(it, counts, DayMeasure.STREAK_THRESHOLD)) }
         .consecutiveMet()
 }
@@ -45,12 +55,10 @@ private fun GoalDefinition.periodStreak(
     date: LocalDate,
     counts: CountIndex,
     period: CalendarPeriod,
-    weekStart: WeekStart,
-): Int = generateSequence(calendarPeriodOf(date, period, weekStart)) {
-    calendarPeriodOf(it.from.minusDays(1), period, weekStart)
-}
+    calendar: PeriodCalendar,
+): Int = calendar.periodsBack(date, period)
     .takeWhile { !it.to.isBefore(activePeriod.startDate) }
-    .mapNotNull { periodUnit(it, date, counts, weekStart) }
+    .mapNotNull { periodUnit(it, date, counts, calendar) }
     .consecutiveMet()
 
 /** A calendar period's standing, judged on its last counted day; null when it isn't due. */
@@ -58,13 +66,13 @@ private fun GoalDefinition.periodUnit(
     calendarPeriod: DateWindow,
     date: LocalDate,
     counts: CountIndex,
-    weekStart: WeekStart,
+    calendar: PeriodCalendar,
 ): StreakUnit? {
     val evaluated = listOfNotNull(calendarPeriod.to, date, activePeriod.lastDay).min()
     if (evaluated !in calendarPeriod) return null
     val status = when (requirement) {
-        is Requirement.DaysPerPeriod -> daysPerPeriodOn(evaluated, counts, weekStart).status
-        else -> standingOn(evaluated, counts, weekStart).status
+        is Requirement.DaysPerPeriod -> daysPerPeriodOn(evaluated, counts, calendar).status
+        else -> standingOn(evaluated, counts, calendar).status
     }
     return if (status == StandingStatus.NOT_DUE) {
         null

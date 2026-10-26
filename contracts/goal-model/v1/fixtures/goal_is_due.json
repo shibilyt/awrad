@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "goal_is_due",
-  "description": "Whether a goal is due on a day: inside its active period, not paused, and on its schedule (Gregorian kinds). Completion is evaluated separately (goal_completion).",
+  "description": "Whether a goal is due on a day: inside its active period, not paused, and on its schedule. Completion is evaluated separately (goal_completion).",
   "references": [
     "CONTEXT.md#goal-language (Schedule, Active period, Paused)",
     "docs/slices/01-domain-foundation.md rows 4-8, 17, 21",
@@ -21,6 +21,10 @@
       },
       "date": {
         "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      },
+      "hijri_corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections",
+        "description": "The account's Hijri month-start corrections. Absent means none."
       }
     }
   },
@@ -1027,6 +1031,1601 @@
           "completion": "never"
         },
         "date": "2026-10-20"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "white_days_13th",
+      "description": "13 Ramadan 1447 is a white day.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "hijri_month_days",
+            "days": [
+              13,
+              14,
+              15
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-03-02"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "white_days_12th",
+      "description": "12 Ramadan 1447 isn't.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "hijri_month_days",
+            "days": [
+              13,
+              14,
+              15
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-03-01"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "hijri_day_30_in_29_day_month",
+      "description": "Day 30 falls on the 29th of the 29-day Ramadan 1446.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "hijri_month_days",
+            "days": [
+              30
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2025-03-29"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "hijri_day_30_in_30_day_month",
+      "description": "In the 30-day Ramadan 1447 the 29th isn't the 30th.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "hijri_month_days",
+            "days": [
+              30
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-03-18"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "ramadan_first_day",
+      "description": "1 Ramadan 1447.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-02-18"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "ramadan_day_before",
+      "description": "29 Sha'ban 1447, the day before.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-02-17"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "ramadan_30th",
+      "description": "30 Ramadan 1447.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-03-19"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "eid_after_30_day_ramadan",
+      "description": "1 Shawwal 1447.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-03-20"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "ramadan_29_day_year_last_day",
+      "description": "Ramadan 1–30 covers the whole 29-day Ramadan 1446.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2025-03-29"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "eid_after_29_day_ramadan",
+      "description": "1 Shawwal 1446 isn't Ramadan.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2025-03-30"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "arafah",
+      "description": "9 Dhu al-Hijjah 1447 (a one-day range).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 9
+                },
+                "end": {
+                  "month": 12,
+                  "day": 9
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-05-26"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "day_after_arafah",
+      "description": "10 Dhu al-Hijjah 1447.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 9
+                },
+                "end": {
+                  "month": 12,
+                  "day": 9
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-05-27"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "odd_night_23rd",
+      "description": "23 Ramadan 1447, one of several single-day ranges.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 21
+                },
+                "end": {
+                  "month": 9,
+                  "day": 21
+                }
+              },
+              {
+                "start": {
+                  "month": 9,
+                  "day": 23
+                },
+                "end": {
+                  "month": 9,
+                  "day": 23
+                }
+              },
+              {
+                "start": {
+                  "month": 9,
+                  "day": 25
+                },
+                "end": {
+                  "month": 9,
+                  "day": 25
+                }
+              },
+              {
+                "start": {
+                  "month": 9,
+                  "day": 27
+                },
+                "end": {
+                  "month": 9,
+                  "day": 27
+                }
+              },
+              {
+                "start": {
+                  "month": 9,
+                  "day": 29
+                },
+                "end": {
+                  "month": 9,
+                  "day": 29
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-03-12"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "even_night_22nd",
+      "description": "22 Ramadan 1447 isn't in the list.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 21
+                },
+                "end": {
+                  "month": 9,
+                  "day": 21
+                }
+              },
+              {
+                "start": {
+                  "month": 9,
+                  "day": 23
+                },
+                "end": {
+                  "month": 9,
+                  "day": 23
+                }
+              },
+              {
+                "start": {
+                  "month": 9,
+                  "day": 25
+                },
+                "end": {
+                  "month": 9,
+                  "day": 25
+                }
+              },
+              {
+                "start": {
+                  "month": 9,
+                  "day": 27
+                },
+                "end": {
+                  "month": 9,
+                  "day": 27
+                }
+              },
+              {
+                "start": {
+                  "month": 9,
+                  "day": 29
+                },
+                "end": {
+                  "month": 9,
+                  "day": 29
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-03-11"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "hijri_range_over_year_end_inside",
+      "description": "25 Dhu al-Hijjah – 10 Muharram includes 5 Muharram 1448.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 25
+                },
+                "end": {
+                  "month": 1,
+                  "day": 10
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-06-20"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "hijri_range_over_year_end_start",
+      "description": "...and starts on 25 Dhu al-Hijjah 1447.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 25
+                },
+                "end": {
+                  "month": 1,
+                  "day": 10
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-06-11"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "hijri_range_over_year_end_before",
+      "description": "24 Dhu al-Hijjah 1447 is before it.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 25
+                },
+                "end": {
+                  "month": 1,
+                  "day": 10
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-06-10"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "hijri_range_over_year_end_after",
+      "description": "11 Muharram 1448 is after it.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 25
+                },
+                "end": {
+                  "month": 1,
+                  "day": 10
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-06-26"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "hijri_range_end_30_in_29_day_month",
+      "description": "Sha'ban 25–30 ends on the 29th of the 29-day Sha'ban 1447.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 8,
+                  "day": 25
+                },
+                "end": {
+                  "month": 8,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-02-17"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "hijri_range_end_30_next_month",
+      "description": "...so 1 Ramadan isn't in it.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 8,
+                  "day": 25
+                },
+                "end": {
+                  "month": 8,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-02-18"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "hijri_range_start_30_in_29_day_month",
+      "description": "A range from 30 Ramadan starts on the 29th of the 29-day Ramadan 1446.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 30
+                },
+                "end": {
+                  "month": 10,
+                  "day": 2
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2025-03-29"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "correction_table_first_day_not_due",
+      "description": "With Ramadan a day later, the table's 1 Ramadan is 30 Sha'ban.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-02-18",
+        "hijri_corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "correction_first_day",
+      "description": "...and 19 February is 1 Ramadan.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-02-19",
+        "hijri_corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "correction_last_day",
+      "description": "...and 20 March is 30 Ramadan.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-03-20",
+        "hijri_corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "hijri_last_day_of_table",
+      "description": "The last day the table covers.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 1,
+                  "day": 1
+                },
+                "end": {
+                  "month": 12,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2077-11-16"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "hijri_after_table",
+      "description": "Hijri schedules are never due after the table.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 1,
+                  "day": 1
+                },
+                "end": {
+                  "month": 12,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2077-11-17"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "gregorian_29_feb_common_year",
+      "description": "29 February falls on 28 February in 2027.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "gregorian",
+            "ranges": [
+              {
+                "start": {
+                  "month": 2,
+                  "day": 29
+                },
+                "end": {
+                  "month": 2,
+                  "day": 29
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2027-02-28"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "gregorian_29_feb_leap_year_28th",
+      "description": "In 2028 the 28th isn't the 29th.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "gregorian",
+            "ranges": [
+              {
+                "start": {
+                  "month": 2,
+                  "day": 29
+                },
+                "end": {
+                  "month": 2,
+                  "day": 29
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2028-02-28"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "gregorian_29_feb_leap_year",
+      "description": "29 February 2028.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "gregorian",
+            "ranges": [
+              {
+                "start": {
+                  "month": 2,
+                  "day": 29
+                },
+                "end": {
+                  "month": 2,
+                  "day": 29
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2028-02-29"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "gregorian_range_over_year_end",
+      "description": "25 December – 5 January includes 3 January.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "gregorian",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 25
+                },
+                "end": {
+                  "month": 1,
+                  "day": 5
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2027-01-03"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "gregorian_range_over_year_end_before",
+      "description": "24 December isn't in it.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "gregorian",
+            "ranges": [
+              {
+                "start": {
+                  "month": 12,
+                  "day": 25
+                },
+                "end": {
+                  "month": 1,
+                  "day": 5
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-12-24"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "gregorian_single_day",
+      "description": "14 October every year.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "gregorian",
+            "ranges": [
+              {
+                "start": {
+                  "month": 10,
+                  "day": 14
+                },
+                "end": {
+                  "month": 10,
+                  "day": 14
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-14"
+      },
+      "expect": {
+        "due": true
+      }
+    },
+    {
+      "id": "gregorian_single_day_next",
+      "description": "15 October isn't.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "gregorian",
+            "ranges": [
+              {
+                "start": {
+                  "month": 10,
+                  "day": 14
+                },
+                "end": {
+                  "month": 10,
+                  "day": 14
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-10-15"
+      },
+      "expect": {
+        "due": false
+      }
+    },
+    {
+      "id": "yearly_before_start_date",
+      "description": "The active period still applies.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-03-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "date": "2026-02-18"
       },
       "expect": {
         "due": false

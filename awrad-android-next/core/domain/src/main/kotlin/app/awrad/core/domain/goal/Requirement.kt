@@ -1,9 +1,10 @@
 package app.awrad.core.domain.goal
 
-/** A calendar week (starting on the account's week start) or a Gregorian month. */
+/** A calendar week (starting on the account's week start), a Gregorian month, or a corrected Hijri month. */
 public enum class CalendarPeriod {
     WEEK,
     MONTH,
+    HIJRI_MONTH,
 }
 
 /**
@@ -18,10 +19,10 @@ public sealed interface Requirement {
     /** One target across the whole active period. */
     public data object CumulativeTotal : Requirement
 
-    /** A target per week or month. */
+    /** A target per week, month or Hijri month. */
     public data class PeriodTotal(val period: CalendarPeriod) : Requirement
 
-    /** A number of qualifying days (days meeting the daily target) per week or month. */
+    /** A number of qualifying days (days meeting the daily target) per week, month or Hijri month. */
     public data class DaysPerPeriod(val period: CalendarPeriod, val days: Int) : Requirement {
         init {
             require(days in 1..MAX_DAYS) { "Days per period must be 1..$MAX_DAYS: $days" }

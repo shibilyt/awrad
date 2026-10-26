@@ -10,12 +10,14 @@ defmodule Awrad.Goals.Rules.Requirement do
   alias Awrad.Goals.Session
   alias Awrad.Goals.SessionStanding
   alias Awrad.Goals.Standing
+  alias Awrad.Hijri.Corrections
 
-  @spec standing(Goal.t(), Counts.index(), Date.t(), Goal.week_start()) :: Standing.t()
-  def standing(%Goal{} = goal, index, date, week_start) do
+  @spec standing(Goal.t(), Counts.index(), Date.t(), Goal.week_start(), Corrections.t()) ::
+          Standing.t()
+  def standing(%Goal{} = goal, index, date, week_start, corrections) do
     goal = without_tracker_target(goal)
-    window = window(goal, date, week_start)
-    due? = due_in?(goal, window, date)
+    window = window(goal, date, week_start, corrections)
+    due? = window != nil and due_in?(goal, window, date, corrections)
     # Every `:not_due` answer has the evaluated day as its window, so its
     # progress is that day's count inside the active period, even for a
     # period goal whose whole week or month has no due day.
@@ -47,19 +49,20 @@ defmodule Awrad.Goals.Rules.Requirement do
 
   defp without_tracker_target(goal), do: goal
 
-  defp window(%Goal{active_period: period} = goal, date, week_start) do
+  # `nil` when there's no window to be due in: outside the active period, or
+  # a day outside the Hijri table for a Hijri-month total.
+  defp window(%Goal{active_period: period} = goal, date, week_start, corrections) do
     cond do
-      not Periods.in_active_period?(period, date) -> Periods.day(date)
+      not Periods.in_active_period?(period, date) -> nil
       goal.requirement == :cumulative_total -> Date.range(period.start_date, date, 1)
-      true -> period_window(goal.requirement, period, date, week_start)
+      true -> period_window(goal.requirement, period, date, week_start, corrections)
     end
   end
 
-  # The window always contains `date`, so the clip is never empty.
-  defp period_window({:period_total, unit}, period, date, week_start),
-    do: date |> Periods.period(unit, week_start) |> Periods.clip(period) || Periods.day(date)
+  defp period_window({:period_total, unit}, period, date, week_start, corrections),
+    do: Periods.window(period, unit, date, week_start, corrections)
 
-  defp period_window(_per_day, _period, date, _week_start), do: Periods.day(date)
+  defp period_window(_per_day, _period, date, _week_start, _corrections), do: Periods.day(date)
 
   # Progress counts the window's days up to and including `date`, inside the active period.
   defp evaluate(%Goal{active_period: period} = goal, index, window, date) do
@@ -79,17 +82,15 @@ defmodule Awrad.Goals.Rules.Requirement do
   defp status(goal, true, progress, sessions),
     do: if(met?(goal, progress, sessions), do: :met, else: :not_met)
 
-  # Per-day goals need the day itself to be due; period goals need a due day
-  # in the window; cumulative goals only need the active period.
-  defp due_in?(%Goal{requirement: :cumulative_total} = goal, _window, date),
-    do: Periods.in_active_period?(goal.active_period, date)
+  # Given a window (so inside the active period): per-day goals need the day
+  # itself to be due; period goals need a due day in the window; cumulative
+  # goals need nothing more.
+  defp due_in?(%Goal{requirement: :cumulative_total}, _window, _date, _corrections), do: true
 
-  defp due_in?(%Goal{requirement: {:period_total, _unit}} = goal, window, date) do
-    Periods.in_active_period?(goal.active_period, date) and
-      Enum.any?(window, &Schedule.due?(goal, &1))
-  end
+  defp due_in?(%Goal{requirement: {:period_total, _unit}} = goal, window, _date, corrections),
+    do: Enum.any?(window, &Schedule.due?(goal, &1, corrections))
 
-  defp due_in?(goal, _window, date), do: Schedule.due?(goal, date)
+  defp due_in?(goal, _window, date, corrections), do: Schedule.due?(goal, date, corrections)
 
   defp met?(%Goal{sessions: []} = goal, progress, _sessions),
     do: Counts.meets?(progress, goal.count_policy, :target)

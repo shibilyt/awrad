@@ -5,6 +5,7 @@ import app.awrad.core.domain.goal.CountEntry
 import app.awrad.core.domain.goal.CountPolicy
 import app.awrad.core.domain.goal.DateWindow
 import app.awrad.core.domain.goal.GoalDefinition
+import app.awrad.core.domain.hijri.HijriCalendar
 import app.awrad.core.domain.practice.WeekStart
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -55,14 +56,30 @@ internal fun GoalDefinition.dayMeets(date: LocalDate, counts: CountIndex, measur
         sessions.all { it.countPolicy.isMetBy(counts.sessionTotal(date, it.id), measure) }
     }
 
-/** The whole calendar week or month containing [date], before clipping to the active period. */
-internal fun calendarPeriodOf(date: LocalDate, period: CalendarPeriod, weekStart: WeekStart): DateWindow =
-    when (period) {
+/** The calendar periods rules group days into: weeks start on [weekStart], Hijri months follow [hijri]. */
+internal data class PeriodCalendar(val weekStart: WeekStart, val hijri: HijriCalendar) {
+
+    /**
+     * The whole week, month or Hijri month containing [date], before clipping to the active period.
+     * Null for a Hijri month outside the Hijri table, which is never due.
+     */
+    fun periodOf(date: LocalDate, period: CalendarPeriod): DateWindow? = when (period) {
         CalendarPeriod.WEEK -> {
             val from = date.with(TemporalAdjusters.previousOrSame(weekStart.firstDay))
             DateWindow(from, from.plusDays(DAYS_IN_WEEK - 1))
         }
         CalendarPeriod.MONTH -> DateWindow(date.withDayOfMonth(1), date.with(TemporalAdjusters.lastDayOfMonth()))
+        CalendarPeriod.HIJRI_MONTH -> hijri.monthOf(date)?.let { DateWindow(it.firstDay, it.lastDay) }
     }
+
+    /**
+     * Every [period] ending on or before [date]'s, latest first: the one containing [date], then each earlier
+     * one. Hijri months start from the table's last month when [date] is after the table.
+     */
+    fun periodsBack(date: LocalDate, period: CalendarPeriod): Sequence<DateWindow> {
+        val latest = if (period == CalendarPeriod.HIJRI_MONTH) minOf(date, hijri.lastDay) else date
+        return generateSequence(periodOf(latest, period)) { periodOf(it.from.minusDays(1), period) }
+    }
+}
 
 private const val DAYS_IN_WEEK = 7L

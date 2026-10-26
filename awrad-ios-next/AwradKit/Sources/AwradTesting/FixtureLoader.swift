@@ -50,6 +50,21 @@ public enum FixtureLoader {
         throw FixtureError.contractsNotFound(searchedFrom: filePath)
     }
 
+    /// `contracts/<model>/v1/fixtures/` in this repository.
+    public static func fixturesDirectory(model: String, from filePath: String = #filePath) throws -> URL {
+        try contractsDirectory(holding: model, from: filePath).appending(path: "\(model)/v1/fixtures")
+    }
+
+    /// The rule names of every fixture file in `contracts/<model>/v1/fixtures/`, sorted. The
+    /// runner checks each has a rule iOS implements, so a new file can't go unrun.
+    public static func ruleFiles(model: String) throws -> [String] {
+        let directory = try fixturesDirectory(model: model)
+        return try FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
+            .filter { $0.pathExtension == "json" }
+            .map { $0.deletingPathExtension().lastPathComponent }
+            .sorted()
+    }
+
     /// Loads `<rule>.json`, checks its format and rule name, and decodes every case.
     /// Fails when the file is missing, malformed, has no cases, or has a case that doesn't decode.
     public static func load<Given: Decodable & Sendable, Expect: Decodable & Sendable>(

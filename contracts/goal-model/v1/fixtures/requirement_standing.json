@@ -32,6 +32,10 @@
       },
       "week_start": {
         "$ref": "urn:awrad:goal-model:1#/$defs/week_start"
+      },
+      "hijri_corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections",
+        "description": "The account's Hijri month-start corrections. Absent means none."
       }
     }
   },
@@ -1566,6 +1570,230 @@
         },
         "progress": 0,
         "target": null,
+        "sessions": []
+      }
+    },
+    {
+      "id": "hijri_month_total",
+      "description": "Ramadan 1447 so far: Sha'ban's count and tomorrow's don't count.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "hijri_month"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-02-17",
+            "session": null,
+            "count": 500
+          },
+          {
+            "date": "2026-02-18",
+            "session": null,
+            "count": 400
+          },
+          {
+            "date": "2026-03-01",
+            "session": null,
+            "count": 300
+          },
+          {
+            "date": "2026-03-02",
+            "session": null,
+            "count": 999
+          }
+        ],
+        "date": "2026-03-01",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-02-18",
+          "to": "2026-03-19"
+        },
+        "progress": 700,
+        "target": 1000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "hijri_month_total_with_correction",
+      "description": "With Ramadan a day later, the window moves and 18 February belongs to Sha'ban.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "hijri_month"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-02-18",
+            "session": null,
+            "count": 400
+          },
+          {
+            "date": "2026-02-19",
+            "session": null,
+            "count": 600
+          },
+          {
+            "date": "2026-03-01",
+            "session": null,
+            "count": 400
+          }
+        ],
+        "date": "2026-03-01",
+        "week_start": "monday",
+        "hijri_corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-02-19",
+          "to": "2026-03-20"
+        },
+        "progress": 1000,
+        "target": 1000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "hijri_month_window_clipped_to_start",
+      "description": "A goal starting mid-Ramadan.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-03-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "hijri_month"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-03-01",
+            "session": null,
+            "count": 1000
+          }
+        ],
+        "date": "2026-03-05",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-03-01",
+          "to": "2026-03-19"
+        },
+        "progress": 1000,
+        "target": 1000,
+        "sessions": []
+      }
+    },
+    {
+      "id": "hijri_month_after_table",
+      "description": "After the table there's no Hijri month: not due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2077-11-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "hijri_month"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2077-11-20",
+            "session": null,
+            "count": 5
+          }
+        ],
+        "date": "2077-11-20",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_due",
+        "window": {
+          "from": "2077-11-20",
+          "to": "2077-11-20"
+        },
+        "progress": 5,
+        "target": 1000,
         "sessions": []
       }
     }

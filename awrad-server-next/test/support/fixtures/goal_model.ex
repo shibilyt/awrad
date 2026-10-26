@@ -5,6 +5,7 @@ defmodule Awrad.Fixtures.GoalModel do
   shapes, so a test compares `encode(result) == expect` exactly.
   """
 
+  alias Awrad.Fixtures.HijriCalendar
   alias Awrad.Goals.ActivePeriod
   alias Awrad.Goals.CountEntry
   alias Awrad.Goals.CountPolicy
@@ -14,13 +15,15 @@ defmodule Awrad.Fixtures.GoalModel do
   alias Awrad.Goals.Session
   alias Awrad.Goals.SessionStanding
   alias Awrad.Goals.Standing
+  alias Awrad.Hijri.Corrections
 
   @weekdays Map.new(
               ~w(monday tuesday wednesday thursday friday saturday sunday)a,
               &{Atom.to_string(&1), &1}
             )
   @week_starts %{"saturday" => :saturday, "sunday" => :sunday, "monday" => :monday}
-  @periods %{"week" => :week, "month" => :month}
+  @periods %{"week" => :week, "month" => :month, "hijri_month" => :hijri_month}
+  @calendars %{"gregorian" => :gregorian, "hijri" => :hijri}
   @thresholds %{
     "any_count" => :any_count,
     "minimum" => :minimum,
@@ -91,6 +94,15 @@ defmodule Awrad.Fixtures.GoalModel do
   def optional_instant(nil), do: nil
   def optional_instant(iso), do: instant(iso)
 
+  @doc """
+  A case's optional `hijri_corrections` (absent means none), built through
+  `Corrections.new/1`. Rule fixtures only contain valid sets, so an invalid
+  one raises.
+  """
+  @spec hijri_corrections(map()) :: Corrections.t()
+  def hijri_corrections(given),
+    do: given |> Map.get("hijri_corrections", []) |> HijriCalendar.corrections!()
+
   @spec week_start(String.t()) :: Goal.week_start()
   def week_start(name), do: Map.fetch!(@week_starts, name)
 
@@ -110,6 +122,15 @@ defmodule Awrad.Fixtures.GoalModel do
 
   defp schedule(%{"kind" => "specific_dates", "dates" => dates}),
     do: {:specific_dates, Enum.map(dates, &date/1)}
+
+  defp schedule(%{"kind" => "hijri_month_days", "days" => days}), do: {:hijri_month_days, days}
+
+  defp schedule(%{"kind" => "yearly", "calendar" => calendar, "ranges" => ranges}),
+    do: {:yearly, Map.fetch!(@calendars, calendar), Enum.map(ranges, &yearly_range/1)}
+
+  defp yearly_range(%{"start" => from, "end" => to}), do: {month_day(from), month_day(to)}
+
+  defp month_day(%{"month" => month, "day" => day}), do: {month, day}
 
   defp active_period(json) do
     %ActivePeriod{

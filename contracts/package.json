@@ -13,7 +13,8 @@
     "check:rules": "node api/tests/check-rules.mjs",
     "check:fixtures": "node tools/check-fixtures.mjs",
     "check:fixture-format": "node tools/tests/check-fixture-format.mjs",
-    "test": "npm run check:bundle && npm run lint:api && npm run check:rules && npm run check:fixtures && npm run check:fixture-format"
+    "test": "npm run check:bundle && npm run lint:api && npm run check:rules && npm run check:fixtures && npm run check:catalogs && npm run check:fixture-format",
+    "check:catalogs": "node tools/check-catalogs.mjs"
   },
   "devDependencies": {
     "@redocly/cli": "2.64.1",

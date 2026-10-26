@@ -8,6 +8,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.extension
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.nameWithoutExtension
 
 /** One case of an `awrad-fixture/1` file (contracts/FIXTURES.md). */
 public data class FixtureCase(
@@ -16,6 +19,12 @@ public data class FixtureCase(
     val given: JsonObject,
     val expect: JsonObject,
 )
+
+/** A shared model in `contracts/` whose `v1/fixtures/` the Android domain runs. */
+public enum class FixtureModel(public val directory: String) {
+    GOAL_MODEL("goal-model"),
+    HIJRI_CALENDAR("hijri-calendar"),
+}
 
 /**
  * Runs shared `awrad-fixture/1` cases against a platform implementation.
@@ -26,16 +35,28 @@ public data class FixtureCase(
 public object FixtureRunner {
 
     private const val FORMAT = "awrad-fixture/1"
-    private const val MODEL_DIR = "contracts/goal-model"
-    private const val FIXTURES_DIR = "contracts/goal-model/v1/fixtures"
 
     /** Loads `contracts/goal-model/v1/fixtures/<rule>.json`, found by walking up from the working directory. */
-    public fun goalModelCases(rule: String): List<FixtureCase> =
-        load(goalModelFixturesDir().resolve("$rule.json"), rule)
+    public fun goalModelCases(rule: String): List<FixtureCase> = cases(FixtureModel.GOAL_MODEL, rule)
 
     /** Runs every case of the goal-model [rule]; returns how many ran. Fails if any case fails. */
     public fun runGoalModel(rule: String, evaluate: (given: JsonObject) -> JsonObject): Int =
-        run(goalModelCases(rule), evaluate).also { println("goal-model/$rule: $it of $it cases passed") }
+        run(FixtureModel.GOAL_MODEL, rule, evaluate)
+
+    /** Runs every case of the hijri-calendar [rule]; returns how many ran. Fails if any case fails. */
+    public fun runHijriCalendar(rule: String, evaluate: (given: JsonObject) -> JsonObject): Int =
+        run(FixtureModel.HIJRI_CALENDAR, rule, evaluate)
+
+    /** Loads `contracts/<model>/v1/fixtures/<rule>.json`. */
+    public fun cases(model: FixtureModel, rule: String): List<FixtureCase> =
+        load(fixturesDir(model).resolve("$rule.json"), rule)
+
+    /** The rule of every fixture file in [model]'s `v1/fixtures/`, so a guard can require a runner for each. */
+    public fun rules(model: FixtureModel): Set<String> = fixturesDir(model)
+        .listDirectoryEntries()
+        .filter { it.extension == "json" }
+        .map { it.nameWithoutExtension }
+        .toSet()
 
     /** Loads [file]; fails when it's missing, isn't [rule]'s `awrad-fixture/1` file, or has no cases. */
     public fun load(file: Path, rule: String): List<FixtureCase> {
@@ -75,12 +96,16 @@ public object FixtureRunner {
         return cases.size
     }
 
+    private fun run(model: FixtureModel, rule: String, evaluate: (given: JsonObject) -> JsonObject): Int =
+        run(cases(model, rule), evaluate).also { println("${model.directory}/$rule: $it of $it cases passed") }
+
     /** Gradle runs tests from the module directory, so walk up until the repository's contracts appear. */
-    private fun goalModelFixturesDir(): Path {
+    private fun fixturesDir(model: FixtureModel): Path {
+        val modelDir = "contracts/${model.directory}"
         val start = Paths.get(System.getProperty("user.dir")).toAbsolutePath()
-        val root = generateSequence(start) { it.parent }.firstOrNull { Files.isDirectory(it.resolve(MODEL_DIR)) }
-        checkNotNull(root) { "No $MODEL_DIR found above $start" }
-        return root.resolve(FIXTURES_DIR)
+        val root = generateSequence(start) { it.parent }.firstOrNull { Files.isDirectory(it.resolve(modelDir)) }
+        checkNotNull(root) { "No $modelDir found above $start" }
+        return root.resolve("$modelDir/v1/fixtures")
     }
 
     private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content

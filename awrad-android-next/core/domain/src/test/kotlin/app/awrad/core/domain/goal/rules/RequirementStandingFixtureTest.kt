@@ -4,6 +4,7 @@ import app.awrad.core.testing.fixtures.FixtureRunner
 import app.awrad.core.testing.fixtures.counts
 import app.awrad.core.testing.fixtures.date
 import app.awrad.core.testing.fixtures.goal
+import app.awrad.core.testing.fixtures.hijriCorrections
 import app.awrad.core.testing.fixtures.toFixtureName
 import app.awrad.core.testing.fixtures.toJson
 import app.awrad.core.testing.fixtures.weekStart
@@ -19,7 +20,9 @@ class RequirementStandingFixtureTest {
     @Test
     fun `every requirement_standing fixture case passes`() {
         FixtureRunner.runGoalModel("requirement_standing") { given ->
-            given.goal().standingOn(given.date("date"), given.counts(), given.weekStart()).toJson()
+            given.goal()
+                .standingOn(given.date("date"), given.counts(), given.weekStart(), given.hijriCorrections())
+                .toJson()
         }
     }
 

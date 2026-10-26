@@ -2,7 +2,7 @@ import Foundation
 
 // Rule: days per period (contracts/goal-model/v1/fixtures/days_per_period.json).
 
-/// How many qualifying days a week or month has, against the days it requires.
+/// How many qualifying days a week, month or Hijri month has, against the days it requires.
 public struct DaysPerPeriodStanding: Hashable, Sendable {
     public var status: RequirementStanding.Status
     /// The period containing the evaluated day, clipped to the active period.
@@ -28,18 +28,22 @@ extension Goal {
     /// A day qualifies when it's due and meets the daily target (with sessions, every session
     /// meets its own). A partial first or last period, pauses and the schedule all reduce the days
     /// required. Outside the active period, or in a window with no due days (fully paused, say),
-    /// it's `notDue`, with `day` itself as the window and no days.
+    /// it's `notDue`, with `day` itself as the window and no days; so is a Hijri month outside the
+    /// table. Hijri dates use `hijriCorrections`.
     public func daysPerPeriodStanding(
         on day: CalendarDay,
         counts: [CountEntry],
-        weekStart: WeekStart
+        weekStart: WeekStart,
+        hijriCorrections: HijriCorrections = .none
     ) -> DaysPerPeriodStanding? {
         guard case .daysPerPeriod(let period, _) = requirement else { return nil }
         let notDue = DaysPerPeriodStanding(status: .notDue, window: day...day, qualifyingDays: 0, requiredDays: 0)
         guard activePeriod.contains(day),
-            let window = activePeriod.clip(period.window(containing: day, weekStart: weekStart))
+            let whole = period.window(containing: day, weekStart: weekStart, hijriCorrections: hijriCorrections),
+            let window = activePeriod.clip(whole)
         else { return notDue }
-        let tally = daysPerPeriodTally(in: window, through: day, ledger: CountLedger(counts))
+        let tally = daysPerPeriodTally(
+            in: window, through: day, ledger: CountLedger(counts), hijriCorrections: hijriCorrections)
         guard tally.required > 0 else { return notDue }
         return DaysPerPeriodStanding(
             status: tally.qualifying >= tally.required ? .met : .notMet,
@@ -54,10 +58,11 @@ extension Goal {
     func daysPerPeriodTally(
         in window: ClosedRange<CalendarDay>,
         through: CalendarDay,
-        ledger: CountLedger
+        ledger: CountLedger,
+        hijriCorrections: HijriCorrections
     ) -> (qualifying: Int, required: Int) {
         guard case .daysPerPeriod(_, let days) = requirement else { return (0, 0) }
-        let due = dueDays(in: window)
+        let due = dueDays(in: window, hijriCorrections: hijriCorrections)
         let qualifying = due.filter { $0 <= through && meetsDailyTarget(on: $0, ledger: ledger) }.count
         return (qualifying, min(max(days, 0), due.count))
     }
