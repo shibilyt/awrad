@@ -116,6 +116,14 @@ struct PasswordRule: View {
     return RegisterForm(state: state) { _ in }
 }
 
+#Preview("Create account, dark") {
+    var state = AccountModel.State()
+    state.email = "amina@example.com"
+    state.feedback = .passwordTooShort
+    return RegisterForm(state: state) { _ in }
+        .preferredColorScheme(.dark)
+}
+
 #Preview("Verify email") {
     var state = AccountModel.State()
     state.email = "amina@example.com"

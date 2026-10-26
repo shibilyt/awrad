@@ -23,9 +23,9 @@ struct AccountOverview: View {
             .background(AwradColors.surface, in: RoundedRectangle(cornerRadius: 14))
             VStack(spacing: 0) {
                 SettingsRow(symbol: "laptopcomputer.and.iphone", title: Strings.devicesRow) { send(.devicesTapped) }
-                Divider().padding(.leading, 52)
+                Divider().overlay(AwradColors.outline).padding(.leading, 52)
                 SettingsRow(symbol: "key", title: Strings.changePasswordRow) { send(.changePasswordTapped) }
-                Divider().padding(.leading, 52)
+                Divider().overlay(AwradColors.outline).padding(.leading, 52)
                 SettingsRow(symbol: "envelope", title: Strings.changeEmailRow) { send(.changeEmailTapped) }
             }
             .background(AwradColors.surface, in: RoundedRectangle(cornerRadius: 14))
@@ -51,7 +51,7 @@ struct SettingsRow: View {
             HStack(spacing: 16) {
                 Image(systemName: symbol)
                     .frame(width: 20)
-                    .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.primary)
+                    .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.accent)
                 Text(title)
                     .font(AwradFonts.body())
                     .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.onSurface)
@@ -139,7 +139,7 @@ struct DeleteAccountForm: View {
                     .foregroundStyle(AwradColors.onPrimaryContainer)
             } icon: {
                 Image(systemName: "iphone")
-                    .foregroundStyle(AwradColors.primary)
+                    .foregroundStyle(AwradColors.onPrimaryContainer)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -199,4 +199,12 @@ struct DeleteAccountForm: View {
     var state = AccountModel.State()
     state.currentPassword = "a long passphrase"
     return DeleteAccountForm(state: state) { _ in }
+}
+
+#Preview("Delete account, dark") {
+    var state = AccountModel.State()
+    state.currentPassword = "a long passphrase"
+    state.feedback = .currentPasswordIncorrect
+    return DeleteAccountForm(state: state) { _ in }
+        .preferredColorScheme(.dark)
 }

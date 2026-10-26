@@ -27,16 +27,17 @@ Applies inside `awrad-ios-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
   - Its fake goes in `AwradTesting`.
   - An adapter's own seams (`HTTPTransport`, `SecureStore`) stay in `AwradData`, with their doubles in `AwradDataTests` (ADR 0004).
 - **API:** a new operation goes in `APIOperation.used` with hand-written wire types; `OpenAPIContractTests` must pass against `contracts/api/openapi.bundled.json`. Never attach a bearer token to a public operation.
-- **Colours and fonts** come only from `AwradColors` and `AwradFonts`. Never pick a colour by checking the colour scheme.
+- **Colours and fonts** come only from `AwradColors` and `AwradFonts`. Never pick a colour by checking the colour scheme. `AwradColors.swift` is generated from `contracts/design-tokens/v1/colors.json`: never edit it, and pick roles by their contract use (accent text is `accent`, never `primary`).
 - **SwiftData before the first release:** edit the one schema in place; `AwradStore.persistent()` recreates an incompatible dev store (ADR 0002). Never ship that fallback.
 - **Strings:** never inline user-facing text; use `LocalizedStringResource` keys from the module's catalog.
 
 ## Validation
 
 ```bash
-scripts/validate        # Xcode version, module rules, translations, Hijri table freshness, swift format, SwiftLint, package build + tests, app build
+scripts/validate        # Xcode version, module rules, translations, Hijri table and colour freshness, swift format, SwiftLint, package build + tests, app build
 swift format -i -r AwradKit/Sources AwradKit/Tests AwradKit/Package.swift AwradNext   # fix layout
 scripts/generate-hijri-table.py   # regenerate AwradDomain/UmmAlQuraTable.swift after contracts/hijri-calendar changes
+scripts/generate-colors.py        # regenerate AwradColors.swift and AccentColor after contracts/design-tokens changes
 ```
 
 Simulator runs are for UI checks. Domain, data and model logic is tested with `swift test` on macOS.
