@@ -14,3 +14,33 @@ msgstr ""
 
 msgid "reset_password.body"
 msgstr ""
+
+msgid "change_email.subject"
+msgstr ""
+
+msgid "change_email.body"
+msgstr ""
+
+msgid "email_taken.subject"
+msgstr ""
+
+msgid "email_taken.body"
+msgstr ""
+
+msgid "email_changed.subject"
+msgstr ""
+
+msgid "email_changed.body"
+msgstr ""
+
+msgid "password_changed.subject"
+msgstr ""
+
+msgid "password_changed.body"
+msgstr ""
+
+msgid "account_deleted.subject"
+msgstr ""
+
+msgid "account_deleted.body"
+msgstr ""

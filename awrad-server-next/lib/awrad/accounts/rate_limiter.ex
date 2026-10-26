@@ -28,8 +28,23 @@ defmodule Awrad.Accounts.RateLimiter do
     sign_in: {{30, @quarter}, {10, @quarter}},
     refresh: {{60, @quarter}, {60, @quarter}},
     # Fresh verification codes sent by a sign-in to an unverified account.
-    verification_email: {{5, @hour}, {5, @hour}}
+    verification_email: {{5, @hour}, {5, @hour}},
+    # Signed-in operations that check the current password (slice 2b): change
+    # password, request email change, delete account. Limited like sign-in.
+    password_check: {{30, @quarter}, {10, @quarter}},
+    # Emails to an address the caller chooses: few, so they can't bomb an inbox.
+    request_email_change: {{10, @hour}, {5, @hour}},
+    confirm_email_change: {{10, @hour}, {10, @hour}}
   }
+
+  # Actions limited per account by account ID (rather than by email): their
+  # windows identify the account and go when it's deleted.
+  @account_id_actions [
+    :verification_email,
+    :password_check,
+    :request_email_change,
+    :confirm_email_change
+  ]
 
   @type action ::
           :register
@@ -40,6 +55,9 @@ defmodule Awrad.Accounts.RateLimiter do
           | :sign_in
           | :refresh
           | :verification_email
+          | :password_check
+          | :request_email_change
+          | :confirm_email_change
 
   @primary_key {:id, :binary_id, autogenerate: true}
 
@@ -66,6 +84,22 @@ defmodule Awrad.Accounts.RateLimiter do
     end
   end
 
+  @doc """
+  Deletes the per-account windows keyed by the account ID `user_id` (on
+  account deletion). Windows keyed by IP or email stay until they're pruned:
+  they guard against abuse, not the account.
+  """
+  @spec delete_account_windows(Ecto.UUID.t()) :: :ok
+  def delete_account_windows(user_id) when is_binary(user_id) do
+    hashes =
+      for action <- @account_id_actions do
+        subject_hash("#{action}:account", user_id)
+      end
+
+    Repo.delete_all(from(r in __MODULE__, where: r.subject_hash in ^hashes))
+    :ok
+  end
+
   @doc "Deletes windows that ended before `now`. Returns how many."
   @spec prune(DateTime.t()) :: non_neg_integer()
   def prune(now) do
@@ -88,7 +122,7 @@ defmodule Awrad.Accounts.RateLimiter do
 
     row = %__MODULE__{
       scope: scope,
-      subject_hash: Secrets.hmac("rate_limit", [scope, ":", String.downcase(subject)]),
+      subject_hash: subject_hash(scope, subject),
       window_started_at: window_started_at,
       count: 1,
       updated_at: now
@@ -103,4 +137,7 @@ defmodule Awrad.Accounts.RateLimiter do
 
     if count <= limit, do: :ok, else: {:error, window - rem(unix, window)}
   end
+
+  defp subject_hash(scope, subject),
+    do: Secrets.hmac("rate_limit", [scope, ":", String.downcase(subject)])
 end

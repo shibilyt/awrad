@@ -1,7 +1,7 @@
 defmodule AwradWeb.AccountJSON do
   @moduledoc """
   The account schemas of `contracts/api/openapi.yaml` (`Account`,
-  `DeviceSession`, `DeviceSessionGrant`), mapped field by field so no
+  `AccountSession`, `DeviceSession`, `DeviceSessionGrant`), mapped field by field so no
   internal field (password hash, installation hash, revocation) leaks.
   """
 
@@ -24,6 +24,20 @@ defmodule AwradWeb.AccountJSON do
       last_seen_at: instant(session.last_seen_at),
       idle_expires_at: instant(session.idle_expires_at),
       absolute_expires_at: instant(session.absolute_expires_at)
+    }
+  end
+
+  @doc "`AccountSession`: one entry of the account's session list."
+  @spec account_session(Awrad.Accounts.account_session()) :: map()
+  def account_session(%{kind: kind, platform: platform} = item) do
+    %{
+      id: item.id,
+      kind: Atom.to_string(kind),
+      name: item.name,
+      platform: Atom.to_string(platform),
+      created_at: instant(item.created_at),
+      last_seen_at: instant(item.last_seen_at),
+      is_current: item.is_current
     }
   end
 

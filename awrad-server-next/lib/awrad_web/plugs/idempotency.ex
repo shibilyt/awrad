@@ -11,6 +11,9 @@ defmodule AwradWeb.Plugs.Idempotency do
       (`mode: :replay`), or runs the operation again (`mode: :rerun`, for
       browser sign-in, whose result is a cookie that can't be replayed).
     * The same key with a different body is `422 idempotency_key_reused`.
+    * For signed-in operations (after `AccountAuth`), results are per account:
+      another account's key never matches, and an account's results are
+      deleted with it.
 
   `refresh_device_session` doesn't use this plug: it requires the key and
   gives it stricter, 60-second semantics (`Awrad.Accounts.DeviceSessions`).
@@ -50,11 +53,12 @@ defmodule AwradWeb.Plugs.Idempotency do
 
   defp handle(conn, key, mode) do
     scope = conn.method <> " " <> conn.request_path
+    user_id = user_id(conn)
     fingerprint = Idempotency.fingerprint(conn.body_params)
 
-    case Idempotency.lookup(scope, key) do
+    case Idempotency.lookup(scope, key, user_id) do
       nil ->
-        register_before_send(conn, &store(&1, scope, key, fingerprint, mode))
+        register_before_send(conn, &store(&1, {scope, key, user_id}, fingerprint, mode))
 
       %Record{fingerprint: ^fingerprint} = record ->
         if mode == :replay, do: replay(conn, record), else: conn
@@ -64,7 +68,7 @@ defmodule AwradWeb.Plugs.Idempotency do
     end
   end
 
-  defp store(%Plug.Conn{status: status} = conn, scope, key, fingerprint, mode)
+  defp store(%Plug.Conn{status: status} = conn, for_key, fingerprint, mode)
        when status in 200..299 do
     {content_type, body} =
       case mode do
@@ -72,11 +76,20 @@ defmodule AwradWeb.Plugs.Idempotency do
         :rerun -> {nil, nil}
       end
 
-    :ok = Idempotency.store(scope, key, fingerprint, status, content_type, body)
+    :ok = Idempotency.store(for_key, fingerprint, status, content_type, body)
     conn
   end
 
-  defp store(conn, _scope, _key, _fingerprint, _mode), do: conn
+  defp store(conn, _for_key, _fingerprint, _mode), do: conn
+
+  # Signed-in operations keep their results per account; this plug then runs
+  # after authentication.
+  defp user_id(conn) do
+    case conn.assigns[:current_scope] do
+      %{user: %{id: id}} -> id
+      _public -> nil
+    end
+  end
 
   # The body is this server's own stored JSON response, sent with its stored
   # content type, never request input reflected back.
