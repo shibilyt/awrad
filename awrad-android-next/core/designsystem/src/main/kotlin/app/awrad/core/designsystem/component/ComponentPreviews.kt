@@ -13,7 +13,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import app.awrad.core.designsystem.theme.AwradTheme
 
-/* Every shared component in the light and the dark theme. Preview text isn't user-facing. */
+/*
+ * Every shared component in the light and the dark theme, on the `background` and inside an `AwradCard` (fields
+ * and secondary buttons fill the other way there). Preview text isn't user-facing.
+ */
 
 @Preview(name = "light")
 @Preview(name = "dark", uiMode = Configuration.UI_MODE_NIGHT_YES)
@@ -40,10 +43,23 @@ private fun ComponentsPreview() {
                 )
                 AwradPrimaryButton(text = "Continue", onClick = {})
                 AwradSecondaryButton(text = "Sign out", onClick = {})
+                AwradSecondaryButton(text = "Retry", onClick = {}, enabled = false)
                 AwradDestructiveButton(text = "Delete account", onClick = {})
                 AwradTextButton(text = "Forgot password?", onClick = {})
                 AwradTextButton(text = "Remove", onClick = {}, isDestructive = true)
                 AwradCircularProgress()
+                AwradCard {
+                    Text(text = "On a card", style = MaterialTheme.typography.titleMedium)
+                    AwradTextField(value = "", onValueChange = {}, label = "Code")
+                    AwradTextField(
+                        value = "12",
+                        onValueChange = {},
+                        label = "Code",
+                        isError = true,
+                        supportingText = "Enter the 6-digit code",
+                    )
+                    AwradSecondaryButton(text = "Send a new code", onClick = {})
+                }
             }
         }
     }

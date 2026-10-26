@@ -1,6 +1,5 @@
 package app.awrad.core.designsystem.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -10,7 +9,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -21,12 +19,13 @@ import androidx.compose.ui.unit.dp
 import app.awrad.core.designsystem.theme.AwradTheme
 
 /*
- * Buttons by role. Material's outlined and text buttons draw their label in `primary`, which is too dark to read
- * on a dark background, and their border in the decorative `outline`; these use `onSurface`, `accent`,
- * `outlineStrong` and `error` instead.
+ * Buttons by role, all filled or text-only: the design has no outlines. Material's outlined and text buttons
+ * draw their label in `primary`, which is too dark to read on a dark background, and a border; these use
+ * `onSurface`, `accent` and `error` instead.
  */
 
 private val ButtonHeight = 56.dp
+private const val DISABLED_CONTENT_ALPHA = 0.38f
 
 /** The one full-width call to action per screen: a `primary` fill. */
 @Composable
@@ -53,7 +52,10 @@ public fun AwradPrimaryButton(
     }
 }
 
-/** A full-width secondary action, the same size as the primary one: an `outlineStrong` border. */
+/**
+ * A full-width secondary action, the same size as the primary one: filled like a field ([AwradTheme.fill],
+ * `surface` on a `background`, `background` inside an `AwradCard`), `onSurface` text, no border.
+ */
 @Composable
 public fun AwradSecondaryButton(
     text: String,
@@ -62,15 +64,20 @@ public fun AwradSecondaryButton(
     enabled: Boolean = true,
 ) {
     val colors = AwradTheme.colors
-    OutlinedButton(
+    val fill = AwradTheme.fill
+    Button(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
             .height(ButtonHeight),
         shape = MaterialTheme.shapes.medium,
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.onSurface),
-        border = BorderStroke(width = 1.dp, color = if (enabled) colors.outlineStrong else colors.outline),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = fill,
+            contentColor = colors.onSurface,
+            disabledContainerColor = fill,
+            disabledContentColor = colors.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA),
+        ),
     ) {
         Text(text = text, style = MaterialTheme.typography.titleMedium)
     }
