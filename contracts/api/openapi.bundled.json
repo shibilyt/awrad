@@ -971,7 +971,7 @@
       "EmailCode": {
         "type": "string",
         "pattern": "^[0-9]{6}$",
-        "description": "A 6-digit emailed code, ASCII digits only. Clients normalise what the user typed first (contracts/account-model/v1 email_code_input). Valid for 15 minutes and 5 tries.",
+        "description": "A 6-digit emailed code, ASCII digits only. Clients normalise what the user typed first (contracts/account-model/v1 email_code_input). Valid for 15 minutes and 5 tries. A malformed code is `validation_failed` with field code `code_invalid`; clients never send one.",
         "examples": [
           "482913"
         ]
@@ -1239,7 +1239,7 @@
         }
       },
       "CodeSent": {
-        "description": "Accepted. If the email qualifies, a code is on its way. The response is the same either way, so it doesn't reveal whether the email has an account.",
+        "description": "Accepted. If the email qualifies, a code is on its way. The response is the same either way, so it doesn't reveal whether the email has an account. Clients offer \"send a new code\" 60 seconds after this response; a `429` with `Retry-After` overrides that.",
         "headers": {
           "Cache-Control": {
             "$ref": "#/components/headers/CacheControl"
