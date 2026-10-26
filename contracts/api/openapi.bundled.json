@@ -536,7 +536,7 @@
           "account_settings"
         ],
         "summary": "Sign out one device or browser",
-        "description": "Ends that session; its next request is `401`. Revoking the caller's own session is the same as signing out. Another account's session, or one already ended, is `404`.",
+        "description": "Ends that session; its next request is `401`. Revoking the caller's own session is the same as signing out. Another account's session, one already ended, or an id that isn't a UUID is `404`.",
         "security": [
           {
             "bearerAuth": []
@@ -961,7 +961,7 @@
           "account_settings"
         ],
         "summary": "Delete the account now",
-        "description": "Needs the current password. Immediately and permanently deletes the account and everything the server keeps for it (sessions, settings, synced data), and ends every session; a browser's cookies are cleared. Practice data stored on devices isn't touched: the apps keep working offline. The address gets a confirmation email. There is no undo.",
+        "description": "Needs the current password. Immediately and permanently deletes the account and everything the server keeps for it (sessions, settings, synced data), and ends every session; a browser's cookies are cleared. Practice data stored on devices isn't touched: the apps keep working offline. The address gets a confirmation email. There is no undo. A retry after a lost `204` gets `401`, because the account no longer exists: clients treat `401` after a delete request as done.",
         "security": [
           {
             "bearerAuth": []
