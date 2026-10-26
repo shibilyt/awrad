@@ -61,6 +61,11 @@ defmodule Awrad.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
 
+      # Accounts (slice 2a): password hashing, mobile access tokens (ADR 0005), email text
+      {:argon2_elixir, "~> 4.1"},
+      {:joken, "~> 2.6"},
+      {:gettext, "~> 1.0"},
+
       # IANA time zone database, compiled in (ADR 0003). Used by the goal rules.
       {:tz, "~> 0.28.4"},
 
@@ -93,7 +98,8 @@ defmodule Awrad.MixProject do
         "deps.unlock --check-unused",
         "format --check-formatted",
         "credo --strict",
-        "sobelow --config --exit",
+        # --skip honours `# sobelow_skip` annotations; each one says why it's a false positive.
+        "sobelow --config --skip --exit",
         "dialyzer --format short",
         "test --warnings-as-errors"
       ],

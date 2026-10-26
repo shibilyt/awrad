@@ -8,3 +8,5 @@ mix setup                    # deps + create/migrate awrad_next_dev
 mix phx.server               # http://localhost:4000
 mix validate                 # the validation command CI runs
 ```
+
+In development, emails (verification and password-reset codes) aren't sent: read them at http://localhost:4000/dev/mailbox, or as JSON at `/dev/mailbox/json` (`../COMMANDS.md`).

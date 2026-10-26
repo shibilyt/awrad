@@ -31,6 +31,16 @@ config :awrad, AwradWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :awrad, Awrad.Mailer, adapter: Swoosh.Adapters.Local
 
+# Account emails (slice 2a). Production sets AWRAD_MAIL_FROM in runtime.exs.
+config :awrad, Awrad.Accounts.UserNotifier, from: {"Awrad", "no-reply@awrad.localhost"}
+
+# Removes expired idempotency results, rate-limit windows and email codes hourly.
+config :awrad, Awrad.Pruner, enabled: true
+
+# Browser cookies get the Secure flag in production only (prod.exs), so plain-http
+# localhost works in development (ADR-2026-10-15).
+config :awrad, :secure_cookies, false
+
 # Configure Elixir's Logger
 config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
@@ -38,6 +48,10 @@ config :logger, :default_formatter,
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
+
+# Never log credentials: passwords, emailed codes, refresh and CSRF tokens. Phoenix
+# filters any parameter whose name contains one of these.
+config :phoenix, :filter_parameters, ["password", "code", "token"]
 
 # IANA time zones for the goal rules (ADR 0003). The data is compiled into the
 # `tz` dependency; it's updated by bumping `tz`, never at runtime, so

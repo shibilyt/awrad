@@ -1,0 +1,16 @@
+# Account emails (Awrad.Accounts.UserNotifier). Keys, not English source text:
+# the English is in en/LC_MESSAGES/emails.po. Keep en, ar and ml together.
+msgid ""
+msgstr ""
+
+msgid "verify_email.subject"
+msgstr ""
+
+msgid "verify_email.body"
+msgstr ""
+
+msgid "reset_password.subject"
+msgstr ""
+
+msgid "reset_password.body"
+msgstr ""

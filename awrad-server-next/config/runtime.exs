@@ -52,6 +52,33 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
+  # Account secrets (Awrad.Secrets): three distinct random values of at least 32 bytes,
+  # e.g. from `mix phx.gen.secret`.
+  # Rotating access_token_secret invalidates every access token (clients refresh);
+  # rotating hmac_pepper orphans installation hashes, rate-limit windows and email codes;
+  # rotating encryption_secret drops stored idempotent results and refresh retries.
+  account_secret = fn name ->
+    case System.get_env(name) do
+      value when is_binary(value) and byte_size(value) >= 32 ->
+        value
+
+      _missing_or_short ->
+        raise """
+        environment variable #{name} is missing or shorter than 32 bytes.
+        You can generate one by calling: mix phx.gen.secret
+        """
+    end
+  end
+
+  config :awrad, Awrad.Secrets,
+    access_token_secret: account_secret.("AWRAD_ACCESS_TOKEN_SECRET"),
+    hmac_pepper: account_secret.("AWRAD_HMAC_PEPPER"),
+    encryption_secret: account_secret.("AWRAD_ENCRYPTION_SECRET")
+
+  if mail_from = System.get_env("AWRAD_MAIL_FROM") do
+    config :awrad, Awrad.Accounts.UserNotifier, from: {"Awrad", mail_from}
+  end
+
   host = System.get_env("PHX_HOST") || "example.com"
 
   config :awrad, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
