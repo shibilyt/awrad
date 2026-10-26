@@ -54,25 +54,41 @@ struct GoalShape: Decodable {
     /// Fixtures carry no identity, so every fixture goal gets the same placeholder one.
     static let fixtureID = AwradID(UUID(uuid: (0, 0, 0, 0, 0, 0, 0x40, 0, 0x80, 0, 0, 0, 0, 0, 0, 0)))
 
+    /// A valid goal (the schema's `goal`, which rule fixtures use). An invalid one fails the case.
     func goal() throws -> Goal {
-        Goal(
-            id: Self.fixtureID,
-            dhikrCatalogKey: "fixture",
-            schedule: try schedule.domain(),
-            activePeriod: ActivePeriod(
-                start: try FixtureValue.day(activePeriod.startDate),
-                end: try activePeriod.endDate.map(FixtureValue.day),
-                durationDays: activePeriod.durationDays
-            ),
-            paused: try paused.map {
-                PausedRange(from: try FixtureValue.day($0.from), to: try $0.to.map(FixtureValue.day))
-            },
-            countPolicy: try countPolicy.domain(),
-            sessions: try sessions.map { GoalSession(id: $0.id, countPolicy: try $0.countPolicy.domain()) },
-            requirement: try requirement.domain(),
-            completion: try FixtureValue.require(
-                CompletionPolicy(rawValue: FixtureValue.camelCase(completion)), "completion \(completion)")
+        try construct().get()
+    }
+
+    /// The goal through `Goal`'s validating initializer; `.failure` when it's a structurally
+    /// sound `goal_shape` that isn't a valid goal. Throws only when the shape can't be read.
+    func construct() throws -> Result<Goal, GoalValidationError> {
+        let schedule = try schedule.domain()
+        let activePeriod = ActivePeriod(
+            start: try FixtureValue.day(activePeriod.startDate),
+            end: try activePeriod.endDate.map(FixtureValue.day),
+            durationDays: activePeriod.durationDays
         )
+        let paused = try paused.map {
+            PausedRange(from: try FixtureValue.day($0.from), to: try $0.to.map(FixtureValue.day))
+        }
+        let countPolicy = try countPolicy.domain()
+        let sessions = try sessions.map { GoalSession(id: $0.id, countPolicy: try $0.countPolicy.domain()) }
+        let requirement = try requirement.domain()
+        let completion = try FixtureValue.require(
+            CompletionPolicy(rawValue: FixtureValue.camelCase(completion)), "completion \(completion)")
+        return Result { () throws(GoalValidationError) in
+            try Goal(
+                id: Self.fixtureID,
+                dhikrCatalogKey: "fixture",
+                schedule: schedule,
+                activePeriod: activePeriod,
+                paused: paused,
+                countPolicy: countPolicy,
+                sessions: sessions,
+                requirement: requirement,
+                completion: completion
+            )
+        }
     }
 }
 
