@@ -227,3 +227,14 @@ Use this format:
   - Phase 0 complete.
 - Evidence: `docs/slice-playbook.md`, `docs/slices/_template.md`, `AGENTS.md`
 - Commit: see git log
+
+### 2026-10-26 — Slice 1a: goal rules as shared fixtures
+
+- Area: Cross-project
+- Change:
+  - The goal rules (effective practice day, due, requirement standing, days per period, completion, streak, validity) are 125 `awrad-fixture/1` cases in `contracts/goal-model/v1/`. Android (`:core:domain`), iOS (`AwradDomain`) and the server (`Awrad.Goals.Rules`) all pass them.
+  - Invalid goals can't be constructed on any platform. The error codes are `target_required`, `session_target_required` and `streak_threshold_value_required`.
+  - Comparing the three implementations found unspecified choices. Each was settled as a new case (see the brief's reconciliation section).
+  - Server `plug_crypto` moved to 2.2.1 (CVE-2026-105963).
+- Evidence: `contracts/goal-model/v1/`, `docs/slices/01-domain-foundation.md`
+- Commit: see git log

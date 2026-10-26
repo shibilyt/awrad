@@ -1,6 +1,6 @@
 # Slice 01: Domain foundation (goal rules)
 
-Status: In progress. Step 3 fixtures accepted 2026-10-25. Next: step 5, platform implementations
+Status: Done 2026-10-26. 125 fixture cases in 7 files, passed by Android, iOS and the server
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 1
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 
@@ -143,15 +143,26 @@ No API operations in this slice. Slice 3 adds a goal-standing field to the goal 
 
 | Project | Work | Validation | Status |
 |---|---|---|---|
-| awrad-android-next | Goal model and rules in `:core:domain`; fixture runner in `:core:testing`, run by `:core:domain:test` | Gradle validation | ☐ |
-| awrad-ios-next | The same in `AwradDomain`; fixture runner in `AwradTesting`, run by `swift test` | `scripts/validate` | ☐ |
-| awrad-server-next | An `Awrad.Goals.Rules` module (pure functions); fixture runner in ExUnit | `mix validate` | ☐ |
+| awrad-android-next | Goal model and rules in `:core:domain`; fixture runner in `:core:testing`, run by `:core:domain:test` | Gradle validation | ☑ 2026-10-26 |
+| awrad-ios-next | The same in `AwradDomain`; fixture runner in `AwradTesting`, run by `swift test` | `scripts/validate` | ☑ 2026-10-26 |
+| awrad-server-next | An `Awrad.Goals.Rules` module (pure functions); fixture runner in ExUnit | `mix validate` | ☑ 2026-10-26 |
 | awrad-web-next | Nothing in this slice: it displays the server's goal standing from slice 3 | – | n/a |
 
 ## Integration evidence (step 6)
 
 No UI in this slice. The evidence is every implementing platform passing the same fixture files in CI, with the run linked here.
 
+- Local, 2026-10-26: all 125 cases pass on Android (`:core:domain:test`), iOS (`swift test`) and the server (`mix test`), and every project's full validation passes on the merged branch.
+- CI on `main`: see the `ci_ok` run for the merge of `slice-01/rules`.
+
 ## Definition of done
 
-Copy the checklist from the playbook and tick it here before closing.
+- [x] In-scope items built on every platform the slice covers (web excluded: it shows the server's standing from slice 3).
+- [x] Every shared rule has fixture cases, and Android, iOS and the server run them.
+- [x] No API operations in this slice, so no spec examples or round-trip tests.
+- [x] Each project's validation passes locally; `ci_ok` on `main` after the merge.
+- [x] No UI in this slice, so no en/ar run; the evidence is the fixture runs above.
+- [x] No user-facing text in this slice.
+- [x] Decisions recorded: this brief, server ADR 0003 (`tz`), and the reconciliation above.
+- [x] `CONTEXT.md` and each project's `ARCHITECTURE.md` updated.
+- [x] Nothing changed in the frozen projects.
