@@ -9,8 +9,12 @@ struct SignInForm: View {
 
     var body: some View {
         AccountForm(title: Strings.signInTitle, message: Strings.signInSubtitle, feedback: state.feedback) {
-            AccountField(kind: .email, label: Strings.emailField, text: state.email) { send(.emailChanged($0)) }
-            AccountField(kind: .password, label: Strings.passwordField, text: state.password) {
+            AccountField(kind: .email, label: Strings.emailField, text: state.email, isInError: state.isInError(.email))
+            { send(.emailChanged($0)) }
+            AccountField(
+                kind: .password, label: Strings.passwordField, text: state.password,
+                isInError: state.isInError(.password)
+            ) {
                 send(.passwordChanged($0))
             }
         } actions: {
@@ -31,8 +35,12 @@ struct RegisterForm: View {
 
     var body: some View {
         AccountForm(title: Strings.registerTitle, feedback: state.feedback) {
-            AccountField(kind: .email, label: Strings.emailField, text: state.email) { send(.emailChanged($0)) }
-            AccountField(kind: .newPassword, label: Strings.passwordField, text: state.password) {
+            AccountField(kind: .email, label: Strings.emailField, text: state.email, isInError: state.isInError(.email))
+            { send(.emailChanged($0)) }
+            AccountField(
+                kind: .newPassword, label: Strings.passwordField, text: state.password,
+                isInError: state.isInError(.password)
+            ) {
                 send(.passwordChanged($0))
             }
             PasswordRule()
@@ -50,7 +58,9 @@ struct VerifyEmailForm: View {
         AccountForm(
             title: Strings.verifyTitle, message: Strings.verifyBody, address: state.email, feedback: state.feedback
         ) {
-            AccountField(kind: .code, label: Strings.codeField, text: state.code) { send(.codeChanged($0)) }
+            AccountField(kind: .code, label: Strings.codeField, text: state.code, isInError: state.isInError(.code)) {
+                send(.codeChanged($0))
+            }
         } actions: {
             AwradPrimaryButton(Strings.verifyButton, isEnabled: !state.isWorking) { send(.verifyTapped) }
             ResendCodeButton(availableAt: state.resendAvailableAt, isWorking: state.isWorking) {
@@ -66,7 +76,8 @@ struct ForgotPasswordForm: View {
 
     var body: some View {
         AccountForm(title: Strings.forgotTitle, message: Strings.forgotBody, feedback: state.feedback) {
-            AccountField(kind: .email, label: Strings.emailField, text: state.email) { send(.emailChanged($0)) }
+            AccountField(kind: .email, label: Strings.emailField, text: state.email, isInError: state.isInError(.email))
+            { send(.emailChanged($0)) }
         } actions: {
             AwradPrimaryButton(Strings.forgotButton, isEnabled: !state.isWorking) { send(.sendResetCodeTapped) }
         }
@@ -81,8 +92,13 @@ struct ResetPasswordForm: View {
         AccountForm(
             title: Strings.resetTitle, message: Strings.resetBody, address: state.email, feedback: state.feedback
         ) {
-            AccountField(kind: .code, label: Strings.codeField, text: state.code) { send(.codeChanged($0)) }
-            AccountField(kind: .newPassword, label: Strings.newPasswordField, text: state.newPassword) {
+            AccountField(kind: .code, label: Strings.codeField, text: state.code, isInError: state.isInError(.code)) {
+                send(.codeChanged($0))
+            }
+            AccountField(
+                kind: .newPassword, label: Strings.newPasswordField, text: state.newPassword,
+                isInError: state.isInError(.password)
+            ) {
                 send(.newPasswordChanged($0))
             }
             PasswordRule()
@@ -107,6 +123,14 @@ struct PasswordRule: View {
 
 #Preview("Sign in") {
     SignInForm(state: .init()) { _ in }
+}
+
+#Preview("Sign in, dark") {
+    var state = AccountModel.State()
+    state.email = "amina@example"
+    state.feedback = .emailInvalid
+    return SignInForm(state: state) { _ in }
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Create account") {

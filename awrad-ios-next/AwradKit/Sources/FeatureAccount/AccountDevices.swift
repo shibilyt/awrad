@@ -18,15 +18,14 @@ struct DevicesView: View {
             case .unavailable:
                 AccountLinkButton(title: DeviceStrings.retry, isEnabled: !state.isWorking) { send(.devicesAppeared) }
             case .loaded(let sessions):
-                VStack(spacing: 0) {
+                // Rows in a card are separated by spacing, not divider lines.
+                VStack(spacing: 8) {
                     ForEach(sessions) { session in
-                        if session.id != sessions.first?.id {
-                            Divider().overlay(AwradColors.outline).padding(.leading, 52)
-                        }
                         SessionRow(session: session, isEnabled: !state.isWorking) { send(.revokeTapped(session)) }
                     }
                 }
-                .background(AwradColors.surface, in: RoundedRectangle(cornerRadius: 14))
+                .padding(.vertical, 4)
+                .awradCard()
             }
         } actions: {
             if case .loaded(let sessions) = state.sessions, sessions.contains(where: { !$0.isCurrent }) {
