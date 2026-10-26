@@ -38,10 +38,31 @@ extension AccountModel {
 
         public var isNotice: Bool { Self.notices.contains(self) }
 
+        /// The input the error is about, whose field shows an error border next to the message.
+        /// `nil` for notices and for errors no single field caused (wrong credentials, network).
+        public var field: Field? {
+            switch self {
+            case .emailInvalid, .emailUnchanged, .emailTaken: .email
+            case .passwordRequired, .passwordTooShort, .passwordTooLong, .passwordTooCommon: .password
+            case .currentPasswordRequired, .currentPasswordIncorrect: .currentPassword
+            case .codeIncomplete, .verificationCodeInvalid, .resetCodeInvalid, .emailChangeCodeInvalid: .code
+            default: nil
+            }
+        }
+
         private static let notices: [Feedback] = [
             .codeSent, .verificationNeeded, .passwordChanged, .emailChanged, .sessionSignedOut,
             .otherSessionsSignedOut, .accountDeleted,
         ]
+    }
+
+    /// A screen's inputs, by role: `email` is the new email while changing it, and `password` the
+    /// one typed to sign in or chosen as the new one.
+    public enum Field: Sendable {
+        case email
+        case password
+        case currentPassword
+        case code
     }
 
     static func feedback(for error: AccountError) -> Feedback {
