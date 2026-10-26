@@ -36,9 +36,25 @@ defmodule Awrad.Fixtures.GoalModel do
 
   # JSON to domain
 
+  @doc """
+  A schema `goal` (valid) as a `Goal`, built through `Goal.new/1`. Rule
+  fixtures only contain valid goals, so an invalid one raises.
+  """
   @spec goal(map()) :: Goal.t()
   def goal(json) do
-    %Goal{
+    case json |> goal_shape() |> Goal.new() do
+      {:ok, goal} -> goal
+      {:error, errors} -> raise ArgumentError, "invalid fixture goal: #{inspect(errors)}"
+    end
+  end
+
+  @doc """
+  A schema `goal_shape` as `Goal.new/1` attributes, without validating it:
+  for `goal_validity.json`, whose goals may be invalid.
+  """
+  @spec goal_shape(map()) :: Goal.attrs()
+  def goal_shape(json) do
+    %{
       schedule: schedule(json["schedule"]),
       active_period: active_period(json["active_period"]),
       paused: Enum.map(json["paused"], &paused_range/1),
@@ -149,6 +165,13 @@ defmodule Awrad.Fixtures.GoalModel do
       "required_days" => standing.required_days
     }
   end
+
+  @doc "A `Goal.new/1` result as the `goal_validity` expect shape."
+  @spec encode_validity({:ok, Goal.t()} | {:error, [Goal.error()]}) :: map()
+  def encode_validity({:ok, %Goal{}}), do: %{"valid" => true, "errors" => []}
+
+  def encode_validity({:error, errors}),
+    do: %{"valid" => false, "errors" => Enum.map(errors, &Atom.to_string/1)}
 
   defp session_standing(%SessionStanding{} = session) do
     %{

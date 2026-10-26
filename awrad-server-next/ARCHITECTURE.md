@@ -32,11 +32,12 @@ Boundary checks these rules at compile time, and `mix validate` fails on any vio
 
 `Awrad.Goals` evaluates goals for the web (slice 1 brief, decision 1): pure functions over plain structs, with no Ecto, database or HTTP. The structs mirror `contracts/goal-model/v1/goal-model.schema.json`, using `Date`, `DateTime` and integers.
 - **`Awrad.Goals.Rules`** is the only entry point. It has one function per rule: `effective_practice_day/4`, `due?/2`, `standing/4`, `days_per_period/4`, `completed?/3` and `streak/4`.
+- **Invalid goals can't be built.** `Awrad.Goals.Goal.new/1` is the only constructor: it returns `{:ok, goal}`, or `{:error, codes}` with the `goal_validity` error codes sorted alphabetically (`session_target_required`, `streak_threshold_value_required`, `target_required`). The rules assume a valid goal. There's no Ecto goal schema yet; when one arrives, its changeset applies the same check with the same codes.
 - **Each rule has one home** under `lib/awrad/goals/rules/`: `EffectiveDay`, `Schedule`, `Requirement`, `DaysPerPeriod`, `Completion` and `Streak`. Two internal helpers, `Periods` (active-period bounds, week and month windows) and `Counts` (count index, thresholds), are shared. None of these modules is exported.
 - **Time zones** come from the compiled-in `tz` database, with no runtime updates (ADR 0003).
 - **The fixtures are the spec.**
   - `test/support/fixtures.ex` (`Awrad.Fixtures.cases!/2`) loads `contracts/<model>/fixtures/<rule>.json`. It raises when the file is missing, is for another rule, or has no cases.
-  - `test/support/fixtures/goal_model.ex` maps the fixture JSON to the structs and the results back.
+  - `test/support/fixtures/goal_model.ex` maps the fixture JSON to the structs and the results back. Rule fixtures' goals go through `Goal.new/1` (an invalid one raises); only `goal_validity` takes the raw `goal_shape`.
   - `test/awrad/goals/rules/*_test.exs` generate one test per case, named by the case ID.
 
 ## Request path
