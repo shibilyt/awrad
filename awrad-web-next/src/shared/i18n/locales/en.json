@@ -4,12 +4,96 @@
     "title": "As-salamu alaykum",
     "language": "Language"
   },
-  "session": {
+  "home": {
     "checking": "Checking your session…",
-    "signed_in": "You're signed in.",
-    "signed_out": "You're not signed in. Sign-in arrives with the accounts slice.",
+    "signedIn": "Signed in as",
+    "signedOut": "Sign in to use your Awrad account on the web. Everything in the app also works without one.",
     "unavailable": "Couldn't reach Awrad. Try again in a moment.",
-    "retry": "Try again"
+    "retry": "Try again",
+    "signIn": "Sign in",
+    "register": "Create an account",
+    "openAccount": "Your account"
+  },
+  "account": {
+    "backToSignIn": "Back to sign in",
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "New password",
+      "code": "6-digit code",
+      "rememberMe": "Keep me signed in on this browser"
+    },
+    "hints": {
+      "password": "At least {{min}} characters. A few words you'll remember work well.",
+      "code": "From the latest email. It lasts 15 minutes."
+    },
+    "code": {
+      "sentTo": "We sent a 6-digit code to:",
+      "resend": "Send a new code",
+      "resendIn": "You can ask for a new code in {{seconds}} s.",
+      "resent": "A new code is on its way. Use the code in the latest email."
+    },
+    "signIn": {
+      "title": "Sign in",
+      "submit": "Sign in",
+      "forgot": "Forgot your password?",
+      "noAccount": "New to Awrad?",
+      "register": "Create an account",
+      "notice": {
+        "verified": "Your email is verified. Sign in to continue.",
+        "password_reset": "Your password is changed. Sign in with the new one."
+      }
+    },
+    "register": {
+      "title": "Create an account",
+      "intro": "We'll email you a code to verify your address before you can sign in.",
+      "submit": "Create account",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "verify": {
+      "title": "Verify your email",
+      "enterEmail": "Enter your email and the 6-digit code we sent to it.",
+      "submit": "Verify"
+    },
+    "forgot": {
+      "title": "Reset your password",
+      "intro": "Enter your account's email, and we'll send a 6-digit code to reset your password.",
+      "submit": "Send code"
+    },
+    "reset": {
+      "title": "Choose a new password",
+      "enterEmail": "Enter your email and the 6-digit code we sent to it.",
+      "signsOutEverywhere": "Changing your password signs you out on every device.",
+      "submit": "Set new password"
+    },
+    "page": {
+      "title": "Your account",
+      "loading": "Loading your account…",
+      "retry": "Try again",
+      "signOut": "Sign out"
+    },
+    "problems": {
+      "validation_failed": "Check the highlighted fields.",
+      "invalid_credentials": "That email and password don't match an account.",
+      "email_verification_required": "Verify your email before signing in.",
+      "verification_code_invalid": "That code is wrong or has expired. Use the code in the latest email, or ask for a new one.",
+      "reset_code_invalid": "That code is wrong or has expired. Use the code in the latest email, or ask for a new one.",
+      "csrf_token_invalid": "Your session changed in another tab. Reload the page and try again.",
+      "unauthenticated": "You're signed out. Sign in again.",
+      "rate_limited": "Too many attempts. Wait a little and try again.",
+      "unexpected": "Something went wrong. Try again.",
+      "network": "Couldn't reach Awrad. Check your connection and try again."
+    },
+    "fieldErrors": {
+      "email_invalid": "Enter a valid email address.",
+      "password_required": "Enter your password.",
+      "password_too_short": "Use at least 12 characters.",
+      "password_too_long": "Use at most 128 characters.",
+      "password_too_common": "This password is too common. Choose a less predictable one.",
+      "code_invalid": "Enter the 6-digit code from the email.",
+      "invalid": "Check this field."
+    }
   },
   "language": {
     "en": "English",
