@@ -1,6 +1,6 @@
 # Slice 02: Accounts
 
-Status: 2a and 2b done 2026-10-26 (2b pending CI on `main`)
+Status: Done 2026-10-26 (2a and 2b), CI green on `main`
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 2
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 Decided already: ADR-2026-07-12 (verified accounts, device sessions, rotating refresh tokens), ADR-2026-10-15 (browser cookie sessions), `contracts/api/STYLE.md` §7, §11, §12
@@ -252,7 +252,7 @@ Follow-ups, not blocking:
 - [x] Built on the server, Android, iOS and the web.
 - [x] No new shared rules; forms reuse the 2a fixtures.
 - [x] Every operation has spec examples, `assert_conforms` server tests, and client round-trip tests or spec mocks.
-- [ ] `ci_ok` green on `main` (after the push).
+- [x] `ci_ok` green on `main`: every job passed ([run 40355313600](https://github.com/shibilyt/awrad/actions/runs/40355313600)).
 - [x] Main flows checked across three running clients in English, with Arabic on Android.
 - [x] All text in en, ar and ml, with translation checks passing (native review pending).
 - [x] Decisions recorded: this brief and server ADR 0008.
