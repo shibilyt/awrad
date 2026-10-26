@@ -129,7 +129,7 @@ Each slice goes contract → server → Android → iOS → web and is done only
 | 2a | Accounts: register, verify and reset by emailed code, sign in and out, device sessions (mobile), cookie session (web), account screens ([brief](slices/02-accounts.md)) | [x] 2026-10-26 |
 | 2b | Accounts: device list and revoke, sign out of other devices, change password, change email, delete account ([brief](slices/02-accounts.md#slice-2b)) | [x] 2026-10-26 |
 | later | Sign in with Apple and Google, together | [ ] |
-| DS | Design system: shared tokens (colour, type, spacing, shape, motion), components and their states, en/ar/ml and RTL rules, applied to Android, iOS and web. Worked on in its own thread (decided 2026-10-26) | [ ] |
+| DS | Design system: shared tokens (colour, type, spacing, shape, motion), components and their states, en/ar/ml and RTL rules, applied to Android, iOS and web. Colours done 2026-10-26 (`contracts/design-tokens/v1/`: 16 roles, generated and checked on every app); typography, spacing, shape, motion and components next | [ ] |
 | 3a | Practice settings (proposed): day reset, week start, Hijri corrections, location and device context, the account policy API | [ ] |
 | 3 | Goals: create, edit, evaluate; offline-first on mobile | [ ] |
 | 4 | Counting and progress sync | [ ] |
