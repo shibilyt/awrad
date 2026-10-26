@@ -30,7 +30,7 @@ Applies inside `awrad-web-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
 - **Feature layout:** a feature lives in `src/features/<name>/`. Route files in `src/routes/` only map a URL to a feature page.
 - **UI:** use `src/shared/ui` components built on React Aria, and Tailwind classes that name design tokens (`bg-primary`, `text-on-surface`). Never raw colours, and never logic that depends on the colour scheme.
 - **Strings:** all UI text goes in `src/shared/i18n/locales/{en,ar,ml}.json`. Layout uses logical properties (`ps-*`, `me-*`), so right-to-left layout works automatically.
-- **Tests:** mock the API with `specHandler(operationId, status)`, which serves the spec's own examples. The test page's origin (`web.awrad.test`) can't resolve, so a missing mock fails instead of reaching a real server.
+- **Tests:** mock the API with `specHandler(operationId, status)` or `specProblem(operationId, code)`, which serve the spec's own examples. The test page's origin (`web.awrad.test`) can't resolve, so a missing mock fails instead of reaching a real server.
 
 ## Validation
 
