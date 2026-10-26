@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { Dialog, Heading, Modal, ModalOverlay } from "react-aria-components";
 import { DangerButton, SecondaryButton } from "./Button";
+import { OnSurface } from "./Surface";
 
 /**
  * Asks before an action that can't be taken back (signing a device out,
@@ -41,17 +42,19 @@ export function ConfirmDialog({
           </Heading>
           <div className="flex flex-col gap-2 text-on-surface-variant">{children}</div>
           <div className="flex flex-col gap-3">
-            <SecondaryButton
-              isDisabled={isPending}
-              onPress={() => {
-                onOpenChange(false);
-              }}
-            >
-              {cancelLabel}
-            </SecondaryButton>
-            <DangerButton onPress={onConfirm} isPending={isPending}>
-              {confirmLabel}
-            </DangerButton>
+            <OnSurface>
+              <SecondaryButton
+                isDisabled={isPending}
+                onPress={() => {
+                  onOpenChange(false);
+                }}
+              >
+                {cancelLabel}
+              </SecondaryButton>
+              <DangerButton onPress={onConfirm} isPending={isPending}>
+                {confirmLabel}
+              </DangerButton>
+            </OnSurface>
           </div>
         </Dialog>
       </Modal>

@@ -63,7 +63,7 @@ function Settings(): ReactElement {
   const linkClass = "flex min-h-12 items-center px-5";
   return (
     <nav aria-label={t("account.page.settings")}>
-      <ul className="flex flex-col divide-y divide-outline rounded-2xl bg-surface">
+      <ul className="flex flex-col rounded-2xl bg-surface">
         <li>
           <TextLink to="/account/devices" className={linkClass}>
             {t("account.page.devices")}
