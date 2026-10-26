@@ -7,11 +7,11 @@ defmodule Awrad.Goals.Rules do
   | Function | Rule (fixture) | Home |
   |---|---|---|
   | `effective_practice_day/4` | `effective_practice_day` | `Rules.EffectiveDay` |
-  | `due?/2` | `goal_is_due` | `Rules.Schedule` |
-  | `standing/4` | `requirement_standing` | `Rules.Requirement` |
-  | `days_per_period/4` | `days_per_period` | `Rules.DaysPerPeriod` |
+  | `due?/3` | `goal_is_due` | `Rules.Schedule` |
+  | `standing/5` | `requirement_standing` | `Rules.Requirement` |
+  | `days_per_period/5` | `days_per_period` | `Rules.DaysPerPeriod` |
   | `completed?/3` | `goal_completion` | `Rules.Completion` |
-  | `streak/4` | `goal_streak` | `Rules.Streak` |
+  | `streak/5` | `goal_streak` | `Rules.Streak` |
 
   Every rule takes a valid goal. Validity (`goal_validity`) is checked when a
   goal is built, by `Awrad.Goals.Goal.new/1`, so no rule has a fallback for
@@ -19,7 +19,10 @@ defmodule Awrad.Goals.Rules do
 
   Dates are effective practice days; count entries are already bucketed by
   day. Progress only counts entries up to and including the evaluated date.
-  All calendar arithmetic is Gregorian (`Date`, ISO calendar).
+  Dates are Gregorian (`Date`, ISO calendar). Rules that can read Hijri dates
+  (Hijri schedules, Hijri-month periods) take the account's
+  `Awrad.Hijri.Corrections` (`Corrections.none()` for none); outside the Hijri
+  table those schedules and periods are never due.
   """
 
   alias Awrad.Goals.CountEntry
@@ -33,6 +36,7 @@ defmodule Awrad.Goals.Rules do
   alias Awrad.Goals.Rules.Schedule
   alias Awrad.Goals.Rules.Streak
   alias Awrad.Goals.Standing
+  alias Awrad.Hijri.Corrections
 
   @typedoc "The account's day-end rule."
   @type day_reset :: :midnight | :maghrib
@@ -51,32 +55,40 @@ defmodule Awrad.Goals.Rules do
     do: EffectiveDay.resolve(instant, time_zone, day_reset, maghrib)
 
   @doc "Whether `goal` is due on `date`: inside its active period, not paused, and on its schedule."
-  @spec due?(Goal.t(), Date.t()) :: boolean()
-  def due?(goal, date), do: Schedule.due?(goal, date)
+  @spec due?(Goal.t(), Date.t(), Corrections.t()) :: boolean()
+  def due?(goal, date, corrections), do: Schedule.due?(goal, date, corrections)
 
   @doc """
   Where `goal` stands on `date` against its requirement.
 
   The window is the day for per-due-date and tracker goals, the active period
-  so far for cumulative goals, and the week or month (clipped to the active
-  period) for period totals. Outside the active period, or on an unscheduled
-  day for a per-day goal, the status is `:not_due`. A days-per-period goal is
+  so far for cumulative goals, and the week, month or Hijri month (clipped to
+  the active period) for period totals. Outside the active period, on an
+  unscheduled day for a per-day goal, or outside the Hijri table for a
+  Hijri-month total, the status is `:not_due`. A days-per-period goal is
   evaluated here as a single day against its daily target; its period view is
-  `days_per_period/4`.
+  `days_per_period/5`.
   """
-  @spec standing(Goal.t(), [CountEntry.t()], Date.t(), Goal.week_start()) :: Standing.t()
-  def standing(goal, counts, date, week_start),
-    do: Requirement.standing(goal, Counts.index(counts), date, week_start)
+  @spec standing(Goal.t(), [CountEntry.t()], Date.t(), Goal.week_start(), Corrections.t()) ::
+          Standing.t()
+  def standing(goal, counts, date, week_start, corrections),
+    do: Requirement.standing(goal, Counts.index(counts), date, week_start, corrections)
 
   @doc """
-  A days-per-period goal's standing for the week or month containing `date`:
-  qualifying days so far against the required days, capped by the window's
-  due days. Only for goals whose requirement is `{:days_per_period, _, _}`.
+  A days-per-period goal's standing for the week, month or Hijri month
+  containing `date`: qualifying days so far against the required days, capped
+  by the window's due days. Only for goals whose requirement is
+  `{:days_per_period, _, _}`.
   """
-  @spec days_per_period(Goal.t(), [CountEntry.t()], Date.t(), Goal.week_start()) ::
-          DaysPerPeriodStanding.t()
-  def days_per_period(goal, counts, date, week_start),
-    do: DaysPerPeriod.standing(goal, Counts.index(counts), date, week_start)
+  @spec days_per_period(
+          Goal.t(),
+          [CountEntry.t()],
+          Date.t(),
+          Goal.week_start(),
+          Corrections.t()
+        ) :: DaysPerPeriodStanding.t()
+  def days_per_period(goal, counts, date, week_start, corrections),
+    do: DaysPerPeriod.standing(goal, Counts.index(counts), date, week_start, corrections)
 
   @doc "Whether `goal` is completed on `date`, derived from its completion policy."
   @spec completed?(Goal.t(), [CountEntry.t()], Date.t()) :: boolean()
@@ -84,11 +96,13 @@ defmodule Awrad.Goals.Rules do
 
   @doc """
   The current streak on `date`: consecutive due days (per-due-date,
-  cumulative, tracker) meeting the streak threshold, or consecutive weeks or
-  months (period total, days per period) meeting the requirement. The
-  in-progress day or period never breaks it; it only adds once met.
+  cumulative, tracker) meeting the streak threshold, or consecutive weeks,
+  months or Hijri months (period total, days per period) meeting the
+  requirement. The in-progress day or period never breaks it; it only adds
+  once met.
   """
-  @spec streak(Goal.t(), [CountEntry.t()], Date.t(), Goal.week_start()) :: non_neg_integer()
-  def streak(goal, counts, date, week_start),
-    do: Streak.current(goal, Counts.index(counts), date, week_start)
+  @spec streak(Goal.t(), [CountEntry.t()], Date.t(), Goal.week_start(), Corrections.t()) ::
+          non_neg_integer()
+  def streak(goal, counts, date, week_start, corrections),
+    do: Streak.current(goal, Counts.index(counts), date, week_start, corrections)
 end

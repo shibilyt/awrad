@@ -16,7 +16,8 @@ defmodule Awrad.Goals.Rules.RequirementStandingTest do
           GoalModel.goal(@given["goal"]),
           GoalModel.counts(@given["counts"]),
           GoalModel.date(@given["date"]),
-          GoalModel.week_start(@given["week_start"])
+          GoalModel.week_start(@given["week_start"]),
+          GoalModel.hijri_corrections(@given)
         )
 
       assert GoalModel.encode(standing) == @expect
