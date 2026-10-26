@@ -47,7 +47,8 @@ public struct Goal: Hashable, Sendable {
     }
 }
 
-/// Which days a goal is due (Gregorian kinds; Hijri, yearly and seasons follow in slice 1b).
+/// Which days a goal is due. Seasons (Ramadan, white days…) aren't a kind: they're presets that
+/// fill in `hijriMonthDays` or `yearly` (`contracts/goal-presets/v1`).
 public enum Schedule: Hashable, Sendable {
     case everyDay
     case weekdays(Set<Weekday>)
@@ -58,6 +59,43 @@ public enum Schedule: Hashable, Sendable {
     case specificDates(Set<CalendarDay>)
     /// No repeating pattern: due every day of the active period until completed.
     case oneTime
+    /// Days of the Hijri month (1...30). Day 30 falls on day 29 in a 29-day month.
+    case hijriMonthDays(Set<Int>)
+    /// Inclusive month-day ranges every year, in the Gregorian or Hijri calendar.
+    case yearly(YearlyCalendar, ranges: [YearlyRange])
+}
+
+/// The calendar a yearly schedule's dates are in.
+public enum YearlyCalendar: String, CaseIterable, Hashable, Sendable {
+    case gregorian, hijri
+}
+
+/// A month and day in a yearly schedule. A day past the month's end falls on its last day
+/// (29 February in a common year, Hijri day 30 in a 29-day month).
+public struct MonthDay: Hashable, Sendable, Comparable {
+    public var month: Int
+    public var day: Int
+
+    public init(month: Int, day: Int) {
+        self.month = month
+        self.day = day
+    }
+
+    public static func < (lhs: MonthDay, rhs: MonthDay) -> Bool {
+        (lhs.month, lhs.day) < (rhs.month, rhs.day)
+    }
+}
+
+/// An inclusive range of a yearly schedule. When `end` comes before `start`, it runs over the
+/// year end; a single day has `start == end`.
+public struct YearlyRange: Hashable, Sendable {
+    public var start: MonthDay
+    public var end: MonthDay
+
+    public init(start: MonthDay, end: MonthDay) {
+        self.start = start
+        self.end = end
+    }
 }
 
 /// The span a goal can be due in. Both ends are inclusive.
@@ -165,18 +203,26 @@ public enum Requirement: Hashable, Sendable {
     case tracker
 }
 
-/// A week (from the account's week start) or a Gregorian month.
+/// A week (from the account's week start), a Gregorian month or a Hijri month (with the account's
+/// corrections).
 public enum Period: String, CaseIterable, Hashable, Sendable {
-    case week, month
+    case week, month, hijriMonth
 
-    /// The whole period containing `day`, before clipping to an active period.
-    public func window(containing day: CalendarDay, weekStart: WeekStart) -> ClosedRange<CalendarDay> {
+    /// The whole period containing `day`, before clipping to an active period; `nil` for a Hijri
+    /// month outside the table.
+    public func window(
+        containing day: CalendarDay,
+        weekStart: WeekStart,
+        hijriCorrections: HijriCorrections = .none
+    ) -> ClosedRange<CalendarDay>? {
         switch self {
         case .week:
             let first = day.adding(days: -day.weekday.daysSince(weekStart.weekday))
             return first...first.adding(days: 6)
         case .month:
             return day.firstDayOfMonth...day.lastDayOfMonth
+        case .hijriMonth:
+            return hijriCorrections.calendar.month(containing: day)?.days
         }
     }
 }

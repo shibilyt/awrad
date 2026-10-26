@@ -32,8 +32,9 @@ Applies inside `awrad-ios-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
 ## Validation
 
 ```bash
-scripts/validate        # Xcode version, module rules, translations, swift format, SwiftLint, package build + tests, app build
+scripts/validate        # Xcode version, module rules, translations, Hijri table freshness, swift format, SwiftLint, package build + tests, app build
 swift format -i -r AwradKit/Sources AwradKit/Tests AwradKit/Package.swift AwradNext   # fix layout
+scripts/generate-hijri-table.py   # regenerate AwradDomain/UmmAlQuraTable.swift after contracts/hijri-calendar changes
 ```
 
 Simulator runs are for UI checks. Domain, data and model logic is tested with `swift test` on macOS.
