@@ -170,6 +170,16 @@
       }
     },
     {
+      "id": "en_dash",
+      "description": "Only the ASCII hyphen-minus is removed, not an en dash.",
+      "given": {
+        "input": "482–913"
+      },
+      "expect": {
+        "code": null
+      }
+    },
+    {
       "id": "empty",
       "description": "Empty.",
       "given": {

@@ -6,7 +6,7 @@ The client-side input rules for accounts (slice 2a, [`docs/slices/02-accounts.md
 |---|---|---|
 | `fixtures/email_input.json` | A typed email: trimmed, then a basic shape check (one `@`, a dotted domain, no spaces, at most 160 characters) | 21 |
 | `fixtures/password_policy.json` | 12 to 128 Unicode code points after NFC; no trimming, no composition rules | 12 |
-| `fixtures/email_code_input.json` | A typed 6-digit code: spaces and hyphens removed; Arabic-Indic, Eastern Arabic-Indic and fullwidth digits converted | 14 |
+| `fixtures/email_code_input.json` | A typed 6-digit code: spaces and hyphens removed; Arabic-Indic, Eastern Arabic-Indic and fullwidth digits converted; only the ASCII hyphen-minus counts as a hyphen | 15 |
 
 ## Conventions
 

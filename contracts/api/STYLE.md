@@ -144,7 +144,7 @@ Existing codes such as `email_verification_required`, `password_setup_required`,
 
 - **Browsers:** Phoenix cookie session (`cookieAuth`, ADR-2026-10-15).
   - Every state-changing request sends the CSRF token in **`X-CSRF-Token`**.
-  - The token comes from `GET /api/v1/browser/csrf_token`, which is only available to cookie sessions.
+  - The token comes from `GET /api/v1/browser/csrf_token`. It reads only the session cookie, and creates an anonymous session for a signed-out browser.
 - **Mobile:** `Authorization: Bearer <access_token>` (`bearerAuth`), bound to a device session (ADR-2026-07-12).
 - Each operation declares which schemes it accepts. A request presenting the wrong scheme for its pipeline is rejected with `401`.
 - Account endpoints that could reveal whether an email exists (register, resend, forgot password) return the same generic response either way.
