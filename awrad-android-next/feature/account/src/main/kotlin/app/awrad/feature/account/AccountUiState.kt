@@ -23,6 +23,9 @@ internal enum class AccountStep {
         }
 }
 
+/** A line above any account page's form: the last request's error, or a confirmation. */
+internal data class PageStatus(val text: String, val isError: Boolean)
+
 /** A short confirmation shown above the form. */
 internal enum class AccountNotice {
     CODE_SENT,
@@ -30,6 +33,10 @@ internal enum class AccountNotice {
     EMAIL_VERIFIED,
     PASSWORD_CHANGED,
     SIGNED_OUT,
+
+    /** The server ended this device's session: signed out elsewhere, a password change or reset, expiry. */
+    SESSION_ENDED,
+    ACCOUNT_DELETED,
 }
 
 /**

@@ -1,5 +1,6 @@
 package app.awrad.feature.account
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -28,6 +29,7 @@ internal fun EmailField(
     problem: InputProblem?,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    @StringRes label: Int = R.string.account_field_email,
     enabled: Boolean = true,
 ) {
     OutlinedTextField(
@@ -35,7 +37,7 @@ internal fun EmailField(
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
         enabled = enabled,
-        label = { Text(text = stringResource(R.string.account_field_email)) },
+        label = { Text(text = stringResource(label)) },
         isError = problem != null,
         supportingText = problem?.let { { Text(text = it.text()) } },
         singleLine = true,
@@ -53,12 +55,11 @@ internal fun PasswordField(
     problem: InputProblem?,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    isNewPassword: Boolean = false,
+    @StringRes label: Int = R.string.account_field_password,
     showRule: Boolean = false,
     enabled: Boolean = true,
 ) {
     var visible by rememberSaveable { mutableStateOf(false) }
-    val label = if (isNewPassword) R.string.account_field_new_password else R.string.account_field_password
     val hint = when {
         problem != null -> problem.text()
         showRule -> passwordRuleText()

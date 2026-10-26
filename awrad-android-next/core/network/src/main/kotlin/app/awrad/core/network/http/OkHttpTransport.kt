@@ -43,7 +43,10 @@ internal class OkHttpTransport(
     }
 
     private fun HttpRequest.toOkHttp(): Request {
-        val url = base.newBuilder().addPathSegments(path.trimStart('/')).build()
+        val url = base.newBuilder()
+            .addPathSegments(path.trimStart('/'))
+            .apply { query.forEach { (name, value) -> addQueryParameter(name, value) } }
+            .build()
         val requestBody = body?.toRequestBody(JSON)
         return Request.Builder()
             .url(url)

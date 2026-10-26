@@ -60,6 +60,75 @@
     <string name="account_error_no_connection">No connection. Check your internet and try again.</string>
     <string name="account_error_unexpected">Something went wrong on our side. Try again later.</string>
 
+    <!-- Signed-in account pages (slice 2b): titles -->
+    <string name="account_link_devices">Devices</string>
+    <string name="account_link_devices_detail">Phones and browsers signed in to your account</string>
+    <string name="account_title_devices">Devices</string>
+    <string name="account_title_change_password">Change password</string>
+    <string name="account_title_change_email">Change email</string>
+    <string name="account_title_confirm_email">Confirm your new email</string>
+    <string name="account_title_delete">Delete account</string>
+
+    <!-- Devices -->
+    <string name="account_devices_intro">Every phone and browser signed in to your account. Signing one out doesn\'t remove practice data from it.</string>
+    <string name="account_devices_detail">%1$s · %2$s</string>
+    <string name="account_devices_this_device">This device</string>
+    <string name="account_devices_active_now">Active now</string>
+    <string name="account_devices_last_used">Last used %1$s</string>
+    <string name="account_devices_platform_android">Android</string>
+    <string name="account_devices_platform_ios">iOS</string>
+    <string name="account_devices_platform_web">Web</string>
+    <string name="account_devices_platform_other">Other</string>
+    <string name="account_devices_unnamed_browser">Web browser</string>
+    <string name="account_devices_unnamed_device">Unknown device</string>
+    <string name="account_devices_none_other">No other devices or browsers are signed in.</string>
+    <string name="account_devices_confirm_one_title">Sign out %1$s?</string>
+    <string name="account_devices_confirm_one_body">It will need to sign in again to use your account. Practice data on it stays.</string>
+    <string name="account_devices_confirm_others_title">Sign out of all other devices?</string>
+    <string name="account_devices_confirm_others_body">Every other phone and browser will need to sign in again. This device stays signed in.</string>
+
+    <!-- Body text -->
+    <string name="account_change_password_body">Every other device and browser will be signed out. This device stays signed in.</string>
+    <string name="account_change_email_body">We\'ll email a 6-digit code to the new address. Your email changes only once you enter it.</string>
+    <string name="account_delete_what_goes">Deleting your account removes it, and everything our server keeps for it, straight away. There\'s no undo.</string>
+    <string name="account_delete_what_stays">Your practice on this device stays, and the app keeps working without an account.</string>
+    <string name="account_delete_sessions">Every device and browser signed in to the account is signed out. Practice data on them stays too.</string>
+    <string name="account_delete_confirm_title">Delete your account now?</string>
+    <string name="account_delete_confirm_body">Your account and its server data are deleted at once and can\'t be recovered.</string>
+
+    <!-- Fields -->
+    <string name="account_field_current_password">Current password</string>
+    <string name="account_field_new_email">New email</string>
+
+    <!-- Actions -->
+    <string name="account_action_revoke">Sign out</string>
+    <string name="account_action_revoke_named">Sign out %1$s</string>
+    <string name="account_action_revoke_others">Sign out of all other devices</string>
+    <string name="account_action_revoke_others_short">Sign out others</string>
+    <string name="account_action_change_password">Change password</string>
+    <string name="account_action_confirm_email">Confirm new email</string>
+    <string name="account_action_use_other_email">Use a different email</string>
+    <string name="account_action_delete">Delete account</string>
+    <string name="account_action_delete_confirm">Delete for good</string>
+    <string name="account_action_cancel">Cancel</string>
+    <string name="account_action_retry">Try again</string>
+    <string name="account_action_done">Done</string>
+
+    <!-- Notices -->
+    <string name="account_notice_session_ended">This device was signed out, from another device or after a password change. Your practice is still on this device.</string>
+    <string name="account_notice_account_deleted">Your account is deleted. Your practice is still on this device.</string>
+    <string name="account_notice_revoked_one">That device is signed out.</string>
+    <string name="account_notice_revoked_others">All other devices and browsers are signed out.</string>
+    <string name="account_notice_password_updated">Your password is changed. Every other device and browser is signed out.</string>
+    <string name="account_notice_email_changed">Your account\'s email is now %1$s.</string>
+
+    <!-- Errors, one per problem code -->
+    <string name="account_error_current_password_incorrect">That isn\'t your current password.</string>
+    <string name="account_error_email_unchanged">That\'s already your account\'s email.</string>
+    <string name="account_error_email_change_code_invalid">That code is wrong or has expired. Check the email at the new address, or send a new code.</string>
+    <string name="account_error_email_taken">That address now belongs to another account. Use a different email.</string>
+    <string name="account_error_not_found">That device or browser was already signed out.</string>
+
     <!-- Counts of characters (the password policy) -->
     <plurals name="account_hint_password">
         <item quantity="one">At least %1$d character. A few words you\'ll remember work well.</item>

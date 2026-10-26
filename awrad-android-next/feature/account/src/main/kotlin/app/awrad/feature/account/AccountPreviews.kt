@@ -5,8 +5,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import app.awrad.core.designsystem.theme.AwradTheme
-import app.awrad.core.domain.AwradId
-import app.awrad.core.domain.account.Account
 import app.awrad.core.domain.account.AccountError
 import app.awrad.core.domain.account.InputProblem
 
@@ -28,10 +26,8 @@ private class AccountStatePreviews : PreviewParameterProvider<AccountUiState> {
         ),
         AccountUiState(step = AccountStep.FORGOT_PASSWORD, email = "amina@example.com"),
         AccountUiState(step = AccountStep.RESET_PASSWORD, email = "amina@example.com", isBusy = true),
-        AccountUiState(
-            step = AccountStep.SIGNED_IN,
-            account = Account(AwradId("0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90"), "amina@example.com"),
-        ),
+        AccountUiState(step = AccountStep.SIGN_IN, notice = AccountNotice.SESSION_ENDED),
+        AccountUiState(step = AccountStep.SIGN_IN, notice = AccountNotice.ACCOUNT_DELETED),
     )
 }
 

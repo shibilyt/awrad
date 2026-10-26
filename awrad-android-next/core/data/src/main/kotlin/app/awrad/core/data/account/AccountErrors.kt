@@ -19,6 +19,9 @@ internal fun accountErrorOf(problem: Problem, retryAfterSeconds: Long?): Account
     "validation_failed" -> AccountError.InvalidInput(problem.errors.mapNotNull { inputProblemOf(it.code) }.toSet())
     "verification_code_invalid" -> AccountError.VerificationCodeInvalid
     "reset_code_invalid" -> AccountError.ResetCodeInvalid
+    "email_change_code_invalid" -> AccountError.EmailChangeCodeInvalid
+    "email_taken" -> AccountError.EmailTaken
+    "not_found" -> AccountError.NotFound
     "invalid_credentials" -> AccountError.InvalidCredentials
     "email_verification_required" -> AccountError.EmailVerificationRequired
     "refresh_token_invalid", "refresh_reuse_detected", "unauthenticated" -> AccountError.SessionEnded
@@ -27,12 +30,19 @@ internal fun accountErrorOf(problem: Problem, retryAfterSeconds: Long?): Account
     else -> AccountError.Unexpected
 }
 
-/** Field codes of `validation_failed` (contracts/api `Email`, `Password`). Unknown ones are dropped. */
+/**
+ * Field codes of `validation_failed` (contracts/api `Email`, `Password`, `EmailCode`, `CurrentPassword`
+ * and `request_email_change`). Unknown ones are dropped, and so are the `/device/…` codes: the app builds
+ * that object itself, so the person can't fix it.
+ */
 internal fun inputProblemOf(code: String): InputProblem? = when (code) {
     "email_invalid" -> InputProblem.EMAIL_INVALID
     "password_too_short" -> InputProblem.PASSWORD_TOO_SHORT
     "password_too_long" -> InputProblem.PASSWORD_TOO_LONG
     "password_too_common" -> InputProblem.PASSWORD_TOO_COMMON
+    "code_invalid" -> InputProblem.CODE_INVALID
+    "current_password_incorrect" -> InputProblem.CURRENT_PASSWORD_INCORRECT
+    "email_unchanged" -> InputProblem.EMAIL_UNCHANGED
     else -> null
 }
 

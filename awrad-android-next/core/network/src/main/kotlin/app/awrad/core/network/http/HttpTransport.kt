@@ -5,14 +5,15 @@ import java.io.IOException
 /** An HTTP method the API uses (STYLE §2). */
 public enum class HttpMethod { GET, POST, PUT, DELETE }
 
-/** One request, relative to the API base URL. [body] is UTF-8 JSON. */
+/** One request, relative to the API base URL. [body] is UTF-8 JSON; [query] values are not yet encoded. */
 public data class HttpRequest(
     val method: HttpMethod,
     val path: String,
     val headers: Map<String, String> = emptyMap(),
     val body: String? = null,
+    val query: Map<String, String> = emptyMap(),
 ) {
-    override fun toString(): String = "HttpRequest($method $path, headers=${headers.keys})"
+    override fun toString(): String = "HttpRequest($method $path, query=${query.keys}, headers=${headers.keys})"
 }
 
 /** One response. Header names are lowercase. */

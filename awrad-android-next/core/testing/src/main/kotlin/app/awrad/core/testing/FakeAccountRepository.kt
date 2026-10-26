@@ -4,9 +4,10 @@ import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.account.Account
 import app.awrad.core.domain.account.AccountRepository
 import app.awrad.core.domain.account.AccountResult
-import app.awrad.core.domain.account.AccountSession
 import app.awrad.core.domain.account.EmailAddress
 import app.awrad.core.domain.account.EmailCode
+import app.awrad.core.domain.account.SignInState
+import app.awrad.core.domain.account.SignOutReason
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -14,12 +15,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
  * Scriptable [AccountRepository]: each operation returns its `…Result` property, and every call is recorded
  * in [calls]. A successful sign-in signs the fake in; signing out always signs it out.
  */
-public class FakeAccountRepository(initial: AccountSession = AccountSession.SignedOut) : AccountRepository {
+public class FakeAccountRepository(initial: SignInState = SignInState.SignedOut()) : AccountRepository {
     private val state = MutableStateFlow(initial)
 
-    override val session: Flow<AccountSession> = state
+    override val session: Flow<SignInState> = state
 
-    public val currentSession: AccountSession get() = state.value
+    public val currentSession: SignInState get() = state.value
 
     public val calls: MutableList<String> = mutableListOf()
 
@@ -30,6 +31,16 @@ public class FakeAccountRepository(initial: AccountSession = AccountSession.Sign
     public var resetResult: AccountResult<Unit> = AccountResult.Success(Unit)
     public var signInResult: AccountResult<Account> = AccountResult.Success(ACCOUNT)
     public var refreshResult: AccountResult<Account> = AccountResult.Success(ACCOUNT)
+
+    /** The session ended without this device asking: revoked elsewhere (a `401` from refresh), or deleted. */
+    public fun endSession(reason: SignOutReason = SignOutReason.SESSION_ENDED) {
+        state.value = SignInState.SignedOut(reason)
+    }
+
+    /** The signed-in account changed, as after a confirmed email change. */
+    public fun updateAccount(account: Account) {
+        state.value = SignInState.SignedIn(account)
+    }
 
     override suspend fun register(email: EmailAddress, password: String): AccountResult<Unit> =
         registerResult.also { calls += "register $email" }
@@ -52,7 +63,7 @@ public class FakeAccountRepository(initial: AccountSession = AccountSession.Sign
     override suspend fun signIn(email: EmailAddress, password: String): AccountResult<Account> {
         calls += "sign_in $email"
         val result = signInResult
-        if (result is AccountResult.Success) state.value = AccountSession.SignedIn(result.value)
+        if (result is AccountResult.Success) state.value = SignInState.SignedIn(result.value)
         return result
     }
 
@@ -60,7 +71,7 @@ public class FakeAccountRepository(initial: AccountSession = AccountSession.Sign
 
     override suspend fun signOut() {
         calls += "sign_out"
-        state.value = AccountSession.SignedOut
+        state.value = SignInState.SignedOut(SignOutReason.SIGNED_OUT)
     }
 
     public companion object {

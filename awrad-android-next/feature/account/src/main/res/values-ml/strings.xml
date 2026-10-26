@@ -60,6 +60,75 @@
     <string name="account_error_no_connection">കണക്ഷൻ ഇല്ല. ഇന്റർനെറ്റ് പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="account_error_unexpected">ഞങ്ങളുടെ ഭാഗത്ത് എന്തോ പിശക് സംഭവിച്ചു. പിന്നീട് വീണ്ടും ശ്രമിക്കുക.</string>
 
+    <!-- Signed-in account pages (slice 2b): titles -->
+    <string name="account_link_devices">ഉപകരണങ്ങൾ</string>
+    <string name="account_link_devices_detail">നിങ്ങളുടെ അക്കൗണ്ടിൽ സൈൻ ഇൻ ചെയ്‌തിട്ടുള്ള ഫോണുകളും ബ്രൗസറുകളും</string>
+    <string name="account_title_devices">ഉപകരണങ്ങൾ</string>
+    <string name="account_title_change_password">പാസ്‌വേഡ് മാറ്റുക</string>
+    <string name="account_title_change_email">ഇമെയിൽ മാറ്റുക</string>
+    <string name="account_title_confirm_email">പുതിയ ഇമെയിൽ സ്ഥിരീകരിക്കുക</string>
+    <string name="account_title_delete">അക്കൗണ്ട് ഇല്ലാതാക്കുക</string>
+
+    <!-- Devices -->
+    <string name="account_devices_intro">നിങ്ങളുടെ അക്കൗണ്ടിൽ സൈൻ ഇൻ ചെയ്‌തിട്ടുള്ള എല്ലാ ഫോണുകളും ബ്രൗസറുകളും. ഒന്നിനെ സൈൻ ഔട്ട് ചെയ്‌താലും അതിലെ പരിശീലന ഡാറ്റ നീക്കം ചെയ്യില്ല.</string>
+    <string name="account_devices_detail">%1$s · %2$s</string>
+    <string name="account_devices_this_device">ഈ ഉപകരണം</string>
+    <string name="account_devices_active_now">ഇപ്പോൾ സജീവം</string>
+    <string name="account_devices_last_used">അവസാനം ഉപയോഗിച്ചത് %1$s</string>
+    <string name="account_devices_platform_android">Android</string>
+    <string name="account_devices_platform_ios">iOS</string>
+    <string name="account_devices_platform_web">വെബ്</string>
+    <string name="account_devices_platform_other">മറ്റുള്ളവ</string>
+    <string name="account_devices_unnamed_browser">വെബ് ബ്രൗസർ</string>
+    <string name="account_devices_unnamed_device">അജ്ഞാത ഉപകരണം</string>
+    <string name="account_devices_none_other">മറ്റ് ഉപകരണങ്ങളോ ബ്രൗസറുകളോ സൈൻ ഇൻ ചെയ്‌തിട്ടില്ല.</string>
+    <string name="account_devices_confirm_one_title">%1$s സൈൻ ഔട്ട് ചെയ്യണോ?</string>
+    <string name="account_devices_confirm_one_body">നിങ്ങളുടെ അക്കൗണ്ട് ഉപയോഗിക്കാൻ അത് വീണ്ടും സൈൻ ഇൻ ചെയ്യേണ്ടിവരും. അതിലെ പരിശീലന ഡാറ്റ നിലനിൽക്കും.</string>
+    <string name="account_devices_confirm_others_title">മറ്റെല്ലാ ഉപകരണങ്ങളിൽ നിന്നും സൈൻ ഔട്ട് ചെയ്യണോ?</string>
+    <string name="account_devices_confirm_others_body">മറ്റെല്ലാ ഫോണുകളും ബ്രൗസറുകളും വീണ്ടും സൈൻ ഇൻ ചെയ്യേണ്ടിവരും. ഈ ഉപകരണം സൈൻ ഇൻ ആയി തുടരും.</string>
+
+    <!-- Body text -->
+    <string name="account_change_password_body">മറ്റെല്ലാ ഉപകരണങ്ങളും ബ്രൗസറുകളും സൈൻ ഔട്ട് ആകും. ഈ ഉപകരണം സൈൻ ഇൻ ആയി തുടരും.</string>
+    <string name="account_change_email_body">പുതിയ വിലാസത്തിലേക്ക് ഞങ്ങൾ ഒരു 6 അക്ക കോഡ് ഇമെയിൽ ചെയ്യും. അത് നൽകിയ ശേഷം മാത്രമേ നിങ്ങളുടെ ഇമെയിൽ മാറൂ.</string>
+    <string name="account_delete_what_goes">അക്കൗണ്ട് ഇല്ലാതാക്കിയാൽ അതും ഞങ്ങളുടെ സെർവർ അതിനായി സൂക്ഷിക്കുന്ന എല്ലാം ഉടൻ നീക്കം ചെയ്യും. ഇത് പഴയപടിയാക്കാനാവില്ല.</string>
+    <string name="account_delete_what_stays">ഈ ഉപകരണത്തിലെ നിങ്ങളുടെ പരിശീലനം നിലനിൽക്കും, അക്കൗണ്ട് ഇല്ലാതെയും ആപ്പ് പ്രവർത്തിക്കും.</string>
+    <string name="account_delete_sessions">അക്കൗണ്ടിൽ സൈൻ ഇൻ ചെയ്‌തിട്ടുള്ള എല്ലാ ഉപകരണങ്ങളും ബ്രൗസറുകളും സൈൻ ഔട്ട് ആകും. അവയിലെ പരിശീലന ഡാറ്റയും നിലനിൽക്കും.</string>
+    <string name="account_delete_confirm_title">നിങ്ങളുടെ അക്കൗണ്ട് ഇപ്പോൾ ഇല്ലാതാക്കണോ?</string>
+    <string name="account_delete_confirm_body">നിങ്ങളുടെ അക്കൗണ്ടും സെർവറിലെ അതിന്റെ ഡാറ്റയും ഉടൻ ഇല്ലാതാകും, വീണ്ടെടുക്കാനാവില്ല.</string>
+
+    <!-- Fields -->
+    <string name="account_field_current_password">നിലവിലെ പാസ്‌വേഡ്</string>
+    <string name="account_field_new_email">പുതിയ ഇമെയിൽ</string>
+
+    <!-- Actions -->
+    <string name="account_action_revoke">സൈൻ ഔട്ട്</string>
+    <string name="account_action_revoke_named">%1$s സൈൻ ഔട്ട് ചെയ്യുക</string>
+    <string name="account_action_revoke_others">മറ്റെല്ലാ ഉപകരണങ്ങളിൽ നിന്നും സൈൻ ഔട്ട് ചെയ്യുക</string>
+    <string name="account_action_revoke_others_short">മറ്റുള്ളവ സൈൻ ഔട്ട് ചെയ്യുക</string>
+    <string name="account_action_change_password">പാസ്‌വേഡ് മാറ്റുക</string>
+    <string name="account_action_confirm_email">പുതിയ ഇമെയിൽ സ്ഥിരീകരിക്കുക</string>
+    <string name="account_action_use_other_email">മറ്റൊരു ഇമെയിൽ ഉപയോഗിക്കുക</string>
+    <string name="account_action_delete">അക്കൗണ്ട് ഇല്ലാതാക്കുക</string>
+    <string name="account_action_delete_confirm">എന്നെന്നേക്കുമായി ഇല്ലാതാക്കുക</string>
+    <string name="account_action_cancel">റദ്ദാക്കുക</string>
+    <string name="account_action_retry">വീണ്ടും ശ്രമിക്കുക</string>
+    <string name="account_action_done">പൂർത്തിയായി</string>
+
+    <!-- Notices -->
+    <string name="account_notice_session_ended">മറ്റൊരു ഉപകരണത്തിൽ നിന്നോ പാസ്‌വേഡ് മാറ്റിയതിനാലോ ഈ ഉപകരണം സൈൻ ഔട്ട് ആയി. നിങ്ങളുടെ പരിശീലനം ഇപ്പോഴും ഈ ഉപകരണത്തിലുണ്ട്.</string>
+    <string name="account_notice_account_deleted">നിങ്ങളുടെ അക്കൗണ്ട് ഇല്ലാതാക്കി. നിങ്ങളുടെ പരിശീലനം ഇപ്പോഴും ഈ ഉപകരണത്തിലുണ്ട്.</string>
+    <string name="account_notice_revoked_one">ആ ഉപകരണം സൈൻ ഔട്ട് ആയി.</string>
+    <string name="account_notice_revoked_others">മറ്റെല്ലാ ഉപകരണങ്ങളും ബ്രൗസറുകളും സൈൻ ഔട്ട് ആയി.</string>
+    <string name="account_notice_password_updated">പാസ്‌വേഡ് മാറ്റി. മറ്റെല്ലാ ഉപകരണങ്ങളും ബ്രൗസറുകളും സൈൻ ഔട്ട് ആയി.</string>
+    <string name="account_notice_email_changed">നിങ്ങളുടെ അക്കൗണ്ടിന്റെ ഇമെയിൽ ഇപ്പോൾ %1$s ആണ്.</string>
+
+    <!-- Errors, one per problem code -->
+    <string name="account_error_current_password_incorrect">അത് നിങ്ങളുടെ നിലവിലെ പാസ്‌വേഡ് അല്ല.</string>
+    <string name="account_error_email_unchanged">അത് ഇതിനകം നിങ്ങളുടെ അക്കൗണ്ടിന്റെ ഇമെയിലാണ്.</string>
+    <string name="account_error_email_change_code_invalid">ആ കോഡ് തെറ്റാണ് അല്ലെങ്കിൽ കാലഹരണപ്പെട്ടു. പുതിയ വിലാസത്തിലെ ഇമെയിൽ പരിശോധിക്കുക, അല്ലെങ്കിൽ പുതിയ കോഡ് അയയ്ക്കുക.</string>
+    <string name="account_error_email_taken">ആ വിലാസം ഇപ്പോൾ മറ്റൊരു അക്കൗണ്ടിന്റേതാണ്. മറ്റൊരു ഇമെയിൽ ഉപയോഗിക്കുക.</string>
+    <string name="account_error_not_found">ആ ഉപകരണമോ ബ്രൗസറോ നേരത്തെ തന്നെ സൈൻ ഔട്ട് ആയിരുന്നു.</string>
+
     <!-- Counts of characters (the password policy) -->
     <plurals name="account_hint_password">
         <item quantity="one">കുറഞ്ഞത് %1$d അക്ഷരം. ഓർമ്മയിൽ നിൽക്കുന്ന കുറച്ച് വാക്കുകൾ നല്ലതാണ്.</item>

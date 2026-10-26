@@ -4,12 +4,13 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Port: the account and this device's session (contracts/api, tags `accounts` and `device_sessions`).
+ * Settings of a signed-in account are [AccountSettingsRepository].
  *
- * Signing in and out never touches local practice data.
+ * Signing in, signing out and a session ending elsewhere never touch local practice data.
  */
 public interface AccountRepository {
-    /** The current session, starting from what's stored on the device. */
-    public val session: Flow<AccountSession>
+    /** The current sign-in state, starting from what's stored on the device. */
+    public val session: Flow<SignInState>
 
     /** Creates an account and emails a verification code. Succeeds the same way for an existing email. */
     public suspend fun register(email: EmailAddress, password: String): AccountResult<Unit>
