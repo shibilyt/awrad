@@ -159,6 +159,13 @@ struct AccountSettingsModelTests {
         #expect(model.state.phase == .signedIn(email: "amina@example.com"))
         #expect(model.state.feedback == .passwordChanged)
         #expect(model.state.currentPassword.isEmpty && model.state.newPassword.isEmpty)
+
+        // The leaving form's fields write back the text they still hold (SwiftUI does this for the
+        // focused field): it doesn't land, so no password returns to memory and the notice stays.
+        model.apply(.currentPasswordChanged("a long passphrase"))
+        model.apply(.newPasswordChanged("another long passphrase"))
+        #expect(model.state.feedback == .passwordChanged)
+        #expect(model.state.currentPassword.isEmpty && model.state.newPassword.isEmpty)
     }
 
     @Test func leavingAFormForgetsThePassword() async {

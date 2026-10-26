@@ -135,12 +135,15 @@ public final class AccountModel {
 
     private func applyEdit(_ action: Action) -> Bool {
         switch action {
-        case .emailChanged(let email): edit { $0.email = email }
-        case .passwordChanged(let password): edit { $0.password = password }
-        case .codeChanged(let code): edit { $0.code = code }
-        case .newPasswordChanged(let password): edit { $0.newPassword = password }
-        case .currentPasswordChanged(let password): edit { $0.currentPassword = password }
-        case .newEmailChanged(let email): edit { $0.newEmail = email }
+        case .emailChanged(let email): editShown(on: [.register, .forgotPassword], atSignIn: true) { $0.email = email }
+        case .passwordChanged(let password): editShown(on: [.register], atSignIn: true) { $0.password = password }
+        case .codeChanged(let code):
+            editShown(on: [.verifyEmail, .resetPassword, .confirmEmailChange]) { $0.code = code }
+        case .newPasswordChanged(let password):
+            editShown(on: [.resetPassword, .changePassword]) { $0.newPassword = password }
+        case .currentPasswordChanged(let password):
+            editShown(on: [.changePassword, .changeEmail, .deleteAccount]) { $0.currentPassword = password }
+        case .newEmailChanged(let email): editShown(on: [.changeEmail]) { $0.newEmail = email }
         default: return false
         }
         return true
@@ -176,8 +179,26 @@ public final class AccountModel {
         }
     }
 
+    /// Applies an edit only while a screen showing that field is on top. A field leaving the screen
+    /// writes back the text it still holds (SwiftUI does this for the focused field): landing, that
+    /// would bring a cleared password back into memory and wipe the notice that replaced the form.
+    private func editShown(on steps: Set<Step>, atSignIn: Bool = false, _ change: (inout State) -> Void) {
+        let shown = state.path.last.map(steps.contains) ?? (atSignIn && !isSignedIn)
+        guard shown else { return }
+        edit(change)
+    }
+
+    private var isSignedIn: Bool {
+        if case .signedIn = state.phase { true } else { false }
+    }
+
     private func edit(_ change: (inout State) -> Void) {
-        change(&state)
+        var next = state
+        change(&next)
+        // A field writing back its unchanged value (as SwiftUI does when a cleared form leaves the
+        // screen) isn't an edit, and mustn't wipe the notice that replaced the form.
+        guard next != state else { return }
+        state = next
         state.feedback = nil
     }
 
