@@ -1,6 +1,6 @@
 # Slice 01b: Domain foundation, Hijri (calendar, yearly, seasons)
 
-Status: In progress. Step 3 fixtures ready for review (2026-10-26)
+Status: Done 2026-10-26. 211 shared cases, passed by Android, iOS and the server
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 1b
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 Builds on: [slice 01a](01-domain-foundation.md) (`contracts/goal-model/v1/`)
@@ -19,7 +19,7 @@ Every platform agrees on the Hijri date of an effective practice day, and on whe
 | Hijri months as periods for period-total and days-per-period goals | Reminders on Hijri dates: the reminders slice |
 | Fixture cases for all of it, run on every implementing platform | Moon-sighting data feeds |
 
-Platforms: Android ☐ · iOS ☐ · server ☑ (evaluates for the web) · web n/a (displays the server's standing)
+Platforms: Android ☑ · iOS ☑ · server ☑ (evaluates for the web) · web n/a (displays the server's standing)
 
 ## Decisions (answered 2026-10-26)
 
@@ -70,21 +70,22 @@ Abbreviations:
 
 ## Domain and fixtures (step 3)
 
-Done 2026-10-26, awaiting review.
+Done and reviewed 2026-10-26.
 - **`CONTEXT.md`:** Hijri date, Hijri correction, Goal preset, the new schedule kinds, and the Hijri month as a period.
 - **New contracts:**
   - `contracts/hijri-calendar/v1/`: the table, its schema, `hijri_date.json` (22 cases) and `hijri_corrections_validity.json` (16 cases);
   - `contracts/goal-presets/v1/`: 9 presets.
 - **`goal-model.schema.json`:** new schedule kinds `hijri_month_days` and `yearly` (calendar `gregorian` or `hijri`), and the period `hijri_month`. Impossible yearly days (30 February, Hijri 31) are structural errors.
-- **New goal-model cases**, 47 in total. Every rule that reads Hijri dates takes an optional `hijri_corrections`.
+- **New goal-model cases**, 48 in total. Every rule that reads Hijri dates takes an optional `hijri_corrections`.
 
   | File | New cases | Covering |
   |---|---|---|
   | `goal_is_due` | 34 | Hijri and Gregorian yearly, ranges over the year end, day 30 / 29 February clamping, corrections, the table's edges |
   | `requirement_standing` | 4 | Hijri-month totals, with a correction, clipped, after the table |
   | `days_per_period` | 4 | Six days of Shawwal |
-  | `goal_streak` | 5 | Ramadan across years, white days, Hijri-month periods, Shawwal across years |
-- **Totals:** the goal model has 172 cases and the Hijri calendar 38, so 210 shared cases. All agree with the reference implementation.
+  | `goal_streak` | 6 | Ramadan across years, white days, Hijri-month periods, Shawwal across years, a Hijri-month streak after the table |
+- **Totals:** the goal model has 173 cases and the Hijri calendar 38, so 211 shared cases. All agree with the reference implementation.
+- **Added in step 5:** `hijri_month_streak_after_table`. iOS and the server both chose to start the walk back from the table's last month when the day is after the table; the case pins it for every platform.
 - **`npm test` also checks the catalogs:** every table month is 29 or 30 days, and the presets match the schema.
 - **CI:** the Android, iOS and server jobs now also run when `contracts/goal-model/` or `contracts/hijri-calendar/` change. Before, a fixture-only change didn't re-run the platforms.
 
@@ -96,15 +97,25 @@ No API operations in this slice.
 
 | Project | Work | Validation | Status |
 |---|---|---|---|
-| awrad-android-next | Table loader, Hijri date and corrections, new schedules and period in `:core:domain`; runners for the two new files | Gradle validation | ☐ |
-| awrad-ios-next | The same in `AwradDomain` | `scripts/validate` | ☐ |
-| awrad-server-next | The same in `Awrad.Goals.Rules`, with the calendar in `Awrad.Hijri` (table compiled from a checked `priv/` copy, server ADR 0004) | `mix validate` | ☑ |
+| awrad-android-next | Table loader, Hijri date and corrections, new schedules and period in `:core:domain`; runners for the two new files; the table is generated Kotlin source, checked fresh by `verifyUmmAlQuraTable` | Gradle validation | ☑ 2026-10-26 |
+| awrad-ios-next | The same in `AwradDomain`; the table is generated Swift source, checked fresh by `scripts/validate` | `scripts/validate` | ☑ 2026-10-26 |
+| awrad-server-next | The same in `Awrad.Goals.Rules`, with the calendar in `Awrad.Hijri` (table compiled from a checked `priv/` copy, server ADR 0004) | `mix validate` | ☑ 2026-10-26 |
 | awrad-web-next | Nothing in this slice | – | n/a |
 
 ## Integration evidence (step 6)
 
 No UI in this slice. The evidence is every implementing platform passing the same fixture files in CI.
 
+- Local, 2026-10-26: all 211 cases pass on Android, iOS and the server, and every project's full validation passes on the merged branch, including each platform's table freshness check.
+- CI on `main`: linked here after the push.
+
 ## Definition of done
 
-Copy the checklist from the playbook and tick it here before closing.
+- [x] In-scope items built on Android, iOS and the server (web excluded: it shows the server's standing).
+- [x] Every shared rule has fixture cases, and every implementing platform runs them; each platform's guard fails on a fixture file with no runner.
+- [x] No API operations in this slice.
+- [x] Each project's validation passes locally; `ci_ok` on `main` after the push.
+- [x] No UI, so no en/ar run. Preset names go into localization resources when a screen first shows them (slice 3).
+- [x] Decisions recorded: root ADR-2026-10-26, server ADR 0004, this brief.
+- [x] `CONTEXT.md`, the contract READMEs, `docs/index.md` and each project's `ARCHITECTURE.md` updated.
+- [x] Nothing changed in the frozen projects.

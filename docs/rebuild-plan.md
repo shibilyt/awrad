@@ -125,7 +125,7 @@ Each slice goes contract → server → Android → iOS → web and is done only
 | # | Slice | Status |
 |---|---|---|
 | 1a | Domain foundation, Gregorian: goal rules as shared fixtures plus runners on Android, iOS and server ([brief](slices/01-domain-foundation.md)). Includes the new "days per period" requirement | [x] 2026-10-26 |
-| 1b | Domain foundation, Hijri: shared Umm al-Qura table with moon-sighting corrections, Hijri and yearly schedules, goal presets ([brief](slices/01b-domain-hijri.md)) | [ ] |
+| 1b | Domain foundation, Hijri: shared Umm al-Qura table with moon-sighting corrections, Hijri and yearly schedules, goal presets ([brief](slices/01b-domain-hijri.md)) | [x] 2026-10-26 |
 | 2 | Accounts: register, verify, sign in, device sessions (mobile), cookie session (web) | [ ] |
 | 3 | Goals: create, edit, evaluate; offline-first on mobile | [ ] |
 | 4 | Counting and progress sync | [ ] |
