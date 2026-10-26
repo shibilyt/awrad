@@ -1,0 +1,201 @@
+{
+  "version": 1,
+  "description": "Colour roles for Android, iOS and web, light and dark. Values are #RRGGBB or #RRGGBBAA (alpha over whatever is behind). Every value uses only the palette below. The contrast list is checked in npm test (alpha composited over the background).",
+  "palette": {
+    "green": "#23553C",
+    "paleGreen": "#B7D6B6",
+    "mist": "#E8EDE9",
+    "snow": "#F9FBFA",
+    "fog": "#E3E5E3",
+    "night": "#121412",
+    "moss": "#313B34",
+    "white": "#FFFFFF",
+    "black": "#000000",
+    "errorRed": "#B3261E",
+    "errorRose": "#F2B8B5"
+  },
+  "roles": {
+    "background": {
+      "use": "Screen background",
+      "light": "#FFFFFF",
+      "dark": "#121412"
+    },
+    "surface": {
+      "use": "Cards and grouped content: Today's goals, Next prayer, collections",
+      "light": "#E8EDE9",
+      "dark": "#000000"
+    },
+    "surfaceBar": {
+      "use": "Bottom navigation, sheets and other bars",
+      "light": "#F9FBFA",
+      "dark": "#313B34"
+    },
+    "onSurface": {
+      "use": "Main text and icons on any background, surface or bar",
+      "light": "#000000",
+      "dark": "#E3E5E3"
+    },
+    "onSurfaceVariant": {
+      "use": "Secondary text: subtitles, counts, labels",
+      "light": "#000000A6",
+      "dark": "#E3E5E3A6"
+    },
+    "outline": {
+      "use": "Decorative dividers",
+      "light": "#E8EDE9",
+      "dark": "#313B34"
+    },
+    "outlineStrong": {
+      "use": "Borders that identify a control: text fields, outlined buttons",
+      "light": "#00000080",
+      "dark": "#E3E5E380"
+    },
+    "primary": {
+      "use": "Brand fills: main buttons, arrow buttons",
+      "light": "#23553C",
+      "dark": "#23553C"
+    },
+    "onPrimary": {
+      "use": "Text and icons on primary",
+      "light": "#FFFFFF",
+      "dark": "#FFFFFF"
+    },
+    "primaryContainer": {
+      "use": "Selected state fill: the selected tab pill, selected chips",
+      "light": "#B7D6B6",
+      "dark": "#23553C"
+    },
+    "onPrimaryContainer": {
+      "use": "Text and icons on primaryContainer",
+      "light": "#000000",
+      "dark": "#B7D6B6"
+    },
+    "accent": {
+      "use": "Accent text and icons on backgrounds and surfaces: streaks, links, the selected tab's label",
+      "light": "#23553C",
+      "dark": "#B7D6B6"
+    },
+    "progress": {
+      "use": "Goal progress rings and bars",
+      "light": "#23553C",
+      "dark": "#E3E5E3"
+    },
+    "error": {
+      "use": "Errors and destructive actions (text, icons, fills)",
+      "light": "#B3261E",
+      "dark": "#F2B8B5"
+    },
+    "onError": {
+      "use": "Text and icons on an error fill",
+      "light": "#FFFFFF",
+      "dark": "#000000"
+    }
+  },
+  "contrast": [
+    {
+      "foreground": "onSurface",
+      "background": "background",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "onSurface",
+      "background": "surface",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "onSurface",
+      "background": "surfaceBar",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "onSurfaceVariant",
+      "background": "background",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "onSurfaceVariant",
+      "background": "surface",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "onSurfaceVariant",
+      "background": "surfaceBar",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "accent",
+      "background": "background",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "accent",
+      "background": "surface",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "accent",
+      "background": "surfaceBar",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "error",
+      "background": "background",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "error",
+      "background": "surface",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "error",
+      "background": "surfaceBar",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "outlineStrong",
+      "background": "background",
+      "minimum": 3.0
+    },
+    {
+      "foreground": "outlineStrong",
+      "background": "surface",
+      "minimum": 3.0
+    },
+    {
+      "foreground": "outlineStrong",
+      "background": "surfaceBar",
+      "minimum": 3.0
+    },
+    {
+      "foreground": "progress",
+      "background": "background",
+      "minimum": 3.0
+    },
+    {
+      "foreground": "progress",
+      "background": "surface",
+      "minimum": 3.0
+    },
+    {
+      "foreground": "progress",
+      "background": "surfaceBar",
+      "minimum": 3.0
+    },
+    {
+      "foreground": "onPrimary",
+      "background": "primary",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "onPrimaryContainer",
+      "background": "primaryContainer",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "onError",
+      "background": "error",
+      "minimum": 4.5
+    }
+  ]
+}

@@ -46,8 +46,46 @@ for (const { key } of presets.presets ?? []) {
   keys.add(key);
 }
 
+// Design tokens: schema-valid, every colour from the palette, every listed pair meets its contrast minimum in both themes.
+const tokensPath = "design-tokens/v1/colors.json";
+const tokens = read(tokensPath);
+validate(tokensPath, "urn:awrad:design-tokens:1#/$defs/colors", tokens);
+const palette = new Set(Object.values(tokens.palette ?? {}));
+const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+const alpha = (hex) => (hex.length === 9 ? parseInt(hex.slice(7, 9), 16) / 255 : 1);
+const over = (fg, bg) => rgb(fg).map((c, i) => alpha(fg) * c + (1 - alpha(fg)) * rgb(bg)[i]);
+const luminance = (c) =>
+  c.map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4)).reduce((sum, x, i) => sum + x * [0.2126, 0.7152, 0.0722][i], 0);
+const ratio = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+let pairs = 0;
+for (const [name, role] of Object.entries(tokens.roles ?? {})) {
+  for (const theme of ["light", "dark"]) {
+    if (!palette.has(role[theme].slice(0, 7))) problems.push(`${tokensPath}: ${name}.${theme} ${role[theme]} isn't in the palette`);
+  }
+}
+for (const { foreground, background, minimum } of tokens.contrast ?? []) {
+  const fg = tokens.roles[foreground];
+  const bg = tokens.roles[background];
+  if (!fg || !bg) {
+    problems.push(`${tokensPath}: contrast pair ${foreground}/${background} names an unknown role`);
+    continue;
+  }
+  for (const theme of ["light", "dark"]) {
+    if (alpha(bg[theme]) !== 1) problems.push(`${tokensPath}: ${background}.${theme} must be opaque to be a contrast background`);
+    const got = ratio(over(fg[theme], bg[theme]), rgb(bg[theme]));
+    if (got < minimum) problems.push(`${tokensPath}: ${foreground} on ${background} (${theme}) is ${got.toFixed(2)}:1, needs ${minimum}`);
+    pairs += 1;
+  }
+}
+
 if (problems.length) {
   for (const p of problems) console.error(p);
   process.exit(1);
 }
-console.log(`catalogs: Hijri table ${starts.length - 1} months valid; ${keys.size} goal presets valid`);
+console.log(
+  `catalogs: Hijri table ${starts.length - 1} months valid; ${keys.size} goal presets valid; ` +
+    `${Object.keys(tokens.roles).length} colour roles, ${pairs} contrast checks pass`,
+);
