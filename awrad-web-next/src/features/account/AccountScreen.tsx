@@ -17,7 +17,7 @@ export function AccountScreen({
 }): ReactElement {
   return (
     <main className="mx-auto flex w-full max-w-md flex-col gap-6 px-6 py-10">
-      <h1 className="text-2xl font-semibold text-accent">{title}</h1>
+      <h1 className="text-2xl font-semibold text-on-surface">{title}</h1>
       {intro !== undefined && <div className="flex flex-col gap-1 text-on-surface-variant">{intro}</div>}
       {children}
       {footer !== undefined && <div className="flex flex-col items-start gap-3 text-sm">{footer}</div>}

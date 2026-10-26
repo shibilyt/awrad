@@ -283,6 +283,7 @@ Use this format:
   - Colours come only from `contracts/design-tokens/v1/colors.json`: the design palette (`#23553C`, `#B7D6B6`, `#E8EDE9`, `#F9FBFA`, `#E3E5E3`, `#121412`, `#313B34`), white and black (also translucent), and one error red per theme.
   - `npm test` rejects off-palette values and checks 21 contrast pairs per theme.
   - Each app generates its colours and fails validation on drift. Android and the web also reject raw colours outside the generated files.
-  - Dark accent text is `#B7D6B6`, because `#23553C` on dark is 2.2:1. Headings use `onSurface`. Light dividers are black at 10%. `scrim` is black at 40%.
+  - Dark accent text is `#B7D6B6`, because `#23553C` on dark is 2.2:1. Headings use `onSurface`. `scrim` is black at 40%.
+  - No outlines by default: fields, secondary buttons and pills are filled, and rows in a card are spaced, not divided. Lines appear only for web keyboard focus, a checkbox's box and a field in error.
 - Evidence: `contracts/design-tokens/v1/README.md`
 - Commit: see git log

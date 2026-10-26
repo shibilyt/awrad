@@ -51,7 +51,7 @@ export function WelcomePage(): ReactElement {
   return (
     <main className="mx-auto flex max-w-md flex-col items-center gap-6 px-7 py-12 text-center">
       <LogoMark />
-      <h1 className="text-3xl font-semibold text-accent">{t("app.title")}</h1>
+      <h1 className="text-3xl font-semibold text-on-surface">{t("app.title")}</h1>
       <FormNotice message={notice === undefined ? null : t(`home.notice.${notice}`)} />
       <SessionStatus />
     </main>
