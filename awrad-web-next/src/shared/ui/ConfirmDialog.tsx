@@ -34,7 +34,7 @@ export function ConfirmDialog({
       isDismissable={!isPending}
       className="fixed inset-0 z-10 flex items-center justify-center bg-on-surface/40 p-6"
     >
-      <Modal className="w-full max-w-sm rounded-2xl bg-surface p-6 shadow-xl">
+      <Modal className="w-full max-w-sm rounded-2xl bg-surface p-6">
         <Dialog role="alertdialog" className="flex flex-col gap-4 outline-none">
           <Heading slot="title" className="text-xl font-semibold text-on-surface">
             {title}

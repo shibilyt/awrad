@@ -66,7 +66,11 @@ dependency-cruiser enforces:
 
 ## UI, i18n and RTL
 
-- **Design tokens:** CSS variables in `src/shared/ui/theme.css`, with light and dark via `light-dark()`, and the same palette as Android and iOS.
+- **Colours** (ADR 0005) come only from the shared tokens `../contracts/design-tokens/v1/colors.json`, the same 15 roles Android and iOS use:
+  - `npm run tokens:colors` generates `src/shared/ui/colors.gen.css` (committed): one `--awrad-color-<role>` custom property per role, light in `:root` and dark under `@media (prefers-color-scheme: dark)`, `#RRGGBBAA` alpha kept. It also maps every role into Tailwind's theme and removes Tailwind's default palette, so classes read by role (`bg-surface`, `text-on-surface`, `border-outline-strong`, `text-accent`, `bg-error`, `text-on-error`) and `text-white` or `bg-red-500` don't exist.
+  - `npm run validate` fails when the committed file differs from what the JSON produces (`check:colors`), and when a hex colour, a CSS colour function or a Tailwind palette class appears anywhere else in `src/` or `index.html` (`check:raw-colors`). `scripts/colors.test.mjs` tests both.
+  - How the roles are used: field and outlined-button borders `outline-strong`; links, headings and accent text `accent` (pale green in dark mode, never `primary` as text); list dividers `outline`; the selected language and "this device" chip `primary-container` / `on-primary-container`; destructive actions `error`, filled `error` / `on-error` while pressed.
+  - Keyboard focus is the `focus-ring` utility in `theme.css`: a 2px `accent` outline, offset 2px so it shows next to a `primary` fill, readable in both themes. Fields show focus as an `accent` border instead.
 - **Components:** React Aria Components provide keyboard, focus, screen-reader and RTL behaviour; Tailwind styles them.
 - **Language:** i18next with en, ar and ml. Changing language sets `<html lang dir>`, so the whole page flips to right-to-left for Arabic, and `Accept-Language` follows it.
   - The choice is kept in `localStorage` (`awrad.language`, the language code only; never credentials or account data), and the next page load starts in it. Without one, the app starts in English.

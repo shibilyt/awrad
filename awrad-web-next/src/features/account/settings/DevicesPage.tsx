@@ -67,7 +67,7 @@ function SessionList({ sessions }: { sessions: AccountSession[] }): ReactElement
       <FormAlert message={actions.message?.kind === "alert" ? actions.message.text : null} />
       <ul
         aria-label={t("account.devices.listLabel")}
-        className="flex flex-col divide-y divide-outline-variant rounded-2xl bg-surface"
+        className="flex flex-col divide-y divide-outline rounded-2xl bg-surface"
       >
         {sessions.map((session) => (
           <SessionRow key={session.id} session={session} now={now} onSignOut={actions.ask} />
