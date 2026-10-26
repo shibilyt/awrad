@@ -41,12 +41,12 @@
       "dark": "#E3E5E3A6"
     },
     "outline": {
-      "use": "Decorative dividers between rows, and the track of progress rings and bars",
+      "use": "Progress-ring and bar tracks",
       "light": "#0000001A",
       "dark": "#313B34"
     },
     "outlineStrong": {
-      "use": "Borders that identify a control: text fields, outlined buttons",
+      "use": "The few controls invisible without a line, such as a checkbox's box",
       "light": "#00000080",
       "dark": "#E3E5E380"
     },

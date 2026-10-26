@@ -24,9 +24,9 @@ public class AwradColors internal constructor(
     public val onSurface: Color,
     /** Secondary text: subtitles, counts, labels. */
     public val onSurfaceVariant: Color,
-    /** Decorative dividers between rows, and the track of progress rings and bars. */
+    /** Progress-ring and bar tracks. */
     public val outline: Color,
-    /** Borders that identify a control: text fields, outlined buttons. */
+    /** The few controls invisible without a line, such as a checkbox's box. */
     public val outlineStrong: Color,
     /** Brand fills: main buttons, arrow buttons. */
     public val primary: Color,

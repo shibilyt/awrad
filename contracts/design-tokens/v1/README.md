@@ -14,8 +14,8 @@ The colour roles Android, iOS and web use, light and dark (design system, decide
 | `surfaceBar` | Bottom navigation, sheets, bars | `#F9FBFA` | `#313B34` |
 | `onSurface` | Main text and icons | `#000000` | `#E3E5E3` |
 | `onSurfaceVariant` | Secondary text | `#000000` at 65% | `#E3E5E3` at 65% |
-| `outline` | Dividers between rows, progress-ring and bar tracks | `#000000` at 10% | `#313B34` |
-| `outlineStrong` | Borders of controls (fields, outlined buttons) | `#000000` at 50% | `#E3E5E3` at 50% |
+| `outline` | Progress-ring and bar tracks | `#000000` at 10% | `#313B34` |
+| `outlineStrong` | The few controls invisible without a line (a checkbox's box) | `#000000` at 50% | `#E3E5E3` at 50% |
 | `primary` | Brand fills: main buttons, arrow buttons | `#23553C` | `#23553C` |
 | `onPrimary` | On primary | `#FFFFFF` | `#FFFFFF` |
 | `primaryContainer` | Selected fill: selected tab pill, chips | `#B7D6B6` | `#23553C` |
@@ -29,7 +29,15 @@ The colour roles Android, iOS and web use, light and dark (design system, decide
 Rules for screens:
 - **Pick by role, never by hex or by checking the theme.**
 - **Headings and titles use `onSurface`,** as in the design. Green is for accents (links, streaks, the selected tab) and fills.
-- **A focused field or control** shows its border or ring in `accent`.
+- **No outlines by default.** The design is built from filled shapes, not lines. A line appears only where it's required:
+  - **Keyboard focus on the web:** a ring in `accent`. Accessibility requires a visible focus indicator.
+  - **A checkbox's (or radio's) box:** `outlineStrong`. An unticked box is invisible otherwise.
+  - **A field in error:** an `error` border, always with the error message.
+- **Text fields are filled, never outlined:**
+  - The fill is `surface` on a `background`, or `background` on a `surface` card.
+  - On mobile, focus is shown by the cursor and keyboard only.
+- **Secondary buttons and unselected pills are filled** like fields. A selected pill or chip is `primaryContainer`.
+- **Rows inside a card are separated by spacing,** not divider lines.
 - **The app icon artwork is exempt** (Android launcher background `#D5FFDC`) until the icon is redesigned.
 - **`#23553C` is never text on a dark background.** It reads at only 2.2 : 1 there. Dark-mode accent text is `accent`, the pale green.
 - **Surfaces stack as `background` → `surface`.** In dark mode a surface is darker than the background (black on `#121412`), as in the design.

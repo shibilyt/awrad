@@ -17,9 +17,9 @@ public enum AwradColors {
     public static let onSurface = adaptive(light: 0x000000FF, dark: 0xE3E5E3FF)
     /// Secondary text: subtitles, counts, labels.
     public static let onSurfaceVariant = adaptive(light: 0x000000A6, dark: 0xE3E5E3A6)
-    /// Decorative dividers between rows, and the track of progress rings and bars.
+    /// Progress-ring and bar tracks.
     public static let outline = adaptive(light: 0x0000001A, dark: 0x313B34FF)
-    /// Borders that identify a control: text fields, outlined buttons.
+    /// The few controls invisible without a line, such as a checkbox's box.
     public static let outlineStrong = adaptive(light: 0x00000080, dark: 0xE3E5E380)
     /// Brand fills: main buttons, arrow buttons.
     public static let primary = adaptive(light: 0x23553CFF, dark: 0x23553CFF)
