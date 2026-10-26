@@ -107,7 +107,7 @@ No API operations in this slice.
 No UI in this slice. The evidence is every implementing platform passing the same fixture files in CI.
 
 - Local, 2026-10-26: all 211 cases pass on Android, iOS and the server, and every project's full validation passes on the merged branch, including each platform's table freshness check.
-- CI on `main`: linked here after the push.
+- CI on `main`, 2026-10-26: `ci_ok` green, with every job passing, including the web job, which ran because `ci.yml` changed ([run 40301641626](https://github.com/shibilyt/awrad/actions/runs/40301641626)).
 
 ## Definition of done
 
