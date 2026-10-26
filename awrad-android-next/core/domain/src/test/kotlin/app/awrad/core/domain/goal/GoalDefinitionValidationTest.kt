@@ -43,7 +43,7 @@ class GoalDefinitionValidationTest {
         assertFailsWith<IllegalArgumentException> { CountEntry(start, sessionId = null, count = -1) }
         val policy = CountPolicy(target = 33, streakThreshold = StreakThreshold.TARGET)
         assertFailsWith<IllegalArgumentException> {
-            GoalDefinition(
+            GoalDefinition.create(
                 schedule = Schedule.EveryDay,
                 activePeriod = ActivePeriod(start),
                 countPolicy = policy,

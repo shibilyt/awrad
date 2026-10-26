@@ -27,6 +27,10 @@ internal class CountIndex(entries: List<CountEntry>) {
 
     private fun counted(window: DateWindow, upTo: LocalDate): Sequence<LocalDate> =
         byDate.keys.asSequence().filter { it in window && !it.isAfter(upTo) }
+
+    companion object {
+        val EMPTY = CountIndex(emptyList())
+    }
 }
 
 /** Which value of a count policy a single day is measured against. */
