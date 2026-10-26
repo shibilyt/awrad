@@ -1,6 +1,6 @@
 # Slice 02: Accounts
 
-Status: 2a done 2026-10-26, CI green on `main`; 2b next
+Status: 2a done 2026-10-26, CI green on `main`. 2b: contract drafted for review
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 2
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 Decided already: ADR-2026-07-12 (verified accounts, device sessions, rotating refresh tokens), ADR-2026-10-15 (browser cookie sessions), `contracts/api/STYLE.md` §7, §11, §12
@@ -157,3 +157,72 @@ Follow-ups, not blocking:
 - [x] Decisions recorded: root ADR-2026-10-26 (accounts), server ADRs 0005–0007, Android ADRs 0005–0006, iOS ADRs 0004–0005.
 - [x] Docs updated: `CONTEXT.md`, `COMMANDS.md`, each project's `ARCHITECTURE.md`.
 - [x] Nothing changed in the frozen projects.
+
+# Slice 2b
+
+## Scope
+
+- Device list (phones and browsers) and revoking one session.
+- Signing out of all other devices.
+- Changing the password while signed in.
+- Changing the email.
+- Deleting the account.
+
+Screens on Android, iOS and the web. Out of scope: Sign in with Apple or Google (later), and data export (later, when there is synced data).
+
+## Decisions (answered 2026-10-26)
+
+1. **Deleting an account is immediate:**
+   - The user re-enters the password.
+   - The account and everything the server keeps for it are deleted, and every session ends.
+   - Practice data on devices stays, and the apps keep working offline.
+   - A confirmation email goes to the address. There's no undo. This meets App Store guideline 5.1.1(v).
+2. **Changing the email:**
+   - The user enters the password and the new address, and a 6-digit code goes to the **new** address. The switch happens only after the code.
+   - The **old** address gets a notice.
+   - Sessions stay signed in.
+   - If the new address belongs to another account, it gets a notice instead of a code, so the response reveals nothing.
+3. **The session list shows phones and browsers together,** with the current one marked. Any one can be revoked. "Sign out of all other devices" keeps the one in use.
+4. **Password change is added:**
+   - It needs the current password, and the account's email gets a notice.
+   - It signs out every other device and browser, and keeps this one.
+
+## Behaviour inventory
+
+From slice 2a's study (rows 17–19): the frozen apps listed and revoked mobile sessions only, and revoke-all included the caller. Account deletion, password change and email change didn't exist for mobile; email change existed on the web only.
+
+## Contract (step 4)
+
+Drafted 2026-10-26, for review. All of these accept the mobile bearer token **or** the browser cookie (plus `X-CSRF-Token` for changes).
+
+| Operation | Path | Result |
+|---|---|---|
+| `list_account_sessions` | `GET /api/v1/account/sessions` | `{items, next_cursor}` of `AccountSession` (`kind` device or browser, `name`, `platform`, `created_at`, `last_seen_at`, `is_current`) |
+| `revoke_account_session` | `DELETE /api/v1/account/sessions/{session_id}` | `204`; `404` if not the account's or already ended |
+| `revoke_other_account_sessions` | `POST /api/v1/account/sessions/revoke_others` | `204`; keeps the caller |
+| `change_password` | `POST /api/v1/account/change_password` | `204`; other sessions end; email notice |
+| `request_email_change` | `POST /api/v1/account/request_email_change` | `202`; code to the new address |
+| `confirm_email_change` | `POST /api/v1/account/confirm_email_change` | `200` account with the new email; notice to the old one; `409 email_taken` if it was taken meanwhile |
+| `delete_account` | `POST /api/v1/account/delete` | `204`; everything deleted, every session ended |
+
+New error codes:
+- `current_password_incorrect`, a field code on `/current_password`;
+- `email_unchanged`, a field code on `/new_email`;
+- `email_change_code_invalid`;
+- `email_taken`.
+
+Also documented now (2a follow-ups):
+- **Idempotency** (STYLE §10): only successful results are stored, and browser sign-in runs again instead of replaying.
+- **Device field codes:** `installation_id_invalid`, `device_name_invalid` and `platform_invalid`.
+
+No new shared input rules: the forms reuse `email_input` and `password_policy`.
+
+## Platform work (step 5)
+
+| Project | Work | Validation | Status |
+|---|---|---|---|
+| awrad-server-next | Session listing across `device_sessions` and browser tokens (with a browser summary saved at sign-in), the account operations, the emails | `mix validate` | ☐ |
+| awrad-android-next | Account screen: devices, change password, change email, delete | Gradle validation | ☐ |
+| awrad-ios-next | The same | `scripts/validate` | ☐ |
+| awrad-web-next | The same | `npm run validate` | ☐ |
+

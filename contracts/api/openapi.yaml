@@ -23,6 +23,8 @@ tags:
     description: Registration, email verification, password reset and the signed-in account (slice 2a).
   - name: device_sessions
     description: Mobile sign-in, token refresh and sign-out (ADR-2026-07-12).
+  - name: account_settings
+    description: Sessions, password, email and deletion for the signed-in account (slice 2b).
   - name: browser
     description: Endpoints only browser (cookie-session) clients use.
 
@@ -39,6 +41,20 @@ paths:
     $ref: paths/accounts.yaml#/reset_password
   /api/v1/account:
     $ref: paths/accounts.yaml#/current
+  /api/v1/account/sessions:
+    $ref: paths/account_settings.yaml#/sessions
+  /api/v1/account/sessions/{session_id}:
+    $ref: paths/account_settings.yaml#/session
+  /api/v1/account/sessions/revoke_others:
+    $ref: paths/account_settings.yaml#/revoke_others
+  /api/v1/account/change_password:
+    $ref: paths/account_settings.yaml#/change_password
+  /api/v1/account/request_email_change:
+    $ref: paths/account_settings.yaml#/request_email_change
+  /api/v1/account/confirm_email_change:
+    $ref: paths/account_settings.yaml#/confirm_email_change
+  /api/v1/account/delete:
+    $ref: paths/account_settings.yaml#/delete
   /api/v1/device_sessions:
     $ref: paths/device_sessions.yaml#/device_sessions
   /api/v1/device_sessions/refresh:
@@ -205,10 +221,46 @@ components:
           maxLength: 160
         created_at:
           $ref: "#/components/schemas/Instant"
+    CurrentPassword:
+      type: string
+      minLength: 1
+      maxLength: 1024
+      description: The account's current password, re-entered to confirm a sensitive change. A wrong one is
+        `validation_failed` with field code `current_password_incorrect`.
+    AccountSession:
+      type: object
+      additionalProperties: false
+      required: [id, kind, name, platform, created_at, last_seen_at, is_current]
+      description: One place the account is signed in.
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        kind:
+          type: string
+          enum: [device, browser]
+        name:
+          type: ["string", "null"]
+          maxLength: 120
+          description: >-
+            Device model for a device session ("Pixel 9"); a browser and system summary for a browser session
+            ("Firefox on Windows"), or null when it couldn't be told. Clients show a generic label for null.
+        platform:
+          type: string
+          enum: [android, ios, web]
+        created_at:
+          $ref: "#/components/schemas/Instant"
+        last_seen_at:
+          $ref: "#/components/schemas/Instant"
+        is_current:
+          type: boolean
+          description: True for the session making this request.
     DeviceInfo:
       type: object
       additionalProperties: false
       required: [installation_id, name, platform]
+      description: >-
+        Invalid values are `validation_failed` with field codes `installation_id_invalid`, `device_name_invalid`
+        or `platform_invalid` under `/device/...`.
       properties:
         installation_id:
           $ref: "#/components/schemas/Uuid"
@@ -524,6 +576,25 @@ components:
               - field: /password
                 code: password_too_short
                 detail: must be at least 12 characters
+    CurrentPasswordRejected:
+      description: >-
+        `validation_failed`. Field codes: `current_password_incorrect` on `/current_password`; for a new
+        password, `password_too_short`, `password_too_long` or `password_too_common` on `/new_password`.
+      headers: *problem_headers
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:validation_failed
+            title: Request validation failed
+            status: 422
+            code: validation_failed
+            detail: the current password is incorrect
+            errors:
+              - field: /current_password
+                code: current_password_incorrect
+                detail: incorrect
     TooManyRequests:
       description: Rate limited.
       headers:
