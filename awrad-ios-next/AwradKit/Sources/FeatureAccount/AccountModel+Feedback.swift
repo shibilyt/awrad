@@ -1,0 +1,87 @@
+import AwradDomain
+import Foundation
+
+extension AccountModel {
+    /// What the current screen tells the user, as a semantic value the screen localizes. Every
+    /// error code the client handles has its own case, and so its own text.
+    public enum Feedback: Equatable, Sendable {
+        case emailInvalid
+        case passwordRequired
+        case passwordTooShort
+        case passwordTooLong
+        case passwordTooCommon
+        case codeIncomplete
+        case invalidCredentials
+        case verificationCodeInvalid
+        case resetCodeInvalid
+        case currentPasswordRequired
+        case currentPasswordIncorrect
+        case emailUnchanged
+        case emailChangeCodeInvalid
+        case emailTaken
+        case sessionNotFound
+        case rateLimited(seconds: Int?)
+        case signedOut
+        case network
+        case unexpected
+        /// A notice, not an error: a code is on its way to the email.
+        case codeSent
+        /// A notice: signing in needs the email verified first, and a code is on its way.
+        case verificationNeeded
+        /// Notices after a change while signed in.
+        case passwordChanged
+        case emailChanged
+        case sessionSignedOut
+        case otherSessionsSignedOut
+        /// A notice on sign in: the account is gone, the device's practice data isn't.
+        case accountDeleted
+
+        public var isNotice: Bool { Self.notices.contains(self) }
+
+        private static let notices: [Feedback] = [
+            .codeSent, .verificationNeeded, .passwordChanged, .emailChanged, .sessionSignedOut,
+            .otherSessionsSignedOut, .accountDeleted,
+        ]
+    }
+
+    static func feedback(for error: AccountError) -> Feedback {
+        switch error {
+        case .validationFailed(let issues): feedback(for: issues)
+        case .invalidCredentials: .invalidCredentials
+        case .emailVerificationRequired: .verificationNeeded
+        case .rateLimited(let seconds): .rateLimited(seconds: seconds)
+        case .signedOut: .signedOut
+        case .network: .network
+        case .unexpected: .unexpected
+        default: codeFeedback(for: error)
+        }
+    }
+
+    /// The codes that are wrong, expired or gone.
+    private static func codeFeedback(for error: AccountError) -> Feedback {
+        switch error {
+        case .verificationCodeInvalid: .verificationCodeInvalid
+        case .resetCodeInvalid: .resetCodeInvalid
+        case .emailChangeCodeInvalid: .emailChangeCodeInvalid
+        case .emailTaken: .emailTaken
+        case .notFound: .sessionNotFound
+        default: .unexpected
+        }
+    }
+
+    /// The first field code the client has text for.
+    private static func feedback(for issues: [AccountFieldIssue]) -> Feedback {
+        for issue in issues {
+            switch issue {
+            case .currentPasswordIncorrect: return .currentPasswordIncorrect
+            case .emailInvalid: return .emailInvalid
+            case .emailUnchanged: return .emailUnchanged
+            case .passwordTooShort: return .passwordTooShort
+            case .passwordTooLong: return .passwordTooLong
+            case .passwordTooCommon: return .passwordTooCommon
+            case .other: continue
+            }
+        }
+        return .unexpected
+    }
+}

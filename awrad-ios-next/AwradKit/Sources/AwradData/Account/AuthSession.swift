@@ -14,7 +14,7 @@ public actor AuthSession: AccountService {
     /// How long before its stated expiry an access token is treated as expired.
     static let expiryMargin: TimeInterval = 60
 
-    private let client: APIClient
+    let client: APIClient
     private let vault: CredentialVault
     private let deviceName: String
     private let now: @Sendable () -> Date
@@ -53,13 +53,11 @@ public actor AuthSession: AccountService {
     }
 
     public func currentAccount() async throws(AccountError) -> Account {
-        let wire = try await authorized(.getCurrentAccount, expecting: AccountWire.self)
-        guard let account = wire.account else { throw .unexpected(code: nil) }
-        if var stored = credentials, stored.account != wire {
-            stored.account = wire
-            keep(stored)
+        let wire = try await authorized { token throws(APIFailure) in
+            try await client.send(
+                .getCurrentAccount, body: NoBody?.none, accessToken: token, expecting: AccountWire.self)
         }
-        return account
+        return try remember(wire)
     }
 
     public func register(email: String, password: String) async throws(AccountError) {
@@ -122,26 +120,41 @@ public actor AuthSession: AccountService {
         }
     }
 
-    /// Sends an operation with the access token, refreshing first when there's no valid one, and
-    /// once more if the server rejects the token.
-    private func authorized<Response: Decodable & Sendable>(
-        _ operation: APIOperation,
-        expecting type: Response.Type
+    /// Runs an authenticated request with a valid access token: refreshes first when there's none,
+    /// and once more if the server rejects the token (`unauthenticated`). If it rejects the next
+    /// token too, the session has ended elsewhere: the credentials are cleared and it throws
+    /// `.signedOut`. A rejected refresh (the session was revoked) clears them the same way.
+    func authorized<Response: Sendable>(
+        _ call: (_ accessToken: String) async throws(APIFailure) -> Response
     ) async throws(AccountError) -> Response {
+        let startedIn = epoch
         let token = try await validAccessToken()
         do {
-            return try await client.send(operation, body: NoBody?.none, accessToken: token, expecting: type)
+            return try await call(token)
         } catch .problem(let problem, _) where problem.code == "unauthenticated" {
             if access?.token == token { access = nil }
-            let fresh = try await validAccessToken()
-            do {
-                return try await client.send(operation, body: NoBody?.none, accessToken: fresh, expecting: type)
-            } catch {
-                throw AccountError(error)
-            }
         } catch {
             throw AccountError(error)
         }
+        let fresh = try await validAccessToken()
+        do {
+            return try await call(fresh)
+        } catch .problem(let problem, _) where problem.code == "unauthenticated" {
+            if epoch == startedIn { forget() }
+            throw .signedOut
+        } catch {
+            throw AccountError(error)
+        }
+    }
+
+    /// Keeps the account the server returned, so the stored copy shows its current email.
+    func remember(_ wire: AccountWire) throws(AccountError) -> Account {
+        guard let account = wire.account else { throw .unexpected(code: nil) }
+        if var stored = credentials, stored.account != wire {
+            stored.account = wire
+            keep(stored)
+        }
+        return account
     }
 
     private func validAccessToken() async throws(AccountError) -> String {
@@ -227,7 +240,8 @@ public actor AuthSession: AccountService {
         vault.save(stored)
     }
 
-    private func forget() {
+    /// Signs this device out locally. The installation ID stays.
+    func forget() {
         epoch += 1
         credentials = nil
         access = nil

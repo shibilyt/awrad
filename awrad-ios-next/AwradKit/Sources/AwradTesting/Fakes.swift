@@ -27,10 +27,13 @@ public actor FakeGoalRepository: GoalRepository {
 }
 
 /// An account server and device session in memory. Every call is recorded; `fail(_:with:)` makes
-/// an operation throw until it's cleared.
+/// an operation throw until it's cleared. A failure of `.signedOut` also signs the fake out, as
+/// the real session clears its credentials.
 public actor FakeAccountService: AccountService {
     public enum Operation: Hashable, Sendable {
         case currentAccount, register, verifyEmail, resendCode, requestPasswordReset, resetPassword, signIn
+        case sessions, revokeSession, revokeOtherSessions, changePassword, requestEmailChange
+        case confirmEmailChange, deleteAccount
     }
 
     public enum Call: Equatable, Sendable {
@@ -42,14 +45,26 @@ public actor FakeAccountService: AccountService {
         case resetPassword(email: String, code: String, newPassword: String)
         case signIn(email: String, password: String)
         case signOut
+        case sessions
+        case revokeSession(AwradID)
+        case revokeOtherSessions
+        case changePassword(currentPassword: String, newPassword: String)
+        case requestEmailChange(currentPassword: String, newEmail: String)
+        case confirmEmailChange(code: String)
+        case deleteAccount(currentPassword: String)
     }
 
     public private(set) var calls: [Call] = []
     public private(set) var account: Account?
+    /// Where the account is signed in; this device's session is the one marked current.
+    public private(set) var accountSessions: [AccountSession]
+    /// The address a requested email change goes to, until it's confirmed.
+    public private(set) var pendingEmail: String?
     private var failures: [Operation: AccountError] = [:]
 
-    public init(signedInAs email: String? = nil) {
+    public init(signedInAs email: String? = nil, sessions: [AccountSession] = []) {
         account = email.map(Self.account(email:))
+        accountSessions = sessions
     }
 
     public func fail(_ operation: Operation, with error: AccountError?) {
@@ -96,12 +111,71 @@ public actor FakeAccountService: AccountService {
         account = nil
     }
 
+    // MARK: Account settings
+
+    public func sessions() throws(AccountError) -> [AccountSession] {
+        try record(.sessions, .sessions)
+        return accountSessions
+    }
+
+    public func revokeSession(_ id: AwradID) throws(AccountError) {
+        try record(.revokeSession(id), .revokeSession)
+        guard accountSessions.contains(where: { $0.id == id }) else { throw .notFound }
+        accountSessions.removeAll { $0.id == id }
+    }
+
+    public func revokeOtherSessions() throws(AccountError) {
+        try record(.revokeOtherSessions, .revokeOtherSessions)
+        accountSessions.removeAll { !$0.isCurrent }
+    }
+
+    public func changePassword(currentPassword: String, newPassword: String) throws(AccountError) {
+        try record(.changePassword(currentPassword: currentPassword, newPassword: newPassword), .changePassword)
+        accountSessions.removeAll { !$0.isCurrent }
+    }
+
+    public func requestEmailChange(currentPassword: String, newEmail: String) throws(AccountError) {
+        try record(.requestEmailChange(currentPassword: currentPassword, newEmail: newEmail), .requestEmailChange)
+        pendingEmail = newEmail
+    }
+
+    public func confirmEmailChange(code: String) throws(AccountError) -> Account {
+        try record(.confirmEmailChange(code: code), .confirmEmailChange)
+        guard let current = account, let pendingEmail else { throw .emailChangeCodeInvalid }
+        let changed = Account(id: current.id, email: pendingEmail, createdAt: current.createdAt)
+        account = changed
+        self.pendingEmail = nil
+        return changed
+    }
+
+    public func deleteAccount(currentPassword: String) throws(AccountError) {
+        try record(.deleteAccount(currentPassword: currentPassword), .deleteAccount)
+        account = nil
+        accountSessions = []
+    }
+
     private func record(_ call: Call, _ operation: Operation) throws(AccountError) {
         calls.append(call)
-        if let error = failures[operation] { throw error }
+        guard let error = failures[operation] else { return }
+        if error == .signedOut { account = nil }
+        throw error
     }
 
     private static func account(email: String) -> Account {
         Account(id: .random(), email: email, createdAt: Date(timeIntervalSince1970: 1_793_000_000))
+    }
+}
+
+extension AccountSession {
+    /// A session for tests and previews, last used `minutesAgo` before a fixed instant.
+    public static func sample(
+        _ name: String?, kind: Kind = .device, platform: Platform = .ios, minutesAgo: Double = 5,
+        isCurrent: Bool = false
+    ) -> AccountSession {
+        let now = Date(timeIntervalSince1970: 1_793_000_000)
+        return AccountSession(
+            id: .random(), kind: kind, name: name, platform: platform,
+            createdAt: now.addingTimeInterval(-86_400 * 30), lastSeenAt: now.addingTimeInterval(-60 * minutesAgo),
+            isCurrent: isCurrent)
     }
 }

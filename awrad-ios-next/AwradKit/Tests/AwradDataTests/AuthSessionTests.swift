@@ -199,9 +199,12 @@ struct APIClientTests {
 
     @Test(arguments: APIOperation.used)
     func headersFollowTheOperation(_ operation: APIOperation) throws {
-        let request = try client.request(operation, body: NoBody?.none, accessToken: "access-1")
+        let id = "4c2e8f10-7b3a-4d5e-9f61-2a8b0c1d3e45"
+        let request = try client.request(
+            operation, body: NoBody?.none, accessToken: "access-1", pathParameters: ["session_id": id])
 
-        #expect(request.url?.absoluteString == "http://localhost:4000\(operation.path)")
+        let path = operation.path.replacingOccurrences(of: "{session_id}", with: id)
+        #expect(request.url?.absoluteString == "http://localhost:4000\(path)")
         #expect(request.httpMethod == operation.method.rawValue)
         let bearer = request.value(forHTTPHeaderField: "Authorization")
         #expect(bearer == (operation.credential == .bearer ? "Bearer access-1" : nil), "public operations never get it")

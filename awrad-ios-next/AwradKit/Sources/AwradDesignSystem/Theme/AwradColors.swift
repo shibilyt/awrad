@@ -19,6 +19,7 @@ public enum AwradColors {
     public static let onSurfaceVariant = adaptive(light: 0x5D5F5D, dark: 0xABADAB)
     public static let outlineVariant = adaptive(light: 0xC7C9C7, dark: 0x454745)
     public static let error = adaptive(light: 0xBA1A1A, dark: 0xFFB4AB)
+    public static let onError = adaptive(light: 0xFFFFFF, dark: 0x690005)
 
     // The provider closures are `@Sendable` and only pick between colours made up front: UIKit and
     // SwiftUI resolve dynamic colours off the main thread, so a closure inferred as main-actor
