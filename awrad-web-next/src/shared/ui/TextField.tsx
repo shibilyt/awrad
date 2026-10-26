@@ -29,8 +29,8 @@ export function TextField({ label, description, inputMode, autoCapitalize, ...pr
         {...(inputMode === undefined ? {} : { inputMode })}
         {...(autoCapitalize === undefined ? {} : { autoCapitalize })}
         className={[
-          "min-h-12 rounded-xl border border-outline-variant bg-surface px-4 text-base text-on-surface",
-          "outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary-container",
+          "min-h-12 rounded-xl border border-outline-strong px-4 text-base text-on-surface",
+          "outline-none focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent",
           "data-invalid:border-error",
         ].join(" ")}
       />

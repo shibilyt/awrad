@@ -12,8 +12,7 @@ function StyledAnchor({
       ref={ref}
       {...props}
       className={[
-        "rounded font-semibold text-primary underline-offset-4 outline-none hover:underline",
-        "focus-visible:underline focus-visible:ring-2 focus-visible:ring-primary-container",
+        "focus-ring rounded font-semibold text-accent underline-offset-4 hover:underline focus-visible:underline",
         className ?? "",
       ].join(" ")}
     >

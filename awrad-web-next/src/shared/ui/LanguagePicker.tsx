@@ -13,7 +13,7 @@ export function LanguagePicker(): ReactElement {
           key={language}
           onPress={() => void i18n.changeLanguage(language)}
           aria-pressed={isLanguage(i18n.language) && i18n.language === language}
-          className="rounded-full border border-outline-variant px-3 py-1.5 text-sm aria-pressed:border-primary aria-pressed:bg-primary-container aria-pressed:text-on-primary-container"
+          className="focus-ring rounded-full border border-outline-strong px-3 py-1.5 text-sm aria-pressed:border-accent aria-pressed:bg-primary-container aria-pressed:text-on-primary-container"
         >
           {t(`language.${language}`)}
         </Button>

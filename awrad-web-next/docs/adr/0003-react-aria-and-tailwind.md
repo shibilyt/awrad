@@ -1,6 +1,6 @@
 # 0003: React Aria Components with Tailwind design tokens
 
-Status: Accepted (2026-10-21)
+Status: Accepted (2026-10-21). The colour mechanism (hand-written `light-dark()` values) is superseded by [0005](0005-colours-from-shared-tokens.md).
 
 ## Context
 

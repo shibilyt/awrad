@@ -12,6 +12,9 @@
     "preview": "vite preview",
     "api:types": "openapi-typescript ../contracts/api/openapi.bundled.json -o src/shared/api/schema.gen.ts",
     "check:api-types": "node scripts/check-api-types.mjs",
+    "tokens:colors": "node scripts/generate-colors.mjs",
+    "check:colors": "node scripts/generate-colors.mjs --check",
+    "check:raw-colors": "node scripts/check-raw-colors.mjs",
     "check:translations": "node scripts/check-translations.mjs",
     "typecheck": "tsc -b",
     "lint": "eslint . --max-warnings 0",
@@ -19,7 +22,7 @@
     "format:check": "prettier --check .",
     "depcruise": "depcruise src --config .dependency-cruiser.cjs",
     "test": "vitest run",
-    "validate": "npm run check:api-types && npm run check:translations && npm run typecheck && npm run lint && npm run format:check && npm run depcruise && npm run test && vite build"
+    "validate": "npm run check:api-types && npm run check:colors && npm run check:raw-colors && npm run check:translations && npm run typecheck && npm run lint && npm run format:check && npm run depcruise && npm run test && vite build"
   },
   "dependencies": {
     "@tanstack/react-query": "5.104.4",
