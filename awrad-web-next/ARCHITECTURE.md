@@ -3,15 +3,22 @@
 The Awrad web app, an online-only React client of `awrad-server-next` (root ADR-2026-10-14). It replaces the LiveView pages of the frozen `awrad_server`.
 
 - **Stack:** React 19, TypeScript 6.0, Vite 8 with the React Compiler, TanStack Router (file-based) and Query, `openapi-fetch`, React Aria Components, Tailwind 4, i18next.
-- **Status:** slice 2a (accounts) built against the contract; features arrive in slices (`../docs/rebuild-plan.md`).
+- **Status:** slices 2a and 2b (accounts, account settings) built against the contract; features arrive in slices (`../docs/rebuild-plan.md`).
 
 ## Features
 
-- **`src/features/account`** (slice 2a, `../docs/slices/02-accounts.md`):
-  - Screens: home (`/`), sign in, register, verify email (with resend and cooldown), forgot password, reset password, and the account page (email, sign out).
-  - Calls only operations tagged `accounts` and `browser`; `device_sessions` are mobile-only.
+- **`src/features/account`** (slices 2a and 2b, `../docs/slices/02-accounts.md`):
+  - Screens: home (`/`), sign in, register, verify email (with resend and cooldown), forgot password, reset password, and the account page (email, settings links, sign out).
+  - Calls only operations tagged `accounts`, `browser` and `account_settings`; `device_sessions` are mobile-only.
   - Signed-in state is `get_current_account` in TanStack Query (`401 unauthenticated` → `null`).
   - The email and password between "register / sign in" and "verify" are kept in module memory (`pending.ts`), never in the URL, history state or storage. Verifying doesn't sign in (root ADR-2026-10-26), so the verify and reset screens then sign in with that password; after a reload they ask for the email and send the person to sign in.
+  - Search params carry only a notice name (`search.ts`: "verified", "session_ended", "account_deleted", …), never personal data.
+- **`src/features/account/settings`** (slice 2b), under the `/account` layout route (`AccountArea`), which needs a signed-in account and sends a signed-out visitor to sign in:
+  - **Devices** (`/account/devices`): `list_account_sessions` (every page), phones and browsers together, the current one marked, platform, relative last use (`Intl.RelativeTimeFormat` in the UI language), and "Web browser" / "Unknown device" for a `null` name. Signing one out (`revoke_account_session`) or all others (`revoke_other_account_sessions`) goes through a confirmation dialog; `404 not_found` means it had already gone and is shown as a notice.
+  - **Change password** (`/account/password`): current and new password, the 12-character hint; afterwards the account page says the other devices are signed out.
+  - **Change email** (`/account/email`, then `/account/email/confirm`): password and new address, then the code sent to it, with the resend cooldown. "Send a new code" repeats `request_email_change`, so the password and new address are kept in module memory (`pendingEmailChange.ts`) like `pending.ts`. After a reload the code still works, but a new code means starting again. `409 email_taken` ends the attempt and offers "Use a different email".
+  - **Delete account** (`/account/delete`): what happens (immediate, every session ends, device data stays, confirmation email, no undo), the password, then a destructive confirmation dialog (`ConfirmDialog`, an `alertdialog` whose initial focus is Cancel). Afterwards home shows signed out with a message.
+  - **Session ended:** any `401 unauthenticated` from these operations (`sessionEnded.ts`) drops the account's cached queries (`forgetAccount`: the current account becomes `null`, the rest are removed), clears the CSRF token, and shows sign-in with "your session has ended". Sign-out and delete use `forgetAccount` too.
 - **`src/shared/account-input`**: the shared input rules `email_input`, `password_policy` (code points after NFC) and `email_code_input` (other digit scripts). `fixtures.test.ts` runs every file in `contracts/account-model/v1/fixtures/` and fails on a file without an adapter.
 
 ## Layout and module rules
@@ -61,7 +68,8 @@ dependency-cruiser enforces:
 
 - **Design tokens:** CSS variables in `src/shared/ui/theme.css`, with light and dark via `light-dark()`, and the same palette as Android and iOS.
 - **Components:** React Aria Components provide keyboard, focus, screen-reader and RTL behaviour; Tailwind styles them.
-- **Language:** i18next with en, ar and ml. Changing language sets `<html lang dir>`, so the whole page flips to right-to-left for Arabic.
+- **Language:** i18next with en, ar and ml. Changing language sets `<html lang dir>`, so the whole page flips to right-to-left for Arabic, and `Accept-Language` follows it.
+  - The choice is kept in `localStorage` (`awrad.language`, the language code only; never credentials or account data), and the next page load starts in it. Without one, the app starts in English.
 - **Fonts:** Arabic uses Noto Naskh Arabic for both content and interface text; other languages use Manrope.
 
 ## Tests
@@ -70,6 +78,8 @@ dependency-cruiser enforces:
 - **API mocks:** MSW handlers built from the spec's own examples, so they can't drift from the contract:
   - `specHandler(operationId, status)` serves the example for a status (an empty body when it has none), with the documented header examples such as `Retry-After`;
   - `specProblem(operationId, code)` serves the problem example for a code in the operation's `x-error-codes`, also when several codes share a status (`403`).
+  - A state the spec has no example of (a session with a `null` name, an account signed in only here) is derived from the example with `specHandler(…, { from })`, so it keeps the documented shape.
+  - Path parameters (`{session_id}`) match any value.
 - **Whole-app tests:** `renderRoute(path)` renders the real route tree; `recordRequests()` captures what the app sent.
 - **Isolation:** the test page's origin is `http://web.awrad.test`, which never resolves, so an unmocked request can't reach a real server.
 
