@@ -12,6 +12,18 @@ struct GoalShape: Decodable {
         let anchorDate: String?
         let days: [Int]?
         let dates: [String]?
+        let calendar: String?
+        let ranges: [RangeShape]?
+    }
+
+    struct RangeShape: Decodable {
+        let start: MonthDayShape
+        let end: MonthDayShape
+    }
+
+    struct MonthDayShape: Decodable {
+        let month: Int
+        let day: Int
     }
 
     struct ActivePeriodShape: Decodable {
@@ -108,6 +120,18 @@ extension GoalShape.ScheduleShape {
             return .specificDates(Set(try FixtureValue.require(dates, "dates").map(FixtureValue.day)))
         case "one_time":
             return .oneTime
+        case "hijri_month_days":
+            return .hijriMonthDays(Set(try FixtureValue.require(days, "days")))
+        case "yearly":
+            let name = try FixtureValue.require(calendar, "calendar")
+            let yearlyCalendar = try FixtureValue.require(YearlyCalendar(rawValue: name), "calendar \(name)")
+            let ranges = try FixtureValue.require(ranges, "ranges").map {
+                YearlyRange(
+                    start: MonthDay(month: $0.start.month, day: $0.start.day),
+                    end: MonthDay(month: $0.end.month, day: $0.end.day)
+                )
+            }
+            return .yearly(yearlyCalendar, ranges: ranges)
         default:
             throw FixtureValue.Invalid(value: "schedule kind \(kind)")
         }
@@ -141,7 +165,18 @@ extension GoalShape.RequirementShape {
 
     private func domainPeriod() throws -> Period {
         let name = try FixtureValue.require(period, "period")
-        return try FixtureValue.require(Period(rawValue: name), "period \(name)")
+        return try FixtureValue.require(Period(rawValue: FixtureValue.camelCase(name)), "period \(name)")
+    }
+}
+
+/// A Hijri month-start correction (`hijri-calendar.schema.json`'s `correction_shape`).
+struct CorrectionShape: Decodable {
+    let year: Int
+    let month: Int
+    let offsetDays: Int
+
+    var correction: HijriCorrection {
+        HijriCorrection(year: year, month: month, offsetDays: offsetDays)
     }
 }
 

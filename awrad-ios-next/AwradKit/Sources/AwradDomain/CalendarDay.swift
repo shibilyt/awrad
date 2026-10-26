@@ -90,6 +90,33 @@ public struct CalendarDay: Hashable, Sendable, Strideable, CustomStringConvertib
     }
 }
 
+extension CalendarDay {
+    /// Days since 1970-01-01 in the proleptic Gregorian calendar: the Hijri table's encoding.
+    /// Plain arithmetic (H. Hinnant's `days_from_civil`), so table lookups stay cheap.
+    var ordinal: Int {
+        let shiftedYear = month <= 2 ? year - 1 : year
+        let era = (shiftedYear >= 0 ? shiftedYear : shiftedYear - 399) / 400
+        let yearOfEra = shiftedYear - era * 400
+        let dayOfYear = (153 * ((month + 9) % 12) + 2) / 5 + day - 1
+        let dayOfEra = yearOfEra * 365 + yearOfEra / 4 - yearOfEra / 100 + dayOfYear
+        return era * 146_097 + dayOfEra - 719_468
+    }
+
+    /// The day `ordinal` days after 1970-01-01 (H. Hinnant's `civil_from_days`).
+    init(ordinal: Int) {
+        let shifted = ordinal + 719_468
+        let era = (shifted >= 0 ? shifted : shifted - 146_096) / 146_097
+        let dayOfEra = shifted - era * 146_097
+        let yearOfEra = (dayOfEra - dayOfEra / 1460 + dayOfEra / 36_524 - dayOfEra / 146_096) / 365
+        let dayOfYear = dayOfEra - (365 * yearOfEra + yearOfEra / 4 - yearOfEra / 100)
+        let shiftedMonth = (5 * dayOfYear + 2) / 153
+        let month = shiftedMonth < 10 ? shiftedMonth + 3 : shiftedMonth - 9
+        self.year = yearOfEra + era * 400 + (month <= 2 ? 1 : 0)
+        self.month = month
+        self.day = dayOfYear - (153 * shiftedMonth + 2) / 5 + 1
+    }
+}
+
 /// A day of the week, by name. Fixtures and the API never number weekdays: the frozen apps
 /// disagreed on whether 1 is Sunday or Monday.
 public enum Weekday: String, CaseIterable, Hashable, Sendable {

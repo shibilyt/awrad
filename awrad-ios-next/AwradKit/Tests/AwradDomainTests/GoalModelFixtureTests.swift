@@ -20,14 +20,16 @@ struct GoalModelFixtureTests {
     @Test(arguments: try GoalModelFixtures.goalIsDue())
     func goalIsDue(_ fixture: FixtureCase<GoalOnDay, DueExpect>) {
         let given = fixture.given
-        #expect(DueExpect(due: given.goal.isDue(on: given.date)) == fixture.expect, "\(fixture.id): \(fixture.summary)")
+        let due = given.goal.isDue(on: given.date, hijriCorrections: given.hijriCorrections)
+        #expect(DueExpect(due: due) == fixture.expect, "\(fixture.id): \(fixture.summary)")
     }
 
     @Test(arguments: try GoalModelFixtures.requirementStanding())
     func requirementStanding(_ fixture: FixtureCase<GoalOnDay, StandingExpect>) throws {
         let given = fixture.given
         let weekStart = try #require(given.weekStart, "\(fixture.id): week_start")
-        let standing = given.goal.standing(on: given.date, counts: given.counts, weekStart: weekStart)
+        let standing = given.goal.standing(
+            on: given.date, counts: given.counts, weekStart: weekStart, hijriCorrections: given.hijriCorrections)
         #expect(StandingExpect(standing) == fixture.expect, "\(fixture.id): \(fixture.summary)")
     }
 
@@ -36,7 +38,8 @@ struct GoalModelFixtureTests {
         let given = fixture.given
         let weekStart = try #require(given.weekStart, "\(fixture.id): week_start")
         let standing = try #require(
-            given.goal.daysPerPeriodStanding(on: given.date, counts: given.counts, weekStart: weekStart),
+            given.goal.daysPerPeriodStanding(
+                on: given.date, counts: given.counts, weekStart: weekStart, hijriCorrections: given.hijriCorrections),
             "\(fixture.id): not a days-per-period goal")
         #expect(DaysPerPeriodExpect(standing) == fixture.expect, "\(fixture.id): \(fixture.summary)")
     }
@@ -52,7 +55,8 @@ struct GoalModelFixtureTests {
     func goalStreak(_ fixture: FixtureCase<GoalOnDay, StreakExpect>) throws {
         let given = fixture.given
         let weekStart = try #require(given.weekStart, "\(fixture.id): week_start")
-        let current = given.goal.currentStreak(on: given.date, counts: given.counts, weekStart: weekStart)
+        let current = given.goal.currentStreak(
+            on: given.date, counts: given.counts, weekStart: weekStart, hijriCorrections: given.hijriCorrections)
         #expect(StreakExpect(current: current) == fixture.expect, "\(fixture.id): \(fixture.summary)")
     }
 
@@ -65,12 +69,21 @@ struct GoalModelFixtureTests {
 @Suite("fixture runner")
 struct FixtureRunnerTests {
     /// Guards against a parameterized test silently running zero cases.
-    @Test(arguments: GoalModelRule.allCases)
-    func everyImplementedRuleHasAFixtureFileWithCases(_ rule: GoalModelRule) throws {
-        let file = try rule.fixtureFile()
-        #expect(FileManager.default.fileExists(atPath: file.path()), "\(rule.rawValue).json")
-        let count = try caseCount(rule)
-        #expect(count > 0, "\(rule.rawValue) has no cases")
+    @Test(arguments: GoalModelRule.allCases.map(\.rawValue) + HijriCalendarRule.allCases.map(\.rawValue))
+    func everyImplementedRuleHasAFixtureFileWithCases(_ rule: String) throws {
+        let file = try Self.fixtureFile(rule)
+        #expect(FileManager.default.fileExists(atPath: file.path()), "\(rule).json")
+        let object = try JSONSerialization.jsonObject(with: Data(contentsOf: file))
+        let count = ((object as? [String: Any])?["cases"] as? [Any])?.count ?? 0
+        #expect(count > 0, "\(rule) has no cases")
+    }
+
+    /// Guards against a new fixture file nobody runs: every file in each directory is a rule above.
+    @Test func everyFixtureFileIsAnImplementedRule() throws {
+        let goalModel = try FixtureLoader.ruleFiles(model: "goal-model")
+        let hijriCalendar = try FixtureLoader.ruleFiles(model: "hijri-calendar")
+        #expect(goalModel == GoalModelRule.allCases.map(\.rawValue).sorted())
+        #expect(hijriCalendar == HijriCalendarRule.allCases.map(\.rawValue).sorted())
     }
 
     @Test func aMissingFileFails() throws {
@@ -106,8 +119,9 @@ struct FixtureRunnerTests {
         #expect(id == "odd")
     }
 
-    private func caseCount(_ rule: GoalModelRule) throws -> Int {
-        let object = try JSONSerialization.jsonObject(with: Data(contentsOf: rule.fixtureFile()))
-        return ((object as? [String: Any])?["cases"] as? [Any])?.count ?? 0
+    private static func fixtureFile(_ rule: String) throws -> URL {
+        if let goalModel = GoalModelRule(rawValue: rule) { return try goalModel.fixtureFile() }
+        let hijri = try #require(HijriCalendarRule(rawValue: rule), "\(rule) isn't an implemented rule")
+        return try hijri.fixtureFile()
     }
 }

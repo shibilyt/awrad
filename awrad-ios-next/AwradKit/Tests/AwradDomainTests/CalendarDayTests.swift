@@ -40,9 +40,9 @@ struct CalendarDayTests {
 
     @Test func weeksStartOnTheAccountsWeekStart() throws {
         let wednesday = try #require(CalendarDay("2026-10-14"))
-        #expect(Period.week.window(containing: wednesday, weekStart: .monday).lowerBound.description == "2026-10-12")
-        #expect(Period.week.window(containing: wednesday, weekStart: .sunday).lowerBound.description == "2026-10-11")
-        #expect(Period.week.window(containing: wednesday, weekStart: .saturday).upperBound.description == "2026-10-16")
+        #expect(Period.week.window(containing: wednesday, weekStart: .monday)?.lowerBound.description == "2026-10-12")
+        #expect(Period.week.window(containing: wednesday, weekStart: .sunday)?.lowerBound.description == "2026-10-11")
+        #expect(Period.week.window(containing: wednesday, weekStart: .saturday)?.upperBound.description == "2026-10-16")
     }
 
     @Test func idsPrintLowercaseLikeTheWireFormat() throws {
