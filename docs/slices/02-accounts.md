@@ -1,6 +1,6 @@
 # Slice 02: Accounts
 
-Status: 2a done 2026-10-26, CI green on `main`. 2b: contract drafted for review
+Status: 2a and 2b done 2026-10-27 (2b pending CI on `main`)
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 2
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 Decided already: ADR-2026-07-12 (verified accounts, device sessions, rotating refresh tokens), ADR-2026-10-15 (browser cookie sessions), `contracts/api/STYLE.md` §7, §11, §12
@@ -221,8 +221,41 @@ No new shared input rules: the forms reuse `email_input` and `password_policy`.
 
 | Project | Work | Validation | Status |
 |---|---|---|---|
-| awrad-server-next | Session listing across `device_sessions` and browser tokens (with a browser summary saved at sign-in), the account operations, the emails | `mix validate` | ☐ |
-| awrad-android-next | Account screen: devices, change password, change email, delete | Gradle validation | ☐ |
-| awrad-ios-next | The same | `scripts/validate` | ☐ |
-| awrad-web-next | The same | `npm run validate` | ☐ |
+| awrad-server-next | Session list across device and browser sessions (a browser name from the User-Agent, `last_seen_at` throttled to 5 min), revoke, change password, email change, delete. Browser tokens are reissued in place; idempotency results are stored per account (this fixed a 2a cross-account replay bug). Server ADR 0008 | `mix validate` (529 tests) | ☑ |
+| awrad-android-next | `AccountSettingsRepository` port, `AccountSettingsApi`, signed-in area (overview, devices, password, email, delete), sign-out reasons | Gradle validation (71 spec examples round-tripped) | ☑ |
+| awrad-ios-next | The same, plus the 2a follow-ups (email outside sentences, locale digits, sage navigation tint) | `scripts/validate` (96 tests) | ☑ |
+| awrad-web-next | `/account` area with devices, password, email, delete and confirmation dialogs; the language survives a reload | `npm run validate` (111 tests) | ☑ |
+
+## Integration evidence (step 6)
+
+Run 2026-10-27 with one account signed in on the web, iOS and Android at once, against `mix phx.server` on port 4100.
+
+| Flow | Result |
+|---|---|
+| Device list | ☑ The web lists "Chrome on macOS" (this device), "iPhone 16 Pro" and the Android emulator |
+| Revoke one device from another | ☑ Signed Android out from the web; Android's next request showed sign-in with "This device was signed out, from another device or after a password change…", with local data kept |
+| Change password | ☑ On iOS: the web session ended, iOS stayed signed in, and the "password changed" email was sent |
+| Change email | ☑ On the web: the code went to the new address, the account updated, the old address got a notice, and iOS showed the new email |
+| Delete account | ☑ On iOS: no rows left on the server, a confirmation email was sent, and iOS showed "Your account was deleted. Everything on this device is still here." The open web page fell back to sign-in |
+| Arabic (RTL) | ☑ Android: sign-in, overview, devices and delete in Arabic, with the deletion email in Arabic |
+
+Bug found and fixed during integration (iOS, "iOS: field edits only land while their screen is on top"): after a settings change, the leaving form's focused field wrote its old text back into the model. That put the password back in memory and wiped the success notice. Edits now only land while their screen is on top. A regression test reproduces the write-back.
+
+Follow-ups, not blocking:
+- **Product:** an address held by an unverified account counts as taken, so someone could block an email change by registering that address without verifying it. And there's no account-recovery path when an email change wasn't you.
+- **Web:** when the background account refresh gets `401`, the web goes to sign-in without the "your session ended" message that the settings pages show.
+- **iOS, check on a real device:** in the simulator, typing into the first field of a newly opened screen sometimes lost characters. A second tap on a secure field clears it (standard iOS behaviour), and the autofill bar loads late. It reproduced only with automation.
+- **Translations:** native review of ar and ml, as for 2a.
+
+## Definition of done (2b)
+
+- [x] Built on the server, Android, iOS and the web.
+- [x] No new shared rules; forms reuse the 2a fixtures.
+- [x] Every operation has spec examples, `assert_conforms` server tests, and client round-trip tests or spec mocks.
+- [ ] `ci_ok` green on `main` (after the push).
+- [x] Main flows checked across three running clients in English, with Arabic on Android.
+- [x] All text in en, ar and ml, with translation checks passing (native review pending).
+- [x] Decisions recorded: this brief and server ADR 0008.
+- [x] Docs updated: `CONTEXT.md`, the contract, STYLE §10, and each project's `ARCHITECTURE.md`.
+- [x] Nothing changed in the frozen projects.
 
