@@ -26,6 +26,7 @@ let package = Package(
         .library(name: "AwradData", targets: ["AwradData"]),
         .library(name: "AwradDesignSystem", targets: ["AwradDesignSystem"]),
         .library(name: "FeatureOnboarding", targets: ["FeatureOnboarding"]),
+        .library(name: "FeatureAccount", targets: ["FeatureAccount"]),
     ],
     targets: [
         .target(name: "AwradDomain", swiftSettings: strict),
@@ -41,13 +42,28 @@ let package = Package(
             resources: [.process("Resources")],
             swiftSettings: ui
         ),
+        .target(
+            name: "FeatureAccount",
+            dependencies: ["AwradDomain", "AwradDesignSystem"],
+            resources: [.process("Resources")],
+            swiftSettings: ui
+        ),
         .target(name: "AwradTesting", dependencies: ["AwradDomain"], swiftSettings: strict),
 
         .testTarget(name: "AwradDomainTests", dependencies: ["AwradDomain", "AwradTesting"], swiftSettings: strict),
-        .testTarget(name: "AwradDataTests", dependencies: ["AwradData", "AwradDomain"], swiftSettings: strict),
+        .testTarget(
+            name: "AwradDataTests",
+            dependencies: ["AwradData", "AwradDomain", "AwradTesting"],
+            swiftSettings: strict
+        ),
         .testTarget(
             name: "FeatureOnboardingTests",
             dependencies: ["FeatureOnboarding", "AwradDomain", "AwradTesting"],
+            swiftSettings: ui
+        ),
+        .testTarget(
+            name: "FeatureAccountTests",
+            dependencies: ["FeatureAccount", "AwradDomain", "AwradTesting"],
             swiftSettings: ui
         ),
     ]

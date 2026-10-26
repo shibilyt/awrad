@@ -1,0 +1,358 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "account.done" : {
+      "comment" : "Button that closes the account screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പൂർത്തിയായി" } }
+      }
+    },
+    "account.error.code_incomplete" : {
+      "comment" : "Error: the typed code isn't 6 digits.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل الرمز المكوّن من 6 أرقام من البريد الإلكتروني." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter the 6-digit code from the email." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇമെയിലിലെ 6 അക്ക കോഡ് നൽകുക." } }
+      }
+    },
+    "account.error.email_invalid" : {
+      "comment" : "Error: the email isn't a valid address (also the server's email_invalid).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل عنوان بريد إلكتروني صحيحًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a valid email address." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സാധുവായ ഒരു ഇമെയിൽ വിലാസം നൽകുക." } }
+      }
+    },
+    "account.error.invalid_credentials" : {
+      "comment" : "Error: wrong email or password (invalid_credentials).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "البريد الإلكتروني أو كلمة المرور غير صحيحة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The email or password is wrong." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇമെയിലോ പാസ്‌വേഡോ തെറ്റാണ്." } }
+      }
+    },
+    "account.error.network" : {
+      "comment" : "Error: no connection to the server.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعذّر الوصول إلى أوراد. تحقّق من اتصالك وحاول مرة أخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Can't reach Awrad. Check your connection and try again." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "Awrad-ലേക്ക് എത്താനായില്ല. നിങ്ങളുടെ കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക." } }
+      }
+    },
+    "account.error.password_required" : {
+      "comment" : "Error: signing in without a password.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل كلمة المرور." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter your password." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ പാസ്‌വേഡ് നൽകുക." } }
+      }
+    },
+    "account.error.password_too_common" : {
+      "comment" : "Error: the server rejected the password as too common.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور هذه شائعة جدًا. اختر غيرها." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This password is too common. Choose another one." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ പാസ്‌വേഡ് വളരെ സാധാരണമാണ്. മറ്റൊന്ന് തിരഞ്ഞെടുക്കുക." } }
+      }
+    },
+    "account.error.password_too_long %lld" : {
+      "comment" : "Error: the new password is too long. The number is the maximum (128).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "استخدم %lld حرفًا على الأكثر." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use at most %lld characters." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പരമാവധി %lld പ്രതീകങ്ങൾ ഉപയോഗിക്കുക." } }
+      }
+    },
+    "account.error.password_too_short %lld" : {
+      "comment" : "Error: the new password is too short. The number is the minimum (12).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "استخدم %lld حرفًا على الأقل." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use at least %lld characters." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "കുറഞ്ഞത് %lld പ്രതീകങ്ങൾ ഉപയോഗിക്കുക." } }
+      }
+    },
+    "account.error.rate_limited" : {
+      "comment" : "Error: too many attempts (rate_limited), no wait time given.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "محاولات كثيرة جدًا. حاول مرة أخرى بعد قليل." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Too many attempts. Try again in a little while." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "വളരെയധികം ശ്രമങ്ങൾ. അൽപ്പസമയം കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക." } }
+      }
+    },
+    "account.error.rate_limited_seconds %lld" : {
+      "comment" : "Error: too many attempts (rate_limited). The number is seconds to wait.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "محاولات كثيرة جدًا. حاول مرة أخرى بعد %lld ث." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Too many attempts. Try again in %lld s." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "വളരെയധികം ശ്രമങ്ങൾ. %lld സെക്കൻഡിനു ശേഷം വീണ്ടും ശ്രമിക്കുക." } }
+      }
+    },
+    "account.error.reset_code_invalid" : {
+      "comment" : "Error: the reset code is wrong, expired or used (reset_code_invalid).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "لم يعمل هذا الرمز. ربما يكون خاطئًا أو منتهي الصلاحية: تحقّق منه أو أرسل رمزًا جديدًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "That code didn't work. It may be wrong or expired: check it, or send a new one." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ കോഡ് പ്രവർത്തിച്ചില്ല. അത് തെറ്റോ കാലഹരണപ്പെട്ടതോ ആകാം: പരിശോധിക്കുക, അല്ലെങ്കിൽ പുതിയൊരു കോഡ് അയയ്ക്കുക." } }
+      }
+    },
+    "account.error.signed_out" : {
+      "comment" : "Error: the device session ended (refresh_token_invalid, refresh_reuse_detected).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم تسجيل خروجك. سجّل الدخول مرة أخرى لاستخدام حسابك." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "You've been signed out. Sign in again to use your account." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങൾ സൈൻ ഔട്ട് ചെയ്യപ്പെട്ടു. അക്കൗണ്ട് ഉപയോഗിക്കാൻ വീണ്ടും സൈൻ ഇൻ ചെയ്യുക." } }
+      }
+    },
+    "account.error.unexpected" : {
+      "comment" : "Error: any other problem code or a server fault.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حدث خطأ ما. حاول مرة أخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Something went wrong. Try again." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "എന്തോ പിശക് സംഭവിച്ചു. വീണ്ടും ശ്രമിക്കുക." } }
+      }
+    },
+    "account.error.verification_code_invalid" : {
+      "comment" : "Error: the verification code is wrong, expired or used (verification_code_invalid).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "لم يعمل هذا الرمز. ربما يكون خاطئًا أو منتهي الصلاحية: تحقّق منه أو أرسل رمزًا جديدًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "That code didn't work. It may be wrong or expired: check it, or send a new one." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ കോഡ് പ്രവർത്തിച്ചില്ല. അത് തെറ്റോ കാലഹരണപ്പെട്ടതോ ആകാം: പരിശോധിക്കുക, അല്ലെങ്കിൽ പുതിയൊരു കോഡ് അയയ്ക്കുക." } }
+      }
+    },
+    "account.field.code" : {
+      "comment" : "Placeholder of the field for the 6-digit emailed code.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الرمز المكوّن من 6 أرقام" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "6-digit code" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "6 അക്ക കോഡ്" } }
+      }
+    },
+    "account.field.email" : {
+      "comment" : "Placeholder of the email field.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "البريد الإلكتروني" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Email" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇമെയിൽ" } }
+      }
+    },
+    "account.field.new_password" : {
+      "comment" : "Placeholder of the new-password field when resetting a password.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور الجديدة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "New password" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പുതിയ പാസ്‌വേഡ്" } }
+      }
+    },
+    "account.field.password" : {
+      "comment" : "Placeholder of the password field.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Password" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പാസ്‌വേഡ്" } }
+      }
+    },
+    "account.forgot.body" : {
+      "comment" : "Explains the forgot-password screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سنرسل إلى بريدك رمزًا من 6 أرقام لتختار كلمة مرور جديدة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "We'll email you a 6-digit code to choose a new password." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പുതിയ പാസ്‌വേഡ് തിരഞ്ഞെടുക്കാൻ ഞങ്ങൾ നിങ്ങൾക്ക് 6 അക്ക കോഡ് ഇമെയിൽ ചെയ്യും." } }
+      }
+    },
+    "account.forgot.button" : {
+      "comment" : "Primary button on the forgot-password screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إرسال الرمز" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Send code" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "കോഡ് അയയ്ക്കുക" } }
+      }
+    },
+    "account.forgot.title" : {
+      "comment" : "Title of the forgot-password screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إعادة تعيين كلمة المرور" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Reset password" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പാസ്‌വേഡ് പുനഃസജ്ജമാക്കുക" } }
+      }
+    },
+    "account.notice.code_sent" : {
+      "comment" : "Notice: an email with a code is on its way.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أرسلنا إليك رمزًا عبر البريد الإلكتروني. تحقّق من صندوق الوارد." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "We've emailed you a code. Check your inbox." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഞങ്ങൾ നിങ്ങൾക്ക് ഒരു കോഡ് ഇമെയിൽ ചെയ്തിട്ടുണ്ട്. ഇൻബോക്സ് പരിശോധിക്കുക." } }
+      }
+    },
+    "account.notice.verification_needed" : {
+      "comment" : "Notice after signing in with an unverified email (email_verification_required).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أكّد بريدك الإلكتروني لتسجيل الدخول. أرسلنا إليك رمزًا جديدًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Verify your email to sign in. We've emailed you a new code." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഇൻ ചെയ്യാൻ നിങ്ങളുടെ ഇമെയിൽ സ്ഥിരീകരിക്കുക. ഞങ്ങൾ നിങ്ങൾക്ക് പുതിയൊരു കോഡ് ഇമെയിൽ ചെയ്തിട്ടുണ്ട്." } }
+      }
+    },
+    "account.password.rule %lld" : {
+      "comment" : "The password rule, under a new-password field. The number is the minimum length (12).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "استخدم %lld حرفًا على الأقل. المسافات والرموز التعبيرية وأحرف أي لغة كلها تُحسب." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use at least %lld characters. Spaces, emoji and any language count." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "കുറഞ്ഞത് %lld പ്രതീകങ്ങൾ ഉപയോഗിക്കുക. സ്‌പേസുകളും ഇമോജികളും ഏത് ഭാഷയിലെ അക്ഷരങ്ങളും എണ്ണും." } }
+      }
+    },
+    "account.register.button" : {
+      "comment" : "Primary button on the create-account screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إنشاء الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create account" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട് സൃഷ്ടിക്കുക" } }
+      }
+    },
+    "account.register.title" : {
+      "comment" : "Title of the create-account screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إنشاء حساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create account" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട് സൃഷ്ടിക്കുക" } }
+      }
+    },
+    "account.reset.body %@" : {
+      "comment" : "Explains the reset screen. The argument is the email address.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل الرمز الذي أرسلناه إلى %@ وكلمة مرور جديدة. سيؤدي ذلك إلى تسجيل خروجك من جميع أجهزتك." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter the code we sent to %@ and a new password. This signs you out on all your devices." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%@ എന്ന വിലാസത്തിലേക്ക് ഞങ്ങൾ അയച്ച കോഡും പുതിയ പാസ്‌വേഡും നൽകുക. ഇത് നിങ്ങളുടെ എല്ലാ ഉപകരണങ്ങളിൽ നിന്നും സൈൻ ഔട്ട് ചെയ്യും." } }
+      }
+    },
+    "account.reset.button" : {
+      "comment" : "Primary button on the reset screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعيين كلمة المرور" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Set password" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പാസ്‌വേഡ് സജ്ജമാക്കുക" } }
+      }
+    },
+    "account.reset.title" : {
+      "comment" : "Title of the screen that sets a new password.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اختر كلمة مرور جديدة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a new password" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പുതിയ പാസ്‌വേഡ് തിരഞ്ഞെടുക്കുക" } }
+      }
+    },
+    "account.sign_in.button" : {
+      "comment" : "Primary button on the sign-in screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الدخول" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഇൻ ചെയ്യുക" } }
+      }
+    },
+    "account.sign_in.create" : {
+      "comment" : "Link from sign in to creating an account.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إنشاء حساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Create an account" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട് സൃഷ്ടിക്കുക" } }
+      }
+    },
+    "account.sign_in.forgot" : {
+      "comment" : "Link from sign in to the password reset.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "نسيت كلمة المرور؟" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Forgot password?" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പാസ്‌വേഡ് മറന്നോ?" } }
+      }
+    },
+    "account.sign_in.subtitle" : {
+      "comment" : "Explains under the sign-in title that an account is optional.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الحساب اختياري. كل شيء يعمل على هذا الجهاز بدونه." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "An account is optional. Everything works on this device without one." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട് നിർബന്ധമല്ല. അതില്ലാതെയും ഈ ഉപകരണത്തിൽ എല്ലാം പ്രവർത്തിക്കും." } }
+      }
+    },
+    "account.sign_in.title" : {
+      "comment" : "Title of the sign-in screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الدخول" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign in" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഇൻ ചെയ്യുക" } }
+      }
+    },
+    "account.sign_out" : {
+      "comment" : "Button that signs this device out.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الخروج" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign out" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഔട്ട് ചെയ്യുക" } }
+      }
+    },
+    "account.signed_in.label" : {
+      "comment" : "Label above the signed-in email.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم تسجيل الدخول باسم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Signed in as" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഇൻ ചെയ്തിരിക്കുന്നത്" } }
+      }
+    },
+    "account.signed_in.note" : {
+      "comment" : "Explains on the account screen that signing out keeps local data.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تبقى أذكارك وأهدافك وأعدادك على هذا الجهاز عند تسجيل الخروج." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your dhikr, goals and counts stay on this device when you sign out." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഔട്ട് ചെയ്താലും നിങ്ങളുടെ ദിക്റുകളും ലക്ഷ്യങ്ങളും എണ്ണങ്ങളും ഈ ഉപകരണത്തിൽ തന്നെ ഉണ്ടാകും." } }
+      }
+    },
+    "account.title" : {
+      "comment" : "Title of the account screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Account" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട്" } }
+      }
+    },
+    "account.verify.body %@" : {
+      "comment" : "Explains the verification code. The argument is the email address.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إلى %@. الرمز صالح لمدة 15 دقيقة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter the 6-digit code we sent to %@. It works for 15 minutes." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%@ എന്ന വിലാസത്തിലേക്ക് ഞങ്ങൾ അയച്ച 6 അക്ക കോഡ് നൽകുക. ഇത് 15 മിനിറ്റ് സാധുവാണ്." } }
+      }
+    },
+    "account.verify.button" : {
+      "comment" : "Primary button on the verification screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تأكيد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Verify" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സ്ഥിരീകരിക്കുക" } }
+      }
+    },
+    "account.verify.resend" : {
+      "comment" : "Button that emails a new code.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إرسال رمز جديد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Send a new code" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പുതിയ കോഡ് അയയ്ക്കുക" } }
+      }
+    },
+    "account.verify.resend_in %lld" : {
+      "comment" : "The resend button while it waits. The number is seconds left.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إرسال رمز جديد بعد %lld ث" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Send a new code in %lld s" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%lld സെക്കൻഡിനു ശേഷം പുതിയ കോഡ് അയയ്ക്കാം" } }
+      }
+    },
+    "account.verify.title" : {
+      "comment" : "Title of the email verification screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تأكيد بريدك الإلكتروني" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Verify your email" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ ഇമെയിൽ സ്ഥിരീകരിക്കുക" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

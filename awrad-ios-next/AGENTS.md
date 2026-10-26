@@ -25,6 +25,8 @@ Applies inside `awrad-ios-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
   - A new port is a protocol in `AwradDomain`.
   - Its adapter goes in `AwradData`, and is wired in `AppComposition`.
   - Its fake goes in `AwradTesting`.
+  - An adapter's own seams (`HTTPTransport`, `SecureStore`) stay in `AwradData`, with their doubles in `AwradDataTests` (ADR 0004).
+- **API:** a new operation goes in `APIOperation.used` with hand-written wire types; `OpenAPIContractTests` must pass against `contracts/api/openapi.bundled.json`. Never attach a bearer token to a public operation.
 - **Colours and fonts** come only from `AwradColors` and `AwradFonts`. Never pick a colour by checking the colour scheme.
 - **SwiftData before the first release:** edit the one schema in place; `AwradStore.persistent()` recreates an incompatible dev store (ADR 0002). Never ship that fallback.
 - **Strings:** never inline user-facing text; use `LocalizedStringResource` keys from the module's catalog.

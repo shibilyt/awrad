@@ -1,4 +1,5 @@
 import AwradDesignSystem
+import FeatureAccount
 import FeatureOnboarding
 import SwiftUI
 
@@ -6,6 +7,7 @@ import SwiftUI
 struct RootView: View {
     let composition: AppComposition
     @State private var destination: Destination?
+    @State private var showsAccount = false
 
     enum Destination {
         case onboarding
@@ -18,11 +20,17 @@ struct RootView: View {
             case .onboarding:
                 OnboardingRoute(status: composition.onboardingStatus) { destination = .home }
             case .home:
-                HomePlaceholderView {
-                    Task {
-                        await composition.onboardingStatus.reset()
-                        destination = .onboarding
+                HomePlaceholderView(
+                    onShowAccount: { showsAccount = true },
+                    onRestartOnboarding: {
+                        Task {
+                            await composition.onboardingStatus.reset()
+                            destination = .onboarding
+                        }
                     }
+                )
+                .sheet(isPresented: $showsAccount) {
+                    AccountRoute(service: composition.account) { showsAccount = false }
                 }
             case nil:
                 AwradColors.background.ignoresSafeArea()
@@ -36,6 +44,7 @@ struct RootView: View {
 
 /// Stand-in until the first real home feature module exists.
 struct HomePlaceholderView: View {
+    let onShowAccount: () -> Void
     let onRestartOnboarding: () -> Void
 
     var body: some View {
@@ -47,6 +56,8 @@ struct HomePlaceholderView: View {
                 .font(AwradFonts.body())
                 .foregroundStyle(AwradColors.onSurfaceVariant)
                 .multilineTextAlignment(.center)
+            AwradPrimaryButton("home.placeholder.account", action: onShowAccount)
+                .padding(.top, 24)
             Button("home.placeholder.restart", action: onRestartOnboarding)
                 .tint(AwradColors.primary)
                 .padding(.top, 12)
