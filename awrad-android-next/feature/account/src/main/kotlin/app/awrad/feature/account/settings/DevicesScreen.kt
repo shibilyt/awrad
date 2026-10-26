@@ -8,7 +8,6 @@ import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.PhoneIphone
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -96,9 +95,9 @@ private fun SessionList(
     onRevoke: (AccountSession) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(0.dp)) {
-        sessions.forEachIndexed { index, session ->
-            if (index > 0) HorizontalDivider()
+    // Rows are separated by spacing, not divider lines (the design has no outlines).
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        sessions.forEach { session ->
             SessionRow(session = session, now = now, onRevoke = { onRevoke(session) })
         }
     }

@@ -40,17 +40,34 @@ style:
   ForbiddenImport:
     active: true
     # These Material components draw `primary` as text, focus or progress (unreadable on a dark background) or
-    # the decorative `outline` as a control border. Use the :core:designsystem component that picks the role.
+    # draw lines; the design has no outlines (contracts/design-tokens/v1/README.md). Use the :core:designsystem
+    # component that picks the role.
     excludes: ['**/core/designsystem/**']
     imports:
       - value: 'androidx.compose.material3.TextButton'
         reason: 'Use AwradTextButton (accent or error text).'
       - value: 'androidx.compose.material3.OutlinedButton'
-        reason: 'Use AwradSecondaryButton (outlineStrong border).'
+        reason: 'Use AwradSecondaryButton (filled, no border).'
+      - value: 'androidx.compose.material3.OutlinedIconButton'
+        reason: 'The design has no outlines; use a filled or plain IconButton.'
       - value: 'androidx.compose.material3.OutlinedTextField'
-        reason: 'Use AwradTextField (outlineStrong border, accent focus).'
+        reason: 'Use AwradTextField (filled, no border).'
       - value: 'androidx.compose.material3.TextField'
-        reason: 'Use AwradTextField (outlineStrong border, accent focus).'
+        reason: 'Use AwradTextField (filled, no indicator line).'
+      - value: 'androidx.compose.material3.Card'
+        reason: 'Use AwradCard (surface fill; fields inside fill with background).'
+      - value: 'androidx.compose.material3.OutlinedCard'
+        reason: 'Use AwradCard (no border).'
+      - value: 'androidx.compose.material3.HorizontalDivider'
+        reason: 'Separate rows with spacing, not divider lines.'
+      - value: 'androidx.compose.material3.VerticalDivider'
+        reason: 'Separate content with spacing, not divider lines.'
+      - value: 'androidx.compose.material3.Divider'
+        reason: 'Separate rows with spacing, not divider lines.'
+      - value: 'androidx.compose.foundation.border'
+        reason: 'The design has no outlines; the exceptions live in :core:designsystem components.'
+      - value: 'androidx.compose.foundation.BorderStroke'
+        reason: 'The design has no outlines; the exceptions live in :core:designsystem components.'
       - value: 'androidx.compose.material3.LinearProgressIndicator'
         reason: 'Use AwradLinearProgress (the progress role).'
       - value: 'androidx.compose.material3.CircularProgressIndicator'
@@ -84,8 +101,10 @@ Compose:
     active: true
   CompositionLocalAllowlist:
     active: true
-    # The design system's colour roles that Material's ColorScheme lacks (AwradTheme.colors).
-    allowedCompositionLocals: LocalAwradColors
+    # The design system's colour roles that Material's ColorScheme lacks (AwradTheme.colors), and the container
+    # a field or secondary button sits on, which picks its fill since the design has no outlines (AwradCard sets
+    # it; like Material's LocalContentColor, it's ambient by nature).
+    allowedCompositionLocals: LocalAwradColors,LocalAwradContainer
   ContentEmitterReturningValues:
     active: true
   ModifierClickableOrder:

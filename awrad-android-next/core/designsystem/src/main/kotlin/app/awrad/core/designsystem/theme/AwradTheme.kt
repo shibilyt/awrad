@@ -9,6 +9,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 private val AwradShapes = Shapes(
@@ -51,4 +52,10 @@ public object AwradTheme {
         @Composable
         @ReadOnlyComposable
         get() = LocalAwradColors.current
+
+    /** The fill for a field or a secondary button here: `surface` on a `background`, `background` on a card. */
+    public val fill: Color
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAwradColors.current.fillOn(LocalAwradContainer.current)
 }
