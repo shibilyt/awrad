@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.awrad.core.designsystem.component.AwradPrimaryButton
 import app.awrad.core.domain.onboarding.OnboardingStatusStore
 import app.awrad.next.R
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -45,6 +46,7 @@ class HomePlaceholderViewModel @Inject constructor(
 
 @Composable
 fun HomePlaceholderRoute(
+    onOpenAccount: () -> Unit,
     onRestartOnboarding: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomePlaceholderViewModel = hiltViewModel(),
@@ -70,6 +72,8 @@ fun HomePlaceholderRoute(
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(24.dp))
+            AwradPrimaryButton(text = stringResource(R.string.home_placeholder_account), onClick = onOpenAccount)
+            Spacer(modifier = Modifier.height(8.dp))
             TextButton(onClick = { viewModel.restartOnboarding(onRestartOnboarding) }) {
                 Text(text = stringResource(R.string.home_placeholder_restart))
             }

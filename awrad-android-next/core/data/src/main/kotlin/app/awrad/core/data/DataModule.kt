@@ -5,8 +5,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
+import app.awrad.core.data.account.NetworkAccountRepository
 import app.awrad.core.database.AwradDatabase
 import app.awrad.core.database.GoalDao
+import app.awrad.core.domain.account.AccountRepository
 import app.awrad.core.domain.goal.GoalRepository
 import app.awrad.core.domain.onboarding.OnboardingStatusStore
 import dagger.Binds
@@ -27,6 +29,9 @@ internal interface DataModule {
 
     @Binds
     fun goalRepository(adapter: RoomGoalRepository): GoalRepository
+
+    @Binds
+    fun accountRepository(adapter: NetworkAccountRepository): AccountRepository
 
     @Binds
     fun onboardingStatusStore(adapter: DataStoreOnboardingStatusStore): OnboardingStatusStore

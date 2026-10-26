@@ -42,7 +42,7 @@ class ModuleRulesConventionPlugin : Plugin<Project> {
     private fun allowedDependencies(path: String): Set<String>? = when {
         path == ":app" -> setOf(ANY)
         path.startsWith(":feature:") -> setOf(":core:domain", ":core:designsystem")
-        path == ":core:data" -> setOf(":core:domain", ":core:database")
+        path == ":core:data" -> setOf(":core:domain", ":core:database", ":core:network")
         path == ":core:testing" -> setOf(":core:domain")
         path in LEAF_MODULES -> emptySet()
         // Grouping projects (":core", ":feature") have no code.
@@ -52,7 +52,7 @@ class ModuleRulesConventionPlugin : Plugin<Project> {
 
     private companion object {
         const val ANY = "*"
-        val LEAF_MODULES = setOf(":core:domain", ":core:database", ":core:designsystem")
+        val LEAF_MODULES = setOf(":core:domain", ":core:database", ":core:designsystem", ":core:network")
         val TEST_ONLY = setOf(":core:testing")
         val CHECKED_CONFIGURATIONS = setOf("api", "implementation", "compileOnly", "runtimeOnly")
         val TEST_CONFIGURATIONS = setOf("testImplementation", "androidTestImplementation")

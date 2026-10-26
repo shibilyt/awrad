@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Titles -->
+    <string name="account_title_sign_in">Sign in</string>
+    <string name="account_title_register">Create an account</string>
+    <string name="account_title_verify">Verify your email</string>
+    <string name="account_title_forgot">Reset your password</string>
+    <string name="account_title_reset">Choose a new password</string>
+    <string name="account_title_signed_in">Your account</string>
+
+    <!-- Body text -->
+    <string name="account_intro">An account is optional. Everything works on this device without one.</string>
+    <string name="account_forgot_body">Enter your account\'s email and we\'ll send you a code to reset your password.</string>
+    <string name="account_code_sent_to">Enter the 6-digit code we emailed to %1$s. It works for 15 minutes.</string>
+    <string name="account_signed_in_as">Signed in as</string>
+    <string name="account_signed_in_body">Your practice stays on this device. Signing out doesn\'t remove it.</string>
+
+    <!-- Fields -->
+    <string name="account_field_email">Email</string>
+    <string name="account_field_password">Password</string>
+    <string name="account_field_new_password">New password</string>
+    <string name="account_field_code">6-digit code</string>
+
+    <!-- Actions -->
+    <string name="account_action_sign_in">Sign in</string>
+    <string name="account_action_register">Create account</string>
+    <string name="account_action_verify">Verify</string>
+    <string name="account_action_send_code">Send code</string>
+    <string name="account_action_reset_password">Set new password</string>
+    <string name="account_action_resend">Send a new code</string>
+    <string name="account_action_resend_wait">Send a new code (%1$s)</string>
+    <string name="account_action_forgot_password">Forgot your password?</string>
+    <string name="account_action_go_register">Create an account</string>
+    <string name="account_action_go_sign_in">I already have an account</string>
+    <string name="account_action_sign_out">Sign out</string>
+    <string name="account_action_back">Back</string>
+    <string name="account_action_show_password">Show password</string>
+    <string name="account_action_hide_password">Hide password</string>
+
+    <!-- Notices -->
+    <string name="account_notice_code_sent">We\'ve emailed you a code.</string>
+    <string name="account_notice_verification_required">Verify your email first. We\'ve emailed you a new code.</string>
+    <string name="account_notice_email_verified">Your email is verified. Sign in to continue.</string>
+    <string name="account_notice_password_changed">Your password is changed. Sign in with the new one.</string>
+    <string name="account_notice_signed_out">You\'re signed out. Your practice is still on this device.</string>
+
+    <!-- Field problems -->
+    <string name="account_error_email_invalid">Enter a valid email address.</string>
+    <string name="account_error_password_too_common">This password is too common. Choose another one.</string>
+    <string name="account_error_code_format">Enter the 6-digit code from the email.</string>
+
+    <!-- Errors, one per problem code -->
+    <string name="account_error_invalid_input">Check what you entered and try again.</string>
+    <string name="account_error_verification_code_invalid">That code is wrong or has expired. Check the email, or send a new code.</string>
+    <string name="account_error_reset_code_invalid">That code is wrong or has expired. Check the email, or send a new code.</string>
+    <string name="account_error_invalid_credentials">The email or password is wrong.</string>
+    <string name="account_error_session_ended">You\'ve been signed out on this device. Sign in again.</string>
+    <string name="account_error_rate_limited">Too many attempts. Wait a little and try again.</string>
+    <string name="account_error_request_rejected">The app couldn\'t complete that request. Update the app and try again.</string>
+    <string name="account_error_no_connection">No connection. Check your internet and try again.</string>
+    <string name="account_error_unexpected">Something went wrong on our side. Try again later.</string>
+
+    <!-- Counts of characters (the password policy) -->
+    <plurals name="account_hint_password">
+        <item quantity="one">At least %1$d character. A few words you\'ll remember work well.</item>
+        <item quantity="other">At least %1$d characters. A few words you\'ll remember work well.</item>
+    </plurals>
+    <plurals name="account_error_password_too_short">
+        <item quantity="one">Use at least %1$d character.</item>
+        <item quantity="other">Use at least %1$d characters.</item>
+    </plurals>
+    <plurals name="account_error_password_too_long">
+        <item quantity="one">Use at most %1$d character.</item>
+        <item quantity="other">Use at most %1$d characters.</item>
+    </plurals>
+</resources>
