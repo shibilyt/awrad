@@ -8,6 +8,8 @@ defmodule Awrad.Accounts.DeviceSessions do
       tokens back; any other reuse of a spent token revokes the session.
     * `sign_out/1` revokes the session that owns a refresh token.
     * `identify/1` turns an access token into its account and live session.
+    * `revoke/3` and `revoke_all/3` end sessions from the account's session
+      list (slice 2b) or after a password change or reset.
   """
 
   import Ecto.Query
@@ -98,14 +100,41 @@ defmodule Awrad.Accounts.DeviceSessions do
     :ok
   end
 
-  @doc "Revokes every live session of `user` with `reason`."
-  @spec revoke_all(User.t(), String.t()) :: :ok
-  def revoke_all(%User{id: user_id}, reason) do
-    from(s in DeviceSession, where: s.user_id == ^user_id and is_nil(s.revoked_at), select: s.id)
+  @doc "Revokes every live session of `user` with `reason`, except `keep_id` when given."
+  @spec revoke_all(User.t(), String.t(), Ecto.UUID.t() | nil) :: :ok
+  def revoke_all(%User{id: user_id}, reason, keep_id \\ nil) do
+    query =
+      from(s in DeviceSession,
+        where: s.user_id == ^user_id and is_nil(s.revoked_at),
+        select: s.id
+      )
+
+    query = if keep_id, do: where(query, [s], s.id != ^keep_id), else: query
+
+    query
     |> Repo.all()
     |> revoke_sessions(reason, DateTime.utc_now(:second))
 
     :ok
+  end
+
+  @doc "Revokes the account's live session `session_id` with `reason`. `:not_found` if there's none."
+  @spec revoke(User.t(), Ecto.UUID.t(), String.t()) :: :ok | :not_found
+  def revoke(%User{} = user, session_id, reason) do
+    now = DateTime.utc_now(:second)
+
+    case Repo.one(from(s in live_query(user, now), where: s.id == ^session_id, select: s.id)) do
+      nil -> :not_found
+      id -> revoke_sessions([id], reason, now)
+    end
+  end
+
+  @doc "The account's live sessions at `now`, as a query (for the session list)."
+  @spec live_query(User.t(), DateTime.t()) :: Ecto.Query.t()
+  def live_query(%User{id: user_id}, now) do
+    from s in DeviceSession,
+      where: s.user_id == ^user_id and is_nil(s.revoked_at),
+      where: s.idle_expires_at > ^now and s.absolute_expires_at > ^now
   end
 
   @doc """

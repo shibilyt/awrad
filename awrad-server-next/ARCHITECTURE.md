@@ -3,7 +3,7 @@
 The Awrad JSON API, rebuilt contract-first to replace `awrad_server/` (root ADR-2026-10-14).
 - **Stack:** Phoenix 1.8.15 on Elixir 1.20.4 / OTP 29, Ecto with Postgres 18, Bandit.
 - **API only:** no HTML, assets, LiveView or static files.
-- **Status:** the goal rules and the Hijri calendar (slices 1a and 1b), and accounts (slice 2a): registration, email verification and password reset by emailed code, mobile device sessions, browser cookie sessions. Features arrive in slices (`../docs/rebuild-plan.md`).
+- **Status:** the goal rules and the Hijri calendar (slices 1a and 1b), accounts (slice 2a): registration, email verification and password reset by emailed code, mobile device sessions, browser cookie sessions; and account settings (slice 2b): the session list, password and email changes, account deletion. Features arrive in slices (`../docs/rebuild-plan.md`).
 
 ## Boundaries
 
@@ -87,11 +87,27 @@ Boundary checks these rules at compile time, and `mix validate` fails on any vio
   - a key that already rotated another token is `idempotency_key_reused`.
 
   Sign-out takes the refresh token and always answers `204`.
-- **Browser sessions** (`users_tokens`, `UserToken`, `AwradWeb.UserAuth`): `phx.gen.auth`'s session tokens and plugs, minus magic links and confirmation links. 14 days, remember-me (default on), session renewal on sign-in (new session ID and CSRF token), reissue after 7 days. Cookies are `HttpOnly`, `SameSite=Lax`, and `Secure` in production.
-- **Emails** (`UserNotifier`): Swoosh, sent from a supervised task (`Awrad.TaskSupervisor`) so a response's timing doesn't reveal whether an email has an account. Localized from `Accept-Language` (en, ar, ml; default en) with `Awrad.Gettext` and key-based messages in `priv/gettext/<locale>/LC_MESSAGES/emails.po`. In development they land in the Swoosh mailbox at `/dev/mailbox` (JSON at `/dev/mailbox/json`).
-- **Rate limits** (`RateLimiter`, ADR 0006): fixed windows in Postgres, per IP and per account, on every account action; `429` with `Retry-After`.
+- **Browser sessions** (`users_tokens`, `UserToken`, `BrowserSessions`, `AwradWeb.UserAuth`): `phx.gen.auth`'s session tokens and plugs, minus magic links and confirmation links. 14 days, remember-me (default on), session renewal on sign-in (new session ID and CSRF token). Cookies are `HttpOnly`, `SameSite=Lax`, and `Secure` in production. Changed for the session list (ADR 0008):
+  - each row is one browser session, with a `name` parsed from `User-Agent` at sign-in (`AwradWeb.BrowserName`, "Firefox on Windows", `nil` when unknown) and `last_seen_at` (updated at most every 5 minutes);
+  - reissue after 7 days replaces the token **in place**; the replaced token works for 60 more seconds (`previous_token`), and a request carrying it is moved onto the current one.
+- **Emails** (`UserNotifier`): Swoosh, sent from a supervised task (`Awrad.TaskSupervisor`) so a response's timing doesn't reveal whether an email has an account. Localized from `Accept-Language` (en, ar, ml; default en) with `Awrad.Gettext` and key-based messages in `priv/gettext/<locale>/LC_MESSAGES/emails.po`: codes (`verify_email`, `reset_password`, `change_email`) and notices (`password_changed`, `email_taken`, `email_changed`, `account_deleted`). In development they land in the Swoosh mailbox at `/dev/mailbox` (JSON at `/dev/mailbox/json`).
+- **Rate limits** (`RateLimiter`, ADR 0006): fixed windows in Postgres, per IP and per account, on every account action; `429` with `Retry-After`. Signed-in actions are limited by account ID: `password_check` (10 per account and 30 per IP in 15 minutes, shared by change password, request email change and delete), `request_email_change` (5 per account an hour), `confirm_email_change` (10 an hour).
 - **Secrets** (`Awrad.Secrets`): `access_token_secret`, `hmac_pepper` and `encryption_secret`. Dev and test values are in `config/`. Production reads `AWRAD_ACCESS_TOKEN_SECRET`, `AWRAD_HMAC_PEPPER` and `AWRAD_ENCRYPTION_SECRET` (`config/runtime.exs` raises when one is missing); `AWRAD_MAIL_FROM` sets the sender.
 - **Housekeeping:** `Awrad.Pruner` deletes expired idempotency results, email codes and rate-limit windows hourly (off in tests).
+
+## Account settings (slice 2b)
+
+`docs/slices/02-accounts.md` (slice 2b), `contracts/api/paths/account_settings.yaml`. Every operation takes either credential through `AccountAuth`, and ownership comes from the `Scope`, which names the caller's own session (`device_session` for a bearer token, `browser_session_id` for the cookie).
+
+- **Session list** (`AccountSessions.list/3`): live device sessions (not revoked, within both expiries) and live browser sessions (`users_tokens` younger than 14 days), most recently used first by `(last_seen_at, id)` descending; `is_current` for the caller's own. A device session's ID is its `DeviceSession.id`; a browser's is its `users_tokens` row ID. Cursor: base64url of the last item's position, opaque to clients (`400 malformed_request` when it doesn't parse); default 50, maximum 100.
+- **Revoke one** (`AccountSessions.revoke/2`): a live session of the account, of either kind, else `404 not_found` (another account's, ended, or not a UUID). A device session is revoked (`revoked`, or `signed_out` for the caller's own); a browser session's row is deleted, and for the caller's own the cookies are cleared too.
+- **Revoke others** (`revoke_others/1`): every session but the caller's, in one transaction.
+- **Change password** (`Settings.change_password/4`): the current password (Argon2; out-of-bounds input costs a dummy verify and is `current_password_incorrect`), `PasswordPolicy` for the new one, both errors reported together. In one transaction: new hash, every other device session revoked (`password_changed`), every other browser token deleted, pending reset code deleted. The caller's device session or browser token is untouched, so its cookie and CSRF token keep working (ADR 0008). Then a `password_changed` notice.
+- **Email change** (`Settings.request_email_change/4`, `confirm_email_change/3`):
+  - request: current password, `EmailInput` (`email_invalid`), not the current email ignoring case (`email_unchanged`); the earlier `change_email` code is cancelled; if the address has an account (verified or not), that address gets an `email_taken` notice, otherwise a `change_email` code (`email_codes.new_email`, part of the HMAC). Same `202` either way.
+  - confirm: the code (15 minutes, 5 tries) switches the email; `409 email_taken` if the address got an account meanwhile (checked, and the unique index as backstop; the code then stays usable); pending reset codes are deleted; the old address gets an `email_changed` notice naming the new one. Sessions stay.
+- **Delete account** (`Settings.delete/3`): current password, then in one transaction the account's ID-keyed rate-limit windows and the `users` row, which cascades to `users_tokens`, `email_codes`, `device_sessions` (→ `refresh_tokens`) and the account's `idempotency_records`. IP- and email-keyed windows stay until pruned (anti-abuse). A cookie caller's cookies are cleared; an `account_deleted` email goes to the address.
+- **Idempotency:** `revoke_others`, `change_password`, `request_email_change` and `confirm_email_change` run the `:idempotent` pipeline after `AccountAuth`, so stored results are per account (ADR 0008). `delete_account` checks the key's shape only; a repeat after success is `401`.
 
 ### Client IP and proxies
 
@@ -104,8 +120,8 @@ Per-IP rate limits use `conn.remote_ip`, the TCP peer. That's correct when Bandi
 | Pipeline | Used by | Plugs |
 |---|---|---|
 | `:api` | Every `/api/v1` route | JSON only |
-| `:idempotent` | Public account `POST`s and `create_device_session` | `Idempotency` (`mode: :replay`; ADR 0007) |
-| `:any_account` | `get_current_account` | `AccountAuth`: with an `Authorization` header, **only** the bearer token is checked; without one, **only** the cookie session |
+| `:idempotent` | Public account `POST`s, `create_device_session`, and the account settings `POST`s (after `:any_account`, so results are per account) | `Idempotency` (`mode: :replay`; ADR 0007, 0008) |
+| `:any_account` | `get_current_account` and the account settings (`/api/v1/account/...`) | `AccountAuth`: with an `Authorization` header, **only** the bearer token is checked; without one, **only** the cookie session, after the CSRF check on state-changing methods (`403 csrf_token_invalid`) |
 | `:browser_session` | Browser routes | Cookie session (`_awrad_session`), CSRF check on state-changing methods (`X-CSRF-Token`, `403 csrf_token_invalid`), current user from the cookie only (ADR-2026-10-15) |
 | `:idempotent_browser_sign_in` | `create_browser_session` | `Idempotency` (`mode: :rerun`: a cookie can't be replayed) |
 | `:require_browser_user` | `delete_browser_session` | `401 unauthenticated` without a signed-in cookie session |
@@ -144,12 +160,14 @@ Ecto with binary (UUID) primary keys. The databases are `awrad_next_dev` and `aw
 | Table | Holds |
 |---|---|
 | `users` | Accounts (`citext` email, unique) |
-| `users_tokens` | Browser session tokens (`phx.gen.auth`) |
-| `email_codes` | One live code per account and purpose (HMAC) |
+| `users_tokens` | Browser sessions (`phx.gen.auth` tokens), with name, `last_seen_at` and the token a reissue replaced |
+| `email_codes` | One live code per account and purpose (HMAC); `new_email` for an email change |
 | `device_sessions` | Mobile sessions; one live per account and installation |
 | `refresh_tokens` | Single-use refresh tokens (SHA-256), rotation key and encrypted retry grant |
 | `auth_rate_limits` | Fixed-window counters (HMAC subjects) |
-| `idempotency_records` | Stored `Idempotency-Key` results (encrypted bodies) |
+| `idempotency_records` | Stored `Idempotency-Key` results (encrypted bodies), with the account for signed-in operations |
+
+Every table holding account data references `users` with `ON DELETE CASCADE` (directly, or through `device_sessions` for `refresh_tokens`); `auth_rate_limits` holds only HMACs and is cleared by account ID on deletion.
 
 API JSON is mapped field by field (`AwradWeb.AccountJSON`), never straight from schemas.
 

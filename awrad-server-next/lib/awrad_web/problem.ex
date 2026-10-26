@@ -28,7 +28,11 @@ defmodule AwradWeb.Problem do
     "refresh_reuse_detected" =>
       {401, "Refresh token reused", "a spent refresh token was reused; the session is revoked"},
     "idempotency_key_reused" =>
-      {422, "Idempotency key reused", "this Idempotency-Key was used with a different request"}
+      {422, "Idempotency key reused", "this Idempotency-Key was used with a different request"},
+    "not_found" => {404, "Not found", "no such resource"},
+    "email_change_code_invalid" =>
+      {422, "Email change code invalid", "the code is wrong, expired or already used"},
+    "email_taken" => {409, "Email taken", "the new email now belongs to another account"}
   }
 
   # Request fields as JSON Pointers, and an English detail per field code.
@@ -36,6 +40,8 @@ defmodule AwradWeb.Problem do
     email: "/email",
     password: "/password",
     new_password: "/new_password",
+    current_password: "/current_password",
+    new_email: "/new_email",
     code: "/code",
     installation_id: "/device/installation_id",
     device_name: "/device/name",
@@ -44,6 +50,8 @@ defmodule AwradWeb.Problem do
 
   @field_details %{
     email_invalid: "must be an email address such as name@example.com",
+    email_unchanged: "is already the account's email",
+    current_password_incorrect: "is incorrect",
     password_too_short: "must be at least 12 characters",
     password_too_long: "is too long",
     password_too_common: "is too common; choose another",

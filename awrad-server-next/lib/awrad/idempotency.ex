@@ -24,50 +24,67 @@ defmodule Awrad.Idempotency do
   def fingerprint(body),
     do: Secrets.hmac(@purpose, :erlang.term_to_binary(body, [:deterministic]))
 
-  @doc "The live record for `scope` and `key`, if any."
-  @spec lookup(String.t(), Ecto.UUID.t()) :: Record.t() | nil
-  def lookup(scope, key) do
+  @doc """
+  The live record for `scope` and `key`, if any. `user_id` is the signed-in
+  account making the request (`nil` for public operations): a key is only ever
+  matched within the same account.
+  """
+  @spec lookup(String.t(), Ecto.UUID.t(), Ecto.UUID.t() | nil) :: Record.t() | nil
+  def lookup(scope, key, user_id \\ nil) do
     now = DateTime.utc_now(:second)
-    Repo.one(from r in Record, where: r.scope == ^scope and r.key == ^key and r.expires_at > ^now)
+
+    Repo.one(
+      from r in for_key(scope, key, user_id),
+        where: r.expires_at > ^now
+    )
   end
 
   @doc """
-  Stores a result. `body` is `nil` when the operation re-runs on a repeat
-  instead of replaying. The first stored result for a key wins.
+  Stores a result for `scope`, `key` and the account `user_id` (or `nil`).
+  `body` is `nil` when the operation re-runs on a repeat instead of replaying.
+  The first stored result for a key wins. An account's results are deleted
+  with it.
   """
   @spec store(
-          String.t(),
-          Ecto.UUID.t(),
+          {String.t(), Ecto.UUID.t(), Ecto.UUID.t() | nil},
           binary(),
           pos_integer(),
           String.t() | nil,
           binary() | nil
         ) :: :ok
-  def store(scope, key, fingerprint, status, content_type, body) do
+  def store({scope, key, user_id}, fingerprint, status, content_type, body) do
     now = DateTime.utc_now(:second)
 
     # An expired row for the key is gone for good; the new result replaces it.
-    Repo.delete_all(
-      from(r in Record, where: r.scope == ^scope and r.key == ^key and r.expires_at <= ^now)
-    )
+    Repo.delete_all(from(r in for_key(scope, key, user_id), where: r.expires_at <= ^now))
 
-    Repo.insert!(
-      %Record{
-        scope: scope,
-        key: key,
-        fingerprint: fingerprint,
-        status: status,
-        content_type: content_type,
-        body_ciphertext: body && Secrets.encrypt(@purpose, body),
-        expires_at: DateTime.add(now, @ttl_hours, :hour),
-        inserted_at: now
-      },
-      on_conflict: :nothing,
-      conflict_target: [:scope, :key]
-    )
+    record = %Record{
+      scope: scope,
+      key: key,
+      user_id: user_id,
+      fingerprint: fingerprint,
+      status: status,
+      content_type: content_type,
+      body_ciphertext: body && Secrets.encrypt(@purpose, body),
+      expires_at: DateTime.add(now, @ttl_hours, :hour),
+      inserted_at: now
+    }
+
+    # An account deleted while its request ran keeps nothing (foreign key).
+    {_ok_or_error, _record} =
+      record
+      |> Ecto.Changeset.change()
+      |> Ecto.Changeset.foreign_key_constraint(:user_id)
+      |> Repo.insert(on_conflict: :nothing)
 
     :ok
   end
+
+  defp for_key(scope, key, nil),
+    do: from(r in Record, where: r.scope == ^scope and r.key == ^key and is_nil(r.user_id))
+
+  defp for_key(scope, key, user_id),
+    do: from(r in Record, where: r.scope == ^scope and r.key == ^key and r.user_id == ^user_id)
 
   @doc "The stored response body, decrypted. `:error` when there's none or it can't be read."
   @spec body(Record.t()) :: {:ok, binary()} | :error

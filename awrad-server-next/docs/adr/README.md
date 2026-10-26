@@ -10,4 +10,5 @@ Server-only decisions for `awrad-server-next`. Cross-project decisions live in t
 | [0004](0004-hijri-table-compiled-from-a-priv-copy.md) | The Hijri table, compiled in from a checked copy in `priv/` | Accepted |
 | [0005](0005-access-tokens-with-joken.md) | Mobile access tokens are HS256 JWTs signed with Joken | Accepted |
 | [0006](0006-rate-limits-in-postgres.md) | Account rate limits are fixed windows in Postgres | Accepted |
-| [0007](0007-idempotency-results-in-postgres.md) | Idempotency-Key results are stored in Postgres | Accepted |
+| [0007](0007-idempotency-results-in-postgres.md) | Idempotency-Key results are stored in Postgres | Accepted (amended by 0008) |
+| [0008](0008-browser-sessions-in-the-session-list.md) | Browser sessions in the account's session list, and per-account idempotency results | Accepted |

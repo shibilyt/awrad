@@ -2,15 +2,23 @@ defmodule Awrad.Accounts.Input do
   @moduledoc """
   Checks request values the accounts operations share, collecting every field
   error at once: `{:error, {:validation, [{field, code}]}}`, where `field` is
-  the request field (`:email`, `:password`, `:new_password`, `:code`,
-  `:installation_id`, `:device_name`, `:platform`) and `code` the stable field
-  code clients see.
+  the request field (`:email`, `:password`, `:new_password`,
+  `:current_password`, `:new_email`, `:code`, `:installation_id`,
+  `:device_name`, `:platform`) and `code` the stable field code clients see.
   """
 
   alias Awrad.Accounts.{EmailInput, PasswordPolicy}
 
   @type field ::
-          :email | :password | :new_password | :code | :installation_id | :device_name | :platform
+          :email
+          | :password
+          | :new_password
+          | :current_password
+          | :new_email
+          | :code
+          | :installation_id
+          | :device_name
+          | :platform
   @type field_error :: {field(), atom()}
   @type validation_error :: {:error, {:validation, [field_error(), ...]}}
 
