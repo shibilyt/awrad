@@ -124,6 +124,146 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/account/sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every place the account is signed in
+         * @description Mobile device sessions and browser sessions together, most recently used first, with the caller's own marked `is_current`. Only active sessions are listed. An account rarely has more than a page.
+         */
+        get: operations["list_account_sessions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/sessions/{session_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Sign out one device or browser
+         * @description Ends that session; its next request is `401`. Revoking the caller's own session is the same as signing out. Another account's session, one already ended, or an id that isn't a UUID is `404`.
+         */
+        delete: operations["revoke_account_session"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/sessions/revoke_others": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign out of all other devices and browsers
+         * @description Ends every session of the account except the caller's own.
+         */
+        post: operations["revoke_other_account_sessions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/change_password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the password while signed in
+         * @description Needs the current password. Signs out every other device and browser and keeps the caller signed in. The account's email gets a notice that the password changed.
+         */
+        post: operations["change_password"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/request_email_change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start changing the account's email
+         * @description Needs the current password. Emails a 6-digit code to the NEW address; nothing changes until `confirm_email_change`. Always `202` for a valid request: if the new address already belongs to another account, that address gets a notice instead of a code, so the response doesn't reveal it. A new request cancels the previous code.
+         */
+        post: operations["request_email_change"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/confirm_email_change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm the new email with the code sent to it
+         * @description Switches the account to the new address and returns the account. The old address gets a notice of the change. Sessions stay signed in. A wrong, expired or used code is `email_change_code_invalid` (5 tries). If the new address was taken by another account in the meantime, `409 email_taken`.
+         */
+        post: operations["confirm_email_change"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/account/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Delete the account now
+         * @description Needs the current password. Immediately and permanently deletes the account and everything the server keeps for it (sessions, settings, synced data), and ends every session; a browser's cookies are cleared. Practice data stored on devices isn't touched: the apps keep working offline. The address gets a confirmation email. There is no undo. A retry after a lost `204` gets `401`, because the account no longer exists: clients treat `401` after a delete request as done.
+         */
+        post: operations["delete_account"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/device_sessions": {
         parameters: {
             query?: never;
@@ -215,7 +355,7 @@ export interface paths {
         put?: never;
         /**
          * Sign in in the browser
-         * @description Sets the Phoenix session cookie (and the remember-me cookie when `remember_me` is true). Needs the session cookie and CSRF token that `get_browser_csrf_token` gives any browser. Signing in renews the session, so the response carries the new CSRF token. An unverified email gets `403 email_verification_required`, and the server emails a fresh code (rate-limited).
+         * @description Sets the Phoenix session cookie (and the remember-me cookie when `remember_me` is true). Needs the session cookie and CSRF token that `get_browser_csrf_token` gives any browser. Signing in renews the session, so the response carries the new CSRF token. An unverified email gets `403 email_verification_required`, and the server emails a fresh code (rate-limited). A repeat with the same `Idempotency-Key` signs in again rather than replaying, because a stored response can't set the cookie (STYLE §10).
          */
         post: operations["create_browser_session"];
         /**
@@ -322,6 +462,24 @@ export interface components {
             email: string;
             created_at: components["schemas"]["Instant"];
         };
+        /** @description The account's current password, re-entered to confirm a sensitive change. A wrong one is `validation_failed` with field code `current_password_incorrect`. */
+        CurrentPassword: string;
+        /** @description One place the account is signed in. */
+        AccountSession: {
+            /** @description For a device session, the same `id` as `DeviceSession.id` in its sign-in grant. */
+            id: components["schemas"]["Uuid"];
+            /** @enum {string} */
+            kind: "device" | "browser";
+            /** @description Device model for a device session ("Pixel 9"); a browser and system summary for a browser session ("Firefox on Windows"), or null when it couldn't be told. Clients show a generic label for null. */
+            name: string | null;
+            /** @enum {string} */
+            platform: "android" | "ios" | "web";
+            created_at: components["schemas"]["Instant"];
+            last_seen_at: components["schemas"]["Instant"];
+            /** @description True for the session making this request. */
+            is_current: boolean;
+        };
+        /** @description Invalid values are `validation_failed` with field codes `installation_id_invalid`, `device_name_invalid` or `platform_invalid` under `/device/...`. */
         DeviceInfo: {
             /** @description Random UUIDv4 the app creates once per installation and keeps in secure storage. */
             installation_id: components["schemas"]["Uuid"];
@@ -507,12 +665,12 @@ export interface components {
                  *       "title": "Request validation failed",
                  *       "status": 422,
                  *       "code": "validation_failed",
-                 *       "detail": "daily_target must be between 1 and 100000",
+                 *       "detail": "email is not a valid address",
                  *       "errors": [
                  *         {
-                 *           "field": "/daily_target",
-                 *           "code": "out_of_range",
-                 *           "detail": "must be between 1 and 100000"
+                 *           "field": "/email",
+                 *           "code": "email_invalid",
+                 *           "detail": "not a valid email address"
                  *         }
                  *       ]
                  *     }
@@ -603,6 +761,33 @@ export interface components {
                  *           "field": "/password",
                  *           "code": "password_too_short",
                  *           "detail": "must be at least 12 characters"
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description `validation_failed`. Field codes: `current_password_incorrect` on `/current_password`; on operations that take a new password, also `password_too_short`, `password_too_long` or `password_too_common` on `/new_password`. */
+        CurrentPasswordRejected: {
+            headers: {
+                "Cache-Control": components["headers"]["CacheControl"];
+                "x-request-id": components["headers"]["RequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "type": "urn:awrad:problem:validation_failed",
+                 *       "title": "Request validation failed",
+                 *       "status": 422,
+                 *       "code": "validation_failed",
+                 *       "detail": "the current password is incorrect",
+                 *       "errors": [
+                 *         {
+                 *           "field": "/current_password",
+                 *           "code": "current_password_incorrect",
+                 *           "detail": "incorrect"
                  *         }
                  *       ]
                  *     }
@@ -883,6 +1068,337 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
         };
     };
+    list_account_sessions: {
+        parameters: {
+            query?: {
+                cursor?: components["parameters"]["Cursor"];
+                /** @description Page size. Default 50, maximum 100. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The sessions. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "id": "9a7d1c42-3e5b-4f60-8a19-0c2d4e6f8b13",
+                     *           "kind": "device",
+                     *           "name": "Pixel 9",
+                     *           "platform": "android",
+                     *           "created_at": "2026-10-26T08:05:00Z",
+                     *           "last_seen_at": "2026-10-27T06:40:00Z",
+                     *           "is_current": true
+                     *         },
+                     *         {
+                     *           "id": "4c2e8f10-7b3a-4d5e-9f61-2a8b0c1d3e45",
+                     *           "kind": "browser",
+                     *           "name": "Firefox on Windows",
+                     *           "platform": "web",
+                     *           "created_at": "2026-10-20T18:00:00Z",
+                     *           "last_seen_at": "2026-10-26T21:15:00Z",
+                     *           "is_current": false
+                     *         },
+                     *         {
+                     *           "id": "7e1f3a95-2c4d-4b6e-8f70-1a2b3c4d5e6f",
+                     *           "kind": "browser",
+                     *           "name": null,
+                     *           "platform": "web",
+                     *           "created_at": "2026-10-12T07:30:00Z",
+                     *           "last_seen_at": "2026-10-18T07:45:00Z",
+                     *           "is_current": false
+                     *         }
+                     *       ],
+                     *       "next_cursor": null
+                     *     }
+                     */
+                    "application/json": {
+                        items: components["schemas"]["AccountSession"][];
+                        next_cursor: components["schemas"]["Cursor"] | null;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    revoke_account_session: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["NoContent"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["CsrfTokenInvalid"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    revoke_other_account_sessions: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: components["responses"]["NoContent"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["CsrfTokenInvalid"];
+        };
+    };
+    change_password: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+                /**
+                 * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
+                 * @example ar
+                 */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "current_password": "a long passphrase",
+                 *       "new_password": "another long passphrase"
+                 *     }
+                 */
+                "application/json": {
+                    current_password: components["schemas"]["CurrentPassword"];
+                    new_password: components["schemas"]["Password"];
+                };
+            };
+        };
+        responses: {
+            204: components["responses"]["NoContent"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["CsrfTokenInvalid"];
+            422: components["responses"]["CurrentPasswordRejected"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    request_email_change: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+                /**
+                 * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
+                 * @example ar
+                 */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "current_password": "a long passphrase",
+                 *       "new_email": "amina.new@example.com"
+                 *     }
+                 */
+                "application/json": {
+                    current_password: components["schemas"]["CurrentPassword"];
+                    new_email: components["schemas"]["Email"];
+                };
+            };
+        };
+        responses: {
+            202: components["responses"]["CodeSent"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["CsrfTokenInvalid"];
+            /** @description `validation_failed`. Field codes: `current_password_incorrect` on `/current_password`; `email_invalid` or `email_unchanged` on `/new_email`. */
+            422: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "urn:awrad:problem:validation_failed",
+                     *       "title": "Request validation failed",
+                     *       "status": 422,
+                     *       "code": "validation_failed",
+                     *       "detail": "new_email is the account's current email",
+                     *       "errors": [
+                     *         {
+                     *           "field": "/new_email",
+                     *           "code": "email_unchanged",
+                     *           "detail": "already the account's email"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    confirm_email_change: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+                /**
+                 * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
+                 * @example ar
+                 */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "code": "519274"
+                 *     }
+                 */
+                "application/json": {
+                    code: components["schemas"]["EmailCode"];
+                };
+            };
+        };
+        responses: {
+            /** @description The account with its new email. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "id": "0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90",
+                     *       "email": "amina.new@example.com",
+                     *       "created_at": "2026-10-26T08:00:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["CsrfTokenInvalid"];
+            /** @description The new address now belongs to another account. */
+            409: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "urn:awrad:problem:email_taken",
+                     *       "title": "Email taken",
+                     *       "status": 409,
+                     *       "code": "email_taken",
+                     *       "detail": "the new email now belongs to another account",
+                     *       "errors": []
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description `email_change_code_invalid`, or `validation_failed` with `code_invalid` on `/code`. */
+            422: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "urn:awrad:problem:email_change_code_invalid",
+                     *       "title": "Email change code invalid",
+                     *       "status": 422,
+                     *       "code": "email_change_code_invalid",
+                     *       "detail": "the code is wrong, expired or already used",
+                     *       "errors": []
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    delete_account: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+                /**
+                 * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
+                 * @example ar
+                 */
+                "Accept-Language"?: components["parameters"]["AcceptLanguage"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "current_password": "a long passphrase"
+                 *     }
+                 */
+                "application/json": {
+                    current_password: components["schemas"]["CurrentPassword"];
+                };
+            };
+        };
+        responses: {
+            204: components["responses"]["NoContent"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["CsrfTokenInvalid"];
+            422: components["responses"]["CurrentPasswordRejected"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
     create_device_session: {
         parameters: {
             query?: never;
@@ -924,7 +1440,33 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["InvalidCredentials"];
             403: components["responses"]["Forbidden"];
-            422: components["responses"]["UnprocessableContent"];
+            /** @description `validation_failed`. Field codes: `email_invalid` on `/email`; `installation_id_invalid`, `device_name_invalid` or `platform_invalid` under `/device/...` (an app bug, not something a person can fix). */
+            422: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "urn:awrad:problem:validation_failed",
+                     *       "title": "Request validation failed",
+                     *       "status": 422,
+                     *       "code": "validation_failed",
+                     *       "detail": "device.platform is not supported",
+                     *       "errors": [
+                     *         {
+                     *           "field": "/device/platform",
+                     *           "code": "platform_invalid",
+                     *           "detail": "must be android or ios"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             429: components["responses"]["TooManyRequests"];
         };
     };

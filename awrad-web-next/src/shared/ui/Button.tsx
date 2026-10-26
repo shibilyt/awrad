@@ -35,3 +35,33 @@ export function SecondaryButton({ className, ...props }: Props): ReactElement {
     />
   );
 }
+
+/** A small outlined action inside a list row (sign out one device). */
+export function InlineButton({ className, ...props }: Props): ReactElement {
+  return (
+    <AriaButton
+      {...props}
+      className={[
+        "min-h-11 shrink-0 rounded-xl border border-outline-variant px-4 text-sm font-semibold text-primary",
+        "outline-none focus-visible:ring-4 focus-visible:ring-primary-container",
+        "data-pressed:bg-primary-container disabled:opacity-50 data-pending:opacity-70",
+        className ?? "",
+      ].join(" ")}
+    />
+  );
+}
+
+/** An action that ends or deletes something: outlined in the error colour, so it never looks like the default. */
+export function DangerButton({ className, ...props }: Props): ReactElement {
+  return (
+    <AriaButton
+      {...props}
+      className={[
+        "min-h-12 w-full rounded-2xl border-2 border-error px-6 font-semibold text-error",
+        "outline-none focus-visible:ring-4 focus-visible:ring-primary-container",
+        "data-pressed:opacity-80 disabled:opacity-50 data-pending:opacity-70",
+        className ?? "",
+      ].join(" ")}
+    />
+  );
+}

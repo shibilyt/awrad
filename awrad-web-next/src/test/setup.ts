@@ -25,6 +25,7 @@ afterEach(async () => {
   cleanup();
   setCsrfToken(null);
   await i18next.changeLanguage("en");
+  window.localStorage.clear();
 });
 afterAll(() => {
   server.close();

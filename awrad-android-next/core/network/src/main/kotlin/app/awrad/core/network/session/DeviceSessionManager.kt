@@ -24,9 +24,25 @@ import java.util.UUID
 public sealed interface DeviceSessionState {
     public data object Loading : DeviceSessionState
 
-    public data object SignedOut : DeviceSessionState
+    /** [cause] is why the last session ended while the app ran; [SignOutCause.NOT_SIGNED_IN] at start. */
+    public data class SignedOut(val cause: SignOutCause) : DeviceSessionState
 
     public data class SignedIn(val accountId: String, val email: String) : DeviceSessionState
+}
+
+/** Why this installation has no device session. Kept in memory only. */
+public enum class SignOutCause {
+    /** It had none when the app started. */
+    NOT_SIGNED_IN,
+
+    /** The person signed out on this device. */
+    SIGNED_OUT,
+
+    /** The server ended it: revoked from another device, a password reset, idle expiry or token reuse. */
+    SESSION_ENDED,
+
+    /** The account was deleted from this device. */
+    ACCOUNT_DELETED,
 }
 
 /**
@@ -110,9 +126,25 @@ public class DeviceSessionManager internal constructor(
             val pending = PendingSignOut(session.refreshToken, newKey())
             store.write(StoredCredentials(session = null, pendingSignOuts = credentials.pendingSignOuts + pending))
             access = null
-            mutableState.value = DeviceSessionState.SignedOut
+            mutableState.value = DeviceSessionState.SignedOut(SignOutCause.SIGNED_OUT)
         }
         retryPendingSignOuts()
+    }
+
+    /**
+     * Forgets the session after `delete_account` succeeded. The server has already ended every session, so
+     * nothing is queued; practice data isn't touched.
+     */
+    public suspend fun accountDeleted(): Unit = mutex.withLock {
+        load()
+        endLocked(SignOutCause.ACCOUNT_DELETED)
+    }
+
+    private suspend fun endLocked(cause: SignOutCause) {
+        val credentials = store.read()
+        store.write(credentials.copy(session = null))
+        access = null
+        mutableState.value = DeviceSessionState.SignedOut(cause)
     }
 
     /**
@@ -165,11 +197,7 @@ public class DeviceSessionManager internal constructor(
         val credentials = store.read()
         when {
             // The session is gone (expired, revoked, or reuse detected): this device is signed out.
-            status == UNAUTHORIZED -> {
-                store.write(credentials.copy(session = null))
-                access = null
-                mutableState.value = DeviceSessionState.SignedOut
-            }
+            status == UNAUTHORIZED -> endLocked(SignOutCause.SESSION_ENDED)
             // A server fault or rate limit may not have run the refresh: keep the key for the retry.
             status >= SERVER_ERROR || status == TOO_MANY_REQUESTS -> Unit
             // Any other answer (a rejected key or body) won't change on a retry with the same key.
@@ -189,7 +217,7 @@ public class DeviceSessionManager internal constructor(
         if (mutableState.value != DeviceSessionState.Loading) return
         val session = store.read().session
         val stored = if (session == null) {
-            DeviceSessionState.SignedOut
+            DeviceSessionState.SignedOut(SignOutCause.NOT_SIGNED_IN)
         } else {
             DeviceSessionState.SignedIn(session.accountId, session.email)
         }

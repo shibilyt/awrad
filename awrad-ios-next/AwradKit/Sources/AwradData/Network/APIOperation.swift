@@ -6,6 +6,7 @@ public struct APIOperation: Hashable, Sendable, CustomStringConvertible {
     public enum Method: String, Sendable {
         case get = "GET"
         case post = "POST"
+        case delete = "DELETE"
     }
 
     /// What the operation authenticates with. Public operations never carry a bearer token.
@@ -16,10 +17,13 @@ public struct APIOperation: Hashable, Sendable, CustomStringConvertible {
 
     public let id: String
     public let method: Method
+    /// The path as the spec writes it, with `{name}` for each path parameter.
     public let path: String
     public let credential: Credential
     /// Whether it sends `Accept-Language`, the language of any email it triggers.
     public let sendsAcceptLanguage: Bool
+    /// The query parameters the app may send. The contract test checks the spec has each.
+    public var queryParameters: [String] = []
 
     public var description: String { id }
 
@@ -56,9 +60,35 @@ extension APIOperation {
         id: "sign_out_device_session", method: .post, path: "/api/v1/device_sessions/sign_out",
         credential: .none, sendsAcceptLanguage: false)
 
+    // Account settings (slice 2b). The spec also accepts the browser cookie; the app sends the
+    // bearer token.
+    static let listAccountSessions = APIOperation(
+        id: "list_account_sessions", method: .get, path: "/api/v1/account/sessions", credential: .bearer,
+        sendsAcceptLanguage: false, queryParameters: ["cursor", "limit"])
+    static let revokeAccountSession = APIOperation(
+        id: "revoke_account_session", method: .delete, path: "/api/v1/account/sessions/{session_id}",
+        credential: .bearer, sendsAcceptLanguage: false)
+    static let revokeOtherAccountSessions = APIOperation(
+        id: "revoke_other_account_sessions", method: .post, path: "/api/v1/account/sessions/revoke_others",
+        credential: .bearer, sendsAcceptLanguage: false)
+    static let changePassword = APIOperation(
+        id: "change_password", method: .post, path: "/api/v1/account/change_password", credential: .bearer,
+        sendsAcceptLanguage: true)
+    static let requestEmailChange = APIOperation(
+        id: "request_email_change", method: .post, path: "/api/v1/account/request_email_change",
+        credential: .bearer, sendsAcceptLanguage: true)
+    static let confirmEmailChange = APIOperation(
+        id: "confirm_email_change", method: .post, path: "/api/v1/account/confirm_email_change",
+        credential: .bearer, sendsAcceptLanguage: true)
+    static let deleteAccount = APIOperation(
+        id: "delete_account", method: .post, path: "/api/v1/account/delete", credential: .bearer,
+        sendsAcceptLanguage: true)
+
     /// Every operation the app uses. The contract test fails if one has no example in the spec.
     public static let used: [APIOperation] = [
         registerAccount, verifyAccountEmail, resendVerificationCode, requestPasswordReset, resetPassword,
         getCurrentAccount, createDeviceSession, refreshDeviceSession, signOutDeviceSession,
+        listAccountSessions, revokeAccountSession, revokeOtherAccountSessions, changePassword,
+        requestEmailChange, confirmEmailChange, deleteAccount,
     ]
 }

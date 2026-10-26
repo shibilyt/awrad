@@ -72,6 +72,26 @@ defmodule AwradWeb.Router do
     get "/account", AccountController, :show
   end
 
+  # Account settings (slice 2b): either credential, CSRF-checked for cookies.
+  scope "/api/v1/account", AwradWeb do
+    pipe_through [:api, :any_account]
+
+    get "/sessions", AccountSettingsController, :list_sessions
+    delete "/sessions/:session_id", AccountSettingsController, :revoke_session
+    # Checks Idempotency-Key itself: the account it would be stored for is deleted.
+    post "/delete", AccountSettingsController, :delete
+
+    # After AccountAuth, so stored results belong to the account.
+    scope "/" do
+      pipe_through :idempotent
+
+      post "/sessions/revoke_others", AccountSettingsController, :revoke_other_sessions
+      post "/change_password", AccountSettingsController, :change_password
+      post "/request_email_change", AccountSettingsController, :request_email_change
+      post "/confirm_email_change", AccountSettingsController, :confirm_email_change
+    end
+  end
+
   scope "/api/v1/browser", AwradWeb do
     pipe_through [:api, :browser_session]
 

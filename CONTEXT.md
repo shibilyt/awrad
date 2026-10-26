@@ -116,6 +116,12 @@ A mobile installation signed in to an account, with its own refresh token. It en
 **Browser session**:
 A web browser signed in to an account with Phoenix's session cookie. It's separate from device sessions, and neither accepts the other's credential.
 
+**Account session**:
+Either kind of session, as the account sees it in its device list. Any one can be revoked; "sign out of all other devices" keeps the one in use.
+
+**Account deletion**:
+Immediate and permanent on the server, after the password is re-entered. Practice data stored on devices is untouched.
+
 ## Future scope
 
 **Practice plan**:

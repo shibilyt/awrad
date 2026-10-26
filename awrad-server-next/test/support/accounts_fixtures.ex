@@ -75,6 +75,51 @@ defmodule Awrad.AccountsFixtures do
     |> Plug.Conn.put_private(:plug_skip_csrf_protection, false)
   end
 
+  @doc """
+  A browser signed in as `user` through the API (`get_browser_csrf_token`, then
+  `create_browser_session`), with optional request `headers` such as
+  `user-agent`. Returns the sign-in response conn and the session's CSRF token.
+  """
+  def sign_in_browser(conn, user, headers \\ []) do
+    conn =
+      conn
+      |> put_headers(headers)
+      |> Phoenix.ConnTest.dispatch(AwradWeb.Endpoint, :get, "/api/v1/browser/csrf_token", nil)
+
+    csrf = Phoenix.ConnTest.json_response(conn, 200)["csrf_token"]
+
+    conn =
+      conn
+      |> next_request()
+      |> put_headers(headers)
+      |> json_conn([{"x-csrf-token", csrf}])
+      |> Phoenix.ConnTest.dispatch(
+        AwradWeb.Endpoint,
+        :post,
+        "/api/v1/browser/session",
+        Jason.encode!(%{email: user.email, password: valid_password()})
+      )
+
+    {conn, Phoenix.ConnTest.json_response(conn, 200)["csrf_token"]}
+  end
+
+  @doc "The next JSON request of a signed-in browser: its cookies and CSRF token."
+  def browser_request(browser_conn, csrf) do
+    browser_conn |> next_request() |> json_conn([{"x-csrf-token", csrf}])
+  end
+
+  @doc "A fresh JSON request from `conn`'s client IP with `grant`'s access token."
+  def bearer_request(conn, grant) do
+    %{Phoenix.ConnTest.build_conn() | remote_ip: conn.remote_ip}
+    |> json_conn([{"authorization", "Bearer " <> grant.access_token}])
+  end
+
+  defp put_headers(conn, headers) do
+    Enum.reduce(headers, conn, fn {name, value}, conn ->
+      Plug.Conn.put_req_header(conn, name, value)
+    end)
+  end
+
   @doc "A JSON request body with the content type set, and optional extra headers."
   def json_conn(conn, headers \\ []) do
     Enum.reduce(

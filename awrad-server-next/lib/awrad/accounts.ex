@@ -2,6 +2,8 @@ defmodule Awrad.Accounts do
   @moduledoc """
   Accounts (slice 2a): registration, email verification and password reset by
   emailed code, sign-in, mobile device sessions and browser session tokens.
+  Account settings (slice 2b): the session list, password and email changes,
+  and account deletion.
 
   The only entry point to the context. Mobile and browser credentials resolve
   to the same accounts through separate functions (`identify_device_session/1`,
@@ -16,9 +18,9 @@ defmodule Awrad.Accounts do
     deps: [Awrad, Awrad.Secrets],
     exports: [DeviceSession, EmailInput, Grant, RateLimiter, Scope, User]
 
-  import Ecto.Query
-
   alias Awrad.Accounts.{
+    AccountSessions,
+    BrowserSessions,
     DeviceSession,
     DeviceSessions,
     EmailCode,
@@ -27,13 +29,17 @@ defmodule Awrad.Accounts do
     PasswordReset,
     RateLimiter,
     Registration,
-    User,
-    UserToken
+    Scope,
+    Settings,
+    User
   }
 
   alias Awrad.Repo
 
   @type validation_error :: Input.validation_error()
+
+  @typedoc "One entry of the account's session list (`list_account_sessions/3`)."
+  @type account_session :: AccountSessions.item()
 
   ## Registration, verification and reset
 
@@ -150,34 +156,62 @@ defmodule Awrad.Accounts do
   ## Browser sessions (phx.gen.auth)
 
   @doc """
-  Generates a session token.
+  Generates a session token for a browser called `name` ("Firefox on
+  Windows", or `nil` when unknown).
   """
-  @spec generate_user_session_token(User.t()) :: binary()
-  def generate_user_session_token(user) do
-    {token, user_token} = UserToken.build_session_token(user)
-    Repo.insert!(user_token)
-    token
-  end
+  @spec generate_user_session_token(User.t(), String.t() | nil) :: binary()
+  def generate_user_session_token(user, name \\ nil), do: BrowserSessions.create(user, name)
 
   @doc """
-  Gets the user with the given signed token.
-
-  If the token is valid `{user, token_inserted_at}` is returned, otherwise `nil` is returned.
+  Gets the user and browser session of a session token, or `nil`. Updates the
+  session's `last_seen_at` at most every 5 minutes. The returned session's
+  `token` is its current one, which differs from `token` for a minute after a
+  reissue.
   """
-  @spec get_user_by_session_token(binary()) :: {User.t(), DateTime.t()} | nil
-  def get_user_by_session_token(token) do
-    {:ok, query} = UserToken.verify_session_token_query(token)
-    Repo.one(query)
-  end
+  @spec get_user_by_session_token(binary()) :: {User.t(), BrowserSessions.session()} | nil
+  defdelegate get_user_by_session_token(token), to: BrowserSessions, as: :identify
+
+  @doc "Replaces a browser session's token, keeping the session; returns the token to use."
+  @spec reissue_user_session_token(Ecto.UUID.t(), binary()) :: binary() | nil
+  defdelegate reissue_user_session_token(session_id, token), to: BrowserSessions, as: :reissue
 
   @doc """
   Deletes the signed token with the given context.
   """
   @spec delete_user_session_token(binary()) :: :ok
-  def delete_user_session_token(token) do
-    Repo.delete_all(from(UserToken, where: [token: ^token, context: "session"]))
-    :ok
-  end
+  defdelegate delete_user_session_token(token), to: BrowserSessions, as: :delete_token
+
+  ## Account settings (slice 2b)
+
+  @doc "One page of the account's device and browser sessions, most recently used first."
+  @spec list_account_sessions(Scope.t(), String.t() | nil, pos_integer() | nil) ::
+          {:ok, AccountSessions.page()} | {:error, :cursor_invalid}
+  defdelegate list_account_sessions(scope, cursor, limit), to: AccountSessions, as: :list
+
+  @doc "Ends one of the account's sessions. `:not_found` unless it's a live session of the account."
+  @spec revoke_account_session(Scope.t(), String.t()) :: :ok | :not_found
+  defdelegate revoke_account_session(scope, session_id), to: AccountSessions, as: :revoke
+
+  @doc "Ends every session of the account except the caller's."
+  @spec revoke_other_account_sessions(Scope.t()) :: :ok
+  defdelegate revoke_other_account_sessions(scope), to: AccountSessions, as: :revoke_others
+
+  @doc "Changes the password with the current one; other sessions end, the caller's stays."
+  @spec change_password(Scope.t(), term(), term(), String.t()) :: :ok | validation_error()
+  defdelegate change_password(scope, current_password, new_password, locale), to: Settings
+
+  @doc "Starts an email change: a code to the new address (or a notice, if it's taken)."
+  @spec request_email_change(Scope.t(), term(), term(), String.t()) :: :ok | validation_error()
+  defdelegate request_email_change(scope, current_password, new_email, locale), to: Settings
+
+  @doc "Switches the email with the code sent to the new address."
+  @spec confirm_email_change(Scope.t(), term(), String.t()) ::
+          {:ok, User.t()} | {:error, :code_invalid | :email_taken} | validation_error()
+  defdelegate confirm_email_change(scope, code, locale), to: Settings
+
+  @doc "Deletes the account and everything stored for it, with the current password."
+  @spec delete_account(Scope.t(), term(), String.t()) :: :ok | validation_error()
+  defdelegate delete_account(scope, current_password, locale), to: Settings, as: :delete
 
   ## Housekeeping
 

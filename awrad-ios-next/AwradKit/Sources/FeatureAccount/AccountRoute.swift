@@ -22,7 +22,8 @@ public struct AccountRoute: View {
 }
 
 /// Stateless: renders `state` and reports every user intent through `send`. Signed out, the
-/// stack starts at sign in and pushes the other steps; signed in, it shows the account.
+/// stack starts at sign in and pushes the other steps; signed in, it starts at the account
+/// overview and pushes the settings.
 struct AccountScreen: View {
     let state: AccountModel.State
     let onClose: () -> Void
@@ -41,21 +42,20 @@ struct AccountScreen: View {
                     }
                 }
         }
+        // The back button and toolbar items take the app's sage, not the system blue.
+        .tint(AwradColors.primary)
     }
 
     @ViewBuilder private var root: some View {
         switch state.phase {
         case .loading:
             ProgressView()
-                .tint(AwradColors.primary)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(AwradColors.background)
         case .signedOut:
             SignInForm(state: state, send: send)
         case .signedIn(let email):
-            SignedInView(email: email, isWorking: state.isWorking, feedback: state.feedback) {
-                send(.signOutTapped)
-            }
+            AccountOverview(email: email, state: state, send: send)
         }
     }
 
@@ -65,33 +65,11 @@ struct AccountScreen: View {
         case .verifyEmail: VerifyEmailForm(state: state, send: send)
         case .forgotPassword: ForgotPasswordForm(state: state, send: send)
         case .resetPassword: ResetPasswordForm(state: state, send: send)
-        }
-    }
-}
-
-/// The signed-in account: its email and sign out.
-struct SignedInView: View {
-    let email: String
-    let isWorking: Bool
-    let feedback: AccountModel.Feedback?
-    let onSignOut: () -> Void
-
-    var body: some View {
-        AccountForm(title: Strings.title, message: Strings.signedInNote, feedback: feedback) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(Strings.signedInLabel)
-                    .font(AwradFonts.body(14))
-                    .foregroundStyle(AwradColors.onSurfaceVariant)
-                Text(verbatim: email)
-                    .font(AwradFonts.title())
-                    .foregroundStyle(AwradColors.onSurface)
-                    .textSelection(.enabled)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AwradColors.surface, in: RoundedRectangle(cornerRadius: 14))
-        } actions: {
-            AwradPrimaryButton(Strings.signOut, isEnabled: !isWorking, action: onSignOut)
+        case .devices: DevicesView(state: state, send: send)
+        case .changePassword: ChangePasswordForm(state: state, send: send)
+        case .changeEmail: ChangeEmailForm(state: state, send: send)
+        case .confirmEmailChange: ConfirmEmailChangeForm(state: state, send: send)
+        case .deleteAccount: DeleteAccountForm(state: state, send: send)
         }
     }
 }
@@ -100,6 +78,15 @@ struct SignedInView: View {
     var state = AccountModel.State()
     state.phase = .signedIn(email: "amina@example.com")
     return AccountScreen(state: state, onClose: {}, send: { _ in })
+}
+
+#Preview("Signed in, Arabic") {
+    var state = AccountModel.State()
+    state.phase = .signedIn(email: "amina@example.com")
+    state.feedback = .passwordChanged
+    return AccountScreen(state: state, onClose: {}, send: { _ in })
+        .environment(\.locale, Locale(identifier: "ar"))
+        .environment(\.layoutDirection, .rightToLeft)
 }
 
 #Preview("Loading") {

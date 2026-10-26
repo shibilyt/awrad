@@ -47,7 +47,9 @@ struct VerifyEmailForm: View {
     let send: (AccountModel.Action) -> Void
 
     var body: some View {
-        AccountForm(title: Strings.verifyTitle, message: Strings.verifyBody(state.email), feedback: state.feedback) {
+        AccountForm(
+            title: Strings.verifyTitle, message: Strings.verifyBody, address: state.email, feedback: state.feedback
+        ) {
             AccountField(kind: .code, label: Strings.codeField, text: state.code) { send(.codeChanged($0)) }
         } actions: {
             AwradPrimaryButton(Strings.verifyButton, isEnabled: !state.isWorking) { send(.verifyTapped) }
@@ -76,7 +78,9 @@ struct ResetPasswordForm: View {
     let send: (AccountModel.Action) -> Void
 
     var body: some View {
-        AccountForm(title: Strings.resetTitle, message: Strings.resetBody(state.email), feedback: state.feedback) {
+        AccountForm(
+            title: Strings.resetTitle, message: Strings.resetBody, address: state.email, feedback: state.feedback
+        ) {
             AccountField(kind: .code, label: Strings.codeField, text: state.code) { send(.codeChanged($0)) }
             AccountField(kind: .newPassword, label: Strings.newPasswordField, text: state.newPassword) {
                 send(.newPasswordChanged($0))
@@ -92,7 +96,7 @@ struct ResetPasswordForm: View {
 }
 
 /// The one password rule, shown wherever a new password is chosen.
-private struct PasswordRule: View {
+struct PasswordRule: View {
     var body: some View {
         Text(Strings.passwordRule)
             .font(AwradFonts.body(14))
@@ -118,6 +122,16 @@ private struct PasswordRule: View {
     state.feedback = .codeSent
     state.resendAvailableAt = .now.addingTimeInterval(42)
     return VerifyEmailForm(state: state) { _ in }
+}
+
+#Preview("Verify email, Arabic") {
+    var state = AccountModel.State()
+    state.email = "amina.long-address@example.com"
+    state.feedback = .codeIncomplete
+    state.resendAvailableAt = .now.addingTimeInterval(42)
+    return VerifyEmailForm(state: state) { _ in }
+        .environment(\.locale, Locale(identifier: "ar"))
+        .environment(\.layoutDirection, .rightToLeft)
 }
 
 #Preview("Forgot password") {

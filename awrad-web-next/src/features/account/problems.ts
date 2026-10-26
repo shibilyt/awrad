@@ -10,6 +10,11 @@ const PROBLEM_CODES: ReadonlySet<string> = new Set([
   "csrf_token_invalid",
   "unauthenticated",
   "rate_limited",
+  "malformed_request",
+  // Slice 2b (account settings).
+  "not_found",
+  "email_change_code_invalid",
+  "email_taken",
 ]);
 
 /** Field error codes from `validation_failed` (plus the client's own `code_invalid`). */
@@ -19,6 +24,8 @@ const FIELD_CODES: ReadonlySet<string> = new Set([
   "password_too_long",
   "password_too_common",
   "code_invalid",
+  "current_password_incorrect",
+  "email_unchanged",
 ]);
 
 /** The translation key for a failed request, decided by `code` only, never by `detail`. */

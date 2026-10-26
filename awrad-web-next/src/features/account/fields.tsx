@@ -10,17 +10,34 @@ type FieldProps = Omit<TextFieldProps, "label" | "name">;
  * `type="email"`, which some browsers rewrite (punycode) or trim differently;
  * the shared `email_input` rule decides what's sent.
  */
-export function EmailField(props: FieldProps): ReactElement {
+export function EmailField({
+  name = "email",
+  label,
+  ...props
+}: FieldProps & { name?: string; label?: string }): ReactElement {
   const { t } = useTranslation();
   return (
     <TextField
       {...props}
-      name="email"
+      name={name}
       inputMode="email"
       autoComplete="email"
       autoCapitalize="none"
       spellCheck="false"
-      label={t("account.fields.email")}
+      label={label ?? t("account.fields.email")}
+    />
+  );
+}
+
+/** The account's current password, re-entered to confirm a sensitive change. */
+export function CurrentPasswordField(): ReactElement {
+  const { t } = useTranslation();
+  return (
+    <TextField
+      name="current_password"
+      type="password"
+      autoComplete="current-password"
+      label={t("account.fields.currentPassword")}
     />
   );
 }

@@ -262,3 +262,16 @@ Use this format:
   - Arabic and Malayalam texts still need native review.
 - Evidence: `docs/slices/02-accounts.md`, root ADR-2026-10-26 (accounts)
 - Commit: see git log
+
+### 2026-10-26 — Slice 2b: account settings
+
+- Area: Cross-project
+- Change:
+  - One device list for phones and browsers. Any one can be revoked, or all others at once.
+  - Changing the password signs the others out. The email changes by a code to the new address, with a notice to the old one.
+  - Account deletion is immediate. Server data and every session are removed; device data stays.
+  - The server now stores `Idempotency-Key` results per account, fixing a 2a cross-account replay bug.
+  - Checked live with one account signed in on all three clients.
+  - One iOS bug found and fixed: a leaving form's field wrote its old text back into the model.
+- Evidence: `docs/slices/02-accounts.md` (Slice 2b), server ADR 0008
+- Commit: see git log

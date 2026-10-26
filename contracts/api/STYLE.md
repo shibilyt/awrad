@@ -137,6 +137,8 @@ Existing codes such as `email_verification_required`, `password_setup_required`,
   - The server stores the result for 24 hours and replays it for a repeat with the same key and the same body.
   - The same key with a different body returns `422` with `code: "idempotency_key_reused"`.
 - Clients must send a key on every retryable `POST`.
+- Only successful results are stored. After an error, a retry with the same key runs again.
+- An operation whose result can't be replayed from storage, such as one that sets a session cookie, runs again for a repeat with the same key and body. Its spec says so.
 - `PUT` and `DELETE` are naturally idempotent.
 - Sync commands keep their own `command_id`.
 

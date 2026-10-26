@@ -77,6 +77,14 @@ defmodule AwradWeb.Plugs.IdempotencyTest do
            ).status == 202
   end
 
+  test "a result for an account deleted meanwhile isn't stored, and doesn't fail" do
+    key = Ecto.UUID.generate()
+    for_key = {"POST /api/v1/account/change_password", key, Ecto.UUID.generate()}
+
+    assert Awrad.Idempotency.store(for_key, "fingerprint", 204, nil, "") == :ok
+    refute Repo.get_by(Record, key: key)
+  end
+
   test "expired results are ignored and pruned", %{conn: conn} do
     key = Ecto.UUID.generate()
 

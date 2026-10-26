@@ -48,14 +48,23 @@ struct APIClient: Sendable {
     let language: @Sendable () -> String
 
     /// The request for `operation`. A bearer token is attached only when the operation takes one,
-    /// so a public operation can never leak it.
+    /// so a public operation can never leak it. `pathParameters` fill the path's `{name}`s; they
+    /// are IDs, and `appending(path:)` percent-encodes anything else.
     func request(
         _ operation: APIOperation,
         body: (some Encodable & Sendable)?,
         accessToken: String? = nil,
-        idempotencyKey: String? = nil
+        idempotencyKey: String? = nil,
+        pathParameters: [String: String] = [:],
+        query: [URLQueryItem] = []
     ) throws -> URLRequest {
-        var request = URLRequest(url: baseURL.appending(path: operation.path))
+        var path = operation.path
+        for (name, value) in pathParameters {
+            path = path.replacingOccurrences(of: "{\(name)}", with: value)
+        }
+        var url = baseURL.appending(path: path, directoryHint: .notDirectory)
+        if !query.isEmpty { url.append(queryItems: query) }
+        var request = URLRequest(url: url)
         request.httpMethod = operation.method.rawValue
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let body {
@@ -63,6 +72,7 @@ struct APIClient: Sendable {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
         if operation.sendsIdempotencyKey {
+            // Lowercase UUIDv4, as every ID on the wire (STYLE §4, §10).
             let key = idempotencyKey ?? AwradID.random().description
             request.setValue(key, forHTTPHeaderField: "Idempotency-Key")
         }
@@ -81,9 +91,16 @@ struct APIClient: Sendable {
         body: (some Encodable & Sendable)?,
         accessToken: String? = nil,
         idempotencyKey: String? = nil,
+        pathParameters: [String: String] = [:],
+        query: [URLQueryItem] = [],
         expecting _: Response.Type
     ) async throws(APIFailure) -> Response {
-        let data = try await exchange(operation, body: body, accessToken: accessToken, idempotencyKey: idempotencyKey)
+        let urlRequest = try built {
+            try request(
+                operation, body: body, accessToken: accessToken, idempotencyKey: idempotencyKey,
+                pathParameters: pathParameters, query: query)
+        }
+        let data = try await exchange(urlRequest)
         do {
             return try JSONDecoder().decode(Response.self, from: data.body)
         } catch {
@@ -96,23 +113,26 @@ struct APIClient: Sendable {
         _ operation: APIOperation,
         body: (some Encodable & Sendable)?,
         accessToken: String? = nil,
-        idempotencyKey: String? = nil
+        idempotencyKey: String? = nil,
+        pathParameters: [String: String] = [:]
     ) async throws(APIFailure) {
-        _ = try await exchange(operation, body: body, accessToken: accessToken, idempotencyKey: idempotencyKey)
+        let urlRequest = try built {
+            try request(
+                operation, body: body, accessToken: accessToken, idempotencyKey: idempotencyKey,
+                pathParameters: pathParameters)
+        }
+        _ = try await exchange(urlRequest)
     }
 
-    private func exchange(
-        _ operation: APIOperation,
-        body: (some Encodable & Sendable)?,
-        accessToken: String?,
-        idempotencyKey: String?
-    ) async throws(APIFailure) -> (status: Int, body: Data) {
-        let urlRequest: URLRequest
+    private func built(_ make: () throws -> URLRequest) throws(APIFailure) -> URLRequest {
         do {
-            urlRequest = try request(operation, body: body, accessToken: accessToken, idempotencyKey: idempotencyKey)
+            return try make()
         } catch {
             throw .unreadable(status: 0)
         }
+    }
+
+    private func exchange(_ urlRequest: URLRequest) async throws(APIFailure) -> (status: Int, body: Data) {
         let data: Data
         let response: HTTPURLResponse
         do {
@@ -149,13 +169,22 @@ extension AccountError {
     private init(code: String, fields: [String], retryAfterSeconds: Int?) {
         switch code {
         case "validation_failed": self = .validationFailed(fields.map(AccountFieldIssue.init(code:)))
-        case "invalid_credentials": self = .invalidCredentials
-        case "email_verification_required": self = .emailVerificationRequired
-        case "verification_code_invalid": self = .verificationCodeInvalid
-        case "reset_code_invalid": self = .resetCodeInvalid
         case "rate_limited": self = .rateLimited(retryAfterSeconds: retryAfterSeconds)
-        case "refresh_token_invalid", "refresh_reuse_detected": self = .signedOut
-        default: self = .unexpected(code: code)
+        default: self = Self.byCode[code] ?? .unexpected(code: code)
         }
     }
+
+    /// The codes that map to an error on their own. Anything else is `.unexpected`, shown as
+    /// "something went wrong" (`malformed_request`, `idempotency_key_reused`, unknown codes).
+    private static let byCode: [String: AccountError] = [
+        "invalid_credentials": .invalidCredentials,
+        "email_verification_required": .emailVerificationRequired,
+        "verification_code_invalid": .verificationCodeInvalid,
+        "reset_code_invalid": .resetCodeInvalid,
+        "email_change_code_invalid": .emailChangeCodeInvalid,
+        "email_taken": .emailTaken,
+        "not_found": .notFound,
+        "refresh_token_invalid": .signedOut,
+        "refresh_reuse_detected": .signedOut,
+    ]
 }

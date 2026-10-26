@@ -39,7 +39,9 @@ session:
       Sets the Phoenix session cookie (and the remember-me cookie when `remember_me` is true). Needs the
       session cookie and CSRF token that `get_browser_csrf_token` gives any browser. Signing in renews the
       session, so the response carries the new CSRF token. An unverified email gets
-      `403 email_verification_required`, and the server emails a fresh code (rate-limited).
+      `403 email_verification_required`, and the server emails a fresh code (rate-limited). A repeat with the
+      same `Idempotency-Key` signs in again rather than replaying, because a stored response can't set the
+      cookie (STYLE §10).
     security:
       - cookieAuth: []
         csrfToken: []

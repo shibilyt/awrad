@@ -11,7 +11,7 @@ defmodule AwradWeb.RateLimit do
   from a header the client controls. See `ARCHITECTURE.md`.
   """
 
-  alias Awrad.Accounts.{EmailInput, RateLimiter}
+  alias Awrad.Accounts.{EmailInput, RateLimiter, User}
 
   @doc """
   Counts `action` for the request's IP and `account` (an email as typed, or
@@ -21,6 +21,19 @@ defmodule AwradWeb.RateLimit do
           :ok | {:error, {:rate_limited, pos_integer()}}
   def check(conn, action, account) do
     case RateLimiter.check(action, ip(conn), account && account_subject(account)) do
+      :ok -> :ok
+      {:error, retry_after} -> {:error, {:rate_limited, retry_after}}
+    end
+  end
+
+  @doc """
+  Counts `action` for the request's IP and the signed-in account `user` (by
+  its ID). Returns `:ok` or `{:error, {:rate_limited, seconds}}`.
+  """
+  @spec check_account(Plug.Conn.t(), RateLimiter.action(), User.t()) ::
+          :ok | {:error, {:rate_limited, pos_integer()}}
+  def check_account(conn, action, %User{id: user_id}) do
+    case RateLimiter.check(action, ip(conn), user_id) do
       :ok -> :ok
       {:error, retry_after} -> {:error, {:rate_limited, retry_after}}
     end

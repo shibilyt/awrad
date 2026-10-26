@@ -8,6 +8,12 @@ defmodule AwradWeb.UserAuth do
     * No return-to paths, sudo mode, flash or LiveView socket handling.
     * `require_authenticated_user/2` answers `401 unauthenticated`.
     * The cookies are `Secure` in production (`config :awrad, :secure_cookies`).
+    * Signing in saves the browser's name (`AwradWeb.BrowserName`) with the
+      session, and the scope names the session (`Scope.for_browser_session/2`)
+      for the account's session list.
+    * Reissue replaces the token in place instead of adding a session, and a
+      request still carrying the replaced token (accepted for a minute) moves
+      the cookie to the current one.
 
   This reads only the session and the remember-me cookie, never an
   `Authorization` header: a bearer token can't open a browser session.
@@ -18,7 +24,7 @@ defmodule AwradWeb.UserAuth do
 
   alias Awrad.Accounts
   alias Awrad.Accounts.Scope
-  alias AwradWeb.Problem
+  alias AwradWeb.{BrowserName, Problem}
 
   # Make the remember me cookie valid for 14 days. This should match
   # the session validity setting in UserToken.
@@ -74,10 +80,11 @@ defmodule AwradWeb.UserAuth do
   @spec fetch_current_scope_for_user(Plug.Conn.t(), term()) :: Plug.Conn.t()
   def fetch_current_scope_for_user(conn, _opts) do
     with {token, conn} <- ensure_user_token(conn),
-         {user, token_inserted_at} <- Accounts.get_user_by_session_token(token) do
+         {user, session} <- Accounts.get_user_by_session_token(token) do
       conn
-      |> assign(:current_scope, Scope.for_user(user))
-      |> maybe_reissue_user_session_token(user, token_inserted_at)
+      |> assign(:current_scope, Scope.for_browser_session(user, session.id))
+      |> keep_current_token(token, session)
+      |> maybe_reissue_user_session_token(session)
     else
       nil -> assign(conn, :current_scope, Scope.for_user(nil))
     end
@@ -97,26 +104,43 @@ defmodule AwradWeb.UserAuth do
     end
   end
 
-  # Reissue the session token if it is older than the configured reissue age.
-  defp maybe_reissue_user_session_token(conn, user, token_inserted_at) do
-    token_age = DateTime.diff(DateTime.utc_now(:second), token_inserted_at, :day)
+  # A request carrying the token a reissue just replaced (it's accepted for a
+  # minute) stores the session's current token, so the cookie moves on too.
+  defp keep_current_token(conn, token, %{token: token}), do: conn
 
-    if token_age >= @session_reissue_age_in_days do
-      create_or_extend_session(conn, user, %{})
+  defp keep_current_token(conn, _replaced, %{token: current}),
+    do: put_session_token(conn, current)
+
+  # Reissue the session token if it is older than the configured reissue age.
+  # Deliberate change: the token is replaced in place, so the browser stays one
+  # session in the account's session list (`Awrad.Accounts.BrowserSessions`).
+  defp maybe_reissue_user_session_token(conn, session) do
+    token_age = DateTime.diff(DateTime.utc_now(:second), session.inserted_at, :day)
+
+    with true <- token_age >= @session_reissue_age_in_days,
+         token when is_binary(token) <-
+           Accounts.reissue_user_session_token(session.id, session.token) do
+      put_session_token(conn, token)
     else
-      conn
+      _fresh_or_gone -> conn
     end
   end
 
+  defp put_session_token(conn, token) do
+    conn
+    |> put_token_in_session(token)
+    |> maybe_write_remember_me_cookie(token, %{}, get_session(conn, :user_remember_me))
+  end
+
   # This function is the one responsible for creating session tokens
-  # and storing them safely in the session and cookies. It may be called
-  # either when logging in, or to renew a session which will soon expire.
+  # and storing them safely in the session and cookies. It's called when
+  # logging in; the browser's name is saved with the session.
   #
   # When the session is created, rather than extended, the renew_session
   # function will clear the session to avoid fixation attacks. See the
   # renew_session function to customize this behaviour.
   defp create_or_extend_session(conn, user, params) do
-    token = Accounts.generate_user_session_token(user)
+    token = Accounts.generate_user_session_token(user, BrowserName.from_conn(conn))
     remember_me = get_session(conn, :user_remember_me)
 
     conn

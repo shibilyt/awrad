@@ -60,6 +60,75 @@
     <string name="account_error_no_connection">لا يوجد اتصال. تحقّق من الإنترنت ثم حاول مرة أخرى.</string>
     <string name="account_error_unexpected">حدث خطأ من جهتنا. حاول مرة أخرى لاحقًا.</string>
 
+    <!-- Signed-in account pages (slice 2b): titles -->
+    <string name="account_link_devices">الأجهزة</string>
+    <string name="account_link_devices_detail">الهواتف والمتصفحات المسجَّل دخولها إلى حسابك</string>
+    <string name="account_title_devices">الأجهزة</string>
+    <string name="account_title_change_password">تغيير كلمة المرور</string>
+    <string name="account_title_change_email">تغيير البريد الإلكتروني</string>
+    <string name="account_title_confirm_email">تأكيد بريدك الإلكتروني الجديد</string>
+    <string name="account_title_delete">حذف الحساب</string>
+
+    <!-- Devices -->
+    <string name="account_devices_intro">كل هاتف ومتصفح مسجَّل دخوله إلى حسابك. تسجيل خروج أحدها لا يحذف بيانات الأوراد منه.</string>
+    <string name="account_devices_detail">%1$s · %2$s</string>
+    <string name="account_devices_this_device">هذا الجهاز</string>
+    <string name="account_devices_active_now">نشط الآن</string>
+    <string name="account_devices_last_used">آخر استخدام %1$s</string>
+    <string name="account_devices_platform_android">أندرويد</string>
+    <string name="account_devices_platform_ios">iOS</string>
+    <string name="account_devices_platform_web">الويب</string>
+    <string name="account_devices_platform_other">أخرى</string>
+    <string name="account_devices_unnamed_browser">متصفح ويب</string>
+    <string name="account_devices_unnamed_device">جهاز غير معروف</string>
+    <string name="account_devices_none_other">لا توجد أجهزة أو متصفحات أخرى مسجَّل دخولها.</string>
+    <string name="account_devices_confirm_one_title">تسجيل خروج %1$s؟</string>
+    <string name="account_devices_confirm_one_body">سيحتاج إلى تسجيل الدخول مرة أخرى لاستخدام حسابك. تبقى بيانات الأوراد عليه.</string>
+    <string name="account_devices_confirm_others_title">تسجيل الخروج من كل الأجهزة الأخرى؟</string>
+    <string name="account_devices_confirm_others_body">سيحتاج كل هاتف ومتصفح آخر إلى تسجيل الدخول مرة أخرى. يبقى هذا الجهاز مسجَّل الدخول.</string>
+
+    <!-- Body text -->
+    <string name="account_change_password_body">سيتم تسجيل خروج كل الأجهزة والمتصفحات الأخرى. يبقى هذا الجهاز مسجَّل الدخول.</string>
+    <string name="account_change_email_body">سنرسل رمزًا من 6 أرقام إلى العنوان الجديد. لا يتغيّر بريدك إلا بعد إدخاله.</string>
+    <string name="account_delete_what_goes">حذف حسابك يزيله فورًا مع كل ما يحفظه خادمنا له. لا يمكن التراجع عن ذلك.</string>
+    <string name="account_delete_what_stays">تبقى أورادك وتقدّمك على هذا الجهاز، ويستمر التطبيق في العمل بدون حساب.</string>
+    <string name="account_delete_sessions">يتم تسجيل خروج كل جهاز ومتصفح مسجَّل الدخول إلى الحساب، وتبقى بيانات الأوراد عليها أيضًا.</string>
+    <string name="account_delete_confirm_title">حذف حسابك الآن؟</string>
+    <string name="account_delete_confirm_body">يُحذف حسابك وبياناته على الخادم فورًا، ولا يمكن استعادتها.</string>
+
+    <!-- Fields -->
+    <string name="account_field_current_password">كلمة المرور الحالية</string>
+    <string name="account_field_new_email">البريد الإلكتروني الجديد</string>
+
+    <!-- Actions -->
+    <string name="account_action_revoke">تسجيل الخروج</string>
+    <string name="account_action_revoke_named">تسجيل خروج %1$s</string>
+    <string name="account_action_revoke_others">تسجيل الخروج من كل الأجهزة الأخرى</string>
+    <string name="account_action_revoke_others_short">تسجيل خروج الأجهزة الأخرى</string>
+    <string name="account_action_change_password">تغيير كلمة المرور</string>
+    <string name="account_action_confirm_email">تأكيد البريد الجديد</string>
+    <string name="account_action_use_other_email">استخدام بريد آخر</string>
+    <string name="account_action_delete">حذف الحساب</string>
+    <string name="account_action_delete_confirm">حذف نهائي</string>
+    <string name="account_action_cancel">إلغاء</string>
+    <string name="account_action_retry">حاول مرة أخرى</string>
+    <string name="account_action_done">تم</string>
+
+    <!-- Notices -->
+    <string name="account_notice_session_ended">تم تسجيل خروج هذا الجهاز، من جهاز آخر أو بعد تغيير كلمة المرور. ما زالت أورادك وتقدّمك على هذا الجهاز.</string>
+    <string name="account_notice_account_deleted">تم حذف حسابك. ما زالت أورادك وتقدّمك على هذا الجهاز.</string>
+    <string name="account_notice_revoked_one">تم تسجيل خروج ذلك الجهاز.</string>
+    <string name="account_notice_revoked_others">تم تسجيل خروج كل الأجهزة والمتصفحات الأخرى.</string>
+    <string name="account_notice_password_updated">تم تغيير كلمة المرور، وتم تسجيل خروج كل الأجهزة والمتصفحات الأخرى.</string>
+    <string name="account_notice_email_changed">أصبح البريد الإلكتروني لحسابك الآن %1$s.</string>
+
+    <!-- Errors, one per problem code -->
+    <string name="account_error_current_password_incorrect">هذه ليست كلمة مرورك الحالية.</string>
+    <string name="account_error_email_unchanged">هذا هو البريد الإلكتروني لحسابك بالفعل.</string>
+    <string name="account_error_email_change_code_invalid">الرمز غير صحيح أو انتهت صلاحيته. راجع البريد في العنوان الجديد أو أرسل رمزًا جديدًا.</string>
+    <string name="account_error_email_taken">أصبح هذا العنوان تابعًا لحساب آخر. استخدم بريدًا آخر.</string>
+    <string name="account_error_not_found">تم تسجيل خروج ذلك الجهاز أو المتصفح من قبل.</string>
+
     <!-- Counts of characters (the password policy) -->
     <plurals name="account_hint_password">
         <item quantity="zero">%1$d حرف على الأقل. بضع كلمات تتذكرها خيار جيد.</item>

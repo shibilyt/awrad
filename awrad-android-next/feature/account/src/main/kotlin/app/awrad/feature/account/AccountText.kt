@@ -17,6 +17,9 @@ internal fun AccountError.message(): Int = when (this) {
     is AccountError.InvalidInput -> R.string.account_error_invalid_input
     AccountError.VerificationCodeInvalid -> R.string.account_error_verification_code_invalid
     AccountError.ResetCodeInvalid -> R.string.account_error_reset_code_invalid
+    AccountError.EmailChangeCodeInvalid -> R.string.account_error_email_change_code_invalid
+    AccountError.EmailTaken -> R.string.account_error_email_taken
+    AccountError.NotFound -> R.string.account_error_not_found
     AccountError.InvalidCredentials -> R.string.account_error_invalid_credentials
     AccountError.EmailVerificationRequired -> R.string.account_notice_verification_required
     AccountError.SessionEnded -> R.string.account_error_session_ended
@@ -38,6 +41,8 @@ internal fun InputProblem.text(): String = when (this) {
     }
     InputProblem.PASSWORD_TOO_COMMON -> stringResource(R.string.account_error_password_too_common)
     InputProblem.CODE_INVALID -> stringResource(R.string.account_error_code_format)
+    InputProblem.CURRENT_PASSWORD_INCORRECT -> stringResource(R.string.account_error_current_password_incorrect)
+    InputProblem.EMAIL_UNCHANGED -> stringResource(R.string.account_error_email_unchanged)
 }
 
 /** The password hint: the 12-character rule. */
@@ -52,6 +57,8 @@ internal fun AccountNotice.message(): Int = when (this) {
     AccountNotice.EMAIL_VERIFIED -> R.string.account_notice_email_verified
     AccountNotice.PASSWORD_CHANGED -> R.string.account_notice_password_changed
     AccountNotice.SIGNED_OUT -> R.string.account_notice_signed_out
+    AccountNotice.SESSION_ENDED -> R.string.account_notice_session_ended
+    AccountNotice.ACCOUNT_DELETED -> R.string.account_notice_account_deleted
 }
 
 @StringRes

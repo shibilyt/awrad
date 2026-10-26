@@ -5,15 +5,12 @@ import androidx.lifecycle.viewModelScope
 import app.awrad.core.domain.account.AccountError
 import app.awrad.core.domain.account.AccountRepository
 import app.awrad.core.domain.account.AccountResult
-import app.awrad.core.domain.account.AccountSession
 import app.awrad.core.domain.account.EmailAddress
 import app.awrad.core.domain.account.EmailCode
 import app.awrad.core.domain.account.InputProblem
-import app.awrad.core.domain.account.PasswordError
-import app.awrad.core.domain.account.PasswordPolicy
+import app.awrad.core.domain.account.SignInState
+import app.awrad.core.domain.account.SignOutReason
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -33,7 +30,9 @@ internal class AccountViewModel @Inject constructor(
     private val mutableState = MutableStateFlow(AccountUiState())
     val state: StateFlow<AccountUiState> = mutableState.asStateFlow()
 
-    private var cooldown: Job? = null
+    private val cooldown = ResendCooldown(viewModelScope) { left ->
+        mutableState.update { it.copy(resendCooldownSeconds = left) }
+    }
 
     init {
         viewModelScope.launch { accounts.session.collect(::onSession) }
@@ -54,24 +53,31 @@ internal class AccountViewModel @Inject constructor(
         }
     }
 
-    private fun onSession(session: AccountSession) {
+    private fun onSession(session: SignInState) {
         when (session) {
-            is AccountSession.SignedIn -> {
+            is SignInState.SignedIn -> {
                 val wasSignedIn = mutableState.value.step == AccountStep.SIGNED_IN
                 mutableState.value = AccountUiState(step = AccountStep.SIGNED_IN, account = session.account)
                 if (!wasSignedIn) viewModelScope.launch { accounts.refreshAccount() }
             }
-            AccountSession.SignedOut -> mutableState.update { current ->
+            // Signed out here, elsewhere, or by deleting the account: say which, and that practice stays.
+            is SignInState.SignedOut -> mutableState.update { current ->
                 when (current.step) {
-                    null -> AccountUiState(step = AccountStep.SIGN_IN)
-                    AccountStep.SIGNED_IN -> AccountUiState(
+                    null, AccountStep.SIGNED_IN -> AccountUiState(
                         step = AccountStep.SIGN_IN,
-                        notice = AccountNotice.SIGNED_OUT,
+                        notice = noticeFor(session.reason),
                     )
                     else -> current
                 }
             }
         }
+    }
+
+    private fun noticeFor(reason: SignOutReason): AccountNotice? = when (reason) {
+        SignOutReason.NOT_SIGNED_IN -> null
+        SignOutReason.SIGNED_OUT -> AccountNotice.SIGNED_OUT
+        SignOutReason.SESSION_ENDED -> AccountNotice.SESSION_ENDED
+        SignOutReason.ACCOUNT_DELETED -> AccountNotice.ACCOUNT_DELETED
     }
 
     private fun submit() {
@@ -182,12 +188,7 @@ internal class AccountViewModel @Inject constructor(
     }
 
     private suspend fun withPassword(then: suspend () -> Unit) {
-        val problems = PasswordPolicy.errors(mutableState.value.password).mapTo(mutableSetOf()) { error ->
-            when (error) {
-                PasswordError.PASSWORD_TOO_SHORT -> InputProblem.PASSWORD_TOO_SHORT
-                PasswordError.PASSWORD_TOO_LONG -> InputProblem.PASSWORD_TOO_LONG
-            }
-        }
+        val problems = newPasswordProblems(mutableState.value.password)
         if (problems.isEmpty()) then() else reject(problems)
     }
 
@@ -235,22 +236,5 @@ internal class AccountViewModel @Inject constructor(
         }
     }
 
-    /** The server's 202 says nothing about when to resend, so wait [seconds] (or `Retry-After`). */
-    private fun startCooldown(seconds: Long? = null) {
-        cooldown?.cancel()
-        val total = (seconds ?: RESEND_COOLDOWN_SECONDS).coerceIn(1, MAX_COOLDOWN_SECONDS).toInt()
-        mutableState.update { it.copy(resendCooldownSeconds = total) }
-        cooldown = viewModelScope.launch {
-            for (left in total - 1 downTo 0) {
-                delay(ONE_SECOND_MS)
-                mutableState.update { it.copy(resendCooldownSeconds = left) }
-            }
-        }
-    }
-
-    internal companion object {
-        const val RESEND_COOLDOWN_SECONDS = 60L
-        private const val MAX_COOLDOWN_SECONDS = 3_600L
-        private const val ONE_SECOND_MS = 1_000L
-    }
+    private fun startCooldown(seconds: Long? = null) = cooldown.start(seconds)
 }

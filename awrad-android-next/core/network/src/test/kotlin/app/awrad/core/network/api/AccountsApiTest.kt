@@ -15,8 +15,20 @@ class AccountsApiTest {
 
     private val transport = FakeTransport()
     private val api = AccountsApi(transport) { "ar" }
+    private val settings = AccountSettingsApi(transport) { "ar" }
 
+    private fun ApiOperation.testPath(): String = pathWith(mapOf("session_id" to SESSION_ID))
+
+    /** Calls each [ApiOperation] once. */
     private suspend fun callEveryOperation() {
+        val token = "access-token-0123456789"
+        settings.listAccountSessions(token)
+        settings.revokeAccountSession(token, SESSION_ID)
+        settings.revokeOtherAccountSessions(token)
+        settings.changePassword(token, ChangePasswordRequest("a long passphrase", "another long passphrase"))
+        settings.requestEmailChange(token, RequestEmailChangeRequest("a long passphrase", "amina.new@example.com"))
+        settings.confirmEmailChange(token, ConfirmEmailChangeRequest("519274"))
+        settings.deleteAccount(token, CurrentPasswordRequest("a long passphrase"))
         api.registerAccount(RegisterAccountRequest("amina@example.com", "a long passphrase"))
         api.verifyAccountEmail(VerifyAccountEmailRequest("amina@example.com", "482913"))
         api.resendVerificationCode(EmailOnlyRequest("amina@example.com"))
@@ -36,13 +48,13 @@ class AccountsApiTest {
 
     @Test
     fun `public operations never carry a bearer token and the authenticated one does`() = runTest {
-        ApiOperation.entries.forEach { op -> transport.on(op.path) { Responses.problem(500, "x") } }
+        ApiOperation.entries.forEach { op -> transport.on(op.testPath()) { Responses.problem(500, "x") } }
 
         callEveryOperation()
 
         assertEquals(ApiOperation.entries.size, transport.requests.size)
         ApiOperation.entries.forEach { operation ->
-            val request = transport.requestsTo(operation.path).single()
+            val request = transport.requestsTo(operation.testPath()).single()
             assertEquals(operation.method, request.method)
             if (operation.isPublic) {
                 assertNull(request.headers["Authorization"], operation.operationId)
@@ -54,12 +66,12 @@ class AccountsApiTest {
 
     @Test
     fun `language and idempotency headers go where the spec takes them`() = runTest {
-        ApiOperation.entries.forEach { op -> transport.on(op.path) { Responses.empty(204) } }
+        ApiOperation.entries.forEach { op -> transport.on(op.testPath()) { Responses.empty(204) } }
 
         callEveryOperation()
 
         ApiOperation.entries.forEach { operation ->
-            val request = transport.requestsTo(operation.path).single()
+            val request = transport.requestsTo(operation.testPath()).single()
             assertEquals(if (operation.sendsLanguage) "ar" else null, request.headers["Accept-Language"])
             assertEquals(operation.idempotent, request.headers["Idempotency-Key"] != null, operation.operationId)
             if (operation.method == HttpMethod.POST) assertNotNull(request.headers["Idempotency-Key"])
@@ -120,10 +132,52 @@ class AccountsApiTest {
             RegisterAccountRequest("amina@example.com", "a long passphrase"),
             ResetPasswordRequest("amina@example.com", "730158", "another long passphrase"),
             RefreshTokenRequest("refresh-token-0123456789"),
+            ChangePasswordRequest("a long passphrase", "another long passphrase"),
+            RequestEmailChangeRequest("a long passphrase", "amina.new@example.com"),
+            CurrentPasswordRequest("a long passphrase"),
         ).joinToString()
 
         assertFalse("passphrase" in text)
         assertFalse("refresh-token" in text)
         assertTrue("amina@example.com" in text)
+        assertTrue("amina.new@example.com" in text)
+    }
+
+    @Test
+    fun `the session list asks for full pages and passes the cursor back`() = runTest {
+        val path = ApiOperation.LIST_ACCOUNT_SESSIONS.path
+        transport.on(path) { Responses.json(200, """{"items":[],"next_cursor":null}""") }
+
+        settings.listAccountSessions("access-token-0123456789")
+        settings.listAccountSessions("access-token-0123456789", cursor = "c2lnbmVk")
+
+        val (first, second) = transport.requestsTo(path)
+        assertEquals(mapOf("limit" to "100"), first.query)
+        assertEquals(mapOf("limit" to "100", "cursor" to "c2lnbmVk"), second.query)
+        assertNull(first.body)
+    }
+
+    @Test
+    fun `a session without a name decodes, and revoking puts its id in the path`() = runTest {
+        transport.on(ApiOperation.LIST_ACCOUNT_SESSIONS.path) {
+            Responses.json(
+                200,
+                """{"items":[{"id":"$SESSION_ID","kind":"browser","name":null,"platform":"web",
+                   "created_at":"2026-10-20T18:00:00Z","last_seen_at":"2026-10-26T21:15:00Z","is_current":false}],
+                   "next_cursor":null}""",
+            )
+        }
+        transport.on("/api/v1/account/sessions/$SESSION_ID") { Responses.empty(204) }
+
+        val page = (settings.listAccountSessions("access-token-0123456789") as ApiResult.Success).value
+        val revoked = settings.revokeAccountSession("access-token-0123456789", page.items.single().id)
+
+        assertNull(page.items.single().name)
+        assertEquals(ApiResult.Success(Unit), revoked)
+        assertEquals(HttpMethod.DELETE, transport.requests.last().method)
+    }
+
+    private companion object {
+        const val SESSION_ID = "4c2e8f10-7b3a-4d5e-9f61-2a8b0c1d3e45"
     }
 }

@@ -60,6 +60,12 @@ function exampleHeaders(response: Response): Record<string, string> {
 interface Options {
   /** Answer only the first matching request (to script a sequence of responses). */
   once?: boolean;
+  /**
+   * Derives a state from the spec's example (a copy), for one the spec shows no
+   * example of, such as a session whose `name` is `null`. Start from the
+   * example, so the mock keeps the documented shape.
+   */
+  from?: (example: never) => unknown;
 }
 
 function handler(operationId: string, status: number, response: Response, body: unknown, options: Options) {
@@ -74,7 +80,8 @@ function handler(operationId: string, status: number, response: Response, body: 
       ? new HttpResponse(null, { status, headers })
       : HttpResponse.json(body as Record<string, unknown>, { status, headers });
   // Absolute URL: in Node, MSW doesn't resolve relative paths against the page.
-  const url = new URL(path, window.location.origin).href;
+  // Path parameters: OpenAPI's `{session_id}` is MSW's `:session_id`.
+  const url = new URL(path.replace(/\{(\w+)\}/g, ":$1"), window.location.origin).href;
   return METHODS[method](url, resolver, { once: options.once ?? false });
 }
 
@@ -87,7 +94,9 @@ export function specHandler(operationId: string, status: number, options: Option
   if (media !== undefined && media.example === undefined) {
     throw new Error(`${operationId} ${String(status)}: the spec has no example to mock with`);
   }
-  return handler(operationId, status, response, media?.example, options);
+  const example: unknown = media?.example;
+  const body = options.from === undefined ? example : options.from(structuredClone(example) as never);
+  return handler(operationId, status, response, body, options);
 }
 
 function problemExample(response: Response): { code?: unknown; status?: unknown } | undefined {

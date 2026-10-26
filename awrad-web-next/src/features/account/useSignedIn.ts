@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { createBrowserSession, currentAccountQuery, type Account } from "./api";
 import { forgetPending, rememberPending } from "./pending";
-import type { SignInNotice } from "./signInSearch";
+import type { SignInNotice } from "./search";
 
 /**
  * Signs in with a password the person already gave, after a step that

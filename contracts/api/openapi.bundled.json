@@ -31,6 +31,10 @@
       "description": "Mobile sign-in, token refresh and sign-out (ADR-2026-07-12)."
     },
     {
+      "name": "account_settings",
+      "description": "Sessions, password, email and deletion for the signed-in account (slice 2b)."
+    },
+    {
       "name": "browser",
       "description": "Endpoints only browser (cookie-session) clients use."
     }
@@ -406,6 +410,626 @@
         }
       }
     },
+    "/api/v1/account/sessions": {
+      "get": {
+        "operationId": "list_account_sessions",
+        "tags": [
+          "account_settings"
+        ],
+        "summary": "Every place the account is signed in",
+        "description": "Mobile device sessions and browser sessions together, most recently used first, with the caller's own marked `is_current`. Only active sessions are listed. An account rarely has more than a page.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Cursor"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size. Default 50, maximum 100.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          }
+        ],
+        "x-error-codes": [
+          "malformed_request",
+          "unauthenticated"
+        ],
+        "responses": {
+          "200": {
+            "description": "The sessions.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "items",
+                    "next_cursor"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AccountSession"
+                      }
+                    },
+                    "next_cursor": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/Cursor"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "items": [
+                    {
+                      "id": "9a7d1c42-3e5b-4f60-8a19-0c2d4e6f8b13",
+                      "kind": "device",
+                      "name": "Pixel 9",
+                      "platform": "android",
+                      "created_at": "2026-10-26T08:05:00Z",
+                      "last_seen_at": "2026-10-27T06:40:00Z",
+                      "is_current": true
+                    },
+                    {
+                      "id": "4c2e8f10-7b3a-4d5e-9f61-2a8b0c1d3e45",
+                      "kind": "browser",
+                      "name": "Firefox on Windows",
+                      "platform": "web",
+                      "created_at": "2026-10-20T18:00:00Z",
+                      "last_seen_at": "2026-10-26T21:15:00Z",
+                      "is_current": false
+                    },
+                    {
+                      "id": "7e1f3a95-2c4d-4b6e-8f70-1a2b3c4d5e6f",
+                      "kind": "browser",
+                      "name": null,
+                      "platform": "web",
+                      "created_at": "2026-10-12T07:30:00Z",
+                      "last_seen_at": "2026-10-18T07:45:00Z",
+                      "is_current": false
+                    }
+                  ],
+                  "next_cursor": null
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/account/sessions/{session_id}": {
+      "delete": {
+        "operationId": "revoke_account_session",
+        "tags": [
+          "account_settings"
+        ],
+        "summary": "Sign out one device or browser",
+        "description": "Ends that session; its next request is `401`. Revoking the caller's own session is the same as signing out. Another account's session, one already ended, or an id that isn't a UUID is `404`.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Uuid"
+            }
+          }
+        ],
+        "x-error-codes": [
+          "unauthenticated",
+          "csrf_token_invalid",
+          "not_found"
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/NoContent"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfTokenInvalid"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/v1/account/sessions/revoke_others": {
+      "post": {
+        "operationId": "revoke_other_account_sessions",
+        "tags": [
+          "account_settings"
+        ],
+        "summary": "Sign out of all other devices and browsers",
+        "description": "Ends every session of the account except the caller's own.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "x-error-codes": [
+          "unauthenticated",
+          "csrf_token_invalid"
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/NoContent"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfTokenInvalid"
+          }
+        }
+      }
+    },
+    "/api/v1/account/change_password": {
+      "post": {
+        "operationId": "change_password",
+        "tags": [
+          "account_settings"
+        ],
+        "summary": "Change the password while signed in",
+        "description": "Needs the current password. Signs out every other device and browser and keeps the caller signed in. The account's email gets a notice that the password changed.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "x-error-codes": [
+          "malformed_request",
+          "unauthenticated",
+          "csrf_token_invalid",
+          "validation_failed",
+          "rate_limited"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "current_password",
+                  "new_password"
+                ],
+                "properties": {
+                  "current_password": {
+                    "$ref": "#/components/schemas/CurrentPassword"
+                  },
+                  "new_password": {
+                    "$ref": "#/components/schemas/Password"
+                  }
+                }
+              },
+              "example": {
+                "current_password": "a long passphrase",
+                "new_password": "another long passphrase"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/NoContent"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfTokenInvalid"
+          },
+          "422": {
+            "$ref": "#/components/responses/CurrentPasswordRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/api/v1/account/request_email_change": {
+      "post": {
+        "operationId": "request_email_change",
+        "tags": [
+          "account_settings"
+        ],
+        "summary": "Start changing the account's email",
+        "description": "Needs the current password. Emails a 6-digit code to the NEW address; nothing changes until `confirm_email_change`. Always `202` for a valid request: if the new address already belongs to another account, that address gets a notice instead of a code, so the response doesn't reveal it. A new request cancels the previous code.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "x-error-codes": [
+          "malformed_request",
+          "unauthenticated",
+          "csrf_token_invalid",
+          "validation_failed",
+          "rate_limited"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "current_password",
+                  "new_email"
+                ],
+                "properties": {
+                  "current_password": {
+                    "$ref": "#/components/schemas/CurrentPassword"
+                  },
+                  "new_email": {
+                    "$ref": "#/components/schemas/Email"
+                  }
+                }
+              },
+              "example": {
+                "current_password": "a long passphrase",
+                "new_email": "amina.new@example.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "$ref": "#/components/responses/CodeSent"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfTokenInvalid"
+          },
+          "422": {
+            "description": "`validation_failed`. Field codes: `current_password_incorrect` on `/current_password`; `email_invalid` or `email_unchanged` on `/new_email`.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "example": {
+                  "type": "urn:awrad:problem:validation_failed",
+                  "title": "Request validation failed",
+                  "status": 422,
+                  "code": "validation_failed",
+                  "detail": "new_email is the account's current email",
+                  "errors": [
+                    {
+                      "field": "/new_email",
+                      "code": "email_unchanged",
+                      "detail": "already the account's email"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/api/v1/account/confirm_email_change": {
+      "post": {
+        "operationId": "confirm_email_change",
+        "tags": [
+          "account_settings"
+        ],
+        "summary": "Confirm the new email with the code sent to it",
+        "description": "Switches the account to the new address and returns the account. The old address gets a notice of the change. Sessions stay signed in. A wrong, expired or used code is `email_change_code_invalid` (5 tries). If the new address was taken by another account in the meantime, `409 email_taken`.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "x-error-codes": [
+          "malformed_request",
+          "unauthenticated",
+          "csrf_token_invalid",
+          "validation_failed",
+          "email_change_code_invalid",
+          "email_taken",
+          "rate_limited"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "$ref": "#/components/schemas/EmailCode"
+                  }
+                }
+              },
+              "example": {
+                "code": "519274"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The account with its new email.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Account"
+                },
+                "example": {
+                  "id": "0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90",
+                  "email": "amina.new@example.com",
+                  "created_at": "2026-10-26T08:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfTokenInvalid"
+          },
+          "409": {
+            "description": "The new address now belongs to another account.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "example": {
+                  "type": "urn:awrad:problem:email_taken",
+                  "title": "Email taken",
+                  "status": 409,
+                  "code": "email_taken",
+                  "detail": "the new email now belongs to another account",
+                  "errors": []
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "`email_change_code_invalid`, or `validation_failed` with `code_invalid` on `/code`.",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "example": {
+                  "type": "urn:awrad:problem:email_change_code_invalid",
+                  "title": "Email change code invalid",
+                  "status": 422,
+                  "code": "email_change_code_invalid",
+                  "detail": "the code is wrong, expired or already used",
+                  "errors": []
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
+    "/api/v1/account/delete": {
+      "post": {
+        "operationId": "delete_account",
+        "tags": [
+          "account_settings"
+        ],
+        "summary": "Delete the account now",
+        "description": "Needs the current password. Immediately and permanently deletes the account and everything the server keeps for it (sessions, settings, synced data), and ends every session; a browser's cookies are cleared. Practice data stored on devices isn't touched: the apps keep working offline. The address gets a confirmation email. There is no undo. A retry after a lost `204` gets `401`, because the account no longer exists: clients treat `401` after a delete request as done.",
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "x-error-codes": [
+          "malformed_request",
+          "unauthenticated",
+          "csrf_token_invalid",
+          "validation_failed",
+          "rate_limited"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "current_password"
+                ],
+                "properties": {
+                  "current_password": {
+                    "$ref": "#/components/schemas/CurrentPassword"
+                  }
+                }
+              },
+              "example": {
+                "current_password": "a long passphrase"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/NoContent"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/CsrfTokenInvalid"
+          },
+          "422": {
+            "$ref": "#/components/responses/CurrentPasswordRejected"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          }
+        }
+      }
+    },
     "/api/v1/device_sessions": {
       "post": {
         "operationId": "create_device_session",
@@ -483,7 +1107,36 @@
             "$ref": "#/components/responses/Forbidden"
           },
           "422": {
-            "$ref": "#/components/responses/UnprocessableContent"
+            "description": "`validation_failed`. Field codes: `email_invalid` on `/email`; `installation_id_invalid`, `device_name_invalid` or `platform_invalid` under `/device/...` (an app bug, not something a person can fix).",
+            "headers": {
+              "Cache-Control": {
+                "$ref": "#/components/headers/CacheControl"
+              },
+              "x-request-id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            },
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                },
+                "example": {
+                  "type": "urn:awrad:problem:validation_failed",
+                  "title": "Request validation failed",
+                  "status": 422,
+                  "code": "validation_failed",
+                  "detail": "device.platform is not supported",
+                  "errors": [
+                    {
+                      "field": "/device/platform",
+                      "code": "platform_invalid",
+                      "detail": "must be android or ios"
+                    }
+                  ]
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/TooManyRequests"
@@ -658,7 +1311,7 @@
           "browser"
         ],
         "summary": "Sign in in the browser",
-        "description": "Sets the Phoenix session cookie (and the remember-me cookie when `remember_me` is true). Needs the session cookie and CSRF token that `get_browser_csrf_token` gives any browser. Signing in renews the session, so the response carries the new CSRF token. An unverified email gets `403 email_verification_required`, and the server emails a fresh code (rate-limited).",
+        "description": "Sets the Phoenix session cookie (and the remember-me cookie when `remember_me` is true). Needs the session cookie and CSRF token that `get_browser_csrf_token` gives any browser. Signing in renews the session, so the response carries the new CSRF token. An unverified email gets `403 email_verification_required`, and the server emails a fresh code (rate-limited). A repeat with the same `Idempotency-Key` signs in again rather than replaying, because a stored response can't set the cookie (STYLE §10).",
         "security": [
           {
             "cookieAuth": [],
@@ -1024,6 +1677,65 @@
           }
         }
       },
+      "CurrentPassword": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1024,
+        "description": "The account's current password, re-entered to confirm a sensitive change. A wrong one is `validation_failed` with field code `current_password_incorrect`."
+      },
+      "AccountSession": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "platform",
+          "created_at",
+          "last_seen_at",
+          "is_current"
+        ],
+        "description": "One place the account is signed in.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Uuid",
+            "description": "For a device session, the same `id` as `DeviceSession.id` in its sign-in grant."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "device",
+              "browser"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120,
+            "description": "Device model for a device session (\"Pixel 9\"); a browser and system summary for a browser session (\"Firefox on Windows\"), or null when it couldn't be told. Clients show a generic label for null."
+          },
+          "platform": {
+            "type": "string",
+            "enum": [
+              "android",
+              "ios",
+              "web"
+            ]
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/Instant"
+          },
+          "last_seen_at": {
+            "$ref": "#/components/schemas/Instant"
+          },
+          "is_current": {
+            "type": "boolean",
+            "description": "True for the session making this request."
+          }
+        }
+      },
       "DeviceInfo": {
         "type": "object",
         "additionalProperties": false,
@@ -1032,6 +1744,7 @@
           "name",
           "platform"
         ],
+        "description": "Invalid values are `validation_failed` with field codes `installation_id_invalid`, `device_name_invalid` or `platform_invalid` under `/device/...`.",
         "properties": {
           "installation_id": {
             "$ref": "#/components/schemas/Uuid",
@@ -1410,12 +2123,12 @@
               "title": "Request validation failed",
               "status": 422,
               "code": "validation_failed",
-              "detail": "daily_target must be between 1 and 100000",
+              "detail": "email is not a valid address",
               "errors": [
                 {
-                  "field": "/daily_target",
-                  "code": "out_of_range",
-                  "detail": "must be between 1 and 100000"
+                  "field": "/email",
+                  "code": "email_invalid",
+                  "detail": "not a valid email address"
                 }
               ]
             }
@@ -1526,6 +2239,38 @@
                   "field": "/password",
                   "code": "password_too_short",
                   "detail": "must be at least 12 characters"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "CurrentPasswordRejected": {
+        "description": "`validation_failed`. Field codes: `current_password_incorrect` on `/current_password`; on operations that take a new password, also `password_too_short`, `password_too_long` or `password_too_common` on `/new_password`.",
+        "headers": {
+          "Cache-Control": {
+            "$ref": "#/components/headers/CacheControl"
+          },
+          "x-request-id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            },
+            "example": {
+              "type": "urn:awrad:problem:validation_failed",
+              "title": "Request validation failed",
+              "status": 422,
+              "code": "validation_failed",
+              "detail": "the current password is incorrect",
+              "errors": [
+                {
+                  "field": "/current_password",
+                  "code": "current_password_incorrect",
+                  "detail": "incorrect"
                 }
               ]
             }

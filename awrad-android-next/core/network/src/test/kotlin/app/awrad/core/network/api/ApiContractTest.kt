@@ -40,6 +40,13 @@ class ApiContractTest {
         ApiOperation.REFRESH_DEVICE_SESSION to
             (RefreshTokenRequest.serializer() to DeviceSessionGrant.serializer()),
         ApiOperation.SIGN_OUT_DEVICE_SESSION to (RefreshTokenRequest.serializer() to null),
+        ApiOperation.LIST_ACCOUNT_SESSIONS to (null to AccountSessionPage.serializer()),
+        ApiOperation.REVOKE_ACCOUNT_SESSION to (null to null),
+        ApiOperation.REVOKE_OTHER_ACCOUNT_SESSIONS to (null to null),
+        ApiOperation.CHANGE_PASSWORD to (ChangePasswordRequest.serializer() to null),
+        ApiOperation.REQUEST_EMAIL_CHANGE to (RequestEmailChangeRequest.serializer() to null),
+        ApiOperation.CONFIRM_EMAIL_CHANGE to (ConfirmEmailChangeRequest.serializer() to AccountResponse.serializer()),
+        ApiOperation.DELETE_ACCOUNT to (CurrentPasswordRequest.serializer() to null),
     )
 
     @Test
@@ -58,7 +65,8 @@ class ApiContractTest {
                 "method $method".takeIf { method != operation.method.name.lowercase() },
                 "path $path".takeIf { path != operation.path },
                 "security $security".takeIf { operation.isPublic != security.isEmpty() },
-                "no bearerAuth".takeIf { !operation.isPublic && security.none { "bearerAuth" in it } },
+                // The bearer token alone must be enough: mobile never sends a cookie or CSRF token.
+                "no bearerAuth".takeIf { !operation.isPublic && security.none { it == setOf("bearerAuth") } },
                 "Accept-Language".takeIf { operation.sendsLanguage != ("Accept-Language" in headers) },
                 "Idempotency-Key".takeIf { operation.idempotent != ("Idempotency-Key" in headers) },
             ).map { "${operation.operationId}: $it differs from the spec" }
