@@ -19,12 +19,36 @@ servers:
       base_url:
         default: http://localhost:4000
 tags:
+  - name: accounts
+    description: Registration, email verification, password reset and the signed-in account (slice 2a).
+  - name: device_sessions
+    description: Mobile sign-in, token refresh and sign-out (ADR-2026-07-12).
   - name: browser
     description: Endpoints only browser (cookie-session) clients use.
 
 paths:
+  /api/v1/accounts:
+    $ref: paths/accounts.yaml#/accounts
+  /api/v1/accounts/verify_email:
+    $ref: paths/accounts.yaml#/verify_email
+  /api/v1/accounts/resend_verification_code:
+    $ref: paths/accounts.yaml#/resend_verification_code
+  /api/v1/accounts/request_password_reset:
+    $ref: paths/accounts.yaml#/request_password_reset
+  /api/v1/accounts/reset_password:
+    $ref: paths/accounts.yaml#/reset_password
+  /api/v1/account:
+    $ref: paths/accounts.yaml#/current
+  /api/v1/device_sessions:
+    $ref: paths/device_sessions.yaml#/device_sessions
+  /api/v1/device_sessions/refresh:
+    $ref: paths/device_sessions.yaml#/refresh
+  /api/v1/device_sessions/sign_out:
+    $ref: paths/device_sessions.yaml#/sign_out
   /api/v1/browser/csrf_token:
     $ref: paths/browser.yaml#/csrf_token
+  /api/v1/browser/session:
+    $ref: paths/browser.yaml#/session
 
 components:
   securitySchemes:
@@ -127,6 +151,118 @@ components:
           description: Field validation errors. Empty when the problem isn't about specific fields.
           items:
             $ref: "#/components/schemas/FieldError"
+    Email:
+      type: string
+      minLength: 3
+      maxLength: 160
+      description: >-
+        An email address, trimmed by the client (contracts/account-model/v1 email_input). Compared
+        case-insensitively. Invalid ones are `validation_failed` with field code `email_invalid`.
+      examples: ["amina@example.com"]
+    Password:
+      type: string
+      minLength: 1
+      maxLength: 1024
+      description: >-
+        12 to 128 Unicode code points after NFC normalisation, no composition rules
+        (contracts/account-model/v1 password_policy). The server also rejects common passwords. Failures are
+        `validation_failed` with field code `password_too_short`, `password_too_long` or `password_too_common`.
+      examples: ["a long passphrase"]
+    EmailCode:
+      type: string
+      pattern: "^[0-9]{6}$"
+      description: >-
+        A 6-digit emailed code, ASCII digits only. Clients normalise what the user typed first
+        (contracts/account-model/v1 email_code_input). Valid for 15 minutes and 5 tries.
+      examples: ["482913"]
+    EmailOnly:
+      type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email:
+          $ref: "#/components/schemas/Email"
+    RefreshTokenOnly:
+      type: object
+      additionalProperties: false
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          minLength: 16
+          maxLength: 512
+    Account:
+      type: object
+      additionalProperties: false
+      required: [id, email, created_at]
+      description: A signed-in account. Its email is always verified (verification-first).
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        email:
+          type: string
+          maxLength: 160
+        created_at:
+          $ref: "#/components/schemas/Instant"
+    DeviceInfo:
+      type: object
+      additionalProperties: false
+      required: [installation_id, name, platform]
+      properties:
+        installation_id:
+          $ref: "#/components/schemas/Uuid"
+          description: Random UUIDv4 the app creates once per installation and keeps in secure storage.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: The device model, for example "Pixel 9" or "iPhone 16". Shown in the device list.
+        platform:
+          type: string
+          enum: [android, ios]
+    DeviceSession:
+      type: object
+      additionalProperties: false
+      required: [id, device_name, platform, created_at, last_seen_at, idle_expires_at, absolute_expires_at]
+      properties:
+        id:
+          $ref: "#/components/schemas/Uuid"
+        device_name:
+          type: string
+        platform:
+          type: string
+          enum: [android, ios]
+        created_at:
+          $ref: "#/components/schemas/Instant"
+        last_seen_at:
+          $ref: "#/components/schemas/Instant"
+        idle_expires_at:
+          $ref: "#/components/schemas/Instant"
+          description: Ends after 30 days without a refresh; each refresh moves it.
+        absolute_expires_at:
+          $ref: "#/components/schemas/Instant"
+          description: Ends 180 days after sign-in, whatever happens.
+    DeviceSessionGrant:
+      type: object
+      additionalProperties: false
+      required: [account, session, access_token, access_token_expires_at, refresh_token]
+      properties:
+        account:
+          $ref: "#/components/schemas/Account"
+        session:
+          $ref: "#/components/schemas/DeviceSession"
+        access_token:
+          type: string
+          minLength: 16
+          maxLength: 4096
+          description: Bearer token, valid for 15 minutes. Keep it in memory only.
+        access_token_expires_at:
+          $ref: "#/components/schemas/Instant"
+        refresh_token:
+          type: string
+          minLength: 16
+          maxLength: 512
+          description: Single use. Keep it in secure storage (Android Keystore, iOS Keychain).
     FieldError:
       type: object
       additionalProperties: false
@@ -147,6 +283,13 @@ components:
       in: header
       required: false
       description: UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST.
+      schema:
+        $ref: "#/components/schemas/Uuid"
+    RequiredIdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: UUIDv4, required on this operation. A retry with the same key gets the same result.
       schema:
         $ref: "#/components/schemas/Uuid"
     Cursor:
@@ -185,6 +328,49 @@ components:
       example: 30
 
   responses:
+    NoContent:
+      description: Done.
+      headers:
+        Cache-Control:
+          $ref: "#/components/headers/CacheControl"
+        x-request-id:
+          $ref: "#/components/headers/RequestId"
+    CodeSent:
+      description: >-
+        Accepted. If the email qualifies, a code is on its way. The response is the same either way, so it
+        doesn't reveal whether the email has an account.
+      headers:
+        Cache-Control:
+          $ref: "#/components/headers/CacheControl"
+        x-request-id:
+          $ref: "#/components/headers/RequestId"
+    DeviceSessionGranted:
+      description: The device session and its tokens.
+      headers:
+        Cache-Control:
+          $ref: "#/components/headers/CacheControl"
+        x-request-id:
+          $ref: "#/components/headers/RequestId"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DeviceSessionGrant"
+          example:
+            account:
+              id: 0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90
+              email: amina@example.com
+              created_at: "2026-10-26T08:00:00Z"
+            session:
+              id: 9a7d1c42-3e5b-4f60-8a19-0c2d4e6f8b13
+              device_name: Pixel 9
+              platform: android
+              created_at: "2026-10-26T08:05:00Z"
+              last_seen_at: "2026-10-26T08:05:00Z"
+              idle_expires_at: "2026-11-25T08:05:00Z"
+              absolute_expires_at: "2027-04-24T08:05:00Z"
+            access_token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwYjZmIn0.c2lnbmF0dXJlLWV4YW1wbGU
+            access_token_expires_at: "2026-10-26T08:20:00Z"
+            refresh_token: Q2hhbmdlTWVJbkEtcmVmcmVzaC10b2tlbi1leGFtcGxlMTIz
     BadRequest:
       description: Malformed request, wrong types, or unknown fields.
       headers: &problem_headers
@@ -262,6 +448,69 @@ components:
               - field: /daily_target
                 code: out_of_range
                 detail: must be between 1 and 100000
+    InvalidCredentials:
+      description: Wrong email or password. Doesn't say which.
+      headers: *problem_headers
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:invalid_credentials
+            title: Invalid credentials
+            status: 401
+            code: invalid_credentials
+            detail: wrong email or password
+            errors: []
+    CsrfTokenInvalid:
+      description: The CSRF token is missing or doesn't match the session.
+      headers: *problem_headers
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:csrf_token_invalid
+            title: CSRF token invalid
+            status: 403
+            code: csrf_token_invalid
+            detail: missing or stale X-CSRF-Token
+            errors: []
+    VerificationCodeInvalid:
+      description: >-
+        `verification_code_invalid` (wrong, expired or used code, or unknown email), or `validation_failed`
+        for a malformed email or code.
+      headers: *problem_headers
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:verification_code_invalid
+            title: Verification code invalid
+            status: 422
+            code: verification_code_invalid
+            detail: the code is wrong, expired or already used
+            errors: []
+    PasswordRejected:
+      description: >-
+        `validation_failed`. Field codes: `email_invalid` on `/email`; `password_too_short`,
+        `password_too_long` or `password_too_common` on `/password`.
+      headers: *problem_headers
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+          example:
+            type: urn:awrad:problem:validation_failed
+            title: Request validation failed
+            status: 422
+            code: validation_failed
+            detail: password must be at least 12 characters
+            errors:
+              - field: /password
+                code: password_too_short
+                detail: must be at least 12 characters
     TooManyRequests:
       description: Rate limited.
       headers:

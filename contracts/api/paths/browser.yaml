@@ -31,3 +31,95 @@ csrf_token:
               csrf_token: SXlPVEZ3Zm9MUw4JHQ0rNTI8KyorFxUZ
       "401":
         $ref: "../openapi.yaml#/components/responses/Unauthorized"
+
+session:
+  post:
+    operationId: create_browser_session
+    tags: [browser]
+    summary: Sign in in the browser
+    description: >-
+      Sets the Phoenix session cookie (and the remember-me cookie when `remember_me` is true). Needs the
+      anonymous session cookie and its CSRF token from `get_browser_csrf_token`. Signing in renews the
+      session, so the response carries the new CSRF token. An unverified email gets
+      `403 email_verification_required`, and the server emails a fresh code (rate-limited).
+    security:
+      - cookieAuth: []
+        csrfToken: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+    x-error-codes: [malformed_request, validation_failed, invalid_credentials, email_verification_required, csrf_token_invalid, rate_limited]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [email, password]
+            properties:
+              email:
+                $ref: "../openapi.yaml#/components/schemas/Email"
+              password:
+                type: string
+                minLength: 1
+                maxLength: 1024
+              remember_me:
+                type: boolean
+                default: true
+                description: Keep the browser signed in for 14 days (sliding). Defaults to true.
+          example:
+            email: amina@example.com
+            password: a long passphrase
+            remember_me: true
+    responses:
+      "200":
+        description: Signed in. The session cookie is set.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [account, csrf_token]
+              properties:
+                account:
+                  $ref: "../openapi.yaml#/components/schemas/Account"
+                csrf_token:
+                  type: string
+                  minLength: 16
+            example:
+              account:
+                id: 0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90
+                email: amina@example.com
+                created_at: "2026-10-26T08:00:00Z"
+              csrf_token: SXlPVEZ3Zm9MUw4JHQ0rNTI8KyorFxUZ
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../openapi.yaml#/components/responses/InvalidCredentials"
+      "403":
+        $ref: "../openapi.yaml#/components/responses/Forbidden"
+      "422":
+        $ref: "../openapi.yaml#/components/responses/UnprocessableContent"
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+  delete:
+    operationId: delete_browser_session
+    tags: [browser]
+    summary: Sign out in the browser
+    description: Deletes the session and remember-me cookies and the server-side session token.
+    security:
+      - cookieAuth: []
+        csrfToken: []
+    x-error-codes: [unauthenticated, csrf_token_invalid]
+    responses:
+      "204":
+        $ref: "../openapi.yaml#/components/responses/NoContent"
+      "401":
+        $ref: "../openapi.yaml#/components/responses/Unauthorized"
+      "403":
+        $ref: "../openapi.yaml#/components/responses/CsrfTokenInvalid"

@@ -97,6 +97,25 @@ The day used to evaluate a goal, from the current instant, the device's timezone
 Two devices may show different prayer-relative context without changing the account policy or historical count dates.
 _Avoid_: Server date
 
+## Account language
+
+**Account**:
+An Awrad identity: an email and a password. It's optional: everything offline works without one. An account can only sign in once its email is verified.
+_Avoid_: User (in product text), profile
+
+**Email code**:
+A 6-digit code emailed to verify an account's email or to reset its password. It lasts 15 minutes and allows 5 tries.
+_Avoid_: OTP, magic link
+
+**Installation**:
+One install of a mobile app, identified by a random UUID it keeps in secure storage. Reinstalling makes a new installation.
+
+**Device session**:
+A mobile installation signed in to an account, with its own refresh token. It ends after 30 days without use, after 180 days in any case, or when it's revoked (sign out, password reset, or a reused refresh token). Signing in again from the same installation replaces it.
+
+**Browser session**:
+A web browser signed in to an account with Phoenix's session cookie. It's separate from device sessions, and neither accepts the other's credential.
+
 ## Future scope
 
 **Practice plan**:

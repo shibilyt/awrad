@@ -28,6 +28,7 @@ The navigation layer for repository knowledge. Keep the root [`AGENTS.md`](../AG
 | Goal model v1: goal rules as shared fixtures | [`contracts/goal-model/v1/`](../contracts/goal-model/v1/) |
 | Hijri calendar v1: Umm al-Qura table, corrections | [`contracts/hijri-calendar/v1/`](../contracts/hijri-calendar/v1/) |
 | Goal presets v1: seasons and occasions | [`contracts/goal-presets/v1/`](../contracts/goal-presets/v1/) |
+| Account model v1: email, password and code input rules | [`contracts/account-model/v1/`](../contracts/account-model/v1/) |
 | API style guide | [`contracts/api/STYLE.md`](../contracts/api/STYLE.md) |
 | API spec (OpenAPI) | Planned under `contracts/api/` (rebuild plan 0.4) |
 | Current API wire contract, in prose (frozen server) | [`CONTRACTS.md`](../CONTRACTS.md). Replaced by `contracts/` slice by slice |

@@ -1,0 +1,226 @@
+# Accounts (slice 2a). Public operations: no credential, the same for every client.
+# Responses never reveal whether an email has an account (STYLE §11).
+
+accounts:
+  post:
+    operationId: register_account
+    tags: [accounts]
+    summary: Create an account and email a verification code
+    description: >-
+      Verification-first (ADR-2026-07-12): the account can't sign in until its email is verified with
+      `verify_account_email`. Always `202`, also when the email already has an account, so the response
+      doesn't reveal it. A new code cancels any earlier one.
+    security: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+    x-error-codes: [malformed_request, validation_failed, rate_limited]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [email, password]
+            properties:
+              email:
+                $ref: "../openapi.yaml#/components/schemas/Email"
+              password:
+                $ref: "../openapi.yaml#/components/schemas/Password"
+          example:
+            email: amina@example.com
+            password: a long passphrase
+    responses:
+      "202":
+        $ref: "../openapi.yaml#/components/responses/CodeSent"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "422":
+        $ref: "../openapi.yaml#/components/responses/PasswordRejected"
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+verify_email:
+  post:
+    operationId: verify_account_email
+    tags: [accounts]
+    summary: Verify an account's email with the emailed code
+    description: >-
+      Marks the email verified. It doesn't sign in: the client then calls `create_device_session` (mobile)
+      or `create_browser_session` (web) with the password it already has. A wrong, expired or used code,
+      or an unknown email, is `verification_code_invalid`. After 5 wrong tries the code is spent.
+    security: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+    x-error-codes: [malformed_request, validation_failed, verification_code_invalid, rate_limited]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [email, code]
+            properties:
+              email:
+                $ref: "../openapi.yaml#/components/schemas/Email"
+              code:
+                $ref: "../openapi.yaml#/components/schemas/EmailCode"
+          example:
+            email: amina@example.com
+            code: "482913"
+    responses:
+      "204":
+        $ref: "../openapi.yaml#/components/responses/NoContent"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "422":
+        $ref: "../openapi.yaml#/components/responses/VerificationCodeInvalid"
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+resend_verification_code:
+  post:
+    operationId: resend_verification_code
+    tags: [accounts]
+    summary: Email a new verification code
+    description: Always `202`. Sent only to an account that exists and isn't verified yet; the new code cancels the old one.
+    security: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+    x-error-codes: [malformed_request, validation_failed, rate_limited]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/EmailOnly"
+          example:
+            email: amina@example.com
+    responses:
+      "202":
+        $ref: "../openapi.yaml#/components/responses/CodeSent"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "422":
+        $ref: "../openapi.yaml#/components/responses/UnprocessableContent"
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+request_password_reset:
+  post:
+    operationId: request_password_reset
+    tags: [accounts]
+    summary: Email a password-reset code
+    description: Always `202`. Sent only when the email has an account; a new code cancels the old one.
+    security: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+    x-error-codes: [malformed_request, validation_failed, rate_limited]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../openapi.yaml#/components/schemas/EmailOnly"
+          example:
+            email: amina@example.com
+    responses:
+      "202":
+        $ref: "../openapi.yaml#/components/responses/CodeSent"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "422":
+        $ref: "../openapi.yaml#/components/responses/UnprocessableContent"
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+reset_password:
+  post:
+    operationId: reset_password
+    tags: [accounts]
+    summary: Set a new password with the emailed reset code
+    description: >-
+      Sets the password and **revokes every session of the account**, mobile and browser. The code also
+      proves the inbox, so an unverified email becomes verified. A wrong, expired or used code, or an unknown
+      email, is `reset_code_invalid`; after 5 wrong tries the code is spent. The client then signs in with
+      the new password.
+    security: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+    x-error-codes: [malformed_request, validation_failed, reset_code_invalid, rate_limited]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [email, code, new_password]
+            properties:
+              email:
+                $ref: "../openapi.yaml#/components/schemas/Email"
+              code:
+                $ref: "../openapi.yaml#/components/schemas/EmailCode"
+              new_password:
+                $ref: "../openapi.yaml#/components/schemas/Password"
+          example:
+            email: amina@example.com
+            code: "730158"
+            new_password: another long passphrase
+    responses:
+      "204":
+        $ref: "../openapi.yaml#/components/responses/NoContent"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "422":
+        description: >-
+          `reset_code_invalid`, or `validation_failed` with field codes `password_too_short`,
+          `password_too_long` or `password_too_common` on `/new_password`.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/problem+json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/Problem"
+            example:
+              type: urn:awrad:problem:reset_code_invalid
+              title: Reset code invalid
+              status: 422
+              code: reset_code_invalid
+              detail: the code is wrong, expired or already used
+              errors: []
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+current:
+  get:
+    operationId: get_current_account
+    tags: [accounts]
+    summary: The signed-in account
+    description: Accepts either credential; each pipeline checks only its own (ADR-2026-10-15).
+    security:
+      - bearerAuth: []
+      - cookieAuth: []
+    x-error-codes: [unauthenticated]
+    responses:
+      "200":
+        description: The account.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/Account"
+            example:
+              id: 0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90
+              email: amina@example.com
+              created_at: "2026-10-26T08:00:00Z"
+      "401":
+        $ref: "../openapi.yaml#/components/responses/Unauthorized"
