@@ -21,6 +21,13 @@ struct OpenAPIContractTests {
         "create_device_session": (WireType(CreateDeviceSessionBody.self), WireType(DeviceSessionGrantWire.self)),
         "refresh_device_session": (WireType(RefreshTokenBody.self), WireType(DeviceSessionGrantWire.self)),
         "sign_out_device_session": (WireType(RefreshTokenBody.self), nil),
+        "list_account_sessions": (nil, WireType(AccountSessionPageWire.self)),
+        "revoke_account_session": (nil, nil),
+        "revoke_other_account_sessions": (nil, nil),
+        "change_password": (WireType(ChangePasswordBody.self), nil),
+        "request_email_change": (WireType(RequestEmailChangeBody.self), nil),
+        "confirm_email_change": (WireType(EmailChangeCodeBody.self), WireType(AccountWire.self)),
+        "delete_account": (WireType(CurrentPasswordBody.self), nil),
     ]
 
     @Test(arguments: APIOperation.used)
@@ -42,6 +49,13 @@ struct OpenAPIContractTests {
         if operation == .refreshDeviceSession {
             #expect(headers["Idempotency-Key"] == true, "refresh requires the key")
         }
+
+        let query = try spec.parameters(of: entry, in: "query")
+        for name in operation.queryParameters {
+            #expect(query[name] != nil, "\(operation): query parameter \(name) isn't in the spec")
+        }
+        let pathNames = operation.path.split(separator: "{").dropFirst().compactMap { $0.split(separator: "}").first }
+        #expect(Set(pathNames.map(String.init)) == Set(try spec.parameters(of: entry, in: "path").keys))
     }
 
     @Test(arguments: APIOperation.used)
@@ -80,7 +94,7 @@ struct OpenAPIContractTests {
     /// The mobile operations in the spec are exactly the ones the app implements.
     @Test func theAppCoversEveryMobileOperation() throws {
         let spec = try Spec.load()
-        let mobile = spec.operationIDs(taggedAny: ["accounts", "device_sessions"])
+        let mobile = spec.operationIDs(taggedAny: ["accounts", "device_sessions", "account_settings"])
         #expect(Set(APIOperation.used.map(\.id)) == mobile)
         #expect(Set(Self.wireTypes.keys) == mobile)
     }
@@ -165,9 +179,15 @@ struct Spec {
 
     /// Header parameter names, each mapped to whether it's required.
     func headerParameters(of operation: [String: Any]) throws -> [String: Bool] {
+        try parameters(of: operation, in: "header")
+    }
+
+    /// The operation's parameters in one place (`header`, `query`, `path`), each mapped to whether
+    /// it's required.
+    func parameters(of operation: [String: Any], in location: String) throws -> [String: Bool] {
         let parameters = try (operation["parameters"] as? [[String: Any]] ?? []).map(resolve)
         return Dictionary(
-            parameters.filter { $0["in"] as? String == "header" }
+            parameters.filter { $0["in"] as? String == location }
                 .compactMap { parameter in
                     (parameter["name"] as? String).map { ($0, parameter["required"] as? Bool ?? false) }
                 },

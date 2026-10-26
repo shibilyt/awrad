@@ -1,7 +1,7 @@
 import AwradDomain
 import Foundation
 
-// The account flows. Input is checked with the shared account-model rules before anything is
+// The signed-out flows, and sign out. Input is checked with the shared account-model rules before anything is
 // sent; the server stays the authority and its codes come back as `AccountError`s.
 
 extension AccountModel {
@@ -52,9 +52,14 @@ extension AccountModel {
     func resend() async throws(AccountError) {
         if let available = state.resendAvailableAt, available > now() { return }
         do {
-            if state.path.last == .resetPassword {
+            switch state.path.last {
+            case .resetPassword:
                 try await service.requestPasswordReset(email: state.email)
-            } else {
+            case .confirmEmailChange:
+                // A new request cancels the previous code and sends another.
+                try await service.requestEmailChange(
+                    currentPassword: state.currentPassword, newEmail: state.pendingEmail ?? state.newEmail)
+            default:
                 try await service.resendVerificationCode(email: state.email)
             }
             state.resendAvailableAt = now().addingTimeInterval(Self.resendCooldown)
@@ -79,7 +84,7 @@ extension AccountModel {
 
     func signOut() async {
         await service.signOut()
-        showSignedOut(nil)
+        showSignedOut(nil, keepEmail: false)
     }
 
     // MARK: - Steps
@@ -112,11 +117,12 @@ extension AccountModel {
         state.feedback = notice
     }
 
-    private func showSignedOut(_ feedback: Feedback?) {
-        let email = state.email
+    /// Shows sign in, with the email filled in unless the account is gone.
+    func showSignedOut(_ feedback: Feedback?, keepEmail: Bool = true) {
+        let email = signedInEmail ?? state.email
         state = State()
         state.phase = .signedOut
-        state.email = email
+        state.email = keepEmail ? email : ""
         state.feedback = feedback
     }
 
@@ -132,7 +138,7 @@ extension AccountModel {
         return email
     }
 
-    private func checkedCode() -> String? {
+    func checkedCode() -> String? {
         guard let code = AccountInput.emailCode(state.code) else {
             fail(.codeIncomplete)
             return nil
@@ -140,7 +146,7 @@ extension AccountModel {
         return code
     }
 
-    private func checkPassword(_ password: String) -> Bool {
+    func checkPassword(_ password: String) -> Bool {
         switch PasswordPolicy.problem(with: password) {
         case nil: return true
         case .tooShort: fail(.passwordTooShort)
@@ -149,7 +155,7 @@ extension AccountModel {
         return false
     }
 
-    private func fail(_ feedback: Feedback) {
+    func fail(_ feedback: Feedback) {
         state.feedback = feedback
     }
 }

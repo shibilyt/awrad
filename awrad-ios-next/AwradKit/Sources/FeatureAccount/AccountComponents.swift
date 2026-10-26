@@ -1,11 +1,13 @@
 import AwradDesignSystem
 import SwiftUI
 
-/// The layout every account screen shares: a title, an optional explanation, the fields, the
-/// feedback line and the actions, scrolling when the keyboard is up.
+/// The layout every account screen shares: a title, an optional explanation, an optional email
+/// address, the fields, the feedback line and the actions, scrolling when the keyboard is up.
 struct AccountForm<Fields: View, Actions: View>: View {
     let title: LocalizedStringResource
     var message: LocalizedStringResource?
+    /// An email the explanation refers to, shown on its own line, never inside the sentence.
+    var address: String?
     let feedback: AccountModel.Feedback?
     @ViewBuilder let fields: Fields
     @ViewBuilder let actions: Actions
@@ -21,6 +23,9 @@ struct AccountForm<Fields: View, Actions: View>: View {
                         .font(AwradFonts.body())
                         .foregroundStyle(AwradColors.onSurfaceVariant)
                 }
+                if let address {
+                    AddressText(address: address)
+                }
                 VStack(spacing: 12) { fields }
                 if let feedback {
                     FeedbackLine(feedback: feedback)
@@ -35,6 +40,21 @@ struct AccountForm<Fields: View, Actions: View>: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(AwradColors.background)
+    }
+}
+
+/// An email address as one left-to-right run that's never a link: `Text(verbatim:)` skips
+/// Markdown and link detection, and the isolate keeps it whole inside right-to-left text.
+struct AddressText: View {
+    let address: String
+
+    var body: some View {
+        Text(verbatim: Strings.isolated(address))
+            .font(AwradFonts.title())
+            .foregroundStyle(AwradColors.onSurface)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -59,6 +79,8 @@ struct FeedbackLine: View {
 struct AccountField: View {
     enum Kind {
         case email
+        /// Another address than the one signed in, so autofill doesn't offer the account's.
+        case newEmail
         case password
         case newPassword
         case code
@@ -84,7 +106,7 @@ struct AccountField: View {
     @ViewBuilder private var field: some View {
         let binding = Binding(get: { text }, set: { onChange($0) })
         switch kind {
-        case .email, .code: TextField(text: binding) { Text(label) }
+        case .email, .newEmail, .code: TextField(text: binding) { Text(label) }
         case .password, .newPassword: SecureField(text: binding) { Text(label) }
         }
     }
@@ -99,6 +121,8 @@ private struct InputTraits: ViewModifier {
             switch kind {
             case .email:
                 content.keyboardType(.emailAddress).textContentType(.username).textInputAutocapitalization(.never)
+            case .newEmail:
+                content.keyboardType(.emailAddress).textContentType(.emailAddress).textInputAutocapitalization(.never)
             case .password:
                 content.textContentType(.password)
             case .newPassword:
@@ -116,6 +140,7 @@ private struct InputTraits: ViewModifier {
 struct AccountLinkButton: View {
     let title: LocalizedStringResource
     var isEnabled = true
+    var isDestructive = false
     let action: () -> Void
 
     var body: some View {
@@ -124,7 +149,7 @@ struct AccountLinkButton: View {
                 .font(AwradFonts.body())
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
-        .tint(AwradColors.primary)
+        .tint(isDestructive ? AwradColors.error : AwradColors.primary)
         .disabled(!isEnabled)
     }
 }

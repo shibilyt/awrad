@@ -1,6 +1,286 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "account.cancel" : {
+      "comment" : "Button that closes a confirmation without doing anything.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إلغاء" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "റദ്ദാക്കുക" } }
+      }
+    },
+    "account.change_email.body" : {
+      "comment" : "Explains how changing the email works.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سنرسل رمزًا إلى العنوان الجديد. لن يتغيّر بريدك الإلكتروني إلا بعد إدخاله." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "We'll email a code to the new address. Your email changes only once you enter it." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പുതിയ വിലാസത്തിലേക്ക് ഞങ്ങൾ ഒരു കോഡ് അയയ്ക്കും. അത് നൽകിയാൽ മാത്രമേ നിങ്ങളുടെ ഇമെയിൽ മാറുകയുള്ളൂ." } }
+      }
+    },
+    "account.change_email.button" : {
+      "comment" : "Primary button on the change-email screen: emails a code to the new address.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إرسال الرمز" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Send code" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "കോഡ് അയയ്ക്കുക" } }
+      }
+    },
+    "account.change_email.title" : {
+      "comment" : "Title of the change-email screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تغيير البريد الإلكتروني" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change email" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇമെയിൽ മാറ്റുക" } }
+      }
+    },
+    "account.change_password.body" : {
+      "comment" : "Explains what changing the password does.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سيتم تسجيل الخروج من أجهزتك ومتصفحاتك الأخرى. يبقى هذا الجهاز مسجّل الدخول." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your other devices and browsers will be signed out. This one stays signed in." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ മറ്റ് ഉപകരണങ്ങളും ബ്രൗസറുകളും സൈൻ ഔട്ട് ചെയ്യപ്പെടും. ഇത് സൈൻ ഇൻ ആയി തുടരും." } }
+      }
+    },
+    "account.change_password.button" : {
+      "comment" : "Primary button on the change-password screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تغيير كلمة المرور" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change password" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പാസ്‌വേഡ് മാറ്റുക" } }
+      }
+    },
+    "account.change_password.title" : {
+      "comment" : "Title of the change-password screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تغيير كلمة المرور" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change password" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പാസ്‌വേഡ് മാറ്റുക" } }
+      }
+    },
+    "account.confirm_email.body %lld %lld" : {
+      "comment" : "Explains the code for the new email; the new address is shown on its own line below. The numbers are the code length (6) and the minutes it works (15).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل الرمز المكوّن من %1$lld أرقام الذي أرسلناه إلى هذا العنوان. الرمز صالح لمدة %2$lld دقيقة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter the %1$lld-digit code we sent to this address. It works for %2$lld minutes." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ വിലാസത്തിലേക്ക് ഞങ്ങൾ അയച്ച %1$lld അക്ക കോഡ് നൽകുക. ഇത് %2$lld മിനിറ്റ് സാധുവാണ്." } }
+      }
+    },
+    "account.confirm_email.button" : {
+      "comment" : "Primary button that confirms the new email with the code.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تغيير البريد الإلكتروني" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change email" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇമെയിൽ മാറ്റുക" } }
+      }
+    },
+    "account.confirm_email.title" : {
+      "comment" : "Title of the screen that takes the code sent to the new email.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تأكيد بريدك الإلكتروني الجديد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirm your new email" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ പുതിയ ഇമെയിൽ സ്ഥിരീകരിക്കുക" } }
+      }
+    },
+    "account.delete.body" : {
+      "comment" : "Explains what deleting the account does on the server.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يُحذف حسابك وكل ما يحفظه أوراد له على الخادم فورًا، ويُسجَّل الخروج من جميع الأجهزة والمتصفحات. لا يمكن التراجع عن ذلك." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your account and everything Awrad keeps for it on the server are deleted right away, and every device and browser is signed out. This can't be undone." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ അക്കൗണ്ടും സെർവറിൽ Awrad അതിനായി സൂക്ഷിക്കുന്നതെല്ലാം ഉടൻ ഇല്ലാതാക്കപ്പെടും, എല്ലാ ഉപകരണങ്ങളും ബ്രൗസറുകളും സൈൻ ഔട്ട് ആകും. ഇത് പഴയപടിയാക്കാനാവില്ല." } }
+      }
+    },
+    "account.delete.button" : {
+      "comment" : "Destructive button on the delete-account screen; asks for confirmation next.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حذف الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete account" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട് ഇല്ലാതാക്കുക" } }
+      }
+    },
+    "account.delete.local_note" : {
+      "comment" : "Explains that deleting the account keeps the data on this device.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تبقى أذكارك وأهدافك وأعدادك على هذا الجهاز، ويستمر التطبيق في العمل بدون حساب." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your dhikr, goals and counts on this device stay, and the app keeps working without an account." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ഉപകരണത്തിലെ നിങ്ങളുടെ ദിക്റുകളും ലക്ഷ്യങ്ങളും എണ്ണങ്ങളും നിലനിൽക്കും, അക്കൗണ്ടില്ലാതെയും ആപ്പ് പ്രവർത്തിക്കും." } }
+      }
+    },
+    "account.delete.title" : {
+      "comment" : "Title of the delete-account screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حذف الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete account" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട് ഇല്ലാതാക്കുക" } }
+      }
+    },
+    "account.delete_confirm.button" : {
+      "comment" : "Destructive button that deletes the account.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حذف" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇല്ലാതാക്കുക" } }
+      }
+    },
+    "account.delete_confirm.message" : {
+      "comment" : "Message of the last confirmation before deleting the account.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سيُحذف الآن نهائيًا. تبقى البيانات على هذا الجهاز." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "It's deleted now, for good. Data on this device stays." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇത് ഇപ്പോൾ തന്നെ സ്ഥിരമായി ഇല്ലാതാകും. ഈ ഉപകരണത്തിലെ വിവരങ്ങൾ നിലനിൽക്കും." } }
+      }
+    },
+    "account.delete_confirm.title" : {
+      "comment" : "Title of the last confirmation before deleting the account.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "هل تريد حذف حسابك؟" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete your account?" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ അക്കൗണ്ട് ഇല്ലാതാക്കണോ?" } }
+      }
+    },
+    "account.devices.body" : {
+      "comment" : "Explains the devices screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الأماكن التي سُجّل فيها الدخول إلى حسابك: الهواتف والأجهزة اللوحية والمتصفحات. تسجيل الخروج من أحدها يُبقي بيانات وِردك عليه." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Where your account is signed in: phones, tablets and browsers. Signing one out leaves its practice data on it." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ അക്കൗണ്ട് സൈൻ ഇൻ ചെയ്തിരിക്കുന്ന ഇടങ്ങൾ: ഫോണുകൾ, ടാബ്‌ലെറ്റുകൾ, ബ്രൗസറുകൾ. ഒന്നിൽ നിന്ന് സൈൻ ഔട്ട് ചെയ്താലും അതിലെ പരിശീലന വിവരങ്ങൾ അവിടെ തന്നെ ഉണ്ടാകും." } }
+      }
+    },
+    "account.devices.last_used %@" : {
+      "comment" : "When a session was last used. The argument is a relative time such as \"5 minutes ago\" or \"yesterday\".",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "آخر استخدام: %@" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Last used %@" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അവസാനം ഉപയോഗിച്ചത്: %@" } }
+      }
+    },
+    "account.devices.platform.android" : {
+      "comment" : "Platform of a session: Android.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أندرويد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Android" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ആൻഡ്രോയിഡ്" } }
+      }
+    },
+    "account.devices.platform.ios" : {
+      "comment" : "Platform of a session: iPhone or iPad.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "آيفون أو آيباد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "iPhone or iPad" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഐഫോൺ അല്ലെങ്കിൽ ഐപാഡ്" } }
+      }
+    },
+    "account.devices.platform.other" : {
+      "comment" : "Platform of a session this version of the app doesn't know.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أخرى" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Other" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മറ്റുള്ളവ" } }
+      }
+    },
+    "account.devices.platform.web" : {
+      "comment" : "Platform of a session: a web browser.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الويب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Web" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "വെബ്" } }
+      }
+    },
+    "account.devices.retry" : {
+      "comment" : "Button that loads the devices list again after it failed.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حاول مرة أخرى" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Try again" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "വീണ്ടും ശ്രമിക്കുക" } }
+      }
+    },
+    "account.devices.revoke" : {
+      "comment" : "Button on a device row, and in its confirmation, that signs that device out.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الخروج" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign out" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഔട്ട് ചെയ്യുക" } }
+      }
+    },
+    "account.devices.revoke_confirm.message" : {
+      "comment" : "Confirmation message before signing a device out.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سيحتاج إلى تسجيل الدخول مرة أخرى لاستخدام حسابك. تبقى بيانات وِردك عليه." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "It will have to sign in again to use your account. Its practice data stays on it." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ അക്കൗണ്ട് ഉപയോഗിക്കാൻ അതിൽ വീണ്ടും സൈൻ ഇൻ ചെയ്യേണ്ടിവരും. അതിലെ പരിശീലന വിവരങ്ങൾ അവിടെ തന്നെ ഉണ്ടാകും." } }
+      }
+    },
+    "account.devices.revoke_confirm.title %@" : {
+      "comment" : "Confirmation title before signing a device out. The argument is the device or browser name.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الخروج من %@؟" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign out %@?" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%@ സൈൻ ഔട്ട് ചെയ്യണോ?" } }
+      }
+    },
+    "account.devices.sign_out_others" : {
+      "comment" : "Button that signs out every device and browser except this one.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الخروج من جميع الأجهزة الأخرى" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign out of all other devices" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മറ്റെല്ലാ ഉപകരണങ്ങളിൽ നിന്നും സൈൻ ഔട്ട് ചെയ്യുക" } }
+      }
+    },
+    "account.devices.sign_out_others_confirm.button" : {
+      "comment" : "Destructive button that confirms signing out every other device.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل خروج الأجهزة الأخرى" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign out others" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മറ്റുള്ളവ സൈൻ ഔട്ട് ചെയ്യുക" } }
+      }
+    },
+    "account.devices.sign_out_others_confirm.message" : {
+      "comment" : "Confirmation message before signing out every other device.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ستحتاج جميع الهواتف والأجهزة اللوحية والمتصفحات الأخرى إلى تسجيل الدخول مرة أخرى. يبقى هذا الجهاز مسجّل الدخول." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Every other phone, tablet and browser will have to sign in again. This device stays signed in." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മറ്റെല്ലാ ഫോണുകളിലും ടാബ്‌ലെറ്റുകളിലും ബ്രൗസറുകളിലും വീണ്ടും സൈൻ ഇൻ ചെയ്യേണ്ടിവരും. ഈ ഉപകരണം സൈൻ ഇൻ ആയി തുടരും." } }
+      }
+    },
+    "account.devices.sign_out_others_confirm.title" : {
+      "comment" : "Confirmation title before signing out every other device.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تسجيل الخروج من جميع الأجهزة الأخرى؟" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sign out of all other devices?" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മറ്റെല്ലാ ഉപകരണങ്ങളിൽ നിന്നും സൈൻ ഔട്ട് ചെയ്യണോ?" } }
+      }
+    },
+    "account.devices.this_device" : {
+      "comment" : "Marks the session of the device in hand in the devices list.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "هذا الجهاز" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This device" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ഉപകരണം" } }
+      }
+    },
+    "account.devices.title" : {
+      "comment" : "Title of the devices screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الأجهزة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Devices" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഉപകരണങ്ങൾ" } }
+      }
+    },
+    "account.devices.unknown_device" : {
+      "comment" : "Name of a device session when the server couldn't tell which device.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "جهاز غير معروف" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Unknown device" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അജ്ഞാത ഉപകരണം" } }
+      }
+    },
+    "account.devices.web_browser" : {
+      "comment" : "Name of a browser session when the server couldn't tell which browser.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "متصفح ويب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Web browser" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "വെബ് ബ്രൗസർ" } }
+      }
+    },
     "account.done" : {
       "comment" : "Button that closes the account screen.",
       "localizations" : {
@@ -9,12 +289,36 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "പൂർത്തിയായി" } }
       }
     },
-    "account.error.code_incomplete" : {
-      "comment" : "Error: the typed code isn't 6 digits.",
+    "account.error.code_incomplete %lld" : {
+      "comment" : "Error: the typed code isn't complete. The number is the code length (6).",
       "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل الرمز المكوّن من 6 أرقام من البريد الإلكتروني." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter the 6-digit code from the email." } },
-        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇമെയിലിലെ 6 അക്ക കോഡ് നൽകുക." } }
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل الرمز المكوّن من %lld أرقام من البريد الإلكتروني." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter the %lld-digit code from the email." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇമെയിലിലെ %lld അക്ക കോഡ് നൽകുക." } }
+      }
+    },
+    "account.error.current_password_incorrect" : {
+      "comment" : "Error: the re-entered current password is wrong (current_password_incorrect).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور الحالية غير صحيحة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your current password is wrong." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിലവിലെ പാസ്‌വേഡ് തെറ്റാണ്." } }
+      }
+    },
+    "account.error.current_password_required" : {
+      "comment" : "Error: a change while signed in, without the current password.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل كلمة المرور الحالية." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter your current password." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ നിലവിലെ പാസ്‌വേഡ് നൽകുക." } }
+      }
+    },
+    "account.error.email_change_code_invalid" : {
+      "comment" : "Error: the code for the new email is wrong, expired or used (email_change_code_invalid).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "لم يعمل هذا الرمز. تحقّق من الرمز المرسل إلى العنوان الجديد، أو أرسل رمزًا جديدًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "That code didn't work. Check the code sent to the new address, or send a new one." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ കോഡ് പ്രവർത്തിച്ചില്ല. പുതിയ വിലാസത്തിലേക്ക് അയച്ച കോഡ് പരിശോധിക്കുക, അല്ലെങ്കിൽ പുതിയൊരു കോഡ് അയയ്ക്കുക." } }
       }
     },
     "account.error.email_invalid" : {
@@ -23,6 +327,22 @@
         "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل عنوان بريد إلكتروني صحيحًا." } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter a valid email address." } },
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "സാധുവായ ഒരു ഇമെയിൽ വിലാസം നൽകുക." } }
+      }
+    },
+    "account.error.email_taken" : {
+      "comment" : "Error: the new email became another account's before the change was confirmed (email_taken).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أصبح هذا البريد الإلكتروني تابعًا لحساب آخر. استخدم بريدًا مختلفًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "That email now belongs to another account. Use a different one." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ഇമെയിൽ ഇപ്പോൾ മറ്റൊരു അക്കൗണ്ടിന്റേതാണ്. മറ്റൊന്ന് ഉപയോഗിക്കുക." } }
+      }
+    },
+    "account.error.email_unchanged" : {
+      "comment" : "Error: the new email is the account's email already (email_unchanged).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "هذا هو البريد الإلكتروني لحسابك بالفعل." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "That's already your account's email." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇത് ഇതിനകം നിങ്ങളുടെ അക്കൗണ്ടിന്റെ ഇമെയിലാണ്." } }
       }
     },
     "account.error.invalid_credentials" : {
@@ -97,6 +417,14 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ കോഡ് പ്രവർത്തിച്ചില്ല. അത് തെറ്റോ കാലഹരണപ്പെട്ടതോ ആകാം: പരിശോധിക്കുക, അല്ലെങ്കിൽ പുതിയൊരു കോഡ് അയയ്ക്കുക." } }
       }
     },
+    "account.error.session_not_found" : {
+      "comment" : "Error: the device to sign out had already ended its session (not_found).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم تسجيل الخروج من هذا الجهاز بالفعل." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "That device was already signed out." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ആ ഉപകരണം ഇതിനകം സൈൻ ഔട്ട് ചെയ്തിട്ടുണ്ട്." } }
+      }
+    },
     "account.error.signed_out" : {
       "comment" : "Error: the device session ended (refresh_token_invalid, refresh_reuse_detected).",
       "localizations" : {
@@ -121,12 +449,20 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ കോഡ് പ്രവർത്തിച്ചില്ല. അത് തെറ്റോ കാലഹരണപ്പെട്ടതോ ആകാം: പരിശോധിക്കുക, അല്ലെങ്കിൽ പുതിയൊരു കോഡ് അയയ്ക്കുക." } }
       }
     },
-    "account.field.code" : {
-      "comment" : "Placeholder of the field for the 6-digit emailed code.",
+    "account.field.code %lld" : {
+      "comment" : "Placeholder of the field for the emailed code. The number is the code length (6).",
       "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الرمز المكوّن من 6 أرقام" } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "6-digit code" } },
-        "ml" : { "stringUnit" : { "state" : "translated", "value" : "6 അക്ക കോഡ്" } }
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الرمز المكوّن من %lld أرقام" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld-digit code" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%lld അക്ക കോഡ്" } }
+      }
+    },
+    "account.field.current_password" : {
+      "comment" : "Placeholder of the field for the account's current password, re-entered to confirm a change.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كلمة المرور الحالية" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Current password" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിലവിലെ പാസ്‌വേഡ്" } }
       }
     },
     "account.field.email" : {
@@ -135,6 +471,14 @@
         "ar" : { "stringUnit" : { "state" : "translated", "value" : "البريد الإلكتروني" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Email" } },
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇമെയിൽ" } }
+      }
+    },
+    "account.field.new_email" : {
+      "comment" : "Placeholder of the field for the new email address.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "البريد الإلكتروني الجديد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "New email" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പുതിയ ഇമെയിൽ" } }
       }
     },
     "account.field.new_password" : {
@@ -153,12 +497,12 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "പാസ്‌വേഡ്" } }
       }
     },
-    "account.forgot.body" : {
-      "comment" : "Explains the forgot-password screen.",
+    "account.forgot.body %lld" : {
+      "comment" : "Explains the forgot-password screen. The number is the code length (6).",
       "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سنرسل إلى بريدك رمزًا من 6 أرقام لتختار كلمة مرور جديدة." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "We'll email you a 6-digit code to choose a new password." } },
-        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പുതിയ പാസ്‌വേഡ് തിരഞ്ഞെടുക്കാൻ ഞങ്ങൾ നിങ്ങൾക്ക് 6 അക്ക കോഡ് ഇമെയിൽ ചെയ്യും." } }
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سنرسل إلى بريدك رمزًا من %lld أرقام لتختار كلمة مرور جديدة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "We'll email you a %lld-digit code to choose a new password." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പുതിയ പാസ്‌വേഡ് തിരഞ്ഞെടുക്കാൻ ഞങ്ങൾ നിങ്ങൾക്ക് %lld അക്ക കോഡ് ഇമെയിൽ ചെയ്യും." } }
       }
     },
     "account.forgot.button" : {
@@ -177,6 +521,14 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "പാസ്‌വേഡ് പുനഃസജ്ജമാക്കുക" } }
       }
     },
+    "account.notice.account_deleted" : {
+      "comment" : "Notice on sign in after the account was deleted.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم حذف حسابك. كل ما على هذا الجهاز ما زال موجودًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your account was deleted. Everything on this device is still here." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ അക്കൗണ്ട് ഇല്ലാതാക്കി. ഈ ഉപകരണത്തിലുള്ളതെല്ലാം ഇപ്പോഴും ഇവിടെയുണ്ട്." } }
+      }
+    },
     "account.notice.code_sent" : {
       "comment" : "Notice: an email with a code is on its way.",
       "localizations" : {
@@ -185,12 +537,76 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഞങ്ങൾ നിങ്ങൾക്ക് ഒരു കോഡ് ഇമെയിൽ ചെയ്തിട്ടുണ്ട്. ഇൻബോക്സ് പരിശോധിക്കുക." } }
       }
     },
+    "account.notice.email_changed" : {
+      "comment" : "Notice after the email change is confirmed.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم تغيير بريدك الإلكتروني." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your email has been changed." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ ഇമെയിൽ മാറ്റി." } }
+      }
+    },
+    "account.notice.other_sessions_signed_out" : {
+      "comment" : "Notice after signing out every other device.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم تسجيل الخروج من جميع الأجهزة الأخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "All other devices were signed out." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മറ്റെല്ലാ ഉപകരണങ്ങളും സൈൻ ഔട്ട് ചെയ്തു." } }
+      }
+    },
+    "account.notice.password_changed" : {
+      "comment" : "Notice after changing the password.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم تغيير كلمة المرور. تم تسجيل الخروج من أجهزتك ومتصفحاتك الأخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Password changed. Your other devices and browsers were signed out." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പാസ്‌വേഡ് മാറ്റി. നിങ്ങളുടെ മറ്റ് ഉപകരണങ്ങളും ബ്രൗസറുകളും സൈൻ ഔട്ട് ചെയ്യപ്പെട്ടു." } }
+      }
+    },
+    "account.notice.session_signed_out" : {
+      "comment" : "Notice after signing one device out.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم تسجيل الخروج من ذلك الجهاز." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "That device was signed out." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ആ ഉപകരണം സൈൻ ഔട്ട് ചെയ്തു." } }
+      }
+    },
     "account.notice.verification_needed" : {
       "comment" : "Notice after signing in with an unverified email (email_verification_required).",
       "localizations" : {
         "ar" : { "stringUnit" : { "state" : "translated", "value" : "أكّد بريدك الإلكتروني لتسجيل الدخول. أرسلنا إليك رمزًا جديدًا." } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Verify your email to sign in. We've emailed you a new code." } },
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഇൻ ചെയ്യാൻ നിങ്ങളുടെ ഇമെയിൽ സ്ഥിരീകരിക്കുക. ഞങ്ങൾ നിങ്ങൾക്ക് പുതിയൊരു കോഡ് ഇമെയിൽ ചെയ്തിട്ടുണ്ട്." } }
+      }
+    },
+    "account.overview.change_email" : {
+      "comment" : "Row on the account screen that opens the email change.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تغيير البريد الإلكتروني" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change email" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇമെയിൽ മാറ്റുക" } }
+      }
+    },
+    "account.overview.change_password" : {
+      "comment" : "Row on the account screen that opens the password change.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تغيير كلمة المرور" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Change password" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പാസ്‌വേഡ് മാറ്റുക" } }
+      }
+    },
+    "account.overview.delete" : {
+      "comment" : "Row on the account screen that opens account deletion.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حذف الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete account" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട് ഇല്ലാതാക്കുക" } }
+      }
+    },
+    "account.overview.devices" : {
+      "comment" : "Row on the account screen that opens the list of signed-in devices.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الأجهزة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Devices" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഉപകരണങ്ങൾ" } }
       }
     },
     "account.password.rule %lld" : {
@@ -217,12 +633,12 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട് സൃഷ്ടിക്കുക" } }
       }
     },
-    "account.reset.body %@" : {
-      "comment" : "Explains the reset screen. The argument is the email address.",
+    "account.reset.body" : {
+      "comment" : "Explains the reset screen; the email address is shown on its own line below.",
       "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل الرمز الذي أرسلناه إلى %@ وكلمة مرور جديدة. سيؤدي ذلك إلى تسجيل خروجك من جميع أجهزتك." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter the code we sent to %@ and a new password. This signs you out on all your devices." } },
-        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%@ എന്ന വിലാസത്തിലേക്ക് ഞങ്ങൾ അയച്ച കോഡും പുതിയ പാസ്‌വേഡും നൽകുക. ഇത് നിങ്ങളുടെ എല്ലാ ഉപകരണങ്ങളിൽ നിന്നും സൈൻ ഔട്ട് ചെയ്യും." } }
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل الرمز الذي أرسلناه إلى هذا العنوان وكلمة مرور جديدة. سيؤدي ذلك إلى تسجيل خروجك من جميع أجهزتك." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter the code we sent to this address and a new password. This signs you out on all your devices." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ വിലാസത്തിലേക്ക് ഞങ്ങൾ അയച്ച കോഡും പുതിയ പാസ്‌വേഡും നൽകുക. ഇത് നിങ്ങളുടെ എല്ലാ ഉപകരണങ്ങളിൽ നിന്നും സൈൻ ഔട്ട് ചെയ്യും." } }
       }
     },
     "account.reset.button" : {
@@ -313,12 +729,12 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട്" } }
       }
     },
-    "account.verify.body %@" : {
-      "comment" : "Explains the verification code. The argument is the email address.",
+    "account.verify.body %lld %lld" : {
+      "comment" : "Explains the verification code; the email address is shown on its own line below. The numbers are the code length (6) and the minutes it works (15).",
       "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إلى %@. الرمز صالح لمدة 15 دقيقة." } },
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter the 6-digit code we sent to %@. It works for 15 minutes." } },
-        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%@ എന്ന വിലാസത്തിലേക്ക് ഞങ്ങൾ അയച്ച 6 അക്ക കോഡ് നൽകുക. ഇത് 15 മിനിറ്റ് സാധുവാണ്." } }
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أدخل الرمز المكوّن من %1$lld أرقام الذي أرسلناه إلى هذا العنوان. الرمز صالح لمدة %2$lld دقيقة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Enter the %1$lld-digit code we sent to this address. It works for %2$lld minutes." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ വിലാസത്തിലേക്ക് ഞങ്ങൾ അയച്ച %1$lld അക്ക കോഡ് നൽകുക. ഇത് %2$lld മിനിറ്റ് സാധുവാണ്." } }
       }
     },
     "account.verify.button" : {
