@@ -509,11 +509,11 @@ components:
             title: Request validation failed
             status: 422
             code: validation_failed
-            detail: daily_target must be between 1 and 100000
+            detail: email is not a valid address
             errors:
-              - field: /daily_target
-                code: out_of_range
-                detail: must be between 1 and 100000
+              - field: /email
+                code: email_invalid
+                detail: not a valid email address
     InvalidCredentials:
       description: Wrong email or password. Doesn't say which.
       headers: *problem_headers
@@ -579,8 +579,9 @@ components:
                 detail: must be at least 12 characters
     CurrentPasswordRejected:
       description: >-
-        `validation_failed`. Field codes: `current_password_incorrect` on `/current_password`; for a new
-        password, `password_too_short`, `password_too_long` or `password_too_common` on `/new_password`.
+        `validation_failed`. Field codes: `current_password_incorrect` on `/current_password`; on operations
+        that take a `new_password`, also `password_too_short`, `password_too_long` or `password_too_common`
+        on `/new_password`.
       headers: *problem_headers
       content:
         application/problem+json:

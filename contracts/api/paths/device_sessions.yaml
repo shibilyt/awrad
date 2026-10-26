@@ -50,7 +50,29 @@ device_sessions:
       "403":
         $ref: "../openapi.yaml#/components/responses/Forbidden"
       "422":
-        $ref: "../openapi.yaml#/components/responses/UnprocessableContent"
+        description: >-
+          `validation_failed`. Field codes: `email_invalid` on `/email`; `installation_id_invalid`,
+          `device_name_invalid` or `platform_invalid` under `/device/...` (an app bug, not something a person can
+          fix).
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/problem+json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/Problem"
+            example:
+              type: urn:awrad:problem:validation_failed
+              title: Request validation failed
+              status: 422
+              code: validation_failed
+              detail: device.platform is not supported
+              errors:
+                - field: /device/platform
+                  code: platform_invalid
+                  detail: must be android or ios
       "429":
         $ref: "../openapi.yaml#/components/responses/TooManyRequests"
 
