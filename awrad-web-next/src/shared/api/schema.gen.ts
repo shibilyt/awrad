@@ -193,7 +193,7 @@ export interface paths {
         };
         /**
          * Get the CSRF token for this browser session
-         * @description Only available to cookie sessions (ADR-2026-10-15). The web app sends the returned token in `X-CSRF-Token` on every state-changing request.
+         * @description Works for any browser, signed in or not (ADR-2026-10-15). When the browser has no session cookie yet, this call creates the anonymous session and sets its cookie, so a signed-out browser can then call `create_browser_session`. The web app sends the returned token in `X-CSRF-Token` on every state-changing request. Only the session cookie is read here; a bearer token is ignored.
          */
         get: operations["get_browser_csrf_token"];
         put?: never;
@@ -215,7 +215,7 @@ export interface paths {
         put?: never;
         /**
          * Sign in in the browser
-         * @description Sets the Phoenix session cookie (and the remember-me cookie when `remember_me` is true). Needs the anonymous session cookie and its CSRF token from `get_browser_csrf_token`. Signing in renews the session, so the response carries the new CSRF token. An unverified email gets `403 email_verification_required`, and the server emails a fresh code (rate-limited).
+         * @description Sets the Phoenix session cookie (and the remember-me cookie when `remember_me` is true). Needs the session cookie and CSRF token that `get_browser_csrf_token` gives any browser. Signing in renews the session, so the response carries the new CSRF token. An unverified email gets `403 email_verification_required`, and the server emails a fresh code (rate-limited).
          */
         post: operations["create_browser_session"];
         /**
@@ -306,7 +306,7 @@ export interface components {
          */
         Password: string;
         /**
-         * @description A 6-digit emailed code, ASCII digits only. Clients normalise what the user typed first (contracts/account-model/v1 email_code_input). Valid for 15 minutes and 5 tries.
+         * @description A 6-digit emailed code, ASCII digits only. Clients normalise what the user typed first (contracts/account-model/v1 email_code_input). Valid for 15 minutes and 5 tries. A malformed code is `validation_failed` with field code `code_invalid`; clients never send one.
          * @example 482913
          */
         EmailCode: string;
@@ -368,7 +368,7 @@ export interface components {
             };
             content?: never;
         };
-        /** @description Accepted. If the email qualifies, a code is on its way. The response is the same either way, so it doesn't reveal whether the email has an account. */
+        /** @description Accepted. If the email qualifies, a code is on its way. The response is the same either way, so it doesn't reveal whether the email has an account. Clients offer "send a new code" 60 seconds after this response; a `429` with `Retry-After` overrides that. */
         CodeSent: {
             headers: {
                 "Cache-Control": components["headers"]["CacheControl"];
@@ -1010,7 +1010,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The session's CSRF token. */
+            /** @description The session's CSRF token. Sets the session cookie if there wasn't one. */
             200: {
                 headers: {
                     "Cache-Control": components["headers"]["CacheControl"];
@@ -1028,7 +1028,6 @@ export interface operations {
                     };
                 };
             };
-            401: components["responses"]["Unauthorized"];
         };
     };
     create_browser_session: {
