@@ -78,8 +78,28 @@ internal fun Project.configureSourceFileSize() {
     tasks.matching { it.name == "check" }.configureEach { dependsOn(verify) }
 }
 
+/**
+ * Colours come only from the generated design tokens. Besides `check`, `detekt` runs this, so the
+ * validation command catches a hex value without running `check`.
+ */
+internal fun Project.configureColorLiterals() {
+    val verify = tasks.register("verifyColorLiterals", ColorLiteralTask::class.java) {
+        sources.from(
+            fileTree("src/main") {
+                include("**/*.kt", "res/**/*.xml")
+                // Generated from contracts/design-tokens (AwradColorsTask).
+                exclude("**/designsystem/theme/AwradColors.kt", "res/values*/awrad_colors.xml")
+                // The launcher icon's background is part of the icon artwork, not a UI colour.
+                exclude("res/values/ic_launcher_background.xml")
+            },
+        )
+    }
+    tasks.matching { it.name == "check" || it.name == "detekt" }.configureEach { dependsOn(verify) }
+}
+
 internal fun Project.configureDetekt() {
     configureSourceFileSize()
+    configureColorLiterals()
     pluginManager.apply("io.gitlab.arturbosch.detekt")
     extensions.configure<DetektExtension> {
         buildUponDefaultConfig = true

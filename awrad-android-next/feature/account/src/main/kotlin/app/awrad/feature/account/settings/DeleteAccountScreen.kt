@@ -6,12 +6,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.awrad.core.designsystem.component.AwradDestructiveButton
 import app.awrad.feature.account.AccountPage
 import app.awrad.feature.account.BodyText
 import app.awrad.feature.account.ConfirmDialog
 import app.awrad.feature.account.PasswordField
 import app.awrad.feature.account.R
-import app.awrad.feature.account.SecondaryButton
 import app.awrad.feature.account.message
 import app.awrad.feature.account.pageStatus
 
@@ -52,11 +52,10 @@ internal fun DeleteAccountScreen(
             onValueChange = { onAction(DeleteAccountAction.PasswordChanged(it)) },
             label = R.string.account_field_current_password,
         )
-        SecondaryButton(
+        AwradDestructiveButton(
             text = stringResource(R.string.account_action_delete),
             onClick = { onAction(DeleteAccountAction.Submit) },
             enabled = state.canSubmit,
-            isDestructive = true,
         )
         if (state.isConfirming) {
             ConfirmDialog(

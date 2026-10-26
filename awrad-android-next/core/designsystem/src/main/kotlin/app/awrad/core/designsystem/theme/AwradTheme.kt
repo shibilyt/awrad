@@ -5,6 +5,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.dp
 
 private val AwradShapes = Shapes(
@@ -13,15 +17,38 @@ private val AwradShapes = Shapes(
     large = RoundedCornerShape(24.dp),
 )
 
+private val LocalAwradColors = staticCompositionLocalOf { LightAwradColors }
+
+/**
+ * The app theme. Colours are the shared roles (`contracts/design-tokens/v1`), light or dark with the system;
+ * there is no dynamic (wallpaper) colour.
+ */
 @Composable
 public fun AwradTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
-        typography = AwradTypography,
-        shapes = AwradShapes,
-        content = content,
-    )
+    val colors = if (darkTheme) DarkAwradColors else LightAwradColors
+    val inverse = if (darkTheme) LightAwradColors else DarkAwradColors
+    val colorScheme = remember(colors) { colorSchemeOf(colors, inverse) }
+    CompositionLocalProvider(LocalAwradColors provides colors) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = AwradTypography,
+            shapes = AwradShapes,
+            content = content,
+        )
+    }
+}
+
+/** Reads the current theme's values inside [AwradTheme]. */
+public object AwradTheme {
+    /**
+     * Every colour role, including those Material's `ColorScheme` lacks: `surfaceBar`, `outlineStrong`,
+     * `accent` and `progress`.
+     */
+    public val colors: AwradColors
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAwradColors.current
 }

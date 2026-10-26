@@ -1,15 +1,12 @@
 package app.awrad.feature.account
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,6 +18,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import app.awrad.core.designsystem.component.AwradTextField
 import app.awrad.core.domain.account.InputProblem
 
 @Composable
@@ -32,15 +30,14 @@ internal fun EmailField(
     @StringRes label: Int = R.string.account_field_email,
     enabled: Boolean = true,
 ) {
-    OutlinedTextField(
+    AwradTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.fillMaxWidth(),
+        label = stringResource(label),
+        modifier = modifier,
         enabled = enabled,
-        label = { Text(text = stringResource(label)) },
         isError = problem != null,
-        supportingText = problem?.let { { Text(text = it.text()) } },
-        singleLine = true,
+        supportingText = problem?.text(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
     )
 }
@@ -65,15 +62,14 @@ internal fun PasswordField(
         showRule -> passwordRuleText()
         else -> null
     }
-    OutlinedTextField(
+    AwradTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.fillMaxWidth(),
+        label = stringResource(label),
+        modifier = modifier,
         enabled = enabled,
-        label = { Text(text = stringResource(label)) },
         isError = problem != null,
-        supportingText = hint?.let { { Text(text = it) } },
-        singleLine = true,
+        supportingText = hint,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         trailingIcon = {
@@ -97,15 +93,14 @@ internal fun CodeField(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
-    OutlinedTextField(
+    AwradTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.fillMaxWidth(),
+        label = stringResource(R.string.account_field_code),
+        modifier = modifier,
         enabled = enabled,
-        label = { Text(text = stringResource(R.string.account_field_code)) },
         isError = problem != null,
-        supportingText = problem?.let { { Text(text = it.text()) } },
-        singleLine = true,
+        supportingText = problem?.text(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Next),
     )
 }
