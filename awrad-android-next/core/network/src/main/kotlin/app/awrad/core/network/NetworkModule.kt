@@ -2,6 +2,7 @@ package app.awrad.core.network
 
 import android.content.Context
 import android.os.Build
+import app.awrad.core.network.api.AccountSettingsApi
 import app.awrad.core.network.api.AccountsApi
 import app.awrad.core.network.api.AppLanguage
 import app.awrad.core.network.http.HttpTransport
@@ -34,6 +35,10 @@ internal object NetworkModule {
 
     @Provides
     fun accountsApi(transport: HttpTransport, language: AppLanguage): AccountsApi = AccountsApi(transport, language)
+
+    @Provides
+    fun accountSettingsApi(transport: HttpTransport, language: AppLanguage): AccountSettingsApi =
+        AccountSettingsApi(transport, language)
 
     @Provides
     @Singleton

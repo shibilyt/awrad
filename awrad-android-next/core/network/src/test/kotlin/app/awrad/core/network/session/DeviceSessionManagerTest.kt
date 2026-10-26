@@ -104,8 +104,42 @@ class DeviceSessionManagerTest {
 
             assertEquals(401, ((result as ApiResult.Failure).failure as ApiFailure.ProblemResponse).status)
             assertNull(store.credentials.session, code)
-            assertEquals(DeviceSessionState.SignedOut, manager.state.first())
+            assertEquals(DeviceSessionState.SignedOut(SignOutCause.SESSION_ENDED), manager.state.first())
         }
+    }
+
+    @Test
+    fun `a session revoked elsewhere signs the device out on its next call, keeping nothing queued`() = runTest {
+        transport.on(refreshPath) {
+            if (transport.requestsTo(refreshPath).size == 1) {
+                Responses.grant(refreshToken = "refresh-2", accessToken = "access-2")
+            } else {
+                Responses.problem(401, "refresh_token_invalid")
+            }
+        }
+        transport.on(accountPath) { Responses.problem(401, "unauthenticated") }
+        manager.accessToken(stale = null)
+        val api = AccountsApi(transport) { "en" }
+
+        val result = manager.authorized { token -> api.getCurrentAccount(token) }
+
+        assertEquals(401, ((result as ApiResult.Failure).failure as ApiFailure.ProblemResponse).status)
+        assertEquals(DeviceSessionState.SignedOut(SignOutCause.SESSION_ENDED), manager.state.first())
+        assertEquals(StoredCredentials(), store.credentials)
+        assertEquals(ApiResult.Failure(ApiFailure.NotSignedIn), manager.accessToken(stale = null))
+    }
+
+    @Test
+    fun `a deleted account forgets the session without a sign-out call`() = runTest {
+        transport.on(refreshPath) { Responses.grant(refreshToken = "refresh-2", accessToken = "access-2") }
+        manager.accessToken(stale = null)
+
+        manager.accountDeleted()
+
+        assertEquals(DeviceSessionState.SignedOut(SignOutCause.ACCOUNT_DELETED), manager.state.first())
+        assertEquals(StoredCredentials(), store.credentials)
+        assertEquals(listOf(refreshPath), transport.requests.map { it.path })
+        assertEquals(ApiResult.Failure(ApiFailure.NotSignedIn), manager.accessToken(stale = null))
     }
 
     @Test
@@ -180,7 +214,7 @@ class DeviceSessionManagerTest {
         manager.signOut()
 
         assertNull(store.credentials.session)
-        assertEquals(DeviceSessionState.SignedOut, manager.state.first())
+        assertEquals(DeviceSessionState.SignedOut(SignOutCause.SIGNED_OUT), manager.state.first())
         assertEquals(listOf(PendingSignOut("refresh-1", "key-1")), store.credentials.pendingSignOuts)
 
         transport.on(signOutPath) { Responses.empty(204) }

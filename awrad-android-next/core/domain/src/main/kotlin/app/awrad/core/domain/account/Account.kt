@@ -6,10 +6,26 @@ import app.awrad.core.domain.AwradId
 public data class Account(val id: AwradId, val email: String)
 
 /** Whether this installation is signed in. An account is optional: everything offline works without one. */
-public sealed interface AccountSession {
-    public data object SignedOut : AccountSession
+public sealed interface SignInState {
+    /** [reason] says why, when a session ended while the app was running. */
+    public data class SignedOut(val reason: SignOutReason = SignOutReason.NOT_SIGNED_IN) : SignInState
 
-    public data class SignedIn(val account: Account) : AccountSession
+    public data class SignedIn(val account: Account) : SignInState
+}
+
+/** Why this installation isn't signed in. Local practice data is untouched in every case. */
+public enum class SignOutReason {
+    /** It wasn't signed in when the app started. */
+    NOT_SIGNED_IN,
+
+    /** The person signed out on this device. */
+    SIGNED_OUT,
+
+    /** The server ended this device's session: signed out elsewhere, a password reset, or expiry. */
+    SESSION_ENDED,
+
+    /** The account was deleted from this device. */
+    ACCOUNT_DELETED,
 }
 
 /** A field-level reason the input was rejected, by the client's own check or the server's `validation_failed`. */
@@ -21,8 +37,14 @@ public enum class InputProblem {
     /** The server's blocklist; clients can't check this one. */
     PASSWORD_TOO_COMMON,
 
-    /** Not 6 digits after normalising (client-side only). */
+    /** Not 6 digits after normalising. */
     CODE_INVALID,
+
+    /** `current_password_incorrect`: the re-entered password for a sensitive change is wrong. */
+    CURRENT_PASSWORD_INCORRECT,
+
+    /** `email_unchanged`: the new email is the account's email already. */
+    EMAIL_UNCHANGED,
 }
 
 /**
@@ -38,6 +60,15 @@ public sealed interface AccountError {
 
     /** `reset_code_invalid`. */
     public data object ResetCodeInvalid : AccountError
+
+    /** `email_change_code_invalid`: wrong, expired or used code for the new email. */
+    public data object EmailChangeCodeInvalid : AccountError
+
+    /** `email_taken`: the new email became another account's before the change was confirmed. */
+    public data object EmailTaken : AccountError
+
+    /** `not_found`: the session to revoke has already ended (or never belonged to this account). */
+    public data object NotFound : AccountError
 
     /** `invalid_credentials`: wrong email or password, without saying which. */
     public data object InvalidCredentials : AccountError

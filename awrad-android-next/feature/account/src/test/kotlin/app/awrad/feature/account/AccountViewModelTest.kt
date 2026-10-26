@@ -2,8 +2,9 @@ package app.awrad.feature.account
 
 import app.awrad.core.domain.account.AccountError
 import app.awrad.core.domain.account.AccountResult
-import app.awrad.core.domain.account.AccountSession
 import app.awrad.core.domain.account.InputProblem
+import app.awrad.core.domain.account.SignInState
+import app.awrad.core.domain.account.SignOutReason
 import app.awrad.core.testing.FakeAccountRepository
 import app.awrad.core.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,7 +42,7 @@ class AccountViewModelTest {
 
     @Test
     fun `a signed-in device shows the account and reloads it from the server`() {
-        val accounts = FakeAccountRepository(AccountSession.SignedIn(FakeAccountRepository.ACCOUNT))
+        val accounts = FakeAccountRepository(SignInState.SignedIn(FakeAccountRepository.ACCOUNT))
         val viewModel = AccountViewModel(accounts)
 
         assertEquals(AccountStep.SIGNED_IN, viewModel.state.value.step)
@@ -179,14 +180,65 @@ class AccountViewModelTest {
 
     @Test
     fun `signing out returns to sign in and says practice stays`() {
-        val accounts = FakeAccountRepository(AccountSession.SignedIn(FakeAccountRepository.ACCOUNT))
+        val accounts = FakeAccountRepository(SignInState.SignedIn(FakeAccountRepository.ACCOUNT))
         val viewModel = AccountViewModel(accounts)
 
         viewModel.onAction(AccountAction.SignOut)
 
-        assertEquals(AccountSession.SignedOut, accounts.currentSession)
+        assertEquals(SignInState.SignedOut(SignOutReason.SIGNED_OUT), accounts.currentSession)
         assertEquals(AccountStep.SIGN_IN, viewModel.state.value.step)
         assertEquals(AccountNotice.SIGNED_OUT, viewModel.state.value.notice)
+    }
+
+    @Test
+    fun `a session ended elsewhere signs out with its own message`() {
+        val accounts = FakeAccountRepository(SignInState.SignedIn(FakeAccountRepository.ACCOUNT))
+        val viewModel = AccountViewModel(accounts)
+
+        accounts.endSession(SignOutReason.SESSION_ENDED)
+
+        assertEquals(AccountStep.SIGN_IN, viewModel.state.value.step)
+        assertEquals(AccountNotice.SESSION_ENDED, viewModel.state.value.notice)
+        assertNull(viewModel.state.value.account)
+    }
+
+    @Test
+    fun `a deleted account says so, also when the screen opens afterwards`() {
+        val accounts = FakeAccountRepository(SignInState.SignedOut(SignOutReason.ACCOUNT_DELETED))
+
+        val viewModel = AccountViewModel(accounts)
+
+        assertEquals(AccountStep.SIGN_IN, viewModel.state.value.step)
+        assertEquals(AccountNotice.ACCOUNT_DELETED, viewModel.state.value.notice)
+    }
+
+    @Test
+    fun `a device that was never signed in shows no notice`() {
+        assertNull(state.notice)
+    }
+
+    @Test
+    fun `a session ending mid-form doesn't wipe the sign-in form`() {
+        viewModel.type(email = "amina@example.com")
+
+        accounts.endSession()
+
+        assertEquals("amina@example.com", state.email)
+        assertEquals(AccountStep.SIGN_IN, state.step)
+    }
+
+    @Test
+    fun `signing in again after the session ended shows and reloads the account`() {
+        val accounts = FakeAccountRepository(SignInState.SignedIn(FakeAccountRepository.ACCOUNT))
+        val viewModel = AccountViewModel(accounts)
+
+        accounts.endSession(SignOutReason.SESSION_ENDED)
+        accounts.signInResult = AccountResult.Success(FakeAccountRepository.ACCOUNT.copy(email = "new@example.com"))
+        viewModel.type(email = "new@example.com", password = "a long passphrase")
+        viewModel.onAction(AccountAction.Submit)
+
+        assertEquals("new@example.com", viewModel.state.value.account?.email)
+        assertEquals(listOf("refresh", "sign_in new@example.com", "refresh"), accounts.calls)
     }
 
     @Test
