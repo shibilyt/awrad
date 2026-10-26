@@ -1440,6 +1440,95 @@
       }
     },
     {
+      "id": "sessions_ignore_unknown_session_counts",
+      "description": "On a goal with sessions, a count tagged with a session the goal doesn't have isn't part of any session or the total.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 66,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "maghrib",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-14",
+            "session": "fajr",
+            "count": 33
+          },
+          {
+            "date": "2026-10-14",
+            "session": "maghrib",
+            "count": 33
+          },
+          {
+            "date": "2026-10-14",
+            "session": "isha",
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "progress": 66,
+        "target": null,
+        "sessions": [
+          {
+            "id": "fajr",
+            "progress": 33,
+            "target": 33,
+            "status": "met"
+          },
+          {
+            "id": "maghrib",
+            "progress": 33,
+            "target": 33,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
       "id": "tracker_no_count",
       "description": "A tracker with no count today isn't met.",
       "given": {

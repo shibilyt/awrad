@@ -114,7 +114,7 @@ Done 2026-10-25. Reviewed: the judgment calls below are **accepted provisionally
 
 ## Reconciliation after step 5 (2026-10-26)
 
-The three platform implementations (Android, iOS, server) each passed all 100 cases. Comparing how each resolved the situations no case covered showed three real disagreements, plus several choices made by only one platform. Settled as follows, and locked in as **24 new cases** (124 in total):
+The three platform implementations (Android, iOS, server) each passed all 100 cases. Comparing how each resolved the situations no case covered showed three real disagreements, plus several choices made by only one platform. Settled as follows, and locked in as **25 new cases** (125 in total):
 
 | # | Situation | Decision |
 |---|---|---|
@@ -126,7 +126,7 @@ The three platform implementations (Android, iOS, server) each passed all 100 ca
 | 6 | Completion after the end date | Counts only up to the last day |
 | 7 | Standing after the end date | `not_due`, the day as window, progress 0 |
 | 8 | A goal that ended mid-week or mid-day | Its last period or day is final, not in progress |
-| 9 | Counts without a session on a goal with sessions | Ignored, including in the total |
+| 9 | Counts without a session, or with an unknown session, on a goal with sessions | Ignored, including in the total |
 
 Shape rule for every `not_due`: the window is the evaluated day, and progress is that day's count inside the active period.
 
