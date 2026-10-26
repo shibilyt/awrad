@@ -26,16 +26,24 @@ public data class CountPolicy(
     /** Whether [count] meets the target. Without a target (a tracker), any positive count does. */
     public fun meetsTarget(count: Long): Boolean = target?.let { count >= it } ?: (count > 0)
 
+    /** Whether the value the streak threshold points at is set. A valid goal's policies always have it. */
+    public val hasStreakThresholdValue: Boolean
+        get() = streakThreshold == StreakThreshold.ANY_COUNT || streakThresholdValue != null
+
     /** Whether [count] meets the streak threshold. A threshold whose value is missing can never be met. */
     public fun meetsStreakThreshold(count: Long): Boolean {
-        val threshold = when (streakThreshold) {
-            StreakThreshold.ANY_COUNT -> return count > 0
+        if (streakThreshold == StreakThreshold.ANY_COUNT) return count > 0
+        val threshold = streakThresholdValue
+        return threshold != null && count >= threshold
+    }
+
+    private val streakThresholdValue: Long?
+        get() = when (streakThreshold) {
+            StreakThreshold.ANY_COUNT -> null
             StreakThreshold.MINIMUM -> minimum
             StreakThreshold.TARGET -> target
             StreakThreshold.MAXIMUM -> maximum
         }
-        return threshold != null && count >= threshold
-    }
 }
 
 /** A time-of-day opportunity for a goal, with its own count policy (CONTEXT.md, "Session"). */

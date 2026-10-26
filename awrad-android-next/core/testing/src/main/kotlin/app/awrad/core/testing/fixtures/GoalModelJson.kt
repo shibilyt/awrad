@@ -7,6 +7,7 @@ import app.awrad.core.domain.goal.CountEntry
 import app.awrad.core.domain.goal.CountPolicy
 import app.awrad.core.domain.goal.DateWindow
 import app.awrad.core.domain.goal.GoalDefinition
+import app.awrad.core.domain.goal.GoalDefinitionResult
 import app.awrad.core.domain.goal.PausedRange
 import app.awrad.core.domain.goal.Requirement
 import app.awrad.core.domain.goal.Schedule
@@ -45,9 +46,16 @@ public fun JsonObject.counts(key: String = "counts"): List<CountEntry> = getValu
     CountEntry(date = entry.date("date"), sessionId = entry.stringOrNull("session"), count = entry.long("count"))
 }
 
-public fun JsonObject.goal(key: String = "goal"): GoalDefinition {
+/** A valid goal, as every rule fixture's `goal` is. Fails the case when the domain rejects it. */
+public fun JsonObject.goal(key: String = "goal"): GoalDefinition = when (val result = goalResult(key)) {
+    is GoalDefinitionResult.Valid -> result.definition
+    is GoalDefinitionResult.Invalid -> error("Fixture goal is invalid: ${result.errors}")
+}
+
+/** A structural `goal_shape`, which may be invalid, put through the domain's validation (fixture `goal_validity`). */
+public fun JsonObject.goalResult(key: String = "goal"): GoalDefinitionResult {
     val goal = getValue(key).jsonObject
-    return GoalDefinition(
+    return GoalDefinition.create(
         schedule = goal.getValue("schedule").jsonObject.toSchedule(),
         activePeriod = goal.getValue("active_period").jsonObject.toActivePeriod(),
         paused = goal.getValue("paused").jsonArray.map { it.jsonObject.toPausedRange() },

@@ -62,7 +62,10 @@ private fun GoalDefinition.periodUnit(
 ): StreakUnit? {
     val evaluated = listOfNotNull(calendarPeriod.to, date, activePeriod.lastDay).min()
     if (evaluated !in calendarPeriod) return null
-    val status = standingOn(evaluated, counts, weekStart).status
+    val status = when (requirement) {
+        is Requirement.DaysPerPeriod -> daysPerPeriodOn(evaluated, counts, weekStart).status
+        else -> standingOn(evaluated, counts, weekStart).status
+    }
     return if (status == StandingStatus.NOT_DUE) {
         null
     } else {
