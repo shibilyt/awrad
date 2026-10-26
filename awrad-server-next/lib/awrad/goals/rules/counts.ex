@@ -50,19 +50,15 @@ defmodule Awrad.Goals.Rules.Counts do
 
   @doc """
   Whether `count` meets the policy. A `nil` target is a tracker: any positive
-  count. A streak threshold whose value is `nil` can never be met.
+  count. A valid goal's streak threshold always has its value (`Goal.new/1`).
   """
   @spec meets?(non_neg_integer(), CountPolicy.t(), measure()) :: boolean()
   def meets?(count, %CountPolicy{target: nil}, :target), do: count > 0
   def meets?(count, %CountPolicy{target: target}, :target), do: count >= target
   def meets?(count, %CountPolicy{streak_threshold: :any_count}, :streak), do: count > 0
 
-  def meets?(count, %CountPolicy{streak_threshold: threshold} = policy, :streak) do
-    case Map.fetch!(policy, threshold) do
-      nil -> false
-      value -> count >= value
-    end
-  end
+  def meets?(count, %CountPolicy{streak_threshold: threshold} = policy, :streak),
+    do: count >= Map.fetch!(policy, threshold)
 
   @doc "Whether a day meets the goal: its own policy, or every session its own."
   @spec day_met?(Goal.t(), day(), measure()) :: boolean()

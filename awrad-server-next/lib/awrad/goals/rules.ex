@@ -13,6 +13,10 @@ defmodule Awrad.Goals.Rules do
   | `completed?/3` | `goal_completion` | `Rules.Completion` |
   | `streak/4` | `goal_streak` | `Rules.Streak` |
 
+  Every rule takes a valid goal. Validity (`goal_validity`) is checked when a
+  goal is built, by `Awrad.Goals.Goal.new/1`, so no rule has a fallback for
+  an invalid one. Every `:not_due` answer has the evaluated day as its window.
+
   Dates are effective practice days; count entries are already bucketed by
   day. Progress only counts entries up to and including the evaluated date.
   All calendar arithmetic is Gregorian (`Date`, ISO calendar).

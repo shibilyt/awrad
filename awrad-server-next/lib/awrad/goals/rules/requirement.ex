@@ -15,10 +15,15 @@ defmodule Awrad.Goals.Rules.Requirement do
   def standing(%Goal{} = goal, index, date, week_start) do
     goal = without_tracker_target(goal)
     window = window(goal, date, week_start)
+    due? = due_in?(goal, window, date)
+    # Every `:not_due` answer has the evaluated day as its window, so its
+    # progress is that day's count inside the active period, even for a
+    # period goal whose whole week or month has no due day.
+    window = if due?, do: window, else: Periods.day(date)
     {progress, sessions} = evaluate(goal, index, window, date)
 
     %Standing{
-      status: status(goal, window, date, progress, sessions),
+      status: status(goal, due?, progress, sessions),
       window: window,
       progress: progress,
       target: if(goal.sessions == [], do: goal.count_policy.target),
@@ -69,13 +74,10 @@ defmodule Awrad.Goals.Rules.Requirement do
     %SessionStanding{id: id, progress: progress, target: policy.target, status: status}
   end
 
-  defp status(goal, window, date, progress, sessions) do
-    cond do
-      not due_in?(goal, window, date) -> :not_due
-      met?(goal, progress, sessions) -> :met
-      true -> :not_met
-    end
-  end
+  defp status(_goal, false = _due?, _progress, _sessions), do: :not_due
+
+  defp status(goal, true, progress, sessions),
+    do: if(met?(goal, progress, sessions), do: :met, else: :not_met)
 
   # Per-day goals need the day itself to be due; period goals need a due day
   # in the window; cumulative goals only need the active period.

@@ -14,20 +14,27 @@ defmodule Awrad.Goals.Rules.DaysPerPeriod do
     window = window(goal.active_period, unit, date, week_start)
     {qualifying, required} = tally(goal, index, window, date, days)
 
-    status =
-      cond do
-        required == 0 -> :not_due
-        qualifying >= required -> :met
-        true -> :not_met
-      end
-
-    %DaysPerPeriodStanding{
-      status: status,
-      window: window,
-      qualifying_days: qualifying,
-      required_days: required
-    }
+    if required == 0 do
+      not_due(date)
+    else
+      %DaysPerPeriodStanding{
+        status: if(qualifying >= required, do: :met, else: :not_met),
+        window: window,
+        qualifying_days: qualifying,
+        required_days: required
+      }
+    end
   end
+
+  # A window without due days (outside the active period, or fully paused or
+  # unscheduled): like every `:not_due` answer, its window is the day itself.
+  defp not_due(date),
+    do: %DaysPerPeriodStanding{
+      status: :not_due,
+      window: Periods.day(date),
+      qualifying_days: 0,
+      required_days: 0
+    }
 
   @doc """
   `{qualifying, required}` for `window`: the due days up to `date` meeting the
