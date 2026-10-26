@@ -79,7 +79,7 @@ An account is optional: everything offline works without one, and signing in or 
   | Sign-in | `create_device_session` with the installation ID and `DeviceName.current()` (marketing name of the model, never "Apple device") |
   | Sign-out | `sign_out_device_session` with the refresh token, then credentials cleared, even offline. The installation ID stays |
 
-- **UI** (`FeatureAccount`): one `AccountRoute` and `AccountModel` drive a `NavigationStack`, tinted sage (`AwradColors.primary`) so the back button and toolbar items aren't system blue.
+- **UI** (`FeatureAccount`): one `AccountRoute` and `AccountModel` drive a `NavigationStack`, tinted `AwradColors.accent` so the back button and toolbar items are the app's green and stay readable in dark mode.
   - **Signed out:** sign in, then pushed steps for create account, verify email (resend with a 60 s cooldown, or `Retry-After`), forgot password and reset password. Verifying or resetting signs in with the password just typed.
   - **Signed in** (slice 2b): the overview shows the email, rows for Devices, Change password, Change email and Delete account, and sign out.
     - *Devices:* this device first and marked, then the others with their platform and relative last use; "Web browser" (or "Unknown device") when `name` is `null`. Each other one has Sign out, behind a confirmation; "Sign out of all other devices" too. This device signs out from the overview.
@@ -123,6 +123,11 @@ See `FeatureOnboarding`.
 
 ## Resources
 
+- **Colours:** the 15 roles of [`contracts/design-tokens/v1/colors.json`](../contracts/design-tokens/v1/README.md), light and dark, following the system appearance.
+  - **Generated:** `scripts/generate-colors.py` writes `AwradDesignSystem/Theme/AwradColors.swift` (one `AwradColors` property per role, `0xRRGGBBAA` so alpha is kept) and the app's `AccentColor` asset (the `accent` role, the window tint for system alerts). Never edit either; rerun the script. `scripts/validate` runs it with `--check` and fails on drift.
+  - **Dynamic colours** (`AwradColors+Adaptive.swift`): the `UIColor`/`NSColor` provider is `@Sendable` and only picks between two colours made up front, because UIKit and SwiftUI resolve it off the main thread (a main-actor provider traps).
+  - **Tests:** `AwradDesignSystemTests/AwradColorsTests` checks every role against the JSON in light and dark, and resolves the provider off the main thread.
+  - **Use by role:** accent text, links, nav tint and icons on backgrounds are `accent` (`primary`'s `#23553C` is never text on dark); control borders `outlineStrong`; dividers `outline`; filled buttons `primary`/`onPrimary`; destructive `error`/`onError`; spinners `progress`.
 - **Fonts:** Manrope for interface text, Noto Naskh Arabic for Qur'anic and dhikr text. They're bundled in `AwradDesignSystem` and registered at launch with `AwradFonts.register()`.
 - **Logo:** plain PNGs in the package bundle.
 - **Strings:** String Catalogs per module (`Bundle.module`) plus the app's own. Xcode compiles them into `en`/`ar`/`ml` resources.

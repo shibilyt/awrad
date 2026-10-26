@@ -17,7 +17,7 @@ struct AccountForm<Fields: View, Actions: View>: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text(title)
                     .font(AwradFonts.headline())
-                    .foregroundStyle(AwradColors.primary)
+                    .foregroundStyle(AwradColors.accent)
                 if let message {
                     Text(message)
                         .font(AwradFonts.body())
@@ -98,7 +98,7 @@ struct AccountField: View {
             .padding(.horizontal, 16)
             .frame(minHeight: 52)
             .background(AwradColors.surface, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(AwradColors.outlineVariant))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(AwradColors.outlineStrong))
             .autocorrectionDisabled()
             .modifier(InputTraits(kind: kind))
     }
@@ -149,7 +149,7 @@ struct AccountLinkButton: View {
                 .font(AwradFonts.body())
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
-        .tint(isDestructive ? AwradColors.error : AwradColors.primary)
+        .tint(isDestructive ? AwradColors.error : AwradColors.accent)
         .disabled(!isEnabled)
     }
 }

@@ -51,7 +51,7 @@ struct HomePlaceholderView: View {
         VStack(spacing: 12) {
             Text("home.placeholder.title")
                 .font(AwradFonts.headline())
-                .foregroundStyle(AwradColors.primary)
+                .foregroundStyle(AwradColors.accent)
             Text("home.placeholder.body")
                 .font(AwradFonts.body())
                 .foregroundStyle(AwradColors.onSurfaceVariant)
@@ -59,7 +59,7 @@ struct HomePlaceholderView: View {
             AwradPrimaryButton("home.placeholder.account", action: onShowAccount)
                 .padding(.top, 24)
             Button("home.placeholder.restart", action: onRestartOnboarding)
-                .tint(AwradColors.primary)
+                .tint(AwradColors.accent)
                 .padding(.top, 12)
         }
         .padding(28)

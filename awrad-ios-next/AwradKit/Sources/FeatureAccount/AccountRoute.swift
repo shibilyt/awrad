@@ -38,18 +38,20 @@ struct AccountScreen: View {
                 .toolbar {
                     ToolbarItem(placement: .confirmationAction) {
                         Button(action: onClose) { Text(Strings.done) }
-                            .tint(AwradColors.primary)
+                            .tint(AwradColors.accent)
                     }
                 }
         }
-        // The back button and toolbar items take the app's sage, not the system blue.
-        .tint(AwradColors.primary)
+        // The back button and toolbar items are accent text, which reads on light and dark
+        // backgrounds (the primary green doesn't on dark).
+        .tint(AwradColors.accent)
     }
 
     @ViewBuilder private var root: some View {
         switch state.phase {
         case .loading:
             ProgressView()
+                .tint(AwradColors.progress)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(AwradColors.background)
         case .signedOut:
@@ -87,6 +89,13 @@ struct AccountScreen: View {
     return AccountScreen(state: state, onClose: {}, send: { _ in })
         .environment(\.locale, Locale(identifier: "ar"))
         .environment(\.layoutDirection, .rightToLeft)
+}
+
+#Preview("Signed in, dark") {
+    var state = AccountModel.State()
+    state.phase = .signedIn(email: "amina@example.com")
+    return AccountScreen(state: state, onClose: {}, send: { _ in })
+        .preferredColorScheme(.dark)
 }
 
 #Preview("Loading") {
