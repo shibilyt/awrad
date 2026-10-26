@@ -10,8 +10,20 @@ defmodule Awrad.SharedFixturesTest do
   # Each model's fixture files and the directory of their runners: one
   # `<rule>_test.exs` per `<rule>.json`, loading that file.
   @runners %{
+    "account-model/v1" => "test/awrad/accounts",
     "goal-model/v1" => "test/awrad/goals/rules",
     "hijri-calendar/v1" => "test/awrad/hijri"
+  }
+
+  # Client-only rules the server deliberately doesn't run, with the reason.
+  @client_only %{
+    "account-model/v1" => %{
+      # The server accepts only the API's EmailCode form (six ASCII digits) and
+      # answers `validation_failed` (`code_invalid`) for anything else. Clients
+      # normalise what the user typed (spaces, hyphens, Arabic-Indic and
+      # fullwidth digits) before sending, so there's nothing for the server to run.
+      "email_code_input" => "the server accepts ASCII digits only; clients normalise"
+    }
   }
 
   for {model, dir} <- @runners do
@@ -21,13 +33,20 @@ defmodule Awrad.SharedFixturesTest do
       rules = Fixtures.rules(@model)
       assert rules != []
 
-      for rule <- rules do
+      for rule <- rules, not Map.has_key?(Map.get(@client_only, @model, %{}), rule) do
         runner = Path.join(@dir, rule <> "_test.exs")
         assert File.exists?(runner), "no runner for #{@model}/fixtures/#{rule}.json: #{runner}"
 
         assert File.read!(runner) =~ ~s|Fixtures.cases!("#{@model}", "#{rule}")|,
                "#{runner} doesn't load #{@model}/fixtures/#{rule}.json"
       end
+    end
+  end
+
+  test "client-only rules still exist, so an exemption can't go stale" do
+    for {model, rules} <- @client_only, {rule, _reason} <- rules do
+      assert rule in Fixtures.rules(model),
+             "#{model}/fixtures/#{rule}.json is gone; drop its exemption"
     end
   end
 

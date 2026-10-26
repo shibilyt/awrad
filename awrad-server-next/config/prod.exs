@@ -12,6 +12,9 @@ config :awrad, AwradWeb.Endpoint,
     ]
   ]
 
+# Session and remember-me cookies are Secure in production (ADR-2026-10-15).
+config :awrad, :secure_cookies, true
+
 # Configure Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Req
 

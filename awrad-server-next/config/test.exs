@@ -23,6 +23,18 @@ config :awrad, AwradWeb.Endpoint,
   secret_key_base: "8oYZLbwVKoAfweJ870WCP0SrqWq8Lz0ajGpm9oWUkkMsAKyWSvwK2CjHHpnNTS7r",
   server: false
 
+# Test-only secrets for accounts (Awrad.Secrets).
+config :awrad, Awrad.Secrets,
+  access_token_secret: "test-access-token-secret-not-for-production-use-0001",
+  hmac_pepper: "test-hmac-pepper-not-for-production-use-0002",
+  encryption_secret: "test-encryption-secret-not-for-production-use-0003"
+
+# Fast, weak Argon2 parameters: tests only.
+config :argon2_elixir, t_cost: 1, m_cost: 8
+
+# Tests own the database through the sandbox; no background pruning.
+config :awrad, Awrad.Pruner, enabled: false
+
 # In test we don't send emails
 config :awrad, Awrad.Mailer, adapter: Swoosh.Adapters.Test
 
