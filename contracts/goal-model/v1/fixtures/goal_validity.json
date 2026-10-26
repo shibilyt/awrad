@@ -1,0 +1,535 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "goal_validity",
+  "description": "Which goals are invalid, and why. Every platform rejects these at construction, sync and import, so no rule ever sees them. Error codes are listed alphabetically.",
+  "references": [
+    "CONTEXT.md#goal-language (Count policy, Requirement)",
+    "docs/slices/01-domain-foundation.md (reconciliation, row 1: option C)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goal"
+    ],
+    "properties": {
+      "goal": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_shape"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "valid",
+      "errors"
+    ],
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      },
+      "errors": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "enum": [
+            "target_required",
+            "session_target_required",
+            "streak_threshold_value_required"
+          ]
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "per_due_date_with_target",
+      "description": "A daily goal of 313.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "per_due_date_without_target",
+      "description": "A daily goal needs a target.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "target_required"
+        ]
+      }
+    },
+    {
+      "id": "cumulative_without_target",
+      "description": "A cumulative goal needs a target.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "target_required"
+        ]
+      }
+    },
+    {
+      "id": "period_total_without_target",
+      "description": "A weekly total needs a target.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "target_required"
+        ]
+      }
+    },
+    {
+      "id": "days_per_period_without_target",
+      "description": "Days per period needs a daily target.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 5
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "target_required"
+        ]
+      }
+    },
+    {
+      "id": "tracker_without_target",
+      "description": "A tracker needs no target.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "sessions_each_with_target",
+      "description": "With sessions, the targets live on the sessions.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [
+            {
+              "id": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "isha",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "session_without_target",
+      "description": "Every session needs a target.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "isha",
+              "count_policy": {
+                "minimum": null,
+                "target": null,
+                "maximum": null,
+                "streak_threshold": "any_count"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "session_target_required"
+        ]
+      }
+    },
+    {
+      "id": "streak_minimum_without_minimum",
+      "description": "A \"minimum\" streak threshold needs a minimum.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "streak_threshold_value_required"
+        ]
+      }
+    },
+    {
+      "id": "streak_maximum_without_maximum",
+      "description": "A \"maximum\" streak threshold needs a maximum.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "maximum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "streak_threshold_value_required"
+        ]
+      }
+    },
+    {
+      "id": "tracker_streak_on_target",
+      "description": "A tracker has no target, so its streak can't use \"target\".",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "streak_threshold_value_required"
+        ]
+      }
+    },
+    {
+      "id": "session_streak_minimum_without_minimum",
+      "description": "The rule applies to each session's own count policy.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "minimum"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "streak_threshold_value_required"
+        ]
+      }
+    },
+    {
+      "id": "several_errors",
+      "description": "All errors are reported, alphabetically.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "streak_threshold_value_required",
+          "target_required"
+        ]
+      }
+    }
+  ]
+}

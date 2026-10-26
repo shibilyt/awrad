@@ -112,6 +112,29 @@ Done 2026-10-25. Reviewed: the judgment calls below are **accepted provisionally
 5. **A streak threshold whose value is missing** (e.g. "minimum" with no minimum set) can never be met, so the streak is 0. Goal validation should prevent that combination in slice 3.
 6. **A one-time goal** is modelled as a cumulative goal with the `one_time` schedule. Validation in slice 3 should require that pairing.
 
+## Reconciliation after step 5 (2026-10-26)
+
+The three platform implementations (Android, iOS, server) each passed all 100 cases. Comparing how each resolved the situations no case covered showed three real disagreements, plus several choices made by only one platform. Settled as follows, and locked in as **24 new cases** (124 in total):
+
+| # | Situation | Decision |
+|---|---|---|
+| 1 | A required target isn't set | **Invalid, can't be built** (option C). The schema's `goal` requires a target unless tracker, a target on every session, and the streak threshold's value. New file `goal_validity.json` (13 cases, error codes `target_required`, `session_target_required`, `streak_threshold_value_required`). This also replaces provisional call 5: the old "never met" case is now a validity case |
+| 2 | A fully paused week on a period goal | `not_due` |
+| 3 | Standing asked of a days-per-period goal | That day against the daily target; the period view is `days_per_period` |
+| 4 | A period with no due days in a period streak | Skipped |
+| 5 | "When target reached" on a non-cumulative goal | Never completes |
+| 6 | Completion after the end date | Counts only up to the last day |
+| 7 | Standing after the end date | `not_due`, the day as window, progress 0 |
+| 8 | A goal that ended mid-week or mid-day | Its last period or day is final, not in progress |
+| 9 | Counts without a session on a goal with sessions | Ignored, including in the total |
+
+Shape rule for every `not_due`: the window is the evaluated day, and progress is that day's count inside the active period.
+
+The new cases fail on every platform before the fix:
+- **Android:** 5 cases (not-due windows, row 3, row 9's total);
+- **iOS:** 4 cases (row 2 ×2, row 8, row 9);
+- **server:** 2 cases (row 2).
+
 ## Contract (step 4)
 
 No API operations in this slice. Slice 3 adds a goal-standing field to the goal read views, computed by the server's rules from this slice.
