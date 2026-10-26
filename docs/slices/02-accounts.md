@@ -1,6 +1,6 @@
 # Slice 02: Accounts
 
-Status: 2a done 2026-10-26 (pending CI on main); 2b next
+Status: 2a done 2026-10-26, CI green on `main`; 2b next
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 2
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 Decided already: ADR-2026-07-12 (verified accounts, device sessions, rotating refresh tokens), ADR-2026-10-15 (browser cookie sessions), `contracts/api/STYLE.md` §7, §11, §12
@@ -151,7 +151,7 @@ Follow-ups, not blocking:
 - [x] In-scope 2a items built on the server, Android, iOS and the web.
 - [x] Shared input rules have fixtures (48 cases), run by every client and the server (the server runs `email_input` and `password_policy`; `email_code_input` is client-only by design).
 - [x] Every operation has spec examples, `assert_conforms` server tests, and client round-trip tests (mobile) or spec-example mocks (web).
-- [ ] `ci_ok` green on `main` (after the push).
+- [x] `ci_ok` green on `main`: every job passed ([run 40342184662](https://github.com/shibilyt/awrad/actions/runs/40342184662)).
 - [x] Main flows checked on running builds in English and Arabic (above).
 - [x] All user-facing text in en, ar and ml, with translation checks passing (native review pending).
 - [x] Decisions recorded: root ADR-2026-10-26 (accounts), server ADRs 0005–0007, Android ADRs 0005–0006, iOS ADRs 0004–0005.
