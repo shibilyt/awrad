@@ -19,7 +19,7 @@ Every platform agrees on the Hijri date of an effective practice day, and on whe
 | Hijri months as periods for period-total and days-per-period goals | Reminders on Hijri dates: the reminders slice |
 | Fixture cases for all of it, run on every implementing platform | Moon-sighting data feeds |
 
-Platforms: Android ☐ · iOS ☐ · server ☐ (evaluates for the web) · web n/a (displays the server's standing)
+Platforms: Android ☐ · iOS ☐ · server ☑ (evaluates for the web) · web n/a (displays the server's standing)
 
 ## Decisions (answered 2026-10-26)
 
@@ -98,7 +98,7 @@ No API operations in this slice.
 |---|---|---|---|
 | awrad-android-next | Table loader, Hijri date and corrections, new schedules and period in `:core:domain`; runners for the two new files | Gradle validation | ☐ |
 | awrad-ios-next | The same in `AwradDomain` | `scripts/validate` | ☐ |
-| awrad-server-next | The same in `Awrad.Goals.Rules` | `mix validate` | ☐ |
+| awrad-server-next | The same in `Awrad.Goals.Rules`, with the calendar in `Awrad.Hijri` (table compiled from a checked `priv/` copy, server ADR 0004) | `mix validate` | ☑ |
 | awrad-web-next | Nothing in this slice | – | n/a |
 
 ## Integration evidence (step 6)

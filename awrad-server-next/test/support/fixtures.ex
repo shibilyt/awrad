@@ -27,6 +27,20 @@ defmodule Awrad.Fixtures do
 
   @type fixture_case :: %{required(String.t()) => term()}
 
+  @doc ~s|The absolute path of a file under `contracts/`, e.g. `contracts_path("hijri-calendar/v1/umm-al-qura.json")`.|
+  @spec contracts_path(String.t()) :: String.t()
+  def contracts_path(relative), do: Path.join(@contracts, relative)
+
+  @doc ~s|The rules with a fixture file in `contracts/<model>/fixtures/`, e.g. `rules("goal-model/v1")`.|
+  @spec rules(String.t()) :: [String.t()]
+  def rules(model) do
+    [@contracts, model, "fixtures", "*.json"]
+    |> Path.join()
+    |> Path.wildcard()
+    |> Enum.map(&Path.basename(&1, ".json"))
+    |> Enum.sort()
+  end
+
   @doc ~s|The cases of `contracts/<model>/fixtures/<rule>.json`, e.g. `cases!("goal-model/v1", "goal_streak")`.|
   @spec cases!(String.t(), String.t()) :: [fixture_case(), ...]
   def cases!(model, rule) do

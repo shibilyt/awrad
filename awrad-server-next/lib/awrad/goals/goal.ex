@@ -23,17 +23,35 @@ defmodule Awrad.Goals.Goal do
   @typedoc "The account's week start, an input to every week-based rule."
   @type week_start :: :saturday | :sunday | :monday
 
-  @type period :: :week | :month
+  @typedoc "A week, a month, or a Hijri month (adjusted by the account's corrections)."
+  @type period :: :week | :month | :hijri_month
 
   @typedoc """
-  Which days the goal is due (Gregorian):
+  A `{month, day}` of a yearly range. Gregorian: the schema rules out
+  impossible days (30 February), and 29 February falls on the 28th in a
+  common year. Hijri: day 30 falls on the 29th in a 29-day month.
+  """
+  @type month_day :: {1..12, 1..31}
+
+  @typedoc "An inclusive yearly range. When `to` comes before `from`, it runs over the year end."
+  @type yearly_range :: {from :: month_day(), to :: month_day()}
+
+  @typedoc """
+  Which days the goal is due:
 
   - `:every_day`;
   - `{:weekdays, days}`;
   - `{:every_n_days, n, anchor}`: an `anchor` of `nil` means the start date;
   - `{:month_days, days}`: a day past the month's end falls on its last day;
   - `{:specific_dates, dates}`;
-  - `:one_time`: due every day of the active period.
+  - `:one_time`: due every day of the active period;
+  - `{:hijri_month_days, days}`: days of every Hijri month, day 30 falling on
+    the 29th in a 29-day month;
+  - `{:yearly, calendar, ranges}`: Gregorian or Hijri month-day ranges every
+    year.
+
+  Hijri schedules read the Hijri date with the account's corrections, and
+  are never due outside the Hijri table.
   """
   @type schedule ::
           :every_day
@@ -42,6 +60,8 @@ defmodule Awrad.Goals.Goal do
           | {:month_days, [1..31, ...]}
           | {:specific_dates, [Date.t(), ...]}
           | :one_time
+          | {:hijri_month_days, [1..30, ...]}
+          | {:yearly, :gregorian | :hijri, [yearly_range(), ...]}
 
   @type requirement ::
           :per_due_date

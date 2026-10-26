@@ -11,7 +11,12 @@ defmodule Awrad.Goals.Rules.GoalIsDueTest do
     @given given
     @expect expect
     test id do
-      due? = Rules.due?(GoalModel.goal(@given["goal"]), GoalModel.date(@given["date"]))
+      due? =
+        Rules.due?(
+          GoalModel.goal(@given["goal"]),
+          GoalModel.date(@given["date"]),
+          GoalModel.hijri_corrections(@given)
+        )
 
       assert %{"due" => due?} == @expect
     end

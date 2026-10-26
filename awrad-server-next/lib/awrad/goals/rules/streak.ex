@@ -2,10 +2,11 @@ defmodule Awrad.Goals.Rules.Streak do
   @moduledoc false
   # Rule: the current streak (fixtures/goal_streak.json).
   #
-  # Walks back from the evaluated date over due units: due days, or weeks and
-  # months with at least one due day. A met unit adds one; the unit still in
-  # progress never breaks the streak; any other unmet unit ends it. Days that
-  # aren't due (unscheduled, paused, outside the active period) are skipped.
+  # Walks back from the evaluated date over due units: due days, or weeks,
+  # months and Hijri months with at least one due day. A met unit adds one;
+  # the unit still in progress never breaks the streak; any other unmet unit
+  # ends it. Days that aren't due (unscheduled, paused, outside the active
+  # period, outside the Hijri table for a Hijri schedule) are skipped.
 
   alias Awrad.Goals.Goal
   alias Awrad.Goals.Rules.Counts
@@ -13,19 +14,40 @@ defmodule Awrad.Goals.Rules.Streak do
   alias Awrad.Goals.Rules.Periods
   alias Awrad.Goals.Rules.Requirement
   alias Awrad.Goals.Rules.Schedule
+  alias Awrad.Hijri
+  alias Awrad.Hijri.Corrections
 
-  @spec current(Goal.t(), Counts.index(), Date.t(), Goal.week_start()) :: non_neg_integer()
-  def current(%Goal{requirement: {:period_total, unit}} = goal, index, date, week_start),
-    do: periods(goal, date, unit, week_start, &Requirement.window_met?(goal, index, &1, date))
+  @spec current(Goal.t(), Counts.index(), Date.t(), Goal.week_start(), Corrections.t()) ::
+          non_neg_integer()
+  def current(
+        %Goal{requirement: {:period_total, unit}} = goal,
+        index,
+        date,
+        week_start,
+        corrections
+      ) do
+    periods(
+      goal,
+      date,
+      {unit, week_start, corrections},
+      &Requirement.window_met?(goal, index, &1, date)
+    )
+  end
 
-  def current(%Goal{requirement: {:days_per_period, unit, days}} = goal, index, date, week_start) do
-    periods(goal, date, unit, week_start, fn window ->
-      {qualifying, required} = DaysPerPeriod.tally(goal, index, window, date, days)
+  def current(
+        %Goal{requirement: {:days_per_period, unit, days}} = goal,
+        index,
+        date,
+        week_start,
+        corrections
+      ) do
+    periods(goal, date, {unit, week_start, corrections}, fn window ->
+      {qualifying, required} = DaysPerPeriod.tally(goal, index, window, date, days, corrections)
       qualifying >= required
     end)
   end
 
-  def current(%Goal{} = goal, index, date, _week_start) do
+  def current(%Goal{} = goal, index, date, _week_start, corrections) do
     case last_unit_day(goal, date) do
       nil ->
         0
@@ -33,7 +55,7 @@ defmodule Awrad.Goals.Rules.Streak do
       last ->
         last
         |> Date.range(goal.active_period.start_date, -1)
-        |> Stream.filter(&Schedule.due?(goal, &1))
+        |> Stream.filter(&Schedule.due?(goal, &1, corrections))
         |> Enum.reduce_while(0, fn day, streak ->
           met? = Counts.day_met?(goal, Counts.day(index, day), :streak)
           step(streak, met?, Date.compare(day, date) == :eq)
@@ -41,21 +63,32 @@ defmodule Awrad.Goals.Rules.Streak do
     end
   end
 
-  defp periods(goal, date, unit, week_start, met?) do
+  defp periods(goal, date, {unit, week_start, corrections} = calendar, met?) do
     case last_unit_day(goal, date) do
       nil ->
         0
 
       last ->
-        walk(goal, Periods.period(last, unit, week_start), {date, unit, week_start, met?}, 0)
+        last = last_period_day(unit, last, corrections)
+        walk(goal, Periods.period(last, unit, week_start, corrections), {date, calendar, met?}, 0)
     end
   end
 
-  # Periods before the start date don't overlap the active period: stop there.
-  defp walk(goal, full_period, {_date, unit, week_start, _met?} = context, streak) do
+  # Days after the Hijri table have no Hijri month, so they're never due: the
+  # walk starts from the table's last month instead.
+  defp last_period_day(:hijri_month, last, corrections),
+    do: Periods.earliest(last, Hijri.days(corrections).last)
+
+  defp last_period_day(_unit, last, _corrections), do: last
+
+  # Periods before the start date don't overlap the active period, and days
+  # before the Hijri table have no Hijri month: stop there.
+  defp walk(_goal, nil = _full_period, _context, streak), do: streak
+
+  defp walk(goal, full_period, {_date, {unit, week_start, corrections}, _met?} = context, streak) do
     with %Date.Range{} = window <- Periods.clip(full_period, goal.active_period),
          {:cont, streak} <- visit(goal, window, context, streak) do
-      previous = Periods.period(Date.add(full_period.first, -1), unit, week_start)
+      previous = Periods.period(Date.add(full_period.first, -1), unit, week_start, corrections)
       walk(goal, previous, context, streak)
     else
       nil -> streak
@@ -64,8 +97,8 @@ defmodule Awrad.Goals.Rules.Streak do
   end
 
   # A period without a due day (fully paused or unscheduled) is skipped.
-  defp visit(goal, window, {date, _unit, _week_start, met?}, streak) do
-    if Enum.any?(window, &Schedule.due?(goal, &1)),
+  defp visit(goal, window, {date, {_unit, _week_start, corrections}, met?}, streak) do
+    if Enum.any?(window, &Schedule.due?(goal, &1, corrections)),
       do: step(streak, met?.(window), not Date.before?(window.last, date)),
       else: {:cont, streak}
   end

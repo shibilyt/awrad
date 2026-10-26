@@ -1,10 +1,12 @@
 defmodule Awrad.Goals.Rules.Periods do
   @moduledoc false
   # Shared calendar arithmetic for the rules: active-period bounds and
-  # week/month windows. Gregorian (ISO) only.
+  # week, month and Hijri-month windows.
 
   alias Awrad.Goals.ActivePeriod
   alias Awrad.Goals.Goal
+  alias Awrad.Hijri
+  alias Awrad.Hijri.Corrections
 
   @doc "The active period's last day: the earlier of the end date and start + duration − 1."
   @spec last_day(ActivePeriod.t()) :: Date.t() | nil
@@ -16,14 +18,35 @@ defmodule Awrad.Goals.Rules.Periods do
     not Date.before?(date, start) and not after_last_day?(period, date)
   end
 
-  @doc "The whole week or month containing `date`."
-  @spec period(Date.t(), Goal.period(), Goal.week_start()) :: Date.Range.t()
-  def period(date, :week, week_start),
+  @doc """
+  The whole week, month or Hijri month containing `date`. A day outside the
+  Hijri table has no Hijri month (`nil`).
+  """
+  @spec period(Date.t(), Goal.period(), Goal.week_start(), Corrections.t()) ::
+          Date.Range.t() | nil
+  def period(date, :week, week_start, _corrections),
     do:
       Date.range(Date.beginning_of_week(date, week_start), Date.end_of_week(date, week_start), 1)
 
-  def period(date, :month, _week_start),
+  def period(date, :month, _week_start, _corrections),
     do: Date.range(Date.beginning_of_month(date), Date.end_of_month(date), 1)
+
+  def period(date, :hijri_month, _week_start, corrections), do: Hijri.month(date, corrections)
+
+  @doc """
+  The whole `unit` period containing `date`, clipped to the active period:
+  `nil` when `date` is outside the active period or has no such period.
+  """
+  @spec window(ActivePeriod.t(), Goal.period(), Date.t(), Goal.week_start(), Corrections.t()) ::
+          Date.Range.t() | nil
+  def window(active_period, unit, date, week_start, corrections) do
+    with true <- in_active_period?(active_period, date),
+         %Date.Range{} = period <- period(date, unit, week_start, corrections) do
+      clip(period, active_period)
+    else
+      _no_window -> nil
+    end
+  end
 
   @doc "`range` clipped to the active period, or `nil` when they don't overlap."
   @spec clip(Date.Range.t(), ActivePeriod.t()) :: Date.Range.t() | nil
