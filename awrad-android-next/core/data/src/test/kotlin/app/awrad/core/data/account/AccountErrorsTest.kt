@@ -60,7 +60,8 @@ class AccountErrorsTest {
             (described + examples).filterNot { it in topLevel }
         }.toSet()
 
-        val unmapped = fieldCodes.filter { inputProblemOf(it) == null }
+        // Device details are set by the app, not typed by a person: those codes mean an app bug and stay generic.
+        val unmapped = fieldCodes.filter { inputProblemOf(it) == null && it !in DEVICE_FIELD_CODES }
 
         assertTrue("current_password_incorrect" in fieldCodes && "email_unchanged" in fieldCodes, "$fieldCodes")
         assertTrue(unmapped.isEmpty(), "Field codes without an input problem: $unmapped")
@@ -139,5 +140,8 @@ class AccountErrorsTest {
     private companion object {
         /** A snake_case code in backticks, as the spec's response descriptions name field codes. */
         val BACKTICKED = Regex("`([a-z_]+)`")
+
+        /** Field codes for `device` details in `create_device_session`, which no person can correct. */
+        val DEVICE_FIELD_CODES = setOf("installation_id_invalid", "device_name_invalid", "platform_invalid")
     }
 }

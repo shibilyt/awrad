@@ -156,7 +156,7 @@ export interface paths {
         post?: never;
         /**
          * Sign out one device or browser
-         * @description Ends that session; its next request is `401`. Revoking the caller's own session is the same as signing out. Another account's session, or one already ended, is `404`.
+         * @description Ends that session; its next request is `401`. Revoking the caller's own session is the same as signing out. Another account's session, one already ended, or an id that isn't a UUID is `404`.
          */
         delete: operations["revoke_account_session"];
         options?: never;
@@ -255,7 +255,7 @@ export interface paths {
         put?: never;
         /**
          * Delete the account now
-         * @description Needs the current password. Immediately and permanently deletes the account and everything the server keeps for it (sessions, settings, synced data), and ends every session; a browser's cookies are cleared. Practice data stored on devices isn't touched: the apps keep working offline. The address gets a confirmation email. There is no undo.
+         * @description Needs the current password. Immediately and permanently deletes the account and everything the server keeps for it (sessions, settings, synced data), and ends every session; a browser's cookies are cleared. Practice data stored on devices isn't touched: the apps keep working offline. The address gets a confirmation email. There is no undo. A retry after a lost `204` gets `401`, because the account no longer exists: clients treat `401` after a delete request as done.
          */
         post: operations["delete_account"];
         delete?: never;
@@ -466,6 +466,7 @@ export interface components {
         CurrentPassword: string;
         /** @description One place the account is signed in. */
         AccountSession: {
+            /** @description For a device session, the same `id` as `DeviceSession.id` in its sign-in grant. */
             id: components["schemas"]["Uuid"];
             /** @enum {string} */
             kind: "device" | "browser";
@@ -664,12 +665,12 @@ export interface components {
                  *       "title": "Request validation failed",
                  *       "status": 422,
                  *       "code": "validation_failed",
-                 *       "detail": "daily_target must be between 1 and 100000",
+                 *       "detail": "email is not a valid address",
                  *       "errors": [
                  *         {
-                 *           "field": "/daily_target",
-                 *           "code": "out_of_range",
-                 *           "detail": "must be between 1 and 100000"
+                 *           "field": "/email",
+                 *           "code": "email_invalid",
+                 *           "detail": "not a valid email address"
                  *         }
                  *       ]
                  *     }
@@ -767,7 +768,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description `validation_failed`. Field codes: `current_password_incorrect` on `/current_password`; for a new password, `password_too_short`, `password_too_long` or `password_too_common` on `/new_password`. */
+        /** @description `validation_failed`. Field codes: `current_password_incorrect` on `/current_password`; on operations that take a new password, also `password_too_short`, `password_too_long` or `password_too_common` on `/new_password`. */
         CurrentPasswordRejected: {
             headers: {
                 "Cache-Control": components["headers"]["CacheControl"];
@@ -1108,6 +1109,15 @@ export interface operations {
                      *           "created_at": "2026-10-20T18:00:00Z",
                      *           "last_seen_at": "2026-10-26T21:15:00Z",
                      *           "is_current": false
+                     *         },
+                     *         {
+                     *           "id": "7e1f3a95-2c4d-4b6e-8f70-1a2b3c4d5e6f",
+                     *           "kind": "browser",
+                     *           "name": null,
+                     *           "platform": "web",
+                     *           "created_at": "2026-10-12T07:30:00Z",
+                     *           "last_seen_at": "2026-10-18T07:45:00Z",
+                     *           "is_current": false
                      *         }
                      *       ],
                      *       "next_cursor": null
@@ -1430,7 +1440,33 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["InvalidCredentials"];
             403: components["responses"]["Forbidden"];
-            422: components["responses"]["UnprocessableContent"];
+            /** @description `validation_failed`. Field codes: `email_invalid` on `/email`; `installation_id_invalid`, `device_name_invalid` or `platform_invalid` under `/device/...` (an app bug, not something a person can fix). */
+            422: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "urn:awrad:problem:validation_failed",
+                     *       "title": "Request validation failed",
+                     *       "status": 422,
+                     *       "code": "validation_failed",
+                     *       "detail": "device.platform is not supported",
+                     *       "errors": [
+                     *         {
+                     *           "field": "/device/platform",
+                     *           "code": "platform_invalid",
+                     *           "detail": "must be android or ios"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
             429: components["responses"]["TooManyRequests"];
         };
     };

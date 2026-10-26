@@ -63,15 +63,12 @@ describe("device list", () => {
   });
 
   test("a browser the server couldn't name is a generic web browser", async () => {
+    // The spec example has one browser with a null name, next to a named one.
     signedIn();
-    server.use(
-      specHandler("list_account_sessions", 200, {
-        from: (page: SessionPage) => ({ ...page, items: page.items.map((item) => ({ ...item, name: null })) }),
-      }),
-    );
     const list = await openDevices();
 
-    expect(within(list).getByText("Web browser")).toBeInTheDocument();
+    expect(within(list).getAllByText("Web browser")).toHaveLength(1);
+    expect(within(list).getByText("Firefox on Windows")).toBeInTheDocument();
   });
 
   test("alone on the account, there's nothing else to sign out", async () => {

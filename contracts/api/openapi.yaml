@@ -580,7 +580,7 @@ components:
     CurrentPasswordRejected:
       description: >-
         `validation_failed`. Field codes: `current_password_incorrect` on `/current_password`; on operations
-        that take a `new_password`, also `password_too_short`, `password_too_long` or `password_too_common`
+        that take a new password, also `password_too_short`, `password_too_long` or `password_too_common`
         on `/new_password`.
       headers: *problem_headers
       content:
