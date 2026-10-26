@@ -2,8 +2,7 @@ package app.awrad.feature.account.settings
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.DeleteForever
@@ -17,9 +16,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.awrad.core.designsystem.component.AwradCard
 import app.awrad.core.designsystem.component.AwradSecondaryButton
 import app.awrad.core.domain.account.Account
 import app.awrad.feature.account.AccountPage
@@ -46,8 +47,8 @@ internal fun AccountOverviewScreen(
             color = MaterialTheme.colorScheme.onSurface,
         )
         BodyText(text = stringResource(R.string.account_signed_in_body))
-        // Rows are separated by spacing, not divider lines (the design has no outlines).
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Grouped on a card, as in the design; rows are separated by their own padding, never divider lines.
+        AwradCard(contentPadding = PaddingValues(vertical = 8.dp), spacing = 0.dp) {
             SettingsLink(
                 icon = Icons.Filled.Devices,
                 title = R.string.account_link_devices,
@@ -91,7 +92,7 @@ private fun SettingsLink(
     ListItem(
         modifier = modifier.clickable(onClick = onClick),
         colors = ListItemDefaults.colors(
-            containerColor = MaterialTheme.colorScheme.background,
+            containerColor = Color.Transparent,
             headlineColor = color,
             leadingIconColor = color,
         ),

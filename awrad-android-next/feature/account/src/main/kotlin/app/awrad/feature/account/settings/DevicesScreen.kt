@@ -1,8 +1,7 @@
 package app.awrad.feature.account.settings
 
 import android.text.format.DateUtils
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.Language
@@ -16,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -23,6 +23,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.awrad.core.designsystem.component.AwradCard
 import app.awrad.core.designsystem.component.AwradSecondaryButton
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.domain.account.AccountSession
@@ -95,8 +96,8 @@ private fun SessionList(
     onRevoke: (AccountSession) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Rows are separated by spacing, not divider lines (the design has no outlines).
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Grouped on a card, as in the design; rows are separated by their own padding, never divider lines.
+    AwradCard(modifier = modifier, contentPadding = PaddingValues(vertical = 8.dp), spacing = 0.dp) {
         sessions.forEach { session ->
             SessionRow(session = session, now = now, onRevoke = { onRevoke(session) })
         }
@@ -113,7 +114,7 @@ private fun SessionRow(session: AccountSession, now: Instant, onRevoke: () -> Un
     }
     ListItem(
         modifier = modifier,
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = { Icon(imageVector = session.platform.icon(), contentDescription = null) },
         headlineContent = { Text(text = name) },
         supportingContent = {
