@@ -153,7 +153,7 @@ No API operations in this slice. Slice 3 adds a goal-standing field to the goal 
 No UI in this slice. The evidence is every implementing platform passing the same fixture files in CI, with the run linked here.
 
 - Local, 2026-10-26: all 125 cases pass on Android (`:core:domain:test`), iOS (`swift test`) and the server (`mix test`), and every project's full validation passes on the merged branch.
-- CI on `main`: see the `ci_ok` run for the merge of `slice-01/rules`.
+- CI on `main`, 2026-10-26: `ci_ok` green, with the contracts, Android, iOS and server jobs passing ([run 40282161415](https://github.com/shibilyt/awrad/actions/runs/40282161415)).
 
 ## Definition of done
 
