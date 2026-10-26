@@ -92,8 +92,19 @@ public final class AccountModel {
 
     /// The screen's whole interface to the model.
     public func send(_ action: Action) async {
+        if apply(action) { return }
         switch action {
         case .appeared: await load()
+        default: if let submission = submission(for: action) { await run(submission) }
+        }
+    }
+
+    /// Applies an action that only changes local state (typing, navigation) immediately, and
+    /// returns `false` for anything that needs `send`. Text edits must not wait for a task: the
+    /// field would re-render with the old text in between and drop keystrokes or IME input.
+    @discardableResult
+    public func apply(_ action: Action) -> Bool {
+        switch action {
         case .emailChanged(let email): edit { $0.email = email }
         case .passwordChanged(let password): edit { $0.password = password }
         case .codeChanged(let code): edit { $0.code = code }
@@ -101,8 +112,9 @@ public final class AccountModel {
         case .pathChanged(let path): navigate(to: path)
         case .createAccountTapped: push(.register)
         case .forgotPasswordTapped: push(.forgotPassword)
-        default: if let submission = submission(for: action) { await run(submission) }
+        default: return false
         }
+        return true
     }
 
     /// The work behind a button that talks to the server.

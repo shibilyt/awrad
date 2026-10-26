@@ -14,7 +14,8 @@ public struct AccountRoute: View {
 
     public var body: some View {
         AccountScreen(state: model.state, onClose: onClose) { action in
-            Task { await model.send(action) }
+            // Typing and navigation apply synchronously; only server work runs in a task.
+            if !model.apply(action) { Task { await model.send(action) } }
         }
         .task { await model.send(.appeared) }
     }

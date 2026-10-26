@@ -10,7 +10,7 @@ scripts/validate             # the validation command CI runs
 
 ## Accounts against a local server
 
-Debug builds call `http://localhost:4000` (`APIEnvironment` in `AwradNext/AppComposition.swift`), and `Config/Debug-Info.plist` allows plain HTTP to `localhost` in Debug only.
+Debug builds call `http://localhost:4000` (`APIEnvironment` in `AwradNext/AppComposition.swift`), and `Config/Debug-Info.plist` allows plain HTTP to `localhost` in Debug only. To use another port, set `AWRAD_API_BASE_URL` in the scheme's environment, or launch with `SIMCTL_CHILD_AWRAD_API_BASE_URL=http://localhost:4100 xcrun simctl launch booted <bundle id>`.
 
 1. Start `awrad-server-next` on port 4000 (see its README). Nothing else may be listening on 4000.
 2. Run the `AwradNext` scheme on a simulator, which shares the Mac's `localhost`, and tap **Account** on the home screen.

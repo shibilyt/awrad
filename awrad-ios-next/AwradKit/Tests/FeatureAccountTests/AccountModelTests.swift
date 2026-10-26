@@ -58,6 +58,16 @@ struct AccountModelTests {
         #expect(model.state.feedback == nil)
     }
 
+    @Test func typingAppliesSynchronously() {
+        // A field re-renders right after each keystroke, so edits can't wait for a task.
+        let model = model()
+        #expect(model.apply(.emailChanged("a")))
+        #expect(model.state.email == "a")
+        #expect(model.apply(.passwordChanged("p")))
+        #expect(model.state.password == "p")
+        #expect(!model.apply(.signInTapped))
+    }
+
     @Test func signInChecksTheEmailFirst() async {
         let model = model()
         await model.send(.emailChanged("amina@localhost"))

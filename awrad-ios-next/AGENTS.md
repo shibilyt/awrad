@@ -18,7 +18,7 @@ Applies inside `awrad-ios-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
 
 - **Code lives in `AwradKit`.** The app target (`AwradNext/`) is only the composition root, root routing and app-level strings. A new feature is a `Feature<Name>` target with its own `Resources/Localizable.xcstrings`.
 - **Screens:**
-  - A stateful `…Route` owns an `@Observable` model with one `state` and one `async send(_ action:)`.
+  - A stateful `…Route` owns an `@Observable` model with one `state` and one `async send(_ action:)`. Actions that only change local state (typing, navigation) also go through a synchronous `apply(_:)`, which the route calls first: a text edit that waits for a `Task` drops keystrokes and IME input.
   - It wraps a stateless `…Screen(state:send:)` that has a `#Preview`.
   - Models are tested directly in `swift test`, without a simulator.
 - **Ports:**

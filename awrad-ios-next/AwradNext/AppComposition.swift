@@ -54,7 +54,8 @@ enum APIEnvironment {
         #if DEBUG
             // The local awrad-server-next (`mix phx.server`); the simulator shares the Mac's
             // localhost. Plain HTTP is allowed for localhost in Debug only (Config/Debug-Info.plist).
-            url("http://localhost:4000")
+            // `AWRAD_API_BASE_URL` in the launch environment points it elsewhere, such as another port.
+            url(ProcessInfo.processInfo.environment["AWRAD_API_BASE_URL"] ?? "http://localhost:4000")
         #else
             // No deployment yet: chosen when awrad-server-next is first deployed. `.invalid`
             // never resolves, so a release build fails as offline instead of calling a stranger.
