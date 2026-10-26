@@ -38,11 +38,12 @@ extension Goal {
     /// - Per due date and tracker: that day alone; `notDue` when the goal isn't due.
     /// - Cumulative total: from the start date to `day`.
     /// - Period total: the week (from `weekStart`) or month containing `day`, clipped to the
-    ///   active period.
+    ///   active period; `notDue` when that window has no due days (fully paused, say).
     /// - Days per period: the day's own standing against the daily target (whether it qualifies);
     ///   the period's standing is `daysPerPeriodStanding`.
     ///
-    /// Outside the active period the goal is `notDue`, with no progress.
+    /// Every `notDue` answer's window is `day` itself, with that day's count as progress. Outside
+    /// the active period that count is 0.
     public func standing(on day: CalendarDay, counts: [CountEntry], weekStart: WeekStart) -> RequirementStanding {
         let ledger = CountLedger(counts)
         guard activePeriod.contains(day) else {
@@ -59,8 +60,9 @@ extension Goal {
             window = activePeriod.start...day
             due = true
         case .periodTotal(let period):
-            window = activePeriod.clip(period.window(containing: day, weekStart: weekStart)) ?? day...day
-            due = true
+            let clipped = activePeriod.clip(period.window(containing: day, weekStart: weekStart)) ?? day...day
+            due = !dueDays(in: clipped).isEmpty
+            window = due ? clipped : day...day
         }
         let measured = progress(in: window, through: day, ledger: ledger, threshold: targetThreshold)
         let status: RequirementStanding.Status = due ? (measured.isMet ? .met : .notMet) : .notDue

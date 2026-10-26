@@ -12,7 +12,8 @@ extension Goal {
     ///
     /// Days that aren't due (unscheduled, paused, outside the active period) and periods with no
     /// due days are skipped. `day` itself, or the period containing it, is still in progress: it
-    /// adds one once met and never breaks the streak.
+    /// adds one once met and never breaks the streak. That holds only while the goal is running:
+    /// after it has ended, its last day or period is final and can break the streak.
     public func currentStreak(on day: CalendarDay, counts: [CountEntry], weekStart: WeekStart) -> Int {
         let ledger = CountLedger(counts)
         switch requirement {
@@ -45,11 +46,13 @@ extension Goal {
         var whole = period.window(containing: day, weekStart: weekStart)
         var streak = 0
         while whole.upperBound >= activePeriod.start {
-            let isCurrent = whole.contains(day)
             if let window = activePeriod.clip(whole), !dueDays(in: window).isEmpty {
+                // In progress only while the clipped window is still open: after the goal ends,
+                // its last period is final.
+                let isInProgress = window.contains(day)
                 if meetsPeriodRequirement(in: window, through: day, ledger: ledger) {
                     streak += 1
-                } else if !isCurrent {
+                } else if !isInProgress {
                     break
                 }
             }

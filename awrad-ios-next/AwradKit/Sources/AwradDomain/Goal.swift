@@ -3,23 +3,26 @@ import Foundation
 /// A single measurable objective attached to one dhikr or tracked amal (CONTEXT.md, Goal language).
 ///
 /// The rule-bearing fields mirror `contracts/goal-model/v1/goal-model.schema.json`. The rules
-/// themselves live in one file each: `Goal+IsDue`, `Goal+RequirementStanding`,
+/// themselves live in one file each: `Goal+Validity`, `Goal+IsDue`, `Goal+RequirementStanding`,
 /// `Goal+DaysPerPeriod`, `Goal+Completion`, `Goal+Streak`, plus `EffectivePracticeDay`.
 ///
-/// Values aren't validated here: rejecting empty weekday sets, `every < 1` or a missing target is
-/// the boundary's job (slice 3). The rules stay total on invalid values: they're never due or met.
+/// Every `Goal` is valid (`Goal+Validity`): the initializer throws `GoalValidationError` when a
+/// target or the streak threshold's value is missing, and the properties are read-only, so no rule
+/// ever sees an invalid goal. Structural limits the schema enforces (an empty weekday set,
+/// `every < 1`) are the boundary's job (slice 3); the rules stay total on them: never due or met.
 public struct Goal: Hashable, Sendable {
-    public var id: AwradID
-    public var dhikrCatalogKey: String
-    public var schedule: Schedule
-    public var activePeriod: ActivePeriod
-    public var paused: [PausedRange]
+    public let id: AwradID
+    public let dhikrCatalogKey: String
+    public let schedule: Schedule
+    public let activePeriod: ActivePeriod
+    public let paused: [PausedRange]
     /// The goal's own numbers. With sessions, each session's count policy applies instead.
-    public var countPolicy: CountPolicy
-    public var sessions: [GoalSession]
-    public var requirement: Requirement
-    public var completion: CompletionPolicy
+    public let countPolicy: CountPolicy
+    public let sessions: [GoalSession]
+    public let requirement: Requirement
+    public let completion: CompletionPolicy
 
+    /// Builds a goal, or throws every reason it would be invalid (`GoalValidationError.codes`).
     public init(
         id: AwradID,
         dhikrCatalogKey: String,
@@ -30,7 +33,8 @@ public struct Goal: Hashable, Sendable {
         sessions: [GoalSession] = [],
         requirement: Requirement,
         completion: CompletionPolicy = .never
-    ) {
+    ) throws(GoalValidationError) {
+        try Self.validate(countPolicy: countPolicy, sessions: sessions, requirement: requirement)
         self.id = id
         self.dhikrCatalogKey = dhikrCatalogKey
         self.schedule = schedule

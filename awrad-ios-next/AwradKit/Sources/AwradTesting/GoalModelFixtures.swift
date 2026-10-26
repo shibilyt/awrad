@@ -13,6 +13,7 @@ public enum GoalModelRule: String, CaseIterable, Sendable {
     case daysPerPeriod = "days_per_period"
     case goalCompletion = "goal_completion"
     case goalStreak = "goal_streak"
+    case goalValidity = "goal_validity"
 
     /// `contracts/goal-model/v1/fixtures/<rule>.json` in this repository.
     public func fixtureFile(from filePath: String = #filePath) throws -> URL {
@@ -51,6 +52,10 @@ public enum GoalModelFixtures {
 
     public static func goalStreak() throws -> [FixtureCase<GoalOnDay, StreakExpect>] {
         try GoalModelRule.goalStreak.cases((GoalOnDay.self, StreakExpect.self))
+    }
+
+    public static func goalValidity() throws -> [FixtureCase<GoalValidityGiven, ValidityExpect>] {
+        try GoalModelRule.goalValidity.cases((GoalValidityGiven.self, ValidityExpect.self))
     }
 }
 
@@ -97,6 +102,21 @@ public struct GoalOnDay: Decodable, Sendable {
         weekStart = try values.decodeIfPresent(String.self, forKey: .weekStart).map {
             try FixtureValue.require(WeekStart(rawValue: $0), "week_start \($0)")
         }
+    }
+}
+
+/// A `goal_shape` that may be invalid: the only `given` that doesn't require a valid goal. The
+/// shape decodes, and `construction` is what `Goal`'s validating initializer made of it.
+public struct GoalValidityGiven: Decodable, Sendable {
+    public let construction: Result<Goal, GoalValidationError>
+
+    private enum CodingKeys: String, CodingKey {
+        case goal
+    }
+
+    public init(from decoder: any Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        construction = try values.decode(GoalShape.self, forKey: .goal).construct()
     }
 }
 
@@ -175,4 +195,21 @@ public struct StreakExpect: Decodable, Equatable, Sendable {
     public let current: Int
 
     public init(current: Int) { self.current = current }
+}
+
+public struct ValidityExpect: Decodable, Equatable, Sendable {
+    public let valid: Bool
+    /// Error codes, in the order the domain reports them (the contract's is alphabetical).
+    public let errors: [String]
+
+    public init(_ construction: Result<Goal, GoalValidationError>) {
+        switch construction {
+        case .success:
+            valid = true
+            errors = []
+        case .failure(let error):
+            valid = false
+            errors = error.codes.map(\.rawValue)
+        }
+    }
 }

@@ -6,7 +6,7 @@ import Testing
 struct SwiftDataGoalRepositoryTests {
     @Test func addedGoalsAreStored() async throws {
         let repository = SwiftDataGoalRepository(modelContainer: try AwradStore.inMemory())
-        let goal = Goal(
+        let goal = try Goal(
             id: .random(),
             dhikrCatalogKey: "isthighfar",
             schedule: .everyDay,

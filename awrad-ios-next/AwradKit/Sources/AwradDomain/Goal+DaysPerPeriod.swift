@@ -27,23 +27,26 @@ extension Goal {
     ///
     /// A day qualifies when it's due and meets the daily target (with sessions, every session
     /// meets its own). A partial first or last period, pauses and the schedule all reduce the days
-    /// required. Outside the active period, or in a window with no due days, it's `notDue`.
+    /// required. Outside the active period, or in a window with no due days (fully paused, say),
+    /// it's `notDue`, with `day` itself as the window and no days.
     public func daysPerPeriodStanding(
         on day: CalendarDay,
         counts: [CountEntry],
         weekStart: WeekStart
     ) -> DaysPerPeriodStanding? {
         guard case .daysPerPeriod(let period, _) = requirement else { return nil }
+        let notDue = DaysPerPeriodStanding(status: .notDue, window: day...day, qualifyingDays: 0, requiredDays: 0)
         guard activePeriod.contains(day),
             let window = activePeriod.clip(period.window(containing: day, weekStart: weekStart))
-        else {
-            return DaysPerPeriodStanding(status: .notDue, window: day...day, qualifyingDays: 0, requiredDays: 0)
-        }
+        else { return notDue }
         let tally = daysPerPeriodTally(in: window, through: day, ledger: CountLedger(counts))
-        let status: RequirementStanding.Status =
-            tally.required == 0 ? .notDue : (tally.qualifying >= tally.required ? .met : .notMet)
+        guard tally.required > 0 else { return notDue }
         return DaysPerPeriodStanding(
-            status: status, window: window, qualifyingDays: tally.qualifying, requiredDays: tally.required)
+            status: tally.qualifying >= tally.required ? .met : .notMet,
+            window: window,
+            qualifyingDays: tally.qualifying,
+            requiredDays: tally.required
+        )
     }
 
     /// Qualifying and required days of a clipped period window, counting days up to `through`.

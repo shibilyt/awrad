@@ -59,14 +59,15 @@ struct WindowProgress {
 extension Goal {
     /// Measures `window` (counts up to `through`) against `threshold(policy)` for the goal or,
     /// with sessions, for every session. The day or period is met only when every session is.
+    /// With sessions, counts without one (or for another session) are ignored, even in the total.
     func progress(
         in window: ClosedRange<CalendarDay>,
         through: CalendarDay,
         ledger: CountLedger,
         threshold: (CountPolicy) -> CountThreshold
     ) -> WindowProgress {
-        let total = ledger.total(in: window, through: through)
         guard !sessions.isEmpty else {
+            let total = ledger.total(in: window, through: through)
             let isMet = countPolicy.isMet(by: total, at: threshold(countPolicy))
             let target = requirement == .tracker ? nil : countPolicy.target
             return WindowProgress(progress: total, target: target, sessions: [], isMet: isMet)
@@ -80,6 +81,7 @@ extension Goal {
                 isMet: session.countPolicy.isMet(by: progress, at: threshold(session.countPolicy))
             )
         }
+        let total = standings.reduce(Int64(0)) { $0.addingSaturating($1.progress) }
         return WindowProgress(
             progress: total, target: nil, sessions: standings, isMet: standings.allSatisfy(\.isMet))
     }

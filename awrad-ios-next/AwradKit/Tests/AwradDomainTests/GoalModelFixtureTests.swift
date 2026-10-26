@@ -55,6 +55,11 @@ struct GoalModelFixtureTests {
         let current = given.goal.currentStreak(on: given.date, counts: given.counts, weekStart: weekStart)
         #expect(StreakExpect(current: current) == fixture.expect, "\(fixture.id): \(fixture.summary)")
     }
+
+    @Test(arguments: try GoalModelFixtures.goalValidity())
+    func goalValidity(_ fixture: FixtureCase<GoalValidityGiven, ValidityExpect>) {
+        #expect(ValidityExpect(fixture.given.construction) == fixture.expect, "\(fixture.id): \(fixture.summary)")
+    }
 }
 
 @Suite("fixture runner")
