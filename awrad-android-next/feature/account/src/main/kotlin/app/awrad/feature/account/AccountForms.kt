@@ -4,12 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.awrad.core.designsystem.component.AwradPrimaryButton
+import app.awrad.core.designsystem.component.AwradTextButton
 
 /*
  * The form of each step. Stateless: every one renders AccountUiState and reports AccountActions.
@@ -32,12 +32,14 @@ internal fun SignInForm(state: AccountUiState, onAction: (AccountAction) -> Unit
             onClick = { onAction(AccountAction.Submit) },
             enabled = state.canSubmit,
         )
-        TextButton(onClick = { onAction(AccountAction.GoToForgotPassword) }) {
-            Text(text = stringResource(R.string.account_action_forgot_password))
-        }
-        TextButton(onClick = { onAction(AccountAction.GoToRegister) }) {
-            Text(text = stringResource(R.string.account_action_go_register))
-        }
+        AwradTextButton(
+            text = stringResource(R.string.account_action_forgot_password),
+            onClick = { onAction(AccountAction.GoToForgotPassword) },
+        )
+        AwradTextButton(
+            text = stringResource(R.string.account_action_go_register),
+            onClick = { onAction(AccountAction.GoToRegister) },
+        )
     }
 }
 
@@ -57,9 +59,10 @@ internal fun RegisterForm(state: AccountUiState, onAction: (AccountAction) -> Un
             onClick = { onAction(AccountAction.Submit) },
             enabled = state.canSubmit,
         )
-        TextButton(onClick = { onAction(AccountAction.GoToSignIn) }) {
-            Text(text = stringResource(R.string.account_action_go_sign_in))
-        }
+        AwradTextButton(
+            text = stringResource(R.string.account_action_go_sign_in),
+            onClick = { onAction(AccountAction.GoToSignIn) },
+        )
     }
 }
 

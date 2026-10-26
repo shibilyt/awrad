@@ -3,8 +3,6 @@ package app.awrad.feature.account.settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -13,6 +11,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradPrimaryButton
+import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.feature.account.AccountPage
 import app.awrad.feature.account.BodyText
 import app.awrad.feature.account.CodeField
@@ -125,9 +124,10 @@ private fun EmailChangeCode(
             enabled = state.canResend,
             onClick = { onAction(ChangeEmailAction.ResendCode) },
         )
-        TextButton(onClick = { onAction(ChangeEmailAction.EditEmail) }) {
-            Text(text = stringResource(R.string.account_action_use_other_email))
-        }
+        AwradTextButton(
+            text = stringResource(R.string.account_action_use_other_email),
+            onClick = { onAction(ChangeEmailAction.EditEmail) },
+        )
     }
 }
 

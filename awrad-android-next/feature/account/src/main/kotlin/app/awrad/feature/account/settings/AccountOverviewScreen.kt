@@ -19,11 +19,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import app.awrad.core.designsystem.component.AwradSecondaryButton
 import app.awrad.core.domain.account.Account
 import app.awrad.feature.account.AccountPage
 import app.awrad.feature.account.BodyText
 import app.awrad.feature.account.R
-import app.awrad.feature.account.SecondaryButton
 
 /** The signed-in account: its email, links to its settings, and sign out. */
 @Composable
@@ -72,7 +72,7 @@ internal fun AccountOverviewScreen(
                 isDestructive = true,
             )
         }
-        SecondaryButton(
+        AwradSecondaryButton(
             text = stringResource(R.string.account_action_sign_out),
             onClick = { onAction(OverviewAction.SIGN_OUT) },
         )

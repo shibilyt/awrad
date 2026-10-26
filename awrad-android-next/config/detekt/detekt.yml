@@ -37,6 +37,24 @@ style:
     maxLineLength: 120
   UnusedPrivateMember:
     ignoreAnnotated: ['Preview']
+  ForbiddenImport:
+    active: true
+    # These Material components draw `primary` as text, focus or progress (unreadable on a dark background) or
+    # the decorative `outline` as a control border. Use the :core:designsystem component that picks the role.
+    excludes: ['**/core/designsystem/**']
+    imports:
+      - value: 'androidx.compose.material3.TextButton'
+        reason: 'Use AwradTextButton (accent or error text).'
+      - value: 'androidx.compose.material3.OutlinedButton'
+        reason: 'Use AwradSecondaryButton (outlineStrong border).'
+      - value: 'androidx.compose.material3.OutlinedTextField'
+        reason: 'Use AwradTextField (outlineStrong border, accent focus).'
+      - value: 'androidx.compose.material3.TextField'
+        reason: 'Use AwradTextField (outlineStrong border, accent focus).'
+      - value: 'androidx.compose.material3.LinearProgressIndicator'
+        reason: 'Use AwradLinearProgress (the progress role).'
+      - value: 'androidx.compose.material3.CircularProgressIndicator'
+        reason: 'Use AwradCircularProgress (the progress role).'
   ForbiddenComment:
     active: true
     comments:
@@ -66,6 +84,8 @@ Compose:
     active: true
   CompositionLocalAllowlist:
     active: true
+    # The design system's colour roles that Material's ColorScheme lacks (AwradTheme.colors).
+    allowedCompositionLocals: LocalAwradColors
   ContentEmitterReturningValues:
     active: true
   ModifierClickableOrder:

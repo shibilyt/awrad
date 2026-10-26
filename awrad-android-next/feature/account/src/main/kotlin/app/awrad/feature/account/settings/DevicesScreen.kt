@@ -14,7 +14,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -25,12 +24,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.awrad.core.designsystem.component.AwradSecondaryButton
+import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.domain.account.AccountSession
 import app.awrad.feature.account.AccountPage
 import app.awrad.feature.account.BodyText
 import app.awrad.feature.account.ConfirmDialog
 import app.awrad.feature.account.R
-import app.awrad.feature.account.SecondaryButton
 import app.awrad.feature.account.message
 import app.awrad.feature.account.pageStatus
 import java.time.Duration
@@ -65,7 +65,7 @@ internal fun DevicesScreen(
         val sessions = state.sessions
         if (sessions == null) {
             if (state.canRetry) {
-                SecondaryButton(
+                AwradSecondaryButton(
                     text = stringResource(R.string.account_action_retry),
                     onClick = { onAction(DevicesAction.Reload) },
                 )
@@ -73,7 +73,7 @@ internal fun DevicesScreen(
         } else {
             SessionList(sessions = sessions, now = state.loadedAt, onRevoke = { onAction(DevicesAction.Revoke(it)) })
             if (state.others.isEmpty()) BodyText(text = stringResource(R.string.account_devices_none_other))
-            SecondaryButton(
+            AwradSecondaryButton(
                 text = stringResource(R.string.account_action_revoke_others),
                 onClick = { onAction(DevicesAction.RevokeOthers) },
                 enabled = state.canRevoke,
@@ -125,9 +125,11 @@ private fun SessionRow(session: AccountSession, now: Instant, onRevoke: () -> Un
         } else {
             {
                 val description = stringResource(R.string.account_action_revoke_named, name)
-                TextButton(onClick = onRevoke, modifier = Modifier.semantics { contentDescription = description }) {
-                    Text(text = stringResource(R.string.account_action_revoke))
-                }
+                AwradTextButton(
+                    text = stringResource(R.string.account_action_revoke),
+                    onClick = onRevoke,
+                    modifier = Modifier.semantics { contentDescription = description },
+                )
             }
         },
     )

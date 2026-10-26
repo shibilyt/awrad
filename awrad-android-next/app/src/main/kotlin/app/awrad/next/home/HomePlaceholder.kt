@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +20,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.core.designsystem.component.AwradPrimaryButton
+import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.domain.onboarding.OnboardingStatusStore
 import app.awrad.next.R
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -62,7 +62,6 @@ fun HomePlaceholderRoute(
             Text(
                 text = stringResource(R.string.home_placeholder_title),
                 style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
@@ -74,9 +73,10 @@ fun HomePlaceholderRoute(
             Spacer(modifier = Modifier.height(24.dp))
             AwradPrimaryButton(text = stringResource(R.string.home_placeholder_account), onClick = onOpenAccount)
             Spacer(modifier = Modifier.height(8.dp))
-            TextButton(onClick = { viewModel.restartOnboarding(onRestartOnboarding) }) {
-                Text(text = stringResource(R.string.home_placeholder_restart))
-            }
+            AwradTextButton(
+                text = stringResource(R.string.home_placeholder_restart),
+                onClick = { viewModel.restartOnboarding(onRestartOnboarding) },
+            )
         }
     }
 }

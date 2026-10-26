@@ -1,5 +1,6 @@
 package app.awrad.feature.onboarding
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -62,7 +63,6 @@ internal fun OnboardingScreen(
             Text(
                 text = stringResource(R.string.onboarding_placeholder_title),
                 style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(40.dp))
@@ -75,7 +75,8 @@ internal fun OnboardingScreen(
     }
 }
 
-@Preview
+@Preview(name = "light")
+@Preview(name = "dark", uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun OnboardingScreenPreview() {
     AwradTheme {

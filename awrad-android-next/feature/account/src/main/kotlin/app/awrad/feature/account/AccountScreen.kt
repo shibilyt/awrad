@@ -3,7 +3,6 @@ package app.awrad.feature.account
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -13,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.awrad.core.designsystem.component.AwradCircularProgress
 import app.awrad.feature.account.settings.SignedInArea
 
 /**
@@ -56,7 +56,7 @@ internal fun AccountScreen(
     val step = state.step
     if (step == null) {
         Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            Box(contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+            Box(contentAlignment = Alignment.Center) { AwradCircularProgress() }
         }
         return
     }

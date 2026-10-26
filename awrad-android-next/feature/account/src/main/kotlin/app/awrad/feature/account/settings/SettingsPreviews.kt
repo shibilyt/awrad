@@ -1,5 +1,6 @@
 package app.awrad.feature.account.settings
 
+import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -12,7 +13,7 @@ import app.awrad.core.domain.account.AccountSession
 import app.awrad.core.domain.account.InputProblem
 import java.time.Instant
 
-/* Each signed-in page in English, Arabic (right to left) and Malayalam. */
+/* Each signed-in page in English, Arabic (right to left) and Malayalam, and in English in the dark theme. */
 
 private val Now = Instant.parse("2026-10-27T07:00:00Z")
 
@@ -101,6 +102,7 @@ private class DeleteAccountStates : PreviewParameterProvider<DeleteAccountUiStat
 @Preview(name = "en", showBackground = true)
 @Preview(name = "ar", showBackground = true, locale = "ar")
 @Preview(name = "ml", showBackground = true, locale = "ml")
+@Preview(name = "en dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun AccountOverviewPreview() {
     AwradTheme {
@@ -115,6 +117,7 @@ private fun AccountOverviewPreview() {
 @Preview(name = "en", showBackground = true)
 @Preview(name = "ar", showBackground = true, locale = "ar")
 @Preview(name = "ml", showBackground = true, locale = "ml")
+@Preview(name = "en dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun DevicesPreview(@PreviewParameter(DevicesStates::class) state: DevicesUiState) {
     AwradTheme { DevicesScreen(state = state, onAction = {}, onBack = {}) }
@@ -123,6 +126,7 @@ private fun DevicesPreview(@PreviewParameter(DevicesStates::class) state: Device
 @Preview(name = "en", showBackground = true)
 @Preview(name = "ar", showBackground = true, locale = "ar")
 @Preview(name = "ml", showBackground = true, locale = "ml")
+@Preview(name = "en dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun ChangePasswordPreview(@PreviewParameter(ChangePasswordStates::class) state: ChangePasswordUiState) {
     AwradTheme { ChangePasswordScreen(state = state, onAction = {}, onBack = {}) }
@@ -131,6 +135,7 @@ private fun ChangePasswordPreview(@PreviewParameter(ChangePasswordStates::class)
 @Preview(name = "en", showBackground = true)
 @Preview(name = "ar", showBackground = true, locale = "ar")
 @Preview(name = "ml", showBackground = true, locale = "ml")
+@Preview(name = "en dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun ChangeEmailPreview(@PreviewParameter(ChangeEmailStates::class) state: ChangeEmailUiState) {
     AwradTheme { ChangeEmailScreen(state = state, onAction = {}, onBack = {}, onFinish = {}) }
@@ -139,6 +144,7 @@ private fun ChangeEmailPreview(@PreviewParameter(ChangeEmailStates::class) state
 @Preview(name = "en", showBackground = true)
 @Preview(name = "ar", showBackground = true, locale = "ar")
 @Preview(name = "ml", showBackground = true, locale = "ml")
+@Preview(name = "en dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun DeleteAccountPreview(@PreviewParameter(DeleteAccountStates::class) state: DeleteAccountUiState) {
     AwradTheme { DeleteAccountScreen(state = state, onAction = {}, onBack = {}) }
