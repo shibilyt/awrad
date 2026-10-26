@@ -13,6 +13,7 @@ accounts:
     security: []
     parameters:
       - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+      - $ref: "../openapi.yaml#/components/parameters/AcceptLanguage"
     x-error-codes: [malformed_request, validation_failed, rate_limited]
     requestBody:
       required: true
@@ -88,6 +89,7 @@ resend_verification_code:
     security: []
     parameters:
       - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+      - $ref: "../openapi.yaml#/components/parameters/AcceptLanguage"
     x-error-codes: [malformed_request, validation_failed, rate_limited]
     requestBody:
       required: true
@@ -116,6 +118,7 @@ request_password_reset:
     security: []
     parameters:
       - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+      - $ref: "../openapi.yaml#/components/parameters/AcceptLanguage"
     x-error-codes: [malformed_request, validation_failed, rate_limited]
     requestBody:
       required: true

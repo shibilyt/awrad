@@ -285,6 +285,17 @@ components:
       description: UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST.
       schema:
         $ref: "#/components/schemas/Uuid"
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      required: false
+      description: >-
+        Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins;
+        default `en`). Clients send the app's current language.
+      schema:
+        type: string
+        maxLength: 256
+      example: ar
     RequiredIdempotencyKey:
       name: Idempotency-Key
       in: header
