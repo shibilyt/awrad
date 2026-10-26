@@ -12,7 +12,10 @@
     "retry": "Try again",
     "signIn": "Sign in",
     "register": "Create an account",
-    "openAccount": "Your account"
+    "openAccount": "Your account",
+    "notice": {
+      "account_deleted": "Your account is deleted, and you're signed out. The app on your phones keeps working offline."
+    }
   },
   "account": {
     "backToSignIn": "Back to sign in",
@@ -21,7 +24,9 @@
       "password": "Password",
       "newPassword": "New password",
       "code": "6-digit code",
-      "rememberMe": "Keep me signed in on this browser"
+      "rememberMe": "Keep me signed in on this browser",
+      "currentPassword": "Current password",
+      "newEmail": "New email"
     },
     "hints": {
       "password": "At least {{min}} characters. A few words you'll remember work well.",
@@ -41,7 +46,8 @@
       "register": "Create an account",
       "notice": {
         "verified": "Your email is verified. Sign in to continue.",
-        "password_reset": "Your password is changed. Sign in with the new one."
+        "password_reset": "Your password is changed. Sign in with the new one.",
+        "session_ended": "Your session has ended, maybe because you signed out on another device. Sign in again."
       }
     },
     "register": {
@@ -71,7 +77,16 @@
       "title": "Your account",
       "loading": "Loading your account…",
       "retry": "Try again",
-      "signOut": "Sign out"
+      "signOut": "Sign out",
+      "settings": "Account settings",
+      "devices": "Devices",
+      "changePassword": "Change password",
+      "changeEmail": "Change email",
+      "deleteAccount": "Delete account",
+      "notice": {
+        "password_changed": "Your password is changed. Every other device and browser is signed out.",
+        "email_changed": "Your email is changed."
+      }
     },
     "problems": {
       "validation_failed": "Check the highlighted fields.",
@@ -83,7 +98,11 @@
       "unauthenticated": "You're signed out. Sign in again.",
       "rate_limited": "Too many attempts. Wait a little and try again.",
       "unexpected": "Something went wrong. Try again.",
-      "network": "Couldn't reach Awrad. Check your connection and try again."
+      "network": "Couldn't reach Awrad. Check your connection and try again.",
+      "malformed_request": "Something went wrong with that request. Reload the page and try again.",
+      "not_found": "That was already gone. Reload the page to see the latest.",
+      "email_change_code_invalid": "That code is wrong or has expired. Use the code in the latest email, or ask for a new one.",
+      "email_taken": "That email now belongs to another account. Start again with a different email."
     },
     "fieldErrors": {
       "email_invalid": "Enter a valid email address.",
@@ -92,7 +111,68 @@
       "password_too_long": "Use at most 128 characters.",
       "password_too_common": "This password is too common. Choose a less predictable one.",
       "code_invalid": "Enter the 6-digit code from the email.",
-      "invalid": "Check this field."
+      "invalid": "Check this field.",
+      "current_password_required": "Enter your current password.",
+      "current_password_incorrect": "That isn't your current password.",
+      "email_unchanged": "That's already your account's email."
+    },
+    "backToAccount": "Back to your account",
+    "cancel": "Cancel",
+    "devices": {
+      "title": "Devices",
+      "intro": "Where your account is signed in. Signing a device out ends its session there; the app on it keeps working offline.",
+      "loading": "Loading your devices…",
+      "listLabel": "Signed-in devices",
+      "current": "This device",
+      "webBrowser": "Web browser",
+      "unknownDevice": "Unknown device",
+      "platform": {
+        "android": "Android",
+        "ios": "iPhone or iPad",
+        "web": "Web"
+      },
+      "details": "{{platform}} · Last used {{when}}",
+      "signOut": "Sign out",
+      "signOutNamed": "Sign out {{name}}",
+      "confirmTitle": "Sign out {{name}}?",
+      "confirmBody": "Your account will need to sign in again there. Practice data on that device stays.",
+      "signedOut": "{{name}} is signed out.",
+      "alreadyEnded": "That device was already signed out.",
+      "signOutOthers": "Sign out of all other devices",
+      "othersTitle": "Sign out of all other devices?",
+      "othersBody": "Every other phone and browser will need to sign in again. This one stays signed in.",
+      "othersSignedOut": "Every other device is signed out.",
+      "noOthers": "Your account isn't signed in anywhere else."
+    },
+    "password": {
+      "title": "Change password",
+      "intro": "Changing your password signs you out on every other device and browser. This one stays signed in, and we email you a notice.",
+      "submit": "Change password"
+    },
+    "email": {
+      "title": "Change email",
+      "intro": "We'll send a 6-digit code to the new address. Your email changes only after you enter it, and your current address gets a notice.",
+      "current": "Current email:",
+      "submit": "Send code"
+    },
+    "emailConfirm": {
+      "title": "Confirm your new email",
+      "enterCode": "Enter the 6-digit code we sent to your new email.",
+      "submit": "Change email",
+      "startAgain": "Use a different email"
+    },
+    "delete": {
+      "title": "Delete account",
+      "intro": "Deleting your account happens right away:",
+      "everythingDeleted": "Your account and everything Awrad keeps for it on the server are deleted.",
+      "signedOutEverywhere": "You're signed out on every device and browser.",
+      "deviceDataStays": "Practice data on your phones stays there, and the app keeps working offline.",
+      "confirmationEmail": "We send a confirmation to",
+      "noUndo": "There's no undo.",
+      "submit": "Delete account",
+      "confirmTitle": "Delete your account?",
+      "confirmBody": "Your account is deleted now and for good. This can't be undone.",
+      "confirm": "Delete my account"
     }
   },
   "language": {

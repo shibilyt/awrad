@@ -16,6 +16,12 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as VerifyEmailRouteImport } from './routes/verify-email'
+import { Route as AccountIndexRouteImport } from './routes/account/index'
+import { Route as AccountDeleteRouteImport } from './routes/account/delete'
+import { Route as AccountDevicesRouteImport } from './routes/account/devices'
+import { Route as AccountPasswordRouteImport } from './routes/account/password'
+import { Route as AccountEmailIndexRouteImport } from './routes/account/email/index'
+import { Route as AccountEmailConfirmRouteImport } from './routes/account/email/confirm'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,34 +58,81 @@ const VerifyEmailRoute = VerifyEmailRouteImport.update({
   path: '/verify-email',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountDeleteRoute = AccountDeleteRouteImport.update({
+  id: '/delete',
+  path: '/delete',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountDevicesRoute = AccountDevicesRouteImport.update({
+  id: '/devices',
+  path: '/devices',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountPasswordRoute = AccountPasswordRouteImport.update({
+  id: '/password',
+  path: '/password',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountEmailIndexRoute = AccountEmailIndexRouteImport.update({
+  id: '/email/',
+  path: '/email/',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountEmailConfirmRoute = AccountEmailConfirmRouteImport.update({
+  id: '/email/confirm',
+  path: '/email/confirm',
+  getParentRoute: () => AccountRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/account': typeof AccountRoute
+  '/account': typeof AccountRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-in': typeof SignInRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/account/delete': typeof AccountDeleteRoute
+  '/account/devices': typeof AccountDevicesRoute
+  '/account/password': typeof AccountPasswordRoute
+  '/account/': typeof AccountIndexRoute
+  '/account/email/confirm': typeof AccountEmailConfirmRoute
+  '/account/email/': typeof AccountEmailIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/account': typeof AccountRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-in': typeof SignInRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/account/delete': typeof AccountDeleteRoute
+  '/account/devices': typeof AccountDevicesRoute
+  '/account/password': typeof AccountPasswordRoute
+  '/account': typeof AccountIndexRoute
+  '/account/email/confirm': typeof AccountEmailConfirmRoute
+  '/account/email': typeof AccountEmailIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/account': typeof AccountRoute
+  '/account': typeof AccountRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-in': typeof SignInRoute
   '/verify-email': typeof VerifyEmailRoute
+  '/account/delete': typeof AccountDeleteRoute
+  '/account/devices': typeof AccountDevicesRoute
+  '/account/password': typeof AccountPasswordRoute
+  '/account/': typeof AccountIndexRoute
+  '/account/email/confirm': typeof AccountEmailConfirmRoute
+  '/account/email/': typeof AccountEmailIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,15 +144,26 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sign-in'
     | '/verify-email'
+    | '/account/delete'
+    | '/account/devices'
+    | '/account/password'
+    | '/account/'
+    | '/account/email/confirm'
+    | '/account/email/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/account'
     | '/forgot-password'
     | '/register'
     | '/reset-password'
     | '/sign-in'
     | '/verify-email'
+    | '/account/delete'
+    | '/account/devices'
+    | '/account/password'
+    | '/account'
+    | '/account/email/confirm'
+    | '/account/email'
   id:
     | '__root__'
     | '/'
@@ -109,11 +173,17 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/sign-in'
     | '/verify-email'
+    | '/account/delete'
+    | '/account/devices'
+    | '/account/password'
+    | '/account/'
+    | '/account/email/confirm'
+    | '/account/email/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AccountRoute: typeof AccountRoute
+  AccountRoute: typeof AccountRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   RegisterRoute: typeof RegisterRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -172,12 +242,75 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifyEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account/': {
+      id: '/account/'
+      path: '/'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/delete': {
+      id: '/account/delete'
+      path: '/delete'
+      fullPath: '/account/delete'
+      preLoaderRoute: typeof AccountDeleteRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/devices': {
+      id: '/account/devices'
+      path: '/devices'
+      fullPath: '/account/devices'
+      preLoaderRoute: typeof AccountDevicesRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/password': {
+      id: '/account/password'
+      path: '/password'
+      fullPath: '/account/password'
+      preLoaderRoute: typeof AccountPasswordRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/email/': {
+      id: '/account/email/'
+      path: '/email'
+      fullPath: '/account/email/'
+      preLoaderRoute: typeof AccountEmailIndexRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/email/confirm': {
+      id: '/account/email/confirm'
+      path: '/email/confirm'
+      fullPath: '/account/email/confirm'
+      preLoaderRoute: typeof AccountEmailConfirmRouteImport
+      parentRoute: typeof AccountRoute
+    }
   }
 }
 
+interface AccountRouteChildren {
+  AccountDeleteRoute: typeof AccountDeleteRoute
+  AccountDevicesRoute: typeof AccountDevicesRoute
+  AccountPasswordRoute: typeof AccountPasswordRoute
+  AccountIndexRoute: typeof AccountIndexRoute
+  AccountEmailConfirmRoute: typeof AccountEmailConfirmRoute
+  AccountEmailIndexRoute: typeof AccountEmailIndexRoute
+}
+
+const AccountRouteChildren: AccountRouteChildren = {
+  AccountDeleteRoute: AccountDeleteRoute,
+  AccountDevicesRoute: AccountDevicesRoute,
+  AccountPasswordRoute: AccountPasswordRoute,
+  AccountIndexRoute: AccountIndexRoute,
+  AccountEmailConfirmRoute: AccountEmailConfirmRoute,
+  AccountEmailIndexRoute: AccountEmailIndexRoute,
+}
+
+const AccountRouteWithChildren =
+  AccountRoute._addFileChildren(AccountRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AccountRoute: AccountRoute,
+  AccountRoute: AccountRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   RegisterRoute: RegisterRoute,
   ResetPasswordRoute: ResetPasswordRoute,

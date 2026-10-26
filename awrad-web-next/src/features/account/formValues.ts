@@ -10,10 +10,17 @@ export function text(data: FormData, name: string): string {
   return typeof value === "string" ? value : "";
 }
 
-export function readEmail(data: FormData, errors: Record<string, string>): string {
-  const email = emailInput(text(data, "email"));
-  if (email === null) errors["email"] = fieldErrorKey("email_invalid");
+export function readEmail(data: FormData, errors: Record<string, string>, name = "email"): string {
+  const email = emailInput(text(data, name));
+  if (email === null) errors[name] = fieldErrorKey("email_invalid");
   return email ?? "";
+}
+
+/** The current password, re-entered to confirm a sensitive change: only required. */
+export function readCurrentPassword(data: FormData, errors: Record<string, string>): string {
+  const password = text(data, "current_password");
+  if (password === "") errors["current_password"] = "account.fieldErrors.current_password_required";
+  return password;
 }
 
 /** A password being chosen: the shared length rule. The server also rejects common ones. */
