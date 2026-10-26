@@ -52,4 +52,26 @@ class GoalDefinitionValidationTest {
             )
         }
     }
+
+    @Test
+    fun `empty and out-of-range Hijri month days are invalid`() {
+        assertFailsWith<IllegalArgumentException> { Schedule.HijriMonthDays(emptySet()) }
+        assertFailsWith<IllegalArgumentException> { Schedule.HijriMonthDays(setOf(0)) }
+        assertFailsWith<IllegalArgumentException> { Schedule.HijriMonthDays(setOf(31)) }
+    }
+
+    @Test
+    fun `impossible yearly days are invalid, 29 February is not`() {
+        fun yearly(calendar: CalendarSystem, month: Int, day: Int) =
+            Schedule.Yearly(calendar, listOf(YearlyRange(YearlyDay(month, day), YearlyDay(month, day))))
+
+        assertFailsWith<IllegalArgumentException> { Schedule.Yearly(CalendarSystem.HIJRI, emptyList()) }
+        assertFailsWith<IllegalArgumentException> { yearly(CalendarSystem.GREGORIAN, 2, 30) }
+        assertFailsWith<IllegalArgumentException> { yearly(CalendarSystem.GREGORIAN, 4, 31) }
+        assertFailsWith<IllegalArgumentException> { yearly(CalendarSystem.HIJRI, 9, 31) }
+        assertFailsWith<IllegalArgumentException> { YearlyDay(13, 1) }
+        assertFailsWith<IllegalArgumentException> { YearlyDay(1, 0) }
+        yearly(CalendarSystem.GREGORIAN, 2, 29)
+        yearly(CalendarSystem.HIJRI, 12, 30)
+    }
 }

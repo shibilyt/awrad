@@ -4,6 +4,8 @@ import app.awrad.core.domain.goal.CountEntry
 import app.awrad.core.domain.goal.DateWindow
 import app.awrad.core.domain.goal.GoalDefinition
 import app.awrad.core.domain.goal.Requirement
+import app.awrad.core.domain.hijri.HijriCalendar
+import app.awrad.core.domain.hijri.HijriCorrections
 import app.awrad.core.domain.practice.WeekStart
 import java.time.LocalDate
 
@@ -43,26 +45,38 @@ public data class RequirementStanding(
  * - Per due date, tracker and days per period: the day itself against the daily target; not due when
  *   [isDueOn] says so. The period view of days per period is [daysPerPeriodOn].
  * - Cumulative total: from the start date to [date].
- * - Period total: the week or month containing [date], clipped to the active period; not due without due days.
+ * - Period total: the week, month or Hijri month containing [date], clipped to the active period; not due
+ *   without due days, or outside the Hijri table.
  * - Every `not_due` answer has the day as its window and that day's count inside the active period as progress.
+ *
+ * Hijri schedules and Hijri months read [hijriCorrections].
  */
 public fun GoalDefinition.standingOn(
     date: LocalDate,
     counts: List<CountEntry>,
     weekStart: WeekStart,
-): RequirementStanding = standingOn(date, CountIndex(counts), weekStart)
+    hijriCorrections: HijriCorrections,
+): RequirementStanding =
+    standingOn(date, CountIndex(counts), PeriodCalendar(weekStart, HijriCalendar(hijriCorrections)))
 
-internal fun GoalDefinition.standingOn(date: LocalDate, counts: CountIndex, weekStart: WeekStart): RequirementStanding =
-    when (val requirement = requirement) {
-        Requirement.PerDueDate, Requirement.Tracker, is Requirement.DaysPerPeriod -> dayStanding(date, counts)
-        Requirement.CumulativeTotal -> cumulativeStanding(date, counts)
-        is Requirement.PeriodTotal ->
-            periodTotalStanding(date, counts, calendarPeriodOf(date, requirement.period, weekStart))
-    }
+internal fun GoalDefinition.standingOn(
+    date: LocalDate,
+    counts: CountIndex,
+    calendar: PeriodCalendar,
+): RequirementStanding = when (val requirement = requirement) {
+    Requirement.PerDueDate, Requirement.Tracker, is Requirement.DaysPerPeriod -> dayStanding(date, counts, calendar)
+    Requirement.CumulativeTotal -> cumulativeStanding(date, counts)
+    is Requirement.PeriodTotal ->
+        periodTotalStanding(date, counts, calendar, calendar.periodOf(date, requirement.period))
+}
 
 /** The day itself against the daily target (per due date, tracker, and days per period's day view). */
-private fun GoalDefinition.dayStanding(date: LocalDate, counts: CountIndex): RequirementStanding =
-    if (isDueOn(date)) totals(DateWindow.day(date), date, counts, isDue = true) else notDue(date, counts)
+private fun GoalDefinition.dayStanding(date: LocalDate, counts: CountIndex, calendar: PeriodCalendar) =
+    if (isDueOn(date, calendar.hijri)) {
+        totals(DateWindow.day(date), date, counts, isDue = true)
+    } else {
+        notDue(date, counts)
+    }
 
 /** Cumulative progress from the start date to [date]; shared with completion. */
 internal fun GoalDefinition.cumulativeStanding(date: LocalDate, counts: CountIndex): RequirementStanding =
@@ -72,14 +86,15 @@ internal fun GoalDefinition.cumulativeStanding(date: LocalDate, counts: CountInd
         notDue(date, counts)
     }
 
-/** A week or month with no due days (outside the active period, fully paused) isn't due. */
+/** A period with no due days (outside the active period or the Hijri table, fully paused) isn't due. */
 private fun GoalDefinition.periodTotalStanding(
     date: LocalDate,
     counts: CountIndex,
-    calendarPeriod: DateWindow,
+    calendar: PeriodCalendar,
+    calendarPeriod: DateWindow?,
 ): RequirementStanding {
-    val window = activePeriod.clip(calendarPeriod)?.takeIf { date in activePeriod }
-    return if (window != null && window.days().any { isDueOn(it) }) {
+    val window = calendarPeriod?.let(activePeriod::clip)?.takeIf { date in activePeriod }
+    return if (window != null && window.days().any { isDueOn(it, calendar.hijri) }) {
         totals(window, date, counts, isDue = true)
     } else {
         notDue(date, counts)
