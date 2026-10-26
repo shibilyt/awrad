@@ -1,6 +1,6 @@
 # Slice 02: Accounts
 
-Status: 2a and 2b done 2026-10-27 (2b pending CI on `main`)
+Status: 2a and 2b done 2026-10-26 (2b pending CI on `main`)
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 2
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 Decided already: ADR-2026-07-12 (verified accounts, device sessions, rotating refresh tokens), ADR-2026-10-15 (browser cookie sessions), `contracts/api/STYLE.md` §7, §11, §12
@@ -228,7 +228,7 @@ No new shared input rules: the forms reuse `email_input` and `password_policy`.
 
 ## Integration evidence (step 6)
 
-Run 2026-10-27 with one account signed in on the web, iOS and Android at once, against `mix phx.server` on port 4100.
+Run 2026-10-26 with one account signed in on the web, iOS and Android at once, against `mix phx.server` on port 4100.
 
 | Flow | Result |
 |---|---|

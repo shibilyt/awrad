@@ -263,7 +263,7 @@ Use this format:
 - Evidence: `docs/slices/02-accounts.md`, root ADR-2026-10-26 (accounts)
 - Commit: see git log
 
-### 2026-10-27 — Slice 2b: account settings
+### 2026-10-26 — Slice 2b: account settings
 
 - Area: Cross-project
 - Change:
