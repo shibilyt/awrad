@@ -609,6 +609,47 @@ The OpenAPI 3.1 spec (`contracts/api/`) is the API source of truth for three cli
 
 None.
 
+## ADR-2026-10-26: Hijri dates from one shared table, with month-start corrections
+
+Status: Accepted
+
+### Context
+
+Hijri goals (white days, Ramadan, Arafah, six days of Shawwal) must be due on the same day on every device and on the server. In the frozen apps:
+- Android uses two Umm al-Qura engines (`HijrahDate` for goals, ICU for wirds), and iOS uses Foundation's.
+- The server has no Hijri calendar, so it treats Hijri goals as never due.
+- Elixir has no Umm al-Qura library.
+- No platform lets users follow local moon sighting, which can differ from Umm al-Qura by a day or two, and not by the same amount every month.
+
+### Decision
+
+- **One table:** `contracts/hijri-calendar/v1/umm-al-qura.json` holds the Gregorian start of every Umm al-Qura month from 1400 to 1500 AH. It was generated from `java.time` and Foundation, which agree on all 1,213 month starts. Every platform reads this table; none uses a Hijri library for rules.
+- **Month-start corrections, not a fixed offset:** a correction `{year, month, offset_days}` moves that month's start, and every later month's until the next correction.
+  - It may be at most 2 days from the table.
+  - Every adjusted month must still have 29 or 30 days.
+  - At most one correction per month.
+  - Invalid sets are rejected with the `hijri_corrections_validity` codes.
+- **Ownership:**
+  - The account's own corrections belong to the account practice policy, so all devices agree. They're stored and synced in the practice-settings slice.
+  - Regional corrections published by the server (a sighting authority) are a later option. They merge before the rules run, and the account's own corrections win for the months they cover.
+- **Day boundary:** the Hijri date is the date of the effective practice day, so it changes at Maghrib only with the Maghrib reset.
+- **Outside the table** there's no Hijri date: Hijri schedules and Hijri-month periods are never due there.
+
+### Consequences
+
+- Parity comes from data rather than from libraries agreeing, and the server needs no dependency.
+- The table must be extended before 1500 AH (2077).
+- Changing a correction changes which past days of that month were due. Counts stay on their Gregorian dates, so nothing is rewritten.
+
+### Evidence
+
+- `contracts/hijri-calendar/v1/` (table, schema, fixtures)
+- `docs/slices/01b-domain-hijri.md`
+
+### Supersedes
+
+None. It replaces the frozen apps' platform Hijri calendars (`awrad-android/prd/decisions/015-dual-calendar-system.md` accepted sighting differences without an adjustment).
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

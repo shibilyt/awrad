@@ -30,6 +30,10 @@
       },
       "week_start": {
         "$ref": "urn:awrad:goal-model:1#/$defs/week_start"
+      },
+      "hijri_corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections",
+        "description": "The account's Hijri month-start corrections. Absent means none."
       }
     }
   },
@@ -918,6 +922,340 @@
         },
         "qualifying_days": 1,
         "required_days": 2
+      }
+    },
+    {
+      "id": "shawwal_six_days_met",
+      "description": "Six days of Shawwal 1447 (20 March – 17 April).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 10,
+                  "day": 2
+                },
+                "end": {
+                  "month": 10,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "hijri_month",
+            "days": 6
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-03-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-08",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-04-10",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-03-20",
+          "to": "2026-04-17"
+        },
+        "qualifying_days": 6,
+        "required_days": 6
+      }
+    },
+    {
+      "id": "shawwal_eid_does_not_qualify",
+      "description": "Eid (1 Shawwal) isn't scheduled, so it doesn't qualify.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 10,
+                  "day": 2
+                },
+                "end": {
+                  "month": 10,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "hijri_month",
+            "days": 6
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-03-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-08",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-04-10",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_met",
+        "window": {
+          "from": "2026-03-20",
+          "to": "2026-04-17"
+        },
+        "qualifying_days": 5,
+        "required_days": 6
+      }
+    },
+    {
+      "id": "outside_shawwal_not_due",
+      "description": "Dhu al-Qa'dah has no due days: not due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 10,
+                  "day": 2
+                },
+                "end": {
+                  "month": 10,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "hijri_month",
+            "days": 6
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-03-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-08",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-05-01",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_due",
+        "window": {
+          "from": "2026-05-01",
+          "to": "2026-05-01"
+        },
+        "qualifying_days": 0,
+        "required_days": 0
+      }
+    },
+    {
+      "id": "hijri_month_required_capped",
+      "description": "Starting on 14 April leaves 4 due days of Shawwal, so 4 are required.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 10,
+                  "day": 2
+                },
+                "end": {
+                  "month": 10,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-04-14",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "hijri_month",
+            "days": 6
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-04-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-17",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-04-17",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "met",
+        "window": {
+          "from": "2026-04-14",
+          "to": "2026-04-17"
+        },
+        "qualifying_days": 4,
+        "required_days": 4
       }
     }
   ]

@@ -1,0 +1,493 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "hijri_date",
+  "description": "The Hijri date of a day: the Umm al-Qura month table (umm-al-qura.json) with the account's month-start corrections. A correction moves its month's start, and every later month's, until the next correction. Outside the table both answers are null. The day is an effective practice day, so with the Maghrib reset the Hijri date changes at Maghrib.",
+  "references": [
+    "CONTEXT.md#goal-language (Hijri date, Hijri correction)",
+    "docs/slices/01b-domain-hijri.md",
+    "DECISIONS.md ADR-2026-10-26"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "date",
+      "corrections"
+    ],
+    "properties": {
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      },
+      "corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "hijri",
+      "month_length"
+    ],
+    "properties": {
+      "hijri": {
+        "oneOf": [
+          {
+            "$ref": "urn:awrad:hijri-calendar:1#/$defs/hijri_date"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "month_length": {
+        "oneOf": [
+          {
+            "enum": [
+              29,
+              30
+            ]
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "ramadan_1447_first_day",
+      "description": "1 Ramadan 1447 is 18 February 2026.",
+      "given": {
+        "date": "2026-02-18",
+        "corrections": []
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 9,
+          "day": 1
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "ramadan_1447_last_day",
+      "description": "Ramadan 1447 has 30 days.",
+      "given": {
+        "date": "2026-03-19",
+        "corrections": []
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 9,
+          "day": 30
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "eid_al_fitr_1447",
+      "description": "1 Shawwal 1447.",
+      "given": {
+        "date": "2026-03-20",
+        "corrections": []
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 10,
+          "day": 1
+        },
+        "month_length": 29
+      }
+    },
+    {
+      "id": "ramadan_1446_has_29_days",
+      "description": "29 Ramadan 1446 is its last day.",
+      "given": {
+        "date": "2025-03-29",
+        "corrections": []
+      },
+      "expect": {
+        "hijri": {
+          "year": 1446,
+          "month": 9,
+          "day": 29
+        },
+        "month_length": 29
+      }
+    },
+    {
+      "id": "year_end",
+      "description": "29 Dhu al-Hijjah 1447.",
+      "given": {
+        "date": "2026-06-15",
+        "corrections": []
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 12,
+          "day": 29
+        },
+        "month_length": 29
+      }
+    },
+    {
+      "id": "new_year",
+      "description": "1 Muharram 1448.",
+      "given": {
+        "date": "2026-06-16",
+        "corrections": []
+      },
+      "expect": {
+        "hijri": {
+          "year": 1448,
+          "month": 1,
+          "day": 1
+        },
+        "month_length": 29
+      }
+    },
+    {
+      "id": "table_first_day",
+      "description": "1 Muharram 1400, the first day of the table.",
+      "given": {
+        "date": "1979-11-21",
+        "corrections": []
+      },
+      "expect": {
+        "hijri": {
+          "year": 1400,
+          "month": 1,
+          "day": 1
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "before_table",
+      "description": "Before the table: no Hijri date.",
+      "given": {
+        "date": "1979-11-20",
+        "corrections": []
+      },
+      "expect": {
+        "hijri": null,
+        "month_length": null
+      }
+    },
+    {
+      "id": "table_last_day",
+      "description": "30 Dhu al-Hijjah 1500, the last day of the table.",
+      "given": {
+        "date": "2077-11-16",
+        "corrections": []
+      },
+      "expect": {
+        "hijri": {
+          "year": 1500,
+          "month": 12,
+          "day": 30
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "after_table",
+      "description": "After the table: no Hijri date.",
+      "given": {
+        "date": "2077-11-17",
+        "corrections": []
+      },
+      "expect": {
+        "hijri": null,
+        "month_length": null
+      }
+    },
+    {
+      "id": "correction_delays_month_start",
+      "description": "Ramadan starts a day later locally: the table's 1 Ramadan is 30 Sha'ban.",
+      "given": {
+        "date": "2026-02-18",
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 8,
+          "day": 30
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "corrected_month_first_day",
+      "description": "So 1 Ramadan is 19 February.",
+      "given": {
+        "date": "2026-02-19",
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 9,
+          "day": 1
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "correction_carries_forward",
+      "description": "The correction carries forward: Shawwal also starts a day later.",
+      "given": {
+        "date": "2026-03-20",
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 9,
+          "day": 30
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "carried_forward_next_month",
+      "description": "1 Shawwal is 21 March.",
+      "given": {
+        "date": "2026-03-21",
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 10,
+          "day": 1
+        },
+        "month_length": 29
+      }
+    },
+    {
+      "id": "later_correction_resets",
+      "description": "Shawwal starts on the table's date again, so Ramadan has 29 days.",
+      "given": {
+        "date": "2026-03-19",
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          },
+          {
+            "year": 1447,
+            "month": 10,
+            "offset_days": 0
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 9,
+          "day": 29
+        },
+        "month_length": 29
+      }
+    },
+    {
+      "id": "correction_order_does_not_matter",
+      "description": "The same corrections listed the other way round.",
+      "given": {
+        "date": "2026-03-19",
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 10,
+            "offset_days": 0
+          },
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 9,
+          "day": 29
+        },
+        "month_length": 29
+      }
+    },
+    {
+      "id": "negative_correction",
+      "description": "Shawwal starts a day early, after a 29-day Ramadan.",
+      "given": {
+        "date": "2026-03-19",
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 10,
+            "offset_days": -1
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 10,
+          "day": 1
+        },
+        "month_length": 29
+      }
+    },
+    {
+      "id": "earlier_months_unchanged",
+      "description": "A correction never moves earlier months' starts.",
+      "given": {
+        "date": "2025-12-25",
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 7,
+          "day": 5
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "two_days_in_steps",
+      "description": "+1 on Dhu al-Hijjah 1446 then +2 on Muharram 1447: every month still has 29 or 30 days.",
+      "given": {
+        "date": "2025-06-27",
+        "corrections": [
+          {
+            "year": 1446,
+            "month": 12,
+            "offset_days": 1
+          },
+          {
+            "year": 1447,
+            "month": 1,
+            "offset_days": 2
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1446,
+          "month": 12,
+          "day": 30
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "two_days_in_steps_new_year",
+      "description": "1 Muharram 1447 is two days after the table's.",
+      "given": {
+        "date": "2025-06-28",
+        "corrections": [
+          {
+            "year": 1446,
+            "month": 12,
+            "offset_days": 1
+          },
+          {
+            "year": 1447,
+            "month": 1,
+            "offset_days": 2
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1447,
+          "month": 1,
+          "day": 1
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "correction_moves_table_start",
+      "description": "A −1 correction on the first month moves the table's start a day earlier.",
+      "given": {
+        "date": "1979-11-20",
+        "corrections": [
+          {
+            "year": 1400,
+            "month": 1,
+            "offset_days": -1
+          }
+        ]
+      },
+      "expect": {
+        "hijri": {
+          "year": 1400,
+          "month": 1,
+          "day": 1
+        },
+        "month_length": 30
+      }
+    },
+    {
+      "id": "correction_moves_table_end",
+      "description": "A −1 correction on the last month moves the table's end a day earlier.",
+      "given": {
+        "date": "2077-11-16",
+        "corrections": [
+          {
+            "year": 1500,
+            "month": 12,
+            "offset_days": -1
+          }
+        ]
+      },
+      "expect": {
+        "hijri": null,
+        "month_length": null
+      }
+    }
+  ]
+}

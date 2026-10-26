@@ -38,7 +38,7 @@ const sharedSchemas = readdirSync(root)
   )
   .filter((schema) => String(schema.$id ?? "").startsWith("urn:awrad:") && String(schema.$schema).includes("2020-12"));
 
-function newAjv() {
+export function newAjv() {
   const ajv = new Ajv2020({ allErrors: true, strict: true });
   addFormats(ajv);
   for (const schema of sharedSchemas) ajv.addSchema(schema);

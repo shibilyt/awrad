@@ -1,0 +1,368 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "hijri_corrections_validity",
+  "description": "Which sets of month-start corrections are invalid, and why. A correction must be within 2 days of the table, inside the table, and one per month; every adjusted month must still have 29 or 30 days (checked only when the rest is valid). Platforms reject invalid sets wherever corrections enter (settings, sync). Error codes are listed alphabetically.",
+  "references": [
+    "docs/slices/01b-domain-hijri.md",
+    "DECISIONS.md ADR-2026-10-26"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "corrections"
+    ],
+    "properties": {
+      "corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections_shape"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "valid",
+      "errors"
+    ],
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      },
+      "errors": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "enum": [
+            "duplicate_month",
+            "month_length_invalid",
+            "month_out_of_range",
+            "offset_out_of_range"
+          ]
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "none",
+      "description": "No corrections.",
+      "given": {
+        "corrections": []
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "one_day_later",
+      "description": "Ramadan 1447 a day later (Sha'ban becomes 30 days).",
+      "given": {
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "zero_offset",
+      "description": "A correction back to the table's date.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          },
+          {
+            "year": 1447,
+            "month": 10,
+            "offset_days": 0
+          }
+        ]
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "two_days_in_steps",
+      "description": "+2 is reached through a +1 the month before.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1446,
+            "month": 12,
+            "offset_days": 1
+          },
+          {
+            "year": 1447,
+            "month": 1,
+            "offset_days": 2
+          }
+        ]
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "first_and_last_month",
+      "description": "The table's first and last months can be corrected.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1400,
+            "month": 1,
+            "offset_days": -1
+          },
+          {
+            "year": 1500,
+            "month": 12,
+            "offset_days": -1
+          }
+        ]
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "offset_three_days_later",
+      "description": "More than 2 days from the table.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 3
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "offset_out_of_range"
+        ]
+      }
+    },
+    {
+      "id": "offset_three_days_earlier",
+      "description": "More than 2 days from the table.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": -3
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "offset_out_of_range"
+        ]
+      }
+    },
+    {
+      "id": "year_before_table",
+      "description": "1399 is before the table.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1399,
+            "month": 12,
+            "offset_days": 0
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "month_out_of_range"
+        ]
+      }
+    },
+    {
+      "id": "year_after_table",
+      "description": "1501 is after the table.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1501,
+            "month": 1,
+            "offset_days": 0
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "month_out_of_range"
+        ]
+      }
+    },
+    {
+      "id": "month_zero",
+      "description": "Months are 1–12.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 0,
+            "offset_days": 0
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "month_out_of_range"
+        ]
+      }
+    },
+    {
+      "id": "month_thirteen",
+      "description": "Months are 1–12.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 13,
+            "offset_days": 0
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "month_out_of_range"
+        ]
+      }
+    },
+    {
+      "id": "duplicate_month",
+      "description": "Two corrections for Ramadan 1447.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          },
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 0
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "duplicate_month"
+        ]
+      }
+    },
+    {
+      "id": "previous_month_31_days",
+      "description": "Shawwal +1 would give the 30-day Ramadan 1447 a 31st day.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 10,
+            "offset_days": 1
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "month_length_invalid"
+        ]
+      }
+    },
+    {
+      "id": "previous_month_28_days",
+      "description": "Ramadan −1 would leave the 29-day Sha'ban 1447 with 28 days.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": -1
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "month_length_invalid"
+        ]
+      }
+    },
+    {
+      "id": "two_days_at_once",
+      "description": "+2 straight after an uncorrected 29-day month gives it 31 days.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1447,
+            "month": 1,
+            "offset_days": 2
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "month_length_invalid"
+        ]
+      }
+    },
+    {
+      "id": "several_errors",
+      "description": "All errors except month length (which needs a well-formed set), alphabetically.",
+      "given": {
+        "corrections": [
+          {
+            "year": 1501,
+            "month": 1,
+            "offset_days": 3
+          },
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          },
+          {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 0
+          }
+        ]
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "duplicate_month",
+          "month_out_of_range",
+          "offset_out_of_range"
+        ]
+      }
+    }
+  ]
+}

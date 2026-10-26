@@ -61,10 +61,12 @@ jobs:
           shared='^(mise\.toml|\.github/workflows/ci\.yml)$'
           match() { grep -Eq "$1" <<< "$changed" && echo true || echo false; }
           echo "contracts=$(match "^(contracts/|scripts/)|$shared")" >> "$GITHUB_OUTPUT"
-          echo "android_next=$(match "^awrad-android-next/|$shared")" >> "$GITHUB_OUTPUT"
+          # Android, iOS and the server run the shared domain fixtures and read the Hijri table.
+          domain='^contracts/(goal-model|hijri-calendar)/'
+          echo "android_next=$(match "^awrad-android-next/|$domain|$shared")" >> "$GITHUB_OUTPUT"
           # The server's contract tests read contracts/api/openapi.bundled.json.
-          echo "server_next=$(match "^(awrad-server-next/|contracts/api/)|$shared")" >> "$GITHUB_OUTPUT"
-          echo "ios_next=$(match "^(awrad-ios-next/|\.xcode-version$)|$shared")" >> "$GITHUB_OUTPUT"
+          echo "server_next=$(match "^(awrad-server-next/|contracts/api/)|$domain|$shared")" >> "$GITHUB_OUTPUT"
+          echo "ios_next=$(match "^(awrad-ios-next/|\.xcode-version$)|$domain|$shared")" >> "$GITHUB_OUTPUT"
           # The web app's generated types and test mocks come from contracts/api/openapi.bundled.json.
           echo "web_next=$(match "^(awrad-web-next/|contracts/api/)|$shared")" >> "$GITHUB_OUTPUT"
 

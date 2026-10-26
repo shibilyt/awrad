@@ -32,6 +32,10 @@
       },
       "week_start": {
         "$ref": "urn:awrad:goal-model:1#/$defs/week_start"
+      },
+      "hijri_corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections",
+        "description": "The account's Hijri month-start corrections. Absent means none."
       }
     }
   },
@@ -1249,6 +1253,648 @@
       },
       "expect": {
         "current": 3
+      }
+    },
+    {
+      "id": "ramadan_streak_spans_years",
+      "description": "Every day of Ramadan 1446 (29 days) and the first 3 of Ramadan 1447: the year between isn't due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-02-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2025-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-20",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-02-20",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 32
+      }
+    },
+    {
+      "id": "ramadan_streak_broken_last_year",
+      "description": "Missing 29 Ramadan 1446 breaks it.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 9,
+                  "day": 1
+                },
+                "end": {
+                  "month": 9,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-02-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2025-03-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-20",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-02-20",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3
+      }
+    },
+    {
+      "id": "white_days_streak",
+      "description": "White days of Sha'ban and Ramadan 1447 met; Rajab's weren't.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "hijri_month_days",
+            "days": [
+              13,
+              14,
+              15
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-01-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-02-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-02-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-04",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-03-04",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 6
+      }
+    },
+    {
+      "id": "hijri_month_period_streak",
+      "description": "Rajab and Sha'ban 1447 met; Ramadan in progress doesn't break it.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2025-12-21",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "hijri_month"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2025-12-25",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-01-25",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-02-20",
+            "session": null,
+            "count": 500
+          }
+        ],
+        "date": "2026-02-25",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2
+      }
+    },
+    {
+      "id": "shawwal_six_days_streak",
+      "description": "Six days in Shawwal 1446 and 1447: the months between have no due days and are skipped.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "yearly",
+            "calendar": "hijri",
+            "ranges": [
+              {
+                "start": {
+                  "month": 10,
+                  "day": 2
+                },
+                "end": {
+                  "month": 10,
+                  "day": 30
+                }
+              }
+            ]
+          },
+          "active_period": {
+            "start_date": "2025-03-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "hijri_month",
+            "days": 6
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2025-04-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-04-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-04-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-04-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-04-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2025-04-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-03-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-04-08",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-04-17",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2
       }
     }
   ]

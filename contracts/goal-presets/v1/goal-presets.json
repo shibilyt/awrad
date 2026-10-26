@@ -1,0 +1,242 @@
+{
+  "version": 1,
+  "description": "Built-in goal presets: seasons and occasions offered as shortcuts when creating a goal. Adding a preset changes no rule or fixture.",
+  "presets": [
+    {
+      "key": "ramadan",
+      "schedule": {
+        "kind": "yearly",
+        "calendar": "hijri",
+        "ranges": [
+          {
+            "start": {
+              "month": 9,
+              "day": 1
+            },
+            "end": {
+              "month": 9,
+              "day": 30
+            }
+          }
+        ]
+      },
+      "requirement": null
+    },
+    {
+      "key": "ramadan_last_ten",
+      "schedule": {
+        "kind": "yearly",
+        "calendar": "hijri",
+        "ranges": [
+          {
+            "start": {
+              "month": 9,
+              "day": 21
+            },
+            "end": {
+              "month": 9,
+              "day": 30
+            }
+          }
+        ]
+      },
+      "requirement": null
+    },
+    {
+      "key": "ramadan_odd_nights",
+      "schedule": {
+        "kind": "yearly",
+        "calendar": "hijri",
+        "ranges": [
+          {
+            "start": {
+              "month": 9,
+              "day": 21
+            },
+            "end": {
+              "month": 9,
+              "day": 21
+            }
+          },
+          {
+            "start": {
+              "month": 9,
+              "day": 23
+            },
+            "end": {
+              "month": 9,
+              "day": 23
+            }
+          },
+          {
+            "start": {
+              "month": 9,
+              "day": 25
+            },
+            "end": {
+              "month": 9,
+              "day": 25
+            }
+          },
+          {
+            "start": {
+              "month": 9,
+              "day": 27
+            },
+            "end": {
+              "month": 9,
+              "day": 27
+            }
+          },
+          {
+            "start": {
+              "month": 9,
+              "day": 29
+            },
+            "end": {
+              "month": 9,
+              "day": 29
+            }
+          }
+        ]
+      },
+      "requirement": null
+    },
+    {
+      "key": "dhul_hijjah_first_ten",
+      "schedule": {
+        "kind": "yearly",
+        "calendar": "hijri",
+        "ranges": [
+          {
+            "start": {
+              "month": 12,
+              "day": 1
+            },
+            "end": {
+              "month": 12,
+              "day": 10
+            }
+          }
+        ]
+      },
+      "requirement": null
+    },
+    {
+      "key": "day_of_arafah",
+      "schedule": {
+        "kind": "yearly",
+        "calendar": "hijri",
+        "ranges": [
+          {
+            "start": {
+              "month": 12,
+              "day": 9
+            },
+            "end": {
+              "month": 12,
+              "day": 9
+            }
+          }
+        ]
+      },
+      "requirement": null
+    },
+    {
+      "key": "ashura",
+      "schedule": {
+        "kind": "yearly",
+        "calendar": "hijri",
+        "ranges": [
+          {
+            "start": {
+              "month": 1,
+              "day": 9
+            },
+            "end": {
+              "month": 1,
+              "day": 10
+            }
+          }
+        ]
+      },
+      "requirement": null
+    },
+    {
+      "key": "white_days",
+      "schedule": {
+        "kind": "hijri_month_days",
+        "days": [
+          13,
+          14,
+          15
+        ]
+      },
+      "requirement": null
+    },
+    {
+      "key": "sacred_months",
+      "schedule": {
+        "kind": "yearly",
+        "calendar": "hijri",
+        "ranges": [
+          {
+            "start": {
+              "month": 1,
+              "day": 1
+            },
+            "end": {
+              "month": 1,
+              "day": 30
+            }
+          },
+          {
+            "start": {
+              "month": 7,
+              "day": 1
+            },
+            "end": {
+              "month": 7,
+              "day": 30
+            }
+          },
+          {
+            "start": {
+              "month": 11,
+              "day": 1
+            },
+            "end": {
+              "month": 12,
+              "day": 30
+            }
+          }
+        ]
+      },
+      "requirement": null
+    },
+    {
+      "key": "shawwal_six_days",
+      "schedule": {
+        "kind": "yearly",
+        "calendar": "hijri",
+        "ranges": [
+          {
+            "start": {
+              "month": 10,
+              "day": 2
+            },
+            "end": {
+              "month": 10,
+              "day": 30
+            }
+          }
+        ]
+      },
+      "requirement": {
+        "type": "days_per_period",
+        "period": "hijri_month",
+        "days": 6
+      }
+    }
+  ]
+}

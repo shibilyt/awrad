@@ -17,10 +17,23 @@ The calendar pattern that determines which days a goal is due:
 - every N days from an anchor date;
 - selected days of the month (a day past the month's end falls on its last day, so the 31st is 30 April);
 - specific dates;
-- **one time**: no repeating pattern, so the goal is due every day of its active period until it's completed.
+- **one time**: no repeating pattern, so the goal is due every day of its active period until it's completed;
+- selected days of every **Hijri month** (white days: 13–15);
+- **yearly**: dates or date ranges every year, in the Gregorian or the Hijri calendar. A range may run over the year end.
 
-Hijri, yearly and seasonal schedules follow in slice 1b.
+A Hijri day 30 falls on the 29th in a 29-day month, and 29 February on the 28th in a common year.
 _Avoid_: Target period, recurrence (as a user-facing term)
+
+**Hijri date**:
+The Hijri date of an effective practice day, from the shared Umm al-Qura table and the account's **Hijri corrections**. With the Maghrib reset it changes at Maghrib; with the midnight reset, at midnight. Outside the table (1400–1500 AH) there's none, and Hijri schedules aren't due.
+
+**Hijri correction**:
+A month-start correction for local moon sighting: "Ramadan 1447 started a day later here". It moves that month and every later month until the next correction. It's at most 2 days from the table, and every month still has 29 or 30 days. It's part of the account practice policy.
+_Avoid_: Hijri offset (a fixed shift for every month)
+
+**Goal preset**:
+A built-in shortcut that fills in a goal's schedule, and sometimes its requirement: Ramadan, the white days, six days of Shawwal. The goal keeps the full schedule; the preset's key is only a label. Users build their own occasions with the same schedules.
+_Avoid_: Season (as a schedule kind)
 
 **Active period**:
 The span during which a goal can be due: from its start date, until its end date or the last day of its duration (start + N − 1), whichever comes first. Both ends are inclusive.
@@ -46,7 +59,7 @@ The rule that decides whether a goal is met within a window. One of:
 - **Days per period:** a number of qualifying days per week or month (e.g. 5 of 7 days a week). A day qualifies when it meets the daily target.
 - **Tracker:** no target; any count is progress.
 
-Week-based windows start on the account's **week start**.
+Periods are a week, a month or a **Hijri month**. Week-based windows start on the account's **week start**.
 _Avoid_: Repeat, cadence, streak rule
 
 **Completion**:
@@ -68,7 +81,7 @@ _Avoid_: A separate goal target
 ## Practice settings language
 
 **Account practice policy**:
-The account-shared choices that shape practice interpretation across devices: day-end rule, prayer calculation method, madhab, and **week start** (Saturday, Sunday or Monday; default Monday). It has one canonical revision per account.
+The account-shared choices that shape practice interpretation across devices: day-end rule, prayer calculation method, madhab, **week start** (Saturday, Sunday or Monday; default Monday), and **Hijri corrections**. It has one canonical revision per account.
 _Avoid_: Device settings, location profile
 
 **Device context**:

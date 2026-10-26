@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:awrad:goal-presets:1",
+  "title": "Awrad goal presets v1",
+  "description": "Built-in shortcuts for creating goals (seasons and occasions). A preset fills in a goal's schedule, and sometimes its requirement; the rules never read the key. See README.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "description", "presets"],
+  "properties": {
+    "version": { "const": 1 },
+    "description": { "type": "string" },
+    "presets": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/preset" }
+    }
+  },
+  "$defs": {
+    "preset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "schedule", "requirement"],
+      "properties": {
+        "key": {
+          "description": "Stable catalog key (ADR-2026-07-13). Display names live in each platform's localization resources as goal_preset_<key>.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "schedule": { "$ref": "urn:awrad:goal-model:1#/$defs/schedule" },
+        "requirement": {
+          "description": "null: the user picks the requirement.",
+          "oneOf": [{ "$ref": "urn:awrad:goal-model:1#/$defs/requirement" }, { "type": "null" }]
+        }
+      }
+    }
+  }
+}
