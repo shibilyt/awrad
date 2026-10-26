@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Titles -->
+    <string name="account_title_sign_in">تسجيل الدخول</string>
+    <string name="account_title_register">إنشاء حساب</string>
+    <string name="account_title_verify">تأكيد بريدك الإلكتروني</string>
+    <string name="account_title_forgot">إعادة تعيين كلمة المرور</string>
+    <string name="account_title_reset">اختر كلمة مرور جديدة</string>
+    <string name="account_title_signed_in">حسابك</string>
+
+    <!-- Body text -->
+    <string name="account_intro">الحساب اختياري. كل شيء يعمل على هذا الجهاز بدونه.</string>
+    <string name="account_forgot_body">أدخل البريد الإلكتروني لحسابك وسنرسل إليك رمزًا لإعادة تعيين كلمة المرور.</string>
+    <string name="account_code_sent_to">أدخل الرمز المكوّن من 6 أرقام الذي أرسلناه إلى %1$s. يبقى صالحًا لمدة 15 دقيقة.</string>
+    <string name="account_signed_in_as">تم تسجيل الدخول باسم</string>
+    <string name="account_signed_in_body">تبقى أورادك وتقدّمك على هذا الجهاز، ولا يحذفها تسجيل الخروج.</string>
+
+    <!-- Fields -->
+    <string name="account_field_email">البريد الإلكتروني</string>
+    <string name="account_field_password">كلمة المرور</string>
+    <string name="account_field_new_password">كلمة المرور الجديدة</string>
+    <string name="account_field_code">الرمز المكوّن من 6 أرقام</string>
+
+    <!-- Actions -->
+    <string name="account_action_sign_in">تسجيل الدخول</string>
+    <string name="account_action_register">إنشاء الحساب</string>
+    <string name="account_action_verify">تأكيد</string>
+    <string name="account_action_send_code">إرسال الرمز</string>
+    <string name="account_action_reset_password">تعيين كلمة المرور الجديدة</string>
+    <string name="account_action_resend">إرسال رمز جديد</string>
+    <string name="account_action_resend_wait">إرسال رمز جديد (%1$s)</string>
+    <string name="account_action_forgot_password">نسيت كلمة المرور؟</string>
+    <string name="account_action_go_register">إنشاء حساب</string>
+    <string name="account_action_go_sign_in">لدي حساب بالفعل</string>
+    <string name="account_action_sign_out">تسجيل الخروج</string>
+    <string name="account_action_back">رجوع</string>
+    <string name="account_action_show_password">إظهار كلمة المرور</string>
+    <string name="account_action_hide_password">إخفاء كلمة المرور</string>
+
+    <!-- Notices -->
+    <string name="account_notice_code_sent">أرسلنا رمزًا إلى بريدك الإلكتروني.</string>
+    <string name="account_notice_verification_required">أكّد بريدك الإلكتروني أولًا. أرسلنا إليك رمزًا جديدًا.</string>
+    <string name="account_notice_email_verified">تم تأكيد بريدك الإلكتروني. سجّل الدخول للمتابعة.</string>
+    <string name="account_notice_password_changed">تم تغيير كلمة المرور. سجّل الدخول بكلمة المرور الجديدة.</string>
+    <string name="account_notice_signed_out">تم تسجيل خروجك. ما زالت أورادك وتقدّمك على هذا الجهاز.</string>
+
+    <!-- Field problems -->
+    <string name="account_error_email_invalid">أدخل بريدًا إلكترونيًا صحيحًا.</string>
+    <string name="account_error_password_too_common">كلمة المرور هذه شائعة جدًا. اختر غيرها.</string>
+    <string name="account_error_code_format">أدخل الرمز المكوّن من 6 أرقام الموجود في البريد.</string>
+
+    <!-- Errors, one per problem code -->
+    <string name="account_error_invalid_input">تحقّق مما أدخلته ثم حاول مرة أخرى.</string>
+    <string name="account_error_verification_code_invalid">الرمز غير صحيح أو انتهت صلاحيته. راجع البريد أو أرسل رمزًا جديدًا.</string>
+    <string name="account_error_reset_code_invalid">الرمز غير صحيح أو انتهت صلاحيته. راجع البريد أو أرسل رمزًا جديدًا.</string>
+    <string name="account_error_invalid_credentials">البريد الإلكتروني أو كلمة المرور غير صحيحة.</string>
+    <string name="account_error_session_ended">تم تسجيل خروجك على هذا الجهاز. سجّل الدخول مرة أخرى.</string>
+    <string name="account_error_rate_limited">محاولات كثيرة جدًا. انتظر قليلًا ثم حاول مرة أخرى.</string>
+    <string name="account_error_request_rejected">تعذّر على التطبيق إتمام هذا الطلب. حدّث التطبيق ثم حاول مرة أخرى.</string>
+    <string name="account_error_no_connection">لا يوجد اتصال. تحقّق من الإنترنت ثم حاول مرة أخرى.</string>
+    <string name="account_error_unexpected">حدث خطأ من جهتنا. حاول مرة أخرى لاحقًا.</string>
+
+    <!-- Counts of characters (the password policy) -->
+    <plurals name="account_hint_password">
+        <item quantity="zero">%1$d حرف على الأقل. بضع كلمات تتذكرها خيار جيد.</item>
+        <item quantity="one">حرف واحد (%1$d) على الأقل. بضع كلمات تتذكرها خيار جيد.</item>
+        <item quantity="two">حرفان (%1$d) على الأقل. بضع كلمات تتذكرها خيار جيد.</item>
+        <item quantity="few">%1$d أحرف على الأقل. بضع كلمات تتذكرها خيار جيد.</item>
+        <item quantity="many">%1$d حرفًا على الأقل. بضع كلمات تتذكرها خيار جيد.</item>
+        <item quantity="other">%1$d حرف على الأقل. بضع كلمات تتذكرها خيار جيد.</item>
+    </plurals>
+    <plurals name="account_error_password_too_short">
+        <item quantity="zero">استخدم %1$d حرف على الأقل.</item>
+        <item quantity="one">استخدم حرفًا واحدًا (%1$d) على الأقل.</item>
+        <item quantity="two">استخدم حرفين (%1$d) على الأقل.</item>
+        <item quantity="few">استخدم %1$d أحرف على الأقل.</item>
+        <item quantity="many">استخدم %1$d حرفًا على الأقل.</item>
+        <item quantity="other">استخدم %1$d حرف على الأقل.</item>
+    </plurals>
+    <plurals name="account_error_password_too_long">
+        <item quantity="zero">استخدم %1$d حرف على الأكثر.</item>
+        <item quantity="one">استخدم حرفًا واحدًا (%1$d) على الأكثر.</item>
+        <item quantity="two">استخدم حرفين (%1$d) على الأكثر.</item>
+        <item quantity="few">استخدم %1$d أحرف على الأكثر.</item>
+        <item quantity="many">استخدم %1$d حرفًا على الأكثر.</item>
+        <item quantity="other">استخدم %1$d حرف على الأكثر.</item>
+    </plurals>
+</resources>

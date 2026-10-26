@@ -14,6 +14,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import app.awrad.feature.account.AccountDestination
+import app.awrad.feature.account.accountScreen
 import app.awrad.feature.onboarding.OnboardingDestination
 import app.awrad.feature.onboarding.onboardingScreen
 import app.awrad.next.AppShellViewModel
@@ -47,8 +49,12 @@ fun AwradNavHost(
     NavHost(navController = navController, startDestination = startRoute, modifier = modifier) {
         onboardingScreen(onFinish = { navController.replaceStackWith(HomeDestination) })
         composable<HomeDestination> {
-            HomePlaceholderRoute(onRestartOnboarding = { navController.replaceStackWith(OnboardingDestination) })
+            HomePlaceholderRoute(
+                onOpenAccount = { navController.navigate(AccountDestination) },
+                onRestartOnboarding = { navController.replaceStackWith(OnboardingDestination) },
+            )
         }
+        accountScreen(onBack = { navController.popBackStack() })
     }
 }
 
