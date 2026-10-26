@@ -10,7 +10,7 @@ The goal rules as executable cases, shared by Android, iOS and the server (slice
 | `fixtures/requirement_standing.json` | Window, progress, target and status, per requirement type (for days per period: that day against the daily target) | 30 |
 | `fixtures/days_per_period.json` | Qualifying days against required days per week, month or Hijri month | 16 |
 | `fixtures/goal_completion.json` | Derived completion per completion policy | 11 |
-| `fixtures/goal_streak.json` | The current streak, per day or per period | 29 |
+| `fixtures/goal_streak.json` | The current streak, per day or per period | 30 |
 | `fixtures/goal_validity.json` | Which goals are invalid, with error codes; platforms reject them at construction, sync and import | 13 |
 
 ## Conventions

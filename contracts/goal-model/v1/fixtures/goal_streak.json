@@ -1788,6 +1788,57 @@
       }
     },
     {
+      "id": "hijri_month_streak_after_table",
+      "description": "After the table, the walk back starts from its last month: Shawwal, Dhu al-Qa'dah and Dhu al-Hijjah 1500 met.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2077-08-20",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 10,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "hijri_month"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2077-08-25",
+            "session": null,
+            "count": 10
+          },
+          {
+            "date": "2077-09-20",
+            "session": null,
+            "count": 10
+          },
+          {
+            "date": "2077-10-20",
+            "session": null,
+            "count": 10
+          }
+        ],
+        "date": "2077-11-20",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3
+      }
+    },
+    {
       "id": "shawwal_six_days_streak",
       "description": "Six days in Shawwal 1446 and 1447: the months between have no due days and are skipped.",
       "given": {
