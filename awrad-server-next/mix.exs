@@ -61,6 +61,9 @@ defmodule Awrad.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
 
+      # IANA time zone database, compiled in (ADR 0003). Used by the goal rules.
+      {:tz, "~> 0.28.4"},
+
       # Build-enforced standards
       {:boundary, "~> 0.11", runtime: false},
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},

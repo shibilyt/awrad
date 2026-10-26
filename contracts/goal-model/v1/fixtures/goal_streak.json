@@ -645,46 +645,6 @@
       }
     },
     {
-      "id": "threshold_value_missing",
-      "description": "Threshold \"minimum\" without a minimum can never be met.",
-      "given": {
-        "goal": {
-          "schedule": {
-            "kind": "every_day"
-          },
-          "active_period": {
-            "start_date": "2026-10-01",
-            "end_date": null,
-            "duration_days": null
-          },
-          "paused": [],
-          "count_policy": {
-            "minimum": null,
-            "target": 313,
-            "maximum": null,
-            "streak_threshold": "minimum"
-          },
-          "sessions": [],
-          "requirement": {
-            "type": "per_due_date"
-          },
-          "completion": "never"
-        },
-        "counts": [
-          {
-            "date": "2026-10-13",
-            "session": null,
-            "count": 500
-          }
-        ],
-        "date": "2026-10-14",
-        "week_start": "monday"
-      },
-      "expect": {
-        "current": 0
-      }
-    },
-    {
       "id": "sessions_every_session_must_meet",
       "description": "Both sessions met on the 13th; only Fajr on the 12th.",
       "given": {
@@ -894,6 +854,199 @@
       },
       "expect": {
         "current": 1
+      }
+    },
+    {
+      "id": "week_totals_paused_week_skipped",
+      "description": "A fully paused week (12–18 October) is skipped, like a non-due day.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-12",
+              "to": "2026-10-18"
+            }
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-21",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 1
+      }
+    },
+    {
+      "id": "week_totals_ended_mid_week_final_week_met",
+      "description": "The goal ended Wednesday 21 October; its last week (19–21) is final, not in progress, and was met.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-21",
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 1000
+          }
+        ],
+        "date": "2026-10-23",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2
+      }
+    },
+    {
+      "id": "week_totals_ended_mid_week_final_week_missed",
+      "description": "The final week (19–21 October) is over and missed, so it breaks the streak.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-21",
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-23",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 0
+      }
+    },
+    {
+      "id": "last_day_partial_after_end",
+      "description": "After the goal ended, its last day isn't in progress any more: a partial last day breaks the streak.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-10",
+            "duration_days": null
+          },
+          "paused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never"
+        },
+        "counts": [
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 313
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 313
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 0
       }
     },
     {

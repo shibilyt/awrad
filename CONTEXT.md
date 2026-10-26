@@ -36,6 +36,8 @@ _Avoid_: Recurrence
 **Count policy**:
 The numbers a goal or session works against: an optional minimum, the target, an optional maximum (cap), and which of them the streak uses (the **streak threshold**: any count, minimum, target or maximum). Counts are always whole numbers.
 
+A **valid goal** has a target for every requirement except tracker (on the goal, or on every session when it has sessions), and its streak threshold points at a value that is set. Invalid goals can't be created, synced or imported; there's no fallback behaviour for them.
+
 **Requirement**:
 The rule that decides whether a goal is met within a window. One of:
 - **Per due date:** the target, on each due day (e.g. 313 every day).

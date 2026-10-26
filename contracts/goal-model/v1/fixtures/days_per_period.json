@@ -797,6 +797,53 @@
       }
     },
     {
+      "id": "fully_paused_week",
+      "description": "A week with no due days isn't due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-12",
+              "to": "2026-10-18"
+            }
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 5
+          },
+          "completion": "never"
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "status": "not_due",
+        "window": {
+          "from": "2026-10-14",
+          "to": "2026-10-14"
+        },
+        "qualifying_days": 0,
+        "required_days": 0
+      }
+    },
+    {
       "id": "with_sessions_every_session_must_meet",
       "description": "Only Monday had both sessions at 33.",
       "given": {

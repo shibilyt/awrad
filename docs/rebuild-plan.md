@@ -124,7 +124,7 @@ Each slice goes contract → server → Android → iOS → web and is done only
 
 | # | Slice | Status |
 |---|---|---|
-| 1a | Domain foundation, Gregorian: goal rules as shared fixtures plus runners on Android, iOS and server ([brief](slices/01-domain-foundation.md)). Includes the new "days per period" requirement | [ ] |
+| 1a | Domain foundation, Gregorian: goal rules as shared fixtures plus runners on Android, iOS and server ([brief](slices/01-domain-foundation.md)). Includes the new "days per period" requirement | [x] 2026-10-26 |
 | 1b | Domain foundation, Hijri: Hijri calendar, yearly and season schedules | [ ] |
 | 2 | Accounts: register, verify, sign in, device sessions (mobile), cookie session (web) | [ ] |
 | 3 | Goals: create, edit, evaluate; offline-first on mobile | [ ] |
@@ -133,7 +133,7 @@ Each slice goes contract → server → Android → iOS → web and is done only
 | later | Sequenced dhikr in one goal (e.g. Tasbih Fatimah 33/33/34): its own brief; relates to "Practice plan" | [ ] |
 | later | Carry-over / make-up rule: a missed amount moves to the next due day | [ ] |
 
-**Revisit as slices progress:** the six provisional judgment calls in [slice 1's fixtures](slices/01-domain-foundation.md#judgment-calls-accepted-provisionally-2026-10-25): partial-period required days, future counts ignored, `not_due` outside the period, anchor after start, missing streak-threshold value, one-time = cumulative. Re-check each one when slice 3 (goals) builds validation and screens.
+**Revisit as slices progress:** the provisional judgment calls in [slice 1's fixtures](slices/01-domain-foundation.md#judgment-calls-accepted-provisionally-2026-10-25): partial-period required days, future counts ignored, `not_due` outside the period, anchor after start, one-time = cumulative. (The sixth, a missing streak-threshold value, was settled on 2026-10-26: such goals are invalid.) Re-check each one when slice 3 (goals) builds validation and screens.
 
 ## Before the first release
 

@@ -6,14 +6,15 @@ import SwiftData
 @ModelActor
 public actor SwiftDataGoalRepository: GoalRepository {
     public func add(_ goal: Goal) throws {
+        let start = goal.activePeriod.start
         modelContext.insert(
             GoalRecord(
                 id: goal.id.value,
                 dhikrCatalogKey: goal.dhikrCatalogKey,
-                dailyTarget: goal.dailyTarget.count,
-                startYear: goal.startDate.year ?? 0,
-                startMonth: goal.startDate.month ?? 0,
-                startDay: goal.startDate.day ?? 0
+                target: goal.countPolicy.target,
+                startYear: start.year,
+                startMonth: start.month,
+                startDay: start.day
             )
         )
         try modelContext.save()

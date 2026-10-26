@@ -43,7 +43,7 @@ let package = Package(
         ),
         .target(name: "AwradTesting", dependencies: ["AwradDomain"], swiftSettings: strict),
 
-        .testTarget(name: "AwradDomainTests", dependencies: ["AwradDomain"], swiftSettings: strict),
+        .testTarget(name: "AwradDomainTests", dependencies: ["AwradDomain", "AwradTesting"], swiftSettings: strict),
         .testTarget(name: "AwradDataTests", dependencies: ["AwradData", "AwradDomain"], swiftSettings: strict),
         .testTarget(
             name: "FeatureOnboardingTests",

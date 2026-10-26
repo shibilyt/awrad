@@ -6,11 +6,13 @@ import Testing
 struct SwiftDataGoalRepositoryTests {
     @Test func addedGoalsAreStored() async throws {
         let repository = SwiftDataGoalRepository(modelContainer: try AwradStore.inMemory())
-        let goal = Goal(
+        let goal = try Goal(
             id: .random(),
             dhikrCatalogKey: "isthighfar",
-            dailyTarget: DailyTarget(70),
-            startDate: DateComponents(year: 2026, month: 10, day: 17)
+            schedule: .everyDay,
+            activePeriod: ActivePeriod(start: try #require(CalendarDay("2026-10-17"))),
+            countPolicy: CountPolicy(target: 70, streakThreshold: .target),
+            requirement: .perDueDate
         )
 
         try await repository.add(goal)
