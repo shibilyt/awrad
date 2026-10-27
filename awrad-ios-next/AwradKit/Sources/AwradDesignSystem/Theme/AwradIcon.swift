@@ -37,11 +37,27 @@ nonisolated public enum AwradIcon: String, CaseIterable, Sendable {
     case expand
     /// Streak (`local_fire_department.svg`).
     case streak
+    /// Signed-in devices (`devices.svg`).
+    case devices
+    /// A phone; data kept on this device (`smartphone.svg`).
+    case phone
+    /// Language setting (`language.svg`).
+    case language
+    /// Email address, change email (`mail.svg`).
+    case email
+    /// Password, change password (`password.svg`).
+    case password
+    /// Delete account and other destructive actions (`delete.svg`).
+    case delete
+    /// Trailing chevron on a row that opens a page (`chevron_right.svg`).
+    case chevron
+    /// Error message beside a form or feedback line (`error.svg`).
+    case error
 
     /// Whether it flips in right-to-left layouts (`mirrorInRtl`): the asset is "Left to Right, Mirrors".
     public var mirrorsInRightToLeft: Bool {
         switch self {
-        case .forward, .back: true
+        case .forward, .back, .chevron: true
         default: false
         }
     }
@@ -68,5 +84,13 @@ nonisolated public enum AwradIcon: String, CaseIterable, Sendable {
         "close": "close.svg",
         "expand": "expand_more.svg",
         "streak": "local_fire_department.svg",
+        "devices": "devices.svg",
+        "phone": "smartphone.svg",
+        "language": "language.svg",
+        "email": "mail.svg",
+        "password": "password.svg",
+        "delete": "delete.svg",
+        "chevron": "chevron_right.svg",
+        "error": "error.svg",
     ]
 }

@@ -22,13 +22,13 @@ struct AccountOverview: View {
             }
             // Rows in a card are separated by spacing, not divider lines.
             VStack(spacing: AwradSpacing.xs) {
-                SettingsRow(title: Strings.devicesRow) { send(.devicesTapped) }
-                SettingsRow(title: Strings.changePasswordRow) { send(.changePasswordTapped) }
-                SettingsRow(title: Strings.changeEmailRow) { send(.changeEmailTapped) }
+                SettingsRow(icon: .devices, title: Strings.devicesRow) { send(.devicesTapped) }
+                SettingsRow(icon: .password, title: Strings.changePasswordRow) { send(.changePasswordTapped) }
+                SettingsRow(icon: .email, title: Strings.changeEmailRow) { send(.changeEmailTapped) }
             }
             .padding(.vertical, AwradSpacing.xs)
             .awradCard()
-            SettingsRow(title: Strings.deleteAccountRow, isDestructive: true) {
+            SettingsRow(icon: .delete, title: Strings.deleteAccountRow, isDestructive: true) {
                 send(.deleteAccountTapped)
             }
             .awradCard()
@@ -39,22 +39,29 @@ struct AccountOverview: View {
     }
 }
 
-/// A row that opens a settings screen: its title only. The shared icon set (icons.json) has no
-/// settings or disclosure icons, so there is no leading icon or trailing chevron.
+/// A row that opens a settings screen: a leading icon, its title, and a trailing chevron that flips
+/// in right-to-left.
 struct SettingsRow: View {
+    let icon: AwradIcon
     let title: LocalizedStringResource
     var isDestructive = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .awradTextStyle(.body)
-                .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.onSurface)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, AwradSpacing.cardPadding)
-                .frame(minHeight: AwradSize.listRow)
-                .contentShape(Rectangle())
+            HStack(spacing: AwradSpacing.lg) {
+                AwradIconImage(icon, size: AwradSize.iconSmall)
+                    .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.accent)
+                Text(title)
+                    .awradTextStyle(.body)
+                    .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.onSurface)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                AwradIconImage(.chevron, size: AwradSize.iconSmall)
+                    .foregroundStyle(AwradColors.onSurfaceVariant)
+            }
+            .padding(.horizontal, AwradSpacing.cardPadding)
+            .frame(minHeight: AwradSize.listRow)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.awradPress(.card))
     }
@@ -141,12 +148,16 @@ struct DeleteAccountForm: View {
 
     var body: some View {
         AccountForm(title: Strings.deleteTitle, message: Strings.deleteBody, feedback: state.feedback) {
-            Text(Strings.deleteLocalNote)
-                .awradTextStyle(.body)
-                .foregroundStyle(AwradColors.onPrimaryContainer)
-                .padding(AwradSpacing.cardPadding)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(AwradColors.primaryContainer, in: AwradRadius.card.shape)
+            HStack(alignment: .top, spacing: AwradSpacing.inlineGap) {
+                AwradIconImage(.phone, size: AwradSize.iconSmall)
+                Text(Strings.deleteLocalNote)
+                    .awradTextStyle(.body)
+            }
+            .foregroundStyle(AwradColors.onPrimaryContainer)
+            .accessibilityElement(children: .combine)
+            .padding(AwradSpacing.cardPadding)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(AwradColors.primaryContainer, in: AwradRadius.card.shape)
             AccountField(
                 kind: .password, label: Strings.currentPasswordField, text: state.currentPassword,
                 error: state.fieldError(.currentPassword)

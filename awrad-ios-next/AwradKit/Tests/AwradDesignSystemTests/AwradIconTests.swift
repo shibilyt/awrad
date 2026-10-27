@@ -51,7 +51,7 @@ struct AwradIconTests {
         let contract = try Self.contract()
         let mirrored = Set(AwradIcon.allCases.filter(\.mirrorsInRightToLeft).map(\.rawValue))
         #expect(mirrored == contract.mirrored)
-        #expect(mirrored == ["back", "forward"])
+        #expect(mirrored == ["back", "forward", "chevron"])
     }
 
     @Test(arguments: AwradIcon.allCases)
