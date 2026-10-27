@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -22,7 +23,7 @@ import app.awrad.core.designsystem.theme.AwradTheme
 
 /**
  * A collection of dhikrs on Home and in the Library: a `collectionTile` (128) wide card with the `tile` shape, the
- * card's fill (`surface` on the page) and `cardPadding` inside; at least as tall as it is wide, and taller when the
+ * card's fill (`surface` on the page) and `md` padding inside; at least as tall as it is wide, and taller when the
  * text is larger. The [title] (`rowTitle`) takes up to two lines, breaking only between words; a word or a title
  * too long for them ends in an ellipsis. The [count] ("4 dhikrs", `caption`, `onSurfaceVariant`) sits under it,
  * and a small round `forward` arrow (`roundButtonSmall`, `primary`, flipped in RTL) at the bottom end. The whole
@@ -45,13 +46,14 @@ public fun AwradCollectionTile(
         modifier = modifier.width(tile),
         enabled = enabled,
         size = AwradCardSize.Tile,
+        contentPadding = PaddingValues(spacing.md),
         spacing = spacing.none,
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .fillMaxHeight()
-                .heightIn(min = tile - spacing.cardPadding * 2),
+                .heightIn(min = tile - spacing.md * 2),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(spacing.xxs)) {
@@ -60,7 +62,7 @@ public fun AwradCollectionTile(
                     style = AwradTheme.type.rowTitle,
                     color = AwradTheme.colors.onSurface,
                     maxLines = 2,
-                    width = tile - spacing.cardPadding * 2,
+                    width = tile - spacing.md * 2,
                 )
                 Text(
                     text = count,
