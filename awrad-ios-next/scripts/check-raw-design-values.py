@@ -12,6 +12,10 @@ AwradSpacing, AwradSize, AwradTextStyle/AwradFonts and AwradMotion. Outside Awra
 - a raw animation (`.animation(.easeInOut…)`, `withAnimation(.spring…)`, `.spring(…)`,
   `.timingCurve(…)`, `duration:` numbers) or a raw haptic (`.sensoryFeedback(.…)`).
 
+Everywhere, AwradDesignSystem included, it rejects an SF Symbol (`Image(systemName:)`,
+`systemImage:`, `UIImage(systemName:)`, `NSImage(systemSymbolName:)`): icons are the shared set in
+contracts/design-tokens/v1/icons.json, through `AwradIcon`. No exemption covers one.
+
 Allowlist: a structural value that isn't a design decision stays when its line ends with
 `// design-token-exempt: <reason>`. The reason is required, and it never covers a number that is a
 size token (spacing.json `sizes`, such as the 148 logo or the 448 content width): use `AwradSize`.
@@ -62,6 +66,15 @@ FORBIDDEN = [
 ]
 
 
+# SF Symbols, rejected in every file: icons come from AwradIcon.
+SF_SYMBOL = re.compile(r"\b(?:systemName|systemImage|systemSymbolName)\s*:")
+
+
+def icon_problems(line: str) -> list[str]:
+    code = STRING.sub('""', line).split("//", 1)[0]
+    return ["SF Symbol; use AwradIcon (contracts/design-tokens/v1/icons.json)"] if SF_SYMBOL.search(code) else []
+
+
 def arguments(line: str, start: int) -> str:
     """The text inside the parentheses opened just before `start`, on this line."""
     depth, index = 1, start
@@ -110,10 +123,10 @@ def scan() -> list[str]:
     report = []
     for directory in SCANNED:
         for path in sorted(directory.rglob("*.swift")):
-            if EXEMPT_DIR in path.parents:
-                continue
+            in_design_system = EXEMPT_DIR in path.parents
             for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
-                for problem in problems_in(line):
+                problems = icon_problems(line) + ([] if in_design_system else problems_in(line))
+                for problem in problems:
                     report.append(f"{path.relative_to(ROOT)}:{number}: {problem}")
     return report
 
@@ -154,15 +167,30 @@ SELF_TEST = {
     ".frame(maxWidth: 520)  // design-token-exempt:": True,
 }
 
+# Lines and whether icon_problems flags them (checked in every file, AwradDesignSystem too).
+ICON_SELF_TEST = {
+    'Image(systemName: "chevron.backward")': True,
+    'Label("Add", systemImage: "plus")': True,
+    'AwradButton(title, systemImage: "bell") {}': True,
+    'UIImage(systemName: "xmark")': True,
+    'NSImage(systemSymbolName: "xmark", accessibilityDescription: nil)': True,
+    'Image(systemName: "x")  // design-token-exempt: anything': True,
+    "AwradIconImage(.back)": False,
+    "AwradRoundButton(icon: .add, label: label) {}": False,
+    'Text("Image(systemName: x)")': False,
+    "// Image(systemName:) in a comment": False,
+}
+
 
 def self_test() -> int:
-    wrong = [line for line, flagged in SELF_TEST.items() if bool(problems_in(line)) != flagged]
-    for line in wrong:
-        print(f"raw design values: self-test {'missed' if SELF_TEST[line] else 'wrongly flagged'}: {line}",
-              file=sys.stderr)
+    cases = [(line, flagged, problems_in) for line, flagged in SELF_TEST.items()]
+    cases += [(line, flagged, icon_problems) for line, flagged in ICON_SELF_TEST.items()]
+    wrong = [(line, flagged) for line, flagged, check in cases if bool(check(line)) != flagged]
+    for line, flagged in wrong:
+        print(f"raw design values: self-test {'missed' if flagged else 'wrongly flagged'}: {line}", file=sys.stderr)
     if wrong:
         return 1
-    print(f"raw design values: self-test passed ({len(SELF_TEST)} cases)")
+    print(f"raw design values: self-test passed ({len(cases)} cases)")
     return 0
 
 
@@ -176,10 +204,10 @@ def main() -> int:
     for line in report:
         print(f"raw design values: {line}", file=sys.stderr)
     if report:
-        print("Use AwradRadius, AwradSpacing, AwradSize, awradTextStyle and AwradMotion, or mark a structural "
-              "value with `// design-token-exempt: <reason>`.", file=sys.stderr)
+        print("Use AwradRadius, AwradSpacing, AwradSize, awradTextStyle, AwradMotion and AwradIcon, or mark a "
+              "structural value with `// design-token-exempt: <reason>`.", file=sys.stderr)
         return 1
-    print("raw design values: none outside AwradDesignSystem")
+    print("raw design values: none outside AwradDesignSystem, and no SF Symbols anywhere")
     return 0
 
 

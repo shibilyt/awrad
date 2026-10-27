@@ -24,6 +24,52 @@
         }
       }
     },
+    "ds.close" : {
+      "comment" : "Close icon button of a sheet or dialog (accessibility label).",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إغلاق"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അടയ്ക്കുക"
+          }
+        }
+      }
+    },
+    "ds.hide_password" : {
+      "comment" : "Text field button that hides a shown password (accessibility label).",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إخفاء كلمة المرور"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hide password"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പാസ്‌വേഡ് മറയ്ക്കുക"
+          }
+        }
+      }
+    },
     "ds.loading" : {
       "comment" : "Read as the value of a button whose action is running.",
       "localizations" : {
@@ -66,6 +112,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "കൂടുതൽ ഓപ്ഷനുകൾ"
+          }
+        }
+      }
+    },
+    "ds.show_password" : {
+      "comment" : "Text field button that shows a hidden password (accessibility label).",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إظهار كلمة المرور"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show password"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പാസ്‌വേഡ് കാണിക്കുക"
           }
         }
       }

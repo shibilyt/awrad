@@ -3,7 +3,8 @@ import SwiftUI
 /// A text field with its label above it (`label` style, `xs` gap; never a floating label). The field
 /// is `control` (56) tall and filled by what it sits on (`awradField`): no border at rest or in focus,
 /// an `error` border only while there's an `error` message, shown below in `caption`. Supporting text
-/// shows below when there's no error.
+/// shows below when there's no error. A secure field has a show/hide button at its end (`show`/`hide`
+/// icons, `onSurfaceVariant`, a `touchTarget` area), which keeps the keyboard up.
 ///
 /// Set keyboard, autofill and capitalisation on it from outside (`.keyboardType`, `.textContentType`).
 public struct AwradTextField: View {
@@ -13,6 +14,8 @@ public struct AwradTextField: View {
     private let isSecure: Bool
     private let error: LocalizedStringResource?
     private let supportingText: LocalizedStringResource?
+    @State private var isRevealed = false
+    @FocusState private var isFocused: Bool
 
     public init(
         _ label: LocalizedStringResource, text: Binding<String>, prompt: LocalizedStringResource? = nil,
@@ -35,16 +38,19 @@ public struct AwradTextField: View {
                 .accessibilityHidden(true)
             field
                 .awradField(isInError: error != nil)
+                .overlay(alignment: .trailing) {
+                    if isSecure {
+                        // Over the field, not in its padding, so the whole touch area takes taps.
+                        PasswordRevealButton(isRevealed: isRevealed, action: toggleReveal)
+                            .padding(.trailing, AwradSpacing.lg - (AwradSize.touchTarget - AwradSize.icon) / 2)
+                    }
+                }
                 .accessibilityHint(error.map { Text($0) } ?? Text(verbatim: ""))
             if let error {
-                Label {
-                    Text(error)
-                } icon: {
-                    Image(systemName: "exclamationmark.circle")
-                }
-                .labelStyle(CaptionLabelStyle())
-                .foregroundStyle(AwradColors.error)
-                .awradExpandingContent()
+                Text(error)
+                    .awradTextStyle(.caption)
+                    .foregroundStyle(AwradColors.error)
+                    .awradExpandingContent()
             } else if let supportingText {
                 Text(supportingText)
                     .awradTextStyle(.caption)
@@ -62,21 +68,45 @@ public struct AwradTextField: View {
         // otherwise repeat it as the placeholder.
         let promptText = prompt.map { Text($0).foregroundStyle(AwradColors.onSurfaceVariant) } ?? Text(verbatim: "")
         if isSecure {
-            SecureField(text: $text, prompt: promptText) { Text(label) }
+            Group {
+                if isRevealed {
+                    TextField(text: $text, prompt: promptText) { Text(label) }
+                        .autocorrectionDisabled()
+                } else {
+                    SecureField(text: $text, prompt: promptText) { Text(label) }
+                }
+            }
+            .focused($isFocused)
+            // Text stops `xs` before the show/hide icon.
+            .padding(.trailing, AwradSize.icon + AwradSpacing.xs)
         } else {
             TextField(text: $text, prompt: promptText) { Text(label) }
         }
     }
+
+    private func toggleReveal() {
+        let wasFocused = isFocused
+        isRevealed.toggle()
+        // Swapping the field drops focus; give it back so the keyboard stays.
+        isFocused = wasFocused
+    }
 }
 
-/// An icon and text on one line in `caption`, the icon `xs` before it.
-private struct CaptionLabelStyle: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: AwradSpacing.xs) {
-            configuration.icon
-            configuration.title
+/// Shows or hides a secure field's text: the `show` icon while hidden, `hide` while shown, in a
+/// `touchTarget` area; the field places it so the icon sits `lg` from its end.
+private struct PasswordRevealButton: View {
+    let isRevealed: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            AwradIconImage(isRevealed ? .hide : .show)
+                .foregroundStyle(AwradColors.onSurfaceVariant)
+                .frame(width: AwradSize.touchTarget, height: AwradSize.touchTarget)
+                .contentShape(Rectangle())
         }
-        .awradTextStyle(.caption)
+        .buttonStyle(.awradPress(.button))
+        .accessibilityLabel(Text(isRevealed ? AwradStrings.hidePassword : AwradStrings.showPassword))
     }
 }
 

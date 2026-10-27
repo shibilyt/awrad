@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// A round `primary` button with an `onPrimary` SF Symbol: the + on My Goals (`regular`, 48) or the
-/// arrow on a collection tile (`small`, 32, still with a 48 touch target). It needs a label.
+/// A round `primary` button with an `onPrimary` icon: the + on My Goals (`regular`, 48, `add`) or the
+/// arrow on a collection tile (`small`, 32, still with a 48 touch target, `forward`). It needs a label.
 public struct AwradRoundButton: View {
     public enum Size: Sendable, CaseIterable {
-        /// `roundButton` (48), `icon` (24) symbol.
+        /// `roundButton` (48), `icon` (24) icon.
         case regular
-        /// `roundButtonSmall` (32), `iconSmall` (20) symbol, 48 touch target.
+        /// `roundButtonSmall` (32), `iconSmall` (20) icon, 48 touch target.
         case small
 
         var diameter: CGFloat {
@@ -24,15 +24,15 @@ public struct AwradRoundButton: View {
         }
     }
 
-    private let systemImage: String
+    private let icon: AwradIcon
     private let label: LocalizedStringResource
     private let size: Size
     private let action: () -> Void
 
     public init(
-        systemImage: String, label: LocalizedStringResource, size: Size = .regular, action: @escaping () -> Void
+        icon: AwradIcon, label: LocalizedStringResource, size: Size = .regular, action: @escaping () -> Void
     ) {
-        self.systemImage = systemImage
+        self.icon = icon
         self.label = label
         self.size = size
         self.action = action
@@ -40,8 +40,7 @@ public struct AwradRoundButton: View {
 
     public var body: some View {
         Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: size.iconSize, weight: .semibold))
+            AwradIconImage(icon, size: size.iconSize)
                 .foregroundStyle(AwradColors.onPrimary)
                 .frame(width: size.diameter, height: size.diameter)
                 .background(AwradColors.primary, in: AwradRadius.roundButton.shape)
@@ -54,35 +53,38 @@ public struct AwradRoundButton: View {
     }
 }
 
-/// An unfilled `onSurface` SF Symbol in a `touchTarget` area: back, or the three-dot menu. Pressing
-/// it is the `press` scale only. Directional symbols (`chevron.backward`) flip in right-to-left.
+/// An unfilled `onSurface` icon (`icon`, 24) in a `touchTarget` area: back, the three-dot menu, or
+/// close. Pressing it is the `press` scale only. Mirroring icons (`back`) flip in right-to-left.
 public struct AwradIconButton: View {
-    private let systemImage: String
+    private let icon: AwradIcon
     private let label: LocalizedStringResource
     private let action: () -> Void
 
-    public init(systemImage: String, label: LocalizedStringResource, action: @escaping () -> Void) {
-        self.systemImage = systemImage
+    public init(icon: AwradIcon, label: LocalizedStringResource, action: @escaping () -> Void) {
+        self.icon = icon
         self.label = label
         self.action = action
     }
 
-    /// Back: a `chevron.backward`, which points right in right-to-left.
+    /// Back: the `back` chevron, which points right in right-to-left.
     public static func back(action: @escaping () -> Void) -> AwradIconButton {
-        AwradIconButton(systemImage: "chevron.backward", label: AwradStrings.back, action: action)
+        AwradIconButton(icon: .back, label: AwradStrings.back, action: action)
     }
 
-    /// The three-dot menu.
+    /// The three-dot menu (`more`).
     public static func more(action: @escaping () -> Void) -> AwradIconButton {
-        AwradIconButton(systemImage: "ellipsis", label: AwradStrings.more, action: action)
+        AwradIconButton(icon: .more, label: AwradStrings.more, action: action)
+    }
+
+    /// Closes a sheet or dialog (`close`).
+    public static func close(action: @escaping () -> Void) -> AwradIconButton {
+        AwradIconButton(icon: .close, label: AwradStrings.close, action: action)
     }
 
     public var body: some View {
         Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: AwradSize.icon, weight: .medium))
+            AwradIconImage(icon)
                 .foregroundStyle(AwradColors.onSurface)
-                .frame(width: AwradSize.icon, height: AwradSize.icon)
                 .awradDisabledAppearance()
                 .frame(width: AwradSize.touchTarget, height: AwradSize.touchTarget)
                 .contentShape(Rectangle())
@@ -94,10 +96,11 @@ public struct AwradIconButton: View {
 
 #Preview("Round and icon buttons") {
     HStack(spacing: AwradSpacing.lg) {
-        AwradRoundButton(systemImage: "plus", label: "Add") {}
-        AwradRoundButton(systemImage: "arrow.forward", label: "Open", size: .small) {}
+        AwradRoundButton(icon: .add, label: "Add") {}
+        AwradRoundButton(icon: .forward, label: "Open", size: .small) {}
         AwradIconButton.back {}
         AwradIconButton.more {}
+        AwradIconButton.close {}
     }
     .padding(AwradSpacing.pageMargin)
     .background(AwradColors.background)

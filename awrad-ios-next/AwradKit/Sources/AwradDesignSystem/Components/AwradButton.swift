@@ -10,9 +10,10 @@ import SwiftUI
 /// - `text`: links and small actions, `accent` text, `touchTarget` tall. With the destructive role
 ///   it's `error` text (sign out of other devices).
 ///
-/// `layout: .row` is a button inside a row (sign out one device): `touchTarget` tall and as wide as
-/// its label. While `isLoading`, a progress indicator in the content colour replaces the label: the
-/// button keeps its size and ignores taps, and isn't drawn as disabled. Disable it with `.disabled`.
+/// `icon` is a leading icon (`iconSmall`, `inlineGap` before the label). `layout: .row` is a button
+/// inside a row (sign out one device): `touchTarget` tall and as wide as its label. While `isLoading`,
+/// the platform's own `ProgressView` in the content colour replaces the label: the button keeps its
+/// size and ignores taps, and isn't drawn as disabled. Disable it with `.disabled`.
 public struct AwradButton: View {
     public enum Variant: Sendable, CaseIterable {
         case main, secondary, error, text
@@ -28,7 +29,7 @@ public struct AwradButton: View {
     private let title: LocalizedStringResource
     private let variant: Variant
     private let layout: Layout
-    private let systemImage: String?
+    private let icon: AwradIcon?
     private let isLoading: Bool
     private let role: ButtonRole?
     private let action: () -> Void
@@ -36,12 +37,12 @@ public struct AwradButton: View {
 
     public init(
         _ title: LocalizedStringResource, variant: Variant = .main, layout: Layout = .fill,
-        systemImage: String? = nil, isLoading: Bool = false, role: ButtonRole? = nil, action: @escaping () -> Void
+        icon: AwradIcon? = nil, isLoading: Bool = false, role: ButtonRole? = nil, action: @escaping () -> Void
     ) {
         self.title = title
         self.variant = variant
         self.layout = layout
-        self.systemImage = systemImage
+        self.icon = icon
         self.isLoading = isLoading
         self.role = role
         self.action = action
@@ -50,11 +51,8 @@ public struct AwradButton: View {
     public var body: some View {
         Button(role: role, action: action) {
             HStack(spacing: AwradSpacing.inlineGap) {
-                if let systemImage {
-                    Image(systemName: systemImage)
-                        .font(.system(size: AwradSize.iconSmall))
-                        .frame(width: AwradSize.iconSmall, height: AwradSize.iconSmall)
-                        .accessibilityHidden(true)
+                if let icon {
+                    AwradIconImage(icon, size: AwradSize.iconSmall)
                 }
                 Text(title)
             }

@@ -22,13 +22,13 @@ struct AccountOverview: View {
             }
             // Rows in a card are separated by spacing, not divider lines.
             VStack(spacing: AwradSpacing.xs) {
-                SettingsRow(symbol: "laptopcomputer.and.iphone", title: Strings.devicesRow) { send(.devicesTapped) }
-                SettingsRow(symbol: "key", title: Strings.changePasswordRow) { send(.changePasswordTapped) }
-                SettingsRow(symbol: "envelope", title: Strings.changeEmailRow) { send(.changeEmailTapped) }
+                SettingsRow(title: Strings.devicesRow) { send(.devicesTapped) }
+                SettingsRow(title: Strings.changePasswordRow) { send(.changePasswordTapped) }
+                SettingsRow(title: Strings.changeEmailRow) { send(.changeEmailTapped) }
             }
             .padding(.vertical, AwradSpacing.xs)
             .awradCard()
-            SettingsRow(symbol: "trash", title: Strings.deleteAccountRow, isDestructive: true) {
+            SettingsRow(title: Strings.deleteAccountRow, isDestructive: true) {
                 send(.deleteAccountTapped)
             }
             .awradCard()
@@ -39,30 +39,22 @@ struct AccountOverview: View {
     }
 }
 
-/// A row that opens a settings screen.
+/// A row that opens a settings screen: its title only. The shared icon set (icons.json) has no
+/// settings or disclosure icons, so there is no leading icon or trailing chevron.
 struct SettingsRow: View {
-    let symbol: String
     let title: LocalizedStringResource
     var isDestructive = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: AwradSpacing.lg) {
-                Image(systemName: symbol)
-                    .frame(width: AwradSize.iconSmall)
-                    .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.accent)
-                Text(title)
-                    .awradTextStyle(.body)
-                    .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.onSurface)
-                Spacer(minLength: AwradSpacing.sm)
-                Image(systemName: "chevron.forward")
-                    .font(AwradFonts.font(.caption))
-                    .foregroundStyle(AwradColors.onSurfaceVariant)
-            }
-            .padding(.horizontal, AwradSpacing.cardPadding)
-            .frame(minHeight: AwradSize.listRow)
-            .contentShape(Rectangle())
+            Text(title)
+                .awradTextStyle(.body)
+                .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.onSurface)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, AwradSpacing.cardPadding)
+                .frame(minHeight: AwradSize.listRow)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.awradPress(.card))
     }
@@ -149,17 +141,12 @@ struct DeleteAccountForm: View {
 
     var body: some View {
         AccountForm(title: Strings.deleteTitle, message: Strings.deleteBody, feedback: state.feedback) {
-            Label {
-                Text(Strings.deleteLocalNote)
-                    .awradTextStyle(.body)
-                    .foregroundStyle(AwradColors.onPrimaryContainer)
-            } icon: {
-                Image(systemName: "iphone")
-                    .foregroundStyle(AwradColors.onPrimaryContainer)
-            }
-            .padding(AwradSpacing.cardPadding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AwradColors.primaryContainer, in: AwradRadius.card.shape)
+            Text(Strings.deleteLocalNote)
+                .awradTextStyle(.body)
+                .foregroundStyle(AwradColors.onPrimaryContainer)
+                .padding(AwradSpacing.cardPadding)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(AwradColors.primaryContainer, in: AwradRadius.card.shape)
             AccountField(
                 kind: .password, label: Strings.currentPasswordField, text: state.currentPassword,
                 error: state.fieldError(.currentPassword)

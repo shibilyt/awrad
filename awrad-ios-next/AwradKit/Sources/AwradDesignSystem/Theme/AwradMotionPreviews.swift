@@ -66,7 +66,7 @@ private struct SectionPreview: View {
                     HStack {
                         Text(verbatim: "Section").awradTextStyle(.cardTitle)
                         Spacer()
-                        Image(systemName: "chevron.down").awradChevron(isExpanded: isExpanded)
+                        AwradIconImage(.expand).awradChevron(isExpanded: isExpanded)
                     }
                 }
                 .buttonStyle(.awradPress(.card))
@@ -84,7 +84,7 @@ private struct SectionPreview: View {
             .awradExpand(value: isExpanded)
             HStack(spacing: AwradSpacing.sm) {
                 ForEach(0..<3, id: \.self) { tab in
-                    Image(systemName: "circle.fill")
+                    AwradIconImage([AwradIcon.home, .goals, .library][tab])
                         .awradNavIcon(isSelected: selectedTab == tab)
                         .frame(width: AwradSize.touchTarget, height: AwradSize.touchTarget)
                         .background {

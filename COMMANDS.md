@@ -100,6 +100,7 @@ scripts/validate                                      # full validation (never m
 swift format -i -r AwradKit/Sources AwradKit/Tests AwradKit/Package.swift AwradNext   # fix layout
 scripts/generate-colors.py                            # regenerate AwradColors.swift and AccentColor after contracts/design-tokens changes
 scripts/generate-design-tokens.py                     # regenerate AwradRadius/AwradSpacing/AwradTextStyle/AwradMotion after contracts/design-tokens changes
+scripts/generate-icons.py                             # regenerate Icons.xcassets and AwradIcon.swift after contracts/design-tokens/v1/icons changes
 ```
 
 ## awrad-web-next

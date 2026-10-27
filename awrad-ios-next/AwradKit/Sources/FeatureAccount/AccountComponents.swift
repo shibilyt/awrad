@@ -68,16 +68,12 @@ struct FeedbackLine: View {
     let feedback: AccountModel.Feedback
 
     var body: some View {
-        Label {
-            Text(Strings.feedback(feedback))
-                .awradTextStyle(.body)
-                .contentTransition(.opacity)
-        } icon: {
-            Image(systemName: feedback.isNotice ? "envelope" : "exclamationmark.circle")
-        }
-        .foregroundStyle(feedback.isNotice ? AwradColors.onSurfaceVariant : AwradColors.error)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .accessibilityElement(children: .combine)
+        Text(Strings.feedback(feedback))
+            .awradTextStyle(.body)
+            .contentTransition(.opacity)
+            .foregroundStyle(feedback.isNotice ? AwradColors.onSurfaceVariant : AwradColors.error)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
     }
 }
 

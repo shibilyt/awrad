@@ -54,8 +54,7 @@ public struct AwradOptionRow: View {
                     .foregroundStyle(isSelected ? AwradColors.onPrimaryVariant : container.onSecondaryFill)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: AwradSpacing.md, weight: .bold))
+                    AwradIconImage(.check, size: AwradSize.iconSmall)
                         .foregroundStyle(AwradColors.primary)
                         .frame(width: AwradSize.icon, height: AwradSize.icon)
                         .background(AwradColors.onPrimary, in: Circle())

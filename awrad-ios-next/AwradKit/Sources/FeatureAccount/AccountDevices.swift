@@ -116,9 +116,6 @@ struct SessionRow: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: AwradSpacing.lg) {
-            Image(systemName: DeviceStrings.symbol(for: session))
-                .frame(width: AwradSize.iconSmall)
-                .foregroundStyle(AwradColors.accent)
             VStack(alignment: .leading, spacing: AwradSpacing.xxs) {
                 name
                     .awradTextStyle(.rowTitle)
@@ -200,15 +197,6 @@ enum DeviceStrings {
         case .ios: Strings.text("account.devices.platform.ios")
         case .web: Strings.text("account.devices.platform.web")
         case .other: Strings.text("account.devices.platform.other")
-        }
-    }
-
-    static func symbol(for session: AccountSession) -> String {
-        switch (session.kind, session.platform) {
-        case (.browser, _), (_, .web): "globe"
-        case (_, .ios): "iphone"
-        case (_, .android): "candybarphone"
-        default: "questionmark.circle"
         }
     }
 }

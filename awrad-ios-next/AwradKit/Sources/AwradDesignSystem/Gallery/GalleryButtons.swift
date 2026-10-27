@@ -1,25 +1,25 @@
 #if DEBUG
     import SwiftUI
 
-    /// Every button variant, with an icon, loading and disabled; row, round and icon buttons.
+    /// Every button variant, with an icon, loading and disabled; row, round and icon buttons; the icons.
     struct GalleryButtons: View {
         var body: some View {
             GalleryGroup(title: "Buttons") {
                 GalleryItem(caption: "Main · default, leading icon, loading, disabled") {
                     AwradButton(GalleryStrings.continueAction) {}
-                    AwradButton(GalleryStrings.continueAction, systemImage: "arrow.forward") {}
+                    AwradButton(GalleryStrings.continueAction, icon: .forward) {}
                     AwradButton(GalleryStrings.continueAction, isLoading: true) {}
                     AwradButton(GalleryStrings.continueAction) {}.disabled(true)
                 }
                 GalleryItem(caption: "Secondary · default, leading icon, loading, disabled") {
                     AwradButton(GalleryStrings.notifications, variant: .secondary) {}
-                    AwradButton(GalleryStrings.notifications, variant: .secondary, systemImage: "bell") {}
+                    AwradButton(GalleryStrings.notifications, variant: .secondary, icon: .notifications) {}
                     AwradButton(GalleryStrings.notifications, variant: .secondary, isLoading: true) {}
                     AwradButton(GalleryStrings.notifications, variant: .secondary) {}.disabled(true)
                 }
                 GalleryItem(caption: "Secondary · on a surface card: background fill, onSurface label") {
                     AwradCard {
-                        AwradButton(GalleryStrings.notifications, variant: .secondary, systemImage: "bell") {}
+                        AwradButton(GalleryStrings.notifications, variant: .secondary, icon: .notifications) {}
                         AwradButton(GalleryStrings.viewAll, variant: .secondary, layout: .row) {}
                     }
                 }
@@ -49,18 +49,32 @@
                 }
                 GalleryItem(caption: "Round · 48 and 32 (48 touch target), disabled") {
                     HStack(spacing: AwradSpacing.lg) {
-                        AwradRoundButton(systemImage: "plus", label: GalleryStrings.addGoal) {}
+                        AwradRoundButton(icon: .add, label: GalleryStrings.addGoal) {}
                         AwradRoundButton(
-                            systemImage: "arrow.forward", label: GalleryStrings.openCollection, size: .small
+                            icon: .forward, label: GalleryStrings.openCollection, size: .small
                         ) {}
-                        AwradRoundButton(systemImage: "plus", label: GalleryStrings.addGoal) {}.disabled(true)
+                        AwradRoundButton(icon: .add, label: GalleryStrings.addGoal) {}.disabled(true)
                     }
                 }
-                GalleryItem(caption: "Icon · back (flips in RTL), more, disabled") {
+                GalleryItem(caption: "Icon · back (flips in RTL), more, close, disabled") {
                     HStack(spacing: AwradSpacing.lg) {
                         AwradIconButton.back {}
                         AwradIconButton.more {}
+                        AwradIconButton.close {}
                         AwradIconButton.more {}.disabled(true)
+                    }
+                }
+                GalleryItem(caption: "Icons · the shared set in order; back and forward flip in RTL") {
+                    LazyVGrid(
+                        columns: [GridItem(.adaptive(minimum: AwradSize.touchTarget), spacing: AwradSpacing.sm)],
+                        alignment: .leading, spacing: AwradSpacing.sm
+                    ) {
+                        ForEach(AwradIcon.allCases, id: \.self) { icon in
+                            AwradIconImage(icon)
+                                .foregroundStyle(AwradColors.onSurface)
+                                .frame(width: AwradSize.touchTarget, height: AwradSize.touchTarget)
+                                .background(AwradColors.surface, in: AwradRadius.tile.shape)
+                        }
                     }
                 }
             }

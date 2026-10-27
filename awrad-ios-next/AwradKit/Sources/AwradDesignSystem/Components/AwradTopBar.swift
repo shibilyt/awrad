@@ -170,7 +170,7 @@ private func previewNoAction() {}
     VStack(spacing: AwradSpacing.lg) {
         AwradTopBar("Settings", onBack: previewNoAction) { AwradIconButton.more {} }
         AwradTopBar(onBack: previewNoAction) { AwradStepIndicator(current: 2, total: 7) }
-        AwradLargeTitleHeader("My Goals") { AwradRoundButton(systemImage: "plus", label: "Add") {} }
+        AwradLargeTitleHeader("My Goals") { AwradRoundButton(icon: .add, label: "Add") {} }
     }
     .background(AwradColors.background)
 }

@@ -2,7 +2,8 @@ import SwiftUI
 
 /// A checkbox: a `checkbox` (20) box in the `checkbox` shape followed by its `body` label, `md` apart,
 /// the whole row at least `touchTarget` tall. Unticked, the box is the `checkbox` stroke in
-/// `outlineStrong`; ticked, a `primary` fill with an `onPrimary` tick that draws in with `spatial`.
+/// `outlineStrong`; ticked, a `primary` fill with the `onPrimary` `check` icon, which draws in from
+/// the start with `spatial`.
 /// VoiceOver reads it as the native toggle, with its state.
 public struct AwradCheckbox: View {
     private let label: LocalizedStringResource
@@ -56,30 +57,18 @@ private struct CheckboxBox: View {
             shape.fill(isOn ? AwradColors.primary : .clear)
             shape.strokeBorder(AwradColors.outlineStrong, lineWidth: AwradStroke.checkbox)
                 .opacity(isOn ? 0 : 1)
-            // The tick draws in; with reduced motion it fades in whole.
-            TickShape()
-                .trim(from: 0, to: isOn || motion.reduceMotion ? 1 : 0)
-                .stroke(
-                    AwradColors.onPrimary,
-                    style: StrokeStyle(lineWidth: AwradStroke.checkbox, lineCap: .round, lineJoin: .round)
-                )
+            // The tick draws in from the start; with reduced motion it fades in whole.
+            AwradIconImage(.check, size: AwradSize.checkbox)
+                .foregroundStyle(AwradColors.onPrimary)
+                .mask(alignment: .leading) {
+                    Rectangle()
+                        .frame(width: isOn || motion.reduceMotion ? AwradSize.checkbox : AwradSpacing.none)
+                }
                 .opacity(isOn ? 1 : 0)
-                .padding(AwradSpacing.xs)
                 .animation(motion.animation(AwradMotion.Spring.spatial), value: isOn)
         }
         .frame(width: AwradSize.checkbox, height: AwradSize.checkbox)
         .awradSelectColors(value: isOn)
-    }
-}
-
-/// A tick from the lower start, down to the bottom, up to the top end, in a unit square.
-private struct TickShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        Path { path in
-            path.move(to: CGPoint(x: rect.minX, y: rect.minY + rect.height * 0.55))
-            path.addLine(to: CGPoint(x: rect.minX + rect.width * 0.38, y: rect.maxY - rect.height * 0.1))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + rect.height * 0.12))
-        }
     }
 }
 

@@ -19,8 +19,9 @@ step "Hijri table matches contracts/hijri-calendar"; python3 -I scripts/generate
 step "Colours match contracts/design-tokens"; python3 -I scripts/generate-colors.py --check
 step "Shapes, spacing, type and motion match contracts/design-tokens"
 python3 -I scripts/generate-design-tokens.py --check
+step "Icons match contracts/design-tokens/v1/icons"; python3 -I scripts/generate-icons.py --check
 step "Fonts match contracts/design-tokens/v1/fonts"; python3 -I scripts/check-fonts.py
-step "No raw shape, spacing, type or motion values outside AwradDesignSystem"
+step "No raw shape, spacing, type or motion values outside AwradDesignSystem; no SF Symbols"
 python3 -I scripts/check-raw-design-values.py --self-test
 python3 -I scripts/check-raw-design-values.py
 step "swift format";            swift format lint --strict --recursive "${SOURCES[@]}"
