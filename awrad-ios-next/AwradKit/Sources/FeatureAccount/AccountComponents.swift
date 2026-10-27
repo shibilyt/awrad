@@ -68,12 +68,16 @@ struct FeedbackLine: View {
     let feedback: AccountModel.Feedback
 
     var body: some View {
-        Text(Strings.feedback(feedback))
-            .awradTextStyle(.body)
-            .contentTransition(.opacity)
-            .foregroundStyle(feedback.isNotice ? AwradColors.onSurfaceVariant : AwradColors.error)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .accessibilityElement(children: .combine)
+        // The icon is centred on the first line: the body line height (22) holds the 20-point icon.
+        HStack(alignment: .top, spacing: AwradSpacing.inlineGap) {
+            AwradIconImage(feedback.isNotice ? .email : .error, size: AwradSize.iconSmall)
+            Text(Strings.feedback(feedback))
+                .awradTextStyle(.body)
+                .contentTransition(.opacity)
+        }
+        .foregroundStyle(feedback.isNotice ? AwradColors.onSurfaceVariant : AwradColors.error)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
     }
 }
 

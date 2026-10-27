@@ -116,6 +116,8 @@ struct SessionRow: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: AwradSpacing.lg) {
+            AwradIconImage(DeviceStrings.icon(for: session), size: AwradSize.iconSmall)
+                .foregroundStyle(AwradColors.accent)
             VStack(alignment: .leading, spacing: AwradSpacing.xxs) {
                 name
                     .awradTextStyle(.rowTitle)
@@ -199,6 +201,15 @@ enum DeviceStrings {
         case .other: Strings.text("account.devices.platform.other")
         }
     }
+
+    /// A phone for an iOS or Android app session; the devices icon for a browser or anything else.
+    static func icon(for session: AccountSession) -> AwradIcon {
+        switch (session.kind, session.platform) {
+        case (.browser, _): .devices
+        case (_, .ios), (_, .android): .phone
+        default: .devices
+        }
+    }
 }
 
 #Preview("Devices") {
@@ -231,7 +242,7 @@ enum DeviceStrings {
         .preferredColorScheme(.dark)
 }
 
-private enum PreviewSessions {
+enum PreviewSessions {
     static let all = [
         session("iPhone 16 Pro", .device, .ios, minutesAgo: 0, isCurrent: true),
         session("Pixel 9", .device, .android, minutesAgo: 90),

@@ -16,9 +16,15 @@ struct RootView: View {
 
     var body: some View {
         #if DEBUG
-            // `-AwradGallery YES` opens the component gallery instead (debug builds only).
+            // `-AwradGallery YES` opens the component gallery instead, and
+            // `-AwradAccountScreenshot settings|devices` a signed-in account screen with sample
+            // state (debug builds only).
             if UserDefaults.standard.bool(forKey: "AwradGallery") {
                 AwradComponentGallery()
+            } else if let page = UserDefaults.standard.string(forKey: "AwradAccountScreenshot")
+                .flatMap(AccountScreenshot.Page.init(rawValue:))
+            {
+                AccountScreenshot(page)
             } else {
                 destinations
             }

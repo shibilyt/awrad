@@ -64,7 +64,7 @@
                         AwradIconButton.more {}.disabled(true)
                     }
                 }
-                GalleryItem(caption: "Icons · the shared set in order; back and forward flip in RTL") {
+                GalleryItem(caption: "Icons · the shared set in order; back, forward and chevron flip in RTL") {
                     LazyVGrid(
                         columns: [GridItem(.adaptive(minimum: AwradSize.touchTarget), spacing: AwradSpacing.sm)],
                         alignment: .leading, spacing: AwradSpacing.sm
