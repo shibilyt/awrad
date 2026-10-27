@@ -13,7 +13,9 @@ const problems = [];
 
 function validate(path, ref, doc) {
   const check = ajv.getSchema(ref);
-  if (!check(doc)) for (const e of check.errors) problems.push(`${path}: ${e.instancePath || "/"} ${e.message}`);
+  if (!check(doc))
+    for (const e of check.errors)
+      problems.push(`${path}: ${e.instancePath || "/"} ${e.message}`);
 }
 
 const DAY = 86_400_000;
@@ -27,14 +29,23 @@ const starts = [];
 for (let year = table.first_year; year <= table.last_year; year += 1) {
   const months = table.month_starts[String(year)];
   if (!months) problems.push(`${tablePath}: year ${year} missing`);
-  else starts.push(...months.map((date, i) => ({ date, label: `${year}/${i + 1}` })));
+  else
+    starts.push(
+      ...months.map((date, i) => ({ date, label: `${year}/${i + 1}` })),
+    );
 }
-if (Object.keys(table.month_starts).length !== table.last_year - table.first_year + 1)
-  problems.push(`${tablePath}: month_starts must hold exactly first_year..last_year`);
+if (
+  Object.keys(table.month_starts).length !==
+  table.last_year - table.first_year + 1
+)
+  problems.push(
+    `${tablePath}: month_starts must hold exactly first_year..last_year`,
+  );
 starts.push({ date: table.end_exclusive, label: "end_exclusive" });
 for (let i = 0; i + 1 < starts.length; i += 1) {
   const length = days(starts[i].date, starts[i + 1].date);
-  if (length !== 29 && length !== 30) problems.push(`${tablePath}: ${starts[i].label} has ${length} days`);
+  if (length !== 29 && length !== 30)
+    problems.push(`${tablePath}: ${starts[i].label} has ${length} days`);
 }
 
 // Goal presets: schema-valid, unique keys.
@@ -52,11 +63,16 @@ const tokensPath = "design-tokens/v1/colors.json";
 const tokens = read(tokensPath);
 validate(tokensPath, "urn:awrad:design-tokens:1#/$defs/colors", tokens);
 const palette = new Set(Object.values(tokens.palette ?? {}));
-const rgb = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
-const alpha = (hex) => (hex.length === 9 ? parseInt(hex.slice(7, 9), 16) / 255 : 1);
-const over = (fg, bg) => rgb(fg).map((c, i) => alpha(fg) * c + (1 - alpha(fg)) * rgb(bg)[i]);
+const rgb = (hex) =>
+  [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+const alpha = (hex) =>
+  hex.length === 9 ? parseInt(hex.slice(7, 9), 16) / 255 : 1;
+const over = (fg, bg) =>
+  rgb(fg).map((c, i) => alpha(fg) * c + (1 - alpha(fg)) * rgb(bg)[i]);
 const luminance = (c) =>
-  c.map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4)).reduce((sum, x, i) => sum + x * [0.2126, 0.7152, 0.0722][i], 0);
+  c
+    .map((x) => (x <= 0.04045 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4))
+    .reduce((sum, x, i) => sum + x * [0.2126, 0.7152, 0.0722][i], 0);
 const ratio = (a, b) => {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
@@ -64,34 +80,54 @@ const ratio = (a, b) => {
 let pairs = 0;
 for (const [name, role] of Object.entries(tokens.roles ?? {})) {
   for (const theme of ["light", "dark"]) {
-    if (!palette.has(role[theme].slice(0, 7))) problems.push(`${tokensPath}: ${name}.${theme} ${role[theme]} isn't in the palette`);
+    if (!palette.has(role[theme].slice(0, 7)))
+      problems.push(
+        `${tokensPath}: ${name}.${theme} ${role[theme]} isn't in the palette`,
+      );
   }
 }
 for (const { foreground, background, minimum } of tokens.contrast ?? []) {
   const fg = tokens.roles[foreground];
   const bg = tokens.roles[background];
   if (!fg || !bg) {
-    problems.push(`${tokensPath}: contrast pair ${foreground}/${background} names an unknown role`);
+    problems.push(
+      `${tokensPath}: contrast pair ${foreground}/${background} names an unknown role`,
+    );
     continue;
   }
   for (const theme of ["light", "dark"]) {
-    if (alpha(bg[theme]) !== 1) problems.push(`${tokensPath}: ${background}.${theme} must be opaque to be a contrast background`);
+    if (alpha(bg[theme]) !== 1)
+      problems.push(
+        `${tokensPath}: ${background}.${theme} must be opaque to be a contrast background`,
+      );
     const got = ratio(over(fg[theme], bg[theme]), rgb(bg[theme]));
-    if (got < minimum) problems.push(`${tokensPath}: ${foreground} on ${background} (${theme}) is ${got.toFixed(2)}:1, needs ${minimum}`);
+    if (got < minimum)
+      problems.push(
+        `${tokensPath}: ${foreground} on ${background} (${theme}) is ${got.toFixed(2)}:1, needs ${minimum}`,
+      );
     pairs += 1;
   }
 }
 
 // Fonts: every file listed in SHA256SUMS exists and matches, and every .ttf is listed.
 const fontsDir = "design-tokens/v1/fonts";
-const sums = readFileSync(join(root, fontsDir, "SHA256SUMS"), "utf8").trim().split("\n").map((line) => line.split(/\s+/));
+const sums = readFileSync(join(root, fontsDir, "SHA256SUMS"), "utf8")
+  .trim()
+  .split("\n")
+  .map((line) => line.split(/\s+/));
 for (const [sum, file] of sums) {
-  const actual = createHash("sha256").update(readFileSync(join(root, fontsDir, file))).digest("hex");
-  if (actual !== sum) problems.push(`${fontsDir}/${file}: checksum differs from SHA256SUMS`);
+  const actual = createHash("sha256")
+    .update(readFileSync(join(root, fontsDir, file)))
+    .digest("hex");
+  if (actual !== sum)
+    problems.push(`${fontsDir}/${file}: checksum differs from SHA256SUMS`);
 }
 const listed = new Set(sums.map(([, file]) => file));
-for (const file of readdirSync(join(root, fontsDir)).filter((f) => f.endsWith(".ttf"))) {
-  if (!listed.has(file)) problems.push(`${fontsDir}/${file}: not listed in SHA256SUMS`);
+for (const file of readdirSync(join(root, fontsDir)).filter((f) =>
+  f.endsWith(".ttf"),
+)) {
+  if (!listed.has(file))
+    problems.push(`${fontsDir}/${file}: not listed in SHA256SUMS`);
 }
 
 if (problems.length) {
