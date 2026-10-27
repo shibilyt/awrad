@@ -3,12 +3,15 @@
 // :root and dark under prefers-color-scheme, plus the Tailwind theme that names them
 // (bg-surface, text-on-surface, border-outline-strong, …) and nothing else. The `states`
 // (disabled) are opacities, not colours: an --awrad-state-* property and an opacity-* class each.
+// `data-color-scheme="light|dark"` on an element forces one scheme for its subtree (the dev
+// component gallery's toggle). A key the generator doesn't know fails (token-keys.mjs).
 //
 //   node scripts/generate-colors.mjs           write the file (npm run tokens:colors)
 //   node scripts/generate-colors.mjs --check   fail when the committed file is stale (npm run validate)
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { checkKeys } from "./token-keys.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 export const SOURCE = join(HERE, "../../contracts/design-tokens/v1/colors.json");
@@ -23,6 +26,7 @@ export function kebab(role) {
 
 /** The CSS for a parsed colors.json. Values are copied as written, so `#RRGGBBAA` keeps its alpha. */
 export function renderColorsCss(tokens) {
+  checkKeys("colors", tokens);
   const roles = Object.entries(tokens.roles);
   if (roles.length === 0) throw new Error("colors.json has no roles");
   for (const [role, value] of roles) {
@@ -57,6 +61,17 @@ export function renderColorsCss(tokens) {
     "  --color-*: initial;",
     roles.map(([role]) => `  --color-${kebab(role)}: var(--awrad-color-${kebab(role)});`).join("\n"),
     "}",
+    "",
+    "/*",
+    ' * One scheme forced on a subtree, whatever the system asks: data-color-scheme="light" or "dark".',
+    " * Only the dev component gallery sets it; screens never check or choose the scheme.",
+    " */",
+    ...SCHEMES.flatMap((scheme) => [
+      `[data-color-scheme="${scheme}"] {`,
+      `  color-scheme: ${scheme};`,
+      declarations(scheme, "  "),
+      "}",
+    ]),
     "",
     ...states,
   ].join("\n");

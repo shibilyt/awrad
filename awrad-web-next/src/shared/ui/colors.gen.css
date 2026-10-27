@@ -14,13 +14,17 @@
   --awrad-color-outline-strong: #00000080;
   --awrad-color-primary: #23553C;
   --awrad-color-on-primary: #FFFFFF;
+  --awrad-color-on-primary-variant: #B7D6B6;
   --awrad-color-primary-container: #B7D6B6;
   --awrad-color-on-primary-container: #000000;
+  --awrad-color-secondary-container: #E8EDE9;
+  --awrad-color-on-secondary-container: #000000;
   --awrad-color-accent: #23553C;
   --awrad-color-progress: #23553C;
   --awrad-color-error: #B3261E;
   --awrad-color-on-error: #FFFFFF;
   --awrad-color-scrim: #00000066;
+  --awrad-color-shadow: #0000001F;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -34,13 +38,17 @@
     --awrad-color-outline-strong: #E3E5E380;
     --awrad-color-primary: #23553C;
     --awrad-color-on-primary: #FFFFFF;
+    --awrad-color-on-primary-variant: #B7D6B6;
     --awrad-color-primary-container: #23553C;
     --awrad-color-on-primary-container: #B7D6B6;
+    --awrad-color-secondary-container: #B7D6B6;
+    --awrad-color-on-secondary-container: #000000;
     --awrad-color-accent: #B7D6B6;
     --awrad-color-progress: #E3E5E3;
     --awrad-color-error: #F2B8B5;
     --awrad-color-on-error: #000000;
     --awrad-color-scrim: #00000066;
+    --awrad-color-shadow: #00000000;
   }
 }
 
@@ -56,13 +64,68 @@
   --color-outline-strong: var(--awrad-color-outline-strong);
   --color-primary: var(--awrad-color-primary);
   --color-on-primary: var(--awrad-color-on-primary);
+  --color-on-primary-variant: var(--awrad-color-on-primary-variant);
   --color-primary-container: var(--awrad-color-primary-container);
   --color-on-primary-container: var(--awrad-color-on-primary-container);
+  --color-secondary-container: var(--awrad-color-secondary-container);
+  --color-on-secondary-container: var(--awrad-color-on-secondary-container);
   --color-accent: var(--awrad-color-accent);
   --color-progress: var(--awrad-color-progress);
   --color-error: var(--awrad-color-error);
   --color-on-error: var(--awrad-color-on-error);
   --color-scrim: var(--awrad-color-scrim);
+  --color-shadow: var(--awrad-color-shadow);
+}
+
+/*
+ * One scheme forced on a subtree, whatever the system asks: data-color-scheme="light" or "dark".
+ * Only the dev component gallery sets it; screens never check or choose the scheme.
+ */
+[data-color-scheme="light"] {
+  color-scheme: light;
+  --awrad-color-background: #FFFFFF;
+  --awrad-color-surface: #E8EDE9;
+  --awrad-color-surface-bar: #F9FBFA;
+  --awrad-color-on-surface: #000000;
+  --awrad-color-on-surface-variant: #000000A6;
+  --awrad-color-outline: #0000001A;
+  --awrad-color-outline-strong: #00000080;
+  --awrad-color-primary: #23553C;
+  --awrad-color-on-primary: #FFFFFF;
+  --awrad-color-on-primary-variant: #B7D6B6;
+  --awrad-color-primary-container: #B7D6B6;
+  --awrad-color-on-primary-container: #000000;
+  --awrad-color-secondary-container: #E8EDE9;
+  --awrad-color-on-secondary-container: #000000;
+  --awrad-color-accent: #23553C;
+  --awrad-color-progress: #23553C;
+  --awrad-color-error: #B3261E;
+  --awrad-color-on-error: #FFFFFF;
+  --awrad-color-scrim: #00000066;
+  --awrad-color-shadow: #0000001F;
+}
+[data-color-scheme="dark"] {
+  color-scheme: dark;
+  --awrad-color-background: #121412;
+  --awrad-color-surface: #000000;
+  --awrad-color-surface-bar: #313B34;
+  --awrad-color-on-surface: #E3E5E3;
+  --awrad-color-on-surface-variant: #E3E5E3A6;
+  --awrad-color-outline: #313B34;
+  --awrad-color-outline-strong: #E3E5E380;
+  --awrad-color-primary: #23553C;
+  --awrad-color-on-primary: #FFFFFF;
+  --awrad-color-on-primary-variant: #B7D6B6;
+  --awrad-color-primary-container: #23553C;
+  --awrad-color-on-primary-container: #B7D6B6;
+  --awrad-color-secondary-container: #B7D6B6;
+  --awrad-color-on-secondary-container: #000000;
+  --awrad-color-accent: #B7D6B6;
+  --awrad-color-progress: #E3E5E3;
+  --awrad-color-error: #F2B8B5;
+  --awrad-color-on-error: #000000;
+  --awrad-color-scrim: #00000066;
+  --awrad-color-shadow: #00000000;
 }
 
 /* States (colors.json `states`): drawn at an opacity, with no colours of their own. */

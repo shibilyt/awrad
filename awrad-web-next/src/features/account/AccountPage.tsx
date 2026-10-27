@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { SecondaryButton } from "@/shared/ui/Button";
+import { Button } from "@/shared/ui/Button";
+import { Card } from "@/shared/ui/Card";
 import { TextLink } from "@/shared/ui/TextLink";
 import { AccountScreen, FormAlert, FormNotice } from "./AccountScreen";
 import { deleteBrowserSession, type Account } from "./api";
@@ -32,7 +33,8 @@ function SignOut(): ReactElement {
   return (
     <div className="flex flex-col gap-row-gap">
       <FormAlert message={alert} />
-      <SecondaryButton
+      <Button
+        variant="secondary"
         onPress={() => {
           setAlert(null);
           signOut.mutate();
@@ -40,7 +42,7 @@ function SignOut(): ReactElement {
         isPending={signOut.isPending}
       >
         {t("account.page.signOut")}
-      </SecondaryButton>
+      </Button>
     </div>
   );
 }
@@ -48,12 +50,14 @@ function SignOut(): ReactElement {
 function AccountDetails({ account }: { account: Account }): ReactElement {
   const { t } = useTranslation();
   return (
-    <dl className="flex flex-col gap-xs rounded-card bg-surface p-card-padding">
-      <dt className="text-body-small text-on-surface-variant">{t("account.fields.email")}</dt>
-      <dd className="text-row-title break-all">
-        <bdi>{account.email}</bdi>
-      </dd>
-    </dl>
+    <Card>
+      <dl className="flex flex-col gap-xs">
+        <dt className="text-body-small text-on-surface-variant">{t("account.fields.email")}</dt>
+        <dd className="text-row-title break-all">
+          <bdi>{account.email}</bdi>
+        </dd>
+      </dl>
+    </Card>
   );
 }
 
@@ -63,28 +67,30 @@ function Settings(): ReactElement {
   const linkClass = "flex min-h-list-row items-center px-card-padding text-row-title";
   return (
     <nav aria-label={t("account.page.settings")}>
-      <ul className="flex flex-col rounded-card bg-surface">
-        <li>
-          <TextLink to="/account/devices" className={linkClass}>
-            {t("account.page.devices")}
-          </TextLink>
-        </li>
-        <li>
-          <TextLink to="/account/password" className={linkClass}>
-            {t("account.page.changePassword")}
-          </TextLink>
-        </li>
-        <li>
-          <TextLink to="/account/email" className={linkClass}>
-            {t("account.page.changeEmail")}
-          </TextLink>
-        </li>
-        <li>
-          <TextLink to="/account/delete" className={`${linkClass} text-error!`}>
-            {t("account.page.deleteAccount")}
-          </TextLink>
-        </li>
-      </ul>
+      <Card padded={false}>
+        <ul className="flex flex-col">
+          <li>
+            <TextLink to="/account/devices" className={linkClass}>
+              {t("account.page.devices")}
+            </TextLink>
+          </li>
+          <li>
+            <TextLink to="/account/password" className={linkClass}>
+              {t("account.page.changePassword")}
+            </TextLink>
+          </li>
+          <li>
+            <TextLink to="/account/email" className={linkClass}>
+              {t("account.page.changeEmail")}
+            </TextLink>
+          </li>
+          <li>
+            <TextLink to="/account/delete" className={`${linkClass} text-error!`}>
+              {t("account.page.deleteAccount")}
+            </TextLink>
+          </li>
+        </ul>
+      </Card>
     </nav>
   );
 }

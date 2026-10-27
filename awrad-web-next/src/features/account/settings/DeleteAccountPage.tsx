@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState, type ReactElement } from "react";
 import { Form } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { DangerButton } from "@/shared/ui/Button";
+import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { FormAlert } from "../AccountScreen";
 import { CurrentPasswordField } from "../fields";
@@ -77,7 +77,9 @@ export function DeleteAccountPage(): ReactElement {
       >
         <CurrentPasswordField />
         <FormAlert message={remove.alert} />
-        <DangerButton type="submit">{t("account.delete.submit")}</DangerButton>
+        <Button variant="error" type="submit">
+          {t("account.delete.submit")}
+        </Button>
       </Form>
       <ConfirmDialog
         isOpen={confirmPassword !== null}

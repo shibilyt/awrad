@@ -3,7 +3,7 @@ import { useState, type ReactElement, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { emailInput } from "@/shared/account-input";
 import { ApiProblem } from "@/shared/api/problem";
-import { SecondaryButton } from "@/shared/ui/Button";
+import { Button } from "@/shared/ui/Button";
 import { FormAlert, FormNotice } from "./AccountScreen";
 import type { PendingAccount } from "./pending";
 import { problemKey } from "./problems";
@@ -54,9 +54,9 @@ export function ResendCode({
 
   return (
     <div className="flex flex-col gap-sm">
-      <SecondaryButton onPress={resend} isDisabled={cooldown.remaining > 0} isPending={mutation.isPending}>
+      <Button variant="secondary" onPress={resend} isDisabled={cooldown.remaining > 0} isPending={mutation.isPending}>
         {t("account.code.resend")}
-      </SecondaryButton>
+      </Button>
       {cooldown.remaining > 0 && (
         <p className="text-body-small text-on-surface-variant">
           {t("account.code.resendIn", { seconds: cooldown.remaining })}
