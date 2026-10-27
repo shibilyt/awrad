@@ -60,6 +60,11 @@
       "light": "#FFFFFF",
       "dark": "#FFFFFF"
     },
+    "onPrimaryVariant": {
+      "use": "Secondary text and icons on primary: a selected option row's label, its avatar fill",
+      "light": "#B7D6B6",
+      "dark": "#B7D6B6"
+    },
     "primaryContainer": {
       "use": "Selected state fill: the selected tab pill, selected chips",
       "light": "#B7D6B6",
@@ -69,6 +74,16 @@
       "use": "Text and icons on primaryContainer",
       "light": "#000000",
       "dark": "#B7D6B6"
+    },
+    "secondaryContainer": {
+      "use": "Secondary fills: secondary buttons, unselected option rows",
+      "light": "#E8EDE9",
+      "dark": "#B7D6B6"
+    },
+    "onSecondaryContainer": {
+      "use": "Text and icons on secondaryContainer",
+      "light": "#000000",
+      "dark": "#000000"
     },
     "accent": {
       "use": "Accent text and icons on backgrounds and surfaces: streaks, links, the selected tab's label",
@@ -94,6 +109,11 @@
       "use": "Dimmed backdrop behind dialogs and sheets",
       "light": "#00000066",
       "dark": "#00000066"
+    },
+    "shadow": {
+      "use": "The one shadow, under floating elements (the bottom bar); none in dark",
+      "light": "#0000001F",
+      "dark": "#00000000"
     }
   },
   "contrast": [
@@ -200,6 +220,21 @@
     {
       "foreground": "onError",
       "background": "error",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "onPrimaryVariant",
+      "background": "primary",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "primary",
+      "background": "onPrimaryVariant",
+      "minimum": 4.5
+    },
+    {
+      "foreground": "onSecondaryContainer",
+      "background": "secondaryContainer",
       "minimum": 4.5
     }
   ],

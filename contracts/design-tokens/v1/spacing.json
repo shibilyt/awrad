@@ -76,6 +76,62 @@
     "dialogMaxWidth": {
       "value": 384,
       "use": "Widest a dialog grows (web, tablets)"
+    },
+    "topBar": {
+      "value": 56,
+      "use": "Height of the top bar"
+    },
+    "navBar": {
+      "value": 72,
+      "use": "Height of the floating bottom bar"
+    },
+    "navPillWidth": {
+      "value": 56,
+      "use": "Width of the selected tab's pill"
+    },
+    "navPillHeight": {
+      "value": 32,
+      "use": "Height of the selected tab's pill"
+    },
+    "roundButton": {
+      "value": 48,
+      "use": "Round icon button: the + on My Goals"
+    },
+    "roundButtonSmall": {
+      "value": 32,
+      "use": "Small round button inside a tile: the collection arrow"
+    },
+    "avatar": {
+      "value": 36,
+      "use": "Leading circle in an option row (the language 'Aa')"
+    },
+    "checkbox": {
+      "value": 20,
+      "use": "A checkbox's box"
+    },
+    "switchWidth": {
+      "value": 52,
+      "use": "Switch track width"
+    },
+    "switchHeight": {
+      "value": 32,
+      "use": "Switch track height"
+    },
+    "switchThumb": {
+      "value": 24,
+      "use": "Switch thumb"
+    },
+    "stepDot": {
+      "value": 8,
+      "use": "A square in the onboarding step indicator"
+    },
+    "tabIndicatorWidth": {
+      "value": 24,
+      "use": "The bar under the selected segmented pill"
+    },
+    "tabIndicatorHeight": {
+      "value": 4,
+      "use": "The bar under the selected segmented pill"
     }
   }
 }

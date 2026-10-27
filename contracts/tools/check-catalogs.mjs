@@ -140,6 +140,8 @@ const refs = (file, owner, value, table, kind) => {
 };
 for (const [name, role] of Object.entries(shape.roles ?? {}))
   refs("shape.json", name, role.radius, shape.scale, "radius");
+for (const [name, level] of Object.entries(shape.elevation ?? {}))
+  refs("shape.json", `elevation.${name}`, level.color, tokens.roles, "colour role");
 for (const [name, role] of Object.entries(spacing.roles ?? {}))
   refs("spacing.json", name, role.space, spacing.scale, "space");
 // In motion.json, fields ending in Spring/spring name a spring, duration-like fields a duration, Easing/easing an easing,

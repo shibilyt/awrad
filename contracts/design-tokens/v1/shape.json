@@ -61,6 +61,18 @@
     "checkbox": {
       "radius": "xxs",
       "use": "A checkbox's box (the only use of 4)"
+    },
+    "stepDot": {
+      "radius": "xxs",
+      "use": "Squares in the onboarding step indicator"
+    },
+    "tabIndicator": {
+      "radius": "full",
+      "use": "The bar under the selected segmented pill"
+    },
+    "contentSheet": {
+      "radius": "3xl",
+      "use": "Top corners of the content area under a large-title header (My Goals)"
     }
   },
   "strokes": {
@@ -76,6 +88,14 @@
       "width": 2,
       "offset": 2,
       "use": "Keyboard focus ring on the web, in accent"
+    }
+  },
+  "elevation": {
+    "floating": {
+      "y": 4,
+      "blur": 16,
+      "color": "shadow",
+      "use": "Floating elements over content: the bottom bar. The only shadow; dark mode has none"
     }
   }
 }

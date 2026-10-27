@@ -123,7 +123,8 @@
         "corners",
         "scale",
         "roles",
-        "strokes"
+        "strokes",
+        "elevation"
       ],
       "properties": {
         "version": {
@@ -189,6 +190,35 @@
               "offset": {
                 "type": "number",
                 "minimum": 0
+              },
+              "use": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "elevation": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "y",
+              "blur",
+              "color",
+              "use"
+            ],
+            "properties": {
+              "y": {
+                "type": "number"
+              },
+              "blur": {
+                "type": "number",
+                "minimum": 0
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z]*$"
               },
               "use": {
                 "type": "string"

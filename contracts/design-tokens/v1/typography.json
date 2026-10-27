@@ -3,6 +3,13 @@
   "description": "Text styles. Interface text uses fontFamily (fonts/README.md); a style with its own fontFamily overrides it. Arabic and Malayalam interface text falls back to the system font. Sizes in sp / pt / CSS px; iOS scales each style with Dynamic Type relative to iosTextStyle.",
   "fontFamily": "Google Sans Flex Rounded",
   "styles": {
+    "largeTitle": {
+      "size": 34,
+      "lineHeight": 40,
+      "weight": 700,
+      "iosTextStyle": "largeTitle",
+      "use": "Top-level page titles: My Goals"
+    },
     "title": {
       "size": 22,
       "lineHeight": 28,
