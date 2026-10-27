@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { DevicesIcon, PhoneIcon } from "@/shared/ui/icons.gen";
 import { FormAlert, FormNotice } from "../AccountScreen";
 import { problemKey } from "../problems";
 import { accountSessionsQuery, type AccountSession } from "./api";
@@ -25,6 +26,7 @@ function SessionRow({
   const name = sessionName(t, session);
   return (
     <li className="flex items-center gap-lg px-card-padding py-lg">
+      <span className="text-on-surface-variant">{session.platform === "web" ? <DevicesIcon /> : <PhoneIcon />}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-xs">
         <p className="flex flex-wrap items-center gap-inline-gap text-row-title">
           <bdi className="break-all">{name}</bdi>

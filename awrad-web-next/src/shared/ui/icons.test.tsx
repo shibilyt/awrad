@@ -18,7 +18,7 @@ describe("generated icons", () => {
     expect(container.querySelector("svg")).toHaveClass("size-icon-small");
   });
 
-  it("only back and forward flip in right-to-left layouts", () => {
+  it("only back, forward and chevron flip in right-to-left layouts", () => {
     const mirrored = (Object.keys(ICONS) as IconName[]).filter((name) => {
       const Icon = ICONS[name];
       const { container, unmount } = render(<Icon />);
@@ -26,6 +26,6 @@ describe("generated icons", () => {
       unmount();
       return flips;
     });
-    expect(mirrored).toEqual(["forward", "back"]);
+    expect(mirrored).toEqual(["forward", "back", "chevron"]);
   });
 });
