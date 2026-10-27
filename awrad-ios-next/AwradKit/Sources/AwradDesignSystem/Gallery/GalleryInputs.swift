@@ -20,7 +20,7 @@
                     AwradTextField(
                         GalleryStrings.email, text: $filledEmail, supportingText: GalleryStrings.emailSupport)
                 }
-                GalleryItem(caption: "Text field · error (secure), disabled") {
+                GalleryItem(caption: "Text field · error (secure, with show/hide), disabled") {
                     AwradTextField(
                         GalleryStrings.password, text: $password, isSecure: true, error: GalleryStrings.passwordError)
                     AwradTextField(GalleryStrings.email, text: $filledEmail).disabled(true)
@@ -90,7 +90,7 @@
                 }
                 GalleryItem(caption: "Large-title header · with the + action, title only", isInset: false) {
                     AwradLargeTitleHeader(GalleryStrings.myGoals) {
-                        AwradRoundButton(systemImage: "plus", label: GalleryStrings.addGoal) {}
+                        AwradRoundButton(icon: .add, label: GalleryStrings.addGoal) {}
                     }
                     AwradLargeTitleHeader(GalleryStrings.library)
                 }

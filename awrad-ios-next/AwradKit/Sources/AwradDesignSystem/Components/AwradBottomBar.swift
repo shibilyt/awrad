@@ -1,23 +1,24 @@
 import SwiftUI
 
-/// One tab of the bottom bar: an SF Symbol over its label.
+/// One tab of the bottom bar: its icon (`home`, `goals`, `library`, `community`) over its label.
 public struct AwradBottomBarItem<Tab: Hashable> {
     public let tab: Tab
     public let title: LocalizedStringResource
-    public let systemImage: String
+    public let icon: AwradIcon
 
-    public init(_ tab: Tab, title: LocalizedStringResource, systemImage: String) {
+    public init(_ tab: Tab, title: LocalizedStringResource, icon: AwradIcon) {
         self.tab = tab
         self.title = title
-        self.systemImage = systemImage
+        self.icon = icon
     }
 }
 
 /// The floating main navigation (Home, Goals, Library, Community): `navBar` (72) tall, `surfaceBar`
 /// in the `navBar` shape with the `floating` shadow (none in dark). Items have equal widths; the
-/// selected one has the `primaryContainer` pill behind its icon, which grows in (`navPill`) while
-/// the icon pops, with a `tick`. VoiceOver reads a tab bar with each tab's selected state. It mirrors
-/// in right-to-left. Place it with `awradBottomBar(selection:items:)`.
+/// selected one has the `primaryContainer` pill behind its icon, which grows in (`navPill`) while the
+/// icon pops, with a `tick`. The icon is the same outline icon selected or not: the pill shows the
+/// selection. VoiceOver reads a tab bar with each tab's selected state. It mirrors in right-to-left.
+/// Place it with `awradBottomBar(selection:items:)`.
 public struct AwradBottomBar<Tab: Hashable>: View {
     @Binding private var selection: Tab
     private let items: [AwradBottomBarItem<Tab>]
@@ -62,12 +63,9 @@ private struct BottomBarItemView<Tab: Hashable>: View {
                         .fill(AwradColors.primaryContainer)
                         .frame(width: AwradSize.navPillWidth, height: AwradSize.navPillHeight)
                         .awradNavPill(isSelected: isSelected)
-                    Image(systemName: item.systemImage)
-                        .font(.system(size: AwradSize.icon))
-                        .symbolVariant(isSelected ? .fill : .none)
+                    AwradIconImage(item.icon)
                         .foregroundStyle(isSelected ? AwradColors.onPrimaryContainer : AwradColors.onSurfaceVariant)
                         .animation(colorChange, value: isSelected)
-                        .frame(width: AwradSize.icon, height: AwradSize.icon)
                         .awradNavIcon(isSelected: isSelected)
                 }
                 Text(item.title)
@@ -84,7 +82,7 @@ private struct BottomBarItemView<Tab: Hashable>: View {
         // The bar keeps its height at large text sizes; a long press shows the large label.
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .accessibilityShowsLargeContentViewer {
-            Image(systemName: item.systemImage)
+            item.icon.image
             Text(item.title)
         }
         .accessibilityAddTraits(isSelected ? .isSelected : [])

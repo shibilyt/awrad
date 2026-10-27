@@ -49,6 +49,9 @@ struct AwradLayoutTokensTests {
         #expect(AwradRadius.sheet.fixedRadius == 32)
         #expect(AwradRadius.chip == .full)
         #expect(AwradRadius.checkbox == .radius(4))
+        // Step dots are squares with slightly rounded corners, never circles.
+        #expect(AwradRadius.stepDot == .radius(2))
+        #expect(AwradSize.stepDot > 2 * AwradRadius.xxxs)
         #expect(AwradSpacing.pageMargin == 20)
         #expect(AwradSize.control == 56)
         #expect(AwradSize.logo == 148)

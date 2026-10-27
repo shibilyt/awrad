@@ -72,10 +72,10 @@
         case home, goals, library, community
 
         static let items: [AwradBottomBarItem<GalleryTab>] = [
-            AwradBottomBarItem(.home, title: GalleryStrings.home, systemImage: "house"),
-            AwradBottomBarItem(.goals, title: GalleryStrings.goals, systemImage: "checkmark.circle"),
-            AwradBottomBarItem(.library, title: GalleryStrings.library, systemImage: "books.vertical"),
-            AwradBottomBarItem(.community, title: GalleryStrings.community, systemImage: "person.2"),
+            AwradBottomBarItem(.home, title: GalleryStrings.home, icon: .home),
+            AwradBottomBarItem(.goals, title: GalleryStrings.goals, icon: .goals),
+            AwradBottomBarItem(.library, title: GalleryStrings.library, icon: .library),
+            AwradBottomBarItem(.community, title: GalleryStrings.community, icon: .community),
         ]
 
         var title: LocalizedStringResource {

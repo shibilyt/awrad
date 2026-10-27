@@ -34,7 +34,8 @@ let package = Package(
         .target(
             name: "AwradDesignSystem",
             resources: [
-                .copy("Resources/Fonts"), .copy("Resources/Images"), .process("Resources/Localizable.xcstrings"),
+                .copy("Resources/Fonts"), .copy("Resources/Images"), .process("Resources/Icons.xcassets"),
+                .process("Resources/Localizable.xcstrings"),
             ],
             swiftSettings: ui
         ),

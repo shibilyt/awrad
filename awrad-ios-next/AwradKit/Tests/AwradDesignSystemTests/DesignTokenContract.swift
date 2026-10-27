@@ -5,10 +5,13 @@ import Testing
 /// Reads a file of contracts/design-tokens/v1 from the repository, so the generated Swift is checked
 /// against the contract itself at run time, not against the generator.
 enum DesignTokenContract {
+    /// A file of contracts/design-tokens/v1, such as `icons.json`.
+    static func url(_ file: String) throws -> URL {
+        try FixtureLoader.contractsDirectory(holding: "design-tokens").appending(path: "design-tokens/v1/\(file)")
+    }
+
     static func json(_ name: String) throws -> [String: Any] {
-        let url = try FixtureLoader.contractsDirectory(holding: "design-tokens")
-            .appending(path: "design-tokens/v1/\(name).json")
-        let object = try JSONSerialization.jsonObject(with: Data(contentsOf: url))
+        let object = try JSONSerialization.jsonObject(with: Data(contentsOf: url("\(name).json")))
         return try #require(object as? [String: Any], "\(name).json isn't an object")
     }
 
