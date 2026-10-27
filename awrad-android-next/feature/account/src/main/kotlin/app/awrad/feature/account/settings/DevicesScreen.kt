@@ -4,13 +4,17 @@ import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -20,6 +24,7 @@ import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradCard
 import app.awrad.core.designsystem.component.AwradRowButton
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.motion.AwradContentSwap
 import app.awrad.core.designsystem.motion.AwradExpand
 import app.awrad.core.designsystem.theme.AwradTheme
@@ -133,6 +138,14 @@ private fun SessionRow(session: AccountSession, now: Instant, onRevoke: () -> Un
     ListItem(
         modifier = modifier,
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        leadingContent = {
+            Icon(
+                imageVector = session.platform.icon(),
+                contentDescription = null,
+                modifier = Modifier.size(AwradTheme.sizes.icon),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
         headlineContent = { Text(text = name, style = AwradTheme.type.rowTitle) },
         supportingContent = {
             Text(
@@ -199,6 +212,14 @@ private fun platformLabel(platform: AccountSession.Platform): String = stringRes
         AccountSession.Platform.OTHER -> R.string.account_devices_platform_other
     },
 )
+
+/** A phone for the apps, `language` (a globe) for a browser, `devices` when the platform is unknown. */
+@Composable
+private fun AccountSession.Platform.icon(): ImageVector = when (this) {
+    AccountSession.Platform.ANDROID, AccountSession.Platform.IOS -> AwradIcons.Phone
+    AccountSession.Platform.WEB -> AwradIcons.Language
+    AccountSession.Platform.OTHER -> AwradIcons.Devices
+}
 
 /** "Last used 5 minutes ago", in the app's language; "Active now" within the last minute. */
 @Composable

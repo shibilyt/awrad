@@ -19,7 +19,7 @@ import app.awrad.next.R
 /** How many icons the gallery shows per row. */
 private const val ICONS_PER_ROW = 3
 
-/** Every shared icon (`AwradIcons`) with its name in icons.json; `back` and `forward` flip in RTL. */
+/** Every shared icon (`AwradIcons`) with its name in icons.json; `back`, `forward` and `chevron` flip in RTL. */
 @Composable
 internal fun IconsSection(modifier: Modifier = Modifier) {
     GallerySection(title = stringResource(R.string.gallery_section_icons), modifier = modifier) {

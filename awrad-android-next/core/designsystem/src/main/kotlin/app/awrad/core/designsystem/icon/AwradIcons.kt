@@ -75,6 +75,38 @@ public object AwradIcons {
     public val Streak: ImageVector
         @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_streak)
 
+    /** Signed-in devices. */
+    public val Devices: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_devices)
+
+    /** A phone; data kept on this device. */
+    public val Phone: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_phone)
+
+    /** Language setting. */
+    public val Language: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_language)
+
+    /** Email address, change email. */
+    public val Email: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_email)
+
+    /** Password, change password. */
+    public val Password: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_password)
+
+    /** Delete account and other destructive actions. */
+    public val Delete: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_delete)
+
+    /** Trailing chevron on a row that opens a page. Flips in right-to-left layouts. */
+    public val Chevron: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_chevron)
+
+    /** Error message beside a form or feedback line. */
+    public val Error: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_error)
+
     /** Every icon by its name in icons.json, in the contract's order (the component gallery). */
     public val all: List<Pair<String, ImageVector>>
         @Composable get() = listOf(
@@ -93,5 +125,13 @@ public object AwradIcons {
             "close" to Close,
             "expand" to Expand,
             "streak" to Streak,
+            "devices" to Devices,
+            "phone" to Phone,
+            "language" to Language,
+            "email" to Email,
+            "password" to Password,
+            "delete" to Delete,
+            "chevron" to Chevron,
+            "error" to Error,
         )
 }
