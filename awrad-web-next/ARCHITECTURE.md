@@ -79,7 +79,11 @@ dependency-cruiser enforces:
 - **Components:** React Aria Components provide keyboard, focus, screen-reader and RTL behaviour; Tailwind styles them.
 - **Language:** i18next with en, ar and ml. Changing language sets `<html lang dir>`, so the whole page flips to right-to-left for Arabic, and `Accept-Language` follows it.
   - The choice is kept in `localStorage` (`awrad.language`, the language code only; never credentials or account data), and the next page load starts in it. Without one, the app starts in English.
-- **Fonts:** Arabic uses Noto Naskh Arabic for both content and interface text; other languages use Manrope.
+- **Fonts** (`../contracts/design-tokens/v1/fonts/README.md`): the same files as Android and iOS, copied byte for byte into `public/fonts/` and loaded by `@font-face` in `src/shared/ui/theme.css` (400, 500, 600 and 700, `font-display: swap`, no synthetic bold or italic).
+  - Interface text is Google Sans Flex Rounded, the font of the frozen apps: `--font-sans` is `"Google Sans Flex Rounded", system-ui, sans-serif`.
+  - Interface text in Arabic and Malayalam uses the system font for that script. Google Sans Flex has no glyphs for them, so the browser falls back glyph by glyph to `system-ui` through the same stack; nothing switches font by language.
+  - Noto Naskh Arabic is only for Qur'anic and dhikr text: the `font-arabic` class (`--font-arabic`), never interface text.
+  - `npm run validate` fails when a file in `public/fonts/` isn't listed in the contracts' `SHA256SUMS` or its checksum differs, and when `theme.css` loads a font that isn't served (`check:fonts`). To update a font, copy it from contracts. `scripts/fonts.test.mjs` tests the check.
 
 ## Tests
 

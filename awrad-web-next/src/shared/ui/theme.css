@@ -8,28 +8,34 @@
  */
 @import "./colors.gen.css";
 
-/* Fonts: Manrope for interface text, Noto Naskh Arabic for Arabic (same files as Android and iOS). */
+/*
+ * Fonts (contracts/design-tokens/v1/fonts, same files as Android and iOS; check:fonts
+ * keeps public/fonts identical to them). Interface text is Google Sans Flex Rounded.
+ * It has no Arabic or Malayalam glyphs, so text in those scripts falls back, glyph by
+ * glyph, to the system font for that script through the --font-sans stack. Noto Naskh
+ * Arabic is only for Qur'anic and dhikr text: the font-arabic class, never the interface.
+ */
 @font-face {
-  font-family: "Manrope";
-  src: url("/fonts/manrope_regular.ttf") format("truetype");
+  font-family: "Google Sans Flex Rounded";
+  src: url("/fonts/googlesansflexrounded_regular.ttf") format("truetype");
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
-  font-family: "Manrope";
-  src: url("/fonts/manrope_medium.ttf") format("truetype");
+  font-family: "Google Sans Flex Rounded";
+  src: url("/fonts/googlesansflexrounded_medium.ttf") format("truetype");
   font-weight: 500;
   font-display: swap;
 }
 @font-face {
-  font-family: "Manrope";
-  src: url("/fonts/manrope_semibold.ttf") format("truetype");
+  font-family: "Google Sans Flex Rounded";
+  src: url("/fonts/googlesansflexrounded_semibold.ttf") format("truetype");
   font-weight: 600;
   font-display: swap;
 }
 @font-face {
-  font-family: "Manrope";
-  src: url("/fonts/manrope_bold.ttf") format("truetype");
+  font-family: "Google Sans Flex Rounded";
+  src: url("/fonts/googlesansflexrounded_bold.ttf") format("truetype");
   font-weight: 700;
   font-display: swap;
 }
@@ -41,14 +47,26 @@
 }
 @font-face {
   font-family: "Noto Naskh Arabic";
+  src: url("/fonts/notonaskharabic_medium.ttf") format("truetype");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Noto Naskh Arabic";
   src: url("/fonts/notonaskharabic_semibold.ttf") format("truetype");
   font-weight: 600;
   font-display: swap;
 }
+@font-face {
+  font-family: "Noto Naskh Arabic";
+  src: url("/fonts/notonaskharabic_bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
 
 @theme {
-  --font-sans: "Manrope", system-ui, sans-serif;
-  --font-arabic: "Noto Naskh Arabic", "Manrope", serif;
+  --font-sans: "Google Sans Flex Rounded", system-ui, sans-serif;
+  --font-arabic: "Noto Naskh Arabic", serif;
 }
 
 :root {
@@ -67,11 +85,8 @@
   }
 }
 
-/* Arabic text uses Noto Naskh Arabic for both content and interface on the web. */
-:lang(ar) {
-  font-family: var(--font-arabic);
-}
-
 body {
   @apply bg-background font-sans text-on-surface antialiased;
+  /* Only the real weights (400, 500, 600, 700): no synthetic bold or italic. */
+  font-synthesis: none;
 }

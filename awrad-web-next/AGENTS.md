@@ -6,6 +6,7 @@ Applies inside `awrad-web-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
 
 - **API types:** `src/shared/api/schema.gen.ts` matches `contracts/api/openapi.bundled.json`. Regenerate with `npm run api:types`.
 - **Colours:** `src/shared/ui/colors.gen.css` matches `contracts/design-tokens/v1/colors.json` (regenerate with `npm run tokens:colors`), and no hex colour, colour function or Tailwind palette class appears anywhere else.
+- **Fonts:** every file in `public/fonts/` is byte-identical to `contracts/design-tokens/v1/fonts/` (checked against its `SHA256SUMS`). Copy fonts from there; never edit them here.
 - **TypeScript:** maximum strictness (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, …).
 - **ESLint** with zero warnings allowed:
   - typescript-eslint strict and stylistic type-checked rules;
@@ -36,7 +37,7 @@ Applies inside `awrad-web-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
 ## Validation
 
 ```bash
-npm run validate     # types fresh, translations, typecheck, lint, format, module rules, tests, build
+npm run validate     # types fresh, fonts match contracts, translations, typecheck, lint, format, module rules, tests, build
 npm test             # just the tests (Vitest)
 npm run format       # fix formatting
 ```
