@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "description": "Corner radii in dp (Android), pt (iOS), CSS px (web). Screens use a role, never a number. Corners are continuous (squircle) where the platform makes it cheap.",
+  "corners": "continuous",
+  "scale": {
+    "xs": 8,
+    "sm": 12,
+    "md": 16,
+    "lg": 20,
+    "xl": 24,
+    "2xl": 28,
+    "3xl": 32,
+    "full": "full"
+  },
+  "roles": {
+    "card": {
+      "radius": "xl",
+      "use": "Cards and grouped content"
+    },
+    "tile": {
+      "radius": "md",
+      "use": "Small tiles, such as collection tiles"
+    },
+    "button": {
+      "radius": "md",
+      "use": "Buttons"
+    },
+    "field": {
+      "radius": "md",
+      "use": "Text fields"
+    },
+    "chip": {
+      "radius": "full",
+      "use": "Chips, pills, tags"
+    },
+    "roundButton": {
+      "radius": "full",
+      "use": "Circular icon buttons"
+    },
+    "navBar": {
+      "radius": "2xl",
+      "use": "The floating bottom navigation bar"
+    },
+    "navPill": {
+      "radius": "full",
+      "use": "The selected-tab indicator"
+    },
+    "sheet": {
+      "radius": "3xl",
+      "use": "Top corners of bottom sheets"
+    },
+    "dialog": {
+      "radius": "3xl",
+      "use": "Dialogs"
+    },
+    "screenDepth": {
+      "radius": "3xl",
+      "use": "The screen behind a pushed page"
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "description": "Text styles. Interface text uses the interface font (fonts/README.md); Arabic and Malayalam fall back to the system font. Sizes in sp / pt / CSS px; iOS scales each style with Dynamic Type relative to iosTextStyle.",
+  "fontFamily": "Google Sans Flex Rounded",
+  "styles": {
+    "title": {
+      "size": 22,
+      "lineHeight": 28,
+      "weight": 600,
+      "iosTextStyle": "title2",
+      "use": "Screen titles; the Hijri date on Home"
+    },
+    "cardTitle": {
+      "size": 18,
+      "lineHeight": 24,
+      "weight": 600,
+      "iosTextStyle": "title3",
+      "use": "Card headings: Today's goals"
+    },
+    "rowTitle": {
+      "size": 16,
+      "lineHeight": 22,
+      "weight": 600,
+      "iosTextStyle": "headline",
+      "use": "Row titles: a goal's name"
+    },
+    "sectionTitle": {
+      "size": 15,
+      "lineHeight": 20,
+      "weight": 600,
+      "iosTextStyle": "subheadline",
+      "use": "Section headings: Featured dhikr collections"
+    },
+    "body": {
+      "size": 15,
+      "lineHeight": 22,
+      "weight": 400,
+      "iosTextStyle": "body",
+      "use": "Paragraphs and form text"
+    },
+    "bodySmall": {
+      "size": 14,
+      "lineHeight": 20,
+      "weight": 400,
+      "iosTextStyle": "subheadline",
+      "use": "Secondary text: the Gregorian date, Next prayer"
+    },
+    "label": {
+      "size": 14,
+      "lineHeight": 20,
+      "weight": 500,
+      "iosTextStyle": "subheadline",
+      "use": "Links and small buttons: View all"
+    },
+    "button": {
+      "size": 16,
+      "lineHeight": 22,
+      "weight": 600,
+      "iosTextStyle": "headline",
+      "use": "Main buttons"
+    },
+    "caption": {
+      "size": 12,
+      "lineHeight": 16,
+      "weight": 500,
+      "iosTextStyle": "caption",
+      "use": "Streaks, counts, metadata"
+    },
+    "navLabel": {
+      "size": 11,
+      "lineHeight": 14,
+      "weight": 500,
+      "iosTextStyle": "caption2",
+      "use": "Bottom navigation labels"
+    },
+    "counter": {
+      "size": 56,
+      "lineHeight": 64,
+      "weight": 700,
+      "iosTextStyle": "largeTitle",
+      "tabularNumbers": true,
+      "use": "The counting number"
+    }
+  }
+}

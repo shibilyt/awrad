@@ -1,0 +1,248 @@
+{
+  "version": 1,
+  "description": "Motion for Android and iOS; the web uses only durations, easings and reducedMotion (fades only). Springs are (dampingRatio, stiffness) with mass 1; iOS converts with response = 2π/√stiffness and dampingFraction = dampingRatio. Durations in ms; easings are cubic-bezier control points.",
+  "easing": {
+    "emphasized": [
+      0.2,
+      0,
+      0,
+      1
+    ],
+    "decelerate": [
+      0.05,
+      0.7,
+      0.1,
+      1
+    ],
+    "accelerate": [
+      0.3,
+      0,
+      0.8,
+      0.15
+    ]
+  },
+  "duration": {
+    "fade": 100,
+    "color": 150,
+    "short": 250,
+    "medium": 300,
+    "page": 350,
+    "long": 450
+  },
+  "spring": {
+    "spatial": {
+      "dampingRatio": 0.8,
+      "stiffness": 380,
+      "use": "Anything that moves or changes size"
+    },
+    "spatialFast": {
+      "dampingRatio": 0.6,
+      "stiffness": 800,
+      "use": "Small, quick movements: press release"
+    },
+    "spatialSlow": {
+      "dampingRatio": 0.8,
+      "stiffness": 200,
+      "use": "Large, heavy movements"
+    },
+    "effects": {
+      "dampingRatio": 1.0,
+      "stiffness": 1600,
+      "use": "Colour and opacity; never bounces"
+    },
+    "bouncy": {
+      "dampingRatio": 0.5,
+      "stiffness": 1500,
+      "use": "Small pops: selected icon, count tap"
+    },
+    "bouncySoft": {
+      "dampingRatio": 0.5,
+      "stiffness": 200,
+      "use": "Soft entrances: the nav pill appearing"
+    }
+  },
+  "haptic": {
+    "tick": {
+      "use": "Each count tap, tab and step changes",
+      "android": "HapticFeedbackConstants.CLOCK_TICK (or KEYBOARD_TAP)",
+      "ios": "sensoryFeedback(.selection) / UISelectionFeedbackGenerator"
+    },
+    "threshold": {
+      "use": "Crossing a threshold: a drag past its release point",
+      "android": "HapticFeedbackConstants.GESTURE_THRESHOLD_ACTIVATE (API 34) or LONG_PRESS",
+      "ios": "sensoryFeedback(.impact(weight: .medium))"
+    },
+    "success": {
+      "use": "Reaching a target",
+      "android": "HapticFeedbackConstants.CONFIRM (API 30) or a 1 s one-shot",
+      "ios": "sensoryFeedback(.success)"
+    }
+  },
+  "motions": {
+    "pagePush": {
+      "platforms": [
+        "android"
+      ],
+      "enter": {
+        "scaleFrom": 0.96,
+        "fadeFrom": 0.35
+      },
+      "exit": {
+        "scaleTo": 0.985
+      },
+      "duration": "page",
+      "easing": "emphasized",
+      "use": "Opening a page. iOS uses the native push"
+    },
+    "pagePop": {
+      "platforms": [
+        "android"
+      ],
+      "enter": {
+        "scaleFrom": 0.985,
+        "fadeFrom": 0.6
+      },
+      "exit": {
+        "scaleTo": 0.96,
+        "fadeDuration": "short"
+      },
+      "duration": "page",
+      "easing": "emphasized",
+      "use": "Going back. Follows predictive back on Android"
+    },
+    "screenDepth": {
+      "platforms": [
+        "android"
+      ],
+      "radius": "screenDepth",
+      "dim": 0.34,
+      "duration": "page",
+      "easing": "emphasized",
+      "use": "The page behind a push rounds its corners and dims"
+    },
+    "tabSwitch": {
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "enter": {
+        "scaleFrom": 0.985,
+        "fadeFrom": 0.4
+      },
+      "exit": {
+        "scaleTo": 1.01
+      },
+      "duration": "medium",
+      "easing": "emphasized",
+      "use": "Switching bottom-navigation tabs"
+    },
+    "navPill": {
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "pillScaleFrom": 0.7,
+      "pillSpring": "bouncySoft",
+      "iconScale": 1.1,
+      "iconSpring": "bouncy",
+      "colorDuration": "color",
+      "use": "The selected tab's pill and icon"
+    },
+    "press": {
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "cardScale": 0.985,
+      "buttonScale": 0.98,
+      "pressDuration": "fade",
+      "releaseSpring": "spatialFast",
+      "use": "Pressing a card or button"
+    },
+    "countTap": {
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "popScale": 1.04,
+      "spring": "bouncy",
+      "haptic": "tick",
+      "numberTransition": "roll",
+      "use": "Each count; the number rolls to its next value"
+    },
+    "countComplete": {
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "haptic": "success",
+      "ringSpring": "spatialSlow",
+      "use": "Reaching the target"
+    },
+    "ringFill": {
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "spring": "spatial",
+      "use": "Progress rings and bars changing value"
+    },
+    "sheet": {
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "settleSpring": "spatial",
+      "overshootScale": 1.03,
+      "radius": "sheet",
+      "releaseVelocity": 150,
+      "use": "Bottom sheets follow the finger and settle with the fling's velocity; corners reach 0 at full height"
+    },
+    "expand": {
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "sizeSpring": "spatial",
+      "fadeSpring": "effects",
+      "chevronRotation": 180,
+      "use": "Expanding and collapsing a section"
+    },
+    "listAppear": {
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "offset": 8,
+      "duration": "short",
+      "easing": "decelerate",
+      "stagger": 40,
+      "maxStaggered": 6,
+      "use": "Items appearing in a list"
+    },
+    "contentSwap": {
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ],
+      "fadeIn": "color",
+      "fadeOut": "fade",
+      "use": "Swapping text or status in place"
+    },
+    "webPage": {
+      "platforms": [
+        "web"
+      ],
+      "fadeIn": "color",
+      "fadeOut": "fade",
+      "easing": "emphasized",
+      "use": "Page changes on the web: a fade only"
+    }
+  },
+  "reducedMotion": {
+    "replaceWith": "crossfade",
+    "duration": "color",
+    "use": "When the system asks for reduced motion, every movement, scale and spring becomes a cross-fade of this duration. Haptics stay."
+  }
+}
