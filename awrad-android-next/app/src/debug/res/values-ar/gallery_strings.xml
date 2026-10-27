@@ -10,6 +10,7 @@
     <string name="gallery_section_inputs">حقول الإدخال</string>
     <string name="gallery_section_containers">الحاويات</string>
     <string name="gallery_section_navigation">التنقل</string>
+    <string name="gallery_section_icons">الأيقونات</string>
     <string name="gallery_state_disabled">معطّل</string>
     <string name="gallery_state_loading">جارٍ التحميل</string>
     <string name="gallery_on_card">على بطاقة</string>
@@ -29,6 +30,7 @@
     <string name="gallery_password_hint">12 حرفًا على الأقل</string>
     <string name="gallery_password_error">استخدم 12 حرفًا على الأقل</string>
     <string name="gallery_show_password">إظهار كلمة المرور</string>
+    <string name="gallery_hide_password">إخفاء كلمة المرور</string>
     <string name="gallery_remind_fajr">ذكّرني بعد الفجر</string>
     <string name="gallery_daily_reminder">تذكير يومي</string>
     <string name="gallery_active">النشطة</string>

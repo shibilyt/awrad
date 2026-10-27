@@ -5,11 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowForward
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.MoreVert
-import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +26,7 @@ import app.awrad.core.designsystem.component.AwradStepIndicator
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.component.AwradTopBar
 import app.awrad.core.designsystem.component.awradBottomBarPadding
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.next.R
 
@@ -55,12 +51,12 @@ internal fun NavigationSection(modifier: Modifier = Modifier) {
                 title = stringResource(R.string.gallery_title),
                 actions = {
                     AwradIconButton(
-                        icon = Icons.Rounded.Notifications,
+                        icon = AwradIcons.Notifications,
                         contentDescription = stringResource(R.string.gallery_notifications),
                         onClick = {},
                     )
                     AwradIconButton(
-                        icon = Icons.Rounded.MoreVert,
+                        icon = AwradIcons.More,
                         contentDescription = stringResource(R.string.gallery_more),
                         onClick = {},
                     )
@@ -93,7 +89,7 @@ internal fun GoalsTab(modifier: Modifier = Modifier) {
             .statusBarsPadding(),
         action = {
             AwradRoundButton(
-                icon = Icons.Rounded.Add,
+                icon = AwradIcons.Add,
                 contentDescription = stringResource(R.string.gallery_add_goal),
                 onClick = {},
             )
@@ -125,7 +121,7 @@ internal fun GoalsTab(modifier: Modifier = Modifier) {
                     }
                 }
                 AwradRoundButton(
-                    icon = Icons.AutoMirrored.Rounded.ArrowForward,
+                    icon = AwradIcons.Forward,
                     contentDescription = stringResource(R.string.gallery_open_collection),
                     onClick = {},
                     size = AwradRoundButtonSize.Small,

@@ -49,10 +49,12 @@ public enum class AwradSelectionMode {
     Multiple,
 }
 
-/** One destination of the bottom bar: its [label], and its [icon] ([selectedIcon] while selected). */
+/**
+ * One destination of the bottom bar: its [label] and its outline [icon] (from `AwradIcons`). The icon is the same
+ * selected or not; the pill behind it shows the selection.
+ */
 @Immutable
 public class AwradBottomBarItem(
     public val label: String,
     public val icon: ImageVector,
-    public val selectedIcon: ImageVector = icon,
 )

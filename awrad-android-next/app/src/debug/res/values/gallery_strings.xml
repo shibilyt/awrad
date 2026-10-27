@@ -11,6 +11,7 @@
     <string name="gallery_section_inputs">Inputs</string>
     <string name="gallery_section_containers">Containers</string>
     <string name="gallery_section_navigation">Navigation</string>
+    <string name="gallery_section_icons">Icons</string>
     <string name="gallery_state_disabled">Disabled</string>
     <string name="gallery_state_loading">Loading</string>
     <string name="gallery_on_card">On a card</string>
@@ -30,6 +31,7 @@
     <string name="gallery_password_hint">At least 12 characters</string>
     <string name="gallery_password_error">Use at least 12 characters</string>
     <string name="gallery_show_password">Show password</string>
+    <string name="gallery_hide_password">Hide password</string>
     <string name="gallery_remind_fajr">Remind me after Fajr</string>
     <string name="gallery_daily_reminder">Daily reminder</string>
     <string name="gallery_active">Active</string>

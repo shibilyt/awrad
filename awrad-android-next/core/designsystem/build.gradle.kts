@@ -10,7 +10,6 @@ android {
 dependencies {
     api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.material3)
-    api(libs.androidx.compose.material.icons.extended)
     // WindowCompat: dialogs and sheets lay their window out under the system bars.
     implementation(libs.androidx.core.ktx)
 }
@@ -80,9 +79,34 @@ val verifyAwradFonts = tasks.register<AwradFontsTask>("verifyAwradFonts") {
     fontDirectory.set(file("src/main/res/font"))
 }
 
-// The unit tests (testDebugUnitTest in the validation command) and lint read the bundled tokens and fonts, so
-// they must be the contract's.
-val verifyDesignTokens = listOf(verifyAwradColors, verifyAwradTokens, verifyAwradFonts)
+// The shared icons ship as committed vector drawables and accessors (ARCHITECTURE.md, "Icons").
+fun AwradIconsTask.configureIcons(verify: Boolean) {
+    contract.set(tokensDirectory.resolve("icons.json"))
+    svgDirectory.set(tokensDirectory.resolve("icons"))
+    drawableDirectory.set(file("src/main/res/drawable"))
+    source.set(file("src/main/kotlin/app/awrad/core/designsystem/icon/AwradIcons.kt"))
+    packageName.set("app.awrad.core.designsystem.icon")
+    resourcePackage.set(android.namespace)
+    verifyOnly.set(verify)
+    regenerateCommand.set("./gradlew :core:designsystem:generateAwradIcons")
+}
+
+tasks.register<AwradIconsTask>("generateAwradIcons") {
+    description = "Regenerates the awrad_ic_* vector drawables and AwradIcons from contracts/design-tokens."
+    configureIcons(verify = false)
+}
+
+val verifyAwradIcons = tasks.register<AwradIconsTask>("verifyAwradIcons") {
+    description = "Fails when the bundled icons differ from contracts/design-tokens/v1/icons.json and its SVGs."
+    group = "verification"
+    configureIcons(verify = true)
+    // The generator's own tests (mirroring, unknown keys, SVGs it can't convert) run with the check.
+    dependsOn(gradle.includedBuild("build-logic").task(":convention:test"))
+}
+
+// The unit tests (testDebugUnitTest in the validation command) and lint read the bundled tokens, fonts and icons,
+// so they must be the contract's. detekt runs them too, like the colour and design literal checks.
+val verifyDesignTokens = listOf(verifyAwradColors, verifyAwradTokens, verifyAwradFonts, verifyAwradIcons)
 tasks.named("check") { dependsOn(verifyDesignTokens) }
 tasks.withType<Test>().configureEach { dependsOn(verifyDesignTokens) }
-tasks.matching { it.name.startsWith("lint") }.configureEach { dependsOn(verifyDesignTokens) }
+tasks.matching { it.name.startsWith("lint") || it.name == "detekt" }.configureEach { dependsOn(verifyDesignTokens) }

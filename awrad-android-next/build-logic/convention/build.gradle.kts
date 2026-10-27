@@ -12,6 +12,8 @@ dependencies {
     compileOnly(libs.compose.gradle.plugin)
     compileOnly(libs.ksp.gradle.plugin)
     compileOnly(libs.detekt.gradle.plugin)
+    // The generators' tests (AwradIconsTest). :core:designsystem's verifyAwradIcons runs them.
+    testImplementation(libs.kotlin.test)
 }
 
 gradlePlugin {

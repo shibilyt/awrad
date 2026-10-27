@@ -11,15 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoStories
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.TaskAlt
-import androidx.compose.material.icons.outlined.AutoStories
-import androidx.compose.material.icons.outlined.Groups
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,6 +27,7 @@ import app.awrad.core.designsystem.component.AwradSectionTitle
 import app.awrad.core.designsystem.component.AwradSwitch
 import app.awrad.core.designsystem.component.AwradTopBar
 import app.awrad.core.designsystem.component.awradBottomBarPadding
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.next.R
 
@@ -73,14 +65,10 @@ private const val TAB_COUNT = 4
 
 @Composable
 private fun tabItems(): List<AwradBottomBarItem> = listOf(
-    AwradBottomBarItem(stringResource(R.string.gallery_home), Icons.Outlined.Home, Icons.Filled.Home),
-    AwradBottomBarItem(stringResource(R.string.gallery_goals), Icons.Outlined.TaskAlt, Icons.Filled.TaskAlt),
-    AwradBottomBarItem(
-        stringResource(R.string.gallery_library),
-        Icons.Outlined.AutoStories,
-        Icons.Filled.AutoStories,
-    ),
-    AwradBottomBarItem(stringResource(R.string.gallery_community), Icons.Outlined.Groups, Icons.Filled.Groups),
+    AwradBottomBarItem(stringResource(R.string.gallery_home), AwradIcons.Home),
+    AwradBottomBarItem(stringResource(R.string.gallery_goals), AwradIcons.Goals),
+    AwradBottomBarItem(stringResource(R.string.gallery_library), AwradIcons.Library),
+    AwradBottomBarItem(stringResource(R.string.gallery_community), AwradIcons.Community),
 )
 
 /** Every component, section by section, under the gallery's own switches. */
@@ -103,6 +91,7 @@ private fun ComponentsTab(settings: GallerySettings, startWithSheet: Boolean, mo
             InputsSection()
             ContainersSection(startWithSheet = startWithSheet)
             NavigationSection()
+            IconsSection()
         }
     }
 }

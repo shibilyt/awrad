@@ -10,6 +10,7 @@
     <string name="gallery_section_inputs">ഇൻപുട്ടുകൾ</string>
     <string name="gallery_section_containers">കണ്ടെയ്‌നറുകൾ</string>
     <string name="gallery_section_navigation">നാവിഗേഷൻ</string>
+    <string name="gallery_section_icons">ഐക്കണുകൾ</string>
     <string name="gallery_state_disabled">പ്രവർത്തനരഹിതം</string>
     <string name="gallery_state_loading">ലോഡ് ചെയ്യുന്നു</string>
     <string name="gallery_on_card">ഒരു കാർഡിൽ</string>
@@ -29,6 +30,7 @@
     <string name="gallery_password_hint">കുറഞ്ഞത് 12 അക്ഷരങ്ങൾ</string>
     <string name="gallery_password_error">കുറഞ്ഞത് 12 അക്ഷരങ്ങൾ ഉപയോഗിക്കുക</string>
     <string name="gallery_show_password">പാസ്‌വേഡ് കാണിക്കുക</string>
+    <string name="gallery_hide_password">പാസ്‌വേഡ് മറയ്ക്കുക</string>
     <string name="gallery_remind_fajr">ഫജ്‌റിനു ശേഷം ഓർമ്മിപ്പിക്കുക</string>
     <string name="gallery_daily_reminder">ദിവസേനയുള്ള ഓർമ്മപ്പെടുത്തൽ</string>
     <string name="gallery_active">സജീവം</string>
