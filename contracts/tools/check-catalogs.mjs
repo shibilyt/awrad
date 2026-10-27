@@ -1,6 +1,7 @@
 // Validates the shared data catalogs that aren't fixtures: the Hijri month table and the goal presets.
 // Usage: node tools/check-catalogs.mjs
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { newAjv } from "./check-fixtures.mjs";
@@ -81,11 +82,23 @@ for (const { foreground, background, minimum } of tokens.contrast ?? []) {
   }
 }
 
+// Fonts: every file listed in SHA256SUMS exists and matches, and every .ttf is listed.
+const fontsDir = "design-tokens/v1/fonts";
+const sums = readFileSync(join(root, fontsDir, "SHA256SUMS"), "utf8").trim().split("\n").map((line) => line.split(/\s+/));
+for (const [sum, file] of sums) {
+  const actual = createHash("sha256").update(readFileSync(join(root, fontsDir, file))).digest("hex");
+  if (actual !== sum) problems.push(`${fontsDir}/${file}: checksum differs from SHA256SUMS`);
+}
+const listed = new Set(sums.map(([, file]) => file));
+for (const file of readdirSync(join(root, fontsDir)).filter((f) => f.endsWith(".ttf"))) {
+  if (!listed.has(file)) problems.push(`${fontsDir}/${file}: not listed in SHA256SUMS`);
+}
+
 if (problems.length) {
   for (const p of problems) console.error(p);
   process.exit(1);
 }
 console.log(
   `catalogs: Hijri table ${starts.length - 1} months valid; ${keys.size} goal presets valid; ` +
-    `${Object.keys(tokens.roles).length} colour roles, ${pairs} contrast checks pass`,
+    `${Object.keys(tokens.roles).length} colour roles, ${pairs} contrast checks pass; ${sums.length} font files match`,
 );
