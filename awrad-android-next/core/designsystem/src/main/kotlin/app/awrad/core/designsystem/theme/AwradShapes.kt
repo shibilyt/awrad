@@ -11,6 +11,9 @@ import androidx.compose.ui.unit.dp
 
 /** The corner-radius scale (without `full`). Screens use a role from [AwradShapes], not these. */
 public object AwradRadius {
+    /** 2 */
+    public val xxxs: Dp = 2.dp
+
     /** 4 */
     public val xxs: Dp = 4.dp
 
@@ -77,8 +80,8 @@ public object AwradShapes {
     /** A checkbox's box (the only use of 4): `xxs`, 4. */
     public val checkbox: SmoothCornerShape = SmoothCornerShape(AwradRadius.xxs, CornerSmoothing)
 
-    /** Squares in the onboarding step indicator: `xxs`, 4. */
-    public val stepDot: SmoothCornerShape = SmoothCornerShape(AwradRadius.xxs, CornerSmoothing)
+    /** Squares in the onboarding step indicator: `xxxs`, 2. */
+    public val stepDot: SmoothCornerShape = SmoothCornerShape(AwradRadius.xxxs, CornerSmoothing)
 
     /** The bar under the selected segmented pill: fully rounded. */
     public val tabIndicator: SmoothCornerShape = SmoothCornerShape.full(CornerSmoothing)
