@@ -102,6 +102,14 @@
       "weight": 400,
       "iosTextStyle": "title2",
       "use": "Qur'anic and dhikr Arabic text; never interface text"
+    },
+    "quranLine": {
+      "fontFamily": "Noto Naskh Arabic",
+      "size": 18,
+      "lineHeight": 32,
+      "weight": 400,
+      "iosTextStyle": "body",
+      "use": "One line of Qur'anic or dhikr Arabic in a list row; never interface text"
     }
   }
 }

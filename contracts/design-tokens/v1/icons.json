@@ -117,6 +117,21 @@
       "file": "error.svg",
       "use": "Error message beside a form or feedback line",
       "mirrorInRtl": false
+    },
+    "play": {
+      "file": "play_arrow.svg",
+      "use": "Play audio",
+      "mirrorInRtl": false
+    },
+    "pause": {
+      "file": "pause.svg",
+      "use": "Pause audio",
+      "mirrorInRtl": false
+    },
+    "search": {
+      "file": "search.svg",
+      "use": "Search field",
+      "mirrorInRtl": false
     }
   }
 }

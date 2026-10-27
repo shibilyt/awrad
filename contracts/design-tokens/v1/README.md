@@ -102,6 +102,7 @@ Rules for screens:
   - the small ring 36, with stroke 4;
   - `control` 56, the height of buttons and text fields;
   - `logo` 148;
+  - `collectionTile` 128, the square collection tile;
   - component sizes: `topBar` 56, `navBar` 72, the nav pill 56 × 32, `roundButton` 48 and 32, `avatar` 36, `checkbox` 20, the switch 52 × 32 with a 24 thumb, `stepDot` 8, the tab indicator 24 × 4;
   - `contentMaxWidth` 448 and `dialogMaxWidth` 384, for the web and tablets.
 
@@ -110,6 +111,7 @@ Rules for screens:
 - Named styles from `largeTitle` (34, top-level page titles such as My Goals) and `title` (22) to `navLabel` (11), plus `counter` (56, with tabular digits).
 - `input` (16) is the text typed into fields; 16 stops iOS Safari zooming in.
 - `quran` (24 on a 44 line height) sets Qur'anic and dhikr Arabic in Noto Naskh Arabic. It's the only style with its own `fontFamily`, and it's never used for interface text.
+- `quranLine` (18 on 32) is one line of the Arabic in a list row, in Noto Naskh Arabic.
 - `counter` keeps a 64 line height, tighter than the font's natural 70, on purpose.
 - iOS scales every style with Dynamic Type, relative to its `iosTextStyle`.
 
@@ -170,7 +172,7 @@ The motion values combine three sources:
 ## Icons (`icons.json`, `icons/`)
 
 - **One set on every platform:** Material Symbols Rounded, outline, weight 300, on a 24 grid (Apache 2.0, `icons/LICENSE-MaterialSymbols.txt`). There are no SF Symbols, Material Icons or hand-drawn icons in screens.
-- **Use by name** (`home`, `goals`, `library`, `community`, `add`, `forward`, `back`, `more`, `check`, `notifications`, `show`, `hide`, `close`, `expand`, `streak`, `devices`, `phone`, `language`, `email`, `password`, `delete`, `chevron`, `error`). Each app generates its icons from the SVGs (Android vector drawables, an iOS asset catalog, web components) and fails validation on drift.
+- **Use by name** (`home`, `goals`, `library`, `community`, `add`, `forward`, `back`, `more`, `check`, `notifications`, `show`, `hide`, `close`, `expand`, `streak`, `devices`, `phone`, `language`, `email`, `password`, `delete`, `chevron`, `error`, `play`, `pause`, `search`). Each app generates its icons from the SVGs (Android vector drawables, an iOS asset catalog, web components) and fails validation on drift.
 - **RTL:** icons marked `mirrorInRtl` (`back`, `forward`, `chevron`) flip in right-to-left layouts.
 - **Colour** comes from the component, never the file.
 - **Adding an icon:** download the `wght300_24px` Rounded SVG from the source in `icons.json`, add it with its checksum to `icons/SHA256SUMS`, name it in `icons.json`, and regenerate. `npm test` checks checksums and that every file is a plain path-only SVG.

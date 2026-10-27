@@ -132,6 +132,10 @@
     "tabIndicatorHeight": {
       "value": 4,
       "use": "The bar under the selected segmented pill"
+    },
+    "collectionTile": {
+      "value": 128,
+      "use": "Width and height of a collection tile (Home, Library)"
     }
   }
 }
