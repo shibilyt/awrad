@@ -64,13 +64,9 @@ Platforms: server ☑ (registry only) · Android ☑ · iOS ☑ · web ☑
 - **`CONTEXT.md`** gets these terms:
   - **Dhikr**, **Kind**, **Collection**, **Reference**, **Virtue**: as defined above.
   - **Catalog**: the built-in dhikrs and collections shipped with the apps.
-- **Fixtures:** `contracts/dhikr-catalog/v1/fixtures/search.json`. Each case gives a query, the app language and the keys expected in order. The matching rule is:
-  - case-fold;
-  - strip Arabic harakat and tatweel;
-  - unify alef forms (أ إ آ ٱ → ا) and ta marbuta/ha;
-  - trim and collapse spaces;
-  - substring match over title, transliteration, translation and aliases in the app language and in English, plus the Arabic text.
-  - **Ordering:** title-prefix matches first, then catalog order.
+- **Fixtures:**
+  - [`dhikr_search_normalization.json`](../../contracts/dhikr-catalog/v1/fixtures/dhikr_search_normalization.json): how text is normalized (harakat, Qur'anic marks and tatweel removed; alef forms, ta marbuta and alef maqsura unified; Latin diacritics, apostrophes and ZWNJ removed; lower case; collapsed spaces). 10 cases.
+  - [`dhikr_search.json`](../../contracts/dhikr-catalog/v1/fixtures/dhikr_search.json): search over the real catalog. Names are every title and alias; the other fields are the Arabic, transliterations, and the translation in the app language and in English. Spaces are ignored. A name that starts with the query ranks first, then catalog order. A blank query lists everything. 16 cases.
 
 ## Rendering by kind
 

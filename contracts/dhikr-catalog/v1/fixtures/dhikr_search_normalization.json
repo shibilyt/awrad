@@ -1,0 +1,134 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "dhikr_search_normalization",
+  "description": "How text is normalized before dhikr search compares it. Normalize: (1) Unicode NFKD; (2) remove Arabic harakat and marks U+064B–U+065F, superscript alef U+0670, Qur'anic marks U+06D6–U+06ED and tatweel U+0640; (3) remove every other combining mark (category M) except Malayalam signs U+0D00–U+0D7F; (4) NFC; (5) map أ إ آ ٱ to ا, ة to ه, ى to ي; (6) remove ZWNJ/ZWJ (U+200C, U+200D); (7) remove apostrophes ' ’ ʼ ʿ ʾ `; turn - _ . , ، : ; ! ? ( ) \" “ ” into spaces; (8) Unicode default lowercase; (9) collapse whitespace to one space and trim.",
+  "references": [
+    "docs/slices/03a-dhikr-catalog.md#domain-and-fixtures-step-3"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "text"
+    ],
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "normalized"
+    ],
+    "properties": {
+      "normalized": {
+        "type": "string"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "strips_harakat_and_unifies_alef",
+      "description": "Harakat go and alef wasla and hamza forms become a plain alef.",
+      "given": {
+        "text": "أَسْتَغْفِرُ ٱللَّٰهَ"
+      },
+      "expect": {
+        "normalized": "استغفر الله"
+      }
+    },
+    {
+      "id": "superscript_alef_and_alef_maqsura",
+      "description": "Superscript alef is removed and alef maqsura becomes ya.",
+      "given": {
+        "text": "عَلَىٰ"
+      },
+      "expect": {
+        "normalized": "علي"
+      }
+    },
+    {
+      "id": "ta_marbuta_becomes_ha",
+      "description": "Ta marbuta compares as ha.",
+      "given": {
+        "text": "الصلاة على النبي"
+      },
+      "expect": {
+        "normalized": "الصلاه علي النبي"
+      }
+    },
+    {
+      "id": "latin_diacritics_removed",
+      "description": "Scholarly transliteration diacritics and ayn marks are removed.",
+      "given": {
+        "text": "Allāhumma ṣalli ʿalā"
+      },
+      "expect": {
+        "normalized": "allahumma salli ala"
+      }
+    },
+    {
+      "id": "hyphen_becomes_space",
+      "description": "Hyphens separate words.",
+      "given": {
+        "text": "Ar-Rahman"
+      },
+      "expect": {
+        "normalized": "ar rahman"
+      }
+    },
+    {
+      "id": "apostrophe_removed",
+      "description": "Apostrophes join the word.",
+      "given": {
+        "text": "Mu'mineena"
+      },
+      "expect": {
+        "normalized": "mumineena"
+      }
+    },
+    {
+      "id": "whitespace_collapsed_and_trimmed",
+      "description": "Runs of spaces collapse and ends are trimmed.",
+      "given": {
+        "text": "  Ya   Rahman "
+      },
+      "expect": {
+        "normalized": "ya rahman"
+      }
+    },
+    {
+      "id": "malayalam_zwnj_removed",
+      "description": "Zero-width non-joiner in Malayalam is ignored.",
+      "given": {
+        "text": "തഹ്‌ലീൽ"
+      },
+      "expect": {
+        "normalized": "തഹ്ലീൽ"
+      }
+    },
+    {
+      "id": "malayalam_vowel_signs_kept",
+      "description": "Malayalam vowel signs are letters, not removable marks.",
+      "given": {
+        "text": "സ്വലാത്തുകൾ"
+      },
+      "expect": {
+        "normalized": "സ്വലാത്തുകൾ"
+      }
+    },
+    {
+      "id": "case_folded",
+      "description": "Latin compares in lower case.",
+      "given": {
+        "text": "ISTHIGHFAR"
+      },
+      "expect": {
+        "normalized": "isthighfar"
+      }
+    }
+  ]
+}

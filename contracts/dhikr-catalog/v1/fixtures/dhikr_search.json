@@ -1,0 +1,378 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "dhikr_search",
+  "description": "Searching the built-in catalog (contracts/dhikr-catalog/v1/catalog.json). Query and fields are normalized (dhikr_search_normalization) and then compacted by removing spaces. Names are every title (en, ar, ml) and every alias; other fields are the Arabic, every transliteration, and the translation in the app language and in English. A dhikr matches when the compact query is a substring of any name or other field. Rank 0: some name starts with the query; rank 1: any other match. Results are rank, then catalog order. A blank query returns every dhikr in catalog order.",
+  "references": [
+    "docs/slices/03a-dhikr-catalog.md#domain-and-fixtures-step-3",
+    "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/ui/screens/library/LibraryFilterPolicy.kt",
+    "awrad-ios/awrad/awrad/Features/Library/LibraryFeatureModel.swift"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "query",
+      "language"
+    ],
+    "properties": {
+      "query": {
+        "type": "string"
+      },
+      "language": {
+        "enum": [
+          "en",
+          "ar",
+          "ml"
+        ]
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "keys"
+    ],
+    "properties": {
+      "keys": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "alias_spelling_variant",
+      "description": "A spelling people type finds the dhikr through its alias.",
+      "given": {
+        "query": "astaghfirullah",
+        "language": "en"
+      },
+      "expect": {
+        "keys": [
+          "isthighfar"
+        ]
+      }
+    },
+    {
+      "id": "arabic_query_without_harakat",
+      "description": "Arabic typed without harakat matches vocalized text and aliases.",
+      "given": {
+        "query": "أستغفر الله",
+        "language": "ar"
+      },
+      "expect": {
+        "keys": [
+          "isthighfar",
+          "ramadan-dhikr"
+        ]
+      }
+    },
+    {
+      "id": "case_insensitive_title",
+      "description": "Upper case matches the title.",
+      "given": {
+        "query": "ISTHIGHFAR",
+        "language": "en"
+      },
+      "expect": {
+        "keys": [
+          "isthighfar"
+        ]
+      }
+    },
+    {
+      "id": "name_prefix_ranks_first",
+      "description": "A name starting with the query ranks before a transliteration containing it.",
+      "given": {
+        "query": "rahman",
+        "language": "en"
+      },
+      "expect": {
+        "keys": [
+          "asma-ul-husna-ar-rahman",
+          "surah-ikhlas"
+        ]
+      }
+    },
+    {
+      "id": "spaces_ignored",
+      "description": "Spaces and hyphens don't matter.",
+      "given": {
+        "query": "Ar Rahman",
+        "language": "en"
+      },
+      "expect": {
+        "keys": [
+          "asma-ul-husna-ar-rahman"
+        ]
+      }
+    },
+    {
+      "id": "arabic_name_and_basmala",
+      "description": "An Arabic name matches the name and any text that contains it.",
+      "given": {
+        "query": "الرحمن",
+        "language": "ar"
+      },
+      "expect": {
+        "keys": [
+          "asma-ul-husna-ar-rahman",
+          "surah-ikhlas"
+        ]
+      }
+    },
+    {
+      "id": "malayalam_without_zwnj",
+      "description": "Malayalam typed without ZWNJ matches the title.",
+      "given": {
+        "query": "തഹ്ലീൽ",
+        "language": "ml"
+      },
+      "expect": {
+        "keys": [
+          "tahleel"
+        ]
+      }
+    },
+    {
+      "id": "malayalam_translation",
+      "description": "A word from the Malayalam translation matches in Malayalam.",
+      "given": {
+        "query": "പാപമോചനം",
+        "language": "ml"
+      },
+      "expect": {
+        "keys": [
+          "isthighfar",
+          "ramadan-dhikr"
+        ]
+      }
+    },
+    {
+      "id": "english_translation",
+      "description": "A word from the English translation matches.",
+      "given": {
+        "query": "forgiveness",
+        "language": "en"
+      },
+      "expect": {
+        "keys": [
+          "isthighfar",
+          "ramadan-dhikr"
+        ]
+      }
+    },
+    {
+      "id": "shared_prefix_keeps_catalog_order",
+      "description": "Several names with the same prefix keep catalog order.",
+      "given": {
+        "query": "swalath",
+        "language": "en"
+      },
+      "expect": {
+        "keys": [
+          "swalath-al-fathimiyya",
+          "swalath",
+          "swalath-sayyidina",
+          "swalath-al-fatih",
+          "swalath-al-nariyya",
+          "swalath-for-debt"
+        ]
+      }
+    },
+    {
+      "id": "alias_inside_name",
+      "description": "A phrase inside an alias matches.",
+      "given": {
+        "query": "for debt",
+        "language": "en"
+      },
+      "expect": {
+        "keys": [
+          "swalath-for-debt"
+        ]
+      }
+    },
+    {
+      "id": "spelling_variant_alias",
+      "description": "The salli spelling finds the swalli title through its alias.",
+      "given": {
+        "query": "Allahumma salli",
+        "language": "en"
+      },
+      "expect": {
+        "keys": [
+          "swalath-sayyidina"
+        ]
+      }
+    },
+    {
+      "id": "arabic_phrase_in_text",
+      "description": "An Arabic phrase inside several texts.",
+      "given": {
+        "query": "سيدنا محمد",
+        "language": "ar"
+      },
+      "expect": {
+        "keys": [
+          "swalath-sayyidina",
+          "swalath-al-fatih",
+          "swalath-al-nariyya"
+        ]
+      }
+    },
+    {
+      "id": "duplicate_text_both_found",
+      "description": "Two identities with the same text are both found.",
+      "given": {
+        "query": "ya wahhab",
+        "language": "en"
+      },
+      "expect": {
+        "keys": [
+          "ya-wahhabu",
+          "asma-ul-husna-al-wahhab"
+        ]
+      }
+    },
+    {
+      "id": "no_match",
+      "description": "Nothing matches.",
+      "given": {
+        "query": "xyzzy",
+        "language": "en"
+      },
+      "expect": {
+        "keys": []
+      }
+    },
+    {
+      "id": "blank_query_lists_everything",
+      "description": "A blank query lists every dhikr in catalog order.",
+      "given": {
+        "query": "   ",
+        "language": "en"
+      },
+      "expect": {
+        "keys": [
+          "surah-ikhlas",
+          "tahleel",
+          "ya-wahhabu",
+          "isthighfar",
+          "swalath-al-fathimiyya",
+          "swalath",
+          "swalath-sayyidina",
+          "swalath-al-fatih",
+          "swalath-al-nariyya",
+          "swalath-for-debt",
+          "ramadan-dhikr",
+          "ramadan-first-ten-nights",
+          "ramadan-second-ten-nights",
+          "asma-ul-husna-allah",
+          "asma-ul-husna-ar-rahman",
+          "asma-ul-husna-ar-raheem",
+          "asma-ul-husna-al-malik",
+          "asma-ul-husna-al-quddus",
+          "asma-ul-husna-as-salam",
+          "asma-ul-husna-al-mumin",
+          "asma-ul-husna-al-muhaymin",
+          "asma-ul-husna-al-aziz",
+          "asma-ul-husna-al-jabbar",
+          "asma-ul-husna-al-mutakabbir",
+          "asma-ul-husna-al-khaliq",
+          "asma-ul-husna-al-bari",
+          "asma-ul-husna-al-musawwir",
+          "asma-ul-husna-al-ghaffar",
+          "asma-ul-husna-al-qahhar",
+          "asma-ul-husna-al-wahhab",
+          "asma-ul-husna-ar-razzaq",
+          "asma-ul-husna-al-fattah",
+          "asma-ul-husna-al-alim",
+          "asma-ul-husna-al-qabid",
+          "asma-ul-husna-al-basit",
+          "asma-ul-husna-al-khafid",
+          "asma-ul-husna-ar-rafi",
+          "asma-ul-husna-al-muizz",
+          "asma-ul-husna-al-mudhill",
+          "asma-ul-husna-as-sami",
+          "asma-ul-husna-al-basir",
+          "asma-ul-husna-al-hakam",
+          "asma-ul-husna-al-adl",
+          "asma-ul-husna-al-latif",
+          "asma-ul-husna-al-khabir",
+          "asma-ul-husna-al-halim",
+          "asma-ul-husna-al-azim",
+          "asma-ul-husna-al-ghafur",
+          "asma-ul-husna-ash-shakur",
+          "asma-ul-husna-al-ali",
+          "asma-ul-husna-al-kabir",
+          "asma-ul-husna-al-hafiz",
+          "asma-ul-husna-al-muqit",
+          "asma-ul-husna-al-hasib",
+          "asma-ul-husna-al-jalil",
+          "asma-ul-husna-al-karim",
+          "asma-ul-husna-ar-raqib",
+          "asma-ul-husna-al-mujib",
+          "asma-ul-husna-al-wasi",
+          "asma-ul-husna-al-hakim",
+          "asma-ul-husna-al-wadud",
+          "asma-ul-husna-al-majid",
+          "asma-ul-husna-al-baith",
+          "asma-ul-husna-ash-shahid",
+          "asma-ul-husna-al-haqq",
+          "asma-ul-husna-al-wakil",
+          "asma-ul-husna-al-qawiyy",
+          "asma-ul-husna-al-matin",
+          "asma-ul-husna-al-waliyy",
+          "asma-ul-husna-al-hamid",
+          "asma-ul-husna-al-muhsi",
+          "asma-ul-husna-al-mubdi",
+          "asma-ul-husna-al-muid",
+          "asma-ul-husna-al-muhyi",
+          "asma-ul-husna-al-mumit",
+          "asma-ul-husna-al-hayy",
+          "asma-ul-husna-al-qayyum",
+          "asma-ul-husna-al-wajid",
+          "asma-ul-husna-al-maajid",
+          "asma-ul-husna-al-wahid",
+          "asma-ul-husna-al-ahad",
+          "asma-ul-husna-as-samad",
+          "asma-ul-husna-al-qadir",
+          "asma-ul-husna-al-muqtadir",
+          "asma-ul-husna-al-muqaddim",
+          "asma-ul-husna-al-muakhkhir",
+          "asma-ul-husna-al-awwal",
+          "asma-ul-husna-al-akhir",
+          "asma-ul-husna-az-zahir",
+          "asma-ul-husna-al-batin",
+          "asma-ul-husna-al-wali",
+          "asma-ul-husna-al-mutaali",
+          "asma-ul-husna-al-barr",
+          "asma-ul-husna-at-tawwab",
+          "asma-ul-husna-al-muntaqim",
+          "asma-ul-husna-al-afuww",
+          "asma-ul-husna-ar-rauf",
+          "asma-ul-husna-malik-ul-mulk",
+          "asma-ul-husna-dhul-jalali-wal-ikram",
+          "asma-ul-husna-al-muqsit",
+          "asma-ul-husna-al-jami",
+          "asma-ul-husna-al-ghaniyy",
+          "asma-ul-husna-al-mughni",
+          "asma-ul-husna-al-mani",
+          "asma-ul-husna-ad-darr",
+          "asma-ul-husna-an-nafi",
+          "asma-ul-husna-an-nur",
+          "asma-ul-husna-al-hadi",
+          "asma-ul-husna-al-badi",
+          "asma-ul-husna-al-baqi",
+          "asma-ul-husna-al-warith",
+          "asma-ul-husna-ar-rashid",
+          "asma-ul-husna-as-sabur"
+        ]
+      }
+    }
+  ]
+}
