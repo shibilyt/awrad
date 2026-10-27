@@ -7,10 +7,14 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import app.awrad.core.data.account.NetworkAccountRepository
 import app.awrad.core.data.account.NetworkAccountSettingsRepository
+import app.awrad.core.data.audio.ExoAudioPlayerFactory
+import app.awrad.core.data.dhikr.BundledDhikrCatalogSource
 import app.awrad.core.database.AwradDatabase
 import app.awrad.core.database.GoalDao
 import app.awrad.core.domain.account.AccountRepository
 import app.awrad.core.domain.account.AccountSettingsRepository
+import app.awrad.core.domain.audio.AudioPlayerFactory
+import app.awrad.core.domain.dhikr.DhikrCatalogSource
 import app.awrad.core.domain.goal.GoalRepository
 import app.awrad.core.domain.onboarding.OnboardingStatusStore
 import dagger.Binds
@@ -40,6 +44,12 @@ internal interface DataModule {
 
     @Binds
     fun onboardingStatusStore(adapter: DataStoreOnboardingStatusStore): OnboardingStatusStore
+
+    @Binds
+    fun dhikrCatalogSource(adapter: BundledDhikrCatalogSource): DhikrCatalogSource
+
+    @Binds
+    fun audioPlayerFactory(adapter: ExoAudioPlayerFactory): AudioPlayerFactory
 
     companion object {
         @Provides

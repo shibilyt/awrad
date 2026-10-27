@@ -25,6 +25,7 @@ public enum class FixtureModel(public val directory: String) {
     GOAL_MODEL("goal-model"),
     HIJRI_CALENDAR("hijri-calendar"),
     ACCOUNT_MODEL("account-model"),
+    DHIKR_CATALOG("dhikr-catalog"),
 }
 
 /**
@@ -51,6 +52,14 @@ public object FixtureRunner {
     /** Runs every case of the account-model [rule]; returns how many ran. Fails if any case fails. */
     public fun runAccountModel(rule: String, evaluate: (given: JsonObject) -> JsonObject): Int =
         run(FixtureModel.ACCOUNT_MODEL, rule, evaluate)
+
+    /** Runs every case of the dhikr-catalog [rule]; returns how many ran. Fails if any case fails. */
+    public fun runDhikrCatalog(rule: String, evaluate: (given: JsonObject) -> JsonObject): Int =
+        run(FixtureModel.DHIKR_CATALOG, rule, evaluate)
+
+    /** The text of `contracts/<model>/v1/<name>`, such as the dhikr catalog the search fixtures run over. */
+    public fun contractFile(model: FixtureModel, name: String): String =
+        Files.readString(fixturesDir(model).parent.resolve(name))
 
     /** Loads `contracts/<model>/v1/fixtures/<rule>.json`. */
     public fun cases(model: FixtureModel, rule: String): List<FixtureCase> =
