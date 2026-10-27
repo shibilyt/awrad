@@ -1,0 +1,71 @@
+/*
+ * The web's only motion: fades (contracts/design-tokens/v1/motion.json `webPage`,
+ * `contentSwap` and `reducedMotion`; timings from tokens.gen.css). No movement,
+ * scaling or springs, and no other animation anywhere in the app.
+ */
+
+/*
+ * Page changes: the router wraps each navigation in a view transition
+ * (`defaultViewTransition` in src/app/router.ts). Only the page area (`page-transition`
+ * in AppShell) takes part; the rest (the unchanged header) swaps at once, so it doesn't
+ * flicker. The old page fades
+ * out while the new one fades in, in place: the group's size and position animation
+ * is switched off, so nothing moves. Browsers without view transitions swap at once.
+ */
+@utility page-transition {
+  view-transition-name: page;
+}
+
+::view-transition-group(page),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+
+::view-transition-old(page) {
+  animation: awrad-fade-out var(--awrad-motion-web-page-fade-out) var(--awrad-motion-web-page-easing) both;
+}
+
+::view-transition-new(page) {
+  animation: awrad-fade-in var(--awrad-motion-web-page-fade-in) var(--awrad-motion-web-page-easing) both;
+}
+
+/*
+ * Content swapped in place (a status that replaces "Checking…", a new alert or
+ * notice): the new content fades in when it appears (`contentSwap.fadeIn`, decelerating
+ * as things entering do). Give the element a `key` that changes with its content so
+ * React mounts it afresh. The outgoing content is removed at once.
+ */
+@utility content-swap {
+  animation: awrad-fade-in var(--awrad-motion-content-swap-fade-in) var(--awrad-ease-decelerate) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/*
+ * Reduced motion: page changes become the plain `reducedMotion` cross-fade (both pages
+ * at once, linear, so the unchanged parts stay steady); in-place swaps, already short
+ * fades, don't animate.
+ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(page) {
+    animation: awrad-fade-out var(--awrad-reduced-motion-duration) linear both;
+  }
+
+  ::view-transition-new(page) {
+    animation: awrad-fade-in var(--awrad-reduced-motion-duration) linear both;
+  }
+}
+
+@keyframes awrad-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes awrad-fade-out {
+  to {
+    opacity: 0;
+  }
+}

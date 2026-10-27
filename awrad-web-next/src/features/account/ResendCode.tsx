@@ -53,12 +53,14 @@ export function ResendCode({
   };
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-sm">
       <SecondaryButton onPress={resend} isDisabled={cooldown.remaining > 0} isPending={mutation.isPending}>
         {t("account.code.resend")}
       </SecondaryButton>
       {cooldown.remaining > 0 && (
-        <p className="text-sm text-on-surface-variant">{t("account.code.resendIn", { seconds: cooldown.remaining })}</p>
+        <p className="text-body-small text-on-surface-variant">
+          {t("account.code.resendIn", { seconds: cooldown.remaining })}
+        </p>
       )}
       <FormNotice message={notice} />
       <FormAlert message={alert} />

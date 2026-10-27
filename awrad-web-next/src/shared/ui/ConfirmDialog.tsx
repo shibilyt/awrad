@@ -33,15 +33,15 @@ export function ConfirmDialog({
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       isDismissable={!isPending}
-      className="fixed inset-0 z-10 flex items-center justify-center bg-scrim p-6"
+      className="fixed inset-0 z-10 flex items-center justify-center bg-scrim p-page-margin"
     >
-      <Modal className="w-full max-w-sm rounded-2xl bg-surface p-6">
-        <Dialog role="alertdialog" className="flex flex-col gap-4 outline-none">
-          <Heading slot="title" className="text-xl font-semibold text-on-surface">
+      <Modal className="w-full max-w-dialog rounded-dialog bg-surface p-2xl">
+        <Dialog role="alertdialog" className="flex flex-col gap-lg outline-none">
+          <Heading slot="title" className="text-card-title text-on-surface">
             {title}
           </Heading>
-          <div className="flex flex-col gap-2 text-on-surface-variant">{children}</div>
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-sm text-on-surface-variant">{children}</div>
+          <div className="flex flex-col gap-row-gap">
             <OnSurface>
               <SecondaryButton
                 isDisabled={isPending}

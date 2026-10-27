@@ -3,3 +3,4 @@ node_modules
 src/routeTree.gen.ts
 src/shared/api/schema.gen.ts
 src/shared/ui/colors.gen.css
+src/shared/ui/tokens.gen.css

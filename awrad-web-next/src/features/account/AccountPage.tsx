@@ -30,7 +30,7 @@ function SignOut(): ReactElement {
   });
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-row-gap">
       <FormAlert message={alert} />
       <SecondaryButton
         onPress={() => {
@@ -48,9 +48,9 @@ function SignOut(): ReactElement {
 function AccountDetails({ account }: { account: Account }): ReactElement {
   const { t } = useTranslation();
   return (
-    <dl className="flex flex-col gap-1 rounded-2xl bg-surface p-5">
-      <dt className="text-sm text-on-surface-variant">{t("account.fields.email")}</dt>
-      <dd className="font-semibold break-all">
+    <dl className="flex flex-col gap-xs rounded-card bg-surface p-card-padding">
+      <dt className="text-body-small text-on-surface-variant">{t("account.fields.email")}</dt>
+      <dd className="text-row-title break-all">
         <bdi>{account.email}</bdi>
       </dd>
     </dl>
@@ -60,10 +60,10 @@ function AccountDetails({ account }: { account: Account }): ReactElement {
 /** Links to the account settings (slice 2b). */
 function Settings(): ReactElement {
   const { t } = useTranslation();
-  const linkClass = "flex min-h-12 items-center px-5";
+  const linkClass = "flex min-h-list-row items-center px-card-padding text-row-title";
   return (
     <nav aria-label={t("account.page.settings")}>
-      <ul className="flex flex-col rounded-2xl bg-surface">
+      <ul className="flex flex-col rounded-card bg-surface">
         <li>
           <TextLink to="/account/devices" className={linkClass}>
             {t("account.page.devices")}

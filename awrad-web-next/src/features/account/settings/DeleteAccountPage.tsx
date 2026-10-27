@@ -19,7 +19,7 @@ function Explanation(): ReactElement {
   return (
     <>
       <p>{t("account.delete.intro")}</p>
-      <ul className="flex list-disc flex-col gap-1 ps-5">
+      <ul className="flex list-disc flex-col gap-xs ps-xl">
         <li>{t("account.delete.everythingDeleted")}</li>
         <li>{t("account.delete.signedOutEverywhere")}</li>
         <li>{t("account.delete.deviceDataStays")}</li>
@@ -73,7 +73,7 @@ export function DeleteAccountPage(): ReactElement {
           event.preventDefault();
           submit(new FormData(event.currentTarget));
         }}
-        className="flex flex-col gap-5"
+        className="flex flex-col gap-xl"
       >
         <CurrentPasswordField />
         <FormAlert message={remove.alert} />

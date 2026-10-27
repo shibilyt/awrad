@@ -8,18 +8,18 @@ export function Checkbox({
 }: Omit<CheckboxFieldProps, "children" | "className"> & { children: string }): ReactElement {
   return (
     <CheckboxField {...props}>
-      <CheckboxButton className="group flex min-h-11 items-center gap-3 text-on-surface">
+      <CheckboxButton className="group flex min-h-touch-target items-center gap-row-gap text-on-surface">
         <span
           aria-hidden="true"
           className={[
-            "flex size-5 shrink-0 items-center justify-center rounded border-2 border-outline-strong",
+            "flex size-icon-small shrink-0 items-center justify-center rounded-xs border-2 border-outline-strong",
             "group-data-selected:border-accent group-data-selected:bg-primary",
             "group-data-focus-visible:outline-2 group-data-focus-visible:outline-offset-2 group-data-focus-visible:outline-accent",
           ].join(" ")}
         >
           <svg
             viewBox="0 0 16 16"
-            className="hidden size-3.5 fill-none stroke-on-primary stroke-2 group-data-selected:block"
+            className="hidden size-full fill-none stroke-on-primary stroke-2 group-data-selected:block"
           >
             <polyline points="3,8.5 6.5,12 13,4.5" />
           </svg>

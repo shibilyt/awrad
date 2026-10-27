@@ -1,7 +1,7 @@
 // The colour pipeline: contracts/design-tokens/v1/colors.json → colors.gen.css → Tailwind roles.
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
-import { rawColors } from "./check-raw-colors.mjs";
+import { rawValues } from "./check-raw-values.mjs";
 import { SOURCE, TARGET, kebab, renderColorsCss } from "./generate-colors.mjs";
 
 const tokens = JSON.parse(readFileSync(SOURCE, "utf8"));
@@ -37,7 +37,7 @@ describe("colors.gen.css", () => {
   });
 });
 
-describe("check-raw-colors", () => {
+describe("check-raw-values: colours", () => {
   test.each([
     'className="text-white"',
     'className="hover:bg-red-500/50"',
@@ -47,15 +47,15 @@ describe("check-raw-colors", () => {
     "color: rgb(0 0 0 / 0.5);",
     "--x: light-dark(#ffffff, #000000);",
   ])("flags %s", (line) => {
-    expect(rawColors(line)).not.toHaveLength(0);
+    expect(rawValues(line, "code")).not.toHaveLength(0);
   });
 
   test.each([
-    'className="bg-surface text-on-surface border-outline-strong text-accent text-sm text-error!"',
+    'className="bg-surface text-on-surface border-outline-strong text-accent text-label text-error!"',
     'className="bg-on-surface/40 divide-outline focus-ring"',
     'document.getElementById("root") ?? "#root"',
     "color: color-mix(in oklab, var(--color-accent) 50%, transparent);",
   ])("allows %s", (line) => {
-    expect(rawColors(line)).toEqual([]);
+    expect(rawValues(line, "code")).toEqual([]);
   });
 });

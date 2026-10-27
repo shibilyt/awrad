@@ -30,13 +30,13 @@ export interface TextFieldProps extends Omit<AriaTextFieldProps, "children" | "c
 export function TextField({ label, description, inputMode, autoCapitalize, ...props }: TextFieldProps): ReactElement {
   const fill = useFill();
   return (
-    <AriaTextField {...props} className="flex flex-col gap-1.5 text-start">
-      <Label className="text-sm font-medium text-on-surface">{label}</Label>
+    <AriaTextField {...props} className="flex flex-col gap-xs text-start">
+      <Label className="text-label text-on-surface">{label}</Label>
       <Input
         {...(inputMode === undefined ? {} : { inputMode })}
         {...(autoCapitalize === undefined ? {} : { autoCapitalize })}
         className={[
-          "min-h-12 rounded-xl border border-transparent px-4 text-base text-on-surface",
+          "min-h-touch-target rounded-field border border-transparent px-lg text-body text-on-surface",
           fill,
           "caret-accent placeholder:text-on-surface-variant",
           // Tailwind's outline-none also zeroes outline-2's style, so the ring names its style.
@@ -46,11 +46,11 @@ export function TextField({ label, description, inputMode, autoCapitalize, ...pr
         ].join(" ")}
       />
       {description !== undefined && (
-        <Text slot="description" className="text-sm text-on-surface-variant">
+        <Text slot="description" className="text-body-small text-on-surface-variant">
           {description}
         </Text>
       )}
-      <FieldError className="text-sm text-error" />
+      <FieldError className="text-body-small text-error" />
     </AriaTextField>
   );
 }

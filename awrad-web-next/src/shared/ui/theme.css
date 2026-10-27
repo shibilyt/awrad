@@ -1,4 +1,5 @@
-@import "tailwindcss";
+/* Classes come from src/ only: the scripts' tests and the docs name classes that don't exist. */
+@import "tailwindcss" source("../..");
 /*
  * Colours: the shared roles from contracts/design-tokens/v1/colors.json, generated
  * (light and dark) with their Tailwind names; Tailwind's default palette is removed.
@@ -7,6 +8,15 @@
  * No outlines: controls are filled (Surface.tsx); see ARCHITECTURE.md for the few lines kept.
  */
 @import "./colors.gen.css";
+/*
+ * Shapes, spacing, sizes, text styles and motion: generated from
+ * contracts/design-tokens/v1/{shape,spacing,typography,motion}.json. Tailwind's own
+ * scales are removed, so classes name tokens (rounded-card, p-card-padding,
+ * gap-row-gap, min-h-touch-target, text-title); ARCHITECTURE.md lists them.
+ * Motion is fades only (motion.css).
+ */
+@import "./tokens.gen.css";
+@import "./motion.css";
 
 /*
  * Fonts (contracts/design-tokens/v1/fonts, same files as Android and iOS; check:fonts
@@ -67,6 +77,14 @@
 @theme {
   --font-sans: "Google Sans Flex Rounded", system-ui, sans-serif;
   --font-arabic: "Noto Naskh Arabic", serif;
+  /*
+   * Content widths (max-w-page, max-w-dialog): web-only layout, so not in the shared
+   * tokens (phones are screen-wide). Tailwind's container scale is removed: its names
+   * (max-w-md, …) would read like the spacing scale.
+   */
+  --container-*: initial;
+  --container-page: 28rem;
+  --container-dialog: 24rem;
 }
 
 :root {
@@ -86,7 +104,7 @@
 }
 
 body {
-  @apply bg-background font-sans text-on-surface antialiased;
+  @apply bg-background font-sans text-body text-on-surface antialiased;
   /* Only the real weights (400, 500, 600, 700): no synthetic bold or italic. */
   font-synthesis: none;
 }
