@@ -181,7 +181,7 @@ The floating main navigation: Home, Goals, Library, Community.
 
 ### Collection tile
 
-- **Size and shape:** `collectionTile` (128) square, growing taller with larger text. `surface` fill, `tile` shape, `cardPadding` inside.
+- **Size and shape:** `collectionTile` (128) square, growing taller with larger text. `surface` fill, `tile` shape, `md` (12) padding inside.
 - **Text:**
   - the title in `rowTitle`, at most two lines; a long word wraps between words, never mid-word, and an overflowing title ends in an ellipsis;
   - the count below it in `caption`, `onSurfaceVariant`, for example "4 dhikrs", with plural forms in en, ar and ml.
