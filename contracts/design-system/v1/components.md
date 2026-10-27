@@ -176,3 +176,64 @@ The floating main navigation: Home, Goals, Library, Community.
 - **Content:** the content behind scrolls under the bar and is padded so its last item clears it.
 - **Accessibility:** announced as a tab bar, with each item's selected state.
 - **Web:** the same bar at narrow widths. From `contentMaxWidth` up it stays centred at that width.
+
+## Library components (slice 3a)
+
+### Collection tile
+
+- **Size and shape:** `collectionTile` (128) square, growing taller with larger text. `surface` fill, `tile` shape, `cardPadding` inside.
+- **Text:**
+  - the title in `rowTitle`, at most two lines; a long word wraps between words, never mid-word, and an overflowing title ends in an ellipsis;
+  - the count below it in `caption`, `onSurfaceVariant`, for example "4 dhikrs", with plural forms in en, ar and ml.
+- **Arrow:** a small round `forward` arrow (`roundButtonSmall`, `primary`) at the bottom end. It's drawn, not a separate button.
+- **Behaviour:** the whole tile is one tap target with `press` (`cardScale`), announced as one button named by its title and count.
+
+### Search field
+
+- **Field:** like a text field (`control` 56, `field` shape, filled), with a leading `search` icon in `onSurfaceVariant`.
+- **Text:** no label above it. The placeholder ("Search dhikrs") is its accessible name.
+- **Clearing:** a trailing `close` icon button appears while it has text. Escape clears it on the web.
+
+### Tag chip
+
+A tag shown on a dhikr (display only, for now): `chip` shape, `secondaryContainer` fill (`background` on a surface), `onSecondaryContainer` text in `label`, padding `sm` × `md`.
+
+### Dhikr row
+
+- **Container:** a `tile`-shape card, padding `cardPadding`, rows `rowGap` apart.
+- **Text:**
+  - the title in `rowTitle` at the start;
+  - under it, one line of the Arabic in `quranLine`, laid out right to left and **aligned to the right** in every language, ending in an ellipsis.
+- **Chevron:** a trailing `chevron`.
+- **Behaviour:** the whole row is one tap target with `press`.
+
+### Audio player bar
+
+- **Placement:** inside the Arabic card, under the text.
+- **Controls:**
+  - a `roundButton` (48, `primary`) toggling `play` and `pause`;
+  - then a progress line: `ringStroke` (4) high, fully rounded, an `outline` track and a `progress` fill;
+  - then the time, "0:14 / 0:26", in `caption`, `onSurfaceVariant`. Before the duration is known it shows only the elapsed time.
+- **Behaviour:** a loading state replaces the play icon with the platform's progress indicator. Leaving the screen stops playback, and so does the app going to the background.
+
+## Dhikr detail screen (slice 3a)
+
+- **Top bar:** back at the start and the dhikr's title in `title`. iOS uses the native inline navigation title. The bottom bar is hidden here and on collection pages: it shows only on the top-level tabs.
+- **Arabic card:** a `surface` card (`card` shape, `cardPadding`) with the Arabic centred:
+  - **`quran`:** one ayah per line in `quran`, then the reference label ("Qur'an 112:1–4") in `caption`, `onSurfaceVariant`;
+  - **`name_of_allah`:** the name in `nameOfAllah`, then its meaning in `title`;
+  - **`dhikr`, `dua`, `salawat`:** the text in `quran`.
+
+  The audio player bar sits at the bottom of the card when the dhikr has audio.
+- **Below the card,** `sectionGap` apart, each with a `sectionTitle` label:
+  - **Transliteration** (`body`): not in Arabic, and not for `name_of_allah`, whose title already is the transliteration;
+  - **Translation** (`body`): every kind except `name_of_allah`, whose meaning is in the card;
+  - **Tags:** tag chips, `sm` apart;
+  - **Virtues:** each virtue's text in `body`, then its reference labels in `caption`, `onSurfaceVariant`.
+- **Reference labels:**
+  - `quran`: "Qur'an 112:1–4";
+  - `hadith`: "Sahih Muslim 408" plus " · grade" when present;
+  - `book`: title, author, volume:page;
+  - `shaykh`: the name;
+  - `other`: the text, with its link.
+- **Sections:** a section with nothing to show is left out.

@@ -111,6 +111,7 @@ Rules for screens:
 - Named styles from `largeTitle` (34, top-level page titles such as My Goals) and `title` (22) to `navLabel` (11), plus `counter` (56, with tabular digits).
 - `input` (16) is the text typed into fields; 16 stops iOS Safari zooming in.
 - `quran` (24 on a 44 line height) sets Qur'anic and dhikr Arabic in Noto Naskh Arabic. It's the only style with its own `fontFamily`, and it's never used for interface text.
+- `nameOfAllah` (40 on 64) shows a name of Allah on its own, in Noto Naskh Arabic.
 - `quranLine` (18 on 32) is one line of the Arabic in a list row, in Noto Naskh Arabic.
 - `counter` keeps a 64 line height, tighter than the font's natural 70, on purpose.
 - iOS scales every style with Dynamic Type, relative to its `iosTextStyle`.

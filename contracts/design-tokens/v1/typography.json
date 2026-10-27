@@ -110,6 +110,14 @@
       "weight": 400,
       "iosTextStyle": "body",
       "use": "One line of Qur'anic or dhikr Arabic in a list row; never interface text"
+    },
+    "nameOfAllah": {
+      "fontFamily": "Noto Naskh Arabic",
+      "size": 40,
+      "lineHeight": 64,
+      "weight": 400,
+      "iosTextStyle": "largeTitle",
+      "use": "A name of Allah shown on its own (dhikr detail); never interface text"
     }
   }
 }
