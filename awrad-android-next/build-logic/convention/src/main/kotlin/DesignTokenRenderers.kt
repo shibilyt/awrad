@@ -5,8 +5,8 @@ import TokenText.sentence
 import TokenText.string
 
 /*
- * Renderers for shape.json, spacing.json and typography.json (AwradTokensTask). Each parses its contract
- * strictly, failing on anything it can't express in Kotlin, and renders one committed source file.
+ * Renderers for shape.json (radii and strokes), spacing.json and typography.json (AwradTokensTask). Each parses
+ * its contract strictly, failing on anything it can't express in Kotlin, and renders one committed source file.
  */
 
 /** A `Dp` literal for a contract number: `20.dp`, `0.5.dp`. */
@@ -22,7 +22,16 @@ internal object ShapeTokens {
 
     class Role(val name: String, val step: Step, val use: String)
 
-    class Parsed(val file: TokenFile, val continuous: Boolean, val scale: List<Step>, val roles: List<Role>) {
+    /** A line the design allows: its width and, for a ring drawn outside the element, its offset. */
+    class Stroke(val name: String, val width: Any?, val offset: Any?, val use: String)
+
+    class Parsed(
+        val file: TokenFile,
+        val continuous: Boolean,
+        val scale: List<Step>,
+        val roles: List<Role>,
+        val strokes: List<Stroke>,
+    ) {
         /** The scale step a role uses, for tokens elsewhere that name a shape role (a motion's `radius`). */
         fun role(name: String): Role = roles.firstOrNull { it.name == name } ?: file.fail("no shape role '$name'")
     }
@@ -47,7 +56,25 @@ internal object ShapeTokens {
                 use = string(file, "roles.$name.use", role["use"]),
             )
         }
-        return Parsed(file, continuous, scale, roles)
+        return Parsed(file, continuous, scale, roles, parseStrokes(file))
+    }
+
+    private val STROKE_KEYS = setOf("width", "offset", "use")
+
+    private fun parseStrokes(file: TokenFile): List<Stroke> {
+        @Suppress("UNCHECKED_CAST")
+        val strokes = file.obj("strokes").map { (name, value) ->
+            val stroke = value as? Map<String, Any?> ?: file.fail("strokes.$name must be an object")
+            (stroke.keys - STROKE_KEYS).firstOrNull()?.let {
+                file.fail("strokes.$name.$it isn't supported on Android yet")
+            }
+            val width = stroke["width"].also { file.dp("strokes.$name.width", it) }
+            val offset = stroke["offset"]?.also { file.dp("strokes.$name.offset", it) }
+            Stroke(identifier(file, name), width, offset, string(file, "strokes.$name.use", stroke["use"]))
+        }
+        val names = strokes.flatMap { listOfNotNull(it.name, it.offset?.let { _ -> "${it.name}Offset" }) }
+        names.groupBy { it }.filterValues { it.size > 1 }.keys.firstOrNull()?.let { file.fail("strokes: '$it' twice") }
+        return strokes
     }
 
     fun render(shapes: Parsed, header: TokenHeader): String = buildString {
@@ -83,6 +110,8 @@ internal object ShapeTokens {
         }
         appendLine("}")
         appendLine()
+        appendStrokes(shapes)
+        appendLine()
         if (shapes.continuous) {
             appendLine("/** `corners: continuous`. */")
             appendLine("private const val CornerSmoothing: Float = SmoothCornerShape.CONTINUOUS")
@@ -90,6 +119,28 @@ internal object ShapeTokens {
             appendLine("/** `corners: circular`. */")
             appendLine("private const val CornerSmoothing: Float = 0f")
         }
+    }
+
+    private fun StringBuilder.appendStrokes(shapes: Parsed) {
+        val file = shapes.file
+        appendLine("/**")
+        appendLine(" * Line widths: every line the design allows, since it's built from filled shapes. Read them through")
+        appendLine(" * `AwradTheme.strokes`.")
+        appendLine(" */")
+        appendLine("public object AwradStrokes {")
+        shapes.strokes.forEachIndexed { index, stroke ->
+            val path = "strokes.${stroke.name}"
+            if (index > 0) appendLine()
+            appendDoc("    ", "${stroke.use}: ${file.number("$path.width", stroke.width)}.")
+            appendLine("    public val ${stroke.name}: Dp = ${file.dp("$path.width", stroke.width)}")
+            if (stroke.offset != null) {
+                appendLine()
+                val offset = file.number("$path.offset", stroke.offset)
+                appendDoc("    ", "How far `${stroke.name}` is drawn outside the element's edge: $offset.")
+                appendLine("    public val ${stroke.name}Offset: Dp = ${file.dp("$path.offset", stroke.offset)}")
+            }
+        }
+        appendLine("}")
     }
 }
 
@@ -162,6 +213,7 @@ internal object SpacingTokens {
 internal object TypeTokens {
     class Style(
         val name: String,
+        val fontFamily: String,
         val size: String,
         val lineHeight: String,
         val weight: String,
@@ -170,19 +222,36 @@ internal object TypeTokens {
         val doc: String,
     )
 
-    class Parsed(val fontFamily: String, val styles: List<Style>)
+    class Parsed(val styles: List<Style>)
 
     private val WEIGHTS = mapOf(400 to "Normal", 500 to "Medium", 600 to "SemiBold", 700 to "Bold")
-    private val KEYS = setOf("size", "lineHeight", "weight", "iosTextStyle", "tabularNumbers", "tracking", "use")
+    private val KEYS = setOf(
+        "size",
+        "lineHeight",
+        "weight",
+        "iosTextStyle",
+        "tabularNumbers",
+        "tracking",
+        "fontFamily",
+        "use",
+    )
+
+    /** The `FontFamily` value bundling the contract's [family], at [path]. */
+    private fun fontFamily(file: TokenFile, path: String, family: Any?, fontFamilies: Map<String, String>): String {
+        val name = string(file, path, family)
+        return fontFamilies[name]
+            ?: file.fail("$path '$name' isn't bundled in :core:designsystem (known: ${fontFamilies.keys})")
+    }
 
     fun parse(file: TokenFile, fontFamilies: Map<String, String>): Parsed {
-        val family = string(file, "fontFamily", file.json["fontFamily"])
-        val fontFamily = fontFamilies[family]
-            ?: file.fail("fontFamily '$family' isn't bundled in :core:designsystem (known: ${fontFamilies.keys})")
+        val interfaceFamily = fontFamily(file, "fontFamily", file.json["fontFamily"], fontFamilies)
         @Suppress("UNCHECKED_CAST")
         val styles = file.obj("styles").map { (name, style) ->
             style as Map<String, Any?>
             (style.keys - KEYS).firstOrNull()?.let { file.fail("styles.$name.$it isn't supported on Android yet") }
+            // A style with its own family (`quran`) overrides the interface font.
+            val ownFamily = style["fontFamily"]?.let { string(file, "styles.$name.fontFamily", it) }
+            val family = ownFamily?.let { fontFamily(file, "styles.$name.fontFamily", it, fontFamilies) }
             val weightValue = TokenText.int(file, "styles.$name.weight", style["weight"])
             val weight = WEIGHTS[weightValue] ?: file.fail("styles.$name.weight $weightValue isn't bundled")
             val tabular = when (val value = style["tabularNumbers"]) {
@@ -194,6 +263,7 @@ internal object TypeTokens {
             val lineHeight = file.number("styles.$name.lineHeight", style["lineHeight"])
             Style(
                 name = identifier(file, name),
+                fontFamily = family ?: interfaceFamily,
                 size = file.sp("styles.$name.size", style["size"]),
                 lineHeight = file.sp("styles.$name.lineHeight", style["lineHeight"]),
                 weight = weight,
@@ -201,10 +271,11 @@ internal object TypeTokens {
                 letterSpacing = file.sp("styles.$name.tracking", style["tracking"] ?: 0),
                 tabularNumbers = tabular,
                 doc = sentence(string(file, "styles.$name.use", style["use"])) +
+                    (ownFamily?.let { " $it," } ?: "") +
                     " $size on $lineHeight, weight $weightValue" + (if (tabular) ", tabular numbers." else "."),
             )
         }
-        return Parsed(fontFamily, styles)
+        return Parsed(styles)
     }
 
     fun render(type: Parsed, header: TokenHeader): String = buildString {
@@ -219,15 +290,15 @@ internal object TypeTokens {
             )
         }
         appendLine("/**")
-        appendLine(" * The named text styles, in the interface font. Read them through `AwradTheme.type`; Material's")
-        appendLine(" * `Typography` maps onto them in `AwradTypography`.")
+        appendLine(" * The named text styles, in the interface font unless a style names its own. Read them through")
+        appendLine(" * `AwradTheme.type`; Material's `Typography` maps onto them in `AwradTypography`.")
         appendLine(" */")
         appendLine("public object AwradType {")
         type.styles.forEachIndexed { index, style ->
             if (index > 0) appendLine()
             appendDoc("    ", style.doc)
             appendLine("    public val ${style.name}: TextStyle = TextStyle(")
-            appendLine("        fontFamily = ${type.fontFamily},")
+            appendLine("        fontFamily = ${style.fontFamily},")
             appendLine("        fontWeight = FontWeight.${style.weight},")
             appendLine("        fontSize = ${style.size},")
             appendLine("        lineHeight = ${style.lineHeight},")

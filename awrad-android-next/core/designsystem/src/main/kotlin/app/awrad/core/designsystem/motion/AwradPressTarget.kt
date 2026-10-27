@@ -14,7 +14,6 @@ import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.currentValueOf
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Constraints
-import app.awrad.core.designsystem.theme.AwradEasing
 import app.awrad.core.designsystem.theme.AwradMotions.Press
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -39,7 +38,8 @@ public fun Modifier.pressFeedback(interactionSource: InteractionSource, target: 
 
 private const val HASH = 31
 
-private val PressSpec = tween<Float>(Press.pressDurationMillis, easing = AwradEasing.emphasized)
+/** The press-in: `pressDuration` on `pressEasing` (emphasized). */
+internal val PressInSpec = tween<Float>(Press.pressDurationMillis, easing = Press.pressEasing)
 
 // Not a data class: its generated copy() returns a Modifier without a receiver, which crashes Compose's lint check.
 private class PressFeedbackElement(
@@ -103,8 +103,7 @@ private class PressFeedbackNode(
         coroutineScope.launch {
             when {
                 motion.isReduced -> scale.snapTo(1f)
-                // The tokens give the press a duration only; it eases like the page transitions.
-                isPressed -> scale.animateTo(pressedScale, PressSpec)
+                isPressed -> scale.animateTo(pressedScale, PressInSpec)
                 else -> scale.animateTo(1f, Press.releaseSpring.spec())
             }
         }

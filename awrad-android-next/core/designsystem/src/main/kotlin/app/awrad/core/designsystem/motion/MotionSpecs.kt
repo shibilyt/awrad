@@ -4,7 +4,6 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.FiniteAnimationSpec
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -14,6 +13,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
+import app.awrad.core.designsystem.theme.AwradEasing
 import app.awrad.core.designsystem.theme.AwradHaptic
 import app.awrad.core.designsystem.theme.AwradMotions.CountComplete
 import app.awrad.core.designsystem.theme.AwradMotions.CountTap
@@ -45,8 +45,8 @@ public class AwradNavPillMotion internal constructor(private val motion: AwradMo
     public val selectedIconScale: Float = if (motion.isReduced) 1f else NavPill.iconScale
     public val iconScale: FiniteAnimationSpec<Float> = motion.spring(NavPill.iconSpring)
 
-    /** For the pill's and label's colours. */
-    public fun <T> color(): FiniteAnimationSpec<T> = motion.tween(NavPill.colorDurationMillis, LinearEasing)
+    /** For the pill's and label's colours: linear (`navPill` names no easing). */
+    public fun <T> color(): FiniteAnimationSpec<T> = motion.tween(NavPill.colorDurationMillis, AwradEasing.linear)
 }
 
 /** `countTap`: a [haptic] tick, the number rolls to its next value, and the counter pops to [popScale]. */

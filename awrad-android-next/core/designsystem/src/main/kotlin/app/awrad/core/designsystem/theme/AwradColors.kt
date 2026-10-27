@@ -85,3 +85,12 @@ internal val DarkAwradColors: AwradColors = AwradColors(
     onError = Color(0xFF000000),
     scrim = Color(0x66000000),
 )
+
+/** How a control's state changes its look (`states`). Read it through [AwradTheme.states]. */
+public object AwradStates {
+    /**
+     * A disabled control keeps its colours and is drawn at this opacity; no separate disabled colours.
+     * 0.38.
+     */
+    public const val disabledOpacity: Float = 0.38f
+}

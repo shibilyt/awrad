@@ -10,6 +10,9 @@ import androidx.compose.ui.unit.dp
 
 /** The corner-radius scale (without `full`). Screens use a role from [AwradShapes], not these. */
 public object AwradRadius {
+    /** 4 */
+    public val xxs: Dp = 4.dp
+
     /** 8 */
     public val xs: Dp = 8.dp
 
@@ -69,6 +72,27 @@ public object AwradShapes {
 
     /** The screen behind a pushed page: `xl3`, 32. */
     public val screenDepth: SmoothCornerShape = SmoothCornerShape(AwradRadius.xl3, CornerSmoothing)
+
+    /** A checkbox's box (the only use of 4): `xxs`, 4. */
+    public val checkbox: SmoothCornerShape = SmoothCornerShape(AwradRadius.xxs, CornerSmoothing)
+}
+
+/**
+ * Line widths: every line the design allows, since it's built from filled shapes. Read them through
+ * `AwradTheme.strokes`.
+ */
+public object AwradStrokes {
+    /** Border of a field in error, always with its message: 1.5. */
+    public val fieldError: Dp = 1.5.dp
+
+    /** An unticked checkbox's box, in outlineStrong: 2. */
+    public val checkbox: Dp = 2.dp
+
+    /** Keyboard focus ring on the web, in accent: 2. */
+    public val focusRing: Dp = 2.dp
+
+    /** How far `focusRing` is drawn outside the element's edge: 2. */
+    public val focusRingOffset: Dp = 2.dp
 }
 
 /** `corners: continuous`. */

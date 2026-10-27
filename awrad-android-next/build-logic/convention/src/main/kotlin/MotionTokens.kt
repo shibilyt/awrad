@@ -121,12 +121,18 @@ internal class MotionTokens(private val file: TokenFile, private val shapes: Sha
 
     private fun StringBuilder.appendReducedMotion() {
         val reduced = file.obj("reducedMotion")
+        (reduced.keys - REDUCED_MOTION_KEYS).firstOrNull()?.let {
+            file.fail("reducedMotion.$it isn't supported on Android yet")
+        }
         val replaceWith = reduced["replaceWith"]
         if (replaceWith != "crossfade") file.fail("reducedMotion.replaceWith must be crossfade, was $replaceWith")
         appendDoc("    ", sentence(string(file, "reducedMotion.use", reduced["use"])))
         appendLine("    public object ReducedMotion {")
         appendLine("        /** A cross-fade of this duration replaces every movement, scale and spring. */")
         appendLine("        public const val durationMillis: Int = ${duration("reducedMotion.duration", reduced["duration"])}")
+        appendLine()
+        appendLine("        /** The cross-fade's easing. */")
+        appendLine("        public val easing: Easing = AwradEasing.${ref("reducedMotion.easing", reduced["easing"], easings)}")
         appendLine("    }")
     }
 
@@ -179,6 +185,8 @@ internal class MotionTokens(private val file: TokenFile, private val shapes: Sha
     private companion object {
         const val BEZIER_POINTS = 4
 
+        val REDUCED_MOTION_KEYS = setOf("replaceWith", "duration", "easing", "use")
+
         /** How each key of a named motion is typed in Kotlin. */
         val KEYS = mapOf(
             "scaleFrom" to Kind.FLOAT,
@@ -193,7 +201,7 @@ internal class MotionTokens(private val file: TokenFile, private val shapes: Sha
             "dim" to Kind.FLOAT,
             // Degrees.
             "chevronRotation" to Kind.FLOAT,
-            // Velocity in dp (pt) per second.
+            // Velocity in dp per second (`sheet`, Android only).
             "releaseVelocity" to Kind.FLOAT,
             "maxStaggered" to Kind.INT,
             // A delay in milliseconds, not a named duration.
@@ -206,6 +214,7 @@ internal class MotionTokens(private val file: TokenFile, private val shapes: Sha
             "fadeIn" to Kind.DURATION,
             "fadeOut" to Kind.DURATION,
             "easing" to Kind.EASING,
+            "pressEasing" to Kind.EASING,
             "spring" to Kind.SPRING,
             "pillSpring" to Kind.SPRING,
             "iconSpring" to Kind.SPRING,

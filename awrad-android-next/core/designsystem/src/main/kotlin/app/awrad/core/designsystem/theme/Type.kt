@@ -18,7 +18,10 @@ internal val InterfaceFontFamily: FontFamily = FontFamily(
     Font(R.font.googlesansflexrounded_bold, FontWeight.Bold),
 )
 
-/** For Qur'anic and dhikr text in Arabic script. Never for interface text. */
+/**
+ * Noto Naskh Arabic, for Qur'anic and dhikr text in Arabic script: the `quran` style's own `fontFamily`
+ * (`AwradType.quran`). Never for interface text.
+ */
 public val ArabicScriptFontFamily: FontFamily = FontFamily(
     Font(R.font.notonaskharabic_regular, FontWeight.Normal),
     Font(R.font.notonaskharabic_medium, FontWeight.Medium),

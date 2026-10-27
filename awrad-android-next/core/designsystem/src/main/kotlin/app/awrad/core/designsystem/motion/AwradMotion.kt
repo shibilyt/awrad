@@ -6,7 +6,6 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FiniteAnimationSpec
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -41,9 +40,9 @@ import androidx.compose.animation.core.tween as composeTween
 @Immutable
 public class AwradMotion internal constructor(public val isReduced: Boolean) {
 
-    /** The reduced-motion cross-fade: `reducedMotion.duration`, linear. */
+    /** The reduced-motion cross-fade: `reducedMotion.duration` and `reducedMotion.easing` (linear). */
     public fun <T> crossfade(): FiniteAnimationSpec<T> =
-        composeTween(durationMillis = ReducedMotion.durationMillis, easing = LinearEasing)
+        composeTween(durationMillis = ReducedMotion.durationMillis, easing = ReducedMotion.easing)
 
     /** [spring] as a Compose spring; under reduced motion, the cross-fade. */
     public fun <T> spring(spring: AwradSpring, visibilityThreshold: T? = null): FiniteAnimationSpec<T> =
@@ -103,11 +102,11 @@ public class AwradMotion internal constructor(public val isReduced: Boolean) {
 
     /**
      * `contentSwap`, for text or status swapped in place (`AwradContentSwap`): fade in over `color`, out over
-     * `fade`; a change of size follows [AwradSprings.spatial].
+     * `fade`, on its `easing` (linear); a change of size follows [AwradSprings.spatial].
      */
     public fun contentSwap(): ContentTransform {
-        val enter = fadeIn(if (isReduced) crossfade() else fade(ContentSwap.fadeInMillis))
-        val exit = fadeOut(if (isReduced) crossfade() else fade(ContentSwap.fadeOutMillis))
+        val enter = fadeIn(if (isReduced) crossfade() else swapFade(ContentSwap.fadeInMillis))
+        val exit = fadeOut(if (isReduced) crossfade() else swapFade(ContentSwap.fadeOutMillis))
         val size = SizeTransform(clip = false) { _, _ -> movement(visibilityThreshold = IntSize(1, 1)) }
         return ContentTransform(enter, exit, sizeTransform = size)
     }
@@ -138,9 +137,8 @@ public class AwradMotion internal constructor(public val isReduced: Boolean) {
     private fun <T> tab(): FiniteAnimationSpec<T> =
         composeTween(TabSwitch.durationMillis, easing = TabSwitch.easing)
 
-    /** Opacity changes are linear: the tokens give fades a duration only. */
-    private fun <T> fade(durationMillis: Int): FiniteAnimationSpec<T> =
-        composeTween(durationMillis, easing = LinearEasing)
+    private fun <T> swapFade(durationMillis: Int): FiniteAnimationSpec<T> =
+        composeTween(durationMillis, easing = ContentSwap.easing)
 
     override fun equals(other: Any?): Boolean = other is AwradMotion && isReduced == other.isReduced
 

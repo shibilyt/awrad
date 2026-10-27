@@ -53,6 +53,7 @@ fun AwradTokensTask.configureTokens(verify: Boolean) {
     packageName.set("app.awrad.core.designsystem.theme")
     // The contract's font family → the FontFamily in Type.kt that bundles its files.
     fontFamilies.put("Google Sans Flex Rounded", "InterfaceFontFamily")
+    fontFamilies.put("Noto Naskh Arabic", "ArabicScriptFontFamily")
     verifyOnly.set(verify)
     regenerateCommand.set("./gradlew :core:designsystem:generateAwradTokens")
 }
