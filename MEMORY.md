@@ -287,3 +287,13 @@ Use this format:
   - No outlines by default: fields, secondary buttons and pills are filled, and rows in a card are spaced, not divided. Lines appear only for web keyboard focus, a checkbox's box and a field in error.
 - Evidence: `contracts/design-tokens/v1/README.md`
 - Commit: see git log
+
+### 2026-10-27 — Design system: fonts
+
+- Area: Cross-project
+- Change:
+  - Interface text uses Google Sans Flex Rounded (four static weights), the font of the frozen apps; Manrope is removed.
+  - Arabic and Malayalam interface text uses the system font. Noto Naskh Arabic is for Qur'anic and dhikr text only.
+  - The font files and `SHA256SUMS` are in `contracts/design-tokens/v1/fonts/`. Each app's validation checks its copies against them.
+- Evidence: `contracts/design-tokens/v1/fonts/README.md`
+- Commit: see git log

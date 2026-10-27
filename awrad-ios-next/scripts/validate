@@ -17,6 +17,7 @@ step "Module rules";            python3 -I scripts/check-module-rules.py
 step "Translations (en/ar/ml)"; python3 -I scripts/check-strings.py
 step "Hijri table matches contracts/hijri-calendar"; python3 -I scripts/generate-hijri-table.py --check
 step "Colours match contracts/design-tokens"; python3 -I scripts/generate-colors.py --check
+step "Fonts match contracts/design-tokens/v1/fonts"; python3 -I scripts/check-fonts.py
 step "swift format";            swift format lint --strict --recursive "${SOURCES[@]}"
 step "SwiftLint (strict)";      mise exec -- swiftlint lint --strict --quiet
 step "AwradKit build and tests (macOS, warnings as errors)"
