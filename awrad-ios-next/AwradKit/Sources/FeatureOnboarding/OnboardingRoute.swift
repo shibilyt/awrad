@@ -29,12 +29,12 @@ struct OnboardingScreen: View {
     let send: (OnboardingModel.Action) -> Void
 
     var body: some View {
-        VStack(spacing: 28) {
+        VStack(spacing: AwradSpacing.xl2) {
             Spacer()
             AwradLogoMark()
-                .frame(width: 148, height: 148)
+                .frame(width: 148, height: 148)  // design-token-exempt: the logo artwork's size
             Text(Strings.title)
-                .font(AwradFonts.headline())
+                .awradTextStyle(.title)
                 .foregroundStyle(AwradColors.onSurface)
                 .multilineTextAlignment(.center)
             Spacer()
@@ -42,8 +42,8 @@ struct OnboardingScreen: View {
                 send(.getStarted)
             }
         }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 40)
+        .padding(.horizontal, AwradSpacing.pageMargin)
+        .padding(.vertical, AwradSpacing.xl4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AwradColors.background)
     }
