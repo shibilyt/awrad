@@ -12,9 +12,10 @@ export function Checkbox({
         <span
           aria-hidden="true"
           className={[
-            "flex size-icon-small shrink-0 items-center justify-center rounded-xs border-2 border-outline-strong",
-            "group-data-selected:border-accent group-data-selected:bg-primary",
-            "group-data-focus-visible:outline-2 group-data-focus-visible:outline-offset-2 group-data-focus-visible:outline-accent",
+            "flex size-icon-small shrink-0 items-center justify-center rounded-checkbox",
+            "border-checkbox border-outline-strong group-data-selected:border-accent group-data-selected:bg-primary",
+            "group-data-focus-visible:outline-focus-ring group-data-focus-visible:outline-offset-focus-ring",
+            "group-data-focus-visible:outline-accent",
           ].join(" ")}
         >
           <svg

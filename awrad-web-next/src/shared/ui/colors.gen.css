@@ -64,3 +64,11 @@
   --color-on-error: var(--awrad-color-on-error);
   --color-scrim: var(--awrad-color-scrim);
 }
+
+/* States (colors.json `states`): drawn at an opacity, with no colours of their own. */
+:root {
+  --awrad-state-disabled-opacity: 0.38;
+}
+@utility opacity-disabled {
+  opacity: var(--awrad-state-disabled-opacity);
+}

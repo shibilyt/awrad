@@ -16,7 +16,7 @@ export function AccountScreen({
   footer?: ReactNode;
 }): ReactElement {
   return (
-    <main className="mx-auto flex w-full max-w-page flex-col gap-section-gap px-page-margin py-4xl">
+    <main className="mx-auto flex w-full max-w-content flex-col gap-section-gap px-page-margin py-4xl">
       <h1 className="text-title text-on-surface">{title}</h1>
       {intro !== undefined && <div className="flex flex-col gap-xs text-on-surface-variant">{intro}</div>}
       {children}

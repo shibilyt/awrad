@@ -32,12 +32,12 @@
 
 /*
  * Content swapped in place (a status that replaces "Checking…", a new alert or
- * notice): the new content fades in when it appears (`contentSwap.fadeIn`, decelerating
- * as things entering do). Give the element a `key` that changes with its content so
- * React mounts it afresh. The outgoing content is removed at once.
+ * notice): the new content fades in when it appears (`contentSwap.fadeIn`, with
+ * `contentSwap.easing`, linear as fades are). Give the element a `key` that changes with
+ * its content so React mounts it afresh. The outgoing content is removed at once.
  */
 @utility content-swap {
-  animation: awrad-fade-in var(--awrad-motion-content-swap-fade-in) var(--awrad-ease-decelerate) both;
+  animation: awrad-fade-in var(--awrad-motion-content-swap-fade-in) var(--awrad-motion-content-swap-easing) both;
   @media (prefers-reduced-motion: reduce) {
     animation: none;
   }
@@ -45,16 +45,16 @@
 
 /*
  * Reduced motion: page changes become the plain `reducedMotion` cross-fade (both pages
- * at once, linear, so the unchanged parts stay steady); in-place swaps, already short
- * fades, don't animate.
+ * at once, `reducedMotion.easing` (linear), so the unchanged parts stay steady); in-place
+ * swaps, already short fades, don't animate.
  */
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(page) {
-    animation: awrad-fade-out var(--awrad-reduced-motion-duration) linear both;
+    animation: awrad-fade-out var(--awrad-reduced-motion-duration) var(--awrad-reduced-motion-easing) both;
   }
 
   ::view-transition-new(page) {
-    animation: awrad-fade-in var(--awrad-reduced-motion-duration) linear both;
+    animation: awrad-fade-in var(--awrad-reduced-motion-duration) var(--awrad-reduced-motion-easing) both;
   }
 }
 

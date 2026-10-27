@@ -1,7 +1,8 @@
 // Generates src/shared/ui/tokens.gen.css from the shared shape, spacing, type and motion
 // tokens (contracts/design-tokens/v1/{shape,spacing,typography,motion}.json): custom
 // properties for every value, plus the Tailwind theme that names them (rounded-card,
-// p-card-padding, gap-row-gap, min-h-touch-target, text-title, …) and nothing else.
+// p-card-padding, gap-row-gap, min-h-control, max-w-content, text-title, border-checkbox,
+// outline-focus-ring, …) and nothing else.
 // Colours have their own generator (generate-colors.mjs).
 //
 //   node scripts/generate-tokens.mjs           write the file (npm run tokens:design)
@@ -36,6 +37,16 @@ const WEIGHT_NAMES = {
   900: "black",
 };
 const FULL = "calc(infinity * 1px)";
+/**
+ * The Tailwind font family (`--font-<key>` in theme.css, which loads the files) for each
+ * family typography.json names. A style with its own fontFamily uses that family's key.
+ */
+export const FONT_KEYS = {
+  "Google Sans Flex Rounded": "sans",
+  "Noto Naskh Arabic": "arabic",
+};
+/** spacing.json sizes named `<name>MaxWidth` are content widths: Tailwind containers (`max-w-<name>`). */
+const MAX_WIDTH = /^(.+)MaxWidth$/;
 
 /** Reads the four token files. */
 export function readTokens() {
@@ -55,13 +66,23 @@ function number(value, where) {
   return value;
 }
 
+function px(value, where) {
+  return `${String(number(value, where))}px`;
+}
+
+function fontKey(family, where) {
+  return Object.hasOwn(FONT_KEYS, family)
+    ? FONT_KEYS[family]
+    : fail(`${where}: "${String(family)}" has no font in theme.css (FONT_KEYS in generate-tokens.mjs)`);
+}
+
 /** `22` → `1.375rem`: text follows the browser's text size, like sp on Android. */
 function rem(px) {
   return `${String(px / 16)}rem`;
 }
 
-/** The tokens as named, checked values; throws on a dangling reference or a bad value. */
-export function resolveTokens({ shape, spacing, typography, motion }) {
+/** shape.json: radii, radius roles and line widths. */
+function resolveShape(shape) {
   const radii = Object.entries(shape.scale).map(([name, value]) => {
     if (value === "full") return { name, css: FULL, finite: false };
     return { name, css: `${String(number(value, `shape.json scale.${name}`))}px`, finite: true };
@@ -71,7 +92,17 @@ export function resolveTokens({ shape, spacing, typography, motion }) {
       radii.find((entry) => entry.name === radius) ?? fail(`shape.json roles.${role}: unknown radius "${radius}"`);
     return { name: kebab(role), step: step.name, finite: step.finite };
   });
+  // Line widths: the only borders and outlines (README: no outlines).
+  const strokes = Object.entries(shape.strokes).map(([stroke, value]) => ({
+    name: kebab(stroke),
+    width: px(value.width, `shape.json strokes.${stroke}.width`),
+    offset: value.offset === undefined ? null : px(value.offset, `shape.json strokes.${stroke}.offset`),
+  }));
+  return { radii, radiusRoles, strokes };
+}
 
+/** spacing.json: the scale, roles, sizes, and the sizes that are content widths. */
+function resolveSpacing(spacing) {
   const spaces = Object.entries(spacing.scale).map(([name, value]) => ({
     name,
     css: `${String(number(value, `spacing.json scale.${name}`))}px`,
@@ -82,10 +113,24 @@ export function resolveTokens({ shape, spacing, typography, motion }) {
   });
   const sizes = Object.entries(spacing.sizes).map(([size, { value }]) => ({
     name: kebab(size),
-    css: `${String(number(value, `spacing.json sizes.${size}`))}px`,
+    css: px(value, `spacing.json sizes.${size}`),
+    container: MAX_WIDTH.exec(size)?.[1],
   }));
+  return {
+    spaces,
+    spaceRoles,
+    sizes,
+    spacingSizes: sizes.filter((size) => size.container === undefined),
+    containers: sizes
+      .filter((size) => size.container !== undefined)
+      .map((size) => ({ name: kebab(size.container ?? ""), size: size.name })),
+  };
+}
 
-  const styles = Object.entries(typography.styles).map(([style, value]) => {
+/** typography.json: text styles, each with its weight and, when it has one, its own font. */
+function resolveTypography(typography) {
+  fontKey(typography.fontFamily, "typography.json fontFamily");
+  return Object.entries(typography.styles).map(([style, value]) => {
     const weight = number(value.weight, `typography.json styles.${style}.weight`);
     if (!(weight in WEIGHT_NAMES))
       fail(`typography.json styles.${style}.weight must be 100…900 in hundreds, got ${String(weight)}`);
@@ -95,9 +140,14 @@ export function resolveTokens({ shape, spacing, typography, motion }) {
       lineHeight: rem(number(value.lineHeight, `typography.json styles.${style}.lineHeight`)),
       weight,
       tabular: value.tabularNumbers === true,
+      font:
+        value.fontFamily === undefined ? null : fontKey(value.fontFamily, `typography.json styles.${style}.fontFamily`),
     };
   });
+}
 
+/** motion.json: durations, easings, the web's motions and reducedMotion. */
+function resolveMotion(motion) {
   const easings = Object.entries(motion.easing).map(([name, points]) => {
     if (!Array.isArray(points) || points.length !== 4 || points.some((point) => typeof point !== "number")) {
       fail(`motion.json easing.${name} must be four numbers`);
@@ -126,9 +176,24 @@ export function resolveTokens({ shape, spacing, typography, motion }) {
   if (!(motion.reducedMotion.duration in motion.duration)) {
     fail(`motion.json reducedMotion.duration: unknown duration "${String(motion.reducedMotion.duration)}"`);
   }
-  const reducedMotion = `var(--awrad-duration-${kebab(motion.reducedMotion.duration)})`;
+  if (!(motion.reducedMotion.easing in motion.easing)) {
+    fail(`motion.json reducedMotion.easing: unknown easing "${String(motion.reducedMotion.easing)}"`);
+  }
+  const reducedMotion = {
+    duration: `var(--awrad-duration-${kebab(motion.reducedMotion.duration)})`,
+    easing: `var(--awrad-ease-${kebab(motion.reducedMotion.easing)})`,
+  };
+  return { easings, durations, webMotions, reducedMotion };
+}
 
-  return { radii, radiusRoles, spaces, spaceRoles, sizes, styles, easings, durations, webMotions, reducedMotion };
+/** The tokens as named, checked values; throws on a dangling reference or a bad value. */
+export function resolveTokens({ shape, spacing, typography, motion }) {
+  return {
+    ...resolveShape(shape),
+    ...resolveSpacing(spacing),
+    styles: resolveTypography(typography),
+    ...resolveMotion(motion),
+  };
 }
 
 /** spacing.json's `none` is Tailwind's 0 (p-0, inset-0, min-w-0): `*-none` would clash with max-w-none. */
@@ -144,7 +209,13 @@ function rootLines(t) {
     ...t.radii.map((step) => `  --awrad-radius-${step.name}: ${step.css};`),
     ...t.radiusRoles.map((role) => `  --awrad-radius-${role.name}: var(--awrad-radius-${role.step});`),
     "",
-    "  /* Spacing (spacing.json): the scale, the roles, then the standard sizes. */",
+    "  /* Line widths (shape.json strokes), the only lines: a width and, for a ring, its offset. */",
+    ...t.strokes.flatMap((stroke) => [
+      `  --awrad-stroke-${stroke.name}: ${stroke.width};`,
+      ...(stroke.offset === null ? [] : [`  --awrad-stroke-${stroke.name}-offset: ${stroke.offset};`]),
+    ]),
+    "",
+    "  /* Spacing (spacing.json): the scale, the roles, then the standard sizes and content widths. */",
     ...t.spaces.map((step) => `  --awrad-space-${step.name}: ${step.css};`),
     ...t.spaceRoles.map((role) => `  --awrad-space-${role.name}: var(--awrad-space-${role.step});`),
     ...t.sizes.map((size) => `  --awrad-size-${size.name}: ${size.css};`),
@@ -154,6 +225,7 @@ function rootLines(t) {
       `  --awrad-text-${style.name}-size: ${style.size};`,
       `  --awrad-text-${style.name}-line-height: ${style.lineHeight};`,
       `  --awrad-text-${style.name}-weight: ${String(style.weight)};`,
+      ...(style.font === null ? [] : [`  --awrad-text-${style.name}-font-family: var(--font-${style.font});`]),
     ]),
     "",
     "  /* Motion (motion.json). The web uses only fades: durations, easings, its motions and reducedMotion. */",
@@ -162,7 +234,8 @@ function rootLines(t) {
     ...t.webMotions.flatMap((motion) =>
       motion.values.map((value) => `  --awrad-motion-${motion.name}-${value.name}: ${value.css};`),
     ),
-    `  --awrad-reduced-motion-duration: ${t.reducedMotion};`,
+    `  --awrad-reduced-motion-duration: ${t.reducedMotion.duration};`,
+    `  --awrad-reduced-motion-easing: ${t.reducedMotion.easing};`,
     "}",
   ];
 }
@@ -172,10 +245,10 @@ function themeLines(t) {
   const weights = [...new Set(t.styles.map((style) => style.weight))].sort((a, b) => a - b);
   return [
     "/*",
-    " * Tailwind: these are the only radii, spacing, sizes, text styles and weights.",
-    " * Tailwind's defaults (rounded-xl, p-4, text-sm, leading-*, tracking-*, ease-*,",
+    " * Tailwind: these are the only radii, spacing, sizes, content widths, text styles and weights.",
+    " * Tailwind's defaults (rounded-xl, p-4, max-w-md, text-sm, leading-*, tracking-*, ease-*,",
     " * animate-*) are removed, so classes name a token: rounded-card, p-card-padding,",
-    " * gap-row-gap, min-h-touch-target, text-title, font-semibold.",
+    " * gap-row-gap, min-h-control, max-w-content, text-title, font-semibold.",
     " */",
     "@theme inline {",
     "  --radius-*: initial;",
@@ -183,7 +256,9 @@ function themeLines(t) {
     "  --spacing-*: initial;",
     ...t.spaces.map((step) => `  --spacing-${spacingKey(step.name)}: var(--awrad-space-${step.name});`),
     ...t.spaceRoles.map((role) => `  --spacing-${role.name}: var(--awrad-space-${role.name});`),
-    ...t.sizes.map((size) => `  --spacing-${size.name}: var(--awrad-size-${size.name});`),
+    ...t.spacingSizes.map((size) => `  --spacing-${size.name}: var(--awrad-size-${size.name});`),
+    "  --container-*: initial;",
+    ...t.containers.map((container) => `  --container-${container.name}: var(--awrad-size-${container.size});`),
     "  --text-*: initial;",
     ...t.styles.flatMap((style) => [
       `  --text-${style.name}: var(--awrad-text-${style.name}-size);`,
@@ -200,18 +275,50 @@ function themeLines(t) {
   ];
 }
 
-/** What a theme value can't say: tabular digits, and continuous corners when shape.json asks for them. */
+/**
+ * What a theme value can't say: line widths, text styles' own digits and font family,
+ * and continuous corners when shape.json asks for them.
+ */
 function utilityLines(t, corners) {
   const squircles = [...t.radii, ...t.radiusRoles].filter((entry) => entry.finite).map((entry) => entry.name);
-  const tabular = [
-    "/* Text styles with tabular digits. */",
-    ...t.styles
-      .filter((style) => style.tabular)
-      .flatMap((style) => [`@utility text-${style.name} {`, "  font-variant-numeric: tabular-nums;", "}"]),
+  const strokes = [
+    "/*",
+    " * Line widths (shape.json strokes): each stroke as a border width (border-field-error,",
+    " * border-checkbox) or a solid outline (outline-focus-ring, with outline-offset-focus-ring).",
+    " * Pair with a colour role: border-error, outline-accent.",
+    " */",
+    ...t.strokes.flatMap((stroke) => [
+      `@utility border-${stroke.name} {`,
+      `  border-width: var(--awrad-stroke-${stroke.name});`,
+      "}",
+      `@utility outline-${stroke.name} {`,
+      "  outline-style: solid;",
+      `  outline-width: var(--awrad-stroke-${stroke.name});`,
+      "}",
+      ...(stroke.offset === null
+        ? []
+        : [
+            `@utility outline-offset-${stroke.name} {`,
+            `  outline-offset: var(--awrad-stroke-${stroke.name}-offset);`,
+            "}",
+          ]),
+    ]),
   ];
-  if (corners !== "continuous") return tabular;
+  const styles = [
+    "/* Text styles with tabular digits or their own font family. */",
+    ...t.styles
+      .filter((style) => style.tabular || style.font !== null)
+      .flatMap((style) => [
+        `@utility text-${style.name} {`,
+        ...(style.tabular ? ["  font-variant-numeric: tabular-nums;"] : []),
+        ...(style.font === null ? [] : [`  font-family: var(--awrad-text-${style.name}-font-family);`]),
+        "}",
+      ]),
+  ];
+  const plain = [...strokes, "", ...styles];
+  if (corners !== "continuous") return plain;
   return [
-    ...tabular,
+    ...plain,
     "",
     "/*",
     " * Continuous corners (shape.json `corners`): corner-shape: squircle where the browser",
@@ -254,6 +361,13 @@ export function tokenNames(tokens) {
   const t = resolveTokens(tokens);
   return {
     radius: [...t.radii.map((step) => step.name), ...t.radiusRoles.map((role) => role.name)],
+    stroke: t.strokes.map((stroke) => stroke.name),
+    space: [
+      ...t.spaces.map((step) => spacingKey(step.name)),
+      ...t.spaceRoles.map((role) => role.name),
+      ...t.spacingSizes.map((size) => size.name),
+    ],
+    container: t.containers.map((container) => container.name),
     text: t.styles.map((style) => style.name),
     weight: [...new Set(t.styles.map((style) => WEIGHT_NAMES[style.weight]))],
   };
