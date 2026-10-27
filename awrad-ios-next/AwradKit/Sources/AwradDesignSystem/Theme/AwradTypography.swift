@@ -2,8 +2,12 @@ import CoreText
 import Foundation
 import SwiftUI
 
-/// Bundled fonts: Manrope for interface text, Noto Naskh Arabic for Qur'anic and dhikr text.
-/// Sizes follow Dynamic Type through `relativeTo:`.
+/// Bundled fonts (contracts/design-tokens/v1/fonts): Google Sans Flex Rounded for interface text,
+/// Noto Naskh Arabic for Qur'anic and dhikr text. Sizes follow Dynamic Type through `relativeTo:`,
+/// and each weight is its own font file, never a synthetic bold.
+///
+/// Google Sans Flex has no Arabic or Malayalam glyphs. Core Text falls back per glyph to the
+/// system font for those scripts, so interface text in ar and ml uses the system font.
 public enum AwradFonts {
     private static var registered = false
 
@@ -11,25 +15,62 @@ public enum AwradFonts {
     public static func register() {
         guard !registered else { return }
         registered = true
-        let urls = Bundle.module.urls(forResourcesWithExtension: "ttf", subdirectory: "Fonts") ?? []
-        for url in urls {
+        for url in bundledFontURLs {
             CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
         }
     }
 
+    /// The font files in the package bundle.
+    static var bundledFontURLs: [URL] {
+        Bundle.module.urls(forResourcesWithExtension: "ttf", subdirectory: "Fonts") ?? []
+    }
+
     public static func headline(_ size: CGFloat = 28) -> Font {
-        .custom("Manrope-SemiBold", size: size, relativeTo: .title)
+        .custom(Face.interfaceSemiBold.postScriptName, size: size, relativeTo: .title)
     }
 
     public static func title(_ size: CGFloat = 17) -> Font {
-        .custom("Manrope-SemiBold", size: size, relativeTo: .headline)
+        .custom(Face.interfaceSemiBold.postScriptName, size: size, relativeTo: .headline)
     }
 
     public static func body(_ size: CGFloat = 16) -> Font {
-        .custom("Manrope-Regular", size: size, relativeTo: .body)
+        .custom(Face.interfaceRegular.postScriptName, size: size, relativeTo: .body)
     }
 
+    /// Qur'anic and dhikr text only; interface text in Arabic uses the interface styles.
     public static func arabic(_ size: CGFloat = 28) -> Font {
-        .custom("NotoNaskhArabic-Regular", size: size, relativeTo: .title)
+        .custom(Face.naskhRegular.postScriptName, size: size, relativeTo: .title)
+    }
+
+    /// Every bundled font face, by its file and PostScript name.
+    enum Face: CaseIterable {
+        case interfaceRegular, interfaceMedium, interfaceSemiBold, interfaceBold
+        case naskhRegular, naskhMedium, naskhSemiBold, naskhBold
+
+        var postScriptName: String {
+            switch self {
+            case .interfaceRegular: "GoogleSansFlexRounded-Regular"
+            case .interfaceMedium: "GoogleSansFlexRounded-Medium"
+            case .interfaceSemiBold: "GoogleSansFlexRounded-SemiBold"
+            case .interfaceBold: "GoogleSansFlexRounded-Bold"
+            case .naskhRegular: "NotoNaskhArabic-Regular"
+            case .naskhMedium: "NotoNaskhArabic-Medium"
+            case .naskhSemiBold: "NotoNaskhArabic-SemiBold"
+            case .naskhBold: "NotoNaskhArabic-Bold"
+            }
+        }
+
+        var fileName: String {
+            switch self {
+            case .interfaceRegular: "googlesansflexrounded_regular.ttf"
+            case .interfaceMedium: "googlesansflexrounded_medium.ttf"
+            case .interfaceSemiBold: "googlesansflexrounded_semibold.ttf"
+            case .interfaceBold: "googlesansflexrounded_bold.ttf"
+            case .naskhRegular: "notonaskharabic_regular.ttf"
+            case .naskhMedium: "notonaskharabic_medium.ttf"
+            case .naskhSemiBold: "notonaskharabic_semibold.ttf"
+            case .naskhBold: "notonaskharabic_bold.ttf"
+            }
+        }
     }
 }

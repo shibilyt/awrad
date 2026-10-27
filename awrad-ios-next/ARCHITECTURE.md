@@ -133,7 +133,11 @@ See `FeatureOnboarding`.
   - **Text fields** use `awradField(isInError:)`: that fill, no border at rest or in focus (the `accent` cursor and the keyboard show focus), a placeholder in `onSurfaceVariant`, and an `error` border only while in error, always with the message. `AccountField` gets `isInError` from `Feedback.field`, the input an error is about (none for notices or wrong credentials).
   - **Rows in a card** (account overview, devices) are separated by spacing, never `Divider()`.
   - **The only lines allowed:** `outlineStrong` for a checkbox or radio box, `outline` for a progress track (neither exists yet), and the field error border. Text and link buttons stay unfilled.
-- **Fonts:** Manrope for interface text, Noto Naskh Arabic for Qur'anic and dhikr text. They're bundled in `AwradDesignSystem` and registered at launch with `AwradFonts.register()`.
+- **Fonts:** the files of [`contracts/design-tokens/v1/fonts`](../contracts/design-tokens/v1/fonts/README.md), copied unchanged into `AwradDesignSystem/Resources/Fonts` and registered at launch with `AwradFonts.register()`.
+  - **Interface text** is Google Sans Flex Rounded (`GoogleSansFlexRounded-Regular`/`-Medium`/`-SemiBold`/`-Bold`), the font of the frozen apps. `AwradFonts` styles use `.custom(_:size:relativeTo:)` for Dynamic Type, and each weight is its own file, never synthetic.
+  - **Qur'anic and dhikr text** is Noto Naskh Arabic (`NotoNaskhArabic-…`), only through `AwradFonts.arabic`.
+  - **Arabic and Malayalam interface text** uses the system font: Google Sans Flex has no glyphs for them, and Core Text falls back per glyph to the system cascade. Nothing names a font for those scripts.
+  - **Checks:** `scripts/check-fonts.py` (in `scripts/validate`) fails when a bundled file is missing, extra, or differs from the contract's `SHA256SUMS`; to update, copy the contract files. `AwradDesignSystemTests/AwradFontsTests` checks that every file registers and resolves by its PostScript name, and that ar and ml text falls back to neither bundled family.
 - **Logo:** plain PNGs in the package bundle.
 - **Strings:** String Catalogs per module (`Bundle.module`) plus the app's own. Xcode compiles them into `en`/`ar`/`ml` resources.
 
