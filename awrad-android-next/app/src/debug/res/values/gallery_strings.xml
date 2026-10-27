@@ -17,10 +17,12 @@
     <string name="gallery_collection_daily">Daily Essentials</string>
     <string name="gallery_collection_long">Asma-ul Husna, the Most Beautiful Names</string>
     <plurals name="gallery_dhikr_count">
-        <item quantity="one">%d Dhikr</item>
-        <item quantity="other">%d Dhikrs</item>
+        <item quantity="one">%d dhikr</item>
+        <item quantity="other">%d dhikrs</item>
     </plurals>
     <string name="gallery_search_placeholder">Search dhikrs</string>
+    <string name="gallery_player_buttons">Play, and loading</string>
+    <string name="gallery_play">Play</string>
     <string name="gallery_search_query">astaghfirullah</string>
     <string name="gallery_chips">Chips</string>
     <string name="gallery_chip_debt">Debt</string>

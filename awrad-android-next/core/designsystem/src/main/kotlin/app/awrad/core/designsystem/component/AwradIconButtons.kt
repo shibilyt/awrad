@@ -6,6 +6,7 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -19,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import app.awrad.core.designsystem.R
 import app.awrad.core.designsystem.icon.AwradIcons
@@ -79,7 +81,8 @@ public fun AwradBackButton(onClick: () -> Unit, modifier: Modifier = Modifier, e
 
 /**
  * A round `primary` button with an `onPrimary` [icon], fully rounded. [contentDescription] is required: it's
- * the button's only label.
+ * the button's only label. While [isLoading] (audio connecting) a spinner in the same colour replaces the icon,
+ * and the button stays tappable, so it can still stop what it started.
  */
 @Composable
 public fun AwradRoundButton(
@@ -89,8 +92,10 @@ public fun AwradRoundButton(
     modifier: Modifier = Modifier,
     size: AwradRoundButtonSize = AwradRoundButtonSize.Regular,
     enabled: Boolean = true,
+    isLoading: Boolean = false,
 ) {
     val sizes = AwradTheme.sizes
+    val loading = stringResource(R.string.awrad_state_loading)
     val (diameter, iconSize) = when (size) {
         AwradRoundButtonSize.Regular -> sizes.roundButton to sizes.icon
         AwradRoundButtonSize.Small -> sizes.roundButtonSmall to sizes.iconSmall
@@ -109,16 +114,27 @@ public fun AwradRoundButton(
                 role = Role.Button,
                 onClick = onClick,
             )
-            .semantics { this.contentDescription = contentDescription },
+            .semantics {
+                this.contentDescription = contentDescription
+                if (isLoading) stateDescription = loading
+            },
         contentAlignment = Alignment.Center,
     ) {
         RoundFill(diameter = diameter, interactionSource = interactionSource) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(iconSize),
-                tint = AwradTheme.colors.onPrimary,
-            )
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(iconSize),
+                    color = AwradTheme.colors.onPrimary,
+                    strokeWidth = sizes.ringStroke,
+                )
+            } else {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(iconSize),
+                    tint = AwradTheme.colors.onPrimary,
+                )
+            }
         }
     }
 }

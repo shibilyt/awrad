@@ -170,4 +170,17 @@ public object AwradType {
         letterSpacing = 0.sp,
         lineHeightStyle = AwradLineHeightStyle,
     )
+
+    /**
+     * A name of Allah shown on its own (dhikr detail); never interface text. Noto Naskh Arabic, 40 on 64,
+     * weight 400.
+     */
+    public val nameOfAllah: TextStyle = TextStyle(
+        fontFamily = ArabicScriptFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 40.sp,
+        lineHeight = 64.sp,
+        letterSpacing = 0.sp,
+        lineHeightStyle = AwradLineHeightStyle,
+    )
 }

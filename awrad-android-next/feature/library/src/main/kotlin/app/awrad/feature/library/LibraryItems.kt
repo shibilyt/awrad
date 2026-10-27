@@ -1,16 +1,20 @@
 package app.awrad.feature.library
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextDirection
@@ -69,7 +73,10 @@ internal fun DhikrRow(
     }
 }
 
-/** The collections as a row of tiles that scrolls sideways, inset by the page margin. */
+/**
+ * The collections as a row of tiles that scrolls sideways, inset by the page margin. The tiles share the tallest
+ * one's height. The catalog has a handful of collections, so the row isn't lazy.
+ */
 @Composable
 internal fun CollectionTilesRow(
     collections: List<Collection>,
@@ -77,17 +84,22 @@ internal fun CollectionTilesRow(
     onOpen: (Collection) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyRow(
-        modifier = modifier,
-        contentPadding = PaddingValues(horizontal = AwradTheme.spacing.pageMargin),
+    Row(
+        modifier = modifier
+            .horizontalScroll(rememberScrollState())
+            .height(IntrinsicSize.Max)
+            .padding(horizontal = AwradTheme.spacing.pageMargin),
         horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap),
     ) {
-        items(collections, key = { it.key }) { collection ->
-            AwradCollectionTile(
-                title = collection.title.localized(language),
-                count = dhikrCount(collection.dhikrs.size),
-                onClick = { onOpen(collection) },
-            )
+        collections.forEach { collection ->
+            key(collection.key) {
+                AwradCollectionTile(
+                    title = collection.title.localized(language),
+                    count = dhikrCount(collection.dhikrs.size),
+                    onClick = { onOpen(collection) },
+                    modifier = Modifier.fillMaxHeight(),
+                )
+            }
         }
     }
 }

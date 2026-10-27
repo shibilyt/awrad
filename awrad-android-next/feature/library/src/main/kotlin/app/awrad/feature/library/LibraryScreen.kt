@@ -87,12 +87,17 @@ internal fun LibraryScreen(
 }
 
 private fun LazyListScope.wholeLibrary(state: LibraryUiState, onNavigate: (LibraryDestination) -> Unit) {
+    item(key = "collectionsTitle") {
+        AwradSectionTitle(
+            text = stringResource(R.string.library_collections),
+            modifier = Modifier.padding(horizontal = AwradTheme.spacing.pageMargin, vertical = AwradTheme.spacing.xs),
+        )
+    }
     item(key = "collections") {
         CollectionTilesRow(
             collections = state.collections,
             language = state.language,
             onOpen = { onNavigate(LibraryDestination.Collection(it.key)) },
-            modifier = Modifier.padding(top = AwradTheme.spacing.xs),
         )
     }
     item(key = "allTitle") {

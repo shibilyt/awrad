@@ -2,6 +2,7 @@
 <resources>
     <string name="library_title">المكتبة</string>
     <string name="library_search_placeholder">ابحث في الأذكار</string>
+    <string name="library_collections">المجموعات</string>
     <string name="library_all_dhikrs">كل الأذكار</string>
     <string name="library_no_results">لا شيء يطابق «%1$s»</string>
     <string name="library_no_results_hint">جرّب كتابة أخرى، أو كلمات الذكر بالعربية.</string>
@@ -19,11 +20,13 @@
 
     <!-- Dhikr detail -->
     <string name="library_quran">القرآن</string>
+    <string name="library_transliteration">النطق بالحروف اللاتينية</string>
+    <string name="library_translation">الترجمة</string>
+    <string name="library_tags">الوسوم</string>
     <string name="library_virtues">الفضائل</string>
     <string name="library_open_source">افتح المصدر</string>
     <string name="library_play">تشغيل</string>
     <string name="library_pause">إيقاف مؤقت</string>
-    <string name="library_audio_loading">جارٍ تحميل التسجيل…</string>
     <string name="library_audio_failed">تعذّر تشغيل التسجيل. تحقّق من الاتصال وحاول مرة أخرى.</string>
     <string name="library_audio_elapsed">%1$s / %2$s</string>
 </resources>

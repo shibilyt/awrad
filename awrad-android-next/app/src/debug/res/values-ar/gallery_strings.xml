@@ -24,6 +24,8 @@
         <item quantity="other">%d ذكر</item>
     </plurals>
     <string name="gallery_search_placeholder">ابحث في الأذكار</string>
+    <string name="gallery_player_buttons">تشغيل، وجارٍ التحميل</string>
+    <string name="gallery_play">تشغيل</string>
     <string name="gallery_search_query">أستغفر الله</string>
     <string name="gallery_chips">الشارات</string>
     <string name="gallery_chip_debt">الدَّيْن</string>
