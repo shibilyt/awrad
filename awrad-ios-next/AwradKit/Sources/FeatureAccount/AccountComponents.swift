@@ -36,9 +36,10 @@ struct AccountForm<Fields: View, Actions: View>: View {
             }
             // A message appearing, changing or leaving resizes the form with the `expand` motion.
             .awradExpand(value: feedback)
+            // On an iPad the column stops growing at the contract's content width.
+            .frame(maxWidth: AwradSize.contentMaxWidth)
             .padding(.horizontal, AwradSpacing.pageMargin)
             .padding(.vertical, AwradSpacing.xl3)
-            .frame(maxWidth: 520)  // design-token-exempt: readable width of a form on iPad
             .frame(maxWidth: .infinity)
         }
         .scrollDismissesKeyboard(.interactively)
@@ -156,9 +157,11 @@ struct AccountLinkButton: View {
         Button(action: action) {
             Text(title)
                 .awradTextStyle(.label)
+                // Its own colour, so a disabled link keeps it at the disabled opacity.
+                .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.accent)
+                .awradDisabledAppearance()
                 .frame(maxWidth: .infinity, minHeight: AwradSize.touchTarget)
         }
-        .tint(isDestructive ? AwradColors.error : AwradColors.accent)
         .disabled(!isEnabled)
     }
 }

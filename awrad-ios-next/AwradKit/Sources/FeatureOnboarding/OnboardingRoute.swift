@@ -32,7 +32,7 @@ struct OnboardingScreen: View {
         VStack(spacing: AwradSpacing.xl2) {
             Spacer()
             AwradLogoMark()
-                .frame(width: 148, height: 148)  // design-token-exempt: the logo artwork's size
+                .frame(width: AwradSize.logo, height: AwradSize.logo)
             Text(Strings.title)
                 .awradTextStyle(.title)
                 .foregroundStyle(AwradColors.onSurface)

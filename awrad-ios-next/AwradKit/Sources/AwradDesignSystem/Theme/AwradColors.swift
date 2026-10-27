@@ -60,3 +60,15 @@ public enum AwradColors {
         "scrim": scrim,
     ]
 }
+
+/// Interaction states from the design tokens contract (colors.json `states`). A state changes how
+/// a control is drawn, never its colour roles.
+public enum AwradState {
+    /// A disabled control keeps its colours and is drawn at this opacity; no separate disabled colours.
+    public static let disabledOpacity: Double = 0.38
+
+    /// Every state's opacity by its contract name, for tests that check the values against the contract.
+    static let opacities: KeyValuePairs<String, Double> = [
+        "disabled": disabledOpacity
+    ]
+}

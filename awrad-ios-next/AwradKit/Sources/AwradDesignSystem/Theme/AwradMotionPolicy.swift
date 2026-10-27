@@ -52,8 +52,9 @@ nonisolated public struct AwradMotionPolicy: Sendable, Equatable {
         self.reduceMotion = reduceMotion
     }
 
-    /// The reduced-motion replacement: a cross-fade over `reducedMotion.duration`.
-    public static let crossFade = Animation.easeInOut(duration: AwradMotion.ReducedMotion.duration)
+    /// The reduced-motion replacement: a cross-fade over `reducedMotion.duration` on its easing (linear).
+    public static let crossFade = AwradMotion.ReducedMotion.easing.animation(
+        duration: AwradMotion.ReducedMotion.duration)
 
     /// A movement's animation, or the cross-fade when motion is reduced.
     public func animation(_ animation: Animation) -> Animation {

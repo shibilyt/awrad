@@ -3,8 +3,8 @@ import Testing
 
 @testable import AwradDesignSystem
 
-/// The generated shapes, spacing and type match contracts/design-tokens/v1: every scale step,
-/// role, size and style, by name and value.
+/// The generated shapes, strokes, spacing and type match contracts/design-tokens/v1: every scale
+/// step, role, stroke, size and style, by name and value.
 struct AwradLayoutTokensTests {
     @Test func theRadiusScaleAndRolesMatchShapeJSON() throws {
         let shape = try DesignTokenContract.json("shape")
@@ -29,13 +29,30 @@ struct AwradLayoutTokensTests {
         #expect(DesignTokenContract.dictionary(AwradRadius.roles) == expectedRoles)
     }
 
+    @Test func everyStrokeMatchesShapeJSON() throws {
+        let strokes = try DesignTokenContract.object(DesignTokenContract.json("shape")["strokes"], "strokes")
+        var expected: [String: CGFloat] = [:]
+        for (name, spec) in strokes {
+            let stroke = try DesignTokenContract.object(spec, name)
+            expected["\(name).width"] = CGFloat(try DesignTokenContract.number(stroke["width"], "\(name).width"))
+            if let offset = stroke["offset"] {
+                expected["\(name).offset"] = CGFloat(try DesignTokenContract.number(offset, "\(name).offset"))
+            }
+        }
+        #expect(DesignTokenContract.dictionary(AwradStroke.strokes) == expected)
+    }
+
     @Test func theContractNamesTheRolesTheAppUses() {
         #expect(AwradRadius.card == .radius(24))
         #expect(AwradRadius.button == .radius(16))
         #expect(AwradRadius.field == .radius(16))
         #expect(AwradRadius.sheet.fixedRadius == 32)
         #expect(AwradRadius.chip == .full)
+        #expect(AwradRadius.checkbox == .radius(4))
         #expect(AwradSpacing.pageMargin == 20)
+        #expect(AwradSize.control == 56)
+        #expect(AwradSize.logo == 148)
+        #expect(AwradStroke.fieldError == 1.5)
     }
 
     @Test func shapesHaveContinuousCorners() {
@@ -69,7 +86,9 @@ struct AwradLayoutTokensTests {
     }
 
     @Test func everyTextStyleMatchesTypographyJSON() throws {
-        let styles = try DesignTokenContract.object(DesignTokenContract.json("typography")["styles"], "styles")
+        let typography = try DesignTokenContract.json("typography")
+        let interfaceFamily = try DesignTokenContract.string(typography["fontFamily"], "fontFamily")
+        let styles = try DesignTokenContract.object(typography["styles"], "styles")
         #expect(Set(AwradTextStyle.all.map(\.name)) == Set(styles.keys))
         for style in AwradTextStyle.all {
             let spec = try DesignTokenContract.object(styles[style.name], style.name)
@@ -82,9 +101,12 @@ struct AwradLayoutTokensTests {
             #expect(Double(style.weight) == weight, "\(style.name)")
             #expect(Self.name(of: style.relativeTo) == iosTextStyle, "\(style.name)")
             #expect(style.tabularNumbers == (spec["tabularNumbers"] as? Bool ?? false), "\(style.name)")
-            #expect(style.face == Self.face(weight: style.weight), "\(style.name) uses the wrong face")
+            let family = spec["fontFamily"] as? String ?? interfaceFamily
+            #expect(style.face == Self.face(family: family, weight: style.weight), "\(style.name) uses the wrong face")
         }
         #expect(AwradTextStyle.counter.tabularNumbers)
+        #expect(AwradTextStyle.input.size == 16)
+        #expect(AwradTextStyle.quran.face == .naskhRegular)
     }
 
     /// Lines sit `lineHeight` apart: the face's own line height plus `lineSpacing`, never less.
@@ -96,8 +118,15 @@ struct AwradLayoutTokensTests {
         #expect(abs(natural + style.lineSpacing - max(style.lineHeight, natural)) < 0.001, "\(style.name)")
     }
 
-    private static func face(weight: Int) -> AwradFonts.Face? {
-        [400: .interfaceRegular, 500: .interfaceMedium, 600: .interfaceSemiBold, 700: .interfaceBold][weight]
+    /// The bundled face of a contract font family at a weight; `nil` for a family that isn't bundled.
+    private static func face(family: String, weight: Int) -> AwradFonts.Face? {
+        switch family {
+        case "Google Sans Flex Rounded":
+            [400: .interfaceRegular, 500: .interfaceMedium, 600: .interfaceSemiBold, 700: .interfaceBold][weight]
+        case "Noto Naskh Arabic":
+            [400: .naskhRegular, 500: .naskhMedium, 600: .naskhSemiBold, 700: .naskhBold][weight]
+        default: nil
+        }
     }
 
     private static func name(of style: Font.TextStyle) -> String {

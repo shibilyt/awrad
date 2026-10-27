@@ -5,17 +5,17 @@ import SwiftUI
 // stay the native NavigationStack push.
 
 extension AwradMotion.Press {
-    /// Pressing down: `pressDuration` on the emphasized easing.
-    public static var pressIn: Animation { AwradMotion.Easing.emphasized.animation(duration: pressDuration) }
+    /// Pressing down: `pressDuration` on `pressEasing`.
+    public static var pressIn: Animation { pressEasing.animation(duration: pressDuration) }
 }
 
 extension AwradMotion.ContentSwap {
-    /// The old content fades out over `fadeOut` (accelerating, it's leaving); the new fades in over
-    /// `fadeIn` (decelerating, it's entering).
+    /// The old content fades out over `fadeOut`, the new fades in over `fadeIn`, both on `easing`
+    /// (linear: a fade has nothing to accelerate).
     @MainActor public static var transition: AnyTransition {
         .asymmetric(
-            insertion: .opacity.animation(AwradMotion.Easing.decelerate.animation(duration: fadeIn)),
-            removal: .opacity.animation(AwradMotion.Easing.accelerate.animation(duration: fadeOut)))
+            insertion: .opacity.animation(easing.animation(duration: fadeIn)),
+            removal: .opacity.animation(easing.animation(duration: fadeOut)))
     }
 }
 
@@ -120,12 +120,6 @@ extension View {
         modifier(SpringOnChange(spring: AwradMotion.RingFill.spring, value: value))
     }
 
-    /// `sheet`, on a sheet's content: the `sheet` corner radius. The native sheet follows the finger
-    /// and settles itself.
-    public func awradSheet() -> some View {
-        presentationCornerRadius(AwradMotion.Sheet.radius.fixedRadius)
-    }
-
     /// `expand`, on the container of a section that expands, collapses or changes size: the change
     /// animates with the `spatial` spring. Mark what appears with `awradExpandingContent()`.
     public func awradExpand<Value: Equatable>(value: Value) -> some View {
@@ -153,7 +147,8 @@ extension View {
     /// over `fade`, the new fades in over `color`. Already a fade, so it's the same with reduced motion.
     public func awradContentSwap<Value: Equatable>(value: Value) -> some View {
         ZStack { transition(AwradMotion.ContentSwap.transition) }
-            .animation(AwradMotion.Easing.decelerate.animation(duration: AwradMotion.ContentSwap.fadeIn), value: value)
+            .animation(
+                AwradMotion.ContentSwap.easing.animation(duration: AwradMotion.ContentSwap.fadeIn), value: value)
     }
 }
 

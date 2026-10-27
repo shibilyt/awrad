@@ -12,6 +12,7 @@ nonisolated public enum AwradMotion {
         public static let emphasized = AwradCurve(0.2, 0, 0, 1)
         public static let decelerate = AwradCurve(0.05, 0.7, 0.1, 1)
         public static let accelerate = AwradCurve(0.3, 0, 0.8, 0.15)
+        public static let linear = AwradCurve(0, 0, 1, 1)
     }
 
     /// Durations in seconds.
@@ -64,6 +65,7 @@ nonisolated public enum AwradMotion {
         public static let buttonScale: CGFloat = 0.98
         public static let pressDuration = Duration.fade
         public static let releaseSpring = Spring.spatialFast
+        public static let pressEasing = Easing.emphasized
     }
 
     /// Each count; the number rolls to its next value.
@@ -83,14 +85,6 @@ nonisolated public enum AwradMotion {
     /// Progress rings and bars changing value.
     public enum RingFill {
         public static let spring = Spring.spatial
-    }
-
-    /// Bottom sheets follow the finger and settle with the fling's velocity; corners reach 0 at full height.
-    public enum Sheet {
-        public static let settleSpring = Spring.spatial
-        public static let overshootScale: CGFloat = 1.03
-        public static let radius = AwradRadius.sheet
-        public static let releaseVelocity: CGFloat = 150
     }
 
     /// Expanding and collapsing a section.
@@ -113,12 +107,14 @@ nonisolated public enum AwradMotion {
     public enum ContentSwap {
         public static let fadeIn = Duration.color
         public static let fadeOut = Duration.fade
+        public static let easing = Easing.linear
     }
 
     /// When the system asks for reduced motion, every movement, scale and spring becomes a cross-fade of this duration.
     /// Haptics stay.
     public enum ReducedMotion {
         public static let duration = Duration.color
+        public static let easing = Easing.linear
     }
 
     /// The named motions iOS uses, by contract name.
@@ -129,7 +125,6 @@ nonisolated public enum AwradMotion {
         "countTap",
         "countComplete",
         "ringFill",
-        "sheet",
         "expand",
         "listAppear",
         "contentSwap",
@@ -146,6 +141,7 @@ nonisolated public enum AwradMotion {
         "emphasized": Easing.emphasized,
         "decelerate": Easing.decelerate,
         "accelerate": Easing.accelerate,
+        "linear": Easing.linear,
     ]
     static let springs: KeyValuePairs<String, AwradSpring> = [
         "spatial": Spring.spatial,
@@ -178,6 +174,10 @@ nonisolated public enum AwradMotion {
         "press.pressDuration": Press.pressDuration,
         "press.releaseSpring.response": Press.releaseSpring.response,
         "press.releaseSpring.dampingFraction": Press.releaseSpring.dampingFraction,
+        "press.pressEasing.0": Press.pressEasing.x1,
+        "press.pressEasing.1": Press.pressEasing.y1,
+        "press.pressEasing.2": Press.pressEasing.x2,
+        "press.pressEasing.3": Press.pressEasing.y2,
         "countTap.popScale": Double(CountTap.popScale),
         "countTap.spring.response": CountTap.spring.response,
         "countTap.spring.dampingFraction": CountTap.spring.dampingFraction,
@@ -185,11 +185,6 @@ nonisolated public enum AwradMotion {
         "countComplete.ringSpring.dampingFraction": CountComplete.ringSpring.dampingFraction,
         "ringFill.spring.response": RingFill.spring.response,
         "ringFill.spring.dampingFraction": RingFill.spring.dampingFraction,
-        "sheet.settleSpring.response": Sheet.settleSpring.response,
-        "sheet.settleSpring.dampingFraction": Sheet.settleSpring.dampingFraction,
-        "sheet.overshootScale": Double(Sheet.overshootScale),
-        "sheet.radius": Double(Sheet.radius.fixedRadius ?? -1),
-        "sheet.releaseVelocity": Double(Sheet.releaseVelocity),
         "expand.sizeSpring.response": Expand.sizeSpring.response,
         "expand.sizeSpring.dampingFraction": Expand.sizeSpring.dampingFraction,
         "expand.fadeSpring.response": Expand.fadeSpring.response,
@@ -205,6 +200,10 @@ nonisolated public enum AwradMotion {
         "listAppear.maxStaggered": Double(ListAppear.maxStaggered),
         "contentSwap.fadeIn": ContentSwap.fadeIn,
         "contentSwap.fadeOut": ContentSwap.fadeOut,
+        "contentSwap.easing.0": ContentSwap.easing.x1,
+        "contentSwap.easing.1": ContentSwap.easing.y1,
+        "contentSwap.easing.2": ContentSwap.easing.x2,
+        "contentSwap.easing.3": ContentSwap.easing.y2,
     ]
     /// Every haptic and text value of the named motions by contract path.
     static let motionNames: KeyValuePairs<String, String> = [

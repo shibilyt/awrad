@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 """Generates shapes, spacing, type and motion from contracts/design-tokens/v1.
 
-Reads shape.json, spacing.json, typography.json and motion.json, and writes four committed files
+Reads shape.json, spacing.json, typography.json and motion.json, and writes five committed files
 in AwradDesignSystem/Theme:
 - AwradRadius.swift: the radius scale and the shape roles (`AwradCorner`, continuous corners).
+- AwradStroke.swift: the line widths the design allows (`AwradStroke`).
 - AwradSpacing.swift: the spacing scale and roles (`AwradSpacing`) and the standard sizes (`AwradSize`).
-- AwradTextStyle.swift: the named text styles (`AwradTextStyle`).
+- AwradTextStyle.swift: the named text styles (`AwradTextStyle`), each on a bundled face of its family.
 - AwradMotion.swift: easings, durations, springs (converted for SwiftUI), haptics, the named motions
-  iOS uses, and reduced motion.
+  iOS uses (motions without "ios" in `platforms`, such as Android's `sheet`, aren't generated), and
+  reduced motion.
 
 Spring conversion (contracts/design-tokens/v1/README.md): response = 2π / √stiffness and
 dampingFraction = dampingRatio, with mass 1.
 
 Nothing reads contracts/ at runtime. Run without arguments to rewrite the files. With --check
 (scripts/validate), it fails when a committed file differs from what the contract generates. An
-unknown key in a named motion fails too, so a new token can't be silently dropped: teach `MOTION_KEYS`
-its type first.
+unknown key in a named motion, a stroke or reduced motion fails too, so a new token can't be silently
+dropped: teach the generator its type first (`MOTION_KEYS` for motions).
 """
 import json
 import math
@@ -35,23 +37,27 @@ HEADER = [
 NAME = re.compile(r"^[a-z][A-Za-z]*$")
 TEXT_STYLES = {"largeTitle", "title", "title2", "title3", "headline", "subheadline", "body", "callout",
                "footnote", "caption", "caption2"}
-FACES = {400: "interfaceRegular", 500: "interfaceMedium", 600: "interfaceSemiBold", 700: "interfaceBold"}
+# Each font family's bundled faces (`AwradFonts.Face`): the case prefix, then the weight's suffix.
+FAMILIES = {"Google Sans Flex Rounded": "interface", "Noto Naskh Arabic": "naskh"}
+WEIGHTS = {400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold"}
+STROKE_KEYS = {"width", "offset", "use"}
+REDUCED_MOTION_KEYS = {"replaceWith", "duration", "easing", "use"}
 HAPTIC = re.compile(r"sensoryFeedback\((\.[A-Za-z]+(?:\([a-z]+: \.[a-z]+\))?)\)")
 
 # The Swift type of every key a named motion may use. `scale`/`opacity`/`points` are numbers as
 # given; `ms` becomes seconds; the `*Ref` kinds name another token.
 MOTION_KEYS = {
     "scaleFrom": "scale", "scaleTo": "scale", "cardScale": "scale", "buttonScale": "scale",
-    "popScale": "scale", "iconScale": "scale", "pillScaleFrom": "scale", "overshootScale": "scale",
+    "popScale": "scale", "iconScale": "scale", "pillScaleFrom": "scale",
     "fadeFrom": "opacity", "dim": "opacity",
-    "offset": "points", "releaseVelocity": "points",
+    "offset": "points",
     "stagger": "ms", "maxStaggered": "count", "chevronRotation": "degrees",
     "duration": "durationRef", "pressDuration": "durationRef", "colorDuration": "durationRef",
     "fadeDuration": "durationRef", "fadeIn": "durationRef", "fadeOut": "durationRef",
-    "easing": "easingRef",
+    "easing": "easingRef", "pressEasing": "easingRef",
     "spring": "springRef", "pillSpring": "springRef", "iconSpring": "springRef", "releaseSpring": "springRef",
-    "ringSpring": "springRef", "settleSpring": "springRef", "sizeSpring": "springRef", "fadeSpring": "springRef",
-    "haptic": "hapticRef", "radius": "cornerRef", "numberTransition": "text",
+    "ringSpring": "springRef", "sizeSpring": "springRef", "fadeSpring": "springRef",
+    "haptic": "hapticRef", "numberTransition": "text",
 }
 
 
@@ -131,6 +137,35 @@ def radius_swift(shape: dict) -> str:
     return "\n".join(lines)
 
 
+def stroke_swift(shape: dict) -> str:
+    """The line widths of shape.json `strokes`; an `offset` becomes `<name>Offset`."""
+    lines = [
+        *[line.format(source="shape.json") for line in HEADER],
+        "import CoreGraphics",
+        "",
+        "/// Line widths from the design tokens contract (shape.json `strokes`): every line the design allows,",
+        "/// since shapes are otherwise filled, never outlined. Screens use a name, never a number.",
+        "nonisolated public enum AwradStroke {",
+    ]
+    entries = []
+    for name, spec in shape["strokes"].items():
+        if not NAME.match(name):
+            raise SystemExit(f"shape: stroke {name!r} isn't lowerCamelCase")
+        unknown = set(spec) - STROKE_KEYS
+        if unknown:
+            raise SystemExit(f"shape: stroke {name!r} has {sorted(unknown)}, which iOS doesn't generate yet")
+        lines += [doc(f"{spec['use']}.", "    "), f"    public static let {name}: CGFloat = {number(spec['width'])}"]
+        entries.append((f"{name}.width", name))
+        if "offset" in spec:
+            lines += [
+                f"    /// How far `{name}` sits outside what it outlines.",
+                f"    public static let {name}Offset: CGFloat = {number(spec['offset'])}",
+            ]
+            entries.append((f"{name}.offset", f"{name}Offset"))
+    lines += ["", *table("strokes", "CGFloat", entries), "}", ""]
+    return "\n".join(lines)
+
+
 def spacing_swift(spacing: dict) -> str:
     scale, roles, sizes = spacing["scale"], spacing["roles"], spacing["sizes"]
     lines = [
@@ -172,22 +207,28 @@ def typography_swift(typography: dict) -> str:
         *[line.format(source="typography.json") for line in HEADER],
         "import SwiftUI",
         "",
-        f"// Interface text is {typography['fontFamily']}; `AwradFonts.font(_:)` turns a style into a Font.",
+        f"// Interface text is {typography['fontFamily']}; a style with its own fontFamily uses that family.",
+        "// `AwradFonts.font(_:)` turns a style into a Font.",
         "extension AwradTextStyle {",
     ]
     for name, style in styles.items():
         if style["iosTextStyle"] not in TEXT_STYLES:
             raise SystemExit(f"typography: {name}.iosTextStyle {style['iosTextStyle']!r} isn't a Font.TextStyle")
-        if style["weight"] not in FACES:
+        family = style.get("fontFamily", typography["fontFamily"])
+        if family not in FAMILIES:
+            raise SystemExit(f"typography: {name} uses {family!r}, which has no bundled faces")
+        if style["weight"] not in WEIGHTS:
             raise SystemExit(f"typography: {name}.weight {style['weight']} has no bundled face")
+        face = FAMILIES[family] + WEIGHTS[style["weight"]]
         tabular = "true" if style.get("tabularNumbers") else "false"
+        own_family = f" {family}." if "fontFamily" in style else ""
         lines += [
-            doc(f"{style['use']}. {number(style['size'])}/{number(style['lineHeight'])}, weight {style['weight']}.",
-                "    "),
+            doc(f"{style['use']}. {number(style['size'])}/{number(style['lineHeight'])}, weight {style['weight']}."
+                f"{own_family}", "    "),
             f"    public static let {name} = AwradTextStyle(",
             f'        name: "{name}", size: {number(style["size"])}, lineHeight: {number(style["lineHeight"])}, '
             f"weight: {style['weight']},",
-            f"        face: .{FACES[style['weight']]}, relativeTo: .{style['iosTextStyle']}, tabularNumbers: {tabular})",
+            f"        face: .{face}, relativeTo: .{style['iosTextStyle']}, tabularNumbers: {tabular})",
         ]
     lines += ["", "    /// Every style, in contract order.", "    static let all: [AwradTextStyle] = ["]
     lines += [f"        {name}," for name in styles]
@@ -201,18 +242,13 @@ def spring_conversion(spring: dict) -> tuple[float, float]:
 
 
 class Motion:
-    def __init__(self, motion: dict, shape: dict):
+    def __init__(self, motion: dict):
         self.tokens = motion
-        self.roles = shape["roles"]
         self.table: list[tuple[str, str]] = []  # contract path -> Swift Double expression
         self.names: list[tuple[str, str]] = []  # contract path -> Swift String expression
 
     def ref(self, kind: str, value: str, where: str) -> str:
         groups = {"durationRef": "duration", "easingRef": "easing", "springRef": "spring", "hapticRef": "haptic"}
-        if kind == "cornerRef":
-            if value not in self.roles:
-                raise SystemExit(f"motion: {where} names shape role {value!r}, which doesn't exist")
-            return f"AwradRadius.{value}"
         if value not in self.tokens[groups[kind]]:
             raise SystemExit(f"motion: {where} names {groups[kind]} {value!r}, which doesn't exist")
         if kind == "hapticRef":
@@ -250,8 +286,6 @@ class Motion:
             self.table += [(f"{where}.{i}", f"{owner}.{name}.{c}") for i, c in enumerate(["x1", "y1", "x2", "y2"])]
         elif kind == "durationRef":
             self.table.append((where, f"{owner}.{name}"))
-        elif kind == "cornerRef":
-            self.table.append((where, f"Double({owner}.{name}.fixedRadius ?? -1)"))
         else:
             self.names.append((where, f"{owner}.{name}.rawValue"))
         return [f"        public static let {name} = {expression}"]
@@ -300,11 +334,15 @@ class Motion:
         reduced = tokens["reducedMotion"]
         if reduced["replaceWith"] != "crossfade":
             raise SystemExit("motion: iOS only knows the crossfade reduced motion")
+        unknown = set(reduced) - REDUCED_MOTION_KEYS
+        if unknown:
+            raise SystemExit(f"motion: reducedMotion has {sorted(unknown)}, which iOS doesn't generate yet")
         lines += [
             "",
             doc(reduced["use"], "    "),
             "    public enum ReducedMotion {",
             f"        public static let duration = {self.ref('durationRef', reduced['duration'], 'reducedMotion')}",
+            f"        public static let easing = {self.ref('easingRef', reduced['easing'], 'reducedMotion')}",
             "    }",
             "",
             "    /// The named motions iOS uses, by contract name.",
@@ -341,9 +379,10 @@ def outputs() -> dict[Path, str]:
     shape = load("shape")
     return {
         THEME / "AwradRadius.swift": radius_swift(shape),
+        THEME / "AwradStroke.swift": stroke_swift(shape),
         THEME / "AwradSpacing.swift": spacing_swift(load("spacing")),
         THEME / "AwradTextStyle.swift": typography_swift(load("typography")),
-        THEME / "AwradMotion.swift": Motion(load("motion"), shape).swift(),
+        THEME / "AwradMotion.swift": Motion(load("motion")).swift(),
     }
 
 
@@ -356,7 +395,7 @@ def main() -> int:
                   file=sys.stderr)
         if stale:
             return 1
-        print("design tokens: shape, spacing, typography and motion match contracts/design-tokens/v1")
+        print("design tokens: shape, strokes, spacing, typography and motion match contracts/design-tokens/v1")
         return 0
     if sys.argv[1:]:
         print("usage: generate-design-tokens.py [--check]", file=sys.stderr)

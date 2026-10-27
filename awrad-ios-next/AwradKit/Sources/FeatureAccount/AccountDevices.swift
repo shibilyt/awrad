@@ -142,8 +142,9 @@ struct SessionRow: View {
                 Button(action: onRevoke) {
                     Text(DeviceStrings.revoke)
                         .awradTextStyle(.label)
+                        .foregroundStyle(AwradColors.error)
+                        .awradDisabledAppearance()
                 }
-                .tint(AwradColors.error)
                 .disabled(!isEnabled)
             }
         }

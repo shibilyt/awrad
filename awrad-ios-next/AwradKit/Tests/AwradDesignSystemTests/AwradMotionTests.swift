@@ -107,15 +107,9 @@ struct AwradMotionTests {
                 let (response, dampingFraction) = try AwradMotionTests.converted(spring)
                 numbers["\(path).response"] = response
                 numbers["\(path).dampingFraction"] = dampingFraction
-            } else if key == "easing" {
+            } else if key == "easing" || key.hasSuffix("Easing") {
                 let points = try #require(DesignTokenContract.object(tokens["easing"], "easing")[name] as? [Double])
                 for (index, point) in points.enumerated() { numbers["\(path).\(index)"] = point }
-            } else if key == "radius" {
-                let shape = try DesignTokenContract.json("shape")
-                let roles = try DesignTokenContract.object(shape["roles"], "roles")
-                let step = try DesignTokenContract.string(DesignTokenContract.object(roles[name], name)["radius"], name)
-                numbers[path] = try DesignTokenContract.number(
-                    DesignTokenContract.object(shape["scale"], "scale")[step], step)
             } else if key == "haptic" || key == "numberTransition" {
                 names[path] = name
             } else {
@@ -134,7 +128,22 @@ struct AwradMotionTests {
             durations[DesignTokenContract.string(reduced["duration"], "duration")], "duration")
         #expect(try DesignTokenContract.string(reduced["replaceWith"], "replaceWith") == "crossfade")
         #expect(AwradMotion.ReducedMotion.duration == duration / 1000)
-        #expect(AwradMotionPolicy.crossFade == .easeInOut(duration: duration / 1000))
+        let easing = try DesignTokenContract.string(reduced["easing"], "easing")
+        #expect(AwradMotion.ReducedMotion.easing == DesignTokenContract.dictionary(AwradMotion.easings)[easing])
+        #expect(
+            AwradMotionPolicy.crossFade
+                == AwradMotion.ReducedMotion.easing.animation(duration: AwradMotion.ReducedMotion.duration))
+    }
+
+    /// iOS keeps the native sheet: the contract's `sheet` motion is Android's, so nothing is generated
+    /// for it, and the sheet's corners come from the `sheet` shape role. Fades are linear and the
+    /// press-in uses `pressEasing`.
+    @Test func theHelpersUseTheContractsEasings() {
+        #expect(!AwradMotion.motions.contains("sheet"))
+        let pressDuration = AwradMotion.Press.pressDuration
+        #expect(AwradMotion.Press.pressIn == AwradMotion.Press.pressEasing.animation(duration: pressDuration))
+        #expect(AwradMotion.ContentSwap.easing == AwradMotion.Easing.linear)
+        #expect(AwradMotion.ReducedMotion.easing == AwradMotion.Easing.linear)
     }
 
     @Test func withReducedMotionEveryMovementBecomesTheCrossFade() {
