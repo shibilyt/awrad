@@ -17,6 +17,14 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇത് Awrad Next-ന്റെ അടിസ്ഥാന ഘടനയാണ്. ഫീച്ചറുകൾ ഓരോന്നായി ഇവിടെ ചേർക്കും." } }
       }
     },
+    "home.placeholder.gallery" : {
+      "comment" : "Debug-only button on the placeholder home screen that opens the component gallery.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "معرض المكوّنات" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Component gallery" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഘടകങ്ങളുടെ ഗാലറി" } }
+      }
+    },
     "home.placeholder.restart" : {
       "comment" : "Button that resets onboarding, for development.",
       "localizations" : {
