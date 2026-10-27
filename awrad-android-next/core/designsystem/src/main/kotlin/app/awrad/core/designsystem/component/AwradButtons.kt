@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -14,8 +15,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
 import app.awrad.core.designsystem.motion.AwradPressTarget
 import app.awrad.core.designsystem.motion.pressFeedback
 import app.awrad.core.designsystem.theme.AwradTheme
@@ -23,12 +24,9 @@ import app.awrad.core.designsystem.theme.AwradTheme
 /*
  * Buttons by role, all filled or text-only: the design has no outlines. Material's outlined and text buttons
  * draw their label in `primary`, which is too dark to read on a dark background, and a border; these use
- * `onSurface`, `accent` and `error` instead. Every one shrinks a little while pressed (`press`).
+ * `onSurface`, `accent` and `error` instead. Every one shrinks a little while pressed (`press`). The full-width
+ * ones are `control` high. Disabled, they keep their colours at `states.disabled.opacity`.
  */
-
-/** The tokens have no button height; the frozen app's full-width buttons are 56 (the `listRow` height). */
-private val ButtonHeight = 56.dp
-private const val DISABLED_CONTENT_ALPHA = 0.38f
 
 /** The one full-width call to action per screen: a `primary` fill. */
 @Composable
@@ -39,15 +37,18 @@ public fun AwradPrimaryButton(
     enabled: Boolean = true,
     trailingIcon: ImageVector? = null,
 ) {
+    val colors = AwradTheme.colors
     val interactionSource = remember { MutableInteractionSource() }
     Button(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier
             .pressFeedback(interactionSource, AwradPressTarget.Button)
+            .disabledOpacity(enabled)
             .fillMaxWidth()
-            .height(ButtonHeight),
+            .height(AwradTheme.sizes.control),
         shape = AwradTheme.shapes.button,
+        colors = filledColors(container = colors.primary, content = colors.onPrimary),
         interactionSource = interactionSource,
     ) {
         Text(text = text, style = AwradTheme.type.button)
@@ -81,15 +82,11 @@ public fun AwradSecondaryButton(
         enabled = enabled,
         modifier = modifier
             .pressFeedback(interactionSource, AwradPressTarget.Button)
+            .disabledOpacity(enabled)
             .fillMaxWidth()
-            .height(ButtonHeight),
+            .height(AwradTheme.sizes.control),
         shape = AwradTheme.shapes.button,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = fill,
-            contentColor = colors.onSurface,
-            disabledContainerColor = fill,
-            disabledContentColor = colors.onSurface.copy(alpha = DISABLED_CONTENT_ALPHA),
-        ),
+        colors = filledColors(container = fill, content = colors.onSurface),
         interactionSource = interactionSource,
     ) {
         Text(text = text, style = AwradTheme.type.button)
@@ -111,10 +108,11 @@ public fun AwradDestructiveButton(
         enabled = enabled,
         modifier = modifier
             .pressFeedback(interactionSource, AwradPressTarget.Button)
+            .disabledOpacity(enabled)
             .fillMaxWidth()
-            .height(ButtonHeight),
+            .height(AwradTheme.sizes.control),
         shape = AwradTheme.shapes.button,
-        colors = ButtonDefaults.buttonColors(containerColor = colors.error, contentColor = colors.onError),
+        colors = filledColors(container = colors.error, content = colors.onError),
         interactionSource = interactionSource,
     ) {
         Text(text = text, style = AwradTheme.type.button)
@@ -135,13 +133,16 @@ public fun AwradTextButton(
     isEmphasized: Boolean = false,
 ) {
     val colors = AwradTheme.colors
+    val content = if (isDestructive) colors.error else colors.accent
     val interactionSource = remember { MutableInteractionSource() }
     TextButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.pressFeedback(interactionSource, AwradPressTarget.Button),
+        modifier = modifier
+            .pressFeedback(interactionSource, AwradPressTarget.Button)
+            .disabledOpacity(enabled),
         shape = AwradTheme.shapes.button,
-        colors = ButtonDefaults.textButtonColors(contentColor = if (isDestructive) colors.error else colors.accent),
+        colors = ButtonDefaults.textButtonColors(contentColor = content, disabledContentColor = content),
         interactionSource = interactionSource,
     ) {
         Text(
@@ -151,3 +152,12 @@ public fun AwradTextButton(
         )
     }
 }
+
+/** A filled button's colours, the same when disabled (`disabledOpacity` dims the whole button instead). */
+@Composable
+private fun filledColors(container: Color, content: Color): ButtonColors = ButtonDefaults.buttonColors(
+    containerColor = container,
+    contentColor = content,
+    disabledContainerColor = container,
+    disabledContentColor = content,
+)

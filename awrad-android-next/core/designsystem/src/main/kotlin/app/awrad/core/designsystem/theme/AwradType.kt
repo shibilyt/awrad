@@ -10,8 +10,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
 /**
- * The named text styles, in the interface font. Read them through `AwradTheme.type`; Material's
- * `Typography` maps onto them in `AwradTypography`.
+ * The named text styles, in the interface font unless a style names its own. Read them through
+ * `AwradTheme.type`; Material's `Typography` maps onto them in `AwradTypography`.
  */
 public object AwradType {
     /** Screen titles; the Hijri date on Home. 22 on 28, weight 600. */
@@ -59,6 +59,16 @@ public object AwradType {
         fontFamily = InterfaceFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 15.sp,
+        lineHeight = 22.sp,
+        letterSpacing = 0.sp,
+        lineHeightStyle = AwradLineHeightStyle,
+    )
+
+    /** Text typed into fields (16 stops iOS Safari zooming in). 16 on 22, weight 400. */
+    public val input: TextStyle = TextStyle(
+        fontFamily = InterfaceFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 16.sp,
         lineHeight = 22.sp,
         letterSpacing = 0.sp,
         lineHeightStyle = AwradLineHeightStyle,
@@ -114,7 +124,10 @@ public object AwradType {
         lineHeightStyle = AwradLineHeightStyle,
     )
 
-    /** The counting number. 56 on 64, weight 700, tabular numbers. */
+    /**
+     * The counting number. The 64 line height is tighter than the font's natural 70 on purpose. 56 on 64,
+     * weight 700, tabular numbers.
+     */
     public val counter: TextStyle = TextStyle(
         fontFamily = InterfaceFontFamily,
         fontWeight = FontWeight.Bold,
@@ -123,5 +136,15 @@ public object AwradType {
         letterSpacing = 0.sp,
         lineHeightStyle = AwradLineHeightStyle,
         fontFeatureSettings = "tnum",
+    )
+
+    /** Qur'anic and dhikr Arabic text; never interface text. Noto Naskh Arabic, 24 on 44, weight 400. */
+    public val quran: TextStyle = TextStyle(
+        fontFamily = ArabicScriptFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 24.sp,
+        lineHeight = 44.sp,
+        letterSpacing = 0.sp,
+        lineHeightStyle = AwradLineHeightStyle,
     )
 }

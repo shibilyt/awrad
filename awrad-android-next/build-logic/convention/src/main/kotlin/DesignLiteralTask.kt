@@ -49,7 +49,7 @@ abstract class DesignLiteralTask : DefaultTask() {
         if (found.isNotEmpty()) {
             throw GradleException(
                 "Raw design values outside :core:designsystem. Use a token by name instead (AwradTheme.spacing, " +
-                    ".sizes, .shapes, .type, .motion; ARCHITECTURE.md, \"Design tokens\"):\n" +
+                    ".sizes, .shapes, .strokes, .type, .motion; ARCHITECTURE.md, \"Design tokens\"):\n" +
                     found.joinToString("\n"),
             )
         }
@@ -60,8 +60,8 @@ abstract class DesignLiteralTask : DefaultTask() {
 private class DesignLiteralRule(val use: String, val pattern: Regex)
 
 private val RULES = listOf(
-    DesignLiteralRule("use AwradTheme.spacing or AwradTheme.sizes", Regex("""(?<![\w.])\d+(\.\d+)?\.dp\b""")),
-    DesignLiteralRule("use AwradTheme.spacing or AwradTheme.sizes", Regex("""\bDp\(\s*\d""")),
+    DesignLiteralRule("use AwradTheme.spacing, .sizes or .strokes", Regex("""(?<![\w.])\d+(\.\d+)?\.dp\b""")),
+    DesignLiteralRule("use AwradTheme.spacing, .sizes or .strokes", Regex("""\bDp\(\s*\d""")),
     DesignLiteralRule("use an AwradTheme.type style", Regex("""(?<![\w.])\d+(\.\d+)?\.sp\b""")),
     DesignLiteralRule(
         "use an AwradTheme.shapes role",

@@ -81,4 +81,16 @@ public object AwradSizes {
 
     /** Stroke of small progress rings: 4. */
     public val ringStroke: Dp = 4.dp
+
+    /** Height of buttons and text fields: 56. */
+    public val control: Dp = 56.dp
+
+    /** The Awrad logo on welcome and sign-in screens: 148. */
+    public val logo: Dp = 148.dp
+
+    /** Widest a page's content column grows (web, tablets): 448. */
+    public val contentMaxWidth: Dp = 448.dp
+
+    /** Widest a dialog grows (web, tablets): 384. */
+    public val dialogMaxWidth: Dp = 384.dp
 }

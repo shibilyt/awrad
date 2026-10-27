@@ -1,7 +1,6 @@
 package app.awrad.core.designsystem.motion
 
 import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -21,7 +20,7 @@ class AwradMotionTest {
 
     private val full = AwradMotion(isReduced = false)
     private val reduced = AwradMotion(isReduced = true)
-    private val crossfade = tween<Float>(durationMillis = 150, easing = LinearEasing)
+    private val crossfade = tween<Float>(durationMillis = 150, easing = AwradEasing.linear)
 
     @Test
     fun aZeroAnimationScaleAsksForReducedMotion() {
@@ -38,6 +37,21 @@ class AwradMotionTest {
         assertEquals(scaleOut(page, targetScale = 0.985f), full.pagePushExit)
         val shortFade = tween<Float>(durationMillis = 250, easing = AwradEasing.emphasized)
         assertEquals(scaleOut(page, targetScale = 0.96f) + fadeOut(shortFade), full.pagePopExit)
+    }
+
+    @Test
+    fun contentSwapFadesLinearlyInOverColorAndOutOverFade() {
+        val swap = full.contentSwap()
+        assertEquals(fadeIn(tween(durationMillis = 150, easing = AwradEasing.linear)), swap.targetContentEnter)
+        assertEquals(fadeOut(tween(durationMillis = 100, easing = AwradEasing.linear)), swap.initialContentExit)
+        val reducedSwap = reduced.contentSwap()
+        assertEquals(fadeIn(crossfade), reducedSwap.targetContentEnter)
+        assertEquals(fadeOut(crossfade), reducedSwap.initialContentExit)
+    }
+
+    @Test
+    fun thePressInIsFadeLongOnTheEmphasizedEasing() {
+        assertEquals(tween(durationMillis = 100, easing = AwradEasing.emphasized), PressInSpec)
     }
 
     @Test

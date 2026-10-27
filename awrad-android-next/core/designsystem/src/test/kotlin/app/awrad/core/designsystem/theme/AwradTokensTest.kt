@@ -3,6 +3,7 @@ package app.awrad.core.designsystem.theme
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.ui.text.font.FontListFontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +25,21 @@ class AwradTokensTest {
         assertEquals(SmoothCornerShape(32.dp), AwradShapes.dialog)
         assertEquals(32.dp, AwradMotions.ScreenDepth.radius)
         assertEquals(CornerSize(percent = 50), AwradShapes.chip.topStart)
+        assertEquals(4.dp, AwradRadius.xxs)
+        assertEquals(SmoothCornerShape(4.dp), AwradShapes.checkbox)
+    }
+
+    @Test
+    fun strokesAreTheOnlyLineWidths() {
+        assertEquals(1.5.dp, AwradStrokes.fieldError)
+        assertEquals(2.dp, AwradStrokes.checkbox)
+        assertEquals(2.dp, AwradStrokes.focusRing)
+        assertEquals(2.dp, AwradStrokes.focusRingOffset)
+    }
+
+    @Test
+    fun aDisabledControlIsDrawnAtTheDisabledOpacity() {
+        assertEquals(0.38f, AwradStates.disabledOpacity)
     }
 
     @Test
@@ -44,6 +60,10 @@ class AwradTokensTest {
         assertEquals(24.dp, AwradSpacing.xl2)
         assertEquals(48.dp, AwradSizes.touchTarget)
         assertEquals(4.dp, AwradSizes.ringStroke)
+        assertEquals(56.dp, AwradSizes.control)
+        assertEquals(148.dp, AwradSizes.logo)
+        assertEquals(448.dp, AwradSizes.contentMaxWidth)
+        assertEquals(384.dp, AwradSizes.dialogMaxWidth)
     }
 
     @Test
@@ -65,6 +85,24 @@ class AwradTokensTest {
             assertEquals("tnum", fontFeatureSettings)
         }
         assertEquals(null, AwradType.title.fontFeatureSettings)
+        with(AwradType.input) {
+            assertEquals(InterfaceFontFamily, fontFamily)
+            assertEquals(16.sp, fontSize)
+            assertEquals(22.sp, lineHeight)
+            assertEquals(FontWeight.Normal, fontWeight)
+        }
+    }
+
+    @Test
+    fun theQuranStyleUsesItsOwnBundledFamily() {
+        with(AwradType.quran) {
+            assertEquals(ArabicScriptFontFamily, fontFamily)
+            assertEquals(24.sp, fontSize)
+            assertEquals(44.sp, lineHeight)
+            assertEquals(FontWeight.Normal, fontWeight)
+        }
+        val bundled = (ArabicScriptFontFamily as FontListFontFamily).fonts.map { it.weight }
+        assertTrue(FontWeight.Normal in bundled)
     }
 
     @Test
@@ -100,6 +138,19 @@ class AwradTokensTest {
         assertEquals(350, AwradMotions.PagePush.durationMillis)
         assertEquals(AwradEasing.emphasized, AwradMotions.PagePush.easing)
         assertEquals(150, AwradMotions.ReducedMotion.durationMillis)
+    }
+
+    @Test
+    fun fadesAreLinearAndThePressInIsEmphasized() {
+        assertEquals(CubicBezierEasing(0f, 0f, 1f, 1f), AwradEasing.linear)
+        with(AwradEasing.linear) {
+            assertEquals(0.25f, transform(0.25f), 1e-3f)
+            assertEquals(0.75f, transform(0.75f), 1e-3f)
+        }
+        assertEquals(AwradEasing.linear, AwradMotions.ContentSwap.easing)
+        assertEquals(AwradEasing.linear, AwradMotions.ReducedMotion.easing)
+        assertEquals(AwradEasing.emphasized, AwradMotions.Press.pressEasing)
+        assertEquals(150f, AwradMotions.Sheet.releaseVelocity)
     }
 
     @Test

@@ -54,8 +54,8 @@ public fun AwradTheme(
 }
 
 /**
- * Reads the design tokens inside [AwradTheme]. Screens use these by name, never a raw number, radius, text style,
- * duration or colour (the build rejects literals outside `:core:designsystem`).
+ * Reads the design tokens inside [AwradTheme]. Screens use these by name, never a raw number, radius, stroke,
+ * text style, duration or colour (the build rejects literals outside `:core:designsystem`).
  */
 public object AwradTheme {
     /**
@@ -73,16 +73,22 @@ public object AwradTheme {
         @ReadOnlyComposable
         get() = LocalAwradColors.current.fillOn(LocalAwradContainer.current)
 
+    /** How a state changes a control's look: `disabledOpacity`. */
+    public val states: AwradStates get() = AwradStates
+
     /** Corner shapes by role (`card`, `button`, `sheet`…), with continuous corners. */
     public val shapes: AwradShapes get() = AwradShapes
+
+    /** The only line widths the design allows (`fieldError`, `checkbox`). */
+    public val strokes: AwradStrokes get() = AwradStrokes
 
     /** Spacing roles (`pageMargin`, `cardPadding`…) and the spacing scale. */
     public val spacing: AwradSpacing get() = AwradSpacing
 
-    /** Standard sizes (`touchTarget`, `icon`…). */
+    /** Standard sizes (`touchTarget`, `control`, `icon`…). */
     public val sizes: AwradSizes get() = AwradSizes
 
-    /** The named text styles (`title`, `body`, `counter`…). */
+    /** The named text styles (`title`, `body`, `input`, `counter`, `quran`…). */
     public val type: AwradType get() = AwradType
 
     /** Motion specs for the current reduced-motion setting. */

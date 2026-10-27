@@ -20,6 +20,9 @@ public object AwradEasing {
 
     /** `accelerate`: (0.3, 0, 0.8, 0.15). */
     public val accelerate: Easing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
+
+    /** `linear`: (0, 0, 1, 1). */
+    public val linear: Easing = CubicBezierEasing(0f, 0f, 1f, 1f)
 }
 
 /** Durations in milliseconds. */
@@ -136,6 +139,7 @@ public object AwradMotions {
         public const val buttonScale: Float = 0.98f
         public const val pressDurationMillis: Int = AwradDurations.fade
         public val releaseSpring: AwradSpring = AwradSprings.spatialFast
+        public val pressEasing: Easing = AwradEasing.emphasized
     }
 
     /** Each count; the number rolls to its next value. */
@@ -157,7 +161,10 @@ public object AwradMotions {
         public val spring: AwradSpring = AwradSprings.spatial
     }
 
-    /** Bottom sheets follow the finger and settle with the fling's velocity; corners reach 0 at full height. */
+    /**
+     * Bottom sheets follow the finger and settle with the fling's velocity; corners reach 0 at full
+     * height. releaseVelocity is in dp per second. iOS uses the native sheet.
+     */
     public object Sheet {
         public val settleSpring: AwradSpring = AwradSprings.spatial
         public const val overshootScale: Float = 1.03f
@@ -185,6 +192,7 @@ public object AwradMotions {
     public object ContentSwap {
         public const val fadeInMillis: Int = AwradDurations.color
         public const val fadeOutMillis: Int = AwradDurations.fade
+        public val easing: Easing = AwradEasing.linear
     }
 
     /**
@@ -194,5 +202,8 @@ public object AwradMotions {
     public object ReducedMotion {
         /** A cross-fade of this duration replaces every movement, scale and spring. */
         public const val durationMillis: Int = AwradDurations.color
+
+        /** The cross-fade's easing. */
+        public val easing: Easing = AwradEasing.linear
     }
 }

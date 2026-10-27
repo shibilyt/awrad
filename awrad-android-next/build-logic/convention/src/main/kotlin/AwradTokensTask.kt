@@ -16,15 +16,18 @@ import org.gradle.api.tasks.TaskAction
  * typography,motion}.json`) into `:core:designsystem` as committed Kotlin source, the same way [AwradColorsTask]
  * bundles the colours:
  *
- * - [shapeSource]: `AwradRadius` (the scale) and `AwradShapes` (roles, continuous corners);
+ * - [shapeSource]: `AwradRadius` (the scale), `AwradShapes` (roles, continuous corners) and `AwradStrokes` (the
+ *   line widths the design allows);
  * - [spacingSource]: `AwradSpacing` (scale and roles) and `AwradSizes`;
- * - [typeSource]: `AwradType`, one `TextStyle` per named style;
+ * - [typeSource]: `AwradType`, one `TextStyle` per named style, in the interface font or the style's own
+ *   `fontFamily`;
  * - [motionSource]: `AwradEasing`, `AwradDurations`, `AwradSprings`, `AwradHaptic` and `AwradMotions` (the named
  *   motions Android uses, and reduced motion).
  *
  * With [verifyOnly] false it (re)writes the files. With [verifyOnly] true it fails when any of them isn't exactly
- * what the contracts generate. A token the generator doesn't understand (a new key in a named motion, a new font
- * family) fails generation instead of being dropped, so the app can't silently drift from the contract.
+ * what the contracts generate. A token the generator doesn't understand (a new key in a named motion, a stroke
+ * or a text style, a font family missing from [fontFamilies]) fails generation instead of being dropped, so the
+ * app can't silently drift from the contract.
  */
 abstract class AwradTokensTask : DefaultTask() {
 
@@ -59,7 +62,7 @@ abstract class AwradTokensTask : DefaultTask() {
     @get:Input
     abstract val packageName: Property<String>
 
-    /** The contract's `fontFamily` name → the Kotlin `FontFamily` value that bundles it. */
+    /** Each `fontFamily` name in the contract (the interface font's, and any style's own) → the Kotlin `FontFamily`. */
     @get:Input
     abstract val fontFamilies: MapProperty<String, String>
 

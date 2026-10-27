@@ -23,24 +23,22 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.unit.dp
 import app.awrad.core.designsystem.theme.AwradTheme
 
+/** The selection highlight behind selected text: the tokens have no selection colour, so `accent` at 40%. */
 private const val SELECTION_ALPHA = 0.4f
-private const val DISABLED_ALPHA = 0.38f
-
-/** A hairline: the tokens have no border widths, since the design draws no lines but this one. */
-private val ErrorBorderWidth = 1.dp
 
 /**
- * A full-width, single-line text field, filled and without a line: [AwradTheme.fill] (`surface` on a
- * `background`, `background` inside an `AwradCard`). Focus shows as the `accent` cursor only. The label is
- * `onSurfaceVariant`. With [isError] it gets an `error` border, and [supportingText] (the error) turns `error`;
- * otherwise [supportingText] is a hint below the field.
+ * A full-width, single-line text field, `control` high, filled and without a line: [AwradTheme.fill] (`surface`
+ * on a `background`, `background` inside an `AwradCard`). The typed text is the `input` style. Focus shows as the
+ * `accent` cursor only. The label is `onSurfaceVariant`. With [isError] it gets an `error` border
+ * (`strokes.fieldError`), and [supportingText] (the error) turns `error`; otherwise [supportingText] is a hint
+ * below the field. Disabled, it keeps its colours at `states.disabled.opacity`.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +59,6 @@ public fun AwradTextField(
     val fieldColors = awradTextFieldColors(fill)
     val shape = AwradTheme.shapes.field
     val interactionSource = remember { MutableInteractionSource() }
-    val textColor = if (enabled) colors.onSurface else colors.onSurface.copy(alpha = DISABLED_ALPHA)
     val selectionColors = TextSelectionColors(
         handleColor = colors.accent,
         backgroundColor = colors.accent.copy(alpha = SELECTION_ALPHA),
@@ -71,11 +68,12 @@ public fun AwradTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = modifier
+                .disabledOpacity(enabled)
                 .fillMaxWidth()
-                .defaultMinSize(minWidth = TextFieldDefaults.MinWidth, minHeight = TextFieldDefaults.MinHeight)
+                .defaultMinSize(minWidth = TextFieldDefaults.MinWidth, minHeight = AwradTheme.sizes.control)
                 .semantics { if (isError) error(supportingText.orEmpty()) },
             enabled = enabled,
-            textStyle = AwradTheme.type.body.copy(color = textColor),
+            textStyle = AwradTheme.type.input.copy(color = colors.onSurface),
             keyboardOptions = keyboardOptions,
             singleLine = true,
             visualTransformation = visualTransformation,
@@ -96,30 +94,36 @@ public fun AwradTextField(
                     shape = shape,
                     colors = fieldColors,
                     // The fill covers the field only, not the supporting text below it.
-                    container = {
-                        val container = Modifier
-                            .fillMaxSize()
-                            .background(color = fill, shape = shape)
-                        Box(
-                            modifier = if (isError) {
-                                container.border(width = ErrorBorderWidth, color = colors.error, shape = shape)
-                            } else {
-                                container
-                            },
-                        )
-                    },
+                    container = { FieldContainer(fill = fill, shape = shape, isError = isError) },
                 )
             },
         )
     }
 }
 
-/** Label, icons and hint in `onSurfaceVariant` (the hint in `error` with an error); no indicator line. */
+/** The field's [fill]; with [isError], an `error` border `strokes.fieldError` wide. */
+@Composable
+private fun FieldContainer(fill: Color, shape: Shape, isError: Boolean) {
+    val container = Modifier
+        .fillMaxSize()
+        .background(color = fill, shape = shape)
+    Box(
+        modifier = if (isError) {
+            container.border(width = AwradTheme.strokes.fieldError, color = AwradTheme.colors.error, shape = shape)
+        } else {
+            container
+        },
+    )
+}
+
+/**
+ * Label, icons and hint in `onSurfaceVariant` (the hint in `error` with an error); no indicator line. Disabled
+ * keeps the same colours: `disabledOpacity` dims the whole field instead.
+ */
 @Composable
 private fun awradTextFieldColors(fill: Color): TextFieldColors {
     val colors = AwradTheme.colors
     val variant = colors.onSurfaceVariant
-    val disabled = colors.onSurface.copy(alpha = DISABLED_ALPHA)
     return TextFieldDefaults.colors(
         focusedContainerColor = fill,
         unfocusedContainerColor = fill,
@@ -133,18 +137,19 @@ private fun awradTextFieldColors(fill: Color): TextFieldColors {
         errorIndicatorColor = Color.Transparent,
         focusedLabelColor = variant,
         unfocusedLabelColor = variant,
-        disabledLabelColor = disabled,
+        disabledLabelColor = variant,
         errorLabelColor = variant,
         focusedPlaceholderColor = variant,
         unfocusedPlaceholderColor = variant,
+        disabledPlaceholderColor = variant,
         errorPlaceholderColor = variant,
         focusedTrailingIconColor = variant,
         unfocusedTrailingIconColor = variant,
-        disabledTrailingIconColor = disabled,
+        disabledTrailingIconColor = variant,
         errorTrailingIconColor = variant,
         focusedSupportingTextColor = variant,
         unfocusedSupportingTextColor = variant,
-        disabledSupportingTextColor = disabled,
+        disabledSupportingTextColor = variant,
         errorSupportingTextColor = colors.error,
     )
 }
