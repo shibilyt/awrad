@@ -1,5 +1,8 @@
 package app.awrad.feature.library
 
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.core.domain.audio.AudioPlayer
@@ -85,6 +88,13 @@ internal sealed interface DhikrDetailAction {
     /** Play, or pause while playing. */
     data object TogglePlayback : DhikrDetailAction
 
-    /** The page went out of sight (another page, another app): stop the sound. */
+    /** The page went out of sight (another page, another app) or away: stop the sound. */
     data object Pause : DhikrDetailAction
 }
+
+/**
+ * Sends [DhikrDetailAction.Pause] when the page's lifecycle stops: another page opens on top, or the app goes to
+ * the background (Home, another app, the screen off).
+ */
+internal fun pauseOnStop(onAction: (DhikrDetailAction) -> Unit): LifecycleObserver =
+    LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_STOP) onAction(DhikrDetailAction.Pause) }

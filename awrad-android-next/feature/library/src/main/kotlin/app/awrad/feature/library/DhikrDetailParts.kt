@@ -1,6 +1,5 @@
 package app.awrad.feature.library
 
-import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -25,170 +25,121 @@ import app.awrad.core.domain.audio.PlaybackStatus
 import app.awrad.core.domain.dhikr.ContentLanguage
 import app.awrad.core.domain.dhikr.Dhikr
 import app.awrad.core.domain.dhikr.DhikrKind
-import app.awrad.core.domain.dhikr.DhikrText
 import app.awrad.core.domain.dhikr.Reference
 import app.awrad.core.domain.dhikr.textIn
+import java.util.Locale
 
 /**
- * The dhikr's text by its kind (docs/slices/03a-dhikr-catalog.md, "Rendering by kind"):
- * - Qur'an: one ayah per line in `quran`, then its reference ("Qur'an 112:1–4");
- * - a name of Allah: the name large and centred, then its meaning;
+ * The Arabic card (components.md, "Dhikr detail screen"): a `surface` card with the Arabic centred, by kind:
+ * - Qur'an: one ayah per line in `quran`, then its reference ("Qur'an 112:1–4") in `caption`;
+ * - a name of Allah: the name in `nameOfAllah`, then its meaning in `title`;
  * - the others: the Arabic in `quran`.
- * The transliteration (`body`, `onSurfaceVariant`; none in Arabic) and the translation (`body`) follow.
+ * The player bar sits at the bottom when the dhikr has a recording.
  */
 @Composable
-internal fun DhikrTextByKind(dhikr: Dhikr, language: ContentLanguage, modifier: Modifier = Modifier) {
-    val text = dhikr.textIn(language)
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap),
-    ) {
-        when (dhikr.kind) {
-            DhikrKind.NAME_OF_ALLAH -> NameOfAllah(dhikr = dhikr, text = text)
-            DhikrKind.QURAN -> {
-                ArabicLines(lines = dhikr.arabicLines)
-                dhikr.references.filterIsInstance<Reference.Quran>().firstOrNull()?.let { reference ->
-                    Text(
-                        text = referenceLabel(reference).text,
-                        style = AwradTheme.type.label,
-                        color = AwradTheme.colors.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-                Meaning(text = text)
-            }
-            DhikrKind.DHIKR, DhikrKind.DUA, DhikrKind.SALAWAT -> {
-                ArabicLines(lines = dhikr.arabicLines)
-                Meaning(text = text)
-            }
-        }
-    }
-}
-
-/** Each line (an ayah, for Qur'an) centred in `quran`. */
-@Composable
-private fun ArabicLines(lines: List<String>, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        lines.forEach { line ->
-            Text(
-                text = line,
-                style = AwradTheme.type.quran,
-                color = AwradTheme.colors.onSurface,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
-
-/** The transliteration, then the translation, from the start. */
-@Composable
-private fun Meaning(text: DhikrText, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm)) {
-        text.transliteration?.let {
-            Text(text = it, style = AwradTheme.type.body, color = AwradTheme.colors.onSurfaceVariant)
-        }
-        Text(text = text.translation, style = AwradTheme.type.body, color = AwradTheme.colors.onSurface)
-    }
-}
-
-/** The name in the `quran` face at the `largeTitle` size, its transliteration, then its meaning in `title`. */
-@Composable
-private fun NameOfAllah(dhikr: Dhikr, text: DhikrText, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm),
-    ) {
-        Text(
-            text = dhikr.arabic,
-            style = largeArabic(),
-            color = AwradTheme.colors.onSurface,
-            textAlign = TextAlign.Center,
-        )
-        text.transliteration?.let {
-            Text(
-                text = it,
-                style = AwradTheme.type.body,
-                color = AwradTheme.colors.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-            )
-        }
-        Text(
-            text = text.translation,
-            style = AwradTheme.type.title,
-            color = AwradTheme.colors.onSurface,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-/** `quran` scaled up to `largeTitle`'s size, its line height in proportion (the tokens have no larger Arabic). */
-@Composable
-private fun largeArabic(): TextStyle {
-    val quran = AwradTheme.type.quran
-    val size = AwradTheme.type.largeTitle.fontSize
-    return quran.copy(fontSize = size, lineHeight = quran.lineHeight * (size.value / quran.fontSize.value))
-}
-
-/**
- * The recording in a card: a round play/pause button, then a progress bar with the elapsed and total time. While
- * it connects the bar runs without a length; if it fails, a message says so and play retries.
- */
-@Composable
-internal fun AudioControl(playback: PlaybackState, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+internal fun ArabicCard(
+    dhikr: Dhikr,
+    language: ContentLanguage,
+    playback: PlaybackState,
+    onTogglePlayback: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     AwradCard(modifier = modifier) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.md),
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm),
         ) {
-            AwradRoundButton(
-                icon = if (playback.isPlaying) AwradIcons.Pause else AwradIcons.Play,
-                contentDescription = stringResource(
-                    if (playback.isPlaying) R.string.library_pause else R.string.library_play,
-                ),
-                onClick = onToggle,
-            )
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm),
-            ) {
-                val progress = playback.progress
-                if (playback.status == PlaybackStatus.LOADING && progress == null) {
-                    AwradLinearProgress()
-                } else {
-                    AwradLinearProgress(progress = { progress ?: 0f })
+            when (dhikr.kind) {
+                DhikrKind.NAME_OF_ALLAH -> {
+                    CentredText(text = dhikr.arabic, style = AwradTheme.type.nameOfAllah)
+                    CentredText(text = dhikr.textIn(language).translation, style = AwradTheme.type.title)
                 }
-                PlaybackLine(playback = playback)
+                DhikrKind.QURAN -> {
+                    dhikr.arabicLines.forEach { CentredText(text = it, style = AwradTheme.type.quran) }
+                    dhikr.references.filterIsInstance<Reference.Quran>().firstOrNull()?.let { reference ->
+                        Text(
+                            text = referenceLabel(reference).text,
+                            style = AwradTheme.type.caption,
+                            color = AwradTheme.colors.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                }
+                DhikrKind.DHIKR, DhikrKind.DUA, DhikrKind.SALAWAT ->
+                    dhikr.arabicLines.forEach { CentredText(text = it, style = AwradTheme.type.quran) }
             }
         }
+        dhikr.audio?.let { PlayerBar(playback = playback, onToggle = onTogglePlayback) }
     }
 }
 
 @Composable
-private fun PlaybackLine(playback: PlaybackState, modifier: Modifier = Modifier) {
-    val (text, color) = when (playback.status) {
-        PlaybackStatus.FAILED -> stringResource(R.string.library_audio_failed) to AwradTheme.colors.error
-        PlaybackStatus.LOADING -> stringResource(R.string.library_audio_loading) to AwradTheme.colors.onSurfaceVariant
-        else -> elapsed(playback) to AwradTheme.colors.onSurfaceVariant
-    }
+private fun CentredText(text: String, style: TextStyle, modifier: Modifier = Modifier) {
     Text(
         text = text,
-        modifier = modifier.semantics {
-            if (playback.status == PlaybackStatus.FAILED) liveRegion = LiveRegionMode.Polite
-        },
-        style = AwradTheme.type.caption,
-        color = color,
+        modifier = modifier,
+        style = style,
+        color = AwradTheme.colors.onSurface,
+        textAlign = TextAlign.Center,
     )
+}
+
+/**
+ * The audio player bar (components.md, "Audio player bar"): a round play/pause button (a spinner while it
+ * connects), a progress line, then the time ("0:14 / 0:26", or the elapsed time alone while the length is
+ * unknown). If the recording fails, a message replaces the line and the time, and play retries.
+ */
+@Composable
+internal fun PlayerBar(playback: PlaybackState, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.md),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AwradRoundButton(
+            icon = if (playback.isPlaying) AwradIcons.Pause else AwradIcons.Play,
+            contentDescription = stringResource(
+                if (playback.isPlaying) R.string.library_pause else R.string.library_play,
+            ),
+            onClick = onToggle,
+            isLoading = playback.status == PlaybackStatus.LOADING,
+        )
+        if (playback.status == PlaybackStatus.FAILED) {
+            Text(
+                text = stringResource(R.string.library_audio_failed),
+                modifier = Modifier
+                    .weight(1f)
+                    .semantics { liveRegion = LiveRegionMode.Polite },
+                style = AwradTheme.type.caption,
+                color = AwradTheme.colors.error,
+            )
+        } else {
+            AwradLinearProgress(progress = { playback.progress ?: 0f }, modifier = Modifier.weight(1f))
+            Text(
+                text = elapsed(playback),
+                style = AwradTheme.type.caption,
+                color = AwradTheme.colors.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+    }
 }
 
 /** "0:12 / 0:45", or just the elapsed time while the length is unknown. */
 @Composable
 private fun elapsed(playback: PlaybackState): String {
-    val position = DateUtils.formatElapsedTime(playback.positionMs / MILLIS_PER_SECOND)
+    val locale = LocalConfiguration.current.locales[0]
+    val position = clock(playback.positionMs, locale)
     val duration = playback.durationMs ?: return position
-    val total = DateUtils.formatElapsedTime(duration / MILLIS_PER_SECOND)
-    return stringResource(R.string.library_audio_elapsed, position, total)
+    return stringResource(R.string.library_audio_elapsed, position, clock(duration, locale))
+}
+
+/** Minutes, unpadded, and seconds: "0:14", in [locale]'s digits. */
+private fun clock(millis: Long, locale: Locale): String {
+    val seconds = millis / MILLIS_PER_SECOND
+    return String.format(locale, "%d:%02d", seconds / SECONDS_PER_MINUTE, seconds % SECONDS_PER_MINUTE)
 }
 
 private const val MILLIS_PER_SECOND = 1_000L
+private const val SECONDS_PER_MINUTE = 60L

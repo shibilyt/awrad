@@ -20,6 +20,8 @@
         <item quantity="other">%d ദിക്റുകൾ</item>
     </plurals>
     <string name="gallery_search_placeholder">ദിക്റുകൾ തിരയുക</string>
+    <string name="gallery_player_buttons">പ്ലേ, ലോഡ് ചെയ്യുന്നു</string>
+    <string name="gallery_play">പ്ലേ ചെയ്യുക</string>
     <string name="gallery_search_query">അസ്തഗ്ഫിറുല്ലാഹ്</string>
     <string name="gallery_chips">ചിപ്പുകൾ</string>
     <string name="gallery_chip_debt">കടം</string>

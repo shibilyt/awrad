@@ -25,7 +25,7 @@ internal fun currentContentLanguage(): ContentLanguage {
     return ContentLanguage.of(List(locales.size()) { locales[it].language })
 }
 
-/** "100 Dhikrs", with the plural forms of the app's language. */
+/** "100 dhikrs", with the plural forms of the app's language. */
 @Composable
 @ReadOnlyComposable
 internal fun dhikrCount(count: Int): String = pluralStringResource(R.plurals.library_dhikr_count, count, count)
