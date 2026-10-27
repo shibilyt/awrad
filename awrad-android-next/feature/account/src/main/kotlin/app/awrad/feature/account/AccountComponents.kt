@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.designsystem.theme.AwradTheme
 import java.util.Locale
 
 /*
@@ -28,7 +29,7 @@ internal fun BodyText(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
         modifier = modifier,
-        style = MaterialTheme.typography.bodyLarge,
+        style = AwradTheme.type.body,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }

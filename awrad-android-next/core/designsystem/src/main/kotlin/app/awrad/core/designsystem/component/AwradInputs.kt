@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -14,8 +15,6 @@ import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
@@ -33,6 +32,8 @@ import app.awrad.core.designsystem.theme.AwradTheme
 
 private const val SELECTION_ALPHA = 0.4f
 private const val DISABLED_ALPHA = 0.38f
+
+/** A hairline: the tokens have no border widths, since the design draws no lines but this one. */
 private val ErrorBorderWidth = 1.dp
 
 /**
@@ -58,7 +59,7 @@ public fun AwradTextField(
     val colors = AwradTheme.colors
     val fill = AwradTheme.fill
     val fieldColors = awradTextFieldColors(fill)
-    val shape = MaterialTheme.shapes.medium
+    val shape = AwradTheme.shapes.field
     val interactionSource = remember { MutableInteractionSource() }
     val textColor = if (enabled) colors.onSurface else colors.onSurface.copy(alpha = DISABLED_ALPHA)
     val selectionColors = TextSelectionColors(
@@ -74,7 +75,7 @@ public fun AwradTextField(
                 .defaultMinSize(minWidth = TextFieldDefaults.MinWidth, minHeight = TextFieldDefaults.MinHeight)
                 .semantics { if (isError) error(supportingText.orEmpty()) },
             enabled = enabled,
-            textStyle = LocalTextStyle.current.copy(color = textColor),
+            textStyle = AwradTheme.type.body.copy(color = textColor),
             keyboardOptions = keyboardOptions,
             singleLine = true,
             visualTransformation = visualTransformation,
@@ -148,11 +149,13 @@ private fun awradTextFieldColors(fill: Color): TextFieldColors {
     )
 }
 
-/** A thin bar while work of unknown length runs, in `progress` on an `outline` track. */
+/** A thin bar (`ringStroke` high) while work of unknown length runs, in `progress` on an `outline` track. */
 @Composable
 public fun AwradLinearProgress(modifier: Modifier = Modifier) {
     LinearProgressIndicator(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(AwradTheme.sizes.ringStroke),
         color = AwradTheme.colors.progress,
         trackColor = AwradTheme.colors.outline,
     )

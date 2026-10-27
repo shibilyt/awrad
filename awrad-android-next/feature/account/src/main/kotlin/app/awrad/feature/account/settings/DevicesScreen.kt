@@ -1,6 +1,8 @@
 package app.awrad.feature.account.settings
 
 import android.text.format.DateUtils
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Devices
@@ -19,12 +21,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradCard
 import app.awrad.core.designsystem.component.AwradSecondaryButton
 import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.designsystem.motion.AwradContentSwap
+import app.awrad.core.designsystem.motion.AwradExpand
+import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.domain.account.AccountSession
 import app.awrad.feature.account.AccountPage
 import app.awrad.feature.account.BodyText
@@ -61,22 +65,16 @@ internal fun DevicesScreen(
         status = pageStatus(error = state.error?.message(), notice = state.notice?.message()),
     ) {
         BodyText(text = stringResource(R.string.account_devices_intro))
-        val sessions = state.sessions
-        if (sessions == null) {
-            if (state.canRetry) {
+        // The list takes the place of Retry (or of nothing) once it loads (`contentSwap`).
+        AwradContentSwap(targetState = state.sessions, label = "sessions", contentKey = { it != null }) { sessions ->
+            if (sessions != null) {
+                Sessions(state = state, sessions = sessions, onAction = onAction)
+            } else if (state.canRetry) {
                 AwradSecondaryButton(
                     text = stringResource(R.string.account_action_retry),
                     onClick = { onAction(DevicesAction.Reload) },
                 )
             }
-        } else {
-            SessionList(sessions = sessions, now = state.loadedAt, onRevoke = { onAction(DevicesAction.Revoke(it)) })
-            if (state.others.isEmpty()) BodyText(text = stringResource(R.string.account_devices_none_other))
-            AwradSecondaryButton(
-                text = stringResource(R.string.account_action_revoke_others),
-                onClick = { onAction(DevicesAction.RevokeOthers) },
-                enabled = state.canRevoke,
-            )
         }
         state.confirming?.let { confirmation ->
             RevokeDialog(
@@ -89,6 +87,27 @@ internal fun DevicesScreen(
 }
 
 @Composable
+private fun Sessions(
+    state: DevicesUiState,
+    sessions: List<AccountSession>,
+    onAction: (DevicesAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.lg)) {
+        SessionList(sessions = sessions, now = state.loadedAt, onRevoke = { onAction(DevicesAction.Revoke(it)) })
+        // Opens when the last other device is signed out (`expand`).
+        AwradExpand(visible = state.others.isEmpty(), label = "noOtherDevices") {
+            BodyText(text = stringResource(R.string.account_devices_none_other))
+        }
+        AwradSecondaryButton(
+            text = stringResource(R.string.account_action_revoke_others),
+            onClick = { onAction(DevicesAction.RevokeOthers) },
+            enabled = state.canRevoke,
+        )
+    }
+}
+
+@Composable
 private fun SessionList(
     sessions: List<AccountSession>,
     now: Instant,
@@ -96,7 +115,11 @@ private fun SessionList(
     modifier: Modifier = Modifier,
 ) {
     // Grouped on a card, as in the design; rows are separated by their own padding, never divider lines.
-    AwradCard(modifier = modifier, contentPadding = PaddingValues(vertical = 8.dp), spacing = 0.dp) {
+    AwradCard(
+        modifier = modifier,
+        contentPadding = PaddingValues(vertical = AwradTheme.spacing.sm),
+        spacing = AwradTheme.spacing.none,
+    ) {
         sessions.forEach { session ->
             SessionRow(session = session, now = now, onRevoke = { onRevoke(session) })
         }
@@ -115,9 +138,12 @@ private fun SessionRow(session: AccountSession, now: Instant, onRevoke: () -> Un
         modifier = modifier,
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         leadingContent = { Icon(imageVector = session.platform.icon(), contentDescription = null) },
-        headlineContent = { Text(text = name) },
+        headlineContent = { Text(text = name, style = AwradTheme.type.rowTitle) },
         supportingContent = {
-            Text(text = stringResource(R.string.account_devices_detail, platformLabel(session.platform), detail))
+            Text(
+                text = stringResource(R.string.account_devices_detail, platformLabel(session.platform), detail),
+                style = AwradTheme.type.bodySmall,
+            )
         },
         trailingContent = if (session.isCurrent) {
             null

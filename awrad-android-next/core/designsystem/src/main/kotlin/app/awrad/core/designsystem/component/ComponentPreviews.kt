@@ -10,7 +10,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import app.awrad.core.designsystem.theme.AwradTheme
 
 /*
@@ -24,14 +23,18 @@ import app.awrad.core.designsystem.theme.AwradTheme
 private fun ComponentsPreview() {
     AwradTheme {
         Surface(color = MaterialTheme.colorScheme.background) {
-            Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(text = "Title", style = MaterialTheme.typography.headlineMedium)
+            Column(
+                modifier = Modifier.padding(AwradTheme.spacing.pageMargin),
+                verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap),
+            ) {
+                Text(text = "Title", style = AwradTheme.type.title)
                 Text(
                     text = "Secondary text",
-                    style = MaterialTheme.typography.bodyLarge,
+                    style = AwradTheme.type.body,
                     color = AwradTheme.colors.onSurfaceVariant,
                 )
-                Text(text = "7-day streak", color = AwradTheme.colors.accent)
+                Text(text = "7-day streak", style = AwradTheme.type.caption, color = AwradTheme.colors.accent)
+                Text(text = "33", style = AwradTheme.type.counter)
                 AwradLinearProgress()
                 AwradTextField(value = "amina@example.com", onValueChange = {}, label = "Email")
                 AwradTextField(
@@ -49,7 +52,7 @@ private fun ComponentsPreview() {
                 AwradTextButton(text = "Remove", onClick = {}, isDestructive = true)
                 AwradCircularProgress()
                 AwradCard {
-                    Text(text = "On a card", style = MaterialTheme.typography.titleMedium)
+                    Text(text = "On a card", style = AwradTheme.type.cardTitle)
                     AwradTextField(value = "", onValueChange = {}, label = "Code")
                     AwradTextField(
                         value = "12",
@@ -59,6 +62,9 @@ private fun ComponentsPreview() {
                         supportingText = "Enter the 6-digit code",
                     )
                     AwradSecondaryButton(text = "Send a new code", onClick = {})
+                }
+                AwradCard(onClick = {}) {
+                    Text(text = "A tappable card", style = AwradTheme.type.rowTitle)
                 }
             }
         }

@@ -7,22 +7,20 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import app.awrad.core.designsystem.component.AwradPrimaryButton
 import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.designsystem.theme.AwradTheme
 
 /*
  * The form of each step. Stateless: every one renders AccountUiState and reports AccountActions.
  */
 
-private val FormSpacing = 12.dp
-
 @Composable
 internal fun SignInForm(state: AccountUiState, onAction: (AccountAction) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(FormSpacing)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
         Text(
             text = stringResource(R.string.account_intro),
-            style = MaterialTheme.typography.bodyLarge,
+            style = AwradTheme.type.body,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         EmailField(state.email, state.emailProblem, { onAction(AccountAction.EmailChanged(it)) })
@@ -45,7 +43,7 @@ internal fun SignInForm(state: AccountUiState, onAction: (AccountAction) -> Unit
 
 @Composable
 internal fun RegisterForm(state: AccountUiState, onAction: (AccountAction) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(FormSpacing)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
         EmailField(state.email, state.emailProblem, { onAction(AccountAction.EmailChanged(it)) })
         PasswordField(
             value = state.password,
@@ -68,7 +66,7 @@ internal fun RegisterForm(state: AccountUiState, onAction: (AccountAction) -> Un
 
 @Composable
 internal fun VerifyEmailForm(state: AccountUiState, onAction: (AccountAction) -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(FormSpacing)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
         CodeSentTo(email = state.email)
         CodeField(state.code, state.codeProblem, { onAction(AccountAction.CodeChanged(it)) })
         AwradPrimaryButton(
@@ -90,10 +88,10 @@ internal fun ForgotPasswordForm(
     onAction: (AccountAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(FormSpacing)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
         Text(
             text = stringResource(R.string.account_forgot_body),
-            style = MaterialTheme.typography.bodyLarge,
+            style = AwradTheme.type.body,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         EmailField(state.email, state.emailProblem, { onAction(AccountAction.EmailChanged(it)) })
@@ -111,7 +109,7 @@ internal fun ResetPasswordForm(
     onAction: (AccountAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(FormSpacing)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
         CodeSentTo(email = state.email)
         CodeField(state.code, state.codeProblem, { onAction(AccountAction.CodeChanged(it)) })
         PasswordField(
