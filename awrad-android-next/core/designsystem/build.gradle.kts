@@ -37,8 +37,17 @@ val verifyAwradColors = tasks.register<AwradColorsTask>("verifyAwradColors") {
     configureColors(verify = true)
 }
 
-// The unit tests (testDebugUnitTest in the validation command) and lint read the bundled colours, so they
-// must be the contract's.
-tasks.named("check") { dependsOn(verifyAwradColors) }
-tasks.withType<Test>().configureEach { dependsOn(verifyAwradColors) }
-tasks.matching { it.name.startsWith("lint") }.configureEach { dependsOn(verifyAwradColors) }
+// The bundled fonts are byte-for-byte the shared ones (ARCHITECTURE.md, "Fonts").
+val verifyAwradFonts = tasks.register<AwradFontsTask>("verifyAwradFonts") {
+    description = "Fails when a bundled font differs from contracts/design-tokens/v1/fonts (SHA256SUMS)."
+    group = "verification"
+    checksums.set(rootDir.resolve("../contracts/design-tokens/v1/fonts/SHA256SUMS"))
+    fontDirectory.set(file("src/main/res/font"))
+}
+
+// The unit tests (testDebugUnitTest in the validation command) and lint read the bundled colours and fonts, so
+// they must be the contract's.
+val verifyDesignTokens = listOf(verifyAwradColors, verifyAwradFonts)
+tasks.named("check") { dependsOn(verifyDesignTokens) }
+tasks.withType<Test>().configureEach { dependsOn(verifyDesignTokens) }
+tasks.matching { it.name.startsWith("lint") }.configureEach { dependsOn(verifyDesignTokens) }
