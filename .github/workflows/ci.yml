@@ -64,8 +64,9 @@ jobs:
           # Android, iOS and the server run the shared domain fixtures and read the Hijri table; the web runs account-model.
           domain='^contracts/(goal-model|hijri-calendar|account-model|design-tokens)/'
           echo "android_next=$(match "^awrad-android-next/|$domain|$shared")" >> "$GITHUB_OUTPUT"
-          # The server's contract tests read contracts/api/openapi.bundled.json.
-          echo "server_next=$(match "^(awrad-server-next/|contracts/api/)|$domain|$shared")" >> "$GITHUB_OUTPUT"
+          # The server's contract tests read contracts/api/openapi.bundled.json; its
+          # dhikr catalog copy is checked against dhikr-catalog/ and progress-model/.
+          echo "server_next=$(match "^(awrad-server-next/|contracts/(api|dhikr-catalog|progress-model)/)|$domain|$shared")" >> "$GITHUB_OUTPUT"
           echo "ios_next=$(match "^(awrad-ios-next/|\.xcode-version$)|$domain|$shared")" >> "$GITHUB_OUTPUT"
           # The web app's generated types and test mocks come from contracts/api/openapi.bundled.json.
           echo "web_next=$(match "^(awrad-web-next/|contracts/(api|account-model|design-tokens)/)|$shared")" >> "$GITHUB_OUTPUT"
