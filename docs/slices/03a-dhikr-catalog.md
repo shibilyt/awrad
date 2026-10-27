@@ -1,6 +1,6 @@
 # Slice 3a: Dhikr catalog and library
 
-Status: Done 2026-10-28 (content review items in SOURCES.md stay open)
+Status: Done 2026-10-27 (content review items in SOURCES.md stay open)
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 3a
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 

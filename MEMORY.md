@@ -309,7 +309,7 @@ Use this format:
 - Evidence: `contracts/design-tokens/v1/README.md`
 - Commit: see git log
 
-### 2026-10-28 — Slice 3a: dhikr catalog and library
+### 2026-10-27 — Slice 3a: dhikr catalog and library
 
 - Area: Cross-project
 - Change:
