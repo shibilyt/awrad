@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { Tab, TabList, TabPanel, Tabs, type TabPanelProps, type TabsProps } from "react-aria-components";
+import { Tab, TabList, TabPanel, Tabs, type TabPanelProps, type TabProps, type TabsProps } from "react-aria-components";
 import { cx } from "./cx";
 import type { Icon } from "./icons.gen";
 
@@ -7,6 +7,11 @@ export interface BottomBarItem {
   id: string;
   label: string;
   icon: Icon;
+  /**
+   * Makes the item a link to a page (the app's main navigation, through `AriaRouter`). Control
+   * `selectedKey` from the current route then, and put the page in one `BottomBarPanel` with that id.
+   */
+  href?: TabProps["href"];
 }
 
 /**
@@ -34,7 +39,7 @@ export function BottomBar({
   children?: ReactNode;
 }): ReactElement {
   return (
-    <Tabs {...props} className="flex flex-col">
+    <Tabs {...props} className="flex grow flex-col">
       {/* The list comes first (React Aria gives the panels its ids); it floats, so the order doesn't show. */}
       <TabList
         aria-label={label}
@@ -47,6 +52,7 @@ export function BottomBar({
         {(item) => (
           <Tab
             id={item.id}
+            {...(item.href === undefined ? {} : { href: item.href })}
             className={cx(
               "group flex min-w-0 flex-1 cursor-default flex-col items-center justify-center gap-xs rounded-tile",
               "outline-none data-focus-visible:outline-focus-ring data-focus-visible:outline-offset-focus-ring",

@@ -11,6 +11,7 @@ import { InputsSection } from "./InputsSection";
 import ar from "./locales/ar.json";
 import en from "./locales/en.json";
 import ml from "./locales/ml.json";
+import { LibrarySection } from "./LibrarySection";
 import { NavigationSection } from "./NavigationSection";
 
 /*
@@ -66,6 +67,7 @@ function GalleryPage(): ReactElement {
       <ButtonsSection />
       <InputsSection />
       <NavigationSection />
+      <LibrarySection />
       <IconsSection />
     </main>
   );

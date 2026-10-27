@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/shared/ui/Button";
 import { LogoMark } from "@/shared/ui/LogoMark";
@@ -61,16 +61,22 @@ function SessionStatus(): ReactElement {
   );
 }
 
-/** Home: a greeting and where this browser's session stands, from `get_current_account`. */
-export function WelcomePage(): ReactElement {
+/**
+ * Home: a greeting and where this browser's session stands, from `get_current_account`, then
+ * `children` (the route adds the featured dhikr collections, from another feature).
+ */
+export function WelcomePage({ children }: { children?: ReactNode }): ReactElement {
   const { t } = useTranslation();
   const { notice } = route.useSearch();
   return (
-    <main className="mx-auto flex max-w-content flex-col items-center gap-2xl px-page-margin py-5xl text-center">
-      <LogoMark />
-      <h1 className="text-title text-on-surface">{t("app.title")}</h1>
-      <FormNotice message={notice === undefined ? null : t(`home.notice.${notice}`)} />
-      <SessionStatus />
+    <main className="mx-auto flex w-full max-w-content flex-col gap-5xl pt-5xl pb-page-margin">
+      <div className="flex flex-col items-center gap-2xl px-page-margin text-center">
+        <LogoMark />
+        <h1 className="text-title text-on-surface">{t("app.title")}</h1>
+        <FormNotice message={notice === undefined ? null : t(`home.notice.${notice}`)} />
+        <SessionStatus />
+      </div>
+      {children}
     </main>
   );
 }

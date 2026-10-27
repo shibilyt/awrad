@@ -87,13 +87,13 @@ export function Button({
   );
 }
 
+/** A text button's look, shared with `TextButtonLink` (a text button that navigates). */
+export const TEXT_BUTTON = cx("inline-flex min-h-touch-target items-center rounded-xs text-label text-accent", STATES);
+
 /** A link-like action (View All): no fill, `accent`, `label` style, `touchTarget` tall. */
 export function TextButton({ children, ...props }: AriaProps & { children: ReactNode }): ReactElement {
   return (
-    <AriaButton
-      {...props}
-      className={cx("inline-flex min-h-touch-target items-center rounded-xs text-label text-accent", STATES)}
-    >
+    <AriaButton {...props} className={TEXT_BUTTON}>
       {children}
     </AriaButton>
   );
@@ -133,10 +133,21 @@ export function RoundButton({
       {...props}
       className={cx("flex size-touch-target shrink-0 items-center justify-center rounded-round-button", STATES)}
     >
-      <span className="flex size-round-button-small items-center justify-center rounded-round-button bg-primary text-on-primary">
-        <ButtonIcon size="small" />
-      </span>
+      <SmallRoundIcon icon={ButtonIcon} />
     </AriaButton>
+  );
+}
+
+/**
+ * The visible part of a small round button: a `roundButtonSmall` (32) `primary` circle with an
+ * `onPrimary` `iconSmall`. For a press target bigger than the button, such as the arrow on a
+ * collection tile, where the whole tile is the link.
+ */
+export function SmallRoundIcon({ icon: ButtonIcon }: { icon: Icon }): ReactElement {
+  return (
+    <span className="flex size-round-button-small shrink-0 items-center justify-center rounded-round-button bg-primary text-on-primary">
+      <ButtonIcon size="small" />
+    </span>
   );
 }
 
