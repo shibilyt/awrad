@@ -106,6 +106,7 @@ No fill; `onSurface` icon at `icon` (24); a `touchTarget` (48) area. Used for ba
 | Text | `input` style, `onSurface`; placeholder `onSurfaceVariant` |
 | Focus | Cursor only on mobile; the web adds the `focusRing` |
 | Error | `fieldError` stroke in `error`, with the message below in `caption` style, `error` colour. The border never appears without a message |
+| Password | A trailing icon button toggles `show` / `hide`, with a localized label |
 | Supporting text | Below, `caption`, `onSurfaceVariant` |
 
 Fields own no Material label layout: on Android this replaces the Material text field, so the field is exactly 56.
@@ -114,8 +115,8 @@ Fields own no Material label layout: on Android this replaces the Material text 
 
 - **Box:** `checkbox` size (20), `checkbox` shape (4), with a 48 touch target. The label (`body`) follows, `md` gap.
 - **Unticked:** the `checkbox` stroke in `outlineStrong`.
-- **Ticked:** a `primary` fill and an `onPrimary` tick.
-- **Motion:** `select`; on mobile the tick draws in with `spatial`.
+- **Ticked:** a `primary` fill and the `check` icon in `onPrimary`.
+- **Motion:** `select`; on mobile the tick is revealed from the leading edge with `spatial`.
 
 ### Switch
 
