@@ -1,16 +1,22 @@
 package app.awrad.feature.account
 
 import android.text.BidiFormatter
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradDialog
 import app.awrad.core.designsystem.component.AwradRowButton
 import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.theme.AwradTheme
 import java.util.Locale
 
@@ -34,6 +40,24 @@ internal fun BodyText(text: String, modifier: Modifier = Modifier) {
         style = AwradTheme.type.body,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+}
+
+/** Body text that says practice stays on this device, led by the `phone` icon. */
+@Composable
+internal fun DeviceNote(text: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.inlineGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = AwradIcons.Phone,
+            contentDescription = null,
+            modifier = Modifier.size(AwradTheme.sizes.iconSmall),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        BodyText(text = text, modifier = Modifier.weight(1f))
+    }
 }
 
 /** Sends a new code; shows the seconds left until it may. */

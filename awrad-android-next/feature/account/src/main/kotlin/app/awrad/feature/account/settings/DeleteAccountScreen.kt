@@ -11,6 +11,7 @@ import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.feature.account.AccountPage
 import app.awrad.feature.account.BodyText
 import app.awrad.feature.account.ConfirmDialog
+import app.awrad.feature.account.DeviceNote
 import app.awrad.feature.account.PasswordField
 import app.awrad.feature.account.R
 import app.awrad.feature.account.message
@@ -45,7 +46,7 @@ internal fun DeleteAccountScreen(
         status = pageStatus(error = state.error?.message(), notice = null),
     ) {
         BodyText(text = stringResource(R.string.account_delete_what_goes))
-        BodyText(text = stringResource(R.string.account_delete_what_stays))
+        DeviceNote(text = stringResource(R.string.account_delete_what_stays))
         BodyText(text = stringResource(R.string.account_delete_sessions))
         PasswordField(
             value = state.password,
