@@ -34,7 +34,7 @@ Applies inside `awrad-ios-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
 ## Validation
 
 ```bash
-scripts/validate        # Xcode version, module rules, translations, Hijri table and colour freshness, swift format, SwiftLint, package build + tests, app build
+scripts/validate        # Xcode version, module rules, translations, Hijri table, colour and font freshness, swift format, SwiftLint, package build + tests, app build
 swift format -i -r AwradKit/Sources AwradKit/Tests AwradKit/Package.swift AwradNext   # fix layout
 scripts/generate-hijri-table.py   # regenerate AwradDomain/UmmAlQuraTable.swift after contracts/hijri-calendar changes
 scripts/generate-colors.py        # regenerate AwradColors.swift and AccentColor after contracts/design-tokens changes
