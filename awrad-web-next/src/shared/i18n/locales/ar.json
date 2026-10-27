@@ -184,6 +184,63 @@
     "back": "رجوع",
     "more": "خيارات أخرى",
     "loading": "جارٍ التحميل",
-    "stepOf": "الخطوة {{current}} من {{total}}"
+    "stepOf": "الخطوة {{current}} من {{total}}",
+    "clearSearch": "مسح البحث"
+  },
+  "nav": {
+    "label": "التنقل الرئيسي",
+    "home": "الرئيسية",
+    "library": "المكتبة"
+  },
+  "library": {
+    "title": "المكتبة",
+    "featured": "مجموعات أذكار مختارة",
+    "viewAll": "عرض الكل",
+    "collections": "المجموعات",
+    "allDhikrs": "كل الأذكار",
+    "dhikrCount_zero": "لا أذكار",
+    "dhikrCount_one": "ذكر واحد",
+    "dhikrCount_two": "ذكران",
+    "dhikrCount_few": "{{count}} أذكار",
+    "dhikrCount_many": "{{count}} ذكرًا",
+    "dhikrCount_other": "{{count}} ذكر",
+    "search": {
+      "label": "ابحث في الأذكار",
+      "results_zero": "لم يُعثر على أذكار",
+      "results_one": "عُثر على ذكر واحد",
+      "results_two": "عُثر على ذكرين",
+      "results_few": "عُثر على {{count}} أذكار",
+      "results_many": "عُثر على {{count}} ذكرًا",
+      "results_other": "عُثر على {{count}} ذكر",
+      "resultsLabel": "نتائج البحث",
+      "empty": "لا توجد أذكار تطابق «{{query}}»",
+      "emptyHint": "جرّب كتابة أخرى، أو ابحث بالعربية."
+    },
+    "notFound": {
+      "title": "غير موجود في المكتبة",
+      "collection": "هذه المجموعة غير موجودة في المكتبة. ربما الرابط قديم أو فيه خطأ.",
+      "dhikr": "هذا الذكر غير موجود في المكتبة. ربما الرابط قديم أو فيه خطأ.",
+      "back": "الذهاب إلى المكتبة"
+    },
+    "detail": {
+      "transliteration": "النطق بالحروف اللاتينية",
+      "translation": "الترجمة",
+      "tags": "الوسوم",
+      "virtues": "الفضائل",
+      "play": "تشغيل الصوت",
+      "pause": "إيقاف الصوت مؤقتًا",
+      "position": "موضع التشغيل",
+      "time": "{{elapsed}} / {{duration}}",
+      "audioFailed": "تعذّر تشغيل الصوت. تحقّق من اتصالك وحاول مرة أخرى."
+    },
+    "reference": {
+      "quran": "القرآن {{place}}",
+      "graded": "{{name}} · {{grade}}",
+      "volume": "ج {{volume}}",
+      "page": "ص {{page}}",
+      "separator": "، ",
+      "withNote": "{{name}} ({{note}})",
+      "list": "؛ "
+    }
   }
 }

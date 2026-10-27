@@ -309,6 +309,19 @@ Use this format:
 - Evidence: `contracts/design-tokens/v1/README.md`
 - Commit: see git log
 
+### 2026-10-27 — Slice 3a: dhikr catalog and library
+
+- Area: Cross-project
+- Change:
+  - A dhikr is one foundational entity (ADR-2026-10-27): kind, Arabic, per-language title, transliteration and translation, aliases, catalog tags, at most one audio, typed references, and virtues that must cite references.
+  - Built-ins come only from `contracts/dhikr-catalog/v1/catalog.json` (113 dhikrs, 5 collections). Each app bundles a copy with a drift check. Collections are data, and categories are gone. Audio is on the Cloudflare R2 bucket at `dhikrs.awrad.app`.
+  - Search follows two shared fixture files (normalization and ranking). Every platform passes them unedited.
+  - Library, collection and dhikr detail screens on Android, iOS and web, with one layout spec (`contracts/design-system/v1/components.md`). The Arabic card holds the player bar, the bottom bar shows only on top-level tabs, and audio stops when leaving the screen or the app.
+  - The server holds a compiled registry of keys, ids and kinds for later goal validation.
+- Open: content review items in `contracts/dhikr-catalog/v1/SOURCES.md`, and a reference for the "for debt" virtue.
+- Evidence: `docs/slices/03a-dhikr-catalog.md`
+- Commit: see git log
+
 ### 2026-10-27 — Design system: key components and icons
 
 - Area: Cross-project

@@ -91,12 +91,18 @@ private struct BottomBarItemView<Tab: Hashable>: View {
 
 extension View {
     /// Floats the bottom bar over this view: `pageMargin` from the sides and `lg` above the bottom
-    /// safe area. Scrolling content goes under it and is inset so its last item clears it.
-    public func awradBottomBar<Tab: Hashable>(selection: Binding<Tab>, items: [AwradBottomBarItem<Tab>]) -> some View {
+    /// safe area. Scrolling content goes under it and is inset so its last item clears it. It shows
+    /// only on the top-level tabs: pass `isPresented: false` while a page is pushed, and the bar and
+    /// its inset go away.
+    public func awradBottomBar<Tab: Hashable>(
+        selection: Binding<Tab>, items: [AwradBottomBarItem<Tab>], isPresented: Bool = true
+    ) -> some View {
         safeAreaInset(edge: .bottom, spacing: AwradSpacing.none) {
-            AwradBottomBar(selection: selection, items: items)
-                .padding(.horizontal, AwradSpacing.pageMargin)
-                .padding(.bottom, AwradSpacing.lg)
+            if isPresented {
+                AwradBottomBar(selection: selection, items: items)
+                    .padding(.horizontal, AwradSpacing.pageMargin)
+                    .padding(.bottom, AwradSpacing.lg)
+            }
         }
     }
 

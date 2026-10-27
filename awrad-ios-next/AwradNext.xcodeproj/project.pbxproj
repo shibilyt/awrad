@@ -12,6 +12,7 @@
 		AA0000000000000000000103 /* AwradDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000203 /* AwradDesignSystem */; };
 		AA0000000000000000000104 /* FeatureOnboarding in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000204 /* FeatureOnboarding */; };
 		AA0000000000000000000105 /* FeatureAccount in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000205 /* FeatureAccount */; };
+		AA0000000000000000000106 /* FeatureLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = AA0000000000000000000206 /* FeatureLibrary */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -36,6 +37,7 @@
 				AA0000000000000000000103 /* AwradDesignSystem in Frameworks */,
 				AA0000000000000000000104 /* FeatureOnboarding in Frameworks */,
 				AA0000000000000000000105 /* FeatureAccount in Frameworks */,
+				AA0000000000000000000106 /* FeatureLibrary in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,6 +85,7 @@
 				AA0000000000000000000203 /* AwradDesignSystem */,
 				AA0000000000000000000204 /* FeatureOnboarding */,
 				AA0000000000000000000205 /* FeatureAccount */,
+				AA0000000000000000000206 /* FeatureLibrary */,
 			);
 			productName = AwradNext;
 			productReference = AA0000000000000000000301 /* AwradNext.app */;
@@ -311,6 +314,10 @@
 		AA0000000000000000000205 /* FeatureAccount */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = FeatureAccount;
+		};
+		AA0000000000000000000206 /* FeatureLibrary */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = FeatureLibrary;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

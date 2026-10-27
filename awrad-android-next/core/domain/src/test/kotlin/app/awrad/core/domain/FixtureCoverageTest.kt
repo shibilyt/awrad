@@ -49,4 +49,15 @@ class FixtureCoverageTest {
             FixtureRunner.rules(FixtureModel.ACCOUNT_MODEL),
         )
     }
+
+    @Test
+    fun `every dhikr-catalog rule file has a runner`() {
+        assertEquals(
+            setOf(
+                "dhikr_search_normalization", // dhikr.DhikrSearchNormalizationFixtureTest
+                "dhikr_search", // dhikr.DhikrSearchFixtureTest
+            ),
+            FixtureRunner.rules(FixtureModel.DHIKR_CATALOG),
+        )
+    }
 }

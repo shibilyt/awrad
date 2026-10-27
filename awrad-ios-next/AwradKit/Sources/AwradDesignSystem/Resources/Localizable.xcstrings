@@ -392,6 +392,89 @@
         }
       }
     },
+    "gallery.dhikr_count" : {
+      "comment" : "Gallery sample: the number of dhikrs on a collection tile.",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا أذكار"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ذكر واحد"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ذكران"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld أذكار"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ذكرًا"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ذكر"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld dhikr"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld dhikrs"
+                }
+              }
+            }
+          }
+        },
+        "ml" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ദിക്ർ"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ദിക്റുകൾ"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "gallery.dialog_body" : {
       "comment" : "Sample text in the debug-only component gallery.",
       "localizations" : {

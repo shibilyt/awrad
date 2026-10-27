@@ -135,4 +135,7 @@ public object AwradSizes {
 
     /** The bar under the selected segmented pill: 4. */
     public val tabIndicatorHeight: Dp = 4.dp
+
+    /** Width and height of a collection tile (Home, Library): 128. */
+    public val collectionTile: Dp = 128.dp
 }

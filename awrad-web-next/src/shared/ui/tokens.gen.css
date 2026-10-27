@@ -82,6 +82,7 @@
   --awrad-size-step-dot: 8px;
   --awrad-size-tab-indicator-width: 24px;
   --awrad-size-tab-indicator-height: 4px;
+  --awrad-size-collection-tile: 128px;
 
   /* Text styles (typography.json), in rem (1rem = 16px) so they follow the browser's text size. */
   --awrad-text-large-title-size: 2.125rem;
@@ -127,6 +128,14 @@
   --awrad-text-quran-line-height: 2.75rem;
   --awrad-text-quran-weight: 400;
   --awrad-text-quran-font-family: var(--font-arabic);
+  --awrad-text-quran-line-size: 1.125rem;
+  --awrad-text-quran-line-line-height: 2rem;
+  --awrad-text-quran-line-weight: 400;
+  --awrad-text-quran-line-font-family: var(--font-arabic);
+  --awrad-text-name-of-allah-size: 2.5rem;
+  --awrad-text-name-of-allah-line-height: 4rem;
+  --awrad-text-name-of-allah-weight: 400;
+  --awrad-text-name-of-allah-font-family: var(--font-arabic);
 
   /* Motion (motion.json). The web uses only fades: durations, easings, its motions and reducedMotion. */
   --awrad-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
@@ -223,6 +232,7 @@
   --spacing-step-dot: var(--awrad-size-step-dot);
   --spacing-tab-indicator-width: var(--awrad-size-tab-indicator-width);
   --spacing-tab-indicator-height: var(--awrad-size-tab-indicator-height);
+  --spacing-collection-tile: var(--awrad-size-collection-tile);
   --container-*: initial;
   --container-content: var(--awrad-size-content-max-width);
   --container-dialog: var(--awrad-size-dialog-max-width);
@@ -269,6 +279,12 @@
   --text-quran: var(--awrad-text-quran-size);
   --text-quran--line-height: var(--awrad-text-quran-line-height);
   --text-quran--font-weight: var(--awrad-text-quran-weight);
+  --text-quran-line: var(--awrad-text-quran-line-size);
+  --text-quran-line--line-height: var(--awrad-text-quran-line-line-height);
+  --text-quran-line--font-weight: var(--awrad-text-quran-line-weight);
+  --text-name-of-allah: var(--awrad-text-name-of-allah-size);
+  --text-name-of-allah--line-height: var(--awrad-text-name-of-allah-line-height);
+  --text-name-of-allah--font-weight: var(--awrad-text-name-of-allah-weight);
   --font-weight-*: initial;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -320,6 +336,12 @@
 }
 @utility text-quran {
   font-family: var(--awrad-text-quran-font-family);
+}
+@utility text-quran-line {
+  font-family: var(--awrad-text-quran-line-font-family);
+}
+@utility text-name-of-allah {
+  font-family: var(--awrad-text-name-of-allah-font-family);
 }
 
 /* Elevation (shape.json): shadow-<elevation> is the only shadow class. */

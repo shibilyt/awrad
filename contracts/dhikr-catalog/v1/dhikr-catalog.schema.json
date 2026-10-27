@@ -1,0 +1,500 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:awrad:dhikr-catalog:1",
+  "title": "Awrad built-in dhikr catalog v1",
+  "description": "The built-in dhikrs and the collections that list them. Apps generate their built-in content from catalog.json at build time. $defs/dhikr is the dhikr shape, for reuse by custom dhikrs. Identity, fallback and contentRevision rules: README.md. tools/check-dhikr-catalog.mjs adds the checks a schema can't express.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "contentRevision",
+    "dhikrs",
+    "collections",
+    "tags"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "contentRevision": {
+      "description": "Bumped on every content change to this file; apps compare it to refresh stored built-in content.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "dhikrs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/dhikr"
+      }
+    },
+    "collections": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/collection"
+      }
+    },
+    "tags": {
+      "description": "Curated topic tags shipped with the catalog (separate from users' own tags). Dhikrs reference them by key.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tag"
+      }
+    }
+  },
+  "$defs": {
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "uuid": {
+      "description": "Lowercase UUIDv4.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "fullText": {
+      "description": "Localized text that every language must carry.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "en",
+        "ar",
+        "ml"
+      ],
+      "properties": {
+        "en": {
+          "$ref": "#/$defs/text"
+        },
+        "ar": {
+          "$ref": "#/$defs/text"
+        },
+        "ml": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "localText": {
+      "description": "Localized text where only en is required; apps fall back to en.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "en"
+      ],
+      "properties": {
+        "en": {
+          "$ref": "#/$defs/text"
+        },
+        "ar": {
+          "$ref": "#/$defs/text"
+        },
+        "ml": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "aliasList": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/text"
+      }
+    },
+    "dhikr": {
+      "description": "One dhikr: a single text recited as a unit. Occasions, counts and sequences belong to practices and wirds, not here.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "key",
+        "kind",
+        "arabic",
+        "title",
+        "transliteration",
+        "translation",
+        "audio",
+        "references",
+        "virtues"
+      ],
+      "properties": {
+        "id": {
+          "description": "Immutable; for built-ins, paired with key in contracts/progress-model/v1/builtin-dhikrs.json (ADR-2026-07-13).",
+          "$ref": "#/$defs/uuid"
+        },
+        "key": {
+          "description": "Immutable catalog key.",
+          "$ref": "#/$defs/key"
+        },
+        "kind": {
+          "description": "Drives rendering.",
+          "enum": [
+            "quran",
+            "dhikr",
+            "dua",
+            "salawat",
+            "name_of_allah"
+          ]
+        },
+        "arabic": {
+          "description": "The text as recited, with harakat. Line breaks are meaningful (one ayah per line for Qur'an); no ayah numbers or decorative separators.",
+          "$ref": "#/$defs/text"
+        },
+        "title": {
+          "$ref": "#/$defs/fullText"
+        },
+        "transliteration": {
+          "description": "One per supported language, in that language's script. Arabic has none.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "en"
+          ],
+          "properties": {
+            "en": {
+              "$ref": "#/$defs/text"
+            },
+            "ml": {
+              "$ref": "#/$defs/text"
+            }
+          }
+        },
+        "aliases": {
+          "description": "Extra search terms per language: spelling variants and common names people type. Not shown as text.",
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "en": {
+              "$ref": "#/$defs/aliasList"
+            },
+            "ar": {
+              "$ref": "#/$defs/aliasList"
+            },
+            "ml": {
+              "$ref": "#/$defs/aliasList"
+            }
+          }
+        },
+        "tags": {
+          "description": "Catalog tag keys (topics such as debt). Custom dhikrs use user tags instead.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/key"
+          }
+        },
+        "translation": {
+          "$ref": "#/$defs/localText"
+        },
+        "audio": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/audio"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/reference"
+          }
+        },
+        "virtues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/virtue"
+          }
+        }
+      }
+    },
+    "audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "style",
+        "repetitions"
+      ],
+      "properties": {
+        "url": {
+          "description": "Full https URL of the recording. Built-in audio is hosted in the Awrad Cloudflare R2 bucket, served at https://dhikrs.awrad.app/.",
+          "type": "string",
+          "format": "uri",
+          "pattern": "^https://dhikrs\\.awrad\\.app/[A-Za-z0-9._-]+\\.mp3$"
+        },
+        "reciter": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "name"
+          ],
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/localText"
+            }
+          }
+        },
+        "style": {
+          "enum": [
+            "recitation",
+            "melodic",
+            "teaching"
+          ]
+        },
+        "repetitions": {
+          "description": "How many times the dhikr is recited in one play of the file.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "byteSize": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mimeType": {
+          "type": "string",
+          "pattern": "^audio/[a-z0-9.+-]+$"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "attribution": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "reference": {
+      "description": "Where a text or virtue comes from. id is unique within its dhikr; virtues point at it.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/quranReference"
+        },
+        {
+          "$ref": "#/$defs/hadithReference"
+        },
+        {
+          "$ref": "#/$defs/bookReference"
+        },
+        {
+          "$ref": "#/$defs/shaykhReference"
+        },
+        {
+          "$ref": "#/$defs/otherReference"
+        }
+      ]
+    },
+    "quranReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "surah",
+        "ayahStart",
+        "ayahEnd"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/key"
+        },
+        "type": {
+          "const": "quran"
+        },
+        "surah": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 114
+        },
+        "ayahStart": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ayahEnd": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "hadithReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "collection"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/key"
+        },
+        "type": {
+          "const": "hadith"
+        },
+        "collection": {
+          "$ref": "#/$defs/text"
+        },
+        "number": {
+          "$ref": "#/$defs/text"
+        },
+        "narrator": {
+          "$ref": "#/$defs/text"
+        },
+        "grade": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "bookReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "title"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/key"
+        },
+        "type": {
+          "const": "book"
+        },
+        "title": {
+          "$ref": "#/$defs/text"
+        },
+        "author": {
+          "$ref": "#/$defs/text"
+        },
+        "volume": {
+          "$ref": "#/$defs/text"
+        },
+        "page": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "shaykhReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "name"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/key"
+        },
+        "type": {
+          "const": "shaykh"
+        },
+        "name": {
+          "$ref": "#/$defs/text"
+        },
+        "note": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "otherReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/key"
+        },
+        "type": {
+          "const": "other"
+        },
+        "text": {
+          "$ref": "#/$defs/text"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        }
+      }
+    },
+    "virtue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "text",
+        "references"
+      ],
+      "properties": {
+        "text": {
+          "$ref": "#/$defs/localText"
+        },
+        "references": {
+          "description": "Ids of this dhikr's references. A virtue without a reference doesn't belong in the catalog.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/key"
+          }
+        }
+      }
+    },
+    "collection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "title",
+        "dhikrs"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "title": {
+          "$ref": "#/$defs/fullText"
+        },
+        "dhikrs": {
+          "description": "Ordered dhikr keys. A dhikr may appear in several collections.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/key"
+          }
+        }
+      }
+    },
+    "tag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "title"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "title": {
+          "$ref": "#/$defs/fullText"
+        }
+      }
+    }
+  }
+}

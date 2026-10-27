@@ -184,6 +184,55 @@
     "back": "Back",
     "more": "More options",
     "loading": "Loading",
-    "stepOf": "Step {{current}} of {{total}}"
+    "stepOf": "Step {{current}} of {{total}}",
+    "clearSearch": "Clear search"
+  },
+  "nav": {
+    "label": "Main navigation",
+    "home": "Home",
+    "library": "Library"
+  },
+  "library": {
+    "title": "Library",
+    "featured": "Featured dhikr collections",
+    "viewAll": "View all",
+    "collections": "Collections",
+    "allDhikrs": "All dhikrs",
+    "dhikrCount_one": "{{count}} dhikr",
+    "dhikrCount_other": "{{count}} dhikrs",
+    "search": {
+      "label": "Search dhikrs",
+      "results_one": "{{count}} dhikr found",
+      "results_other": "{{count}} dhikrs found",
+      "resultsLabel": "Search results",
+      "empty": "No dhikrs match “{{query}}”",
+      "emptyHint": "Try another spelling, or search in Arabic."
+    },
+    "notFound": {
+      "title": "Not in the library",
+      "collection": "This collection isn't in the library. The link may be old or mistyped.",
+      "dhikr": "This dhikr isn't in the library. The link may be old or mistyped.",
+      "back": "Go to the library"
+    },
+    "detail": {
+      "transliteration": "Transliteration",
+      "translation": "Translation",
+      "tags": "Tags",
+      "virtues": "Virtues",
+      "play": "Play audio",
+      "pause": "Pause audio",
+      "position": "Playback position",
+      "time": "{{elapsed}} / {{duration}}",
+      "audioFailed": "Couldn't play the audio. Check your connection and try again."
+    },
+    "reference": {
+      "quran": "Qur'an {{place}}",
+      "graded": "{{name}} · {{grade}}",
+      "volume": "vol. {{volume}}",
+      "page": "p. {{page}}",
+      "separator": ", ",
+      "withNote": "{{name}} ({{note}})",
+      "list": "; "
+    }
   }
 }

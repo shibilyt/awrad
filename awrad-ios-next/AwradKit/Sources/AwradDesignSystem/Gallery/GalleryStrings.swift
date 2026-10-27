@@ -40,6 +40,11 @@
         static let addGoal = text("gallery.add_goal", "Add goal")
         static let openCollection = text("gallery.open_collection", "Open collection")
 
+        /// A collection tile's count (plural variants in the catalog).
+        static func dhikrCount(_ count: Int) -> LocalizedStringResource {
+            LocalizedStringResource("gallery.dhikr_count", defaultValue: "\(count) dhikrs", bundle: AwradStrings.bundle)
+        }
+
         static let email = text("gallery.email", "Email")
         static let emailPrompt = text("gallery.email_prompt", "Your email address")
         static let emailSupport = text("gallery.email_support", "We'll send a code to this address.")

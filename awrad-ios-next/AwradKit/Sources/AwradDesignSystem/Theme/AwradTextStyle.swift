@@ -62,6 +62,14 @@ extension AwradTextStyle {
     public static let quran = AwradTextStyle(
         name: "quran", size: 24, lineHeight: 44, weight: 400,
         face: .naskhRegular, relativeTo: .title2, tabularNumbers: false)
+    /// One line of Qur'anic or dhikr Arabic in a list row; never interface text. 18/32, weight 400. Noto Naskh Arabic.
+    public static let quranLine = AwradTextStyle(
+        name: "quranLine", size: 18, lineHeight: 32, weight: 400,
+        face: .naskhRegular, relativeTo: .body, tabularNumbers: false)
+    /// A name of Allah shown on its own (dhikr detail); never interface text. 40/64, weight 400. Noto Naskh Arabic.
+    public static let nameOfAllah = AwradTextStyle(
+        name: "nameOfAllah", size: 40, lineHeight: 64, weight: 400,
+        face: .naskhRegular, relativeTo: .largeTitle, tabularNumbers: false)
 
     /// Every style, in contract order.
     static let all: [AwradTextStyle] = [
@@ -79,5 +87,7 @@ extension AwradTextStyle {
         navLabel,
         counter,
         quran,
+        quranLine,
+        nameOfAllah,
     ]
 }

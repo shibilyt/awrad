@@ -97,6 +97,32 @@ The day used to evaluate a goal, from the current instant, the device's timezone
 Two devices may show different prayer-relative context without changing the account policy or historical count dates.
 _Avoid_: Server date
 
+## Dhikr language
+
+**Dhikr**:
+A single text of remembrance: one entity with a kind, its Arabic, and a title, transliteration and translation per language. It is the building block that goals, wirds and practices use; it holds no counts, occasions or sequences itself.
+_Avoid_: Practice, wird (for a single dhikr)
+
+**Kind**:
+What a dhikr is, which decides how it is shown: `quran`, `dhikr`, `dua`, `salawat` or `name_of_allah`.
+
+**Catalog**:
+The built-in dhikrs, collections and tags shipped with every app, from `contracts/dhikr-catalog/v1/catalog.json`. Built-ins are read-only; their keys and IDs never change.
+
+**Collection**:
+An ordered list of dhikrs with a translated title, such as Asma-ul Husna or Swalaths. A dhikr can be in several collections.
+_Avoid_: Category
+
+**Reference**:
+Where a dhikr or a virtue comes from: the Qur'an (surah and ayahs), a hadith (collection, number, grade), a book, a shaykh, or another source.
+
+**Virtue**:
+A benefit of reciting a dhikr. Every virtue cites at least one reference.
+_Avoid_: Benefit (in product text, unless sourced)
+
+**Alias**:
+Another spelling or name people search for a dhikr by, per language (Istighfar, Astaghfirullah).
+
 ## Account language
 
 **Account**:

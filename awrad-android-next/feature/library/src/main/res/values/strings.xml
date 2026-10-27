@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_title">Library</string>
+    <string name="library_search_placeholder">Search dhikrs</string>
+    <string name="library_collections">Collections</string>
+    <string name="library_all_dhikrs">All dhikrs</string>
+    <string name="library_no_results">Nothing matches “%1$s”</string>
+    <string name="library_no_results_hint">Try another spelling, or the dhikr’s words in Arabic.</string>
+    <string name="library_featured_collections">Featured dhikr collections</string>
+    <string name="library_view_all">View all</string>
+    <string name="library_missing">This dhikr or collection isn’t in the library.</string>
+    <plurals name="library_dhikr_count">
+        <item quantity="one">%d dhikr</item>
+        <item quantity="other">%d dhikrs</item>
+    </plurals>
+
+    <!-- Dhikr detail -->
+    <string name="library_quran">Qur’an</string>
+    <string name="library_transliteration">Transliteration</string>
+    <string name="library_translation">Translation</string>
+    <string name="library_tags">Tags</string>
+    <string name="library_virtues">Virtues</string>
+    <string name="library_open_source">Open the source</string>
+    <string name="library_play">Play</string>
+    <string name="library_pause">Pause</string>
+    <string name="library_audio_failed">The recording couldn’t play. Check your connection and try again.</string>
+    <string name="library_audio_elapsed">%1$s / %2$s</string>
+</resources>

@@ -52,8 +52,8 @@ export default tseslint.config(
     },
   },
   {
-    // Generated (scripts/generate-icons.mjs): one component per shared icon, so its length follows icons.json.
-    files: ["src/**/*.gen.tsx"],
+    // Generated (scripts/generate-icons.mjs, generate-catalog.mjs): their length follows icons.json and catalog.json.
+    files: ["src/**/*.gen.{ts,tsx}"],
     rules: { "max-lines": "off" },
   },
   {

@@ -10,11 +10,24 @@ final class AppComposition {
     let onboardingStatus: any OnboardingStatusStore
     let goals: any GoalRepository
     let account: any AccountService
+    /// The built-in dhikrs, decoded once from the bundled copy of the contract's catalog.
+    let catalog: DhikrCatalog
+    /// The app language, which picks the catalog's text.
+    let language: CatalogLanguage
+    /// A new audio player for each dhikr screen.
+    let makeAudioPlayer: @MainActor () -> any DhikrAudioPlayer
 
-    init(onboardingStatus: any OnboardingStatusStore, goals: any GoalRepository, account: any AccountService) {
+    init(
+        onboardingStatus: any OnboardingStatusStore, goals: any GoalRepository, account: any AccountService,
+        catalog: DhikrCatalog, language: CatalogLanguage,
+        makeAudioPlayer: @escaping @MainActor () -> any DhikrAudioPlayer
+    ) {
         self.onboardingStatus = onboardingStatus
         self.goals = goals
         self.account = account
+        self.catalog = catalog
+        self.language = language
+        self.makeAudioPlayer = makeAudioPlayer
     }
 
     static func live() -> AppComposition {
@@ -24,6 +37,13 @@ final class AppComposition {
         } catch {
             // Can't continue without a store; `persistent()` already recreated it once.
             fatalError("Couldn't open the Awrad store: \(error)")
+        }
+        let catalog: DhikrCatalog
+        do {
+            catalog = try DhikrCatalog.bundled()
+        } catch {
+            // The bundled copy is checked against the contract and decoded in tests.
+            fatalError("Couldn't read the bundled dhikr catalog: \(error)")
         }
         let language = appLanguage()
         return AppComposition(
@@ -36,7 +56,10 @@ final class AppComposition {
                 marker: UserDefaultsInstallationMarker(),
                 deviceName: DeviceName.current(),
                 language: { language }
-            )
+            ),
+            catalog: catalog,
+            language: CatalogLanguage(languageCode: language),
+            makeAudioPlayer: { AVDhikrAudioPlayer() }
         )
     }
 

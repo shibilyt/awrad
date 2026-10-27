@@ -12,6 +12,8 @@ dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:network"))
     implementation(libs.androidx.datastore.preferences)
+    // Dhikr audio: ExoPlayer streams the catalog's recordings (ExoAudioPlayer).
+    implementation(libs.media3.exoplayer)
     testImplementation(libs.kotlinx.serialization.json)
 }
 
@@ -21,3 +23,29 @@ tasks.withType<Test>().configureEach {
         .withPropertyName("apiSpec")
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
+
+// The shared dhikr catalog ships as a committed asset (ARCHITECTURE.md, "Dhikr catalog").
+fun DhikrCatalogTask.configureCatalog(verify: Boolean) {
+    contract.set(rootDir.resolve("../contracts/dhikr-catalog/v1/catalog.json"))
+    asset.set(file("src/main/assets/dhikr-catalog.json"))
+    verifyOnly.set(verify)
+    regenerateCommand.set("./gradlew :core:data:generateDhikrCatalog")
+}
+
+tasks.register<DhikrCatalogTask>("generateDhikrCatalog") {
+    description = "Regenerates the bundled dhikr catalog from contracts/dhikr-catalog."
+    configureCatalog(verify = false)
+}
+
+val verifyDhikrCatalog = tasks.register<DhikrCatalogTask>("verifyDhikrCatalog") {
+    description = "Fails when the bundled dhikr catalog differs from contracts/dhikr-catalog or has unknown keys."
+    group = "verification"
+    configureCatalog(verify = true)
+    // The shape check's own tests (unknown keys, kinds, reference types; the real contract) run with it.
+    dependsOn(gradle.includedBuild("build-logic").task(":convention:test"))
+}
+
+// Like the design tokens: check, the unit tests, lint and detekt all run it, so the validation command catches drift.
+tasks.named("check") { dependsOn(verifyDhikrCatalog) }
+tasks.withType<Test>().configureEach { dependsOn(verifyDhikrCatalog) }
+tasks.matching { it.name.startsWith("lint") || it.name == "detekt" }.configureEach { dependsOn(verifyDhikrCatalog) }

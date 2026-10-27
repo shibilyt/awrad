@@ -11,5 +11,14 @@ defmodule Awrad do
   # Each context sub-boundary is exported with its own exports ({Context, []}).
   use Boundary,
     deps: [],
-    exports: [Mailer, Pruner, Repo, {Accounts, []}, {Goals, []}, {Hijri, []}, {Idempotency, []}]
+    exports: [
+      Mailer,
+      Pruner,
+      Repo,
+      {Accounts, []},
+      {Dhikrs, []},
+      {Goals, []},
+      {Hijri, []},
+      {Idempotency, []}
+    ]
 end

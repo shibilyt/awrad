@@ -690,6 +690,39 @@ The frozen apps verified emails and reset passwords with links, and the web also
 
 The verification-link and request-id parts of the frozen implementation. ADR-2026-07-12 and ADR-2026-10-15 otherwise stand.
 
+## ADR-2026-10-27: A dhikr is one foundational entity, from one shared catalog
+
+Status: Proposed
+
+### Context
+
+Built-in dhikrs were hand-copied into Android, iOS and the server and drifted: the server text was truncated and untitled, Android's translations repeated titles, and only iOS had Arabic and Malayalam. Collections were code over eleven categories and grouped differently per platform. Benefits often had no source.
+
+### Decision
+
+- **One entity.** A dhikr is a single text with `kind` (`quran`, `dhikr`, `dua`, `salawat`, `name_of_allah`), Arabic, per-language title, transliteration and translation, optional search aliases, curated catalog tags, at most one audio recording, typed references (`quran`, `hadith`, `book`, `shaykh`, `other`) and virtues that must cite references. Sequences, occasions and recommended counts belong to wirds, practices and goals, never to the dhikr.
+- **One catalog.** Built-ins live only in `contracts/dhikr-catalog/v1/catalog.json`. Each app generates its content from it at build time and fails on drift. Keys and UUIDs stay as in ADR-2026-07-13.
+- **Collections are data.** A collection is an ordered list of dhikr keys, and a dhikr can be in several. Categories are dropped.
+- **Naming.** A dhikr without an established name is titled by its opening words, never a number; local names are aliases.
+- **Display language.** The app language selects the localized fields, falling back to English.
+- **Custom dhikrs.** They use the same `$defs/dhikr` shape (slice 3b).
+
+### Consequences
+
+- A content fix is one catalog change and a rebuild; a later server-updatable catalog can reuse `contentRevision`.
+- Unsourced benefits stay out until sourced.
+- The frozen `progress-model` Asma-ul Husna file is superseded as a content source.
+
+### Evidence
+
+- `contracts/dhikr-catalog/v1/` (catalog, schema, `SOURCES.md`)
+- `contracts/tools/check-dhikr-catalog.mjs`
+- `docs/slices/03a-dhikr-catalog.md`
+
+### Supersedes
+
+None. Extends ADR-2026-07-13 (identity) and the canonical Asma-ul Husna collection ADR.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

@@ -11,6 +11,21 @@
     <string name="gallery_section_containers">കണ്ടെയ്‌നറുകൾ</string>
     <string name="gallery_section_navigation">നാവിഗേഷൻ</string>
     <string name="gallery_section_icons">ഐക്കണുകൾ</string>
+    <string name="gallery_section_library">ലൈബ്രറി</string>
+    <string name="gallery_collection_tiles">ശേഖര ടൈലുകൾ</string>
+    <string name="gallery_collection_daily">ദൈനംദിന അടിസ്ഥാനങ്ങൾ</string>
+    <string name="gallery_collection_long">അസ്മാഉൽ ഹുസ്ന, അല്ലാഹുവിന്റെ ഉത്തമ നാമങ്ങൾ</string>
+    <plurals name="gallery_dhikr_count">
+        <item quantity="one">%d ദിക്ർ</item>
+        <item quantity="other">%d ദിക്റുകൾ</item>
+    </plurals>
+    <string name="gallery_search_placeholder">ദിക്റുകൾ തിരയുക</string>
+    <string name="gallery_player_buttons">പ്ലേ, ലോഡ് ചെയ്യുന്നു</string>
+    <string name="gallery_play">പ്ലേ ചെയ്യുക</string>
+    <string name="gallery_search_query">അസ്തഗ്ഫിറുല്ലാഹ്</string>
+    <string name="gallery_chips">ചിപ്പുകൾ</string>
+    <string name="gallery_chip_debt">കടം</string>
+    <string name="gallery_chip_morning">പ്രഭാതം</string>
     <string name="gallery_state_disabled">പ്രവർത്തനരഹിതം</string>
     <string name="gallery_state_loading">ലോഡ് ചെയ്യുന്നു</string>
     <string name="gallery_on_card">ഒരു കാർഡിൽ</string>

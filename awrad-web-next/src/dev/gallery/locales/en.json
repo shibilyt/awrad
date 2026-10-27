@@ -9,7 +9,8 @@
     "buttons": "Buttons",
     "inputs": "Inputs",
     "navigation": "Navigation",
-    "icons": "Icons"
+    "icons": "Icons",
+    "library": "Library"
   },
   "specimen": {
     "card": "Card: static, grouped content",
@@ -36,7 +37,10 @@
     "steps": "Step indicator: first, second and last of seven",
     "largeTitle": "Large-title header: scroll the frame and a compact bar appears",
     "bottomBar": "Bottom bar, the second tab selected",
-    "icons": "The shared icon set, by name. Back and forward flip in right to left."
+    "icons": "The shared icon set, by name. Back and forward flip in right to left.",
+    "collectionTile": "Collection tiles: on the page; a long title takes two lines",
+    "collectionTileOnCard": "Collection tiles on a card",
+    "searchField": "Search field: empty, filled (with clear), disabled"
   },
   "sample": {
     "todaysGoals": "Today's goals",
@@ -101,6 +105,11 @@
     "dialogBody": "Its history goes too. This can't be undone.",
     "cancel": "Cancel",
     "delete": "Delete",
-    "onboarding": "Choose your language"
+    "onboarding": "Choose your language",
+    "dailyEssentials": "Daily Essentials",
+    "asmaUlHusna": "Asma-ul Husna",
+    "longCollection": "Salawat for every day of the week",
+    "searchLabel": "Search dhikrs",
+    "searchValue": "astaghfirullah"
   }
 }

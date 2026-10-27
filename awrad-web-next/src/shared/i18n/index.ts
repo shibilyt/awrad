@@ -1,5 +1,5 @@
 import i18next from "i18next";
-import { initReactI18next } from "react-i18next";
+import { initReactI18next, useTranslation } from "react-i18next";
 import ar from "./locales/ar.json";
 import en from "./locales/en.json";
 import ml from "./locales/ml.json";
@@ -23,6 +23,12 @@ export function applyDocumentLanguage(language: Language): void {
 
 export function isLanguage(value: string): value is Language {
   return (LANGUAGES as readonly string[]).includes(value);
+}
+
+/** The UI language, for content that carries its own translations (the dhikr catalog). */
+export function useLanguage(): Language {
+  const { i18n } = useTranslation();
+  return isLanguage(i18n.language) ? i18n.language : "en";
 }
 
 /** The language chosen on an earlier visit, or `null`. Storage can be unavailable (privacy modes). */

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_title">ലൈബ്രറി</string>
+    <string name="library_search_placeholder">ദിക്റുകൾ തിരയുക</string>
+    <string name="library_collections">ശേഖരങ്ങൾ</string>
+    <string name="library_all_dhikrs">എല്ലാ ദിക്റുകളും</string>
+    <string name="library_no_results">“%1$s” എന്നതിന് ഒന്നും കണ്ടെത്തിയില്ല</string>
+    <string name="library_no_results_hint">മറ്റൊരു എഴുത്തുരീതി, അല്ലെങ്കിൽ ദിക്റിന്റെ അറബി വാക്കുകൾ ശ്രമിക്കുക.</string>
+    <string name="library_featured_collections">തിരഞ്ഞെടുത്ത ദിക്ർ ശേഖരങ്ങൾ</string>
+    <string name="library_view_all">എല്ലാം കാണുക</string>
+    <string name="library_missing">ഈ ദിക്റോ ശേഖരമോ ലൈബ്രറിയിൽ ഇല്ല.</string>
+    <plurals name="library_dhikr_count">
+        <item quantity="one">%d ദിക്ർ</item>
+        <item quantity="other">%d ദിക്റുകൾ</item>
+    </plurals>
+
+    <!-- Dhikr detail -->
+    <string name="library_quran">ഖുർആൻ</string>
+    <string name="library_transliteration">ഉച്ചാരണം</string>
+    <string name="library_translation">പരിഭാഷ</string>
+    <string name="library_tags">ടാഗുകൾ</string>
+    <string name="library_virtues">ശ്രേഷ്ഠതകൾ</string>
+    <string name="library_open_source">ഉറവിടം തുറക്കുക</string>
+    <string name="library_play">പ്ലേ ചെയ്യുക</string>
+    <string name="library_pause">താൽക്കാലികമായി നിർത്തുക</string>
+    <string name="library_audio_failed">റെക്കോർഡിംഗ് പ്ലേ ചെയ്യാനായില്ല. കണക്ഷൻ പരിശോധിച്ച് വീണ്ടും ശ്രമിക്കുക.</string>
+    <string name="library_audio_elapsed">%1$s / %2$s</string>
+</resources>

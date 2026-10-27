@@ -130,6 +130,12 @@
   padding-bottom: calc(var(--awrad-size-nav-bar) + var(--awrad-space-lg) + var(--awrad-space-lg));
 }
 
+/* SearchField draws its own clear button, so the browser's own one stays hidden. */
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  appearance: none;
+}
+
 body {
   @apply bg-background font-sans text-body text-on-surface antialiased;
   /* Only the real weights (400, 500, 600, 700): no synthetic bold or italic. */

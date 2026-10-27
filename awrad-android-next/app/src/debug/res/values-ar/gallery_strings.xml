@@ -11,6 +11,25 @@
     <string name="gallery_section_containers">الحاويات</string>
     <string name="gallery_section_navigation">التنقل</string>
     <string name="gallery_section_icons">الأيقونات</string>
+    <string name="gallery_section_library">المكتبة</string>
+    <string name="gallery_collection_tiles">بطاقات المجموعات</string>
+    <string name="gallery_collection_daily">أساسيات يومية</string>
+    <string name="gallery_collection_long">الأسماء الحسنى، أسماء الله الحسنى كلها</string>
+    <plurals name="gallery_dhikr_count">
+        <item quantity="zero">لا أذكار</item>
+        <item quantity="one">ذكر واحد</item>
+        <item quantity="two">ذكران</item>
+        <item quantity="few">%d أذكار</item>
+        <item quantity="many">%d ذكرًا</item>
+        <item quantity="other">%d ذكر</item>
+    </plurals>
+    <string name="gallery_search_placeholder">ابحث في الأذكار</string>
+    <string name="gallery_player_buttons">تشغيل، وجارٍ التحميل</string>
+    <string name="gallery_play">تشغيل</string>
+    <string name="gallery_search_query">أستغفر الله</string>
+    <string name="gallery_chips">الشارات</string>
+    <string name="gallery_chip_debt">الدَّيْن</string>
+    <string name="gallery_chip_morning">الصباح</string>
     <string name="gallery_state_disabled">معطّل</string>
     <string name="gallery_state_loading">جارٍ التحميل</string>
     <string name="gallery_on_card">على بطاقة</string>

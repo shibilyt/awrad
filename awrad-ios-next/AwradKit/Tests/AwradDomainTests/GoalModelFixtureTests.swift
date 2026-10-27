@@ -71,7 +71,7 @@ struct FixtureRunnerTests {
     /// Guards against a parameterized test silently running zero cases.
     @Test(
         arguments: GoalModelRule.allCases.map(\.rawValue) + HijriCalendarRule.allCases.map(\.rawValue)
-            + AccountModelRule.allCases.map(\.rawValue)
+            + AccountModelRule.allCases.map(\.rawValue) + DhikrCatalogRule.allCases.map(\.rawValue)
     )
     func everyImplementedRuleHasAFixtureFileWithCases(_ rule: String) throws {
         let file = try Self.fixtureFile(rule)
@@ -89,6 +89,8 @@ struct FixtureRunnerTests {
         #expect(goalModel == GoalModelRule.allCases.map(\.rawValue).sorted())
         #expect(hijriCalendar == HijriCalendarRule.allCases.map(\.rawValue).sorted())
         #expect(accountModel == AccountModelRule.allCases.map(\.rawValue).sorted())
+        let dhikrCatalog = try FixtureLoader.ruleFiles(model: "dhikr-catalog")
+        #expect(dhikrCatalog == DhikrCatalogRule.allCases.map(\.rawValue).sorted())
     }
 
     @Test func aMissingFileFails() throws {
@@ -127,6 +129,7 @@ struct FixtureRunnerTests {
     private static func fixtureFile(_ rule: String) throws -> URL {
         if let goalModel = GoalModelRule(rawValue: rule) { return try goalModel.fixtureFile() }
         if let account = AccountModelRule(rawValue: rule) { return try account.fixtureFile() }
+        if let catalog = DhikrCatalogRule(rawValue: rule) { return try catalog.fixtureFile() }
         let hijri = try #require(HijriCalendarRule(rawValue: rule), "\(rule) isn't an implemented rule")
         return try hijri.fixtureFile()
     }
