@@ -3,7 +3,7 @@
 The Awrad JSON API, rebuilt contract-first to replace `awrad_server/` (root ADR-2026-10-14).
 - **Stack:** Phoenix 1.8.15 on Elixir 1.20.4 / OTP 29, Ecto with Postgres 18, Bandit.
 - **API only:** no HTML, assets, LiveView or static files.
-- **Status:** the goal rules and the Hijri calendar (slices 1a and 1b), accounts (slice 2a): registration, email verification and password reset by emailed code, mobile device sessions, browser cookie sessions; and account settings (slice 2b): the session list, password and email changes, account deletion. Features arrive in slices (`../docs/rebuild-plan.md`).
+- **Status:** the goal rules and the Hijri calendar (slices 1a and 1b), accounts (slice 2a): registration, email verification and password reset by emailed code, mobile device sessions, browser cookie sessions; and account settings (slice 2b): the session list, password and email changes, account deletion; and the built-in dhikr catalog's identity (slice 3a). Features arrive in slices (`../docs/rebuild-plan.md`).
 
 ## Boundaries
 
@@ -16,6 +16,7 @@ flowchart TD
   hijri["Awrad.Hijri<br/>Hijri calendar (pure)"]
   accounts["Awrad.Accounts<br/>accounts, sessions, codes"]
   idem["Awrad.Idempotency<br/>stored POST results"]
+  dhikrs["Awrad.Dhikrs<br/>built-in catalog identity"]
   secrets["Awrad.Secrets<br/>keys (not re-exported)"]
   app --> web
   app --> domain
@@ -24,6 +25,7 @@ flowchart TD
   domain --- hijri
   domain --- accounts
   domain --- idem
+  domain --- dhikrs
   goals --> hijri
   accounts --> secrets
   idem --> secrets
@@ -33,12 +35,13 @@ flowchart TD
 |---|---|---|
 | `Awrad.Application` (top level) | `Awrad`, `AwradWeb` | – |
 | `AwradWeb` | `Awrad` | `Endpoint`, `Telemetry` |
-| `Awrad` | nothing | `Mailer`, `Pruner`, `Repo`, and each context sub-boundary with its exports (`{Accounts, []}`, `{Goals, []}`, `{Hijri, []}`, `{Idempotency, []}`) |
+| `Awrad` | nothing | `Mailer`, `Pruner`, `Repo`, and each context sub-boundary with its exports (`{Accounts, []}`, `{Dhikrs, []}`, `{Goals, []}`, `{Hijri, []}`, `{Idempotency, []}`) |
 | `Awrad.Accounts` (sub-boundary) | `Awrad` (`Repo`, `Mailer`, `Gettext`), `Awrad.Secrets` | The `Awrad.Accounts` facade, `DeviceSession`, `EmailInput`, `Grant`, `RateLimiter`, `Scope`, `User` |
 | `Awrad.Idempotency` (sub-boundary) | `Awrad`, `Awrad.Secrets` | The facade and `Record` |
 | `Awrad.Secrets` (sub-boundary) | nothing | Its root module, to its siblings only: `Awrad` doesn't re-export it, so `AwradWeb` can't read secrets |
 | `Awrad.Goals` (sub-boundary of `Awrad`) | `Awrad.Hijri` | `Rules` and the goal-model structs (`Goal`, `ActivePeriod`, `PausedRange`, `CountPolicy`, `Session`, `CountEntry`, `Standing`, `SessionStanding`, `DaysPerPeriodStanding`) |
 | `Awrad.Hijri` (sub-boundary of `Awrad`) | nothing | `Corrections`, `HijriDate` (and the `Awrad.Hijri` facade) |
+| `Awrad.Dhikrs` (sub-boundary of `Awrad`) | nothing | `Catalog`, `Catalog.Entry` |
 
 Boundary checks these rules at compile time, and `mix validate` fails on any violation (ADR 0001). Test support (`test/support/`) sits outside the production boundaries.
 
@@ -62,6 +65,13 @@ Boundary checks these rules at compile time, and `mix validate` fails on any vio
 - **API:** `Awrad.Hijri.date/2` (`%HijriDate{year, month, day, month_length}` or `nil` outside the table), `month/2` (the adjusted month's Gregorian days) and `days/1` (the adjusted table's span).
 - **Corrections:** `Awrad.Hijri.Corrections.new/1` is the only constructor besides `none/0`. It returns `{:ok, corrections}` or `{:error, codes}` with the `hijri_corrections_validity` codes sorted alphabetically (`duplicate_month`, `month_length_invalid`, `month_out_of_range`, `offset_out_of_range`), like `Goal.new/1`.
 - **The table** is compiled into `Awrad.Hijri.Table` from a checked copy, `priv/hijri-calendar/umm-al-qura.json`. The release never reads `contracts/`; `test/awrad/shared_fixtures_test.exs` fails `mix validate` when the copy differs from the contracts file (ADR 0004).
+
+## Built-in dhikr catalog (slice 3a)
+
+`Awrad.Dhikrs.Catalog` holds the identity of the built-in dhikrs (`contracts/dhikr-catalog/v1/catalog.json`, ADR-2026-07-13), so later slices can check that a goal's built-in dhikr exists and know its kind. No API and no table: the apps bundle the content.
+- **API:** `fetch_by_id/1` and `fetch_by_key/1` (`{:ok, %Catalog.Entry{id, key, kind, collections}}` or `:error`), `builtin?/1`, `kind/1` (`{:ok, :quran | :dhikr | :dua | :salawat | :name_of_allah}` or `:error`) and `content_revision/0`. IDs match exactly, in lowercase.
+- **Compiled in** like the Hijri table (ADR 0004): from the checked copy `priv/dhikr-catalog/catalog.json` (`@external_resource`), keeping only key, id, kind and collection membership. Compilation fails on an unknown kind, a duplicate or non-UUIDv4 id, a duplicate key, or a collection listing an unknown key.
+- **Checks:** `test/awrad/shared_fixtures_test.exs` fails when the copy differs from the contracts file (refresh with `cp ../contracts/dhikr-catalog/v1/catalog.json priv/dhikr-catalog/`); `test/awrad/dhikrs/catalog_test.exs` checks every key and id against `contracts/progress-model/v1/builtin-dhikrs.json`. The search fixtures are client-only.
 
 ## Accounts (slice 2a)
 

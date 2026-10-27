@@ -1,7 +1,7 @@
 defmodule Awrad.SharedFixturesTest do
   @moduledoc """
-  The server runs every shared rule file, and its copy of the Hijri table is
-  the contracts one.
+  The server runs every shared rule file, and its copies of the Hijri table
+  and the dhikr catalog are the contracts ones.
   """
   use ExUnit.Case, async: true
 
@@ -60,6 +60,18 @@ defmodule Awrad.SharedFixturesTest do
     #{copy} differs from #{source}. Refresh the server's copy:
 
         cp ../contracts/hijri-calendar/v1/umm-al-qura.json priv/hijri-calendar/
+    """
+  end
+
+  # Awrad.Dhikrs.Catalog compiles from this copy the same way (ADR 0004).
+  test "the server's dhikr catalog is the contracts one" do
+    copy = Path.expand("priv/dhikr-catalog/catalog.json")
+    source = Fixtures.contracts_path("dhikr-catalog/v1/catalog.json")
+
+    assert File.read!(copy) == File.read!(source), """
+    #{copy} differs from #{source}. Refresh the server's copy:
+
+        cp ../contracts/dhikr-catalog/v1/catalog.json priv/dhikr-catalog/
     """
   end
 end
