@@ -214,6 +214,30 @@ for (const [name, style] of Object.entries({ "": { fontFamily: typography.fontFa
     problems.push(`typography.json: ${name || "fontFamily"} uses "${family}", which has no file in ${fontsDir}`);
 }
 
+// Icons: schema-valid; every file named exists, matches SHA256SUMS, and is a plain path-only SVG;
+// every .svg is named by an icon.
+const iconsDir = "design-tokens/v1/icons";
+const icons = read("design-tokens/v1/icons.json");
+validate("design-tokens/v1/icons.json", "urn:awrad:design-tokens:1#/$defs/icons", icons);
+const iconSums = new Map(
+  readFileSync(join(root, iconsDir, "SHA256SUMS"), "utf8")
+    .trim()
+    .split("\n")
+    .map((line) => line.split(/\s+/).reverse()),
+);
+const named = new Set(Object.values(icons.icons ?? {}).map((icon) => icon.file));
+for (const file of readdirSync(join(root, iconsDir)).filter((f) => f.endsWith(".svg"))) {
+  const bytes = readFileSync(join(root, iconsDir, file));
+  if (createHash("sha256").update(bytes).digest("hex") !== iconSums.get(file))
+    problems.push(`${iconsDir}/${file}: checksum differs from SHA256SUMS`);
+  if (!named.has(file)) problems.push(`${iconsDir}/${file}: not named in icons.json`);
+  const tags = [...bytes.toString("utf8").matchAll(/<([a-zA-Z]+)/g)].map((m) => m[1]);
+  if (tags.some((tag) => tag !== "svg" && tag !== "path"))
+    problems.push(`${iconsDir}/${file}: only <svg> and <path> are allowed`);
+}
+for (const file of named)
+  if (!iconSums.has(file)) problems.push(`icons.json: ${file} is missing from ${iconsDir}`);
+
 if (problems.length) {
   for (const p of problems) console.error(p);
   process.exit(1);
@@ -222,5 +246,5 @@ console.log(
   `catalogs: Hijri table ${starts.length - 1} months valid; ${keys.size} goal presets valid; ` +
     `${Object.keys(tokens.roles).length} colour roles, ${pairs} contrast checks pass; ${sums.length} font files match; ` +
     `${Object.keys(shape.roles).length} shape, ${Object.keys(spacing.roles).length} spacing, ` +
-    `${Object.keys(typography.styles).length} type and ${Object.keys(motion.motions).length} motion tokens valid`,
+    `${Object.keys(typography.styles).length} type, ${Object.keys(motion.motions).length} motion and ${named.size} icon tokens valid`,
 );

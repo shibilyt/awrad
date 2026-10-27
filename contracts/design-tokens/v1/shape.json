@@ -3,6 +3,7 @@
   "description": "Corner radii and line widths in dp (Android), pt (iOS), CSS px (web). Screens use a role, never a number. Corners are continuous (squircle) where the platform makes it cheap. Lines are rare (README: no outlines); strokes lists every one allowed.",
   "corners": "continuous",
   "scale": {
+    "xxxs": 2,
     "xxs": 4,
     "xs": 8,
     "sm": 12,
@@ -63,7 +64,7 @@
       "use": "A checkbox's box (the only use of 4)"
     },
     "stepDot": {
-      "radius": "xxs",
+      "radius": "xxxs",
       "use": "Squares in the onboarding step indicator"
     },
     "tabIndicator": {

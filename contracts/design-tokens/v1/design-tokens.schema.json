@@ -515,6 +515,54 @@
           }
         }
       }
+    },
+    "icons": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "description",
+        "source",
+        "icons"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "icons": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][A-Za-z]*$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "use",
+              "mirrorInRtl"
+            ],
+            "properties": {
+              "file": {
+                "type": "string",
+                "pattern": "^[a-z_]+\\.svg$"
+              },
+              "use": {
+                "type": "string"
+              },
+              "mirrorInRtl": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

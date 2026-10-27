@@ -21,6 +21,7 @@ Every app has a debug-only **component gallery** that shows each component below
 - **No outlines.** The only lines are the `strokes` in `shape.json`: a field in error, a checkbox's box, the web focus ring.
 - **RTL:** layouts mirror; directional icons (back chevron, arrow) flip; the step indicator and bottom bar order mirror.
 - **Strings:** every label comes from localization resources (en, ar, ml).
+- **Icons:** only the shared set in `icons.json`, by name. Back and forward arrows mirror in RTL.
 - **Reduced motion:** every movement below becomes the `reducedMotion` cross-fade.
 
 ## Containers
@@ -78,7 +79,7 @@ All buttons are `control` (56) tall and fill the width they're given, unless not
 
 - **Shape:** `button` (16).
 - **Content:** a label, optionally with a leading icon (`iconSmall`, `inlineGap` to the label).
-- **Loading:** the label is replaced by a progress indicator in the content colour. The button keeps its size and ignores taps; it isn't drawn as disabled.
+- **Loading:** the label is replaced by the platform's own progress indicator in the content colour (Android's circular indicator, the iOS `ProgressView`, three fading dots on the web). The button keeps its size and ignores taps; it isn't drawn as disabled.
 - **Row buttons:** a button that sits inside a row (sign out one device) is `touchTarget` (48) tall and as wide as its label.
 
 ### Round button

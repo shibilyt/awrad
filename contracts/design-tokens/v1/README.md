@@ -10,6 +10,7 @@ The design system's single source for Android, iOS and web: colours, fonts, shap
 | `spacing.json` | Spacing scale, named roles, standard sizes |
 | `typography.json` | Named text styles |
 | `motion.json` | Easings, durations, springs, haptics, named motions, reduced motion |
+| `icons.json`, `icons/` | The icon set: Material Symbols Rounded outline SVGs, checksums, licence |
 
 The components built from these are specified in [`../../design-system/v1/components.md`](../../design-system/v1/components.md).
 
@@ -64,7 +65,7 @@ Rules for screens:
 
 ## Shapes (`shape.json`)
 
-- **The scale:** 4, 8, 12, 16, 20, 24, 28, 32, and fully rounded. 4 is only for a checkbox's box.
+- **The scale:** 2, 4, 8, 12, 16, 20, 24, 28, 32, and fully rounded. 2 is only for the step indicator's squares and 4 only for a checkbox's box.
 - **Roles:**
   - `card` 24;
   - `tile`, `button` and `field` 16;
@@ -83,7 +84,7 @@ Rules for screens:
   - `focusRing` 2, offset 2 (web keyboard focus).
 
 - **Elevation** (`elevation`): one level, `floating` (y 4, blur 16, `shadow` colour), only for the bottom bar. Dark mode has no shadow.
-- **Component roles:** `stepDot` 4, `tabIndicator` fully rounded, `contentSheet` 32.
+- **Component roles:** `stepDot` 2, `tabIndicator` fully rounded, `contentSheet` 32.
 
 ## Spacing (`spacing.json`)
 
@@ -165,3 +166,11 @@ The motion values combine three sources:
 - **The frozen Android app's motion:** page transitions, the screen-depth corners, the nav pill and press feedback.
 - **Material 3 Expressive spring values,** which PixelPlayer also uses. Its code is proprietary, so only numbers and ideas are reused, never code.
 - **A unified timing,** replacing the frozen apps' 16 different durations.
+
+## Icons (`icons.json`, `icons/`)
+
+- **One set on every platform:** Material Symbols Rounded, outline, weight 300, on a 24 grid (Apache 2.0, `icons/LICENSE-MaterialSymbols.txt`). There are no SF Symbols, Material Icons or hand-drawn icons in screens.
+- **Use by name** (`home`, `goals`, `library`, `community`, `add`, `forward`, `back`, `more`, `check`, `notifications`, `show`, `hide`, `close`, `expand`, `streak`). Each app generates its icons from the SVGs (Android vector drawables, an iOS asset catalog, web components) and fails validation on drift.
+- **RTL:** icons marked `mirrorInRtl` (`back`, `forward`) flip in right-to-left layouts.
+- **Colour** comes from the component, never the file.
+- **Adding an icon:** download the `wght300_24px` Rounded SVG from the source in `icons.json`, add it with its checksum to `icons/SHA256SUMS`, name it in `icons.json`, and regenerate. `npm test` checks checksums and that every file is a plain path-only SVG.
