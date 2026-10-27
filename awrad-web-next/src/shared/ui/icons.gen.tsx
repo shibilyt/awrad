@@ -39,7 +39,10 @@ export type IconName =
   | "password"
   | "delete"
   | "chevron"
-  | "error";
+  | "error"
+  | "play"
+  | "pause"
+  | "search";
 
 /**
  * An icon's paths on Material Symbols' 960 grid (viewBox "0 -960 960 960"). Each component holds
@@ -344,6 +347,42 @@ export function ErrorIcon(props: IconProps): ReactElement {
   );
 }
 
+/** `play`: Play audio. From play_arrow.svg. */
+export function PlayIcon(props: IconProps): ReactElement {
+  return (
+    <Svg
+      {...props}
+      paths={[
+        "M340-302.23v-355.54q0-15.84 10.85-26 10.84-10.15 25.31-10.15 4.61 0 9.53 1.31 4.93 1.3 9.54 3.92l279.84 178.15q8.24 5.62 12.35 13.46 4.12 7.85 4.12 17.08 0 9.23-4.12 17.08-4.11 7.84-12.35 13.46L395.23-271.31q-4.61 2.62-9.54 3.92-4.92 1.31-9.53 1.31-14.47 0-25.31-10.15-10.85-10.16-10.85-26ZM400-480Zm0 134 210.77-134L400-614v268Z",
+      ]}
+    />
+  );
+}
+
+/** `pause`: Pause audio. From pause.svg. */
+export function PauseIcon(props: IconProps): ReactElement {
+  return (
+    <Svg
+      {...props}
+      paths={[
+        "M590-220q-24.54 0-42.27-17.73Q530-255.46 530-280v-400q0-24.54 17.73-42.27Q565.46-740 590-740h90q24.54 0 42.27 17.73Q740-704.54 740-680v400q0 24.54-17.73 42.27Q704.54-220 680-220h-90Zm-310 0q-24.54 0-42.27-17.73Q220-255.46 220-280v-400q0-24.54 17.73-42.27Q255.46-740 280-740h90q24.54 0 42.27 17.73Q430-704.54 430-680v400q0 24.54-17.73 42.27Q394.54-220 370-220h-90Zm310-60h90v-400h-90v400Zm-310 0h90v-400h-90v400Zm0-400v400-400Zm310 0v400-400Z",
+      ]}
+    />
+  );
+}
+
+/** `search`: Search field. From search.svg. */
+export function SearchIcon(props: IconProps): ReactElement {
+  return (
+    <Svg
+      {...props}
+      paths={[
+        "M380.77-335.39q-102.46 0-173.54-71.07-71.07-71.08-71.07-173.54t71.07-173.54q71.08-71.07 173.54-71.07t173.54 71.07q71.07 71.08 71.07 173.54 0 42.85-14.38 81.85-14.39 39-38.39 67.84l230.16 230.16q8.31 8.3 8.5 20.88.19 12.58-8.5 21.27t-21.08 8.69q-12.38 0-21.07-8.69L530.46-388.16q-30 24.77-69 38.77-39 14-80.69 14Zm0-59.99q77.31 0 130.96-53.66 53.66-53.65 53.66-130.96t-53.66-130.96q-53.65-53.66-130.96-53.66t-130.96 53.66Q196.15-657.31 196.15-580t53.66 130.96q53.65 53.66 130.96 53.66Z",
+      ]}
+    />
+  );
+}
+
 /** Every icon by its shared name (the gallery; importing it brings in the whole set). */
 export const ICONS: Record<IconName, Icon> = {
   home: HomeIcon,
@@ -369,4 +408,7 @@ export const ICONS: Record<IconName, Icon> = {
   delete: DeleteIcon,
   chevron: ChevronIcon,
   error: ErrorIcon,
+  play: PlayIcon,
+  pause: PauseIcon,
+  search: SearchIcon,
 };
