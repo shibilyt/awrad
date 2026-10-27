@@ -1,6 +1,6 @@
 # Slice 3a: Dhikr catalog and library
 
-Status: Draft
+Status: Done 2026-10-28 (content review items in SOURCES.md stay open)
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 3a
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 
@@ -82,19 +82,19 @@ On every kind, virtues are listed with their references below the text. Audio co
 
 | Project | Work | Validation | Status |
 |---|---|---|---|
-| awrad-server-next | Generate the catalog registry module (key, id, kind) from the contract, with a drift test | `mix validate` | ☐ |
-| awrad-android-next | Catalog generation; search fixtures runner; Library, collection, all-dhikrs, search and detail screens; audio playback | Gradle validation | ☐ |
-| awrad-ios-next | Same as Android | `scripts/validate` | ☐ |
-| awrad-web-next | Same, bundled; audio through the browser | `npm run validate` | ☐ |
+| awrad-server-next | Generate the catalog registry module (key, id, kind) from the contract, with a drift test | `mix validate` | ☑ |
+| awrad-android-next | Catalog generation; search fixtures runner; Library, collection, all-dhikrs, search and detail screens; audio playback | Gradle validation | ☑ |
+| awrad-ios-next | Same as Android | `scripts/validate` | ☑ |
+| awrad-web-next | Same, bundled; audio through the browser | `npm run validate` | ☑ |
 
 ## Integration evidence (step 6)
 
 | Flow | Android | iOS | Web | Notes |
 |---|---|---|---|---|
-| Browse collections, open one, open a dhikr (en) | ☐ | ☐ | ☐ | |
-| Same in ar (RTL) and ml | ☐ | ☐ | ☐ | Fallback to en where missing |
-| Search by alias ("Astaghfirullah", "أستغفر الله") | ☐ | ☐ | ☐ | |
-| Play and pause audio | ☐ | ☐ | ☐ | |
+| Browse collections, open one, open a dhikr (en) | ☑ | ☑ | ☑ | Emulator, simulator, headless Chrome screenshots |
+| Same in ar (RTL) and ml | ☑ | ☑ | ☑ | Fallback to en where missing |
+| Search by alias ("Astaghfirullah", "أستغفر الله") | ☑ | ☑ | ☑ | Also every case in the shared search fixtures |
+| Play and pause audio | ☑ | ☑ | ☑ | Progress advances; pauses on leaving and in the background |
 
 ## Definition of done
 
