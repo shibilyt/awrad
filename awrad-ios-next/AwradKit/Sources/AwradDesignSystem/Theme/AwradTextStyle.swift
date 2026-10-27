@@ -3,7 +3,8 @@
 
 import SwiftUI
 
-// Interface text is Google Sans Flex Rounded; `AwradFonts.font(_:)` turns a style into a Font.
+// Interface text is Google Sans Flex Rounded; a style with its own fontFamily uses that family.
+// `AwradFonts.font(_:)` turns a style into a Font.
 extension AwradTextStyle {
     /// Screen titles; the Hijri date on Home. 22/28, weight 600.
     public static let title = AwradTextStyle(
@@ -25,6 +26,10 @@ extension AwradTextStyle {
     public static let body = AwradTextStyle(
         name: "body", size: 15, lineHeight: 22, weight: 400,
         face: .interfaceRegular, relativeTo: .body, tabularNumbers: false)
+    /// Text typed into fields (16 stops iOS Safari zooming in). 16/22, weight 400.
+    public static let input = AwradTextStyle(
+        name: "input", size: 16, lineHeight: 22, weight: 400,
+        face: .interfaceRegular, relativeTo: .body, tabularNumbers: false)
     /// Secondary text: the Gregorian date, Next prayer. 14/20, weight 400.
     public static let bodySmall = AwradTextStyle(
         name: "bodySmall", size: 14, lineHeight: 20, weight: 400,
@@ -45,10 +50,14 @@ extension AwradTextStyle {
     public static let navLabel = AwradTextStyle(
         name: "navLabel", size: 11, lineHeight: 14, weight: 500,
         face: .interfaceMedium, relativeTo: .caption2, tabularNumbers: false)
-    /// The counting number. 56/64, weight 700.
+    /// The counting number. The 64 line height is tighter than the font's natural 70 on purpose. 56/64, weight 700.
     public static let counter = AwradTextStyle(
         name: "counter", size: 56, lineHeight: 64, weight: 700,
         face: .interfaceBold, relativeTo: .largeTitle, tabularNumbers: true)
+    /// Qur'anic and dhikr Arabic text; never interface text. 24/44, weight 400. Noto Naskh Arabic.
+    public static let quran = AwradTextStyle(
+        name: "quran", size: 24, lineHeight: 44, weight: 400,
+        face: .naskhRegular, relativeTo: .title2, tabularNumbers: false)
 
     /// Every style, in contract order.
     static let all: [AwradTextStyle] = [
@@ -57,11 +66,13 @@ extension AwradTextStyle {
         rowTitle,
         sectionTitle,
         body,
+        input,
         bodySmall,
         label,
         button,
         caption,
         navLabel,
         counter,
+        quran,
     ]
 }

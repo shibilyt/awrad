@@ -3,7 +3,7 @@ import Foundation
 import SwiftUI
 
 /// Bundled fonts (contracts/design-tokens/v1/fonts): Google Sans Flex Rounded for interface text,
-/// Noto Naskh Arabic for Qur'anic and dhikr text. Sizes follow Dynamic Type through `relativeTo:`,
+/// Noto Naskh Arabic for Qur'anic and dhikr text (the `quran` style). Sizes follow Dynamic Type through `relativeTo:`,
 /// and each weight is its own font file, never a synthetic bold.
 ///
 /// Google Sans Flex has no Arabic or Malayalam glyphs. Core Text falls back per glyph to the
@@ -25,18 +25,12 @@ public enum AwradFonts {
         Bundle.module.urls(forResourcesWithExtension: "ttf", subdirectory: "Fonts") ?? []
     }
 
-    /// A named text style (typography.json) as a font: the face for its weight at its size, scaled
+    /// A named text style (typography.json) as a font: its family's face for its weight at its size, scaled
     /// with Dynamic Type relative to its `iosTextStyle`, with tabular digits where it asks for them.
     /// Use `awradTextStyle(_:)` on text that can wrap, so its lines also sit `lineHeight` apart.
     public static func font(_ style: AwradTextStyle) -> Font {
         let font = Font.custom(style.face.postScriptName, size: style.size, relativeTo: style.relativeTo)
         return style.tabularNumbers ? font.monospacedDigit() : font
-    }
-
-    /// Qur'anic and dhikr text only; interface text in Arabic uses the interface styles. The type
-    /// tokens have no Qur'anic style yet, so the size is the caller's until they do.
-    public static func arabic(_ size: CGFloat = 28) -> Font {
-        .custom(Face.naskhRegular.postScriptName, size: size, relativeTo: .title)
     }
 
     /// Every bundled font face, by its file and PostScript name.

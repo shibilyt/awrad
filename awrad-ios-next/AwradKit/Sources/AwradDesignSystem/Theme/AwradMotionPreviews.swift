@@ -31,7 +31,7 @@ private struct MotionPreview: View {
                 Text(verbatim: "Count")
                     .awradTextStyle(.button)
                     .foregroundStyle(AwradColors.onPrimary)
-                    .frame(maxWidth: .infinity, minHeight: AwradSize.listRow)
+                    .frame(maxWidth: .infinity, minHeight: AwradSize.control)
                     .background(AwradColors.primary, in: AwradRadius.button.shape)
             }
             .buttonStyle(.awradPress(.button))

@@ -57,4 +57,10 @@ extension View {
     public func awradClip(_ corner: AwradCorner) -> some View {
         clipShape(corner.shape)
     }
+
+    /// On a sheet's content: the `sheet` corner radius. iOS keeps the native sheet, which follows the
+    /// finger and settles itself (the contract's `sheet` motion is Android's).
+    public func awradSheet() -> some View {
+        presentationCornerRadius(AwradRadius.sheet.fixedRadius)
+    }
 }

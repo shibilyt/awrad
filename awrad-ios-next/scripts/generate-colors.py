@@ -2,13 +2,15 @@
 """Generates the app's colour roles from contracts/design-tokens/v1/colors.json.
 
 Writes two files, both committed:
-- AwradDesignSystem/Theme/AwradColors.swift: one `AwradColors` property per role, light and dark.
+- AwradDesignSystem/Theme/AwradColors.swift: one `AwradColors` property per role, light and dark, and
+  `AwradState`, the opacity of each interaction state (`states`, such as `disabled`).
 - AwradNext/Assets.xcassets/AccentColor.colorset: the app-wide tint (system alerts, controls nobody
   tinted), the `accent` role.
 
 Nothing reads contracts/ at runtime. Run without arguments to rewrite both files. With --check
 (scripts/validate), it fails when either committed file differs from what the contract generates:
-the freshness check.
+the freshness check. A state key other than `opacity` and `use` fails, so a new token can't be
+silently dropped.
 """
 import json
 import re
@@ -22,6 +24,7 @@ ACCENT_OUTPUT = ROOT / "AwradNext" / "Assets.xcassets" / "AccentColor.colorset" 
 ACCENT_ROLE = "accent"
 HEX = re.compile(r"^#([0-9A-F]{6})([0-9A-F]{2})?$")
 NAME = re.compile(r"^[a-z][A-Za-z]*$")
+STATE_KEYS = {"opacity", "use"}
 
 
 def rgba(value: str, where: str) -> str:
@@ -32,10 +35,30 @@ def rgba(value: str, where: str) -> str:
     return match.group(1) + (match.group(2) or "FF")
 
 
-def load() -> dict[str, dict[str, str]]:
+def load() -> dict:
     tokens = json.loads(CONTRACT.read_text(encoding="utf-8"))
     if tokens.get("version") != 1:
         raise SystemExit("colors: expected version 1")
+    return tokens
+
+
+def load_states(tokens: dict) -> dict[str, dict]:
+    """Each interaction state's opacity: a disabled control keeps its colours at this opacity."""
+    states = {}
+    for name, state in tokens.get("states", {}).items():
+        if not NAME.match(name):
+            raise SystemExit(f"colors: state {name!r} isn't a lowerCamelCase name")
+        unknown = set(state) - STATE_KEYS
+        if unknown:
+            raise SystemExit(f"colors: state {name!r} has {sorted(unknown)}, which iOS doesn't generate yet")
+        opacity = state["opacity"]
+        if not 0 < opacity < 1:
+            raise SystemExit(f"colors: state {name!r} opacity {opacity} isn't between 0 and 1")
+        states[name] = {"opacity": opacity, "use": " ".join(state["use"].split())}
+    return states
+
+
+def load_roles(tokens: dict) -> dict[str, dict[str, str]]:
     roles = {}
     for name, role in tokens["roles"].items():
         if not NAME.match(name):
@@ -50,7 +73,7 @@ def load() -> dict[str, dict[str, str]]:
     return roles
 
 
-def swift(roles: dict[str, dict[str, str]]) -> str:
+def swift(roles: dict[str, dict[str, str]], states: dict[str, dict]) -> str:
     properties = []
     for name, role in roles.items():
         properties += [
@@ -72,6 +95,21 @@ def swift(roles: dict[str, dict[str, str]]) -> str:
         "    /// Every role by its contract name, for tests that check the values against the contract.",
         "    static let roles: KeyValuePairs<String, Color> = [",
         *(f'        "{name}": {name},' for name in roles),
+        "    ]",
+        "}",
+        "",
+        "/// Interaction states from the design tokens contract (colors.json `states`). A state changes how",
+        "/// a control is drawn, never its colour roles.",
+        "public enum AwradState {",
+    ]
+    for name, state in states.items():
+        lines += [f"    /// {state['use']}.", f"    public static let {name}Opacity: Double = {state['opacity']}"]
+    lines += [
+        "",
+        "    /// Every state's opacity by its contract name, for tests that check the values against the contract.",
+        "    static let opacities: KeyValuePairs<String, Double> = [",
+        # swift-format drops the trailing comma of a one-element literal.
+        *(f'        "{name}": {name}Opacity' + ("," if len(states) > 1 else "") for name in states),
         "    ]",
         "}",
         "",
@@ -112,8 +150,9 @@ def colorset(roles: dict[str, dict[str, str]]) -> str:
 
 
 def main() -> int:
-    roles = load()
-    outputs = {SWIFT_OUTPUT: swift(roles), ACCENT_OUTPUT: colorset(roles)}
+    tokens = load()
+    roles, states = load_roles(tokens), load_states(tokens)
+    outputs = {SWIFT_OUTPUT: swift(roles, states), ACCENT_OUTPUT: colorset(roles)}
     if sys.argv[1:] == ["--check"]:
         stale = [path for path, text in outputs.items() if not path.exists() or path.read_text(encoding="utf-8") != text]
         for path in stale:
@@ -123,7 +162,7 @@ def main() -> int:
             )
         if stale:
             return 1
-        print(f"colors: {len(roles)} roles match contracts/design-tokens/v1/colors.json")
+        print(f"colors: {len(roles)} roles and the states ({', '.join(states)}) match contracts/design-tokens/v1/colors.json")
         return 0
     if sys.argv[1:]:
         print("usage: generate-colors.py [--check]", file=sys.stderr)

@@ -65,6 +65,14 @@ nonisolated public enum AwradSize {
     public static let ringSmall: CGFloat = 36
     /// Stroke of small progress rings.
     public static let ringStroke: CGFloat = 4
+    /// Height of buttons and text fields.
+    public static let control: CGFloat = 56
+    /// The Awrad logo on welcome and sign-in screens.
+    public static let logo: CGFloat = 148
+    /// Widest a page's content column grows (web, tablets).
+    public static let contentMaxWidth: CGFloat = 448
+    /// Widest a dialog grows (web, tablets).
+    public static let dialogMaxWidth: CGFloat = 384
 
     static let sizes: KeyValuePairs<String, CGFloat> = [
         "touchTarget": touchTarget,
@@ -73,5 +81,9 @@ nonisolated public enum AwradSize {
         "iconSmall": iconSmall,
         "ringSmall": ringSmall,
         "ringStroke": ringStroke,
+        "control": control,
+        "logo": logo,
+        "contentMaxWidth": contentMaxWidth,
+        "dialogMaxWidth": dialogMaxWidth,
     ]
 }

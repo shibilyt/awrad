@@ -4,22 +4,27 @@
 Shapes, spacing, type and motion come from contracts/design-tokens/v1 through AwradRadius,
 AwradSpacing, AwradSize, AwradTextStyle/AwradFonts and AwradMotion. Outside AwradDesignSystem
 (which turns the tokens into SwiftUI), this rejects:
-- a number in `.padding(…)`, `spacing:`, `minLength:`, `cornerRadius:`, `.frame(…)`, `lineWidth:`,
-  `lineSpacing(…)`, `.offset(…)`, `.scaleEffect(…)`, `.presentationCornerRadius(…)`;
+- a number in `.padding(…)`, `spacing:`, `minLength:`, `cornerRadius:`, `.frame(…)`, `lineWidth:`
+  (strokes are `AwradStroke`), `lineSpacing(…)`, `.offset(…)`, `.scaleEffect(…)`,
+  `.presentationCornerRadius(…)`;
+- an `.opacity(…)` other than 0 or 1 (a disabled control uses `awradDisabledAppearance()`);
 - a system or sized font (`.font(.system…)`, `.font(.body)`, `Font.custom`, `.fontWeight(…)`);
 - a raw animation (`.animation(.easeInOut…)`, `withAnimation(.spring…)`, `.spring(…)`,
   `.timingCurve(…)`, `duration:` numbers) or a raw haptic (`.sensoryFeedback(.…)`).
 
-Allowlist: a structural value that isn't a design decision (a readable-width cap, artwork size)
-stays when its line ends with `// design-token-exempt: <reason>`. The reason is required.
+Allowlist: a structural value that isn't a design decision stays when its line ends with
+`// design-token-exempt: <reason>`. The reason is required, and it never covers a number that is a
+size token (spacing.json `sizes`, such as the 148 logo or the 448 content width): use `AwradSize`.
 
 `--self-test` runs the scanner on planted snippets, so a broken pattern can't pass silently.
 """
+import json
 import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+SPACING = ROOT.parent / "contracts" / "design-tokens" / "v1" / "spacing.json"
 SCANNED = [ROOT / "AwradKit" / "Sources", ROOT / "AwradNext"]
 EXEMPT_DIR = ROOT / "AwradKit" / "Sources" / "AwradDesignSystem"
 EXEMPT = re.compile(r"//\s*design-token-exempt:\s*\S")
@@ -36,6 +41,9 @@ CALLS = [
     ("presentationCornerRadius", re.compile(r"\.presentationCornerRadius\(")),
     ("RoundedRectangle", re.compile(r"RoundedRectangle\(")),
 ]
+# Calls that may only take 0 or 1 (fully hidden or shown); anything between is a token's job.
+OPACITY = re.compile(r"\.opacity\(")
+UNIT = re.compile(r"^(?:0|1)(?:\.0+)?$")
 # Labels whose value must not be a number.
 LABELS = ["spacing", "minLength", "cornerRadius", "lineWidth", "duration", "response", "dampingFraction",
           "size"]
@@ -63,13 +71,29 @@ def arguments(line: str, start: int) -> str:
     return line[start:index - 1] if depth == 0 else line[start:]
 
 
+def size_tokens() -> dict[float, str]:
+    """Each size token's value and name (spacing.json `sizes`): numbers an exemption can't cover."""
+    sizes = json.loads(SPACING.read_text(encoding="utf-8"))["sizes"]
+    tokens: dict[float, str] = {}
+    for name, spec in sizes.items():
+        tokens.setdefault(float(spec["value"]), name)
+    return tokens
+
+
+SIZES = size_tokens()
+
+
 def problems_in(line: str) -> list[str]:
-    if EXEMPT.search(line):
-        return []
     code = STRING.sub('""', line).split("//", 1)[0]
+    if EXEMPT.search(line):
+        return [f"{number} is the size token AwradSize.{SIZES[float(number)]}; an exemption can't cover it"
+                for number in NUMBER.findall(code) if float(number) in SIZES]
     if not code.strip():
         return []
     found = []
+    for match in OPACITY.finditer(code):
+        if any(not UNIT.match(number) for number in NUMBER.findall(arguments(code, match.end()))):
+            found.append("number in opacity(…); use awradDisabledAppearance() or a token")
     for name, opening in CALLS:
         for match in opening.finditer(code):
             if NUMBER.search(arguments(code, match.end())):
@@ -109,6 +133,15 @@ SELF_TEST = {
     ".sensoryFeedback(.selection, trigger: count)": True,
     ".presentationCornerRadius(32)": True,
     ".scaleEffect(0.98)": True,
+    ".frame(maxWidth: .infinity, minHeight: 56)": True,
+    "shape.strokeBorder(AwradColors.error, lineWidth: 1.5)": True,
+    ".opacity(0.38)": True,
+    ".opacity(isEnabled ? 1 : 0.5)": True,
+    ".opacity(isVisible ? 1 : 0)": False,
+    ".frame(maxWidth: .infinity, minHeight: AwradSize.control)": False,
+    "shape.strokeBorder(AwradColors.error, lineWidth: AwradStroke.fieldError)": False,
+    ".frame(width: 148, height: 148)  // design-token-exempt: the logo artwork's size": True,
+    ".frame(maxWidth: 448)  // design-token-exempt: readable width": True,
     ".padding(.horizontal, AwradSpacing.xl2)": False,
     "VStack(spacing: AwradSpacing.rowGap) {": False,
     ".frame(maxWidth: .infinity, minHeight: AwradSize.touchTarget)": False,

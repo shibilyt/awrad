@@ -38,6 +38,20 @@ extension View {
     public func awradField(isInError: Bool = false) -> some View {
         modifier(AwradFieldStyle(isInError: isInError))
     }
+
+    /// A control's disabled look (colors.json `states.disabled`): when the environment says it isn't
+    /// enabled, it keeps its own colours and is drawn at `AwradState.disabledOpacity`.
+    public func awradDisabledAppearance() -> some View {
+        modifier(DisabledAppearance())
+    }
+}
+
+private struct DisabledAppearance: ViewModifier {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        content.opacity(isEnabled ? 1 : AwradState.disabledOpacity)
+    }
 }
 
 private struct AwradFieldStyle: ViewModifier {
@@ -47,17 +61,16 @@ private struct AwradFieldStyle: ViewModifier {
     func body(content: Content) -> some View {
         let shape = AwradRadius.field.shape
         content
-            .font(AwradFonts.font(.body))
+            .font(AwradFonts.font(.input))
             .foregroundStyle(AwradColors.onSurface)
             .tint(AwradColors.accent)
             .padding(.horizontal, AwradSpacing.lg)
-            // The tokens have no field height; a field is as tall as a standard row.
-            .frame(minHeight: AwradSize.listRow)
+            .frame(minHeight: AwradSize.control)
             .background(container.controlFill, in: shape)
             .overlay {
                 if isInError {
-                    // The tokens have no border width; the error border is the one line a field draws.
-                    shape.strokeBorder(AwradColors.error, lineWidth: 1.5)
+                    // The error border is the one line a field draws.
+                    shape.strokeBorder(AwradColors.error, lineWidth: AwradStroke.fieldError)
                 }
             }
     }
