@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { Tab, TabList, TabPanel, Tabs, type TabPanelProps, type TabsProps } from "react-aria-components";
 import { cx } from "./cx";
-import type { Icon } from "./icons";
+import type { Icon } from "./icons.gen";
 
 export interface BottomBarItem {
   id: string;
@@ -12,11 +12,13 @@ export interface BottomBarItem {
 /**
  * The floating main navigation (components.md "Bottom bar"): Home, Goals, Library, Community,
  * announced as a tab bar with each item's selected state. `navBar` tall, `surfaceBar`, the
- * `navBar` shape and the `floating` shadow (none in dark), `pageMargin` from the sides and `lg`
- * above the bottom safe area. From `contentMaxWidth` up it stays that wide, centred. Items are
+ * `navBar` shape and the `floating` shadow (none in dark), `pageMargin` inside the side safe areas
+ * and `lg` above the bottom one (`bottom-bar-offset`). From `contentMaxWidth` up it stays that wide, centred. Items are
  * equal widths: the icon over the label, `onSurfaceVariant`; the selected one has a
- * `primaryContainer` pill behind an `onPrimaryContainer` icon and an `accent` label. On the web
- * the pill and colours cross-fade (`select`); nothing grows, pops or moves.
+ * `primaryContainer` pill behind an `onPrimaryContainer` icon and an `accent` label. The icon is
+ * the same outline icon selected or not (`home`, `goals`, `library`, `community` from
+ * icons.gen.tsx): the pill shows the selection. On the web the pill and colours cross-fade
+ * (`select`); nothing grows, pops or moves.
  *
  * Put the content in `BottomBarPanel`s (`children`): they're padded so their end clears the bar.
  */
@@ -38,7 +40,7 @@ export function BottomBar({
         aria-label={label}
         items={items}
         className={cx(
-          "fixed inset-x-page-margin bottom-bar-offset z-10 mx-auto flex h-nav-bar max-w-content items-stretch",
+          "fixed bottom-bar-offset z-10 mx-auto flex h-nav-bar max-w-content items-stretch",
           "rounded-nav-bar bg-surface-bar px-sm shadow-floating",
         )}
       >
@@ -71,7 +73,10 @@ export function BottomBar({
   );
 }
 
-/** One tab's content, padded at the end so its last item scrolls clear of the floating bar. */
+/**
+ * One tab's content, padded at the end so its last item scrolls clear of the floating bar. The
+ * bottom safe area comes from the page frame (AppShell's `safe-area-bottom`).
+ */
 export function BottomBarPanel(props: Omit<TabPanelProps, "className" | "style">): ReactElement {
   return <TabPanel {...props} className="bottom-bar-clearance focus-ring" />;
 }

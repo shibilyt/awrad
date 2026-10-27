@@ -100,17 +100,34 @@
 }
 
 /*
- * The floating bottom bar (BottomBar.tsx): `lg` above the bottom safe area, and the padding
- * that lets a page's last item scroll clear of it (the bar, plus `lg` on each side of it).
+ * Safe areas. index.html's viewport has `viewport-fit=cover`, so on phones with a notch or a
+ * home indicator the page reaches the screen's edges and these insets say what to keep clear.
+ * The page frame (AppShell) pads its content by all four; fixed layers pad or offset themselves
+ * (the compact top bar, the bottom bar, a bottom sheet). Each is zero where there's nothing.
+ */
+@utility safe-area-x {
+  padding-left: env(safe-area-inset-left, var(--awrad-space-none));
+  padding-right: env(safe-area-inset-right, var(--awrad-space-none));
+}
+@utility safe-area-top {
+  padding-top: env(safe-area-inset-top, var(--awrad-space-none));
+}
+@utility safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, var(--awrad-space-none));
+}
+
+/*
+ * The floating bottom bar (BottomBar.tsx): `pageMargin` inside the side safe areas and `lg`
+ * above the bottom one, and the padding that lets a page's last item scroll clear of it (the
+ * bar, plus `lg` on each side of it). The page frame's `safe-area-bottom` adds the inset.
  */
 @utility bottom-bar-offset {
+  left: calc(var(--awrad-space-page-margin) + env(safe-area-inset-left, var(--awrad-space-none)));
+  right: calc(var(--awrad-space-page-margin) + env(safe-area-inset-right, var(--awrad-space-none)));
   bottom: calc(var(--awrad-space-lg) + env(safe-area-inset-bottom, var(--awrad-space-none)));
 }
 @utility bottom-bar-clearance {
-  padding-bottom: calc(
-    var(--awrad-size-nav-bar) + var(--awrad-space-lg) + var(--awrad-space-lg) +
-      env(safe-area-inset-bottom, var(--awrad-space-none))
-  );
+  padding-bottom: calc(var(--awrad-size-nav-bar) + var(--awrad-space-lg) + var(--awrad-space-lg));
 }
 
 body {

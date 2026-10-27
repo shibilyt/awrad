@@ -7,7 +7,7 @@ import { BottomBar, BottomBarPanel } from "./BottomBar";
 import { BottomSheet } from "./BottomSheet";
 import { Checkbox, Switch } from "./Checkbox";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { GoalsIcon, HomeIcon, LibraryIcon } from "./icons";
+import { GoalsIcon, HomeIcon, LibraryIcon } from "./icons.gen";
 import { OptionCheckboxGroup, OptionRadioGroup, OptionRow } from "./OptionRow";
 import { SegmentPanel, SegmentedPills } from "./SegmentedPills";
 import { StepIndicator } from "./TopBar";

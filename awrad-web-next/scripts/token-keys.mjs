@@ -1,6 +1,7 @@
 // The keys the web's token generators understand, per file and per entry. A key the
 // generators don't know fails the build, so a token added to contracts/design-tokens/v1
-// can't be silently left out of the web (generate-colors.mjs, generate-tokens.mjs).
+// can't be silently left out of the web (generate-colors.mjs, generate-tokens.mjs,
+// generate-icons.mjs).
 
 /** Keys that describe a token and generate nothing. */
 const NOTES = ["use"];
@@ -32,6 +33,11 @@ export const KNOWN_KEYS = {
     // spring and haptic are mobile-only; the web's motions name only durations and easings.
     top: ["version", "description", "easing", "duration", "spring", "haptic", "motions", "reducedMotion"],
     entries: {},
+  },
+  icons: {
+    // source says where the SVGs came from; the generator reads the files themselves.
+    top: ["version", "description", "source", "icons"],
+    entries: { icons: ["file", "mirrorInRtl", ...NOTES] },
   },
 };
 

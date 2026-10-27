@@ -13,7 +13,8 @@ function scrollParent(element: HTMLElement): HTMLElement | null {
  * The top of a main tab (components.md "Large-title header", My Goals): the page's `h1` in
  * `largeTitle` at the start and an optional round button at the end; the content sheet or
  * segmented pills follow `lg` below. It scrolls away with the content, and once the title has
- * scrolled out of view a compact top bar with the title in `title` style fades in at the top.
+ * scrolled out of view a compact top bar with the title in `title` style fades in at the top,
+ * clear of the notch (`safe-area-top`, `safe-area-x`).
  * That copy is hidden from screen readers, which still have the `h1`.
  */
 export function LargeTitleHeader({ title, action }: { title: string; action?: ReactNode }): ReactElement {
@@ -47,7 +48,10 @@ export function LargeTitleHeader({ title, action }: { title: string; action?: Re
         {action}
       </div>
       {compact && (
-        <div aria-hidden="true" className="content-swap fixed inset-x-0 top-0 z-10 bg-background">
+        <div
+          aria-hidden="true"
+          className="content-swap fixed inset-x-0 top-0 z-10 bg-background safe-area-x safe-area-top"
+        >
           <TopBar title={<span className="truncate">{title}</span>} />
         </div>
       )}

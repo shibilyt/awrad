@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, IconButton, RoundButton, TextButton, type ButtonVariant } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
-import { ArrowIcon, BellIcon, MoreIcon, PlusIcon, type Icon } from "@/shared/ui/icons";
+import { ForwardIcon, NotificationsIcon, MoreIcon, AddIcon, type Icon } from "@/shared/ui/icons.gen";
 import { BackButton } from "@/shared/ui/TopBar";
 import { GallerySection, Row, Specimen, noop } from "./Specimen";
 
@@ -68,10 +68,10 @@ function SmallButtons(): ReactElement {
       </Specimen>
       <Specimen title={t("specimen.round")}>
         <Row>
-          <RoundButton icon={PlusIcon} aria-label={t("sample.addGoal")} onPress={noop} />
-          <RoundButton size="small" icon={ArrowIcon} aria-label={t("sample.openCollection")} onPress={noop} />
-          <RoundButton icon={PlusIcon} aria-label={t("sample.addGoal")} isDisabled />
-          <RoundButton size="small" icon={ArrowIcon} aria-label={t("sample.openCollection")} isDisabled />
+          <RoundButton icon={AddIcon} aria-label={t("sample.addGoal")} onPress={noop} />
+          <RoundButton size="small" icon={ForwardIcon} aria-label={t("sample.openCollection")} onPress={noop} />
+          <RoundButton icon={AddIcon} aria-label={t("sample.addGoal")} isDisabled />
+          <RoundButton size="small" icon={ForwardIcon} aria-label={t("sample.openCollection")} isDisabled />
         </Row>
       </Specimen>
       <Specimen title={t("specimen.icon")}>
@@ -90,7 +90,12 @@ export function ButtonsSection(): ReactElement {
   return (
     <GallerySection title={t("section.buttons")}>
       <Variant variant="main" title={t("specimen.main")} label={t("sample.getStarted")} />
-      <Variant variant="secondary" title={t("specimen.secondary")} label={t("sample.notifications")} icon={BellIcon} />
+      <Variant
+        variant="secondary"
+        title={t("specimen.secondary")}
+        label={t("sample.notifications")}
+        icon={NotificationsIcon}
+      />
       <Variant variant="error" title={t("specimen.error")} label={t("sample.deleteAccount")} />
       <SmallButtons />
     </GallerySection>

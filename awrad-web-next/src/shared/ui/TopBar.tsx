@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { IconButton } from "./Button";
 import { cx } from "./cx";
-import { BackIcon } from "./icons";
+import { BackIcon } from "./icons.gen";
 
 /**
  * The bar at the top of a screen (components.md "Top bar"): `topBar` tall, `pageMargin` from the

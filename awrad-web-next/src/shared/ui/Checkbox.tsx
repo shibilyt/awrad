@@ -8,6 +8,7 @@ import {
   type SwitchFieldProps,
 } from "react-aria-components";
 import { cx } from "./cx";
+import { CheckIcon } from "./icons.gen";
 
 const FOCUS =
   "group-data-focus-visible:outline-focus-ring group-data-focus-visible:outline-offset-focus-ring group-data-focus-visible:outline-accent";
@@ -15,7 +16,7 @@ const FOCUS =
 /**
  * A labelled checkbox (components.md). React Aria keeps the native input, so forms and screen
  * readers see a real checkbox. The box is `checkbox` (20) in a 48 touch target: the `checkbox`
- * stroke in `outlineStrong`, then a `primary` fill with an `onPrimary` tick when ticked; the label
+ * stroke in `outlineStrong`, then a `primary` fill with an `onPrimary` `check` icon (`iconSmall`) when ticked; the label
  * in `body`, `md` after it. Colours and the tick cross-fade (`select`).
  */
 export function Checkbox({
@@ -33,12 +34,9 @@ export function Checkbox({
             FOCUS,
           )}
         >
-          <svg
-            viewBox="0 0 16 16"
-            className="size-full fill-none stroke-on-primary stroke-2 opacity-0 select-fade group-data-selected:opacity-100"
-          >
-            <polyline points="3,8.5 6.5,12 13,4.5" />
-          </svg>
+          <span className="flex text-on-primary opacity-0 select-fade group-data-selected:opacity-100">
+            <CheckIcon size="small" />
+          </span>
         </span>
         {children}
       </CheckboxButton>

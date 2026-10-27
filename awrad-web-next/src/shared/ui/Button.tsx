@@ -2,7 +2,7 @@ import type { ReactElement, ReactNode } from "react";
 import { Button as AriaButton, ProgressBar, type ButtonProps as AriaButtonProps } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { cx } from "./cx";
-import type { Icon } from "./icons";
+import type { Icon } from "./icons.gen";
 import { useSecondaryFill } from "./Surface";
 
 type AriaProps = Omit<AriaButtonProps, "children" | "className" | "style">;
@@ -29,7 +29,10 @@ export interface ButtonProps extends AriaProps {
   children: ReactNode;
 }
 
-/** Three dots that fade in turn, in the content colour. Fades only, still with reduced motion. */
+/**
+ * The web's own progress indicator (components.md lets each platform use its own): three dots that
+ * fade in turn, in the content colour. Fades only, still with reduced motion.
+ */
 function PendingIndicator(): ReactElement {
   const { t } = useTranslation();
   return (

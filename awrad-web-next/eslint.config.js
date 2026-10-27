@@ -52,6 +52,11 @@ export default tseslint.config(
     },
   },
   {
+    // Generated (scripts/generate-icons.mjs): one component per shared icon, so its length follows icons.json.
+    files: ["src/**/*.gen.tsx"],
+    rules: { "max-lines": "off" },
+  },
+  {
     files: ["vite.config.ts"],
     languageOptions: { globals: globals.node },
     rules: { "i18next/no-literal-string": "off" },

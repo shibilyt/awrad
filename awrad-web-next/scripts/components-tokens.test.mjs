@@ -1,11 +1,12 @@
 // The tokens the key components need (contracts/design-system/v1/components.md): elevation,
 // component sizes and shapes, largeTitle, the select motion, the forced colour scheme, and the
-// generators failing on keys they don't know.
+// generators failing on keys they don't know, and the safe-area insets (viewport-fit=cover).
 import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { classProblem, rawValues, vocabulary } from "./check-raw-values.mjs";
 import { SOURCE as COLORS, kebab, renderColorsCss } from "./generate-colors.mjs";
-import { readTokens, renderTokensCss } from "./generate-tokens.mjs";
+import { TARGET, readTokens, renderTokensCss } from "./generate-tokens.mjs";
 
 const tokens = readTokens();
 const colors = JSON.parse(readFileSync(COLORS, "utf8"));
@@ -54,7 +55,7 @@ describe("component tokens", () => {
   });
 
   test("the component shapes are radius roles; the fully rounded tab indicator has no squircle", () => {
-    expect(css).toContain("--awrad-radius-step-dot: var(--awrad-radius-xxs);");
+    expect(css).toContain("--awrad-radius-step-dot: var(--awrad-radius-xxxs);");
     expect(css).toContain("--awrad-radius-content-sheet: var(--awrad-radius-3xl);");
     expect(css).toContain("--awrad-radius-tab-indicator: var(--awrad-radius-full);");
     expect(css).not.toContain("--corner-shape-tab-indicator");
@@ -121,5 +122,28 @@ describe("check-raw-values: shadows", () => {
     expect(classProblem("shadow-[0_4px_16px_black]", vocab)).toBe("arbitrary value");
     expect(rawValues("  box-shadow: 0 4px 16px var(--awrad-color-shadow);", "css")).toHaveLength(1);
     expect(rawValues("  box-shadow: var(--awrad-elevation-floating);", "css")).toEqual([]);
+  });
+});
+
+describe("safe areas", () => {
+  const ui = dirname(TARGET);
+  const html = readFileSync(join(ui, "../../../index.html"), "utf8");
+  const theme = readFileSync(join(ui, "theme.css"), "utf8");
+
+  test("the viewport covers the whole screen, so env(safe-area-inset-*) is set on iOS", () => {
+    expect(html).toMatch(/<meta name="viewport" content="[^"]*viewport-fit=cover[^"]*"/);
+  });
+
+  test("the safe-area utilities pad by each inset, and the bottom bar sits inside them", () => {
+    expect(theme).toContain("@utility safe-area-x {");
+    expect(theme).toContain("padding-left: env(safe-area-inset-left, var(--awrad-space-none));");
+    expect(theme).toContain("padding-top: env(safe-area-inset-top, var(--awrad-space-none));");
+    expect(theme).toContain("padding-bottom: env(safe-area-inset-bottom, var(--awrad-space-none));");
+    expect(theme).toContain(
+      "left: calc(var(--awrad-space-page-margin) + env(safe-area-inset-left, var(--awrad-space-none)));",
+    );
+    expect(theme).toContain(
+      "bottom: calc(var(--awrad-space-lg) + env(safe-area-inset-bottom, var(--awrad-space-none)));",
+    );
   });
 });

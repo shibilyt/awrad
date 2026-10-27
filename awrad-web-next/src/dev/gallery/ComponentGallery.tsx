@@ -6,6 +6,7 @@ import { Card } from "@/shared/ui/Card";
 import { Switch } from "@/shared/ui/Checkbox";
 import { ButtonsSection } from "./ButtonsSection";
 import { ContainersSection } from "./ContainersSection";
+import { IconsSection } from "./IconsSection";
 import { InputsSection } from "./InputsSection";
 import ar from "./locales/ar.json";
 import en from "./locales/en.json";
@@ -65,6 +66,7 @@ function GalleryPage(): ReactElement {
       <ButtonsSection />
       <InputsSection />
       <NavigationSection />
+      <IconsSection />
     </main>
   );
 }

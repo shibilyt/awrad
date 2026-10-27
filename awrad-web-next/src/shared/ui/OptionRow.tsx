@@ -10,7 +10,7 @@ import {
   type RadioGroupProps,
 } from "react-aria-components";
 import { cx } from "./cx";
-import { CheckIcon } from "./icons";
+import { CheckIcon } from "./icons.gen";
 import { useSecondaryFill } from "./Surface";
 
 type Mode = "single" | "multiple";
