@@ -146,7 +146,8 @@ struct CollectionScreen: View {
 @MainActor
 final class PreviewAudioPlayer: DhikrAudioPlayer {
     var onStatusChange: (@MainActor (AudioPlaybackStatus) -> Void)?
-    func play(_ url: URL) { onStatusChange?(.playing(elapsed: .seconds(12))) }
-    func pause() { onStatusChange?(.paused(elapsed: .seconds(12))) }
+    func play(_ url: URL) { onStatusChange?(.playing(position)) }
+    func pause() { onStatusChange?(.paused(position)) }
+    private let position = PlaybackPosition(elapsed: .seconds(14), duration: .seconds(26))
     func stop() { onStatusChange?(.stopped) }
 }

@@ -2,9 +2,11 @@ import AwradDesignSystem
 import AwradDomain
 import SwiftUI
 
-/// A dhikr's screen: owns its model (and so its audio), which stops when the screen goes away.
+/// A dhikr's screen: owns its model (and so its audio), which stops when the screen goes away and
+/// pauses when the app goes to the background.
 struct DhikrDetailRoute: View {
     @State private var model: DhikrDetailModel
+    @Environment(\.scenePhase) private var scenePhase
     private let content: LibraryContent
 
     init(dhikr: Dhikr, content: LibraryContent, makePlayer: @escaping @MainActor () -> any DhikrAudioPlayer) {
@@ -17,11 +19,14 @@ struct DhikrDetailRoute: View {
             if !model.apply(action) { Task { await model.send(action) } }
         }
         .onDisappear { model.apply(.disappeared) }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background { model.apply(.backgrounded) }
+        }
     }
 }
 
-/// Stateless: the text by kind (slice 3a brief, "Rendering by kind"), the audio button, the tags
-/// and the virtues with their references.
+/// Stateless: the Arabic card by kind with the audio player bar at its bottom, then the
+/// transliteration, translation, tags and virtues (components.md, "Dhikr detail screen").
 struct DhikrDetailScreen: View {
     let state: DhikrDetailModel.State
     let content: LibraryContent
@@ -38,7 +43,7 @@ struct DhikrDetailScreen: View {
                 AwradCard {
                     recitedText
                     if state.audio != .unavailable {
-                        DhikrAudioControl(audio: state.audio) { send(.playPauseTapped) }
+                        DhikrAudioBar(audio: state.audio) { send(.playPauseTapped) }
                     }
                 }
                 .padding(.horizontal, AwradSpacing.pageMargin)
@@ -55,7 +60,8 @@ struct DhikrDetailScreen: View {
         #endif
     }
 
-    /// The Arabic, centred and right to left: one ayah per line with its reference for Qur'an.
+    /// The Arabic, centred and right to left: one ayah per line with its reference for Qur'an, or a
+    /// name of Allah over its meaning.
     @ViewBuilder private var recitedText: some View {
         VStack(spacing: AwradSpacing.sm) {
             switch dhikr.kind {
@@ -65,24 +71,26 @@ struct DhikrDetailScreen: View {
                 }
                 ForEach(dhikr.references.filter(\.isQuran), id: \.id) { reference in
                     Text(verbatim: ReferenceLabel.text(reference, locale: locale))
-                        .awradTextStyle(.label)
-                        .foregroundStyle(AwradColors.accent)
+                        .awradTextStyle(.caption)
+                        .foregroundStyle(AwradColors.onSurfaceVariant)
                 }
-            case .nameOfAllah, .dhikr, .dua, .salawat:
+            case .nameOfAllah:
+                ArabicText(dhikr.arabic, style: .nameOfAllah)
+                Text(verbatim: display.translation)
+                    .awradTextStyle(.title)
+                    .foregroundStyle(AwradColors.onSurface)
+                    .multilineTextAlignment(.center)
+            case .dhikr, .dua, .salawat:
                 ArabicText(dhikr.arabic)
             }
         }
         .frame(maxWidth: .infinity)
     }
 
-    /// What follows the text: the meaning of a name, or a dhikr's transliteration and translation.
+    /// The transliteration and translation; a name of Allah has neither (its title is the
+    /// transliteration and its meaning is in the card).
     @ViewBuilder private var details: some View {
-        switch dhikr.kind {
-        case .quran:
-            EmptyView()
-        case .nameOfAllah:
-            DetailSection(title: Strings.meaning, text: display.translation)
-        case .dhikr, .dua, .salawat:
+        if dhikr.kind != .nameOfAllah {
             if let transliteration = display.transliteration {
                 DetailSection(title: Strings.transliteration, text: transliteration)
             }
@@ -124,17 +132,20 @@ extension Reference {
     }
 }
 
-/// Recited Arabic in the `quran` style, centred, right to left whatever the app language.
+/// Recited Arabic (`quran`, or `nameOfAllah` for a name), centred, right to left whatever the app
+/// language.
 private struct ArabicText: View {
     let text: String
+    let style: AwradTextStyle
 
-    init(_ text: String) {
+    init(_ text: String, style: AwradTextStyle = .quran) {
         self.text = text
+        self.style = style
     }
 
     var body: some View {
         Text(verbatim: text)
-            .awradTextStyle(.quran)
+            .awradTextStyle(style)
             .foregroundStyle(AwradColors.onSurface)
             .multilineTextAlignment(.center)
             .frame(maxWidth: .infinity)
@@ -143,7 +154,7 @@ private struct ArabicText: View {
     }
 }
 
-/// A titled paragraph: transliteration, translation or a name's meaning.
+/// A titled paragraph: the transliteration or the translation.
 private struct DetailSection: View {
     let title: LocalizedStringResource
     let text: String
@@ -202,34 +213,6 @@ private struct VirtueCard: View {
                 }
             }
         }
-    }
-}
-
-/// The play/pause round button with the elapsed time, or why it can't play.
-private struct DhikrAudioControl: View {
-    let audio: DhikrDetailModel.Audio
-    let action: () -> Void
-
-    var body: some View {
-        HStack(spacing: AwradSpacing.md) {
-            AwradRoundButton(
-                icon: audio.isActive ? .pause : .play, label: audio.isActive ? Strings.pause : Strings.play,
-                action: action)
-            if let elapsed = audio.elapsed {
-                Text(elapsed, format: .time(pattern: .minuteSecond))
-                    .awradTextStyle(.label)
-                    .monospacedDigit()
-                    .foregroundStyle(AwradColors.onSurfaceVariant)
-            } else if audio == .loading {
-                ProgressView()
-                    .tint(AwradColors.progress)
-            } else if audio == .failed {
-                Text(Strings.audioFailed)
-                    .awradTextStyle(.caption)
-                    .foregroundStyle(AwradColors.error)
-            }
-        }
-        .frame(maxWidth: .infinity)
     }
 }
 

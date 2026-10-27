@@ -93,6 +93,29 @@
         }
       }
     },
+    "library.audio.progress" : {
+      "comment" : "The audio player's time: the elapsed time, then the recording's length, such as \"0:14 / 0:26\".",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ / %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ / %2$@"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ / %2$@"
+          }
+        }
+      }
+    },
     "library.collection.count" : {
       "comment" : "The number of dhikrs in a collection, on its tile.",
       "localizations" : {
@@ -144,13 +167,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld Dhikr"
+                  "value" : "%lld dhikr"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld Dhikrs"
+                  "value" : "%lld dhikrs"
                 }
               }
             }
@@ -195,29 +218,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ശേഖരങ്ങൾ"
-          }
-        }
-      }
-    },
-    "library.detail.meaning" : {
-      "comment" : "Section title over the meaning of one of the names of Allah.",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "المعنى"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Meaning"
-          }
-        },
-        "ml" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "അർത്ഥം"
           }
         }
       }

@@ -55,7 +55,10 @@ struct AppShell: View {
             }
         }
         .awradTabSwitch(value: tab)
-        .awradBottomBar(selection: $tab, items: Self.items)
+        // Only on the tab roots: a pushed collection or dhikr page hides it.
+        .awradBottomBar(
+            selection: $tab, items: Self.items, isPresented: tab == .home || library.state.path.isEmpty
+        )
         .background(AwradColors.background)
     }
 }

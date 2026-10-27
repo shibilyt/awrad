@@ -1,7 +1,9 @@
 import SwiftUI
 
 /// A round `primary` button with an `onPrimary` icon: the + on My Goals (`regular`, 48, `add`) or the
-/// arrow on a collection tile (`small`, 32, still with a 48 touch target, `forward`). It needs a label.
+/// arrow on a collection tile (`small`, 32, still with a 48 touch target, `forward`), or play/pause on
+/// the audio player bar. It needs a label. While `isLoading`, the platform's `ProgressView` in
+/// `onPrimary` replaces the icon; the button stays tappable (to cancel).
 public struct AwradRoundButton: View {
     public enum Size: Sendable, CaseIterable {
         /// `roundButton` (48), `icon` (24) icon.
@@ -27,26 +29,30 @@ public struct AwradRoundButton: View {
     private let icon: AwradIcon
     private let label: LocalizedStringResource
     private let size: Size
+    private let isLoading: Bool
     private let action: () -> Void
 
     public init(
-        icon: AwradIcon, label: LocalizedStringResource, size: Size = .regular, action: @escaping () -> Void
+        icon: AwradIcon, label: LocalizedStringResource, size: Size = .regular, isLoading: Bool = false,
+        action: @escaping () -> Void
     ) {
         self.icon = icon
         self.label = label
         self.size = size
+        self.isLoading = isLoading
         self.action = action
     }
 
     public var body: some View {
         Button(action: action) {
-            AwradRoundIcon(icon, size: size)
+            AwradRoundIcon(icon, size: size, isLoading: isLoading)
                 .awradDisabledAppearance()
                 .frame(minWidth: AwradSize.touchTarget, minHeight: AwradSize.touchTarget)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.awradPress(.button))
         .accessibilityLabel(Text(label))
+        .accessibilityValue(isLoading ? Text(AwradStrings.loading) : Text(verbatim: ""))
     }
 }
 
@@ -55,15 +61,25 @@ public struct AwradRoundButton: View {
 struct AwradRoundIcon: View {
     private let icon: AwradIcon
     private let size: AwradRoundButton.Size
+    private let isLoading: Bool
 
-    init(_ icon: AwradIcon, size: AwradRoundButton.Size) {
+    init(_ icon: AwradIcon, size: AwradRoundButton.Size, isLoading: Bool = false) {
         self.icon = icon
         self.size = size
+        self.isLoading = isLoading
     }
 
     var body: some View {
         AwradIconImage(icon, size: size.iconSize)
             .foregroundStyle(AwradColors.onPrimary)
+            .opacity(isLoading ? 0 : 1)
+            .overlay {
+                if isLoading {
+                    ProgressView()
+                        .tint(AwradColors.onPrimary)
+                        .accessibilityHidden(true)
+                }
+            }
             .frame(width: size.diameter, height: size.diameter)
             .background(AwradColors.primary, in: AwradRadius.roundButton.shape)
     }

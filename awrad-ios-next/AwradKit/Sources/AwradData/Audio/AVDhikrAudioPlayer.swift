@@ -91,23 +91,25 @@ public final class AVDhikrAudioPlayer: DhikrAudioPlayer {
             status = .failed
             return
         }
-        let elapsed = Self.duration(player.currentTime())
+        let position = PlaybackPosition(
+            elapsed: Self.duration(player.currentTime()) ?? .zero, duration: Self.duration(item.duration))
         switch player.timeControlStatus {
         case .playing:
-            status = .playing(elapsed: elapsed)
+            status = .playing(position)
         case .waitingToPlayAtSpecifiedRate:
             status = .loading
         case .paused:
             // Pausing at the end is `finished`, set by the end notification.
-            if status != .finished { status = .paused(elapsed: elapsed) }
+            if status != .finished { status = .paused(position) }
         @unknown default:
             break
         }
     }
 
-    private static func duration(_ time: CMTime) -> Duration {
+    /// The time as a `Duration`; `nil` while it's indefinite (a length not yet loaded).
+    private static func duration(_ time: CMTime) -> Duration? {
         let seconds = time.seconds
-        return seconds.isFinite ? .milliseconds(Int((seconds * 1000).rounded())) : .zero
+        return seconds.isFinite ? .milliseconds(Int((seconds * 1000).rounded())) : nil
     }
 
     private func activateSession() {

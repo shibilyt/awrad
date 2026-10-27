@@ -443,13 +443,13 @@
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld Dhikr"
+                  "value" : "%lld dhikr"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld Dhikrs"
+                  "value" : "%lld dhikrs"
                 }
               }
             }
