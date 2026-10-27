@@ -40,16 +40,32 @@ public struct AwradRoundButton: View {
 
     public var body: some View {
         Button(action: action) {
-            AwradIconImage(icon, size: size.iconSize)
-                .foregroundStyle(AwradColors.onPrimary)
-                .frame(width: size.diameter, height: size.diameter)
-                .background(AwradColors.primary, in: AwradRadius.roundButton.shape)
+            AwradRoundIcon(icon, size: size)
                 .awradDisabledAppearance()
                 .frame(minWidth: AwradSize.touchTarget, minHeight: AwradSize.touchTarget)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.awradPress(.button))
         .accessibilityLabel(Text(label))
+    }
+}
+
+/// The round button's face without the button: an `onPrimary` icon in a `primary` circle. A tappable
+/// container that already is the button (a collection tile's arrow) draws this inside it.
+struct AwradRoundIcon: View {
+    private let icon: AwradIcon
+    private let size: AwradRoundButton.Size
+
+    init(_ icon: AwradIcon, size: AwradRoundButton.Size) {
+        self.icon = icon
+        self.size = size
+    }
+
+    var body: some View {
+        AwradIconImage(icon, size: size.iconSize)
+            .foregroundStyle(AwradColors.onPrimary)
+            .frame(width: size.diameter, height: size.diameter)
+            .background(AwradColors.primary, in: AwradRadius.roundButton.shape)
     }
 }
 
