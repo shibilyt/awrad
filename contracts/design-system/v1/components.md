@@ -17,6 +17,7 @@ Every app has a debug-only **component gallery** that shows each component below
 - **Touch target:** at least `touchTarget` (48), even when the visible shape is smaller.
 - **Press:** anything tappable uses the `press` motion: `buttonScale` for buttons, `cardScale` for cards and rows.
 - **Disabled:** the whole component is drawn at `states.disabled.opacity` with its normal colours, and it ignores input.
+- **Secondary fills on a surface:** `secondaryContainer` equals `surface` in light mode, so on a `surface` area (a card, the content sheet) secondary buttons, unselected option rows and unselected pills fill `background` with `onSurface` content, like fields. Dialogs and bottom sheets count as the page.
 - **No outlines.** The only lines are the `strokes` in `shape.json`: a field in error, a checkbox's box, the web focus ring.
 - **RTL:** layouts mirror; directional icons (back chevron, arrow) flip; the step indicator and bottom bar order mirror.
 - **Strings:** every label comes from localization resources (en, ar, ml).
