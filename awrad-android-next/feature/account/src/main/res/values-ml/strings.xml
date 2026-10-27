@@ -33,7 +33,6 @@
     <string name="account_action_go_register">അക്കൗണ്ട് സൃഷ്ടിക്കുക</string>
     <string name="account_action_go_sign_in">എനിക്ക് ഇതിനകം അക്കൗണ്ട് ഉണ്ട്</string>
     <string name="account_action_sign_out">സൈൻ ഔട്ട് ചെയ്യുക</string>
-    <string name="account_action_back">തിരികെ</string>
     <string name="account_action_show_password">പാസ്‌വേഡ് കാണിക്കുക</string>
     <string name="account_action_hide_password">പാസ്‌വേഡ് മറയ്ക്കുക</string>
 

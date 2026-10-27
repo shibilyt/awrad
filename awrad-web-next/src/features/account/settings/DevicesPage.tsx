@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { InlineButton, PrimaryButton, SecondaryButton } from "@/shared/ui/Button";
+import { Button } from "@/shared/ui/Button";
+import { Card } from "@/shared/ui/Card";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
-import { OnSurface } from "@/shared/ui/Surface";
+import { DevicesIcon, PhoneIcon } from "@/shared/ui/icons.gen";
 import { FormAlert, FormNotice } from "../AccountScreen";
 import { problemKey } from "../problems";
 import { accountSessionsQuery, type AccountSession } from "./api";
@@ -25,6 +26,7 @@ function SessionRow({
   const name = sessionName(t, session);
   return (
     <li className="flex items-center gap-lg px-card-padding py-lg">
+      <span className="text-on-surface-variant">{session.platform === "web" ? <DevicesIcon /> : <PhoneIcon />}</span>
       <div className="flex min-w-0 flex-1 flex-col gap-xs">
         <p className="flex flex-wrap items-center gap-inline-gap text-row-title">
           <bdi className="break-all">{name}</bdi>
@@ -42,14 +44,16 @@ function SessionRow({
         </p>
       </div>
       {!session.is_current && (
-        <InlineButton
+        <Button
+          variant="secondary"
+          size="row"
           aria-label={t("account.devices.signOutNamed", { name })}
           onPress={() => {
             onSignOut(session);
           }}
         >
           {t("account.devices.signOut")}
-        </InlineButton>
+        </Button>
       )}
     </li>
   );
@@ -66,15 +70,17 @@ function SessionList({ sessions }: { sessions: AccountSession[] }): ReactElement
     <>
       <FormNotice message={actions.message?.kind === "notice" ? actions.message.text : null} />
       <FormAlert message={actions.message?.kind === "alert" ? actions.message.text : null} />
-      <ul aria-label={t("account.devices.listLabel")} className="flex flex-col rounded-card bg-surface">
-        <OnSurface>
+      <Card padded={false}>
+        <ul aria-label={t("account.devices.listLabel")} className="flex flex-col">
           {sessions.map((session) => (
             <SessionRow key={session.id} session={session} now={now} onSignOut={actions.ask} />
           ))}
-        </OnSurface>
-      </ul>
+        </ul>
+      </Card>
       {hasOthers ? (
-        <SecondaryButton onPress={actions.askOthers}>{t("account.devices.signOutOthers")}</SecondaryButton>
+        <Button variant="secondary" onPress={actions.askOthers}>
+          {t("account.devices.signOutOthers")}
+        </Button>
       ) : (
         <p className="text-on-surface-variant">{t("account.devices.noOthers")}</p>
       )}
@@ -121,7 +127,7 @@ export function DevicesPage(): ReactElement {
       {sessions.data === undefined && sessions.isError && !isSessionEnded(sessions.error) && (
         <>
           <FormAlert message={t(problemKey(sessions.error))} />
-          <PrimaryButton onPress={() => void sessions.refetch()}>{t("account.page.retry")}</PrimaryButton>
+          <Button onPress={() => void sessions.refetch()}>{t("account.page.retry")}</Button>
         </>
       )}
     </SettingsScreen>

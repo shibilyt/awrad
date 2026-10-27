@@ -8,6 +8,8 @@ struct AwradNextApp: App {
 
     init() {
         AwradFonts.register()
+        // The native navigation bar's large and inline titles in the interface font.
+        AwradNavigationBarAppearance.apply()
     }
 
     var body: some Scene {

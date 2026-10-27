@@ -28,6 +28,8 @@ internal val AwradMaterialShapes: Shapes = Shapes(
 
 private val LocalAwradColors = staticCompositionLocalOf { LightAwradColors }
 
+private val LocalAwradElevation = staticCompositionLocalOf { AwradElevation(LightAwradColors) }
+
 /**
  * The app theme. Colours are the shared roles (`contracts/design-tokens/v1`), light or dark with the system;
  * there is no dynamic (wallpaper) colour. Motion follows the system's reduced-motion setting unless
@@ -42,8 +44,13 @@ public fun AwradTheme(
     val colors = if (darkTheme) DarkAwradColors else LightAwradColors
     val inverse = if (darkTheme) LightAwradColors else DarkAwradColors
     val colorScheme = remember(colors) { colorSchemeOf(colors, inverse) }
+    val elevation = remember(colors) { AwradElevation(colors) }
     val motion = remember(reducedMotion) { AwradMotion(isReduced = reducedMotion) }
-    CompositionLocalProvider(LocalAwradColors provides colors, LocalAwradMotion provides motion) {
+    CompositionLocalProvider(
+        LocalAwradColors provides colors,
+        LocalAwradElevation provides elevation,
+        LocalAwradMotion provides motion,
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = AwradTypography,
@@ -73,6 +80,21 @@ public object AwradTheme {
         @ReadOnlyComposable
         get() = LocalAwradColors.current.fillOn(LocalAwradContainer.current)
 
+    /**
+     * The fill for a secondary control here (secondary button, unselected option row or segmented pill):
+     * `secondaryContainer` on the page, `background` on a `surface` area.
+     */
+    public val secondaryFill: Color
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAwradColors.current.secondaryFillOn(LocalAwradContainer.current)
+
+    /** Text and icons on [secondaryFill]: `onSecondaryContainer`, or `onSurface` on a `surface` area. */
+    public val onSecondaryFill: Color
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAwradColors.current.onSecondaryFillOn(LocalAwradContainer.current)
+
     /** How a state changes a control's look: `disabledOpacity`. */
     public val states: AwradStates get() = AwradStates
 
@@ -81,6 +103,12 @@ public object AwradTheme {
 
     /** The only line widths the design allows (`fieldError`, `checkbox`). */
     public val strokes: AwradStrokes get() = AwradStrokes
+
+    /** The shadows (`floating`), with this theme's colours: none in dark. Draw one with `Modifier.awradShadow`. */
+    public val elevation: AwradElevation
+        @Composable
+        @ReadOnlyComposable
+        get() = LocalAwradElevation.current
 
     /** Spacing roles (`pageMargin`, `cardPadding`…) and the spacing scale. */
     public val spacing: AwradSpacing get() = AwradSpacing

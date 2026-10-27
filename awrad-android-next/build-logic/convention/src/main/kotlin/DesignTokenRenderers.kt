@@ -31,12 +31,14 @@ internal object ShapeTokens {
         val scale: List<Step>,
         val roles: List<Role>,
         val strokes: List<Stroke>,
+        val elevations: List<ElevationTokens.Elevation>,
     ) {
         /** The scale step a role uses, for tokens elsewhere that name a shape role (a motion's `radius`). */
         fun role(name: String): Role = roles.firstOrNull { it.name == name } ?: file.fail("no shape role '$name'")
     }
 
-    fun parse(file: TokenFile): Parsed {
+    fun parse(file: TokenFile, colorRoles: Set<String>): Parsed {
+        file.requireKeys("corners", "scale", "roles", "strokes", "elevation")
         val continuous = when (val corners = file.json["corners"]) {
             "continuous" -> true
             "circular" -> false
@@ -56,7 +58,7 @@ internal object ShapeTokens {
                 use = string(file, "roles.$name.use", role["use"]),
             )
         }
-        return Parsed(file, continuous, scale, roles, parseStrokes(file))
+        return Parsed(file, continuous, scale, roles, parseStrokes(file), ElevationTokens.parse(file, colorRoles))
     }
 
     private val STROKE_KEYS = setOf("width", "offset", "use")
@@ -79,7 +81,10 @@ internal object ShapeTokens {
 
     fun render(shapes: Parsed, header: TokenHeader): String = buildString {
         with(header) {
-            appendHeader("shape.json", listOf("androidx.compose.ui.unit.Dp", "androidx.compose.ui.unit.dp"))
+            appendHeader(
+                "shape.json",
+                listOf("androidx.compose.runtime.Immutable", "androidx.compose.ui.unit.Dp", "androidx.compose.ui.unit.dp"),
+            )
         }
         appendLine("/** The corner-radius scale (without `full`). Screens use a role from [AwradShapes], not these. */")
         appendLine("public object AwradRadius {")
@@ -111,6 +116,8 @@ internal object ShapeTokens {
         appendLine("}")
         appendLine()
         appendStrokes(shapes)
+        appendLine()
+        with(ElevationTokens) { appendElevations(shapes.elevations) }
         appendLine()
         if (shapes.continuous) {
             appendLine("/** `corners: continuous`. */")
@@ -150,6 +157,7 @@ internal object SpacingTokens {
     class Parsed(val scale: List<Entry>, val roles: List<Entry>, val sizes: List<Entry>)
 
     fun parse(file: TokenFile): Parsed {
+        file.requireKeys("scale", "roles", "sizes")
         val scale = file.obj("scale").map { (name, value) ->
             val id = identifier(file, name)
             Entry(id, file.dp("scale.$name", value), file.number("scale.$name", value))
@@ -244,6 +252,7 @@ internal object TypeTokens {
     }
 
     fun parse(file: TokenFile, fontFamilies: Map<String, String>): Parsed {
+        file.requireKeys("fontFamily", "styles")
         val interfaceFamily = fontFamily(file, "fontFamily", file.json["fontFamily"], fontFamilies)
         @Suppress("UNCHECKED_CAST")
         val styles = file.obj("styles").map { (name, style) ->

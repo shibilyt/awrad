@@ -9,22 +9,22 @@ struct SignInForm: View {
 
     var body: some View {
         AccountForm(title: Strings.signInTitle, message: Strings.signInSubtitle, feedback: state.feedback) {
-            AccountField(kind: .email, label: Strings.emailField, text: state.email, isInError: state.isInError(.email))
-            { send(.emailChanged($0)) }
+            AccountField(kind: .email, label: Strings.emailField, text: state.email, error: state.fieldError(.email)) {
+                send(.emailChanged($0))
+            }
             AccountField(
                 kind: .password, label: Strings.passwordField, text: state.password,
-                isInError: state.isInError(.password)
+                error: state.fieldError(.password)
             ) {
                 send(.passwordChanged($0))
             }
         } actions: {
-            AwradPrimaryButton(Strings.signInButton, isEnabled: !state.isWorking) { send(.signInTapped) }
-            AccountLinkButton(title: Strings.forgotPassword, isEnabled: !state.isWorking) {
-                send(.forgotPasswordTapped)
-            }
-            AccountLinkButton(title: Strings.createAccount, isEnabled: !state.isWorking) {
-                send(.createAccountTapped)
-            }
+            AwradButton(Strings.signInButton) { send(.signInTapped) }
+                .disabled(state.isWorking)
+            AwradButton(Strings.forgotPassword, variant: .text) { send(.forgotPasswordTapped) }
+                .disabled(state.isWorking)
+            AwradButton(Strings.createAccount, variant: .text) { send(.createAccountTapped) }
+                .disabled(state.isWorking)
         }
     }
 }
@@ -35,17 +35,19 @@ struct RegisterForm: View {
 
     var body: some View {
         AccountForm(title: Strings.registerTitle, feedback: state.feedback) {
-            AccountField(kind: .email, label: Strings.emailField, text: state.email, isInError: state.isInError(.email))
-            { send(.emailChanged($0)) }
+            AccountField(kind: .email, label: Strings.emailField, text: state.email, error: state.fieldError(.email)) {
+                send(.emailChanged($0))
+            }
             AccountField(
                 kind: .newPassword, label: Strings.passwordField, text: state.password,
-                isInError: state.isInError(.password)
+                error: state.fieldError(.password)
             ) {
                 send(.passwordChanged($0))
             }
             PasswordRule()
         } actions: {
-            AwradPrimaryButton(Strings.registerButton, isEnabled: !state.isWorking) { send(.registerTapped) }
+            AwradButton(Strings.registerButton) { send(.registerTapped) }
+                .disabled(state.isWorking)
         }
     }
 }
@@ -58,11 +60,12 @@ struct VerifyEmailForm: View {
         AccountForm(
             title: Strings.verifyTitle, message: Strings.verifyBody, address: state.email, feedback: state.feedback
         ) {
-            AccountField(kind: .code, label: Strings.codeField, text: state.code, isInError: state.isInError(.code)) {
+            AccountField(kind: .code, label: Strings.codeField, text: state.code, error: state.fieldError(.code)) {
                 send(.codeChanged($0))
             }
         } actions: {
-            AwradPrimaryButton(Strings.verifyButton, isEnabled: !state.isWorking) { send(.verifyTapped) }
+            AwradButton(Strings.verifyButton) { send(.verifyTapped) }
+                .disabled(state.isWorking)
             ResendCodeButton(availableAt: state.resendAvailableAt, isWorking: state.isWorking) {
                 send(.resendTapped)
             }
@@ -76,10 +79,12 @@ struct ForgotPasswordForm: View {
 
     var body: some View {
         AccountForm(title: Strings.forgotTitle, message: Strings.forgotBody, feedback: state.feedback) {
-            AccountField(kind: .email, label: Strings.emailField, text: state.email, isInError: state.isInError(.email))
-            { send(.emailChanged($0)) }
+            AccountField(kind: .email, label: Strings.emailField, text: state.email, error: state.fieldError(.email)) {
+                send(.emailChanged($0))
+            }
         } actions: {
-            AwradPrimaryButton(Strings.forgotButton, isEnabled: !state.isWorking) { send(.sendResetCodeTapped) }
+            AwradButton(Strings.forgotButton) { send(.sendResetCodeTapped) }
+                .disabled(state.isWorking)
         }
     }
 }
@@ -92,18 +97,19 @@ struct ResetPasswordForm: View {
         AccountForm(
             title: Strings.resetTitle, message: Strings.resetBody, address: state.email, feedback: state.feedback
         ) {
-            AccountField(kind: .code, label: Strings.codeField, text: state.code, isInError: state.isInError(.code)) {
+            AccountField(kind: .code, label: Strings.codeField, text: state.code, error: state.fieldError(.code)) {
                 send(.codeChanged($0))
             }
             AccountField(
                 kind: .newPassword, label: Strings.newPasswordField, text: state.newPassword,
-                isInError: state.isInError(.password)
+                error: state.fieldError(.password)
             ) {
                 send(.newPasswordChanged($0))
             }
             PasswordRule()
         } actions: {
-            AwradPrimaryButton(Strings.resetButton, isEnabled: !state.isWorking) { send(.resetTapped) }
+            AwradButton(Strings.resetButton) { send(.resetTapped) }
+                .disabled(state.isWorking)
             ResendCodeButton(availableAt: state.resendAvailableAt, isWorking: state.isWorking) {
                 send(.resendTapped)
             }

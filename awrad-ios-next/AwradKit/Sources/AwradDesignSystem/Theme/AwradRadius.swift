@@ -6,6 +6,7 @@ import CoreGraphics
 /// Corner radii from the design tokens contract: a scale, and the role every shape uses.
 /// Screens use a role (`AwradRadius.card.shape`), never a number. Corners are continuous.
 nonisolated public enum AwradRadius {
+    public static let xxxs: CGFloat = 2
     public static let xxs: CGFloat = 4
     public static let xs: CGFloat = 8
     public static let sm: CGFloat = 12
@@ -39,8 +40,15 @@ nonisolated public enum AwradRadius {
     public static let screenDepth: AwradCorner = .radius(xl3)
     /// A checkbox's box (the only use of 4): `xxs`.
     public static let checkbox: AwradCorner = .radius(xxs)
+    /// Squares in the onboarding step indicator: `xxxs`.
+    public static let stepDot: AwradCorner = .radius(xxxs)
+    /// The bar under the selected segmented pill: `full`.
+    public static let tabIndicator: AwradCorner = .full
+    /// Top corners of the content area under a large-title header (My Goals): `3xl`.
+    public static let contentSheet: AwradCorner = .radius(xl3)
 
     static let scale: KeyValuePairs<String, CGFloat> = [
+        "xxxs": xxxs,
         "xxs": xxs,
         "xs": xs,
         "sm": sm,
@@ -63,5 +71,8 @@ nonisolated public enum AwradRadius {
         "dialog": dialog,
         "screenDepth": screenDepth,
         "checkbox": checkbox,
+        "stepDot": stepDot,
+        "tabIndicator": tabIndicator,
+        "contentSheet": contentSheet,
     ]
 }

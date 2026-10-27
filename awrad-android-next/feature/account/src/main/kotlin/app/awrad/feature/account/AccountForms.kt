@@ -7,7 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import app.awrad.core.designsystem.component.AwradPrimaryButton
+import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.theme.AwradTheme
 
@@ -25,7 +25,7 @@ internal fun SignInForm(state: AccountUiState, onAction: (AccountAction) -> Unit
         )
         EmailField(state.email, state.emailProblem, { onAction(AccountAction.EmailChanged(it)) })
         PasswordField(state.password, state.passwordProblem, { onAction(AccountAction.PasswordChanged(it)) })
-        AwradPrimaryButton(
+        AwradButton(
             text = stringResource(R.string.account_action_sign_in),
             onClick = { onAction(AccountAction.Submit) },
             enabled = state.canSubmit,
@@ -52,7 +52,7 @@ internal fun RegisterForm(state: AccountUiState, onAction: (AccountAction) -> Un
             label = R.string.account_field_new_password,
             showRule = true,
         )
-        AwradPrimaryButton(
+        AwradButton(
             text = stringResource(R.string.account_action_register),
             onClick = { onAction(AccountAction.Submit) },
             enabled = state.canSubmit,
@@ -69,7 +69,7 @@ internal fun VerifyEmailForm(state: AccountUiState, onAction: (AccountAction) ->
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
         CodeSentTo(email = state.email)
         CodeField(state.code, state.codeProblem, { onAction(AccountAction.CodeChanged(it)) })
-        AwradPrimaryButton(
+        AwradButton(
             text = stringResource(R.string.account_action_verify),
             onClick = { onAction(AccountAction.Submit) },
             enabled = state.canSubmit,
@@ -95,7 +95,7 @@ internal fun ForgotPasswordForm(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         EmailField(state.email, state.emailProblem, { onAction(AccountAction.EmailChanged(it)) })
-        AwradPrimaryButton(
+        AwradButton(
             text = stringResource(R.string.account_action_send_code),
             onClick = { onAction(AccountAction.Submit) },
             enabled = state.canSubmit,
@@ -119,7 +119,7 @@ internal fun ResetPasswordForm(
             label = R.string.account_field_new_password,
             showRule = true,
         )
-        AwradPrimaryButton(
+        AwradButton(
             text = stringResource(R.string.account_action_reset_password),
             onClick = { onAction(AccountAction.Submit) },
             enabled = state.canSubmit,

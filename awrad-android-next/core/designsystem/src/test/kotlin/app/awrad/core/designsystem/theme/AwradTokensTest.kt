@@ -27,6 +27,9 @@ class AwradTokensTest {
         assertEquals(CornerSize(percent = 50), AwradShapes.chip.topStart)
         assertEquals(4.dp, AwradRadius.xxs)
         assertEquals(SmoothCornerShape(4.dp), AwradShapes.checkbox)
+        // Step dots are squares with barely rounded corners: the `xxxs` step.
+        assertEquals(2.dp, AwradRadius.xxxs)
+        assertEquals(SmoothCornerShape(2.dp), AwradShapes.stepDot)
     }
 
     @Test

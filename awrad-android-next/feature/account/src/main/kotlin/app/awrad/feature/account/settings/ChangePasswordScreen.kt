@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.awrad.core.designsystem.component.AwradPrimaryButton
+import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.motion.AwradContentSwap
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.feature.account.AccountPage
@@ -49,7 +49,7 @@ internal fun ChangePasswordScreen(
         // The form gives way to Done in place (`contentSwap`).
         AwradContentSwap(targetState = state.isDone, label = "changePasswordDone") { isDone ->
             if (isDone) {
-                AwradPrimaryButton(text = stringResource(R.string.account_action_done), onClick = onBack)
+                AwradButton(text = stringResource(R.string.account_action_done), onClick = onBack)
             } else {
                 ChangePasswordForm(state = state, onAction = onAction)
             }
@@ -78,7 +78,7 @@ private fun ChangePasswordForm(
             label = R.string.account_field_new_password,
             showRule = true,
         )
-        AwradPrimaryButton(
+        AwradButton(
             text = stringResource(R.string.account_action_change_password),
             onClick = { onAction(ChangePasswordAction.Submit) },
             enabled = state.canSubmit,

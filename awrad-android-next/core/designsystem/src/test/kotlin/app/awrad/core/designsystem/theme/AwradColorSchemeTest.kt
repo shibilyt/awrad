@@ -37,7 +37,7 @@ class AwradColorSchemeTest {
             assertEquals(colors.onPrimary, scheme.onPrimary)
             assertEquals(colors.primaryContainer, scheme.primaryContainer)
             assertEquals(colors.onPrimaryContainer, scheme.onPrimaryContainer)
-            assertEquals(colors.primaryContainer, scheme.secondaryContainer)
+            assertEquals(colors.secondaryContainer, scheme.secondaryContainer)
             assertEquals(colors.error, scheme.error)
             assertEquals(colors.onError, scheme.onError)
             assertEquals(colors.surface, scheme.surfaceContainerHighest)

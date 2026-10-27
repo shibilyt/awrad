@@ -25,10 +25,16 @@ public enum AwradColors {
     public static let primary = adaptive(light: 0x23553CFF, dark: 0x23553CFF)
     /// Text and icons on primary.
     public static let onPrimary = adaptive(light: 0xFFFFFFFF, dark: 0xFFFFFFFF)
+    /// Secondary text and icons on primary: a selected option row's label, its avatar fill.
+    public static let onPrimaryVariant = adaptive(light: 0xB7D6B6FF, dark: 0xB7D6B6FF)
     /// Selected state fill: the selected tab pill, selected chips.
     public static let primaryContainer = adaptive(light: 0xB7D6B6FF, dark: 0x23553CFF)
     /// Text and icons on primaryContainer.
     public static let onPrimaryContainer = adaptive(light: 0x000000FF, dark: 0xB7D6B6FF)
+    /// Secondary fills: secondary buttons, unselected option rows.
+    public static let secondaryContainer = adaptive(light: 0xE8EDE9FF, dark: 0xB7D6B6FF)
+    /// Text and icons on secondaryContainer.
+    public static let onSecondaryContainer = adaptive(light: 0x000000FF, dark: 0x000000FF)
     /// Accent text and icons on backgrounds and surfaces: streaks, links, the selected tab's label.
     public static let accent = adaptive(light: 0x23553CFF, dark: 0xB7D6B6FF)
     /// Goal progress rings and bars.
@@ -39,6 +45,8 @@ public enum AwradColors {
     public static let onError = adaptive(light: 0xFFFFFFFF, dark: 0x000000FF)
     /// Dimmed backdrop behind dialogs and sheets.
     public static let scrim = adaptive(light: 0x00000066, dark: 0x00000066)
+    /// The one shadow, under floating elements (the bottom bar); none in dark.
+    public static let shadow = adaptive(light: 0x0000001F, dark: 0x00000000)
 
     /// Every role by its contract name, for tests that check the values against the contract.
     static let roles: KeyValuePairs<String, Color> = [
@@ -51,13 +59,17 @@ public enum AwradColors {
         "outlineStrong": outlineStrong,
         "primary": primary,
         "onPrimary": onPrimary,
+        "onPrimaryVariant": onPrimaryVariant,
         "primaryContainer": primaryContainer,
         "onPrimaryContainer": onPrimaryContainer,
+        "secondaryContainer": secondaryContainer,
+        "onSecondaryContainer": onSecondaryContainer,
         "accent": accent,
         "progress": progress,
         "error": error,
         "onError": onError,
         "scrim": scrim,
+        "shadow": shadow,
     ]
 }
 

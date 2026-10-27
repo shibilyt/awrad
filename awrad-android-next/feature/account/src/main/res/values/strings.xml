@@ -33,7 +33,6 @@
     <string name="account_action_go_register">Create an account</string>
     <string name="account_action_go_sign_in">I already have an account</string>
     <string name="account_action_sign_out">Sign out</string>
-    <string name="account_action_back">Back</string>
     <string name="account_action_show_password">Show password</string>
     <string name="account_action_hide_password">Hide password</string>
 

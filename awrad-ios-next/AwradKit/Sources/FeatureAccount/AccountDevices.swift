@@ -18,9 +18,8 @@ struct DevicesView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, AwradSpacing.xl3)
                 case .unavailable:
-                    AccountLinkButton(title: DeviceStrings.retry, isEnabled: !state.isWorking) {
-                        send(.devicesAppeared)
-                    }
+                    AwradButton(DeviceStrings.retry, variant: .text) { send(.devicesAppeared) }
+                        .disabled(state.isWorking)
                 case .loaded(let sessions):
                     SessionCard(sessions: sessions, isEnabled: !state.isWorking) { send(.revokeTapped($0)) }
                 }
@@ -28,10 +27,10 @@ struct DevicesView: View {
             .awradContentSwap(value: state.sessions.kind)
         } actions: {
             if case .loaded(let sessions) = state.sessions, sessions.contains(where: { !$0.isCurrent }) {
-                AccountLinkButton(title: DeviceStrings.signOutOthers, isEnabled: !state.isWorking, isDestructive: true)
-                {
+                AwradButton(DeviceStrings.signOutOthers, variant: .text, role: .destructive) {
                     send(.revokeOthersTapped)
                 }
+                .disabled(state.isWorking)
             }
         }
         .task { send(.devicesAppeared) }
@@ -117,8 +116,7 @@ struct SessionRow: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: AwradSpacing.lg) {
-            Image(systemName: DeviceStrings.symbol(for: session))
-                .frame(width: AwradSize.iconSmall)
+            AwradIconImage(DeviceStrings.icon(for: session), size: AwradSize.iconSmall)
                 .foregroundStyle(AwradColors.accent)
             VStack(alignment: .leading, spacing: AwradSpacing.xxs) {
                 name
@@ -139,13 +137,8 @@ struct SessionRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if !session.isCurrent {
-                Button(action: onRevoke) {
-                    Text(DeviceStrings.revoke)
-                        .awradTextStyle(.label)
-                        .foregroundStyle(AwradColors.error)
-                        .awradDisabledAppearance()
-                }
-                .disabled(!isEnabled)
+                AwradButton(DeviceStrings.revoke, variant: .text, layout: .row, role: .destructive, action: onRevoke)
+                    .disabled(!isEnabled)
             }
         }
         .padding(.horizontal, AwradSpacing.cardPadding)
@@ -209,12 +202,12 @@ enum DeviceStrings {
         }
     }
 
-    static func symbol(for session: AccountSession) -> String {
+    /// A phone for an iOS or Android app session; the devices icon for a browser or anything else.
+    static func icon(for session: AccountSession) -> AwradIcon {
         switch (session.kind, session.platform) {
-        case (.browser, _), (_, .web): "globe"
-        case (_, .ios): "iphone"
-        case (_, .android): "candybarphone"
-        default: "questionmark.circle"
+        case (.browser, _): .devices
+        case (_, .ios), (_, .android): .phone
+        default: .devices
         }
     }
 }
@@ -249,7 +242,7 @@ enum DeviceStrings {
         .preferredColorScheme(.dark)
 }
 
-private enum PreviewSessions {
+enum PreviewSessions {
     static let all = [
         session("iPhone 16 Pro", .device, .ios, minutesAgo: 0, isCurrent: true),
         session("Pixel 9", .device, .android, minutesAgo: 90),

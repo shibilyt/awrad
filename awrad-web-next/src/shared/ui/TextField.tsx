@@ -15,6 +15,8 @@ export interface TextFieldProps extends Omit<AriaTextFieldProps, "children" | "c
   description?: string | undefined;
   inputMode?: "text" | "email" | "numeric";
   autoCapitalize?: "none" | "sentences";
+  /** An example of what to type, in `onSurfaceVariant`; never a substitute for the label. */
+  placeholder?: string;
 }
 
 /**
@@ -26,14 +28,23 @@ export interface TextFieldProps extends Omit<AriaTextFieldProps, "children" | "c
  * style. Keyboard focus shows the `accent` ring; a click shows the caret only. A
  * field in error gets an `error` border (the `fieldError` stroke), always with its
  * message; the border is transparent otherwise, so the text doesn't move when an
- * error appears.
+ * error appears. The message and the help text below are `caption`. Disabled, the
+ * whole field is drawn at the `disabled` opacity.
  */
-export function TextField({ label, description, inputMode, autoCapitalize, ...props }: TextFieldProps): ReactElement {
+export function TextField({
+  label,
+  description,
+  inputMode,
+  autoCapitalize,
+  placeholder,
+  ...props
+}: TextFieldProps): ReactElement {
   const fill = useFill();
   return (
-    <AriaTextField {...props} className="flex flex-col gap-xs text-start">
+    <AriaTextField {...props} className="flex flex-col gap-xs text-start data-disabled:opacity-disabled">
       <Label className="text-label text-on-surface">{label}</Label>
       <Input
+        {...(placeholder === undefined ? {} : { placeholder })}
         {...(inputMode === undefined ? {} : { inputMode })}
         {...(autoCapitalize === undefined ? {} : { autoCapitalize })}
         className={[
@@ -46,11 +57,11 @@ export function TextField({ label, description, inputMode, autoCapitalize, ...pr
         ].join(" ")}
       />
       {description !== undefined && (
-        <Text slot="description" className="text-body-small text-on-surface-variant">
+        <Text slot="description" className="text-caption text-on-surface-variant">
           {description}
         </Text>
       )}
-      <FieldError className="text-body-small text-error" />
+      <FieldError className="text-caption text-error" />
     </AriaTextField>
   );
 }

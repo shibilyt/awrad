@@ -33,7 +33,10 @@ let package = Package(
         .target(name: "AwradData", dependencies: ["AwradDomain"], swiftSettings: strict),
         .target(
             name: "AwradDesignSystem",
-            resources: [.copy("Resources/Fonts"), .copy("Resources/Images")],
+            resources: [
+                .copy("Resources/Fonts"), .copy("Resources/Images"), .process("Resources/Icons.xcassets"),
+                .process("Resources/Localizable.xcstrings"),
+            ],
             swiftSettings: ui
         ),
         .target(

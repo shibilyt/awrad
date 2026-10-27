@@ -35,7 +35,7 @@ private fun ContentResolver.isReducedMotion(): Boolean = isReducedMotion(
 
 /** The system's reduced-motion setting, updated while the app runs when the user changes it. Off in previews. */
 @Composable
-internal fun rememberSystemReducedMotion(): Boolean {
+public fun rememberSystemReducedMotion(): Boolean {
     if (LocalInspectionMode.current) return false
     val resolver = LocalContext.current.contentResolver
     var isReduced by remember(resolver) { mutableStateOf(resolver.isReducedMotion()) }

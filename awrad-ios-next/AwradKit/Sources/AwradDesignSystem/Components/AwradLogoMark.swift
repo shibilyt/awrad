@@ -21,13 +21,12 @@ public struct AwradLogoMark: View {
 
     private var logo: Image {
         let name = colorScheme == .dark ? "awrad_logo_dark" : "awrad_logo_light"
-        guard let url = Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "Images") else {
-            return Image(systemName: "circle.dotted")
-        }
+        // The PNGs ship in the bundle; an empty image only if one were missing.
+        let url = Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "Images")
         #if canImport(UIKit)
-            return UIImage(contentsOfFile: url.path()).map(Image.init(uiImage:)) ?? Image(systemName: "circle.dotted")
+            return Image(uiImage: url.flatMap { UIImage(contentsOfFile: $0.path()) } ?? UIImage())
         #else
-            return NSImage(contentsOf: url).map(Image.init(nsImage:)) ?? Image(systemName: "circle.dotted")
+            return Image(nsImage: url.flatMap { NSImage(contentsOf: $0) } ?? NSImage())
         #endif
     }
 }

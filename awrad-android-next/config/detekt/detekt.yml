@@ -46,6 +46,24 @@ style:
     imports:
       - value: 'androidx.compose.material3.TextButton'
         reason: 'Use AwradTextButton (accent or error text).'
+      - value: 'androidx.compose.material3.Button'
+        reason: 'Use AwradButton or AwradRowButton (components.md, "Buttons").'
+      - value: 'androidx.compose.material3.IconButton'
+        reason: 'Use AwradIconButton or AwradBackButton (no ripple fill, a required label).'
+      - value: 'androidx.compose.material3.AlertDialog'
+        reason: 'Use AwradDialog (surfaceBar, the scrim, buttons at the end).'
+      - value: 'androidx.compose.material3.ModalBottomSheet'
+        reason: 'Use AwradBottomSheet (the sheet motion).'
+      - value: 'androidx.compose.material3.Checkbox'
+        reason: 'Use AwradCheckbox.'
+      - value: 'androidx.compose.material3.Switch'
+        reason: 'Use AwradSwitch.'
+      - value: 'androidx.compose.material3.TopAppBar'
+        reason: 'Use AwradTopBar.'
+      - value: 'androidx.compose.material3.CenterAlignedTopAppBar'
+        reason: 'Use AwradTopBar.'
+      - value: 'androidx.compose.material3.NavigationBar'
+        reason: 'Use AwradBottomBar (floating, the navPill motion).'
       - value: 'androidx.compose.material3.OutlinedButton'
         reason: 'Use AwradSecondaryButton (filled, no border).'
       - value: 'androidx.compose.material3.OutlinedIconButton'
@@ -72,6 +90,8 @@ style:
         reason: 'Use AwradLinearProgress (the progress role).'
       - value: 'androidx.compose.material3.CircularProgressIndicator'
         reason: 'Use AwradCircularProgress (the progress role).'
+      - value: 'androidx.compose.material.icons.*'
+        reason: 'Use AwradIcons, the shared icon set (contracts/design-tokens/v1/icons.json), never Material Icons.'
   ForbiddenComment:
     active: true
     comments:
@@ -104,8 +124,9 @@ Compose:
     # The design system's colour roles that Material's ColorScheme lacks (AwradTheme.colors), and the container
     # a field or secondary button sits on, which picks its fill since the design has no outlines (AwradCard sets
     # it; like Material's LocalContentColor, it's ambient by nature). The motion for the system's reduced-motion
-    # setting (AwradTheme.motion), and the page transitions of the NavHost around a page (its screen depth).
-    allowedCompositionLocals: LocalAwradColors,LocalAwradContainer,LocalAwradMotion,LocalAwradPageTransitions
+    # setting (AwradTheme.motion), and the page transitions of the NavHost around a page (its screen depth). The
+    # shadows resolved for the theme's colours (AwradTheme.elevation), like the colours.
+    allowedCompositionLocals: LocalAwradColors,LocalAwradContainer,LocalAwradElevation,LocalAwradMotion,LocalAwradPageTransitions
   ContentEmitterReturningValues:
     active: true
   ModifierClickableOrder:

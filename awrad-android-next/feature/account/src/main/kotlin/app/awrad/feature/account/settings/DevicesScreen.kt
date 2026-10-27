@@ -4,14 +4,11 @@ import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Devices
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.PhoneIphone
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,9 +20,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.awrad.core.designsystem.component.AwradButton
+import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradCard
-import app.awrad.core.designsystem.component.AwradSecondaryButton
-import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.designsystem.component.AwradRowButton
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.motion.AwradContentSwap
 import app.awrad.core.designsystem.motion.AwradExpand
 import app.awrad.core.designsystem.theme.AwradTheme
@@ -70,7 +69,8 @@ internal fun DevicesScreen(
             if (sessions != null) {
                 Sessions(state = state, sessions = sessions, onAction = onAction)
             } else if (state.canRetry) {
-                AwradSecondaryButton(
+                AwradButton(
+                    variant = AwradButtonVariant.Secondary,
                     text = stringResource(R.string.account_action_retry),
                     onClick = { onAction(DevicesAction.Reload) },
                 )
@@ -99,7 +99,8 @@ private fun Sessions(
         AwradExpand(visible = state.others.isEmpty(), label = "noOtherDevices") {
             BodyText(text = stringResource(R.string.account_devices_none_other))
         }
-        AwradSecondaryButton(
+        AwradButton(
+            variant = AwradButtonVariant.Secondary,
             text = stringResource(R.string.account_action_revoke_others),
             onClick = { onAction(DevicesAction.RevokeOthers) },
             enabled = state.canRevoke,
@@ -137,7 +138,14 @@ private fun SessionRow(session: AccountSession, now: Instant, onRevoke: () -> Un
     ListItem(
         modifier = modifier,
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        leadingContent = { Icon(imageVector = session.platform.icon(), contentDescription = null) },
+        leadingContent = {
+            Icon(
+                imageVector = session.platform.icon(),
+                contentDescription = null,
+                modifier = Modifier.size(AwradTheme.sizes.icon),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
         headlineContent = { Text(text = name, style = AwradTheme.type.rowTitle) },
         supportingContent = {
             Text(
@@ -150,7 +158,7 @@ private fun SessionRow(session: AccountSession, now: Instant, onRevoke: () -> Un
         } else {
             {
                 val description = stringResource(R.string.account_action_revoke_named, name)
-                AwradTextButton(
+                AwradRowButton(
                     text = stringResource(R.string.account_action_revoke),
                     onClick = onRevoke,
                     modifier = Modifier.semantics { contentDescription = description },
@@ -205,11 +213,12 @@ private fun platformLabel(platform: AccountSession.Platform): String = stringRes
     },
 )
 
+/** A phone for the apps, `language` (a globe) for a browser, `devices` when the platform is unknown. */
+@Composable
 private fun AccountSession.Platform.icon(): ImageVector = when (this) {
-    AccountSession.Platform.ANDROID -> Icons.Filled.PhoneAndroid
-    AccountSession.Platform.IOS -> Icons.Filled.PhoneIphone
-    AccountSession.Platform.WEB -> Icons.Filled.Language
-    AccountSession.Platform.OTHER -> Icons.Filled.Devices
+    AccountSession.Platform.ANDROID, AccountSession.Platform.IOS -> AwradIcons.Phone
+    AccountSession.Platform.WEB -> AwradIcons.Language
+    AccountSession.Platform.OTHER -> AwradIcons.Devices
 }
 
 /** "Last used 5 minutes ago", in the app's language; "Active now" within the last minute. */

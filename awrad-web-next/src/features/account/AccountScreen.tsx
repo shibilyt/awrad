@@ -1,6 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { Form } from "react-aria-components";
-import { PrimaryButton } from "@/shared/ui/Button";
+import { Button } from "@/shared/ui/Button";
+import { ErrorIcon } from "@/shared/ui/icons.gen";
 import { useFill } from "@/shared/ui/Surface";
 
 /** The frame every account screen shares: a heading, an optional intro, the content, then links. */
@@ -25,7 +26,10 @@ export function AccountScreen({
   );
 }
 
-/** A request-level message, filled (no outline) in `error` text. `role="alert"` announces it when it appears. */
+/**
+ * A request-level message, filled (no outline) in `error` text beside the decorative `error` icon.
+ * `role="alert"` announces it when it appears.
+ */
 export function FormAlert({ message }: { message: string | null }): ReactElement | null {
   const fill = useFill();
   if (message === null) return null;
@@ -33,9 +37,10 @@ export function FormAlert({ message }: { message: string | null }): ReactElement
     <p
       key={message}
       role="alert"
-      className={`content-swap rounded-field px-lg py-md text-body-small text-error ${fill}`}
+      className={`content-swap flex items-start gap-inline-gap rounded-field px-lg py-md text-body-small text-error ${fill}`}
     >
-      {message}
+      <ErrorIcon size="small" />
+      <span className="min-w-0 flex-1">{message}</span>
     </p>
   );
 }
@@ -86,9 +91,9 @@ export function AccountForm({
     >
       {children}
       <FormAlert message={alert} />
-      <PrimaryButton type="submit" isPending={isPending}>
+      <Button type="submit" isPending={isPending}>
         {submitLabel}
-      </PrimaryButton>
+      </Button>
     </Form>
   );
 }

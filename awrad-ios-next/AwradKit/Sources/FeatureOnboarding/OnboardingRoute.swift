@@ -38,9 +38,10 @@ struct OnboardingScreen: View {
                 .foregroundStyle(AwradColors.onSurface)
                 .multilineTextAlignment(.center)
             Spacer()
-            AwradPrimaryButton(Strings.getStarted, isEnabled: !state.isFinishing) {
+            AwradButton(Strings.getStarted) {
                 send(.getStarted)
             }
+            .disabled(state.isFinishing)
         }
         .padding(.horizontal, AwradSpacing.pageMargin)
         .padding(.vertical, AwradSpacing.xl4)

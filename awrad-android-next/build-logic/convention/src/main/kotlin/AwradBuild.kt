@@ -72,7 +72,7 @@ internal const val MAX_SOURCE_FILE_LINES = 400
 
 internal fun Project.configureSourceFileSize() {
     val verify = tasks.register("verifySourceFileSize", SourceFileSizeTask::class.java) {
-        sources.from(fileTree("src/main") { include("**/*.kt") })
+        sources.from(fileTree("src") { include("main/**/*.kt", "debug/**/*.kt") })
         maxLines.set(MAX_SOURCE_FILE_LINES)
     }
     tasks.matching { it.name == "check" }.configureEach { dependsOn(verify) }
@@ -84,13 +84,14 @@ internal fun Project.configureSourceFileSize() {
  */
 internal fun Project.configureColorLiterals() {
     val verify = tasks.register("verifyColorLiterals", ColorLiteralTask::class.java) {
+        // `debug` holds the debug-only component gallery, which uses the tokens like any screen.
         sources.from(
-            fileTree("src/main") {
-                include("**/*.kt", "res/**/*.xml")
+            fileTree("src") {
+                include("main/**/*.kt", "main/res/**/*.xml", "debug/**/*.kt", "debug/res/**/*.xml")
                 // Generated from contracts/design-tokens (AwradColorsTask).
-                exclude("**/designsystem/theme/AwradColors.kt", "res/values*/awrad_colors.xml")
+                exclude("main/**/designsystem/theme/AwradColors.kt", "main/res/values*/awrad_colors.xml")
                 // The launcher icon's background is part of the icon artwork, not a UI colour.
-                exclude("res/values/ic_launcher_background.xml")
+                exclude("main/res/values/ic_launcher_background.xml")
             },
         )
     }
@@ -104,7 +105,7 @@ internal fun Project.configureColorLiterals() {
 internal fun Project.configureDesignLiterals() {
     if (path == DESIGN_SYSTEM) return
     val verify = tasks.register("verifyDesignLiterals", DesignLiteralTask::class.java) {
-        sources.from(fileTree("src/main") { include("**/*.kt") })
+        sources.from(fileTree("src") { include("main/**/*.kt", "debug/**/*.kt") })
         // Genuinely structural values, as "<path suffix>: <matched text>", each with the reason. None yet.
         allowed.set(emptyList<String>())
     }
@@ -122,6 +123,11 @@ internal fun Project.configureDetekt() {
         buildUponDefaultConfig = true
         allRules = false
         config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+        // The design system may wrap the Material components detekt.yml bans, but not Material Icons: its own
+        // file overrides that rule (a later config file wins over an earlier one).
+        if (path == DESIGN_SYSTEM) config.from(rootProject.file("config/detekt/designsystem.yml"))
+        // The debug-only component gallery is held to the same rules.
+        source.from(files("src/debug/kotlin"))
         parallel = true
     }
     dependencies {

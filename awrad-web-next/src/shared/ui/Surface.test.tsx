@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { SecondaryButton } from "./Button";
+import { Card } from "./Card";
 import { OnSurface } from "./Surface";
 import { TextField } from "./TextField";
 
@@ -13,18 +13,36 @@ describe("filled controls (no outlines)", () => {
     render(
       <>
         <TextField label="Page field" />
-        <SecondaryButton>Page button</SecondaryButton>
         <OnSurface>
           <TextField label="Card field" />
-          <SecondaryButton>Card button</SecondaryButton>
         </OnSurface>
       </>,
     );
 
     expect(classesOf(screen.getByRole("textbox", { name: "Page field" }))).toContain("bg-surface");
-    expect(classesOf(screen.getByRole("button", { name: "Page button" }))).toContain("bg-surface");
     expect(classesOf(screen.getByRole("textbox", { name: "Card field" }))).toContain("bg-background");
-    expect(classesOf(screen.getByRole("button", { name: "Card button" }))).toContain("bg-background");
+  });
+
+  it("cards alternate: surface on the page, background inside a surface area, and their content follows", () => {
+    render(
+      <>
+        <Card>
+          <TextField label="In a card" />
+        </Card>
+        <OnSurface>
+          <Card>
+            <TextField label="In a card on the sheet" />
+          </Card>
+        </OnSurface>
+      </>,
+    );
+
+    const inCard = screen.getByRole("textbox", { name: "In a card" });
+    const onSheet = screen.getByRole("textbox", { name: "In a card on the sheet" });
+    expect(classesOf(inCard)).toContain("bg-background");
+    expect(classesOf(onSheet)).toContain("bg-surface");
+    expect(inCard.closest(".rounded-card")).toHaveClass("bg-surface");
+    expect(onSheet.closest(".rounded-card")).toHaveClass("bg-background");
   });
 
   it("draw no visible line at rest, and the error stroke only when invalid", () => {

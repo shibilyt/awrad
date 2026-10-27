@@ -15,12 +15,14 @@
 //   - border, outline and ring widths: border, border-2, outline-2, outline-offset-2, ring
 //     (use a stroke: border-checkbox, border-field-error, outline-focus-ring);
 //   - numeric opacity on a disabled control: disabled:opacity-50 (use opacity-disabled);
+//   - shadows other than an elevation token: shadow, shadow-lg, drop-shadow-md, text-shadow-sm
+//     (use shadow-floating);
 //   - animation classes: animate-*, transition*, duration-*, delay-*, ease-* (motion is
 //     fades only, in motion.css).
 // In hand-written CSS (outside the generated files):
 //   - raw durations, easing functions and easing keywords in animations and transitions
 //     (use --awrad-duration-*, --awrad-ease-*);
-//   - raw lengths in radius, spacing, text, border-width and outline declarations.
+//   - raw lengths in radius, spacing, text, border-width, outline and shadow declarations.
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -60,7 +62,7 @@ const CSS_RULES = [
   {
     name: "raw length",
     pattern:
-      /\b(?:border(?:-[a-z]+)*-(?:radius|width)|border(?:-(?:top|right|bottom|left|block|inline)(?:-start|-end)?)?|outline(?:-width|-offset)?|font-size|line-height|letter-spacing|(?:padding|margin|inset|scroll-padding|scroll-margin)(?:-[a-z]+)*|gap|row-gap|column-gap)\s*:[^;]*?\d(?:px|rem|em|pt|%)/g,
+      /\b(?:box-shadow|text-shadow|border(?:-[a-z]+)*-(?:radius|width)|border(?:-(?:top|right|bottom|left|block|inline)(?:-start|-end)?)?|outline(?:-width|-offset)?|font-size|line-height|letter-spacing|(?:padding|margin|inset|scroll-padding|scroll-margin)(?:-[a-z]+)*|gap|row-gap|column-gap)\s*:[^;]*?\d(?:px|rem|em|pt|%)/g,
   },
 ];
 
@@ -94,6 +96,8 @@ const LINE_WIDTH =
 /** max-w-* keywords that aren't lengths. */
 const MAX_WIDTH_KEYWORDS = new Set(["none", "full", "min", "max", "fit", "screen", "dvw", "svw", "lvw", "auto"]);
 /** Variants that style a disabled control. */
+/** Shadow utilities: only an elevation (shadow-floating) is allowed. */
+const SHADOW = /^(?:inset-|drop-|text-)?shadow(?:-|$)/;
 const DISABLED = /^(?:(?:group|peer)-)?(?:disabled|data-disabled|aria-disabled)$/;
 
 /** The vocabulary the generated theme defines (tokens.gen.css, colors.gen.css). */
@@ -105,6 +109,7 @@ export function vocabulary() {
     text: new Set([...names.text, ...roles]),
     font: new Set([...names.weight, ...FONT_FAMILIES]),
     maxWidth: new Set([...names.container, ...names.space, ...MAX_WIDTH_KEYWORDS]),
+    shadow: new Set(names.shadow),
   };
 }
 
@@ -114,6 +119,9 @@ export function classProblem(candidate, vocab) {
   const variants = candidate.split(/:(?![^[]*\])/);
   const utility = variants.pop()?.replace(/^!|!$/g, "").replace(/^-/, "") ?? "";
   if (/^[a-z][\w-]*-[[(]|^\[[\w-]+:/.test(utility)) return "arbitrary value";
+  if (SHADOW.test(utility) && !vocab.shadow.has(utility.replace(/^shadow-/, ""))) {
+    return "shadow that isn't an elevation token (shadow-floating)";
+  }
   const radius = /^rounded(?:-(.+))?$/.exec(utility);
   if (radius) {
     const value = radius[1] ?? "";
@@ -201,7 +209,7 @@ function main() {
     console.error(
       "Name a token from contracts/design-tokens/v1 instead: a colour role (bg-surface, text-accent), a shape " +
         "(rounded-card), a spacing token (p-card-padding, gap-row-gap, min-h-control), a content width (max-w-content), " +
-        "a stroke (border-checkbox, outline-focus-ring), a state (disabled:opacity-disabled), a text style (text-body). " +
+        "a stroke (border-checkbox, outline-focus-ring), an elevation (shadow-floating), a state (disabled:opacity-disabled), a text style (text-body). " +
         "See ARCHITECTURE.md.",
     );
     process.exit(1);

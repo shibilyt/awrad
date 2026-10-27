@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "description": "Icons: Material Symbols Rounded, outline, weight 300, 24 px grid (Apache 2.0, LICENSE-MaterialSymbols.txt). Screens use an icon by its name here, never a platform icon set. mirrorInRtl icons flip horizontally in right-to-left layouts. Colour comes from the component (currentColor / tint).",
+  "source": "https://github.com/google/material-design-icons symbols/web/<file>/materialsymbolsrounded/<file>_wght300_24px.svg",
+  "icons": {
+    "home": {
+      "file": "home.svg",
+      "use": "Bottom bar: Home",
+      "mirrorInRtl": false
+    },
+    "goals": {
+      "file": "format_list_bulleted.svg",
+      "use": "Bottom bar: Goals",
+      "mirrorInRtl": false
+    },
+    "library": {
+      "file": "library_books.svg",
+      "use": "Bottom bar: Library",
+      "mirrorInRtl": false
+    },
+    "community": {
+      "file": "group.svg",
+      "use": "Bottom bar: Community",
+      "mirrorInRtl": false
+    },
+    "add": {
+      "file": "add.svg",
+      "use": "Round + button",
+      "mirrorInRtl": false
+    },
+    "forward": {
+      "file": "arrow_forward.svg",
+      "use": "Round arrow on a tile",
+      "mirrorInRtl": true
+    },
+    "back": {
+      "file": "chevron_left.svg",
+      "use": "Back button",
+      "mirrorInRtl": true
+    },
+    "more": {
+      "file": "more_vert.svg",
+      "use": "Three-dot menu",
+      "mirrorInRtl": false
+    },
+    "check": {
+      "file": "check.svg",
+      "use": "Selected option row, checkbox tick",
+      "mirrorInRtl": false
+    },
+    "notifications": {
+      "file": "notifications.svg",
+      "use": "Notifications",
+      "mirrorInRtl": false
+    },
+    "show": {
+      "file": "visibility.svg",
+      "use": "Show password",
+      "mirrorInRtl": false
+    },
+    "hide": {
+      "file": "visibility_off.svg",
+      "use": "Hide password",
+      "mirrorInRtl": false
+    },
+    "close": {
+      "file": "close.svg",
+      "use": "Close a sheet or dialog",
+      "mirrorInRtl": false
+    },
+    "expand": {
+      "file": "expand_more.svg",
+      "use": "Expand a section (rotates 180° when open)",
+      "mirrorInRtl": false
+    },
+    "streak": {
+      "file": "local_fire_department.svg",
+      "use": "Streak",
+      "mirrorInRtl": false
+    },
+    "devices": {
+      "file": "devices.svg",
+      "use": "Signed-in devices",
+      "mirrorInRtl": false
+    },
+    "phone": {
+      "file": "smartphone.svg",
+      "use": "A phone; data kept on this device",
+      "mirrorInRtl": false
+    },
+    "language": {
+      "file": "language.svg",
+      "use": "Language setting",
+      "mirrorInRtl": false
+    },
+    "email": {
+      "file": "mail.svg",
+      "use": "Email address, change email",
+      "mirrorInRtl": false
+    },
+    "password": {
+      "file": "password.svg",
+      "use": "Password, change password",
+      "mirrorInRtl": false
+    },
+    "delete": {
+      "file": "delete.svg",
+      "use": "Delete account and other destructive actions",
+      "mirrorInRtl": false
+    },
+    "chevron": {
+      "file": "chevron_right.svg",
+      "use": "Trailing chevron on a row that opens a page",
+      "mirrorInRtl": true
+    },
+    "error": {
+      "file": "error.svg",
+      "use": "Error message beside a form or feedback line",
+      "mirrorInRtl": false
+    }
+  }
+}

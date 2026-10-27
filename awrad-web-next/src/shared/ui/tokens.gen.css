@@ -6,6 +6,7 @@
 
 :root {
   /* Corner radii (shape.json): the scale, then the roles. */
+  --awrad-radius-xxxs: 2px;
   --awrad-radius-xxs: 4px;
   --awrad-radius-xs: 8px;
   --awrad-radius-sm: 12px;
@@ -27,12 +28,18 @@
   --awrad-radius-dialog: var(--awrad-radius-3xl);
   --awrad-radius-screen-depth: var(--awrad-radius-3xl);
   --awrad-radius-checkbox: var(--awrad-radius-xxs);
+  --awrad-radius-step-dot: var(--awrad-radius-xxxs);
+  --awrad-radius-tab-indicator: var(--awrad-radius-full);
+  --awrad-radius-content-sheet: var(--awrad-radius-3xl);
 
   /* Line widths (shape.json strokes), the only lines: a width and, for a ring, its offset. */
   --awrad-stroke-field-error: 1.5px;
   --awrad-stroke-checkbox: 2px;
   --awrad-stroke-focus-ring: 2px;
   --awrad-stroke-focus-ring-offset: 2px;
+
+  /* Elevation (shape.json): the only shadows, in the `shadow` colour role. */
+  --awrad-elevation-floating: 0 4px 16px var(--awrad-color-shadow);
 
   /* Spacing (spacing.json): the scale, the roles, then the standard sizes and content widths. */
   --awrad-space-none: 0px;
@@ -61,8 +68,25 @@
   --awrad-size-logo: 148px;
   --awrad-size-content-max-width: 448px;
   --awrad-size-dialog-max-width: 384px;
+  --awrad-size-top-bar: 56px;
+  --awrad-size-nav-bar: 72px;
+  --awrad-size-nav-pill-width: 56px;
+  --awrad-size-nav-pill-height: 32px;
+  --awrad-size-round-button: 48px;
+  --awrad-size-round-button-small: 32px;
+  --awrad-size-avatar: 36px;
+  --awrad-size-checkbox: 20px;
+  --awrad-size-switch-width: 52px;
+  --awrad-size-switch-height: 32px;
+  --awrad-size-switch-thumb: 24px;
+  --awrad-size-step-dot: 8px;
+  --awrad-size-tab-indicator-width: 24px;
+  --awrad-size-tab-indicator-height: 4px;
 
   /* Text styles (typography.json), in rem (1rem = 16px) so they follow the browser's text size. */
+  --awrad-text-large-title-size: 2.125rem;
+  --awrad-text-large-title-line-height: 2.5rem;
+  --awrad-text-large-title-weight: 700;
   --awrad-text-title-size: 1.375rem;
   --awrad-text-title-line-height: 1.75rem;
   --awrad-text-title-weight: 600;
@@ -121,6 +145,8 @@
   --awrad-motion-web-page-fade-in: var(--awrad-duration-color);
   --awrad-motion-web-page-fade-out: var(--awrad-duration-fade);
   --awrad-motion-web-page-easing: var(--awrad-ease-emphasized);
+  --awrad-motion-select-color-duration: var(--awrad-duration-color);
+  --awrad-motion-select-easing: var(--awrad-ease-linear);
   --awrad-reduced-motion-duration: var(--awrad-duration-color);
   --awrad-reduced-motion-easing: var(--awrad-ease-linear);
 }
@@ -128,11 +154,12 @@
 /*
  * Tailwind: these are the only radii, spacing, sizes, content widths, text styles and weights.
  * Tailwind's defaults (rounded-xl, p-4, max-w-md, text-sm, leading-*, tracking-*, ease-*,
- * animate-*) are removed, so classes name a token: rounded-card, p-card-padding,
+ * animate-*, shadow-*) are removed, so classes name a token: rounded-card, p-card-padding,
  * gap-row-gap, min-h-control, max-w-content, text-title, font-semibold.
  */
 @theme inline {
   --radius-*: initial;
+  --radius-xxxs: var(--awrad-radius-xxxs);
   --radius-xxs: var(--awrad-radius-xxs);
   --radius-xs: var(--awrad-radius-xs);
   --radius-sm: var(--awrad-radius-sm);
@@ -154,6 +181,9 @@
   --radius-dialog: var(--awrad-radius-dialog);
   --radius-screen-depth: var(--awrad-radius-screen-depth);
   --radius-checkbox: var(--awrad-radius-checkbox);
+  --radius-step-dot: var(--awrad-radius-step-dot);
+  --radius-tab-indicator: var(--awrad-radius-tab-indicator);
+  --radius-content-sheet: var(--awrad-radius-content-sheet);
   --spacing-*: initial;
   --spacing-0: var(--awrad-space-none);
   --spacing-xxs: var(--awrad-space-xxs);
@@ -179,10 +209,27 @@
   --spacing-ring-stroke: var(--awrad-size-ring-stroke);
   --spacing-control: var(--awrad-size-control);
   --spacing-logo: var(--awrad-size-logo);
+  --spacing-top-bar: var(--awrad-size-top-bar);
+  --spacing-nav-bar: var(--awrad-size-nav-bar);
+  --spacing-nav-pill-width: var(--awrad-size-nav-pill-width);
+  --spacing-nav-pill-height: var(--awrad-size-nav-pill-height);
+  --spacing-round-button: var(--awrad-size-round-button);
+  --spacing-round-button-small: var(--awrad-size-round-button-small);
+  --spacing-avatar: var(--awrad-size-avatar);
+  --spacing-checkbox: var(--awrad-size-checkbox);
+  --spacing-switch-width: var(--awrad-size-switch-width);
+  --spacing-switch-height: var(--awrad-size-switch-height);
+  --spacing-switch-thumb: var(--awrad-size-switch-thumb);
+  --spacing-step-dot: var(--awrad-size-step-dot);
+  --spacing-tab-indicator-width: var(--awrad-size-tab-indicator-width);
+  --spacing-tab-indicator-height: var(--awrad-size-tab-indicator-height);
   --container-*: initial;
   --container-content: var(--awrad-size-content-max-width);
   --container-dialog: var(--awrad-size-dialog-max-width);
   --text-*: initial;
+  --text-large-title: var(--awrad-text-large-title-size);
+  --text-large-title--line-height: var(--awrad-text-large-title-line-height);
+  --text-large-title--font-weight: var(--awrad-text-large-title-weight);
   --text-title: var(--awrad-text-title-size);
   --text-title--line-height: var(--awrad-text-title-line-height);
   --text-title--font-weight: var(--awrad-text-title-weight);
@@ -231,6 +278,10 @@
   --tracking-*: initial;
   --ease-*: initial;
   --animate-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
 }
 
 /*
@@ -271,11 +322,17 @@
   font-family: var(--awrad-text-quran-font-family);
 }
 
+/* Elevation (shape.json): shadow-<elevation> is the only shadow class. */
+@utility shadow-floating {
+  box-shadow: var(--awrad-elevation-floating);
+}
+
 /*
  * Continuous corners (shape.json `corners`): corner-shape: squircle where the browser
  * supports it, plain rounding elsewhere. Fully rounded shapes (chips, round buttons) stay round.
  */
 @theme inline reference {
+  --corner-shape-xxxs: squircle;
   --corner-shape-xxs: squircle;
   --corner-shape-xs: squircle;
   --corner-shape-sm: squircle;
@@ -293,6 +350,8 @@
   --corner-shape-dialog: squircle;
   --corner-shape-screen-depth: squircle;
   --corner-shape-checkbox: squircle;
+  --corner-shape-step-dot: squircle;
+  --corner-shape-content-sheet: squircle;
 }
 @utility rounded-* {
   @supports (corner-shape: squircle) {

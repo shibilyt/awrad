@@ -245,6 +245,25 @@
       "fadeOut": "fade",
       "easing": "emphasized",
       "use": "Page changes on the web: a fade only"
+    },
+    "segmentIndicator": {
+      "platforms": [
+        "android",
+        "ios"
+      ],
+      "spring": "spatial",
+      "colorDuration": "color",
+      "use": "The selected segmented pill's fill and the bar under it move to the new pill"
+    },
+    "select": {
+      "platforms": [
+        "android",
+        "ios",
+        "web"
+      ],
+      "colorDuration": "color",
+      "easing": "linear",
+      "use": "An option row, checkbox or switch changing state: colours cross-fade; the tick and switch thumb use spatial on mobile"
     }
   },
   "reducedMotion": {

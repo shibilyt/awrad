@@ -10,6 +10,9 @@ The design system's single source for Android, iOS and web: colours, fonts, shap
 | `spacing.json` | Spacing scale, named roles, standard sizes |
 | `typography.json` | Named text styles |
 | `motion.json` | Easings, durations, springs, haptics, named motions, reduced motion |
+| `icons.json`, `icons/` | The icon set: Material Symbols Rounded outline SVGs, checksums, licence |
+
+The components built from these are specified in [`../../design-system/v1/components.md`](../../design-system/v1/components.md).
 
 ## Colours
 
@@ -31,13 +34,17 @@ The colour roles Android, iOS and web use, light and dark (design system, decide
 | `outlineStrong` | The few controls invisible without a line (a checkbox's box) | `#000000` at 50% | `#E3E5E3` at 50% |
 | `primary` | Brand fills: main buttons, arrow buttons | `#23553C` | `#23553C` |
 | `onPrimary` | On primary | `#FFFFFF` | `#FFFFFF` |
+| `onPrimaryVariant` | Secondary content on primary: a selected option row's label | `#B7D6B6` | `#B7D6B6` |
 | `primaryContainer` | Selected fill: selected tab pill, chips | `#B7D6B6` | `#23553C` |
 | `onPrimaryContainer` | On primaryContainer | `#000000` | `#B7D6B6` |
+| `secondaryContainer` | Secondary buttons, unselected option rows | `#E8EDE9` | `#B7D6B6` |
+| `onSecondaryContainer` | On secondaryContainer | `#000000` | `#000000` |
 | `accent` | Accent text and icons: streaks, links, selected tab label | `#23553C` | `#B7D6B6` |
 | `progress` | Progress rings and bars | `#23553C` | `#E3E5E3` |
 | `error` | Errors and destructive actions | `#B3261E` | `#F2B8B5` |
 | `onError` | On an error fill | `#FFFFFF` | `#000000` |
 | `scrim` | Dimmed backdrop behind dialogs and sheets | `#000000` at 40% | `#000000` at 40% |
+| `shadow` | The one shadow, under the bottom bar | `#000000` at 12% | none |
 
 Rules for screens:
 - **Pick by role, never by hex or by checking the theme.**
@@ -58,7 +65,7 @@ Rules for screens:
 
 ## Shapes (`shape.json`)
 
-- **The scale:** 4, 8, 12, 16, 20, 24, 28, 32, and fully rounded. 4 is only for a checkbox's box.
+- **The scale:** 2, 4, 8, 12, 16, 20, 24, 28, 32, and fully rounded. 2 is only for the step indicator's squares and 4 only for a checkbox's box.
 - **Roles:**
   - `card` 24;
   - `tile`, `button` and `field` 16;
@@ -76,6 +83,9 @@ Rules for screens:
   - `checkbox` 2;
   - `focusRing` 2, offset 2 (web keyboard focus).
 
+- **Elevation** (`elevation`): one level, `floating` (y 4, blur 16, `shadow` colour), only for the bottom bar. Dark mode has no shadow.
+- **Component roles:** `stepDot` 2, `tabIndicator` fully rounded, `contentSheet` 32.
+
 ## Spacing (`spacing.json`)
 
 - **The scale:** 2, 4, 8, 12, 16, 20, 24, 32, 40, 48.
@@ -92,11 +102,12 @@ Rules for screens:
   - the small ring 36, with stroke 4;
   - `control` 56, the height of buttons and text fields;
   - `logo` 148;
+  - component sizes: `topBar` 56, `navBar` 72, the nav pill 56 × 32, `roundButton` 48 and 32, `avatar` 36, `checkbox` 20, the switch 52 × 32 with a 24 thumb, `stepDot` 8, the tab indicator 24 × 4;
   - `contentMaxWidth` 448 and `dialogMaxWidth` 384, for the web and tablets.
 
 ## Type (`typography.json`)
 
-- Named styles from `title` (22) to `navLabel` (11), plus `counter` (56, with tabular digits).
+- Named styles from `largeTitle` (34, top-level page titles such as My Goals) and `title` (22) to `navLabel` (11), plus `counter` (56, with tabular digits).
 - `input` (16) is the text typed into fields; 16 stops iOS Safari zooming in.
 - `quran` (24 on a 44 line height) sets Qur'anic and dhikr Arabic in Noto Naskh Arabic. It's the only style with its own `fontFamily`, and it's never used for interface text.
 - `counter` keeps a 64 line height, tighter than the font's natural 70, on purpose.
@@ -145,6 +156,8 @@ Named motions (`motions`) say which platforms use them:
 - **Expanding sections:** `expand`.
 - **Lists:** `listAppear`.
 - **Swapping text in place:** `contentSwap`.
+- **Segmented pills:** `segmentIndicator` (the fill and bar move with `spatial`).
+- **Selection:** `select` (option rows, checkboxes and switches cross-fade their colours).
 - **Web:** `webPage`, a fade only.
 
 **Reduced motion:** when the system asks for it, every movement, scale and spring becomes a 150 ms cross-fade. Haptics stay. The web follows `prefers-reduced-motion`.
@@ -153,3 +166,11 @@ The motion values combine three sources:
 - **The frozen Android app's motion:** page transitions, the screen-depth corners, the nav pill and press feedback.
 - **Material 3 Expressive spring values,** which PixelPlayer also uses. Its code is proprietary, so only numbers and ideas are reused, never code.
 - **A unified timing,** replacing the frozen apps' 16 different durations.
+
+## Icons (`icons.json`, `icons/`)
+
+- **One set on every platform:** Material Symbols Rounded, outline, weight 300, on a 24 grid (Apache 2.0, `icons/LICENSE-MaterialSymbols.txt`). There are no SF Symbols, Material Icons or hand-drawn icons in screens.
+- **Use by name** (`home`, `goals`, `library`, `community`, `add`, `forward`, `back`, `more`, `check`, `notifications`, `show`, `hide`, `close`, `expand`, `streak`, `devices`, `phone`, `language`, `email`, `password`, `delete`, `chevron`, `error`). Each app generates its icons from the SVGs (Android vector drawables, an iOS asset catalog, web components) and fails validation on drift.
+- **RTL:** icons marked `mirrorInRtl` (`back`, `forward`, `chevron`) flip in right-to-left layouts.
+- **Colour** comes from the component, never the file.
+- **Adding an icon:** download the `wght300_24px` Rounded SVG from the source in `icons.json`, add it with its checksum to `icons/SHA256SUMS`, name it in `icons.json`, and regenerate. `npm test` checks checksums and that every file is a plain path-only SVG.

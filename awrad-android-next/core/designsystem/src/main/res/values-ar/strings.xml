@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="awrad_action_back">رجوع</string>
+    <string name="awrad_action_close_sheet">إغلاق</string>
+    <string name="awrad_state_loading">جارٍ التحميل</string>
+    <string name="awrad_step_indicator">الخطوة %1$d من %2$d</string>
+</resources>

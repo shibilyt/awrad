@@ -33,7 +33,6 @@
     <string name="account_action_go_register">إنشاء حساب</string>
     <string name="account_action_go_sign_in">لدي حساب بالفعل</string>
     <string name="account_action_sign_out">تسجيل الخروج</string>
-    <string name="account_action_back">رجوع</string>
     <string name="account_action_show_password">إظهار كلمة المرور</string>
     <string name="account_action_hide_password">إخفاء كلمة المرور</string>
 

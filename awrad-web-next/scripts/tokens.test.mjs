@@ -275,6 +275,7 @@ describe("check-raw-values: token classes", () => {
     "max-w-1/2",
     "rounded-checkbox",
     "rounded-xxs",
+    "rounded-xxxs",
     "border-checkbox",
     "border-field-error",
     "border-transparent",

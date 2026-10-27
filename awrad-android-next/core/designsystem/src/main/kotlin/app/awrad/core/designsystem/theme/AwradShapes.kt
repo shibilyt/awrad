@@ -5,11 +5,15 @@
 
 package app.awrad.core.designsystem.theme
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /** The corner-radius scale (without `full`). Screens use a role from [AwradShapes], not these. */
 public object AwradRadius {
+    /** 2 */
+    public val xxxs: Dp = 2.dp
+
     /** 4 */
     public val xxs: Dp = 4.dp
 
@@ -75,6 +79,15 @@ public object AwradShapes {
 
     /** A checkbox's box (the only use of 4): `xxs`, 4. */
     public val checkbox: SmoothCornerShape = SmoothCornerShape(AwradRadius.xxs, CornerSmoothing)
+
+    /** Squares in the onboarding step indicator: `xxxs`, 2. */
+    public val stepDot: SmoothCornerShape = SmoothCornerShape(AwradRadius.xxxs, CornerSmoothing)
+
+    /** The bar under the selected segmented pill: fully rounded. */
+    public val tabIndicator: SmoothCornerShape = SmoothCornerShape.full(CornerSmoothing)
+
+    /** Top corners of the content area under a large-title header (My Goals): `xl3`, 32. */
+    public val contentSheet: SmoothCornerShape = SmoothCornerShape(AwradRadius.xl3, CornerSmoothing)
 }
 
 /**
@@ -93,6 +106,16 @@ public object AwradStrokes {
 
     /** How far `focusRing` is drawn outside the element's edge: 2. */
     public val focusRingOffset: Dp = 2.dp
+}
+
+/**
+ * Elevation: the only shadows the design allows, with one theme's colours. Read them through
+ * `AwradTheme.elevation` and draw one with `Modifier.awradShadow`.
+ */
+@Immutable
+public class AwradElevation internal constructor(colors: AwradColors) {
+    /** Floating elements over content: the bottom bar. The only shadow; dark mode has none. y 4, blur 16, `shadow`. */
+    public val floating: AwradShadow = AwradShadow(y = 4.dp, blur = 16.dp, color = colors.shadow)
 }
 
 /** `corners: continuous`. */

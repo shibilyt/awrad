@@ -123,7 +123,8 @@
         "corners",
         "scale",
         "roles",
-        "strokes"
+        "strokes",
+        "elevation"
       ],
       "properties": {
         "version": {
@@ -189,6 +190,35 @@
               "offset": {
                 "type": "number",
                 "minimum": 0
+              },
+              "use": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "elevation": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "y",
+              "blur",
+              "color",
+              "use"
+            ],
+            "properties": {
+              "y": {
+                "type": "number"
+              },
+              "blur": {
+                "type": "number",
+                "minimum": 0
+              },
+              "color": {
+                "type": "string",
+                "pattern": "^[a-z][A-Za-z]*$"
               },
               "use": {
                 "type": "string"
@@ -481,6 +511,54 @@
             "easing": {
               "type": "string",
               "pattern": "^[a-z0-9][A-Za-z0-9]*$"
+            }
+          }
+        }
+      }
+    },
+    "icons": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "description",
+        "source",
+        "icons"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "icons": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][A-Za-z]*$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "file",
+              "use",
+              "mirrorInRtl"
+            ],
+            "properties": {
+              "file": {
+                "type": "string",
+                "pattern": "^[a-z_]+\\.svg$"
+              },
+              "use": {
+                "type": "string"
+              },
+              "mirrorInRtl": {
+                "type": "boolean"
+              }
             }
           }
         }

@@ -1,14 +1,22 @@
 package app.awrad.feature.account
 
 import android.text.BidiFormatter
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import app.awrad.core.designsystem.component.AwradButtonVariant
+import app.awrad.core.designsystem.component.AwradDialog
+import app.awrad.core.designsystem.component.AwradRowButton
 import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.theme.AwradTheme
 import java.util.Locale
 
@@ -34,6 +42,24 @@ internal fun BodyText(text: String, modifier: Modifier = Modifier) {
     )
 }
 
+/** Body text that says practice stays on this device, led by the `phone` icon. */
+@Composable
+internal fun DeviceNote(text: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.inlineGap),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = AwradIcons.Phone,
+            contentDescription = null,
+            modifier = Modifier.size(AwradTheme.sizes.iconSmall),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        BodyText(text = text, modifier = Modifier.weight(1f))
+    }
+}
+
 /** Sends a new code; shows the seconds left until it may. */
 @Composable
 internal fun ResendButton(secondsLeft: Int, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -50,7 +76,7 @@ internal fun ResendButton(secondsLeft: Int, enabled: Boolean, onClick: () -> Uni
     )
 }
 
-/** Asks before an action that can't be taken back. [isDestructive] colours the confirm button as an error. */
+/** Asks before an action that can't be taken back. [isDestructive] makes the confirm button the error one. */
 @Composable
 internal fun ConfirmDialog(
     title: String,
@@ -61,17 +87,16 @@ internal fun ConfirmDialog(
     modifier: Modifier = Modifier,
     isDestructive: Boolean = false,
 ) {
-    AlertDialog(
+    AwradDialog(
         onDismissRequest = onDismiss,
+        title = title,
+        text = text,
         modifier = modifier,
-        title = { Text(text = title) },
-        text = { Text(text = text) },
         confirmButton = {
-            AwradTextButton(
+            AwradRowButton(
                 text = confirmLabel,
                 onClick = onConfirm,
-                isDestructive = isDestructive,
-                isEmphasized = true,
+                variant = if (isDestructive) AwradButtonVariant.Error else AwradButtonVariant.Main,
             )
         },
         dismissButton = {
