@@ -10,6 +10,8 @@ The font files every app bundles (design system, decided 2026-10-27). Each app's
 Rules:
 - **Interface text in Arabic or Malayalam** uses each platform's system font for that script, as the frozen apps did. Google Sans Flex has no Arabic or Malayalam glyphs.
 - **Weights:** Regular 400, Medium 500, SemiBold 600, Bold 700. Don't use synthetic bold or italic.
-- **Licence:** both families are under the SIL Open Font License 1.1 (in each font's metadata). The full licence text ships with the fonts.
+- **Licence:** both families are under the SIL Open Font License 1.1 (stated in each font's metadata).
+  - Google Sans Flex's licence text is `OFL-GoogleSansFlex.txt`, from `google/fonts` (`ofl/googlesansflex/OFL.txt`).
+  - Noto Naskh Arabic's licence text isn't in the repo yet.
 
 To change a font: replace the file here, run `shasum -a 256 *.ttf > SHA256SUMS`, and copy it into each app (each app's validation will say which copies are stale).
