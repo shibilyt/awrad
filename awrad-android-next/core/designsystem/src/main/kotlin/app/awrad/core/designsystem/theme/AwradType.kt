@@ -157,4 +157,17 @@ public object AwradType {
         letterSpacing = 0.sp,
         lineHeightStyle = AwradLineHeightStyle,
     )
+
+    /**
+     * One line of Qur'anic or dhikr Arabic in a list row; never interface text. Noto Naskh Arabic, 18 on
+     * 32, weight 400.
+     */
+    public val quranLine: TextStyle = TextStyle(
+        fontFamily = ArabicScriptFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 18.sp,
+        lineHeight = 32.sp,
+        letterSpacing = 0.sp,
+        lineHeightStyle = AwradLineHeightStyle,
+    )
 }

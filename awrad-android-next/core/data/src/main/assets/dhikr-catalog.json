@@ -1,0 +1,3433 @@
+{
+  "version": 1,
+  "contentRevision": 3,
+  "dhikrs": [
+    {
+      "id": "c88b9491-40ad-4b42-a5b8-e07c4b4d31ef",
+      "key": "surah-ikhlas",
+      "kind": "quran",
+      "arabic": "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ\nقُلۡ هُوَ ٱللَّهُ أَحَدٌ\nٱللَّهُ ٱلصَّمَدُ\nلَمۡ يَلِدۡ وَلَمۡ يُولَدۡ\nوَلَمۡ يَكُن لَّهُۥ كُفُوًا أَحَدُۢ",
+      "title": {
+        "en": "Surah Ikhlas",
+        "ar": "سورة الإخلاص",
+        "ml": "സൂറത് അൽ ഇഖ്ലാസ്"
+      },
+      "transliteration": {
+        "en": "Bismillahir Rahmanir Raheem. Qul huwallahu ahad. Allahus samad. Lam yalid wa lam yulad. Wa lam yakun lahu kufuwan ahad"
+      },
+      "aliases": {
+        "en": [
+          "Al-Ikhlas",
+          "Qul Huwallahu Ahad",
+          "Surah 112",
+          "ikhlas"
+        ],
+        "ar": [
+          "الإخلاص",
+          "قل هو الله أحد"
+        ],
+        "ml": [
+          "ഇഖ്ലാസ്"
+        ]
+      },
+      "translation": {
+        "en": "In the name of Allah, the Most Merciful, the Especially Merciful. Say: He is Allah, the One. Allah, the Self-Sufficient, on whom all depend. He does not beget, nor was He begotten. And there is none comparable to Him."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/ikhlas.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 139851,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [
+        {
+          "id": "quran-112-1-4",
+          "type": "quran",
+          "surah": 112,
+          "ayahStart": 1,
+          "ayahEnd": 4
+        }
+      ],
+      "virtues": []
+    },
+    {
+      "id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+      "key": "tahleel",
+      "kind": "dhikr",
+      "arabic": "لَا إِلٰهَ إِلَّا ٱللَّٰهُ",
+      "title": {
+        "en": "Tahleel",
+        "ar": "التهليل",
+        "ml": "തഹ്‌ലീൽ"
+      },
+      "transliteration": {
+        "en": "La ilaha illallah"
+      },
+      "aliases": {
+        "en": [
+          "Tahlil",
+          "Lailahaillallah"
+        ],
+        "ar": [
+          "لا إله إلا الله"
+        ],
+        "ml": [
+          "ലാ ഇലാഹ ഇല്ലല്ലാഹ്"
+        ]
+      },
+      "translation": {
+        "en": "There is no god but Allah.",
+        "ar": "لا إله إلا الله.",
+        "ml": "അല്ലാഹുവല്ലാതെ ആരാധനയ്ക്ക് അർഹനില്ല."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/1736077531573-g8kajuv6fww-tahleel.mp3",
+        "style": "recitation",
+        "repetitions": 2,
+        "byteSize": 171362,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [
+        {
+          "id": "tirmidhi-3585",
+          "type": "hadith",
+          "collection": "Jami at-Tirmidhi",
+          "number": "3585"
+        },
+        {
+          "id": "abu-dawud-3116",
+          "type": "hadith",
+          "collection": "Sunan Abi Dawud",
+          "number": "3116"
+        },
+        {
+          "id": "tirmidhi-2639",
+          "type": "hadith",
+          "collection": "Jami at-Tirmidhi",
+          "number": "2639"
+        }
+      ],
+      "virtues": [
+        {
+          "text": {
+            "en": "The Prophet ﷺ said: \"The best of what I and the prophets before me have said is: La ilaha illallah.\"",
+            "ar": "بيّن النبي ﷺ أن من أفضل ما قاله الأنبياء كلمة: لا إله إلا الله.",
+            "ml": "മുൻ പ്രവാചകന്മാരും താനും പറഞ്ഞതിൽ ഏറ്റവും ഉത്തമമായത് ലാ ഇലാഹ ഇല്ലല്ലാഹ് ആണെന്ന് നബി ﷺ അറിയിച്ചു."
+          },
+          "references": [
+            "tirmidhi-3585"
+          ]
+        },
+        {
+          "text": {
+            "en": "Whoever's last words are La ilaha illallah will enter Paradise.",
+            "ar": "من كان آخر كلامه لا إله إلا الله دخل الجنة.",
+            "ml": "അവസാന വാക്കുകൾ ലാ ഇലാഹ ഇല്ലല്ലാഹ് ആയവൻ സ്വർഗത്തിൽ പ്രവേശിക്കും."
+          },
+          "references": [
+            "abu-dawud-3116"
+          ]
+        },
+        {
+          "text": {
+            "en": "On the Day of Judgement, nothing will be heavier in the scales than La ilaha illallah.",
+            "ar": "لا يثقل مع اسم الله شيء في الميزان يوم القيامة.",
+            "ml": "ഖിയാമത്ത് നാളിൽ തുലാസിൽ അല്ലാഹുവിന്റെ നാമത്തേക്കാൾ ഭാരമുള്ളതായി ഒന്നുമില്ല."
+          },
+          "references": [
+            "tirmidhi-2639"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "6abe90a8-abe2-4678-a4bf-3f14323c3e8d",
+      "key": "ya-wahhabu",
+      "kind": "dhikr",
+      "arabic": "يَا وَهَّابُ",
+      "title": {
+        "en": "Ya Wahhabu",
+        "ar": "يا وهاب",
+        "ml": "യാ വഹ്ഹാബ്"
+      },
+      "transliteration": {
+        "en": "Ya Wahhabu"
+      },
+      "aliases": {
+        "en": [
+          "Ya Wahhab",
+          "Wahhab"
+        ],
+        "ar": [
+          "الوهاب"
+        ],
+        "ml": [
+          "അൽ വഹ്ഹാബ്"
+        ]
+      },
+      "translation": {
+        "en": "O Bestower.",
+        "ar": "يا كثير العطاء.",
+        "ml": "അനുഗ്രഹങ്ങൾ ധാരാളമായി നൽകുന്നവനേ."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/ya-wahhabu-2.mp3",
+        "style": "recitation",
+        "repetitions": 2,
+        "byteSize": 29100,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+      "key": "isthighfar",
+      "kind": "dhikr",
+      "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+      "title": {
+        "en": "Isthighfar",
+        "ar": "الاستغفار",
+        "ml": "ഇസ്തിഗ്ഫാർ"
+      },
+      "transliteration": {
+        "en": "Asthaghfirullahil Azeem"
+      },
+      "aliases": {
+        "en": [
+          "Istighfar",
+          "Astaghfirullah",
+          "Astaghfirullahal Azim"
+        ],
+        "ar": [
+          "أستغفر الله"
+        ],
+        "ml": [
+          "അസ്തഗ്ഫിറുല്ലാഹ്"
+        ]
+      },
+      "translation": {
+        "en": "I seek forgiveness from Allah, the Magnificent.",
+        "ar": "أستغفر الله العظيم.",
+        "ml": "മഹത്തായ അല്ലാഹുവിനോട് ഞാൻ പാപമോചനം തേടുന്നു."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/1736083253280-c2kcxrk9cj-isthighfar.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 103444,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [
+        {
+          "id": "abu-dawud-1518",
+          "type": "hadith",
+          "collection": "Sunan Abi Dawud",
+          "number": "1518",
+          "grade": "Da'if (al-Albani)"
+        },
+        {
+          "id": "quran-71-10",
+          "type": "quran",
+          "surah": 71,
+          "ayahStart": 10,
+          "ayahEnd": 10
+        },
+        {
+          "id": "quran-71-10-12",
+          "type": "quran",
+          "surah": 71,
+          "ayahStart": 10,
+          "ayahEnd": 12
+        }
+      ],
+      "virtues": [
+        {
+          "text": {
+            "en": "Constant istighfar is connected with relief from worries and a way out from difficulty.",
+            "ar": "المداومة على الاستغفار مرتبطة بتفريج الهموم وفتح المخارج من الشدة.",
+            "ml": "ഇസ്തിഗ്ഫാറിൽ സ്ഥിരത പുലർത്തുന്നത് വിഷമങ്ങളിൽ നിന്ന് ആശ്വാസവും ബുദ്ധിമുട്ടുകളിൽ നിന്ന് വഴിയും നൽകുന്നതുമായി ബന്ധപ്പെട്ടിരിക്കുന്നു."
+          },
+          "references": [
+            "abu-dawud-1518"
+          ]
+        },
+        {
+          "text": {
+            "en": "Allah calls His servants to seek forgiveness from their Lord.",
+            "ar": "يدعو الله عباده إلى الاستغفار والرجوع إليه.",
+            "ml": "അല്ലാഹു തന്റെ ദാസന്മാരെ രക്ഷിതാവിനോട് പാപമോചനം തേടാൻ വിളിക്കുന്നു."
+          },
+          "references": [
+            "quran-71-10"
+          ]
+        },
+        {
+          "text": {
+            "en": "Surah Nuh connects seeking forgiveness with increase in provision and blessings.",
+            "ar": "تربط سورة نوح بين الاستغفار ونزول البركات وزيادة الرزق.",
+            "ml": "സൂറത് നൂഹ് ഇസ്തിഗ്ഫാറിനെ അനുഗ്രഹങ്ങളും ഉപജീവനവും വർധിക്കുന്നതുമായി ബന്ധിപ്പിക്കുന്നു."
+          },
+          "references": [
+            "quran-71-10-12"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3daf6738-face-4afc-aeca-2ab62e57a5ea",
+      "key": "swalath-al-fathimiyya",
+      "kind": "salawat",
+      "arabic": "اللَّهُمَّ صَلِّ عَلَى النُّورِ وَأَهْلِهِ",
+      "title": {
+        "en": "Swalath Al Fathimiyya",
+        "ar": "الصلاة الفاطمية",
+        "ml": "സ്വലാത്ത് അൽ ഫാത്വിമിയ്യ"
+      },
+      "transliteration": {
+        "en": "Allahumma swalli ala nnoori wa ahlihi"
+      },
+      "aliases": {
+        "en": [
+          "Salawat al-Fatimiyya",
+          "Swalath Fatimiya"
+        ]
+      },
+      "translation": {
+        "en": "O Allah, send blessings upon the Light and his family.",
+        "ar": "اللهم صل على النور وأهله.",
+        "ml": "നൂറിനും അവിടുത്തെ കുടുംബത്തിനും സ്വലാത്ത് അയക്കണമേ."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/1736075795464-yh0twy42m-swalath-fatimiya.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 103444,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "f2337cb6-6d46-45fb-a193-b9e231c97bbd",
+      "key": "swalath",
+      "kind": "salawat",
+      "arabic": "صَلَّى ٱللَّٰهُ عَلَىٰ مُحَمَّدٍ، صَلَّى ٱللَّٰهُ عَلَيْهِ وَسَلَّمَ",
+      "title": {
+        "en": "Swalath",
+        "ar": "الصلاة على النبي",
+        "ml": "സ്വലാത്ത്"
+      },
+      "transliteration": {
+        "en": "Swallallahu ala Muhammad, swallallahu alayhi wa sallim"
+      },
+      "aliases": {
+        "en": [
+          "Salawat",
+          "Durood",
+          "Sallallahu alayhi wa sallam"
+        ],
+        "ar": [
+          "صلى الله عليه وسلم"
+        ]
+      },
+      "translation": {
+        "en": "May Allah bless Muhammad and grant him peace.",
+        "ar": "صلى الله على محمد، صلى الله عليه وسلم.",
+        "ml": "മുഹമ്മദ് നബിയിലേക്ക് അല്ലാഹുവിന്റെ അനുഗ്രഹവും സമാധാനവും ഉണ്ടാകട്ടെ."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/1736510596621-oqiqm8yj15l-swalath-regular.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 165093,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [
+        {
+          "id": "muslim-408",
+          "type": "hadith",
+          "collection": "Sahih Muslim",
+          "number": "408"
+        },
+        {
+          "id": "tirmidhi-484",
+          "type": "hadith",
+          "collection": "Jami at-Tirmidhi",
+          "number": "484"
+        }
+      ],
+      "virtues": [
+        {
+          "text": {
+            "en": "Whoever sends blessings upon the Prophet ﷺ once receives tenfold blessings from Allah.",
+            "ar": "من صلى على النبي ﷺ مرة صلى الله عليه بها عشرًا.",
+            "ml": "നബി ﷺയിലേക്ക് ഒരിക്കൽ സ്വലാത്ത് ചൊല്ലുന്നവനോട് അല്ലാഹു പത്ത് അനുഗ്രഹങ്ങൾ നൽകും."
+          },
+          "references": [
+            "muslim-408"
+          ]
+        },
+        {
+          "text": {
+            "en": "Abundant blessings upon the Prophet ﷺ are connected with closeness to him on the Day of Judgement.",
+            "ar": "الإكثار من الصلاة على النبي ﷺ سبب للقرب منه يوم القيامة.",
+            "ml": "നബി ﷺയിലേക്ക് ധാരാളം സ്വലാത്ത് ചൊല്ലുന്നത് ഖിയാമത്ത് നാളിൽ അവിടുത്തോട് അടുത്തിരിക്കാൻ കാരണമാകുന്നു."
+          },
+          "references": [
+            "tirmidhi-484"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2a65a361-c499-41ff-b441-fc487714eacf",
+      "key": "swalath-sayyidina",
+      "kind": "salawat",
+      "arabic": "اللَّهُمَّ صَلِّ عَلَىٰ سَيِّدِنَا مُحَمَّدٍ وَعَلَىٰ آلِهِ وَصَحْبِهِ وَسَلِّمْ",
+      "title": {
+        "en": "Allahumma swalli ala sayyidina Muhammad",
+        "ar": "اللهم صل على سيدنا محمد",
+        "ml": "അല്ലാഹുമ്മ സ്വല്ലി അലാ സയ്യിദിനാ മുഹമ്മദ്"
+      },
+      "transliteration": {
+        "en": "Allahumma swalli ala sayyidina Muhammadin wa ala aalihi wa swahbihi wa sallim"
+      },
+      "aliases": {
+        "en": [
+          "Allahumma salli ala sayyidina Muhammad",
+          "Salawat Sayyidina",
+          "Swalath Sayyidina"
+        ]
+      },
+      "translation": {
+        "en": "O Allah, send blessings and peace upon our master Muhammad, his family, and companions.",
+        "ar": "اللهم صل وسلم على سيدنا محمد وآله وصحبه.",
+        "ml": "സയ്യിദുനാ മുഹമ്മദ് നബിയുടെയും കുടുംബത്തിന്റെയും സഹാബികളുടെയും മേൽ സ്വലാത്തും സലാമും."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/1737527316685-7gkeld0j3oy-swalath-1.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 195395,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [
+        {
+          "id": "abu-dawud-1047",
+          "type": "hadith",
+          "collection": "Sunan Abi Dawud",
+          "number": "1047"
+        }
+      ],
+      "virtues": [
+        {
+          "text": {
+            "en": "The Prophet ﷺ encouraged abundant blessings upon him on Friday.",
+            "ar": "حث النبي ﷺ على الإكثار من الصلاة عليه يوم الجمعة.",
+            "ml": "വെള്ളിയാഴ്ച നബി ﷺയിലേക്ക് കൂടുതൽ സ്വലാത്ത് ചൊല്ലാൻ പ്രോത്സാഹനം ഉണ്ട്."
+          },
+          "references": [
+            "abu-dawud-1047"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c94229d6-6b24-4280-ae7c-1e618fc4f1fc",
+      "key": "swalath-al-fatih",
+      "kind": "salawat",
+      "arabic": "اللَّهُمَّ صَلِّ عَلَىٰ سَيِّدِنَا مُحَمَّدٍ الْفَاتِحِ لِمَا أُغْلِقَ وَالْخَاتِمِ لِمَا سَبَقَ نَاصِرِ الْحَقِّ بِالْحَقِّ وَالْهَادِي إِلَىٰ صِرَاطِكَ الْمُسْتَقِيمِ وَعَلَىٰ آلِهِ حَقَّ قَدْرِهِ وَمِقْدَارِهِ الْعَظِيمِ",
+      "title": {
+        "en": "Swalath al Fatih",
+        "ar": "صلاة الفاتح",
+        "ml": "സ്വലാത്തുൽ ഫാത്തിഹ്"
+      },
+      "transliteration": {
+        "en": "Allahumma swalli ala sayyidina Muhammadinil fatihi lima ughliqa, wal khatimi lima sabaqa, nasiril haqqi bil haqqi, wal hadi ila swiratikal mustaqeem, wa ala aalihi haqqa qadrihi wa miqdarihil azeem"
+      },
+      "aliases": {
+        "en": [
+          "Salat al-Fatih",
+          "Salatul Fatih",
+          "Swalathul Fatih"
+        ]
+      },
+      "translation": {
+        "en": "O Allah, send blessings upon our master Muhammad, the opener of what was closed, the seal of what came before, the one who makes the truth prevail by the truth, and the guide to Your straight path; and upon his family, as befits his immense rank and worth.",
+        "ar": "اللهم صل على سيدنا محمد الفاتح لما أغلق.",
+        "ml": "അടഞ്ഞതിനെ തുറന്ന സയ്യിദുനാ മുഹമ്മദ് നബിയിലേക്ക് സ്വലാത്ത്."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/swalath_fatih.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 241812,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "c2a59b7e-7e64-4bfe-9b0c-2d493fe01537",
+      "key": "swalath-al-nariyya",
+      "kind": "salawat",
+      "arabic": "اللَّهُمَّ صَلِّ صَلَاةً كَامِلَةً وَسَلِّمْ سَلَامًا تَامًّا عَلَىٰ سَيِّدِنَا مُحَمَّدٍ الَّذِي تَنْحَلُّ بِهِ الْعُقَدُ وَتَنْفَرِجُ بِهِ الْكُرَبُ وَتُقْضَىٰ بِهِ الْحَوَائِجُ وَتُنَالُ بِهِ الرَّغَائِبُ وَحُسْنُ الْخَوَاتِمِ وَيُسْتَسْقَى الْغَمَامُ بِوَجْهِهِ الْكَرِيمِ وَعَلَىٰ آلِهِ وَصَحْبِهِ فِي كُلِّ لَمْحَةٍ وَنَفَسٍ بِعَدَدِ كُلِّ مَعْلُومٍ لَكَ",
+      "title": {
+        "en": "Swalath al Nariyya",
+        "ar": "الصلاة النارية",
+        "ml": "സ്വലാത്തുന്നാരിയ്യ"
+      },
+      "transliteration": {
+        "en": "Allahumma swalli swalatan kamilatan wa sallim salaman tamman ala sayyidina Muhammadinilladhi tanhallu bihil uqadu, wa tanfariju bihil kurabu, wa tuqda bihil hawa'iju, wa tunalu bihir ragha'ibu wa husnul khawatimi, wa yustasqal ghamamu bi wajhihil kareem, wa ala aalihi wa swahbihi fi kulli lamhatin wa nafasin bi adadi kulli ma'lumin lak"
+      },
+      "aliases": {
+        "en": [
+          "Salat an-Nariyya",
+          "Salawat Nariyya",
+          "Swalathunnariyya",
+          "Salat Tafrijiyya"
+        ],
+        "ar": [
+          "الصلاة التفريجية"
+        ]
+      },
+      "translation": {
+        "en": "O Allah, send complete blessings and perfect peace upon our master Muhammad, through whom knots are untied, distress is relieved, needs are fulfilled, hopes and good endings are attained, and rain is sought from the clouds by his noble face; and upon his family and companions, in every glance and breath, as many times as all that is known to You.",
+        "ar": "صلاة كاملة وسلام تام على سيدنا محمد.",
+        "ml": "സയ്യിദുനാ മുഹമ്മദ് നബിയിലേക്ക് സമ്പൂർണ സ്വലാത്തും സമാധാനവും."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/swalath_nariyya.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 463782,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "9cbb04d9-fb07-4c8f-9235-49e2ce6fc818",
+      "key": "swalath-for-debt",
+      "kind": "salawat",
+      "arabic": "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ عَبْدِكَ وَرَسُولِكَ، وَعَلَى الْمُؤْمِنِينَ وَالْمُؤْمِنَاتِ وَالْمُسْلِمِينَ وَالْمُسْلِمَاتِ",
+      "title": {
+        "en": "Swalath abdika wa rasulika",
+        "ar": "اللهم صل على محمد عبدك ورسولك",
+        "ml": "സ്വലാത്ത് അബ്ദിക വ റസൂലിക"
+      },
+      "transliteration": {
+        "en": "Allahumma swalli ala Muhammadin abdika wa rasulika, wa alal mu'mineena wal mu'minaathi wal muslimeena wal muslimath"
+      },
+      "aliases": {
+        "en": [
+          "Tajul Ulama Swalath",
+          "Swalath for Debt"
+        ],
+        "ar": [
+          "صلاة قضاء الدين"
+        ],
+        "ml": [
+          "കടം തീർക്കാനുള്ള സ്വലാത്ത്"
+        ]
+      },
+      "tags": [
+        "debt"
+      ],
+      "translation": {
+        "en": "O Allah, send blessings upon Muhammad, Your servant and Your Messenger, and upon the believing men and the believing women, and the Muslim men and the Muslim women.",
+        "ar": "اللهم صل على محمد عبدك ورسولك، وعلى المؤمنين والمؤمنات والمسلمين والمسلمات.",
+        "ml": "അല്ലാഹുവേ, നിന്റെ ദാസനും ദൂതനുമായ മുഹമ്മദ് നബിയിലേക്കും വിശ്വാസികളായ സ്ത്രീപുരുഷന്മാരിലേക്കും മുസ്‌ലിംകളായ സ്ത്രീപുരുഷന്മാരിലേക്കും സ്വലാത്ത് അയക്കണമേ."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/swalath_tajul_ulama.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 131603,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "82f55daf-9f23-4d53-a10e-b60a5c90b3c8",
+      "key": "ramadan-dhikr",
+      "kind": "dua",
+      "arabic": "أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا ٱللَّٰهُ، أَسْتَغْفِرُ ٱللَّٰهَ، أَسْأَلُكَ ٱلْجَنَّةَ وَأَعُوذُ بِكَ مِنَ ٱلنَّارِ",
+      "title": {
+        "en": "Ramadan Dhikr",
+        "ar": "ذكر رمضان",
+        "ml": "റമദാൻ ദിക്ർ"
+      },
+      "transliteration": {
+        "en": "Ash'hadu an la ilaha illallahu, asthaghfirullah, as'alukal jannatha wa au'dhu bika mina nnaar"
+      },
+      "aliases": {
+        "en": [
+          "Ramzan Dhikr"
+        ]
+      },
+      "translation": {
+        "en": "I bear witness there is no god but Allah, seek forgiveness, ask for Paradise, and seek refuge from the Fire.",
+        "ar": "أشهد أن لا إله إلا الله، أستغفر الله، أسألك الجنة وأعوذ بك من النار.",
+        "ml": "അല്ലാഹുവല്ലാതെ ആരാധനയ്ക്ക് അർഹനില്ലെന്ന് ഞാൻ സാക്ഷ്യം വഹിക്കുന്നു; പാപമോചനം തേടുന്നു; സ്വർഗം ചോദിക്കുകയും നരകത്തിൽ നിന്ന് അഭയം തേടുകയും ചെയ്യുന്നു."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/ramadan_full.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 131679,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "cebda17e-2ed8-4bd6-b1f3-5dbbb29f9454",
+      "key": "ramadan-first-ten-nights",
+      "kind": "dua",
+      "arabic": "اللَّهُمَّ ٱرْحَمْنِي يَا أَرْحَمَ ٱلرَّاحِمِينَ",
+      "title": {
+        "en": "First 10 Nights",
+        "ar": "العشر الأوائل من رمضان",
+        "ml": "ആദ്യ പത്ത് രാത്രികൾ"
+      },
+      "transliteration": {
+        "en": "Allahummarhamni ya arhama rrahimin"
+      },
+      "aliases": {
+        "en": [
+          "First Ashra",
+          "Allahummarhamni"
+        ]
+      },
+      "translation": {
+        "en": "O Allah, have mercy on me, Most Merciful of those who show mercy.",
+        "ar": "اللهم ارحمني يا أرحم الراحمين.",
+        "ml": "അല്ലാഹുവേ, കാരുണ്യം കാണിക്കുന്നവരിൽ ഏറ്റവും കാരുണ്യമുള്ളവനേ, എന്നോട് കരുണ കാണിക്കണമേ."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/ramadan_first10.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 66743,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "b2580d39-140f-463b-a157-697997129b13",
+      "key": "ramadan-second-ten-nights",
+      "kind": "dua",
+      "arabic": "اللَّهُمَّ ٱغْفِرْ لِي ذُنُوبِي يَا رَبَّ ٱلْعَالَمِينَ",
+      "title": {
+        "en": "Second 10 Nights",
+        "ar": "العشر الوسطى من رمضان",
+        "ml": "രണ്ടാം പത്ത് രാത്രികൾ"
+      },
+      "transliteration": {
+        "en": "Allahummaghfirli dhunubi ya rabbal aalameen"
+      },
+      "aliases": {
+        "en": [
+          "Second Ashra",
+          "Allahummaghfirli"
+        ]
+      },
+      "translation": {
+        "en": "O Allah, forgive my sins, Lord of all worlds.",
+        "ar": "اللهم اغفر لي ذنوبي يا رب العالمين.",
+        "ml": "അല്ലാഹുവേ, ലോകങ്ങളുടെ രക്ഷിതാവേ, എന്റെ പാപങ്ങൾ പൊറുത്തുതരണമേ."
+      },
+      "audio": {
+        "url": "https://dhikrs.awrad.app/ramadan_second10.mp3",
+        "style": "recitation",
+        "repetitions": 1,
+        "byteSize": 74210,
+        "mimeType": "audio/mpeg"
+      },
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "a308aedc-2871-44ea-bb88-b2f3babacfcb",
+      "key": "asma-ul-husna-allah",
+      "kind": "name_of_allah",
+      "arabic": "يَا ٱللَّٰهُ",
+      "title": {
+        "en": "Ya Allah",
+        "ar": "ٱللَّٰهُ",
+        "ml": "Ya Allah"
+      },
+      "transliteration": {
+        "en": "Ya Allah"
+      },
+      "aliases": {
+        "en": [
+          "Allah"
+        ]
+      },
+      "translation": {
+        "en": "The Proper Name of God"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "9185bbcd-8f37-4eaa-af4a-d8d78b3ee6bd",
+      "key": "asma-ul-husna-ar-rahman",
+      "kind": "name_of_allah",
+      "arabic": "يَا رَحْمَٰنُ",
+      "title": {
+        "en": "Ya Rahman",
+        "ar": "ٱلرَّحْمَٰنُ",
+        "ml": "Ya Rahman"
+      },
+      "transliteration": {
+        "en": "Ya Rahman"
+      },
+      "aliases": {
+        "en": [
+          "Ar-Rahman",
+          "Rahman"
+        ]
+      },
+      "translation": {
+        "en": "The Most Merciful"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "19c3001c-4b4a-48c0-800b-8098433798e6",
+      "key": "asma-ul-husna-ar-raheem",
+      "kind": "name_of_allah",
+      "arabic": "يَا رَحِيمُ",
+      "title": {
+        "en": "Ya Raheem",
+        "ar": "ٱلرَّحِيمُ",
+        "ml": "Ya Raheem"
+      },
+      "transliteration": {
+        "en": "Ya Raheem"
+      },
+      "aliases": {
+        "en": [
+          "Ar-Raheem",
+          "Raheem"
+        ]
+      },
+      "translation": {
+        "en": "The Especially Merciful"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "1239cba4-376d-48ac-b1b7-a0bd15bc82b3",
+      "key": "asma-ul-husna-al-malik",
+      "kind": "name_of_allah",
+      "arabic": "يَا مَلِكُ",
+      "title": {
+        "en": "Ya Malik",
+        "ar": "ٱلْمَلِكُ",
+        "ml": "Ya Malik"
+      },
+      "transliteration": {
+        "en": "Ya Malik"
+      },
+      "aliases": {
+        "en": [
+          "Al-Malik",
+          "Malik"
+        ]
+      },
+      "translation": {
+        "en": "The King"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "5d2c7c45-f0a9-440a-af93-dc007a6c2e7f",
+      "key": "asma-ul-husna-al-quddus",
+      "kind": "name_of_allah",
+      "arabic": "يَا قُدُّوسُ",
+      "title": {
+        "en": "Ya Quddus",
+        "ar": "ٱلْقُدُّوسُ",
+        "ml": "Ya Quddus"
+      },
+      "transliteration": {
+        "en": "Ya Quddus"
+      },
+      "aliases": {
+        "en": [
+          "Al-Quddus",
+          "Quddus"
+        ]
+      },
+      "translation": {
+        "en": "The Most Holy"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "b851de15-1a0d-45d9-b55f-ed1d2714696f",
+      "key": "asma-ul-husna-as-salam",
+      "kind": "name_of_allah",
+      "arabic": "يَا سَلَامُ",
+      "title": {
+        "en": "Ya Salam",
+        "ar": "ٱلسَّلَامُ",
+        "ml": "Ya Salam"
+      },
+      "transliteration": {
+        "en": "Ya Salam"
+      },
+      "aliases": {
+        "en": [
+          "As-Salam",
+          "Salam"
+        ]
+      },
+      "translation": {
+        "en": "The Source of Peace"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "aca52e41-0e6c-40cc-9b1a-e42eeadeec76",
+      "key": "asma-ul-husna-al-mumin",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُؤْمِنُ",
+      "title": {
+        "en": "Ya Mu'min",
+        "ar": "ٱلْمُؤْمِنُ",
+        "ml": "Ya Mu'min"
+      },
+      "transliteration": {
+        "en": "Ya Mu'min"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mu'min",
+          "Mu'min"
+        ]
+      },
+      "translation": {
+        "en": "The Granter of Security"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "dae77984-f401-42e3-8a1e-393176c3cf82",
+      "key": "asma-ul-husna-al-muhaymin",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُهَيْمِنُ",
+      "title": {
+        "en": "Ya Muhaymin",
+        "ar": "ٱلْمُهَيْمِنُ",
+        "ml": "Ya Muhaymin"
+      },
+      "transliteration": {
+        "en": "Ya Muhaymin"
+      },
+      "aliases": {
+        "en": [
+          "Al-Muhaymin",
+          "Muhaymin"
+        ]
+      },
+      "translation": {
+        "en": "The Guardian"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "aeceafe3-a564-477b-a66c-b3f5ebf65fef",
+      "key": "asma-ul-husna-al-aziz",
+      "kind": "name_of_allah",
+      "arabic": "يَا عَزِيزُ",
+      "title": {
+        "en": "Ya Aziz",
+        "ar": "ٱلْعَزِيزُ",
+        "ml": "Ya Aziz"
+      },
+      "transliteration": {
+        "en": "Ya Aziz"
+      },
+      "aliases": {
+        "en": [
+          "Al-Aziz",
+          "Aziz"
+        ]
+      },
+      "translation": {
+        "en": "The Almighty"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "f9e56d90-200f-4a53-80f3-e4f21d76a0fa",
+      "key": "asma-ul-husna-al-jabbar",
+      "kind": "name_of_allah",
+      "arabic": "يَا جَبَّارُ",
+      "title": {
+        "en": "Ya Jabbar",
+        "ar": "ٱلْجَبَّارُ",
+        "ml": "Ya Jabbar"
+      },
+      "transliteration": {
+        "en": "Ya Jabbar"
+      },
+      "aliases": {
+        "en": [
+          "Al-Jabbar",
+          "Jabbar"
+        ]
+      },
+      "translation": {
+        "en": "The Compeller"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "4b7f2535-628c-45bc-880a-81ede715f8f7",
+      "key": "asma-ul-husna-al-mutakabbir",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُتَكَبِّرُ",
+      "title": {
+        "en": "Ya Mutakabbir",
+        "ar": "ٱلْمُتَكَبِّرُ",
+        "ml": "Ya Mutakabbir"
+      },
+      "transliteration": {
+        "en": "Ya Mutakabbir"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mutakabbir",
+          "Mutakabbir"
+        ]
+      },
+      "translation": {
+        "en": "The Supreme"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "b35386fa-7773-41be-a5be-5e41e68d140e",
+      "key": "asma-ul-husna-al-khaliq",
+      "kind": "name_of_allah",
+      "arabic": "يَا خَٰلِقُ",
+      "title": {
+        "en": "Ya Khaliq",
+        "ar": "ٱلْخَٰلِقُ",
+        "ml": "Ya Khaliq"
+      },
+      "transliteration": {
+        "en": "Ya Khaliq"
+      },
+      "aliases": {
+        "en": [
+          "Al-Khaliq",
+          "Khaliq"
+        ]
+      },
+      "translation": {
+        "en": "The Creator"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "70b800b2-c7b4-48bf-89ac-bca0a0c20624",
+      "key": "asma-ul-husna-al-bari",
+      "kind": "name_of_allah",
+      "arabic": "يَا بَارِئُ",
+      "title": {
+        "en": "Ya Bari'",
+        "ar": "ٱلْبَارِئُ",
+        "ml": "Ya Bari'"
+      },
+      "transliteration": {
+        "en": "Ya Bari'"
+      },
+      "aliases": {
+        "en": [
+          "Al-Bari'",
+          "Bari'"
+        ]
+      },
+      "translation": {
+        "en": "The Originator"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "1094c202-a33c-44a1-8413-a011f9114c64",
+      "key": "asma-ul-husna-al-musawwir",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُصَوِّرُ",
+      "title": {
+        "en": "Ya Musawwir",
+        "ar": "ٱلْمُصَوِّرُ",
+        "ml": "Ya Musawwir"
+      },
+      "transliteration": {
+        "en": "Ya Musawwir"
+      },
+      "aliases": {
+        "en": [
+          "Al-Musawwir",
+          "Musawwir"
+        ]
+      },
+      "translation": {
+        "en": "The Fashioner"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "6ac2de1b-4a59-45c8-88f3-4f7f67628336",
+      "key": "asma-ul-husna-al-ghaffar",
+      "kind": "name_of_allah",
+      "arabic": "يَا غَفَّارُ",
+      "title": {
+        "en": "Ya Ghaffar",
+        "ar": "ٱلْغَفَّارُ",
+        "ml": "Ya Ghaffar"
+      },
+      "transliteration": {
+        "en": "Ya Ghaffar"
+      },
+      "aliases": {
+        "en": [
+          "Al-Ghaffar",
+          "Ghaffar"
+        ]
+      },
+      "translation": {
+        "en": "The Constant Forgiver"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "adebd521-22a0-4004-92c7-4424c0049503",
+      "key": "asma-ul-husna-al-qahhar",
+      "kind": "name_of_allah",
+      "arabic": "يَا قَهَّارُ",
+      "title": {
+        "en": "Ya Qahhar",
+        "ar": "ٱلْقَهَّارُ",
+        "ml": "Ya Qahhar"
+      },
+      "transliteration": {
+        "en": "Ya Qahhar"
+      },
+      "aliases": {
+        "en": [
+          "Al-Qahhar",
+          "Qahhar"
+        ]
+      },
+      "translation": {
+        "en": "The Subduer"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "decc5cc8-34e7-4e07-b13d-b871c22bd866",
+      "key": "asma-ul-husna-al-wahhab",
+      "kind": "name_of_allah",
+      "arabic": "يَا وَهَّابُ",
+      "title": {
+        "en": "Ya Wahhab",
+        "ar": "ٱلْوَهَّابُ",
+        "ml": "Ya Wahhab"
+      },
+      "transliteration": {
+        "en": "Ya Wahhab"
+      },
+      "aliases": {
+        "en": [
+          "Al-Wahhab",
+          "Wahhab"
+        ]
+      },
+      "translation": {
+        "en": "The Bestower"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "02fe9df2-58d8-48bd-af6f-e6ac074047d8",
+      "key": "asma-ul-husna-ar-razzaq",
+      "kind": "name_of_allah",
+      "arabic": "يَا رَزَّاقُ",
+      "title": {
+        "en": "Ya Razzaq",
+        "ar": "ٱلرَّزَّاقُ",
+        "ml": "Ya Razzaq"
+      },
+      "transliteration": {
+        "en": "Ya Razzaq"
+      },
+      "aliases": {
+        "en": [
+          "Ar-Razzaq",
+          "Razzaq"
+        ]
+      },
+      "translation": {
+        "en": "The Provider"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "eb2b3fc6-0b04-46b9-bcfd-06a26c16975e",
+      "key": "asma-ul-husna-al-fattah",
+      "kind": "name_of_allah",
+      "arabic": "يَا فَتَّاحُ",
+      "title": {
+        "en": "Ya Fattah",
+        "ar": "ٱلْفَتَّاحُ",
+        "ml": "Ya Fattah"
+      },
+      "transliteration": {
+        "en": "Ya Fattah"
+      },
+      "aliases": {
+        "en": [
+          "Al-Fattah",
+          "Fattah"
+        ]
+      },
+      "translation": {
+        "en": "The Opener"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "26285e20-e411-42a7-b406-f260bf532655",
+      "key": "asma-ul-husna-al-alim",
+      "kind": "name_of_allah",
+      "arabic": "يَا عَلِيمُ",
+      "title": {
+        "en": "Ya Alim",
+        "ar": "ٱلْعَلِيمُ",
+        "ml": "Ya Alim"
+      },
+      "transliteration": {
+        "en": "Ya Alim"
+      },
+      "aliases": {
+        "en": [
+          "Al-'Alim",
+          "Alim"
+        ]
+      },
+      "translation": {
+        "en": "The All-Knowing"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "f1e4c8ca-af7e-4363-a0b5-903e5c1eb889",
+      "key": "asma-ul-husna-al-qabid",
+      "kind": "name_of_allah",
+      "arabic": "يَا قَابِضُ",
+      "title": {
+        "en": "Ya Qabid",
+        "ar": "ٱلْقَابِضُ",
+        "ml": "Ya Qabid"
+      },
+      "transliteration": {
+        "en": "Ya Qabid"
+      },
+      "aliases": {
+        "en": [
+          "Al-Qabid",
+          "Qabid"
+        ]
+      },
+      "translation": {
+        "en": "The Withholder"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "ef08e07c-ee48-42fa-8050-870f736d3223",
+      "key": "asma-ul-husna-al-basit",
+      "kind": "name_of_allah",
+      "arabic": "يَا بَاسِطُ",
+      "title": {
+        "en": "Ya Basit",
+        "ar": "ٱلْبَاسِطُ",
+        "ml": "Ya Basit"
+      },
+      "transliteration": {
+        "en": "Ya Basit"
+      },
+      "aliases": {
+        "en": [
+          "Al-Basit",
+          "Basit"
+        ]
+      },
+      "translation": {
+        "en": "The Expander"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "c61a8d2a-6a56-4e82-ace0-aa13fda979f8",
+      "key": "asma-ul-husna-al-khafid",
+      "kind": "name_of_allah",
+      "arabic": "يَا خَافِضُ",
+      "title": {
+        "en": "Ya Khafid",
+        "ar": "ٱلْخَافِضُ",
+        "ml": "Ya Khafid"
+      },
+      "transliteration": {
+        "en": "Ya Khafid"
+      },
+      "aliases": {
+        "en": [
+          "Al-Khafid",
+          "Khafid"
+        ]
+      },
+      "translation": {
+        "en": "The Abaser"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "0d89d53b-49a1-4c41-9db7-3d1e34a87189",
+      "key": "asma-ul-husna-ar-rafi",
+      "kind": "name_of_allah",
+      "arabic": "يَا رَافِعُ",
+      "title": {
+        "en": "Ya Rafi'",
+        "ar": "ٱلرَّافِعُ",
+        "ml": "Ya Rafi'"
+      },
+      "transliteration": {
+        "en": "Ya Rafi'"
+      },
+      "aliases": {
+        "en": [
+          "Ar-Rafi'",
+          "Rafi'"
+        ]
+      },
+      "translation": {
+        "en": "The Exalter"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "d2eca4f6-62d4-4f4c-b04c-d6310ddf2fd2",
+      "key": "asma-ul-husna-al-muizz",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُعِزُّ",
+      "title": {
+        "en": "Ya Mu'izz",
+        "ar": "ٱلْمُعِزُّ",
+        "ml": "Ya Mu'izz"
+      },
+      "transliteration": {
+        "en": "Ya Mu'izz"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mu'izz",
+          "Mu'izz"
+        ]
+      },
+      "translation": {
+        "en": "The Honourer"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "ea793cb0-75e3-4ecc-a079-49648c55b8da",
+      "key": "asma-ul-husna-al-mudhill",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُذِلُّ",
+      "title": {
+        "en": "Ya Mudhill",
+        "ar": "ٱلْمُذِلُّ",
+        "ml": "Ya Mudhill"
+      },
+      "transliteration": {
+        "en": "Ya Mudhill"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mudhill",
+          "Mudhill"
+        ]
+      },
+      "translation": {
+        "en": "The Humiliator"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "b625b726-944f-4c85-af35-bdbe4741b17a",
+      "key": "asma-ul-husna-as-sami",
+      "kind": "name_of_allah",
+      "arabic": "يَا سَمِيعُ",
+      "title": {
+        "en": "Ya Sami'",
+        "ar": "ٱلسَّمِيعُ",
+        "ml": "Ya Sami'"
+      },
+      "transliteration": {
+        "en": "Ya Sami'"
+      },
+      "aliases": {
+        "en": [
+          "As-Sami'",
+          "Sami'"
+        ]
+      },
+      "translation": {
+        "en": "The All-Hearing"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "5a94ea6b-ef84-484e-9d91-8a9346b6852a",
+      "key": "asma-ul-husna-al-basir",
+      "kind": "name_of_allah",
+      "arabic": "يَا بَصِيرُ",
+      "title": {
+        "en": "Ya Basir",
+        "ar": "ٱلْبَصِيرُ",
+        "ml": "Ya Basir"
+      },
+      "transliteration": {
+        "en": "Ya Basir"
+      },
+      "aliases": {
+        "en": [
+          "Al-Basir",
+          "Basir"
+        ]
+      },
+      "translation": {
+        "en": "The All-Seeing"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "77945437-44ee-4ab7-b762-455d212e3dd6",
+      "key": "asma-ul-husna-al-hakam",
+      "kind": "name_of_allah",
+      "arabic": "يَا حَكَمُ",
+      "title": {
+        "en": "Ya Hakam",
+        "ar": "ٱلْحَكَمُ",
+        "ml": "Ya Hakam"
+      },
+      "transliteration": {
+        "en": "Ya Hakam"
+      },
+      "aliases": {
+        "en": [
+          "Al-Hakam",
+          "Hakam"
+        ]
+      },
+      "translation": {
+        "en": "The Judge"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "77bd93a6-8912-4d47-9cf4-58b48641dc83",
+      "key": "asma-ul-husna-al-adl",
+      "kind": "name_of_allah",
+      "arabic": "يَا عَدْلُ",
+      "title": {
+        "en": "Ya Adl",
+        "ar": "ٱلْعَدْلُ",
+        "ml": "Ya Adl"
+      },
+      "transliteration": {
+        "en": "Ya Adl"
+      },
+      "aliases": {
+        "en": [
+          "Al-'Adl",
+          "Adl"
+        ]
+      },
+      "translation": {
+        "en": "The Utterly Just"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "3eba257e-4ce0-4cda-aaeb-67d14fd01d6c",
+      "key": "asma-ul-husna-al-latif",
+      "kind": "name_of_allah",
+      "arabic": "يَا لَطِيفُ",
+      "title": {
+        "en": "Ya Latif",
+        "ar": "ٱللَّطِيفُ",
+        "ml": "Ya Latif"
+      },
+      "transliteration": {
+        "en": "Ya Latif"
+      },
+      "aliases": {
+        "en": [
+          "Al-Latif",
+          "Latif"
+        ]
+      },
+      "translation": {
+        "en": "The Most Gentle"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "38d239b4-33fa-4f7d-9619-777ef1cf39a1",
+      "key": "asma-ul-husna-al-khabir",
+      "kind": "name_of_allah",
+      "arabic": "يَا خَبِيرُ",
+      "title": {
+        "en": "Ya Khabir",
+        "ar": "ٱلْخَبِيرُ",
+        "ml": "Ya Khabir"
+      },
+      "transliteration": {
+        "en": "Ya Khabir"
+      },
+      "aliases": {
+        "en": [
+          "Al-Khabir",
+          "Khabir"
+        ]
+      },
+      "translation": {
+        "en": "The All-Aware"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "9751de3a-9b29-4659-b458-7f6a2001ea3d",
+      "key": "asma-ul-husna-al-halim",
+      "kind": "name_of_allah",
+      "arabic": "يَا حَلِيمُ",
+      "title": {
+        "en": "Ya Halim",
+        "ar": "ٱلْحَلِيمُ",
+        "ml": "Ya Halim"
+      },
+      "transliteration": {
+        "en": "Ya Halim"
+      },
+      "aliases": {
+        "en": [
+          "Al-Halim",
+          "Halim"
+        ]
+      },
+      "translation": {
+        "en": "The Most Forbearing"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "2c5d9d5a-f166-402c-af22-24603c1ebb55",
+      "key": "asma-ul-husna-al-azim",
+      "kind": "name_of_allah",
+      "arabic": "يَا عَظِيمُ",
+      "title": {
+        "en": "Ya Azim",
+        "ar": "ٱلْعَظِيمُ",
+        "ml": "Ya Azim"
+      },
+      "transliteration": {
+        "en": "Ya Azim"
+      },
+      "aliases": {
+        "en": [
+          "Al-'Azim",
+          "Azim"
+        ]
+      },
+      "translation": {
+        "en": "The Magnificent"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "a734681e-297d-4a91-ad0b-d8f7cb89271b",
+      "key": "asma-ul-husna-al-ghafur",
+      "kind": "name_of_allah",
+      "arabic": "يَا غَفُورُ",
+      "title": {
+        "en": "Ya Ghafur",
+        "ar": "ٱلْغَفُورُ",
+        "ml": "Ya Ghafur"
+      },
+      "transliteration": {
+        "en": "Ya Ghafur"
+      },
+      "aliases": {
+        "en": [
+          "Al-Ghafur",
+          "Ghafur"
+        ]
+      },
+      "translation": {
+        "en": "The All-Forgiving"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "393cb962-e0b1-4992-a865-64aec10aaf4b",
+      "key": "asma-ul-husna-ash-shakur",
+      "kind": "name_of_allah",
+      "arabic": "يَا شَكُورُ",
+      "title": {
+        "en": "Ya Shakur",
+        "ar": "ٱلشَّكُورُ",
+        "ml": "Ya Shakur"
+      },
+      "transliteration": {
+        "en": "Ya Shakur"
+      },
+      "aliases": {
+        "en": [
+          "Ash-Shakur",
+          "Shakur"
+        ]
+      },
+      "translation": {
+        "en": "The Most Appreciative"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "3e399089-fbbc-4404-8b51-39a9f9b05d49",
+      "key": "asma-ul-husna-al-ali",
+      "kind": "name_of_allah",
+      "arabic": "يَا عَلِيُّ",
+      "title": {
+        "en": "Ya Ali",
+        "ar": "ٱلْعَلِيُّ",
+        "ml": "Ya Ali"
+      },
+      "transliteration": {
+        "en": "Ya Ali"
+      },
+      "aliases": {
+        "en": [
+          "Al-'Ali",
+          "Ali"
+        ]
+      },
+      "translation": {
+        "en": "The Most High"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "02a1e8c1-181e-47b6-9d6d-54a44a78e94d",
+      "key": "asma-ul-husna-al-kabir",
+      "kind": "name_of_allah",
+      "arabic": "يَا كَبِيرُ",
+      "title": {
+        "en": "Ya Kabir",
+        "ar": "ٱلْكَبِيرُ",
+        "ml": "Ya Kabir"
+      },
+      "transliteration": {
+        "en": "Ya Kabir"
+      },
+      "aliases": {
+        "en": [
+          "Al-Kabir",
+          "Kabir"
+        ]
+      },
+      "translation": {
+        "en": "The Most Great"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "2f62a0ef-761b-44db-a37b-a205b27ef919",
+      "key": "asma-ul-husna-al-hafiz",
+      "kind": "name_of_allah",
+      "arabic": "يَا حَفِيظُ",
+      "title": {
+        "en": "Ya Hafiz",
+        "ar": "ٱلْحَفِيظُ",
+        "ml": "Ya Hafiz"
+      },
+      "transliteration": {
+        "en": "Ya Hafiz"
+      },
+      "aliases": {
+        "en": [
+          "Al-Hafiz",
+          "Hafiz"
+        ]
+      },
+      "translation": {
+        "en": "The Preserver"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "2cc9f07a-7635-418d-b418-7f2eb97067cf",
+      "key": "asma-ul-husna-al-muqit",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُقِيتُ",
+      "title": {
+        "en": "Ya Muqit",
+        "ar": "ٱلْمُقِيتُ",
+        "ml": "Ya Muqit"
+      },
+      "transliteration": {
+        "en": "Ya Muqit"
+      },
+      "aliases": {
+        "en": [
+          "Al-Muqit",
+          "Muqit"
+        ]
+      },
+      "translation": {
+        "en": "The Sustainer"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "155ffec7-0a60-41aa-8bb2-c232f44c5cb9",
+      "key": "asma-ul-husna-al-hasib",
+      "kind": "name_of_allah",
+      "arabic": "يَا حَسِيبُ",
+      "title": {
+        "en": "Ya Hasib",
+        "ar": "ٱلْحَسِيبُ",
+        "ml": "Ya Hasib"
+      },
+      "transliteration": {
+        "en": "Ya Hasib"
+      },
+      "aliases": {
+        "en": [
+          "Al-Hasib",
+          "Hasib"
+        ]
+      },
+      "translation": {
+        "en": "The Reckoner"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "60eafbf0-7b9d-4975-b9ef-313de5ee0540",
+      "key": "asma-ul-husna-al-jalil",
+      "kind": "name_of_allah",
+      "arabic": "يَا جَلِيلُ",
+      "title": {
+        "en": "Ya Jalil",
+        "ar": "ٱلْجَلِيلُ",
+        "ml": "Ya Jalil"
+      },
+      "transliteration": {
+        "en": "Ya Jalil"
+      },
+      "aliases": {
+        "en": [
+          "Al-Jalil",
+          "Jalil"
+        ]
+      },
+      "translation": {
+        "en": "The Majestic"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "5972900f-76c8-4827-b426-3823924ece61",
+      "key": "asma-ul-husna-al-karim",
+      "kind": "name_of_allah",
+      "arabic": "يَا كَرِيمُ",
+      "title": {
+        "en": "Ya Karim",
+        "ar": "ٱلْكَرِيمُ",
+        "ml": "Ya Karim"
+      },
+      "transliteration": {
+        "en": "Ya Karim"
+      },
+      "aliases": {
+        "en": [
+          "Al-Karim",
+          "Karim"
+        ]
+      },
+      "translation": {
+        "en": "The Most Generous"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "6d18dade-55c0-499b-a38a-39e481fb360c",
+      "key": "asma-ul-husna-ar-raqib",
+      "kind": "name_of_allah",
+      "arabic": "يَا رَقِيبُ",
+      "title": {
+        "en": "Ya Raqib",
+        "ar": "ٱلرَّقِيبُ",
+        "ml": "Ya Raqib"
+      },
+      "transliteration": {
+        "en": "Ya Raqib"
+      },
+      "aliases": {
+        "en": [
+          "Ar-Raqib",
+          "Raqib"
+        ]
+      },
+      "translation": {
+        "en": "The Watchful"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "30129e79-ba0d-4991-8b51-d312ddb0b11e",
+      "key": "asma-ul-husna-al-mujib",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُجِيبُ",
+      "title": {
+        "en": "Ya Mujib",
+        "ar": "ٱلْمُجِيبُ",
+        "ml": "Ya Mujib"
+      },
+      "transliteration": {
+        "en": "Ya Mujib"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mujib",
+          "Mujib"
+        ]
+      },
+      "translation": {
+        "en": "The Responsive"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "ceee8a6c-d7a8-446f-90f1-7127b5fe4d4d",
+      "key": "asma-ul-husna-al-wasi",
+      "kind": "name_of_allah",
+      "arabic": "يَا وَاسِعُ",
+      "title": {
+        "en": "Ya Wasi'",
+        "ar": "ٱلْوَاسِعُ",
+        "ml": "Ya Wasi'"
+      },
+      "transliteration": {
+        "en": "Ya Wasi'"
+      },
+      "aliases": {
+        "en": [
+          "Al-Wasi'",
+          "Wasi'"
+        ]
+      },
+      "translation": {
+        "en": "The All-Encompassing"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "5389d4f6-49c4-4afe-bd6d-2a3db475d48f",
+      "key": "asma-ul-husna-al-hakim",
+      "kind": "name_of_allah",
+      "arabic": "يَا حَكِيمُ",
+      "title": {
+        "en": "Ya Hakim",
+        "ar": "ٱلْحَكِيمُ",
+        "ml": "Ya Hakim"
+      },
+      "transliteration": {
+        "en": "Ya Hakim"
+      },
+      "aliases": {
+        "en": [
+          "Al-Hakim",
+          "Hakim"
+        ]
+      },
+      "translation": {
+        "en": "The All-Wise"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "cb5a3a28-e678-4829-94be-8e276c4b1d2d",
+      "key": "asma-ul-husna-al-wadud",
+      "kind": "name_of_allah",
+      "arabic": "يَا وَدُودُ",
+      "title": {
+        "en": "Ya Wadud",
+        "ar": "ٱلْوَدُودُ",
+        "ml": "Ya Wadud"
+      },
+      "transliteration": {
+        "en": "Ya Wadud"
+      },
+      "aliases": {
+        "en": [
+          "Al-Wadud",
+          "Wadud"
+        ]
+      },
+      "translation": {
+        "en": "The Most Loving"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "a8ec166c-ea5a-42db-a08e-2030fa70eaf1",
+      "key": "asma-ul-husna-al-majid",
+      "kind": "name_of_allah",
+      "arabic": "يَا مَجِيدُ",
+      "title": {
+        "en": "Ya Majid",
+        "ar": "ٱلْمَجِيدُ",
+        "ml": "Ya Majid"
+      },
+      "transliteration": {
+        "en": "Ya Majid"
+      },
+      "aliases": {
+        "en": [
+          "Al-Majid",
+          "Majid"
+        ]
+      },
+      "translation": {
+        "en": "The Most Glorious"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "b6fd0053-fb95-4975-9b56-f642d3908992",
+      "key": "asma-ul-husna-al-baith",
+      "kind": "name_of_allah",
+      "arabic": "يَا بَاعِثُ",
+      "title": {
+        "en": "Ya Ba'ith",
+        "ar": "ٱلْبَاعِثُ",
+        "ml": "Ya Ba'ith"
+      },
+      "transliteration": {
+        "en": "Ya Ba'ith"
+      },
+      "aliases": {
+        "en": [
+          "Al-Ba'ith",
+          "Ba'ith"
+        ]
+      },
+      "translation": {
+        "en": "The Resurrector"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "2ed4d5c5-4fde-402b-9ca7-5b57acdac35e",
+      "key": "asma-ul-husna-ash-shahid",
+      "kind": "name_of_allah",
+      "arabic": "يَا شَهِيدُ",
+      "title": {
+        "en": "Ya Shahid",
+        "ar": "ٱلشَّهِيدُ",
+        "ml": "Ya Shahid"
+      },
+      "transliteration": {
+        "en": "Ya Shahid"
+      },
+      "aliases": {
+        "en": [
+          "Ash-Shahid",
+          "Shahid"
+        ]
+      },
+      "translation": {
+        "en": "The Witness"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "9fc51bc2-d111-4bc1-b74d-1186ba0de7cb",
+      "key": "asma-ul-husna-al-haqq",
+      "kind": "name_of_allah",
+      "arabic": "يَا حَقُّ",
+      "title": {
+        "en": "Ya Haqq",
+        "ar": "ٱلْحَقُّ",
+        "ml": "Ya Haqq"
+      },
+      "transliteration": {
+        "en": "Ya Haqq"
+      },
+      "aliases": {
+        "en": [
+          "Al-Haqq",
+          "Haqq"
+        ]
+      },
+      "translation": {
+        "en": "The Truth"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "fdde26ca-352e-4ec7-8958-6a3c17ceeeee",
+      "key": "asma-ul-husna-al-wakil",
+      "kind": "name_of_allah",
+      "arabic": "يَا وَكِيلُ",
+      "title": {
+        "en": "Ya Wakil",
+        "ar": "ٱلْوَكِيلُ",
+        "ml": "Ya Wakil"
+      },
+      "transliteration": {
+        "en": "Ya Wakil"
+      },
+      "aliases": {
+        "en": [
+          "Al-Wakil",
+          "Wakil"
+        ]
+      },
+      "translation": {
+        "en": "The Trustee"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "e81344aa-1c07-4cf9-83d6-6d470e547d67",
+      "key": "asma-ul-husna-al-qawiyy",
+      "kind": "name_of_allah",
+      "arabic": "يَا قَوِيُّ",
+      "title": {
+        "en": "Ya Qawiyy",
+        "ar": "ٱلْقَوِيُّ",
+        "ml": "Ya Qawiyy"
+      },
+      "transliteration": {
+        "en": "Ya Qawiyy"
+      },
+      "aliases": {
+        "en": [
+          "Al-Qawiyy",
+          "Qawiyy"
+        ]
+      },
+      "translation": {
+        "en": "The All-Strong"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "c52d68ed-21fb-4659-80f8-569fbb57bd4c",
+      "key": "asma-ul-husna-al-matin",
+      "kind": "name_of_allah",
+      "arabic": "يَا مَتِينُ",
+      "title": {
+        "en": "Ya Matin",
+        "ar": "ٱلْمَتِينُ",
+        "ml": "Ya Matin"
+      },
+      "transliteration": {
+        "en": "Ya Matin"
+      },
+      "aliases": {
+        "en": [
+          "Al-Matin",
+          "Matin"
+        ]
+      },
+      "translation": {
+        "en": "The Firm"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "3e8429f5-cd08-4571-8010-ca9fc9617649",
+      "key": "asma-ul-husna-al-waliyy",
+      "kind": "name_of_allah",
+      "arabic": "يَا وَلِيُّ",
+      "title": {
+        "en": "Ya Waliyy",
+        "ar": "ٱلْوَلِيُّ",
+        "ml": "Ya Waliyy"
+      },
+      "transliteration": {
+        "en": "Ya Waliyy"
+      },
+      "aliases": {
+        "en": [
+          "Al-Waliyy",
+          "Waliyy"
+        ]
+      },
+      "translation": {
+        "en": "The Protecting Friend"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "c48b8b31-7b91-4ab7-8848-fe99328efff8",
+      "key": "asma-ul-husna-al-hamid",
+      "kind": "name_of_allah",
+      "arabic": "يَا حَمِيدُ",
+      "title": {
+        "en": "Ya Hamid",
+        "ar": "ٱلْحَمِيدُ",
+        "ml": "Ya Hamid"
+      },
+      "transliteration": {
+        "en": "Ya Hamid"
+      },
+      "aliases": {
+        "en": [
+          "Al-Hamid",
+          "Hamid"
+        ]
+      },
+      "translation": {
+        "en": "The Praiseworthy"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "4c8f1a9e-29c2-4e19-bd86-16a5c3aa48e5",
+      "key": "asma-ul-husna-al-muhsi",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُحْصِي",
+      "title": {
+        "en": "Ya Muhsi",
+        "ar": "ٱلْمُحْصِي",
+        "ml": "Ya Muhsi"
+      },
+      "transliteration": {
+        "en": "Ya Muhsi"
+      },
+      "aliases": {
+        "en": [
+          "Al-Muhsi",
+          "Muhsi"
+        ]
+      },
+      "translation": {
+        "en": "The All-Enumerating"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "d1b2ad72-5ff9-4196-b00b-0bc4ab4888ab",
+      "key": "asma-ul-husna-al-mubdi",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُبْدِئُ",
+      "title": {
+        "en": "Ya Mubdi'",
+        "ar": "ٱلْمُبْدِئُ",
+        "ml": "Ya Mubdi'"
+      },
+      "transliteration": {
+        "en": "Ya Mubdi'"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mubdi'",
+          "Mubdi'"
+        ]
+      },
+      "translation": {
+        "en": "The Initiator"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "c5c5d6ac-f38c-4055-b3fb-84e40c38ff44",
+      "key": "asma-ul-husna-al-muid",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُعِيدُ",
+      "title": {
+        "en": "Ya Mu'id",
+        "ar": "ٱلْمُعِيدُ",
+        "ml": "Ya Mu'id"
+      },
+      "transliteration": {
+        "en": "Ya Mu'id"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mu'id",
+          "Mu'id"
+        ]
+      },
+      "translation": {
+        "en": "The Restorer"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "6dd67e41-9fdb-4164-96d0-882d5706853c",
+      "key": "asma-ul-husna-al-muhyi",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُحْيِي",
+      "title": {
+        "en": "Ya Muhyi",
+        "ar": "ٱلْمُحْيِي",
+        "ml": "Ya Muhyi"
+      },
+      "transliteration": {
+        "en": "Ya Muhyi"
+      },
+      "aliases": {
+        "en": [
+          "Al-Muhyi",
+          "Muhyi"
+        ]
+      },
+      "translation": {
+        "en": "The Giver of Life"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "b6b425e6-d1a0-4b5c-931a-9d79e3205f90",
+      "key": "asma-ul-husna-al-mumit",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُمِيتُ",
+      "title": {
+        "en": "Ya Mumit",
+        "ar": "ٱلْمُمِيتُ",
+        "ml": "Ya Mumit"
+      },
+      "transliteration": {
+        "en": "Ya Mumit"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mumit",
+          "Mumit"
+        ]
+      },
+      "translation": {
+        "en": "The Taker of Life"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "54510029-5831-4320-b384-c95ebe854ea9",
+      "key": "asma-ul-husna-al-hayy",
+      "kind": "name_of_allah",
+      "arabic": "يَا حَيُّ",
+      "title": {
+        "en": "Ya Hayy",
+        "ar": "ٱلْحَيُّ",
+        "ml": "Ya Hayy"
+      },
+      "transliteration": {
+        "en": "Ya Hayy"
+      },
+      "aliases": {
+        "en": [
+          "Al-Hayy",
+          "Hayy"
+        ]
+      },
+      "translation": {
+        "en": "The Ever-Living"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "5b3acaef-9cbc-48ba-99b8-a02cf46141d9",
+      "key": "asma-ul-husna-al-qayyum",
+      "kind": "name_of_allah",
+      "arabic": "يَا قَيُّومُ",
+      "title": {
+        "en": "Ya Qayyum",
+        "ar": "ٱلْقَيُّومُ",
+        "ml": "Ya Qayyum"
+      },
+      "transliteration": {
+        "en": "Ya Qayyum"
+      },
+      "aliases": {
+        "en": [
+          "Al-Qayyum",
+          "Qayyum"
+        ]
+      },
+      "translation": {
+        "en": "The Self-Subsisting"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "2258c162-64cb-4020-8200-1f5f834cba77",
+      "key": "asma-ul-husna-al-wajid",
+      "kind": "name_of_allah",
+      "arabic": "يَا وَاجِدُ",
+      "title": {
+        "en": "Ya Wajid",
+        "ar": "ٱلْوَاجِدُ",
+        "ml": "Ya Wajid"
+      },
+      "transliteration": {
+        "en": "Ya Wajid"
+      },
+      "aliases": {
+        "en": [
+          "Al-Wajid",
+          "Wajid"
+        ]
+      },
+      "translation": {
+        "en": "The Finder"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "eddafa30-65ef-4ad5-8c86-0e499832d521",
+      "key": "asma-ul-husna-al-maajid",
+      "kind": "name_of_allah",
+      "arabic": "يَا مَاجِدُ",
+      "title": {
+        "en": "Ya Maajid",
+        "ar": "ٱلْمَاجِدُ",
+        "ml": "Ya Maajid"
+      },
+      "transliteration": {
+        "en": "Ya Maajid"
+      },
+      "aliases": {
+        "en": [
+          "Al-Maajid",
+          "Maajid"
+        ]
+      },
+      "translation": {
+        "en": "The Noble"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "a0a9f0ba-00a1-4455-b8e1-73177d6e361a",
+      "key": "asma-ul-husna-al-wahid",
+      "kind": "name_of_allah",
+      "arabic": "يَا وَاحِدُ",
+      "title": {
+        "en": "Ya Wahid",
+        "ar": "ٱلْوَاحِدُ",
+        "ml": "Ya Wahid"
+      },
+      "transliteration": {
+        "en": "Ya Wahid"
+      },
+      "aliases": {
+        "en": [
+          "Al-Wahid",
+          "Wahid"
+        ]
+      },
+      "translation": {
+        "en": "The One"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "9e6b7d79-51ba-43b4-a4f1-043c9b588b44",
+      "key": "asma-ul-husna-al-ahad",
+      "kind": "name_of_allah",
+      "arabic": "يَا أَحَدُ",
+      "title": {
+        "en": "Ya Ahad",
+        "ar": "ٱلْأَحَدُ",
+        "ml": "Ya Ahad"
+      },
+      "transliteration": {
+        "en": "Ya Ahad"
+      },
+      "aliases": {
+        "en": [
+          "Al-Ahad",
+          "Ahad"
+        ]
+      },
+      "translation": {
+        "en": "The Unique"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "cc32ae77-1eb8-4384-8f26-e05077570546",
+      "key": "asma-ul-husna-as-samad",
+      "kind": "name_of_allah",
+      "arabic": "يَا صَمَدُ",
+      "title": {
+        "en": "Ya Samad",
+        "ar": "ٱلصَّمَدُ",
+        "ml": "Ya Samad"
+      },
+      "transliteration": {
+        "en": "Ya Samad"
+      },
+      "aliases": {
+        "en": [
+          "As-Samad",
+          "Samad"
+        ]
+      },
+      "translation": {
+        "en": "The Eternal Refuge"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "bc40bdf3-4989-45eb-ad41-6baf83c85a2e",
+      "key": "asma-ul-husna-al-qadir",
+      "kind": "name_of_allah",
+      "arabic": "يَا قَادِرُ",
+      "title": {
+        "en": "Ya Qadir",
+        "ar": "ٱلْقَادِرُ",
+        "ml": "Ya Qadir"
+      },
+      "transliteration": {
+        "en": "Ya Qadir"
+      },
+      "aliases": {
+        "en": [
+          "Al-Qadir",
+          "Qadir"
+        ]
+      },
+      "translation": {
+        "en": "The All-Powerful"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "a967a075-d6b8-4610-8c91-517443efbf83",
+      "key": "asma-ul-husna-al-muqtadir",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُقْتَدِرُ",
+      "title": {
+        "en": "Ya Muqtadir",
+        "ar": "ٱلْمُقْتَدِرُ",
+        "ml": "Ya Muqtadir"
+      },
+      "transliteration": {
+        "en": "Ya Muqtadir"
+      },
+      "aliases": {
+        "en": [
+          "Al-Muqtadir",
+          "Muqtadir"
+        ]
+      },
+      "translation": {
+        "en": "The Omnipotent"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "cc699d66-ff4f-4b65-98af-e675a91838e3",
+      "key": "asma-ul-husna-al-muqaddim",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُقَدِّمُ",
+      "title": {
+        "en": "Ya Muqaddim",
+        "ar": "ٱلْمُقَدِّمُ",
+        "ml": "Ya Muqaddim"
+      },
+      "transliteration": {
+        "en": "Ya Muqaddim"
+      },
+      "aliases": {
+        "en": [
+          "Al-Muqaddim",
+          "Muqaddim"
+        ]
+      },
+      "translation": {
+        "en": "The Expediter"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "fbcfcc00-90c4-4cb8-81ad-3e7afdfd270d",
+      "key": "asma-ul-husna-al-muakhkhir",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُؤَخِّرُ",
+      "title": {
+        "en": "Ya Mu'akhkhir",
+        "ar": "ٱلْمُؤَخِّرُ",
+        "ml": "Ya Mu'akhkhir"
+      },
+      "transliteration": {
+        "en": "Ya Mu'akhkhir"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mu'akhkhir",
+          "Mu'akhkhir"
+        ]
+      },
+      "translation": {
+        "en": "The Delayer"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "12c85c47-e81c-4e63-9ae4-265ba8f05507",
+      "key": "asma-ul-husna-al-awwal",
+      "kind": "name_of_allah",
+      "arabic": "يَا أَوَّلُ",
+      "title": {
+        "en": "Ya Awwal",
+        "ar": "ٱلْأَوَّلُ",
+        "ml": "Ya Awwal"
+      },
+      "transliteration": {
+        "en": "Ya Awwal"
+      },
+      "aliases": {
+        "en": [
+          "Al-Awwal",
+          "Awwal"
+        ]
+      },
+      "translation": {
+        "en": "The First"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "19c12d1e-b0a5-40e0-94d7-c519c7ce7337",
+      "key": "asma-ul-husna-al-akhir",
+      "kind": "name_of_allah",
+      "arabic": "يَا آخِرُ",
+      "title": {
+        "en": "Ya Akhir",
+        "ar": "ٱلْآخِرُ",
+        "ml": "Ya Akhir"
+      },
+      "transliteration": {
+        "en": "Ya Akhir"
+      },
+      "aliases": {
+        "en": [
+          "Al-Akhir",
+          "Akhir"
+        ]
+      },
+      "translation": {
+        "en": "The Last"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "8da95856-0add-4aa8-91d8-1938de9f49a7",
+      "key": "asma-ul-husna-az-zahir",
+      "kind": "name_of_allah",
+      "arabic": "يَا ظَاهِرُ",
+      "title": {
+        "en": "Ya Zahir",
+        "ar": "ٱلظَّاهِرُ",
+        "ml": "Ya Zahir"
+      },
+      "transliteration": {
+        "en": "Ya Zahir"
+      },
+      "aliases": {
+        "en": [
+          "Az-Zahir",
+          "Zahir"
+        ]
+      },
+      "translation": {
+        "en": "The Manifest"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "9fb77ffe-e96a-48bd-a87f-79e920a49c5f",
+      "key": "asma-ul-husna-al-batin",
+      "kind": "name_of_allah",
+      "arabic": "يَا بَاطِنُ",
+      "title": {
+        "en": "Ya Batin",
+        "ar": "ٱلْبَاطِنُ",
+        "ml": "Ya Batin"
+      },
+      "transliteration": {
+        "en": "Ya Batin"
+      },
+      "aliases": {
+        "en": [
+          "Al-Batin",
+          "Batin"
+        ]
+      },
+      "translation": {
+        "en": "The Hidden"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "3ceb95e3-8431-480a-9c00-b64f74af3f30",
+      "key": "asma-ul-husna-al-wali",
+      "kind": "name_of_allah",
+      "arabic": "يَا وَالِي",
+      "title": {
+        "en": "Ya Wali",
+        "ar": "ٱلْوَالِي",
+        "ml": "Ya Wali"
+      },
+      "transliteration": {
+        "en": "Ya Wali"
+      },
+      "aliases": {
+        "en": [
+          "Al-Wali",
+          "Wali"
+        ]
+      },
+      "translation": {
+        "en": "The Governor"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "12c4f1c5-486b-48d6-98bd-ca26e032c776",
+      "key": "asma-ul-husna-al-mutaali",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُتَعَالِي",
+      "title": {
+        "en": "Ya Muta'ali",
+        "ar": "ٱلْمُتَعَالِي",
+        "ml": "Ya Muta'ali"
+      },
+      "transliteration": {
+        "en": "Ya Muta'ali"
+      },
+      "aliases": {
+        "en": [
+          "Al-Muta'ali",
+          "Muta'ali"
+        ]
+      },
+      "translation": {
+        "en": "The Self-Exalted"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "b2b50b8e-1955-4a32-bd6e-b3e7028fecdc",
+      "key": "asma-ul-husna-al-barr",
+      "kind": "name_of_allah",
+      "arabic": "يَا بَرُّ",
+      "title": {
+        "en": "Ya Barr",
+        "ar": "ٱلْبَرُّ",
+        "ml": "Ya Barr"
+      },
+      "transliteration": {
+        "en": "Ya Barr"
+      },
+      "aliases": {
+        "en": [
+          "Al-Barr",
+          "Barr"
+        ]
+      },
+      "translation": {
+        "en": "The Source of Goodness"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "0cc6b5b0-7486-4de6-9ed1-3a47e125a463",
+      "key": "asma-ul-husna-at-tawwab",
+      "kind": "name_of_allah",
+      "arabic": "يَا تَوَابُ",
+      "title": {
+        "en": "Ya Tawwab",
+        "ar": "ٱلتَّوَابُ",
+        "ml": "Ya Tawwab"
+      },
+      "transliteration": {
+        "en": "Ya Tawwab"
+      },
+      "aliases": {
+        "en": [
+          "At-Tawwab",
+          "Tawwab"
+        ]
+      },
+      "translation": {
+        "en": "The Accepter of Repentance"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "2765df58-6f0c-48be-a5e4-cc2851157a6c",
+      "key": "asma-ul-husna-al-muntaqim",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُنْتَقِمُ",
+      "title": {
+        "en": "Ya Muntaqim",
+        "ar": "ٱلْمُنْتَقِمُ",
+        "ml": "Ya Muntaqim"
+      },
+      "transliteration": {
+        "en": "Ya Muntaqim"
+      },
+      "aliases": {
+        "en": [
+          "Al-Muntaqim",
+          "Muntaqim"
+        ]
+      },
+      "translation": {
+        "en": "The Avenger"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "d20e3f49-4794-44a2-849d-f55fe70f83b2",
+      "key": "asma-ul-husna-al-afuww",
+      "kind": "name_of_allah",
+      "arabic": "يَا عَفُوُّ",
+      "title": {
+        "en": "Ya Afuww",
+        "ar": "ٱلْعَفُوُّ",
+        "ml": "Ya Afuww"
+      },
+      "transliteration": {
+        "en": "Ya Afuww"
+      },
+      "aliases": {
+        "en": [
+          "Al-'Afuww",
+          "Afuww"
+        ]
+      },
+      "translation": {
+        "en": "The Pardoner"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "4c2bbf43-66d9-4302-98c6-91c42964c9b6",
+      "key": "asma-ul-husna-ar-rauf",
+      "kind": "name_of_allah",
+      "arabic": "يَا رَءُوفُ",
+      "title": {
+        "en": "Ya Ra'uf",
+        "ar": "ٱلرَّءُوفُ",
+        "ml": "Ya Ra'uf"
+      },
+      "transliteration": {
+        "en": "Ya Ra'uf"
+      },
+      "aliases": {
+        "en": [
+          "Ar-Ra'uf",
+          "Ra'uf"
+        ]
+      },
+      "translation": {
+        "en": "The Most Kind"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "f04c17c8-ee60-433b-a74a-7cd6a7fc5a29",
+      "key": "asma-ul-husna-malik-ul-mulk",
+      "kind": "name_of_allah",
+      "arabic": "يَا مَالِكَ ٱلْمُلْكِ",
+      "title": {
+        "en": "Ya Malikal-Mulk",
+        "ar": "مَالِكُ ٱلْمُلْكِ",
+        "ml": "Ya Malikal-Mulk"
+      },
+      "transliteration": {
+        "en": "Ya Malikal-Mulk"
+      },
+      "aliases": {
+        "en": [
+          "Malik-ul-Mulk",
+          "Malikal-Mulk"
+        ]
+      },
+      "translation": {
+        "en": "Master of the Kingdom"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "f2e9602a-b761-434f-bc31-3a3ae8d706fd",
+      "key": "asma-ul-husna-dhul-jalali-wal-ikram",
+      "kind": "name_of_allah",
+      "arabic": "يَا ذَا ٱلْجَلَالِ وَٱلْإِكْرَامِ",
+      "title": {
+        "en": "Ya Dhal-Jalali wal-Ikram",
+        "ar": "ذُو ٱلْجَلَالِ وَٱلْإِكْرَامِ",
+        "ml": "Ya Dhal-Jalali wal-Ikram"
+      },
+      "transliteration": {
+        "en": "Ya Dhal-Jalali wal-Ikram"
+      },
+      "aliases": {
+        "en": [
+          "Dhul-Jalali wal-Ikram",
+          "Dhal-Jalali wal-Ikram"
+        ]
+      },
+      "translation": {
+        "en": "Possessor of Glory and Honour"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "e8a1a2bb-9cfb-40d0-80c8-466fbf861a91",
+      "key": "asma-ul-husna-al-muqsit",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُقْسِطُ",
+      "title": {
+        "en": "Ya Muqsit",
+        "ar": "ٱلْمُقْسِطُ",
+        "ml": "Ya Muqsit"
+      },
+      "transliteration": {
+        "en": "Ya Muqsit"
+      },
+      "aliases": {
+        "en": [
+          "Al-Muqsit",
+          "Muqsit"
+        ]
+      },
+      "translation": {
+        "en": "The Equitable"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "4e9394ee-6b73-4431-bb47-0ba96ad74170",
+      "key": "asma-ul-husna-al-jami",
+      "kind": "name_of_allah",
+      "arabic": "يَا جَامِعُ",
+      "title": {
+        "en": "Ya Jami'",
+        "ar": "ٱلْجَامِعُ",
+        "ml": "Ya Jami'"
+      },
+      "transliteration": {
+        "en": "Ya Jami'"
+      },
+      "aliases": {
+        "en": [
+          "Al-Jami'",
+          "Jami'"
+        ]
+      },
+      "translation": {
+        "en": "The Gatherer"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "7ab3b8ef-79da-4d5a-995c-31a6f7f80224",
+      "key": "asma-ul-husna-al-ghaniyy",
+      "kind": "name_of_allah",
+      "arabic": "يَا غَنِيُّ",
+      "title": {
+        "en": "Ya Ghaniyy",
+        "ar": "ٱلْغَنِيُّ",
+        "ml": "Ya Ghaniyy"
+      },
+      "transliteration": {
+        "en": "Ya Ghaniyy"
+      },
+      "aliases": {
+        "en": [
+          "Al-Ghaniyy",
+          "Ghaniyy"
+        ]
+      },
+      "translation": {
+        "en": "The Self-Sufficient"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "16bbc0a8-4230-422e-996c-13eade3c4142",
+      "key": "asma-ul-husna-al-mughni",
+      "kind": "name_of_allah",
+      "arabic": "يَا مُغْنِيُ",
+      "title": {
+        "en": "Ya Mughni",
+        "ar": "ٱلْمُغْنِيُ",
+        "ml": "Ya Mughni"
+      },
+      "transliteration": {
+        "en": "Ya Mughni"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mughni",
+          "Mughni"
+        ]
+      },
+      "translation": {
+        "en": "The Enricher"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "6b2b55a9-0636-4858-af56-37fb4d50848b",
+      "key": "asma-ul-husna-al-mani",
+      "kind": "name_of_allah",
+      "arabic": "يَا مَانِعُ",
+      "title": {
+        "en": "Ya Mani'",
+        "ar": "ٱلْمَانِعُ",
+        "ml": "Ya Mani'"
+      },
+      "transliteration": {
+        "en": "Ya Mani'"
+      },
+      "aliases": {
+        "en": [
+          "Al-Mani'",
+          "Mani'"
+        ]
+      },
+      "translation": {
+        "en": "The Preventer"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "6f3e53d2-ff37-4142-ae7d-eed94554e38b",
+      "key": "asma-ul-husna-ad-darr",
+      "kind": "name_of_allah",
+      "arabic": "يَا ضَارُّ",
+      "title": {
+        "en": "Ya Darr",
+        "ar": "ٱلضَّارُّ",
+        "ml": "Ya Darr"
+      },
+      "transliteration": {
+        "en": "Ya Darr"
+      },
+      "aliases": {
+        "en": [
+          "Ad-Darr",
+          "Darr"
+        ]
+      },
+      "translation": {
+        "en": "The One Who Can Cause Harm"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "850764ed-5257-41a3-bfad-f03586ce728e",
+      "key": "asma-ul-husna-an-nafi",
+      "kind": "name_of_allah",
+      "arabic": "يَا نَافِعُ",
+      "title": {
+        "en": "Ya Nafi'",
+        "ar": "ٱلنَّافِعُ",
+        "ml": "Ya Nafi'"
+      },
+      "transliteration": {
+        "en": "Ya Nafi'"
+      },
+      "aliases": {
+        "en": [
+          "An-Nafi'",
+          "Nafi'"
+        ]
+      },
+      "translation": {
+        "en": "The Benefactor"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "3586ed77-4c65-4173-bfba-fb4cd6020905",
+      "key": "asma-ul-husna-an-nur",
+      "kind": "name_of_allah",
+      "arabic": "يَا نُورُ",
+      "title": {
+        "en": "Ya Nur",
+        "ar": "ٱلنُّورُ",
+        "ml": "Ya Nur"
+      },
+      "transliteration": {
+        "en": "Ya Nur"
+      },
+      "aliases": {
+        "en": [
+          "An-Nur",
+          "Nur"
+        ]
+      },
+      "translation": {
+        "en": "The Light"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "8ff25a4d-d7ff-4231-8c50-785d8a212314",
+      "key": "asma-ul-husna-al-hadi",
+      "kind": "name_of_allah",
+      "arabic": "يَا هَادِي",
+      "title": {
+        "en": "Ya Hadi",
+        "ar": "ٱلْهَادِي",
+        "ml": "Ya Hadi"
+      },
+      "transliteration": {
+        "en": "Ya Hadi"
+      },
+      "aliases": {
+        "en": [
+          "Al-Hadi",
+          "Hadi"
+        ]
+      },
+      "translation": {
+        "en": "The Guide"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "61b49a97-0536-4d1a-afd2-7d4331af2e06",
+      "key": "asma-ul-husna-al-badi",
+      "kind": "name_of_allah",
+      "arabic": "يَا بَدِيعُ",
+      "title": {
+        "en": "Ya Badi'",
+        "ar": "ٱلْبَدِيعُ",
+        "ml": "Ya Badi'"
+      },
+      "transliteration": {
+        "en": "Ya Badi'"
+      },
+      "aliases": {
+        "en": [
+          "Al-Badi'",
+          "Badi'"
+        ]
+      },
+      "translation": {
+        "en": "The Incomparable Originator"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "d69c1581-1a1d-4134-ae3e-9b1eb2e7cb25",
+      "key": "asma-ul-husna-al-baqi",
+      "kind": "name_of_allah",
+      "arabic": "يَا بَاقِي",
+      "title": {
+        "en": "Ya Baqi",
+        "ar": "ٱلْبَاقِي",
+        "ml": "Ya Baqi"
+      },
+      "transliteration": {
+        "en": "Ya Baqi"
+      },
+      "aliases": {
+        "en": [
+          "Al-Baqi",
+          "Baqi"
+        ]
+      },
+      "translation": {
+        "en": "The Everlasting"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "1d83af89-6afc-4ba7-9cdc-31c8e803fc4a",
+      "key": "asma-ul-husna-al-warith",
+      "kind": "name_of_allah",
+      "arabic": "يَا وَارِثُ",
+      "title": {
+        "en": "Ya Warith",
+        "ar": "ٱلْوَارِثُ",
+        "ml": "Ya Warith"
+      },
+      "transliteration": {
+        "en": "Ya Warith"
+      },
+      "aliases": {
+        "en": [
+          "Al-Warith",
+          "Warith"
+        ]
+      },
+      "translation": {
+        "en": "The Inheritor"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "9209cb61-1129-4605-8055-2044864ca053",
+      "key": "asma-ul-husna-ar-rashid",
+      "kind": "name_of_allah",
+      "arabic": "يَا رَشِيدُ",
+      "title": {
+        "en": "Ya Rashid",
+        "ar": "ٱلرَّشِيدُ",
+        "ml": "Ya Rashid"
+      },
+      "transliteration": {
+        "en": "Ya Rashid"
+      },
+      "aliases": {
+        "en": [
+          "Ar-Rashid",
+          "Rashid"
+        ]
+      },
+      "translation": {
+        "en": "The Guide to the Right Path"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    },
+    {
+      "id": "ef8503fe-6deb-4aa9-897a-39624438dda2",
+      "key": "asma-ul-husna-as-sabur",
+      "kind": "name_of_allah",
+      "arabic": "يَا صَبُورُ",
+      "title": {
+        "en": "Ya Sabur",
+        "ar": "ٱلصَّبُورُ",
+        "ml": "Ya Sabur"
+      },
+      "transliteration": {
+        "en": "Ya Sabur"
+      },
+      "aliases": {
+        "en": [
+          "As-Sabur",
+          "Sabur"
+        ]
+      },
+      "translation": {
+        "en": "The Patient"
+      },
+      "audio": null,
+      "references": [],
+      "virtues": []
+    }
+  ],
+  "collections": [
+    {
+      "key": "daily-essentials",
+      "title": {
+        "en": "Daily Essentials",
+        "ar": "أساسيات يومية",
+        "ml": "ദൈനംദിന അടിസ്ഥാനങ്ങൾ"
+      },
+      "dhikrs": [
+        "tahleel",
+        "ya-wahhabu",
+        "isthighfar",
+        "surah-ikhlas"
+      ]
+    },
+    {
+      "key": "dhikrs",
+      "title": {
+        "en": "Dhikrs",
+        "ar": "الأذكار",
+        "ml": "ദിക്‌റുകൾ"
+      },
+      "dhikrs": [
+        "tahleel",
+        "ya-wahhabu",
+        "isthighfar"
+      ]
+    },
+    {
+      "key": "swalaths",
+      "title": {
+        "en": "Swalaths",
+        "ar": "الصلاة على النبي ﷺ",
+        "ml": "സ്വലാത്തുകൾ"
+      },
+      "dhikrs": [
+        "swalath-al-fathimiyya",
+        "swalath",
+        "swalath-sayyidina",
+        "swalath-al-fatih",
+        "swalath-al-nariyya",
+        "swalath-for-debt"
+      ]
+    },
+    {
+      "key": "ramadan",
+      "title": {
+        "en": "Ramadan",
+        "ar": "رمضان",
+        "ml": "റമദാൻ"
+      },
+      "dhikrs": [
+        "ramadan-dhikr",
+        "ramadan-first-ten-nights",
+        "ramadan-second-ten-nights"
+      ]
+    },
+    {
+      "key": "asma-ul-husna",
+      "title": {
+        "en": "Asma-ul Husna",
+        "ar": "الأسماء الحسنى",
+        "ml": "അസ്മാഉൽ ഹുസ്ന"
+      },
+      "dhikrs": [
+        "asma-ul-husna-allah",
+        "asma-ul-husna-ar-rahman",
+        "asma-ul-husna-ar-raheem",
+        "asma-ul-husna-al-malik",
+        "asma-ul-husna-al-quddus",
+        "asma-ul-husna-as-salam",
+        "asma-ul-husna-al-mumin",
+        "asma-ul-husna-al-muhaymin",
+        "asma-ul-husna-al-aziz",
+        "asma-ul-husna-al-jabbar",
+        "asma-ul-husna-al-mutakabbir",
+        "asma-ul-husna-al-khaliq",
+        "asma-ul-husna-al-bari",
+        "asma-ul-husna-al-musawwir",
+        "asma-ul-husna-al-ghaffar",
+        "asma-ul-husna-al-qahhar",
+        "asma-ul-husna-al-wahhab",
+        "asma-ul-husna-ar-razzaq",
+        "asma-ul-husna-al-fattah",
+        "asma-ul-husna-al-alim",
+        "asma-ul-husna-al-qabid",
+        "asma-ul-husna-al-basit",
+        "asma-ul-husna-al-khafid",
+        "asma-ul-husna-ar-rafi",
+        "asma-ul-husna-al-muizz",
+        "asma-ul-husna-al-mudhill",
+        "asma-ul-husna-as-sami",
+        "asma-ul-husna-al-basir",
+        "asma-ul-husna-al-hakam",
+        "asma-ul-husna-al-adl",
+        "asma-ul-husna-al-latif",
+        "asma-ul-husna-al-khabir",
+        "asma-ul-husna-al-halim",
+        "asma-ul-husna-al-azim",
+        "asma-ul-husna-al-ghafur",
+        "asma-ul-husna-ash-shakur",
+        "asma-ul-husna-al-ali",
+        "asma-ul-husna-al-kabir",
+        "asma-ul-husna-al-hafiz",
+        "asma-ul-husna-al-muqit",
+        "asma-ul-husna-al-hasib",
+        "asma-ul-husna-al-jalil",
+        "asma-ul-husna-al-karim",
+        "asma-ul-husna-ar-raqib",
+        "asma-ul-husna-al-mujib",
+        "asma-ul-husna-al-wasi",
+        "asma-ul-husna-al-hakim",
+        "asma-ul-husna-al-wadud",
+        "asma-ul-husna-al-majid",
+        "asma-ul-husna-al-baith",
+        "asma-ul-husna-ash-shahid",
+        "asma-ul-husna-al-haqq",
+        "asma-ul-husna-al-wakil",
+        "asma-ul-husna-al-qawiyy",
+        "asma-ul-husna-al-matin",
+        "asma-ul-husna-al-waliyy",
+        "asma-ul-husna-al-hamid",
+        "asma-ul-husna-al-muhsi",
+        "asma-ul-husna-al-mubdi",
+        "asma-ul-husna-al-muid",
+        "asma-ul-husna-al-muhyi",
+        "asma-ul-husna-al-mumit",
+        "asma-ul-husna-al-hayy",
+        "asma-ul-husna-al-qayyum",
+        "asma-ul-husna-al-wajid",
+        "asma-ul-husna-al-maajid",
+        "asma-ul-husna-al-wahid",
+        "asma-ul-husna-al-ahad",
+        "asma-ul-husna-as-samad",
+        "asma-ul-husna-al-qadir",
+        "asma-ul-husna-al-muqtadir",
+        "asma-ul-husna-al-muqaddim",
+        "asma-ul-husna-al-muakhkhir",
+        "asma-ul-husna-al-awwal",
+        "asma-ul-husna-al-akhir",
+        "asma-ul-husna-az-zahir",
+        "asma-ul-husna-al-batin",
+        "asma-ul-husna-al-wali",
+        "asma-ul-husna-al-mutaali",
+        "asma-ul-husna-al-barr",
+        "asma-ul-husna-at-tawwab",
+        "asma-ul-husna-al-muntaqim",
+        "asma-ul-husna-al-afuww",
+        "asma-ul-husna-ar-rauf",
+        "asma-ul-husna-malik-ul-mulk",
+        "asma-ul-husna-dhul-jalali-wal-ikram",
+        "asma-ul-husna-al-muqsit",
+        "asma-ul-husna-al-jami",
+        "asma-ul-husna-al-ghaniyy",
+        "asma-ul-husna-al-mughni",
+        "asma-ul-husna-al-mani",
+        "asma-ul-husna-ad-darr",
+        "asma-ul-husna-an-nafi",
+        "asma-ul-husna-an-nur",
+        "asma-ul-husna-al-hadi",
+        "asma-ul-husna-al-badi",
+        "asma-ul-husna-al-baqi",
+        "asma-ul-husna-al-warith",
+        "asma-ul-husna-ar-rashid",
+        "asma-ul-husna-as-sabur"
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "key": "debt",
+      "title": {
+        "en": "Debt",
+        "ar": "الدَّيْن",
+        "ml": "കടം"
+      }
+    }
+  ]
+}

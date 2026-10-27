@@ -107,6 +107,18 @@ public object AwradIcons {
     public val Error: ImageVector
         @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_error)
 
+    /** Play audio. */
+    public val Play: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_play)
+
+    /** Pause audio. */
+    public val Pause: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_pause)
+
+    /** Search field. */
+    public val Search: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_search)
+
     /** Every icon by its name in icons.json, in the contract's order (the component gallery). */
     public val all: List<Pair<String, ImageVector>>
         @Composable get() = listOf(
@@ -133,5 +145,8 @@ public object AwradIcons {
             "delete" to Delete,
             "chevron" to Chevron,
             "error" to Error,
+            "play" to Play,
+            "pause" to Pause,
+            "search" to Search,
         )
 }

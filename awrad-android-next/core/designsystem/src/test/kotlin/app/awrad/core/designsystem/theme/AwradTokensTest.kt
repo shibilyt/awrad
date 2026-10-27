@@ -104,6 +104,11 @@ class AwradTokensTest {
             assertEquals(44.sp, lineHeight)
             assertEquals(FontWeight.Normal, fontWeight)
         }
+        with(AwradType.quranLine) {
+            assertEquals(ArabicScriptFontFamily, fontFamily)
+            assertEquals(18.sp, fontSize)
+            assertEquals(32.sp, lineHeight)
+        }
         val bundled = (ArabicScriptFontFamily as FontListFontFamily).fonts.map { it.weight }
         assertTrue(FontWeight.Normal in bundled)
     }

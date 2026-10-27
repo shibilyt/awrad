@@ -1,10 +1,13 @@
 plugins {
     id("awrad.jvm.library")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.javax.inject)
+    // DhikrCatalog.parse reads the bundled catalog.json.
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(project(":core:testing"))
 }
 
@@ -45,6 +48,10 @@ tasks.test {
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(fileTree(rootDir.resolve("../contracts/account-model")))
         .withPropertyName("accountModelFixtures")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    // The dhikr search fixtures run over the contract's catalog.json, which the catalog tests parse too.
+    inputs.files(fileTree(rootDir.resolve("../contracts/dhikr-catalog")))
+        .withPropertyName("dhikrCatalog")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     // Print the whole assertion, which names every failing case id, in the build log.
     testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL

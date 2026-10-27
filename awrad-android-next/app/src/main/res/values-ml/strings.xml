@@ -5,4 +5,6 @@
     <string name="home_placeholder_body">ഇത് Awrad Next-ന്റെ അടിസ്ഥാന ഘടനയാണ്. ഫീച്ചറുകൾ ഓരോന്നായി ഇവിടെ ചേർക്കും.</string>
     <string name="home_placeholder_restart">ഓൺബോർഡിംഗ് വീണ്ടും തുടങ്ങുക</string>
     <string name="home_placeholder_account">അക്കൗണ്ട്</string>
+    <string name="shell_tab_home">ഹോം</string>
+    <string name="shell_tab_library">ലൈബ്രറി</string>
 </resources>

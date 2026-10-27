@@ -12,6 +12,19 @@
     <string name="gallery_section_containers">Containers</string>
     <string name="gallery_section_navigation">Navigation</string>
     <string name="gallery_section_icons">Icons</string>
+    <string name="gallery_section_library">Library</string>
+    <string name="gallery_collection_tiles">Collection tiles</string>
+    <string name="gallery_collection_daily">Daily Essentials</string>
+    <string name="gallery_collection_long">Asma-ul Husna, the Most Beautiful Names</string>
+    <plurals name="gallery_dhikr_count">
+        <item quantity="one">%d Dhikr</item>
+        <item quantity="other">%d Dhikrs</item>
+    </plurals>
+    <string name="gallery_search_placeholder">Search dhikrs</string>
+    <string name="gallery_search_query">astaghfirullah</string>
+    <string name="gallery_chips">Chips</string>
+    <string name="gallery_chip_debt">Debt</string>
+    <string name="gallery_chip_morning">Morning</string>
     <string name="gallery_state_disabled">Disabled</string>
     <string name="gallery_state_loading">Loading</string>
     <string name="gallery_on_card">On a card</string>
