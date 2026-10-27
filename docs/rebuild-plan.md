@@ -112,7 +112,7 @@ A living checklist for rebuilding Awrad as four contract-first projects. Tick it
 | Extend `CONTEXT.md`: Dhikr, Wird, Count, Count session, Collective counter, Account, Device | Slice 1, gradually | [ ] |
 | Behaviour inventory per feature: keep / change / drop, with old tests as evidence | Each slice, before its contract | [ ] |
 | One source for translations (en/ar/ml) exported to Android XML, iOS string catalogs and web JSON | Slice 2 | [ ] |
-| Design tokens from one source exported to Compose, SwiftUI and CSS. Includes the Arabic interface font: Manrope has no Arabic glyphs, so iOS falls back to the system Arabic font | Slice 2 | [ ] |
+| Design tokens from one source exported to Compose, SwiftUI and CSS. Colours and fonts done 2026-10-27 (`contracts/design-tokens/v1/`): Google Sans Flex Rounded for interface text, the system font for Arabic and Malayalam interface text, Noto Naskh Arabic for Qur'anic and dhikr text | Design system | [ ] |
 | Shared-counter behaviour ADR: scale target, overshoot, late offline contributions, guests, rate caps | Counting slice | [ ] |
 | Content pipeline: built-in dhikr and wird content from `contracts/` into each app at build time | Goals / wird slices | [ ] |
 | Staging environment: server and web on one origin via Dokploy, including the web reverse-proxy container (web ADR 0001) | Accounts slice | [ ] |
@@ -129,7 +129,7 @@ Each slice goes contract → server → Android → iOS → web and is done only
 | 2a | Accounts: register, verify and reset by emailed code, sign in and out, device sessions (mobile), cookie session (web), account screens ([brief](slices/02-accounts.md)) | [x] 2026-10-26 |
 | 2b | Accounts: device list and revoke, sign out of other devices, change password, change email, delete account ([brief](slices/02-accounts.md#slice-2b)) | [x] 2026-10-26 |
 | later | Sign in with Apple and Google, together | [ ] |
-| DS | Design system: shared tokens (colour, type, spacing, shape, motion), components and their states, en/ar/ml and RTL rules, applied to Android, iOS and web. Colours done 2026-10-26 (`contracts/design-tokens/v1/`: 16 roles, generated and checked on every app); typography, spacing, shape, motion and components next | [ ] |
+| DS | Design system: shared tokens (colour, type, spacing, shape, motion), components and their states, en/ar/ml and RTL rules, applied to Android, iOS and web. Colours done 2026-10-26 and fonts 2026-10-27 (`contracts/design-tokens/v1/`, generated or checked on every app); type scale, spacing, shape, motion and components next | [ ] |
 | 3a | Practice settings (proposed): day reset, week start, Hijri corrections, location and device context, the account policy API | [ ] |
 | 3 | Goals: create, edit, evaluate; offline-first on mobile | [ ] |
 | 4 | Counting and progress sync | [ ] |
