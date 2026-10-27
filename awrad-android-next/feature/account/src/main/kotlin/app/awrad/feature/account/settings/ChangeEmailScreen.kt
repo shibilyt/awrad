@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.awrad.core.designsystem.component.AwradPrimaryButton
+import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.motion.AwradContentSwap
 import app.awrad.core.designsystem.theme.AwradTheme
@@ -74,7 +74,7 @@ internal fun ChangeEmailScreen(
                 ChangeEmailStep.DONE -> Column(verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.lg)) {
                     val email = isolated(state.changedTo.orEmpty())
                     BodyText(text = stringResource(R.string.account_notice_email_changed, email))
-                    AwradPrimaryButton(text = stringResource(R.string.account_action_done), onClick = onFinish)
+                    AwradButton(text = stringResource(R.string.account_action_done), onClick = onFinish)
                 }
             }
         }
@@ -101,7 +101,7 @@ private fun EmailChangeForm(
             onValueChange = { onAction(ChangeEmailAction.CurrentPasswordChanged(it)) },
             label = R.string.account_field_current_password,
         )
-        AwradPrimaryButton(
+        AwradButton(
             text = stringResource(R.string.account_action_send_code),
             onClick = { onAction(ChangeEmailAction.Submit) },
             enabled = state.canSubmit,
@@ -118,7 +118,7 @@ private fun EmailChangeCode(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
         CodeSentTo(email = state.newEmail)
         CodeField(state.code, state.codeProblem, { onAction(ChangeEmailAction.CodeChanged(it)) })
-        AwradPrimaryButton(
+        AwradButton(
             text = stringResource(R.string.account_action_confirm_email),
             onClick = { onAction(ChangeEmailAction.Submit) },
             enabled = state.canSubmit,

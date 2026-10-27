@@ -2,12 +2,14 @@ package app.awrad.feature.account
 
 import android.text.BidiFormatter
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import app.awrad.core.designsystem.component.AwradButtonVariant
+import app.awrad.core.designsystem.component.AwradDialog
+import app.awrad.core.designsystem.component.AwradRowButton
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.theme.AwradTheme
 import java.util.Locale
@@ -50,7 +52,7 @@ internal fun ResendButton(secondsLeft: Int, enabled: Boolean, onClick: () -> Uni
     )
 }
 
-/** Asks before an action that can't be taken back. [isDestructive] colours the confirm button as an error. */
+/** Asks before an action that can't be taken back. [isDestructive] makes the confirm button the error one. */
 @Composable
 internal fun ConfirmDialog(
     title: String,
@@ -61,17 +63,16 @@ internal fun ConfirmDialog(
     modifier: Modifier = Modifier,
     isDestructive: Boolean = false,
 ) {
-    AlertDialog(
+    AwradDialog(
         onDismissRequest = onDismiss,
+        title = title,
+        text = text,
         modifier = modifier,
-        title = { Text(text = title) },
-        text = { Text(text = text) },
         confirmButton = {
-            AwradTextButton(
+            AwradRowButton(
                 text = confirmLabel,
                 onClick = onConfirm,
-                isDestructive = isDestructive,
-                isEmphasized = true,
+                variant = if (isDestructive) AwradButtonVariant.Error else AwradButtonVariant.Main,
             )
         },
         dismissButton = {

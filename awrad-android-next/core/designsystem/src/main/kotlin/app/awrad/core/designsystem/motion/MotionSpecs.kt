@@ -20,6 +20,8 @@ import app.awrad.core.designsystem.theme.AwradMotions.CountTap
 import app.awrad.core.designsystem.theme.AwradMotions.ListAppear
 import app.awrad.core.designsystem.theme.AwradMotions.NavPill
 import app.awrad.core.designsystem.theme.AwradMotions.RingFill
+import app.awrad.core.designsystem.theme.AwradMotions.SegmentIndicator
+import app.awrad.core.designsystem.theme.AwradMotions.Select
 import app.awrad.core.designsystem.theme.AwradMotions.Sheet
 import app.awrad.core.designsystem.theme.AwradSprings
 import kotlin.math.min
@@ -99,6 +101,23 @@ public val AwradMotion.countTap: AwradCountTapMotion get() = AwradCountTapMotion
 public val AwradMotion.countComplete: AwradCountCompleteMotion get() = AwradCountCompleteMotion(this)
 
 public val AwradMotion.sheet: AwradSheetMotion get() = AwradSheetMotion(this)
+
+/**
+ * `select`: an option row, checkbox or switch cross-fading its colours over `color`, linear. (The tick and the
+ * switch thumb move with [AwradMotion.movement].)
+ */
+public fun <T> AwradMotion.select(): FiniteAnimationSpec<T> = tween(Select.colorDurationMillis, Select.easing)
+
+/**
+ * `segmentIndicator`: the selected segmented pill's fill and bar moving to the new pill, on `spatial`; their
+ * colours over [segmentColor]. Under reduced motion the move becomes the cross-fade.
+ */
+public fun <T> AwradMotion.segmentIndicator(visibilityThreshold: T? = null): FiniteAnimationSpec<T> =
+    spring(SegmentIndicator.spring, visibilityThreshold)
+
+/** `segmentIndicator`'s colour change: over `color`, linear (it names no easing). */
+public fun <T> AwradMotion.segmentColor(): FiniteAnimationSpec<T> =
+    tween(SegmentIndicator.colorDurationMillis, AwradEasing.linear)
 
 /** `ringFill`: a progress ring or bar moving to a new value. */
 public fun AwradMotion.ringFill(): FiniteAnimationSpec<Float> = spring(RingFill.spring, RING_THRESHOLD)

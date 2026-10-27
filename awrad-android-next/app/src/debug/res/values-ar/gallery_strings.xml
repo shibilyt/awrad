@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gallery_app_name">مكونات أوراد</string>
+    <string name="gallery_title">المكونات</string>
+    <string name="gallery_dark">المظهر الداكن</string>
+    <string name="gallery_rtl">من اليمين إلى اليسار (العربية)</string>
+    <string name="gallery_reduced_motion">تقليل الحركة</string>
+
+    <string name="gallery_section_buttons">الأزرار</string>
+    <string name="gallery_section_inputs">حقول الإدخال</string>
+    <string name="gallery_section_containers">الحاويات</string>
+    <string name="gallery_section_navigation">التنقل</string>
+    <string name="gallery_state_disabled">معطّل</string>
+    <string name="gallery_state_loading">جارٍ التحميل</string>
+    <string name="gallery_on_card">على بطاقة</string>
+
+    <string name="gallery_get_started">ابدأ</string>
+    <string name="gallery_notifications">الإشعارات</string>
+    <string name="gallery_delete_account">حذف الحساب</string>
+    <string name="gallery_view_all">عرض الكل</string>
+    <string name="gallery_sign_out">تسجيل الخروج</string>
+    <string name="gallery_add_goal">إضافة هدف</string>
+    <string name="gallery_open_collection">فتح المجموعة</string>
+    <string name="gallery_more">خيارات أخرى</string>
+
+    <string name="gallery_email">البريد الإلكتروني</string>
+    <string name="gallery_email_placeholder">name@example.com</string>
+    <string name="gallery_password">كلمة المرور</string>
+    <string name="gallery_password_hint">12 حرفًا على الأقل</string>
+    <string name="gallery_password_error">استخدم 12 حرفًا على الأقل</string>
+    <string name="gallery_show_password">إظهار كلمة المرور</string>
+    <string name="gallery_remind_fajr">ذكّرني بعد الفجر</string>
+    <string name="gallery_daily_reminder">تذكير يومي</string>
+    <string name="gallery_active">النشطة</string>
+    <string name="gallery_history">السجل</string>
+    <string name="gallery_today">اليوم</string>
+    <string name="gallery_week">الأسبوع</string>
+    <string name="gallery_month">الشهر</string>
+
+    <string name="gallery_card_title">أهداف اليوم</string>
+    <string name="gallery_card_body">تم 3 من 5</string>
+    <string name="gallery_tile_title">أذكار الصباح</string>
+    <string name="gallery_tile_body">كل يوم</string>
+    <string name="gallery_tap_card">اضغط للفتح</string>
+    <string name="gallery_language">اللغة</string>
+    <string name="gallery_reminders">التذكيرات</string>
+    <string name="gallery_show_dialog">إظهار مربع حوار</string>
+    <string name="gallery_show_error_dialog">إظهار مربع حوار للحذف</string>
+    <string name="gallery_show_sheet">إظهار اللوحة السفلية</string>
+    <string name="gallery_dialog_title">تسجيل الخروج من هذا الجهاز؟</string>
+    <string name="gallery_dialog_body">تبقى ممارستك على هذا الجهاز.</string>
+    <string name="gallery_cancel">إلغاء</string>
+    <string name="gallery_delete">حذف</string>
+    <string name="gallery_delete_title">حذف حسابك؟</string>
+    <string name="gallery_delete_body">لا يمكن التراجع عن هذا.</string>
+    <string name="gallery_sheet_title">اختر تذكيرًا</string>
+    <string name="gallery_after_fajr">بعد الفجر</string>
+    <string name="gallery_after_isha">بعد العشاء</string>
+    <string name="gallery_done">تم</string>
+
+    <string name="gallery_welcome">مرحبًا</string>
+    <string name="gallery_my_goals">أهدافي</string>
+    <string name="gallery_home">الرئيسية</string>
+    <string name="gallery_goals">الأهداف</string>
+    <string name="gallery_library">المكتبة</string>
+    <string name="gallery_community">المجتمع</string>
+    <string name="gallery_empty_tab">لا شيء هنا بعد</string>
+    <string name="gallery_goals_hint">مرّر القائمة: يختفي العنوان وتظهر شريطة علوية مضغوطة.</string>
+    <string name="gallery_large_title_hint">العنوان الكبير ولوحة المحتوى والأزرار المقسّمة في تبويب الأهداف أدناه.</string>
+</resources>

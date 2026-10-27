@@ -23,9 +23,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.awrad.core.designsystem.component.AwradButton
+import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradCard
-import app.awrad.core.designsystem.component.AwradSecondaryButton
-import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.designsystem.component.AwradRowButton
 import app.awrad.core.designsystem.motion.AwradContentSwap
 import app.awrad.core.designsystem.motion.AwradExpand
 import app.awrad.core.designsystem.theme.AwradTheme
@@ -70,7 +71,8 @@ internal fun DevicesScreen(
             if (sessions != null) {
                 Sessions(state = state, sessions = sessions, onAction = onAction)
             } else if (state.canRetry) {
-                AwradSecondaryButton(
+                AwradButton(
+                    variant = AwradButtonVariant.Secondary,
                     text = stringResource(R.string.account_action_retry),
                     onClick = { onAction(DevicesAction.Reload) },
                 )
@@ -99,7 +101,8 @@ private fun Sessions(
         AwradExpand(visible = state.others.isEmpty(), label = "noOtherDevices") {
             BodyText(text = stringResource(R.string.account_devices_none_other))
         }
-        AwradSecondaryButton(
+        AwradButton(
+            variant = AwradButtonVariant.Secondary,
             text = stringResource(R.string.account_action_revoke_others),
             onClick = { onAction(DevicesAction.RevokeOthers) },
             enabled = state.canRevoke,
@@ -150,7 +153,7 @@ private fun SessionRow(session: AccountSession, now: Instant, onRevoke: () -> Un
         } else {
             {
                 val description = stringResource(R.string.account_action_revoke_named, name)
-                AwradTextButton(
+                AwradRowButton(
                     text = stringResource(R.string.account_action_revoke),
                     onClick = onRevoke,
                     modifier = Modifier.semantics { contentDescription = description },

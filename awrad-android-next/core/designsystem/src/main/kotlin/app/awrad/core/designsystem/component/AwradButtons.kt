@@ -1,127 +1,102 @@
 package app.awrad.core.designsystem.component
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import app.awrad.core.designsystem.R
 import app.awrad.core.designsystem.motion.AwradPressTarget
 import app.awrad.core.designsystem.motion.pressFeedback
 import app.awrad.core.designsystem.theme.AwradTheme
 
 /*
- * Buttons by role, all filled or text-only: the design has no outlines. Material's outlined and text buttons
- * draw their label in `primary`, which is too dark to read on a dark background, and a border; these use
- * `onSurface`, `accent` and `error` instead. Every one shrinks a little while pressed (`press`). The full-width
- * ones are `control` high. Disabled, they keep their colours at `states.disabled.opacity`.
+ * Buttons (components.md, "Buttons"): filled or text-only, never outlined. Every one shrinks a little while
+ * pressed (`press`, `buttonScale`). Disabled, a button keeps its colours and is drawn at
+ * `states.disabled.opacity`; loading, it keeps its size and colours, shows a spinner instead of its label and
+ * ignores taps.
  */
 
-/** The one full-width call to action per screen: a `primary` fill. */
+/**
+ * A full-width button, `control` (56) tall, `button` shape, with a [text] label and an optional [leadingIcon]
+ * (`iconSmall`, `inlineGap` from the label). While [isLoading], a spinner replaces the label.
+ */
 @Composable
-public fun AwradPrimaryButton(
+public fun AwradButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    variant: AwradButtonVariant = AwradButtonVariant.Main,
     enabled: Boolean = true,
-    trailingIcon: ImageVector? = null,
+    isLoading: Boolean = false,
+    leadingIcon: ImageVector? = null,
 ) {
-    val colors = AwradTheme.colors
-    val interactionSource = remember { MutableInteractionSource() }
-    Button(
+    FilledButton(
+        text = text,
         onClick = onClick,
+        variant = variant,
         enabled = enabled,
+        isLoading = isLoading,
+        leadingIcon = leadingIcon,
         modifier = modifier
-            .pressFeedback(interactionSource, AwradPressTarget.Button)
-            .disabledOpacity(enabled)
             .fillMaxWidth()
             .height(AwradTheme.sizes.control),
-        shape = AwradTheme.shapes.button,
-        colors = filledColors(container = colors.primary, content = colors.onPrimary),
-        interactionSource = interactionSource,
-    ) {
-        Text(text = text, style = AwradTheme.type.button)
-        if (trailingIcon != null) {
-            Spacer(modifier = Modifier.width(AwradTheme.spacing.inlineGap))
-            Icon(
-                imageVector = trailingIcon,
-                contentDescription = null,
-                modifier = Modifier.size(AwradTheme.sizes.iconSmall),
-            )
-        }
-    }
+    )
 }
 
 /**
- * A full-width secondary action, the same size as the primary one: filled like a field ([AwradTheme.fill],
- * `surface` on a `background`, `background` inside an `AwradCard`), `onSurface` text, no border.
+ * A button inside a row, such as signing out one device: `touchTarget` (48) tall and as wide as its label.
+ * Otherwise like [AwradButton]; it defaults to [AwradButtonVariant.Secondary].
  */
 @Composable
-public fun AwradSecondaryButton(
+public fun AwradRowButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    variant: AwradButtonVariant = AwradButtonVariant.Secondary,
     enabled: Boolean = true,
+    isLoading: Boolean = false,
+    leadingIcon: ImageVector? = null,
 ) {
-    val colors = AwradTheme.colors
-    val fill = AwradTheme.fill
-    val interactionSource = remember { MutableInteractionSource() }
-    Button(
+    FilledButton(
+        text = text,
         onClick = onClick,
+        variant = variant,
         enabled = enabled,
-        modifier = modifier
-            .pressFeedback(interactionSource, AwradPressTarget.Button)
-            .disabledOpacity(enabled)
-            .fillMaxWidth()
-            .height(AwradTheme.sizes.control),
-        shape = AwradTheme.shapes.button,
-        colors = filledColors(container = fill, content = colors.onSurface),
-        interactionSource = interactionSource,
-    ) {
-        Text(text = text, style = AwradTheme.type.button)
-    }
-}
-
-/** A full-width action that can't be taken back, such as deleting the account: an `error` fill. */
-@Composable
-public fun AwradDestructiveButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-) {
-    val colors = AwradTheme.colors
-    val interactionSource = remember { MutableInteractionSource() }
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier
-            .pressFeedback(interactionSource, AwradPressTarget.Button)
-            .disabledOpacity(enabled)
-            .fillMaxWidth()
-            .height(AwradTheme.sizes.control),
-        shape = AwradTheme.shapes.button,
-        colors = filledColors(container = colors.error, content = colors.onError),
-        interactionSource = interactionSource,
-    ) {
-        Text(text = text, style = AwradTheme.type.button)
-    }
+        isLoading = isLoading,
+        leadingIcon = leadingIcon,
+        modifier = modifier.height(AwradTheme.sizes.touchTarget),
+    )
 }
 
 /**
- * A text-only action, such as a link to another page or a dialog's buttons: `accent` text, or `error` when
- * [isDestructive]. [isEmphasized] sets it in semibold, for a dialog's confirm button.
+ * A text-only action (links, "View all", a dialog's cancel): no fill, `accent` text in the `label` style, or
+ * `error` when [isDestructive]; `touchTarget` tall.
  */
 @Composable
 public fun AwradTextButton(
@@ -130,34 +105,136 @@ public fun AwradTextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     isDestructive: Boolean = false,
-    isEmphasized: Boolean = false,
+    leadingIcon: ImageVector? = null,
 ) {
-    val colors = AwradTheme.colors
-    val content = if (isDestructive) colors.error else colors.accent
-    val interactionSource = remember { MutableInteractionSource() }
-    TextButton(
+    val content = if (isDestructive) AwradTheme.colors.error else AwradTheme.colors.accent
+    ButtonFrame(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier
-            .pressFeedback(interactionSource, AwradPressTarget.Button)
-            .disabledOpacity(enabled),
-        shape = AwradTheme.shapes.button,
-        colors = ButtonDefaults.textButtonColors(contentColor = content, disabledContentColor = content),
-        interactionSource = interactionSource,
+        isLoading = false,
+        fill = Color.Transparent,
+        modifier = modifier.heightIn(min = AwradTheme.sizes.touchTarget),
+        horizontalPadding = AwradTheme.spacing.md,
     ) {
-        Text(
+        ButtonLabel(
             text = text,
+            color = content,
             style = AwradTheme.type.label,
-            fontWeight = if (isEmphasized) AwradTheme.type.button.fontWeight else null,
+            leadingIcon = leadingIcon,
+            isLoading = false,
         )
     }
 }
 
-/** A filled button's colours, the same when disabled (`disabledOpacity` dims the whole button instead). */
 @Composable
-private fun filledColors(container: Color, content: Color): ButtonColors = ButtonDefaults.buttonColors(
-    containerColor = container,
-    contentColor = content,
-    disabledContainerColor = container,
-    disabledContentColor = content,
-)
+private fun FilledButton(
+    text: String,
+    onClick: () -> Unit,
+    variant: AwradButtonVariant,
+    enabled: Boolean,
+    isLoading: Boolean,
+    leadingIcon: ImageVector?,
+    modifier: Modifier = Modifier,
+) {
+    val colors = AwradTheme.colors
+    val fill = when (variant) {
+        AwradButtonVariant.Main -> colors.primary
+        AwradButtonVariant.Secondary -> AwradTheme.secondaryFill
+        AwradButtonVariant.Error -> colors.error
+    }
+    val content = when (variant) {
+        AwradButtonVariant.Main -> colors.onPrimary
+        AwradButtonVariant.Secondary -> AwradTheme.onSecondaryFill
+        AwradButtonVariant.Error -> colors.onError
+    }
+    ButtonFrame(
+        onClick = onClick,
+        enabled = enabled,
+        isLoading = isLoading,
+        fill = fill,
+        modifier = modifier,
+        horizontalPadding = AwradTheme.spacing.lg,
+    ) {
+        ButtonLabel(
+            text = text,
+            color = content,
+            style = AwradTheme.type.button,
+            leadingIcon = leadingIcon,
+            isLoading = isLoading,
+        )
+    }
+}
+
+/** The tappable, pressable shape every button shares. */
+@Composable
+private fun ButtonFrame(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    isLoading: Boolean,
+    fill: Color,
+    horizontalPadding: Dp,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val shape = AwradTheme.shapes.button
+    val loading = stringResource(R.string.awrad_state_loading)
+    Box(
+        modifier = modifier
+            .pressFeedback(interactionSource, AwradPressTarget.Button)
+            .disabledOpacity(enabled)
+            .clip(shape)
+            .background(fill)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = ripple(),
+                enabled = enabled && !isLoading,
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .semantics { if (isLoading) stateDescription = loading }
+            .padding(horizontal = horizontalPadding),
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+    }
+}
+
+/**
+ * The label and its icon. While [isLoading] they stay laid out (so the button keeps its size) but invisible,
+ * under a spinner in the same colour.
+ */
+@Composable
+private fun ButtonLabel(
+    text: String,
+    color: Color,
+    style: TextStyle,
+    leadingIcon: ImageVector?,
+    isLoading: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Row(
+            modifier = Modifier.alpha(if (isLoading) 0f else 1f),
+            horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.inlineGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (leadingIcon != null) {
+                Icon(
+                    imageVector = leadingIcon,
+                    contentDescription = null,
+                    modifier = Modifier.size(AwradTheme.sizes.iconSmall),
+                    tint = color,
+                )
+            }
+            Text(text = text, color = color, style = style, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(AwradTheme.sizes.icon),
+                color = color,
+                strokeWidth = AwradTheme.sizes.ringStroke,
+            )
+        }
+    }
+}

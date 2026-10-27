@@ -12,10 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,13 +23,14 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import app.awrad.core.designsystem.component.AwradLinearProgress
+import app.awrad.core.designsystem.component.AwradTopBar
 import app.awrad.core.designsystem.motion.AwradContentSwap
 import app.awrad.core.designsystem.theme.AwradTheme
 
 /**
- * The frame of every account page: Back, the title, a progress line while [isBusy], the [status], then
- * [content]. Scrolls, and keeps clear of system bars and the keyboard. A new title, the progress line and the
- * status cross-fade in place (`contentSwap`).
+ * The frame of every account page: the top bar with Back, the title, a progress line while [isBusy], the
+ * [status], then [content]. Scrolls under the top bar, and keeps clear of system bars and the keyboard. A new
+ * title, the progress line and the status cross-fade in place (`contentSwap`).
  */
 @Composable
 internal fun AccountPage(
@@ -45,30 +42,36 @@ internal fun AccountPage(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            modifier = Modifier
-                .safeDrawingPadding()
-                .imePadding()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = AwradTheme.spacing.pageMargin, vertical = AwradTheme.spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.lg),
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = stringResource(R.string.account_action_back),
-                )
-            }
-            AwradContentSwap(targetState = title, label = "title") { text ->
-                Text(text = text, modifier = Modifier.semantics { heading() }, style = AwradTheme.type.title)
-            }
-            // One item, so an absent status adds no gap.
-            Column {
-                BusyIndicator(isBusy = isBusy)
-                StatusMessage(status = status)
-            }
-            content()
+        Column(modifier = Modifier.safeDrawingPadding().imePadding()) {
+            AwradTopBar(onBack = onBack)
+            PageContent(title = title, isBusy = isBusy, status = status, content = content)
         }
+    }
+}
+
+@Composable
+private fun PageContent(
+    title: String,
+    isBusy: Boolean,
+    status: PageStatus?,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = AwradTheme.spacing.pageMargin, vertical = AwradTheme.spacing.lg),
+        verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.lg),
+    ) {
+        AwradContentSwap(targetState = title, label = "title") { text ->
+            Text(text = text, modifier = Modifier.semantics { heading() }, style = AwradTheme.type.title)
+        }
+        // One item, so an absent status adds no gap.
+        Column {
+            BusyIndicator(isBusy = isBusy)
+            StatusMessage(status = status)
+        }
+        content()
     }
 }
 
