@@ -101,6 +101,8 @@ nonisolated public enum AwradSize {
     public static let tabIndicatorWidth: CGFloat = 24
     /// The bar under the selected segmented pill.
     public static let tabIndicatorHeight: CGFloat = 4
+    /// Width and height of a collection tile (Home, Library).
+    public static let collectionTile: CGFloat = 128
 
     static let sizes: KeyValuePairs<String, CGFloat> = [
         "touchTarget": touchTarget,
@@ -127,5 +129,6 @@ nonisolated public enum AwradSize {
         "stepDot": stepDot,
         "tabIndicatorWidth": tabIndicatorWidth,
         "tabIndicatorHeight": tabIndicatorHeight,
+        "collectionTile": collectionTile,
     ]
 }
