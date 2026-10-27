@@ -59,6 +59,7 @@ flowchart TD
 | ≤ 400 lines per file | `verifySourceFileSize` (part of `check`) | `CountingScreen.kt` at 4,341 lines |
 | Committed schemas | Room Gradle plugin → `core/database/schemas/` | Same rule as today, now automatic |
 | Colours only from the shared roles | `verifyAwradColors`, `verifyColorLiterals` (run by `detekt`), detekt `ForbiddenImport` | Hex values and sage shades scattered through screens |
+| Fonts are the shared files | `verifyAwradFonts` | Fonts that drift from the other apps |
 
 Every rule lives in `build-logic/` or `config/detekt/detekt.yml`, so changing a standard is a reviewed diff.
 
@@ -119,6 +120,15 @@ Every colour is one of the 15 shared roles in `contracts/design-tokens/v1/colors
 - **Components:** Material draws `primary` as text, focus and progress colour, and borders or indicator lines on its outlined and filled controls; `#23553C` is unreadable on a dark background. So screens use the design system's `AwradTextButton` (`accent`, or `error`; no border), `AwradSecondaryButton` (`AwradTheme.fill`, `onSurface` text, no border), `AwradDestructiveButton` (`error` fill, `onError` text), `AwradTextField` (a `BasicTextField` in Material's filled decoration with its own container: `AwradTheme.fill`, no indicator line, no focus border; `accent` cursor and selection, `onSurfaceVariant` label, icons and hint; with an error, an `error` border and the message in `error`), `AwradCard` and `AwradLinearProgress`/`AwradCircularProgress` (`progress` on an `outline` track). detekt's `ForbiddenImport` keeps the Material versions, cards, dividers and `border`/`BorderStroke` out of features and `:app`.
 - **No literals:** `verifyColorLiterals` (in every module, run by `detekt` and `check`) fails on `Color(0x…)` in Kotlin or `#…` in resource XML outside the generated files. The launcher icon's background is part of the icon artwork and exempt.
 - **Previews:** the design system's `ComponentPreviews.kt` and every screen preview render in light and dark (`uiMode = UI_MODE_NIGHT_YES`).
+
+## Fonts
+
+The fonts are the shared files in `contracts/design-tokens/v1/fonts/` (read its README), bundled under the same names in `core/designsystem/src/main/res/font/`.
+
+- **Interface text** is Google Sans Flex Rounded, the frozen apps' font: `InterfaceFontFamily` in `theme/Type.kt`, four static instances (Regular 400, Medium 500, SemiBold 600, Bold 700). Every Material style in `AwradTypography` (display, headline, title, body, label) uses it, with Material's sizes; display small is Bold, headlines and title large SemiBold, the rest Material's own weight. `AwradTypographyTest` fails when a style uses another family or a weight that isn't bundled (which Android would synthesise).
+- **Arabic and Malayalam interface text** uses the system font. Google Sans Flex has no glyphs for them, and Compose falls back to the system font glyph by glyph, so nothing sets a font per language.
+- **Qur'anic and dhikr text** in Arabic script uses `ArabicScriptFontFamily` (Noto Naskh Arabic, same four weights). Never use it for interface text.
+- **Freshness check:** `verifyAwradFonts` (`AwradFontsTask` in `build-logic`) fails when `res/font/` isn't exactly the files listed in the contract's `SHA256SUMS`: a missing file, an extra one, or one whose SHA-256 differs. It runs before the module's unit tests and lint, and in `check`. To change a font, change the contract first, then copy the file here.
 
 ## Patterns
 
