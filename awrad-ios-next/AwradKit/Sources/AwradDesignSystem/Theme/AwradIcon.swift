@@ -53,6 +53,12 @@ nonisolated public enum AwradIcon: String, CaseIterable, Sendable {
     case chevron
     /// Error message beside a form or feedback line (`error.svg`).
     case error
+    /// Play audio (`play_arrow.svg`).
+    case play
+    /// Pause audio (`pause.svg`).
+    case pause
+    /// Search field (`search.svg`).
+    case search
 
     /// Whether it flips in right-to-left layouts (`mirrorInRtl`): the asset is "Left to Right, Mirrors".
     public var mirrorsInRightToLeft: Bool {
@@ -92,5 +98,8 @@ nonisolated public enum AwradIcon: String, CaseIterable, Sendable {
         "delete": "delete.svg",
         "chevron": "chevron_right.svg",
         "error": "error.svg",
+        "play": "play_arrow.svg",
+        "pause": "pause.svg",
+        "search": "search.svg",
     ]
 }

@@ -28,6 +28,17 @@
                     }
                     .disabled(true)
                 }
+                GalleryItem(caption: "Collection tile · title and count, long title, disabled", isInset: false) {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(alignment: .top, spacing: AwradSpacing.md) {
+                            AwradCollectionTile(GalleryStrings.morningAdhkar, detail: GalleryStrings.dhikrCount(4)) {}
+                            AwradCollectionTile(GalleryStrings.todaysGoals, detail: GalleryStrings.dhikrCount(1)) {}
+                            AwradCollectionTile(GalleryStrings.eveningAdhkar, detail: GalleryStrings.dhikrCount(100)) {}
+                                .disabled(true)
+                        }
+                        .padding(.horizontal, AwradSpacing.pageMargin)
+                    }
+                }
                 GalleryItem(caption: "Content sheet · section title, background cards inside", isInset: false) {
                     AwradContentSheet {
                         AwradSectionTitle(GalleryStrings.myGoals)

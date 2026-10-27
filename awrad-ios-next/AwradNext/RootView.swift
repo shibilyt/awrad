@@ -40,7 +40,8 @@ struct RootView: View {
             case .onboarding:
                 OnboardingRoute(status: composition.onboardingStatus) { destination = .home }
             case .home:
-                HomePlaceholderView(
+                AppShell(
+                    composition: composition,
                     onShowAccount: { showsAccount = true },
                     onRestartOnboarding: {
                         Task {
@@ -61,37 +62,5 @@ struct RootView: View {
         .task {
             destination = await composition.onboardingStatus.isOnboarded() ? .home : .onboarding
         }
-    }
-}
-
-/// Stand-in until the first real home feature module exists.
-struct HomePlaceholderView: View {
-    let onShowAccount: () -> Void
-    let onRestartOnboarding: () -> Void
-    #if DEBUG
-        @State private var showsGallery = false
-    #endif
-
-    var body: some View {
-        VStack(spacing: AwradSpacing.rowGap) {
-            Text("home.placeholder.title")
-                .awradTextStyle(.title)
-                .foregroundStyle(AwradColors.onSurface)
-            Text("home.placeholder.body")
-                .awradTextStyle(.body)
-                .foregroundStyle(AwradColors.onSurfaceVariant)
-                .multilineTextAlignment(.center)
-            AwradButton("home.placeholder.account", action: onShowAccount)
-                .padding(.top, AwradSpacing.xl2)
-            AwradButton("home.placeholder.restart", variant: .text, action: onRestartOnboarding)
-                .padding(.top, AwradSpacing.md)
-            #if DEBUG
-                AwradButton("home.placeholder.gallery", variant: .text) { showsGallery = true }
-                    .fullScreenCover(isPresented: $showsGallery) { AwradComponentGallery() }
-            #endif
-        }
-        .padding(AwradSpacing.pageMargin)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AwradColors.background)
     }
 }

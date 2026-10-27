@@ -27,9 +27,15 @@ let package = Package(
         .library(name: "AwradDesignSystem", targets: ["AwradDesignSystem"]),
         .library(name: "FeatureOnboarding", targets: ["FeatureOnboarding"]),
         .library(name: "FeatureAccount", targets: ["FeatureAccount"]),
+        .library(name: "FeatureLibrary", targets: ["FeatureLibrary"]),
     ],
     targets: [
-        .target(name: "AwradDomain", swiftSettings: strict),
+        .target(
+            name: "AwradDomain",
+            // An identical copy of contracts/dhikr-catalog/v1/catalog.json (scripts/check-dhikr-catalog.py).
+            resources: [.copy("Resources/dhikr-catalog.json")],
+            swiftSettings: strict
+        ),
         .target(name: "AwradData", dependencies: ["AwradDomain"], swiftSettings: strict),
         .target(
             name: "AwradDesignSystem",
@@ -47,6 +53,12 @@ let package = Package(
         ),
         .target(
             name: "FeatureAccount",
+            dependencies: ["AwradDomain", "AwradDesignSystem"],
+            resources: [.process("Resources")],
+            swiftSettings: ui
+        ),
+        .target(
+            name: "FeatureLibrary",
             dependencies: ["AwradDomain", "AwradDesignSystem"],
             resources: [.process("Resources")],
             swiftSettings: ui
@@ -72,6 +84,11 @@ let package = Package(
         .testTarget(
             name: "FeatureAccountTests",
             dependencies: ["FeatureAccount", "AwradDomain", "AwradTesting"],
+            swiftSettings: ui
+        ),
+        .testTarget(
+            name: "FeatureLibraryTests",
+            dependencies: ["FeatureLibrary", "AwradDomain", "AwradTesting"],
             swiftSettings: ui
         ),
     ]

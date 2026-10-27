@@ -1,0 +1,526 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "library.all_dhikrs" : {
+      "comment" : "Library section title over the list of every dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جميع الأذكار"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All dhikrs"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "എല്ലാ ദിക്റുകളും"
+          }
+        }
+      }
+    },
+    "library.audio.failed" : {
+      "comment" : "Shown when a dhikr's recording can't be played.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر تشغيل التسجيل. تحقّق من اتصالك."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't play the recording. Check your connection."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "റെക്കോർഡിംഗ് പ്ലേ ചെയ്യാനായില്ല. കണക്ഷൻ പരിശോധിക്കുക."
+          }
+        }
+      }
+    },
+    "library.audio.pause" : {
+      "comment" : "Accessibility label of the button that pauses a dhikr's recording.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إيقاف مؤقت"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pause"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "താൽക്കാലികമായി നിർത്തുക"
+          }
+        }
+      }
+    },
+    "library.audio.play" : {
+      "comment" : "Accessibility label of the button that plays a dhikr's recording.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تشغيل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Play"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പ്ലേ ചെയ്യുക"
+          }
+        }
+      }
+    },
+    "library.collection.count" : {
+      "comment" : "The number of dhikrs in a collection, on its tile.",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا أذكار"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ذكر واحد"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ذكران"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld أذكار"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ذكرًا"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ذكر"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Dhikr"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld Dhikrs"
+                }
+              }
+            }
+          }
+        },
+        "ml" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ദിക്ർ"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ദിക്റുകൾ"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "library.collections" : {
+      "comment" : "Library section title over the collection tiles.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المجموعات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collections"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ശേഖരങ്ങൾ"
+          }
+        }
+      }
+    },
+    "library.detail.meaning" : {
+      "comment" : "Section title over the meaning of one of the names of Allah.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المعنى"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Meaning"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അർത്ഥം"
+          }
+        }
+      }
+    },
+    "library.detail.tags" : {
+      "comment" : "Section title over a dhikr's topic tags.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الوسوم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tags"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ടാഗുകൾ"
+          }
+        }
+      }
+    },
+    "library.detail.translation" : {
+      "comment" : "Section title over a dhikr's translation.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الترجمة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Translation"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പരിഭാഷ"
+          }
+        }
+      }
+    },
+    "library.detail.transliteration" : {
+      "comment" : "Section title over a dhikr's transliteration.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النطق بالحروف اللاتينية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transliteration"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഉച്ചാരണം"
+          }
+        }
+      }
+    },
+    "library.detail.virtues" : {
+      "comment" : "Section title over a dhikr's virtues and their sources.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفضائل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Virtues"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ശ്രേഷ്ഠതകൾ"
+          }
+        }
+      }
+    },
+    "library.featured" : {
+      "comment" : "Home section title over the collection tiles.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مجموعات الذكر المميزة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Featured dhikr collections"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പ്രധാന ദിക്ർ ശേഖരങ്ങൾ"
+          }
+        }
+      }
+    },
+    "library.reference.quran" : {
+      "comment" : "A Qur'an reference to one ayah: the surah number, then the ayah number.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القرآن %1$lld:%2$lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qur'an %1$lld:%2$lld"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഖുർആൻ %1$lld:%2$lld"
+          }
+        }
+      }
+    },
+    "library.reference.quran_range" : {
+      "comment" : "A Qur'an reference to a range of ayahs: the surah number, then the first and last ayah.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القرآن %1$lld:%2$lld–%3$lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qur'an %1$lld:%2$lld–%3$lld"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഖുർആൻ %1$lld:%2$lld–%3$lld"
+          }
+        }
+      }
+    },
+    "library.search.clear" : {
+      "comment" : "Button that empties the Library's search field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسح البحث"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear search"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "തിരയൽ മായ്ക്കുക"
+          }
+        }
+      }
+    },
+    "library.search.empty.body" : {
+      "comment" : "Hint under the empty search result.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جرّب كتابة أخرى، أو ابحث بلغة أخرى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Try another spelling, or search in another language."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മറ്റൊരു എഴുത്തുരീതിയിലോ മറ്റൊരു ഭാഷയിലോ തിരഞ്ഞുനോക്കൂ."
+          }
+        }
+      }
+    },
+    "library.search.empty.title" : {
+      "comment" : "Shown when a Library search finds nothing.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُعثر على أذكار"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No dhikrs found"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ദിക്റുകളൊന്നും കണ്ടെത്തിയില്ല"
+          }
+        }
+      }
+    },
+    "library.search.prompt" : {
+      "comment" : "Placeholder of the Library's search field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابحث في الأذكار"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Search dhikrs"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ദിക്റുകൾ തിരയുക"
+          }
+        }
+      }
+    },
+    "library.title" : {
+      "comment" : "Title of the Library tab and its large title.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المكتبة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Library"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ലൈബ്രറി"
+          }
+        }
+      }
+    },
+    "library.view_all" : {
+      "comment" : "Text button on Home that opens the Library.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض الكل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View all"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "എല്ലാം കാണുക"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -40,6 +40,22 @@
         "en" : { "stringUnit" : { "state" : "translated", "value" : "You're all set" } },
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "എല്ലാം തയ്യാറാണ്" } }
       }
+    },
+    "tab.home" : {
+      "comment" : "Bottom bar tab: Home.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الرئيسية" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Home" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഹോം" } }
+      }
+    },
+    "tab.library" : {
+      "comment" : "Bottom bar tab: the Library of dhikrs.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المكتبة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Library" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ലൈബ്രറി" } }
+      }
     }
   },
   "version" : "1.0"
