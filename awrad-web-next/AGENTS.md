@@ -7,6 +7,7 @@ Applies inside `awrad-web-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
 - **API types:** `src/shared/api/schema.gen.ts` matches `contracts/api/openapi.bundled.json`. Regenerate with `npm run api:types`.
 - **Colours:** `src/shared/ui/colors.gen.css` matches `contracts/design-tokens/v1/colors.json` (regenerate with `npm run tokens:colors`), and no hex colour, colour function or Tailwind palette class appears anywhere else. Its `states` (disabled) become `opacity-disabled`, the only disabled style.
 - **Shapes, spacing, type, motion:** `src/shared/ui/tokens.gen.css` matches `contracts/design-tokens/v1/{shape,spacing,typography,motion}.json` (regenerate with `npm run tokens:design`). Classes name tokens (`rounded-card`, `p-card-padding`, `gap-row-gap`, `min-h-control`, `max-w-content`, `border-checkbox`, `outline-focus-ring`, `text-title`); `check:raw-values` rejects arbitrary values (`p-[13px]`), `text-sm`, `rounded`, numeric spacing (`p-4`, `h-12`), unknown max widths, border/outline/ring widths (`border-2`), shadows other than `shadow-floating`, numeric disabled opacity, `leading-*`, animation classes, and raw durations, easings, line widths and lengths in hand-written CSS.
+- **Icons:** `src/shared/ui/icons.gen.tsx` matches `contracts/design-tokens/v1/icons.json` and its SVGs (regenerate with `npm run icons`); use its components (`BackIcon`, `AddIcon`, …), never a hand-drawn SVG or an icon library.
 - **Fonts:** every file in `public/fonts/` is byte-identical to `contracts/design-tokens/v1/fonts/` (checked against its `SHA256SUMS`). Copy fonts from there; never edit them here.
 - **TypeScript:** maximum strictness (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, …).
 - **ESLint** with zero warnings allowed:
@@ -39,7 +40,7 @@ Applies inside `awrad-web-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
 ## Validation
 
 ```bash
-npm run validate     # types and tokens fresh, no raw values, fonts match contracts, translations, typecheck, lint, format, module rules, tests, build
+npm run validate     # types, tokens and icons fresh, no raw values, fonts match contracts, translations, typecheck, lint, format, module rules, tests, build
 npm test             # just the tests (Vitest)
 npm run format       # fix formatting
 ```

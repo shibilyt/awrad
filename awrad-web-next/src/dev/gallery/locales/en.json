@@ -8,7 +8,8 @@
     "containers": "Containers",
     "buttons": "Buttons",
     "inputs": "Inputs",
-    "navigation": "Navigation"
+    "navigation": "Navigation",
+    "icons": "Icons"
   },
   "specimen": {
     "card": "Card: static, grouped content",
@@ -34,7 +35,8 @@
     "topBar": "Top bar: back, title and menu; back and steps; title and a text button",
     "steps": "Step indicator: first, second and last of seven",
     "largeTitle": "Large-title header: scroll the frame and a compact bar appears",
-    "bottomBar": "Bottom bar, the second tab selected"
+    "bottomBar": "Bottom bar, the second tab selected",
+    "icons": "The shared icon set, by name. Back and forward flip in right to left."
   },
   "sample": {
     "todaysGoals": "Today's goals",

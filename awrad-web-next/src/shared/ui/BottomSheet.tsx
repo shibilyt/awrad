@@ -6,7 +6,8 @@ import { Dialog, Heading, Modal, ModalOverlay } from "react-aria-components";
  * modal dialog, so focus moves in and stays, Escape or a press on the `scrim` closes it (unless
  * `isDismissable` is false), and focus returns to what opened it. `surfaceBar` fill, top
  * corners `sheet`, a decorative drag handle, up to `contentMaxWidth` wide. It fades in and
- * out (`overlay-fade`); it doesn't slide, since web motion is fades only. Controls inside fill
+ * out (`overlay-fade`); it doesn't slide, since web motion is fades only. It keeps clear of the
+ * notch and fills down behind the home indicator (safe-area padding). Controls inside fill
  * as on the page (`surfaceBar` isn't a `surface` card).
  */
 export function BottomSheet({
@@ -29,9 +30,9 @@ export function BottomSheet({
       onOpenChange={onOpenChange}
       isDismissable={isDismissable}
       isKeyboardDismissDisabled={!isDismissable}
-      className="overlay-fade fixed inset-0 z-10 flex items-end justify-center bg-scrim"
+      className="overlay-fade fixed inset-0 z-10 flex items-end justify-center bg-scrim safe-area-x safe-area-top"
     >
-      <Modal className="flex max-h-dvh w-full max-w-content flex-col rounded-t-sheet bg-surface-bar">
+      <Modal className="flex max-h-full w-full max-w-content flex-col rounded-t-sheet bg-surface-bar safe-area-bottom">
         <Dialog className="flex flex-col gap-lg overflow-y-auto px-page-margin pb-2xl outline-none">
           <span aria-hidden="true" className="mx-auto mt-md h-xs w-3xl shrink-0 rounded-tab-indicator bg-outline" />
           <Heading slot="title" className="text-card-title text-on-surface">

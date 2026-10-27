@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { BottomBar, BottomBarPanel, type BottomBarItem } from "@/shared/ui/BottomBar";
 import { IconButton, RoundButton, TextButton } from "@/shared/ui/Button";
 import { Card, ContentSheet, ContentSheetSection } from "@/shared/ui/Card";
-import { CommunityIcon, GoalsIcon, HomeIcon, LibraryIcon, MoreIcon, PlusIcon } from "@/shared/ui/icons";
+import { CommunityIcon, GoalsIcon, HomeIcon, LibraryIcon, MoreIcon, AddIcon } from "@/shared/ui/icons.gen";
 import { LargeTitleHeader } from "@/shared/ui/LargeTitleHeader";
 import { SegmentedPills } from "@/shared/ui/SegmentedPills";
 import { BackButton, StepIndicator, TopBar } from "@/shared/ui/TopBar";
@@ -47,7 +47,7 @@ function LargeTitleFrame(): ReactElement {
         <div className="flex aspect-square flex-col overflow-y-auto bg-background pt-lg">
           <LargeTitleHeader
             title={t("sample.myGoals")}
-            action={<RoundButton icon={PlusIcon} aria-label={t("sample.addGoal")} onPress={noop} />}
+            action={<RoundButton icon={AddIcon} aria-label={t("sample.addGoal")} onPress={noop} />}
           />
           <div className="px-page-margin pb-lg">
             <SegmentedPills

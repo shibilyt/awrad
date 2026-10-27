@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Button, IconButton, RoundButton, TextButton } from "./Button";
 import { Card, ClickableCard } from "./Card";
-import { MoreIcon, PlusIcon } from "./icons";
+import { MoreIcon, AddIcon } from "./icons.gen";
 import { BackButton } from "./TopBar";
 
 describe("Button", () => {
@@ -71,7 +71,7 @@ describe("Button", () => {
   });
 
   it("puts a leading icon before the label, hidden from screen readers", () => {
-    render(<Button icon={PlusIcon}>Add</Button>);
+    render(<Button icon={AddIcon}>Add</Button>);
     const button = screen.getByRole("button", { name: "Add" });
     expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
@@ -90,8 +90,8 @@ describe("text, round and icon buttons", () => {
   it("round buttons are named by their label; the small one keeps a 48 touch target", () => {
     render(
       <>
-        <RoundButton icon={PlusIcon} aria-label="Add a goal" />
-        <RoundButton size="small" icon={PlusIcon} aria-label="Open collection" isDisabled />
+        <RoundButton icon={AddIcon} aria-label="Add a goal" />
+        <RoundButton size="small" icon={AddIcon} aria-label="Open collection" isDisabled />
       </>,
     );
     expect(screen.getByRole("button", { name: "Add a goal" })).toHaveClass("size-round-button", "bg-primary");

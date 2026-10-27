@@ -6,6 +6,7 @@
 
 :root {
   /* Corner radii (shape.json): the scale, then the roles. */
+  --awrad-radius-xxxs: 2px;
   --awrad-radius-xxs: 4px;
   --awrad-radius-xs: 8px;
   --awrad-radius-sm: 12px;
@@ -27,7 +28,7 @@
   --awrad-radius-dialog: var(--awrad-radius-3xl);
   --awrad-radius-screen-depth: var(--awrad-radius-3xl);
   --awrad-radius-checkbox: var(--awrad-radius-xxs);
-  --awrad-radius-step-dot: var(--awrad-radius-xxs);
+  --awrad-radius-step-dot: var(--awrad-radius-xxxs);
   --awrad-radius-tab-indicator: var(--awrad-radius-full);
   --awrad-radius-content-sheet: var(--awrad-radius-3xl);
 
@@ -158,6 +159,7 @@
  */
 @theme inline {
   --radius-*: initial;
+  --radius-xxxs: var(--awrad-radius-xxxs);
   --radius-xxs: var(--awrad-radius-xxs);
   --radius-xs: var(--awrad-radius-xs);
   --radius-sm: var(--awrad-radius-sm);
@@ -330,6 +332,7 @@
  * supports it, plain rounding elsewhere. Fully rounded shapes (chips, round buttons) stay round.
  */
 @theme inline reference {
+  --corner-shape-xxxs: squircle;
   --corner-shape-xxs: squircle;
   --corner-shape-xs: squircle;
   --corner-shape-sm: squircle;
