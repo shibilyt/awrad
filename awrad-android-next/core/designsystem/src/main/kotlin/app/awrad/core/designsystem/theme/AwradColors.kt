@@ -32,10 +32,16 @@ public class AwradColors internal constructor(
     public val primary: Color,
     /** Text and icons on primary. */
     public val onPrimary: Color,
+    /** Secondary text and icons on primary: a selected option row's label, its avatar fill. */
+    public val onPrimaryVariant: Color,
     /** Selected state fill: the selected tab pill, selected chips. */
     public val primaryContainer: Color,
     /** Text and icons on primaryContainer. */
     public val onPrimaryContainer: Color,
+    /** Secondary fills: secondary buttons, unselected option rows. */
+    public val secondaryContainer: Color,
+    /** Text and icons on secondaryContainer. */
+    public val onSecondaryContainer: Color,
     /** Accent text and icons on backgrounds and surfaces: streaks, links, the selected tab's label. */
     public val accent: Color,
     /** Goal progress rings and bars. */
@@ -46,6 +52,8 @@ public class AwradColors internal constructor(
     public val onError: Color,
     /** Dimmed backdrop behind dialogs and sheets. */
     public val scrim: Color,
+    /** The one shadow, under floating elements (the bottom bar); none in dark. */
+    public val shadow: Color,
 )
 
 internal val LightAwradColors: AwradColors = AwradColors(
@@ -58,13 +66,17 @@ internal val LightAwradColors: AwradColors = AwradColors(
     outlineStrong = Color(0x80000000),
     primary = Color(0xFF23553C),
     onPrimary = Color(0xFFFFFFFF),
+    onPrimaryVariant = Color(0xFFB7D6B6),
     primaryContainer = Color(0xFFB7D6B6),
     onPrimaryContainer = Color(0xFF000000),
+    secondaryContainer = Color(0xFFE8EDE9),
+    onSecondaryContainer = Color(0xFF000000),
     accent = Color(0xFF23553C),
     progress = Color(0xFF23553C),
     error = Color(0xFFB3261E),
     onError = Color(0xFFFFFFFF),
     scrim = Color(0x66000000),
+    shadow = Color(0x1F000000),
 )
 
 internal val DarkAwradColors: AwradColors = AwradColors(
@@ -77,13 +89,17 @@ internal val DarkAwradColors: AwradColors = AwradColors(
     outlineStrong = Color(0x80E3E5E3),
     primary = Color(0xFF23553C),
     onPrimary = Color(0xFFFFFFFF),
+    onPrimaryVariant = Color(0xFFB7D6B6),
     primaryContainer = Color(0xFF23553C),
     onPrimaryContainer = Color(0xFFB7D6B6),
+    secondaryContainer = Color(0xFFB7D6B6),
+    onSecondaryContainer = Color(0xFF000000),
     accent = Color(0xFFB7D6B6),
     progress = Color(0xFFE3E5E3),
     error = Color(0xFFF2B8B5),
     onError = Color(0xFF000000),
     scrim = Color(0x66000000),
+    shadow = Color(0x00000000),
 )
 
 /** How a control's state changes its look (`states`). Read it through [AwradTheme.states]. */

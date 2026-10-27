@@ -17,8 +17,25 @@ public enum class AwradContainer { Background, Surface }
 public val LocalAwradContainer: ProvidableCompositionLocal<AwradContainer> =
     staticCompositionLocalOf { AwradContainer.Background }
 
-/** The fill for a field or a secondary button on [container]. */
+/** The fill for a field on [container]. */
 public fun AwradColors.fillOn(container: AwradContainer): Color = when (container) {
     AwradContainer.Background -> surface
     AwradContainer.Surface -> background
+}
+
+/**
+ * The fill for a secondary control (a secondary button, an unselected option row or segmented pill) on
+ * [container]: `secondaryContainer` on the page, but `background` on a `surface` area, since in light
+ * `secondaryContainer` is the same colour as `surface` and the control would vanish there. Dialogs and sheets
+ * count as the page.
+ */
+public fun AwradColors.secondaryFillOn(container: AwradContainer): Color = when (container) {
+    AwradContainer.Background -> secondaryContainer
+    AwradContainer.Surface -> background
+}
+
+/** Text and icons on [secondaryFillOn]: `onSecondaryContainer` on the page, `onSurface` on a `surface` area. */
+public fun AwradColors.onSecondaryFillOn(container: AwradContainer): Color = when (container) {
+    AwradContainer.Background -> onSecondaryContainer
+    AwradContainer.Surface -> onSurface
 }

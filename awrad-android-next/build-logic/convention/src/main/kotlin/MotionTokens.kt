@@ -17,6 +17,10 @@ internal class MotionTokens(private val file: TokenFile, private val shapes: Sha
 
     private enum class Kind { FLOAT, INT, MILLIS, DP, DURATION, EASING, SPRING, HAPTIC, RADIUS, STRING }
 
+    init {
+        file.requireKeys("easing", "duration", "spring", "haptic", "motions", "reducedMotion")
+    }
+
     private val easings = file.obj("easing").keys.associateWith { identifier(file, it) }
     private val durations = file.obj("duration").keys.associateWith { identifier(file, it) }
     private val springs = file.obj("spring").keys.associateWith { identifier(file, it) }

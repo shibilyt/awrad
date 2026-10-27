@@ -77,6 +77,8 @@ abstract class AwradColorsTask : DefaultTask() {
     private class States(val disabledOpacity: String, val disabledUse: String)
 
     private fun parse(tokens: Map<String, Any?>): List<Role> {
+        // `palette` and `contrast` document and check the roles; nothing on Android reads them.
+        (tokens.keys - TOP_LEVEL_KEYS).firstOrNull()?.let { fail("'$it' isn't supported on Android yet") }
         @Suppress("UNCHECKED_CAST")
         val roles = tokens.getValue("roles") as Map<String, Map<String, String>>
         return roles.map { (name, role) ->
@@ -206,6 +208,7 @@ abstract class AwradColorsTask : DefaultTask() {
 
     private companion object {
         val NAME = Regex("[a-z][A-Za-z0-9]*")
+        val TOP_LEVEL_KEYS = setOf("version", "description", "palette", "roles", "contrast", "states")
         val HEX = Regex("#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?")
         const val KDOC_WIDTH = 100
     }

@@ -195,6 +195,21 @@ public object AwradMotions {
         public val easing: Easing = AwradEasing.linear
     }
 
+    /** The selected segmented pill's fill and the bar under it move to the new pill. */
+    public object SegmentIndicator {
+        public val spring: AwradSpring = AwradSprings.spatial
+        public const val colorDurationMillis: Int = AwradDurations.color
+    }
+
+    /**
+     * An option row, checkbox or switch changing state: colours cross-fade; the tick and switch thumb use
+     * spatial on mobile.
+     */
+    public object Select {
+        public const val colorDurationMillis: Int = AwradDurations.color
+        public val easing: Easing = AwradEasing.linear
+    }
+
     /**
      * When the system asks for reduced motion, every movement, scale and spring becomes a cross-fade of
      * this duration. Haptics stay.

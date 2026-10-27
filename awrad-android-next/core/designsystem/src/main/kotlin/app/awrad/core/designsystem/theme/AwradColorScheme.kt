@@ -16,12 +16,12 @@ internal fun colorSchemeOf(colors: AwradColors, inverse: AwradColors): ColorSche
     primaryContainer = colors.primaryContainer,
     onPrimaryContainer = colors.onPrimaryContainer,
     inversePrimary = inverse.accent,
-    // One brand colour: Material's secondary and tertiary slots (navigation bar pill, tonal buttons,
-    // chips) are the same selected-state roles as primary.
+    // One brand colour: Material's secondary and tertiary slots are the primary roles, except the secondary
+    // container (tonal buttons), which has its own role.
     secondary = colors.primary,
     onSecondary = colors.onPrimary,
-    secondaryContainer = colors.primaryContainer,
-    onSecondaryContainer = colors.onPrimaryContainer,
+    secondaryContainer = colors.secondaryContainer,
+    onSecondaryContainer = colors.onSecondaryContainer,
     tertiary = colors.primary,
     onTertiary = colors.onPrimary,
     tertiaryContainer = colors.primaryContainer,

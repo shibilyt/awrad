@@ -14,6 +14,16 @@ import androidx.compose.ui.unit.sp
  * `AwradTheme.type`; Material's `Typography` maps onto them in `AwradTypography`.
  */
 public object AwradType {
+    /** Top-level page titles: My Goals. 34 on 40, weight 700. */
+    public val largeTitle: TextStyle = TextStyle(
+        fontFamily = InterfaceFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 34.sp,
+        lineHeight = 40.sp,
+        letterSpacing = 0.sp,
+        lineHeightStyle = AwradLineHeightStyle,
+    )
+
     /** Screen titles; the Hijri date on Home. 22 on 28, weight 600. */
     public val title: TextStyle = TextStyle(
         fontFamily = InterfaceFontFamily,

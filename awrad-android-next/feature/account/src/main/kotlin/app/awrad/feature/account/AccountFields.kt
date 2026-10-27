@@ -5,8 +5,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,7 +16,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import app.awrad.core.designsystem.component.AwradIconButton
 import app.awrad.core.designsystem.component.AwradTextField
+import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.domain.account.InputProblem
 
 @Composable
@@ -36,8 +36,7 @@ internal fun EmailField(
         label = stringResource(label),
         modifier = modifier,
         enabled = enabled,
-        isError = problem != null,
-        supportingText = problem?.text(),
+        error = problem?.text(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
     )
 }
@@ -57,30 +56,26 @@ internal fun PasswordField(
     enabled: Boolean = true,
 ) {
     var visible by rememberSaveable { mutableStateOf(false) }
-    val hint = when {
-        problem != null -> problem.text()
-        showRule -> passwordRuleText()
-        else -> null
-    }
+    val hint = if (showRule) passwordRuleText() else null
     AwradTextField(
         value = value,
         onValueChange = onValueChange,
         label = stringResource(label),
         modifier = modifier,
         enabled = enabled,
-        isError = problem != null,
+        error = problem?.text(),
         supportingText = hint,
         visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         trailingIcon = {
-            IconButton(onClick = { visible = !visible }) {
-                Icon(
-                    imageVector = if (visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                    contentDescription = stringResource(
-                        if (visible) R.string.account_action_hide_password else R.string.account_action_show_password,
-                    ),
-                )
-            }
+            AwradIconButton(
+                icon = if (visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                contentDescription = stringResource(
+                    if (visible) R.string.account_action_hide_password else R.string.account_action_show_password,
+                ),
+                onClick = { visible = !visible },
+                tint = AwradTheme.colors.onSurfaceVariant,
+            )
         },
     )
 }
@@ -99,8 +94,7 @@ internal fun CodeField(
         label = stringResource(R.string.account_field_code),
         modifier = modifier,
         enabled = enabled,
-        isError = problem != null,
-        supportingText = problem?.text(),
+        error = problem?.text(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Next),
     )
 }

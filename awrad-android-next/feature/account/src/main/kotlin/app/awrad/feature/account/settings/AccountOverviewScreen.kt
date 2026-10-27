@@ -19,8 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import app.awrad.core.designsystem.component.AwradButton
+import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradCard
-import app.awrad.core.designsystem.component.AwradSecondaryButton
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.domain.account.Account
 import app.awrad.feature.account.AccountPage
@@ -75,7 +76,8 @@ internal fun AccountOverviewScreen(
                 isDestructive = true,
             )
         }
-        AwradSecondaryButton(
+        AwradButton(
+            variant = AwradButtonVariant.Secondary,
             text = stringResource(R.string.account_action_sign_out),
             onClick = { onAction(OverviewAction.SIGN_OUT) },
         )

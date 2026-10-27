@@ -6,7 +6,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import app.awrad.core.designsystem.component.AwradDestructiveButton
+import app.awrad.core.designsystem.component.AwradButton
+import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.feature.account.AccountPage
 import app.awrad.feature.account.BodyText
 import app.awrad.feature.account.ConfirmDialog
@@ -52,7 +53,8 @@ internal fun DeleteAccountScreen(
             onValueChange = { onAction(DeleteAccountAction.PasswordChanged(it)) },
             label = R.string.account_field_current_password,
         )
-        AwradDestructiveButton(
+        AwradButton(
+            variant = AwradButtonVariant.Error,
             text = stringResource(R.string.account_action_delete),
             onClick = { onAction(DeleteAccountAction.Submit) },
             enabled = state.canSubmit,

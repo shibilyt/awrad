@@ -93,4 +93,46 @@ public object AwradSizes {
 
     /** Widest a dialog grows (web, tablets): 384. */
     public val dialogMaxWidth: Dp = 384.dp
+
+    /** Height of the top bar: 56. */
+    public val topBar: Dp = 56.dp
+
+    /** Height of the floating bottom bar: 72. */
+    public val navBar: Dp = 72.dp
+
+    /** Width of the selected tab's pill: 56. */
+    public val navPillWidth: Dp = 56.dp
+
+    /** Height of the selected tab's pill: 32. */
+    public val navPillHeight: Dp = 32.dp
+
+    /** Round icon button: the + on My Goals: 48. */
+    public val roundButton: Dp = 48.dp
+
+    /** Small round button inside a tile: the collection arrow: 32. */
+    public val roundButtonSmall: Dp = 32.dp
+
+    /** Leading circle in an option row (the language 'Aa'): 36. */
+    public val avatar: Dp = 36.dp
+
+    /** A checkbox's box: 20. */
+    public val checkbox: Dp = 20.dp
+
+    /** Switch track width: 52. */
+    public val switchWidth: Dp = 52.dp
+
+    /** Switch track height: 32. */
+    public val switchHeight: Dp = 32.dp
+
+    /** Switch thumb: 24. */
+    public val switchThumb: Dp = 24.dp
+
+    /** A square in the onboarding step indicator: 8. */
+    public val stepDot: Dp = 8.dp
+
+    /** The bar under the selected segmented pill: 24. */
+    public val tabIndicatorWidth: Dp = 24.dp
+
+    /** The bar under the selected segmented pill: 4. */
+    public val tabIndicatorHeight: Dp = 4.dp
 }

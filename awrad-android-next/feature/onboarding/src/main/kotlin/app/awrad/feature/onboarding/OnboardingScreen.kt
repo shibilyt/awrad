@@ -22,8 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.component.AwradLogoMark
-import app.awrad.core.designsystem.component.AwradPrimaryButton
 import app.awrad.core.designsystem.theme.AwradTheme
 
 /** Stateful entry point: owns the ViewModel and the exit side effect, nothing else. */
@@ -64,7 +64,7 @@ internal fun OnboardingScreen(
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(AwradTheme.spacing.xl4))
-            AwradPrimaryButton(
+            AwradButton(
                 text = stringResource(R.string.onboarding_placeholder_action),
                 onClick = { onAction(OnboardingAction.GetStarted) },
                 enabled = !state.isFinishing,

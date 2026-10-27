@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="awrad_action_back">തിരികെ</string>
+    <string name="awrad_action_close_sheet">അടയ്ക്കുക</string>
+    <string name="awrad_state_loading">ലോഡ് ചെയ്യുന്നു</string>
+    <string name="awrad_step_indicator">ഘട്ടം %1$d / %2$d</string>
+</resources>

@@ -11,11 +11,15 @@
     <color name="awrad_outline_strong">#80000000</color>
     <color name="awrad_primary">#FF23553C</color>
     <color name="awrad_on_primary">#FFFFFFFF</color>
+    <color name="awrad_on_primary_variant">#FFB7D6B6</color>
     <color name="awrad_primary_container">#FFB7D6B6</color>
     <color name="awrad_on_primary_container">#FF000000</color>
+    <color name="awrad_secondary_container">#FFE8EDE9</color>
+    <color name="awrad_on_secondary_container">#FF000000</color>
     <color name="awrad_accent">#FF23553C</color>
     <color name="awrad_progress">#FF23553C</color>
     <color name="awrad_error">#FFB3261E</color>
     <color name="awrad_on_error">#FFFFFFFF</color>
     <color name="awrad_scrim">#66000000</color>
+    <color name="awrad_shadow">#1F000000</color>
 </resources>

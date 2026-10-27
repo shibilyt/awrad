@@ -18,7 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.awrad.core.designsystem.component.AwradPrimaryButton
+import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.domain.onboarding.OnboardingStatusStore
@@ -71,7 +71,7 @@ fun HomePlaceholderRoute(
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(AwradTheme.spacing.xl2))
-            AwradPrimaryButton(text = stringResource(R.string.home_placeholder_account), onClick = onOpenAccount)
+            AwradButton(text = stringResource(R.string.home_placeholder_account), onClick = onOpenAccount)
             Spacer(modifier = Modifier.height(AwradTheme.spacing.inlineGap))
             AwradTextButton(
                 text = stringResource(R.string.home_placeholder_restart),

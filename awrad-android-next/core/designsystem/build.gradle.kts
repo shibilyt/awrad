@@ -11,6 +11,8 @@ dependencies {
     api(platform(libs.androidx.compose.bom))
     api(libs.androidx.compose.material3)
     api(libs.androidx.compose.material.icons.extended)
+    // WindowCompat: dialogs and sheets lay their window out under the system bars.
+    implementation(libs.androidx.core.ktx)
 }
 
 // The shared colour roles ship as committed source (ARCHITECTURE.md, "Colours").
@@ -46,6 +48,7 @@ fun AwradTokensTask.configureTokens(verify: Boolean) {
     spacingContract.set(tokensDirectory.resolve("spacing.json"))
     typographyContract.set(tokensDirectory.resolve("typography.json"))
     motionContract.set(tokensDirectory.resolve("motion.json"))
+    colorsContract.set(tokensDirectory.resolve("colors.json"))
     shapeSource.set(file("$themeSources/AwradShapes.kt"))
     spacingSource.set(file("$themeSources/AwradSpacing.kt"))
     typeSource.set(file("$themeSources/AwradType.kt"))
