@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, Outlet } from "@tanstack/react-router";
 import { createContext, use, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { PrimaryButton } from "@/shared/ui/Button";
+import { Button } from "@/shared/ui/Button";
 import { AccountScreen, FormAlert } from "../AccountScreen";
 import { currentAccountQuery, type Account } from "../api";
 import { problemKey } from "../problems";
@@ -37,7 +37,7 @@ export function AccountArea(): ReactElement {
       {account.isError ? (
         <>
           <FormAlert message={t(problemKey(account.error))} />
-          <PrimaryButton onPress={() => void account.refetch()}>{t("account.page.retry")}</PrimaryButton>
+          <Button onPress={() => void account.refetch()}>{t("account.page.retry")}</Button>
         </>
       ) : (
         <p role="status">{t("account.page.loading")}</p>

@@ -1,13 +1,16 @@
 import type { ReactElement, ReactNode } from "react";
 import { Dialog, Heading, Modal, ModalOverlay } from "react-aria-components";
-import { DangerButton, SecondaryButton } from "./Button";
-import { OnSurface } from "./Surface";
+import { Button } from "./Button";
 
 /**
  * Asks before an action that can't be taken back (signing a device out,
  * deleting the account). React Aria makes it a modal `alertdialog`: focus moves
  * in and stays there, Escape cancels, and focus returns to the button that
- * opened it. Cancel comes first, so the dialog's initial focus is the safe choice.
+ * opened it. Cancel comes first, so the first Tab from the dialog reaches the safe choice.
+ *
+ * components.md "Dialog": `surfaceBar`, `dialog` corners, `scrim` behind, `cardPadding`
+ * inside, up to `dialogMaxWidth` wide; the title in `cardTitle`, the actions aligned to the
+ * end, the confirmation an error button. It fades in and out (`overlay-fade`).
  */
 export function ConfirmDialog({
   isOpen,
@@ -33,28 +36,28 @@ export function ConfirmDialog({
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       isDismissable={!isPending}
-      className="fixed inset-0 z-10 flex items-center justify-center bg-scrim p-page-margin"
+      className="overlay-fade fixed inset-0 z-10 flex items-center justify-center bg-scrim p-page-margin"
     >
-      <Modal className="w-full max-w-dialog rounded-dialog bg-surface p-2xl">
+      <Modal className="w-full max-w-dialog rounded-dialog bg-surface-bar p-card-padding">
         <Dialog role="alertdialog" className="flex flex-col gap-lg outline-none">
           <Heading slot="title" className="text-card-title text-on-surface">
             {title}
           </Heading>
-          <div className="flex flex-col gap-sm text-on-surface-variant">{children}</div>
-          <div className="flex flex-col gap-row-gap">
-            <OnSurface>
-              <SecondaryButton
-                isDisabled={isPending}
-                onPress={() => {
-                  onOpenChange(false);
-                }}
-              >
-                {cancelLabel}
-              </SecondaryButton>
-              <DangerButton onPress={onConfirm} isPending={isPending}>
-                {confirmLabel}
-              </DangerButton>
-            </OnSurface>
+          <div className="flex flex-col gap-sm text-body text-on-surface-variant">{children}</div>
+          <div className="flex flex-wrap justify-end gap-sm">
+            <Button
+              variant="secondary"
+              width="label"
+              isDisabled={isPending}
+              onPress={() => {
+                onOpenChange(false);
+              }}
+            >
+              {cancelLabel}
+            </Button>
+            <Button variant="error" width="label" onPress={onConfirm} isPending={isPending}>
+              {confirmLabel}
+            </Button>
           </div>
         </Dialog>
       </Modal>

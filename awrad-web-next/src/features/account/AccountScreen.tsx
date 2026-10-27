@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 import { Form } from "react-aria-components";
-import { PrimaryButton } from "@/shared/ui/Button";
+import { Button } from "@/shared/ui/Button";
 import { useFill } from "@/shared/ui/Surface";
 
 /** The frame every account screen shares: a heading, an optional intro, the content, then links. */
@@ -86,9 +86,9 @@ export function AccountForm({
     >
       {children}
       <FormAlert message={alert} />
-      <PrimaryButton type="submit" isPending={isPending}>
+      <Button type="submit" isPending={isPending}>
         {submitLabel}
-      </PrimaryButton>
+      </Button>
     </Form>
   );
 }

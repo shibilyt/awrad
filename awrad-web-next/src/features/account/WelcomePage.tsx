@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteApi } from "@tanstack/react-router";
 import type { ReactElement } from "react";
 import { useTranslation } from "react-i18next";
-import { PrimaryButton } from "@/shared/ui/Button";
+import { Button } from "@/shared/ui/Button";
 import { LogoMark } from "@/shared/ui/LogoMark";
 import { TextLink } from "@/shared/ui/TextLink";
 import { FormNotice } from "./AccountScreen";
@@ -19,7 +19,7 @@ function SessionStatusContent(): ReactElement {
     return (
       <>
         <p role="alert">{t("home.unavailable")}</p>
-        <PrimaryButton onPress={() => void account.refetch()}>{t("home.retry")}</PrimaryButton>
+        <Button onPress={() => void account.refetch()}>{t("home.retry")}</Button>
       </>
     );
   }

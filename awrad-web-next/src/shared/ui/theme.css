@@ -14,7 +14,7 @@
  * scales are removed, so classes name tokens (rounded-card, border-checkbox,
  * p-card-padding, gap-row-gap, min-h-control, max-w-content, text-title);
  * ARCHITECTURE.md lists them.
- * Motion is fades only (motion.css).
+ * Motion is fades and colour cross-fades only (motion.css).
  */
 @import "./tokens.gen.css";
 @import "./motion.css";
@@ -97,6 +97,20 @@
     outline: var(--awrad-stroke-focus-ring) solid --theme(--color-accent);
     outline-offset: var(--awrad-stroke-focus-ring-offset);
   }
+}
+
+/*
+ * The floating bottom bar (BottomBar.tsx): `lg` above the bottom safe area, and the padding
+ * that lets a page's last item scroll clear of it (the bar, plus `lg` on each side of it).
+ */
+@utility bottom-bar-offset {
+  bottom: calc(var(--awrad-space-lg) + env(safe-area-inset-bottom, var(--awrad-space-none)));
+}
+@utility bottom-bar-clearance {
+  padding-bottom: calc(
+    var(--awrad-size-nav-bar) + var(--awrad-space-lg) + var(--awrad-space-lg) +
+      env(safe-area-inset-bottom, var(--awrad-space-none))
+  );
 }
 
 body {

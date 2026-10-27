@@ -1,7 +1,7 @@
 /*
- * The web's only motion: fades (contracts/design-tokens/v1/motion.json `webPage`,
- * `contentSwap` and `reducedMotion`; timings from tokens.gen.css). No movement,
- * scaling or springs, and no other animation anywhere in the app.
+ * The web's only motion: fades and colour cross-fades (contracts/design-tokens/v1/motion.json
+ * `webPage`, `contentSwap`, `select` and `reducedMotion`; timings from tokens.gen.css; ADRs 0006
+ * and 0007). No movement, scaling or springs, and no other animation anywhere in the app.
  */
 
 /*
@@ -44,6 +44,61 @@
 }
 
 /*
+ * Selection (`select`): an option row, checkbox, switch, segmented pill or bottom-bar item
+ * changing state cross-fades its colours (`select.colorDuration`, `select.easing`). The web
+ * never moves the pill, bar or thumb: they fade where they are. Reduced motion keeps the
+ * cross-fade at the `reducedMotion` timing, since colour changes aren't movement.
+ */
+@utility select-fade {
+  transition-property: color, background-color, border-color, fill, stroke, opacity;
+  transition-duration: var(--awrad-motion-select-color-duration);
+  transition-timing-function: var(--awrad-motion-select-easing);
+  @media (prefers-reduced-motion: reduce) {
+    transition-duration: var(--awrad-reduced-motion-duration);
+    transition-timing-function: var(--awrad-reduced-motion-easing);
+  }
+}
+
+/*
+ * Dialogs and the bottom sheet (React Aria's `data-entering` / `data-exiting` on the overlay)
+ * fade in over `contentSwap.fadeIn` and out over `contentSwap.fadeOut`; React Aria waits for
+ * the fade-out before removing them. With reduced motion both are the `reducedMotion` fade.
+ */
+@utility overlay-fade {
+  &[data-entering] {
+    animation: awrad-fade-in var(--awrad-motion-content-swap-fade-in) var(--awrad-motion-content-swap-easing) both;
+  }
+  &[data-exiting] {
+    animation: awrad-fade-out var(--awrad-motion-content-swap-fade-out) var(--awrad-motion-content-swap-easing) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &[data-entering] {
+      animation: awrad-fade-in var(--awrad-reduced-motion-duration) var(--awrad-reduced-motion-easing) both;
+    }
+    &[data-exiting] {
+      animation: awrad-fade-out var(--awrad-reduced-motion-duration) var(--awrad-reduced-motion-easing) both;
+    }
+  }
+}
+
+/*
+ * A pending button's progress indicator: three dots fading in turn (no spinning, since web
+ * motion is fades only). With reduced motion the dots stay still.
+ */
+@utility progress-pulse {
+  animation: awrad-pulse var(--awrad-duration-long) var(--awrad-ease-linear) infinite alternate both;
+  &:nth-child(2) {
+    animation-delay: var(--awrad-duration-color);
+  }
+  &:nth-child(3) {
+    animation-delay: var(--awrad-duration-medium);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+/*
  * Reduced motion: page changes become the plain `reducedMotion` cross-fade (both pages
  * at once, `reducedMotion.easing` (linear), so the unchanged parts stay steady); in-place
  * swaps, already short fades, don't animate.
@@ -67,5 +122,11 @@
 @keyframes awrad-fade-out {
   to {
     opacity: 0;
+  }
+}
+
+@keyframes awrad-pulse {
+  from {
+    opacity: 0.3;
   }
 }

@@ -18,6 +18,14 @@ module.exports = {
       to: { path: "^src/(features|routes|app)/" },
     },
     {
+      name: "only-main-loads-the-dev-gallery",
+      comment:
+        "src/dev is development-only (the component gallery): only main.tsx loads it, behind import.meta.env.DEV, so it never reaches a production build.",
+      severity: "error",
+      from: { path: "^src/", pathNot: "^src/(dev/|main\\.tsx$)" },
+      to: { path: "^src/dev/" },
+    },
+    {
       name: "only-shared-api-uses-the-network-client",
       comment: "openapi-fetch is wrapped once, in src/shared/api.",
       severity: "error",
