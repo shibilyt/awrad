@@ -1,0 +1,1110 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "ds.back" : {
+      "comment" : "Back icon button (accessibility label).",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رجوع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മടങ്ങുക"
+          }
+        }
+      }
+    },
+    "ds.loading" : {
+      "comment" : "Read as the value of a button whose action is running.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ التحميل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Loading"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ലോഡ് ചെയ്യുന്നു"
+          }
+        }
+      }
+    },
+    "ds.more" : {
+      "comment" : "Three-dot menu icon button (accessibility label).",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مزيد من الخيارات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "More options"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "കൂടുതൽ ഓപ്ഷനുകൾ"
+          }
+        }
+      }
+    },
+    "ds.step_indicator" : {
+      "comment" : "Step indicator, read as one element: the current step, then the number of steps.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الخطوة %1$lld من %2$lld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Step %1$lld of %2$lld"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%2$lld-ൽ %1$lld-ാം ഘട്ടം"
+          }
+        }
+      }
+    },
+    "gallery.active" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النشطة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സജീവം"
+          }
+        }
+      }
+    },
+    "gallery.add_goal" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة هدف"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add goal"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ലക്ഷ്യം ചേർക്കുക"
+          }
+        }
+      }
+    },
+    "gallery.arabic" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العربية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العربية"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العربية"
+          }
+        }
+      }
+    },
+    "gallery.cancel" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "റദ്ദാക്കുക"
+          }
+        }
+      }
+    },
+    "gallery.community" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المجتمع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Community"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "കമ്മ്യൂണിറ്റി"
+          }
+        }
+      }
+    },
+    "gallery.continue" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متابعة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "തുടരുക"
+          }
+        }
+      }
+    },
+    "gallery.daily_reminder" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تذكير يومي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Daily reminder"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ദിവസേനയുള്ള ഓർമ്മപ്പെടുത്തൽ"
+          }
+        }
+      }
+    },
+    "gallery.dark" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "داكن"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dark"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഡാർക്ക്"
+          }
+        }
+      }
+    },
+    "gallery.delete" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇല്ലാതാക്കുക"
+          }
+        }
+      }
+    },
+    "gallery.delete_account" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف الحساب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete account"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അക്കൗണ്ട് ഇല്ലാതാക്കുക"
+          }
+        }
+      }
+    },
+    "gallery.dialog_body" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيُحذف سجله أيضًا. لا يمكن التراجع عن ذلك."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Its history goes too. This can't be undone."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അതിന്റെ ചരിത്രവും ഇല്ലാതാകും. ഇത് പഴയപടിയാക്കാനാവില്ല."
+          }
+        }
+      }
+    },
+    "gallery.dialog_title" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف هذا الهدف؟"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this goal?"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഈ ലക്ഷ്യം ഇല്ലാതാക്കണോ?"
+          }
+        }
+      }
+    },
+    "gallery.email" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البريد الإلكتروني"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Email"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇമെയിൽ"
+          }
+        }
+      }
+    },
+    "gallery.email_prompt" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عنوان بريدك الإلكتروني"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your email address"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങളുടെ ഇമെയിൽ വിലാസം"
+          }
+        }
+      }
+    },
+    "gallery.email_support" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سنرسل رمزًا إلى هذا العنوان."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "We'll send a code to this address."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഈ വിലാസത്തിലേക്ക് ഞങ്ങൾ ഒരു കോഡ് അയയ്ക്കും."
+          }
+        }
+      }
+    },
+    "gallery.english" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "English"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "English"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "English"
+          }
+        }
+      }
+    },
+    "gallery.evening_adhkar" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذكار المساء"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evening adhkar"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സായാഹ്ന ദിക്റുകൾ"
+          }
+        }
+      }
+    },
+    "gallery.goals" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأهداف"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Goals"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ലക്ഷ്യങ്ങൾ"
+          }
+        }
+      }
+    },
+    "gallery.history" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السجل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "History"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ചരിത്രം"
+          }
+        }
+      }
+    },
+    "gallery.home" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرئيسية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Home"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഹോം"
+          }
+        }
+      }
+    },
+    "gallery.library" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المكتبة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Library"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ലൈബ്രറി"
+          }
+        }
+      }
+    },
+    "gallery.malayalam" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മലയാളം"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മലയാളം"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മലയാളം"
+          }
+        }
+      }
+    },
+    "gallery.morning_adhkar" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذكار الصباح"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morning adhkar"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പ്രഭാത ദിക്റുകൾ"
+          }
+        }
+      }
+    },
+    "gallery.my_goals" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أهدافي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My Goals"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "എന്റെ ലക്ഷ്യങ്ങൾ"
+          }
+        }
+      }
+    },
+    "gallery.next_prayer" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصلاة القادمة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next prayer"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അടുത്ത നമസ്കാരം"
+          }
+        }
+      }
+    },
+    "gallery.notifications" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإشعارات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notifications"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അറിയിപ്പുകൾ"
+          }
+        }
+      }
+    },
+    "gallery.open_collection" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فتح المجموعة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open collection"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ശേഖരം തുറക്കുക"
+          }
+        }
+      }
+    },
+    "gallery.open_dialog" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فتح مربع الحوار"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open dialog"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഡയലോഗ് തുറക്കുക"
+          }
+        }
+      }
+    },
+    "gallery.open_sheet" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فتح اللوحة السفلية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open bottom sheet"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "താഴെയുള്ള ഷീറ്റ് തുറക്കുക"
+          }
+        }
+      }
+    },
+    "gallery.password" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلمة المرور"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പാസ്‌വേഡ്"
+          }
+        }
+      }
+    },
+    "gallery.password_error" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلمة المرور هذه قصيرة جدًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This password is too short."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഈ പാസ്‌വേഡ് വളരെ ചെറുതാണ്."
+          }
+        }
+      }
+    },
+    "gallery.remember_me" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تذكرني"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remember me"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "എന്നെ ഓർക്കുക"
+          }
+        }
+      }
+    },
+    "gallery.reminders" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التذكيرات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminders"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഓർമ്മപ്പെടുത്തലുകൾ"
+          }
+        }
+      }
+    },
+    "gallery.rtl" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العربية، من اليمين إلى اليسار"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arabic, right to left"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അറബി, വലത്തുനിന്ന് ഇടത്തോട്ട്"
+          }
+        }
+      }
+    },
+    "gallery.settings" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإعدادات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ക്രമീകരണങ്ങൾ"
+          }
+        }
+      }
+    },
+    "gallery.sheet_body" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسحب للأسفل للإغلاق."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drag down to close."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അടയ്ക്കാൻ താഴേക്ക് വലിക്കുക."
+          }
+        }
+      }
+    },
+    "gallery.sheet_title" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر وقتًا"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose a time"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഒരു സമയം തിരഞ്ഞെടുക്കുക"
+          }
+        }
+      }
+    },
+    "gallery.sign_out" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسجيل الخروج"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sign out"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സൈൻ ഔട്ട്"
+          }
+        }
+      }
+    },
+    "gallery.skip" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تخطٍّ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഒഴിവാക്കുക"
+          }
+        }
+      }
+    },
+    "gallery.sounds" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأصوات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sounds"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ശബ്ദങ്ങൾ"
+          }
+        }
+      }
+    },
+    "gallery.title" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المكوّنات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Components"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഘടകങ്ങൾ"
+          }
+        }
+      }
+    },
+    "gallery.todays_goals" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أهداف اليوم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Today's goals"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇന്നത്തെ ലക്ഷ്യങ്ങൾ"
+          }
+        }
+      }
+    },
+    "gallery.upcoming" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القادمة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Upcoming"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "വരാനിരിക്കുന്നവ"
+          }
+        }
+      }
+    },
+    "gallery.view_all" : {
+      "comment" : "Sample text in the debug-only component gallery.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرض الكل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View all"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "എല്ലാം കാണുക"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

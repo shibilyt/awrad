@@ -39,6 +39,12 @@ nonisolated public enum AwradRadius {
     public static let screenDepth: AwradCorner = .radius(xl3)
     /// A checkbox's box (the only use of 4): `xxs`.
     public static let checkbox: AwradCorner = .radius(xxs)
+    /// Squares in the onboarding step indicator: `xxs`.
+    public static let stepDot: AwradCorner = .radius(xxs)
+    /// The bar under the selected segmented pill: `full`.
+    public static let tabIndicator: AwradCorner = .full
+    /// Top corners of the content area under a large-title header (My Goals): `3xl`.
+    public static let contentSheet: AwradCorner = .radius(xl3)
 
     static let scale: KeyValuePairs<String, CGFloat> = [
         "xxs": xxs,
@@ -63,5 +69,8 @@ nonisolated public enum AwradRadius {
         "dialog": dialog,
         "screenDepth": screenDepth,
         "checkbox": checkbox,
+        "stepDot": stepDot,
+        "tabIndicator": tabIndicator,
+        "contentSheet": contentSheet,
     ]
 }

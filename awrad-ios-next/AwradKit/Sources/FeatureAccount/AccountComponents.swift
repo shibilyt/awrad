@@ -27,7 +27,8 @@ struct AccountForm<Fields: View, Actions: View>: View {
                     AddressText(address: address)
                 }
                 VStack(spacing: AwradSpacing.rowGap) { fields }
-                if let feedback {
+                // An error about one input shows under its field instead.
+                if let feedback, feedback.field == nil {
                     FeedbackLine(feedback: feedback)
                         .awradExpandingContent()
                 }
@@ -80,8 +81,8 @@ struct FeedbackLine: View {
     }
 }
 
-/// A text field for one kind of account input, with the right keyboard and autofill. It's filled,
-/// never outlined (`awradField`): an error border shows only while `isInError`, beside the message.
+/// A text field for one kind of account input (`AwradTextField`, its label above it), with the right
+/// keyboard and autofill. An error about this input shows below it, with the field's error border.
 struct AccountField: View {
     enum Kind {
         case email
@@ -95,23 +96,16 @@ struct AccountField: View {
     let kind: Kind
     let label: LocalizedStringResource
     let text: String
-    var isInError = false
+    var error: LocalizedStringResource?
     let onChange: @MainActor (String) -> Void
 
     var body: some View {
-        field
-            .awradField(isInError: isInError)
-            .autocorrectionDisabled()
-            .modifier(InputTraits(kind: kind))
-    }
-
-    @ViewBuilder private var field: some View {
-        let binding = Binding(get: { text }, set: { onChange($0) })
-        let prompt = Text(label).foregroundStyle(AwradColors.onSurfaceVariant)
-        switch kind {
-        case .email, .newEmail, .code: TextField(text: binding, prompt: prompt) { Text(label) }
-        case .password, .newPassword: SecureField(text: binding, prompt: prompt) { Text(label) }
-        }
+        AwradTextField(
+            label, text: Binding(get: { text }, set: { onChange($0) }),
+            isSecure: kind == .password || kind == .newPassword, error: error
+        )
+        .autocorrectionDisabled()
+        .modifier(InputTraits(kind: kind))
     }
 }
 
@@ -119,6 +113,13 @@ extension AccountModel.State {
     /// Whether the current error is about `field`, so its text field shows the error border.
     func isInError(_ field: AccountModel.Field) -> Bool {
         feedback?.field == field
+    }
+
+    /// The current error's text when it's about `field`: shown under that field, not in the
+    /// form's feedback line.
+    func fieldError(_ field: AccountModel.Field) -> LocalizedStringResource? {
+        guard let feedback, isInError(field) else { return nil }
+        return Strings.feedback(feedback)
     }
 }
 
@@ -146,27 +147,7 @@ private struct InputTraits: ViewModifier {
     }
 }
 
-/// A secondary action under the primary button.
-struct AccountLinkButton: View {
-    let title: LocalizedStringResource
-    var isEnabled = true
-    var isDestructive = false
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .awradTextStyle(.label)
-                // Its own colour, so a disabled link keeps it at the disabled opacity.
-                .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.accent)
-                .awradDisabledAppearance()
-                .frame(maxWidth: .infinity, minHeight: AwradSize.touchTarget)
-        }
-        .disabled(!isEnabled)
-    }
-}
-
-/// "Send a new code", counting down while the cooldown runs.
+/// "Send a new code" (a text button), counting down while the cooldown runs.
 struct ResendCodeButton: View {
     let availableAt: Date?
     let isWorking: Bool
@@ -175,11 +156,8 @@ struct ResendCodeButton: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             let remaining = availableAt.map { Int($0.timeIntervalSince(context.date).rounded(.up)) } ?? 0
-            AccountLinkButton(
-                title: remaining > 0 ? Strings.resendIn(remaining) : Strings.resend,
-                isEnabled: remaining <= 0 && !isWorking,
-                action: action
-            )
+            AwradButton(remaining > 0 ? Strings.resendIn(remaining) : Strings.resend, variant: .text, action: action)
+                .disabled(remaining > 0 || isWorking)
         }
     }
 }

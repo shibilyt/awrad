@@ -12,15 +12,14 @@ struct AccountOverview: View {
 
     var body: some View {
         AccountForm(title: Strings.title, message: Strings.signedInNote, feedback: state.feedback) {
-            VStack(alignment: .leading, spacing: AwradSpacing.xs) {
-                Text(Strings.signedInLabel)
-                    .awradTextStyle(.bodySmall)
-                    .foregroundStyle(AwradColors.onSurfaceVariant)
-                AddressText(address: email)
+            AwradCard {
+                VStack(alignment: .leading, spacing: AwradSpacing.xs) {
+                    Text(Strings.signedInLabel)
+                        .awradTextStyle(.bodySmall)
+                        .foregroundStyle(AwradColors.onSurfaceVariant)
+                    AddressText(address: email)
+                }
             }
-            .padding(AwradSpacing.cardPadding)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .awradCard()
             // Rows in a card are separated by spacing, not divider lines.
             VStack(spacing: AwradSpacing.xs) {
                 SettingsRow(symbol: "laptopcomputer.and.iphone", title: Strings.devicesRow) { send(.devicesTapped) }
@@ -34,7 +33,8 @@ struct AccountOverview: View {
             }
             .awradCard()
         } actions: {
-            AwradPrimaryButton(Strings.signOut, isEnabled: !state.isWorking) { send(.signOutTapped) }
+            AwradButton(Strings.signOut) { send(.signOutTapped) }
+                .disabled(state.isWorking)
         }
     }
 }
@@ -76,21 +76,22 @@ struct ChangePasswordForm: View {
         AccountForm(title: Strings.changePasswordTitle, message: Strings.changePasswordBody, feedback: state.feedback) {
             AccountField(
                 kind: .password, label: Strings.currentPasswordField, text: state.currentPassword,
-                isInError: state.isInError(.currentPassword)
+                error: state.fieldError(.currentPassword)
             ) {
                 send(.currentPasswordChanged($0))
             }
             AccountField(
                 kind: .newPassword, label: Strings.newPasswordField, text: state.newPassword,
-                isInError: state.isInError(.password)
+                error: state.fieldError(.password)
             ) {
                 send(.newPasswordChanged($0))
             }
             PasswordRule()
         } actions: {
-            AwradPrimaryButton(Strings.changePasswordButton, isEnabled: !state.isWorking) {
+            AwradButton(Strings.changePasswordButton) {
                 send(.savePasswordTapped)
             }
+            .disabled(state.isWorking)
         }
     }
 }
@@ -103,17 +104,18 @@ struct ChangeEmailForm: View {
         AccountForm(title: Strings.changeEmailTitle, message: Strings.changeEmailBody, feedback: state.feedback) {
             AccountField(
                 kind: .password, label: Strings.currentPasswordField, text: state.currentPassword,
-                isInError: state.isInError(.currentPassword)
+                error: state.fieldError(.currentPassword)
             ) {
                 send(.currentPasswordChanged($0))
             }
             AccountField(
-                kind: .newEmail, label: Strings.newEmailField, text: state.newEmail, isInError: state.isInError(.email)
+                kind: .newEmail, label: Strings.newEmailField, text: state.newEmail, error: state.fieldError(.email)
             ) {
                 send(.newEmailChanged($0))
             }
         } actions: {
-            AwradPrimaryButton(Strings.changeEmailButton, isEnabled: !state.isWorking) { send(.sendEmailCodeTapped) }
+            AwradButton(Strings.changeEmailButton) { send(.sendEmailCodeTapped) }
+                .disabled(state.isWorking)
         }
     }
 }
@@ -127,11 +129,12 @@ struct ConfirmEmailChangeForm: View {
             title: Strings.confirmEmailTitle, message: Strings.confirmEmailBody,
             address: state.pendingEmail ?? state.newEmail, feedback: state.feedback
         ) {
-            AccountField(kind: .code, label: Strings.codeField, text: state.code, isInError: state.isInError(.code)) {
+            AccountField(kind: .code, label: Strings.codeField, text: state.code, error: state.fieldError(.code)) {
                 send(.codeChanged($0))
             }
         } actions: {
-            AwradPrimaryButton(Strings.confirmEmailButton, isEnabled: !state.isWorking) { send(.confirmEmailTapped) }
+            AwradButton(Strings.confirmEmailButton) { send(.confirmEmailTapped) }
+                .disabled(state.isWorking)
             ResendCodeButton(availableAt: state.resendAvailableAt, isWorking: state.isWorking) {
                 send(.resendTapped)
             }
@@ -159,14 +162,15 @@ struct DeleteAccountForm: View {
             .background(AwradColors.primaryContainer, in: AwradRadius.card.shape)
             AccountField(
                 kind: .password, label: Strings.currentPasswordField, text: state.currentPassword,
-                isInError: state.isInError(.currentPassword)
+                error: state.fieldError(.currentPassword)
             ) {
                 send(.currentPasswordChanged($0))
             }
         } actions: {
-            AwradPrimaryButton(Strings.deleteButton, isEnabled: !state.isWorking, isDestructive: true) {
+            AwradButton(Strings.deleteButton, variant: .error, role: .destructive) {
                 send(.deleteTapped)
             }
+            .disabled(state.isWorking)
         }
         .alert(
             Text(Strings.deleteConfirmTitle),

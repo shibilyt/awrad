@@ -6,6 +6,10 @@ import SwiftUI
 // Interface text is Google Sans Flex Rounded; a style with its own fontFamily uses that family.
 // `AwradFonts.font(_:)` turns a style into a Font.
 extension AwradTextStyle {
+    /// Top-level page titles: My Goals. 34/40, weight 700.
+    public static let largeTitle = AwradTextStyle(
+        name: "largeTitle", size: 34, lineHeight: 40, weight: 700,
+        face: .interfaceBold, relativeTo: .largeTitle, tabularNumbers: false)
     /// Screen titles; the Hijri date on Home. 22/28, weight 600.
     public static let title = AwradTextStyle(
         name: "title", size: 22, lineHeight: 28, weight: 600,
@@ -61,6 +65,7 @@ extension AwradTextStyle {
 
     /// Every style, in contract order.
     static let all: [AwradTextStyle] = [
+        largeTitle,
         title,
         cardTitle,
         rowTitle,

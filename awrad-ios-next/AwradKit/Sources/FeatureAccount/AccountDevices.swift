@@ -18,9 +18,8 @@ struct DevicesView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, AwradSpacing.xl3)
                 case .unavailable:
-                    AccountLinkButton(title: DeviceStrings.retry, isEnabled: !state.isWorking) {
-                        send(.devicesAppeared)
-                    }
+                    AwradButton(DeviceStrings.retry, variant: .text) { send(.devicesAppeared) }
+                        .disabled(state.isWorking)
                 case .loaded(let sessions):
                     SessionCard(sessions: sessions, isEnabled: !state.isWorking) { send(.revokeTapped($0)) }
                 }
@@ -28,10 +27,10 @@ struct DevicesView: View {
             .awradContentSwap(value: state.sessions.kind)
         } actions: {
             if case .loaded(let sessions) = state.sessions, sessions.contains(where: { !$0.isCurrent }) {
-                AccountLinkButton(title: DeviceStrings.signOutOthers, isEnabled: !state.isWorking, isDestructive: true)
-                {
+                AwradButton(DeviceStrings.signOutOthers, variant: .text, role: .destructive) {
                     send(.revokeOthersTapped)
                 }
+                .disabled(state.isWorking)
             }
         }
         .task { send(.devicesAppeared) }
@@ -139,13 +138,8 @@ struct SessionRow: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             if !session.isCurrent {
-                Button(action: onRevoke) {
-                    Text(DeviceStrings.revoke)
-                        .awradTextStyle(.label)
-                        .foregroundStyle(AwradColors.error)
-                        .awradDisabledAppearance()
-                }
-                .disabled(!isEnabled)
+                AwradButton(DeviceStrings.revoke, variant: .text, layout: .row, role: .destructive, action: onRevoke)
+                    .disabled(!isEnabled)
             }
         }
         .padding(.horizontal, AwradSpacing.cardPadding)

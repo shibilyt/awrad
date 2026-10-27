@@ -73,6 +73,34 @@ nonisolated public enum AwradSize {
     public static let contentMaxWidth: CGFloat = 448
     /// Widest a dialog grows (web, tablets).
     public static let dialogMaxWidth: CGFloat = 384
+    /// Height of the top bar.
+    public static let topBar: CGFloat = 56
+    /// Height of the floating bottom bar.
+    public static let navBar: CGFloat = 72
+    /// Width of the selected tab's pill.
+    public static let navPillWidth: CGFloat = 56
+    /// Height of the selected tab's pill.
+    public static let navPillHeight: CGFloat = 32
+    /// Round icon button: the + on My Goals.
+    public static let roundButton: CGFloat = 48
+    /// Small round button inside a tile: the collection arrow.
+    public static let roundButtonSmall: CGFloat = 32
+    /// Leading circle in an option row (the language 'Aa').
+    public static let avatar: CGFloat = 36
+    /// A checkbox's box.
+    public static let checkbox: CGFloat = 20
+    /// Switch track width.
+    public static let switchWidth: CGFloat = 52
+    /// Switch track height.
+    public static let switchHeight: CGFloat = 32
+    /// Switch thumb.
+    public static let switchThumb: CGFloat = 24
+    /// A square in the onboarding step indicator.
+    public static let stepDot: CGFloat = 8
+    /// The bar under the selected segmented pill.
+    public static let tabIndicatorWidth: CGFloat = 24
+    /// The bar under the selected segmented pill.
+    public static let tabIndicatorHeight: CGFloat = 4
 
     static let sizes: KeyValuePairs<String, CGFloat> = [
         "touchTarget": touchTarget,
@@ -85,5 +113,19 @@ nonisolated public enum AwradSize {
         "logo": logo,
         "contentMaxWidth": contentMaxWidth,
         "dialogMaxWidth": dialogMaxWidth,
+        "topBar": topBar,
+        "navBar": navBar,
+        "navPillWidth": navPillWidth,
+        "navPillHeight": navPillHeight,
+        "roundButton": roundButton,
+        "roundButtonSmall": roundButtonSmall,
+        "avatar": avatar,
+        "checkbox": checkbox,
+        "switchWidth": switchWidth,
+        "switchHeight": switchHeight,
+        "switchThumb": switchThumb,
+        "stepDot": stepDot,
+        "tabIndicatorWidth": tabIndicatorWidth,
+        "tabIndicatorHeight": tabIndicatorHeight,
     ]
 }

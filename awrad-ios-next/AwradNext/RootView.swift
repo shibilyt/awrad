@@ -15,6 +15,19 @@ struct RootView: View {
     }
 
     var body: some View {
+        #if DEBUG
+            // `-AwradGallery YES` opens the component gallery instead (debug builds only).
+            if UserDefaults.standard.bool(forKey: "AwradGallery") {
+                AwradComponentGallery()
+            } else {
+                destinations
+            }
+        #else
+            destinations
+        #endif
+    }
+
+    private var destinations: some View {
         // Onboarding and home swap in place with the `contentSwap` fade.
         Group {
             switch destination {
@@ -49,6 +62,9 @@ struct RootView: View {
 struct HomePlaceholderView: View {
     let onShowAccount: () -> Void
     let onRestartOnboarding: () -> Void
+    #if DEBUG
+        @State private var showsGallery = false
+    #endif
 
     var body: some View {
         VStack(spacing: AwradSpacing.rowGap) {
@@ -59,11 +75,14 @@ struct HomePlaceholderView: View {
                 .awradTextStyle(.body)
                 .foregroundStyle(AwradColors.onSurfaceVariant)
                 .multilineTextAlignment(.center)
-            AwradPrimaryButton("home.placeholder.account", action: onShowAccount)
+            AwradButton("home.placeholder.account", action: onShowAccount)
                 .padding(.top, AwradSpacing.xl2)
-            Button("home.placeholder.restart", action: onRestartOnboarding)
-                .tint(AwradColors.accent)
+            AwradButton("home.placeholder.restart", variant: .text, action: onRestartOnboarding)
                 .padding(.top, AwradSpacing.md)
+            #if DEBUG
+                AwradButton("home.placeholder.gallery", variant: .text) { showsGallery = true }
+                    .fullScreenCover(isPresented: $showsGallery) { AwradComponentGallery() }
+            #endif
         }
         .padding(AwradSpacing.pageMargin)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
