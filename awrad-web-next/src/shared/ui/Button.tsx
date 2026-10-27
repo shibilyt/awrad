@@ -13,7 +13,7 @@ export function PrimaryButton({ className, ...props }: Props): ReactElement {
     <AriaButton
       {...props}
       className={[
-        "min-h-14 w-full rounded-2xl bg-primary px-6 font-semibold text-on-primary",
+        "min-h-touch-target w-full rounded-button bg-primary px-2xl text-button text-on-primary",
         "focus-ring data-pressed:opacity-90 disabled:opacity-50 data-pending:opacity-70",
         className ?? "",
       ].join(" ")}
@@ -28,7 +28,7 @@ export function SecondaryButton({ className, ...props }: Props): ReactElement {
     <AriaButton
       {...props}
       className={[
-        "min-h-12 w-full rounded-2xl px-6 font-semibold text-accent",
+        "min-h-touch-target w-full rounded-button px-2xl text-button text-accent",
         fill,
         "focus-ring data-pressed:bg-primary-container data-pressed:text-on-primary-container",
         "disabled:opacity-50 data-pending:opacity-70",
@@ -45,7 +45,7 @@ export function InlineButton({ className, ...props }: Props): ReactElement {
     <AriaButton
       {...props}
       className={[
-        "min-h-11 shrink-0 rounded-xl px-4 text-sm font-semibold text-accent",
+        "min-h-touch-target shrink-0 rounded-button px-lg text-label text-accent",
         fill,
         "focus-ring data-pressed:bg-primary-container data-pressed:text-on-primary-container",
         "disabled:opacity-50 data-pending:opacity-70",
@@ -65,7 +65,7 @@ export function DangerButton({ className, ...props }: Props): ReactElement {
     <AriaButton
       {...props}
       className={[
-        "min-h-12 w-full rounded-2xl px-6 font-semibold text-error",
+        "min-h-touch-target w-full rounded-button px-2xl text-button text-error",
         fill,
         "focus-ring data-pressed:bg-error data-pressed:text-on-error disabled:opacity-50 data-pending:opacity-70",
         className ?? "",

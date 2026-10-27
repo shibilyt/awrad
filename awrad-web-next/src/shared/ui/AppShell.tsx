@@ -8,13 +8,13 @@ export function AppShell({ children }: { children: ReactNode }): ReactElement {
   const { t } = useTranslation();
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
-        <TextLink to="/" className="text-lg">
+      <header className="flex flex-wrap items-center justify-between gap-row-gap px-page-margin py-lg">
+        <TextLink to="/" className="text-card-title">
           {t("app.name")}
         </TextLink>
         <LanguagePicker />
       </header>
-      {children}
+      <div className="page-transition flex flex-col">{children}</div>
     </div>
   );
 }

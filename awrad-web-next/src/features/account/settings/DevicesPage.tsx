@@ -24,17 +24,17 @@ function SessionRow({
   const { t, i18n } = useTranslation();
   const name = sessionName(t, session);
   return (
-    <li className="flex items-center gap-4 px-5 py-4">
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="flex flex-wrap items-center gap-2 font-semibold">
+    <li className="flex items-center gap-lg px-card-padding py-lg">
+      <div className="flex min-w-0 flex-1 flex-col gap-xs">
+        <p className="flex flex-wrap items-center gap-inline-gap text-row-title">
           <bdi className="break-all">{name}</bdi>
           {session.is_current && (
-            <span className="rounded-full bg-primary-container px-2.5 py-0.5 text-xs text-on-primary-container">
+            <span className="rounded-chip bg-primary-container px-sm py-xxs text-caption text-on-primary-container">
               {t("account.devices.current")}
             </span>
           )}
         </p>
-        <p className="text-sm text-on-surface-variant">
+        <p className="text-body-small text-on-surface-variant">
           {t("account.devices.details", {
             platform: t(`account.devices.platform.${session.platform}`),
             when: relativeTime(session.last_seen_at, now, i18n.language),
@@ -66,7 +66,7 @@ function SessionList({ sessions }: { sessions: AccountSession[] }): ReactElement
     <>
       <FormNotice message={actions.message?.kind === "notice" ? actions.message.text : null} />
       <FormAlert message={actions.message?.kind === "alert" ? actions.message.text : null} />
-      <ul aria-label={t("account.devices.listLabel")} className="flex flex-col rounded-2xl bg-surface">
+      <ul aria-label={t("account.devices.listLabel")} className="flex flex-col rounded-card bg-surface">
         <OnSurface>
           {sessions.map((session) => (
             <SessionRow key={session.id} session={session} now={now} onSignOut={actions.ask} />

@@ -12,14 +12,14 @@ export function LanguagePicker(): ReactElement {
   const { t, i18n } = useTranslation();
   const fill = useFill();
   return (
-    <nav aria-label={t("app.language")} className="flex gap-2">
+    <nav aria-label={t("app.language")} className="flex gap-inline-gap">
       {LANGUAGES.map((language) => (
         <Button
           key={language}
           onPress={() => void i18n.changeLanguage(language)}
           aria-pressed={isLanguage(i18n.language) && i18n.language === language}
           className={[
-            "focus-ring rounded-full px-3 py-1.5 text-sm",
+            "focus-ring rounded-chip px-md py-sm text-label",
             fill,
             "aria-pressed:bg-primary-container aria-pressed:text-on-primary-container",
           ].join(" ")}
