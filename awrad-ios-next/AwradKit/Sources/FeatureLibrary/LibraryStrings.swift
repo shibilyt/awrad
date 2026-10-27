@@ -23,20 +23,25 @@ enum Strings {
     static let featured = text("library.featured", "Featured dhikr collections")
     static let viewAll = text("library.view_all", "View all")
 
-    /// A collection's size on its tile: "100 Dhikrs" (plural variants in the catalog).
+    /// A collection's size on its tile: "100 dhikrs" (plural variants in the catalog).
     static func dhikrCount(_ count: Int) -> LocalizedStringResource {
         LocalizedStringResource(
-            "library.collection.count", defaultValue: "\(count) Dhikrs", bundle: bundle)
+            "library.collection.count", defaultValue: "\(count) dhikrs", bundle: bundle)
     }
 
     static let transliteration = text("library.detail.transliteration", "Transliteration")
     static let translation = text("library.detail.translation", "Translation")
-    static let meaning = text("library.detail.meaning", "Meaning")
     static let tags = text("library.detail.tags", "Tags")
     static let virtues = text("library.detail.virtues", "Virtues")
 
     static let play = text("library.audio.play", "Play")
     static let pause = text("library.audio.pause", "Pause")
+    /// The player bar's time once the length is known: "0:14 / 0:26" (both already formatted).
+    static func audioProgress(elapsed: String, duration: String) -> LocalizedStringResource {
+        LocalizedStringResource(
+            "library.audio.progress", defaultValue: "\(elapsed) / \(duration)", bundle: bundle)
+    }
+
     static let audioFailed = text("library.audio.failed", "Couldn't play the recording. Check your connection.")
 
     /// One ayah: "Qur'an 71:10".

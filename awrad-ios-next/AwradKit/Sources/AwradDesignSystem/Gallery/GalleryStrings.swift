@@ -42,7 +42,7 @@
 
         /// A collection tile's count (plural variants in the catalog).
         static func dhikrCount(_ count: Int) -> LocalizedStringResource {
-            LocalizedStringResource("gallery.dhikr_count", defaultValue: "\(count) Dhikrs", bundle: AwradStrings.bundle)
+            LocalizedStringResource("gallery.dhikr_count", defaultValue: "\(count) dhikrs", bundle: AwradStrings.bundle)
         }
 
         static let email = text("gallery.email", "Email")

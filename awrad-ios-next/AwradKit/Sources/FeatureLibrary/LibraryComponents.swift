@@ -54,16 +54,20 @@ struct CollectionTilesRow: View {
 }
 
 /// A dhikr in a list: its title (`rowTitle`) over one right-to-left line of its Arabic
-/// (`quranLine`, truncated), and a `chevron` at the end. A `tile`-shaped tappable card.
+/// (`quranLine`, truncated at its end), right-aligned in every language, and a `chevron` at the end.
+/// A `tile`-shaped tappable card that hugs its content: the Arabic line is `quranLine`'s line height
+/// (scaled with Dynamic Type) with the glyphs centred in it, right under the title.
 struct DhikrRow: View {
     let dhikr: Dhikr
     let display: DhikrDisplay
     let action: () -> Void
+    @ScaledMetric(relativeTo: AwradTextStyle.quranLine.relativeTo)
+    private var arabicLineHeight = AwradTextStyle.quranLine.lineHeight
 
     var body: some View {
         AwradCardButton(AwradRadius.tile, action: action) {
             HStack(spacing: AwradSpacing.md) {
-                VStack(alignment: .leading, spacing: AwradSpacing.xxs) {
+                VStack(alignment: .leading, spacing: AwradSpacing.none) {
                     Text(verbatim: display.title)
                         .awradTextStyle(.rowTitle)
                         .foregroundStyle(AwradColors.onSurface)
@@ -73,7 +77,12 @@ struct DhikrRow: View {
                         .foregroundStyle(AwradColors.onSurfaceVariant)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        // Leading in the right-to-left frame: on the right whatever the interface
+                        // direction.
+                        .frame(
+                            maxWidth: .infinity, minHeight: arabicLineHeight, maxHeight: arabicLineHeight,
+                            alignment: .leading
+                        )
                         .environment(\.layoutDirection, .rightToLeft)
                         .environment(\.locale, Locale(identifier: "ar"))
                 }

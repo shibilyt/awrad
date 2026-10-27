@@ -1,17 +1,17 @@
 import AwradDomain
 import Observation
 
-/// A dhikr's screen: its text never changes; the model drives the audio button.
+/// A dhikr's screen: its text never changes; the model drives the audio player bar.
 @Observable
 public final class DhikrDetailModel {
-    /// What the play/pause button shows.
+    /// What the audio player bar shows.
     public enum Audio: Equatable, Sendable {
-        /// The dhikr has no recording: no button.
+        /// The dhikr has no recording: no player bar.
         case unavailable
         case stopped
         case loading
-        case playing(elapsed: Duration)
-        case paused(elapsed: Duration)
+        case playing(PlaybackPosition)
+        case paused(PlaybackPosition)
         case failed
 
         /// Whether the button pauses (shows `pause`) rather than plays.
@@ -22,10 +22,10 @@ public final class DhikrDetailModel {
             }
         }
 
-        /// The time to show next to the button, while there's one.
-        public var elapsed: Duration? {
+        /// Where playback is, while there's a position to show.
+        public var position: PlaybackPosition? {
             switch self {
-            case .playing(let elapsed), .paused(let elapsed): elapsed
+            case .playing(let position), .paused(let position): position
             default: nil
             }
         }
@@ -40,6 +40,8 @@ public final class DhikrDetailModel {
         case playPauseTapped
         /// Leaving the screen stops the recording.
         case disappeared
+        /// The app going to the background pauses it.
+        case backgrounded
     }
 
     public private(set) var state: State
@@ -52,7 +54,7 @@ public final class DhikrDetailModel {
         self.makePlayer = makePlayer
     }
 
-    /// Both actions are local and immediate. Returns whether it handled the action (always).
+    /// Every action is local and immediate. Returns whether it handled the action (always).
     @discardableResult
     public func apply(_ action: Action) -> Bool {
         switch action {
@@ -61,6 +63,8 @@ public final class DhikrDetailModel {
         case .disappeared:
             player?.stop()
             if state.audio != .unavailable { state.audio = .stopped }
+        case .backgrounded:
+            if state.audio.isActive { player?.pause() }
         }
         return true
     }
@@ -89,8 +93,8 @@ public final class DhikrDetailModel {
         switch status {
         case .stopped, .finished: state.audio = .stopped
         case .loading: state.audio = .loading
-        case .playing(let elapsed): state.audio = .playing(elapsed: elapsed)
-        case .paused(let elapsed): state.audio = .paused(elapsed: elapsed)
+        case .playing(let position): state.audio = .playing(position)
+        case .paused(let position): state.audio = .paused(position)
         case .failed: state.audio = .failed
         }
     }

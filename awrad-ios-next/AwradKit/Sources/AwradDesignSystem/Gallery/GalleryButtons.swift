@@ -47,12 +47,13 @@
                         }
                     }
                 }
-                GalleryItem(caption: "Round · 48 and 32 (48 touch target), disabled") {
+                GalleryItem(caption: "Round · 48 and 32 (48 touch target), loading, disabled") {
                     HStack(spacing: AwradSpacing.lg) {
                         AwradRoundButton(icon: .add, label: GalleryStrings.addGoal) {}
                         AwradRoundButton(
                             icon: .forward, label: GalleryStrings.openCollection, size: .small
                         ) {}
+                        AwradRoundButton(icon: .add, label: GalleryStrings.addGoal, isLoading: true) {}
                         AwradRoundButton(icon: .add, label: GalleryStrings.addGoal) {}.disabled(true)
                     }
                 }
