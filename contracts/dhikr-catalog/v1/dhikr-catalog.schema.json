@@ -9,7 +9,8 @@
     "version",
     "contentRevision",
     "dhikrs",
-    "collections"
+    "collections",
+    "tags"
   ],
   "properties": {
     "version": {
@@ -32,6 +33,13 @@
       "minItems": 1,
       "items": {
         "$ref": "#/$defs/collection"
+      }
+    },
+    "tags": {
+      "description": "Curated topic tags shipped with the catalog (separate from users' own tags). Dhikrs reference them by key.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tag"
       }
     }
   },
@@ -171,6 +179,14 @@
             "ml": {
               "$ref": "#/$defs/aliasList"
             }
+          }
+        },
+        "tags": {
+          "description": "Catalog tag keys (topics such as debt). Custom dhikrs use user tags instead.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/key"
           }
         },
         "translation": {
@@ -461,6 +477,22 @@
           "items": {
             "$ref": "#/$defs/key"
           }
+        }
+      }
+    },
+    "tag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "title"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "title": {
+          "$ref": "#/$defs/fullText"
         }
       }
     }

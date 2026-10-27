@@ -78,3 +78,11 @@ Each name is a `name_of_allah` dhikr in its **invocation form**, as the native a
 - that Qur'an ranges fall within the surah.
 
 It also prints the missing-translation counts. Run `node tools/check-dhikr-catalog.mjs <file>` to check a different file.
+
+## Tags
+
+`tags` lists curated topic tags shipped with the catalog (for example `debt`), with titles in en, ar and ml. A dhikr lists tag keys in its `tags`. These are separate from the tags users create for themselves (slice 3b). Apps can show both and filter by either. The checker requires every tag to resolve and every tag to be used.
+
+## Naming dhikrs without an established name
+
+Use the established name when one exists (Salat al-Fatih, an-Nariyya, Tajul Ulama). Otherwise title the dhikr by its opening words, as unnamed duas and salawat are traditionally known, and never by a number. Local and popular names go in `aliases`, and where it comes from goes in `references`. Keys are identity, not names, so a title can change without touching goals or counts.

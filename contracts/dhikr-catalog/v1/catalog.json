@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "contentRevision": 2,
+  "contentRevision": 3,
   "dhikrs": [
     {
       "id": "c88b9491-40ad-4b42-a5b8-e07c4b4d31ef",
@@ -387,9 +387,9 @@
       "kind": "salawat",
       "arabic": "اللَّهُمَّ صَلِّ عَلَىٰ سَيِّدِنَا مُحَمَّدٍ وَعَلَىٰ آلِهِ وَصَحْبِهِ وَسَلِّمْ",
       "title": {
-        "en": "Swalath 2",
-        "ar": "الصلاة على سيدنا محمد",
-        "ml": "സ്വലാത്ത് 2"
+        "en": "Allahumma swalli ala sayyidina Muhammad",
+        "ar": "اللهم صل على سيدنا محمد",
+        "ml": "അല്ലാഹുമ്മ സ്വല്ലി അലാ സയ്യിദിനാ മുഹമ്മദ്"
       },
       "transliteration": {
         "en": "Allahumma swalli ala sayyidina Muhammadin wa ala aalihi wa swahbihi wa sallim"
@@ -397,7 +397,7 @@
       "aliases": {
         "en": [
           "Salawat Sayyidina",
-          "Allahumma salli ala sayyidina Muhammad"
+          "Swalath Sayyidina"
         ]
       },
       "translation": {
@@ -513,18 +513,28 @@
       "kind": "salawat",
       "arabic": "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ عَبْدِكَ وَرَسُولِكَ، وَعَلَى الْمُؤْمِنِينَ وَالْمُؤْمِنَاتِ وَالْمُسْلِمِينَ وَالْمُسْلِمَاتِ",
       "title": {
-        "en": "Swalath for Debt",
-        "ar": "صلاة قضاء الدين",
-        "ml": "കടം തീർക്കാനുള്ള സ്വലാത്ത്"
+        "en": "Swalath abdika wa rasulika",
+        "ar": "اللهم صل على محمد عبدك ورسولك",
+        "ml": "സ്വലാത്ത് അബ്ദിക വ റസൂലിക"
       },
       "transliteration": {
         "en": "Allahumma swalli ala Muhammadin abdika wa rasulika, wa alal mu'mineena wal mu'minaathi wal muslimeena wal muslimath"
       },
       "aliases": {
         "en": [
-          "Tajul Ulama Swalath"
+          "Tajul Ulama Swalath",
+          "Swalath for Debt"
+        ],
+        "ar": [
+          "صلاة قضاء الدين"
+        ],
+        "ml": [
+          "കടം തീർക്കാനുള്ള സ്വലാത്ത്"
         ]
       },
+      "tags": [
+        "debt"
+      ],
       "translation": {
         "en": "O Allah, send blessings upon Muhammad, Your servant and Your Messenger, and upon the believing men and the believing women, and the Muslim men and the Muslim women.",
         "ar": "اللهم صل على محمد عبدك ورسولك، وعلى المؤمنين والمؤمنات والمسلمين والمسلمات.",
@@ -3407,6 +3417,16 @@
         "asma-ul-husna-ar-rashid",
         "asma-ul-husna-as-sabur"
       ]
+    }
+  ],
+  "tags": [
+    {
+      "key": "debt",
+      "title": {
+        "en": "Debt",
+        "ar": "الدَّيْن",
+        "ml": "കടം"
+      }
     }
   ]
 }

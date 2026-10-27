@@ -21,6 +21,7 @@ A dhikr is one foundational entity: a single text that wirds, practices and goal
 | `transliteration` | One per language, in that language's script (en Latin, ml Malayalam); none for ar |
 | `translation` | One per language; en required |
 | `aliases` | Optional search terms per language (spelling variants, common names) |
+| `tags` | Curated catalog topic tags by key (for example `debt`); users' own tags come in 3b |
 | `audio` | None, or one recording: file, reciter, style, repetitions, duration, size, type, checksum, attribution |
 | `references` | `quran`, `hadith`, `book`, `shaykh`, `other`; a `quran` dhikr needs a quran reference |
 | `virtues` | Localized text, each citing at least one reference |
@@ -35,7 +36,7 @@ A dhikr is one foundational entity: a single text that wirds, practices and goal
 | Build-time generation of the catalog into each app, with a drift check | Catalog updates from the server without an app release (later; `contentRevision` is ready for it) |
 | Search matching rule as shared fixtures | Custom dhikrs, tags and imported audio: slice 3b |
 | Library: collections (collection tile), a collection's dhikrs, all dhikrs, search | Favourites, notes, user collections: later, in the personal layer |
-| Dhikr detail, rendered by kind: Arabic, transliteration, translation, virtues with references, audio | Counting a dhikr: slice 4. Goals: slice 3 |
+| Dhikr detail, rendered by kind: Arabic, transliteration, translation, tags, virtues with references, audio | Counting a dhikr: slice 4. Goals: slice 3 |
 | Built-in audio: stream, or download and cache, then play and pause | Audio-synced highlighting, word-by-word: later |
 | Server: the catalog registry (keys, ids, kinds) generated from the contract, ready for goal validation | A catalog API: not needed while every app bundles the catalog |
 

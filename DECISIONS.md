@@ -700,9 +700,10 @@ Built-in dhikrs were hand-copied into Android, iOS and the server and drifted: t
 
 ### Decision
 
-- **One entity.** A dhikr is a single text with `kind` (`quran`, `dhikr`, `dua`, `salawat`, `name_of_allah`), Arabic, per-language title, transliteration and translation, optional search aliases, at most one audio recording, typed references (`quran`, `hadith`, `book`, `shaykh`, `other`) and virtues that must cite references. Sequences, occasions and recommended counts belong to wirds, practices and goals, never to the dhikr.
+- **One entity.** A dhikr is a single text with `kind` (`quran`, `dhikr`, `dua`, `salawat`, `name_of_allah`), Arabic, per-language title, transliteration and translation, optional search aliases, curated catalog tags, at most one audio recording, typed references (`quran`, `hadith`, `book`, `shaykh`, `other`) and virtues that must cite references. Sequences, occasions and recommended counts belong to wirds, practices and goals, never to the dhikr.
 - **One catalog.** Built-ins live only in `contracts/dhikr-catalog/v1/catalog.json`. Each app generates its content from it at build time and fails on drift. Keys and UUIDs stay as in ADR-2026-07-13.
 - **Collections are data.** A collection is an ordered list of dhikr keys, and a dhikr can be in several. Categories are dropped.
+- **Naming.** A dhikr without an established name is titled by its opening words, never a number; local names are aliases.
 - **Display language.** The app language selects the localized fields, falling back to English.
 - **Custom dhikrs.** They use the same `$defs/dhikr` shape (slice 3b).
 

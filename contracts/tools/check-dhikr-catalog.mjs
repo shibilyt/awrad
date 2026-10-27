@@ -57,6 +57,20 @@ for (const c of catalog.collections) {
 for (const key of byKey.keys())
   if (!collected.has(key)) problems.push(`"${key}" isn't in any collection`);
 
+// Tags: unique keys, every dhikr's tags resolve, every tag is used.
+const tagKeys = new Set();
+for (const tag of catalog.tags ?? []) {
+  if (tagKeys.has(tag.key)) problems.push(`duplicate tag key "${tag.key}"`);
+  tagKeys.add(tag.key);
+}
+const usedTags = new Set();
+for (const d of catalog.dhikrs)
+  for (const key of d.tags ?? []) {
+    if (!tagKeys.has(key)) problems.push(`"${d.key}" names unknown tag "${key}"`);
+    usedTags.add(key);
+  }
+for (const key of tagKeys) if (!usedTags.has(key)) problems.push(`tag "${key}" isn't used by any dhikr`);
+
 // References: ids unique within a dhikr, every virtue's references resolve, quran-kind dhikrs cite the Qur'an.
 for (const d of catalog.dhikrs) {
   const refIds = new Set();
@@ -102,6 +116,7 @@ for (const d of catalog.dhikrs) {
   }
 }
 for (const c of catalog.collections) arabicField(`collection ${c.key}.title.ar`, c.title.ar, false);
+for (const tag of catalog.tags ?? []) arabicField(`tag ${tag.key}.title.ar`, tag.title.ar, false);
 
 // Qur'an references fall inside the surah (Hafs ayah counts, 6236 in total).
 const AYAHS = [
@@ -132,7 +147,7 @@ function report() {
   const virtues = catalog.dhikrs.flatMap((d) => d.virtues.map((v) => v.text));
   const transliterations = catalog.dhikrs.map((d) => d.transliteration);
   console.log(
-    `dhikr catalog: ${catalog.dhikrs.length} dhikrs and ${catalog.collections.length} collections valid; ` +
+    `dhikr catalog: ${catalog.dhikrs.length} dhikrs, ${catalog.collections.length} collections and ${(catalog.tags ?? []).length} tags valid; ` +
       `key/id parity with builtin-dhikrs.json holds`,
   );
   console.log(

@@ -11,6 +11,7 @@ How `catalog.json` was put together from the frozen apps, every disagreement fou
 - **References fixed:**
   - "Nothing heavier in the scales" now cites the hadith of the card, Tirmidhi 2639 (was 3462), with its ar/ml wording aligned to "nothing heavier".
   - Abu Dawud 1518 carries the grade *Da'if (al-Albani)*.
+- **Renamed by opening words:** `swalath-sayyidina` is "Allahumma swalli ala sayyidina Muhammad" (was "Swalath 2"), and `swalath-for-debt` is "Swalath abdika wa rasulika". "Swalath for Debt" is now an alias, and the swalath carries the catalog tag `debt`. A "for debt" virtue waits for its reference (book or shaykh) from the user.
 - **Audio links** are full URLs into the R2 bucket (`dhikrs.awrad.app`), as in the frozen Android app.
 
 The rows below record the original findings; where they conflict with this section, this section wins.
