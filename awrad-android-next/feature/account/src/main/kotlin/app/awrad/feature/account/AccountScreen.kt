@@ -13,6 +13,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradCircularProgress
+import app.awrad.core.designsystem.motion.AwradContentSwap
 import app.awrad.feature.account.settings.SignedInArea
 
 /**
@@ -26,23 +27,29 @@ internal fun AccountRoute(
     viewModel: AccountViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val account = state.account
-    if (state.step == AccountStep.SIGNED_IN && account != null) {
-        SignedInArea(
-            account = account,
-            onSignOut = { viewModel.onAction(AccountAction.SignOut) },
-            onExit = onBack,
-            modifier = modifier,
-        )
-        return
-    }
-    BackHandler(enabled = state.canGoBack) { viewModel.onAction(AccountAction.Back) }
-    AccountScreen(
-        state = state,
-        onAction = viewModel::onAction,
-        onBack = { if (state.canGoBack) viewModel.onAction(AccountAction.Back) else onBack() },
+    val signedIn = state.account.takeIf { state.step == AccountStep.SIGNED_IN }
+    BackHandler(enabled = signedIn == null && state.canGoBack) { viewModel.onAction(AccountAction.Back) }
+    // Signing in or out swaps the whole area in place (`contentSwap`); the leaving side keeps its last account.
+    AwradContentSwap(
+        targetState = signedIn,
         modifier = modifier,
-    )
+        label = "signedIn",
+        contentKey = { it != null },
+    ) { account ->
+        if (account != null) {
+            SignedInArea(
+                account = account,
+                onSignOut = { viewModel.onAction(AccountAction.SignOut) },
+                onExit = onBack,
+            )
+        } else {
+            AccountScreen(
+                state = state,
+                onAction = viewModel::onAction,
+                onBack = { if (state.canGoBack) viewModel.onAction(AccountAction.Back) else onBack() },
+            )
+        }
+    }
 }
 
 /** Stateless: renders [state] and reports every user intent through [onAction]. */
@@ -67,7 +74,10 @@ internal fun AccountScreen(
         isBusy = state.isBusy,
         status = pageStatus(error = state.error?.message(), notice = state.notice?.message()),
     ) {
-        StepContent(step = step, state = state, onAction = onAction)
+        // Each step replaces the last in place (`contentSwap`).
+        AwradContentSwap(targetState = step, label = "accountStep") { shown ->
+            StepContent(step = shown, state = state, onAction = onAction)
+        }
     }
 }
 

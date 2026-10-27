@@ -97,9 +97,26 @@ internal fun Project.configureColorLiterals() {
     tasks.matching { it.name == "check" || it.name == "detekt" }.configureEach { dependsOn(verify) }
 }
 
+/**
+ * Spacing, sizes, radii, text styles and motion come only from the generated design tokens, outside
+ * `:core:designsystem` (which turns the tokens into components). Like [configureColorLiterals], `detekt` runs it.
+ */
+internal fun Project.configureDesignLiterals() {
+    if (path == DESIGN_SYSTEM) return
+    val verify = tasks.register("verifyDesignLiterals", DesignLiteralTask::class.java) {
+        sources.from(fileTree("src/main") { include("**/*.kt") })
+        // Genuinely structural values, as "<path suffix>: <matched text>", each with the reason. None yet.
+        allowed.set(emptyList<String>())
+    }
+    tasks.matching { it.name == "check" || it.name == "detekt" }.configureEach { dependsOn(verify) }
+}
+
+private const val DESIGN_SYSTEM = ":core:designsystem"
+
 internal fun Project.configureDetekt() {
     configureSourceFileSize()
     configureColorLiterals()
+    configureDesignLiterals()
     pluginManager.apply("io.gitlab.arturbosch.detekt")
     extensions.configure<DetektExtension> {
         buildUponDefaultConfig = true

@@ -1,10 +1,9 @@
 package app.awrad.core.designsystem.theme
 
-import androidx.compose.material3.Typography
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import app.awrad.core.designsystem.R
 
 /**
@@ -27,24 +26,11 @@ public val ArabicScriptFontFamily: FontFamily = FontFamily(
     Font(R.font.notonaskharabic_bold, FontWeight.Bold),
 )
 
-private fun TextStyle.interfaceFont(): TextStyle = copy(fontFamily = InterfaceFontFamily)
-
-internal val AwradTypography: Typography = Typography().run {
-    copy(
-        displayLarge = displayLarge.interfaceFont(),
-        displayMedium = displayMedium.interfaceFont(),
-        displaySmall = displaySmall.interfaceFont().copy(fontWeight = FontWeight.Bold),
-        headlineLarge = headlineLarge.interfaceFont().copy(fontWeight = FontWeight.SemiBold),
-        headlineMedium = headlineMedium.interfaceFont().copy(fontWeight = FontWeight.SemiBold),
-        headlineSmall = headlineSmall.interfaceFont().copy(fontWeight = FontWeight.SemiBold),
-        titleLarge = titleLarge.interfaceFont().copy(fontWeight = FontWeight.SemiBold),
-        titleMedium = titleMedium.interfaceFont(),
-        titleSmall = titleSmall.interfaceFont(),
-        bodyLarge = bodyLarge.interfaceFont(),
-        bodyMedium = bodyMedium.interfaceFont(),
-        bodySmall = bodySmall.interfaceFont(),
-        labelLarge = labelLarge.interfaceFont(),
-        labelMedium = labelMedium.interfaceFont(),
-        labelSmall = labelSmall.interfaceFont(),
-    )
-}
+/**
+ * Line heights from `typography.json` are the whole line: the extra space is split evenly above and below the
+ * text, and kept on the first and last line, as on iOS and the web.
+ */
+internal val AwradLineHeightStyle: LineHeightStyle = LineHeightStyle(
+    alignment = LineHeightStyle.Alignment.Center,
+    trim = LineHeightStyle.Trim.None,
+)

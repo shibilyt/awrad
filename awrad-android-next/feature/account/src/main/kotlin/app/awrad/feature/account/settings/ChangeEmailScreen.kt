@@ -7,11 +7,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradPrimaryButton
 import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.designsystem.motion.AwradContentSwap
+import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.feature.account.AccountPage
 import app.awrad.feature.account.BodyText
 import app.awrad.feature.account.CodeField
@@ -65,13 +66,16 @@ internal fun ChangeEmailScreen(
             notice = R.string.account_notice_code_sent.takeIf { state.isCodeSent },
         ),
     ) {
-        when (state.step) {
-            ChangeEmailStep.FORM -> EmailChangeForm(state = state, onAction = onAction)
-            ChangeEmailStep.CODE -> EmailChangeCode(state = state, onAction = onAction)
-            ChangeEmailStep.DONE -> {
-                val email = isolated(state.changedTo.orEmpty())
-                BodyText(text = stringResource(R.string.account_notice_email_changed, email))
-                AwradPrimaryButton(text = stringResource(R.string.account_action_done), onClick = onFinish)
+        // Each step replaces the last in place (`contentSwap`).
+        AwradContentSwap(targetState = state.step, label = "changeEmailStep") { step ->
+            when (step) {
+                ChangeEmailStep.FORM -> EmailChangeForm(state = state, onAction = onAction)
+                ChangeEmailStep.CODE -> EmailChangeCode(state = state, onAction = onAction)
+                ChangeEmailStep.DONE -> Column(verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.lg)) {
+                    val email = isolated(state.changedTo.orEmpty())
+                    BodyText(text = stringResource(R.string.account_notice_email_changed, email))
+                    AwradPrimaryButton(text = stringResource(R.string.account_action_done), onClick = onFinish)
+                }
             }
         }
     }
@@ -83,7 +87,7 @@ private fun EmailChangeForm(
     onAction: (ChangeEmailAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(FormSpacing)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
         BodyText(text = stringResource(R.string.account_change_email_body))
         EmailField(
             value = state.newEmail,
@@ -111,7 +115,7 @@ private fun EmailChangeCode(
     onAction: (ChangeEmailAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(FormSpacing)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
         CodeSentTo(email = state.newEmail)
         CodeField(state.code, state.codeProblem, { onAction(ChangeEmailAction.CodeChanged(it)) })
         AwradPrimaryButton(
@@ -130,5 +134,3 @@ private fun EmailChangeCode(
         )
     }
 }
-
-private val FormSpacing = 12.dp

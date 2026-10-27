@@ -23,6 +23,7 @@ You can't merge around these, so don't try:
   ViewModels expose one `StateFlow<…UiState>` and one `onAction(…Action)`.
 - Errors are typed (enums or sealed types) and mapped to string resources in the UI. No sentinel strings.
 - Colours are roles from the shared tokens (`AwradTheme.colors`, `MaterialTheme.colorScheme`), never hex values; the build rejects colour literals ([ARCHITECTURE.md](ARCHITECTURE.md), "Colours"). To change a colour, change `contracts/design-tokens/` first, then run `./gradlew :core:designsystem:generateAwradColors`.
+- Shapes, spacing, sizes, text styles and motion are tokens too (`AwradTheme.shapes`, `.spacing`, `.sizes`, `.type`, `.motion`), never a `.dp`/`.sp` number, a corner radius, a `MaterialTheme.typography` slot or a raw `tween`/`spring`; the build rejects them outside `:core:designsystem` ([ARCHITECTURE.md](ARCHITECTURE.md), "Design tokens" and "Motion"). Regenerate with `./gradlew :core:designsystem:generateAwradTokens`. A new destination wraps its content in `AwradPage(scope = this, key = entry)`.
 - Every user-facing string goes in `values/`, `values-ar/` and `values-ml/` together.
 - Test through the module's interface: ViewModels with fakes from `:core:testing`. No tests that read source text.
 - Room before the first release: stay on version 1, edit it in place, and re-export the schema (ADR 0003). Forward migrations start at the first release.

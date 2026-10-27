@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradLogoMark
@@ -54,18 +52,18 @@ internal fun OnboardingScreen(
         Column(
             modifier = Modifier
                 .safeDrawingPadding()
-                .padding(horizontal = 28.dp, vertical = 40.dp),
+                .padding(horizontal = AwradTheme.spacing.pageMargin, vertical = AwradTheme.spacing.xl4),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            AwradLogoMark(modifier = Modifier.size(148.dp))
-            Spacer(modifier = Modifier.height(28.dp))
+            AwradLogoMark()
+            Spacer(modifier = Modifier.height(AwradTheme.spacing.xl2))
             Text(
                 text = stringResource(R.string.onboarding_placeholder_title),
-                style = MaterialTheme.typography.headlineMedium,
+                style = AwradTheme.type.title,
                 textAlign = TextAlign.Center,
             )
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(AwradTheme.spacing.xl4))
             AwradPrimaryButton(
                 text = stringResource(R.string.onboarding_placeholder_action),
                 onClick = { onAction(OnboardingAction.GetStarted) },
