@@ -10,14 +10,18 @@ in AwradDesignSystem/Theme:
 - AwradMotion.swift: easings, durations, springs (converted for SwiftUI), haptics, the named motions
   iOS uses (motions without "ios" in `platforms`, such as Android's `sheet`, aren't generated), and
   reduced motion.
+- AwradElevation.swift: shape.json `elevation` as `AwradShadow`s for `.shadow(color:radius:x:y:)`.
+  The contract's blur is the CSS/Figma blur, about twice SwiftUI's radius, so radius = blur / 2. The
+  colour is a colour role; `shadow` is clear in dark, so dark mode has no shadow.
 
 Spring conversion (contracts/design-tokens/v1/README.md): response = 2π / √stiffness and
 dampingFraction = dampingRatio, with mass 1.
 
 Nothing reads contracts/ at runtime. Run without arguments to rewrite the files. With --check
 (scripts/validate), it fails when a committed file differs from what the contract generates. An
-unknown key in a named motion, a stroke or reduced motion fails too, so a new token can't be silently
-dropped: teach the generator its type first (`MOTION_KEYS` for motions).
+unknown key anywhere (a file's top-level group, a role, size, style, spring, haptic, stroke, elevation,
+named motion or reduced motion) fails too, so a new token can't be silently dropped: teach the
+generator its type first (`MOTION_KEYS` for motions, `KEYS` for the rest).
 """
 import json
 import math
@@ -42,6 +46,21 @@ FAMILIES = {"Google Sans Flex Rounded": "interface", "Noto Naskh Arabic": "naskh
 WEIGHTS = {400: "Regular", 500: "Medium", 600: "SemiBold", 700: "Bold"}
 STROKE_KEYS = {"width", "offset", "use"}
 REDUCED_MOTION_KEYS = {"replaceWith", "duration", "easing", "use"}
+COLORS = TOKENS / "colors.json"
+# The keys each file, and each entry of its listed groups, may have. Anything else fails the generator.
+KEYS = {
+    "shape": {"version", "description", "corners", "scale", "roles", "strokes", "elevation"},
+    "shape.roles": {"radius", "use"},
+    "shape.elevation": {"y", "blur", "color", "use"},
+    "spacing": {"version", "description", "scale", "roles", "sizes"},
+    "spacing.roles": {"space", "use"},
+    "spacing.sizes": {"value", "use"},
+    "typography": {"version", "description", "fontFamily", "styles"},
+    "typography.styles": {"size", "lineHeight", "weight", "iosTextStyle", "fontFamily", "tabularNumbers", "use"},
+    "motion": {"version", "description", "easing", "duration", "spring", "haptic", "motions", "reducedMotion"},
+    "motion.spring": {"dampingRatio", "stiffness", "use"},
+    "motion.haptic": {"ios", "android", "use"},
+}
 HAPTIC = re.compile(r"sensoryFeedback\((\.[A-Za-z]+(?:\([a-z]+: \.[a-z]+\))?)\)")
 
 # The Swift type of every key a named motion may use. `scale`/`opacity`/`points` are numbers as
@@ -61,10 +80,21 @@ MOTION_KEYS = {
 }
 
 
+def check_keys(what: str, keys, allowed: str) -> None:
+    unknown = set(keys) - KEYS[allowed]
+    if unknown:
+        raise SystemExit(f"design tokens: {what} has {sorted(unknown)}, which iOS doesn't generate yet")
+
+
 def load(name: str) -> dict:
     tokens = json.loads((TOKENS / f"{name}.json").read_text(encoding="utf-8"))
     if tokens.get("version") != 1:
         raise SystemExit(f"design tokens: {name}.json isn't version 1")
+    check_keys(f"{name}.json", tokens, name)
+    for group in tokens:
+        if f"{name}.{group}" in KEYS:
+            for entry, spec in tokens[group].items():
+                check_keys(f"{name}.json {group}.{entry}", spec, f"{name}.{group}")
     return tokens
 
 
@@ -96,9 +126,11 @@ def doc(text: str, indent: str) -> str:
 
 def table(name: str, value_type: str, entries: list[tuple[str, str]], indent: str = "    ") -> list[str]:
     """An internal `KeyValuePairs` of contract names to generated values, for the contract tests."""
+    # swift-format drops the trailing comma of a one-element literal.
+    comma = "," if len(entries) > 1 else ""
     return [
         f"{indent}static let {name}: KeyValuePairs<String, {value_type}> = [",
-        *(f'{indent}    "{key}": {value},' for key, value in entries),
+        *(f'{indent}    "{key}": {value}{comma}' for key, value in entries),
         f"{indent}]",
     ]
 
@@ -375,11 +407,51 @@ class Motion:
         return "\n".join(lines)
 
 
+def elevation_swift(shape: dict) -> str:
+    """shape.json `elevation` as `AwradShadow`s: radius = blur / 2, x 0, the colour a colour role."""
+    roles = json.loads(COLORS.read_text(encoding="utf-8"))["roles"]
+    lines = [
+        *[line.format(source="shape.json") for line in HEADER],
+        "import SwiftUI",
+        "",
+        "/// Shadows from the design tokens contract (shape.json `elevation`), applied with `awradElevation(_:)`.",
+        "/// SwiftUI's shadow radius is about half the contract's (CSS/Figma) blur, so radius = blur / 2. The",
+        "/// colour is a colour role that is clear in dark mode, so there is no shadow in dark.",
+        "public enum AwradElevation {",
+    ]
+    numbers, colors = [], []
+    for name, spec in shape["elevation"].items():
+        if not NAME.match(name):
+            raise SystemExit(f"shape: elevation {name!r} isn't lowerCamelCase")
+        if spec["color"] not in roles:
+            raise SystemExit(f"shape: elevation {name!r} uses {spec['color']!r}, which isn't a colour role")
+        if spec["blur"] < 0:
+            raise SystemExit(f"shape: elevation {name!r} has a negative blur")
+        lines += [
+            doc(f"{spec['use']}. y {number(spec['y'])}, blur {number(spec['blur'])}, `{spec['color']}`.", "    "),
+            f"    public static let {name} = AwradShadow(color: AwradColors.{spec['color']}, "
+            f"radius: {number(spec['blur'] / 2)}, x: 0, y: {number(spec['y'])})",
+        ]
+        numbers += [(f"{name}.y", f"Double({name}.y)"), (f"{name}.blur", f"Double({name}.radius * 2)")]
+        colors.append((f"{name}.color", f'"{spec["color"]}"'))
+    lines += [
+        "",
+        "    /// Every number by contract path (the blur back from the radius), for the contract tests.",
+        *table("numbers", "Double", numbers),
+        "    /// Every colour role by contract path.",
+        *table("colors", "String", colors),
+        "}",
+        "",
+    ]
+    return "\n".join(lines)
+
+
 def outputs() -> dict[Path, str]:
     shape = load("shape")
     return {
         THEME / "AwradRadius.swift": radius_swift(shape),
         THEME / "AwradStroke.swift": stroke_swift(shape),
+        THEME / "AwradElevation.swift": elevation_swift(shape),
         THEME / "AwradSpacing.swift": spacing_swift(load("spacing")),
         THEME / "AwradTextStyle.swift": typography_swift(load("typography")),
         THEME / "AwradMotion.swift": Motion(load("motion")).swift(),
@@ -395,7 +467,8 @@ def main() -> int:
                   file=sys.stderr)
         if stale:
             return 1
-        print("design tokens: shape, strokes, spacing, typography and motion match contracts/design-tokens/v1")
+        print("design tokens: shape, strokes, elevation, spacing, typography and motion match "
+              "contracts/design-tokens/v1")
         return 0
     if sys.argv[1:]:
         print("usage: generate-design-tokens.py [--check]", file=sys.stderr)

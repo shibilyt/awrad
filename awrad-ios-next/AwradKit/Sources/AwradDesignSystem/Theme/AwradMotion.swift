@@ -110,6 +110,19 @@ nonisolated public enum AwradMotion {
         public static let easing = Easing.linear
     }
 
+    /// The selected segmented pill's fill and the bar under it move to the new pill.
+    public enum SegmentIndicator {
+        public static let spring = Spring.spatial
+        public static let colorDuration = Duration.color
+    }
+
+    /// An option row, checkbox or switch changing state: colours cross-fade; the tick and switch thumb use spatial on
+    /// mobile.
+    public enum Select {
+        public static let colorDuration = Duration.color
+        public static let easing = Easing.linear
+    }
+
     /// When the system asks for reduced motion, every movement, scale and spring becomes a cross-fade of this duration.
     /// Haptics stay.
     public enum ReducedMotion {
@@ -128,6 +141,8 @@ nonisolated public enum AwradMotion {
         "expand",
         "listAppear",
         "contentSwap",
+        "segmentIndicator",
+        "select",
     ]
     static let durations: KeyValuePairs<String, TimeInterval> = [
         "fade": Duration.fade,
@@ -204,6 +219,14 @@ nonisolated public enum AwradMotion {
         "contentSwap.easing.1": ContentSwap.easing.y1,
         "contentSwap.easing.2": ContentSwap.easing.x2,
         "contentSwap.easing.3": ContentSwap.easing.y2,
+        "segmentIndicator.spring.response": SegmentIndicator.spring.response,
+        "segmentIndicator.spring.dampingFraction": SegmentIndicator.spring.dampingFraction,
+        "segmentIndicator.colorDuration": SegmentIndicator.colorDuration,
+        "select.colorDuration": Select.colorDuration,
+        "select.easing.0": Select.easing.x1,
+        "select.easing.1": Select.easing.y1,
+        "select.easing.2": Select.easing.x2,
+        "select.easing.3": Select.easing.y2,
     ]
     /// Every haptic and text value of the named motions by contract path.
     static let motionNames: KeyValuePairs<String, String> = [

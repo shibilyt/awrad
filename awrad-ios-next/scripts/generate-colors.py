@@ -9,8 +9,8 @@ Writes two files, both committed:
 
 Nothing reads contracts/ at runtime. Run without arguments to rewrite both files. With --check
 (scripts/validate), it fails when either committed file differs from what the contract generates:
-the freshness check. A state key other than `opacity` and `use` fails, so a new token can't be
-silently dropped.
+the freshness check. An unknown top-level group, a role key other than `use`, `light` and `dark`, or a
+state key other than `opacity` and `use` fails, so a new token can't be silently dropped.
 """
 import json
 import re
@@ -25,6 +25,9 @@ ACCENT_ROLE = "accent"
 HEX = re.compile(r"^#([0-9A-F]{6})([0-9A-F]{2})?$")
 NAME = re.compile(r"^[a-z][A-Za-z]*$")
 STATE_KEYS = {"opacity", "use"}
+ROLE_KEYS = {"use", "light", "dark"}
+# `palette` and `contrast` are checked by contracts/tools, not used by the app.
+TOP_KEYS = {"version", "description", "palette", "roles", "contrast", "states"}
 
 
 def rgba(value: str, where: str) -> str:
@@ -39,6 +42,9 @@ def load() -> dict:
     tokens = json.loads(CONTRACT.read_text(encoding="utf-8"))
     if tokens.get("version") != 1:
         raise SystemExit("colors: expected version 1")
+    unknown = set(tokens) - TOP_KEYS
+    if unknown:
+        raise SystemExit(f"colors: colors.json has {sorted(unknown)}, which iOS doesn't generate yet")
     return tokens
 
 
@@ -63,6 +69,9 @@ def load_roles(tokens: dict) -> dict[str, dict[str, str]]:
     for name, role in tokens["roles"].items():
         if not NAME.match(name):
             raise SystemExit(f"colors: role {name!r} isn't a lowerCamelCase name")
+        unknown = set(role) - ROLE_KEYS
+        if unknown:
+            raise SystemExit(f"colors: role {name!r} has {sorted(unknown)}, which iOS doesn't generate yet")
         roles[name] = {
             "use": " ".join(role["use"].split()),
             "light": rgba(role["light"], f"{name}.light"),
