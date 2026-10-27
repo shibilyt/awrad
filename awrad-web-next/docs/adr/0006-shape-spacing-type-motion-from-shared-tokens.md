@@ -20,6 +20,6 @@ For the web, motion is decided to be fades only: `motion.json`'s durations, easi
 ## Consequences
 
 - Changing a radius, space, size, text style or timing means changing the contract; the web follows with `npm run tokens:design`.
-- A value the tokens don't cover can't be written in a class. Content widths (`max-w-page`, `max-w-dialog`) are web-only layout and live in `theme.css`; border, outline and stroke widths, z-index and opacity are still numbers.
-- Some screens changed where the tokens differ from the old literals (headings 22, body 15, buttons 48 tall, cards 24, dialog 32, page margin 20); ARCHITECTURE.md lists them.
+- A value the tokens don't cover can't be written in a class. Content widths (`max-w-content`, `max-w-dialog`), line widths (`border-field-error`, `border-checkbox`, the focus ring) and the disabled opacity (`opacity-disabled`) come from the tokens too; z-index and the pressed and pending opacities are still numbers.
+- Some screens changed where the tokens differ from the old literals (headings 22, body 15, buttons and fields 56 tall, cards 24, dialog 32, page margin 20); ARCHITECTURE.md lists them.
 - `contentSwap.fadeOut` isn't used: outgoing content is removed at once, since fading it out would mean keeping removed elements alive.
