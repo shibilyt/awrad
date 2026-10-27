@@ -13,14 +13,24 @@ export function mainTabOf(pathname: string): "home" | "library" {
 }
 
 /**
+ * Whether a path shows the bottom bar: not on pages pushed onto a tab (a collection, a dhikr),
+ * which have their own Back; on every other page, including Home and `/library`.
+ */
+export function showsBottomBar(pathname: string): boolean {
+  return !/^\/library\/(?:collections|dhikrs)\//.test(pathname);
+}
+
+/**
  * The frame around every page: a top bar with the app name (home) and the language picker, the
- * page, and the floating bottom bar (Home, Library), whose items are links. It pads everything by
+ * page, and the floating bottom bar (Home, Library), whose items are links; pushed pages
+ * (`showsBottomBar`) have none. It pads everything by
  * the safe-area insets (index.html has `viewport-fit=cover`), so nothing sits under a notch or the
  * home indicator; the page is padded to clear the bar.
  */
 export function AppShell({ children }: { children: ReactNode }): ReactElement {
   const { t } = useTranslation();
-  const selected = mainTabOf(useRouterState({ select: (state) => state.location.pathname }));
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const selected = mainTabOf(pathname);
   const items: BottomBarItem[] = [
     { id: "home", label: t("nav.home"), icon: HomeIcon, href: "/" },
     { id: "library", label: t("nav.library"), icon: LibraryIcon, href: "/library" },
@@ -37,11 +47,15 @@ export function AppShell({ children }: { children: ReactNode }): ReactElement {
           end={<LanguagePicker />}
         />
       </header>
-      <BottomBar label={t("nav.label")} items={items} selectedKey={selected}>
-        <div className="page-transition flex flex-col">
-          <BottomBarPanel id={selected}>{children}</BottomBarPanel>
-        </div>
-      </BottomBar>
+      {showsBottomBar(pathname) ? (
+        <BottomBar label={t("nav.label")} items={items} selectedKey={selected}>
+          <div className="page-transition flex flex-col">
+            <BottomBarPanel id={selected}>{children}</BottomBarPanel>
+          </div>
+        </BottomBar>
+      ) : (
+        <div className="page-transition flex flex-col">{children}</div>
+      )}
     </div>
   );
 }

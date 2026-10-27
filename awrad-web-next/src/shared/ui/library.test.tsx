@@ -9,7 +9,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState, type ReactElement } from "react";
 import { describe, expect, test, vi } from "vitest";
-import { mainTabOf } from "./AppShell";
+import { mainTabOf, showsBottomBar } from "./AppShell";
 import { Card } from "./Card";
 import { CollectionTile } from "./CollectionTile";
 import { SearchField } from "./SearchField";
@@ -55,7 +55,6 @@ describe("SearchField", () => {
     return (
       <SearchField
         label="Search dhikrs"
-        placeholder="Search"
         value={value}
         onChange={(next) => {
           setValue(next);
@@ -70,7 +69,7 @@ describe("SearchField", () => {
     render(<Controlled onChange={onChange} />);
 
     const box = screen.getByRole("searchbox", { name: "Search dhikrs" });
-    expect(box).toHaveAttribute("placeholder", "Search");
+    expect(box).toHaveAttribute("placeholder", "Search dhikrs");
     await userEvent.type(box, "ya");
     expect(onChange).toHaveBeenLastCalledWith("ya");
 
@@ -95,5 +94,13 @@ describe("main tabs", () => {
     expect(mainTabOf("/")).toBe("home");
     expect(mainTabOf("/account")).toBe("home");
     expect(mainTabOf("/library-old")).toBe("home");
+  });
+
+  test("the bottom bar shows on the tabs, not on pages pushed onto them", () => {
+    expect(showsBottomBar("/")).toBe(true);
+    expect(showsBottomBar("/library")).toBe(true);
+    expect(showsBottomBar("/account")).toBe(true);
+    expect(showsBottomBar("/library/collections/ramadan")).toBe(false);
+    expect(showsBottomBar("/library/dhikrs/tahleel")).toBe(false);
   });
 });

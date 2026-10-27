@@ -107,7 +107,8 @@ interface IconOnlyProps extends AriaProps {
 
 /**
  * A round `primary` button with an `onPrimary` icon: `regular` (48, the + on My Goals) or
- * `small` (32, a collection tile's arrow) inside a 48 touch target.
+ * `small` (32, a collection tile's arrow) inside a 48 touch target. A regular one `isPending`
+ * (audio loading) shows the progress indicator in place of its icon.
  */
 export function RoundButton({
   icon: ButtonIcon,
@@ -119,12 +120,12 @@ export function RoundButton({
       <AriaButton
         {...props}
         className={cx(
-          "flex size-round-button shrink-0 items-center justify-center rounded-round-button",
+          "relative flex size-round-button shrink-0 items-center justify-center rounded-round-button",
           "bg-primary text-on-primary",
           STATES,
         )}
       >
-        <ButtonIcon size="icon" />
+        {({ isPending }) => (isPending ? <PendingIndicator /> : <ButtonIcon size="icon" />)}
       </AriaButton>
     );
   }

@@ -119,8 +119,11 @@ describe("tokens.gen.css: type and motion", () => {
     expect(root).toContain("--awrad-text-quran-font-family: var(--font-arabic);");
     expect(css).toContain("@utility text-quran {\n  font-family: var(--awrad-text-quran-font-family);\n}");
     const ownFamily = Object.entries(tokens.typography.styles).filter(([, style]) => style.fontFamily !== undefined);
-    expect(ownFamily.map(([style]) => style)).toEqual(["quran", "quranLine"]);
+    expect(ownFamily.map(([style]) => style)).toEqual(["quran", "quranLine", "nameOfAllah"]);
     expect(css).toContain("@utility text-quran-line {\n  font-family: var(--awrad-text-quran-line-font-family);\n}");
+    expect(css).toContain(
+      "@utility text-name-of-allah {\n  font-family: var(--awrad-text-name-of-allah-font-family);\n}",
+    );
     expect(root.match(/-font-family:/g)).toHaveLength(ownFamily.length);
     expect(FONT_KEYS[tokens.typography.fontFamily]).toBe("sans");
   });

@@ -73,7 +73,6 @@ export function LibraryPage(): ReactElement {
         <div className="px-page-margin">
           <SearchField
             label={t("library.search.label")}
-            placeholder={t("library.search.placeholder")}
             value={query}
             onChange={(value) => {
               setQuery(value);

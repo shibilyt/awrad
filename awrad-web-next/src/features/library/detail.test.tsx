@@ -42,7 +42,8 @@ describe("dhikr detail by kind", () => {
 
     expect(await screen.findByRole("heading", { level: 1, name: "Ya Rahman" })).toBeInTheDocument();
     const name = screen.getByText("يَا رَحْمَٰنُ");
-    expect(name).toHaveClass("text-large-title", "font-arabic");
+    expect(name).toHaveClass("text-name-of-allah");
+    expect(screen.getByText("The Most Merciful")).toHaveClass("text-title");
     expect(name).toHaveAttribute("dir", "rtl");
     expect(screen.getByText("The Most Merciful")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Transliteration" })).not.toBeInTheDocument();
@@ -91,7 +92,7 @@ describe("tags, virtues and references", () => {
   test("catalog tags show as chips", async () => {
     renderRoute("/library/dhikrs/swalath-for-debt");
 
-    const tags = await screen.findByRole("list", { name: "Tags" });
+    const tags = await screen.findByRole("region", { name: "Tags" });
     expect(within(tags).getByRole("listitem")).toHaveTextContent("Debt");
     expect(screen.queryByRole("region", { name: "Virtues" })).not.toBeInTheDocument();
   });
@@ -101,6 +102,7 @@ describe("audio", () => {
   test("the round button plays and pauses an <audio> element on the catalog's URL", async () => {
     const play = vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(function (this: HTMLMediaElement) {
       this.dispatchEvent(new Event("play"));
+      this.dispatchEvent(new Event("playing"));
       return Promise.resolve();
     });
     const pause = vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(function (this: HTMLMediaElement) {
@@ -119,6 +121,48 @@ describe("audio", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Pause audio" }));
     expect(pause).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole("button", { name: "Play audio" })).toBeInTheDocument();
+  });
+
+  test("the bar shows the position and time as the audio plays; loading shows the progress indicator", async () => {
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(function (this: HTMLMediaElement) {
+      this.dispatchEvent(new Event("play"));
+      this.dispatchEvent(new Event("waiting"));
+      return Promise.resolve();
+    });
+    renderRoute("/library/dhikrs/surah-ikhlas");
+
+    const position = await screen.findByRole("progressbar", { name: "Playback position" });
+    expect(position).toHaveAttribute("aria-valuetext", "0:00");
+    await userEvent.click(screen.getByRole("button", { name: "Play audio" }));
+    expect(await screen.findByRole("progressbar", { name: "Loading" })).toBeInTheDocument();
+
+    const audio = document.querySelector("audio");
+    if (audio === null) throw new Error("no audio element");
+    // What a browser reports 14.4 s into a 26 s recording.
+    Object.defineProperties(audio, { duration: { value: 26 }, currentTime: { value: 14.4 } });
+    fireEvent.playing(audio);
+    fireEvent.durationChange(audio);
+    fireEvent.timeUpdate(audio);
+
+    expect(screen.queryByRole("progressbar", { name: "Loading" })).not.toBeInTheDocument();
+    expect(position).toHaveAttribute("aria-valuetext", "0:14 / 0:26");
+    expect(position).toHaveAttribute("aria-valuenow", String((14.4 / 26) * 100));
+    expect(screen.getByText("0:14 / 0:26")).toBeInTheDocument();
+  });
+
+  test("playback pauses when the page is hidden and when the page is left", async () => {
+    const pause = vi.spyOn(HTMLMediaElement.prototype, "pause").mockImplementation(() => undefined);
+    const { unmount } = renderRoute("/library/dhikrs/surah-ikhlas");
+    await screen.findByRole("button", { name: "Play audio" });
+
+    // jsdom's media elements are always paused; report playing as a browser would.
+    vi.spyOn(HTMLMediaElement.prototype, "paused", "get").mockReturnValue(false);
+    vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+    fireEvent(document, new Event("visibilitychange"));
+    expect(pause).toHaveBeenCalledTimes(1);
+
+    unmount();
+    expect(pause).toHaveBeenCalledTimes(2);
   });
 
   test("a recording that can't play says so", async () => {

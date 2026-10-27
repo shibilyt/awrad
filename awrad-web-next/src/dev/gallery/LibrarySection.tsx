@@ -66,14 +66,9 @@ function SearchFields(): ReactElement {
   const [filled, setFilled] = useState(t("sample.searchValue"));
   return (
     <Specimen title={t("specimen.searchField")}>
-      <SearchField
-        label={t("sample.searchLabel")}
-        placeholder={t("sample.searchPlaceholder")}
-        value={query}
-        onChange={setQuery}
-      />
+      <SearchField label={t("sample.searchLabel")} value={query} onChange={setQuery} />
       <SearchField label={t("sample.searchLabel")} value={filled} onChange={setFilled} />
-      <SearchField label={t("sample.searchLabel")} placeholder={t("sample.searchPlaceholder")} isDisabled />
+      <SearchField label={t("sample.searchLabel")} isDisabled />
     </Specimen>
   );
 }

@@ -6,14 +6,16 @@ import { BackButton, TopBar } from "@/shared/ui/TopBar";
 
 /**
  * A top bar with Back: to the previous page (a collection, a search), or to the Library when
- * this page was opened directly.
+ * this page was opened directly. With a `title`, the bar also shows it as the page's heading, in
+ * `title`, cut off with an ellipsis when it doesn't fit.
  */
-export function BackBar(): ReactElement {
+export function BackBar({ title }: { title?: string }): ReactElement {
   const router = useRouter();
   const navigate = useNavigate();
   const canGoBack = useCanGoBack();
   return (
     <TopBar
+      {...(title === undefined ? {} : { title: <h1 className="truncate">{title}</h1> })}
       start={
         <BackButton
           onPress={() => {
