@@ -308,3 +308,14 @@ Use this format:
   - Motion: Material 3 Expressive springs (values only; PixelPlayer's code is proprietary and never copied), one duration scale, and named motions. Android keeps the frozen app's scale-and-fade page transitions with screen depth; iOS uses the native push and native sheet; the web fades only. Reduced motion turns every movement into a 150 ms linear cross-fade; haptics stay.
 - Evidence: `contracts/design-tokens/v1/README.md`
 - Commit: see git log
+
+### 2026-10-27 — Design system: key components and icons
+
+- Area: Cross-project
+- Change:
+  - `contracts/design-system/v1/components.md` specifies the key components from the "awrad - app" designs: containers (card, content sheet, bottom sheet, dialog, option row), buttons (main, secondary, error, text, round, icon), inputs (text field with the label above, checkbox, switch, segmented pills) and navigation (top bar, step indicator, large-title header, floating bottom bar). Feature components are built on these in their slices.
+  - Decided against the designs: the main button stays brand green (not black/white); disabled is 38% opacity; off-palette greens map to the palette (`secondaryContainer`, `onPrimaryVariant`). The bottom bar has the one shadow, light mode only. On a `surface`, secondary fills use `background`.
+  - One icon set on every platform: Material Symbols Rounded outline, weight 300 (Apache 2.0), in `contracts/design-tokens/v1/icons/` with checksums; each app generates its icons and bans platform icon sets. Loading indicators stay platform-native.
+  - Each app has a debug-only component gallery (light/dark, LTR/RTL) as the review surface.
+- Evidence: `contracts/design-system/v1/components.md`, `contracts/design-tokens/v1/README.md`
+- Commit: see git log
