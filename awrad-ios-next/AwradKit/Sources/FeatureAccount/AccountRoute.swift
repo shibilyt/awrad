@@ -47,18 +47,22 @@ struct AccountScreen: View {
         .tint(AwradColors.accent)
     }
 
-    @ViewBuilder private var root: some View {
-        switch state.phase {
-        case .loading:
-            ProgressView()
-                .tint(AwradColors.progress)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(AwradColors.background)
-        case .signedOut:
-            SignInForm(state: state, send: send)
-        case .signedIn(let email):
-            AccountOverview(email: email, state: state, send: send)
+    /// Loading, sign in and the overview swap in place with the `contentSwap` fade.
+    private var root: some View {
+        Group {
+            switch state.phase {
+            case .loading:
+                ProgressView()
+                    .tint(AwradColors.progress)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(AwradColors.background)
+            case .signedOut:
+                SignInForm(state: state, send: send)
+            case .signedIn(let email):
+                AccountOverview(email: email, state: state, send: send)
+            }
         }
+        .awradContentSwap(value: state.phase)
     }
 
     @ViewBuilder private func destination(_ step: AccountModel.Step) -> some View {

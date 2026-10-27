@@ -25,38 +25,52 @@ extension EnvironmentValues {
 }
 
 extension View {
-    /// A card: a `surface` fill, with every control inside told it sits on a surface. Rows inside
-    /// are separated by spacing, never by divider lines.
-    public func awradCard(cornerRadius: CGFloat = 14) -> some View {
-        background(AwradColors.surface, in: RoundedRectangle(cornerRadius: cornerRadius))
+    /// A card: a `surface` fill in the `card` shape (or another role's), with every control inside
+    /// told it sits on a surface. Rows inside are separated by spacing, never by divider lines.
+    public func awradCard(_ corner: AwradCorner = AwradRadius.card) -> some View {
+        background(AwradColors.surface, in: corner.shape)
             .environment(\.awradContainer, .surface)
     }
 
     /// A text field's look: filled by its container, no border at rest or in focus (the cursor, in
     /// `accent`, and the keyboard show focus), and an `error` border only while `isInError`, which
     /// is always shown with the error message.
-    public func awradField(isInError: Bool = false, cornerRadius: CGFloat = 14) -> some View {
-        modifier(AwradFieldStyle(isInError: isInError, cornerRadius: cornerRadius))
+    public func awradField(isInError: Bool = false) -> some View {
+        modifier(AwradFieldStyle(isInError: isInError))
+    }
+
+    /// A control's disabled look (colors.json `states.disabled`): when the environment says it isn't
+    /// enabled, it keeps its own colours and is drawn at `AwradState.disabledOpacity`.
+    public func awradDisabledAppearance() -> some View {
+        modifier(DisabledAppearance())
+    }
+}
+
+private struct DisabledAppearance: ViewModifier {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        content.opacity(isEnabled ? 1 : AwradState.disabledOpacity)
     }
 }
 
 private struct AwradFieldStyle: ViewModifier {
     let isInError: Bool
-    let cornerRadius: CGFloat
     @Environment(\.awradContainer) private var container
 
     func body(content: Content) -> some View {
-        let shape = RoundedRectangle(cornerRadius: cornerRadius)
+        let shape = AwradRadius.field.shape
         content
-            .font(AwradFonts.body())
+            .font(AwradFonts.font(.input))
             .foregroundStyle(AwradColors.onSurface)
             .tint(AwradColors.accent)
-            .padding(.horizontal, 16)
-            .frame(minHeight: 52)
+            .padding(.horizontal, AwradSpacing.lg)
+            .frame(minHeight: AwradSize.control)
             .background(container.controlFill, in: shape)
             .overlay {
                 if isInError {
-                    shape.strokeBorder(AwradColors.error, lineWidth: 1.5)
+                    // The error border is the one line a field draws.
+                    shape.strokeBorder(AwradColors.error, lineWidth: AwradStroke.fieldError)
                 }
             }
     }
@@ -75,17 +89,17 @@ private struct AwradContainerPreview: View {
     @State private var text = ""
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: AwradSpacing.lg) {
             field(prompt: "On the background")
             field(prompt: "In error", isInError: true)
-            VStack(spacing: 12) {
+            VStack(spacing: AwradSpacing.rowGap) {
                 field(prompt: "On a card")
                 field(prompt: "On a card, in error", isInError: true)
             }
-            .padding(16)
+            .padding(AwradSpacing.cardPadding)
             .awradCard()
         }
-        .padding(28)
+        .padding(AwradSpacing.pageMargin)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AwradColors.background)
     }

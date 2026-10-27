@@ -202,5 +202,11 @@
       "background": "error",
       "minimum": 4.5
     }
-  ]
+  ],
+  "states": {
+    "disabled": {
+      "opacity": 0.38,
+      "use": "A disabled control keeps its colours and is drawn at this opacity; no separate disabled colours"
+    }
+  }
 }

@@ -15,6 +15,7 @@ struct RootView: View {
     }
 
     var body: some View {
+        // Onboarding and home swap in place with the `contentSwap` fade.
         Group {
             switch destination {
             case .onboarding:
@@ -31,11 +32,13 @@ struct RootView: View {
                 )
                 .sheet(isPresented: $showsAccount) {
                     AccountRoute(service: composition.account) { showsAccount = false }
+                        .awradSheet()
                 }
             case nil:
                 AwradColors.background.ignoresSafeArea()
             }
         }
+        .awradContentSwap(value: destination)
         .task {
             destination = await composition.onboardingStatus.isOnboarded() ? .home : .onboarding
         }
@@ -48,21 +51,21 @@ struct HomePlaceholderView: View {
     let onRestartOnboarding: () -> Void
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AwradSpacing.rowGap) {
             Text("home.placeholder.title")
-                .font(AwradFonts.headline())
+                .awradTextStyle(.title)
                 .foregroundStyle(AwradColors.onSurface)
             Text("home.placeholder.body")
-                .font(AwradFonts.body())
+                .awradTextStyle(.body)
                 .foregroundStyle(AwradColors.onSurfaceVariant)
                 .multilineTextAlignment(.center)
             AwradPrimaryButton("home.placeholder.account", action: onShowAccount)
-                .padding(.top, 24)
+                .padding(.top, AwradSpacing.xl2)
             Button("home.placeholder.restart", action: onRestartOnboarding)
                 .tint(AwradColors.accent)
-                .padding(.top, 12)
+                .padding(.top, AwradSpacing.md)
         }
-        .padding(28)
+        .padding(AwradSpacing.pageMargin)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AwradColors.background)
     }

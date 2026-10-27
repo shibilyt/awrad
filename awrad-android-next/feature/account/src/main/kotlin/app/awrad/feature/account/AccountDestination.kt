@@ -2,6 +2,7 @@ package app.awrad.feature.account
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
+import app.awrad.core.designsystem.motion.AwradPage
 import kotlinx.serialization.Serializable
 
 /**
@@ -13,7 +14,7 @@ public data object AccountDestination
 
 /** The feature's whole public interface: one destination and one exit callback. */
 public fun NavGraphBuilder.accountScreen(onBack: () -> Unit) {
-    composable<AccountDestination> {
-        AccountRoute(onBack = onBack)
+    composable<AccountDestination> { entry ->
+        AwradPage(scope = this, key = entry) { AccountRoute(onBack = onBack) }
     }
 }

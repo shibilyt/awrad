@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "description": "Spacing and sizes in dp / pt / CSS px, on a 4-point grid (2 for hairline gaps). Screens use a role or a scale name, never a number.",
+  "scale": {
+    "none": 0,
+    "xxs": 2,
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 20,
+    "2xl": 24,
+    "3xl": 32,
+    "4xl": 40,
+    "5xl": 48
+  },
+  "roles": {
+    "pageMargin": {
+      "space": "xl",
+      "use": "Left and right margin of a screen"
+    },
+    "sectionGap": {
+      "space": "xl",
+      "use": "Between sections and cards on a screen"
+    },
+    "cardPadding": {
+      "space": "lg",
+      "use": "Inside a card"
+    },
+    "rowGap": {
+      "space": "md",
+      "use": "Between rows or items in a group"
+    },
+    "inlineGap": {
+      "space": "sm",
+      "use": "Between an icon and its text, or small inline items"
+    }
+  },
+  "sizes": {
+    "touchTarget": {
+      "value": 48,
+      "use": "Minimum size of anything tappable"
+    },
+    "listRow": {
+      "value": 56,
+      "use": "Height of a standard row (goal row, settings row)"
+    },
+    "icon": {
+      "value": 24,
+      "use": "Standard icon"
+    },
+    "iconSmall": {
+      "value": 20,
+      "use": "Small icon inside text or chips"
+    },
+    "ringSmall": {
+      "value": 36,
+      "use": "Progress ring in a goal row"
+    },
+    "ringStroke": {
+      "value": 4,
+      "use": "Stroke of small progress rings"
+    },
+    "control": {
+      "value": 56,
+      "use": "Height of buttons and text fields"
+    },
+    "logo": {
+      "value": 148,
+      "use": "The Awrad logo on welcome and sign-in screens"
+    },
+    "contentMaxWidth": {
+      "value": 448,
+      "use": "Widest a page's content column grows (web, tablets)"
+    },
+    "dialogMaxWidth": {
+      "value": 384,
+      "use": "Widest a dialog grows (web, tablets)"
+    }
+  }
+}

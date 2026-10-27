@@ -1,4 +1,17 @@
-# Design tokens v1: colours
+# Design tokens v1
+
+The design system's single source for Android, iOS and web: colours, fonts, shapes, spacing, type and motion. Each app generates its code from these files, and its build fails on drift. **Screens use tokens by name, never a raw number or colour.** To change the look or feel of the app, edit these files and regenerate.
+
+| File | What |
+|---|---|
+| `colors.json` | Colour roles, light and dark (below) |
+| `fonts/` | Font files, checksums, licences (`fonts/README.md`) |
+| `shape.json` | Corner radii: a scale and named roles |
+| `spacing.json` | Spacing scale, named roles, standard sizes |
+| `typography.json` | Named text styles |
+| `motion.json` | Easings, durations, springs, haptics, named motions, reduced motion |
+
+## Colours
 
 The colour roles Android, iOS and web use, light and dark (design system, decided 2026-10-26). Each app's theme is checked against `colors.json`, so the three can't drift.
 
@@ -36,8 +49,107 @@ Rules for screens:
 - **Text fields are filled, never outlined:**
   - The fill is `surface` on a `background`, or `background` on a `surface` card.
   - On mobile, focus is shown by the cursor and keyboard only.
+- **Disabled controls keep their colours** and are drawn at `states.disabled.opacity` (38%). There are no disabled colours.
 - **Secondary buttons and unselected pills are filled** like fields. A selected pill or chip is `primaryContainer`.
 - **Rows inside a card are separated by spacing,** not divider lines.
 - **The app icon artwork is exempt** (Android launcher background `#D5FFDC`) until the icon is redesigned.
 - **`#23553C` is never text on a dark background.** It reads at only 2.2 : 1 there. Dark-mode accent text is `accent`, the pale green.
 - **Surfaces stack as `background` → `surface`.** In dark mode a surface is darker than the background (black on `#121412`), as in the design.
+
+## Shapes (`shape.json`)
+
+- **The scale:** 4, 8, 12, 16, 20, 24, 28, 32, and fully rounded. 4 is only for a checkbox's box.
+- **Roles:**
+  - `card` 24;
+  - `tile`, `button` and `field` 16;
+  - `chip`, `roundButton` and `navPill` fully rounded;
+  - `navBar` 28;
+  - `sheet`, `dialog` and `screenDepth` 32;
+  - `checkbox` 4.
+- **Corners are continuous** (squircle) where the platform makes it cheap:
+  - iOS uses `.continuous`;
+  - Android uses a small in-house smooth-corner shape;
+  - the web uses `corner-shape: squircle` where supported, and plain rounding elsewhere.
+
+- **Strokes** (`strokes`) list every line the design allows (see the no-outline rules above):
+  - `fieldError` 1.5;
+  - `checkbox` 2;
+  - `focusRing` 2, offset 2 (web keyboard focus).
+
+## Spacing (`spacing.json`)
+
+- **The scale:** 2, 4, 8, 12, 16, 20, 24, 32, 40, 48.
+- **Roles:**
+  - `pageMargin` 20;
+  - `sectionGap` 20;
+  - `cardPadding` 16;
+  - `rowGap` 12;
+  - `inlineGap` 8.
+- **Sizes:**
+  - `touchTarget` 48;
+  - `listRow` 56;
+  - icons 24 and 20;
+  - the small ring 36, with stroke 4;
+  - `control` 56, the height of buttons and text fields;
+  - `logo` 148;
+  - `contentMaxWidth` 448 and `dialogMaxWidth` 384, for the web and tablets.
+
+## Type (`typography.json`)
+
+- Named styles from `title` (22) to `navLabel` (11), plus `counter` (56, with tabular digits).
+- `input` (16) is the text typed into fields; 16 stops iOS Safari zooming in.
+- `quran` (24 on a 44 line height) sets Qur'anic and dhikr Arabic in Noto Naskh Arabic. It's the only style with its own `fontFamily`, and it's never used for interface text.
+- `counter` keeps a 64 line height, tighter than the font's natural 70, on purpose.
+- iOS scales every style with Dynamic Type, relative to its `iosTextStyle`.
+
+## Motion (`motion.json`)
+
+Building blocks:
+- **Easings:**
+  - `emphasized` (0.2, 0, 0, 1);
+  - `decelerate` for things entering;
+  - `accelerate` for things leaving;
+  - `linear` for fades (`contentSwap`, the reduced-motion cross-fade). The press-in uses `emphasized`.
+- **Durations:**
+  - `fade` 100;
+  - `color` 150;
+  - `short` 250;
+  - `medium` 300;
+  - `page` 350;
+  - `long` 450.
+- **Springs** (dampingRatio, stiffness, mass 1):
+  - `spatial` (0.8, 380) for anything that moves;
+  - `spatialFast` (0.6, 800) and `spatialSlow` (0.8, 200);
+  - `effects` (1.0, 1600) for colour and opacity, which never bounces;
+  - `bouncy` (0.5, 1500) for small pops;
+  - `bouncySoft` (0.5, 200) for soft entrances.
+- **Spring conversion:**
+  - iOS: `response = 2π / √stiffness`, `dampingFraction = dampingRatio`.
+  - Web, where springs are needed: `damping = 2·dampingRatio·√stiffness`.
+- **Haptics:**
+  - `tick` for a count, a tab or a step;
+  - `threshold` for crossing a release point;
+  - `success` for reaching a target.
+
+Named motions (`motions`) say which platforms use them:
+- **Page transitions on Android:** `pagePush` / `pagePop` (scale and fade); `screenDepth` makes the page behind round to 32 and dim to 0.34.
+- **Page transitions on iOS:** the native push.
+- **Tabs:** `tabSwitch`.
+- **Navigation pill:** `navPill`.
+- **Touch feedback:** `press`.
+- **Counting:**
+  - `countTap`: a light tick, the number rolls, and a 1.04 pop;
+  - `countComplete`;
+  - `ringFill`.
+- **Sheets on Android:** `sheet` (follows the finger, settles with the fling speed in dp per second, corners go to 0 at full height). iOS uses the native sheet.
+- **Expanding sections:** `expand`.
+- **Lists:** `listAppear`.
+- **Swapping text in place:** `contentSwap`.
+- **Web:** `webPage`, a fade only.
+
+**Reduced motion:** when the system asks for it, every movement, scale and spring becomes a 150 ms cross-fade. Haptics stay. The web follows `prefers-reduced-motion`.
+
+The motion values combine three sources:
+- **The frozen Android app's motion:** page transitions, the screen-depth corners, the nav pill and press feedback.
+- **Material 3 Expressive spring values,** which PixelPlayer also uses. Its code is proprietary, so only numbers and ideas are reused, never code.
+- **A unified timing,** replacing the frozen apps' 16 different durations.

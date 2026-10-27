@@ -26,13 +26,14 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import app.awrad.core.designsystem.component.AwradLinearProgress
+import app.awrad.core.designsystem.motion.AwradContentSwap
 import app.awrad.core.designsystem.theme.AwradTheme
 
 /**
  * The frame of every account page: Back, the title, a progress line while [isBusy], the [status], then
- * [content]. Scrolls, and keeps clear of system bars and the keyboard.
+ * [content]. Scrolls, and keeps clear of system bars and the keyboard. A new title, the progress line and the
+ * status cross-fade in place (`contentSwap`).
  */
 @Composable
 internal fun AccountPage(
@@ -49,8 +50,8 @@ internal fun AccountPage(
                 .safeDrawingPadding()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 28.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .padding(horizontal = AwradTheme.spacing.pageMargin, vertical = AwradTheme.spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.lg),
         ) {
             IconButton(onClick = onBack) {
                 Icon(
@@ -58,13 +59,14 @@ internal fun AccountPage(
                     contentDescription = stringResource(R.string.account_action_back),
                 )
             }
-            Text(
-                text = title,
-                modifier = Modifier.semantics { heading() },
-                style = MaterialTheme.typography.headlineMedium,
-            )
-            BusyIndicator(isBusy = isBusy)
-            if (status != null) StatusMessage(status = status)
+            AwradContentSwap(targetState = title, label = "title") { text ->
+                Text(text = text, modifier = Modifier.semantics { heading() }, style = AwradTheme.type.title)
+            }
+            // One item, so an absent status adds no gap.
+            Column {
+                BusyIndicator(isBusy = isBusy)
+                StatusMessage(status = status)
+            }
             content()
         }
     }
@@ -73,20 +75,31 @@ internal fun AccountPage(
 /** Keeps its height while idle, so the form doesn't jump when a request starts. */
 @Composable
 private fun BusyIndicator(isBusy: Boolean, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxWidth().height(4.dp)) {
-        if (isBusy) AwradLinearProgress()
+    Box(modifier = modifier.fillMaxWidth().height(AwradTheme.sizes.ringStroke)) {
+        AwradContentSwap(targetState = isBusy, label = "busy") { busy ->
+            if (busy) AwradLinearProgress()
+        }
     }
 }
 
-/** Announced by screen readers when it changes. */
+/**
+ * Announced by screen readers when it changes. Appearing, changing and going, it cross-fades in place while the
+ * page makes room for it (`contentSwap`).
+ */
 @Composable
-private fun StatusMessage(status: PageStatus, modifier: Modifier = Modifier) {
-    Text(
-        text = status.text,
-        modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite },
-        style = MaterialTheme.typography.bodyMedium,
-        color = if (status.isError) AwradTheme.colors.error else AwradTheme.colors.accent,
-    )
+private fun StatusMessage(status: PageStatus?, modifier: Modifier = Modifier) {
+    AwradContentSwap(targetState = status, modifier = modifier, label = "status") { shown ->
+        if (shown != null) {
+            Text(
+                text = shown.text,
+                modifier = Modifier
+                    .padding(top = AwradTheme.spacing.lg)
+                    .semantics { liveRegion = LiveRegionMode.Polite },
+                style = AwradTheme.type.bodySmall,
+                color = if (shown.isError) AwradTheme.colors.error else AwradTheme.colors.accent,
+            )
+        }
+    }
 }
 
 /** The status for an error, or else a notice; null when there's neither. */

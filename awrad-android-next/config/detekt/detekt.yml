@@ -103,8 +103,9 @@ Compose:
     active: true
     # The design system's colour roles that Material's ColorScheme lacks (AwradTheme.colors), and the container
     # a field or secondary button sits on, which picks its fill since the design has no outlines (AwradCard sets
-    # it; like Material's LocalContentColor, it's ambient by nature).
-    allowedCompositionLocals: LocalAwradColors,LocalAwradContainer
+    # it; like Material's LocalContentColor, it's ambient by nature). The motion for the system's reduced-motion
+    # setting (AwradTheme.motion), and the page transitions of the NavHost around a page (its screen depth).
+    allowedCompositionLocals: LocalAwradColors,LocalAwradContainer,LocalAwradMotion,LocalAwradPageTransitions
   ContentEmitterReturningValues:
     active: true
   ModifierClickableOrder:

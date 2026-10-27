@@ -55,6 +55,16 @@ struct AwradColorsTests {
         #expect(app == contract)
     }
 
+    /// A disabled control keeps its colours at `states.disabled.opacity`; every state is generated.
+    @Test func everyStateOpacityMatchesTheContract() throws {
+        let states = try DesignTokenContract.object(DesignTokenContract.json("colors")["states"], "states")
+        let expected = try states.mapValues { spec in
+            try DesignTokenContract.number(DesignTokenContract.object(spec, "state")["opacity"], "opacity")
+        }
+        #expect(DesignTokenContract.dictionary(AwradState.opacities) == expected)
+        #expect(AwradState.disabledOpacity == 0.38)
+    }
+
     @Test(arguments: [ColorScheme.light, .dark])
     func everyRoleResolvesToItsContractValue(scheme: ColorScheme) throws {
         let roles = try Self.tokens().roles

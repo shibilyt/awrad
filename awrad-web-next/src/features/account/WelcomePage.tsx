@@ -10,7 +10,7 @@ import { currentAccountQuery } from "./api";
 
 const route = getRouteApi("/");
 
-function SessionStatus(): ReactElement {
+function SessionStatusContent(): ReactElement {
   const { t } = useTranslation();
   const account = useQuery(currentAccountQuery);
 
@@ -27,7 +27,7 @@ function SessionStatus(): ReactElement {
     return (
       <>
         <p className="text-on-surface-variant">{t("home.signedOut")}</p>
-        <div className="flex gap-6">
+        <div className="flex gap-2xl">
           <TextLink to="/sign-in">{t("home.signIn")}</TextLink>
           <TextLink to="/register">{t("home.register")}</TextLink>
         </div>
@@ -44,14 +44,31 @@ function SessionStatus(): ReactElement {
   );
 }
 
+/** Where this browser's session stands. Each state fades in as it replaces "Checking…" (`content-swap`). */
+function SessionStatus(): ReactElement {
+  const account = useQuery(currentAccountQuery);
+  const state = account.isPending
+    ? "checking"
+    : account.isError
+      ? "unavailable"
+      : account.data === null
+        ? "signedOut"
+        : "signedIn";
+  return (
+    <div key={state} className="content-swap flex flex-col items-center gap-2xl">
+      <SessionStatusContent />
+    </div>
+  );
+}
+
 /** Home: a greeting and where this browser's session stands, from `get_current_account`. */
 export function WelcomePage(): ReactElement {
   const { t } = useTranslation();
   const { notice } = route.useSearch();
   return (
-    <main className="mx-auto flex max-w-md flex-col items-center gap-6 px-7 py-12 text-center">
+    <main className="mx-auto flex max-w-content flex-col items-center gap-2xl px-page-margin py-5xl text-center">
       <LogoMark />
-      <h1 className="text-3xl font-semibold text-on-surface">{t("app.title")}</h1>
+      <h1 className="text-title text-on-surface">{t("app.title")}</h1>
       <FormNotice message={notice === undefined ? null : t(`home.notice.${notice}`)} />
       <SessionStatus />
     </main>

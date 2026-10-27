@@ -15,12 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.core.designsystem.component.AwradPrimaryButton
 import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.domain.onboarding.OnboardingStatusStore
 import app.awrad.next.R
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -55,24 +55,24 @@ fun HomePlaceholderRoute(
         Column(
             modifier = Modifier
                 .safeDrawingPadding()
-                .padding(horizontal = 28.dp, vertical = 40.dp),
+                .padding(horizontal = AwradTheme.spacing.pageMargin, vertical = AwradTheme.spacing.xl4),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
                 text = stringResource(R.string.home_placeholder_title),
-                style = MaterialTheme.typography.headlineMedium,
+                style = AwradTheme.type.title,
             )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(AwradTheme.spacing.rowGap))
             Text(
                 text = stringResource(R.string.home_placeholder_body),
-                style = MaterialTheme.typography.bodyLarge,
+                style = AwradTheme.type.body,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(AwradTheme.spacing.xl2))
             AwradPrimaryButton(text = stringResource(R.string.home_placeholder_account), onClick = onOpenAccount)
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(AwradTheme.spacing.inlineGap))
             AwradTextButton(
                 text = stringResource(R.string.home_placeholder_restart),
                 onClick = { viewModel.restartOnboarding(onRestartOnboarding) },

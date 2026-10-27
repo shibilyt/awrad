@@ -15,7 +15,8 @@
         "description",
         "palette",
         "roles",
-        "contrast"
+        "contrast",
+        "states"
       ],
       "properties": {
         "version": {
@@ -81,6 +82,405 @@
                 "type": "number",
                 "minimum": 1
               }
+            }
+          }
+        },
+        "states": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "disabled"
+          ],
+          "properties": {
+            "disabled": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "opacity",
+                "use"
+              ],
+              "properties": {
+                "opacity": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "exclusiveMaximum": 1
+                },
+                "use": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "shape": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "description",
+        "corners",
+        "scale",
+        "roles",
+        "strokes"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "corners": {
+          "enum": [
+            "continuous",
+            "circular"
+          ]
+        },
+        "scale": {
+          "type": "object",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "const": "full"
+              }
+            ]
+          }
+        },
+        "roles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "radius",
+              "use"
+            ],
+            "properties": {
+              "radius": {
+                "type": "string",
+                "pattern": "^[a-z0-9][A-Za-z0-9]*$"
+              },
+              "use": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "strokes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "width",
+              "use"
+            ],
+            "properties": {
+              "width": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "offset": {
+                "type": "number",
+                "minimum": 0
+              },
+              "use": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "spacing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "description",
+        "scale",
+        "roles",
+        "sizes"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "scale": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "roles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "space",
+              "use"
+            ],
+            "properties": {
+              "space": {
+                "type": "string",
+                "pattern": "^[a-z0-9][A-Za-z0-9]*$"
+              },
+              "use": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "sizes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "value",
+              "use"
+            ],
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0
+              },
+              "use": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "typography": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "description",
+        "fontFamily",
+        "styles"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "fontFamily": {
+          "type": "string"
+        },
+        "styles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "size",
+              "lineHeight",
+              "weight",
+              "iosTextStyle",
+              "use"
+            ],
+            "properties": {
+              "size": {
+                "type": "number",
+                "minimum": 0
+              },
+              "lineHeight": {
+                "type": "number",
+                "minimum": 0
+              },
+              "weight": {
+                "enum": [
+                  400,
+                  500,
+                  600,
+                  700
+                ]
+              },
+              "iosTextStyle": {
+                "enum": [
+                  "largeTitle",
+                  "title",
+                  "title2",
+                  "title3",
+                  "headline",
+                  "subheadline",
+                  "body",
+                  "callout",
+                  "footnote",
+                  "caption",
+                  "caption2"
+                ]
+              },
+              "tabularNumbers": {
+                "type": "boolean"
+              },
+              "tracking": {
+                "type": "number"
+              },
+              "use": {
+                "type": "string"
+              },
+              "fontFamily": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "motion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "description",
+        "easing",
+        "duration",
+        "spring",
+        "haptic",
+        "motions",
+        "reducedMotion"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "easing": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "duration": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2000
+          }
+        },
+        "spring": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "dampingRatio",
+              "stiffness",
+              "use"
+            ],
+            "properties": {
+              "dampingRatio": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 1
+              },
+              "stiffness": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "use": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "haptic": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "use",
+              "android",
+              "ios"
+            ],
+            "properties": {
+              "use": {
+                "type": "string"
+              },
+              "android": {
+                "type": "string"
+              },
+              "ios": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "motions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "platforms",
+              "use"
+            ],
+            "properties": {
+              "platforms": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "enum": [
+                    "android",
+                    "ios",
+                    "web"
+                  ]
+                }
+              },
+              "use": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "reducedMotion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "replaceWith",
+            "duration",
+            "use",
+            "easing"
+          ],
+          "properties": {
+            "replaceWith": {
+              "const": "crossfade"
+            },
+            "duration": {
+              "type": "string",
+              "pattern": "^[a-z0-9][A-Za-z0-9]*$"
+            },
+            "use": {
+              "type": "string"
+            },
+            "easing": {
+              "type": "string",
+              "pattern": "^[a-z0-9][A-Za-z0-9]*$"
             }
           }
         }

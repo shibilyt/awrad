@@ -12,22 +12,22 @@ struct AccountOverview: View {
 
     var body: some View {
         AccountForm(title: Strings.title, message: Strings.signedInNote, feedback: state.feedback) {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: AwradSpacing.xs) {
                 Text(Strings.signedInLabel)
-                    .font(AwradFonts.body(14))
+                    .awradTextStyle(.bodySmall)
                     .foregroundStyle(AwradColors.onSurfaceVariant)
                 AddressText(address: email)
             }
-            .padding(16)
+            .padding(AwradSpacing.cardPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
             .awradCard()
             // Rows in a card are separated by spacing, not divider lines.
-            VStack(spacing: 4) {
+            VStack(spacing: AwradSpacing.xs) {
                 SettingsRow(symbol: "laptopcomputer.and.iphone", title: Strings.devicesRow) { send(.devicesTapped) }
                 SettingsRow(symbol: "key", title: Strings.changePasswordRow) { send(.changePasswordTapped) }
                 SettingsRow(symbol: "envelope", title: Strings.changeEmailRow) { send(.changeEmailTapped) }
             }
-            .padding(.vertical, 6)
+            .padding(.vertical, AwradSpacing.xs)
             .awradCard()
             SettingsRow(symbol: "trash", title: Strings.deleteAccountRow, isDestructive: true) {
                 send(.deleteAccountTapped)
@@ -48,23 +48,23 @@ struct SettingsRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 16) {
+            HStack(spacing: AwradSpacing.lg) {
                 Image(systemName: symbol)
-                    .frame(width: 20)
+                    .frame(width: AwradSize.iconSmall)
                     .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.accent)
                 Text(title)
-                    .font(AwradFonts.body())
+                    .awradTextStyle(.body)
                     .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.onSurface)
-                Spacer(minLength: 8)
+                Spacer(minLength: AwradSpacing.sm)
                 Image(systemName: "chevron.forward")
-                    .font(.footnote.weight(.semibold))
+                    .font(AwradFonts.font(.caption))
                     .foregroundStyle(AwradColors.onSurfaceVariant)
             }
-            .padding(.horizontal, 16)
-            .frame(minHeight: 52)
+            .padding(.horizontal, AwradSpacing.cardPadding)
+            .frame(minHeight: AwradSize.listRow)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.awradPress(.card))
     }
 }
 
@@ -148,15 +148,15 @@ struct DeleteAccountForm: View {
         AccountForm(title: Strings.deleteTitle, message: Strings.deleteBody, feedback: state.feedback) {
             Label {
                 Text(Strings.deleteLocalNote)
-                    .font(AwradFonts.body())
+                    .awradTextStyle(.body)
                     .foregroundStyle(AwradColors.onPrimaryContainer)
             } icon: {
                 Image(systemName: "iphone")
                     .foregroundStyle(AwradColors.onPrimaryContainer)
             }
-            .padding(16)
+            .padding(AwradSpacing.cardPadding)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AwradColors.primaryContainer, in: RoundedRectangle(cornerRadius: 14))
+            .background(AwradColors.primaryContainer, in: AwradRadius.card.shape)
             AccountField(
                 kind: .password, label: Strings.currentPasswordField, text: state.currentPassword,
                 isInError: state.isInError(.currentPassword)

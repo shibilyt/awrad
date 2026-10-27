@@ -8,6 +8,8 @@ export const router = createRouter({
   routeTree,
   context: { queryClient },
   defaultPreload: "intent",
+  // Page changes fade (src/shared/ui/motion.css) where the browser has view transitions.
+  defaultViewTransition: true,
 });
 
 declare module "@tanstack/react-router" {

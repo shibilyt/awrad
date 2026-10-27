@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// The one full-width call to action per screen. A destructive one (deleting something for
-/// good) is drawn in the error colour.
+/// The one full-width call to action per screen: a filled `button` shape that presses in. A
+/// destructive one (deleting something for good) is drawn in the error colour.
 public struct AwradPrimaryButton: View {
     private let title: LocalizedStringResource
     private let isEnabled: Bool
@@ -20,17 +20,43 @@ public struct AwradPrimaryButton: View {
 
     public var body: some View {
         Button(action: action) {
-            label.foregroundStyle(isDestructive ? AwradColors.onError : AwradColors.onPrimary)
+            Text(title)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(isDestructive ? AwradColors.error : AwradColors.primary)
-        .clipShape(RoundedRectangle(cornerRadius: 18))
+        .buttonStyle(PrimaryStyle(isDestructive: isDestructive))
         .disabled(!isEnabled)
     }
+}
 
-    private var label: some View {
-        Text(title)
-            .font(AwradFonts.title())
-            .frame(maxWidth: .infinity, minHeight: 56)
+private struct PrimaryStyle: ButtonStyle {
+    let isDestructive: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        PrimaryLabel(configuration: configuration, isDestructive: isDestructive)
+    }
+}
+
+private struct PrimaryLabel: View {
+    let configuration: ButtonStyleConfiguration
+    let isDestructive: Bool
+    var body: some View {
+        configuration.label
+            .awradTextStyle(.button)
+            .multilineTextAlignment(.center)
+            .foregroundStyle(foreground)
+            .padding(.horizontal, AwradSpacing.lg)
+            .frame(maxWidth: .infinity, minHeight: AwradSize.control)
+            .background(fill, in: AwradRadius.button.shape)
+            .contentShape(AwradRadius.button.shape)
+            // Disabled, it keeps its colours at the disabled opacity.
+            .awradDisabledAppearance()
+            .awradPressed(configuration.isPressed, kind: .button)
+    }
+
+    private var fill: Color {
+        isDestructive ? AwradColors.error : AwradColors.primary
+    }
+
+    private var foreground: Color {
+        isDestructive ? AwradColors.onError : AwradColors.onPrimary
     }
 }

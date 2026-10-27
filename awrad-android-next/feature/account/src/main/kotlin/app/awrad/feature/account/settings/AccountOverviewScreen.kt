@@ -19,9 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import app.awrad.core.designsystem.component.AwradCard
 import app.awrad.core.designsystem.component.AwradSecondaryButton
+import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.domain.account.Account
 import app.awrad.feature.account.AccountPage
 import app.awrad.feature.account.BodyText
@@ -38,17 +38,20 @@ internal fun AccountOverviewScreen(
     AccountPage(title = stringResource(R.string.account_title_signed_in), onBack = onBack, modifier = modifier) {
         Text(
             text = stringResource(R.string.account_signed_in_as),
-            style = MaterialTheme.typography.labelLarge,
+            style = AwradTheme.type.label,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Text(
             text = account.email,
-            style = MaterialTheme.typography.titleLarge,
+            style = AwradTheme.type.cardTitle,
             color = MaterialTheme.colorScheme.onSurface,
         )
         BodyText(text = stringResource(R.string.account_signed_in_body))
         // Grouped on a card, as in the design; rows are separated by their own padding, never divider lines.
-        AwradCard(contentPadding = PaddingValues(vertical = 8.dp), spacing = 0.dp) {
+        AwradCard(
+            contentPadding = PaddingValues(vertical = AwradTheme.spacing.sm),
+            spacing = AwradTheme.spacing.none,
+        ) {
             SettingsLink(
                 icon = Icons.Filled.Devices,
                 title = R.string.account_link_devices,
@@ -97,8 +100,8 @@ private fun SettingsLink(
             leadingIconColor = color,
         ),
         leadingContent = { Icon(imageVector = icon, contentDescription = null) },
-        headlineContent = { Text(text = stringResource(title)) },
-        supportingContent = detail?.let { { Text(text = stringResource(it)) } },
+        headlineContent = { Text(text = stringResource(title), style = AwradTheme.type.rowTitle) },
+        supportingContent = detail?.let { { Text(text = stringResource(it), style = AwradTheme.type.bodySmall) } },
         trailingContent = {
             Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
         },

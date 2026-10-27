@@ -297,3 +297,14 @@ Use this format:
   - The font files and `SHA256SUMS` are in `contracts/design-tokens/v1/fonts/`. Each app's validation checks its copies against them.
 - Evidence: `contracts/design-tokens/v1/fonts/README.md`
 - Commit: see git log
+
+### 2026-10-27 — Design system: shape, spacing, type and motion tokens
+
+- Area: Cross-project
+- Change:
+  - `contracts/design-tokens/v1/` adds `shape.json`, `spacing.json`, `typography.json` and `motion.json`. Each app generates code from them, fails validation on drift, and rejects raw sizes, radii, text styles and animation values in screens.
+  - Corners are continuous; sheets, dialogs and the screen-depth corner are 32, cards 24, buttons and fields 16 (checkbox 4). Buttons and fields are 56 high. Lines are only the strokes listed in `shape.json`. Disabled controls are drawn at 38% opacity, with no disabled colours.
+  - Type: eleven interface styles plus `input` (16, so iOS Safari doesn't zoom) and `quran` (Noto Naskh Arabic 24/44, the only style with its own font).
+  - Motion: Material 3 Expressive springs (values only; PixelPlayer's code is proprietary and never copied), one duration scale, and named motions. Android keeps the frozen app's scale-and-fade page transitions with screen depth; iOS uses the native push and native sheet; the web fades only. Reduced motion turns every movement into a 150 ms linear cross-fade; haptics stay.
+- Evidence: `contracts/design-tokens/v1/README.md`
+- Commit: see git log

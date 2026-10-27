@@ -109,6 +109,78 @@ for (const { foreground, background, minimum } of tokens.contrast ?? []) {
   }
 }
 
+// Shape, spacing, type and motion: schema-valid, and every name a token refers to exists.
+const shape = read("design-tokens/v1/shape.json");
+const spacing = read("design-tokens/v1/spacing.json");
+const typography = read("design-tokens/v1/typography.json");
+const motion = read("design-tokens/v1/motion.json");
+validate(
+  "design-tokens/v1/shape.json",
+  "urn:awrad:design-tokens:1#/$defs/shape",
+  shape,
+);
+validate(
+  "design-tokens/v1/spacing.json",
+  "urn:awrad:design-tokens:1#/$defs/spacing",
+  spacing,
+);
+validate(
+  "design-tokens/v1/typography.json",
+  "urn:awrad:design-tokens:1#/$defs/typography",
+  typography,
+);
+validate(
+  "design-tokens/v1/motion.json",
+  "urn:awrad:design-tokens:1#/$defs/motion",
+  motion,
+);
+const refs = (file, owner, value, table, kind) => {
+  if (!(value in (table ?? {})))
+    problems.push(`${file}: ${owner} names unknown ${kind} "${value}"`);
+};
+for (const [name, role] of Object.entries(shape.roles ?? {}))
+  refs("shape.json", name, role.radius, shape.scale, "radius");
+for (const [name, role] of Object.entries(spacing.roles ?? {}))
+  refs("spacing.json", name, role.space, spacing.scale, "space");
+// In motion.json, fields ending in Spring/spring name a spring, duration-like fields a duration, Easing/easing an easing,
+// haptic a haptic, radius a shape role.
+const motionRef = (owner, key, value) => {
+  if (typeof value !== "string") return;
+  if (/^spring$|Spring$/.test(key))
+    refs("motion.json", `${owner}.${key}`, value, motion.spring, "spring");
+  else if (/^duration$|Duration$|^fadeIn$|^fadeOut$/.test(key))
+    refs("motion.json", `${owner}.${key}`, value, motion.duration, "duration");
+  else if (/^easing$|Easing$/.test(key))
+    refs("motion.json", `${owner}.${key}`, value, motion.easing, "easing");
+  else if (key === "haptic")
+    refs("motion.json", `${owner}.${key}`, value, motion.haptic, "haptic");
+  else if (key === "radius")
+    refs("motion.json", `${owner}.${key}`, value, shape.roles, "shape role");
+};
+const walk = (owner, node) => {
+  for (const [key, value] of Object.entries(node)) {
+    if (value && typeof value === "object" && !Array.isArray(value))
+      walk(`${owner}.${key}`, value);
+    else motionRef(owner, key, value);
+  }
+};
+for (const [name, spec] of Object.entries(motion.motions ?? {}))
+  walk(name, spec);
+refs(
+  "motion.json",
+  "reducedMotion.duration",
+  motion.reducedMotion?.duration,
+  motion.duration,
+  "duration",
+);
+refs(
+  "motion.json",
+  "reducedMotion.easing",
+  motion.reducedMotion?.easing,
+  motion.easing,
+  "easing",
+);
+
 // Fonts: every file listed in SHA256SUMS exists and matches, and every .ttf is listed.
 const fontsDir = "design-tokens/v1/fonts";
 const sums = readFileSync(join(root, fontsDir, "SHA256SUMS"), "utf8")
@@ -130,11 +202,23 @@ for (const file of readdirSync(join(root, fontsDir)).filter((f) =>
     problems.push(`${fontsDir}/${file}: not listed in SHA256SUMS`);
 }
 
+// Every font family a text style names is bundled: "Noto Naskh Arabic" needs notonaskharabic_*.ttf.
+const ttfs = readdirSync(join(root, fontsDir)).filter((f) => f.endsWith(".ttf"));
+for (const [name, style] of Object.entries({ "": { fontFamily: typography.fontFamily }, ...typography.styles })) {
+  const family = style.fontFamily;
+  if (family === undefined) continue;
+  const prefix = family.toLowerCase().replaceAll(" ", "") + "_";
+  if (!ttfs.some((f) => f.startsWith(prefix)))
+    problems.push(`typography.json: ${name || "fontFamily"} uses "${family}", which has no file in ${fontsDir}`);
+}
+
 if (problems.length) {
   for (const p of problems) console.error(p);
   process.exit(1);
 }
 console.log(
   `catalogs: Hijri table ${starts.length - 1} months valid; ${keys.size} goal presets valid; ` +
-    `${Object.keys(tokens.roles).length} colour roles, ${pairs} contrast checks pass; ${sums.length} font files match`,
+    `${Object.keys(tokens.roles).length} colour roles, ${pairs} contrast checks pass; ${sums.length} font files match; ` +
+    `${Object.keys(shape.roles).length} shape, ${Object.keys(spacing.roles).length} spacing, ` +
+    `${Object.keys(typography.styles).length} type and ${Object.keys(motion.motions).length} motion tokens valid`,
 );
