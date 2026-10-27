@@ -9,10 +9,11 @@
  */
 @import "./colors.gen.css";
 /*
- * Shapes, spacing, sizes, text styles and motion: generated from
- * contracts/design-tokens/v1/{shape,spacing,typography,motion}.json. Tailwind's own
- * scales are removed, so classes name tokens (rounded-card, p-card-padding,
- * gap-row-gap, min-h-touch-target, text-title); ARCHITECTURE.md lists them.
+ * Shapes, line widths, spacing, sizes, content widths, text styles and motion: generated
+ * from contracts/design-tokens/v1/{shape,spacing,typography,motion}.json. Tailwind's own
+ * scales are removed, so classes name tokens (rounded-card, border-checkbox,
+ * p-card-padding, gap-row-gap, min-h-control, max-w-content, text-title);
+ * ARCHITECTURE.md lists them.
  * Motion is fades only (motion.css).
  */
 @import "./tokens.gen.css";
@@ -23,7 +24,8 @@
  * keeps public/fonts identical to them). Interface text is Google Sans Flex Rounded.
  * It has no Arabic or Malayalam glyphs, so text in those scripts falls back, glyph by
  * glyph, to the system font for that script through the --font-sans stack. Noto Naskh
- * Arabic is only for Qur'anic and dhikr text: the font-arabic class, never the interface.
+ * Arabic is only for Qur'anic and dhikr text, never the interface: the text-quran style
+ * (typography.json gives it this family, so the generator points it at --font-arabic).
  */
 @font-face {
   font-family: "Google Sans Flex Rounded";
@@ -77,14 +79,6 @@
 @theme {
   --font-sans: "Google Sans Flex Rounded", system-ui, sans-serif;
   --font-arabic: "Noto Naskh Arabic", serif;
-  /*
-   * Content widths (max-w-page, max-w-dialog): web-only layout, so not in the shared
-   * tokens (phones are screen-wide). Tailwind's container scale is removed: its names
-   * (max-w-md, …) would read like the spacing scale.
-   */
-  --container-*: initial;
-  --container-page: 28rem;
-  --container-dialog: 24rem;
 }
 
 :root {
@@ -92,14 +86,16 @@
 }
 
 /*
- * Keyboard focus: a 2px accent outline, offset so it stays visible next to a
- * primary fill. Accent reads at 4.5 : 1 or more on every background in both themes.
+ * Keyboard focus: an accent outline the `focusRing` stroke wide (shape.json), offset so
+ * it stays visible next to a primary fill. Accent reads at 4.5 : 1 or more on every
+ * background in both themes. Fields and the checkbox draw the same ring from React Aria's
+ * data-focus-visible with outline-focus-ring outline-offset-focus-ring outline-accent.
  */
 @utility focus-ring {
   outline: none;
   &:focus-visible {
-    outline: 2px solid --theme(--color-accent);
-    outline-offset: 2px;
+    outline: var(--awrad-stroke-focus-ring) solid --theme(--color-accent);
+    outline-offset: var(--awrad-stroke-focus-ring-offset);
   }
 }
 

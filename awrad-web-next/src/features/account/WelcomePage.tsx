@@ -66,7 +66,7 @@ export function WelcomePage(): ReactElement {
   const { t } = useTranslation();
   const { notice } = route.useSearch();
   return (
-    <main className="mx-auto flex max-w-page flex-col items-center gap-2xl px-page-margin py-5xl text-center">
+    <main className="mx-auto flex max-w-content flex-col items-center gap-2xl px-page-margin py-5xl text-center">
       <LogoMark />
       <h1 className="text-title text-on-surface">{t("app.title")}</h1>
       <FormNotice message={notice === undefined ? null : t(`home.notice.${notice}`)} />

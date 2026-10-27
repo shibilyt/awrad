@@ -16,7 +16,12 @@ describe("colors.gen.css", () => {
   });
 
   test("has every role, light in :root and dark under prefers-color-scheme, alpha kept", () => {
-    expect(roles).toHaveLength(Object.keys(tokens.roles).length);
+    // One colour per role in each scheme, and nothing else: `states` are opacities, not colours.
+    expect(Object.keys(tokens)).toContain("states");
+    expect(Object.keys(tokens.roles)).not.toContain("disabled");
+    expect(light.match(/--awrad-color-[\w-]+:/g)).toHaveLength(roles.length);
+    expect(dark.match(/--awrad-color-[\w-]+:/g)).toHaveLength(roles.length);
+    expect(css).not.toMatch(/--(?:awrad-)?color-(?:states|disabled)/);
     expect(light).toContain(":root {");
     for (const [role, value] of roles) {
       expect(light).toContain(`--awrad-color-${kebab(role)}: ${value.light};`);
@@ -30,6 +35,24 @@ describe("colors.gen.css", () => {
     expect(theme).toContain("--color-*: initial;");
     for (const [role] of roles) expect(theme).toContain(`--color-${kebab(role)}: var(--awrad-color-${kebab(role)});`);
     expect(kebab("onPrimaryContainer")).toBe("on-primary-container");
+  });
+
+  test("draws states at their opacity: a property and an opacity-<state> class, outside the theme", () => {
+    const states = css.slice(css.indexOf("/* States"));
+    expect(tokens.states.disabled.opacity).toBe(0.38);
+    expect(states).toContain(":root {\n  --awrad-state-disabled-opacity: 0.38;\n}");
+    expect(states).toContain("@utility opacity-disabled {\n  opacity: var(--awrad-state-disabled-opacity);\n}");
+    expect(css.indexOf("/* States")).toBeGreaterThan(css.indexOf("@theme inline"));
+    expect(theme.split("}")[0]).not.toContain("disabled");
+  });
+
+  test("works without states, and rejects an opacity outside 0…1", () => {
+    const withoutStates = structuredClone(tokens);
+    delete withoutStates.states;
+    expect(renderColorsCss(withoutStates)).not.toContain("--awrad-state-");
+    expect(() => renderColorsCss({ ...tokens, states: { disabled: { opacity: 38, use: "" } } })).toThrow(
+      /states\.disabled\.opacity/,
+    );
   });
 
   test("rejects a value that isn't #RRGGBB or #RRGGBBAA", () => {

@@ -6,6 +6,7 @@
 
 :root {
   /* Corner radii (shape.json): the scale, then the roles. */
+  --awrad-radius-xxs: 4px;
   --awrad-radius-xs: 8px;
   --awrad-radius-sm: 12px;
   --awrad-radius-md: 16px;
@@ -25,8 +26,15 @@
   --awrad-radius-sheet: var(--awrad-radius-3xl);
   --awrad-radius-dialog: var(--awrad-radius-3xl);
   --awrad-radius-screen-depth: var(--awrad-radius-3xl);
+  --awrad-radius-checkbox: var(--awrad-radius-xxs);
 
-  /* Spacing (spacing.json): the scale, the roles, then the standard sizes. */
+  /* Line widths (shape.json strokes), the only lines: a width and, for a ring, its offset. */
+  --awrad-stroke-field-error: 1.5px;
+  --awrad-stroke-checkbox: 2px;
+  --awrad-stroke-focus-ring: 2px;
+  --awrad-stroke-focus-ring-offset: 2px;
+
+  /* Spacing (spacing.json): the scale, the roles, then the standard sizes and content widths. */
   --awrad-space-none: 0px;
   --awrad-space-xxs: 2px;
   --awrad-space-xs: 4px;
@@ -49,6 +57,10 @@
   --awrad-size-icon-small: 20px;
   --awrad-size-ring-small: 36px;
   --awrad-size-ring-stroke: 4px;
+  --awrad-size-control: 56px;
+  --awrad-size-logo: 148px;
+  --awrad-size-content-max-width: 448px;
+  --awrad-size-dialog-max-width: 384px;
 
   /* Text styles (typography.json), in rem (1rem = 16px) so they follow the browser's text size. */
   --awrad-text-title-size: 1.375rem;
@@ -66,6 +78,9 @@
   --awrad-text-body-size: 0.9375rem;
   --awrad-text-body-line-height: 1.375rem;
   --awrad-text-body-weight: 400;
+  --awrad-text-input-size: 1rem;
+  --awrad-text-input-line-height: 1.375rem;
+  --awrad-text-input-weight: 400;
   --awrad-text-body-small-size: 0.875rem;
   --awrad-text-body-small-line-height: 1.25rem;
   --awrad-text-body-small-weight: 400;
@@ -84,11 +99,16 @@
   --awrad-text-counter-size: 3.5rem;
   --awrad-text-counter-line-height: 4rem;
   --awrad-text-counter-weight: 700;
+  --awrad-text-quran-size: 1.5rem;
+  --awrad-text-quran-line-height: 2.75rem;
+  --awrad-text-quran-weight: 400;
+  --awrad-text-quran-font-family: var(--font-arabic);
 
   /* Motion (motion.json). The web uses only fades: durations, easings, its motions and reducedMotion. */
   --awrad-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --awrad-ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
   --awrad-ease-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --awrad-ease-linear: cubic-bezier(0, 0, 1, 1);
   --awrad-duration-fade: 100ms;
   --awrad-duration-color: 150ms;
   --awrad-duration-short: 250ms;
@@ -97,20 +117,23 @@
   --awrad-duration-long: 450ms;
   --awrad-motion-content-swap-fade-in: var(--awrad-duration-color);
   --awrad-motion-content-swap-fade-out: var(--awrad-duration-fade);
+  --awrad-motion-content-swap-easing: var(--awrad-ease-linear);
   --awrad-motion-web-page-fade-in: var(--awrad-duration-color);
   --awrad-motion-web-page-fade-out: var(--awrad-duration-fade);
   --awrad-motion-web-page-easing: var(--awrad-ease-emphasized);
   --awrad-reduced-motion-duration: var(--awrad-duration-color);
+  --awrad-reduced-motion-easing: var(--awrad-ease-linear);
 }
 
 /*
- * Tailwind: these are the only radii, spacing, sizes, text styles and weights.
- * Tailwind's defaults (rounded-xl, p-4, text-sm, leading-*, tracking-*, ease-*,
+ * Tailwind: these are the only radii, spacing, sizes, content widths, text styles and weights.
+ * Tailwind's defaults (rounded-xl, p-4, max-w-md, text-sm, leading-*, tracking-*, ease-*,
  * animate-*) are removed, so classes name a token: rounded-card, p-card-padding,
- * gap-row-gap, min-h-touch-target, text-title, font-semibold.
+ * gap-row-gap, min-h-control, max-w-content, text-title, font-semibold.
  */
 @theme inline {
   --radius-*: initial;
+  --radius-xxs: var(--awrad-radius-xxs);
   --radius-xs: var(--awrad-radius-xs);
   --radius-sm: var(--awrad-radius-sm);
   --radius-md: var(--awrad-radius-md);
@@ -130,6 +153,7 @@
   --radius-sheet: var(--awrad-radius-sheet);
   --radius-dialog: var(--awrad-radius-dialog);
   --radius-screen-depth: var(--awrad-radius-screen-depth);
+  --radius-checkbox: var(--awrad-radius-checkbox);
   --spacing-*: initial;
   --spacing-0: var(--awrad-space-none);
   --spacing-xxs: var(--awrad-space-xxs);
@@ -153,6 +177,11 @@
   --spacing-icon-small: var(--awrad-size-icon-small);
   --spacing-ring-small: var(--awrad-size-ring-small);
   --spacing-ring-stroke: var(--awrad-size-ring-stroke);
+  --spacing-control: var(--awrad-size-control);
+  --spacing-logo: var(--awrad-size-logo);
+  --container-*: initial;
+  --container-content: var(--awrad-size-content-max-width);
+  --container-dialog: var(--awrad-size-dialog-max-width);
   --text-*: initial;
   --text-title: var(--awrad-text-title-size);
   --text-title--line-height: var(--awrad-text-title-line-height);
@@ -169,6 +198,9 @@
   --text-body: var(--awrad-text-body-size);
   --text-body--line-height: var(--awrad-text-body-line-height);
   --text-body--font-weight: var(--awrad-text-body-weight);
+  --text-input: var(--awrad-text-input-size);
+  --text-input--line-height: var(--awrad-text-input-line-height);
+  --text-input--font-weight: var(--awrad-text-input-weight);
   --text-body-small: var(--awrad-text-body-small-size);
   --text-body-small--line-height: var(--awrad-text-body-small-line-height);
   --text-body-small--font-weight: var(--awrad-text-body-small-weight);
@@ -187,6 +219,9 @@
   --text-counter: var(--awrad-text-counter-size);
   --text-counter--line-height: var(--awrad-text-counter-line-height);
   --text-counter--font-weight: var(--awrad-text-counter-weight);
+  --text-quran: var(--awrad-text-quran-size);
+  --text-quran--line-height: var(--awrad-text-quran-line-height);
+  --text-quran--font-weight: var(--awrad-text-quran-weight);
   --font-weight-*: initial;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -198,9 +233,42 @@
   --animate-*: initial;
 }
 
-/* Text styles with tabular digits. */
+/*
+ * Line widths (shape.json strokes): each stroke as a border width (border-field-error,
+ * border-checkbox) or a solid outline (outline-focus-ring, with outline-offset-focus-ring).
+ * Pair with a colour role: border-error, outline-accent.
+ */
+@utility border-field-error {
+  border-width: var(--awrad-stroke-field-error);
+}
+@utility outline-field-error {
+  outline-style: solid;
+  outline-width: var(--awrad-stroke-field-error);
+}
+@utility border-checkbox {
+  border-width: var(--awrad-stroke-checkbox);
+}
+@utility outline-checkbox {
+  outline-style: solid;
+  outline-width: var(--awrad-stroke-checkbox);
+}
+@utility border-focus-ring {
+  border-width: var(--awrad-stroke-focus-ring);
+}
+@utility outline-focus-ring {
+  outline-style: solid;
+  outline-width: var(--awrad-stroke-focus-ring);
+}
+@utility outline-offset-focus-ring {
+  outline-offset: var(--awrad-stroke-focus-ring-offset);
+}
+
+/* Text styles with tabular digits or their own font family. */
 @utility text-counter {
   font-variant-numeric: tabular-nums;
+}
+@utility text-quran {
+  font-family: var(--awrad-text-quran-font-family);
 }
 
 /*
@@ -208,6 +276,7 @@
  * supports it, plain rounding elsewhere. Fully rounded shapes (chips, round buttons) stay round.
  */
 @theme inline reference {
+  --corner-shape-xxs: squircle;
   --corner-shape-xs: squircle;
   --corner-shape-sm: squircle;
   --corner-shape-md: squircle;
@@ -223,6 +292,7 @@
   --corner-shape-sheet: squircle;
   --corner-shape-dialog: squircle;
   --corner-shape-screen-depth: squircle;
+  --corner-shape-checkbox: squircle;
 }
 @utility rounded-* {
   @supports (corner-shape: squircle) {

@@ -9,12 +9,18 @@
 //   - radius classes that aren't a shape token: rounded, rounded-none, rounded-[…];
 //   - text classes that aren't a text style, colour role or alignment: text-sm, text-2xl;
 //     leading-* and tracking-* (text styles carry them); weights the text styles don't use;
-//   - numeric spacing and sizes: p-4, gap-1.5, min-h-11, size-5, p-px (use a spacing token);
+//   - numeric spacing and sizes: p-4, gap-1.5, min-h-11, h-12, size-5, p-px (use a spacing
+//     token such as min-h-control);
+//   - max widths that aren't a content width or spacing token: max-w-page, max-w-prose;
+//   - border, outline and ring widths: border, border-2, outline-2, outline-offset-2, ring
+//     (use a stroke: border-checkbox, border-field-error, outline-focus-ring);
+//   - numeric opacity on a disabled control: disabled:opacity-50 (use opacity-disabled);
 //   - animation classes: animate-*, transition*, duration-*, delay-*, ease-* (motion is
 //     fades only, in motion.css).
 // In hand-written CSS (outside the generated files):
-//   - raw durations and easing functions (use --awrad-duration-*, --awrad-ease-*);
-//   - raw lengths in radius, spacing and text declarations.
+//   - raw durations, easing functions and easing keywords in animations and transitions
+//     (use --awrad-duration-*, --awrad-ease-*);
+//   - raw lengths in radius, spacing, text, border-width and outline declarations.
 import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -47,9 +53,14 @@ const CSS_RULES = [
   { name: "raw duration", pattern: /(?<![\w-])\d*\.?\d+m?s\b/g },
   { name: "raw easing", pattern: /\b(?:cubic-bezier|steps|linear)\(/g },
   {
+    name: "raw easing",
+    pattern:
+      /\b(?:animation|transition)(?:-timing-function)?\s*:[^;]*?(?<![\w-])(?:linear|ease(?:-in|-out|-in-out)?|step-start|step-end)(?![\w-])/g,
+  },
+  {
     name: "raw length",
     pattern:
-      /\b(?:border(?:-[a-z]+)*-radius|font-size|line-height|letter-spacing|(?:padding|margin|inset|scroll-padding|scroll-margin)(?:-[a-z]+)*|gap|row-gap|column-gap)\s*:[^;]*?\d(?:px|rem|em|pt|%)/g,
+      /\b(?:border(?:-[a-z]+)*-(?:radius|width)|border(?:-(?:top|right|bottom|left|block|inline)(?:-start|-end)?)?|outline(?:-width|-offset)?|font-size|line-height|letter-spacing|(?:padding|margin|inset|scroll-padding|scroll-margin)(?:-[a-z]+)*|gap|row-gap|column-gap)\s*:[^;]*?\d(?:px|rem|em|pt|%)/g,
   },
 ];
 
@@ -77,6 +88,13 @@ const FONT_FAMILIES = new Set(["sans", "arabic"]);
 const SPACING =
   /^(?:p[xytrblse]?|m[xytrblse]?|gap(?:-[xy])?|space-[xy]|inset(?:-[xy])?|top|right|bottom|left|start|end|(?:min-|max-)?[wh]|size|translate-[xy]|scroll-[mp][xytrblse]?|indent|basis)-(.+)$/;
 const MOTION = /^(?:animate|transition|duration|delay|ease)(?:-|$)/;
+/** Line widths in px (border, border-2, border-x, outline-2, outline-offset-2, ring, divide-y): shape.json strokes name them. */
+const LINE_WIDTH =
+  /^(?:border(?:-(?:[xytrblse]|s[se]|e[se]))?|outline(?:-offset)?|ring(?:-offset)?|inset-ring|divide-[xy])(?:-(?:\d*\.?\d+|px))?$/;
+/** max-w-* keywords that aren't lengths. */
+const MAX_WIDTH_KEYWORDS = new Set(["none", "full", "min", "max", "fit", "screen", "dvw", "svw", "lvw", "auto"]);
+/** Variants that style a disabled control. */
+const DISABLED = /^(?:(?:group|peer)-)?(?:disabled|data-disabled|aria-disabled)$/;
 
 /** The vocabulary the generated theme defines (tokens.gen.css, colors.gen.css). */
 export function vocabulary() {
@@ -86,18 +104,15 @@ export function vocabulary() {
     radius: new Set(names.radius),
     text: new Set([...names.text, ...roles]),
     font: new Set([...names.weight, ...FONT_FAMILIES]),
+    maxWidth: new Set([...names.container, ...names.space, ...MAX_WIDTH_KEYWORDS]),
   };
 }
 
 /** Why a single class (`md:rounded-xl`, `p-[13px]`) isn't allowed, or null when it is. */
 export function classProblem(candidate, vocab) {
   // Drop variants (hover:, data-[pressed]:, group-data-selected:) and the important flag.
-  const utility =
-    candidate
-      .split(/:(?![^[]*\])/)
-      .pop()
-      ?.replace(/^!|!$/g, "")
-      .replace(/^-/, "") ?? "";
+  const variants = candidate.split(/:(?![^[]*\])/);
+  const utility = variants.pop()?.replace(/^!|!$/g, "").replace(/^-/, "") ?? "";
   if (/^[a-z][\w-]*-[[(]|^\[[\w-]+:/.test(utility)) return "arbitrary value";
   const radius = /^rounded(?:-(.+))?$/.exec(utility);
   if (radius) {
@@ -116,6 +131,14 @@ export function classProblem(candidate, vocab) {
   if (font) return vocab.font.has(font[1] ?? "") ? null : "font weight that no text style uses";
   const spacing = SPACING.exec(utility);
   if (spacing && /^(?:\d*\.?\d+|px)$/.test(spacing[1] ?? "") && spacing[1] !== "0") return "spacing that isn't a token";
+  const maxWidth = /^max-w-(.+)$/.exec(utility);
+  if (maxWidth && !vocab.maxWidth.has(maxWidth[1] ?? "") && !/^\d+\/\d+$/.test(maxWidth[1] ?? "")) {
+    return "max width that isn't a token";
+  }
+  if (LINE_WIDTH.test(utility)) return "line width that isn't a stroke token";
+  if (/^opacity-\d/.test(utility) && variants.some((variant) => DISABLED.test(variant))) {
+    return "disabled opacity that isn't the state token (opacity-disabled)";
+  }
   if (MOTION.test(utility)) return "animation class (motion is fades only: motion.css)";
   return null;
 }
@@ -177,7 +200,9 @@ function main() {
     console.error(problems.join("\n"));
     console.error(
       "Name a token from contracts/design-tokens/v1 instead: a colour role (bg-surface, text-accent), a shape " +
-        "(rounded-card), a spacing token (p-card-padding, gap-row-gap), a text style (text-body). See ARCHITECTURE.md.",
+        "(rounded-card), a spacing token (p-card-padding, gap-row-gap, min-h-control), a content width (max-w-content), " +
+        "a stroke (border-checkbox, outline-focus-ring), a state (disabled:opacity-disabled), a text style (text-body). " +
+        "See ARCHITECTURE.md.",
     );
     process.exit(1);
   }

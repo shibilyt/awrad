@@ -27,7 +27,7 @@ describe("filled controls (no outlines)", () => {
     expect(classesOf(screen.getByRole("button", { name: "Card button" }))).toContain("bg-background");
   });
 
-  it("draw no visible border at rest, and an error border only when invalid", () => {
+  it("draw no visible line at rest, and the error stroke only when invalid", () => {
     render(
       <>
         <TextField label="Fine" />
@@ -37,7 +37,7 @@ describe("filled controls (no outlines)", () => {
 
     const fine = screen.getByRole("textbox", { name: "Fine" });
     const wrong = screen.getByRole("textbox", { name: "Wrong" });
-    expect(classesOf(fine)).toContain("border-transparent");
+    expect(classesOf(fine)).toEqual(expect.arrayContaining(["border-field-error", "border-transparent"]));
     expect(classesOf(fine).filter((c) => /^(border-outline|ring-|focus-visible:)/.test(c))).toEqual([]);
     expect(wrong).toHaveAttribute("data-invalid", "true");
     expect(classesOf(wrong)).toContain("data-invalid:border-error");
