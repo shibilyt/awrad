@@ -36,6 +36,7 @@ const ALLOWED = new Set([
   "src/shared/ui/tokens.gen.css",
   "src/shared/api/schema.gen.ts",
   "src/routeTree.gen.ts",
+  "src/shared/dhikr-catalog/catalog.gen.ts",
 ]);
 const EXTENSIONS = /\.(?:css|ts|tsx|html)$/;
 

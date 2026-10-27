@@ -20,8 +20,11 @@ import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as AccountDeleteRouteImport } from './routes/account/delete'
 import { Route as AccountDevicesRouteImport } from './routes/account/devices'
 import { Route as AccountPasswordRouteImport } from './routes/account/password'
+import { Route as LibraryIndexRouteImport } from './routes/library/index'
 import { Route as AccountEmailIndexRouteImport } from './routes/account/email/index'
 import { Route as AccountEmailConfirmRouteImport } from './routes/account/email/confirm'
+import { Route as LibraryCollectionsKeyRouteImport } from './routes/library/collections/$key'
+import { Route as LibraryDhikrsKeyRouteImport } from './routes/library/dhikrs/$key'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -78,6 +81,11 @@ const AccountPasswordRoute = AccountPasswordRouteImport.update({
   path: '/password',
   getParentRoute: () => AccountRoute,
 } as any)
+const LibraryIndexRoute = LibraryIndexRouteImport.update({
+  id: '/library/',
+  path: '/library/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountEmailIndexRoute = AccountEmailIndexRouteImport.update({
   id: '/email/',
   path: '/email/',
@@ -87,6 +95,16 @@ const AccountEmailConfirmRoute = AccountEmailConfirmRouteImport.update({
   id: '/email/confirm',
   path: '/email/confirm',
   getParentRoute: () => AccountRoute,
+} as any)
+const LibraryCollectionsKeyRoute = LibraryCollectionsKeyRouteImport.update({
+  id: '/library/collections/$key',
+  path: '/library/collections/$key',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LibraryDhikrsKeyRoute = LibraryDhikrsKeyRouteImport.update({
+  id: '/library/dhikrs/$key',
+  path: '/library/dhikrs/$key',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -101,7 +119,10 @@ export interface FileRoutesByFullPath {
   '/account/devices': typeof AccountDevicesRoute
   '/account/password': typeof AccountPasswordRoute
   '/account/': typeof AccountIndexRoute
+  '/library/': typeof LibraryIndexRoute
   '/account/email/confirm': typeof AccountEmailConfirmRoute
+  '/library/collections/$key': typeof LibraryCollectionsKeyRoute
+  '/library/dhikrs/$key': typeof LibraryDhikrsKeyRoute
   '/account/email/': typeof AccountEmailIndexRoute
 }
 export interface FileRoutesByTo {
@@ -115,7 +136,10 @@ export interface FileRoutesByTo {
   '/account/devices': typeof AccountDevicesRoute
   '/account/password': typeof AccountPasswordRoute
   '/account': typeof AccountIndexRoute
+  '/library': typeof LibraryIndexRoute
   '/account/email/confirm': typeof AccountEmailConfirmRoute
+  '/library/collections/$key': typeof LibraryCollectionsKeyRoute
+  '/library/dhikrs/$key': typeof LibraryDhikrsKeyRoute
   '/account/email': typeof AccountEmailIndexRoute
 }
 export interface FileRoutesById {
@@ -131,7 +155,10 @@ export interface FileRoutesById {
   '/account/devices': typeof AccountDevicesRoute
   '/account/password': typeof AccountPasswordRoute
   '/account/': typeof AccountIndexRoute
+  '/library/': typeof LibraryIndexRoute
   '/account/email/confirm': typeof AccountEmailConfirmRoute
+  '/library/collections/$key': typeof LibraryCollectionsKeyRoute
+  '/library/dhikrs/$key': typeof LibraryDhikrsKeyRoute
   '/account/email/': typeof AccountEmailIndexRoute
 }
 export interface FileRouteTypes {
@@ -148,7 +175,10 @@ export interface FileRouteTypes {
     | '/account/devices'
     | '/account/password'
     | '/account/'
+    | '/library/'
     | '/account/email/confirm'
+    | '/library/collections/$key'
+    | '/library/dhikrs/$key'
     | '/account/email/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -162,7 +192,10 @@ export interface FileRouteTypes {
     | '/account/devices'
     | '/account/password'
     | '/account'
+    | '/library'
     | '/account/email/confirm'
+    | '/library/collections/$key'
+    | '/library/dhikrs/$key'
     | '/account/email'
   id:
     | '__root__'
@@ -177,7 +210,10 @@ export interface FileRouteTypes {
     | '/account/devices'
     | '/account/password'
     | '/account/'
+    | '/library/'
     | '/account/email/confirm'
+    | '/library/collections/$key'
+    | '/library/dhikrs/$key'
     | '/account/email/'
   fileRoutesById: FileRoutesById
 }
@@ -189,6 +225,9 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignInRoute: typeof SignInRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
+  LibraryIndexRoute: typeof LibraryIndexRoute
+  LibraryCollectionsKeyRoute: typeof LibraryCollectionsKeyRoute
+  LibraryDhikrsKeyRoute: typeof LibraryDhikrsKeyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -270,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountPasswordRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/library/': {
+      id: '/library/'
+      path: '/library'
+      fullPath: '/library/'
+      preLoaderRoute: typeof LibraryIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account/email/': {
       id: '/account/email/'
       path: '/email'
@@ -283,6 +329,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/account/email/confirm'
       preLoaderRoute: typeof AccountEmailConfirmRouteImport
       parentRoute: typeof AccountRoute
+    }
+    '/library/collections/$key': {
+      id: '/library/collections/$key'
+      path: '/library/collections/$key'
+      fullPath: '/library/collections/$key'
+      preLoaderRoute: typeof LibraryCollectionsKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/library/dhikrs/$key': {
+      id: '/library/dhikrs/$key'
+      path: '/library/dhikrs/$key'
+      fullPath: '/library/dhikrs/$key'
+      preLoaderRoute: typeof LibraryDhikrsKeyRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -316,6 +376,9 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignInRoute: SignInRoute,
   VerifyEmailRoute: VerifyEmailRoute,
+  LibraryIndexRoute: LibraryIndexRoute,
+  LibraryCollectionsKeyRoute: LibraryCollectionsKeyRoute,
+  LibraryDhikrsKeyRoute: LibraryDhikrsKeyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
