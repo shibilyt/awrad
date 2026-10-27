@@ -22,6 +22,7 @@ You can't merge around these, so don't try:
 - Screens are a stateful `…Route` (ViewModel and side effects) wrapping a stateless `…Screen(state, onAction)`.
   ViewModels expose one `StateFlow<…UiState>` and one `onAction(…Action)`.
 - Errors are typed (enums or sealed types) and mapped to string resources in the UI. No sentinel strings.
+- Colours are roles from the shared tokens (`AwradTheme.colors`, `MaterialTheme.colorScheme`), never hex values; the build rejects colour literals ([ARCHITECTURE.md](ARCHITECTURE.md), "Colours"). To change a colour, change `contracts/design-tokens/` first, then run `./gradlew :core:designsystem:generateAwradColors`.
 - Every user-facing string goes in `values/`, `values-ar/` and `values-ml/` together.
 - Test through the module's interface: ViewModels with fakes from `:core:testing`. No tests that read source text.
 - Room before the first release: stay on version 1, edit it in place, and re-export the schema (ADR 0003). Forward migrations start at the first release.

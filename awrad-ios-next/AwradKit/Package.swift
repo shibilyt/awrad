@@ -57,6 +57,11 @@ let package = Package(
             swiftSettings: strict
         ),
         .testTarget(
+            name: "AwradDesignSystemTests",
+            dependencies: ["AwradDesignSystem", "AwradTesting"],
+            swiftSettings: ui
+        ),
+        .testTarget(
             name: "FeatureOnboardingTests",
             dependencies: ["FeatureOnboarding", "AwradDomain", "AwradTesting"],
             swiftSettings: ui

@@ -98,6 +98,7 @@ scripts/validate                                      # full validation (never m
 (cd AwradKit && swift test)                           # all package tests on macOS
 (cd AwradKit && swift test --filter OnboardingModelTests)
 swift format -i -r AwradKit/Sources AwradKit/Tests AwradKit/Package.swift AwradNext   # fix layout
+scripts/generate-colors.py                            # regenerate AwradColors.swift and AccentColor after contracts/design-tokens changes
 ```
 
 ## awrad-web-next

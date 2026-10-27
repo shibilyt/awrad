@@ -20,19 +20,19 @@ struct AccountOverview: View {
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AwradColors.surface, in: RoundedRectangle(cornerRadius: 14))
-            VStack(spacing: 0) {
+            .awradCard()
+            // Rows in a card are separated by spacing, not divider lines.
+            VStack(spacing: 4) {
                 SettingsRow(symbol: "laptopcomputer.and.iphone", title: Strings.devicesRow) { send(.devicesTapped) }
-                Divider().padding(.leading, 52)
                 SettingsRow(symbol: "key", title: Strings.changePasswordRow) { send(.changePasswordTapped) }
-                Divider().padding(.leading, 52)
                 SettingsRow(symbol: "envelope", title: Strings.changeEmailRow) { send(.changeEmailTapped) }
             }
-            .background(AwradColors.surface, in: RoundedRectangle(cornerRadius: 14))
+            .padding(.vertical, 6)
+            .awradCard()
             SettingsRow(symbol: "trash", title: Strings.deleteAccountRow, isDestructive: true) {
                 send(.deleteAccountTapped)
             }
-            .background(AwradColors.surface, in: RoundedRectangle(cornerRadius: 14))
+            .awradCard()
         } actions: {
             AwradPrimaryButton(Strings.signOut, isEnabled: !state.isWorking) { send(.signOutTapped) }
         }
@@ -51,7 +51,7 @@ struct SettingsRow: View {
             HStack(spacing: 16) {
                 Image(systemName: symbol)
                     .frame(width: 20)
-                    .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.primary)
+                    .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.accent)
                 Text(title)
                     .font(AwradFonts.body())
                     .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.onSurface)
@@ -74,10 +74,16 @@ struct ChangePasswordForm: View {
 
     var body: some View {
         AccountForm(title: Strings.changePasswordTitle, message: Strings.changePasswordBody, feedback: state.feedback) {
-            AccountField(kind: .password, label: Strings.currentPasswordField, text: state.currentPassword) {
+            AccountField(
+                kind: .password, label: Strings.currentPasswordField, text: state.currentPassword,
+                isInError: state.isInError(.currentPassword)
+            ) {
                 send(.currentPasswordChanged($0))
             }
-            AccountField(kind: .newPassword, label: Strings.newPasswordField, text: state.newPassword) {
+            AccountField(
+                kind: .newPassword, label: Strings.newPasswordField, text: state.newPassword,
+                isInError: state.isInError(.password)
+            ) {
                 send(.newPasswordChanged($0))
             }
             PasswordRule()
@@ -95,10 +101,15 @@ struct ChangeEmailForm: View {
 
     var body: some View {
         AccountForm(title: Strings.changeEmailTitle, message: Strings.changeEmailBody, feedback: state.feedback) {
-            AccountField(kind: .password, label: Strings.currentPasswordField, text: state.currentPassword) {
+            AccountField(
+                kind: .password, label: Strings.currentPasswordField, text: state.currentPassword,
+                isInError: state.isInError(.currentPassword)
+            ) {
                 send(.currentPasswordChanged($0))
             }
-            AccountField(kind: .newEmail, label: Strings.newEmailField, text: state.newEmail) {
+            AccountField(
+                kind: .newEmail, label: Strings.newEmailField, text: state.newEmail, isInError: state.isInError(.email)
+            ) {
                 send(.newEmailChanged($0))
             }
         } actions: {
@@ -116,7 +127,9 @@ struct ConfirmEmailChangeForm: View {
             title: Strings.confirmEmailTitle, message: Strings.confirmEmailBody,
             address: state.pendingEmail ?? state.newEmail, feedback: state.feedback
         ) {
-            AccountField(kind: .code, label: Strings.codeField, text: state.code) { send(.codeChanged($0)) }
+            AccountField(kind: .code, label: Strings.codeField, text: state.code, isInError: state.isInError(.code)) {
+                send(.codeChanged($0))
+            }
         } actions: {
             AwradPrimaryButton(Strings.confirmEmailButton, isEnabled: !state.isWorking) { send(.confirmEmailTapped) }
             ResendCodeButton(availableAt: state.resendAvailableAt, isWorking: state.isWorking) {
@@ -139,12 +152,15 @@ struct DeleteAccountForm: View {
                     .foregroundStyle(AwradColors.onPrimaryContainer)
             } icon: {
                 Image(systemName: "iphone")
-                    .foregroundStyle(AwradColors.primary)
+                    .foregroundStyle(AwradColors.onPrimaryContainer)
             }
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(AwradColors.primaryContainer, in: RoundedRectangle(cornerRadius: 14))
-            AccountField(kind: .password, label: Strings.currentPasswordField, text: state.currentPassword) {
+            AccountField(
+                kind: .password, label: Strings.currentPasswordField, text: state.currentPassword,
+                isInError: state.isInError(.currentPassword)
+            ) {
                 send(.currentPasswordChanged($0))
             }
         } actions: {
@@ -199,4 +215,12 @@ struct DeleteAccountForm: View {
     var state = AccountModel.State()
     state.currentPassword = "a long passphrase"
     return DeleteAccountForm(state: state) { _ in }
+}
+
+#Preview("Delete account, dark") {
+    var state = AccountModel.State()
+    state.currentPassword = "a long passphrase"
+    state.feedback = .currentPasswordIncorrect
+    return DeleteAccountForm(state: state) { _ in }
+        .preferredColorScheme(.dark)
 }

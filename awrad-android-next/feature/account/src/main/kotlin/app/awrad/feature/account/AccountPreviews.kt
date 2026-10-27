@@ -1,5 +1,6 @@
 package app.awrad.feature.account
 
+import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -31,7 +32,8 @@ private class AccountStatePreviews : PreviewParameterProvider<AccountUiState> {
     )
 }
 
-@Preview(showBackground = true)
+@Preview(name = "light", showBackground = true)
+@Preview(name = "dark", showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun AccountScreenPreview(@PreviewParameter(AccountStatePreviews::class) state: AccountUiState) {
     AwradTheme {

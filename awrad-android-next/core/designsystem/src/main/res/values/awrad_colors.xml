@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated from contracts/design-tokens/v1/colors.json. Don't edit by hand:
+     regenerate with `./gradlew :core:designsystem:generateAwradColors`. -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
+    <color name="awrad_background">#FFFFFFFF</color>
+    <color name="awrad_surface">#FFE8EDE9</color>
+    <color name="awrad_surface_bar">#FFF9FBFA</color>
+    <color name="awrad_on_surface">#FF000000</color>
+    <color name="awrad_on_surface_variant">#A6000000</color>
+    <color name="awrad_outline">#1A000000</color>
+    <color name="awrad_outline_strong">#80000000</color>
+    <color name="awrad_primary">#FF23553C</color>
+    <color name="awrad_on_primary">#FFFFFFFF</color>
+    <color name="awrad_primary_container">#FFB7D6B6</color>
+    <color name="awrad_on_primary_container">#FF000000</color>
+    <color name="awrad_accent">#FF23553C</color>
+    <color name="awrad_progress">#FF23553C</color>
+    <color name="awrad_error">#FFB3261E</color>
+    <color name="awrad_on_error">#FFFFFFFF</color>
+    <color name="awrad_scrim">#66000000</color>
+</resources>

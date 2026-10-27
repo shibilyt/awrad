@@ -13,17 +13,19 @@ struct DevicesView: View {
             switch state.sessions {
             case .loading:
                 ProgressView()
+                    .tint(AwradColors.progress)
                     .frame(maxWidth: .infinity, minHeight: 80)
             case .unavailable:
                 AccountLinkButton(title: DeviceStrings.retry, isEnabled: !state.isWorking) { send(.devicesAppeared) }
             case .loaded(let sessions):
-                VStack(spacing: 0) {
+                // Rows in a card are separated by spacing, not divider lines.
+                VStack(spacing: 8) {
                     ForEach(sessions) { session in
-                        if session.id != sessions.first?.id { Divider().padding(.leading, 52) }
                         SessionRow(session: session, isEnabled: !state.isWorking) { send(.revokeTapped(session)) }
                     }
                 }
-                .background(AwradColors.surface, in: RoundedRectangle(cornerRadius: 14))
+                .padding(.vertical, 4)
+                .awradCard()
             }
         } actions: {
             if case .loaded(let sessions) = state.sessions, sessions.contains(where: { !$0.isCurrent }) {
@@ -86,7 +88,7 @@ struct SessionRow: View {
         HStack(alignment: .center, spacing: 16) {
             Image(systemName: DeviceStrings.symbol(for: session))
                 .frame(width: 20)
-                .foregroundStyle(AwradColors.primary)
+                .foregroundStyle(AwradColors.accent)
             VStack(alignment: .leading, spacing: 2) {
                 name
                     .font(AwradFonts.title(16))
@@ -97,7 +99,7 @@ struct SessionRow: View {
                 if session.isCurrent {
                     Text(DeviceStrings.thisDevice)
                         .font(AwradFonts.body(14))
-                        .foregroundStyle(AwradColors.primary)
+                        .foregroundStyle(AwradColors.accent)
                 } else {
                     Text(DeviceStrings.lastUsed(lastUsed))
                         .font(AwradFonts.body(14))
@@ -205,6 +207,14 @@ enum DeviceStrings {
     state.sessions = .unavailable
     state.feedback = .network
     return DevicesView(state: state) { _ in }
+}
+
+#Preview("Devices, dark") {
+    var state = AccountModel.State()
+    state.sessions = .loaded(PreviewSessions.all)
+    state.feedback = .sessionSignedOut
+    return NavigationStack { DevicesView(state: state) { _ in } }
+        .preferredColorScheme(.dark)
 }
 
 private enum PreviewSessions {

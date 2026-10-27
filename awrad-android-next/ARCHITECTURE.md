@@ -58,6 +58,7 @@ flowchart TD
 | Static analysis | detekt with compose-rules and ktlint formatting, `warningsAsErrors` | Inconsistent Compose and state patterns |
 | ≤ 400 lines per file | `verifySourceFileSize` (part of `check`) | `CountingScreen.kt` at 4,341 lines |
 | Committed schemas | Room Gradle plugin → `core/database/schemas/` | Same rule as today, now automatic |
+| Colours only from the shared roles | `verifyAwradColors`, `verifyColorLiterals` (run by `detekt`), detekt `ForbiddenImport` | Hex values and sage shades scattered through screens |
 
 Every rule lives in `build-logic/` or `config/detekt/detekt.yml`, so changing a standard is a reviewed diff.
 
@@ -106,12 +107,25 @@ Slice 2a ([`docs/slices/02-accounts.md`](../docs/slices/02-accounts.md)), follow
   - Shared pieces: `AccountPage` (Back, title, progress line, status), `ResendCooldown`, `ConfirmDialog`. Text edits update the ViewModel's state synchronously.
 - **Server address:** `BuildConfig.API_BASE_URL` in `:app`. Debug is `http://10.0.2.2:4000` (the host's `localhost` from the emulator), overridable with `-Pawrad.apiBaseUrl=…`; only debug allows cleartext (`src/debug/res/xml/network_security_config.xml`). Release points at a reserved `.invalid` host until the server is deployed.
 
+## Colours
+
+Every colour is one of the 15 shared roles in `contracts/design-tokens/v1/colors.json` (light and dark; read its README for what each role is for). Light or dark follows the system; there is no dynamic (wallpaper) colour.
+
+- **Generated, committed source:** `core/designsystem/.../theme/AwradColors.kt` (the `AwradColors` class, `LightAwradColors`, `DarkAwradColors`; alpha kept) and the same roles as resources, `res/values/awrad_colors.xml` and `res/values-night/awrad_colors.xml` (`@color/awrad_background` is the window background before the first frame). Don't edit them: regenerate with `./gradlew :core:designsystem:generateAwradColors` (`AwradColorsTask` in `build-logic`). `verifyAwradColors` fails when any of the three differs from the contract; it runs before the module's unit tests and lint, and in `check`.
+- **Reading a role:** `MaterialTheme.colorScheme` for the roles Material has, `AwradTheme.colors` for all of them, including those Material lacks (`surfaceBar`, `outlineStrong`, `accent`, `progress`).
+- **Material mapping** (`AwradColorScheme.kt`, every slot set, checked by `AwradColorSchemeTest`): `background`, `surface`, `onSurface` (also `onBackground`), `onSurfaceVariant`, `primary`, `onPrimary`, `primaryContainer`, `onPrimaryContainer`, `error`, `onError` map to their namesakes. `outline` and `outlineVariant` are `outline`. Secondary and tertiary repeat the primary roles (one brand colour, so the navigation bar's pill is `primaryContainer`). `surfaceContainerHighest`, `surfaceVariant` and `surfaceDim` are `surface` (filled cards and fields); `surfaceContainerLow`, `surfaceContainer`, `surfaceContainerHigh` and `surfaceBright` are `surfaceBar` (sheets, menus, navigation bar, dialogs); `surfaceContainerLowest` is `background`. Error containers are `error`/`onError`; `surfaceTint` is `surface`, which turns tonal elevation off; inverse slots (snackbars) are the other theme's `background`, `onSurface` and `accent`; the scrim is black.
+- **No outlines** (the tokens README, "No outlines by default"): the design is filled shapes. The only lines on Android are a field's `error` border (always with its message) and, once one exists, a checkbox's or radio's `outlineStrong` box; `outline` is only the progress track. Rows in a list or card are separated by spacing, never dividers.
+- **Fill follows the container:** a field or secondary button fills with `surface` on a `background` and `background` on a `surface` card. `LocalAwradContainer` (`AwradContainer.Background` by default) says which one content sits on; `AwradCard` (a `surface` fill, no border or shadow) sets it to `Surface`, and anything else drawing a `surface` fill provides it too. Components read the result as `AwradTheme.fill` (`AwradColors.fillOn(container)`, checked by `AwradContainerTest`).
+- **Components:** Material draws `primary` as text, focus and progress colour, and borders or indicator lines on its outlined and filled controls; `#23553C` is unreadable on a dark background. So screens use the design system's `AwradTextButton` (`accent`, or `error`; no border), `AwradSecondaryButton` (`AwradTheme.fill`, `onSurface` text, no border), `AwradDestructiveButton` (`error` fill, `onError` text), `AwradTextField` (a `BasicTextField` in Material's filled decoration with its own container: `AwradTheme.fill`, no indicator line, no focus border; `accent` cursor and selection, `onSurfaceVariant` label, icons and hint; with an error, an `error` border and the message in `error`), `AwradCard` and `AwradLinearProgress`/`AwradCircularProgress` (`progress` on an `outline` track). detekt's `ForbiddenImport` keeps the Material versions, cards, dividers and `border`/`BorderStroke` out of features and `:app`.
+- **No literals:** `verifyColorLiterals` (in every module, run by `detekt` and `check`) fails on `Color(0x…)` in Kotlin or `#…` in resource XML outside the generated files. The launcher icon's background is part of the icon artwork and exempt.
+- **Previews:** the design system's `ComponentPreviews.kt` and every screen preview render in light and dark (`uiMode = UI_MODE_NIGHT_YES`).
+
 ## Patterns
 
 - **Feature interface:** one `@Serializable` destination and one `NavGraphBuilder` extension. See `feature/onboarding/OnboardingDestination.kt`.
 - **Screens:** a stateful `…Route` (ViewModel and side effects) wraps a stateless `…Screen(state, onAction, modifier)`. The stateless screen is previewable and can be UI-tested without Hilt.
 - **ViewModels:** one `StateFlow<…UiState>` in, one `onAction(…Action)` out. A sealed `Action` type is the whole interface the screen uses.
-- **Colours:** screens read roles from `MaterialTheme.colorScheme`. The raw palette is private to the design system, and nothing picks colours by checking whether the theme is dark.
+- **Colours:** screens pick a role (below), never a hex value, and never by checking whether the theme is dark.
 - **Errors:** typed (enums or sealed types) and mapped to string resources at the UI edge.
 - **Startup:** `AppShellViewModel` picks the start destination. `MainActivity` only hosts.
 

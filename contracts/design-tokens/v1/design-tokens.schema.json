@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:awrad:design-tokens:1",
+  "title": "Awrad design tokens v1",
+  "$defs": {
+    "hex": {
+      "type": "string",
+      "pattern": "^#[0-9A-F]{6}([0-9A-F]{2})?$"
+    },
+    "colors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "description",
+        "palette",
+        "roles",
+        "contrast"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "palette": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$"
+          },
+          "propertyNames": {
+            "pattern": "^[a-z][A-Za-z]*$"
+          }
+        },
+        "roles": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][A-Za-z]*$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "use",
+              "light",
+              "dark"
+            ],
+            "properties": {
+              "use": {
+                "type": "string"
+              },
+              "light": {
+                "$ref": "#/$defs/hex"
+              },
+              "dark": {
+                "$ref": "#/$defs/hex"
+              }
+            }
+          }
+        },
+        "contrast": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "foreground",
+              "background",
+              "minimum"
+            ],
+            "properties": {
+              "foreground": {
+                "type": "string"
+              },
+              "background": {
+                "type": "string"
+              },
+              "minimum": {
+                "type": "number",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

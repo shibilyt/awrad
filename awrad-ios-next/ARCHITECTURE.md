@@ -79,7 +79,7 @@ An account is optional: everything offline works without one, and signing in or 
   | Sign-in | `create_device_session` with the installation ID and `DeviceName.current()` (marketing name of the model, never "Apple device") |
   | Sign-out | `sign_out_device_session` with the refresh token, then credentials cleared, even offline. The installation ID stays |
 
-- **UI** (`FeatureAccount`): one `AccountRoute` and `AccountModel` drive a `NavigationStack`, tinted sage (`AwradColors.primary`) so the back button and toolbar items aren't system blue.
+- **UI** (`FeatureAccount`): one `AccountRoute` and `AccountModel` drive a `NavigationStack`, tinted `AwradColors.accent` so the back button and toolbar items are the app's green and stay readable in dark mode.
   - **Signed out:** sign in, then pushed steps for create account, verify email (resend with a 60 s cooldown, or `Retry-After`), forgot password and reset password. Verifying or resetting signs in with the password just typed.
   - **Signed in** (slice 2b): the overview shows the email, rows for Devices, Change password, Change email and Delete account, and sign out.
     - *Devices:* this device first and marked, then the others with their platform and relative last use; "Web browser" (or "Unknown device") when `name` is `null`. Each other one has Sign out, behind a confirmation; "Sign out of all other devices" too. This device signs out from the overview.
@@ -123,6 +123,16 @@ See `FeatureOnboarding`.
 
 ## Resources
 
+- **Colours:** the 15 roles of [`contracts/design-tokens/v1/colors.json`](../contracts/design-tokens/v1/README.md), light and dark, following the system appearance.
+  - **Generated:** `scripts/generate-colors.py` writes `AwradDesignSystem/Theme/AwradColors.swift` (one `AwradColors` property per role, `0xRRGGBBAA` so alpha is kept) and the app's `AccentColor` asset (the `accent` role, the window tint for system alerts). Never edit either; rerun the script. `scripts/validate` runs it with `--check` and fails on drift.
+  - **Dynamic colours** (`AwradColors+Adaptive.swift`): the `UIColor`/`NSColor` provider is `@Sendable` and only picks between two colours made up front, because UIKit and SwiftUI resolve it off the main thread (a main-actor provider traps).
+  - **Tests:** `AwradDesignSystemTests/AwradColorsTests` checks every role against the JSON in light and dark, and resolves the provider off the main thread.
+  - **Use by role:** accent text, links, nav tint, cursors and icons on backgrounds are `accent` (`primary`'s `#23553C` is never text on dark); filled buttons `primary`/`onPrimary`; destructive `error`/`onError`; spinners `progress`.
+- **No outlines** (the contract's rules for screens): shapes are filled, never stroked.
+  - **Containers** (`AwradDesignSystem/Theme/AwradContainer.swift`): the `awradContainer` environment value says what a view sits on, `.background` by default. `awradCard()` fills a card with `surface` and sets it to `.surface` for everything inside. `AwradContainer.controlFill` is the fill of a field, secondary button or unselected pill: `surface` on a background, `background` on a card.
+  - **Text fields** use `awradField(isInError:)`: that fill, no border at rest or in focus (the `accent` cursor and the keyboard show focus), a placeholder in `onSurfaceVariant`, and an `error` border only while in error, always with the message. `AccountField` gets `isInError` from `Feedback.field`, the input an error is about (none for notices or wrong credentials).
+  - **Rows in a card** (account overview, devices) are separated by spacing, never `Divider()`.
+  - **The only lines allowed:** `outlineStrong` for a checkbox or radio box, `outline` for a progress track (neither exists yet), and the field error border. Text and link buttons stay unfilled.
 - **Fonts:** Manrope for interface text, Noto Naskh Arabic for Qur'anic and dhikr text. They're bundled in `AwradDesignSystem` and registered at launch with `AwradFonts.register()`.
 - **Logo:** plain PNGs in the package bundle.
 - **Strings:** String Catalogs per module (`Bundle.module`) plus the app's own. Xcode compiles them into `en`/`ar`/`ml` resources.

@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,6 +27,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.awrad.core.designsystem.component.AwradLinearProgress
+import app.awrad.core.designsystem.theme.AwradTheme
 
 /**
  * The frame of every account page: Back, the title, a progress line while [isBusy], the [status], then
@@ -61,7 +62,6 @@ internal fun AccountPage(
                 text = title,
                 modifier = Modifier.semantics { heading() },
                 style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.primary,
             )
             BusyIndicator(isBusy = isBusy)
             if (status != null) StatusMessage(status = status)
@@ -74,7 +74,7 @@ internal fun AccountPage(
 @Composable
 private fun BusyIndicator(isBusy: Boolean, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxWidth().height(4.dp)) {
-        if (isBusy) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+        if (isBusy) AwradLinearProgress()
     }
 }
 
@@ -85,7 +85,7 @@ private fun StatusMessage(status: PageStatus, modifier: Modifier = Modifier) {
         text = status.text,
         modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite },
         style = MaterialTheme.typography.bodyMedium,
-        color = if (status.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.secondary,
+        color = if (status.isError) AwradTheme.colors.error else AwradTheme.colors.accent,
     )
 }
 

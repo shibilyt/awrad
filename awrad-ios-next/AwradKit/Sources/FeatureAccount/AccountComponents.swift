@@ -17,7 +17,7 @@ struct AccountForm<Fields: View, Actions: View>: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text(title)
                     .font(AwradFonts.headline())
-                    .foregroundStyle(AwradColors.primary)
+                    .foregroundStyle(AwradColors.onSurface)
                 if let message {
                     Text(message)
                         .font(AwradFonts.body())
@@ -75,7 +75,8 @@ struct FeedbackLine: View {
     }
 }
 
-/// A text field for one kind of account input, with the right keyboard and autofill.
+/// A text field for one kind of account input, with the right keyboard and autofill. It's filled,
+/// never outlined (`awradField`): an error border shows only while `isInError`, beside the message.
 struct AccountField: View {
     enum Kind {
         case email
@@ -89,26 +90,30 @@ struct AccountField: View {
     let kind: Kind
     let label: LocalizedStringResource
     let text: String
+    var isInError = false
     let onChange: @MainActor (String) -> Void
 
     var body: some View {
         field
-            .font(AwradFonts.body())
-            .foregroundStyle(AwradColors.onSurface)
-            .padding(.horizontal, 16)
-            .frame(minHeight: 52)
-            .background(AwradColors.surface, in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(AwradColors.outlineVariant))
+            .awradField(isInError: isInError)
             .autocorrectionDisabled()
             .modifier(InputTraits(kind: kind))
     }
 
     @ViewBuilder private var field: some View {
         let binding = Binding(get: { text }, set: { onChange($0) })
+        let prompt = Text(label).foregroundStyle(AwradColors.onSurfaceVariant)
         switch kind {
-        case .email, .newEmail, .code: TextField(text: binding) { Text(label) }
-        case .password, .newPassword: SecureField(text: binding) { Text(label) }
+        case .email, .newEmail, .code: TextField(text: binding, prompt: prompt) { Text(label) }
+        case .password, .newPassword: SecureField(text: binding, prompt: prompt) { Text(label) }
         }
+    }
+}
+
+extension AccountModel.State {
+    /// Whether the current error is about `field`, so its text field shows the error border.
+    func isInError(_ field: AccountModel.Field) -> Bool {
+        feedback?.field == field
     }
 }
 
@@ -149,7 +154,7 @@ struct AccountLinkButton: View {
                 .font(AwradFonts.body())
                 .frame(maxWidth: .infinity, minHeight: 44)
         }
-        .tint(isDestructive ? AwradColors.error : AwradColors.primary)
+        .tint(isDestructive ? AwradColors.error : AwradColors.accent)
         .disabled(!isEnabled)
     }
 }

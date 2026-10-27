@@ -20,11 +20,7 @@ public struct AwradPrimaryButton: View {
 
     public var body: some View {
         Button(action: action) {
-            if isDestructive {
-                label.foregroundStyle(AwradColors.onError)
-            } else {
-                label
-            }
+            label.foregroundStyle(isDestructive ? AwradColors.onError : AwradColors.onPrimary)
         }
         .buttonStyle(.borderedProminent)
         .tint(isDestructive ? AwradColors.error : AwradColors.primary)

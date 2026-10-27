@@ -44,7 +44,12 @@ export default tseslint.config(
     files: ["**/*.{js,cjs,mjs}"],
     ...tseslint.configs.disableTypeChecked,
     languageOptions: { ...tseslint.configs.disableTypeChecked.languageOptions, globals: globals.node },
-    rules: { ...tseslint.configs.disableTypeChecked.rules, "i18next/no-literal-string": "off" },
+    rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
+      "i18next/no-literal-string": "off",
+      // Plain JS has no type annotations to require.
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+    },
   },
   {
     files: ["vite.config.ts"],

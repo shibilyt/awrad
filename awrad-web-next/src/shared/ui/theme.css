@@ -1,4 +1,12 @@
 @import "tailwindcss";
+/*
+ * Colours: the shared roles from contracts/design-tokens/v1/colors.json, generated
+ * (light and dark) with their Tailwind names; Tailwind's default palette is removed.
+ * Components use the roles (bg-surface, text-on-surface, bg-primary-container,
+ * text-accent, …), never raw colours, and never check the colour scheme themselves.
+ * No outlines: controls are filled (Surface.tsx); see ARCHITECTURE.md for the few lines kept.
+ */
+@import "./colors.gen.css";
 
 /* Fonts: Manrope for interface text, Noto Naskh Arabic for Arabic (same files as Android and iOS). */
 @font-face {
@@ -38,29 +46,25 @@
   font-display: swap;
 }
 
-/*
- * Design tokens: the same sage palette as Android and iOS. Components use these
- * roles (bg-primary, text-on-surface, …), never raw colours, and never check the
- * colour scheme themselves.
- */
 @theme {
   --font-sans: "Manrope", system-ui, sans-serif;
   --font-arabic: "Noto Naskh Arabic", "Manrope", serif;
-
-  --color-primary: light-dark(#4b7c5a, #6b9e7a);
-  --color-on-primary: light-dark(#ffffff, #2e5c3d);
-  --color-primary-container: light-dark(#d4e8da, #2e5c3d);
-  --color-on-primary-container: light-dark(#1a3d26, #d4e8da);
-  --color-background: light-dark(#f0f2f0, #121412);
-  --color-surface: light-dark(#ffffff, #121412);
-  --color-on-surface: light-dark(#1a1c1a, #e3e5e3);
-  --color-on-surface-variant: light-dark(#5d5f5d, #abadab);
-  --color-outline-variant: light-dark(#c7c9c7, #454745);
-  --color-error: light-dark(#ba1a1a, #ffb4ab);
 }
 
 :root {
   color-scheme: light dark;
+}
+
+/*
+ * Keyboard focus: a 2px accent outline, offset so it stays visible next to a
+ * primary fill. Accent reads at 4.5 : 1 or more on every background in both themes.
+ */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    outline: 2px solid --theme(--color-accent);
+    outline-offset: 2px;
+  }
 }
 
 /* Arabic text uses Noto Naskh Arabic for both content and interface on the web. */
