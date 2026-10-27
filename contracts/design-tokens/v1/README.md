@@ -49,6 +49,7 @@ Rules for screens:
 - **Text fields are filled, never outlined:**
   - The fill is `surface` on a `background`, or `background` on a `surface` card.
   - On mobile, focus is shown by the cursor and keyboard only.
+- **Disabled controls keep their colours** and are drawn at `states.disabled.opacity` (38%). There are no disabled colours.
 - **Secondary buttons and unselected pills are filled** like fields. A selected pill or chip is `primaryContainer`.
 - **Rows inside a card are separated by spacing,** not divider lines.
 - **The app icon artwork is exempt** (Android launcher background `#D5FFDC`) until the icon is redesigned.
@@ -57,17 +58,23 @@ Rules for screens:
 
 ## Shapes (`shape.json`)
 
-- **The scale:** 8, 12, 16, 20, 24, 28, 32, and fully rounded.
+- **The scale:** 4, 8, 12, 16, 20, 24, 28, 32, and fully rounded. 4 is only for a checkbox's box.
 - **Roles:**
   - `card` 24;
   - `tile`, `button` and `field` 16;
   - `chip`, `roundButton` and `navPill` fully rounded;
   - `navBar` 28;
-  - `sheet`, `dialog` and `screenDepth` 32.
+  - `sheet`, `dialog` and `screenDepth` 32;
+  - `checkbox` 4.
 - **Corners are continuous** (squircle) where the platform makes it cheap:
   - iOS uses `.continuous`;
   - Android uses a small in-house smooth-corner shape;
   - the web uses `corner-shape: squircle` where supported, and plain rounding elsewhere.
+
+- **Strokes** (`strokes`) list every line the design allows (see the no-outline rules above):
+  - `fieldError` 1.5;
+  - `checkbox` 2;
+  - `focusRing` 2, offset 2 (web keyboard focus).
 
 ## Spacing (`spacing.json`)
 
@@ -82,11 +89,17 @@ Rules for screens:
   - `touchTarget` 48;
   - `listRow` 56;
   - icons 24 and 20;
-  - the small ring 36, with stroke 4.
+  - the small ring 36, with stroke 4;
+  - `control` 56, the height of buttons and text fields;
+  - `logo` 148;
+  - `contentMaxWidth` 448 and `dialogMaxWidth` 384, for the web and tablets.
 
 ## Type (`typography.json`)
 
 - Named styles from `title` (22) to `navLabel` (11), plus `counter` (56, with tabular digits).
+- `input` (16) is the text typed into fields; 16 stops iOS Safari zooming in.
+- `quran` (24 on a 44 line height) sets Qur'anic and dhikr Arabic in Noto Naskh Arabic. It's the only style with its own `fontFamily`, and it's never used for interface text.
+- `counter` keeps a 64 line height, tighter than the font's natural 70, on purpose.
 - iOS scales every style with Dynamic Type, relative to its `iosTextStyle`.
 
 ## Motion (`motion.json`)
@@ -95,7 +108,8 @@ Building blocks:
 - **Easings:**
   - `emphasized` (0.2, 0, 0, 1);
   - `decelerate` for things entering;
-  - `accelerate` for things leaving.
+  - `accelerate` for things leaving;
+  - `linear` for fades (`contentSwap`, the reduced-motion cross-fade). The press-in uses `emphasized`.
 - **Durations:**
   - `fade` 100;
   - `color` 150;
@@ -127,7 +141,7 @@ Named motions (`motions`) say which platforms use them:
   - `countTap`: a light tick, the number rolls, and a 1.04 pop;
   - `countComplete`;
   - `ringFill`.
-- **Sheets:** `sheet` (follows the finger, settles with the fling speed, corners go to 0 at full height).
+- **Sheets on Android:** `sheet` (follows the finger, settles with the fling speed in dp per second, corners go to 0 at full height). iOS uses the native sheet.
 - **Expanding sections:** `expand`.
 - **Lists:** `listAppear`.
 - **Swapping text in place:** `contentSwap`.

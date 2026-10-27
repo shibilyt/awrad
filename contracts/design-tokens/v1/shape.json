@@ -1,8 +1,9 @@
 {
   "version": 1,
-  "description": "Corner radii in dp (Android), pt (iOS), CSS px (web). Screens use a role, never a number. Corners are continuous (squircle) where the platform makes it cheap.",
+  "description": "Corner radii and line widths in dp (Android), pt (iOS), CSS px (web). Screens use a role, never a number. Corners are continuous (squircle) where the platform makes it cheap. Lines are rare (README: no outlines); strokes lists every one allowed.",
   "corners": "continuous",
   "scale": {
+    "xxs": 4,
     "xs": 8,
     "sm": 12,
     "md": 16,
@@ -56,6 +57,25 @@
     "screenDepth": {
       "radius": "3xl",
       "use": "The screen behind a pushed page"
+    },
+    "checkbox": {
+      "radius": "xxs",
+      "use": "A checkbox's box (the only use of 4)"
+    }
+  },
+  "strokes": {
+    "fieldError": {
+      "width": 1.5,
+      "use": "Border of a field in error, always with its message"
+    },
+    "checkbox": {
+      "width": 2,
+      "use": "An unticked checkbox's box, in outlineStrong"
+    },
+    "focusRing": {
+      "width": 2,
+      "offset": 2,
+      "use": "Keyboard focus ring on the web, in accent"
     }
   }
 }

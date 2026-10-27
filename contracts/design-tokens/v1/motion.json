@@ -19,6 +19,12 @@
       0,
       0.8,
       0.15
+    ],
+    "linear": [
+      0,
+      0,
+      1,
+      1
     ]
   },
   "duration": {
@@ -157,7 +163,8 @@
       "buttonScale": 0.98,
       "pressDuration": "fade",
       "releaseSpring": "spatialFast",
-      "use": "Pressing a card or button"
+      "use": "Pressing a card or button",
+      "pressEasing": "emphasized"
     },
     "countTap": {
       "platforms": [
@@ -189,14 +196,13 @@
     },
     "sheet": {
       "platforms": [
-        "android",
-        "ios"
+        "android"
       ],
       "settleSpring": "spatial",
       "overshootScale": 1.03,
       "radius": "sheet",
       "releaseVelocity": 150,
-      "use": "Bottom sheets follow the finger and settle with the fling's velocity; corners reach 0 at full height"
+      "use": "Bottom sheets follow the finger and settle with the fling's velocity; corners reach 0 at full height. releaseVelocity is in dp per second. iOS uses the native sheet"
     },
     "expand": {
       "platforms": [
@@ -228,7 +234,8 @@
       ],
       "fadeIn": "color",
       "fadeOut": "fade",
-      "use": "Swapping text or status in place"
+      "use": "Swapping text or status in place",
+      "easing": "linear"
     },
     "webPage": {
       "platforms": [
@@ -243,6 +250,7 @@
   "reducedMotion": {
     "replaceWith": "crossfade",
     "duration": "color",
+    "easing": "linear",
     "use": "When the system asks for reduced motion, every movement, scale and spring becomes a cross-fade of this duration. Haptics stay."
   }
 }

@@ -15,7 +15,8 @@
         "description",
         "palette",
         "roles",
-        "contrast"
+        "contrast",
+        "states"
       ],
       "properties": {
         "version": {
@@ -83,6 +84,33 @@
               }
             }
           }
+        },
+        "states": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "disabled"
+          ],
+          "properties": {
+            "disabled": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "opacity",
+                "use"
+              ],
+              "properties": {
+                "opacity": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "exclusiveMaximum": 1
+                },
+                "use": {
+                  "type": "string"
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -94,7 +122,8 @@
         "description",
         "corners",
         "scale",
-        "roles"
+        "roles",
+        "strokes"
       ],
       "properties": {
         "version": {
@@ -136,6 +165,30 @@
               "radius": {
                 "type": "string",
                 "pattern": "^[a-z0-9][A-Za-z0-9]*$"
+              },
+              "use": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "strokes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "width",
+              "use"
+            ],
+            "properties": {
+              "width": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "offset": {
+                "type": "number",
+                "minimum": 0
               },
               "use": {
                 "type": "string"
@@ -282,6 +335,9 @@
               },
               "use": {
                 "type": "string"
+              },
+              "fontFamily": {
+                "type": "string"
               }
             }
           }
@@ -408,7 +464,8 @@
           "required": [
             "replaceWith",
             "duration",
-            "use"
+            "use",
+            "easing"
           ],
           "properties": {
             "replaceWith": {
@@ -420,6 +477,10 @@
             },
             "use": {
               "type": "string"
+            },
+            "easing": {
+              "type": "string",
+              "pattern": "^[a-z0-9][A-Za-z0-9]*$"
             }
           }
         }

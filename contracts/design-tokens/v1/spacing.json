@@ -60,6 +60,22 @@
     "ringStroke": {
       "value": 4,
       "use": "Stroke of small progress rings"
+    },
+    "control": {
+      "value": 56,
+      "use": "Height of buttons and text fields"
+    },
+    "logo": {
+      "value": 148,
+      "use": "The Awrad logo on welcome and sign-in screens"
+    },
+    "contentMaxWidth": {
+      "value": 448,
+      "use": "Widest a page's content column grows (web, tablets)"
+    },
+    "dialogMaxWidth": {
+      "value": 384,
+      "use": "Widest a dialog grows (web, tablets)"
     }
   }
 }

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Text styles. Interface text uses the interface font (fonts/README.md); Arabic and Malayalam fall back to the system font. Sizes in sp / pt / CSS px; iOS scales each style with Dynamic Type relative to iosTextStyle.",
+  "description": "Text styles. Interface text uses fontFamily (fonts/README.md); a style with its own fontFamily overrides it. Arabic and Malayalam interface text falls back to the system font. Sizes in sp / pt / CSS px; iOS scales each style with Dynamic Type relative to iosTextStyle.",
   "fontFamily": "Google Sans Flex Rounded",
   "styles": {
     "title": {
@@ -37,6 +37,13 @@
       "weight": 400,
       "iosTextStyle": "body",
       "use": "Paragraphs and form text"
+    },
+    "input": {
+      "size": 16,
+      "lineHeight": 22,
+      "weight": 400,
+      "iosTextStyle": "body",
+      "use": "Text typed into fields (16 stops iOS Safari zooming in)"
     },
     "bodySmall": {
       "size": 14,
@@ -79,7 +86,15 @@
       "weight": 700,
       "iosTextStyle": "largeTitle",
       "tabularNumbers": true,
-      "use": "The counting number"
+      "use": "The counting number. The 64 line height is tighter than the font's natural 70 on purpose"
+    },
+    "quran": {
+      "fontFamily": "Noto Naskh Arabic",
+      "size": 24,
+      "lineHeight": 44,
+      "weight": 400,
+      "iosTextStyle": "title2",
+      "use": "Qur'anic and dhikr Arabic text; never interface text"
     }
   }
 }

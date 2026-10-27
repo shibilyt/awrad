@@ -142,7 +142,7 @@ for (const [name, role] of Object.entries(shape.roles ?? {}))
   refs("shape.json", name, role.radius, shape.scale, "radius");
 for (const [name, role] of Object.entries(spacing.roles ?? {}))
   refs("spacing.json", name, role.space, spacing.scale, "space");
-// In motion.json, fields ending in Spring/spring name a spring, duration-like fields a duration, easing an easing,
+// In motion.json, fields ending in Spring/spring name a spring, duration-like fields a duration, Easing/easing an easing,
 // haptic a haptic, radius a shape role.
 const motionRef = (owner, key, value) => {
   if (typeof value !== "string") return;
@@ -150,7 +150,7 @@ const motionRef = (owner, key, value) => {
     refs("motion.json", `${owner}.${key}`, value, motion.spring, "spring");
   else if (/^duration$|Duration$|^fadeIn$|^fadeOut$/.test(key))
     refs("motion.json", `${owner}.${key}`, value, motion.duration, "duration");
-  else if (key === "easing")
+  else if (/^easing$|Easing$/.test(key))
     refs("motion.json", `${owner}.${key}`, value, motion.easing, "easing");
   else if (key === "haptic")
     refs("motion.json", `${owner}.${key}`, value, motion.haptic, "haptic");
@@ -173,6 +173,13 @@ refs(
   motion.duration,
   "duration",
 );
+refs(
+  "motion.json",
+  "reducedMotion.easing",
+  motion.reducedMotion?.easing,
+  motion.easing,
+  "easing",
+);
 
 // Fonts: every file listed in SHA256SUMS exists and matches, and every .ttf is listed.
 const fontsDir = "design-tokens/v1/fonts";
@@ -193,6 +200,16 @@ for (const file of readdirSync(join(root, fontsDir)).filter((f) =>
 )) {
   if (!listed.has(file))
     problems.push(`${fontsDir}/${file}: not listed in SHA256SUMS`);
+}
+
+// Every font family a text style names is bundled: "Noto Naskh Arabic" needs notonaskharabic_*.ttf.
+const ttfs = readdirSync(join(root, fontsDir)).filter((f) => f.endsWith(".ttf"));
+for (const [name, style] of Object.entries({ "": { fontFamily: typography.fontFamily }, ...typography.styles })) {
+  const family = style.fontFamily;
+  if (family === undefined) continue;
+  const prefix = family.toLowerCase().replaceAll(" ", "") + "_";
+  if (!ttfs.some((f) => f.startsWith(prefix)))
+    problems.push(`typography.json: ${name || "fontFamily"} uses "${family}", which has no file in ${fontsDir}`);
 }
 
 if (problems.length) {
