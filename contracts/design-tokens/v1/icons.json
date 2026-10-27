@@ -77,6 +77,46 @@
       "file": "local_fire_department.svg",
       "use": "Streak",
       "mirrorInRtl": false
+    },
+    "devices": {
+      "file": "devices.svg",
+      "use": "Signed-in devices",
+      "mirrorInRtl": false
+    },
+    "phone": {
+      "file": "smartphone.svg",
+      "use": "A phone; data kept on this device",
+      "mirrorInRtl": false
+    },
+    "language": {
+      "file": "language.svg",
+      "use": "Language setting",
+      "mirrorInRtl": false
+    },
+    "email": {
+      "file": "mail.svg",
+      "use": "Email address, change email",
+      "mirrorInRtl": false
+    },
+    "password": {
+      "file": "password.svg",
+      "use": "Password, change password",
+      "mirrorInRtl": false
+    },
+    "delete": {
+      "file": "delete.svg",
+      "use": "Delete account and other destructive actions",
+      "mirrorInRtl": false
+    },
+    "chevron": {
+      "file": "chevron_right.svg",
+      "use": "Trailing chevron on a row that opens a page",
+      "mirrorInRtl": true
+    },
+    "error": {
+      "file": "error.svg",
+      "use": "Error message beside a form or feedback line",
+      "mirrorInRtl": false
     }
   }
 }

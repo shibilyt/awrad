@@ -170,7 +170,7 @@ The motion values combine three sources:
 ## Icons (`icons.json`, `icons/`)
 
 - **One set on every platform:** Material Symbols Rounded, outline, weight 300, on a 24 grid (Apache 2.0, `icons/LICENSE-MaterialSymbols.txt`). There are no SF Symbols, Material Icons or hand-drawn icons in screens.
-- **Use by name** (`home`, `goals`, `library`, `community`, `add`, `forward`, `back`, `more`, `check`, `notifications`, `show`, `hide`, `close`, `expand`, `streak`). Each app generates its icons from the SVGs (Android vector drawables, an iOS asset catalog, web components) and fails validation on drift.
-- **RTL:** icons marked `mirrorInRtl` (`back`, `forward`) flip in right-to-left layouts.
+- **Use by name** (`home`, `goals`, `library`, `community`, `add`, `forward`, `back`, `more`, `check`, `notifications`, `show`, `hide`, `close`, `expand`, `streak`, `devices`, `phone`, `language`, `email`, `password`, `delete`, `chevron`, `error`). Each app generates its icons from the SVGs (Android vector drawables, an iOS asset catalog, web components) and fails validation on drift.
+- **RTL:** icons marked `mirrorInRtl` (`back`, `forward`, `chevron`) flip in right-to-left layouts.
 - **Colour** comes from the component, never the file.
 - **Adding an icon:** download the `wght300_24px` Rounded SVG from the source in `icons.json`, add it with its checksum to `icons/SHA256SUMS`, name it in `icons.json`, and regenerate. `npm test` checks checksums and that every file is a plain path-only SVG.
