@@ -10,23 +10,22 @@ struct DevicesView: View {
 
     var body: some View {
         AccountForm(title: DeviceStrings.title, message: DeviceStrings.body, feedback: state.feedback) {
-            switch state.sessions {
-            case .loading:
-                ProgressView()
-                    .tint(AwradColors.progress)
-                    .frame(maxWidth: .infinity, minHeight: 80)
-            case .unavailable:
-                AccountLinkButton(title: DeviceStrings.retry, isEnabled: !state.isWorking) { send(.devicesAppeared) }
-            case .loaded(let sessions):
-                // Rows in a card are separated by spacing, not divider lines.
-                VStack(spacing: 8) {
-                    ForEach(sessions) { session in
-                        SessionRow(session: session, isEnabled: !state.isWorking) { send(.revokeTapped(session)) }
+            Group {
+                switch state.sessions {
+                case .loading:
+                    ProgressView()
+                        .tint(AwradColors.progress)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, AwradSpacing.xl3)
+                case .unavailable:
+                    AccountLinkButton(title: DeviceStrings.retry, isEnabled: !state.isWorking) {
+                        send(.devicesAppeared)
                     }
+                case .loaded(let sessions):
+                    SessionCard(sessions: sessions, isEnabled: !state.isWorking) { send(.revokeTapped($0)) }
                 }
-                .padding(.vertical, 4)
-                .awradCard()
             }
+            .awradContentSwap(value: state.sessions.kind)
         } actions: {
             if case .loaded(let sessions) = state.sessions, sessions.contains(where: { !$0.isCurrent }) {
                 AccountLinkButton(title: DeviceStrings.signOutOthers, isEnabled: !state.isWorking, isDestructive: true)
@@ -77,6 +76,38 @@ struct DevicesView: View {
     }
 }
 
+extension AccountModel.SessionList {
+    /// Loading, loaded or unavailable, without the sessions: swapping between them fades, while a
+    /// change to the list itself uses `expand`.
+    var kind: String {
+        switch self {
+        case .loading: "loading"
+        case .loaded: "loaded"
+        case .unavailable: "unavailable"
+        }
+    }
+}
+
+/// The sessions in one card. Rows are separated by spacing, not divider lines; a signed-out device
+/// leaves with the `expand` motion.
+struct SessionCard: View {
+    let sessions: [AccountSession]
+    let isEnabled: Bool
+    let onRevoke: (AccountSession) -> Void
+
+    var body: some View {
+        VStack(spacing: AwradSpacing.sm) {
+            ForEach(sessions) { session in
+                SessionRow(session: session, isEnabled: isEnabled) { onRevoke(session) }
+                    .awradExpandingContent()
+            }
+        }
+        .padding(.vertical, AwradSpacing.xs)
+        .awradCard()
+        .awradExpand(value: sessions.map(\.id))
+    }
+}
+
 /// One session: what it is, where it runs, and when it was last used.
 struct SessionRow: View {
     let session: AccountSession
@@ -85,24 +116,24 @@ struct SessionRow: View {
     @Environment(\.locale) private var locale
 
     var body: some View {
-        HStack(alignment: .center, spacing: 16) {
+        HStack(alignment: .center, spacing: AwradSpacing.lg) {
             Image(systemName: DeviceStrings.symbol(for: session))
-                .frame(width: 20)
+                .frame(width: AwradSize.iconSmall)
                 .foregroundStyle(AwradColors.accent)
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: AwradSpacing.xxs) {
                 name
-                    .font(AwradFonts.title(16))
+                    .awradTextStyle(.rowTitle)
                     .foregroundStyle(AwradColors.onSurface)
                 Text(DeviceStrings.platform(session.platform))
-                    .font(AwradFonts.body(14))
+                    .awradTextStyle(.bodySmall)
                     .foregroundStyle(AwradColors.onSurfaceVariant)
                 if session.isCurrent {
                     Text(DeviceStrings.thisDevice)
-                        .font(AwradFonts.body(14))
+                        .awradTextStyle(.bodySmall)
                         .foregroundStyle(AwradColors.accent)
                 } else {
                     Text(DeviceStrings.lastUsed(lastUsed))
-                        .font(AwradFonts.body(14))
+                        .awradTextStyle(.bodySmall)
                         .foregroundStyle(AwradColors.onSurfaceVariant)
                 }
             }
@@ -110,14 +141,14 @@ struct SessionRow: View {
             if !session.isCurrent {
                 Button(action: onRevoke) {
                     Text(DeviceStrings.revoke)
-                        .font(AwradFonts.body(15))
+                        .awradTextStyle(.label)
                 }
                 .tint(AwradColors.error)
                 .disabled(!isEnabled)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, AwradSpacing.cardPadding)
+        .padding(.vertical, AwradSpacing.md)
         .accessibilityElement(children: .combine)
     }
 

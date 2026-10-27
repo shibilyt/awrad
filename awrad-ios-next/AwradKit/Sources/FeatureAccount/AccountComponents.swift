@@ -14,28 +14,31 @@ struct AccountForm<Fields: View, Actions: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: AwradSpacing.sectionGap) {
                 Text(title)
-                    .font(AwradFonts.headline())
+                    .awradTextStyle(.title)
                     .foregroundStyle(AwradColors.onSurface)
                 if let message {
                     Text(message)
-                        .font(AwradFonts.body())
+                        .awradTextStyle(.body)
                         .foregroundStyle(AwradColors.onSurfaceVariant)
                 }
                 if let address {
                     AddressText(address: address)
                 }
-                VStack(spacing: 12) { fields }
+                VStack(spacing: AwradSpacing.rowGap) { fields }
                 if let feedback {
                     FeedbackLine(feedback: feedback)
+                        .awradExpandingContent()
                 }
-                VStack(spacing: 12) { actions }
-                    .padding(.top, 8)
+                VStack(spacing: AwradSpacing.rowGap) { actions }
+                    .padding(.top, AwradSpacing.sm)
             }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 32)
-            .frame(maxWidth: 520)
+            // A message appearing, changing or leaving resizes the form with the `expand` motion.
+            .awradExpand(value: feedback)
+            .padding(.horizontal, AwradSpacing.pageMargin)
+            .padding(.vertical, AwradSpacing.xl3)
+            .frame(maxWidth: 520)  // design-token-exempt: readable width of a form on iPad
             .frame(maxWidth: .infinity)
         }
         .scrollDismissesKeyboard(.interactively)
@@ -50,7 +53,7 @@ struct AddressText: View {
 
     var body: some View {
         Text(verbatim: Strings.isolated(address))
-            .font(AwradFonts.title())
+            .awradTextStyle(.rowTitle)
             .foregroundStyle(AwradColors.onSurface)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
@@ -65,7 +68,8 @@ struct FeedbackLine: View {
     var body: some View {
         Label {
             Text(Strings.feedback(feedback))
-                .font(AwradFonts.body(15))
+                .awradTextStyle(.body)
+                .contentTransition(.opacity)
         } icon: {
             Image(systemName: feedback.isNotice ? "envelope" : "exclamationmark.circle")
         }
@@ -151,8 +155,8 @@ struct AccountLinkButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(AwradFonts.body())
-                .frame(maxWidth: .infinity, minHeight: 44)
+                .awradTextStyle(.label)
+                .frame(maxWidth: .infinity, minHeight: AwradSize.touchTarget)
         }
         .tint(isDestructive ? AwradColors.error : AwradColors.accent)
         .disabled(!isEnabled)

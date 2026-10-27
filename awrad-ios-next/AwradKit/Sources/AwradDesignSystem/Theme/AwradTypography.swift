@@ -25,25 +25,22 @@ public enum AwradFonts {
         Bundle.module.urls(forResourcesWithExtension: "ttf", subdirectory: "Fonts") ?? []
     }
 
-    public static func headline(_ size: CGFloat = 28) -> Font {
-        .custom(Face.interfaceSemiBold.postScriptName, size: size, relativeTo: .title)
+    /// A named text style (typography.json) as a font: the face for its weight at its size, scaled
+    /// with Dynamic Type relative to its `iosTextStyle`, with tabular digits where it asks for them.
+    /// Use `awradTextStyle(_:)` on text that can wrap, so its lines also sit `lineHeight` apart.
+    public static func font(_ style: AwradTextStyle) -> Font {
+        let font = Font.custom(style.face.postScriptName, size: style.size, relativeTo: style.relativeTo)
+        return style.tabularNumbers ? font.monospacedDigit() : font
     }
 
-    public static func title(_ size: CGFloat = 17) -> Font {
-        .custom(Face.interfaceSemiBold.postScriptName, size: size, relativeTo: .headline)
-    }
-
-    public static func body(_ size: CGFloat = 16) -> Font {
-        .custom(Face.interfaceRegular.postScriptName, size: size, relativeTo: .body)
-    }
-
-    /// Qur'anic and dhikr text only; interface text in Arabic uses the interface styles.
+    /// Qur'anic and dhikr text only; interface text in Arabic uses the interface styles. The type
+    /// tokens have no Qur'anic style yet, so the size is the caller's until they do.
     public static func arabic(_ size: CGFloat = 28) -> Font {
         .custom(Face.naskhRegular.postScriptName, size: size, relativeTo: .title)
     }
 
     /// Every bundled font face, by its file and PostScript name.
-    enum Face: CaseIterable {
+    nonisolated enum Face: CaseIterable, Sendable {
         case interfaceRegular, interfaceMedium, interfaceSemiBold, interfaceBold
         case naskhRegular, naskhMedium, naskhSemiBold, naskhBold
 
@@ -58,6 +55,12 @@ public enum AwradFonts {
             case .naskhSemiBold: "NotoNaskhArabic-SemiBold"
             case .naskhBold: "NotoNaskhArabic-Bold"
             }
+        }
+
+        /// Ascent, descent and leading at `size`: the line height before any `lineSpacing`.
+        func naturalLineHeight(size: CGFloat) -> CGFloat {
+            let font = CTFontCreateWithName(postScriptName as CFString, size, nil)
+            return CTFontGetAscent(font) + CTFontGetDescent(font) + CTFontGetLeading(font)
         }
 
         var fileName: String {

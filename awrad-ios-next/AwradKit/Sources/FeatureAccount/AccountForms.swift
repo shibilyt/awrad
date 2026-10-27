@@ -115,7 +115,7 @@ struct ResetPasswordForm: View {
 struct PasswordRule: View {
     var body: some View {
         Text(Strings.passwordRule)
-            .font(AwradFonts.body(14))
+            .awradTextStyle(.bodySmall)
             .foregroundStyle(AwradColors.onSurfaceVariant)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
