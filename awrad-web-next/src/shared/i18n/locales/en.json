@@ -202,7 +202,6 @@
     "dhikrCount_other": "{{count}} dhikrs",
     "search": {
       "label": "Search dhikrs",
-      "placeholder": "Search by name or meaning",
       "results_one": "{{count}} dhikr found",
       "results_other": "{{count}} dhikrs found",
       "resultsLabel": "Search results",
@@ -222,6 +221,8 @@
       "virtues": "Virtues",
       "play": "Play audio",
       "pause": "Pause audio",
+      "position": "Playback position",
+      "time": "{{elapsed}} / {{duration}}",
       "audioFailed": "Couldn't play the audio. Check your connection and try again."
     },
     "reference": {

@@ -3,14 +3,14 @@ import { useTranslation } from "react-i18next";
 import { localized, transliterationFor, type Dhikr } from "@/shared/dhikr-catalog";
 import { useLanguage } from "@/shared/i18n";
 import { Card } from "@/shared/ui/Card";
-import { AudioButton } from "./AudioButton";
+import { AudioPlayer } from "./AudioPlayer";
 import { quranReference, referenceLabel } from "./referenceLabel";
 
 /** A labelled block of text under the Arabic: the transliteration or the translation. */
 function TextSection({ title, children }: { title: string; children: string }): ReactElement {
   return (
     <section className="flex flex-col gap-xs">
-      <h2 className="text-section-title text-on-surface-variant">{title}</h2>
+      <h2 className="text-section-title text-on-surface">{title}</h2>
       <p dir="auto" className="text-body text-on-surface">
         {children}
       </p>
@@ -33,13 +33,13 @@ function ArabicText({ dhikr }: { dhikr: Dhikr }): ReactElement {
   );
 }
 
-/** The card holding the recited text, with the audio button under it when there's a recording. */
+/** The card holding the recited text, with the audio player bar at its bottom when there's a recording. */
 function TextCard({ dhikr, children }: { dhikr: Dhikr; children: ReactNode }): ReactElement {
   return (
     <Card>
       <div className="flex flex-col items-center gap-lg py-sm">
         {children}
-        {dhikr.audio !== null && <AudioButton audio={dhikr.audio} />}
+        {dhikr.audio !== null && <AudioPlayer key={dhikr.key} audio={dhikr.audio} />}
       </div>
     </Card>
   );
@@ -49,7 +49,7 @@ function TextCard({ dhikr, children }: { dhikr: Dhikr; children: ReactNode }): R
  * A dhikr's text by kind (the slice brief's "Rendering by kind"):
  * - `quran`: the Arabic one ayah per line, its reference ("Qur'an 112:1–4"), then the
  *   transliteration and translation;
- * - `name_of_allah`: the name large and centred, then its meaning;
+ * - `name_of_allah`: the name in `nameOfAllah`, then its meaning in `title`, both in the card;
  * - `dhikr`, `dua`, `salawat`: the Arabic, then the transliteration and translation.
  * The transliteration and translation are in the UI language, falling back to English; Arabic
  * shows no transliteration.
@@ -62,10 +62,10 @@ export function DhikrText({ dhikr }: { dhikr: Dhikr }): ReactElement {
   if (dhikr.kind === "name_of_allah") {
     return (
       <TextCard dhikr={dhikr}>
-        <p lang="ar" dir="rtl" className="text-center font-arabic text-large-title text-on-surface">
+        <p lang="ar" dir="rtl" className="text-center text-name-of-allah text-on-surface">
           {dhikr.arabic}
         </p>
-        <p dir="auto" className="text-center text-card-title text-on-surface-variant">
+        <p dir="auto" className="text-center text-title text-on-surface">
           {translation}
         </p>
       </TextCard>

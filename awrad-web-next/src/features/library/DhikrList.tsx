@@ -25,10 +25,10 @@ function RowAnchor({ ref, heading, arabic, className, ...props }: RowProps): Rea
         className,
       )}
     >
-      {/* items-start: each line is as wide as its text, so the Arabic sits at the row's start in either direction. */}
+      {/* The title sits at the row's start; the Arabic spans the row, aligned right in every language. */}
       <span className="flex min-w-0 flex-1 flex-col items-start">
         <span className="max-w-full truncate text-row-title text-on-surface">{heading}</span>
-        <span lang="ar" dir="rtl" className="max-w-full truncate text-quran-line text-on-surface-variant">
+        <span lang="ar" dir="rtl" className="self-stretch truncate text-right text-quran-line text-on-surface-variant">
           {arabic}
         </span>
       </span>
@@ -43,7 +43,7 @@ const RowLink = createLink(RowAnchor);
 
 /**
  * A dhikr in a list: its title in `rowTitle`, the start of its Arabic on one line in `quranLine`
- * (right to left, cut off with an ellipsis), and a trailing chevron (mirrored in right-to-left
+ * (right to left and aligned right in every language, cut off with an ellipsis), and a trailing chevron (mirrored in right-to-left
  * layouts). The row is one link to the dhikr; `tile` corners, filled like a card.
  */
 export function DhikrRow({ dhikr }: { dhikr: Dhikr }): ReactElement {

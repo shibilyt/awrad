@@ -29,14 +29,27 @@ describe("navigation", () => {
     expect(screen.getByRole("link", { name: "View all" })).toHaveAttribute("href", "/library");
   });
 
-  test("the bottom bar's Home and Library are links, Library selected on its pages", async () => {
-    renderRoute("/library/dhikrs/tahleel");
+  test("the bottom bar's Home and Library are links, Library selected on the Library", async () => {
+    renderRoute("/library");
 
     const bar = await screen.findByRole("tablist", { name: "Main navigation" });
     const library = within(bar).getByRole("tab", { name: "Library" });
     expect(library).toHaveAttribute("href", "/library");
     expect(library).toHaveAttribute("aria-selected", "true");
     expect(within(bar).getByRole("tab", { name: "Home" })).toHaveAttribute("href", "/");
+  });
+
+  test("pushed pages (a collection, a dhikr) have Back and no bottom bar", async () => {
+    const { unmount } = renderRoute("/library/collections/swalaths");
+    expect(await screen.findByRole("heading", { level: 1, name: "Swalaths" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+    unmount();
+
+    renderRoute("/library/dhikrs/tahleel");
+    expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
   });
 
   test("a tile opens its collection, and a row opens the dhikr", async () => {

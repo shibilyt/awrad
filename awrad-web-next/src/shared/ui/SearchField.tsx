@@ -9,16 +9,14 @@ import { useFill } from "./Surface";
 /**
  * A search box (the Library): a filled field like `TextField` (`control` tall, `field` shape,
  * `surface` on the page), with the `search` icon at the start and, once there's text, a clear
- * button at the end (Escape clears too). It has no visible label, so `label` names it for screen
- * readers; the placeholder says what can be searched. Keyboard focus rings the whole field.
+ * button at the end (Escape clears too). It has no visible label: `label` ("Search dhikrs") is the
+ * placeholder and the accessible name. Keyboard focus rings the whole field.
  */
 export function SearchField({
   label,
-  placeholder,
   ...props
 }: Omit<SearchFieldProps, "children" | "className" | "aria-label"> & {
   label: string;
-  placeholder?: string;
 }): ReactElement {
   const { t } = useTranslation();
   const fill = useFill();
@@ -34,7 +32,7 @@ export function SearchField({
       >
         <SearchIcon />
         <Input
-          {...(placeholder === undefined ? {} : { placeholder })}
+          placeholder={label}
           className="min-w-0 flex-1 bg-transparent text-input text-on-surface caret-accent outline-none placeholder:text-on-surface-variant"
         />
         <span className="group-data-empty:invisible">

@@ -11,22 +11,28 @@ import { citedLabels } from "./referenceLabel";
 
 const route = getRouteApi("/library/dhikrs/$key");
 
-/** The dhikr's catalog tags as chips (not yet filters). */
+/** "Tags": the dhikr's catalog tags as chips (not yet filters). */
 function Tags({ dhikr }: { dhikr: Dhikr }): ReactElement | null {
   const { t } = useTranslation();
   const language = useLanguage();
   const catalog = useCatalog();
   const fill = useSecondaryFill();
+  const heading = useId();
   const tags = (dhikr.tags ?? []).flatMap((key) => findTag(catalog, key) ?? []);
   if (tags.length === 0) return null;
   return (
-    <ul aria-label={t("library.detail.tags")} className="flex flex-wrap gap-sm">
-      {tags.map((tag) => (
-        <li key={tag.key} className={`rounded-chip px-md py-xs text-label ${fill}`}>
-          {tag.title[language]}
-        </li>
-      ))}
-    </ul>
+    <section aria-labelledby={heading} className="flex flex-col gap-row-gap">
+      <h2 id={heading} className="text-section-title text-on-surface">
+        {t("library.detail.tags")}
+      </h2>
+      <ul className="flex flex-wrap gap-sm">
+        {tags.map((tag) => (
+          <li key={tag.key} className={`rounded-chip px-md py-xs text-label ${fill}`}>
+            {tag.title[language]}
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -60,8 +66,8 @@ function Virtues({ dhikr }: { dhikr: Dhikr }): ReactElement | null {
 }
 
 /**
- * `/library/dhikrs/$key`: the title, the text by kind with the audio button, the tags, and the
- * virtues with their references. An unknown key shows not found.
+ * `/library/dhikrs/$key` (components.md "Dhikr detail screen"): Back and the title in the top bar,
+ * the text by kind with the audio player bar, then the tags and the virtues with their references. An unknown key shows not found.
  */
 export function DhikrPage(): ReactElement {
   const { t } = useTranslation();
@@ -73,9 +79,8 @@ export function DhikrPage(): ReactElement {
 
   return (
     <main className="mx-auto flex w-full max-w-content flex-col pb-page-margin">
-      <BackBar />
+      <BackBar title={dhikr.title[language]} />
       <div className="flex flex-col gap-section-gap px-page-margin">
-        <h1 className="text-title text-on-surface">{dhikr.title[language]}</h1>
         <DhikrText dhikr={dhikr} />
         <Tags dhikr={dhikr} />
         <Virtues dhikr={dhikr} />

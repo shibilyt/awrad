@@ -205,8 +205,7 @@
     "dhikrCount_many": "{{count}} ذكرًا",
     "dhikrCount_other": "{{count}} ذكر",
     "search": {
-      "label": "البحث في الأذكار",
-      "placeholder": "ابحث بالاسم أو المعنى",
+      "label": "ابحث في الأذكار",
       "results_zero": "لم يُعثر على أذكار",
       "results_one": "عُثر على ذكر واحد",
       "results_two": "عُثر على ذكرين",
@@ -230,6 +229,8 @@
       "virtues": "الفضائل",
       "play": "تشغيل الصوت",
       "pause": "إيقاف الصوت مؤقتًا",
+      "position": "موضع التشغيل",
+      "time": "{{elapsed}} / {{duration}}",
       "audioFailed": "تعذّر تشغيل الصوت. تحقّق من اتصالك وحاول مرة أخرى."
     },
     "reference": {

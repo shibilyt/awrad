@@ -7,7 +7,7 @@ import { useFill } from "./Surface";
 
 interface TileProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   ref?: Ref<HTMLAnchorElement>;
-  /** The collection's title, in `rowTitle`, up to two lines. */
+  /** The collection's title, in `rowTitle`: up to two lines, wrapping between words, then an ellipsis. */
   heading: string;
   /** How many it holds ("4 dhikrs"), in `caption`. */
   count: string;
@@ -27,7 +27,7 @@ function TileAnchor({ ref, heading, count, className, ...props }: TileProps): Re
       )}
     >
       <span className="flex min-w-0 flex-col gap-xxs">
-        <span className="line-clamp-2 wrap-break-word text-row-title text-on-surface">{heading}</span>{" "}
+        <span className="line-clamp-2 text-ellipsis text-row-title text-on-surface">{heading}</span>{" "}
         <span className="truncate text-caption text-on-surface-variant">{count}</span>
       </span>
       <span className="self-end">

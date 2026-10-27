@@ -132,6 +132,10 @@
   --awrad-text-quran-line-line-height: 2rem;
   --awrad-text-quran-line-weight: 400;
   --awrad-text-quran-line-font-family: var(--font-arabic);
+  --awrad-text-name-of-allah-size: 2.5rem;
+  --awrad-text-name-of-allah-line-height: 4rem;
+  --awrad-text-name-of-allah-weight: 400;
+  --awrad-text-name-of-allah-font-family: var(--font-arabic);
 
   /* Motion (motion.json). The web uses only fades: durations, easings, its motions and reducedMotion. */
   --awrad-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
@@ -278,6 +282,9 @@
   --text-quran-line: var(--awrad-text-quran-line-size);
   --text-quran-line--line-height: var(--awrad-text-quran-line-line-height);
   --text-quran-line--font-weight: var(--awrad-text-quran-line-weight);
+  --text-name-of-allah: var(--awrad-text-name-of-allah-size);
+  --text-name-of-allah--line-height: var(--awrad-text-name-of-allah-line-height);
+  --text-name-of-allah--font-weight: var(--awrad-text-name-of-allah-weight);
   --font-weight-*: initial;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -332,6 +339,9 @@
 }
 @utility text-quran-line {
   font-family: var(--awrad-text-quran-line-font-family);
+}
+@utility text-name-of-allah {
+  font-family: var(--awrad-text-name-of-allah-font-family);
 }
 
 /* Elevation (shape.json): shadow-<elevation> is the only shadow class. */
