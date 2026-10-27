@@ -90,8 +90,8 @@ private fun SettingsLink(
     isDestructive: Boolean = false,
 ) {
     val color = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
-    // The leading icon is quieter than the title, except on a destructive row, where it takes the title's colour.
-    val iconColor = if (isDestructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+    // The leading icon is an accent, as on iOS and the web; a destructive row's takes the title's colour.
+    val iconColor = if (isDestructive) MaterialTheme.colorScheme.error else AwradTheme.colors.accent
     ListItem(
         modifier = modifier.clickable(onClick = onClick),
         colors = ListItemDefaults.colors(
