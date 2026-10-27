@@ -1,7 +1,6 @@
 {
   "version": 1,
-  "contentRevision": 1,
-  "audioBaseUrl": "https://dhikrs.awrad.app/",
+  "contentRevision": 2,
   "dhikrs": [
     {
       "id": "c88b9491-40ad-4b42-a5b8-e07c4b4d31ef",
@@ -14,13 +13,14 @@
         "ml": "സൂറത് അൽ ഇഖ്ലാസ്"
       },
       "transliteration": {
-        "en": "Qul huwa Allahu ahad"
+        "en": "Bismillahir Rahmanir Raheem. Qul huwallahu ahad. Allahus samad. Lam yalid wa lam yulad. Wa lam yakun lahu kufuwan ahad"
       },
       "aliases": {
         "en": [
           "Al-Ikhlas",
           "Qul Huwallahu Ahad",
-          "Surah 112"
+          "Surah 112",
+          "ikhlas"
         ],
         "ar": [
           "الإخلاص",
@@ -34,7 +34,7 @@
         "en": "In the name of Allah, the Most Merciful, the Especially Merciful. Say: He is Allah, the One. Allah, the Self-Sufficient, on whom all depend. He does not beget, nor was He begotten. And there is none comparable to Him."
       },
       "audio": {
-        "file": "ikhlas.mp3",
+        "url": "https://dhikrs.awrad.app/ikhlas.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 139851,
@@ -82,7 +82,7 @@
         "ml": "അല്ലാഹുവല്ലാതെ ആരാധനയ്ക്ക് അർഹനില്ല."
       },
       "audio": {
-        "file": "1736077531573-g8kajuv6fww-tahleel.mp3",
+        "url": "https://dhikrs.awrad.app/1736077531573-g8kajuv6fww-tahleel.mp3",
         "style": "recitation",
         "repetitions": 2,
         "byteSize": 171362,
@@ -102,10 +102,10 @@
           "number": "3116"
         },
         {
-          "id": "tirmidhi-3462",
+          "id": "tirmidhi-2639",
           "type": "hadith",
           "collection": "Jami at-Tirmidhi",
-          "number": "3462"
+          "number": "2639"
         }
       ],
       "virtues": [
@@ -132,11 +132,11 @@
         {
           "text": {
             "en": "On the Day of Judgement, nothing will be heavier in the scales than La ilaha illallah.",
-            "ar": "هذه الكلمة العظيمة من أثقل الأذكار في الميزان يوم القيامة.",
-            "ml": "ഖിയാമത്ത് നാളിൽ ഈ മഹത്തായ വാക്ക് തുലാസിൽ ഭാരമുള്ള ദിക്റുകളിൽ ഒന്നാണ്."
+            "ar": "لا يثقل مع اسم الله شيء في الميزان يوم القيامة.",
+            "ml": "ഖിയാമത്ത് നാളിൽ തുലാസിൽ അല്ലാഹുവിന്റെ നാമത്തേക്കാൾ ഭാരമുള്ളതായി ഒന്നുമില്ല."
           },
           "references": [
-            "tirmidhi-3462"
+            "tirmidhi-2639"
           ]
         }
       ]
@@ -172,7 +172,7 @@
         "ml": "അനുഗ്രഹങ്ങൾ ധാരാളമായി നൽകുന്നവനേ."
       },
       "audio": {
-        "file": "ya-wahhabu-2.mp3",
+        "url": "https://dhikrs.awrad.app/ya-wahhabu-2.mp3",
         "style": "recitation",
         "repetitions": 2,
         "byteSize": 29100,
@@ -213,7 +213,7 @@
         "ml": "മഹത്തായ അല്ലാഹുവിനോട് ഞാൻ പാപമോചനം തേടുന്നു."
       },
       "audio": {
-        "file": "1736083253280-c2kcxrk9cj-isthighfar.mp3",
+        "url": "https://dhikrs.awrad.app/1736083253280-c2kcxrk9cj-isthighfar.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 103444,
@@ -224,7 +224,8 @@
           "id": "abu-dawud-1518",
           "type": "hadith",
           "collection": "Sunan Abi Dawud",
-          "number": "1518"
+          "number": "1518",
+          "grade": "Da'if (al-Albani)"
         },
         {
           "id": "quran-71-10",
@@ -299,7 +300,7 @@
         "ml": "നൂറിനും അവിടുത്തെ കുടുംബത്തിനും സ്വലാത്ത് അയക്കണമേ."
       },
       "audio": {
-        "file": "1736075795464-yh0twy42m-swalath-fatimiya.mp3",
+        "url": "https://dhikrs.awrad.app/1736075795464-yh0twy42m-swalath-fatimiya.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 103444,
@@ -337,7 +338,7 @@
         "ml": "മുഹമ്മദ് നബിയിലേക്ക് അല്ലാഹുവിന്റെ അനുഗ്രഹവും സമാധാനവും ഉണ്ടാകട്ടെ."
       },
       "audio": {
-        "file": "1736510596621-oqiqm8yj15l-swalath-regular.mp3",
+        "url": "https://dhikrs.awrad.app/1736510596621-oqiqm8yj15l-swalath-regular.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 165093,
@@ -405,7 +406,7 @@
         "ml": "സയ്യിദുനാ മുഹമ്മദ് നബിയുടെയും കുടുംബത്തിന്റെയും സഹാബികളുടെയും മേൽ സ്വലാത്തും സലാമും."
       },
       "audio": {
-        "file": "1737527316685-7gkeld0j3oy-swalath-1.mp3",
+        "url": "https://dhikrs.awrad.app/1737527316685-7gkeld0j3oy-swalath-1.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 195395,
@@ -458,7 +459,7 @@
         "ml": "അടഞ്ഞതിനെ തുറന്ന സയ്യിദുനാ മുഹമ്മദ് നബിയിലേക്ക് സ്വലാത്ത്."
       },
       "audio": {
-        "file": "swalath_fatih.mp3",
+        "url": "https://dhikrs.awrad.app/swalath_fatih.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 241812,
@@ -497,7 +498,7 @@
         "ml": "സയ്യിദുനാ മുഹമ്മദ് നബിയിലേക്ക് സമ്പൂർണ സ്വലാത്തും സമാധാനവും."
       },
       "audio": {
-        "file": "swalath_nariyya.mp3",
+        "url": "https://dhikrs.awrad.app/swalath_nariyya.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 463782,
@@ -510,14 +511,14 @@
       "id": "9cbb04d9-fb07-4c8f-9235-49e2ce6fc818",
       "key": "swalath-for-debt",
       "kind": "salawat",
-      "arabic": "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ عَبْدِكَ وَرَسُولِكَ وَعَلَى الْمُؤْمِنِينَ وَالْمُسْلِمِينَ وَلِلْمُؤْمِنَاتِ وَالْمُسْلِمَاتِ",
+      "arabic": "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ عَبْدِكَ وَرَسُولِكَ، وَعَلَى الْمُؤْمِنِينَ وَالْمُؤْمِنَاتِ وَالْمُسْلِمِينَ وَالْمُسْلِمَاتِ",
       "title": {
         "en": "Swalath for Debt",
         "ar": "صلاة قضاء الدين",
         "ml": "കടം തീർക്കാനുള്ള സ്വലാത്ത്"
       },
       "transliteration": {
-        "en": "Allāhumma ṣalli ʿalā Muḥammadin ʿabdika wa rasūlika wa ʿalā al-muʾminīna wa al-muslimīna wa lil-muʾmināti wa al-muslimāt."
+        "en": "Allahumma swalli ala Muhammadin abdika wa rasulika, wa alal mu'mineena wal mu'minaathi wal muslimeena wal muslimath"
       },
       "aliases": {
         "en": [
@@ -525,12 +526,12 @@
         ]
       },
       "translation": {
-        "en": "O Allah, send blessings upon Muhammad, Your servant and Your messenger, and upon the believing men and the Muslim men, and upon the believing women and the Muslim women.",
-        "ar": "اللهم صل على محمد عبدك ورسولك وعلى المؤمنين والمؤمنات.",
-        "ml": "അല്ലാഹുവേ, നിന്റെ ദാസനും ദൂതനുമായ മുഹമ്മദ് നബിയിലേക്കും വിശ്വാസികളിലേക്കും സ്വലാത്ത് അയക്കണമേ."
+        "en": "O Allah, send blessings upon Muhammad, Your servant and Your Messenger, and upon the believing men and the believing women, and the Muslim men and the Muslim women.",
+        "ar": "اللهم صل على محمد عبدك ورسولك، وعلى المؤمنين والمؤمنات والمسلمين والمسلمات.",
+        "ml": "അല്ലാഹുവേ, നിന്റെ ദാസനും ദൂതനുമായ മുഹമ്മദ് നബിയിലേക്കും വിശ്വാസികളായ സ്ത്രീപുരുഷന്മാരിലേക്കും മുസ്‌ലിംകളായ സ്ത്രീപുരുഷന്മാരിലേക്കും സ്വലാത്ത് അയക്കണമേ."
       },
       "audio": {
-        "file": "swalath_tajul_ulama.mp3",
+        "url": "https://dhikrs.awrad.app/swalath_tajul_ulama.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 131603,
@@ -563,7 +564,7 @@
         "ml": "അല്ലാഹുവല്ലാതെ ആരാധനയ്ക്ക് അർഹനില്ലെന്ന് ഞാൻ സാക്ഷ്യം വഹിക്കുന്നു; പാപമോചനം തേടുന്നു; സ്വർഗം ചോദിക്കുകയും നരകത്തിൽ നിന്ന് അഭയം തേടുകയും ചെയ്യുന്നു."
       },
       "audio": {
-        "file": "ramadan_full.mp3",
+        "url": "https://dhikrs.awrad.app/ramadan_full.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 131679,
@@ -597,7 +598,7 @@
         "ml": "അല്ലാഹുവേ, കാരുണ്യം കാണിക്കുന്നവരിൽ ഏറ്റവും കാരുണ്യമുള്ളവനേ, എന്നോട് കരുണ കാണിക്കണമേ."
       },
       "audio": {
-        "file": "ramadan_first10.mp3",
+        "url": "https://dhikrs.awrad.app/ramadan_first10.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 66743,
@@ -631,7 +632,7 @@
         "ml": "അല്ലാഹുവേ, ലോകങ്ങളുടെ രക്ഷിതാവേ, എന്റെ പാപങ്ങൾ പൊറുത്തുതരണമേ."
       },
       "audio": {
-        "file": "ramadan_second10.mp3",
+        "url": "https://dhikrs.awrad.app/ramadan_second10.mp3",
         "style": "recitation",
         "repetitions": 1,
         "byteSize": 74210,

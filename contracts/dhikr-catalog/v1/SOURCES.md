@@ -2,6 +2,19 @@
 
 How `catalog.json` was put together from the frozen apps, every disagreement found between their copies, and what still needs a human or a scholar. The frozen projects are evidence only; nothing in them was changed.
 
+
+## Decided by the user (2026-10-27)
+
+- **Surah Ikhlas** includes the basmala; the transliteration now covers the whole surah.
+- **Swalath an-Nariyya** keeps `الْخَوَاتِمِ`.
+- **Swalath for debt:** the text is the user's wording: *Allahumma swalli ala Muhammadin abdika wa rasulika, wa alal mu'mineena wal mu'minaathi wal muslimeena wal muslimath*. The Arabic, translations and transliteration follow it, and the earlier `وَلِلْمُؤْمِنَاتِ` reading is replaced. The ml translation is new and needs a native check.
+- **References fixed:**
+  - "Nothing heavier in the scales" now cites the hadith of the card, Tirmidhi 2639 (was 3462), with its ar/ml wording aligned to "nothing heavier".
+  - Abu Dawud 1518 carries the grade *Da'if (al-Albani)*.
+- **Audio links** are full URLs into the R2 bucket (`dhikrs.awrad.app`), as in the frozen Android app.
+
+The rows below record the original findings; where they conflict with this section, this section wins.
+
 ## Sources
 
 | Tag | File |
@@ -26,7 +39,7 @@ The comparison was done mechanically, field by field. Every virtue text is verba
 - **transliteration.en** comes from A and I, which match for all 13, except where they only repeat the title (Fatih, Nariyya). No frozen source has a Malayalam-script transliteration, so `transliteration.ml` is absent everywhere.
 - **translation.en:** A's `translation` repeats the title for 12 of the 13, so I is used, except where noted. **translation.ar/ml** come from ID, except where ID repeats the title. Several ar "translations" just restate the Arabic without harakat; they were kept so Arabic users don't fall back to English.
 - **audio:**
-  - `file` is the remote file name from A's `audioUrl`, which equals I's `audioURL`. A and I also have a local cache name (`audioFileName`, for example `tahleel.mp3`); it's a platform detail and was dropped.
+  - `url` is A's `audioUrl` exactly: the Cloudflare R2 bucket behind `dhikrs.awrad.app` (equals I's `audioURL`). A and I also have a local cache name (`audioFileName`, for example `tahleel.mp3`); it's a platform detail and was dropped.
   - `repetitions` is the old `audioCountPerPlay`: 2 for tahleel and ya-wahhabu, 1 for the rest. A and I agree.
   - `byteSize` and `mimeType` come from the HEAD check below.
   - `style` is set to `recitation` for all 13, but **nobody has listened to confirm it**; some may be `melodic`.

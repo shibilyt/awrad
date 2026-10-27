@@ -21,7 +21,7 @@ A dhikr is one text, recited as a unit. It has no parts, sequences, occasions or
 | `transliteration` | One per language, in that language's script: `en` is Latin (required), `ml` is Malayalam script. Arabic has none. |
 | `aliases` | Optional extra search terms per language (`{en?: […], ar?: […], ml?: […]}`): spelling variants and common names people type. Each is in its language's script and doesn't repeat the title or transliteration. Not shown as text. |
 | `translation` | `{en, ar?, ml?}` |
-| `audio` | `null` or one recording. `file` is relative to `audioBaseUrl`, `style` is `recitation`, `melodic` or `teaching`, and `repetitions` is how many recitations one play contains. Optional: `reciter`, `durationMs`, `byteSize`, `mimeType`, `sha256`, `attribution`. |
+| `audio` | `null` or one recording. `url` is the full link to the file in the Awrad Cloudflare R2 bucket, served at `https://dhikrs.awrad.app/` (the frozen Android app's links), `style` is `recitation`, `melodic` or `teaching`, and `repetitions` is how many recitations one play contains. Optional: `reciter`, `durationMs`, `byteSize`, `mimeType`, `sha256`, `attribution`. |
 | `references` | Sources, each with an `id` unique within the dhikr and a `type`: `quran` (surah, ayah range), `hadith` (collection, number, narrator, grade), `book`, `shaykh` or `other`. A `quran`-kind dhikr must cite the Qur'an. |
 | `virtues` | `{text: {en, ar?, ml?}, references: [id, …]}`. Every virtue cites at least one of the dhikr's references. A benefit with no source isn't a virtue; it waits in `SOURCES.md` until it has one. |
 
