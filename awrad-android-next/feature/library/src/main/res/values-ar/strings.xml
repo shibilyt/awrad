@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="library_title">المكتبة</string>
+    <string name="library_search_placeholder">ابحث في الأذكار</string>
+    <string name="library_all_dhikrs">كل الأذكار</string>
+    <string name="library_no_results">لا شيء يطابق «%1$s»</string>
+    <string name="library_no_results_hint">جرّب كتابة أخرى، أو كلمات الذكر بالعربية.</string>
+    <string name="library_featured_collections">مجموعات أذكار مختارة</string>
+    <string name="library_view_all">عرض الكل</string>
+    <string name="library_missing">هذا الذكر أو هذه المجموعة غير موجودة في المكتبة.</string>
+    <plurals name="library_dhikr_count">
+        <item quantity="zero">لا أذكار</item>
+        <item quantity="one">ذكر واحد</item>
+        <item quantity="two">ذكران</item>
+        <item quantity="few">%d أذكار</item>
+        <item quantity="many">%d ذكرًا</item>
+        <item quantity="other">%d ذكر</item>
+    </plurals>
+
+    <!-- Dhikr detail -->
+    <string name="library_quran">القرآن</string>
+    <string name="library_virtues">الفضائل</string>
+    <string name="library_open_source">افتح المصدر</string>
+    <string name="library_play">تشغيل</string>
+    <string name="library_pause">إيقاف مؤقت</string>
+    <string name="library_audio_loading">جارٍ تحميل التسجيل…</string>
+    <string name="library_audio_failed">تعذّر تشغيل التسجيل. تحقّق من الاتصال وحاول مرة أخرى.</string>
+    <string name="library_audio_elapsed">%1$s / %2$s</string>
+</resources>

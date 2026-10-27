@@ -90,6 +90,7 @@ private fun ComponentsTab(settings: GallerySettings, startWithSheet: Boolean, mo
             ButtonsSection()
             InputsSection()
             ContainersSection(startWithSheet = startWithSheet)
+            LibrarySection()
             NavigationSection()
             IconsSection()
         }

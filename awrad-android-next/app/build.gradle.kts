@@ -40,6 +40,7 @@ dependencies {
     implementation(project(":core:network"))
     implementation(project(":feature:onboarding"))
     implementation(project(":feature:account"))
+    implementation(project(":feature:library"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)

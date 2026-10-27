@@ -20,12 +20,11 @@ import app.awrad.core.designsystem.motion.LocalAwradPageTransitions
 import app.awrad.core.designsystem.motion.rememberAwradPageTransitions
 import app.awrad.feature.account.AccountDestination
 import app.awrad.feature.account.accountScreen
+import app.awrad.feature.library.libraryScreen
 import app.awrad.feature.onboarding.OnboardingDestination
 import app.awrad.feature.onboarding.onboardingScreen
 import app.awrad.next.AppShellViewModel
 import app.awrad.next.StartDestination
-import app.awrad.next.home.HomeDestination
-import app.awrad.next.home.HomePlaceholderRoute
 
 /**
  * Wires features together. Each feature contributes one `NavGraphBuilder`
@@ -45,7 +44,7 @@ fun AwradNavHost(
     val startRoute: Any? = remember(start != null) {
         when (start) {
             StartDestination.Onboarding -> OnboardingDestination
-            StartDestination.Home -> HomeDestination
+            StartDestination.Home -> MainDestination
             null -> null
         }
     }
@@ -65,15 +64,17 @@ fun AwradNavHost(
             popEnterTransition = { pages.popEnter(this) },
             popExitTransition = { pages.popExit(this) },
         ) {
-            onboardingScreen(onFinish = { navController.replaceStackWith(HomeDestination) })
-            composable<HomeDestination> { entry ->
+            onboardingScreen(onFinish = { navController.replaceStackWith(MainDestination) })
+            composable<MainDestination> { entry ->
                 AwradPage(scope = this, key = entry) {
-                    HomePlaceholderRoute(
+                    MainShell(
+                        onNavigate = { navController.navigate(it) },
                         onOpenAccount = { navController.navigate(AccountDestination) },
                         onRestartOnboarding = { navController.replaceStackWith(OnboardingDestination) },
                     )
                 }
             }
+            libraryScreen(onNavigate = { navController.navigate(it) }, onBack = { navController.popBackStack() })
             accountScreen(onBack = { navController.popBackStack() })
         }
     }
