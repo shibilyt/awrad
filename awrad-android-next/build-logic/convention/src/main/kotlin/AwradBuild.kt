@@ -123,6 +123,9 @@ internal fun Project.configureDetekt() {
         buildUponDefaultConfig = true
         allRules = false
         config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+        // The design system may wrap the Material components detekt.yml bans, but not Material Icons: its own
+        // file overrides that rule (a later config file wins over an earlier one).
+        if (path == DESIGN_SYSTEM) config.from(rootProject.file("config/detekt/designsystem.yml"))
         // The debug-only component gallery is held to the same rules.
         source.from(files("src/debug/kotlin"))
         parallel = true

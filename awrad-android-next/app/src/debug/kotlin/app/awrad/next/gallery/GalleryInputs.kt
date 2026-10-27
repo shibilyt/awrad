@@ -1,8 +1,6 @@
 package app.awrad.next.gallery
 
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -13,12 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import app.awrad.core.designsystem.component.AwradCard
 import app.awrad.core.designsystem.component.AwradCheckbox
 import app.awrad.core.designsystem.component.AwradIconButton
 import app.awrad.core.designsystem.component.AwradSegmentedPills
 import app.awrad.core.designsystem.component.AwradSwitch
 import app.awrad.core.designsystem.component.AwradTextField
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.next.R
 
@@ -37,6 +37,7 @@ internal fun InputsSection(modifier: Modifier = Modifier) {
 private fun TextFields(disabled: String) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var visible by rememberSaveable { mutableStateOf(false) }
     AwradTextField(
         value = email,
         onValueChange = { email = it },
@@ -49,12 +50,14 @@ private fun TextFields(disabled: String) {
         onValueChange = { password = it },
         label = stringResource(R.string.gallery_password),
         supportingText = stringResource(R.string.gallery_password_hint),
-        visualTransformation = PasswordVisualTransformation(),
+        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             AwradIconButton(
-                icon = Icons.Filled.Visibility,
-                contentDescription = stringResource(R.string.gallery_show_password),
-                onClick = {},
+                icon = if (visible) AwradIcons.Hide else AwradIcons.Show,
+                contentDescription = stringResource(
+                    if (visible) R.string.gallery_hide_password else R.string.gallery_show_password,
+                ),
+                onClick = { visible = !visible },
                 tint = AwradTheme.colors.onSurfaceVariant,
             )
         },

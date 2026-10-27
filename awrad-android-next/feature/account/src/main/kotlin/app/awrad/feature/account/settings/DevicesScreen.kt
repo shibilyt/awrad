@@ -4,12 +4,6 @@ import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Devices
-import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.PhoneAndroid
-import androidx.compose.material.icons.filled.PhoneIphone
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.Text
@@ -17,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -140,7 +133,6 @@ private fun SessionRow(session: AccountSession, now: Instant, onRevoke: () -> Un
     ListItem(
         modifier = modifier,
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        leadingContent = { Icon(imageVector = session.platform.icon(), contentDescription = null) },
         headlineContent = { Text(text = name, style = AwradTheme.type.rowTitle) },
         supportingContent = {
             Text(
@@ -207,13 +199,6 @@ private fun platformLabel(platform: AccountSession.Platform): String = stringRes
         AccountSession.Platform.OTHER -> R.string.account_devices_platform_other
     },
 )
-
-private fun AccountSession.Platform.icon(): ImageVector = when (this) {
-    AccountSession.Platform.ANDROID -> Icons.Filled.PhoneAndroid
-    AccountSession.Platform.IOS -> Icons.Filled.PhoneIphone
-    AccountSession.Platform.WEB -> Icons.Filled.Language
-    AccountSession.Platform.OTHER -> Icons.Filled.Devices
-}
 
 /** "Last used 5 minutes ago", in the app's language; "Active now" within the last minute. */
 @Composable

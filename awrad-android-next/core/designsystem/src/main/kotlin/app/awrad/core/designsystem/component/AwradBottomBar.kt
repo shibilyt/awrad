@@ -143,7 +143,7 @@ private fun BarItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.xs, Alignment.CenterVertically),
     ) {
-        PillIcon(icon = if (selected) item.selectedIcon else item.icon, selected = selected)
+        PillIcon(icon = item.icon, selected = selected)
         Text(
             text = item.label,
             style = AwradTheme.type.navLabel,

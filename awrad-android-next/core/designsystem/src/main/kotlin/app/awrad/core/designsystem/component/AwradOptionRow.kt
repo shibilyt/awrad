@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -27,6 +25,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextOverflow
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.motion.AwradPressTarget
 import app.awrad.core.designsystem.motion.pressFeedback
 import app.awrad.core.designsystem.motion.select
@@ -153,7 +152,7 @@ private fun SelectedCheck(selected: Boolean, modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Rounded.Check,
+            imageVector = AwradIcons.Check,
             contentDescription = null,
             modifier = Modifier.size(AwradTheme.sizes.iconSmall),
             tint = AwradTheme.colors.primary,

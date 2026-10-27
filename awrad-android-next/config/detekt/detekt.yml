@@ -90,6 +90,8 @@ style:
         reason: 'Use AwradLinearProgress (the progress role).'
       - value: 'androidx.compose.material3.CircularProgressIndicator'
         reason: 'Use AwradCircularProgress (the progress role).'
+      - value: 'androidx.compose.material.icons.*'
+        reason: 'Use AwradIcons, the shared icon set (contracts/design-tokens/v1/icons.json), never Material Icons.'
   ForbiddenComment:
     active: true
     comments:

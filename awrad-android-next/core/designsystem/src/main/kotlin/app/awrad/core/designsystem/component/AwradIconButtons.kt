@@ -6,8 +6,6 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBackIos
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
@@ -23,6 +21,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import app.awrad.core.designsystem.R
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.motion.AwradPressTarget
 import app.awrad.core.designsystem.motion.pressFeedback
 import app.awrad.core.designsystem.theme.AwradTheme
@@ -66,11 +65,11 @@ public fun AwradIconButton(
     }
 }
 
-/** Back: a chevron (flipped in RTL) labelled "Back" in the app's language. */
+/** Back: the shared `back` chevron (flipped in RTL) labelled "Back" in the app's language. */
 @Composable
 public fun AwradBackButton(onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true) {
     AwradIconButton(
-        icon = Icons.AutoMirrored.Rounded.ArrowBackIos,
+        icon = AwradIcons.Back,
         contentDescription = stringResource(R.string.awrad_action_back),
         onClick = onClick,
         modifier = modifier,

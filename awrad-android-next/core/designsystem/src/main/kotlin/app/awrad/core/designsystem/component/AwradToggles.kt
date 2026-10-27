@@ -22,19 +22,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathMeasure
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.IntOffset
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.motion.AwradPressTarget
 import app.awrad.core.designsystem.motion.pressFeedback
 import app.awrad.core.designsystem.motion.select
@@ -45,13 +43,11 @@ import app.awrad.core.designsystem.theme.AwradTheme
  * (at least 48 tall) and one node for screen readers, with the checkbox or switch role and its state.
  */
 
-/** Where the tick's three points sit in the box, as fractions of its side. */
-private val TickPoints = listOf(Offset(0.24f, 0.52f), Offset(0.42f, 0.7f), Offset(0.77f, 0.32f))
-
 /**
  * A checkbox with its [label] (`body`, `md` after the box). The box is `checkbox` (20), `checkbox` shape:
- * unticked, a `strokes.checkbox` line in `outlineStrong`; ticked, a `primary` fill with an `onPrimary` tick that
- * draws in on `spatial`. Colours change with `select`; under reduced motion the tick cross-fades instead.
+ * unticked, a `strokes.checkbox` line in `outlineStrong`; ticked, a `primary` fill with an `onPrimary` tick (the
+ * shared `check` icon) that draws in from its start on `spatial`. Colours change with `select`; under reduced
+ * motion the tick cross-fades instead.
  */
 @Composable
 public fun AwradCheckbox(
@@ -155,8 +151,7 @@ private fun CheckboxBox(checked: Boolean, modifier: Modifier = Modifier) {
     val shape = AwradTheme.shapes.checkbox
     val stroke = AwradTheme.strokes.checkbox
     val tickColor = colors.onPrimary
-    val path = remember { Path() }
-    val measure = remember { PathMeasure() }
+    val check = rememberVectorPainter(AwradIcons.Check)
     Canvas(modifier = modifier.size(AwradTheme.sizes.checkbox)) {
         val width = stroke.toPx()
         drawOutline(shape.createOutline(size, layoutDirection, this), fill)
@@ -168,24 +163,12 @@ private fun CheckboxBox(checked: Boolean, modifier: Modifier = Modifier) {
         if (tick > 0f) {
             val drawn = if (motion.isReduced) 1f else tick
             val alpha = if (motion.isReduced) tick else 1f
-            drawTick(path, measure, drawn, tickColor.copy(alpha = tickColor.alpha * alpha), width)
+            // Drawing in reveals the check from its start (left; a tick isn't mirrored).
+            clipRect(right = size.width * drawn) {
+                with(check) { draw(size, alpha = alpha, colorFilter = ColorFilter.tint(tickColor)) }
+            }
         }
     }
-}
-
-/** The first [fraction] of the tick, in [color]. */
-private fun DrawScope.drawTick(path: Path, measure: PathMeasure, fraction: Float, color: Color, width: Float) {
-    val full = Path().apply {
-        TickPoints.forEachIndexed { index, point ->
-            val x = point.x * size.width
-            val y = point.y * size.height
-            if (index == 0) moveTo(x, y) else lineTo(x, y)
-        }
-    }
-    measure.setPath(full, forceClosed = false)
-    path.reset()
-    measure.getSegment(0f, measure.length * fraction.coerceIn(0f, 1f), path, startWithMoveTo = true)
-    drawPath(path, color, style = Stroke(width = width, cap = StrokeCap.Round, join = StrokeJoin.Round))
 }
 
 @Composable

@@ -1,0 +1,11 @@
+# Layered over detekt.yml for :core:designsystem only (configureDetekt in build-logic's AwradBuild.kt).
+# detekt.yml's ForbiddenImport excludes the design system, which wraps the Material components it bans. The icon
+# ban holds here too: the design system draws the shared icons (AwradIcons) like every other module.
+
+style:
+  ForbiddenImport:
+    active: true
+    excludes: []
+    imports:
+      - value: 'androidx.compose.material.icons.*'
+        reason: 'Use AwradIcons, the shared icon set (contracts/design-tokens/v1/icons.json), never Material Icons.'

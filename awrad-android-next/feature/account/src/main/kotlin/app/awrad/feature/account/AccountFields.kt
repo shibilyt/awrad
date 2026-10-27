@@ -2,9 +2,6 @@ package app.awrad.feature.account
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +15,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import app.awrad.core.designsystem.component.AwradIconButton
 import app.awrad.core.designsystem.component.AwradTextField
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.domain.account.InputProblem
 
@@ -69,7 +67,7 @@ internal fun PasswordField(
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
         trailingIcon = {
             AwradIconButton(
-                icon = if (visible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                icon = if (visible) AwradIcons.Hide else AwradIcons.Show,
                 contentDescription = stringResource(
                     if (visible) R.string.account_action_hide_password else R.string.account_action_show_password,
                 ),
