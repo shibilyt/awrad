@@ -61,6 +61,43 @@ struct CustomDhikrEditorModelTests {
         #expect(await library.calls.isEmpty)
     }
 
+    /// The first problem may be above what's on screen: a failed save points the screen at it, once
+    /// per attempt, so it scrolls there and VoiceOver reads it.
+    @Test func aFailedSavePointsAtTheFirstFieldWithAProblem() async {
+        let library = FakePersonalLibrary(customDhikrs: [])
+        let model = model(library)
+        #expect(model.state.problemFocus == nil)
+        model.apply(.arabicChanged("سبحان الله"))
+        await model.send(.saveTapped)
+        #expect(model.state.problemFocus == .init(field: .title, problem: .titleRequired, attempt: 1))
+        #expect(model.state.problemFocus?.field.anchor == .title)
+        await model.send(.saveTapped)
+        #expect(model.state.problemFocus?.attempt == 2)
+        model.apply(.arabicChanged(""))
+        await model.send(.saveTapped)
+        #expect(model.state.problemFocus == .init(field: .arabic, problem: .blank, attempt: 3))
+    }
+
+    @Test func theFirstProblemIsInTheLanguageShown() async {
+        let library = FakePersonalLibrary(customDhikrs: [])
+        let model = model(library)
+        fill(model)
+        model.apply(.textChanged(.translation, .ml, String(repeating: "അ", count: 5001)))
+        await model.send(.saveTapped)
+        #expect(model.state.language == .ml)
+        #expect(model.state.problemFocus?.field == .translation(.ml))
+        #expect(model.state.problemFocus?.field.anchor == .translation)
+    }
+
+    @Test func fieldsAreOrderedAsTheScreenShowsThem() {
+        let fields: [EditorField] = [.reference(2), .translation(.en), .reference(0), .titleText(.ar), .references]
+        #expect(EditorField.first(of: fields, showing: .en) == .translation(.en))
+        #expect(EditorField.first(of: fields, showing: .ar) == .titleText(.ar))
+        #expect(EditorField.first(of: [.reference(2), .reference(0)], showing: .en) == .reference(0))
+        #expect(EditorField.first(of: [.reference(1), .references], showing: .en) == .references)
+        #expect(EditorField.first(of: [.translation(.ml)], showing: .en) == nil)
+    }
+
     @Test func typingClearsThatFieldsProblem() async {
         let library = FakePersonalLibrary(customDhikrs: [])
         let model = model(library)

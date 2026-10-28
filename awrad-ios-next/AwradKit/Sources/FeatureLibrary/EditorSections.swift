@@ -37,6 +37,7 @@ struct EditorTextSections: View {
                 error: error(.arabic), kind: .multiline, isArabic: true
             )
             .pageInset()
+            .id(EditorAnchor.arabic)
             kindSection
             languageSection
         }
@@ -91,6 +92,8 @@ struct EditorTextSections: View {
         )
         // A new language starts empty and unfocused, not with the last one's cursor.
         .id("\(role)-\(language.rawValue)")
+        // Where a failed save scrolls to.
+        .id(field.anchor)
     }
 
     private func error(_ field: EditorField) -> LocalizedStringResource? {

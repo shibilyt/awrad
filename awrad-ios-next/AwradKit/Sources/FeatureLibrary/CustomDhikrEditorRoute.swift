@@ -25,7 +25,10 @@ struct CustomDhikrEditorRoute: View {
     var body: some View {
         CustomDhikrEditorScreen(
             state: model.state,
-            send: { action in if !model.apply(action) { Task { await model.send(action) } } },
+            send: { action in
+                if action.endsEditing { awradEndEditing() }
+                if !model.apply(action) { Task { await model.send(action) } }
+            },
             onManageTags: { navigate(.openManageTags(dhikr: nil)) }
         )
         .task { await model.observe() }
@@ -34,11 +37,20 @@ struct CustomDhikrEditorRoute: View {
             if phase == .background { model.apply(.backgrounded) }
         }
         .onChange(of: model.state.outcome) { _, outcome in
-            switch outcome {
-            case .saved(let id, let isNew): navigate(.editorSaved(id, isNew: isNew))
-            case .deleted: navigate(.popToRoot)
-            case nil: break
-            }
+            if let outcome { navigate(outcome.libraryAction) }
+        }
+    }
+}
+
+extension CustomDhikrEditorModel.Action {
+    /// Whether typing is over: Save, or a sheet, picker or dialog opening over the form. The route
+    /// ends text editing first. Otherwise, when the tag chooser closes, the field typed in last
+    /// takes focus back and the form scrolls to it, so a tap meant for Save misses or lands while
+    /// the screen moves.
+    var endsEditing: Bool {
+        switch self {
+        case .saveTapped, .chooseTagsChanged(true), .addReferenceTapped, .addRecordingTapped, .deleteTapped: true
+        default: false
         }
     }
 }
@@ -48,17 +60,31 @@ struct CustomDhikrEditorScreen: View {
     let state: CustomDhikrEditorModel.State
     let send: EditorSend
     let onManageTags: () -> Void
+    @Environment(\.awradMotion) private var motion
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AwradSpacing.sectionGap) {
-                EditorTextSections(state: state, send: send)
-                EditorReferencesSection(state: state, send: send)
-                EditorTagsSection(state: state, send: send)
-                EditorRecordingSection(state: state, send: send)
-                actions
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(alignment: .leading, spacing: AwradSpacing.sectionGap) {
+                    EditorTextSections(state: state, send: send)
+                    EditorReferencesSection(state: state, send: send)
+                        .id(EditorAnchor.references)
+                    EditorTagsSection(state: state, send: send)
+                    EditorRecordingSection(state: state, send: send)
+                    actions
+                }
+                .padding(.vertical, AwradSpacing.sm)
             }
-            .padding(.vertical, AwradSpacing.sm)
+            // A save that found problems brings the first one into view and reads it out.
+            .onChange(of: state.problemFocus) { _, focus in
+                guard let focus else { return }
+                motion.animate(AwradMotion.Spring.spatial.animation) {
+                    proxy.scrollTo(focus.field.anchor, anchor: .top)
+                }
+                AccessibilityNotification.Announcement(
+                    String(localized: Strings.message(for: focus.problem, field: focus.field))
+                ).post()
+            }
         }
         .scrollDismissesKeyboard(.interactively)
         .background(AwradColors.background)

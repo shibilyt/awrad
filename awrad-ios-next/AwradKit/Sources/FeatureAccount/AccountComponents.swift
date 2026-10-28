@@ -135,9 +135,9 @@ private struct InputTraits: ViewModifier {
             case .newEmail:
                 content.keyboardType(.emailAddress).textContentType(.emailAddress).textInputAutocapitalization(.never)
             case .password:
-                content.textContentType(.password)
+                content.textContentType(.password).textInputAutocapitalization(.never)
             case .newPassword:
-                content.textContentType(.newPassword)
+                content.textContentType(.newPassword).textInputAutocapitalization(.never)
             case .code:
                 content.keyboardType(.numberPad).textContentType(.oneTimeCode)
             }

@@ -46,12 +46,44 @@ public enum AwradContainer: Sendable {
     }
 }
 
+/// A coloured fill that text buttons can sit on (components.md, Buttons: Text). On it a text button's
+/// label takes the fill's paired content colour instead of `accent`, which can be the fill's own
+/// colour (in dark mode `accent` and `secondaryContainer` are the same).
+public enum AwradFill: Sendable, CaseIterable {
+    case secondaryContainer
+    case primary
+
+    public var color: Color {
+        switch self {
+        case .secondaryContainer: AwradColors.secondaryContainer
+        case .primary: AwradColors.primary
+        }
+    }
+
+    /// Text and icons on the fill.
+    public var content: Color {
+        switch self {
+        case .secondaryContainer: AwradColors.onSecondaryContainer
+        case .primary: AwradColors.onPrimary
+        }
+    }
+}
+
 extension EnvironmentValues {
     /// What the views here sit on. A screen is `.background` until a card says otherwise.
     @Entry public var awradContainer: AwradContainer = .background
+    /// The coloured fill the views here sit on, if any (`awradFill(_:in:)` sets it).
+    @Entry public var awradFill: AwradFill?
 }
 
 extension View {
+    /// Fills the view with `fill` in `corner`'s shape and tells the controls inside, so a text button
+    /// on it uses the fill's content colour (the conflict banner's Keep mine and Use theirs).
+    public func awradFill(_ fill: AwradFill, in corner: AwradCorner) -> some View {
+        environment(\.awradFill, fill)
+            .background(fill.color, in: corner.shape)
+    }
+
     /// A card's fill in the `card` shape (or `tile` for list-item cards): `surface` on the background,
     /// `background` on a surface (cards in the content sheet). Every control inside is told what it
     /// sits on. Rows inside are separated by spacing, never by divider lines.
