@@ -28,9 +28,23 @@ internal fun InputsSection(modifier: Modifier = Modifier) {
     val disabled = stringResource(R.string.gallery_state_disabled)
     GallerySection(title = stringResource(R.string.gallery_section_inputs), modifier = modifier) {
         TextFields(disabled = disabled)
+        MultiLineField()
         Toggles(disabled = disabled)
         Segments()
     }
+}
+
+/** A field of several lines (slice 3b): it grows with its text. */
+@Composable
+private fun MultiLineField() {
+    var notes by rememberSaveable { mutableStateOf("") }
+    AwradTextField(
+        value = notes,
+        onValueChange = { notes = it },
+        label = stringResource(R.string.gallery_multi_line),
+        singleLine = false,
+        placeholder = stringResource(R.string.gallery_multi_line_placeholder),
+    )
 }
 
 @Composable

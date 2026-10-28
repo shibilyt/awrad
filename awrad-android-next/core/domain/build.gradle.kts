@@ -6,8 +6,9 @@ plugins {
 dependencies {
     api(libs.kotlinx.coroutines.core)
     api(libs.javax.inject)
-    // DhikrCatalog.parse reads the bundled catalog.json.
-    implementation(libs.kotlinx.serialization.json)
+    // DhikrCatalog.parse reads the bundled catalog.json; the change queue's documents are JSON objects
+    // (contracts/sync/v1), so the sync types expose kotlinx.serialization's JsonObject.
+    api(libs.kotlinx.serialization.json)
     testImplementation(project(":core:testing"))
 }
 
@@ -51,6 +52,9 @@ tasks.test {
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(fileTree(rootDir.resolve("../contracts/identity")))
         .withPropertyName("identityFixtures")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(fileTree(rootDir.resolve("../contracts/sync")))
+        .withPropertyName("syncFixtures")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     // The dhikr search fixtures run over the contract's catalog.json, which the catalog tests parse too.
     inputs.files(fileTree(rootDir.resolve("../contracts/dhikr-catalog")))

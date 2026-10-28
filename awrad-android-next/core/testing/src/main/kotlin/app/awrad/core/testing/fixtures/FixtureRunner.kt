@@ -27,6 +27,7 @@ public enum class FixtureModel(public val directory: String) {
     ACCOUNT_MODEL("account-model"),
     DHIKR_CATALOG("dhikr-catalog"),
     IDENTITY("identity"),
+    SYNC("sync"),
 }
 
 /**

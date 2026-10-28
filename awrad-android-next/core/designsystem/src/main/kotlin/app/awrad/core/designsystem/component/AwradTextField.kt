@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -25,10 +26,15 @@ import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
+import app.awrad.core.designsystem.theme.AwradSizes
+import app.awrad.core.designsystem.theme.AwradSpacing
 import app.awrad.core.designsystem.theme.AwradTheme
 
 /** The selection highlight behind selected text: the tokens have no selection colour, so `accent` at 40%. */
 private const val SELECTION_ALPHA = 0.4f
+
+/** A multi-line field starts this many lines tall and grows with its text. */
+private const val MULTI_LINE_MIN_LINES = 3
 
 /**
  * A single-line text field (components.md, "Text field"): the [label] above it (`label` style, `onSurface`, `xs`
@@ -41,6 +47,9 @@ private const val SELECTION_ALPHA = 0.4f
  * message; a blank message counts as none. Otherwise [supportingText] shows below in `onSurfaceVariant`.
  * Disabled, it keeps its colours at `states.disabled.opacity`. The label, value and message are one node for
  * screen readers.
+ *
+ * Not [singleLine] (slice 3b: a custom dhikr's Arabic and translations), the field starts three lines tall, at
+ * least `control`, padded `md` above and below, and grows with its text.
  */
 @Composable
 public fun AwradTextField(
@@ -49,6 +58,7 @@ public fun AwradTextField(
     label: String,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    singleLine: Boolean = true,
     error: String? = null,
     supportingText: String? = null,
     placeholder: String? = null,
@@ -75,14 +85,15 @@ public fun AwradTextField(
             textStyle = AwradTheme.type.input.copy(color = colors.onSurface),
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
-            singleLine = true,
+            singleLine = singleLine,
+            minLines = if (singleLine) 1 else MULTI_LINE_MIN_LINES,
             visualTransformation = visualTransformation,
             cursorBrush = SolidColor(colors.accent),
             decorationBox = { innerTextField ->
                 FieldDecoration(
+                    singleLine = singleLine,
                     label = label,
-                    isEmpty = value.isEmpty(),
-                    placeholder = placeholder,
+                    placeholder = placeholder.takeIf { value.isEmpty() },
                     message = message,
                     trailingIcon = trailingIcon,
                     innerTextField = innerTextField,
@@ -95,8 +106,8 @@ public fun AwradTextField(
 /** Label, field and message, all inside the text field's own node. */
 @Composable
 private fun FieldDecoration(
+    singleLine: Boolean,
     label: String,
-    isEmpty: Boolean,
     placeholder: String?,
     message: FieldMessage?,
     trailingIcon: (@Composable () -> Unit)?,
@@ -110,7 +121,7 @@ private fun FieldDecoration(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(AwradTheme.sizes.control)
+                .fieldHeight(singleLine)
                 .background(color = AwradTheme.fill, shape = shape)
                 .then(
                     if (isError) {
@@ -119,15 +130,11 @@ private fun FieldDecoration(
                         Modifier
                     },
                 )
-                // A trailing icon button's own 48 target pads its glyph, which then lines up with `lg`.
-                .padding(
-                    start = AwradTheme.spacing.lg,
-                    end = if (trailingIcon == null) AwradTheme.spacing.lg else AwradTheme.spacing.xs,
-                ),
-            verticalAlignment = Alignment.CenterVertically,
+                .fieldPadding(singleLine = singleLine, hasTrailingIcon = trailingIcon != null),
+            verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
         ) {
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                if (isEmpty && placeholder != null) {
+                if (placeholder != null) {
                     Text(
                         text = placeholder,
                         style = AwradTheme.type.input,
@@ -150,4 +157,23 @@ private fun FieldDecoration(
             )
         }
     }
+}
+
+/** Exactly `control` tall on one line; at least that, growing with its text, on several. */
+private fun Modifier.fieldHeight(singleLine: Boolean): Modifier =
+    if (singleLine) height(AwradSizes.control) else heightIn(min = AwradSizes.control)
+
+/**
+ * `lg` at the start and end (a trailing icon button's own 48 target pads its glyph, which then lines up with
+ * `lg`, so the end is `xs`); several lines are padded `md` above and below too.
+ */
+private fun Modifier.fieldPadding(singleLine: Boolean, hasTrailingIcon: Boolean): Modifier {
+    val spacing = AwradSpacing
+    val vertical = if (singleLine) spacing.none else spacing.md
+    return padding(
+        start = spacing.lg,
+        end = if (hasTrailingIcon) spacing.xs else spacing.lg,
+        top = vertical,
+        bottom = vertical,
+    )
 }

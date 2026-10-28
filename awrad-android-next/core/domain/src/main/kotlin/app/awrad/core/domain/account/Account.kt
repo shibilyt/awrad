@@ -7,8 +7,14 @@ public data class Account(val id: AwradId, val email: String)
 
 /** Whether this installation is signed in. An account is optional: everything offline works without one. */
 public sealed interface SignInState {
-    /** [reason] says why, when a session ended while the app was running. */
-    public data class SignedOut(val reason: SignOutReason = SignOutReason.NOT_SIGNED_IN) : SignInState
+    /**
+     * [reason] says why, when a session ended while the app was running. [accountId] names a deleted account, so
+     * its local profile can be offered for removal.
+     */
+    public data class SignedOut(
+        val reason: SignOutReason = SignOutReason.NOT_SIGNED_IN,
+        val accountId: AwradId? = null,
+    ) : SignInState
 
     public data class SignedIn(val account: Account) : SignInState
 }
@@ -24,7 +30,7 @@ public enum class SignOutReason {
     /** The server ended this device's session: signed out elsewhere, a password reset, or expiry. */
     SESSION_ENDED,
 
-    /** The account was deleted from this device. */
+    /** The account was deleted: from this device, or elsewhere (`account_deleted` on refresh). */
     ACCOUNT_DELETED,
 }
 

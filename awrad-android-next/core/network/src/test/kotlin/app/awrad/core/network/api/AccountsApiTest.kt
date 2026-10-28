@@ -17,6 +17,7 @@ class AccountsApiTest {
     private val transport = FakeTransport()
     private val api = AccountsApi(transport, SequentialIds()) { "ar" }
     private val settings = AccountSettingsApi(transport, SequentialIds()) { "ar" }
+    private val sync = SyncApi(transport, SequentialIds()) { "ar" }
 
     private fun ApiOperation.testPath(): String = pathWith(mapOf("session_id" to SESSION_ID))
 
@@ -45,6 +46,12 @@ class AccountsApiTest {
         api.refreshDeviceSession(RefreshTokenRequest("refresh-token-0123456789"), "key-1")
         api.signOutDeviceSession(RefreshTokenRequest("refresh-token-0123456789"), "key-2")
         api.getCurrentAccount("access-token-0123456789")
+        sync.postCommands(
+            "access-token-0123456789",
+            ACCOUNT,
+            SyncCommandBatch(listOf(SyncCommandBody(ACCOUNT, "user_tag", ACCOUNT, "delete", 1))),
+        )
+        sync.listChanges("access-token-0123456789", ACCOUNT, after = 0, limit = 200)
     }
 
     @Test
@@ -75,6 +82,7 @@ class AccountsApiTest {
             val request = transport.requestsTo(operation.testPath()).single()
             assertEquals(if (operation.sendsLanguage) "ar" else null, request.headers["Accept-Language"])
             assertEquals(operation.idempotent, request.headers["Idempotency-Key"] != null, operation.operationId)
+            assertEquals(operation.namesAccount, request.headers["X-Awrad-Account"] == ACCOUNT, operation.operationId)
             if (operation.method == HttpMethod.POST) assertNotNull(request.headers["Idempotency-Key"])
         }
         val refresh = transport.requestsTo(ApiOperation.REFRESH_DEVICE_SESSION.path).single()
@@ -180,5 +188,6 @@ class AccountsApiTest {
 
     private companion object {
         const val SESSION_ID = "4c2e8f10-7b3a-4d5e-9f61-2a8b0c1d3e45"
+        const val ACCOUNT = "0192f0b0-0000-7000-8000-000000000001"
     }
 }

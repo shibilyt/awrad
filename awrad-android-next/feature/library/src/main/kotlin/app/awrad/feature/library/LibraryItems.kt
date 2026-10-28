@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import app.awrad.core.designsystem.component.AwradCard
@@ -75,7 +76,8 @@ internal fun DhikrRow(
 
 /**
  * The collections as a row of tiles that scrolls sideways, inset by the page margin. The tiles share the tallest
- * one's height. The catalog has a handful of collections, so the row isn't lazy.
+ * one's height. The catalog has a handful of collections, so the row isn't lazy. With [yourDhikrs] (how many the
+ * user has made), "Your dhikrs" comes first and opens through [onOpenYourDhikrs].
  */
 @Composable
 internal fun CollectionTilesRow(
@@ -83,6 +85,8 @@ internal fun CollectionTilesRow(
     language: ContentLanguage,
     onOpen: (Collection) -> Unit,
     modifier: Modifier = Modifier,
+    yourDhikrs: Int? = null,
+    onOpenYourDhikrs: () -> Unit = {},
 ) {
     Row(
         modifier = modifier
@@ -91,6 +95,14 @@ internal fun CollectionTilesRow(
             .padding(horizontal = AwradTheme.spacing.pageMargin),
         horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap),
     ) {
+        if (yourDhikrs != null) {
+            AwradCollectionTile(
+                title = stringResource(R.string.library_your_dhikrs),
+                count = dhikrCount(yourDhikrs),
+                onClick = onOpenYourDhikrs,
+                modifier = Modifier.fillMaxHeight(),
+            )
+        }
         collections.forEach { collection ->
             key(collection.key) {
                 AwradCollectionTile(

@@ -47,6 +47,8 @@ class ApiContractTest {
         ApiOperation.REQUEST_EMAIL_CHANGE to (RequestEmailChangeRequest.serializer() to null),
         ApiOperation.CONFIRM_EMAIL_CHANGE to (ConfirmEmailChangeRequest.serializer() to AccountResponse.serializer()),
         ApiOperation.DELETE_ACCOUNT to (CurrentPasswordRequest.serializer() to null),
+        ApiOperation.POST_SYNC_COMMANDS to (SyncCommandBatch.serializer() to SyncReceiptBatch.serializer()),
+        ApiOperation.LIST_SYNC_CHANGES to (null to SyncChangesPage.serializer()),
     )
 
     @Test
@@ -69,6 +71,7 @@ class ApiContractTest {
                 "no bearerAuth".takeIf { !operation.isPublic && security.none { it == setOf("bearerAuth") } },
                 "Accept-Language".takeIf { operation.sendsLanguage != ("Accept-Language" in headers) },
                 "Idempotency-Key".takeIf { operation.idempotent != ("Idempotency-Key" in headers) },
+                "X-Awrad-Account".takeIf { operation.namesAccount != ("X-Awrad-Account" in headers) },
             ).map { "${operation.operationId}: $it differs from the spec" }
         }
         assertTrue(failures.isEmpty(), failures.joinToString("\n"))

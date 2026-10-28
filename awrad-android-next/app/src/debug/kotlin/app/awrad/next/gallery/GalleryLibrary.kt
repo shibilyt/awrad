@@ -62,6 +62,7 @@ internal fun LibrarySection(modifier: Modifier = Modifier) {
             AwradChip(text = stringResource(R.string.gallery_chip_debt))
             AwradChip(text = stringResource(R.string.gallery_chip_morning))
         }
+        FilterChips()
         AwradCard {
             StateLabel(text = stringResource(R.string.gallery_on_card))
             AwradChip(text = stringResource(R.string.gallery_chip_debt))
@@ -81,6 +82,31 @@ internal fun LibrarySection(modifier: Modifier = Modifier) {
                 )
             }
         }
+    }
+}
+
+/** Tag filter chips (slice 3b): unselected, selected and disabled. */
+@Composable
+private fun FilterChips() {
+    var selected by rememberSaveable { mutableStateOf(true) }
+    StateLabel(text = stringResource(R.string.gallery_filter_chips))
+    Row(horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm)) {
+        AwradChip(
+            text = stringResource(R.string.gallery_chip_morning),
+            selected = selected,
+            onSelectedChange = { selected = it },
+        )
+        AwradChip(
+            text = stringResource(R.string.gallery_chip_debt),
+            selected = !selected,
+            onSelectedChange = { selected = !it },
+        )
+        AwradChip(
+            text = stringResource(R.string.gallery_state_disabled),
+            selected = false,
+            onSelectedChange = {},
+            enabled = false,
+        )
     }
 }
 

@@ -168,7 +168,12 @@ private sealed class ReferenceDocument {
 
     @Serializable
     @SerialName("quran")
-    class Quran(override val id: String, val surah: Int, val ayahStart: Int, val ayahEnd: Int) : ReferenceDocument()
+    class Quran(
+        override val id: String,
+        val surah: Int,
+        @SerialName("ayah_start") val ayahStart: Int,
+        @SerialName("ayah_end") val ayahEnd: Int,
+    ) : ReferenceDocument()
 
     @Serializable
     @SerialName("hadith")

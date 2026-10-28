@@ -24,7 +24,7 @@ internal fun accountErrorOf(problem: Problem, retryAfterSeconds: Long?): Account
     "not_found" -> AccountError.NotFound
     "invalid_credentials" -> AccountError.InvalidCredentials
     "email_verification_required" -> AccountError.EmailVerificationRequired
-    "refresh_token_invalid", "refresh_reuse_detected", "unauthenticated" -> AccountError.SessionEnded
+    "refresh_token_invalid", "refresh_reuse_detected", "unauthenticated", "account_deleted" -> AccountError.SessionEnded
     "rate_limited" -> AccountError.RateLimited(retryAfterSeconds)
     "malformed_request", "idempotency_key_reused", "csrf_token_invalid" -> AccountError.RequestRejected
     else -> AccountError.Unexpected

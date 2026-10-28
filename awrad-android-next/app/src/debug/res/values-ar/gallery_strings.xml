@@ -30,6 +30,9 @@
     <string name="gallery_chips">الشارات</string>
     <string name="gallery_chip_debt">الدَّيْن</string>
     <string name="gallery_chip_morning">الصباح</string>
+    <string name="gallery_filter_chips">شرائح التصفية</string>
+    <string name="gallery_multi_line">الترجمة</string>
+    <string name="gallery_multi_line_placeholder">نص من عدة أسطر</string>
     <string name="gallery_state_disabled">معطّل</string>
     <string name="gallery_state_loading">جارٍ التحميل</string>
     <string name="gallery_on_card">على بطاقة</string>
