@@ -128,10 +128,14 @@ public class DhikrCatalog(
     public val tags: List<CatalogTag>,
 ) {
     private val dhikrsByKey = dhikrs.associateBy { it.key }
+    private val dhikrsById = dhikrs.associateBy { it.id }
     private val collectionsByKey = collections.associateBy { it.key }
 
     /** The dhikr with [key], or null. */
     public fun dhikr(key: String): Dhikr? = dhikrsByKey[key]
+
+    /** The dhikr with [id], or null. */
+    public fun dhikr(id: AwradId): Dhikr? = dhikrsById[id]
 
     /** The collection with [key], or null. */
     public fun collection(key: String): Collection? = collectionsByKey[key]

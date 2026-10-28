@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,7 +18,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
@@ -30,23 +34,24 @@ import app.awrad.core.designsystem.component.AwradSectionTitle
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.component.AwradTopBar
 import app.awrad.core.designsystem.theme.AwradTheme
-import app.awrad.core.domain.audio.PlaybackState
-import app.awrad.core.domain.dhikr.CatalogTag
 import app.awrad.core.domain.dhikr.ContentLanguage
-import app.awrad.core.domain.dhikr.Dhikr
 import app.awrad.core.domain.dhikr.DhikrKind
 import app.awrad.core.domain.dhikr.ReferenceLabel
 import app.awrad.core.domain.dhikr.Virtue
 import app.awrad.core.domain.dhikr.textIn
+import app.awrad.core.domain.personal.textIn
+import app.awrad.core.domain.sync.ConflictChoice
+import app.awrad.core.domain.sync.EntityType
 
 @Composable
 internal fun DhikrDetailRoute(
-    dhikrKey: String,
+    dhikrId: String,
+    onNavigate: (LibraryDestination) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DhikrDetailViewModel = hiltViewModel<DhikrDetailViewModel, DhikrDetailViewModel.Factory>(
-        key = dhikrKey,
-        creationCallback = { it.create(dhikrKey) },
+        key = dhikrId,
+        creationCallback = { it.create(dhikrId) },
     ),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -61,55 +66,79 @@ internal fun DhikrDetailRoute(
             viewModel.onAction(DhikrDetailAction.Pause)
         }
     }
-    DhikrDetailScreen(state = state, onAction = viewModel::onAction, onBack = onBack, modifier = modifier)
+    val back by rememberUpdatedState(onBack)
+    LaunchedEffect(state.isDeleted) { if (state.isDeleted) back() }
+    DhikrDetailScreen(
+        state = state,
+        onAction = viewModel::onAction,
+        onEdit = { onNavigate(LibraryDestination.Editor(dhikrId)) },
+        onBack = onBack,
+        modifier = modifier,
+    )
 }
 
 /**
- * A top bar with Back and the title, the Arabic card (with the player bar when there's a recording), then the
- * transliteration, translation, tags and virtues, each under its `sectionTitle`. A section with nothing to show
- * is left out (components.md, "Dhikr detail screen").
+ * A top bar with Back, the title and, for the user's own dhikr, Edit; a conflict banner when the dhikr or its
+ * tags changed on another device; the Arabic card (with the player bar when there's a recording), then the
+ * transliteration, translation, references (of a custom dhikr), tags with "Manage tags" and virtues, each under
+ * its `sectionTitle`. A section with nothing to show is left out (components.md, "Dhikr detail screen"). A custom
+ * dhikr ends with Delete.
  */
 @Composable
 internal fun DhikrDetailScreen(
     state: DhikrDetailUiState,
     onAction: (DhikrDetailAction) -> Unit,
+    onEdit: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val language = currentContentLanguage()
-    val dhikr = state.dhikr
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(AwradTheme.colors.background)
             .statusBarsPadding(),
     ) {
-        AwradTopBar(title = dhikr?.title?.localized(language), onBack = onBack)
+        AwradTopBar(
+            title = state.dhikr?.title?.localized(language),
+            onBack = onBack,
+            actions = {
+                if (state.custom != null) {
+                    AwradTextButton(text = stringResource(R.string.library_edit), onClick = onEdit)
+                }
+            },
+        )
         when {
-            dhikr != null -> DhikrDetailContent(
-                dhikr = dhikr,
-                language = language,
-                playback = state.playback,
-                onTogglePlayback = { onAction(DhikrDetailAction.TogglePlayback) },
-            )
+            state.dhikr != null -> DhikrDetailContent(state = state, language = language, onAction = onAction)
             !state.isLoading -> MissingContent()
         }
+    }
+    state.sheet?.let { sheet ->
+        DhikrTagsSheet(
+            sheet = sheet,
+            tags = state.allTags,
+            selected = state.tags.map { it.id }.toSet(),
+            onAction = { onAction(DhikrDetailAction.Tags(it)) },
+        )
+    }
+    if (state.isDeleteConfirmOpen) {
+        DeleteDhikrDialog(
+            onConfirm = { onAction(DhikrDetailAction.ConfirmDelete) },
+            onDismiss = { onAction(DhikrDetailAction.CancelDelete) },
+        )
     }
 }
 
 @Composable
 private fun DhikrDetailContent(
-    dhikr: Dhikr,
+    state: DhikrDetailUiState,
     language: ContentLanguage,
-    playback: PlaybackState,
-    onTogglePlayback: () -> Unit,
+    onAction: (DhikrDetailAction) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val dhikr = checkNotNull(state.dhikr)
     val spacing = AwradTheme.spacing
     val navigationBar = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val text = dhikr.textIn(language)
-    // A name's title already is its transliteration, and its meaning is in the card.
-    val isName = dhikr.kind == DhikrKind.NAME_OF_ALLAH
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -118,22 +147,84 @@ private fun DhikrDetailContent(
             .padding(top = spacing.sm, bottom = spacing.sectionGap + navigationBar),
         verticalArrangement = Arrangement.spacedBy(spacing.sectionGap),
     ) {
-        ArabicCard(dhikr = dhikr, language = language, playback = playback, onTogglePlayback = onTogglePlayback)
-        // Arabic has none (textIn).
-        text.transliteration?.takeUnless { isName }?.let {
-            TextSection(title = stringResource(R.string.library_transliteration), text = it)
+        state.conflict?.let { conflict ->
+            ConflictBanner(
+                message = stringResource(
+                    if (conflict.key.type == EntityType.DHIKR_PERSONAL) {
+                        R.string.library_conflict_tags
+                    } else {
+                        R.string.library_conflict_dhikr
+                    },
+                ),
+                onKeepMine = { onAction(DhikrDetailAction.Resolve(ConflictChoice.KEEP_MINE)) },
+                onUseTheirs = { onAction(DhikrDetailAction.Resolve(ConflictChoice.USE_THEIRS)) },
+            )
         }
-        if (!isName) TextSection(title = stringResource(R.string.library_translation), text = text.translation)
-        if (dhikr.tags.isNotEmpty()) Tags(tags = dhikr.tags, language = language)
+        ArabicCard(
+            dhikr = dhikr,
+            language = language,
+            playback = state.playback,
+            onTogglePlayback = { onAction(DhikrDetailAction.TogglePlayback) },
+        )
+        TextSections(state = state, language = language)
+        TagsSection(
+            state = state,
+            language = language,
+            onManage = { onAction(DhikrDetailAction.Tags(TagSheetAction.Open)) },
+        )
         if (dhikr.virtues.isNotEmpty()) Virtues(virtues = dhikr.virtues, language = language)
+        if (state.custom != null) {
+            AwradTextButton(
+                text = stringResource(R.string.library_delete_dhikr),
+                onClick = { onAction(DhikrDetailAction.AskDelete) },
+                isDestructive = true,
+            )
+        }
     }
 }
 
-/** A `sectionTitle`, then its [content]. */
+/**
+ * "Transliteration" (none in Arabic) and "Translation", left out for a name of Allah (its title is the
+ * transliteration, its meaning is in the card); a custom dhikr may have neither, and lists its "References".
+ */
 @Composable
-private fun DetailSection(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+private fun TextSections(state: DhikrDetailUiState, language: ContentLanguage, modifier: Modifier = Modifier) {
+    val dhikr = checkNotNull(state.dhikr)
+    val custom = state.custom
+    val (transliteration, translation) = if (custom != null) {
+        custom.textIn(language).let { it.transliteration to it.translation }
+    } else {
+        dhikr.textIn(language).let { it.transliteration to it.translation }
+    }
+    val isName = dhikr.kind == DhikrKind.NAME_OF_ALLAH
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sectionGap)) {
+        transliteration?.takeUnless { isName || it.isBlank() }?.let {
+            TextSection(title = stringResource(R.string.library_transliteration), text = it)
+        }
+        translation?.takeUnless { isName }?.let {
+            TextSection(title = stringResource(R.string.library_translation), text = it)
+        }
+        if (custom != null && custom.references.isNotEmpty()) {
+            DetailSection(title = stringResource(R.string.library_references)) {
+                custom.references.forEach { ReferenceLine(label = referenceLabel(it)) }
+            }
+        }
+    }
+}
+
+/** A `sectionTitle`, with an optional [action] at the end, then its [content]. */
+@Composable
+private fun DetailSection(
+    title: String,
+    modifier: Modifier = Modifier,
+    action: (@Composable () -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm)) {
-        AwradSectionTitle(text = title)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AwradSectionTitle(text = title, modifier = Modifier.weight(1f))
+            action?.invoke()
+        }
         content()
     }
 }
@@ -145,16 +236,36 @@ private fun TextSection(title: String, text: String, modifier: Modifier = Modifi
     }
 }
 
+/** "Tags": the catalog's topic tags, then the user's own, and "Manage tags" for every dhikr. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Tags(tags: List<CatalogTag>, language: ContentLanguage, modifier: Modifier = Modifier) {
-    DetailSection(title = stringResource(R.string.library_tags), modifier = modifier) {
-        FlowRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm),
-            verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm),
-        ) {
-            tags.forEach { AwradChip(text = it.title.localized(language)) }
+private fun TagsSection(
+    state: DhikrDetailUiState,
+    language: ContentLanguage,
+    onManage: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val catalogTags = state.dhikr?.tags.orEmpty()
+    DetailSection(
+        title = stringResource(R.string.library_tags),
+        modifier = modifier,
+        action = { AwradTextButton(text = stringResource(R.string.library_manage_tags), onClick = onManage) },
+    ) {
+        if (catalogTags.isEmpty() && state.tags.isEmpty()) {
+            Text(
+                text = stringResource(R.string.library_no_tags),
+                style = AwradTheme.type.bodySmall,
+                color = AwradTheme.colors.onSurfaceVariant,
+            )
+        } else {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm),
+                verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm),
+            ) {
+                catalogTags.forEach { AwradChip(text = it.title.localized(language)) }
+                state.tags.forEach { AwradChip(text = it.name) }
+            }
         }
     }
 }

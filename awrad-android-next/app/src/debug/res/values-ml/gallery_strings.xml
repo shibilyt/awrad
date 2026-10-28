@@ -26,6 +26,9 @@
     <string name="gallery_chips">ചിപ്പുകൾ</string>
     <string name="gallery_chip_debt">കടം</string>
     <string name="gallery_chip_morning">പ്രഭാതം</string>
+    <string name="gallery_filter_chips">ഫിൽട്ടർ ചിപ്പുകൾ</string>
+    <string name="gallery_multi_line">പരിഭാഷ</string>
+    <string name="gallery_multi_line_placeholder">പല വരികളുള്ള വാചകം</string>
     <string name="gallery_state_disabled">പ്രവർത്തനരഹിതം</string>
     <string name="gallery_state_loading">ലോഡ് ചെയ്യുന്നു</string>
     <string name="gallery_on_card">ഒരു കാർഡിൽ</string>

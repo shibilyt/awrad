@@ -24,8 +24,11 @@ import java.time.format.DateTimeParseException
 public sealed interface DeviceSessionState {
     public data object Loading : DeviceSessionState
 
-    /** [cause] is why the last session ended while the app ran; [SignOutCause.NOT_SIGNED_IN] at start. */
-    public data class SignedOut(val cause: SignOutCause) : DeviceSessionState
+    /**
+     * [cause] is why the last session ended while the app ran; [SignOutCause.NOT_SIGNED_IN] at start. [accountId] is
+     * the account whose session ended, when the app knows it.
+     */
+    public data class SignedOut(val cause: SignOutCause, val accountId: String? = null) : DeviceSessionState
 
     public data class SignedIn(val accountId: String, val email: String) : DeviceSessionState
 }
@@ -41,7 +44,7 @@ public enum class SignOutCause {
     /** The server ended it: revoked from another device, a password reset, idle expiry or token reuse. */
     SESSION_ENDED,
 
-    /** The account was deleted from this device. */
+    /** The account was deleted: from this device, or elsewhere (`401 account_deleted` on refresh). */
     ACCOUNT_DELETED,
 }
 
@@ -142,9 +145,12 @@ public class DeviceSessionManager internal constructor(
 
     private suspend fun endLocked(cause: SignOutCause) {
         val credentials = store.read()
+        val accountId = credentials.session?.accountId
         store.write(credentials.copy(session = null))
         access = null
-        mutableState.value = DeviceSessionState.SignedOut(cause)
+        // Only a deleted account is named: its local profile may be removed (contracts/sync/v1, profile_switch).
+        mutableState.value =
+            DeviceSessionState.SignedOut(cause, accountId.takeIf { cause == SignOutCause.ACCOUNT_DELETED })
     }
 
     /**
@@ -193,9 +199,13 @@ public class DeviceSessionManager internal constructor(
     }
 
     private suspend fun handleRefreshFailureLocked(failure: ApiFailure) {
-        val status = (failure as? ApiFailure.ProblemResponse)?.status ?: return
+        val response = failure as? ApiFailure.ProblemResponse ?: return
+        val status = response.status
         val credentials = store.read()
         when {
+            // The account no longer exists: signed out, and the phone offers to remove its local profile.
+            status == UNAUTHORIZED && response.problem.code == ACCOUNT_DELETED_CODE ->
+                endLocked(SignOutCause.ACCOUNT_DELETED)
             // The session is gone (expired, revoked, or reuse detected): this device is signed out.
             status == UNAUTHORIZED -> endLocked(SignOutCause.SESSION_ENDED)
             // A server fault or rate limit may not have run the refresh: keep the key for the retry.
@@ -240,6 +250,7 @@ public class DeviceSessionManager internal constructor(
     private companion object {
         const val PLATFORM = "android"
         const val UNAUTHORIZED = 401
+        const val ACCOUNT_DELETED_CODE = "account_deleted"
         const val TOO_MANY_REQUESTS = 429
         const val SERVER_ERROR = 500
 

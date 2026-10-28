@@ -33,7 +33,8 @@ internal class NetworkAccountRepository @Inject constructor(
         .mapNotNull { state ->
             when (state) {
                 DeviceSessionState.Loading -> null
-                is DeviceSessionState.SignedOut -> SignInState.SignedOut(reasonOf(state.cause))
+                is DeviceSessionState.SignedOut ->
+                    SignInState.SignedOut(reasonOf(state.cause), state.accountId?.let(AwradId::parse))
                 is DeviceSessionState.SignedIn -> SignInState.SignedIn(account(state.accountId, state.email))
             }
         }

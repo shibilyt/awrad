@@ -78,7 +78,7 @@ internal object DhikrCatalogShape {
     private val COLLECTION = setOf("key", "title", "dhikrs")
     private val TAG = setOf("key", "title")
     private val REFERENCES = mapOf(
-        "quran" to setOf("id", "type", "surah", "ayahStart", "ayahEnd"),
+        "quran" to setOf("id", "type", "surah", "ayah_start", "ayah_end"),
         "hadith" to setOf("id", "type", "collection", "number", "narrator", "grade"),
         "book" to setOf("id", "type", "title", "author", "volume", "page"),
         "shaykh" to setOf("id", "type", "name", "note"),

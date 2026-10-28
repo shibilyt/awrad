@@ -62,6 +62,20 @@ class FixtureCoverageTest {
     }
 
     @Test
+    fun `every sync rule file the phones run has a runner`() {
+        assertEquals(
+            setOf(
+                "tag_name_normalization", // personal.TagNameNormalizationFixtureTest
+                "custom_dhikr_validity", // personal.CustomDhikrValidityFixtureTest
+                "outbox_enqueue", // sync.OutboxEnqueueFixtureTest
+                "apply_changes", // sync.ApplyChangesFixtureTest
+                "profile_switch", // sync.ProfileSwitchFixtureTest
+            ),
+            FixtureRunner.rules(FixtureModel.SYNC) - SERVER_ONLY_SYNC_RULES,
+        )
+    }
+
+    @Test
     fun `every identity rule file has a runner`() {
         assertEquals(
             setOf(
@@ -70,5 +84,10 @@ class FixtureCoverageTest {
             ),
             FixtureRunner.rules(FixtureModel.IDENTITY),
         )
+    }
+
+    private companion object {
+        /** The server's protocol spec (contracts/sync/v1/README.md, "Fixtures"): phones don't run these. */
+        val SERVER_ONLY_SYNC_RULES = setOf("sync_receipts", "sync_changes_feed")
     }
 }

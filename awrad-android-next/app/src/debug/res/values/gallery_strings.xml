@@ -27,6 +27,9 @@
     <string name="gallery_chips">Chips</string>
     <string name="gallery_chip_debt">Debt</string>
     <string name="gallery_chip_morning">Morning</string>
+    <string name="gallery_filter_chips">Filter chips</string>
+    <string name="gallery_multi_line">Translation</string>
+    <string name="gallery_multi_line_placeholder">Several lines of text</string>
     <string name="gallery_state_disabled">Disabled</string>
     <string name="gallery_state_loading">Loading</string>
     <string name="gallery_on_card">On a card</string>

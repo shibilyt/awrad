@@ -37,6 +37,7 @@ enum class MainTab { Home, Library }
 fun MainShell(
     onNavigate: (LibraryDestination) -> Unit,
     onOpenAccount: () -> Unit,
+    onOpenDataSync: () -> Unit,
     onRestartOnboarding: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -62,6 +63,7 @@ fun MainShell(
                 when (shown) {
                     MainTab.Home -> HomeTab(
                         onOpenAccount = onOpenAccount,
+                        onOpenDataSync = onOpenDataSync,
                         onRestartOnboarding = onRestartOnboarding,
                         onNavigate = onNavigate,
                         onViewLibrary = { tab = MainTab.Library },

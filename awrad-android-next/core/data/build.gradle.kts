@@ -12,9 +12,15 @@ dependencies {
     implementation(project(":core:database"))
     implementation(project(":core:network"))
     implementation(libs.androidx.datastore.preferences)
+    // Uri helpers for imported recordings.
+    implementation(libs.androidx.core.ktx)
     // Dhikr audio: ExoPlayer streams the catalog's recordings (ExoAudioPlayer).
     implementation(libs.media3.exoplayer)
     testImplementation(libs.kotlinx.serialization.json)
+    // Room runs on Robolectric in the unit tests (DAO, transaction, engine and profile tests).
+    testImplementation(project(":core:testing"))
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 }
 
 tasks.withType<Test>().configureEach {
@@ -22,6 +28,11 @@ tasks.withType<Test>().configureEach {
     inputs.files(fileTree(rootDir.resolve("../contracts/api")) { include("openapi.bundled.json") })
         .withPropertyName("apiSpec")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    // The Room store runs the shared sync fixtures too.
+    inputs.files(fileTree(rootDir.resolve("../contracts/sync")))
+        .withPropertyName("syncFixtures")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 }
 
 // The shared dhikr catalog ships as a committed asset (ARCHITECTURE.md, "Dhikr catalog").

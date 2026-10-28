@@ -116,8 +116,8 @@ internal fun CollectionScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(spacing.rowGap),
             ) {
-                items(state.collection.dhikrs, key = { it.key }) { dhikr ->
-                    DhikrRow(dhikr = dhikr, language = language, onClick = { onOpenDhikr(dhikr.key) })
+                items(state.collection.dhikrs, key = { it.id.value }) { dhikr ->
+                    DhikrRow(dhikr = dhikr, language = language, onClick = { onOpenDhikr(dhikr.id.value) })
                 }
             }
         }

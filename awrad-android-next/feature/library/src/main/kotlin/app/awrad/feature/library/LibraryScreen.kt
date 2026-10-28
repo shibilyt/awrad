@@ -24,10 +24,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradLargeTitlePage
+import app.awrad.core.designsystem.component.AwradRoundButton
 import app.awrad.core.designsystem.component.AwradSearchField
 import app.awrad.core.designsystem.component.AwradSectionTitle
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.component.awradBottomBarPadding
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.domain.dhikr.ContentLanguage
 import app.awrad.core.domain.dhikr.Dhikr
@@ -46,8 +48,9 @@ internal fun LibraryRoute(
 }
 
 /**
- * The Library: the large "Library" header, the search field, then the collection tiles and "All dhikrs"; while
- * searching, the results only, or an empty state. The list clears the floating bottom bar.
+ * The Library: the large "Library" header with a + round button (a new dhikr), the search field and the tag
+ * filter, then the collection tiles and "All dhikrs"; while searching or filtering, the results only, or an
+ * empty state. The list clears the floating bottom bar.
  */
 @Composable
 internal fun LibraryScreen(
@@ -62,6 +65,13 @@ internal fun LibraryScreen(
         modifier = modifier
             .fillMaxSize()
             .statusBarsPadding(),
+        action = {
+            AwradRoundButton(
+                icon = AwradIcons.Add,
+                contentDescription = stringResource(R.string.library_new_dhikr),
+                onClick = { onNavigate(LibraryDestination.Editor()) },
+            )
+        },
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -76,9 +86,19 @@ internal fun LibraryScreen(
                     modifier = Modifier.padding(horizontal = spacing.pageMargin),
                 )
             }
+            if (state.tags.isNotEmpty()) {
+                item(key = "tagFilter") {
+                    TagFilterRow(
+                        tags = state.tags,
+                        selected = state.selectedTags,
+                        onToggle = { onAction(LibraryAction.TagToggled(it)) },
+                        onManage = { onNavigate(LibraryDestination.ManageTags) },
+                    )
+                }
+            }
             val results = state.results
             if (results != null) {
-                searchResults(results, state.query, state.language, onNavigate)
+                searchResults(results, state, onNavigate)
             } else {
                 wholeLibrary(state, onNavigate)
             }
@@ -98,6 +118,8 @@ private fun LazyListScope.wholeLibrary(state: LibraryUiState, onNavigate: (Libra
             collections = state.collections,
             language = state.language,
             onOpen = { onNavigate(LibraryDestination.Collection(it.key)) },
+            yourDhikrs = state.yourDhikrs.size.takeIf { it > 0 },
+            onOpenYourDhikrs = { onNavigate(LibraryDestination.YourDhikrs) },
         )
     }
     item(key = "allTitle") {
@@ -106,19 +128,18 @@ private fun LazyListScope.wholeLibrary(state: LibraryUiState, onNavigate: (Libra
             modifier = Modifier.padding(horizontal = AwradTheme.spacing.pageMargin, vertical = AwradTheme.spacing.xs),
         )
     }
-    dhikrRows(state.dhikrs, state.language, onNavigate)
+    dhikrRows(state.yourDhikrs + state.dhikrs, state.language, onNavigate)
 }
 
 private fun LazyListScope.searchResults(
     results: List<Dhikr>,
-    query: String,
-    language: ContentLanguage,
+    state: LibraryUiState,
     onNavigate: (LibraryDestination) -> Unit,
 ) {
     if (results.isEmpty()) {
-        item(key = "empty") { NoResults(query = query.trim()) }
+        item(key = "empty") { NoResults(query = state.query.trim(), byTags = state.query.isBlank()) }
     } else {
-        dhikrRows(results, language, onNavigate)
+        dhikrRows(results, state.language, onNavigate)
     }
 }
 
@@ -127,19 +148,22 @@ private fun LazyListScope.dhikrRows(
     language: ContentLanguage,
     onNavigate: (LibraryDestination) -> Unit,
 ) {
-    items(dhikrs, key = { it.key }) { dhikr ->
+    items(dhikrs, key = { it.id.value }) { dhikr ->
         DhikrRow(
             dhikr = dhikr,
             language = language,
-            onClick = { onNavigate(LibraryDestination.Dhikr(dhikr.key)) },
+            onClick = { onNavigate(LibraryDestination.Dhikr(dhikr.id.value)) },
             modifier = Modifier.padding(horizontal = AwradTheme.spacing.pageMargin),
         )
     }
 }
 
-/** Nothing matched: what was searched for, and what to try. Announced when it appears. */
+/**
+ * Nothing matched: what was searched for (or that no dhikr has every selected tag), and what to try. Announced
+ * when it appears.
+ */
 @Composable
-private fun NoResults(query: String, modifier: Modifier = Modifier) {
+private fun NoResults(query: String, byTags: Boolean, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -149,13 +173,17 @@ private fun NoResults(query: String, modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.xs),
     ) {
         Text(
-            text = stringResource(R.string.library_no_results, query),
+            text = if (byTags) {
+                stringResource(R.string.library_no_tagged)
+            } else {
+                stringResource(R.string.library_no_results, query)
+            },
             style = AwradTheme.type.cardTitle,
             color = AwradTheme.colors.onSurface,
             textAlign = TextAlign.Center,
         )
         Text(
-            text = stringResource(R.string.library_no_results_hint),
+            text = stringResource(if (byTags) R.string.library_no_tagged_hint else R.string.library_no_results_hint),
             style = AwradTheme.type.body,
             color = AwradTheme.colors.onSurfaceVariant,
             textAlign = TextAlign.Center,
