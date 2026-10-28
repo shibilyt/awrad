@@ -15,6 +15,7 @@ import app.awrad.core.domain.sync.OpenConflict
 import app.awrad.core.domain.sync.ProfilePrompt
 import app.awrad.core.domain.sync.ProfileService
 import app.awrad.core.domain.sync.SyncService
+import app.awrad.core.domain.sync.SyncState
 import app.awrad.core.domain.sync.SyncStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -111,7 +112,22 @@ internal data class DataSyncUiState(
     val profiles: List<LocalProfile> = emptyList(),
     val conflicts: List<NamedConflict> = emptyList(),
     val removing: Removing? = null,
-)
+) {
+    /** The status card's first line: open conflicts instead of "Up to date", since syncing isn't done with them. */
+    val headline: SyncHeadline
+        get() = if (status.state == SyncState.IDLE && conflicts.isNotEmpty()) {
+            SyncHeadline.Conflicts(conflicts.size)
+        } else {
+            SyncHeadline.State(status.state)
+        }
+}
+
+/** What the status card leads with: the sync state, or how many conflicts are left to resolve. */
+internal sealed interface SyncHeadline {
+    data class State(val state: SyncState) : SyncHeadline
+
+    data class Conflicts(val count: Int) : SyncHeadline
+}
 
 internal sealed interface DataSyncAction {
     data object SyncNow : DataSyncAction

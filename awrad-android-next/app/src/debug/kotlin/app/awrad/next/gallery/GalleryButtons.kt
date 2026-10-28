@@ -1,8 +1,11 @@
 package app.awrad.next.gallery
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,6 +18,7 @@ import app.awrad.core.designsystem.component.AwradRoundButton
 import app.awrad.core.designsystem.component.AwradRoundButtonSize
 import app.awrad.core.designsystem.component.AwradRowButton
 import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.designsystem.component.AwradTextButtonFill
 import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.next.R
@@ -64,6 +68,30 @@ internal fun ButtonsSection(modifier: Modifier = Modifier) {
     }
 }
 
+/** Text buttons on a `secondaryContainer` and a `primary` fill take the fill's content colour, not `accent`. */
+@Composable
+private fun TextButtonsOnFills(disabled: String) {
+    StateLabel(text = stringResource(R.string.gallery_on_fill))
+    val colors = AwradTheme.colors
+    val fills = listOf(
+        AwradTextButtonFill.SecondaryContainer to colors.secondaryContainer,
+        AwradTextButtonFill.Primary to colors.primary,
+    )
+    fills.forEach { (fill, color) ->
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(color, AwradTheme.shapes.card)
+                .padding(horizontal = AwradTheme.spacing.sm),
+            horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AwradTextButton(text = stringResource(R.string.gallery_view_all), onClick = {}, onFill = fill)
+            AwradTextButton(text = disabled, onClick = {}, enabled = false, onFill = fill)
+        }
+    }
+}
+
 @Composable
 private fun TextAndRowButtons(disabled: String) {
     Column(verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
@@ -75,6 +103,7 @@ private fun TextAndRowButtons(disabled: String) {
             AwradTextButton(text = stringResource(R.string.gallery_delete), onClick = {}, isDestructive = true)
             AwradTextButton(text = disabled, onClick = {}, enabled = false)
         }
+        TextButtonsOnFills(disabled = disabled)
         Row(
             horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm),
             verticalAlignment = Alignment.CenterVertically,

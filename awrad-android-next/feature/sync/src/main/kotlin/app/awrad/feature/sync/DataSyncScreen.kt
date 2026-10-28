@@ -86,7 +86,12 @@ internal fun DataSyncScreen(
                 .padding(top = spacing.sm, bottom = spacing.sectionGap + navigationBar),
             verticalArrangement = Arrangement.spacedBy(spacing.sectionGap),
         ) {
-            StatusSection(status = state.status, onAction = onAction, onOpenAccount = onOpenAccount)
+            StatusSection(
+                headline = state.headline,
+                status = state.status,
+                onAction = onAction,
+                onOpenAccount = onOpenAccount,
+            )
             if (state.conflicts.isNotEmpty()) ConflictsSection(conflicts = state.conflicts, onAction = onAction)
             ProfilesSection(profiles = state.profiles, onAction = onAction)
         }
@@ -96,6 +101,7 @@ internal fun DataSyncScreen(
 
 @Composable
 private fun StatusSection(
+    headline: SyncHeadline,
     status: SyncStatus,
     onAction: (DataSyncAction) -> Unit,
     onOpenAccount: () -> Unit,
@@ -104,7 +110,7 @@ private fun StatusSection(
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm)) {
         AwradSectionTitle(text = stringResource(R.string.sync_section_status))
         AwradCard(spacing = AwradTheme.spacing.sm) {
-            Text(text = stateText(status.state), style = AwradTheme.type.rowTitle, color = AwradTheme.colors.onSurface)
+            Text(text = headlineText(headline), style = AwradTheme.type.rowTitle, color = AwradTheme.colors.onSurface)
             Text(
                 text = status.lastSyncedAt?.let { lastSyncedText(it) } ?: stringResource(R.string.sync_never_synced),
                 style = AwradTheme.type.bodySmall,
@@ -248,6 +254,12 @@ private fun lastSyncedText(at: Instant): String {
         val relative = DateUtils.getRelativeTimeSpanString(millis, now, DateUtils.MINUTE_IN_MILLIS).toString()
         stringResource(R.string.sync_last_synced, relative)
     }
+}
+
+@Composable
+private fun headlineText(headline: SyncHeadline): String = when (headline) {
+    is SyncHeadline.State -> stateText(headline.state)
+    is SyncHeadline.Conflicts -> pluralStringResource(R.plurals.sync_conflicts_open, headline.count, headline.count)
 }
 
 @Composable

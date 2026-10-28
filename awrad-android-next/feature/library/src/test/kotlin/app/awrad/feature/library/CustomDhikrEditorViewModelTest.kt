@@ -43,6 +43,43 @@ class CustomDhikrEditorViewModelTest {
     }
 
     @Test
+    fun `each failed save points at the topmost problem`() {
+        val editor = editor()
+
+        editor.onAction(EditorAction.Save)
+        assertEquals(1, editor.state.value.failedSaves)
+        assertEquals(ProblemSpot.ARABIC, editor.state.value.firstProblemSpot())
+
+        editor.onAction(EditorAction.ArabicChanged("سُبْحَانَ ٱللَّهِ"))
+        assertNull(editor.state.value.firstProblemSpot())
+        editor.onAction(EditorAction.Save)
+        assertEquals(2, editor.state.value.failedSaves)
+        assertEquals(ProblemSpot.TITLE, editor.state.value.firstProblemSpot())
+
+        editor.onAction(EditorAction.TitleChanged("Tasbih"))
+        editor.onAction(EditorAction.Save)
+        assertTrue(editor.state.value.isDone)
+        assertEquals(2, editor.state.value.failedSaves)
+    }
+
+    @Test
+    fun `problems no field shows point at the summary line`() {
+        val reference = setOf(EditorProblem.REFERENCE_INVALID)
+        val limit = EditorUiState(problems = setOf(EditorProblem.LIMIT_REACHED))
+        assertEquals(ProblemSpot.SUMMARY, limit.firstProblemSpot())
+        assertEquals(
+            ProblemSpot.QURAN,
+            EditorUiState(problems = reference + EditorProblem.QURAN_RANGE).firstProblemSpot(),
+        )
+        // A reference problem is marked on a blank reference, so without one there's only the summary line.
+        assertEquals(ProblemSpot.SUMMARY, EditorUiState(problems = reference).firstProblemSpot())
+        assertEquals(
+            ProblemSpot.REFERENCE,
+            EditorUiState(otherReferences = listOf("Muslim", " "), problems = reference).firstProblemSpot(),
+        )
+    }
+
+    @Test
     fun `fields in each language, a Qur'an reference and others are saved as one dhikr`() {
         val editor = editor()
         editor.onAction(EditorAction.KindChanged(DhikrKind.QURAN))

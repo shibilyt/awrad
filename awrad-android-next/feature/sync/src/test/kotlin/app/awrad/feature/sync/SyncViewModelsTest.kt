@@ -60,6 +60,22 @@ class SyncViewModelsTest {
     }
 
     @Test
+    fun `an up-to-date sync with open conflicts leads with how many are left, not up to date`() {
+        val viewModel = dataSync()
+        assertEquals(SyncHeadline.State(SyncState.IDLE), viewModel.state.value.headline)
+
+        sync.conflictState.value = listOf(
+            OpenConflict(EntityKey(EntityType.USER_TAG, AwradId("0192f0a0-0000-7000-8000-000000000001")), SyncOp.PUT),
+            OpenConflict(EntityKey(EntityType.USER_TAG, AwradId("0192f0a0-0000-7000-8000-000000000002")), SyncOp.PUT),
+        )
+        assertEquals(SyncHeadline.Conflicts(2), viewModel.state.value.headline)
+
+        // A state that needs the user's attention more still shows.
+        sync.status.value = SyncStatus(SyncState.RETRYING)
+        assertEquals(SyncHeadline.State(SyncState.RETRYING), viewModel.state.value.headline)
+    }
+
+    @Test
     fun `removing a profile with unsent changes warns, then removes`() {
         val viewModel = dataSync()
 

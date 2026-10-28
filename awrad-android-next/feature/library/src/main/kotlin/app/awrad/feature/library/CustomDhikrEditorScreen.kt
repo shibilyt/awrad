@@ -57,7 +57,8 @@ internal fun CustomDhikrEditorRoute(
  * The custom dhikr editor: a top bar with Back, the title ("New dhikr" or "Edit dhikr") and Save; then the kind,
  * the Arabic text (required), the title, transliteration and translation of one language at a time (pills switch
  * between English, Arabic and Malayalam), the Qur'an reference and other references, the recording, and tags.
- * Save at the end, and Delete (with a confirmation) for a dhikr that exists.
+ * Save at the end, and Delete (with a confirmation) for a dhikr that exists. A save that fails scrolls to the first
+ * problem and moves focus there, so it's seen (and read out) even when it's above what's on screen.
  */
 @Composable
 internal fun CustomDhikrEditorScreen(
@@ -69,6 +70,7 @@ internal fun CustomDhikrEditorScreen(
 ) {
     val spacing = AwradTheme.spacing
     val navigationBar = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val targets = rememberProblemTargets(state)
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -96,11 +98,11 @@ internal fun CustomDhikrEditorScreen(
                 .padding(top = spacing.sm, bottom = spacing.sectionGap + navigationBar),
             verticalArrangement = Arrangement.spacedBy(spacing.sectionGap),
         ) {
-            ProblemsLine(problems = state.problems)
+            ProblemsLine(problems = state.problems, modifier = Modifier.problemSpot(targets, ProblemSpot.SUMMARY))
             KindSection(kind = state.kind, onAction = onAction)
-            ArabicSection(state = state, onAction = onAction)
-            TextsSection(state = state, onAction = onAction)
-            ReferencesSection(state = state, onAction = onAction)
+            ArabicSection(state = state, onAction = onAction, targets = targets)
+            TextsSection(state = state, onAction = onAction, targets = targets)
+            ReferencesSection(state = state, onAction = onAction, targets = targets)
             AudioSection(state = state, onAction = onAction, onPickAudio = onPickAudio)
             EditorTagsSection(state = state, onAction = onAction)
             AwradButton(

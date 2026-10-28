@@ -37,6 +37,7 @@
     <string name="gallery_state_disabled">Disabled</string>
     <string name="gallery_state_loading">Loading</string>
     <string name="gallery_on_card">On a card</string>
+    <string name="gallery_on_fill">On a filled container</string>
 
     <string name="gallery_get_started">Get started</string>
     <string name="gallery_notifications">Notifications</string>

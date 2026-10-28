@@ -6,6 +6,10 @@
     <string name="sync_state_waiting">Waiting for your answer about this phone’s data</string>
     <string name="sync_state_syncing">Syncing…</string>
     <string name="sync_state_idle">Up to date</string>
+    <plurals name="sync_conflicts_open">
+        <item quantity="one">%d conflict to resolve</item>
+        <item quantity="other">%d conflicts to resolve</item>
+    </plurals>
     <string name="sync_state_retrying">Couldn’t reach the server. Trying again soon.</string>
     <string name="sync_state_mismatch">This data belongs to a different account, so it isn’t sent.</string>
     <string name="sync_last_synced">Last synced %1$s</string>

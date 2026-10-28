@@ -142,7 +142,14 @@ internal class CustomDhikrEditorViewModel @AssistedInject constructor(
                 tags.setTags(id, current.selectedTags)
                 dhikr.audio?.localUri?.let { unsaved.remove(it) }
             }
-            mutableState.update { it.copy(isSaving = false, problems = problems, isDone = problems.isEmpty()) }
+            mutableState.update {
+                it.copy(
+                    isSaving = false,
+                    problems = problems,
+                    failedSaves = if (problems.isEmpty()) it.failedSaves else it.failedSaves + 1,
+                    isDone = problems.isEmpty(),
+                )
+            }
         }
     }
 

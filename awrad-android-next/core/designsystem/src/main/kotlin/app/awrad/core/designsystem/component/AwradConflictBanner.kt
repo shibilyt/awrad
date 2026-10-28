@@ -23,8 +23,8 @@ import app.awrad.core.designsystem.theme.AwradTheme
  * The conflict banner (components.md, "Conflict banner"), at the top of a dhikr's page while it has an open
  * conflict: a `card`-shaped container padded `cardPadding` and filled `secondaryContainer` (never the `error`
  * roles), with the `error` icon (`icon` size) at the start and [text] ("Changed on another device") in `body`,
- * both `onSecondaryContainer`; then two text buttons aligned to the end, [keepMine] and [useTheirs]. It's
- * announced when it appears.
+ * both `onSecondaryContainer`; then two text buttons aligned to the end, [keepMine] and [useTheirs], their
+ * labels `onSecondaryContainer` too. It's announced when it appears.
  */
 @Composable
 public fun AwradConflictBanner(
@@ -62,8 +62,10 @@ public fun AwradConflictBanner(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(spacing.sm, Alignment.End),
         ) {
-            AwradTextButton(text = keepMine, onClick = onKeepMine)
-            AwradTextButton(text = useTheirs, onClick = onUseTheirs)
+            // On `secondaryContainer`, so `onSecondaryContainer` labels: `accent` is the fill's colour in dark mode.
+            val onFill = AwradTextButtonFill.SecondaryContainer
+            AwradTextButton(text = keepMine, onClick = onKeepMine, onFill = onFill)
+            AwradTextButton(text = useTheirs, onClick = onUseTheirs, onFill = onFill)
         }
     }
 }

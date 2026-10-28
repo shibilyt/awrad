@@ -22,6 +22,22 @@ public enum class AwradButtonVariant {
     Error,
 }
 
+/**
+ * The fill a text button sits on (components.md, "Buttons"). Its label is `accent` on the page or a card, but on a
+ * filled container it takes the fill's paired content colour: in dark mode `accent` and `secondaryContainer` are
+ * the same colour, so an `accent` label there would vanish.
+ */
+public enum class AwradTextButtonFill {
+    /** No fill of its own: the page, a card, a dialog or a sheet. The label is `accent`. */
+    None,
+
+    /** A `secondaryContainer` fill, such as the conflict banner: the label is `onSecondaryContainer`. */
+    SecondaryContainer,
+
+    /** A `primary` fill: the label is `onPrimary`. */
+    Primary,
+}
+
 /** The two round button sizes (components.md, "Round button"). */
 public enum class AwradRoundButtonSize {
     /** `roundButton` (48) with an `icon` (24): the + on My Goals. */
