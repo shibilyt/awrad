@@ -75,7 +75,7 @@ All buttons are `control` (56) tall and fill the width they're given, unless not
 | Main | `primary` | `onPrimary` | The one main action of a screen: Get Started, Continue |
 | Secondary | `secondaryContainer` | `onSecondaryContainer` | Other actions: Notifications |
 | Error | `error` | `onError` | Destructive confirmations: Delete account |
-| Text | none | `accent`, `label` style, `touchTarget` tall | Links and small actions: View All |
+| Text | none | `accent`, `label` style, `touchTarget` tall; on a `secondaryContainer` or `primary` fill, the fill's paired content colour instead | Links and small actions: View All |
 
 - **Shape:** `button` (16).
 - **Content:** a label, optionally with a leading icon (`iconSmall`, `inlineGap` to the label).
@@ -260,7 +260,7 @@ A selectable chip that filters a list (the Library's tag filter). Several can be
 Shown at the top of a dhikr's page while it has an open conflict.
 - **Container:** a card (`card` shape, `cardPadding`) filled `secondaryContainer`. It doesn't use the `error` colour roles.
 - **Content:** the `error` icon (`icon` size) at the start, then "Changed on another device" in `body`; icon and text in `onSecondaryContainer`.
-- **Actions:** two text buttons aligned to the end: **Keep mine** and **Use theirs**.
+- **Actions:** two text buttons aligned to the end: **Keep mine** and **Use theirs**, their labels in `onSecondaryContainer` (not `accent`: in dark mode `accent` and `secondaryContainer` are the same colour).
 
 ### "Change refused" notice
 
