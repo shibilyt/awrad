@@ -37,6 +37,7 @@ A slice is done only when **all** of these hold:
 - [ ] Every operation in the slice has spec examples, server `assert_conforms` tests and client round-trip tests or mocks.
 - [ ] Each project's validation command passes locally, and `ci_ok` is green.
 - [ ] Main flows have been checked on a running build in English and Arabic (RTL), with evidence in the brief.
+- [ ] On mobile, the slice's core flows work signed out with the network off, and it adds no sign-in gate (ADR-2026-10-28).
 - [ ] All user-facing text is in localization resources with en, ar and ml, and the translation checks pass.
 - [ ] Decisions taken along the way are ADRs (root or project), and none contradicts an accepted ADR without superseding it.
 - [ ] Docs that the slice made stale are updated: `CONTEXT.md`, `STRUCTURE.md`, project `ARCHITECTURE.md`, `COMMANDS.md`.

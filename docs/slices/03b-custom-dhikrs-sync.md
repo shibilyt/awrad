@@ -15,7 +15,7 @@ Users can create, edit and delete their own dhikrs and tag any dhikr, offline on
   - Custom dhikrs can hold a recording kept on the device.
   - Uploading it to private storage is slice 3c: 10 MB per file, 500 MB per account, MP3 and M4A/AAC.
 - **Duplicate tags merge.** Two devices that both create "Morning" offline end up with one tag, and every dhikr keeps it.
-- **Signing in with local data asks.** The user chooses to add the device's data to the account, or erase it from the device. Signing into a different account from last time always asks.
+- **Local profiles.** A phone keeps each account's data in its own local profile, labelled with the account, and never mixes two accounts. Before the first sign-in there is one anonymous profile; the first sign-in asks once to add it to the account or erase it.
 - **The web edits too.** It's online only and sends each edit straight away, with no queue.
 
 ## Scope
@@ -26,7 +26,7 @@ Users can create, edit and delete their own dhikrs and tag any dhikr, offline on
 | Custom dhikrs: create, edit, delete; same shape as built-ins (`$defs/dhikr`) | Virtues on custom dhikrs; custom collections (later) |
 | User tags: create, rename, delete; tag built-in and custom dhikrs | Favourites and notes (later, in the same per-dhikr record) |
 | Local audio on a custom dhikr (import, play, replace, remove) | Uploading audio (3c) |
-| Sign-in binding: add to the account or erase; sign-out keeps local data | Restoring deleted items |
+| Local profiles: anonymous, then one per account; switching accounts; removing an account's data from the phone | Restoring deleted items |
 | Library: "Your dhikrs" collection, tag chips, a tag filter | |
 
 Platforms: server ☑ · Android ☑ · iOS ☑ · web ☑ (online, no queue)
@@ -130,11 +130,26 @@ The request has 1–100 commands, applied in order. Each command is:
 - Sync on app start, on a change (after a 2 s debounce) and every 5 minutes while open.
 - Back off from 5 s to 5 min, with ±20% jitter.
 
-**Sign-in binding:**
-- The device remembers which account its data belongs to.
-- First sign-in with local data asks: **Add to my account** (every local entity is queued as `put`), or **Erase from this device**.
-- Signing out keeps the data and stops syncing.
-- Signing into a different account always asks the same question.
+**Local profiles (who the data on a phone belongs to):**
+- **Profiles and the registry.** Each profile is its own local database file. A small registry records:
+  - every profile: local ID, account ID (none for the anonymous profile), email for display, its changes-feed `after`, and when it was last used;
+  - which profile is active.
+- **Before any sign-in:** there's one anonymous profile. Everything is saved locally and nothing is queued for sending.
+- **First sign-in as an account (A):**
+  - If the anonymous profile has data, the app asks once:
+    - **Add to my account:** the anonymous profile becomes A's profile, every entity in it is queued as a `put`, and then A's server data is pulled and merged (tags with the same name merge);
+    - **Erase:** the anonymous profile is deleted and A's profile is downloaded fresh.
+  - If the anonymous profile is empty, A's profile is simply created.
+- **Signing out** keeps the active profile: the last account that signed in. New edits go on being saved and queued for that account; they just aren't sent.
+- **Signing in as the same account** sends the queue and pulls, with no question asked.
+- **Signing in as a different account (B):**
+  - The phone switches to B's profile, downloading it if it's new. A's profile, including commands not yet sent, stays untouched on the phone and becomes active again when A signs in.
+  - Two accounts' data never mix. A profile's queue is only ever sent with its own account's token.
+- **Removing an account's data:** Settings lists the profiles on the phone, each with **Remove from this device**. It warns first if the profile has unsent changes.
+- **A deleted account:** if signing in shows a profile's account no longer exists, the phone offers to remove that profile.
+- **Two safety checks:**
+  - the sync engine sends only when the signed-in account ID equals the active profile's account ID;
+  - every sync request carries the account ID it expects (`X-Awrad-Account`), and the server refuses a mismatch with `409 account_mismatch`.
 
 ### Web
 
@@ -145,19 +160,21 @@ The web sends each edit as a one-command batch through the same endpoint, with t
 - **`CONTEXT.md`:**
   - **Custom dhikr**, **Tag**, **Change queue**, **Command**, **Revision**, **Conflict**.
   - **Personal record**: a user's own data about one dhikr, for now its tags.
+  - **Local profile**: one account's data on a phone (or the anonymous data before any sign-in), kept apart from every other account's.
 - **Fixtures** (`contracts/sync/v1/fixtures/`):
   - `tag_name_normalization.json`: the old v1 cases, ported to awrad-fixture/1, plus new ones;
   - `custom_dhikr_validity.json`: which custom dhikr documents are valid;
   - `sync_receipts.json`: given server state and a batch, the receipts and the resulting state. The server runs it; it's the protocol spec;
   - `outbox_enqueue.json`: given local state and a pending queue, the queue after an edit (replace-if-unsent, append-if-sent). Android and iOS run it;
   - `apply_changes.json`: given local state, pending commands and a changes page, the resulting local state and conflicts. Android and iOS run it.
+  - `profile_switch.json`: given the profile registry, the signed-in account and the user's choice, the resulting active profile and what is queued, kept or erased. Android and iOS run it.
 
 ## Contract (step 4)
 
 - **Operations:**
   - `post_sync_commands` `POST /api/v1/sync/commands`;
   - `list_sync_changes` `GET /api/v1/sync/changes`.
-  - Both work with a bearer token (mobile) or a cookie plus CSRF (web).
+  - Both work with a bearer token (mobile) or a cookie plus CSRF (web), and both require `X-Awrad-Account`.
 - **Schemas** in `contracts/sync/v1/sync.schema.json`: command, receipt, change, and the three entity documents.
 - **ADR:** "The change queue", replacing progress sync v1 for the rebuild.
 
@@ -178,7 +195,9 @@ The web sends each edit as a one-command batch through the same endpoint, with t
 | The same tag created on two devices offline merges | ☐ | ☐ | — | |
 | Edit the same dhikr on two devices: conflict, then Keep mine or Use theirs | ☐ | ☐ | ☐ | |
 | Delete on one device; it disappears on the others | ☐ | ☐ | ☐ | |
-| Sign in to a different account: asked to add or erase | ☐ | ☐ | — | |
+| Anonymous use → sign in (add) → sign out → more edits → sign in again: queued edits sync, no prompt | ☐ | ☐ | — | |
+| Sign in as B after A: B's data only; A's unsent edits kept and sent when A returns | ☐ | ☐ | — | |
+| Remove an account's data from the phone, with a warning about unsent changes | ☐ | ☐ | — | |
 
 ## Definition of done
 
