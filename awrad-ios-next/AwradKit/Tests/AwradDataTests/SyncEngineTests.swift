@@ -110,6 +110,30 @@ struct SyncEngineTests {
         #expect(personal == .object(["tag_ids": .array([.string(survivor.description)])]))
     }
 
+    @Test func aRecordEditedToNameALaterTagIsSentAfterIt() async throws {
+        let harness = try await StoreHarness(signedIn: true)
+        defer { harness.removeDirectory() }
+        _ = try await harness.signIn()
+        let morning = try await harness.store.createTag(named: "Morning")
+        try await harness.store.setTags([morning.id], on: Sample.builtIn)
+        // Offline: a new tag, then the never-sent record edited to use it.
+        let evening = try await harness.store.createTag(named: "Evening")
+        try await harness.store.setTags([morning.id, evening.id], on: Sample.builtIn)
+
+        await harness.sync()
+
+        let order = await harness.server.sentBatches.flatMap(\.self).map(\.entityType)
+        #expect(order == ["user_tag", "user_tag", "dhikr_personal"], "the record follows the tag it names")
+        let content = await harness.store.content()
+        #expect(content.notices.isEmpty, "no tag_not_found")
+        #expect(content.tagsByDhikr[Sample.builtIn] == [morning.id, evening.id])
+        let personal = await harness.server.document(SyncEntityKey(.dhikrPersonal, Sample.builtIn))
+        #expect(
+            personal
+                == .object(["tag_ids": .array([.string(morning.id.description), .string(evening.id.description)])]))
+        #expect(await harness.store.state().unsentCount == 0)
+    }
+
     @Test func aGoneEntityIsRemoved() async throws {
         let harness = try await StoreHarness(signedIn: true)
         defer { harness.removeDirectory() }
