@@ -1,5 +1,6 @@
 import i18next from "i18next";
 import createClient, { type Middleware } from "openapi-fetch";
+import { newUuidV7 } from "@/shared/identity";
 import { isProblem } from "./problem";
 import type { paths } from "./schema.gen";
 
@@ -100,7 +101,7 @@ export const api = createClient<paths>({
 });
 api.use(language);
 
-/** A fresh `Idempotency-Key` (STYLE §10) for one user action; a retry of it reuses the key. */
+/** A fresh `Idempotency-Key` (STYLE §10), a UUIDv7, for one user action; a retry of it reuses the key. */
 export function idempotencyKey(): string {
-  return crypto.randomUUID();
+  return newUuidV7();
 }

@@ -145,7 +145,9 @@ describe("signing devices out", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Every other device is signed out.");
     const revoke = requests.find((request) => request.path === "/api/v1/account/sessions/revoke_others");
     expect(revoke?.method).toBe("POST");
-    expect(revoke?.headers.get("Idempotency-Key")).toMatch(/^[0-9a-f-]{36}$/);
+    expect(revoke?.headers.get("Idempotency-Key")).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
   });
 
   test("a stale CSRF token is refreshed once and the same request retried", async () => {

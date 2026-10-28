@@ -32,6 +32,10 @@ The Awrad web app, an online-only React client of `awrad-server-next` (root ADR-
   - **Display language** (`localize.ts`): `localized(text, language)` falls back to English; `transliterationFor` returns none in Arabic and English where Malayalam has none. `useLanguage()` (`src/shared/i18n`) gives the UI language.
   - **Search** (`search.ts`): `normalizeForSearch` and `searchDhikrs` implement `dhikr_search_normalization` and `dhikr_search`. `fixtures.test.ts` runs every file in `contracts/dhikr-catalog/v1/fixtures/` and fails on a file without an adapter, like the account-model fixtures.
 - **`src/shared/account-input`**: the shared input rules `email_input`, `password_policy` (code points after NFC) and `email_code_input` (other digit scripts). `fixtures.test.ts` runs every file in `contracts/account-model/v1/fixtures/` and fails on a file without an adapter.
+- **`src/shared/identity`** (root ADR-2026-10-28, `../contracts/identity/v1/`): every ID the app generates is a UUIDv7.
+  - `uuidV7FromParts(unixMs, randomBytes)` lays out a 48-bit millisecond time and 10 random bytes exactly as `uuid_v7_layout.json` fixes them; `newUuidV7()` feeds it `Date.now()` and `crypto.getRandomValues`, and takes an injected clock and random source instead. `isValidId(text)` is `uuid_format.json`: any lowercase, hyphenated UUID except nil and max, nothing trimmed.
+  - Today it makes the `Idempotency-Key`s (`idempotencyKey()` in `src/shared/api/client.ts`). ESLint (`no-restricted-syntax`) rejects `.randomUUID` anywhere else, since it makes v4.
+  - An ID's timestamp never orders, expires or authorizes anything. `fixtures.test.ts` runs every file in `contracts/identity/v1/fixtures/` and fails on a file without an adapter.
 
 ## Layout and module rules
 
@@ -68,7 +72,7 @@ dependency-cruiser enforces:
   - The first write fetches the token from `get_browser_csrf_token` (single-flight). A `401` there leaves no token, and the write's own answer is the result.
   - `create_browser_session` renews the session, so its `csrf_token` replaces the old one; sign-out clears it.
   - On `403 csrf_token_invalid` the client refetches the token once and retries the same request (same `Idempotency-Key`). A second rejection is returned.
-- **Headers:** `Accept-Language` follows the UI language on every request, so emails the server sends match it. Retryable POSTs carry a fresh `Idempotency-Key` per user action.
+- **Headers:** `Accept-Language` follows the UI language on every request, so emails the server sends match it. Retryable POSTs carry a fresh `Idempotency-Key` (a UUIDv7 from `src/shared/identity`) per user action.
 - **Errors:** every non-2xx response becomes an `ApiProblem` with the server's stable `code`, field `errors` and `Retry-After`. The UI maps `code` (and field codes) to translated text; never `detail`. `problemOf` checks the status, since openapi-fetch reports an empty error body as `error: undefined`.
 
 ## Hosting (ADR 0001)
