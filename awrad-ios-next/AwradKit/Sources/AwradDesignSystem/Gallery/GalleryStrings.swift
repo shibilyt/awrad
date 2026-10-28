@@ -62,5 +62,22 @@
         static let goals = text("gallery.goals", "Goals")
         static let library = text("gallery.library", "Library")
         static let community = text("gallery.community", "Community")
+
+        static let tagMorning = text("gallery.tag_morning", "Morning")
+        static let tagEvening = text("gallery.tag_evening", "Evening")
+        static let tagTravel = text("gallery.tag_travel", "Travel")
+        static let conflict = text("gallery.conflict", "Changed on another device")
+        static let keepMine = text("gallery.keep_mine", "Keep mine")
+        static let useTheirs = text("gallery.use_theirs", "Use theirs")
+        static let changeRefused = text("gallery.change_refused", "Change refused")
+        static let changeRefusedReason = text("gallery.change_refused_reason", "Another tag already has that name.")
+        static let ok = text("gallery.ok", "OK")
+        static let translation = text("gallery.translation", "Translation")
+        static let translationSample = text(
+            "gallery.translation_sample",
+            "Glory be to Allah and praise be to Him, glory be to Allah the Magnificent. Whoever says it a hundred times a day has their sins wiped away."
+        )
+        static let required = text("gallery.required", "Enter the Arabic text.")
+        static let yourDhikrs = text("gallery.your_dhikrs", "Your dhikrs")
     }
 #endif

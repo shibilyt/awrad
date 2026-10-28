@@ -243,9 +243,28 @@ public struct SyncFieldError: Hashable, Sendable, Comparable {
     public static func < (lhs: Self, rhs: Self) -> Bool { (lhs.field, lhs.code) < (rhs.field, rhs.code) }
 }
 
+/// An entity the server changed as a cascade of a delete, at the same revision
+/// (`$defs/cascaded_change`): a personal record a tag delete took the tag out of (active), or the
+/// personal record of a deleted custom dhikr (deleted). The document comes in the changes feed.
+public struct SyncCascade: Hashable, Sendable {
+    public let key: SyncEntityKey
+    public let state: SyncEntityState
+    public let version: Int
+    public let revision: Int
+
+    public init(key: SyncEntityKey, state: SyncEntityState, version: Int, revision: Int) {
+        self.key = key
+        self.state = state
+        self.version = version
+        self.revision = revision
+    }
+}
+
 /// What the server decided about one command.
 public indirect enum SyncReceipt: Hashable, Sendable {
-    case applied(commandID: AwradID, version: Int, revision: Int)
+    /// `cascaded` is a list for a tag or custom dhikr delete (empty when nothing cascaded), `nil`
+    /// for every other command.
+    case applied(commandID: AwradID, version: Int, revision: Int, cascaded: [SyncCascade]?)
     case duplicate(commandID: AwradID, original: SyncReceipt)
     case conflict(commandID: AwradID, current: ServerCopy)
     case merged(commandID: AwradID, mergedInto: AwradID, current: ServerCopy)
@@ -254,7 +273,7 @@ public indirect enum SyncReceipt: Hashable, Sendable {
 
     public var commandID: AwradID {
         switch self {
-        case .applied(let id, _, _), .duplicate(let id, _), .conflict(let id, _), .merged(let id, _, _),
+        case .applied(let id, _, _, _), .duplicate(let id, _), .conflict(let id, _), .merged(let id, _, _),
             .gone(let id), .rejected(let id, _, _, _):
             id
         }

@@ -88,9 +88,33 @@ struct SyncFieldErrorWire: Codable, Equatable, Sendable {
     let code: String
 }
 
+/// One entity a delete cascaded to (`$defs/cascaded_change`).
+struct SyncCascadeWire: Codable, Equatable, Sendable {
+    let entityType: String
+    let entityID: String
+    let state: String
+    let version: Int
+    let revision: Int
+
+    enum CodingKeys: String, CodingKey {
+        case state, version, revision
+        case entityType = "entity_type"
+        case entityID = "entity_id"
+    }
+
+    /// `nil` for an entity type or state this client doesn't know: it's skipped.
+    var cascade: SyncCascade? {
+        guard let type = SyncEntityType(rawValue: entityType), let id = AwradID(entityID),
+            let state = SyncEntityState(rawValue: state)
+        else { return nil }
+        return SyncCascade(key: SyncEntityKey(type, id), state: state, version: version, revision: revision)
+    }
+}
+
 /// One receipt. Each status carries exactly its own members, so it encodes back to the same JSON.
 indirect enum SyncReceiptWire: Codable, Equatable, Sendable {
-    case applied(commandID: String, version: Int, revision: Int)
+    /// `cascaded` is a list for a tag or custom dhikr delete, `null` otherwise (always present).
+    case applied(commandID: String, version: Int, revision: Int, cascaded: [SyncCascadeWire]?)
     case duplicate(commandID: String, original: SyncReceiptWire)
     case conflict(commandID: String, current: SyncCurrentWire)
     case merged(commandID: String, mergedInto: String, current: SyncCurrentWire)
@@ -100,14 +124,14 @@ indirect enum SyncReceiptWire: Codable, Equatable, Sendable {
     case unknown(commandID: String, status: String)
 
     enum CodingKeys: String, CodingKey {
-        case status, version, revision, original, current, code, fields
+        case status, version, revision, original, current, code, fields, cascaded
         case commandID = "command_id"
         case mergedInto = "merged_into"
     }
 
     var commandID: String {
         switch self {
-        case .applied(let id, _, _), .duplicate(let id, _), .conflict(let id, _), .merged(let id, _, _),
+        case .applied(let id, _, _, _), .duplicate(let id, _), .conflict(let id, _), .merged(let id, _, _),
             .gone(let id), .rejected(let id, _, _, _), .unknown(let id, _):
             id
         }
@@ -120,7 +144,8 @@ indirect enum SyncReceiptWire: Codable, Equatable, Sendable {
         case "applied":
             self = .applied(
                 commandID: id, version: try container.decode(Int.self, forKey: .version),
-                revision: try container.decode(Int.self, forKey: .revision))
+                revision: try container.decode(Int.self, forKey: .revision),
+                cascaded: try container.decodeIfPresent([SyncCascadeWire].self, forKey: .cascaded))
         case "duplicate":
             self = .duplicate(commandID: id, original: try container.decode(SyncReceiptWire.self, forKey: .original))
         case "conflict":
@@ -145,10 +170,12 @@ indirect enum SyncReceiptWire: Codable, Equatable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(commandID, forKey: .commandID)
         switch self {
-        case .applied(_, let version, let revision):
+        case .applied(_, let version, let revision, let cascaded):
             try container.encode("applied", forKey: .status)
             try container.encode(version, forKey: .version)
             try container.encode(revision, forKey: .revision)
+            // Required, and `null` for a command that can't cascade.
+            try container.encode(cascaded, forKey: .cascaded)
         case .duplicate(_, let original):
             try container.encode("duplicate", forKey: .status)
             try container.encode(original, forKey: .original)
@@ -177,8 +204,9 @@ indirect enum SyncReceiptWire: Codable, Equatable, Sendable {
     func receipt(type: SyncEntityType) -> SyncReceipt? {
         guard let id = AwradID(commandID) else { return nil }
         switch self {
-        case .applied(_, let version, let revision):
-            return .applied(commandID: id, version: version, revision: revision)
+        case .applied(_, let version, let revision, let cascaded):
+            return .applied(
+                commandID: id, version: version, revision: revision, cascaded: cascaded?.compactMap(\.cascade))
         case .duplicate(_, let original):
             return original.receipt(type: type).map { .duplicate(commandID: id, original: $0) }
         case .conflict(_, let current):

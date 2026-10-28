@@ -108,6 +108,17 @@ public struct Dhikr: Identifiable, Hashable, Sendable {
     public func references(of virtue: Virtue) -> [Reference] {
         virtue.references.compactMap(reference)
     }
+
+    /// The detail screen's Sources (components.md "Dhikr detail screen"): the references not shown
+    /// elsewhere on it, in the dhikr's order. A `quran` dhikr's Qur'an references are in its card, and
+    /// a virtue's references under the virtue; a custom dhikr has no virtues, so it lists all of its.
+    public var sources: [Reference] {
+        let cited = Set(virtues.flatMap(\.references))
+        return references.filter { reference in
+            if kind == .quran, case .quran = reference { return false }
+            return !cited.contains(reference.id)
+        }
+    }
 }
 
 /// Where a text or virtue comes from. `id` is unique within its dhikr; virtues point at it.

@@ -28,7 +28,7 @@ struct ManageTagsScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: AwradSpacing.sectionGap) {
                 ForEach(state.conflicts, id: \.key) { conflict in
-                    ConflictCard(
+                    ConflictBanner(
                         name: state.personal.tag(conflict.key.id)?.name,
                         onKeepMine: { send(.resolveConflict(conflict.key, .keepMine)) },
                         onUseTheirs: { send(.resolveConflict(conflict.key, .useTheirs)) }

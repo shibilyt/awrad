@@ -30,7 +30,12 @@
                 title: LanguageTexts(en: "Hasbiyallah", ar: "حسبي الله", ml: "ഹസ്ബിയല്ലാഹ്"),
                 transliteration: LanguageTexts(en: "Hasbiyallahu la ilaha illa huwa, 'alayhi tawakkaltu"),
                 translation: LanguageTexts(en: "Allah is sufficient for me; there is no god but Him. In Him I trust."),
-                references: [Reference.quran(id: "quran-9-129", surah: 9, ayahs: 129...129).json])
+                references: [
+                    Reference.quran(id: "quran-9-129", surah: 9, ayahs: 129...129).json,
+                    Reference.hadith(
+                        id: "abu-dawud-5081", collection: "Sunan Abi Dawud", number: "5081", narrator: nil, grade: nil
+                    ).json,
+                ])
             var theirs = hasbiyallah
             theirs.title = LanguageTexts(en: "Hasbiyallah (seven times)")
             let morningDua = CustomDhikrDocument(
