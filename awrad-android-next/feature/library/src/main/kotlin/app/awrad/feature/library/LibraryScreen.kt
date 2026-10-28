@@ -237,6 +237,8 @@ internal fun FeaturedCollectionsSection(
             collections = state.collections,
             language = language,
             onOpen = { onNavigate(LibraryDestination.Collection(it.key)) },
+            yourDhikrs = state.yourDhikrs.size.takeIf { it > 0 },
+            onOpenYourDhikrs = { onNavigate(LibraryDestination.YourDhikrs) },
         )
     }
 }

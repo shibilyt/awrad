@@ -1,6 +1,7 @@
 package app.awrad.core.testing.fixtures
 
 import app.awrad.core.domain.AwradId
+import app.awrad.core.domain.sync.CascadedChange
 import app.awrad.core.domain.sync.Change
 import app.awrad.core.domain.sync.ChangesPage
 import app.awrad.core.domain.sync.EntityKey
@@ -86,7 +87,20 @@ public fun JsonObject.toChangesPage(): ChangesPage = ChangesPage(
 public fun JsonObject.toReceipt(): Receipt {
     val commandId = id("command_id")
     return when (val status = string("status")) {
-        "applied" -> Receipt.Applied(commandId, number("version"), number("revision"))
+        "applied" -> Receipt.Applied(
+            commandId = commandId,
+            version = number("version"),
+            revision = number("revision"),
+            cascaded = this["cascaded"]?.takeUnless { it is JsonNull }?.jsonArray?.map { element ->
+                val cascaded = element.jsonObject
+                CascadedChange(
+                    key = cascaded.entityKey(),
+                    state = checkNotNull(EntityState.fromWire(cascaded.string("state"))) { "state" },
+                    version = cascaded.number("version"),
+                    revision = cascaded.number("revision"),
+                )
+            },
+        )
         "duplicate" -> Receipt.Duplicate(commandId, getValue("original").jsonObject.toReceipt())
         "conflict" -> Receipt.Conflict(commandId, getValue("current").jsonObject.toServerCopy())
         "merged" -> Receipt.Merged(commandId, id("merged_into"), getValue("current").jsonObject.toServerCopy())

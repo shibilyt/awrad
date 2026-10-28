@@ -64,6 +64,7 @@ internal class ProfileManager(
                     isActive = id == active.profileId,
                     hasUnsent = transfers.hasUnsent(id),
                     lastUsedAt = Instant.ofEpochMilli(entry.lastUsedAt),
+                    accountDeleted = entry.accountDeleted,
                 )
             }.sortedWith(compareByDescending<LocalProfile> { it.isActive }.thenByDescending { it.lastUsedAt })
         }
@@ -137,8 +138,8 @@ internal class ProfileManager(
         val outcome = ProfileSwitch.apply(current, event, choice, newId())
         signedIn = outcome.registry.signedInAccountId
         saveRegistry(outcome)
-        val anonymous = current.active.profileId
-        outcome.mergeInto?.let { target -> transfers.mergeAnonymous(from = anonymous, into = target) }
+        outcome.merge?.let { transfers.mergeAnonymous(from = it.from, into = it.into) }
+        outcome.dropQueue?.let { transfers.dropQueue(it) }
         if (outcome.registry.activeProfileId != databases.current().profileId) {
             databases.activate(outcome.registry.activeProfileId)
         } else {
@@ -153,8 +154,11 @@ internal class ProfileManager(
         val stored = registry.profiles().associateBy { it.profileId }
         val now = clock.millis()
         val entities = outcome.registry.profiles.map { profile ->
-            stored[profile.profileId.value]?.copy(accountId = profile.accountId?.value, email = profile.email)
-                ?: ProfileEntity(profile.profileId.value, profile.accountId?.value, profile.email, 0, now, now)
+            stored[profile.profileId.value]?.copy(
+                accountId = profile.accountId?.value,
+                email = profile.email,
+                accountDeleted = profile.accountDeleted,
+            ) ?: ProfileEntity(profile.profileId.value, profile.accountId?.value, profile.email, 0, now, now)
         }
         registry.replace(entities, RegistryEntity(activeProfileId = outcome.registry.activeProfileId.value))
     }
@@ -171,6 +175,7 @@ internal class ProfileManager(
                 after = entry.after,
                 hasData = transfers.hasData(id),
                 hasUnsent = transfers.hasUnsent(id),
+                accountDeleted = entry.accountDeleted,
             )
         }
         return ProfileRegistry(entries, active.profileId, signedIn)

@@ -192,9 +192,14 @@ private fun ProfileCard(profile: LocalProfile, onAction: (DataSyncAction) -> Uni
             )
             if (profile.isActive) AwradChip(text = stringResource(R.string.sync_profile_active))
         }
-        if (profile.hasUnsent) {
+        val status = when {
+            profile.accountDeleted -> R.string.sync_profile_account_deleted
+            profile.hasUnsent -> R.string.sync_profile_unsent
+            else -> null
+        }
+        if (status != null) {
             Text(
-                text = stringResource(R.string.sync_profile_unsent),
+                text = stringResource(status),
                 style = AwradTheme.type.bodySmall,
                 color = AwradTheme.colors.onSurfaceVariant,
             )

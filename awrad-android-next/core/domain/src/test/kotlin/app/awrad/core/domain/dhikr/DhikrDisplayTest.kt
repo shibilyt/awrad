@@ -48,6 +48,25 @@ class DhikrDisplayTest {
     }
 
     @Test
+    fun `Sources lists the references neither a virtue nor the card shows, in order`() {
+        val quran = Reference.Quran("quran", surah = 112, ayahStart = 1, ayahEnd = 4)
+        val muslim = Reference.Hadith("muslim", collection = "Sahih Muslim", number = "408")
+        val book = Reference.Book("book", title = "Hisn al-Muslim")
+        val bukhari = Reference.Hadith("bukhari", collection = "Sahih al-Bukhari", number = "5013")
+        val surah = dhikr.copy(
+            kind = DhikrKind.QURAN,
+            references = listOf(book, quran, muslim, bukhari),
+            virtues = listOf(Virtue(LocalizedText(en = "Equal to a third"), listOf(bukhari))),
+        )
+        assertEquals(quran, surah.cardReference)
+        assertEquals(listOf(book, muslim), surah.sources)
+        // Not a Qur'an dhikr, so the card shows no reference; with no virtues every reference is a source.
+        val custom = dhikr.copy(references = listOf(quran, book))
+        assertEquals(null, custom.cardReference)
+        assertEquals(listOf(quran, book), custom.sources)
+    }
+
+    @Test
     fun `the app language is the first configured one the app ships`() {
         assertEquals(ContentLanguage.AR, ContentLanguage.of(listOf("ar")))
         assertEquals(ContentLanguage.ML, ContentLanguage.of(listOf("fr", "ml", "en")))

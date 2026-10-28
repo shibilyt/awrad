@@ -29,8 +29,8 @@ public interface SyncStore {
     public fun outbox(): List<OutboxCommand>
 
     /**
-     * Makes the queue [commands]. The queue rules only ever replace a command in place, remove commands or add
-     * new ones at the end, so commands keep their relative order.
+     * Makes the queue [commands], in that order. The queue rules replace a command in place, remove commands, add
+     * new ones at the end, or move a replaced command to just after a later put it names ([Outbox.enqueue]).
      */
     public fun replaceOutbox(commands: List<OutboxCommand>)
 

@@ -32,6 +32,7 @@
     <string name="sync_profile_anonymous">സൈൻ ഇൻ ചെയ്യാതെ (ഈ ഫോണിൽ മാത്രം)</string>
     <string name="sync_profile_active">ഉപയോഗത്തിൽ</string>
     <string name="sync_profile_unsent">സമന്വയിപ്പിക്കാത്ത മാറ്റങ്ങളുണ്ട്</string>
+    <string name="sync_profile_account_deleted">അക്കൗണ്ട് ഇല്ലാതാക്കി</string>
     <string name="sync_remove_profile">ഈ ഉപകരണത്തിൽ നിന്ന് നീക്കം ചെയ്യുക</string>
     <string name="sync_remove_title">%1$s-ന്റെ ഡാറ്റ ഈ ഫോണിൽ നിന്ന് നീക്കം ചെയ്യണോ?</string>
     <string name="sync_remove_body">ഇതിനായി ഇവിടെ സൂക്ഷിച്ച ദിക്റുകളും ടാഗുകളും റെക്കോർഡിംഗുകളും ഈ ഫോണിൽ നിന്ന് മായ്ക്കും. സമന്വയിപ്പിച്ചവ അക്കൗണ്ടിൽ നിലനിൽക്കും.</string>
@@ -45,16 +46,16 @@
     <string name="sync_deleted_title">ഈ അക്കൗണ്ട് ഇപ്പോൾ നിലവിലില്ല</string>
     <string name="sync_deleted_body">%1$s ഇല്ലാതാക്കപ്പെട്ടു, അതിനാൽ ഈ ഫോണിലെ അതിന്റെ ഡാറ്റ ഇനി സമന്വയിപ്പിക്കാനാവില്ല. ഈ ഫോണിൽ നിന്ന് നീക്കം ചെയ്യണോ, അതോ ഇവിടെ നിലനിർത്തണോ?</string>
     <string name="sync_deleted_keep">നിലനിർത്തുക</string>
-    <string name="sync_rejected_title">ഒരു മാറ്റം സേവ് ചെയ്തില്ല</string>
-    <string name="sync_rejected_body">%1$s പിൻവലിച്ചു: %2$s</string>
-    <string name="sync_rejected_dhikr">ഒരു ദിക്റിലെ മാറ്റം</string>
-    <string name="sync_rejected_tag">ഒരു ടാഗിലെ മാറ്റം</string>
-    <string name="sync_rejected_tags">ഒരു ദിക്റിന്റെ ടാഗുകളിലെ മാറ്റം</string>
+    <string name="sync_rejected_title">മാറ്റം നിരസിച്ചു</string>
+    <string name="sync_reason_document_invalid">സെർവർ ഈ മാറ്റം സ്വീകരിച്ചില്ല.</string>
+    <string name="sync_reason_document_too_large">ഈ മാറ്റം സേവ് ചെയ്യാൻ കഴിയാത്തത്ര വലുതാണ്.</string>
+    <string name="sync_reason_custom_dhikr_limit">നിങ്ങളുടെ അക്കൗണ്ടിൽ ഇതിനകം സ്വന്തമായി 1,000 ദിക്റുകളുണ്ട്.</string>
+    <string name="sync_reason_tag_limit">നിങ്ങളുടെ അക്കൗണ്ടിൽ ഇതിനകം 100 ടാഗുകളുണ്ട്.</string>
     <string name="sync_reason_tag_name_taken">ആ പേരിൽ മറ്റൊരു ടാഗുണ്ട്.</string>
-    <string name="sync_reason_tag_limit">അക്കൗണ്ടിൽ ഇതിനകം 100 ടാഗുകളുണ്ട്.</string>
-    <string name="sync_reason_dhikr_limit">അക്കൗണ്ടിൽ ഇതിനകം സ്വന്തമായി 1,000 ദിക്റുകളുണ്ട്.</string>
-    <string name="sync_reason_too_large">സേവ് ചെയ്യാൻ കഴിയാത്തത്ര വലുതായിരുന്നു.</string>
-    <string name="sync_reason_not_found">ഇത് സൂചിപ്പിക്കുന്ന ഒന്ന് ഇല്ലാതാക്കപ്പെട്ടു.</string>
-    <string name="sync_reason_invalid">സെർവർ ഇത് സ്വീകരിച്ചില്ല.</string>
+    <string name="sync_reason_tag_not_found">ഈ മാറ്റം ഉപയോഗിക്കുന്ന ഒരു ടാഗ് ഇല്ലാതാക്കപ്പെട്ടു.</string>
+    <string name="sync_reason_dhikr_not_found">ഈ മാറ്റം ബാധകമായ ദിക്ർ ഇല്ലാതാക്കപ്പെട്ടു.</string>
+    <string name="sync_reason_entity_not_found">ഈ മാറ്റം തിരുത്തുന്നത് ഇനി നിലവിലില്ല.</string>
+    <string name="sync_reason_delete_not_allowed">ഇത് ഇല്ലാതാക്കാൻ കഴിയില്ല.</string>
+    <string name="sync_reason_command_id_reused">ഇതേ ഐഡിയിൽ മറ്റൊരു മാറ്റം സെർവറിന് മുമ്പേ ലഭിച്ചിരുന്നു.</string>
     <string name="sync_ok">ശരി</string>
 </resources>

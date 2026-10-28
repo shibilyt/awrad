@@ -1,5 +1,7 @@
 package app.awrad.feature.library
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.core.domain.AwradId
@@ -8,10 +10,6 @@ import app.awrad.core.domain.personal.TagOutcome
 import app.awrad.core.domain.personal.TagRepository
 import app.awrad.core.domain.personal.UserTag
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,8 +17,8 @@ import javax.inject.Inject
 @HiltViewModel
 internal class ManageTagsViewModel @Inject constructor(private val tags: TagRepository) : ViewModel() {
 
-    private val mutableState = MutableStateFlow(ManageTagsUiState())
-    val state: StateFlow<ManageTagsUiState> = mutableState.asStateFlow()
+    private val mutableState = mutableStateOf(ManageTagsUiState())
+    val state: State<ManageTagsUiState> = mutableState
 
     init {
         viewModelScope.launch {

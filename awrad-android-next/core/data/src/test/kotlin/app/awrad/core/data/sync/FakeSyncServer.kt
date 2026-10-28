@@ -9,6 +9,7 @@ import app.awrad.core.network.api.ApiFailure
 import app.awrad.core.network.api.ApiResult
 import app.awrad.core.network.api.Problem
 import app.awrad.core.network.api.SyncAppliedReceipt
+import app.awrad.core.network.api.SyncCascadedBody
 import app.awrad.core.network.api.SyncChangeBody
 import app.awrad.core.network.api.SyncChangesPage
 import app.awrad.core.network.api.SyncCommandBatch
@@ -176,7 +177,12 @@ internal class FakeSyncServer(private val accountId: AwradId, var tagLimit: Int 
         } else {
             write(command.entityType, command.entityId, version, ACTIVE, revision, document)
         }
-        return SyncAppliedReceipt(command.commandId, "applied", version, revision)
+        val cascades = command.op == "delete" && command.entityType in setOf(TAG, CUSTOM)
+        val cascaded = entities.values
+            .filter { it.revision == revision && !(it.type == command.entityType && it.id == command.entityId) }
+            .sortedWith(compareBy({ it.type }, { it.id }))
+            .map { SyncCascadedBody(it.type, it.id, it.state, it.version, it.revision) }
+        return SyncAppliedReceipt(command.commandId, "applied", version, revision, cascaded.takeIf { cascades })
     }
 
     private fun cascade(type: String, id: String, revision: Long) {

@@ -27,6 +27,7 @@ public abstract class ProfileRegistryDatabase : RoomDatabase() {
 /**
  * One profile: [accountId] and [email] are null for the anonymous profile. [after] mirrors the changes-feed
  * position the profile's own database holds (it's written there with each page, in one transaction).
+ * [accountDeleted] marks a kept profile whose account no longer exists: it's never queued or synced again.
  */
 @Entity(tableName = "profiles")
 public data class ProfileEntity(
@@ -36,6 +37,7 @@ public data class ProfileEntity(
     @ColumnInfo(name = "after") val after: Long,
     @ColumnInfo(name = "created_at") val createdAt: Long,
     @ColumnInfo(name = "last_used_at") val lastUsedAt: Long,
+    @ColumnInfo(name = "account_deleted", defaultValue = "0") val accountDeleted: Boolean = false,
 )
 
 /** The registry's one row: the active profile. */

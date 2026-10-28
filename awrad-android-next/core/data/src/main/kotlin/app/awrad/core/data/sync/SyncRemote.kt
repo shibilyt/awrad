@@ -1,6 +1,7 @@
 package app.awrad.core.data.sync
 
 import app.awrad.core.domain.AwradId
+import app.awrad.core.domain.sync.CascadedChange
 import app.awrad.core.domain.sync.Change
 import app.awrad.core.domain.sync.ChangesPage
 import app.awrad.core.domain.sync.EntityKey
@@ -15,6 +16,7 @@ import app.awrad.core.domain.sync.ServerCopy
 import app.awrad.core.network.api.ApiResult
 import app.awrad.core.network.api.SyncApi
 import app.awrad.core.network.api.SyncAppliedReceipt
+import app.awrad.core.network.api.SyncCascadedBody
 import app.awrad.core.network.api.SyncChangesPage
 import app.awrad.core.network.api.SyncCommandBatch
 import app.awrad.core.network.api.SyncCommandBody
@@ -65,7 +67,12 @@ internal fun OutboxCommand.toWire() = SyncCommandBody(
 internal fun SyncReceiptBody.toDomain(): Receipt? {
     val commandId = AwradId.parse(commandId) ?: return null
     return when (this) {
-        is SyncAppliedReceipt -> Receipt.Applied(commandId, version, revision)
+        is SyncAppliedReceipt -> Receipt.Applied(
+            commandId = commandId,
+            version = version,
+            revision = revision,
+            cascaded = cascaded?.mapNotNull { it.toDomain() },
+        )
         is SyncDuplicateReceipt -> original.toDomain()?.let { Receipt.Duplicate(commandId, it) }
         is SyncConflictReceipt -> current.toDomain()?.let { Receipt.Conflict(commandId, it) }
         is SyncMergedReceipt -> AwradId.parse(mergedInto)?.let { survivor ->
@@ -78,6 +85,18 @@ internal fun SyncReceiptBody.toDomain(): Receipt? {
             fields = fields.map { FieldError(it.field, FieldErrorCode.fromWire(it.code)) },
             current = current?.toDomain(),
         )
+    }
+}
+
+/** The domain cascade, or null when it names an entity type or state this app doesn't know. */
+private fun SyncCascadedBody.toDomain(): CascadedChange? {
+    val type = EntityType.fromWire(entityType)
+    val id = AwradId.parse(entityId)
+    val state = EntityState.fromWire(state)
+    return if (type != null && id != null && state != null) {
+        CascadedChange(EntityKey(type, id), state, version, revision)
+    } else {
+        null
     }
 }
 

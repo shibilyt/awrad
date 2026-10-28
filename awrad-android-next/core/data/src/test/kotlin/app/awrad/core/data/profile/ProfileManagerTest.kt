@@ -211,4 +211,120 @@ class ProfileManagerTest {
         assertEquals(listOf(amina), stack.profiles.storage.deleted)
         assertNull(stack.databases.current().accountId)
     }
+
+    @Test
+    fun `Keep on a deleted account marks the profile, drops its queue and never queues again`() = runTest {
+        val stack = started()
+        stack.accounts.updateAccount(ACCOUNT)
+        runCurrent()
+        val amina = stack.databases.current().profileId
+        stack.dhikrs.save(dhikr(dhikrId))
+        assertEquals(1, stack.outbox().size)
+
+        stack.accounts.endSession(SignOutReason.ACCOUNT_DELETED, ACCOUNT.id)
+        runCurrent()
+        stack.manager.answer(ProfileChoice.KEEP)
+        runCurrent()
+
+        assertEquals(amina, stack.databases.current().profileId)
+        assertTrue(stack.outbox().isEmpty())
+        assertTrue(stack.manager.profiles.first().single().accountDeleted)
+        stack.dhikrs.save(dhikr(dhikrId, title = "Edited offline"))
+        assertTrue(stack.outbox().isEmpty())
+        assertEquals("Edited offline", stack.dhikrs.dhikrs.first().single().title.en)
+        assertTrue(stack.profiles.storage.deleted.isEmpty())
+    }
+
+    @Test
+    fun `Add to my account merges anonymous data into the account's existing profile`() = runTest {
+        val stack = started()
+        stack.accounts.updateAccount(ACCOUNT)
+        runCurrent()
+        val amina = stack.databases.current().profileId
+        val morning = (stack.tags.create("Morning") as TagOutcome.Saved).tag
+        stack.tags.setTags(BUILT_IN, listOf(morning.id))
+        assertEquals(SyncOutcome.Done, stack.engine.syncOnce())
+        val anonymous = anonymousBeside(stack, amina)
+        val shouted = (stack.tags.create("MORNING") as TagOutcome.Saved).tag
+        val travel = (stack.tags.create("Travel") as TagOutcome.Saved).tag
+        stack.tags.setTags(BUILT_IN, listOf(travel.id, shouted.id))
+        stack.dhikrs.save(dhikr(dhikrId))
+
+        stack.accounts.updateAccount(ACCOUNT)
+        runCurrent()
+        assertEquals(PendingProfilePrompt.AnonymousData(ACCOUNT.email), stack.manager.prompt.value)
+        stack.manager.answer(ProfileChoice.ADD_TO_ACCOUNT)
+        runCurrent()
+
+        assertEquals(amina, stack.databases.current().profileId)
+        assertEquals(listOf("Morning", "Travel"), stack.tags.tags.first().map { it.name })
+        assertEquals(listOf(morning.id, travel.id), stack.tags.tagsByDhikr.first()[BUILT_IN])
+        assertEquals(
+            listOf(
+                EntityType.USER_TAG to travel.id,
+                EntityType.CUSTOM_DHIKR to dhikrId,
+                EntityType.DHIKR_PERSONAL to BUILT_IN,
+            ),
+            stack.outbox().map { it.key.type to it.key.id },
+        )
+        assertTrue(anonymous in stack.profiles.storage.deleted)
+    }
+
+    @Test
+    fun `an empty anonymous profile stays, and removing the active profile activates it`() = runTest {
+        val stack = started()
+        stack.accounts.updateAccount(ACCOUNT)
+        runCurrent()
+        val amina = stack.databases.current().profileId
+        val anonymous = anonymousBeside(stack, amina)
+
+        stack.accounts.updateAccount(ACCOUNT)
+        runCurrent()
+        assertNull(stack.manager.prompt.value)
+        assertEquals(amina, stack.databases.current().profileId)
+        assertEquals(2, stack.manager.profiles.first().size)
+
+        stack.manager.remove(amina)
+        runCurrent()
+
+        assertEquals(anonymous, stack.databases.current().profileId)
+        assertEquals(listOf(anonymous), stack.manager.profiles.first().map { it.profileId })
+    }
+
+    @Test
+    fun `deleting a tag queues only the tag delete`() = runTest {
+        val stack = started()
+        stack.accounts.updateAccount(ACCOUNT)
+        runCurrent()
+        val morning = (stack.tags.create("Morning") as TagOutcome.Saved).tag
+        stack.tags.setTags(BUILT_IN, listOf(morning.id))
+        assertEquals(SyncOutcome.Done, stack.engine.syncOnce())
+
+        stack.tags.delete(morning.id)
+
+        assertEquals(
+            listOf(Triple(EntityType.USER_TAG, morning.id, SyncOp.DELETE)),
+            stack.outbox().map { Triple(it.key.type, it.key.id, it.op) },
+        )
+        assertEquals(null, stack.tags.tagsByDhikr.first()[BUILT_IN])
+        assertEquals(SyncOutcome.Done, stack.engine.syncOnce())
+        val record = stack.entities().single { it.key.type == EntityType.DHIKR_PERSONAL }
+        assertEquals(stack.server.entities.getValue("dhikr_personal" to BUILT_IN.value).version, record.knownVersion)
+    }
+
+    /**
+     * Leaves [account]'s profile on the phone beside a fresh, active anonymous profile, signed out: signs in as
+     * another account and removes that profile. Returns the anonymous profile.
+     */
+    private suspend fun TestScope.anonymousBeside(stack: SyncStack, account: AwradId): AwradId {
+        stack.accounts.signOut()
+        runCurrent()
+        stack.accounts.updateAccount(OTHER)
+        runCurrent()
+        val other = stack.databases.current().profileId
+        assertNotEquals(account, other)
+        stack.manager.remove(other)
+        runCurrent()
+        return stack.databases.current().profileId.also { assertNull(stack.databases.current().accountId) }
+    }
 }

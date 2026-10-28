@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradCircularProgress
 import app.awrad.core.designsystem.motion.AwradContentSwap
 import app.awrad.feature.account.settings.SignedInArea
@@ -26,7 +25,7 @@ internal fun AccountRoute(
     modifier: Modifier = Modifier,
     viewModel: AccountViewModel = hiltViewModel(),
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state
     val signedIn = state.account.takeIf { state.step == AccountStep.SIGNED_IN }
     BackHandler(enabled = signedIn == null && state.canGoBack) { viewModel.onAction(AccountAction.Back) }
     // Signing in or out swaps the whole area in place (`contentSwap`); the leaving side keeps its last account.

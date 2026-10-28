@@ -6,6 +6,7 @@ import app.awrad.core.domain.AwradId
  * One local profile in the registry: one account's data on this phone, or the anonymous data before any
  * sign-in (CONTEXT.md, "Local profile"). Each is its own database. [after] is its changes-feed position;
  * [hasData] means it holds a custom dhikr, tag or personal record, [hasUnsent] that its queue isn't empty.
+ * [accountDeleted] marks a kept profile whose account no longer exists: usable offline, never queued or synced.
  */
 public data class ProfileEntry(
     val profileId: AwradId,
@@ -14,6 +15,7 @@ public data class ProfileEntry(
     val after: Long,
     val hasData: Boolean,
     val hasUnsent: Boolean,
+    val accountDeleted: Boolean = false,
 ) {
     val isAnonymous: Boolean get() = accountId == null
 }
@@ -49,7 +51,7 @@ public sealed interface ProfileEvent {
 
 /** A question an event asks before it's applied. */
 public enum class ProfilePrompt(public val wire: String) {
-    /** The first sign-in found anonymous data: add it to the account, or erase it. */
+    /** A sign-in found anonymous data: add it to the account, or erase it. */
     ANONYMOUS_DATA("anonymous_data"),
 
     /** The profile to remove has changes that were never sent: remove anyway, or cancel. */
@@ -68,11 +70,14 @@ public enum class ProfileChoice(public val wire: String) {
     KEEP("keep"),
 }
 
+/** "Add to my account" into an account's existing profile: the anonymous profile [from] goes into [into]. */
+public data class ProfileMergePlan(val from: AwradId, val into: AwradId)
+
 /**
  * What an event leads to: the [registry] afterwards, the profile whose every entity is queued as a put
- * ([queueAll]), the profile that syncs now ([sync]: send its queue, then pull), and the profiles [erased].
- * [mergeInto] is set when an anonymous profile's data goes into an account's existing profile (signing in, with
- * anonymous data, as an account this phone already has): copy it there and queue it, then erase the anonymous one.
+ * ([queueAll]), the anonymous profile merged into an account's existing one ([merge]: copy its data there with
+ * [ProfileMerge] and queue it), the profile whose unsent commands are dropped ([dropQueue]), the profile that
+ * syncs now ([sync]: send its queue, then pull), and the profiles [erased].
  */
 public data class ProfileOutcome(
     val prompt: ProfilePrompt?,
@@ -80,7 +85,8 @@ public data class ProfileOutcome(
     val queueAll: AwradId? = null,
     val sync: AwradId? = null,
     val erased: List<AwradId> = emptyList(),
-    val mergeInto: AwradId? = null,
+    val merge: ProfileMergePlan? = null,
+    val dropQueue: AwradId? = null,
 )
 
 /**
@@ -132,12 +138,15 @@ public object ProfileSwitch {
         }
     }
 
-    /** Whether edits in [profile] are queued: only a profile that belongs to an account queues. */
-    public fun queuesEdits(profile: ProfileEntry): Boolean = !profile.isAnonymous
+    /**
+     * Whether edits in [profile] are queued: only a profile that belongs to an account queues, and never one whose
+     * account was deleted.
+     */
+    public fun queuesEdits(profile: ProfileEntry): Boolean = !profile.isAnonymous && !profile.accountDeleted
 
     /** Whether [profile] may sync now: the signed-in account owns it (the engine's first safety check). */
     public fun maySync(profile: ProfileEntry, signedInAccountId: AwradId?): Boolean =
-        signedInAccountId != null && profile.accountId == signedInAccountId
+        signedInAccountId != null && profile.accountId == signedInAccountId && !profile.accountDeleted
 
     private fun edit(registry: ProfileRegistry): ProfileOutcome {
         val active = registry.active
@@ -158,15 +167,13 @@ public object ProfileSwitch {
     ): ProfileOutcome {
         val active = registry.active
         val signedIn = registry.copy(signedInAccountId = event.accountId)
-        val existing = registry.profileOf(event.accountId)
+        val existing = registry.profileOf(event.accountId)?.copy(email = event.email)
         val adds = active.hasData && choice == ProfileChoice.ADD_TO_ACCOUNT
         return when {
-            existing != null && active.isAnonymous -> mergeAnonymous(signedIn, existing.copy(email = event.email), adds)
+            existing != null && active.isAnonymous && active.hasData -> mergeAnonymous(signedIn, existing, adds)
             existing != null -> ProfileOutcome(
                 prompt = null,
-                registry = signedIn
-                    .copy(activeProfileId = existing.profileId)
-                    .replace(existing.copy(email = event.email)),
+                registry = signedIn.copy(activeProfileId = existing.profileId).replace(existing),
                 sync = existing.profileId,
             )
             active.isAnonymous && active.hasData && !adds -> {
@@ -194,7 +201,10 @@ public object ProfileSwitch {
         }
     }
 
-    /** The account already has a profile here: the anonymous data goes into it when [adds], else it's erased. */
+    /**
+     * The account already has a profile here and the anonymous one has data: it's merged into [target] when
+     * [adds], else erased. Either way [target] becomes active and the anonymous profile goes.
+     */
     private fun mergeAnonymous(signedIn: ProfileRegistry, target: ProfileEntry, adds: Boolean): ProfileOutcome {
         val anonymous = signedIn.active
         val updated = signedIn.copy(
@@ -206,7 +216,7 @@ public object ProfileSwitch {
             registry = updated,
             sync = target.profileId,
             erased = listOf(anonymous.profileId),
-            mergeInto = target.profileId.takeIf { adds },
+            merge = ProfileMergePlan(from = anonymous.profileId, into = target.profileId).takeIf { adds },
         )
     }
 
@@ -226,19 +236,28 @@ public object ProfileSwitch {
         )
     }
 
+    /**
+     * Removes [profileId]. Removing the active profile signs out and activates the anonymous profile if there is
+     * one, or else a fresh, empty one, as on a new install: there's at most one anonymous profile.
+     */
     private fun remove(registry: ProfileRegistry, profileId: AwradId, newProfileId: AwradId): ProfileOutcome {
         registry.profile(profileId) ?: return ProfileOutcome(null, registry)
         val remaining = registry.profiles.filterNot { it.profileId == profileId }
         val updated = if (profileId == registry.activeProfileId) {
-            // As on a new install: signed out, with a fresh, empty anonymous profile.
-            val anonymous = ProfileEntry(newProfileId, null, null, 0, hasData = false, hasUnsent = false)
-            ProfileRegistry(remaining + anonymous, anonymous.profileId, signedInAccountId = null)
+            val existing = remaining.firstOrNull { it.isAnonymous }
+            val anonymous = existing ?: ProfileEntry(newProfileId, null, null, 0, hasData = false, hasUnsent = false)
+            val profiles = if (existing != null) remaining else remaining + anonymous
+            ProfileRegistry(profiles, anonymous.profileId, signedInAccountId = null)
         } else {
             registry.copy(profiles = remaining)
         }
         return ProfileOutcome(prompt = null, registry = updated, erased = listOf(profileId))
     }
 
+    /**
+     * The account is gone: it's signed out if it was signed in. Remove erases its profile; Keep marks it
+     * `account_deleted` and drops its unsent commands, which can never be sent.
+     */
     private fun accountDeleted(
         registry: ProfileRegistry,
         event: ProfileEvent.AccountDeleted,
@@ -251,10 +270,14 @@ public object ProfileSwitch {
             registry
         }
         val profile = signedOut.profileOf(event.accountId)
-        return if (profile != null && choice == ProfileChoice.REMOVE) {
-            remove(signedOut, profile.profileId, newProfileId)
-        } else {
-            ProfileOutcome(prompt = null, registry = signedOut)
+        return when {
+            profile != null && choice == ProfileChoice.REMOVE -> remove(signedOut, profile.profileId, newProfileId)
+            profile != null && choice == ProfileChoice.KEEP -> ProfileOutcome(
+                prompt = null,
+                registry = signedOut.replace(profile.copy(accountDeleted = true, hasUnsent = false)),
+                dropQueue = profile.profileId,
+            )
+            else -> ProfileOutcome(prompt = null, registry = signedOut)
         }
     }
 

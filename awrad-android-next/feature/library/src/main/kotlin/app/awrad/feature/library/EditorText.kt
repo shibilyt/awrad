@@ -42,6 +42,7 @@ internal fun problemText(problem: EditorProblem): String = stringResource(
         EditorProblem.ARABIC_TOO_LONG, EditorProblem.TEXT_TOO_LONG -> R.string.editor_problem_too_long
         EditorProblem.TITLE_REQUIRED -> R.string.editor_problem_title
         EditorProblem.QURAN_INVALID -> R.string.editor_problem_quran
+        EditorProblem.QURAN_RANGE -> R.string.editor_problem_quran_range
         EditorProblem.REFERENCE_INVALID -> R.string.editor_problem_reference
         EditorProblem.TOO_MANY_REFERENCES -> R.string.editor_problem_references
         EditorProblem.LIMIT_REACHED -> R.string.editor_problem_limit

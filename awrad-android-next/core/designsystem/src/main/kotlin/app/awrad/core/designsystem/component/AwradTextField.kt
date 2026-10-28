@@ -33,8 +33,8 @@ import app.awrad.core.designsystem.theme.AwradTheme
 /** The selection highlight behind selected text: the tokens have no selection colour, so `accent` at 40%. */
 private const val SELECTION_ALPHA = 0.4f
 
-/** A multi-line field starts this many lines tall and grows with its text. */
-private const val MULTI_LINE_MIN_LINES = 3
+/** A multi-line field grows with its text up to this many lines, then scrolls inside. */
+private const val MULTI_LINE_MAX_LINES = 6
 
 /**
  * A single-line text field (components.md, "Text field"): the [label] above it (`label` style, `onSurface`, `xs`
@@ -48,8 +48,12 @@ private const val MULTI_LINE_MIN_LINES = 3
  * Disabled, it keeps its colours at `states.disabled.opacity`. The label, value and message are one node for
  * screen readers.
  *
- * Not [singleLine] (slice 3b: a custom dhikr's Arabic and translations), the field starts three lines tall, at
- * least `control`, padded `md` above and below, and grows with its text.
+ * Not [singleLine], it's the multi-line text field (components.md, slice 3b: a custom dhikr's Arabic,
+ * transliteration and translation): it starts one line tall (`control`, 56), padded `md` above and below, and
+ * grows with its text up to 6 lines; beyond that it scrolls inside.
+ *
+ * The caller holds [value] synchronously (Compose state, read straight from the ViewModel): a value that comes
+ * back a frame late, through a collected flow, makes fast typing drop characters.
  */
 @Composable
 public fun AwradTextField(
@@ -86,7 +90,7 @@ public fun AwradTextField(
             keyboardOptions = keyboardOptions,
             keyboardActions = keyboardActions,
             singleLine = singleLine,
-            minLines = if (singleLine) 1 else MULTI_LINE_MIN_LINES,
+            maxLines = if (singleLine) 1 else MULTI_LINE_MAX_LINES,
             visualTransformation = visualTransformation,
             cursorBrush = SolidColor(colors.accent),
             decorationBox = { innerTextField ->
@@ -131,7 +135,7 @@ private fun FieldDecoration(
                     },
                 )
                 .fieldPadding(singleLine = singleLine, hasTrailingIcon = trailingIcon != null),
-            verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                 if (placeholder != null) {
@@ -159,7 +163,7 @@ private fun FieldDecoration(
     }
 }
 
-/** Exactly `control` tall on one line; at least that, growing with its text, on several. */
+/** Exactly `control` tall on one line; at least that, growing with its text up to 6 lines, on several. */
 private fun Modifier.fieldHeight(singleLine: Boolean): Modifier =
     if (singleLine) height(AwradSizes.control) else heightIn(min = AwradSizes.control)
 

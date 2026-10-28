@@ -24,10 +24,12 @@ public object ApplyChanges {
 
     /**
      * Applies one changes page, then moves `after` to its `next_after`:
-     * - a change to an entity with a queued command or an open conflict only updates the known version (and the
-     *   conflict's server copy); the local edit stays and is settled when it's sent;
-     * - otherwise an active change is stored unless it's older than the known version, and a delete removes the
-     *   entity, or is ignored when the phone doesn't have it.
+     * - a delete cleans up as a `gone` receipt does, even with queued commands or an open conflict: the entity
+     *   goes with its unsent commands (sent ones wait for their receipts) and its conflict, cascading locally; a
+     *   delete of something the phone doesn't have is ignored;
+     * - any other change to an entity with a queued command or an open conflict only updates the known version
+     *   (and the conflict's server copy); the local edit stays and is settled when it's sent;
+     * - otherwise an active change is stored unless it's older than the known version.
      */
     public fun applyPage(store: SyncStore, page: ChangesPage) {
         for (change in page.changes) {
@@ -36,26 +38,29 @@ public object ApplyChanges {
             val conflict = store.conflict(key)
             val pending = store.outbox().any { it.key == key }
             when {
-                pending || conflict != null -> {
-                    if (local != null && change.version > local.knownVersion) {
-                        store.putEntity(local.copy(knownVersion = change.version))
-                    }
-                    if (conflict != null && change.version > conflict.server.version) {
-                        store.putConflict(
-                            conflict.copy(server = ServerCopy(change.version, change.state, change.document)),
-                        )
-                    }
+                change.state == EntityState.DELETED -> {
+                    if (local != null || pending || conflict != null) remove(store, key)
                 }
-                change.state == EntityState.ACTIVE -> {
+                pending || conflict != null -> recordVersion(store, change, local, conflict)
+                else -> {
                     val document = checkNotNull(change.document) { "An active change of $key has no document" }
                     if (local == null || change.version >= local.knownVersion) {
                         store.putEntity(LocalEntity(key, change.version, document))
                     }
                 }
-                local != null -> remove(store, key)
             }
         }
         store.after = page.nextAfter
+    }
+
+    /** A change to an entity with a local edit in flight: only the known version (and conflict copy) move on. */
+    private fun recordVersion(store: SyncStore, change: Change, local: LocalEntity?, conflict: SyncConflict?) {
+        if (local != null && change.version > local.knownVersion) {
+            store.putEntity(local.copy(knownVersion = change.version))
+        }
+        if (conflict != null && change.version > conflict.server.version) {
+            store.putConflict(conflict.copy(server = ServerCopy(change.version, change.state, change.document)))
+        }
     }
 
     /**
@@ -78,6 +83,7 @@ public object ApplyChanges {
             is Receipt.Applied -> {
                 store.entity(key)?.let { store.putEntity(it.copy(knownVersion = outcome.version)) }
                 store.removeConflict(key)
+                outcome.cascaded.orEmpty().forEach { applyCascaded(store, it) }
             }
             is Receipt.Conflict -> {
                 val local = store.entity(key)
@@ -103,6 +109,19 @@ public object ApplyChanges {
             is Receipt.Duplicate -> Unit
         }
         return null
+    }
+
+    /**
+     * One entity a delete cascaded to on the server: an active one the phone has takes the version as its known
+     * version, so its next edit doesn't conflict; a deleted one goes. Queued commands for it keep their
+     * `base_version` and settle as normal. The document itself arrives in the changes feed.
+     */
+    private fun applyCascaded(store: SyncStore, cascaded: CascadedChange) {
+        val local = store.entity(cascaded.key)
+        when {
+            cascaded.state == EntityState.DELETED -> if (local != null) remove(store, cascaded.key)
+            local != null -> store.putEntity(local.copy(knownVersion = cascaded.version))
+        }
     }
 
     /**
@@ -172,21 +191,9 @@ public object ApplyChanges {
             }
         }
         val outbox = store.outbox()
-        val rewritten = outbox.map { command ->
-            val document = command.document
-            if (command.sent || command.key.type != EntityType.DHIKR_PERSONAL || document == null) return@map command
-            val tags = PersonalDocument.tagIds(document)
-            if (tagId in tags) {
-                command.copy(document = PersonalDocument.of(tags.rewritten(tagId, replacement)))
-            } else {
-                command
-            }
-        }
+        val rewritten = Outbox.rewriteTag(outbox, tagId, replacement)
         if (rewritten != outbox) store.replaceOutbox(rewritten)
     }
-
-    private fun List<AwradId>.rewritten(tagId: AwradId, replacement: AwradId?): List<AwradId> =
-        mapNotNull { if (it == tagId) replacement else it }.distinct()
 
     private fun dropUnsent(store: SyncStore, key: EntityKey) {
         val outbox = store.outbox()

@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradCard
 import app.awrad.core.designsystem.component.AwradCardSize
@@ -40,7 +39,7 @@ internal fun ManageTagsRoute(
     modifier: Modifier = Modifier,
     viewModel: ManageTagsViewModel = hiltViewModel(),
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state
     ManageTagsScreen(state = state, onAction = viewModel::onAction, onBack = onBack, modifier = modifier)
 }
 

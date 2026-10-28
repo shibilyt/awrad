@@ -22,13 +22,23 @@ import java.time.Clock
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 
-/** The active profile's open database and private files. [accountId] is null for the anonymous profile. */
+/**
+ * The active profile's open database and private files. [accountId] is null for the anonymous profile;
+ * [accountDeleted] marks a kept profile of a deleted account.
+ */
 internal data class OpenProfile(
     val profileId: AwradId,
     val accountId: AwradId?,
     val database: AwradDatabase,
     val filesDir: File,
-)
+    val accountDeleted: Boolean = false,
+) {
+    /** Whether edits here are queued (ProfileSwitch.queuesEdits): an account's profile, unless it was deleted. */
+    val queuesEdits: Boolean get() = accountId != null && !accountDeleted
+}
+
+private fun ProfileEntity?.toOpenProfile(profileId: AwradId, database: AwradDatabase, filesDir: File) =
+    OpenProfile(profileId, this?.accountId?.let(::AwradId), database, filesDir, this?.accountDeleted == true)
 
 /** Opens, closes and deletes the profiles' own databases and files. Tests open them in memory. */
 internal interface ProfileStorage {
@@ -89,8 +99,7 @@ internal class ProfileDatabases(
                 val database = storage.open(profileId)
                 try {
                     val entry = registry.profiles().first { it.profileId == profileId.value }
-                    val accountId = entry.accountId?.let(::AwradId)
-                    val profile = OpenProfile(profileId, accountId, database, storage.filesDir(profileId))
+                    val profile = entry.toOpenProfile(profileId, database, storage.filesDir(profileId))
                     database.runInTransaction<T> { block(profile) }
                 } finally {
                     storage.release(database)
@@ -116,7 +125,7 @@ internal class ProfileDatabases(
         }
     }
 
-    /** Re-reads the active profile's account (after it's adopted by an account). */
+    /** Re-reads the active profile's account (after it's adopted by an account, or its account is deleted). */
     suspend fun refresh(): Unit = mutex.withLock { refreshLocked(currentLocked()) }
 
     /** Deletes [profileId]'s database and files, once it's closed. It must not be the active profile. */
@@ -150,12 +159,12 @@ internal class ProfileDatabases(
 
     private suspend fun openLocked(profileId: AwradId): OpenProfile = withContext(io) {
         val entry = registry.profiles().firstOrNull { it.profileId == profileId.value }
-        OpenProfile(profileId, entry?.accountId?.let(::AwradId), storage.open(profileId), storage.filesDir(profileId))
+        entry.toOpenProfile(profileId, storage.open(profileId), storage.filesDir(profileId))
     }
 
     private suspend fun refreshLocked(profile: OpenProfile) {
         val entry = withContext(io) { registry.profiles().firstOrNull { it.profileId == profile.profileId.value } }
-        mutableActive.value = profile.copy(accountId = entry?.accountId?.let(::AwradId))
+        mutableActive.value = entry.toOpenProfile(profile.profileId, profile.database, profile.filesDir)
     }
 
     private fun closeLater(profile: OpenProfile) {

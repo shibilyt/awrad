@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "40103f26793692ac105f47493e6e8515",
+    "identityHash": "7ce79f2bacee6ea96b3de4b269b9dedd",
     "entities": [
       {
         "tableName": "profiles",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `account_id` TEXT, `email` TEXT, `after` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `last_used_at` INTEGER NOT NULL, PRIMARY KEY(`profile_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`profile_id` TEXT NOT NULL, `account_id` TEXT, `email` TEXT, `after` INTEGER NOT NULL, `created_at` INTEGER NOT NULL, `last_used_at` INTEGER NOT NULL, `account_deleted` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`profile_id`))",
         "fields": [
           {
             "fieldPath": "profileId",
@@ -43,6 +43,13 @@
             "columnName": "last_used_at",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "accountDeleted",
+            "columnName": "account_deleted",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
           }
         ],
         "primaryKey": {
@@ -84,7 +91,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '40103f26793692ac105f47493e6e8515')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7ce79f2bacee6ea96b3de4b269b9dedd')"
     ]
   }
 }

@@ -36,6 +36,7 @@
     <string name="sync_profile_anonymous">دون تسجيل دخول (هذا الهاتف فقط)</string>
     <string name="sync_profile_active">قيد الاستخدام</string>
     <string name="sync_profile_unsent">فيه تغييرات لم تُزامن</string>
+    <string name="sync_profile_account_deleted">الحساب محذوف</string>
     <string name="sync_remove_profile">إزالة من هذا الجهاز</string>
     <string name="sync_remove_title">إزالة بيانات %1$s من هذا الهاتف؟</string>
     <string name="sync_remove_body">تُمحى من هذا الهاتف الأذكار والوسوم والتسجيلات المحفوظة له هنا. ما تمت مزامنته يبقى في الحساب.</string>
@@ -49,16 +50,16 @@
     <string name="sync_deleted_title">هذا الحساب لم يعد موجودًا</string>
     <string name="sync_deleted_body">حُذف الحساب %1$s، فلا يمكن مزامنة بياناته على هذا الهاتف مجددًا. هل تزيلها من هذا الهاتف أم تبقيها هنا؟</string>
     <string name="sync_deleted_keep">أبقِها</string>
-    <string name="sync_rejected_title">لم يُحفظ تغيير</string>
-    <string name="sync_rejected_body">تم التراجع عن %1$s: %2$s</string>
-    <string name="sync_rejected_dhikr">تغيير على ذكر</string>
-    <string name="sync_rejected_tag">تغيير على وسم</string>
-    <string name="sync_rejected_tags">تغيير على وسوم ذكر</string>
+    <string name="sync_rejected_title">رُفض التغيير</string>
+    <string name="sync_reason_document_invalid">لم يقبل الخادم هذا التغيير.</string>
+    <string name="sync_reason_document_too_large">هذا التغيير أكبر من أن يُحفظ.</string>
+    <string name="sync_reason_custom_dhikr_limit">في حسابك ١٬٠٠٠ ذكر من إنشائك بالفعل.</string>
+    <string name="sync_reason_tag_limit">في حسابك ١٠٠ وسم بالفعل.</string>
     <string name="sync_reason_tag_name_taken">يوجد وسم آخر بهذا الاسم.</string>
-    <string name="sync_reason_tag_limit">في الحساب ١٠٠ وسم بالفعل.</string>
-    <string name="sync_reason_dhikr_limit">في الحساب ١٬٠٠٠ ذكر من إنشائه بالفعل.</string>
-    <string name="sync_reason_too_large">كان أكبر من أن يُحفظ.</string>
-    <string name="sync_reason_not_found">حُذف شيء يشير إليه.</string>
-    <string name="sync_reason_invalid">لم يقبله الخادم.</string>
+    <string name="sync_reason_tag_not_found">حُذف وسم يستخدمه هذا التغيير.</string>
+    <string name="sync_reason_dhikr_not_found">حُذف الذكر الذي يخصّه هذا التغيير.</string>
+    <string name="sync_reason_entity_not_found">ما يعدّله هذا التغيير لم يعد موجودًا.</string>
+    <string name="sync_reason_delete_not_allowed">لا يمكن حذف هذا.</string>
+    <string name="sync_reason_command_id_reused">سبق أن تلقّى الخادم تغييرًا مختلفًا بالمعرّف نفسه.</string>
     <string name="sync_ok">حسنًا</string>
 </resources>

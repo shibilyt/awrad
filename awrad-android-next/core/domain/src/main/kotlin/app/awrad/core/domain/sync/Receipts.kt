@@ -6,8 +6,16 @@ import app.awrad.core.domain.AwradId
 public sealed interface Receipt {
     public val commandId: AwradId
 
-    /** Done: the entity is now at [version], taken at [revision]. */
-    public data class Applied(override val commandId: AwradId, val version: Long, val revision: Long) : Receipt
+    /**
+     * Done: the entity is now at [version], taken at [revision]. [cascaded] lists the other entities a `user_tag` or
+     * `custom_dhikr` delete changed at the same revision (empty when none did); it's null for every other command.
+     */
+    public data class Applied(
+        override val commandId: AwradId,
+        val version: Long,
+        val revision: Long,
+        val cascaded: List<CascadedChange>? = null,
+    ) : Receipt
 
     /** Seen before with the same payload: handled as [original]. */
     public data class Duplicate(override val commandId: AwradId, val original: Receipt) : Receipt
@@ -33,6 +41,13 @@ public sealed interface Receipt {
     /** The receipt to act on: a [Duplicate]'s original, otherwise this one. */
     public val outcome: Receipt get() = if (this is Duplicate) original.outcome else this
 }
+
+/**
+ * An entity the server changed as a cascade of a delete, at the same revision (`$defs/cascaded_change`): a
+ * `dhikr_personal` a tag delete took the tag out of ([EntityState.ACTIVE]), or a deleted custom dhikr's
+ * `dhikr_personal` ([EntityState.DELETED]). Its document arrives in the changes feed.
+ */
+public data class CascadedChange(val key: EntityKey, val state: EntityState, val version: Long, val revision: Long)
 
 /** Why a command was `rejected` (`$defs/rejection_code`). [UNKNOWN] is a code this app doesn't know yet. */
 public enum class RejectionCode(public val wire: String) {
@@ -68,6 +83,9 @@ public enum class FieldErrorCode(public val wire: String) {
     INVALID("invalid"),
     MISMATCH("mismatch"),
     NOT_FOUND("not_found"),
+
+    /** A value is out of order with another, such as a Qur'an reference whose `ayah_end` is below `ayah_start`. */
+    RANGE("range"),
     ;
 
     public companion object {

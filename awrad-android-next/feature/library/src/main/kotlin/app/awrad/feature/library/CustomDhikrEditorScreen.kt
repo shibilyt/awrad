@@ -21,7 +21,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.component.AwradTopBar
@@ -39,7 +38,7 @@ internal fun CustomDhikrEditorRoute(
             creationCallback = { it.create(dhikrId) },
         ),
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { viewModel.onAction(EditorAction.ImportAudio(it.toString())) }
     }

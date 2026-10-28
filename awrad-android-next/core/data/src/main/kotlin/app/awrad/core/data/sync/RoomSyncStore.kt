@@ -102,7 +102,8 @@ internal class RoomSyncStore(private val dao: SyncDao, private val now: () -> Lo
 
     /**
      * Writes only what changed: removed commands go, changed ones are updated where they stand, and new ones are
-     * added after the last position, in order.
+     * added after the last position, in order. When the queue rules moved a command (a replacement that names a
+     * later put), the whole queue is written again in its new order.
      */
     override fun replaceOutbox(commands: List<OutboxCommand>) {
         val stored = dao.outbox()
@@ -110,6 +111,12 @@ internal class RoomSyncStore(private val dao: SyncDao, private val now: () -> Lo
         val keptIds = commands.map { it.commandId.value }.toSet()
         stored.filterNot { it.commandId in keptIds }.forEach { dao.deleteCommand(it.commandId) }
         var next = (stored.maxOfOrNull { it.position } ?: -1) + 1
+        val keptPositions = commands.mapNotNull { storedById[it.commandId.value]?.position }
+        if (keptPositions.zipWithNext().any { (before, after) -> before > after }) {
+            // A replaced command moved after a put it names: renumber the queue, past every position in use.
+            commands.forEach { dao.upsertCommand(it.toEntity(next++)) }
+            return
+        }
         commands.forEach { command ->
             val existing = storedById[command.commandId.value]
             if (existing == null) {

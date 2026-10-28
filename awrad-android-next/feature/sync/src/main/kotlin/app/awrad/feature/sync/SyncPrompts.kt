@@ -1,5 +1,6 @@
 package app.awrad.feature.sync
 
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -12,7 +13,6 @@ import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradDialog
 import app.awrad.core.designsystem.component.AwradRowButton
 import app.awrad.core.designsystem.component.AwradTextButton
-import app.awrad.core.domain.sync.EntityType
 import app.awrad.core.domain.sync.PendingProfilePrompt
 import app.awrad.core.domain.sync.ProfileChoice
 import app.awrad.core.domain.sync.ProfileService
@@ -81,20 +81,32 @@ internal fun SyncPromptsContent(
     when {
         prompt is PendingProfilePrompt.AnonymousData -> AnonymousDataDialog(prompt, onAction, modifier)
         prompt is PendingProfilePrompt.AccountDeleted -> AccountDeletedDialog(prompt, onAction, modifier)
-        notice != null -> AwradDialog(
-            onDismissRequest = { onAction(SyncPromptsAction.Dismiss(notice)) },
-            title = stringResource(R.string.sync_rejected_title),
-            text = rejectedText(notice),
-            modifier = modifier,
-            confirmButton = {
-                AwradRowButton(
-                    text = stringResource(R.string.sync_ok),
-                    onClick = { onAction(SyncPromptsAction.Dismiss(notice)) },
-                    variant = AwradButtonVariant.Main,
-                )
-            },
-        )
+        notice != null -> ChangeRefusedDialog(notice, onAction, modifier)
     }
+}
+
+/**
+ * The "Change refused" notice (components.md): the server refused a change, which is already undone. The title,
+ * the reason for its rejection code, and a single "OK" text button that closes it.
+ */
+@Composable
+private fun ChangeRefusedDialog(
+    notice: SyncNotice,
+    onAction: (SyncPromptsAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AwradDialog(
+        onDismissRequest = { onAction(SyncPromptsAction.Dismiss(notice)) },
+        title = stringResource(R.string.sync_rejected_title),
+        text = stringResource(refusedReason(notice.code)),
+        modifier = modifier,
+        confirmButton = {
+            AwradTextButton(
+                text = stringResource(R.string.sync_ok),
+                onClick = { onAction(SyncPromptsAction.Dismiss(notice)) },
+            )
+        },
+    )
 }
 
 /** "Add to my account" or "Erase": asked once, and it must be answered (Back or a tap outside keeps it open). */
@@ -157,28 +169,17 @@ private fun AccountDeletedDialog(
     )
 }
 
-/** Which change was undone, and why: the code decides, never the message. */
-@Composable
-private fun rejectedText(notice: SyncNotice): String {
-    val what = stringResource(
-        when (notice.key.type) {
-            EntityType.CUSTOM_DHIKR -> R.string.sync_rejected_dhikr
-            EntityType.USER_TAG -> R.string.sync_rejected_tag
-            EntityType.DHIKR_PERSONAL -> R.string.sync_rejected_tags
-        },
-    )
-    val why = stringResource(
-        when (notice.code) {
-            RejectionCode.TAG_NAME_TAKEN -> R.string.sync_reason_tag_name_taken
-            RejectionCode.TAG_LIMIT_REACHED -> R.string.sync_reason_tag_limit
-            RejectionCode.CUSTOM_DHIKR_LIMIT_REACHED -> R.string.sync_reason_dhikr_limit
-            RejectionCode.DOCUMENT_TOO_LARGE -> R.string.sync_reason_too_large
-            RejectionCode.TAG_NOT_FOUND, RejectionCode.DHIKR_NOT_FOUND, RejectionCode.ENTITY_NOT_FOUND ->
-                R.string.sync_reason_not_found
-            RejectionCode.DOCUMENT_INVALID, RejectionCode.DELETE_NOT_ALLOWED, RejectionCode.COMMAND_ID_REUSED,
-            RejectionCode.UNKNOWN,
-            -> R.string.sync_reason_invalid
-        },
-    )
-    return stringResource(R.string.sync_rejected_body, what, why)
+/** Why a change was refused, one message per rejection code: the code decides, never the server's message. */
+@StringRes
+internal fun refusedReason(code: RejectionCode): Int = when (code) {
+    RejectionCode.DOCUMENT_INVALID, RejectionCode.UNKNOWN -> R.string.sync_reason_document_invalid
+    RejectionCode.DOCUMENT_TOO_LARGE -> R.string.sync_reason_document_too_large
+    RejectionCode.CUSTOM_DHIKR_LIMIT_REACHED -> R.string.sync_reason_custom_dhikr_limit
+    RejectionCode.TAG_LIMIT_REACHED -> R.string.sync_reason_tag_limit
+    RejectionCode.TAG_NAME_TAKEN -> R.string.sync_reason_tag_name_taken
+    RejectionCode.TAG_NOT_FOUND -> R.string.sync_reason_tag_not_found
+    RejectionCode.DHIKR_NOT_FOUND -> R.string.sync_reason_dhikr_not_found
+    RejectionCode.ENTITY_NOT_FOUND -> R.string.sync_reason_entity_not_found
+    RejectionCode.DELETE_NOT_ALLOWED -> R.string.sync_reason_delete_not_allowed
+    RejectionCode.COMMAND_ID_REUSED -> R.string.sync_reason_command_id_reused
 }
