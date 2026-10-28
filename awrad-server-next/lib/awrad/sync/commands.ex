@@ -19,7 +19,9 @@ defmodule Awrad.Sync.Commands do
        `entity_not_found` for anything but a create of an unknown entity;
        `conflict` for a stale `base_version`);
     5. the entity rules (`Awrad.Sync.Rules`);
-    6. apply, with cascades at the same revision (`Awrad.Sync.Rules.write/4`).
+    6. apply, with cascades at the same revision (`Awrad.Sync.Rules.write/4`),
+       which a `user_tag` or `custom_dhikr` delete's `applied` receipt lists
+       in `cascaded` (`null` on every other `applied` receipt).
   """
 
   import Ecto.Query
@@ -109,13 +111,14 @@ defmodule Awrad.Sync.Commands do
          :ok <- check_state(user_id, command, entity),
          {:ok, document} <- Rules.check(user_id, command, entity) do
       revision = revision + 1
-      version = Rules.write(user_id, command, entity, {document, revision})
+      {version, cascaded} = Rules.write(user_id, command, entity, {document, revision})
 
       {%{
          "command_id" => command["command_id"],
          "status" => "applied",
          "version" => version,
-         "revision" => revision
+         "revision" => revision,
+         "cascaded" => cascaded
        }, revision}
     else
       {:stop, receipt} -> {receipt, revision}
