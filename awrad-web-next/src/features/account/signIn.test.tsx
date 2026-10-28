@@ -131,3 +131,18 @@ describe("account form submit buttons", () => {
     expect(container.querySelectorAll("button[type=submit]:not([aria-label])")).toHaveLength(0);
   });
 });
+
+describe("keep me signed in", () => {
+  test.each(["en", "ar"])("%s: the checkbox is named by its label itself, not by its value", async (language) => {
+    await i18next.changeLanguage(language);
+    const label = i18next.t("account.fields.rememberMe");
+    server.use(specHandler("get_browser_csrf_token", 200));
+    renderRoute("/sign-in");
+
+    const remember = await screen.findByRole("checkbox", { name: label });
+    expect(label).not.toBe("account.fields.rememberMe");
+    expect(remember).toHaveAttribute("aria-label", label);
+    expect(remember).toHaveAttribute("value", "true");
+    expect(remember).toBeChecked();
+  });
+});

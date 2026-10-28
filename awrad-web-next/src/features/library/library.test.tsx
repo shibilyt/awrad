@@ -143,3 +143,25 @@ describe("collection and not found", () => {
     expect(await screen.findByText(/This dhikr isn't in the library/)).toBeInTheDocument();
   });
 });
+
+describe("names the shell and Home carry themselves", () => {
+  test.each(["en", "ar"])("%s: bottom bar tabs (with their selected state) and collection tiles", async (language) => {
+    await i18next.changeLanguage(language);
+    renderRoute("/");
+
+    const bar = await screen.findByRole("tablist", { name: i18next.t("nav.label") });
+    const home = within(bar).getByRole("tab", { name: i18next.t("nav.home") });
+    const library = within(bar).getByRole("tab", { name: i18next.t("nav.library") });
+    expect(home).toHaveAttribute("aria-label", i18next.t("nav.home"));
+    expect(home).toHaveAttribute("aria-selected", "true");
+    expect(library).toHaveAttribute("aria-label", i18next.t("nav.library"));
+    expect(library).toHaveAttribute("aria-selected", "false");
+
+    const tiles = await screen.findByRole("list", { name: i18next.t("library.featured") });
+    const links = within(tiles).getAllByRole("link");
+    expect(links.length).toBeGreaterThan(0);
+    for (const tile of links) {
+      expect(tile).toHaveAttribute("aria-label", tile.textContent);
+    }
+  });
+});

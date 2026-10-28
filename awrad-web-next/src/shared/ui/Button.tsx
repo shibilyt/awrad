@@ -3,6 +3,7 @@ import { Button as AriaButton, ProgressBar, type ButtonProps as AriaButtonProps 
 import { useTranslation } from "react-i18next";
 import { cx } from "./cx";
 import type { Icon } from "./icons.gen";
+import { nameFromText } from "./nameFromText";
 import { useSecondaryFill } from "./Surface";
 
 type AriaProps = Omit<AriaButtonProps, "children" | "className" | "style">;
@@ -67,10 +68,9 @@ export function Button({
   ...props
 }: ButtonProps): ReactElement {
   const secondary = useSecondaryFill();
-  const named = props["aria-label"] !== undefined || props["aria-labelledby"] !== undefined;
   return (
     <AriaButton
-      {...(typeof children === "string" && !named ? { "aria-label": children } : {})}
+      {...(typeof children === "string" ? nameFromText(children, props) : {})}
       {...props}
       className={cx(
         "relative inline-flex items-center justify-center rounded-button text-button select-fade",
