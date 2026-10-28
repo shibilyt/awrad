@@ -20,9 +20,14 @@ struct AccountOverview: View {
                     AddressText(address: email)
                 }
             }
+            if let profiles = state.profiles {
+                SyncCard(profiles: profiles)
+                    .awradExpandingContent()
+            }
             // Rows in a card are separated by spacing, not divider lines.
             VStack(spacing: AwradSpacing.xs) {
                 SettingsRow(icon: .devices, title: Strings.devicesRow) { send(.devicesTapped) }
+                SettingsRow(icon: .phone, title: ProfileStrings.title) { send(.profilesTapped) }
                 SettingsRow(icon: .password, title: Strings.changePasswordRow) { send(.changePasswordTapped) }
                 SettingsRow(icon: .email, title: Strings.changeEmailRow) { send(.changeEmailTapped) }
             }

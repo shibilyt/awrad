@@ -19,6 +19,7 @@ public final class AccountModel {
         case changeEmail
         case confirmEmailChange
         case deleteAccount
+        case profiles
     }
 
     public enum Phase: Equatable, Sendable {
@@ -42,6 +43,17 @@ public final class AccountModel {
         case deleteAccount
     }
 
+    /// A question about the profiles on this phone, waiting for an answer in a dialog.
+    public enum ProfileQuestion: Equatable, Sendable {
+        /// First sign-in with data made before it: add it to the account, or erase it. Has to be
+        /// answered; the dialog can't be dismissed.
+        case anonymousData(ProfileEvent, email: String)
+        /// Removing a profile whose changes haven't all been sent: they'd be lost.
+        case removeUnsent(AwradID)
+        /// Removing a profile; `email` is `nil` for the one made before any sign-in.
+        case remove(AwradID, email: String?)
+    }
+
     public struct State: Equatable, Sendable {
         public var phase = Phase.loading
         /// Screens pushed over the root.
@@ -59,6 +71,9 @@ public final class AccountModel {
         public var confirmation: Confirmation?
         public var isWorking = false
         public var feedback: Feedback?
+        /// The profiles on this phone and the active one's sync; `nil` until the first update.
+        public var profiles: ProfilesState?
+        public var profileQuestion: ProfileQuestion?
         /// When "send a new code" becomes available again.
         public var resendAvailableAt: Date?
 
@@ -99,6 +114,12 @@ public final class AccountModel {
         case confirmEmailTapped
         case deleteTapped
         case deleteConfirmed
+        // Profiles
+        case profilesTapped
+        case removeProfileTapped(AwradID)
+        case profileAnswered(ProfileChoice)
+        /// The dialog was dismissed without choosing (the scrim, the escape gesture).
+        case profileQuestionDismissed
     }
 
     /// How long to wait before another code can be requested (the server rate-limits too).
@@ -106,11 +127,21 @@ public final class AccountModel {
 
     public internal(set) var state = State()
     let service: any AccountService
+    let profiles: any LocalProfiles
     let now: @Sendable () -> Date
 
-    public init(service: any AccountService, now: @escaping @Sendable () -> Date = Date.init) {
+    public init(
+        service: any AccountService, profiles: any LocalProfiles, now: @escaping @Sendable () -> Date = Date.init
+    ) {
         self.service = service
+        self.profiles = profiles
         self.now = now
+    }
+
+    /// Keeps the latest profiles and sync status in the state until the task is cancelled (the
+    /// route's `.task`).
+    public func observeProfiles() async {
+        for await next in profiles.updates() { state.profiles = next }
     }
 
     /// The screen's whole interface to the model.
@@ -119,6 +150,8 @@ public final class AccountModel {
         switch action {
         case .appeared: await load()
         case .devicesAppeared: await loadSessions()
+        case .removeProfileTapped(let id): await askToRemoveProfile(id)
+        case .profileAnswered(let choice): await answerProfileQuestion(choice)
         default:
             if let submission = submission(for: action) ?? settingsSubmission(for: action) { await run(submission) }
         }
@@ -160,6 +193,7 @@ public final class AccountModel {
         case .changePasswordTapped: push(.changePassword)
         case .changeEmailTapped: push(.changeEmail)
         case .deleteAccountTapped: push(.deleteAccount)
+        case .profilesTapped: push(.profiles)
         default: return false
         }
         return true
@@ -188,7 +222,7 @@ public final class AccountModel {
         edit(change)
     }
 
-    private var isSignedIn: Bool {
+    var isSignedIn: Bool {
         if case .signedIn = state.phase { true } else { false }
     }
 
@@ -234,7 +268,7 @@ public final class AccountModel {
         do {
             try await work()
         } catch .signedOut where signedInEmail != nil {
-            showSignedOut(.signedOut)
+            await sessionEnded()
         } catch {
             state.feedback = Self.feedback(for: error)
         }

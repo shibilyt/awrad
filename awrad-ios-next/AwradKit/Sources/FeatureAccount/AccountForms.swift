@@ -25,6 +25,8 @@ struct SignInForm: View {
                 .disabled(state.isWorking)
             AwradButton(Strings.createAccount, variant: .text) { send(.createAccountTapped) }
                 .disabled(state.isWorking)
+            AwradButton(ProfileStrings.title, variant: .text) { send(.profilesTapped) }
+                .disabled(state.isWorking)
         }
     }
 }

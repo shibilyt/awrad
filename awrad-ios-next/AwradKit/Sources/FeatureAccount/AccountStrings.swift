@@ -7,7 +7,7 @@ import Foundation
 /// screen shows one digit style: the locale's. An email or device name is never put inside a
 /// sentence: screens show it as its own verbatim run (`isolated(_:)`).
 enum Strings {
-    private static let bundle = LocalizedStringResource.BundleDescription.atURL(Bundle.module.bundleURL)
+    static let bundle = LocalizedStringResource.BundleDescription.atURL(Bundle.module.bundleURL)
 
     static func text(_ key: String.LocalizationValue) -> LocalizedStringResource {
         LocalizedStringResource(key, bundle: bundle)
