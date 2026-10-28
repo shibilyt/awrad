@@ -1,0 +1,98 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "uuid_v7_layout",
+  "description": "How every platform lays out a new UUIDv7 (RFC 9562 §5.7) from a Unix time in milliseconds and 10 random bytes r0..r9: bytes 0–5 are the time, big-endian; byte 6 is 0x70 | (r0 & 0x0f); byte 7 is r1; byte 8 is 0x80 | (r2 & 0x3f); bytes 9–15 are r3..r9. Output is lowercase and hyphenated 8-4-4-4-12. Generators take the clock and the random source as inputs so this fixture can drive them; production uses the system clock and a cryptographic random source.",
+  "references": [
+    "https://www.rfc-editor.org/rfc/rfc9562#section-5.7",
+    "DECISIONS.md ADR-2026-10-28 (UUIDv7)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "unix_ms",
+      "random_hex"
+    ],
+    "properties": {
+      "unix_ms": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 281474976710655
+      },
+      "random_hex": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{20}$"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "uuid"
+    ],
+    "properties": {
+      "uuid": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "rfc_9562_example",
+      "description": "The RFC 9562 Appendix A.6 example: 2022-02-22T19:22:22Z (1645557742000 ms).",
+      "given": {
+        "unix_ms": 1645557742000,
+        "random_hex": "0cc318c4dc0c0c07398f"
+      },
+      "expect": {
+        "uuid": "017f22e2-79b0-7cc3-98c4-dc0c0c07398f"
+      }
+    },
+    {
+      "id": "epoch_zero",
+      "description": "Time zero gives a zero timestamp field.",
+      "given": {
+        "unix_ms": 0,
+        "random_hex": "00000000000000000000"
+      },
+      "expect": {
+        "uuid": "00000000-0000-7000-8000-000000000000"
+      }
+    },
+    {
+      "id": "all_random_bits_set",
+      "description": "Version and variant bits override the random bits.",
+      "given": {
+        "unix_ms": 1700000000000,
+        "random_hex": "ffffffffffffffffffff"
+      },
+      "expect": {
+        "uuid": "018bcfe5-6800-7fff-bfff-ffffffffffff"
+      }
+    },
+    {
+      "id": "max_48_bit_time",
+      "description": "The largest 48-bit millisecond time.",
+      "given": {
+        "unix_ms": 281474976710655,
+        "random_hex": "123456789abcdef01234"
+      },
+      "expect": {
+        "uuid": "ffffffff-ffff-7234-9678-9abcdef01234"
+      }
+    },
+    {
+      "id": "today",
+      "description": "A current timestamp.",
+      "given": {
+        "unix_ms": 1793145600000,
+        "random_hex": "a1b2c3d4e5f60718293a"
+      },
+      "expect": {
+        "uuid": "01a17fce-7800-71b2-83d4-e5f60718293a"
+      }
+    }
+  ]
+}

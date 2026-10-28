@@ -47,9 +47,10 @@ The keywords **must**, **must not**, **should** and **may** are used in their RF
 
 ## 4. Identifiers
 
-- Every ID is a lowercase, hyphenated UUID string.
-- **User-owned entities** (goals, custom dhikr, tags, count commands) get **client-generated UUIDv4s**, so they can be created offline. The server validates the format and ownership, and never trusts an ID to decide who owns something.
-- **Server-owned entities** (accounts, device sessions, browser installations) get **server-generated UUIDv4s**.
+- Every ID is a lowercase, hyphenated UUID string ([`identity/v1/fixtures/uuid_format.json`](../identity/v1/fixtures/uuid_format.json)). Any version is accepted; the nil and max UUIDs aren't.
+- **Every ID we generate is a UUIDv7** (ADR-2026-10-28), laid out as [`uuid_v7_layout.json`](../identity/v1/fixtures/uuid_v7_layout.json) specifies.
+- **User-owned entities** (goals, custom dhikr, tags, count commands) get **client-generated UUIDv7s**, so they can be created offline. The server validates the format and ownership, and never trusts an ID to decide who owns something, nor its timestamp to order anything.
+- **Server-owned entities** (accounts, device sessions, browser installations) get **server-generated UUIDv7s**.
 - **Built-in content** keeps its deterministic IDs from `contracts/` (ADR-2026-07-13): catalog keys plus UUIDs for built-in dhikr, and UUIDv3 structural IDs for wird parts and segments.
 - Ownership always comes from the authenticated scope. Requests must not carry `user_id`.
 
@@ -133,7 +134,7 @@ Existing codes such as `email_verification_required`, `password_setup_required`,
 
 ## 10. Idempotency
 
-- Every non-idempotent `POST` accepts an **`Idempotency-Key`** header (a UUIDv4).
+- Every non-idempotent `POST` accepts an **`Idempotency-Key`** header (a UUIDv7; any valid UUID is accepted).
   - The server stores the result for 24 hours and replays it for a repeat with the same key and the same body.
   - The same key with a different body returns `422` with `code: "idempotency_key_reused"`.
 - Clients must send a key on every retryable `POST`.

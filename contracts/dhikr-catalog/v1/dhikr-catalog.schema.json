@@ -49,9 +49,9 @@
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
     },
     "uuid": {
-      "description": "Lowercase UUIDv4.",
+      "description": "Lowercase, hyphenated UUID (contracts/identity/v1/fixtures/uuid_format.json). Built-in dhikr IDs are fixed UUIDv4 constants; custom dhikrs get new UUIDv7s.",
       "type": "string",
-      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
     },
     "text": {
       "type": "string",

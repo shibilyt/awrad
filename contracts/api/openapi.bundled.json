@@ -1484,9 +1484,9 @@
         "type": "string",
         "format": "uuid",
         "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
-        "description": "Lowercase, hyphenated UUID. User-owned entities use client-generated UUIDv4 (STYLE §4).",
+        "description": "Lowercase, hyphenated UUID, any version except nil and max. New IDs are UUIDv7, client-generated for user-owned entities (STYLE §4).",
         "examples": [
-          "3285e014-551b-46a4-aedc-8b6664b59bc7"
+          "017f22e2-79b0-7cc3-98c4-dc0c0c07398f"
         ]
       },
       "Instant": {
