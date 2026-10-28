@@ -9,7 +9,8 @@ defmodule AwradWeb.Params do
   content and answers `422 validation_failed` with field codes.
   """
 
-  @type type :: :string | :boolean | {:object, spec()}
+  # `:array` checks only that the value is a JSON array; its items are the domain's.
+  @type type :: :string | :boolean | :array | {:object, spec()}
   @type spec :: [{atom(), {type(), :required | :optional}}]
 
   @doc """
@@ -60,6 +61,9 @@ defmodule AwradWeb.Params do
   defp cast_field(value, :string, _path, name, acc) when is_binary(value),
     do: {:cont, {:ok, Map.put(acc, name, value)}}
 
+  defp cast_field(value, :array, _path, name, acc) when is_list(value),
+    do: {:cont, {:ok, Map.put(acc, name, value)}}
+
   defp cast_field(value, :boolean, _path, name, acc) when is_boolean(value),
     do: {:cont, {:ok, Map.put(acc, name, value)}}
 
@@ -85,4 +89,5 @@ defmodule AwradWeb.Params do
 
   defp type_name(:string), do: "a string"
   defp type_name(:boolean), do: "a boolean"
+  defp type_name(:array), do: "an array"
 end

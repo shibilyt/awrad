@@ -14,7 +14,15 @@ defmodule Awrad.Accounts.DeviceSessions do
 
   import Ecto.Query
 
-  alias Awrad.Accounts.{AccessToken, DeviceSession, Grant, RefreshToken, User}
+  alias Awrad.Accounts.{
+    AccessToken,
+    DeletedRefreshToken,
+    DeviceSession,
+    Grant,
+    RefreshToken,
+    User
+  }
+
   alias Awrad.{Repo, Secrets}
 
   @retry_seconds 60
@@ -70,11 +78,17 @@ defmodule Awrad.Accounts.DeviceSessions do
 
   Errors: `:refresh_token_invalid` (unknown, expired, revoked, or its session
   ended), `:refresh_reuse_detected` (a spent token reused; the session is now
-  revoked), `:idempotency_key_reused` (the key already rotated another token).
+  revoked), `:idempotency_key_reused` (the key already rotated another token),
+  `:account_deleted` (a token that still worked when its account was deleted;
+  ADR 0010).
   """
   @spec refresh(String.t(), Ecto.UUID.t()) ::
           {:ok, Grant.t()}
-          | {:error, :refresh_token_invalid | :refresh_reuse_detected | :idempotency_key_reused}
+          | {:error,
+             :refresh_token_invalid
+             | :refresh_reuse_detected
+             | :idempotency_key_reused
+             | :account_deleted}
   def refresh(refresh_token, key) when is_binary(refresh_token) and is_binary(key) do
     hash = :crypto.hash(:sha256, refresh_token)
 
@@ -190,6 +204,7 @@ defmodule Awrad.Accounts.DeviceSessions do
       )
 
     cond do
+      is_nil(token) and DeletedRefreshToken.deleted?(hash, now) -> {:error, :account_deleted}
       not usable?(token, now) -> {:error, :refresh_token_invalid}
       key_used_elsewhere?(token, key) -> {:error, :idempotency_key_reused}
       is_nil(token.used_at) -> rotate(token, key, now)

@@ -9,7 +9,8 @@ defmodule Awrad.Identity.GeneratedIdsTest do
 
   # Every table, read back raw: the stored IDs, not what a schema casts them to.
   @tables ~w(users email_codes idempotency_records auth_rate_limits device_sessions
-             refresh_tokens users_tokens)
+             refresh_tokens users_tokens deleted_account_refresh_tokens sync_heads
+             sync_entities sync_receipts sync_tag_aliases)
 
   test "rows created through the real code paths get v7 IDs", %{conn: conn} do
     # An account (registration's insert_all), its email code, an idempotency
@@ -38,6 +39,35 @@ defmodule Awrad.Identity.GeneratedIdsTest do
 
     # A browser session.
     sign_in_browser(%{build_conn() | remote_ip: conn.remote_ip}, user)
+
+    # Change-queue rows: a head, an entity, receipts and, from the merge, an alias.
+    grant = grant_fixture(user)
+
+    tags =
+      for name <- ["Morning", "MORNING"] do
+        %{
+          "command_id" => Awrad.UUIDv7.generate(),
+          "entity_type" => "user_tag",
+          "entity_id" => Awrad.UUIDv7.generate(),
+          "op" => "put",
+          "base_version" => 0,
+          "document" => %{"name" => name, "normalized_name" => "morning"}
+        }
+      end
+
+    conn
+    |> bearer_request(grant)
+    |> put_req_header("x-awrad-account", user.id)
+    |> post(~p"/api/v1/sync/commands", Jason.encode!(%{commands: tags}))
+    |> json_response(200)
+
+    # A deleted account's refresh token.
+    deleted = grant_fixture(user_fixture())
+
+    conn
+    |> bearer_request(deleted)
+    |> post(~p"/api/v1/account/delete", Jason.encode!(%{current_password: valid_password()}))
+    |> response(204)
 
     for table <- @tables do
       ids = Repo.all(from r in table, select: r.id)

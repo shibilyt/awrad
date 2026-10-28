@@ -25,6 +25,10 @@ defmodule AwradWeb.Problem do
       {422, "Reset code invalid", "the code is wrong, expired or already used"},
     "refresh_token_invalid" =>
       {401, "Refresh token invalid", "the refresh token is unknown or its session has ended"},
+    "account_deleted" =>
+      {401, "Account deleted", "the account this refresh token belonged to no longer exists"},
+    "account_mismatch" =>
+      {409, "Account mismatch", "X-Awrad-Account isn't the signed-in account"},
     "refresh_reuse_detected" =>
       {401, "Refresh token reused", "a spent refresh token was reused; the session is revoked"},
     "idempotency_key_reused" =>
@@ -99,6 +103,22 @@ defmodule AwradWeb.Problem do
 
     [%{field: field, detail: detail} | _] = errors
 
+    send_problem(
+      conn,
+      422,
+      "validation_failed",
+      "Request validation failed",
+      "#{field} #{detail}",
+      errors
+    )
+  end
+
+  @doc """
+  `422 validation_failed` with errors whose `field` is already a JSON Pointer
+  into the request body (for nested bodies such as a sync batch).
+  """
+  @spec validation_failed_at(Plug.Conn.t(), [field_error(), ...]) :: Plug.Conn.t()
+  def validation_failed_at(conn, [%{field: field, detail: detail} | _] = errors) do
     send_problem(
       conn,
       422,

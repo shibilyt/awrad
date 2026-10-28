@@ -13,7 +13,8 @@ defmodule Awrad.SharedFixturesTest do
     "account-model/v1" => "test/awrad/accounts",
     "goal-model/v1" => "test/awrad/goals/rules",
     "hijri-calendar/v1" => "test/awrad/hijri",
-    "identity/v1" => "test/awrad/identity"
+    "identity/v1" => "test/awrad/identity",
+    "sync/v1" => "test/awrad/sync"
   }
 
   # Client-only rules the server deliberately doesn't run, with the reason.
@@ -24,6 +25,14 @@ defmodule Awrad.SharedFixturesTest do
       # normalise what the user typed (spaces, hyphens, Arabic-Indic and
       # fullwidth digits) before sending, so there's nothing for the server to run.
       "email_code_input" => "the server accepts ASCII digits only; clients normalise"
+    },
+    # The phones' side of the change queue (contracts/sync/v1/README.md,
+    # "Fixtures"): their outbox, how they apply receipts and pages, and their
+    # local profiles. The server's side is sync_receipts and sync_changes_feed.
+    "sync/v1" => %{
+      "outbox_enqueue" => "the phones' outbox; the web and the server have none",
+      "apply_changes" => "how a phone applies receipts and pages to its local state",
+      "profile_switch" => "local profiles exist only on phones"
     }
   }
 

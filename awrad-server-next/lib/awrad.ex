@@ -21,6 +21,7 @@ defmodule Awrad do
       {Dhikrs, []},
       {Goals, []},
       {Hijri, []},
-      {Idempotency, []}
+      {Idempotency, []},
+      {Sync, []}
     ]
 end

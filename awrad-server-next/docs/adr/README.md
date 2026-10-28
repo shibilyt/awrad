@@ -12,3 +12,5 @@ Server-only decisions for `awrad-server-next`. Cross-project decisions live in t
 | [0006](0006-rate-limits-in-postgres.md) | Account rate limits are fixed windows in Postgres | Accepted |
 | [0007](0007-idempotency-results-in-postgres.md) | Idempotency-Key results are stored in Postgres | Accepted (amended by 0008) |
 | [0008](0008-browser-sessions-in-the-session-list.md) | Browser sessions in the account's session list, and per-account idempotency results | Accepted |
+| [0009](0009-change-queue-in-postgres.md) | The change queue in Postgres: one locked transaction per batch, one statement per feed page | Accepted |
+| [0010](0010-deleted-account-refresh-tokens.md) | A deleted account's live refresh tokens answer `account_deleted` | Accepted |
