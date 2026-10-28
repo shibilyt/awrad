@@ -20,8 +20,9 @@ export interface FilterChip {
 
 /**
  * Chips that filter a list (components.md "Filter chip"): any number can be on. Each is a toggle
- * button named by its label that announces whether it's on (`aria-pressed`), in a React Aria
- * toggle button group (a toolbar: arrow keys move between chips, Space or Enter toggles one).
+ * button named by its label (`aria-label`: the label sits in a span) that announces whether it's
+ * on (`aria-pressed`), in a React Aria toggle button group (a toolbar: arrow keys move between
+ * chips, Space or Enter toggles one).
  * - Off: the secondary fill (`background` on a surface) with its label colour.
  * - On: `primary` with an `onPrimary` label and a leading `check` (`iconSmall`, `inlineGap` to
  *   the label). The colours cross-fade (`select`).
@@ -55,6 +56,7 @@ export function FilterChips({
         <ToggleButton
           key={chip.id}
           id={chip.id}
+          aria-label={chip.label}
           className="group inline-flex min-h-touch-target cursor-default items-center outline-none data-disabled:opacity-disabled"
         >
           {({ isSelected }) => (
