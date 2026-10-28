@@ -527,7 +527,7 @@ export interface components {
         };
         /** @description Invalid values are `validation_failed` with field codes `installation_id_invalid`, `device_name_invalid` or `platform_invalid` under `/device/...`. */
         DeviceInfo: {
-            /** @description Random UUIDv4 the app creates once per installation and keeps in secure storage. */
+            /** @description Random UUID the app creates once per installation and keeps in secure storage (UUIDv7 since ADR-2026-10-28). */
             installation_id: components["schemas"]["Uuid"];
             /** @description The device model, for example "Pixel 9" or "iPhone 16". Shown in the device list. */
             name: string;
@@ -1024,14 +1024,14 @@ export interface components {
     parameters: {
         /** @description The account this request's data belongs to: on a phone, the active local profile's account; on the web, the signed-in account. If it isn't the authenticated account, the request is refused with `409 account_mismatch` and nothing is read or written. Missing or not a UUID is `400 malformed_request`. */
         AwradAccount: components["schemas"]["Uuid"];
-        /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+        /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
         IdempotencyKey: components["schemas"]["Uuid"];
         /**
          * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
          * @example ar
          */
         AcceptLanguage: string;
-        /** @description UUIDv4, required on this operation. A retry with the same key gets the same result. */
+        /** @description A UUID (clients generate UUIDv7), required on this operation. A retry with the same key gets the same result. */
         RequiredIdempotencyKey: components["schemas"]["Uuid"];
         Cursor: components["schemas"]["Cursor"];
         /** @description Page size. Each list operation documents its own default and maximum. */
@@ -1063,7 +1063,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1099,7 +1099,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
             };
             path?: never;
@@ -1130,7 +1130,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1162,7 +1162,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1194,7 +1194,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
             };
             path?: never;
@@ -1359,7 +1359,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
             };
             path?: never;
@@ -1376,7 +1376,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1414,7 +1414,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1478,7 +1478,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1572,7 +1572,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1608,7 +1608,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1679,7 +1679,7 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description UUIDv4, required on this operation. A retry with the same key gets the same result. */
+                /** @description A UUID (clients generate UUIDv7), required on this operation. A retry with the same key gets the same result. */
                 "Idempotency-Key": components["parameters"]["RequiredIdempotencyKey"];
             };
             path?: never;
@@ -1727,7 +1727,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
             };
             path?: never;
@@ -1781,7 +1781,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1864,7 +1864,7 @@ export interface operations {
             header: {
                 /** @description The account this request's data belongs to: on a phone, the active local profile's account; on the web, the signed-in account. If it isn't the authenticated account, the request is refused with `409 account_mismatch` and nothing is read or written. Missing or not a UUID is `400 malformed_request`. */
                 "X-Awrad-Account": components["parameters"]["AwradAccount"];
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
             };
             path?: never;
