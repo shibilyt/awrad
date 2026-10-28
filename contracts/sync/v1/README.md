@@ -140,7 +140,8 @@ Android and iOS keep an **outbox** (the queue) in each profile's database. The w
 
 The rules are in [`fixtures/outbox_enqueue.json`](fixtures/outbox_enqueue.json). The change and its command are saved in one local transaction.
 
-- **Last command never sent:** the edit replaces it in place, keeping its `command_id`, `base_version` and position. A delete of an entity whose never-sent create is still queued removes that create instead.
+- **Last command never sent:** the edit replaces it, keeping its `command_id`, `base_version` and position. A delete of an entity whose never-sent create is still queued removes that create instead.
+- **Except when the replacement would get ahead of what it names:** if the new document references an entity whose never-sent put sits later in the queue, the command moves to immediately after the last such put. References are the tags in `tag_ids` and a `dhikr_personal`'s own custom dhikr; custom dhikr and tag documents reference nothing, so their replacements never move. Everything else keeps its relative order. Without this, a record sent before its tag's or custom dhikr's create would be `rejected` with `tag_not_found` or `dhikr_not_found`.
 - **Otherwise:** a command is added at the end. Its `base_version` is the previous command's `base_version` + 1, or the known version when nothing is queued for the entity.
 - **Deleting a custom dhikr** also drops never-sent commands for its `dhikr_personal`.
 - **Deleting a tag** queues only the tag delete, never a `dhikr_personal` put: the server removes the tag from every record itself and reports them in the receipt's `cascaded`. Locally, the tag leaves every `dhikr_personal` document and every never-sent `dhikr_personal` command in the same transaction.

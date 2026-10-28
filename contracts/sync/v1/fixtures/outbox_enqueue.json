@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "outbox_enqueue",
-  "description": "How a phone queues one saved edit (Android and iOS; the web has no queue). Given the versions this device knows, the queue (oldest first; `sent` once a command has been in a request) and the edit, the queue afterwards. If the entity's last queued command was never sent, the edit replaces it in place, keeping its command_id, base_version and position; but a delete that replaces a never-sent create (base_version 0) removes it instead, since the server never heard of the entity. Otherwise a new command is added at the end with base_version = the entity's last queued command's base_version + 1, or the known version (0 if unknown) when nothing is queued for it. Deleting a custom dhikr also drops never-sent commands for its dhikr_personal. Deleting a tag queues only the tag delete, never a dhikr_personal put: the server removes the tag from every record itself and reports those records in the receipt's `cascaded`. Locally the tag leaves every dhikr_personal document and every never-sent dhikr_personal command, in the same transaction. The edit and its queue change are one local transaction; the queue's document for a delete is null (the wire command omits it). Phones only queue for a profile that belongs to an account, and never for one marked account_deleted (profile_switch).",
+  "description": "How a phone queues one saved edit (Android and iOS; the web has no queue). Given the versions this device knows, the queue (oldest first; `sent` once a command has been in a request) and the edit, the queue afterwards. If the entity's last queued command was never sent, the edit replaces it, keeping its command_id and base_version, and its position unless its new document references an entity (a tag in tag_ids, or a dhikr_personal's own custom dhikr) whose never-sent put command sits later in the queue: then it moves to immediately after the last such command, so the server meets every referenced entity before the record (otherwise the record would be rejected with tag_not_found or dhikr_not_found). Everything else keeps its relative order. A custom_dhikr or user_tag document references nothing, so its replacement never moves. A delete that replaces a never-sent create (base_version 0) removes it instead, since the server never heard of the entity. Otherwise a new command is added at the end with base_version = the entity's last queued command's base_version + 1, or the known version (0 if unknown) when nothing is queued for it. Deleting a custom dhikr also drops never-sent commands for its dhikr_personal. Deleting a tag queues only the tag delete, never a dhikr_personal put: the server removes the tag from every record itself and reports those records in the receipt's `cascaded`. Locally the tag leaves every dhikr_personal document and every never-sent dhikr_personal command, in the same transaction. The edit and its queue change are one local transaction; the queue's document for a delete is null (the wire command omits it). Phones only queue for a profile that belongs to an account, and never for one marked account_deleted (profile_switch).",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#clients-android-and-ios",
     "contracts/sync/v1/README.md",
@@ -1103,6 +1103,728 @@
                   "ayah_end": 129
                 }
               ]
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "replaced_personal_moves_after_later_tag_create",
+      "description": "A never-sent dhikr_personal replaced to name a tag whose never-sent create sits later in the queue moves to just after that create, keeping its command_id and base_version, so the server knows the tag when the record arrives.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000040",
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000041",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000042",
+          "entity_type": "dhikr_personal",
+          "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+          "op": "put",
+          "document": {
+            "tag_ids": [
+              "0192f0a0-0000-7000-8000-000000000001",
+              "0192f0a0-0000-7000-8000-000000000005"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000041",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000040",
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000005"
+              ]
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "replaced_personal_naming_earlier_tags_stays_in_place",
+      "description": "A replacement that names only tags already known, already sent or created earlier in the queue keeps its position; a later create it doesn't name doesn't move it.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000043",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000044",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000006",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Friday",
+              "normalized_name": "friday"
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000045",
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000046",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000007",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Travel",
+              "normalized_name": "travel"
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000047",
+          "entity_type": "dhikr_personal",
+          "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+          "op": "put",
+          "document": {
+            "tag_ids": [
+              "0192f0a0-0000-7000-8000-000000000001",
+              "0192f0a0-0000-7000-8000-000000000005",
+              "0192f0a0-0000-7000-8000-000000000006"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000043",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000044",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000006",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Friday",
+              "normalized_name": "friday"
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000045",
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000005",
+                "0192f0a0-0000-7000-8000-000000000006"
+              ]
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000046",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000007",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Travel",
+              "normalized_name": "travel"
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "replaced_personal_moves_after_last_later_create",
+      "description": "A replacement naming two tags whose never-sent creates both sit later moves to just after the last of them, not to the end: a later command it doesn't depend on stays after it.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000048",
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000049",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000004a",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000006",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Friday",
+              "normalized_name": "friday"
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000004b",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-00000000004c",
+          "entity_type": "dhikr_personal",
+          "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+          "op": "put",
+          "document": {
+            "tag_ids": [
+              "0192f0a0-0000-7000-8000-000000000006",
+              "0192f0a0-0000-7000-8000-000000000001",
+              "0192f0a0-0000-7000-8000-000000000005"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000049",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000004a",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000006",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Friday",
+              "normalized_name": "friday"
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000048",
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000006",
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000005"
+              ]
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000004b",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "replaced_custom_dhikr_create_keeps_place_before_its_personal",
+      "description": "Replacing a never-sent custom dhikr create queued before its dhikr_personal keeps the create in place (a custom dhikr document names no other entity), so the personal record still comes after it.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000004d",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000004e",
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-00000000004f",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+          "op": "put",
+          "document": {
+            "kind": "dhikr",
+            "arabic": "ٱلْحَمْدُ لِلَّهِ",
+            "title": {
+              "en": "Alhamdulillah",
+              "ar": null,
+              "ml": null
+            },
+            "transliteration": {
+              "en": "Alhamdulillah",
+              "ml": null
+            },
+            "translation": {
+              "en": "All praise is for Allah",
+              "ar": null,
+              "ml": null
+            },
+            "audio": null,
+            "references": []
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000004d",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "ٱلْحَمْدُ لِلَّهِ",
+              "title": {
+                "en": "Alhamdulillah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Alhamdulillah",
+                "ml": null
+              },
+              "translation": {
+                "en": "All praise is for Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000004e",
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "replaced_personal_moves_after_its_custom_dhikr_put",
+      "description": "A dhikr_personal references its own custom dhikr: replaced while a never-sent put of that dhikr sits later, it moves to just after that put, even with no tags.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000050",
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 2,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000051",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000052",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000053",
+          "entity_type": "dhikr_personal",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+          "op": "put",
+          "document": {
+            "tag_ids": []
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000051",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000050",
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 2,
+            "document": {
+              "tag_ids": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000052",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
             },
             "sent": false
           }
