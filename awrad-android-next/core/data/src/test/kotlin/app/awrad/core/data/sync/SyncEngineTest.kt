@@ -256,4 +256,27 @@ class SyncEngineTest {
         assertEquals(SyncOutcome.Done, stack.engine.syncOnce())
         assertTrue(stack.outbox().isEmpty())
     }
+
+    @Test
+    fun `a record edited to name a later-created tag is sent after that tag`() = runTest {
+        val stack = SyncStack(this)
+        stack.ownActiveProfile()
+        val morning = (stack.tags.create("Morning") as TagOutcome.Saved).tag
+        stack.tags.setTags(BUILT_IN, listOf(morning.id))
+        val travel = (stack.tags.create("Travel") as TagOutcome.Saved).tag
+        // The record's never-sent put is replaced; it now names a tag whose create is queued after it.
+        stack.tags.setTags(BUILT_IN, listOf(morning.id, travel.id))
+
+        assertEquals(SyncOutcome.Done, stack.engine.syncOnce())
+
+        val sent = stack.server.batches.flatMap { it.commands }.map { it.entityType to it.entityId }
+        assertEquals(
+            listOf(TAG to morning.id.value, TAG to travel.id.value, "dhikr_personal" to BUILT_IN.value),
+            sent,
+        )
+        assertTrue(stack.sync.notices.first().isEmpty())
+        assertTrue(stack.outbox().isEmpty())
+        val record = stack.server.entities.getValue("dhikr_personal" to BUILT_IN.value)
+        assertEquals(listOf(morning.id, travel.id), PersonalDocument.tagIds(checkNotNull(record.document)))
+    }
 }
