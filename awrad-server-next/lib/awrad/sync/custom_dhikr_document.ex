@@ -11,7 +11,10 @@ defmodule Awrad.Sync.CustomDhikrDocument do
     * `too_many`: more than 20 references;
     * `not_allowed`: a member the shape doesn't have (`id`, `key`, `aliases`,
       `virtues`, catalog `tags`, an unknown language);
-    * `invalid`: a wrong type or value (`kind`, `audio`, a whole reference).
+    * `invalid`: a wrong type or value (`kind`, `audio`, a whole reference);
+    * `range`: a valid Qur'an reference whose `ayah_end` is below its
+      `ayah_start`, on `/references/N/ayah_end` (the one rule the schema
+      can't express).
 
   Lengths count Unicode code points. Fields are JSON Pointers into the
   document; errors are sorted by field, then code.
@@ -134,12 +137,21 @@ defmodule Awrad.Sync.CustomDhikrDocument do
   defp references({:ok, list}) when is_list(list) do
     too_many = if length(list) > @max_references, do: [{"/references", "too_many"}], else: []
 
-    invalid =
-      for {reference, index} <- Enum.with_index(list), not reference?(reference) do
-        {pointer(["references", Integer.to_string(index)]), "invalid"}
+    per_reference =
+      for {reference, index} <- Enum.with_index(list) do
+        cond do
+          not reference?(reference) ->
+            [{pointer(["references", Integer.to_string(index)]), "invalid"}]
+
+          reversed?(reference) ->
+            [{pointer(["references", Integer.to_string(index), "ayah_end"]), "range"}]
+
+          true ->
+            []
+        end
       end
 
-    too_many ++ invalid
+    too_many ++ List.flatten(per_reference)
   end
 
   defp references({:ok, _other}), do: [{"/references", "invalid"}]
@@ -160,6 +172,12 @@ defmodule Awrad.Sync.CustomDhikrDocument do
   end
 
   defp reference?(_other), do: false
+
+  # A valid Qur'an reference that ends before it starts.
+  defp reversed?(%{"type" => "quran", "ayah_start" => start, "ayah_end" => stop}),
+    do: stop < start
+
+  defp reversed?(_reference), do: false
 
   defp member?(_type, _name, :absent), do: true
   defp member?("quran", "surah", value), do: is_integer(value) and value in 1..114
