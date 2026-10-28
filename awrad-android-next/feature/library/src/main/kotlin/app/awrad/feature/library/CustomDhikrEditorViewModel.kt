@@ -93,7 +93,7 @@ internal class CustomDhikrEditorViewModel @AssistedInject constructor(
 
     /** A change to the form: the last save's problems no longer apply. */
     private fun edit(change: EditorUiState.() -> EditorUiState) {
-        mutableState.update { it.change().copy(problems = emptySet()) }
+        mutableState.update { it.change().copy(problems = emptyMap()) }
     }
 
     private fun importAudio(sourceUri: String) {
@@ -133,10 +133,10 @@ internal class CustomDhikrEditorViewModel @AssistedInject constructor(
         mutableState.update { it.copy(isSaving = true) }
         viewModelScope.launch {
             val problems = when (val error = customDhikrs.save(dhikr)) {
-                null -> emptySet()
-                is CustomDhikrError.Invalid -> problemsOf(error.errors, hasQuran = !current.quran.isEmpty)
-                CustomDhikrError.LimitReached -> setOf(EditorProblem.LIMIT_REACHED)
-                CustomDhikrError.NotFound -> setOf(EditorProblem.NOT_SAVED)
+                null -> emptyMap()
+                is CustomDhikrError.Invalid -> current.problemsOf(error.errors)
+                CustomDhikrError.LimitReached -> mapOf(ProblemSpot.SUMMARY to EditorProblem.LIMIT_REACHED)
+                CustomDhikrError.NotFound -> mapOf(ProblemSpot.SUMMARY to EditorProblem.NOT_SAVED)
             }
             if (problems.isEmpty()) {
                 tags.setTags(id, current.selectedTags)

@@ -44,6 +44,7 @@ internal fun problemText(problem: EditorProblem): String = stringResource(
         EditorProblem.QURAN_INVALID -> R.string.editor_problem_quran
         EditorProblem.QURAN_RANGE -> R.string.editor_problem_quran_range
         EditorProblem.REFERENCE_INVALID -> R.string.editor_problem_reference
+        EditorProblem.KEPT_REFERENCE_INVALID -> R.string.editor_problem_kept_reference
         EditorProblem.TOO_MANY_REFERENCES -> R.string.editor_problem_references
         EditorProblem.LIMIT_REACHED -> R.string.editor_problem_limit
         EditorProblem.NOT_SAVED -> R.string.editor_problem_not_saved
