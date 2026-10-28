@@ -1,0 +1,185 @@
+# Slice 3b: Custom dhikrs, tags and the change queue
+
+Status: Draft
+Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 3b
+Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
+
+## Goal
+
+Users can create, edit and delete their own dhikrs and tag any dhikr, offline on phones and online on the web. Once they're signed in, it all reaches every device. This slice builds the **change queue**, the sync mechanism that goals (slice 4) and counting (slice 5) reuse.
+
+## Decisions (2026-10-28)
+
+- **Sync starts here.** Custom dhikrs and tags are the change queue's first users.
+- **Audio:**
+  - Custom dhikrs can hold a recording kept on the device.
+  - Uploading it to private storage is slice 3c: 10 MB per file, 500 MB per account, MP3 and M4A/AAC.
+- **Duplicate tags merge.** Two devices that both create "Morning" offline end up with one tag, and every dhikr keeps it.
+- **Signing in with local data asks.** The user chooses to add the device's data to the account, or erase it from the device. Signing into a different account from last time always asks.
+- **The web edits too.** It's online only and sends each edit straight away, with no queue.
+
+## Scope
+
+| In scope | Out of scope (and where it goes instead) |
+|---|---|
+| The change queue: commands, receipts, the changes feed, conflicts, deletes | Goals and counts (slices 4, 5), on the same queue |
+| Custom dhikrs: create, edit, delete; same shape as built-ins (`$defs/dhikr`) | Virtues on custom dhikrs; custom collections (later) |
+| User tags: create, rename, delete; tag built-in and custom dhikrs | Favourites and notes (later, in the same per-dhikr record) |
+| Local audio on a custom dhikr (import, play, replace, remove) | Uploading audio (3c) |
+| Sign-in binding: add to the account or erase; sign-out keeps local data | Restoring deleted items |
+| Library: "Your dhikrs" collection, tag chips, a tag filter | |
+
+Platforms: server ☑ · Android ☑ · iOS ☑ · web ☑ (online, no queue)
+
+## What we keep and drop from the old progress sync
+
+The frozen design is in `docs/progress-sync-architecture.md` and ADR-2026-07-16/24.
+
+| Old | New |
+|---|---|
+| Per-account revision under a row lock | **Keep** |
+| Command IDs with idempotent receipts and a payload hash | **Keep** (IDs are UUIDv7) |
+| Whole-document version checks | **Keep** |
+| Tombstones | **Keep**. A delete is final; no restore, purge or fences |
+| Actors, contiguous sequences, fork and adoption, incarnations | **Drop**. Receipts plus in-order batches are enough |
+| Transfer sessions, checksums, generations | **Drop**. One "changes after revision N" feed |
+| JSONB entities plus legacy tables (written twice) | **Drop**. One entity table |
+| Separate tag-assignment entities, coalesced on receipt | **Change**. A per-dhikr personal record holds `tag_ids`; the server remembers merged tag IDs and rewrites references itself |
+| Rewriting a command after it was sent | **Drop**. Only a never-sent command may be replaced |
+| iOS diffing the whole database on every write | **Drop**. Each edit records its own command |
+
+## The change queue
+
+### Entities in 3b
+
+| `entity_type` | `entity_id` | Document |
+|---|---|---|
+| `custom_dhikr` | a new UUIDv7 | `$defs/dhikr` without `key`, `virtues` or `audio`, plus `audio: {local_only: true}` or null |
+| `user_tag` | a new UUIDv7 | `{name, normalized_name}` |
+| `dhikr_personal` | the dhikr's ID (built-in or custom) | `{tag_ids: [...]}` (≤ 20) |
+
+**Limits:**
+- 1,000 custom dhikrs per account;
+- 100 tags per account;
+- 20 tags per dhikr;
+- 64 KB per document.
+
+**Tag names:**
+- 1–40 characters, 128 bytes at most;
+- `normalized_name` follows the shared tag-normalization fixture: trim, collapse spaces, NFC, case-fold;
+- the server recomputes it and rejects a mismatch.
+
+### Commands (`POST /api/v1/sync/commands`)
+
+The request has 1–100 commands, applied in order. Each command is:
+
+```json
+{
+  "command_id": "<uuidv7>",
+  "entity_type": "custom_dhikr",
+  "entity_id": "<uuid>",
+  "op": "put",
+  "base_version": 3,
+  "document": { "…": "…" }
+}
+```
+
+- **`put`** creates the entity (`base_version` 0) or replaces it.
+- **`delete`** marks it deleted.
+- **Receipts:** each command gets one receipt, in the same order. A command's outcome never undoes the others.
+
+| `status` | Meaning | Carries |
+|---|---|---|
+| `applied` | Done | `version`, `revision` |
+| `duplicate` | Same `command_id` and payload as before | the original receipt |
+| `conflict` | `base_version` is stale | the server's current entity (version, state, document) |
+| `merged` | A `user_tag` create whose name already exists | `merged_into` (the existing tag ID) |
+| `gone` | The entity is deleted | — |
+| `rejected` | Invalid, over a limit, or a reused `command_id` with a different payload | `code`, `fields` |
+
+**Server rules:**
+- One account's batches are serialized: its revision row is locked, and every applied change gets the next revision.
+- Receipts are kept for 90 days.
+- **Tag merging:** a merged tag's ID is remembered as an alias. Any later `dhikr_personal` document naming the alias is rewritten to the surviving tag ID. That covers a merge and its tag use landing in the same batch, the bug that broke the old iOS client.
+- **Deleting a tag** removes it from every `dhikr_personal` document, at the same revision.
+- **Deleting a custom dhikr** deletes its `dhikr_personal` too. From slice 4, it's blocked while goals use it.
+
+### Changes feed (`GET /api/v1/sync/changes?after=N&limit=200`)
+
+- **Response:** `{changes: [{entity_type, entity_id, state, version, revision, document?}], next_after, has_more, head_revision}`, ordered by revision.
+- **`after=0`** is a full download: it lists only active entities.
+- **`after>0`** also includes deletes.
+- **Deletes of unknown entities:** a client ignores a delete for something it doesn't have.
+
+### Clients (Android and iOS)
+
+**Saving an edit:** the change and its command go into the queue in one local transaction. The command is `pending`, and its `base_version` is the last version this device knows for the entity. If the same entity already has a pending, never-sent command, that command is replaced in place; once it has been sent, a new command is added after it.
+
+**Sending:**
+- When signed in and online: send pending commands in order, in batches.
+- After a receipt, drop the command and record the entity's new version.
+- `merged`: replace the tag ID everywhere locally.
+- `rejected`: undo locally to the server version and tell the user.
+- `conflict`: keep the local edit and mark the dhikr "Changed on another device". The user picks **Keep mine** (re-sent on the server's version) or **Use theirs**.
+
+**Pulling:**
+- After sending, read the changes feed from the stored `after` and apply each change in one transaction with the new `after`.
+- A change to an entity that has a pending local edit updates only its known server version; the local edit is kept and its conflict resolved on send.
+
+**Cadence:**
+- Sync on app start, on a change (after a 2 s debounce) and every 5 minutes while open.
+- Back off from 5 s to 5 min, with ±20% jitter.
+
+**Sign-in binding:**
+- The device remembers which account its data belongs to.
+- First sign-in with local data asks: **Add to my account** (every local entity is queued as `put`), or **Erase from this device**.
+- Signing out keeps the data and stops syncing.
+- Signing into a different account always asks the same question.
+
+### Web
+
+The web sends each edit as a one-command batch through the same endpoint, with the browser session plus CSRF. It reads the changes feed from `after=0` when it loads, and reads again after each edit. It has no queue and no offline state.
+
+## Domain and fixtures (step 3)
+
+- **`CONTEXT.md`:**
+  - **Custom dhikr**, **Tag**, **Change queue**, **Command**, **Revision**, **Conflict**.
+  - **Personal record**: a user's own data about one dhikr, for now its tags.
+- **Fixtures** (`contracts/sync/v1/fixtures/`):
+  - `tag_name_normalization.json`: the old v1 cases, ported to awrad-fixture/1, plus new ones;
+  - `custom_dhikr_validity.json`: which custom dhikr documents are valid;
+  - `sync_receipts.json`: given server state and a batch, the receipts and the resulting state. The server runs it; it's the protocol spec;
+  - `outbox_enqueue.json`: given local state and a pending queue, the queue after an edit (replace-if-unsent, append-if-sent). Android and iOS run it;
+  - `apply_changes.json`: given local state, pending commands and a changes page, the resulting local state and conflicts. Android and iOS run it.
+
+## Contract (step 4)
+
+- **Operations:**
+  - `post_sync_commands` `POST /api/v1/sync/commands`;
+  - `list_sync_changes` `GET /api/v1/sync/changes`.
+  - Both work with a bearer token (mobile) or a cookie plus CSRF (web).
+- **Schemas** in `contracts/sync/v1/sync.schema.json`: command, receipt, change, and the three entity documents.
+- **ADR:** "The change queue", replacing progress sync v1 for the rebuild.
+
+## Platform work (step 5)
+
+| Project | Work | Validation | Status |
+|---|---|---|---|
+| awrad-server-next | Sync tables (heads, entities, receipts, tag aliases), the two endpoints, the rules above, fixture runners | `mix validate` | ☐ |
+| awrad-android-next | Room entities and outbox, sync engine, binding prompt, custom dhikr editor, tags, Library additions, local audio | Gradle validation | ☐ |
+| awrad-ios-next | Same as Android, on SwiftData | `scripts/validate` | ☐ |
+| awrad-web-next | Custom dhikr editor and tags over the API | `npm run validate` | ☐ |
+
+## Integration evidence (step 6)
+
+| Flow | Android | iOS | Web | Notes |
+|---|---|---|---|---|
+| Create a custom dhikr offline, sign in, add to account; it appears on the other platforms | ☐ | ☐ | ☐ | |
+| The same tag created on two devices offline merges | ☐ | ☐ | — | |
+| Edit the same dhikr on two devices: conflict, then Keep mine or Use theirs | ☐ | ☐ | ☐ | |
+| Delete on one device; it disappears on the others | ☐ | ☐ | ☐ | |
+| Sign in to a different account: asked to add or erase | ☐ | ☐ | — | |
+
+## Definition of done
+
+Copy the checklist from the playbook and tick it here before closing.
