@@ -3,7 +3,8 @@ import SwiftUI
 /// components.md "Conflict banner": at the top of a page while what it shows has an open conflict.
 /// A `card`-shaped card with `cardPadding`, filled `secondaryContainer` (never the `error` roles):
 /// the `error` icon (`icon` size) at the start, then the message in `body`, both
-/// `onSecondaryContainer`; under them, the two text buttons aligned to the end. `detail` (a tag's
+/// `onSecondaryContainer`; under them, the two text buttons aligned to the end, their labels also
+/// `onSecondaryContainer` (`awradFill`). `detail` (a tag's
 /// name, say) is a second line under the message.
 public struct AwradConflictBanner: View {
     private let message: LocalizedStringResource
@@ -48,7 +49,8 @@ public struct AwradConflictBanner: View {
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .padding(AwradSpacing.cardPadding)
-        .background(AwradColors.secondaryContainer, in: AwradRadius.card.shape)
+        // Keep mine and Use theirs in `onSecondaryContainer`: `accent` would vanish on it in dark mode.
+        .awradFill(.secondaryContainer, in: AwradRadius.card)
         .awradDisabledAppearance()
     }
 }

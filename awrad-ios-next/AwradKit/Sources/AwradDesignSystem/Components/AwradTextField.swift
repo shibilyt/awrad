@@ -83,11 +83,12 @@ public struct AwradTextField: View {
             Group {
                 if isRevealed {
                     TextField(text: $text, prompt: promptText) { Text(label) }
-                        .autocorrectionDisabled()
                 } else {
                     SecureField(text: $text, prompt: promptText) { Text(label) }
                 }
             }
+            // A password is typed as is, shown or hidden: no capitals, no corrections.
+            .passwordInputTraits()
             .focused($isFocused)
             // Text stops `xs` before the show/hide icon.
             .padding(.trailing, AwradSize.icon + AwradSpacing.xs)
@@ -116,6 +117,17 @@ public struct AwradTextField: View {
         isRevealed.toggle()
         // Swapping the field drops focus; give it back so the keyboard stays.
         isFocused = wasFocused
+    }
+}
+
+extension View {
+    /// A password's keyboard: no autocapitalisation and no autocorrection.
+    fileprivate func passwordInputTraits() -> some View {
+        #if os(iOS)
+            autocorrectionDisabled().textInputAutocapitalization(.never)
+        #else
+            autocorrectionDisabled()
+        #endif
     }
 }
 

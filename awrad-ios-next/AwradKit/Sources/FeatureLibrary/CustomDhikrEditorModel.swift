@@ -27,6 +27,22 @@ final class CustomDhikrEditorModel {
     enum Outcome: Equatable, Sendable {
         case saved(AwradID, isNew: Bool)
         case deleted
+
+        /// What the Library does next: the new dhikr's page, back to the page it came from, or the root.
+        var libraryAction: LibraryModel.Action {
+            switch self {
+            case .saved(let id, let isNew): .editorSaved(id, isNew: isNew)
+            case .deleted: .popToRoot
+            }
+        }
+    }
+
+    /// The first field with a problem after a save that found some: the screen scrolls to it and
+    /// VoiceOver reads its message. `attempt` tells one failed save from the next.
+    struct ProblemFocus: Equatable, Sendable {
+        let field: EditorField
+        let problem: FieldProblem
+        let attempt: Int
     }
 
     struct State: Equatable, Sendable {
@@ -36,6 +52,7 @@ final class CustomDhikrEditorModel {
         /// The language the title and texts show.
         var language = CatalogLanguage.en
         var errors: [EditorField: FieldProblem] = [:]
+        var problemFocus: ProblemFocus?
         /// Why saving or deleting failed, when no field says it.
         var failure: EditFailure?
         /// The user's tags, to choose from.
@@ -248,7 +265,8 @@ final class CustomDhikrEditorModel {
         }
     }
 
-    /// Puts each problem on its field and shows the first language that has one.
+    /// Puts each problem on its field, shows the first language that has one, and points the screen
+    /// at the first field with a problem.
     private func show(_ problems: [SyncFieldError]) {
         let (fields, unplaced) = EditorField.problems(from: problems)
         state.errors = fields
@@ -258,6 +276,10 @@ final class CustomDhikrEditorModel {
             let language = order.first(where: { language in fields.keys.contains { $0.language == language } })
         {
             state.language = language
+        }
+        if let field = EditorField.first(of: fields.keys, showing: state.language), let problem = fields[field] {
+            let attempt = (state.problemFocus?.attempt ?? 0) + 1
+            state.problemFocus = ProblemFocus(field: field, problem: problem, attempt: attempt)
         }
     }
 }

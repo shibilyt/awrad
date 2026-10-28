@@ -8,7 +8,8 @@ import SwiftUI
 ///   sheet, with `onSurface` content).
 /// - `error`: destructive confirmations, `error`.
 /// - `text`: links and small actions, `accent` text, `touchTarget` tall. With the destructive role
-///   it's `error` text (sign out of other devices).
+///   it's `error` text (sign out of other devices). On a `secondaryContainer` or `primary` fill
+///   (`awradFill(_:in:)`) it's the fill's content colour instead (the conflict banner).
 ///
 /// `icon` is a leading icon (`iconSmall`, `inlineGap` before the label). `layout: .row` is a button
 /// inside a row (sign out one device): `touchTarget` tall and as wide as its label. While `isLoading`,
@@ -34,6 +35,7 @@ public struct AwradButton: View {
     private let role: ButtonRole?
     private let action: () -> Void
     @Environment(\.awradContainer) private var container
+    @Environment(\.awradFill) private var onFill
 
     public init(
         _ title: LocalizedStringResource, variant: Variant = .main, layout: Layout = .fill,
@@ -60,7 +62,8 @@ public struct AwradButton: View {
         .buttonStyle(
             AwradButtonStyle(
                 appearance: AwradButtonAppearance(
-                    variant: variant, layout: layout, isDestructive: role == .destructive, container: container),
+                    variant: variant, layout: layout, isDestructive: role == .destructive, container: container,
+                    onFill: onFill),
                 isLoading: isLoading)
         )
         // Loading ignores taps without looking disabled.
@@ -76,6 +79,8 @@ struct AwradButtonAppearance: Equatable {
     var isDestructive = false
     /// What it sits on: a secondary button on a surface is `background` (`AwradContainer.secondaryFill`).
     var container = AwradContainer.background
+    /// The coloured fill it sits on (`awradFill`): a text button's label takes its content colour.
+    var onFill: AwradFill?
 
     var fill: Color {
         switch variant {
@@ -91,7 +96,12 @@ struct AwradButtonAppearance: Equatable {
         case .main: AwradColors.onPrimary
         case .secondary: container.onSecondaryFill
         case .error: AwradColors.onError
-        case .text: isDestructive ? AwradColors.error : AwradColors.accent
+        case .text:
+            if isDestructive {
+                AwradColors.error
+            } else {
+                onFill?.content ?? AwradColors.accent
+            }
         }
     }
 

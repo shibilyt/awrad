@@ -194,3 +194,33 @@ extension EditorField {
         }
     }
 }
+
+/// Where the editor shows a field, top to bottom. After a save that found problems the screen
+/// scrolls to the first one.
+enum EditorAnchor: Hashable, Sendable, CaseIterable {
+    case arabic, title, transliteration, translation, references
+}
+
+extension EditorField {
+    var anchor: EditorAnchor {
+        switch self {
+        case .arabic: .arabic
+        case .title, .titleText: .title
+        case .transliteration: .transliteration
+        case .translation: .translation
+        case .references, .reference: .references
+        }
+    }
+
+    /// The first of `fields` on the screen, top to bottom, while `language`'s texts show. Another
+    /// language's fields aren't on the screen.
+    static func first(of fields: some Collection<EditorField>, showing language: CatalogLanguage) -> EditorField? {
+        fields.filter { $0.language == nil || $0.language == language }.min { $0.order < $1.order }
+    }
+
+    private var order: (section: Int, row: Int) {
+        let section = EditorAnchor.allCases.firstIndex(of: anchor) ?? 0
+        if case .reference(let index) = self { return (section, index + 1) }
+        return (section, 0)
+    }
+}
