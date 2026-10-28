@@ -89,7 +89,7 @@ refresh:
     security: []
     parameters:
       - $ref: "../openapi.yaml#/components/parameters/RequiredIdempotencyKey"
-    x-error-codes: [malformed_request, refresh_token_invalid, refresh_reuse_detected, idempotency_key_reused, rate_limited]
+    x-error-codes: [malformed_request, refresh_token_invalid, refresh_reuse_detected, account_deleted, idempotency_key_reused, rate_limited]
     requestBody:
       required: true
       content:
@@ -105,8 +105,11 @@ refresh:
         $ref: "../openapi.yaml#/components/responses/BadRequest"
       "401":
         description: >-
-          `refresh_token_invalid` (unknown, expired, or its session ended) or `refresh_reuse_detected`
-          (the session is now revoked). Either way the device is signed out.
+          `refresh_token_invalid` (unknown, expired, or its session ended), `refresh_reuse_detected`
+          (the session is now revoked) or `account_deleted` (the token belonged to an account that no longer
+          exists; only the holder of a once-valid refresh token learns this, so it reveals nothing to others).
+          Either way the device is signed out. On `account_deleted` a phone offers to remove that account's
+          local profile (contracts/sync/v1, `profile_switch`).
         headers:
           Cache-Control:
             $ref: "../openapi.yaml#/components/headers/CacheControl"

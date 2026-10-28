@@ -1166,6 +1166,7 @@
           "malformed_request",
           "refresh_token_invalid",
           "refresh_reuse_detected",
+          "account_deleted",
           "idempotency_key_reused",
           "rate_limited"
         ],
@@ -1190,7 +1191,7 @@
             "$ref": "#/components/responses/BadRequest"
           },
           "401": {
-            "description": "`refresh_token_invalid` (unknown, expired, or its session ended) or `refresh_reuse_detected` (the session is now revoked). Either way the device is signed out.",
+            "description": "`refresh_token_invalid` (unknown, expired, or its session ended), `refresh_reuse_detected` (the session is now revoked) or `account_deleted` (the token belonged to an account that no longer exists; only the holder of a once-valid refresh token learns this, so it reveals nothing to others). Either way the device is signed out. On `account_deleted` a phone offers to remove that account's local profile (contracts/sync/v1, `profile_switch`).",
             "headers": {
               "Cache-Control": {
                 "$ref": "#/components/headers/CacheControl"
@@ -1549,8 +1550,8 @@
                           "id": "quran",
                           "type": "quran",
                           "surah": 9,
-                          "ayahStart": 129,
-                          "ayahEnd": 129
+                          "ayah_start": 129,
+                          "ayah_end": 129
                         }
                       ]
                     }
@@ -1635,8 +1636,8 @@
                           "id": "quran",
                           "type": "quran",
                           "surah": 9,
-                          "ayahStart": 129,
-                          "ayahEnd": 129
+                          "ayah_start": 129,
+                          "ayah_end": 129
                         }
                       ]
                     }
@@ -1941,8 +1942,8 @@
                             "id": "quran",
                             "type": "quran",
                             "surah": 9,
-                            "ayahStart": 129,
-                            "ayahEnd": 129
+                            "ayah_start": 129,
+                            "ayah_end": 129
                           }
                         ]
                       }
@@ -2556,7 +2557,7 @@
             "type": "array",
             "maxItems": 20,
             "items": {
-              "description": "A reference exactly as in contracts/dhikr-catalog/v1 `$defs/reference`: `quran` (surah, ayahStart, ayahEnd), `hadith`, `book`, `shaykh` or `other`, each with an `id`. Not restated here because the catalog's camelCase member names (ayahStart, ayahEnd) can't pass this spec's snake_case lint."
+              "description": "A reference exactly as in contracts/dhikr-catalog/v1 `$defs/reference`: `quran` (surah, ayah_start, ayah_end), `hadith`, `book`, `shaykh` or `other`, each with an `id`. Not restated here because the catalog's camelCase member names (ayah_start, ayah_end) can't pass this spec's snake_case lint."
             }
           }
         }

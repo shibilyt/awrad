@@ -80,8 +80,8 @@ commands:
                     - id: quran
                       type: quran
                       surah: 9
-                      ayahStart: 129
-                      ayahEnd: 129
+                      ayah_start: 129
+                      ayah_end: 129
               - command_id: 0192f0c0-0000-7000-8000-000000000002
                 entity_type: user_tag
                 entity_id: 0192f0a0-0000-7000-8000-000000000003
@@ -142,8 +142,8 @@ commands:
                     - id: quran
                       type: quran
                       surah: 9
-                      ayahStart: 129
-                      ayahEnd: 129
+                      ayah_start: 129
+                      ayah_end: 129
     responses:
       "200":
         description: One receipt per command, in order, and the account's head revision after the batch.
@@ -351,8 +351,8 @@ changes:
                       - id: quran
                         type: quran
                         surah: 9
-                        ayahStart: 129
-                        ayahEnd: 129
+                        ayah_start: 129
+                        ayah_end: 129
                 - entity_type: dhikr_personal
                   entity_id: 6f04f77e-dcb6-4a29-9dc5-fcd3649c2961
                   state: active

@@ -692,7 +692,7 @@ The verification-link and request-id parts of the frozen implementation. ADR-202
 
 ## ADR-2026-10-28: The change queue
 
-Status: Proposed
+Status: Accepted
 
 ### Context
 
@@ -734,6 +734,9 @@ What is kept from progress sync v1 and what is dropped:
 
 ### Consequences
 
+- Quran references in the catalog and in custom dhikr documents use `ayah_start` and `ayah_end`, as STYLE's snake_case rule asks (the catalog's camelCase is renamed now, before more code reads it).
+- A phone learns that its account was deleted from `401 account_deleted` on refresh, and offers to remove that profile.
+
 - **Simpler state.** The server keeps four things per account: a head revision, one entity table, receipts for 90 days, and tag aliases. Phones keep an outbox, known versions and a feed position per profile.
 - **Reuse.** Goals (slice 4) and counts (slice 5) add entity types to the same queue. Counts will need their own merge rule on top of it, because whole-document versions would lose concurrent taps.
 - **Behaviour is fixed by fixtures.** The server runs `sync_receipts` and `sync_changes_feed`; Android and iOS run `outbox_enqueue`, `apply_changes` and `profile_switch`; all four run `tag_name_normalization` and `custom_dhikr_validity`.
@@ -749,7 +752,9 @@ What is kept from progress sync v1 and what is dropped:
 
 ### Supersedes
 
-ADR-2026-07-16 (Offline-first progress synchronization), ADR-2026-07-24 (Capability-gated dhikr tags in progress sync v1) and ADR-2026-09-04 (Browser companion actors) for the rebuild, once accepted. They stay accepted for the frozen apps.
+ADR-2026-07-16 (Offline-first progress synchronization), ADR-2026-07-24 (Capability-gated dhikr tags in progress sync v1) and ADR-2026-09-04 (Browser companion actors) for the rebuild. They stay accepted for the frozen apps.
+
+Local profiles replace the account-binding rules those ADRs and ADR-2026-09-09 describe; where ADR-2026-10-28 (the mobile apps are complete without an account) says signing in binds local data, local profiles are how. How practice settings merge at the first sign-in (ADR-2026-09-09) is revisited in slice 3d.
 
 ## ADR-2026-10-28: Every generated ID is a UUIDv7
 

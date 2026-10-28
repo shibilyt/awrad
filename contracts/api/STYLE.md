@@ -28,11 +28,11 @@ The keywords **must**, **must not**, **should** and **may** are used in their RF
 
   `PATCH` is not used: writes replace whole documents and carry `expected_revision` (§9).
 - A non-CRUD action is `POST /api/v1/{collection}/{id}/{action_name}`, with a verb in snake_case: `POST /api/v1/sessions/{session_id}/revoke`.
-- **One write path for user progress.** Goals, counts, custom dhikr and tags change only through the progress command ledger:
-  - Mobile sends batched commands from its offline outbox.
-  - The online-only web app calls resource endpoints (for example `POST /api/v1/goals`). The server turns each call into the same ledger commands, as browser actors do today (ADR-2026-09-04).
-  - No endpoint writes progress tables directly.
-- Reads: the web uses resource read views; mobile uses sync snapshots and deltas. Both are projections of the same ledger.
+- **One write path for user data.** Custom dhikrs, tags, and later goals and counts, change only through the change queue (`contracts/sync/v1/`, ADR-2026-10-28):
+  - Mobile sends batched commands from its offline queue to `POST /api/v1/sync/commands`.
+  - The online-only web sends each edit as a one-command batch to the same endpoint.
+  - No endpoint writes those entities directly.
+- Reads: every client reads `GET /api/v1/sync/changes` (after `0` for everything active, then after its last revision).
 
 ## 3. JSON naming and shape
 
@@ -64,7 +64,7 @@ The keywords **must**, **must not**, **should** and **may** are used in their RF
   - Clients store them as 64-bit integers (Kotlin `Long`, Swift `Int64`). The server rejects anything outside the declared range.
 - Small bounded values (minutes, page sizes, `limit`) are plain JSON integers with tighter declared ranges.
 - Coordinates (latitude, longitude) are the only fractional numbers.
-- This replaces the integer-string encoding of the frozen sync contract (`contracts/progress-sync/v1`). The new progress-sync contract uses JSON integers.
+- This replaces the integer-string encoding of the frozen sync contract (`contracts/progress-sync/v1`). The change queue (`contracts/sync/v1`) uses JSON integers.
 
 ## 6. Time
 
@@ -124,13 +124,13 @@ Existing codes such as `email_verification_required`, `password_setup_required`,
 - Lists are **cursor-paginated**: `?limit=50&cursor=…`. Responses carry `next_cursor`, which is `null` on the last page.
 - Cursors are opaque strings. Clients must not parse or build them. Cursors may be signed and tied to the account.
 - Every list documents its default and maximum `limit`. Offsets aren't supported.
-- Sync snapshots and deltas keep their own paged transfer protocol (`contracts/progress-sync/`).
+- The sync changes feed pages by revision instead (`after`, `next_after`, `has_more`; `contracts/sync/v1/`).
 
 ## 9. Concurrency
 
 - Mutable shared resources carry `revision` (a JSON integer).
 - A write sends `expected_revision`. If it's stale, the server returns `409` with `code: "revision_conflict"` and the current resource in `current`. The client applies it, and doesn't retry the stale write blindly.
-- This is the same model the sync protocol uses (`basis_revision`), so there's one concurrency model across the API.
+- The change queue uses the same model per entity: a command's `base_version` against the entity's `version`, with a `conflict` receipt carrying `current`.
 
 ## 10. Idempotency
 
@@ -141,7 +141,7 @@ Existing codes such as `email_verification_required`, `password_setup_required`,
 - Only successful results are stored. After an error, a retry with the same key runs again.
 - An operation whose result can't be replayed from storage, such as one that sets a session cookie, runs again for a repeat with the same key and body. Its spec says so.
 - `PUT` and `DELETE` are naturally idempotent.
-- Sync commands keep their own `command_id`.
+- Sync commands are idempotent by their own `command_id`; `Idempotency-Key` is accepted and ignored there.
 
 ## 11. Authentication
 

@@ -494,8 +494,8 @@
                       "id": "quran",
                       "type": "quran",
                       "surah": 9,
-                      "ayahStart": 129,
-                      "ayahEnd": 129
+                      "ayah_start": 129,
+                      "ayah_end": 129
                     }
                   ]
                 }
@@ -563,8 +563,8 @@
                     "id": "quran",
                     "type": "quran",
                     "surah": 9,
-                    "ayahStart": 129,
-                    "ayahEnd": 129
+                    "ayah_start": 129,
+                    "ayah_end": 129
                   }
                 ]
               }
@@ -1949,8 +1949,8 @@
                       "id": "quran",
                       "type": "quran",
                       "surah": 9,
-                      "ayahStart": 129,
-                      "ayahEnd": 129
+                      "ayah_start": 129,
+                      "ayah_end": 129
                     }
                   ]
                 }
@@ -2063,8 +2063,8 @@
                       "id": "quran",
                       "type": "quran",
                       "surah": 9,
-                      "ayahStart": 129,
-                      "ayahEnd": 129
+                      "ayah_start": 129,
+                      "ayah_end": 129
                     }
                   ]
                 }
@@ -2885,8 +2885,8 @@
                       "id": "quran",
                       "type": "quran",
                       "surah": 9,
-                      "ayahStart": 129,
-                      "ayahEnd": 129
+                      "ayah_start": 129,
+                      "ayah_end": 129
                     }
                   ]
                 }
@@ -2996,8 +2996,8 @@
                       "id": "quran",
                       "type": "quran",
                       "surah": 9,
-                      "ayahStart": 129,
-                      "ayahEnd": 129
+                      "ayah_start": 129,
+                      "ayah_end": 129
                     }
                   ]
                 }
@@ -4554,8 +4554,8 @@
                       "id": "quran",
                       "type": "quran",
                       "surah": 9,
-                      "ayahStart": 129,
-                      "ayahEnd": 129
+                      "ayah_start": 129,
+                      "ayah_end": 129
                     }
                   ]
                 }
@@ -4781,8 +4781,8 @@
                       "id": "quran",
                       "type": "quran",
                       "surah": 9,
-                      "ayahStart": 129,
-                      "ayahEnd": 129
+                      "ayah_start": 129,
+                      "ayah_end": 129
                     }
                   ]
                 }
@@ -4831,8 +4831,8 @@
                     "id": "quran",
                     "type": "quran",
                     "surah": 9,
-                    "ayahStart": 129,
-                    "ayahEnd": 129
+                    "ayah_start": 129,
+                    "ayah_end": 129
                   }
                 ]
               }

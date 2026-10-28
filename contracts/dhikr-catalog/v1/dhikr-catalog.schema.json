@@ -303,8 +303,8 @@
         "id",
         "type",
         "surah",
-        "ayahStart",
-        "ayahEnd"
+        "ayah_start",
+        "ayah_end"
       ],
       "properties": {
         "id": {
@@ -318,11 +318,11 @@
           "minimum": 1,
           "maximum": 114
         },
-        "ayahStart": {
+        "ayah_start": {
           "type": "integer",
           "minimum": 1
         },
-        "ayahEnd": {
+        "ayah_end": {
           "type": "integer",
           "minimum": 1
         }

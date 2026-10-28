@@ -431,9 +431,9 @@ components:
           maxItems: 20
           items:
             description: >-
-              A reference exactly as in contracts/dhikr-catalog/v1 `$defs/reference`: `quran` (surah, ayahStart,
-              ayahEnd), `hadith`, `book`, `shaykh` or `other`, each with an `id`. Not restated here because the
-              catalog's camelCase member names (ayahStart, ayahEnd) can't pass this spec's snake_case lint.
+              A reference exactly as in contracts/dhikr-catalog/v1 `$defs/reference`: `quran` (surah, ayah_start,
+              ayah_end), `hadith`, `book`, `shaykh` or `other`, each with an `id`. Not restated here because the
+              catalog's camelCase member names (ayah_start, ayah_end) can't pass this spec's snake_case lint.
     UserTagDocument:
       type: object
       additionalProperties: false

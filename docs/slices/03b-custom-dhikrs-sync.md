@@ -1,6 +1,6 @@
 # Slice 3b: Custom dhikrs, tags and the change queue
 
-Status: Draft
+Status: Agreed (contract accepted 2026-10-28)
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 3b
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 
@@ -17,6 +17,7 @@ Users can create, edit and delete their own dhikrs and tag any dhikr, offline on
 - **Duplicate tags merge.** Two devices that both create "Morning" offline end up with one tag, and every dhikr keeps it.
 - **Local profiles.** A phone keeps each account's data in its own local profile, labelled with the account, and never mixes two accounts. Before the first sign-in there is one anonymous profile; the first sign-in asks once to add it to the account or erase it.
 - **The web edits too.** It's online only and sends each edit straight away, with no queue.
+- **Contract details agreed (2026-10-28):** Qur'an references are `ayah_start`/`ayah_end` everywhere (the catalog is renamed, so each app updates its catalog parsing in this slice); a refresh for a deleted account answers `401 account_deleted`, and the phone offers to remove that profile. The mobile apps stay complete without an account (ADR-2026-10-28): signed out, nothing contacts the server.
 
 ## Scope
 
