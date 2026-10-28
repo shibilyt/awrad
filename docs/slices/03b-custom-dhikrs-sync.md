@@ -196,22 +196,22 @@ The web sends each edit as a one-command batch through the same endpoint, with t
 
 | Project | Work | Validation | Status |
 |---|---|---|---|
-| awrad-server-next | Sync tables (heads, entities, receipts, tag aliases), the two endpoints, the rules above, fixture runners | `mix validate` | ☐ |
-| awrad-android-next | Room entities and outbox, sync engine, binding prompt, custom dhikr editor, tags, Library additions, local audio | Gradle validation | ☐ |
-| awrad-ios-next | Same as Android, on SwiftData | `scripts/validate` | ☐ |
-| awrad-web-next | Custom dhikr editor and tags over the API | `npm run validate` | ☐ |
+| awrad-server-next | Sync tables (heads, entities, receipts, tag aliases), the two endpoints, the rules above, fixture runners | `mix validate` | ☑ |
+| awrad-android-next | Room entities and outbox, sync engine, binding prompt, custom dhikr editor, tags, Library additions, local audio | Gradle validation | ☑ |
+| awrad-ios-next | Same as Android, on SwiftData | `scripts/validate` | ☑ |
+| awrad-web-next | Custom dhikr editor and tags over the API | `npm run validate` | ☑ |
 
 ## Integration evidence (step 6)
 
 | Flow | Android | iOS | Web | Notes |
 |---|---|---|---|---|
-| Create a custom dhikr offline, sign in, add to account; it appears on the other platforms | ☐ | ☐ | ☐ | |
-| The same tag created on two devices offline merges | ☐ | ☐ | — | |
-| Edit the same dhikr on two devices: conflict, then Keep mine or Use theirs | ☐ | ☐ | ☐ | |
-| Delete on one device; it disappears on the others | ☐ | ☐ | ☐ | |
-| Anonymous use → sign in (add) → sign out → more edits → sign in again: queued edits sync, no prompt | ☐ | ☐ | — | |
-| Sign in as B after A: B's data only; A's unsent edits kept and sent when A returns | ☐ | ☐ | — | |
-| Remove an account's data from the phone, with a warning about unsent changes | ☐ | ☐ | — | |
+| Create a custom dhikr offline, sign in, add to account; it appears on the other platforms | ☑ | ☑ | ☑ | Real server on :4100; phone data seen on the web and in the API feed |
+| The same tag created on two devices offline merges | ☑ | ☑ | — | Protocol run against the real server (merge, alias rewrite in the same batch) plus the shared fixtures on both phones |
+| Edit the same dhikr on two devices: conflict, then Keep mine or Use theirs | ☑ | ☑ | ☑ | Android Keep mine, iOS Use theirs, web Keep mine, each against a second device's earlier edit |
+| Delete on one device; it disappears on the others | ☑ | ☑ | ☑ | Protocol run (tag delete with `cascaded`, seen by the second device) plus the `apply_changes` page-delete fixtures |
+| Anonymous use → sign in (add) → sign out → more edits → sign in again: queued edits sync, no prompt | ☑ | ☑ | — | Zero requests while signed out (network capture on Android, connection monitor on iOS) |
+| Sign in as B after A: B's data only; A's unsent edits kept and sent when A returns | ☑ | ☑ | — | |
+| Remove an account's data from the phone, with a warning about unsent changes | ☑ | ☑ | — | Remove after `account_deleted` on both phones; the unsent-changes warning is covered by `profile_switch` and profile tests |
 
 ## Definition of done
 
