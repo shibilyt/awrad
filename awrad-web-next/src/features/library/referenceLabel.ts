@@ -19,8 +19,8 @@ function isolate(text: string, language: Language): string {
 export function referenceLabel(reference: Reference, t: TFunction, language: Language): string {
   switch (reference.type) {
     case "quran": {
-      const { surah, ayahStart, ayahEnd } = reference;
-      const ayahs = ayahStart === ayahEnd ? String(ayahStart) : `${String(ayahStart)}–${String(ayahEnd)}`;
+      const { surah, ayah_start, ayah_end } = reference;
+      const ayahs = ayah_start === ayah_end ? String(ayah_start) : `${String(ayah_start)}–${String(ayah_end)}`;
       return t("library.reference.quran", { place: isolate(`${String(surah)}:${ayahs}`, language) });
     }
     case "hadith": {

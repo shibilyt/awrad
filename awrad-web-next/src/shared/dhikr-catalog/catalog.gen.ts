@@ -5,7 +5,7 @@ import type { Catalog } from "./types";
 
 export const catalog: Catalog = {
   version: 1,
-  contentRevision: 3,
+  contentRevision: 4,
   dhikrs: [
     {
       id: "c88b9491-40ad-4b42-a5b8-e07c4b4d31ef",
@@ -32,7 +32,7 @@ export const catalog: Catalog = {
         byteSize: 139851,
         mimeType: "audio/mpeg",
       },
-      references: [{ id: "quran-112-1-4", type: "quran", surah: 112, ayahStart: 1, ayahEnd: 4 }],
+      references: [{ id: "quran-112-1-4", type: "quran", surah: 112, ayah_start: 1, ayah_end: 4 }],
       virtues: [],
     },
     {
@@ -138,8 +138,8 @@ export const catalog: Catalog = {
           number: "1518",
           grade: "Da'if (al-Albani)",
         },
-        { id: "quran-71-10", type: "quran", surah: 71, ayahStart: 10, ayahEnd: 10 },
-        { id: "quran-71-10-12", type: "quran", surah: 71, ayahStart: 10, ayahEnd: 12 },
+        { id: "quran-71-10", type: "quran", surah: 71, ayah_start: 10, ayah_end: 10 },
+        { id: "quran-71-10-12", type: "quran", surah: 71, ayah_start: 10, ayah_end: 12 },
       ],
       virtues: [
         {
