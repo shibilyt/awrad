@@ -99,9 +99,10 @@ extension LocalProfileStore: PersonalLibrary {
     }
 
     /// Saves one edit in the active profile: queued only when the profile belongs to an account
-    /// (an anonymous profile's edits are saved, never queued).
+    /// that still exists (an anonymous profile's edits, and a kept deleted account's, are saved,
+    /// never queued).
     private func edit(_ edit: SyncEdit) async throws(PersonalLibraryError) {
-        let queue = registry.active?.accountID != nil
+        let queue = registry.active?.queuesEdits == true
         try await database.save(edit, queue: queue)
         await afterEdit()
     }

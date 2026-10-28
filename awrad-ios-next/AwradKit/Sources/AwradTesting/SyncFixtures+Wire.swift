@@ -58,9 +58,10 @@ final class ReceiptShape: Decodable {
     let code: String?
     let fields: [FieldErrorShape]?
     let original: ReceiptShape?
+    let cascaded: [CascadeShape]?
 
     enum CodingKeys: String, CodingKey {
-        case status, version, revision, current, code, fields, original
+        case status, version, revision, current, code, fields, original, cascaded
         case commandID = "command_id"
         case mergedInto = "merged_into"
     }
@@ -69,7 +70,9 @@ final class ReceiptShape: Decodable {
         let commandID = try wireID(commandID)
         switch status {
         case "applied":
-            return .applied(commandID: commandID, version: version ?? 0, revision: revision ?? 0)
+            return .applied(
+                commandID: commandID, version: version ?? 0, revision: revision ?? 0,
+                cascaded: try cascaded?.map { try $0.cascade() })
         case "duplicate":
             guard let original else { throw SyncShapeError("duplicate without original") }
             return .duplicate(commandID: commandID, original: try original.receipt())
@@ -89,6 +92,27 @@ final class ReceiptShape: Decodable {
         default:
             throw SyncShapeError("unknown status \(status)")
         }
+    }
+}
+
+struct CascadeShape: Decodable {
+    let entityType: String
+    let entityID: String
+    let state: String
+    let version: Int
+    let revision: Int
+
+    enum CodingKeys: String, CodingKey {
+        case state, version, revision
+        case entityType = "entity_type"
+        case entityID = "entity_id"
+    }
+
+    func cascade() throws -> SyncCascade {
+        guard let state = SyncEntityState(rawValue: state) else { throw SyncShapeError("unknown state \(state)") }
+        return SyncCascade(
+            key: SyncEntityKey(try wireEntityType(entityType), try wireID(entityID)), state: state, version: version,
+            revision: revision)
     }
 }
 

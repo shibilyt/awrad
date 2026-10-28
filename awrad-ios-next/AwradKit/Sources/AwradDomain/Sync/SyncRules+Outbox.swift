@@ -10,8 +10,8 @@ extension SyncRules {
     /// command is queued (`outbox_enqueue.json`). An anonymous profile saves without queuing.
     ///
     /// - A put stores the document. A delete removes the entity; deleting a custom dhikr removes
-    ///   its personal record, and deleting a tag takes it out of every personal record (the server
-    ///   does the same and sends those changes back).
+    ///   its personal record, and deleting a tag takes it out of every personal record and never-sent
+    ///   personal command (only the tag delete is queued; the server cascades it).
     public static func save(_ edit: SyncEdit, queue: Bool, in state: inout some SyncLocalState) {
         switch edit.op {
         case .put:
@@ -40,6 +40,9 @@ extension SyncRules {
     /// - Otherwise a command is added at the end, chained on the entity's last queued command
     ///   (`base_version` + 1), or on the known version when nothing is queued for it.
     /// - Deleting a custom dhikr also drops never-sent commands for its personal record.
+    /// - Deleting a tag queues only the tag delete, and takes the tag out of every personal record
+    ///   and never-sent personal command in place; sent ones stay, since the server drops the tag
+    ///   itself and lists the records it changed in the receipt's `cascaded`.
     public static func enqueue(_ edit: SyncEdit, in state: inout some SyncLocalState) {
         let queued = state.commands(for: edit.key)
         if var last = queued.last, !last.sent {
@@ -59,6 +62,9 @@ extension SyncRules {
         }
         if edit.op == .delete, edit.key.type == .customDhikr {
             dropUnsentCommands(for: SyncEntityKey(.dhikrPersonal, edit.key.id), in: &state)
+        }
+        if edit.op == .delete, edit.key.type == .userTag {
+            removeTagFromPersonalRecords(edit.key.id, in: &state)
         }
     }
 

@@ -23,6 +23,26 @@ struct DhikrCatalogTests {
         #expect(catalog.dhikrs.filter { $0.kind == .nameOfAllah }.count == 100)
     }
 
+    /// The detail screen's Sources: never what its card or a virtue already shows.
+    @Test func sourcesAreTheReferencesShownNowhereElse() throws {
+        for dhikr in try DhikrCatalog.bundled().dhikrs {
+            let cited = Set(dhikr.virtues.flatMap(\.references))
+            #expect(dhikr.sources.allSatisfy { !cited.contains($0.id) }, "\(dhikr.key)")
+            if dhikr.kind == .quran {
+                #expect(dhikr.sources.allSatisfy { if case .quran = $0 { false } else { true } }, "\(dhikr.key)")
+            }
+        }
+        // A custom dhikr has no virtues: all of its references, in order, Qur'an included unless
+        // it's a Qur'an dhikr.
+        let book = Reference.book(id: "book", title: "Hisn al-Muslim", author: nil, volume: nil, page: nil)
+        let quran = Reference.quran(id: "quran", surah: 2, ayahs: 255...255)
+        var custom = CustomDhikrDocument(
+            kind: .dua, arabic: "سُبْحَانَ ٱللَّهِ", title: LanguageTexts(en: "Mine"), references: [book.json, quran.json])
+        #expect(custom.dhikr(id: .random()).sources.map(\.id) == ["book", "quran"])
+        custom.kind = .quran
+        #expect(custom.dhikr(id: .random()).sources.map(\.id) == ["book"])
+    }
+
     @Test func referencesResolve() throws {
         let catalog = try DhikrCatalog.bundled()
         for collection in catalog.collections {

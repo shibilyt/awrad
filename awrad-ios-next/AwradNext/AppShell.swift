@@ -41,7 +41,12 @@ struct AppShell: View {
             switch tab {
             case .home:
                 HomeView(
-                    content: library.content,
+                    content: library.content, yourDhikrsCount: library.state.personal.customDhikrs.count,
+                    onOpenYourDhikrs: {
+                        library.apply(.showRoot)
+                        library.apply(.openYourDhikrs)
+                        tab = .library
+                    },
                     onOpenCollection: { collection in
                         library.apply(.openCollection(key: collection.key))
                         tab = .library
@@ -62,12 +67,16 @@ struct AppShell: View {
             selection: $tab, items: Self.items, isPresented: tab == .home || library.state.path.isEmpty
         )
         .background(AwradColors.background)
+        // The shell follows the user's library, so Home's tiles know about their dhikrs too.
+        .task { await library.observePersonalLibrary() }
     }
 }
 
 /// Home: the placeholder content from earlier slices, then the featured dhikr collections.
 struct HomeView: View {
     let content: LibraryContent
+    let yourDhikrsCount: Int
+    let onOpenYourDhikrs: () -> Void
     let onOpenCollection: (DhikrCollection) -> Void
     let onViewAll: () -> Void
     let onShowAccount: () -> Void
@@ -80,7 +89,9 @@ struct HomeView: View {
         ScrollView {
             VStack(spacing: AwradSpacing.xl3) {
                 placeholder
-                FeaturedCollections(content: content, onOpen: onOpenCollection, onViewAll: onViewAll)
+                FeaturedCollections(
+                    content: content, yourDhikrsCount: yourDhikrsCount, onOpenYourDhikrs: onOpenYourDhikrs,
+                    onOpen: onOpenCollection, onViewAll: onViewAll)
             }
             .padding(.vertical, AwradSpacing.xl3)
         }

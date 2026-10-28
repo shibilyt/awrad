@@ -1,7 +1,7 @@
 import AwradDomain
 import Foundation
 
-// apply_changes and profile_switch shapes.
+// apply_changes shapes (profile_switch: SyncFixtures+Profiles.swift).
 
 // MARK: - apply_changes
 
@@ -170,120 +170,5 @@ public struct ApplyChangesExpect: Decodable, Equatable, Sendable {
     public init(local: LocalShape, notices: [NoticeShape]) {
         self.local = local
         self.notices = notices
-    }
-}
-
-// MARK: - profile_switch
-
-public struct ProfileShape: Codable, Equatable, Sendable {
-    public let profileID: String
-    public let accountID: String?
-    public let email: String?
-    public let after: Int
-    public let hasData: Bool
-    public let hasUnsent: Bool
-
-    enum CodingKeys: String, CodingKey {
-        case email, after
-        case profileID = "profile_id"
-        case accountID = "account_id"
-        case hasData = "has_data"
-        case hasUnsent = "has_unsent"
-    }
-
-    public init(_ profile: LocalProfile) {
-        profileID = profile.id.description
-        accountID = profile.accountID?.description
-        email = profile.email
-        after = profile.after
-        hasData = profile.hasData
-        hasUnsent = profile.hasUnsent
-    }
-
-    public func profile() throws -> LocalProfile {
-        LocalProfile(
-            id: try wireID(profileID), accountID: try accountID.map(wireID), email: email, after: after,
-            hasData: hasData, hasUnsent: hasUnsent)
-    }
-}
-
-public struct RegistryShape: Codable, Equatable, Sendable {
-    public let profiles: [ProfileShape]
-    public let activeProfileID: String
-    public let signedInAccountID: String?
-
-    enum CodingKeys: String, CodingKey {
-        case profiles
-        case activeProfileID = "active_profile_id"
-        case signedInAccountID = "signed_in_account_id"
-    }
-
-    public init(_ registry: ProfileRegistry) {
-        profiles = registry.profiles.map(ProfileShape.init)
-        activeProfileID = registry.activeProfileID.description
-        signedInAccountID = registry.signedInAccountID?.description
-    }
-
-    public func registry() throws -> ProfileRegistry {
-        ProfileRegistry(
-            profiles: try profiles.map { try $0.profile() }, activeProfileID: try wireID(activeProfileID),
-            signedInAccountID: try signedInAccountID.map(wireID))
-    }
-}
-
-public struct ProfileEventShape: Decodable, Sendable {
-    public let type: String
-    public let accountID: String?
-    public let email: String?
-    public let profileID: String?
-
-    enum CodingKeys: String, CodingKey {
-        case type, email
-        case accountID = "account_id"
-        case profileID = "profile_id"
-    }
-
-    public func event() throws -> ProfileEvent {
-        switch type {
-        case "edit": return .edit
-        case "sign_out": return .signOut
-        case "sign_in": return .signIn(accountID: try wireID(accountID ?? ""), email: email ?? "")
-        case "remove_profile": return .removeProfile(try wireID(profileID ?? ""))
-        case "account_deleted": return .accountDeleted(try wireID(accountID ?? ""))
-        default: throw SyncShapeError("unknown event \(type)")
-        }
-    }
-}
-
-public struct ProfileSwitchGiven: Decodable, Sendable {
-    public let registry: RegistryShape
-    public let event: ProfileEventShape
-    public let choice: String?
-    public let newProfileID: String
-
-    enum CodingKeys: String, CodingKey {
-        case registry, event, choice
-        case newProfileID = "new_profile_id"
-    }
-}
-
-public struct ProfileSwitchExpect: Decodable, Equatable, Sendable {
-    public let prompt: String?
-    public let registry: RegistryShape
-    public let queueAll: String?
-    public let sync: String?
-    public let erased: [String]
-
-    enum CodingKeys: String, CodingKey {
-        case prompt, registry, sync, erased
-        case queueAll = "queue_all"
-    }
-
-    public init(_ outcome: ProfileSwitchOutcome) {
-        prompt = outcome.prompt?.rawValue
-        registry = RegistryShape(outcome.registry)
-        queueAll = outcome.queueAll?.description
-        sync = outcome.sync?.description
-        erased = outcome.erased.map(\.description)
     }
 }

@@ -132,8 +132,17 @@ public enum CustomDhikrValidation {
         guard let items = value.arrayValue else { return [SyncFieldError(field: "/references", code: "invalid")] }
         var errors: [SyncFieldError] = []
         if items.count > maxReferences { errors.append(SyncFieldError(field: "/references", code: "too_many")) }
-        for (index, item) in items.enumerated() where !isValidReference(item) {
-            errors.append(SyncFieldError(field: "/references/\(index)", code: "invalid"))
+        for (index, item) in items.enumerated() {
+            guard isValidReference(item) else {
+                errors.append(SyncFieldError(field: "/references/\(index)", code: "invalid"))
+                continue
+            }
+            // The rule the schema can't express: a Qur'an range never ends before it starts.
+            if item["type"]?.stringValue == "quran", let start = item["ayah_start"]?.intValue,
+                let end = item["ayah_end"]?.intValue, end < start
+            {
+                errors.append(SyncFieldError(field: "/references/\(index)/ayah_end", code: "range"))
+            }
         }
         return errors
     }

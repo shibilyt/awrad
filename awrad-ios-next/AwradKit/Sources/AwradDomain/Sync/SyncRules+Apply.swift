@@ -6,15 +6,21 @@ extension SyncRules {
     /// Applies one changes page, then moves `after` to its `next_after`. The caller saves both in
     /// one transaction.
     ///
-    /// - A change to an entity with a queued command or an open conflict updates only its known
-    ///   version (and the conflict's server copy): the local edit stays, and its conflict surfaces
-    ///   when it's sent.
-    /// - Otherwise an active change is stored, unless it's older than the known version, and a
-    ///   delete removes the entity, or is ignored when the phone doesn't have it.
+    /// - A delete cleans up as a `gone` receipt does, even with queued commands or an open
+    ///   conflict: the entity goes with its unsent commands and its conflict (sent commands wait for
+    ///   their receipts). A delete of something the phone doesn't have changes nothing.
+    /// - Any other change to an entity with a queued command or an open conflict updates only its
+    ///   known version (and the conflict's server copy): the local edit stays, and its conflict
+    ///   surfaces when it's sent.
+    /// - Otherwise an active change is stored, unless it's older than the known version.
     public static func apply(_ page: ChangesPage, to state: inout some SyncLocalState) {
         for change in page.changes {
             let key = change.key
             let known = state.knownVersion(key)
+            if change.state == .deleted {
+                remove(key, in: &state)
+                continue
+            }
             if state.hasPendingEdit(key) {
                 state.setKnownVersion(max(known, change.version), for: key)
                 if var conflict = state.conflict(key), change.version >= conflict.server.version {
@@ -25,13 +31,8 @@ extension SyncRules {
                 continue
             }
             guard change.version >= known else { continue }
-            switch change.state {
-            case .active:
-                state.setDocument(change.document, for: key)
-                state.setKnownVersion(change.version, for: key)
-            case .deleted:
-                remove(key, in: &state)
-            }
+            state.setDocument(change.document, for: key)
+            state.setKnownVersion(change.version, for: key)
         }
         state.after = page.nextAfter
     }
@@ -41,7 +42,7 @@ extension SyncRules {
     ///
     /// | Receipt | Effect |
     /// |---|---|
-    /// | `applied` | Records the version and closes any conflict |
+    /// | `applied` | Records the version, closes any conflict, and applies its `cascaded` entries |
     /// | `duplicate` | As its original |
     /// | `conflict` | Keeps the local document, drops later unsent commands for the entity, opens a conflict |
     /// | `merged` | Moves every local use of the tag ID to the surviving tag |
@@ -55,13 +56,14 @@ extension SyncRules {
             state.removeCommand(command.commandID)
             let key = command.key
             switch receipt.outcome {
-            case .applied(_, let version, _):
+            case .applied(_, let version, _, let cascaded):
                 if state.document(key) == nil, state.commands(for: key).isEmpty {
                     state.setKnownVersion(nil, for: key)
                 } else {
                     state.setKnownVersion(version, for: key)
                 }
                 state.setConflict(nil, for: key)
+                for cascade in cascaded ?? [] { apply(cascade, to: &state) }
             case .conflict(_, let current):
                 dropUnsentCommands(for: key, in: &state)
                 state.setKnownVersion(current.version, for: key)
@@ -104,6 +106,19 @@ extension SyncRules {
     }
 
     // MARK: - Steps
+
+    /// A delete's cascade, applied as a page change would be to an entity the phone has: an active
+    /// one moves its known version (never back), a deleted one is removed. A command already queued
+    /// for it keeps its `base_version` and conflicts as normal.
+    private static func apply(_ cascade: SyncCascade, to state: inout some SyncLocalState) {
+        let key = cascade.key
+        let known = state.knownVersion(key)
+        guard state.document(key) != nil || known > 0 || !state.commands(for: key).isEmpty else { return }
+        switch cascade.state {
+        case .active: state.setKnownVersion(max(known, cascade.version), for: key)
+        case .deleted: remove(key, in: &state)
+        }
+    }
 
     /// Puts the server's copy back, or removes the entity when the server has none (or deleted it).
     /// Later unsent commands for the entity are dropped: they were made on the undone version.

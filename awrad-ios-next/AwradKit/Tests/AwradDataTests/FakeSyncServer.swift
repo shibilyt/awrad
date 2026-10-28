@@ -143,8 +143,8 @@ actor FakeSyncServer: SyncServer {
         let deleted = command.op == "delete"
         entities[key] = Entity(
             version: version, state: deleted ? .deleted : .active, revision: head, document: deleted ? .null : document)
-        if deleted { cascade(key) }
-        return .applied(commandID: id, version: version, revision: head)
+        let cascaded = deleted && type != .dhikrPersonal ? cascade(key) : nil
+        return .applied(commandID: id, version: version, revision: head, cascaded: cascaded)
     }
 
     /// A tag create whose name an active tag has is merged (its ID becomes an alias); a rename onto
@@ -177,13 +177,18 @@ actor FakeSyncServer: SyncServer {
         return .object(["tag_ids": .array(ids.map(AwradJSON.string))])
     }
 
-    private func cascade(_ key: SyncEntityKey) {
+    /// Applies a delete's cascade at the current revision and lists what it changed, as an `applied`
+    /// receipt's `cascaded` does.
+    @discardableResult
+    private func cascade(_ key: SyncEntityKey) -> [SyncCascadeWire] {
+        var changed: [SyncEntityKey] = []
         switch key.type {
         case .customDhikr:
             let personal = SyncEntityKey(.dhikrPersonal, key.id)
             if let entity = entities[personal], entity.state == .active {
                 entities[personal] = Entity(
                     version: entity.version + 1, state: .deleted, revision: head, document: .null)
+                changed.append(personal)
             }
         case .userTag:
             for (other, entity) in entities where other.type == .dhikrPersonal && entity.state == .active {
@@ -193,9 +198,17 @@ actor FakeSyncServer: SyncServer {
                 entities[other] = Entity(
                     version: entity.version + 1, state: .active, revision: head,
                     document: .object(["tag_ids": .array(kept)]))
+                changed.append(other)
             }
         case .dhikrPersonal:
             break
+        }
+        return changed.sorted().compactMap { changedKey in
+            entities[changedKey].map {
+                SyncCascadeWire(
+                    entityType: changedKey.type.rawValue, entityID: changedKey.id.description,
+                    state: $0.state.rawValue, version: $0.version, revision: $0.revision)
+            }
         }
     }
 

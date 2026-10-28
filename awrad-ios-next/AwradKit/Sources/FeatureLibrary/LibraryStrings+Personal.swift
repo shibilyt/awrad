@@ -10,7 +10,7 @@ extension Strings {
     static let done = text("library.common.done", "Done")
     static let save = text("library.common.save", "Save")
     static let add = text("library.common.add", "Add")
-    static let dismiss = text("library.common.dismiss", "Dismiss")
+    static let ok = text("library.common.ok", "OK")
     static let edit = text("library.common.edit", "Edit")
     static let delete = text("library.common.delete", "Delete")
 
@@ -19,7 +19,6 @@ extension Strings {
     static let yourDhikrs = text("library.your_dhikrs", "Your dhikrs")
     static let newDhikr = text("library.new_dhikr", "New dhikr")
     static let filterByTag = text("library.filter.by_tag", "Filter by tag")
-    static let clearFilter = text("library.filter.clear", "Clear")
     static let noFilterMatchBody = text("library.filter.empty.body", "No dhikr has all of the selected tags.")
     static let yourEmptyTitle = text("library.your.empty.title", "No dhikrs of your own yet")
     static let yourEmptyBody = text(
@@ -28,14 +27,8 @@ extension Strings {
 
     // MARK: - Rejected changes
 
-    /// What was undone, by the kind of thing.
-    static func noticeTitle(_ type: SyncEntityType) -> LocalizedStringResource {
-        switch type {
-        case .customDhikr: text("library.notice.title.custom_dhikr", "Your dhikr change was undone")
-        case .userTag: text("library.notice.title.user_tag", "Your tag change was undone")
-        case .dhikrPersonal: text("library.notice.title.dhikr_personal", "Your tag choice was undone")
-        }
-    }
+    /// The "Change refused" dialog's title; the change was already undone.
+    static let changeRefused = text("library.notice.change_refused", "Change refused")
 
     /// Why the server refused it.
     static func noticeReason(_ code: RejectionCode) -> LocalizedStringResource {
@@ -58,6 +51,7 @@ extension Strings {
     // MARK: - Detail
 
     static let manageTags = text("library.manage_tags", "Manage tags")
+    static let sources = text("library.sources", "Sources")
     static let deleteDhikr = text("library.delete_dhikr", "Delete dhikr")
     static let deleteDhikrTitle = text("library.delete_dhikr.title", "Delete this dhikr?")
     static let deleteDhikrMessage = text(

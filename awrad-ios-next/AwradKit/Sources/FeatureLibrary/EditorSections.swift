@@ -86,7 +86,7 @@ struct EditorTextSections: View {
         }
         return LabeledField(
             label: label, text: state.form[role][language], onChange: { send(.textChanged(role, language, $0)) },
-            error: error(field) ?? (role == .title ? error(.title) : nil), kind: .multiline,
+            error: error(field) ?? (role == .title ? error(.title) : nil), kind: role == .title ? .line : .multiline,
             isArabic: language == .ar && role != .transliteration
         )
         // A new language starts empty and unfocused, not with the last one's cursor.

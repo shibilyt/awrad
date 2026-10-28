@@ -106,6 +106,8 @@ public actor LocalProfileStore {
         if outcome.prompt != nil, choice == nil || choice == .cancel { return }
         let previousActive = registry.activeProfileID
         registry = outcome.registry
+        if let merge = outcome.merge { await self.merge(merge) }
+        if let kept = outcome.discardUnsent { await discardUnsent(kept, isActive: kept == previousActive) }
         for erased in outcome.erased {
             files.erase(erased)
         }
@@ -130,6 +132,28 @@ public actor LocalProfileStore {
                 // Not awaited: signing in mustn't wait for the network.
                 syncTask = Task { await self.scheduler.syncNow() }
             }
+        }
+    }
+
+    /// "Add to my account" into the account's existing profile: the anonymous profile's documents
+    /// and recordings move into it, queued as puts; the anonymous profile is erased afterwards.
+    private func merge(_ merge: ProfileMerge) async {
+        do {
+            let source = ProfileDatabase(modelContainer: try files.container(merge.from))
+            let target = ProfileDatabase(modelContainer: try files.container(merge.into))
+            try await target.merge(await source.documents())
+            files.moveAudio(from: merge.from, to: merge.into)
+        } catch {
+            // The account's profile stays as it was; the anonymous data can't be read or written.
+        }
+    }
+
+    /// A kept profile of a deleted account: its commands can never be sent.
+    private func discardUnsent(_ profile: AwradID, isActive: Bool) async {
+        if isActive {
+            try? await database.discardOutbox()
+        } else if let container = try? files.container(profile) {
+            try? await ProfileDatabase(modelContainer: container).discardOutbox()
         }
     }
 

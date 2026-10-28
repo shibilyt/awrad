@@ -32,24 +32,19 @@ struct LibraryScreen: View {
     let content: LibraryContent
     let services: LibraryServices
     let send: (LibraryModel.Action) -> Void
-    @State private var isFilterSheetShown = false
 
     var body: some View {
         NavigationStack(path: Binding(get: { state.path }, set: { send(.pathChanged($0)) })) {
             ScrollView {
                 VStack(alignment: .leading, spacing: AwradSpacing.sectionGap) {
-                    ForEach(state.personal.notices, id: \.self) { notice in
-                        NoticeCard(notice: notice) { send(.dismissNotice(notice)) }
-                            .pageInset()
-                    }
                     LibrarySearchField(
                         query: state.query, onChange: { send(.queryChanged($0)) }, onClear: { send(.clearSearch) }
                     )
                     .pageInset()
                     if !state.personal.tags.isEmpty {
-                        TagFilterBar(
-                            selected: state.filterTags, onOpen: { isFilterSheetShown = true },
-                            onClear: { send(.clearTagFilter) })
+                        TagFilterChips(tags: state.personal.tags, selected: state.tagFilter) {
+                            send(.toggleTagFilter($0))
+                        }
                     }
                     if let results = state.results {
                         listing(results)
@@ -66,12 +61,8 @@ struct LibraryScreen: View {
             .navigationDestination(for: LibraryModel.Destination.self) { destination in
                 self.destination(destination)
             }
-            .awradBottomSheet(isPresented: $isFilterSheetShown) {
-                TagFilterSheet(tags: state.personal.tags, selected: state.tagFilter, send: send) {
-                    isFilterSheetShown = false
-                }
-            }
         }
+        .changeRefusedNotice(state.personal.notices) { send(.dismissNotice($0)) }
         // Accent text for the back button, readable in light and dark.
         .tint(AwradColors.accent)
     }

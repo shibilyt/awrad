@@ -291,29 +291,6 @@
         }
       }
     },
-    "library.common.dismiss" : {
-      "comment" : "Button that hides a notice.",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "إخفاء"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Dismiss"
-          }
-        },
-        "ml" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ഒഴിവാക്കുക"
-          }
-        }
-      }
-    },
     "library.common.done" : {
       "comment" : "Done button that closes a sheet.",
       "localizations" : {
@@ -356,6 +333,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "എഡിറ്റ് ചെയ്യുക"
+          }
+        }
+      }
+    },
+    "library.common.ok" : {
+      "comment" : "The button that closes the \"Change refused\" dialog.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حسنًا"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ശരി"
           }
         }
       }
@@ -1441,29 +1441,6 @@
         }
       }
     },
-    "library.filter.clear" : {
-      "comment" : "Button that removes the tag filter.",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "مسح"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Clear"
-          }
-        },
-        "ml" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "മായ്ക്കുക"
-          }
-        }
-      }
-    },
     "library.filter.empty.body" : {
       "comment" : "Shown when no dhikr has every selected tag.",
       "localizations" : {
@@ -1648,6 +1625,29 @@
         }
       }
     },
+    "library.notice.change_refused" : {
+      "comment" : "Title of the dialog shown when the server refused a change, which has already been undone. Its body is the reason.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رُفض التغيير"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change refused"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മാറ്റം നിരസിച്ചു"
+          }
+        }
+      }
+    },
     "library.notice.reason.dhikr_limit" : {
       "comment" : "Why a change was undone.",
       "localizations" : {
@@ -1782,75 +1782,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ആ പേരിൽ മറ്റൊരു ടാഗ് ഇതിനകം ഉണ്ട്."
-          }
-        }
-      }
-    },
-    "library.notice.title.custom_dhikr" : {
-      "comment" : "Title of a notice: the server refused a change to a custom dhikr.",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تم التراجع عن تغيير ذكرك"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your dhikr change was undone"
-          }
-        },
-        "ml" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "നിങ്ങളുടെ ദിക്റിലെ മാറ്റം പിൻവലിച്ചു"
-          }
-        }
-      }
-    },
-    "library.notice.title.dhikr_personal" : {
-      "comment" : "Title of a notice: the server refused the tags chosen for a dhikr.",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تم التراجع عن اختيار الوسوم"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your tag choice was undone"
-          }
-        },
-        "ml" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "നിങ്ങളുടെ ടാഗ് തിരഞ്ഞെടുപ്പ് പിൻവലിച്ചു"
-          }
-        }
-      }
-    },
-    "library.notice.title.user_tag" : {
-      "comment" : "Title of a notice: the server refused a change to a tag.",
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تم التراجع عن تغيير الوسم"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Your tag change was undone"
-          }
-        },
-        "ml" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "നിങ്ങളുടെ ടാഗിലെ മാറ്റം പിൻവലിച്ചു"
           }
         }
       }
@@ -2587,6 +2518,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ദിക്റുകൾ തിരയുക"
+          }
+        }
+      }
+    },
+    "library.sources" : {
+      "comment" : "Dhikr detail section title over the references not shown elsewhere on the screen.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المصادر"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sources"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഉറവിടങ്ങൾ"
           }
         }
       }

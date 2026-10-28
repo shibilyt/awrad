@@ -6,7 +6,7 @@
     /// Debug builds only; the app opens it from a debug-only entry point.
     ///
     /// Launch arguments set its starting state, for screenshots: `-AwradGalleryDark YES`,
-    /// `-AwradGalleryRTL YES`, `-AwradGallerySection <containers|buttons|inputs|navigation>`,
+    /// `-AwradGalleryRTL YES`, `-AwradGallerySection <containers|buttons|inputs|library|navigation>`,
     /// `-AwradGalleryTab <home|goals|library|community>`, `-AwradGallerySheet YES`.
     public struct AwradComponentGallery: View {
         @State private var isDark: Bool
@@ -38,6 +38,7 @@
                                 .id(GallerySection.containers)
                             GalleryButtons().id(GallerySection.buttons)
                             GalleryInputs().id(GallerySection.inputs)
+                            GalleryLibrary().id(GallerySection.library)
                             GalleryNavigation(tab: tab).id(GallerySection.navigation)
                         }
                         .padding(.vertical, AwradSpacing.lg)
@@ -65,7 +66,7 @@
     func galleryNoAction() {}
 
     enum GallerySection: String, Hashable {
-        case containers, buttons, inputs, navigation
+        case containers, buttons, inputs, library, navigation
     }
 
     enum GalleryTab: String, Hashable, CaseIterable {

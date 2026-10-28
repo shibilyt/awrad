@@ -98,62 +98,32 @@ struct FlowLayout: Layout {
     }
 }
 
-/// "Changed on another device": the dhikr or tag was changed here and elsewhere. Keep mine or Use
-/// theirs. `name` is the tag's name when it's about a tag.
-struct ConflictCard: View {
+/// "Changed on another device" (components.md "Conflict banner"): the dhikr or tag was changed here
+/// and elsewhere. Keep mine or Use theirs. `name` is the tag's name when it's about a tag.
+struct ConflictBanner: View {
     let name: String?
     let onKeepMine: () -> Void
     let onUseTheirs: () -> Void
 
     var body: some View {
-        AwradCard {
-            VStack(alignment: .leading, spacing: AwradSpacing.xs) {
-                Text(Strings.conflictTitle)
-                    .awradTextStyle(.cardTitle)
-                    .foregroundStyle(AwradColors.onSurface)
-                    .accessibilityAddTraits(.isHeader)
-                if let name {
-                    Text(verbatim: name)
-                        .awradTextStyle(.rowTitle)
-                        .foregroundStyle(AwradColors.onSurface)
-                }
-                Text(Strings.conflictBody)
-                    .awradTextStyle(.body)
-                    .foregroundStyle(AwradColors.onSurfaceVariant)
-            }
-            .accessibilityElement(children: .combine)
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: AwradSpacing.sm) { buttons }
-                VStack(alignment: .leading, spacing: AwradSpacing.sm) { buttons }
-            }
-        }
-    }
-
-    @ViewBuilder private var buttons: some View {
-        AwradButton(Strings.keepMine, variant: .secondary, layout: .row, action: onKeepMine)
-        AwradButton(Strings.useTheirs, variant: .secondary, layout: .row, action: onUseTheirs)
+        AwradConflictBanner(
+            Strings.conflictTitle, detail: name, keepMine: Strings.keepMine, useTheirs: Strings.useTheirs,
+            onKeepMine: onKeepMine, onUseTheirs: onUseTheirs)
     }
 }
 
-/// A rejected change that was undone, with the reason, until the user dismisses it.
-struct NoticeCard: View {
-    let notice: SyncNotice
-    let onDismiss: () -> Void
-
-    var body: some View {
-        AwradCard {
-            VStack(alignment: .leading, spacing: AwradSpacing.xs) {
-                Text(Strings.noticeTitle(notice.key.type))
-                    .awradTextStyle(.cardTitle)
-                    .foregroundStyle(AwradColors.onSurface)
-                    .accessibilityAddTraits(.isHeader)
-                Text(Strings.noticeReason(notice.code))
-                    .awradTextStyle(.body)
-                    .foregroundStyle(AwradColors.onSurfaceVariant)
+extension View {
+    /// components.md "Change refused" notice: while the server has refused changes (each already
+    /// undone), a dialog with the first one's reason and a single OK that dismisses it.
+    func changeRefusedNotice(_ notices: [SyncNotice], dismiss: @escaping (SyncNotice) -> Void) -> some View {
+        let notice = notices.first
+        return awradDialog(
+            isPresented: Binding(get: { notice != nil }, set: { if !$0, let notice { dismiss(notice) } }),
+            title: Strings.changeRefused, message: notice.map { Strings.noticeReason($0.code) }
+        ) {
+            AwradButton(Strings.ok, variant: .text, layout: .row) {
+                if let notice { dismiss(notice) }
             }
-            .accessibilityElement(children: .combine)
-            AwradButton(Strings.dismiss, variant: .text, layout: .row, action: onDismiss)
-                .frame(maxWidth: .infinity, alignment: .trailing)
         }
     }
 }
@@ -170,8 +140,9 @@ struct FailureText: View {
     }
 }
 
-/// A labelled text field in the `field` style: one line, or several that grow with the text.
-/// Arabic fields type right to left. An error shows under the field, and is read with it.
+/// A labelled `AwradTextField`: one line, a number, or the multi-line field that grows with its text
+/// (components.md "Multi-line text field"). Arabic fields type right to left. An error shows under the
+/// field, and is read with it.
 struct LabeledField: View {
     enum Kind {
         case line
@@ -187,41 +158,17 @@ struct LabeledField: View {
     var isArabic = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: AwradSpacing.xs) {
-            Text(label)
-                .awradTextStyle(.label)
-                .foregroundStyle(AwradColors.onSurface)
-                .accessibilityHidden(true)
-            field
-                .padding(.vertical, kind == .multiline ? AwradSpacing.md : AwradSpacing.none)
-                .awradField(isInError: error != nil)
-                .accessibilityHint(error.map { Text($0) } ?? Text(verbatim: ""))
-            if let error {
-                Text(error)
-                    .awradTextStyle(.caption)
-                    .foregroundStyle(AwradColors.error)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    @ViewBuilder private var field: some View {
-        let binding = Binding(get: { text }, set: { onChange($0) })
-        let field = TextField(text: binding, axis: kind == .multiline ? .vertical : .horizontal) { Text(label) }
-        if isArabic {
-            field
-                .lineLimit(kind == .multiline ? 1...8 : 1...1)
-                .environment(\.layoutDirection, .rightToLeft)
-                .environment(\.locale, Locale(identifier: "ar"))
-        } else if kind == .number {
-            #if os(iOS)
+        let field = AwradTextField(
+            label, text: Binding(get: { text }, set: { onChange($0) }), error: error,
+            axis: kind == .multiline ? .vertical : .horizontal, isRightToLeft: isArabic)
+        #if os(iOS)
+            if kind == .number {
                 field.keyboardType(.numberPad)
-            #else
+            } else {
                 field
-            #endif
-        } else {
-            field.lineLimit(kind == .multiline ? 1...8 : 1...1)
-        }
+            }
+        #else
+            field
+        #endif
     }
 }
