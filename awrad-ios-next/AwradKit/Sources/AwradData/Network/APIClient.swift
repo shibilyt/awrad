@@ -56,7 +56,8 @@ struct APIClient: Sendable {
         accessToken: String? = nil,
         idempotencyKey: String? = nil,
         pathParameters: [String: String] = [:],
-        query: [URLQueryItem] = []
+        query: [URLQueryItem] = [],
+        headers: [String: String] = [:]
     ) throws -> URLRequest {
         var path = operation.path
         for (name, value) in pathParameters {
@@ -82,6 +83,9 @@ struct APIClient: Sendable {
         if operation.credential == .bearer, let accessToken {
             request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
         }
+        for (name, value) in headers {
+            request.setValue(value, forHTTPHeaderField: name)
+        }
         return request
     }
 
@@ -93,12 +97,13 @@ struct APIClient: Sendable {
         idempotencyKey: String? = nil,
         pathParameters: [String: String] = [:],
         query: [URLQueryItem] = [],
+        headers: [String: String] = [:],
         expecting _: Response.Type
     ) async throws(APIFailure) -> Response {
         let urlRequest = try built {
             try request(
                 operation, body: body, accessToken: accessToken, idempotencyKey: idempotencyKey,
-                pathParameters: pathParameters, query: query)
+                pathParameters: pathParameters, query: query, headers: headers)
         }
         let data = try await exchange(urlRequest)
         do {
@@ -186,5 +191,6 @@ extension AccountError {
         "not_found": .notFound,
         "refresh_token_invalid": .signedOut,
         "refresh_reuse_detected": .signedOut,
+        "account_deleted": .signedOut,
     ]
 }

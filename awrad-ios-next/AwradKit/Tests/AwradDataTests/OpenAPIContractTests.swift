@@ -28,6 +28,8 @@ struct OpenAPIContractTests {
         "request_email_change": (WireType(RequestEmailChangeBody.self), nil),
         "confirm_email_change": (WireType(EmailChangeCodeBody.self), WireType(AccountWire.self)),
         "delete_account": (WireType(CurrentPasswordBody.self), nil),
+        "post_sync_commands": (WireType(SyncCommandBatchWire.self), WireType(SyncReceiptBatchWire.self)),
+        "list_sync_changes": (nil, WireType(SyncChangesPageWire.self)),
     ]
 
     @Test(arguments: APIOperation.used)
@@ -49,6 +51,9 @@ struct OpenAPIContractTests {
         if operation == .refreshDeviceSession {
             #expect(headers["Idempotency-Key"] == true, "refresh requires the key")
         }
+        // The change queue names its account; the spec requires the header wherever it appears.
+        #expect((headers["X-Awrad-Account"] != nil) == operation.sendsAccountHeader, "\(operation): X-Awrad-Account")
+        if operation.sendsAccountHeader { #expect(headers["X-Awrad-Account"] == true) }
 
         let query = try spec.parameters(of: entry, in: "query")
         for name in operation.queryParameters {
@@ -94,7 +99,7 @@ struct OpenAPIContractTests {
     /// The mobile operations in the spec are exactly the ones the app implements.
     @Test func theAppCoversEveryMobileOperation() throws {
         let spec = try Spec.load()
-        let mobile = spec.operationIDs(taggedAny: ["accounts", "device_sessions", "account_settings"])
+        let mobile = spec.operationIDs(taggedAny: ["accounts", "device_sessions", "account_settings", "sync"])
         #expect(Set(APIOperation.used.map(\.id)) == mobile)
         #expect(Set(Self.wireTypes.keys) == mobile)
     }

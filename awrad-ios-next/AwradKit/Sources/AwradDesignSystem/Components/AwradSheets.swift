@@ -76,6 +76,10 @@ public struct AwradDialog<Actions: View>: View {
                 Text(message)
                     .awradTextStyle(.body)
                     .foregroundStyle(AwradColors.onSurfaceVariant)
+                    // An email or name in the message is plain text: the localized string's
+                    // Markdown would otherwise turn it into a tappable, tinted link.
+                    .tint(AwradColors.onSurfaceVariant)
+                    .environment(\.openURL, OpenURLAction { _ in .discarded })
             }
             HStack(spacing: AwradSpacing.sm) {
                 Spacer(minLength: AwradSpacing.none)
