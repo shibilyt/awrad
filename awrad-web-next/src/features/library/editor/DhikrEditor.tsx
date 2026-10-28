@@ -7,7 +7,7 @@ import { Button } from "@/shared/ui/Button";
 import { FormAlert } from "@/shared/ui/FormAlert";
 import { OptionCheckboxGroup, OptionRow } from "@/shared/ui/OptionRow";
 import { TextLink } from "@/shared/ui/TextLink";
-import { ConflictDialog } from "../custom/ConflictDialog";
+import { ConflictDialog, RefusedDialog } from "../custom/ConflictDialog";
 import { sortedTags, tagIdsOf } from "../custom/data";
 import { EMPTY_VALUES, valuesFrom, type EditorValues } from "./form";
 import { ReferencesEditor } from "./ReferencesEditor";
@@ -119,7 +119,7 @@ export function DhikrEditor({
   const [values, setValues] = useState<EditorValues>(() =>
     existing === null ? EMPTY_VALUES : valuesFrom(existing.document, tagIdsOf(state, existing.id)),
   );
-  const { save, errors, alert, isPending, conflict } = useSaveDhikr(accountId, state, existing);
+  const { save, errors, alert, isPending, conflict, refused } = useSaveDhikr(accountId, state, existing);
   const set = <K extends keyof EditorValues>(key: K, value: EditorValues[K]) => {
     setValues((previous) => ({ ...previous, [key]: value }));
   };
@@ -174,6 +174,7 @@ export function DhikrEditor({
         {t("library.editor.save")}
       </Button>
       <ConflictDialog conflict={conflict} state={state} isPending={isPending} />
+      <RefusedDialog refused={refused} />
     </Form>
   );
 }

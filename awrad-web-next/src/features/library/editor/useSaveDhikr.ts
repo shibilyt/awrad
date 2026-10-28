@@ -10,7 +10,15 @@ import {
   type SyncState,
 } from "@/shared/sync";
 import { tagIdsOf } from "../custom/data";
-import { problemKey, settledKey, useEdit, type OpenConflict } from "../custom/useEdit";
+import {
+  problemKey,
+  settledKey,
+  useEdit,
+  wentThrough,
+  type OpenConflict,
+  type Refusal,
+  type Settled,
+} from "../custom/useEdit";
 import { documentFrom, errorMessages, type EditorValues } from "./form";
 
 function sameTags(a: readonly string[], b: readonly string[]): boolean {
@@ -33,10 +41,11 @@ export function useSaveDhikr(
   alert: string | null;
   isPending: boolean;
   conflict: OpenConflict | null;
+  refused: Refusal | null;
 } {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { send, isPending, conflict } = useEdit(accountId);
+  const { send, isPending, conflict, refused } = useEdit(accountId);
   // Fixed when the editor opens: a new dhikr's ID, and the versions the edit is based on.
   const [id] = useState(() => existing?.id ?? newUuidV7());
   const [base, setBase] = useState(() => ({
@@ -46,6 +55,12 @@ export function useSaveDhikr(
   }));
   const [problems, setProblems] = useState<FieldProblem[]>([]);
   const [alert, setAlert] = useState<string | null>(null);
+
+  // Why an edit didn't go through, under the form; a refusal's reason is in its own dialog.
+  const showSettled = (settled: Settled) => {
+    const key = settledKey(settled);
+    setAlert(key === null ? null : t(key));
+  };
 
   const save = async (values: EditorValues): Promise<void> => {
     const document = documentFrom(values, existing?.document.audio ?? null);
@@ -64,9 +79,8 @@ export function useSaveDhikr(
       if (dhikr.status === "rejected") setProblems(dhikr.fields);
       // Saved: trying again (if the tags fail) builds on this version, not the one the editor opened with.
       if (dhikr.status === "applied") setBase((previous) => ({ ...previous, dhikr: dhikr.version }));
-      const dhikrProblem = settledKey(dhikr);
-      if (dhikrProblem !== null) {
-        setAlert(t(dhikrProblem));
+      if (!wentThrough(dhikr)) {
+        showSettled(dhikr);
         return;
       }
       if (!sameTags(values.tagIds, base.tagIds)) {
@@ -80,9 +94,8 @@ export function useSaveDhikr(
         if (tags.status === "applied") {
           setBase((previous) => ({ ...previous, personal: tags.version, tagIds: values.tagIds }));
         }
-        const tagsProblem = settledKey(tags);
-        if (tagsProblem !== null) {
-          setAlert(t(tagsProblem));
+        if (!wentThrough(tags)) {
+          showSettled(tags);
           return;
         }
       }
@@ -92,5 +105,5 @@ export function useSaveDhikr(
     }
   };
 
-  return { save, errors: errorMessages(problems, t), alert, isPending, conflict };
+  return { save, errors: errorMessages(problems, t), alert, isPending, conflict, refused };
 }

@@ -225,7 +225,7 @@
       "position": "Playback position",
       "time": "{{elapsed}} / {{duration}}",
       "audioFailed": "Couldn't play the audio. Check your connection and try again.",
-      "references": "References"
+      "sources": "Sources"
     },
     "reference": {
       "quran": "Qur'an {{place}}",
@@ -323,7 +323,8 @@
         "tooManyReferences": "Use at most {{max}} references.",
         "kind": "Choose what kind of text this is.",
         "reference": "Fill in what this reference needs. A surah is 1 to 114, and ayahs are numbers from 1.",
-        "invalid": "Check this field."
+        "invalid": "Check this field.",
+        "ayahRange": "The last ayah can't come before the first."
       }
     },
     "tags": {
@@ -381,6 +382,10 @@
         "tag_not_found": "One of these tags was deleted on another device. Check the tags and save again.",
         "dhikr_not_found": "This dhikr was deleted on another device, so it can't be tagged.",
         "entity_not_found": "That was deleted on another device."
+      },
+      "refused": {
+        "title": "Change refused",
+        "ok": "OK"
       }
     }
   }

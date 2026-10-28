@@ -6,9 +6,9 @@ import { BottomSheet } from "@/shared/ui/BottomSheet";
 import { Button } from "@/shared/ui/Button";
 import { FormAlert } from "@/shared/ui/FormAlert";
 import { OptionCheckboxGroup, OptionRow } from "@/shared/ui/OptionRow";
-import { ConflictDialog } from "../custom/ConflictDialog";
+import { ConflictDialog, RefusedDialog } from "../custom/ConflictDialog";
 import { sortedTags, tagIdsOf } from "../custom/data";
-import { problemKey, settledKey, useEdit } from "../custom/useEdit";
+import { problemKey, settledKey, useEdit, wentThrough } from "../custom/useEdit";
 import { TagNameForm } from "./TagsPage";
 import { useTagActions } from "./useTagActions";
 
@@ -28,7 +28,7 @@ function DhikrTags({
 }): ReactElement {
   const { t } = useTranslation();
   const language = useLanguage();
-  const { send, isPending, conflict } = useEdit(accountId);
+  const { send, isPending, conflict, refused } = useEdit(accountId);
   const actions = useTagActions(accountId, state);
   const [baseVersion] = useState(() => state.dhikr_personal[dhikrId]?.version ?? 0);
   const [selected, setSelected] = useState(() => tagIdsOf(state, dhikrId));
@@ -44,9 +44,12 @@ function DhikrTags({
         base_version: baseVersion,
         document: { tag_ids: selected.filter((id) => id in state.user_tag) },
       });
+      if (wentThrough(settled)) {
+        onDone();
+        return;
+      }
       const problem = settledKey(settled);
-      if (problem === null) onDone();
-      else setAlert(t(problem));
+      setAlert(problem === null ? null : t(problem));
     } catch (error) {
       setAlert(t(problemKey(error)));
     }
@@ -85,6 +88,7 @@ function DhikrTags({
         {t("library.tags.save")}
       </Button>
       <ConflictDialog conflict={conflict ?? actions.conflict} state={state} isPending={isPending} />
+      <RefusedDialog refused={refused ?? actions.refused} />
     </div>
   );
 }

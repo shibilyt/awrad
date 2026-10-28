@@ -22,6 +22,7 @@ import { Route as AccountDevicesRouteImport } from './routes/account/devices'
 import { Route as AccountPasswordRouteImport } from './routes/account/password'
 import { Route as LibraryIndexRouteImport } from './routes/library/index'
 import { Route as LibraryTagsRouteImport } from './routes/library/tags'
+import { Route as LibraryYoursRouteImport } from './routes/library/yours'
 import { Route as AccountEmailIndexRouteImport } from './routes/account/email/index'
 import { Route as AccountEmailConfirmRouteImport } from './routes/account/email/confirm'
 import { Route as LibraryCollectionsKeyRouteImport } from './routes/library/collections/$key'
@@ -94,6 +95,11 @@ const LibraryTagsRoute = LibraryTagsRouteImport.update({
   path: '/library/tags',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LibraryYoursRoute = LibraryYoursRouteImport.update({
+  id: '/library/yours',
+  path: '/library/yours',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AccountEmailIndexRoute = AccountEmailIndexRouteImport.update({
   id: '/email/',
   path: '/email/',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/account/devices': typeof AccountDevicesRoute
   '/account/password': typeof AccountPasswordRoute
   '/library/tags': typeof LibraryTagsRoute
+  '/library/yours': typeof LibraryYoursRoute
   '/account/': typeof AccountIndexRoute
   '/library/': typeof LibraryIndexRoute
   '/account/email/confirm': typeof AccountEmailConfirmRoute
@@ -157,6 +164,7 @@ export interface FileRoutesByTo {
   '/account/devices': typeof AccountDevicesRoute
   '/account/password': typeof AccountPasswordRoute
   '/library/tags': typeof LibraryTagsRoute
+  '/library/yours': typeof LibraryYoursRoute
   '/account': typeof AccountIndexRoute
   '/library': typeof LibraryIndexRoute
   '/account/email/confirm': typeof AccountEmailConfirmRoute
@@ -179,6 +187,7 @@ export interface FileRoutesById {
   '/account/devices': typeof AccountDevicesRoute
   '/account/password': typeof AccountPasswordRoute
   '/library/tags': typeof LibraryTagsRoute
+  '/library/yours': typeof LibraryYoursRoute
   '/account/': typeof AccountIndexRoute
   '/library/': typeof LibraryIndexRoute
   '/account/email/confirm': typeof AccountEmailConfirmRoute
@@ -202,6 +211,7 @@ export interface FileRouteTypes {
     | '/account/devices'
     | '/account/password'
     | '/library/tags'
+    | '/library/yours'
     | '/account/'
     | '/library/'
     | '/account/email/confirm'
@@ -222,6 +232,7 @@ export interface FileRouteTypes {
     | '/account/devices'
     | '/account/password'
     | '/library/tags'
+    | '/library/yours'
     | '/account'
     | '/library'
     | '/account/email/confirm'
@@ -243,6 +254,7 @@ export interface FileRouteTypes {
     | '/account/devices'
     | '/account/password'
     | '/library/tags'
+    | '/library/yours'
     | '/account/'
     | '/library/'
     | '/account/email/confirm'
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   VerifyEmailRoute: typeof VerifyEmailRoute
   LibraryTagsRoute: typeof LibraryTagsRoute
+  LibraryYoursRoute: typeof LibraryYoursRoute
   LibraryIndexRoute: typeof LibraryIndexRoute
   LibraryCollectionsKeyRoute: typeof LibraryCollectionsKeyRoute
   LibraryDhikrsKeyRoute: typeof LibraryDhikrsKeyRoute
@@ -362,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LibraryTagsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/library/yours': {
+      id: '/library/yours'
+      path: '/library/yours'
+      fullPath: '/library/yours'
+      preLoaderRoute: typeof LibraryYoursRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/account/email/': {
       id: '/account/email/'
       path: '/email'
@@ -437,6 +457,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   VerifyEmailRoute: VerifyEmailRoute,
   LibraryTagsRoute: LibraryTagsRoute,
+  LibraryYoursRoute: LibraryYoursRoute,
   LibraryIndexRoute: LibraryIndexRoute,
   LibraryCollectionsKeyRoute: LibraryCollectionsKeyRoute,
   LibraryDhikrsKeyRoute: LibraryDhikrsKeyRoute,

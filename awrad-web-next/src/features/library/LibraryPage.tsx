@@ -9,7 +9,7 @@ import { LargeTitleHeader } from "@/shared/ui/LargeTitleHeader";
 import { SearchField } from "@/shared/ui/SearchField";
 import { CollectionTiles } from "./CollectionTiles";
 import { useYours } from "./custom/data";
-import { TagFilter, YourDhikrs } from "./custom/YourDhikrs";
+import { TagFilter, YoursNotice, yoursTile } from "./custom/YourDhikrs";
 import { DhikrList } from "./DhikrList";
 import { Section } from "./LibraryScreen";
 
@@ -41,8 +41,9 @@ function SearchResults({ query }: { query: string }): ReactElement {
 
 /**
  * `/library`: a large title (with "New dhikr" when signed in), a search field whose query is kept
- * in the URL (`?q=`), then "Your dhikrs", the tag filter (`?tags=`, signed in), the collections as
- * tiles and every dhikr as a row. While searching it shows only the results.
+ * in the URL (`?q=`), then the tag filter (`?tags=`, signed in), the collections as tiles ("Your
+ * dhikrs" first when the account has any) and every dhikr as a row. Signed out, a note offers
+ * sign-in. While searching it shows only the results.
  */
 export function LibraryPage(): ReactElement {
   const { t } = useTranslation();
@@ -98,7 +99,7 @@ export function LibraryPage(): ReactElement {
         <SearchResults query={query} />
       ) : (
         <>
-          <YourDhikrs yours={yours} />
+          <YoursNotice yours={yours} />
           {yours.status === "ready" && (
             <TagFilter
               state={yours.state}
@@ -115,7 +116,7 @@ export function LibraryPage(): ReactElement {
             />
           )}
           <Section title={t("library.collections")}>
-            <CollectionTiles label={t("library.collections")} />
+            <CollectionTiles label={t("library.collections")} first={yoursTile(yours)} />
           </Section>
           <Section title={t("library.allDhikrs")}>
             <DhikrList dhikrs={catalog.dhikrs} label={t("library.allDhikrs")} />

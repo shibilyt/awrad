@@ -12,6 +12,7 @@ export type EntityType = Schemas["SyncEntityType"];
 export type Receipt = Schemas["SyncReceipt"];
 export type Outcome = Schemas["SyncOutcome"];
 export type Change = Schemas["SyncChange"];
+export type CascadedChange = Schemas["SyncCascadedChange"];
 export type Current = Schemas["SyncCurrent"];
 export type RejectionCode = Schemas["SyncRejectedReceipt"]["code"];
 

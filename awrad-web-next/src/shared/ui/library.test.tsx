@@ -13,6 +13,7 @@ import { mainTabOf, showsBottomBar } from "./AppShell";
 import { Card } from "./Card";
 import { CollectionTile } from "./CollectionTile";
 import { SearchField } from "./SearchField";
+import { FilterChips } from "./TagChips";
 
 /** Renders `ui` as the only page of a throwaway router, so router links work. */
 async function renderInRouter(ui: () => ReactElement): Promise<void> {
@@ -102,5 +103,51 @@ describe("main tabs", () => {
     expect(showsBottomBar("/account")).toBe(true);
     expect(showsBottomBar("/library/collections/ramadan")).toBe(false);
     expect(showsBottomBar("/library/dhikrs/tahleel")).toBe(false);
+    expect(showsBottomBar("/library/tags")).toBe(false);
+    expect(showsBottomBar("/library/yours")).toBe(false);
+  });
+});
+
+describe("FilterChips", () => {
+  function Chips(): ReactElement {
+    const [selected, setSelected] = useState<string[]>(["evening"]);
+    return (
+      <FilterChips
+        label="Filter by tag"
+        chips={[
+          { id: "evening", label: "Evening" },
+          { id: "morning", label: "Morning" },
+        ]}
+        selected={selected}
+        onChange={setSelected}
+      />
+    );
+  }
+
+  test("toggle buttons named by their label with their state; on is primary with a check", async () => {
+    render(<Chips />);
+
+    expect(screen.getByRole("toolbar", { name: "Filter by tag" })).toBeInTheDocument();
+    const evening = screen.getByRole("button", { name: "Evening", pressed: true });
+    const morning = screen.getByRole("button", { name: "Morning", pressed: false });
+    expect(evening).toHaveClass("min-h-touch-target");
+    expect(evening.firstElementChild).toHaveClass("bg-primary", "text-on-primary", "rounded-chip", "px-md", "py-sm");
+    expect(evening.querySelector("svg")).not.toBeNull();
+    expect(morning.firstElementChild).toHaveClass("bg-secondary-container", "text-on-secondary-container");
+    expect(morning.querySelector("svg")).toBeNull();
+
+    await userEvent.click(morning);
+    expect(screen.getByRole("button", { name: "Morning", pressed: true })).toBeInTheDocument();
+    await userEvent.click(evening);
+    expect(screen.getByRole("button", { name: "Evening", pressed: false })).toBeInTheDocument();
+  });
+
+  test("on a surface card an off chip fills with background", () => {
+    render(
+      <Card>
+        <Chips />
+      </Card>,
+    );
+    expect(screen.getByRole("button", { name: "Morning" }).firstElementChild).toHaveClass("bg-background");
   });
 });

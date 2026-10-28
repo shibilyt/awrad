@@ -1,12 +1,12 @@
-import type { ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/shared/i18n";
 import type { CustomDhikrDocument, DhikrPersonalDocument, SyncState, UserTagDocument } from "@/shared/sync";
 import { Card } from "@/shared/ui/Card";
-import { ChoiceDialog } from "@/shared/ui/ConfirmDialog";
+import { ChoiceDialog, NoticeDialog } from "@/shared/ui/ConfirmDialog";
 import { TagChip } from "@/shared/ui/TagChips";
 import { pickText } from "./data";
-import type { OpenConflict } from "./useEdit";
+import { rejectionKey, type OpenConflict, type Refusal } from "./useEdit";
 
 /** The server's copy of what was edited, in a card: a dhikr's title and Arabic, a tag's name, or a dhikr's tags. */
 function TheirVersion({ conflict, state }: { conflict: OpenConflict; state: SyncState }): ReactElement {
@@ -60,9 +60,10 @@ function TheirVersion({ conflict, state }: { conflict: OpenConflict; state: Sync
 }
 
 /**
- * "Changed on another device" (slice 3b): the server's version of what the person just saved,
- * and the choice: **Use theirs** (keep the server's copy) or **Keep mine** (save theirs over it).
- * It can't be dismissed without choosing.
+ * "Changed on another device" (slice 3b, components.md "Conflict banner"): the server's version
+ * of what the person just saved, and the choice: **Keep mine** (save it over theirs) or **Use
+ * theirs** (keep the server's copy). The web has no queue, so the conflict comes up as the edit
+ * is saved, and the banner is a dialog that can't be dismissed without choosing.
  */
 export function ConflictDialog({
   conflict,
@@ -79,11 +80,32 @@ export function ConflictDialog({
       isOpen={conflict !== null}
       title={t("library.conflict.title")}
       isPending={isPending}
-      first={{ label: t("library.conflict.useTheirs"), onPress: () => conflict?.choose(false) }}
-      second={{ label: t("library.conflict.keepMine"), onPress: () => conflict?.choose(true) }}
+      first={{ label: t("library.conflict.keepMine"), onPress: () => conflict?.choose(true) }}
+      second={{ label: t("library.conflict.useTheirs"), onPress: () => conflict?.choose(false) }}
     >
       <p>{t(conflict?.edit.op === "delete" ? "library.conflict.bodyDelete" : "library.conflict.body")}</p>
       {conflict !== null && <TheirVersion conflict={conflict} state={state} />}
     </ChoiceDialog>
+  );
+}
+
+/**
+ * "Change refused" (slice 3b, components.md): the server refused a change (a `rejected`
+ * receipt), whose reason it gives by code, and OK. The page already shows the server's copy.
+ */
+export function RefusedDialog({ refused }: { refused: Refusal | null }): ReactElement {
+  const { t } = useTranslation();
+  // Kept while it fades out, so the text doesn't go blank as it closes.
+  const [shown, setShown] = useState(refused);
+  if (refused !== null && refused !== shown) setShown(refused);
+  return (
+    <NoticeDialog
+      isOpen={refused !== null}
+      onClose={() => refused?.close()}
+      title={t("library.sync.refused.title")}
+      closeLabel={t("library.sync.refused.ok")}
+    >
+      <p>{shown === null ? "" : t(rejectionKey(shown.code))}</p>
+    </NoticeDialog>
   );
 }

@@ -85,7 +85,7 @@ export function receiptHandler(receipt: (example: Receipt[]) => Receipt): HttpHa
   });
 }
 
-/** The receipt the spec's example has at `index` (0 applied, 1 merged, 3 conflict, 4 gone, 5 rejected, 6 duplicate). */
+/** The receipt the spec's example has at `index` (0 applied, 1 merged, 3 conflict, 4 gone, 5 rejected, 6 applied with `cascaded`, 7 duplicate). */
 export function exampleReceipt(index: number): HttpHandler {
   return receiptHandler((receipts) => {
     const receipt = receipts[index];

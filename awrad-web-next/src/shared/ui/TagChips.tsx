@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { Tag, TagGroup, TagList } from "react-aria-components";
+import { ToggleButton, ToggleButtonGroup } from "react-aria-components";
 import { cx } from "./cx";
 import { CheckIcon } from "./icons.gen";
 import { useSecondaryFill } from "./Surface";
@@ -19,10 +19,14 @@ export interface FilterChip {
 }
 
 /**
- * Tag chips that filter a list: any number can be on (a React Aria tag group with multiple
- * selection, so arrow keys move between chips and Space toggles one). An off chip is a tag chip
- * a `touchTarget` tall; an on chip is `primary` with an `onPrimary` label and a leading check, and
- * the colours cross-fade (`select`), like a selected segmented pill.
+ * Chips that filter a list (components.md "Filter chip"): any number can be on. Each is a toggle
+ * button named by its label that announces whether it's on (`aria-pressed`), in a React Aria
+ * toggle button group (a toolbar: arrow keys move between chips, Space or Enter toggles one).
+ * - Off: the secondary fill (`background` on a surface) with its label colour.
+ * - On: `primary` with an `onPrimary` label and a leading `check` (`iconSmall`, `inlineGap` to
+ *   the label). The colours cross-fade (`select`).
+ * - `chip` shape, padding `sm` × `md`, chips `sm` apart. Each sits in a `touchTarget` (48) tall
+ *   touch area, so the chip itself keeps its own size. Pressed, it dims.
  */
 export function FilterChips({
   label,
@@ -38,39 +42,36 @@ export function FilterChips({
 }): ReactElement {
   const fill = useSecondaryFill();
   return (
-    <TagGroup
+    <ToggleButtonGroup
       aria-label={label}
       selectionMode="multiple"
       selectedKeys={selected}
       onSelectionChange={(keys) => {
-        onChange(
-          keys === "all" ? chips.map((chip) => chip.id) : chips.flatMap((chip) => (keys.has(chip.id) ? [chip.id] : [])),
-        );
+        onChange(chips.flatMap((chip) => (keys.has(chip.id) ? [chip.id] : [])));
       }}
+      className="flex flex-wrap gap-x-sm"
     >
-      <TagList className="flex flex-wrap gap-sm">
-        {chips.map((chip) => (
-          <Tag
-            key={chip.id}
-            id={chip.id}
-            textValue={chip.label}
-            className={cx(
-              "inline-flex min-h-touch-target cursor-default items-center gap-xs rounded-chip px-lg text-label select-fade",
-              fill,
-              "data-selected:bg-primary data-selected:text-on-primary",
-              "data-focus-visible:outline-focus-ring data-focus-visible:outline-offset-focus-ring data-focus-visible:outline-accent",
-              "data-pressed:opacity-90 data-disabled:opacity-disabled",
-            )}
-          >
-            {({ isSelected }) => (
-              <>
-                {isSelected && <CheckIcon size="small" />}
-                {chip.label}
-              </>
-            )}
-          </Tag>
-        ))}
-      </TagList>
-    </TagGroup>
+      {chips.map((chip) => (
+        <ToggleButton
+          key={chip.id}
+          id={chip.id}
+          className="group inline-flex min-h-touch-target cursor-default items-center outline-none data-disabled:opacity-disabled"
+        >
+          {({ isSelected }) => (
+            <span
+              className={cx(
+                "inline-flex items-center gap-inline-gap rounded-chip px-md py-sm text-label select-fade",
+                isSelected ? "bg-primary text-on-primary" : fill,
+                "group-data-focus-visible:outline-focus-ring group-data-focus-visible:outline-offset-focus-ring",
+                "group-data-focus-visible:outline-accent group-data-pressed:opacity-90",
+              )}
+            >
+              {isSelected && <CheckIcon size="small" />}
+              {chip.label}
+            </span>
+          )}
+        </ToggleButton>
+      ))}
+    </ToggleButtonGroup>
   );
 }

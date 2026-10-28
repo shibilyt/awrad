@@ -5,6 +5,7 @@ import { useLanguage } from "@/shared/i18n";
 import type { SyncState } from "@/shared/sync";
 import { Button } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
+import { CollectionTile } from "@/shared/ui/CollectionTile";
 import { FilterChips } from "@/shared/ui/TagChips";
 import { TextButtonLink, TextLink } from "@/shared/ui/TextLink";
 import { DhikrList } from "../DhikrList";
@@ -26,42 +27,39 @@ function Notice({ children, action }: { children: string; action?: ReactElement 
   );
 }
 
-/** Signed out: what "Your dhikrs" would hold, and a link to sign in. */
-function SignedOut(): ReactElement {
+/** The "Your dhikrs" tile, with how many, opening their list (`/library/yours`). */
+function YoursTile({ count }: { count: number }): ReactElement {
   const { t } = useTranslation();
   return (
-    <Notice action={<TextLink to="/sign-in">{t("library.yours.signIn")}</TextLink>}>
-      {t("library.yours.signedOut")}
-    </Notice>
+    <CollectionTile to="/library/yours" heading={t("library.yours.title")} count={t("library.dhikrCount", { count })} />
   );
 }
 
 /**
- * The Library's "Your dhikrs" (slice 3b): the signed-in account's own dhikrs, newest first, with
- * "Manage tags"; an empty state that offers "New dhikr"; a sign-in link when signed out; and a
- * retry when they couldn't be read.
+ * The "Your dhikrs" collection tile (components.md, slice 3b) when the account has dhikrs of its
+ * own, for the Library to put first in its tile row; `null` otherwise (none, or not read yet).
  */
-export function YourDhikrs({ yours }: { yours: Yours }): ReactElement {
+export function yoursTile(yours: Yours): ReactElement | null {
+  const count = yours.status === "ready" ? Object.keys(yours.state.custom_dhikr).length : 0;
+  return count === 0 ? null : <YoursTile count={count} />;
+}
+
+/**
+ * What the Library says about the account's own dhikrs when they can't be shown: a sign-in link
+ * when signed out (the web edits online and signed in only), or a retry when they couldn't be
+ * read. Nothing while loading or once they're here: the tile shows them.
+ */
+export function YoursNotice({ yours }: { yours: Yours }): ReactElement | null {
   const { t } = useTranslation();
-  const title = t("library.yours.title");
-  const manage =
-    yours.status === "ready" ? (
-      <TextButtonLink to="/library/tags">{t("library.tags.manage")}</TextButtonLink>
-    ) : undefined;
-  let content: ReactElement;
   switch (yours.status) {
-    case "loading":
-      content = (
-        <p role="status" className="px-page-margin text-caption text-on-surface-variant">
-          {t("library.yours.loading")}
-        </p>
-      );
-      break;
     case "signedOut":
-      content = <SignedOut />;
-      break;
+      return (
+        <Notice action={<TextLink to="/sign-in">{t("library.yours.signIn")}</TextLink>}>
+          {t("library.yours.signedOut")}
+        </Notice>
+      );
     case "error":
-      content = (
+      return (
         <Notice
           action={
             <Button variant="secondary" size="row" onPress={yours.retry}>
@@ -72,30 +70,37 @@ export function YourDhikrs({ yours }: { yours: Yours }): ReactElement {
           {t(problemKey(yours.error))}
         </Notice>
       );
-      break;
-    case "ready": {
-      const dhikrs = customDhikrs(yours.state);
-      content =
-        dhikrs.length === 0 ? (
-          <Notice action={<TextButtonLink to="/library/dhikrs/new">{t("library.yours.new")}</TextButtonLink>}>
-            {t("library.yours.empty")}
-          </Notice>
-        ) : (
-          <DhikrList dhikrs={dhikrs} label={title} />
-        );
-    }
+    case "loading":
+    case "ready":
+      return null;
+  }
+}
+
+/** The account's dhikrs, newest first, or an empty state that offers "New dhikr". */
+export function YoursList({ state }: { state: SyncState }): ReactElement {
+  const { t } = useTranslation();
+  const dhikrs = customDhikrs(state);
+  if (dhikrs.length === 0) {
+    return (
+      <Notice action={<TextButtonLink to="/library/dhikrs/new">{t("library.yours.new")}</TextButtonLink>}>
+        {t("library.yours.empty")}
+      </Notice>
+    );
   }
   return (
-    <Section title={title} {...(manage === undefined ? {} : { action: manage })}>
-      {content}
-    </Section>
+    <div className="flex flex-col gap-row-gap">
+      <p className="px-page-margin text-caption text-on-surface-variant">
+        {t("library.dhikrCount", { count: dhikrs.length })}
+      </p>
+      <DhikrList dhikrs={dhikrs} label={t("library.yours.title")} />
+    </div>
   );
 }
 
 /**
- * "Filter by tag": the account's tags as chips. With some chosen, the dhikrs (built-in and the
- * account's own) that have every chosen tag, with how many in a `status` region, or an empty
- * state. Nothing when the account has no tags.
+ * "Filter by tag": the account's tags as chips, with "Manage tags". With some chosen, the dhikrs
+ * (built-in and the account's own) that have every chosen tag, with how many in a `status`
+ * region, or an empty state. Nothing when the account has no tags.
  */
 export function TagFilter({
   state,
@@ -114,7 +119,10 @@ export function TagFilter({
   const chosen = selected.filter((id) => id in state.user_tag);
   const matches = chosen.length === 0 ? [] : withAllTags(state, [...customDhikrs(state), ...catalog.dhikrs], chosen);
   return (
-    <Section title={t("library.filter.title")}>
+    <Section
+      title={t("library.filter.title")}
+      action={<TextButtonLink to="/library/tags">{t("library.tags.manage")}</TextButtonLink>}
+    >
       <div className="flex flex-col gap-row-gap">
         <div className="px-page-margin">
           <FilterChips

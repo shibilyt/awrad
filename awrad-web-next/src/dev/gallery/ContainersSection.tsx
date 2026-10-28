@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { BottomSheet } from "@/shared/ui/BottomSheet";
 import { Button } from "@/shared/ui/Button";
 import { Card, ClickableCard, ContentSheet, ContentSheetSection } from "@/shared/ui/Card";
-import { ChoiceDialog, ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { ChoiceDialog, ConfirmDialog, NoticeDialog } from "@/shared/ui/ConfirmDialog";
 import { OptionCheckboxGroup, OptionRadioGroup, OptionRow } from "@/shared/ui/OptionRow";
 import { GallerySection, Specimen, noop } from "./Specimen";
 
@@ -138,11 +138,38 @@ function ChoiceDemo(): ReactElement {
       <ChoiceDialog
         isOpen={isOpen}
         title={t("sample.choiceTitle")}
-        first={{ label: t("sample.useTheirs"), onPress: close }}
-        second={{ label: t("sample.keepMine"), onPress: close }}
+        first={{ label: t("sample.keepMine"), onPress: close }}
+        second={{ label: t("sample.useTheirs"), onPress: close }}
       >
         <p>{t("sample.choiceBody")}</p>
       </ChoiceDialog>
+    </Specimen>
+  );
+}
+
+function NoticeDemo(): ReactElement {
+  const { t } = useTranslation("gallery");
+  const [isOpen, setOpen] = useState(false);
+  return (
+    <Specimen title={t("specimen.noticeDialog")}>
+      <Button
+        variant="secondary"
+        onPress={() => {
+          setOpen(true);
+        }}
+      >
+        {t("sample.openDialog")}
+      </Button>
+      <NoticeDialog
+        isOpen={isOpen}
+        onClose={() => {
+          setOpen(false);
+        }}
+        title={t("sample.noticeTitle")}
+        closeLabel={t("sample.ok")}
+      >
+        <p>{t("sample.noticeBody")}</p>
+      </NoticeDialog>
     </Specimen>
   );
 }
@@ -177,6 +204,7 @@ export function ContainersSection(): ReactElement {
       <SheetDemo />
       <DialogDemo />
       <ChoiceDemo />
+      <NoticeDemo />
       <Options />
     </GallerySection>
   );

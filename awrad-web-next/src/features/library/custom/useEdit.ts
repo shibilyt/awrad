@@ -12,22 +12,40 @@ export interface OpenConflict {
   choose: (keepMine: boolean) => void;
 }
 
+/** A change the server refused (a `rejected` receipt), for the "Change refused" dialog. */
+export interface Refusal {
+  code: RejectionCode;
+  close: () => void;
+}
+
 /**
  * Sends edits for the Library's pages. A `conflict` receipt waits for the person's choice in the
- * conflict dialog (`ConflictDialog`, given `conflict`): **Use theirs** keeps the server's copy, now
- * in the cache; **Keep mine** sends the same edit again on the server's version. `send` resolves
- * once that's settled. A failed batch rejects (an `ApiProblem`, or a network error).
+ * conflict dialog (`ConflictDialog`, given `conflict`): **Keep mine** sends the same edit again on
+ * the server's version; **Use theirs** keeps the server's copy, now in the cache. `send` resolves
+ * once that's settled. A `rejected` receipt opens the "Change refused" dialog (`RefusedDialog`,
+ * given `refused`); the cache already holds the server's copy. A failed batch rejects (an
+ * `ApiProblem`, or a network error).
  */
 export function useEdit(accountId: string): {
   send: (edit: Edit) => Promise<Settled>;
   isPending: boolean;
   conflict: OpenConflict | null;
+  refused: Refusal | null;
 } {
   const { mutateAsync, isPending } = useSendEdit(accountId);
   const [conflict, setConflict] = useState<OpenConflict | null>(null);
+  const [refused, setRefused] = useState<Refusal | null>(null);
 
   const send = async (edit: Edit): Promise<Settled> => {
     const result = await mutateAsync(edit);
+    if (result.status === "rejected") {
+      setRefused({
+        code: result.code,
+        close: () => {
+          setRefused(null);
+        },
+      });
+    }
     if (result.status !== "conflict") return result;
     const keepMine = await new Promise<boolean>((resolve) => {
       setConflict({ current: result.current, edit, choose: resolve });
@@ -37,7 +55,7 @@ export function useEdit(accountId: string): {
     return send({ ...edit, base_version: result.current.version });
   };
 
-  return { send, isPending, conflict };
+  return { send, isPending, conflict, refused };
 }
 
 /** Problem codes the Library explains (sync.yaml's x-error-codes); anything else is "unexpected". */
@@ -65,21 +83,21 @@ const REJECTION_CODES: ReadonlySet<RejectionCode> = new Set<RejectionCode>([
   "entity_not_found",
 ]);
 
+/** The translation key for why the server refused a change, by its rejection code. */
+export function rejectionKey(code: RejectionCode): string {
+  return REJECTION_CODES.has(code) ? `library.sync.rejected.${code}` : "library.sync.problems.unexpected";
+}
+
+/** Whether a settled edit went through: applied, merged, or settled by keeping the server's copy. */
+export function wentThrough(settled: Settled): boolean {
+  return settled.status === "applied" || settled.status === "merged" || settled.status === "theirs";
+}
+
 /**
- * The translation key for a settled edit that didn't go through, or `null` when it did: a
- * rejection by its code, or something deleted on another device in the meantime.
+ * The translation key to show where the edit was made when it didn't go through, or `null` when
+ * there's nothing to say there: it went through, or it was refused (the "Change refused" dialog
+ * gives the reason). Something deleted on another device in the meantime says so.
  */
 export function settledKey(settled: Settled): string | null {
-  switch (settled.status) {
-    case "applied":
-    case "merged":
-    case "theirs":
-      return null;
-    case "gone":
-      return "library.sync.gone";
-    case "rejected":
-      return REJECTION_CODES.has(settled.code)
-        ? `library.sync.rejected.${settled.code}`
-        : "library.sync.problems.unexpected";
-  }
+  return settled.status === "gone" ? "library.sync.gone" : null;
 }
