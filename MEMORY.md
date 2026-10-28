@@ -8,7 +8,7 @@ This file stores durable repository facts and a concise append-only change log. 
 - Awrad is being rebuilt as four contract-first projects: `awrad-server-next`, `awrad-android-next`, `awrad-ios-next` and `awrad-web-next` (ADR-2026-10-14). All four rebuild projects exist as scaffolds: `awrad-server-next`, `awrad-android-next`, `awrad-ios-next`, `awrad-web-next`.
 - `contracts/` is the shared source of truth: schemas, behaviour fixtures and built-in content, with an OpenAPI spec planned.
 - Git runs at the root; each project's toolchain runs inside its own directory.
-- Mobile apps are offline-first for dhikr, goals, counting and wird. The web app is online-only.
+- Mobile apps are offline-first for dhikr, goals, counting and wird, and complete without an account: no sign-in gate, and sign-in and sync are opt-in (ADR-2026-10-28). The web app is online-only.
 - Browsers authenticate with Phoenix cookie sessions plus CSRF; mobile with bearer tokens bound to device sessions (ADR-2026-10-15, ADR-2026-07-12).
 - `awrad-android-next` keeps Room at version 1 until the first release (its ADR 0003).
 - Toolchains are pinned at the root: `mise.toml` (OTP 29.1.2, Elixir 1.20.4, Node 24.22.0, Zulu JDK 17, SwiftLint 0.65.1), `.xcode-version` (26.2), and `compose.yaml` (Postgres 18.6 on port 5433, the fallback). Postgres major 18 is the target for local, CI and the Dokploy database. The default local database is the machine's own Postgres 18 on 5432; new-server databases are `awrad_next_dev` / `awrad_next_test`.
@@ -80,28 +80,28 @@ Use this format:
 - Area: Documentation
 - Change: Added root orientation, structure, workflow, contract, command, test, decision, and memory guidance with scoped platform instructions.
 - Evidence: `AGENTS.md`, `STRUCTURE.md`, `LOOPS.md`, `CONTRACTS.md`
-- Commit: uncommitted
+- Commit: see git log
 
 ### 2026-07-12 — Added progressive documentation map
 
 - Area: Documentation
 - Change: Reduced root agent guidance to a compact map with hard invariants and added `docs/index.md` for progressive project and subsystem navigation.
 - Evidence: `AGENTS.md`, `docs/index.md`, `README.md`
-- Commit: uncommitted
+- Commit: see git log
 
 ### 2026-07-13 — Added API security baseline
 
 - Area: API | Documentation
 - Change: Documented API trust boundaries, authentication/session invariants, public-auth abuse controls, authorization rules, production proxy requirements, endpoint review steps, and current security follow-up items; implemented shared browser-auth abuse limits and generic registration responses.
 - Evidence: `awrad_server/memory/security.md`, `awrad_server/lib/awrad_server_web/browser_auth_protection.ex`, browser-auth controller tests, `TESTING.md`
-- Commit: uncommitted
+- Commit: see git log
 
 ### 2026-07-15 — Implemented the iOS Android-parity architecture
 
 - Area: iOS | Cross-project | Documentation
 - Change: Froze Android `2f56aa4` as the iOS behavior baseline; added the App Group SwiftData repository/migration boundary, canonical progress/behavior/Wird contracts, Android-equivalent iOS route families, Keychain authentication with single-flight refresh, and an explicit runtime/physical-device acceptance ledger.
 - Evidence: `awrad-ios/awrad/awrad/Core/Persistence/`, `awrad-ios/awrad/awrad/Core/AwradStore.swift`, `awrad-ios/awrad/awrad/Features/`, `contracts/behavior-model/v1/`, `contracts/wird-model/v1/`, `docs/ios-android-parity-ledger.md`, `docs/ios-parity-debugger-review.md`
-- Commit: uncommitted
+- Commit: see git log
 
 ### 2026-09-07 — Added password setup handoff for passwordless web accounts
 
@@ -115,14 +115,14 @@ Use this format:
 - Area: Android | iOS | API | Cross-project | Documentation
 - Change: Added verified mobile GET/PUT practice settings routes, revision-checked account policy writes, per-installation device-context writes, and native reconciliation on authentication/foreground sync. Existing progress-sync routes and envelopes remain unchanged.
 - Evidence: `awrad_server/lib/awrad_server_web/controllers/api/practice_settings_controller.ex`, `awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/sync/PracticeSettingsRepository.kt`, `awrad-ios/awrad/awrad/Core/PracticeSettingsSync.swift`, `CONTRACTS.md`
-- Commit: uncommitted
+- Commit: see git log
 
 ### 2026-09-09 — Added browser Maghrib effective-day resolution
 
 - Area: Web | API | Documentation
 - Change: The authenticated web companion now calculates Maghrib locally with bundled Adhan JS, resolves the per-device effective practice date, uses it across read models and counting, and validates the claimed date in `WebSync`; missing location or unavailable prayer times fall back explicitly to midnight.
 - Evidence: `awrad_server/assets/js/practice_day.js`, `awrad_server/lib/awrad_server/practice_day.ex`, `awrad_server/lib/awrad_server/web_sync.ex`, `docs/progress-sync-architecture.md`
-- Commit: uncommitted
+- Commit: see git log
 
 ### 2026-10-15 — Started the four-project rebuild
 
@@ -317,6 +317,15 @@ Use this format:
   - `contracts/identity/v1/` fixes the v7 layout and the valid-ID rule as shared fixtures. Every project runs both.
   - Each project has a small generator (Java, Foundation and Ecto only make v4) and a guard against the old v4 calls. The server's seven tables autogenerate v7, and it rejects upper-case IDs (404/400/422).
 - Evidence: `contracts/identity/v1/README.md`, `DECISIONS.md`
+- Commit: see git log
+
+### 2026-10-28 — Mobile apps are complete without an account
+
+- Area: Cross-project
+- Change:
+  - ADR-2026-10-28: a fresh mobile install opens straight into the app with no sign-in gate. All practice features work signed out and offline, a signed-out app makes no API calls for core features, and there are no anonymous accounts. Signing in is the one opt-in, and it turns on sync; there's no separate sync switch.
+  - The slice definition of done now checks each mobile slice's core flows signed out with the network off.
+- Evidence: `DECISIONS.md`, `docs/slice-playbook.md`
 - Commit: see git log
 
 ### 2026-10-27 — Slice 3a: dhikr catalog and library

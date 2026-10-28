@@ -25,7 +25,7 @@ Avoid dense or busy dashboards, hard-edged or stylistically mixed controls, heav
 1. Practice comes first: keep counting and reading focused, legible, and interruption-free.
 2. Calm clarity: use familiar mobile patterns and a restrained hierarchy that supports reflection.
 3. Respect spiritual context: preserve authentic content, prayer awareness, Islamic-day behavior, and meaningful pacing.
-4. Work locally: core dhikr, goals, counting, and wird flows remain useful offline.
+4. Work locally, no account needed: core dhikr, goals, counting, and wird flows work fully offline without signing in. Accounts and sync are opt-in extras, never a gate.
 5. Design for the full community: treat dark mode, Arabic RTL, multilingual content, and a wide range of practice intensity as first-class.
 
 ## Accessibility & Inclusion

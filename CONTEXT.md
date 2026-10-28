@@ -126,7 +126,7 @@ Another spelling or name people search for a dhikr by, per language (Istighfar, 
 ## Account language
 
 **Account**:
-An Awrad identity: an email and a password. It's optional: everything offline works without one. An account can only sign in once its email is verified.
+An Awrad identity: an email and a password. It's optional: the mobile apps are complete without one, and signing in is how a user opts in to sync (ADR-2026-10-28). An account can only sign in once its email is verified.
 _Avoid_: User (in product text), profile
 
 **Email code**:

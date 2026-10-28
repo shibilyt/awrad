@@ -753,6 +753,39 @@ Built-in dhikrs were hand-copied into Android, iOS and the server and drifted: t
 
 None. Extends ADR-2026-07-13 (identity) and the canonical Asma-ul Husna collection ADR.
 
+## ADR-2026-10-28: The mobile apps are complete without an account
+
+Status: Accepted
+
+### Context
+
+The invariants already say the mobile apps work offline, and `CONTEXT.md` calls an account optional. But no decision said so outright. Each slice that adds accounts or sync could quietly add a sign-in gate, an onboarding step or a network call to a core flow.
+
+### Decision
+
+- **No sign-in gate.** A fresh mobile install opens straight into the app. No first-run step, core screen or core action needs an account, and nothing nags the user to create one.
+- **Everything about practice works signed out and offline:** the dhikr library, custom dhikrs and tags, counting, goals, wird, history, practice settings and reminders. Built-in content ships in the app (ADR-2026-10-27).
+- **Accounts and sync are opt-in.** Sign-in lives in settings, and features that need it may offer it where they're used. Signing in is the opt-in to sync: a signed-in account always syncs, and there's no separate sync switch. A feature may require an account only if it needs the server or other people, such as sync, the web companion or shared counters. Its brief says why.
+- **Signed out means no server contact.** The app creates no anonymous or guest account and makes no API calls for core features.
+- **Opting in or out never costs local data.** Signing in binds local data as ADR-2026-07-16 and ADR-2026-09-09 describe. Signing out leaves the app fully usable offline.
+- The web app stays online-only and account-based (ADR-2026-10-15). It's a companion to an account, not a signed-out client.
+
+### Consequences
+
+- Mobile local storage is the primary store, and its data has no account owner until the user signs in. Sync layers on top and is never needed to read or write.
+- Every mobile slice checks its main flows signed out with the network off.
+- Without an account, data lives on one installation: uninstalling or losing the phone loses it. Backup to a file is a separate, later decision.
+
+### Evidence
+
+- `PRODUCT.md` (design principle 4)
+- `CONTEXT.md` (Account)
+- `docs/slice-playbook.md` (definition of done)
+
+### Supersedes
+
+None. Makes explicit the offline-first rule of ADR-2026-07-16 and the rebuild invariants.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.
