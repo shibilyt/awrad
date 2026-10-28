@@ -3,7 +3,7 @@ defmodule Awrad.Idempotency.Record do
 
   use Ecto.Schema
 
-  @primary_key {:id, :binary_id, autogenerate: true}
+  @primary_key {:id, Awrad.UUIDv7, autogenerate: true}
 
   @type t :: %__MODULE__{
           scope: String.t() | nil,

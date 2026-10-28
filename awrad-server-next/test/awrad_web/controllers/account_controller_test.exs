@@ -308,7 +308,7 @@ defmodule AwradWeb.AccountControllerTest do
 
       assert Awrad.Accounts.identify_device_session(grant.access_token) == :error
 
-      assert Awrad.Accounts.refresh_device_session(grant.refresh_token, Ecto.UUID.generate()) ==
+      assert Awrad.Accounts.refresh_device_session(grant.refresh_token, Awrad.UUIDv7.generate()) ==
                {:error, :refresh_token_invalid}
 
       assert Awrad.Accounts.get_user_by_session_token(browser_token) == nil
@@ -357,7 +357,7 @@ defmodule AwradWeb.AccountControllerTest do
     test "a repeat with the same key and body replays the result without re-running it", %{
       conn: conn
     } do
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
       body = %{email: unique_email(), password: valid_password()}
 
       first = post_json(conn, ~p"/api/v1/accounts", body, [{"idempotency-key", key}])
@@ -370,7 +370,7 @@ defmodule AwradWeb.AccountControllerTest do
     end
 
     test "the same key with another body is 422 idempotency_key_reused", %{conn: conn} do
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
 
       post_json(
         conn,
@@ -392,16 +392,25 @@ defmodule AwradWeb.AccountControllerTest do
       assert assert_conforms(conn, "register_account")["code"] == "idempotency_key_reused"
     end
 
-    test "a malformed key is 400", %{conn: conn} do
-      conn =
-        post_json(
-          conn,
-          ~p"/api/v1/accounts",
-          %{email: unique_email(), password: valid_password()},
-          [{"idempotency-key", "not-a-uuid"}]
-        )
+    test "a malformed key is 400 (identity uuid_format)", %{conn: conn} do
+      malformed = [
+        "not-a-uuid",
+        String.upcase(Awrad.UUIDv7.generate()),
+        "00000000-0000-0000-0000-000000000000",
+        "ffffffff-ffff-ffff-ffff-ffffffffffff"
+      ]
 
-      assert assert_conforms(conn, "register_account")["code"] == "malformed_request"
+      for key <- malformed do
+        conn =
+          post_json(
+            %{build_conn() | remote_ip: conn.remote_ip},
+            ~p"/api/v1/accounts",
+            %{email: unique_email(), password: valid_password()},
+            [{"idempotency-key", key}]
+          )
+
+        assert assert_conforms(conn, "register_account")["code"] == "malformed_request"
+      end
     end
   end
 

@@ -2,7 +2,7 @@ defmodule AwradWeb.Plugs.Idempotency do
   @moduledoc """
   `Idempotency-Key` on POST operations (`contracts/api/STYLE.md` §10, server
   ADR 0007). The header is optional; when present it must be a lowercase UUID
-  (`400 malformed_request` otherwise).
+  (`Awrad.ID.valid?/1`; `400 malformed_request` otherwise).
 
     * The first successful (2xx) result for an operation and key is stored for
       24 hours with a fingerprint of the body. Errors aren't stored: a retry
@@ -27,8 +27,6 @@ defmodule AwradWeb.Plugs.Idempotency do
   alias Awrad.Idempotency.Record
   alias AwradWeb.Problem
 
-  @uuid ~r/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/
-
   @impl Plug
   def init(opts), do: Keyword.validate!(opts, mode: :replay)
 
@@ -46,7 +44,7 @@ defmodule AwradWeb.Plugs.Idempotency do
   def key(conn) do
     case get_req_header(conn, "idempotency-key") do
       [] -> :none
-      [key] -> if Regex.match?(@uuid, key), do: {:ok, key}, else: :error
+      [key] -> if Awrad.ID.valid?(key), do: {:ok, key}, else: :error
       _many -> :error
     end
   end

@@ -161,7 +161,7 @@ defmodule AwradWeb.AccountPasswordTest do
     end
 
     test "a repeat with the same Idempotency-Key replays without running again", ctx do
-      key = [{"idempotency-key", Ecto.UUID.generate()}]
+      key = [{"idempotency-key", Awrad.UUIDv7.generate()}]
 
       assert ctx.conn |> bearer_request(ctx.phone) |> change_password(change(), key) |> status() ==
                204
@@ -183,7 +183,7 @@ defmodule AwradWeb.AccountPasswordTest do
 
       ctx.conn
       |> bearer_request(ctx.phone)
-      |> json_conn([{"idempotency-key", Ecto.UUID.generate()}])
+      |> json_conn([{"idempotency-key", Awrad.UUIDv7.generate()}])
       |> post(~p"/api/v1/account/sessions/revoke_others")
 
       assert Repo.exists?(where(Record, user_id: ^ctx.user.id))
@@ -192,7 +192,7 @@ defmodule AwradWeb.AccountPasswordTest do
         ctx.conn
         |> bearer_request(ctx.phone)
         |> delete_account(%{current_password: valid_password()}, [
-          {"idempotency-key", Ecto.UUID.generate()},
+          {"idempotency-key", Awrad.UUIDv7.generate()},
           {"accept-language", "ml"}
         ])
 
@@ -225,7 +225,7 @@ defmodule AwradWeb.AccountPasswordTest do
     end
 
     test "a repeat after success is 401: the credential ended with the account", ctx do
-      key = [{"idempotency-key", Ecto.UUID.generate()}]
+      key = [{"idempotency-key", Awrad.UUIDv7.generate()}]
       body = %{current_password: valid_password()}
       assert ctx.conn |> bearer_request(ctx.phone) |> delete_account(body, key) |> status() == 204
 

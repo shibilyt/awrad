@@ -146,8 +146,8 @@ defmodule Awrad.Accounts.DeviceSessions do
     now = DateTime.utc_now(:second)
 
     with {:ok, %{user_id: user_id, session_id: session_id}} <- AccessToken.verify(access_token),
-         {:ok, user_id} <- Ecto.UUID.cast(user_id),
-         {:ok, session_id} <- Ecto.UUID.cast(session_id),
+         true <- Awrad.ID.valid?(user_id),
+         true <- Awrad.ID.valid?(session_id),
          {%User{} = user, %DeviceSession{} = session} <- fetch_live(user_id, session_id, now) do
       {:ok, user, touch(session, now)}
     else

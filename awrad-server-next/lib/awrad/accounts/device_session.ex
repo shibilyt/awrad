@@ -14,7 +14,7 @@ defmodule Awrad.Accounts.DeviceSession do
 
   alias Awrad.Accounts.User
 
-  @primary_key {:id, :binary_id, autogenerate: true}
+  @primary_key {:id, Awrad.UUIDv7, autogenerate: true}
   @foreign_key_type :binary_id
 
   @idle_days 30
