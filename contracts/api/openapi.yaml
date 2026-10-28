@@ -534,11 +534,33 @@ components:
           description: JSON Pointer into the command, for example /document/title/en.
         code:
           type: string
-          enum: [required, blank, too_long, too_many, duplicate, not_allowed, invalid, mismatch, not_found]
+          enum: [required, blank, too_long, too_many, duplicate, not_allowed, invalid, mismatch, not_found, range]
+          description: >-
+            `range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its
+            ayah_start (reported on ayah_end).
+    SyncCascadedChange:
+      type: object
+      additionalProperties: false
+      required: [entity_type, entity_id, state, version, revision]
+      description: >-
+        An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal a
+        user_tag delete removed the tag from (active), or the dhikr_personal of a deleted custom_dhikr (deleted).
+      properties:
+        entity_type:
+          $ref: "#/components/schemas/SyncEntityType"
+        entity_id:
+          $ref: "#/components/schemas/Uuid"
+        state:
+          type: string
+          enum: [active, deleted]
+        version:
+          $ref: "#/components/schemas/SyncVersion"
+        revision:
+          $ref: "#/components/schemas/Revision"
     SyncAppliedReceipt:
       type: object
       additionalProperties: false
-      required: [command_id, status, version, revision]
+      required: [command_id, status, version, revision, cascaded]
       properties:
         command_id:
           $ref: "#/components/schemas/Uuid"
@@ -549,6 +571,17 @@ components:
           $ref: "#/components/schemas/SyncVersion"
         revision:
           $ref: "#/components/schemas/Revision"
+        cascaded:
+          description: >-
+            An array exactly when the command is a user_tag or custom_dhikr delete: every other entity the server
+            changed at the same revision, ordered by entity_type, then entity_id, and empty when nothing cascaded.
+            Phones set those entities' known versions from it straight away, so the next edit doesn't conflict. null
+            for every other command.
+          oneOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/SyncCascadedChange"
+            - type: "null"
     SyncConflictReceipt:
       type: object
       additionalProperties: false

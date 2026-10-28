@@ -53,7 +53,7 @@
       "oneOf": [{ "$ref": "#/$defs/long_text" }, { "type": "null" }]
     },
     "custom_dhikr_document": {
-      "description": "A user's own dhikr: urn:awrad:dhikr-catalog:1#/$defs/dhikr without id (the entity_id is the ID), key, virtues, aliases or catalog tags (user tags live in dhikr_personal). Every language key is always present, null when empty; the title needs at least one. Audio is never uploaded in 3b: null, or a marker that a recording exists on the device that made it. Lengths count Unicode code points.",
+      "description": "A user's own dhikr: urn:awrad:dhikr-catalog:1#/$defs/dhikr without id (the entity_id is the ID), key, virtues, aliases or catalog tags (user tags live in dhikr_personal). Every language key is always present, null when empty; the title needs at least one. Audio is never uploaded in 3b: null, or a marker that a recording exists on the device that made it. Lengths count Unicode code points. One rule this schema can't express: a Qur'an reference's ayah_end must be at least its ayah_start (field error `range` on /references/N/ayah_end; fixtures/custom_dhikr_validity.json).",
       "type": "object",
       "additionalProperties": false,
       "required": ["kind", "arabic", "title", "transliteration", "translation", "audio", "references"],
@@ -245,14 +245,14 @@
       "else": { "properties": { "document": { "$ref": "#/$defs/document" } } }
     },
     "field_error": {
-      "description": "One problem with a command. field is a JSON Pointer into the command (for example /document/title/en).",
+      "description": "One problem with a command. field is a JSON Pointer into the command (for example /document/title/en). `range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its ayah_start (on ayah_end).",
       "type": "object",
       "additionalProperties": false,
       "required": ["field", "code"],
       "properties": {
         "field": { "type": "string" },
         "code": {
-          "enum": ["required", "blank", "too_long", "too_many", "duplicate", "not_allowed", "invalid", "mismatch", "not_found"]
+          "enum": ["required", "blank", "too_long", "too_many", "duplicate", "not_allowed", "invalid", "mismatch", "not_found", "range"]
         }
       }
     },
@@ -270,15 +270,35 @@
         "command_id_reused"
       ]
     },
-    "applied_receipt": {
+    "cascaded_change": {
+      "description": "An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal that a user_tag delete removed the tag from (active), or the dhikr_personal of a deleted custom_dhikr (deleted). The phone sets its known version from it; the document is in the changes feed.",
       "type": "object",
       "additionalProperties": false,
-      "required": ["command_id", "status", "version", "revision"],
+      "required": ["entity_type", "entity_id", "state", "version", "revision"],
+      "properties": {
+        "entity_type": { "$ref": "#/$defs/entity_type" },
+        "entity_id": { "$ref": "#/$defs/uuid" },
+        "state": { "$ref": "#/$defs/state" },
+        "version": { "$ref": "#/$defs/version", "type": "integer", "minimum": 1 },
+        "revision": { "$ref": "#/$defs/revision", "type": "integer", "minimum": 1 }
+      }
+    },
+    "applied_receipt": {
+      "description": "cascaded is an array exactly when the command is a user_tag or custom_dhikr delete: every other entity the server changed at the same revision, ordered by entity_type, then entity_id, and empty when nothing cascaded. For every other command it is null.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_id", "status", "version", "revision", "cascaded"],
       "properties": {
         "command_id": { "$ref": "#/$defs/uuid" },
         "status": { "const": "applied" },
         "version": { "$ref": "#/$defs/version" },
-        "revision": { "$ref": "#/$defs/revision" }
+        "revision": { "$ref": "#/$defs/revision" },
+        "cascaded": {
+          "oneOf": [
+            { "type": "array", "items": { "$ref": "#/$defs/cascaded_change" } },
+            { "type": "null" }
+          ]
+        }
       }
     },
     "conflict_receipt": {

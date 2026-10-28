@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "outbox_enqueue",
-  "description": "How a phone queues one saved edit (Android and iOS; the web has no queue). Given the versions this device knows, the queue (oldest first; `sent` once a command has been in a request) and the edit, the queue afterwards. If the entity's last queued command was never sent, the edit replaces it in place, keeping its command_id, base_version and position; but a delete that replaces a never-sent create (base_version 0) removes it instead, since the server never heard of the entity. Otherwise a new command is added at the end with base_version = the entity's last queued command's base_version + 1, or the known version (0 if unknown) when nothing is queued for it. Deleting a custom dhikr also drops never-sent commands for its dhikr_personal. The edit and its queue change are one local transaction; the queue's document for a delete is null (the wire command omits it). Phones only queue for a profile that belongs to an account (profile_switch).",
+  "description": "How a phone queues one saved edit (Android and iOS; the web has no queue). Given the versions this device knows, the queue (oldest first; `sent` once a command has been in a request) and the edit, the queue afterwards. If the entity's last queued command was never sent, the edit replaces it in place, keeping its command_id, base_version and position; but a delete that replaces a never-sent create (base_version 0) removes it instead, since the server never heard of the entity. Otherwise a new command is added at the end with base_version = the entity's last queued command's base_version + 1, or the known version (0 if unknown) when nothing is queued for it. Deleting a custom dhikr also drops never-sent commands for its dhikr_personal. Deleting a tag queues only the tag delete, never a dhikr_personal put: the server removes the tag from every record itself and reports those records in the receipt's `cascaded`. Locally the tag leaves every dhikr_personal document and every never-sent dhikr_personal command, in the same transaction. The edit and its queue change are one local transaction; the queue's document for a delete is null (the wire command omits it). Phones only queue for a profile that belongs to an account (profile_switch).",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#clients-android-and-ios",
     "contracts/sync/v1/README.md",
@@ -1566,6 +1566,160 @@
       },
       "expect": {
         "outbox": []
+      }
+    },
+    {
+      "id": "delete_tag_queues_only_the_tag_delete",
+      "description": "Deleting a tag that dhikr_personal records use queues the tag delete and nothing else: no dhikr_personal put.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000030",
+          "entity_type": "user_tag",
+          "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+          "op": "delete",
+          "document": null
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000030",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "op": "delete",
+            "base_version": 1,
+            "document": null,
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "delete_tag_removes_it_from_unsent_personal_commands",
+      "description": "A never-sent dhikr_personal command naming the deleted tag loses it in place (same command_id, base_version and position); a sent one stays as it is, since the server drops deleted tags itself.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000031",
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 2,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000004"
+              ]
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000032",
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000004",
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000033",
+          "entity_type": "user_tag",
+          "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+          "op": "delete",
+          "document": null
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000031",
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 2,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000004"
+              ]
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000032",
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000004"
+              ]
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000033",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "op": "delete",
+            "base_version": 1,
+            "document": null,
+            "sent": false
+          }
+        ]
       }
     },
     {

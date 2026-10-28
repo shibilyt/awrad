@@ -19,6 +19,18 @@ Users can create, edit and delete their own dhikrs and tag any dhikr, offline on
 - **The web edits too.** It's online only and sends each edit straight away, with no queue.
 - **Contract details agreed (2026-10-28):** Qur'an references are `ayah_start`/`ayah_end` everywhere (the catalog is renamed, so each app updates its catalog parsing in this slice); a refresh for a deleted account answers `401 account_deleted`, and the phone offers to remove that profile. The mobile apps stay complete without an account (ADR-2026-10-28): signed out, nothing contacts the server.
 
+## Decisions after the build (2026-10-28)
+
+Gaps found while building the four platforms, closed in `contracts/` (sync README, fixtures and `components.md`):
+
+1. **Anonymous data, existing profile.** Signing in from an anonymous profile with data, as an account that already has a profile on the phone, asks: **Add to my account** merges the anonymous data into that profile (same-name tags fold together locally, every merged entity is queued as a put); **Erase** discards it and activates the existing profile (`profile_switch.json`).
+2. **Removing the active profile** signs out and activates the anonymous profile if one exists, or else creates a fresh one. There's at most one anonymous profile at a time.
+3. **Keeping a deleted account's profile.** **Keep** on the active profile signs out; the profile stays active and usable offline, is marked `account_deleted`, never syncs and can be removed later.
+4. **Deletes in a changes page** clean up exactly as a receipt does: a deleted tag leaves local personal records, a deleted custom dhikr takes its personal record, and unsent commands for the deleted entity are dropped (`apply_changes.json`).
+5. **Cascades in receipts.** The `applied` receipt of a `user_tag` or `custom_dhikr` delete carries `cascaded` (`{entity_type, entity_id, state, version, revision}` for every entity changed at that revision; `null` on other applied receipts). Phones update their known versions from it straight away. Deleting a tag queues only the tag delete, never personal-record puts.
+6. **Ranges and sizes.** A Qur'an reference needs `ayah_end` ≥ `ayah_start` (field error `range`; the catalog check enforces it for built-ins). 64 KB per document means 65,536 bytes of UTF-8 JSON; 10 MB of audio (3c) means 10,000,000 bytes.
+7. **Components:** filter chip, conflict banner, "Change refused" notice, multi-line text field, the Sources section on the dhikr detail, and the "Your dhikrs" collection tile (`contracts/design-system/v1/components.md`).
+
 ## Scope
 
 | In scope | Out of scope (and where it goes instead) |

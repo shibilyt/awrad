@@ -229,7 +229,8 @@ A tag shown on a dhikr (display only, for now): `chip` shape, `secondaryContaine
   - **Transliteration** (`body`): not in Arabic, and not for `name_of_allah`, whose title already is the transliteration;
   - **Translation** (`body`): every kind except `name_of_allah`, whose meaning is in the card;
   - **Tags:** tag chips, `sm` apart;
-  - **Virtues:** each virtue's text in `body`, then its reference labels in `caption`, `onSurfaceVariant`.
+  - **Virtues:** each virtue's text in `body`, then its reference labels in `caption`, `onSurfaceVariant`;
+  - **Sources** (slice 3b): after Virtues, the reference labels not already shown, one per line in `caption`, `onSurfaceVariant`, in the dhikr's reference order. Never repeated here: the `quran` reference a `quran` dhikr shows in its card. Built-in dhikrs list the references no virtue cites; custom dhikrs, which have no virtues, list all of theirs.
 - **Reference labels:**
   - `quran`: "Qur'an 112:1–4";
   - `hadith`: "Sahih Muslim 408" plus " · grade" when present;
@@ -237,3 +238,44 @@ A tag shown on a dhikr (display only, for now): `chip` shape, `secondaryContaine
   - `shaykh`: the name;
   - `other`: the text, with its link.
 - **Sections:** a section with nothing to show is left out.
+
+## Custom dhikrs and sync components (slice 3b)
+
+### Filter chip
+
+A selectable chip that filters a list (the Library's tag filter). Several can be selected at once.
+
+| Part | Unselected | Selected |
+|---|---|---|
+| Fill | `secondaryContainer` (`background` on a surface) | `primary` |
+| Label (`label`) | `onSecondaryContainer` | `onPrimary` |
+| Leading icon | none | `check` in `onPrimary`, `iconSmall`, `inlineGap` to the label |
+
+- **Size and shape:** `chip` shape, padding `sm` × `md`, chips `sm` apart, with a `touchTarget` (48) touch area.
+- **Motion:** `press` (`buttonScale`); colours change with `select`.
+- **Accessibility:** announced as a toggle button named by its label, with its selected state.
+
+### Conflict banner
+
+Shown at the top of a dhikr's page while it has an open conflict.
+- **Container:** a card (`card` shape, `cardPadding`) filled `secondaryContainer`. It doesn't use the `error` colour roles.
+- **Content:** the `error` icon (`icon` size) at the start, then "Changed on another device" in `body`; icon and text in `onSecondaryContainer`.
+- **Actions:** two text buttons aligned to the end: **Keep mine** and **Use theirs**.
+
+### "Change refused" notice
+
+A dialog shown when the server refuses a change (a `rejected` receipt). By the time it appears, the local change has already been undone.
+- **Title:** "Change refused".
+- **Body:** the reason, one localized message per rejection code.
+- **Action:** a single "OK" text button that closes it.
+
+### Multi-line text field
+
+The text field above, for longer text (a custom dhikr's Arabic, transliteration and translation). It starts one line tall (`control`, 56) and grows with its text up to 6 lines; beyond that it scrolls inside. Label, colours, focus, error and supporting text are the text field's.
+
+### "Your dhikrs" collection tile
+
+A collection tile for the user's own dhikrs.
+- **When:** whenever the profile (phones) or the account (web) has custom dhikrs, always first in the tile row.
+- **Content:** the title "Your dhikrs" and the count as "N dhikrs", with plural forms in en, ar and ml.
+- **Behaviour:** it opens a list page like any collection's.

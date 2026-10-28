@@ -21,7 +21,9 @@ commands:
       checks each document itself, so one bad command never blocks a phone's queue.
 
 
-      Receipts: `applied`, `duplicate` (same `command_id` and payload as before; carries the original receipt),
+      Receipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every
+      other entity the server changed at the same revision, whose known versions phones update straight away; null
+      for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt),
       `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag
       already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected`
       (`code`, `fields`, and the server's copy or null). Receipts are kept for 90 days.
@@ -117,6 +119,11 @@ commands:
                 document:
                   name: Night
                   normalized_name: Night
+              - command_id: 0192f0c0-0000-7000-8000-000000000007
+                entity_type: user_tag
+                entity_id: 0192f0a0-0000-7000-8000-000000000002
+                op: delete
+                base_version: 2
               - command_id: 0192f0c0-0000-7000-8000-000000000001
                 entity_type: custom_dhikr
                 entity_id: 0192f0d0-0000-7000-8000-000000000002
@@ -173,6 +180,7 @@ commands:
                   status: applied
                   version: 1
                   revision: 11
+                  cascaded: null
                 - command_id: 0192f0c0-0000-7000-8000-000000000002
                   status: merged
                   merged_into: 0192f0a0-0000-7000-8000-000000000001
@@ -186,6 +194,7 @@ commands:
                   status: applied
                   version: 2
                   revision: 12
+                  cascaded: null
                 - command_id: 0192f0c0-0000-7000-8000-000000000004
                   status: conflict
                   current:
@@ -216,6 +225,16 @@ commands:
                     - field: /document/normalized_name
                       code: mismatch
                   current: null
+                - command_id: 0192f0c0-0000-7000-8000-000000000007
+                  status: applied
+                  version: 3
+                  revision: 13
+                  cascaded:
+                    - entity_type: dhikr_personal
+                      entity_id: 6f04f77e-dcb6-4a29-9dc5-fcd3649c2961
+                      state: active
+                      version: 3
+                      revision: 13
                 - command_id: 0192f0c0-0000-7000-8000-000000000001
                   status: duplicate
                   original:
@@ -223,7 +242,8 @@ commands:
                     status: applied
                     version: 1
                     revision: 11
-              head_revision: 12
+                    cascaded: null
+              head_revision: 13
       "400":
         $ref: "../openapi.yaml#/components/responses/BadRequest"
       "401":

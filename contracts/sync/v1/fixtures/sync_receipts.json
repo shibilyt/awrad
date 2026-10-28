@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "sync_receipts",
-  "description": "The server side of post_sync_commands: given an account's sync state and a batch, the receipts and the resulting state. State: `entities` (one row per entity, in the changes-feed shape: version, state, the revision of its last change, and document, null when deleted), `head_revision`, stored `receipts` (each original command with its first receipt) and `tag_aliases` (merged tag ID to surviving tag ID). Commands apply in order, each checked in this order: (1) a stored command_id replays as `duplicate` with the same payload, else `rejected` `command_id_reused` (not stored); (2) a dhikr_personal delete is `delete_not_allowed`; (3) a put's document must be valid (`document_invalid`, `document_too_large`); (4) a user_tag ID that is an alias, or a deleted entity, is `gone`; an entity the server doesn't have needs a put with base_version 0 (`entity_not_found`); otherwise base_version must equal its version (`conflict`); (5) entity rules: a user_tag create whose normalized name an active tag has is `merged`, a rename onto one is `tag_name_taken`, more than 100 active tags or 1,000 active custom dhikrs is `*_limit_reached`, a dhikr_personal needs a built-in or active custom dhikr (`dhikr_not_found`) and known tags (`tag_not_found`), with aliases rewritten to their tag, deleted tags dropped and repeats removed. Each applied command takes head_revision + 1 and adds one to the entity's version; its cascades (a deleted tag removed from dhikr_personal documents, a deleted custom dhikr's dhikr_personal deleted) share that revision. Every receipt except command_id_reused is stored. Expect: the receipts in batch order; the new head_revision; `changes`, the entities whose revision is now above the given head_revision, ordered by revision, entity_type, entity_id (what list_sync_changes returns after it); every tag alias, ordered by alias_id; and every stored command_id, sorted.",
+  "description": "The server side of post_sync_commands: given an account's sync state and a batch, the receipts and the resulting state. State: `entities` (one row per entity, in the changes-feed shape: version, state, the revision of its last change, and document, null when deleted), `head_revision`, stored `receipts` (each original command with its first receipt) and `tag_aliases` (merged tag ID to surviving tag ID). Commands apply in order, each checked in this order: (1) a stored command_id replays as `duplicate` with the same payload, else `rejected` `command_id_reused` (not stored); (2) a dhikr_personal delete is `delete_not_allowed`; (3) a put's document must be valid (`document_invalid`, `document_too_large`); (4) a user_tag ID that is an alias, or a deleted entity, is `gone`; an entity the server doesn't have needs a put with base_version 0 (`entity_not_found`); otherwise base_version must equal its version (`conflict`); (5) entity rules: a user_tag create whose normalized name an active tag has is `merged`, a rename onto one is `tag_name_taken`, more than 100 active tags or 1,000 active custom dhikrs is `*_limit_reached`, a dhikr_personal needs a built-in or active custom dhikr (`dhikr_not_found`) and known tags (`tag_not_found`), with aliases rewritten to their tag, deleted tags dropped and repeats removed. Each applied command takes head_revision + 1 and adds one to the entity's version; its cascades (a deleted tag removed from dhikr_personal documents, a deleted custom dhikr's dhikr_personal deleted) share that revision, and the applied receipt of a user_tag or custom_dhikr delete lists them in `cascaded` ({entity_type, entity_id, state, version, revision}, ordered by entity_type, entity_id; empty when nothing cascaded; null on every other applied receipt) so phones can update their known versions at once. Every receipt except command_id_reused is stored. Expect: the receipts in batch order; the new head_revision; `changes`, the entities whose revision is now above the given head_revision, ordered by revision, entity_type, entity_id (what list_sync_changes returns after it); every tag alias, ordered by alias_id; and every stored command_id, sorted.",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#the-change-queue",
     "contracts/sync/v1/README.md",
@@ -279,7 +279,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000001",
             "status": "applied",
             "version": 1,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           }
         ],
         "head_revision": 11,
@@ -457,7 +458,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000002",
             "status": "applied",
             "version": 4,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           }
         ],
         "head_revision": 11,
@@ -1321,7 +1323,16 @@
             "command_id": "0192f0c0-0000-7000-8000-00000000000a",
             "status": "applied",
             "version": 4,
-            "revision": 11
+            "revision": 11,
+            "cascaded": [
+              {
+                "entity_type": "dhikr_personal",
+                "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                "state": "deleted",
+                "version": 3,
+                "revision": 11
+              }
+            ]
           }
         ],
         "head_revision": 11,
@@ -1849,7 +1860,16 @@
             "command_id": "0192f0c0-0000-7000-8000-00000000000e",
             "status": "applied",
             "version": 4,
-            "revision": 11
+            "revision": 11,
+            "cascaded": [
+              {
+                "entity_type": "dhikr_personal",
+                "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                "state": "deleted",
+                "version": 3,
+                "revision": 11
+              }
+            ]
           },
           {
             "command_id": "0192f0c0-0000-7000-8000-00000000000f",
@@ -2177,7 +2197,8 @@
                 "command_id": "0192f0c0-0000-7000-8000-000000000014",
                 "status": "applied",
                 "version": 1,
-                "revision": 11
+                "revision": 11,
+                "cascaded": null
               }
             }
           ],
@@ -2230,7 +2251,8 @@
               "command_id": "0192f0c0-0000-7000-8000-000000000014",
               "status": "applied",
               "version": 1,
-              "revision": 11
+              "revision": 11,
+              "cascaded": null
             }
           }
         ],
@@ -2408,7 +2430,8 @@
                 "command_id": "0192f0c0-0000-7000-8000-000000000014",
                 "status": "applied",
                 "version": 1,
-                "revision": 11
+                "revision": 11,
+                "cascaded": null
               }
             }
           ],
@@ -2665,7 +2688,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000015",
             "status": "applied",
             "version": 1,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           },
           {
             "command_id": "0192f0c0-0000-7000-8000-000000000015",
@@ -2674,7 +2698,8 @@
               "command_id": "0192f0c0-0000-7000-8000-000000000015",
               "status": "applied",
               "version": 1,
-              "revision": 11
+              "revision": 11,
+              "cascaded": null
             }
           }
         ],
@@ -2947,6 +2972,172 @@
         "tag_aliases": [],
         "stored_receipts": [
           "0192f0c0-0000-7000-8000-000000000016"
+        ]
+      }
+    },
+    {
+      "id": "duplicate_replays_cascaded",
+      "description": "A tag delete sent again replays its original receipt, cascaded included, and changes nothing.",
+      "given": {
+        "state": {
+          "head_revision": 11,
+          "entities": [
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "state": "active",
+              "version": 2,
+              "revision": 5,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            },
+            {
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 3,
+              "revision": 6,
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": null,
+                "references": []
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+              "state": "deleted",
+              "version": 2,
+              "revision": 8,
+              "document": null
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 3,
+              "revision": 11,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "state": "active",
+              "version": 2,
+              "revision": 11,
+              "document": {
+                "tag_ids": []
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "state": "deleted",
+              "version": 2,
+              "revision": 11,
+              "document": null
+            }
+          ],
+          "receipts": [
+            {
+              "command": {
+                "command_id": "0192f0c0-0000-7000-8000-000000000032",
+                "entity_type": "user_tag",
+                "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+                "op": "delete",
+                "base_version": 1
+              },
+              "receipt": {
+                "command_id": "0192f0c0-0000-7000-8000-000000000032",
+                "status": "applied",
+                "version": 2,
+                "revision": 11,
+                "cascaded": [
+                  {
+                    "entity_type": "dhikr_personal",
+                    "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                    "state": "active",
+                    "version": 3,
+                    "revision": 11
+                  },
+                  {
+                    "entity_type": "dhikr_personal",
+                    "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                    "state": "active",
+                    "version": 2,
+                    "revision": 11
+                  }
+                ]
+              }
+            }
+          ],
+          "tag_aliases": []
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000032",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "op": "delete",
+            "base_version": 1
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000032",
+            "status": "duplicate",
+            "original": {
+              "command_id": "0192f0c0-0000-7000-8000-000000000032",
+              "status": "applied",
+              "version": 2,
+              "revision": 11,
+              "cascaded": [
+                {
+                  "entity_type": "dhikr_personal",
+                  "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                  "state": "active",
+                  "version": 3,
+                  "revision": 11
+                },
+                {
+                  "entity_type": "dhikr_personal",
+                  "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                  "state": "active",
+                  "version": 2,
+                  "revision": 11
+                }
+              ]
+            }
+          }
+        ],
+        "head_revision": 11,
+        "changes": [],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000032"
         ]
       }
     },
@@ -3225,7 +3416,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000020",
             "status": "applied",
             "version": 1,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           }
         ],
         "head_revision": 11,
@@ -3377,7 +3569,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000021",
             "status": "applied",
             "version": 2,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           }
         ],
         "head_revision": 11,
@@ -3652,7 +3845,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000023",
             "status": "applied",
             "version": 3,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           }
         ],
         "head_revision": 11,
@@ -3788,7 +3982,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000024",
             "status": "applied",
             "version": 2,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           }
         ],
         "head_revision": 11,
@@ -4061,7 +4256,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000026",
             "status": "applied",
             "version": 1,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           }
         ],
         "head_revision": 11,
@@ -4453,7 +4649,23 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000032",
             "status": "applied",
             "version": 2,
-            "revision": 11
+            "revision": 11,
+            "cascaded": [
+              {
+                "entity_type": "dhikr_personal",
+                "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                "state": "active",
+                "version": 3,
+                "revision": 11
+              },
+              {
+                "entity_type": "dhikr_personal",
+                "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                "state": "active",
+                "version": 2,
+                "revision": 11
+              }
+            ]
           }
         ],
         "head_revision": 11,
@@ -4610,7 +4822,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000033",
             "status": "applied",
             "version": 2,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           }
         ],
         "head_revision": 11,
@@ -4761,13 +4974,30 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000034",
             "status": "applied",
             "version": 2,
-            "revision": 11
+            "revision": 11,
+            "cascaded": [
+              {
+                "entity_type": "dhikr_personal",
+                "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                "state": "active",
+                "version": 3,
+                "revision": 11
+              },
+              {
+                "entity_type": "dhikr_personal",
+                "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                "state": "active",
+                "version": 2,
+                "revision": 11
+              }
+            ]
           },
           {
             "command_id": "0192f0c0-0000-7000-8000-000000000035",
             "status": "applied",
             "version": 1,
-            "revision": 12
+            "revision": 12,
+            "cascaded": null
           }
         ],
         "head_revision": 12,
@@ -4824,6 +5054,147 @@
         "stored_receipts": [
           "0192f0c0-0000-7000-8000-000000000034",
           "0192f0c0-0000-7000-8000-000000000035"
+        ]
+      }
+    },
+    {
+      "id": "delete_unused_tag_cascades_nothing",
+      "description": "Deleting a tag no dhikr_personal uses changes nothing else: the applied receipt carries an empty cascaded.",
+      "given": {
+        "state": {
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 1,
+              "revision": 2,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "state": "active",
+              "version": 2,
+              "revision": 5,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            },
+            {
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 3,
+              "revision": 6,
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": null,
+                "references": []
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "state": "active",
+              "version": 1,
+              "revision": 7,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+              "state": "deleted",
+              "version": 2,
+              "revision": 8,
+              "document": null
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+              "state": "active",
+              "version": 1,
+              "revision": 9,
+              "document": {
+                "name": "Travel",
+                "normalized_name": "travel"
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 10,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001",
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": []
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000060",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "delete",
+            "base_version": 1
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000060",
+            "status": "applied",
+            "version": 2,
+            "revision": 11,
+            "cascaded": []
+          }
+        ],
+        "head_revision": 11,
+        "changes": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "state": "deleted",
+            "version": 2,
+            "revision": 11,
+            "document": null
+          }
+        ],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000060"
         ]
       }
     },
@@ -5212,7 +5583,8 @@
             "command_id": "0192f0c0-0000-7000-8000-00000000003e",
             "status": "applied",
             "version": 1,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           }
         ],
         "head_revision": 11,
@@ -5385,13 +5757,15 @@
             "command_id": "0192f0c0-0000-7000-8000-00000000003f",
             "status": "applied",
             "version": 1,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           },
           {
             "command_id": "0192f0c0-0000-7000-8000-000000000040",
             "status": "applied",
             "version": 1,
-            "revision": 12
+            "revision": 12,
+            "cascaded": null
           }
         ],
         "head_revision": 12,
@@ -5575,13 +5949,15 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000041",
             "status": "applied",
             "version": 1,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           },
           {
             "command_id": "0192f0c0-0000-7000-8000-000000000042",
             "status": "applied",
             "version": 2,
-            "revision": 12
+            "revision": 12,
+            "cascaded": null
           }
         ],
         "head_revision": 12,
@@ -5920,7 +6296,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000046",
             "status": "applied",
             "version": 1,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           },
           {
             "command_id": "0192f0c0-0000-7000-8000-000000000047",
@@ -5938,7 +6315,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000048",
             "status": "applied",
             "version": 3,
-            "revision": 12
+            "revision": 12,
+            "cascaded": null
           }
         ],
         "head_revision": 12,
@@ -6237,7 +6615,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000049",
             "status": "applied",
             "version": 1,
-            "revision": 11
+            "revision": 11,
+            "cascaded": null
           },
           {
             "command_id": "0192f0c0-0000-7000-8000-00000000004a",
@@ -6303,7 +6682,8 @@
             "command_id": "0192f0c0-0000-7000-8000-00000000004e",
             "status": "applied",
             "version": 1,
-            "revision": 12
+            "revision": 12,
+            "cascaded": null
           },
           {
             "command_id": "0192f0c0-0000-7000-8000-000000000049",
@@ -6312,7 +6692,8 @@
               "command_id": "0192f0c0-0000-7000-8000-000000000049",
               "status": "applied",
               "version": 1,
-              "revision": 11
+              "revision": 11,
+              "cascaded": null
             }
           }
         ],
@@ -7583,7 +7964,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000050",
             "status": "applied",
             "version": 1,
-            "revision": 108
+            "revision": 108,
+            "cascaded": null
           },
           {
             "command_id": "0192f0c0-0000-7000-8000-000000000051",
@@ -7996,7 +8378,8 @@
             "command_id": "0192f0c0-0000-7000-8000-000000000053",
             "status": "applied",
             "version": 1,
-            "revision": 29
+            "revision": 29,
+            "cascaded": null
           },
           {
             "command_id": "0192f0c0-0000-7000-8000-000000000054",

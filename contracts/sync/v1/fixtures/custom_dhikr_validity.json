@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "custom_dhikr_validity",
-  "description": "Which custom dhikr documents are valid, and why not. A valid document is exactly one that matches urn:awrad:sync:1#/$defs/custom_dhikr_document: the catalog dhikr shape without id, key, aliases, virtues or catalog tags; kind and a non-blank Arabic text required; title (en, ar, ml), transliteration (en, ml) and translation (en, ar, ml) with every language key present and each value text or null (STYLE §3), the title with at least one text; audio null or {\"local_only\": true}; references in the catalog's reference shape. Limits, in Unicode code points: title 120 per language; Arabic, transliteration and translation 5,000 each; 20 references. Errors are {field, code} with field a JSON Pointer into the document, sorted by field and then code; a `rejected` receipt reports the same errors with /document in front. Clients check before saving; the server checks every put.",
+  "description": "Which custom dhikr documents are valid, and why not. A valid document is exactly one that matches urn:awrad:sync:1#/$defs/custom_dhikr_document and whose Qur'an references each have ayah_end ≥ ayah_start (the one rule that schema can't express; `range` on /references/N/ayah_end): the catalog dhikr shape without id, key, aliases, virtues or catalog tags; kind and a non-blank Arabic text required; title (en, ar, ml), transliteration (en, ml) and translation (en, ar, ml) with every language key present and each value text or null (STYLE §3), the title with at least one text; audio null or {\"local_only\": true}; references in the catalog's reference shape. Limits, in Unicode code points: title 120 per language; Arabic, transliteration and translation 5,000 each; 20 references. Errors are {field, code} with field a JSON Pointer into the document, sorted by field and then code; a `rejected` receipt reports the same errors with /document in front. Clients check before saving; the server checks every put.",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#the-change-queue (Entities in 3b)",
     "contracts/sync/v1/sync.schema.json ($defs/custom_dhikr_document)",
@@ -389,6 +389,82 @@
               "id": "r20",
               "type": "other",
               "text": "Source 20"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_ayah_range_single_ayah",
+      "description": "A Qur'an reference to one ayah has ayah_end equal to ayah_start.",
+      "given": {
+        "document": {
+          "kind": "quran",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": null,
+            "ml": null
+          },
+          "translation": {
+            "en": null,
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": [
+            {
+              "id": "quran",
+              "type": "quran",
+              "surah": 2,
+              "ayah_start": 255,
+              "ayah_end": 255
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_ayah_range_several_ayahs",
+      "description": "A Qur'an reference to several ayahs ends after it starts.",
+      "given": {
+        "document": {
+          "kind": "quran",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": null,
+            "ml": null
+          },
+          "translation": {
+            "en": null,
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": [
+            {
+              "id": "quran",
+              "type": "quran",
+              "surah": 112,
+              "ayah_start": 1,
+              "ayah_end": 4
             }
           ]
         }
@@ -1464,6 +1540,56 @@
           {
             "field": "/references/1",
             "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference_ayah_range_reversed",
+      "description": "A Qur'an reference can't end before it starts: `range` on its ayah_end. Each reference is checked; the first one here is fine.",
+      "given": {
+        "document": {
+          "kind": "quran",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": null,
+            "ml": null
+          },
+          "translation": {
+            "en": null,
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": [
+            {
+              "id": "quran",
+              "type": "quran",
+              "surah": 2,
+              "ayah_start": 255,
+              "ayah_end": 255
+            },
+            {
+              "id": "quran-ikhlas",
+              "type": "quran",
+              "surah": 112,
+              "ayah_start": 4,
+              "ayah_end": 1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/references/1/ayah_end",
+            "code": "range"
           }
         ]
       }

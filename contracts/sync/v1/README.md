@@ -22,7 +22,8 @@ Everything synced is an **entity**: an `entity_type`, an `entity_id` (a UUID), a
   - no `id` (the `entity_id` is the ID), `key`, `aliases`, `virtues` or catalog `tags` (user tags live in `dhikr_personal`);
   - `title` `{en, ar, ml}`, `transliteration` `{en, ml}` and `translation` `{en, ar, ml}` always carry every language key, each text or `null` (API STYLE §3), and the title has at least one text;
   - `audio` is `null` or `{"local_only": true}`: a recording that stays on the device that imported it, until uploads arrive in slice 3c;
-  - references keep the catalog's member names, so a Qur'an reference has `ayah_start` and `ayah_end`.
+  - references keep the catalog's member names, so a Qur'an reference has `ayah_start` and `ayah_end`;
+  - a Qur'an reference's `ayah_end` is at least its `ayah_start` (equal for one ayah). The schema can't compare two members, so a reversed range is a field error `range` on `/references/N/ayah_end`; the built-in catalog has the same check in `tools/check-dhikr-catalog.mjs`.
 - **Tag.** `name` is the display form and `normalized_name` its case fold, both defined by [`fixtures/tag_name_normalization.json`](fixtures/tag_name_normalization.json). Two active tags never share a `normalized_name`.
 - **Personal record** (`dhikr_personal`): a user's own data about one dhikr. For now only its tags, in the user's order. Clients never delete one; they put `{"tag_ids": []}`.
 
@@ -71,20 +72,22 @@ Everything else, including a document that breaks its schema, is a `rejected` re
 6. **Apply.** The command takes `head_revision + 1`.
    - Deleting a tag removes it from every `dhikr_personal` that has it.
    - Deleting a custom dhikr deletes its `dhikr_personal`.
-   - Both cascades happen at the same revision. From slice 4, a custom dhikr that goals use can't be deleted.
+   - Both cascades happen at the same revision, and the command's `applied` receipt lists them in `cascaded`. From slice 4, a custom dhikr that goals use can't be deleted.
 
 **Receipts** (`$defs/receipt`), one per command, in order:
 
 | `status` | Meaning | Carries |
 |---|---|---|
-| `applied` | Done | `version`, `revision` |
+| `applied` | Done | `version`, `revision`, `cascaded` |
 | `duplicate` | Seen before with the same payload | `original`: the first receipt |
 | `conflict` | `base_version` is stale | `current`: the server's `{version, state, document}` |
 | `merged` | A tag create whose name exists | `merged_into` (the surviving tag), `current` (that tag) |
 | `gone` | Deleted, or a merged tag ID | — |
 | `rejected` | Invalid, over a limit, or a reused `command_id` | `code`, `fields` (`{field, code}`, pointers into the command), `current` (the server's copy to undo to, or `null`) |
 
-Every receipt except `command_id_reused` is stored for 90 days, whatever its status. The response also carries `head_revision`.
+**Cascades in receipts.** The `applied` receipt of a `user_tag` or `custom_dhikr` delete carries `cascaded`: one `{entity_type, entity_id, state, version, revision}` for every other entity the server changed at the same revision, ordered by `entity_type`, then `entity_id`, and empty when nothing cascaded. Every other `applied` receipt has `cascaded: null` (STYLE §3). Phones apply the entries to their known versions straight away, so the next edit of a cascaded record doesn't conflict; the documents arrive in the changes feed.
+
+Every receipt except `command_id_reused` is stored for 90 days, whatever its status, `cascaded` included. The response also carries `head_revision`.
 
 **Tag merging.** Two phones that both create "Morning" offline end up with one tag:
 - the second create is `merged`;
@@ -122,7 +125,8 @@ Returns `{changes, next_after, has_more, head_revision}`. Each change is an enti
 | 20 tags per dhikr, no repeats | Schema: `document_invalid` |
 | Custom dhikr: title 120 per language; Arabic, transliteration and translation 5,000 per language; 20 references | Schema, counted in Unicode code points: `document_invalid` |
 | Tag name: 1–40 extended grapheme clusters, ≤ 128 UTF-8 bytes, already in display form; `normalized_name` equal to the server's | Server (the schema only bounds code points): `document_invalid` |
-| 64 KB per document: UTF-8 bytes of its compact JSON, non-ASCII unescaped | Server: `document_too_large` |
+| 64 KB per document: at most 65,536 UTF-8 bytes of its compact JSON, non-ASCII unescaped | Server: `document_too_large` |
+| Audio upload (slice 3c): 10 MB per file, meaning 10,000,000 bytes | Server, from slice 3c |
 | Changes page: `limit` 1–500, default 200 | Schema (OpenAPI) |
 | Receipts kept 90 days | Server |
 
@@ -139,6 +143,7 @@ The rules are in [`fixtures/outbox_enqueue.json`](fixtures/outbox_enqueue.json).
 - **Last command never sent:** the edit replaces it in place, keeping its `command_id`, `base_version` and position. A delete of an entity whose never-sent create is still queued removes that create instead.
 - **Otherwise:** a command is added at the end. Its `base_version` is the previous command's `base_version` + 1, or the known version when nothing is queued for the entity.
 - **Deleting a custom dhikr** also drops never-sent commands for its `dhikr_personal`.
+- **Deleting a tag** queues only the tag delete, never a `dhikr_personal` put: the server removes the tag from every record itself and reports them in the receipt's `cascaded`. Locally, the tag leaves every `dhikr_personal` document and every never-sent `dhikr_personal` command in the same transaction.
 
 ### Sending and pulling
 
@@ -148,7 +153,7 @@ The rules are in [`fixtures/apply_changes.json`](fixtures/apply_changes.json).
 
    | Receipt | What the phone does |
    |---|---|
-   | `applied` | Records the version |
+   | `applied` | Records the version, and sets the known version of each `cascaded` entity it has (removing a deleted one) |
    | `duplicate` | Acts as its original |
    | `conflict` | Keeps the local edit and opens a conflict ("Changed on another device": **Keep mine** re-queues it on the server's version, **Use theirs** takes the server's copy). Later unsent commands for the entity are dropped |
    | `merged` | Rewrites the tag ID everywhere locally, in documents and unsent commands |
@@ -156,8 +161,9 @@ The rules are in [`fixtures/apply_changes.json`](fixtures/apply_changes.json).
    | `rejected` | Restores the server's copy, or removes the entity, and tells the user |
 
 2. Pull pages from the stored `after`. Each page is applied in one transaction together with its `next_after`.
-   - A change to an entity with a queued command or an open conflict updates only its known version.
+   - A change other than a delete, to an entity with a queued command or an open conflict, updates only its known version.
    - A change older than the known version is ignored.
+   - A delete cleans up exactly as a `gone` receipt does, even when the entity has queued commands or an open conflict: the entity goes, its unsent commands are dropped (sent ones wait for their receipts) and its conflict is closed. A deleted tag is removed from local personal records and unsent commands; a deleted custom dhikr takes its personal record and that record's unsent commands with it.
    - A delete of something the phone doesn't have is ignored.
 
 **Cadence.** Sync on app start, after a change (with a 2 s debounce) and every 5 minutes while open. On failure, back off from 5 s to 5 min with ±20% jitter.
@@ -177,8 +183,13 @@ Each account's data lives in its own **profile**, a separate local database. A r
 - **Signing out** keeps the active profile. Its edits are queued but not sent.
 - **Signing in again** as the same account sends its queue without asking.
 - **Signing in as another account** switches to that account's profile, creating it if needed. The other profiles, unsent commands included, stay untouched.
-- **Remove from this device** warns first if the profile has unsent changes. Removing the active profile signs out and starts a fresh anonymous profile.
-- **When an account no longer exists**, the phone offers to remove its profile.
+- **Signing in from an anonymous profile with data, as an account that already has a profile on the phone,** asks the same question:
+  - **Add to my account** merges the anonymous data into the account's profile: tags with the same name fold together locally (onto the account's tag), and every merged entity is queued as a put. The anonymous profile is then deleted;
+  - **Erase** discards the anonymous data.
+
+  Either way the account's profile becomes active. An empty anonymous profile asks nothing and stays as it is.
+- **Remove from this device** warns first if the profile has unsent changes. Removing the active profile signs out and activates the anonymous profile if there is one, or else starts a fresh one. There is at most one anonymous profile at a time.
+- **When an account no longer exists**, the phone offers to remove its profile or keep it. **Keep** marks the profile `account_deleted`: it stays usable offline and never syncs again, and it can be removed later. If it's the active profile, the phone signs out and the profile stays active.
 
 **Two safety checks** keep accounts from mixing:
 - the sync engine sends only when the signed-in account equals the active profile's account;
@@ -194,10 +205,11 @@ Each account's data lives in its own **profile**, a separate local database. A r
 | `sync_changes_feed.json` | Server | Entities, `after`, `limit`: the page |
 | `outbox_enqueue.json` | Android, iOS | Known versions, queue and an edit: the queue |
 | `apply_changes.json` | Android, iOS | Local state and a page, receipts or a resolution: local state and notices |
-| `profile_switch.json` | Android, iOS | Registry, event and choice: the prompt, the registry, what's queued, synced and erased |
+| `profile_switch.json` | Android, iOS | Registry, event and choice: the prompt, the registry, what's queued, merged, synced and erased |
 
 `npm test` in `contracts/` validates the fixtures and runs `tools/check-sync-contract.mjs`. That script checks that:
 - the OpenAPI examples match this schema;
-- `custom_dhikr_validity` agrees with `$defs/custom_dhikr_document`;
+- `custom_dhikr_validity` agrees with `$defs/custom_dhikr_document` plus the Qur'an range rule, with a `range` error for each reversed range;
 - the non-rejected commands in `sync_receipts` are valid commands;
+- each `applied` receipt in `sync_receipts` has `cascaded` exactly when its command is a `user_tag` or `custom_dhikr` delete, listing the entities changed at its revision;
 - the names `tag_name_normalization` accepts make valid tag documents.

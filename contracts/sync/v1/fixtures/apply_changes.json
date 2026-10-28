@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "apply_changes",
-  "description": "How a phone applies what comes back from the server (Android and iOS). Given its local state (feed position `after`, entities with their known server versions, the queue, open conflicts) and one step (a changes page, the receipts for the queue's sent commands, or the user resolving a conflict), the local state afterwards and any notices for the user. Page: each change to an entity with a queued command or an open conflict updates only its known version (and the conflict's server copy); otherwise an active change is stored (unless older than the known version) and a delete removes the entity or is ignored if unknown; then after = next_after. The page is applied in one transaction. Receipts, matched in order to the sent commands, each remove its command: applied records the version and closes any conflict; duplicate acts as its original; conflict keeps the local document, drops later unsent commands for the entity and opens a conflict; merged moves every local use of the tag ID to the surviving tag; gone removes the entity; rejected restores the server's copy (or removes the entity when there is none) and adds a notice. Removing a custom dhikr removes its dhikr_personal; removing a tag removes it from local dhikr_personal documents and unsent commands. Resolve keep_mine queues the local version (or delete) on the server's version; use_theirs takes the server's copy.",
+  "description": "How a phone applies what comes back from the server (Android and iOS). Given its local state (feed position `after`, entities with their known server versions, the queue, open conflicts) and one step (a changes page, the receipts for the queue's sent commands, or the user resolving a conflict), the local state afterwards and any notices for the user. Page: a delete removes the entity and cleans up exactly as a `gone` receipt does, even when the entity has queued commands or an open conflict: its unsent commands are dropped (sent ones wait for their receipts) and its conflict is closed; a delete of something the phone doesn't have is ignored. Any other change to an entity with a queued command or an open conflict updates only its known version (and the conflict's server copy); otherwise an active change is stored (unless older than the known version); then after = next_after. The page is applied in one transaction. Receipts, matched in order to the sent commands, each remove its command: applied records the version and closes any conflict, and applies each `cascaded` entry (a user_tag or custom_dhikr delete's cascades) to an entity the phone has as a page change would: an active one sets its known version unless older, a deleted one removes it; duplicate acts as its original; conflict keeps the local document, drops later unsent commands for the entity and opens a conflict; merged moves every local use of the tag ID to the surviving tag; gone removes the entity; rejected restores the server's copy (or removes the entity when there is none) and adds a notice. Removing a custom dhikr, by a page or a receipt, removes its dhikr_personal and that record's unsent commands; removing a tag removes it from local dhikr_personal documents and unsent commands. Resolve keep_mine queues the local version (or delete) on the server's version; use_theirs takes the server's copy.",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#clients-android-and-ios",
     "contracts/sync/v1/README.md",
@@ -900,6 +900,663 @@
                 ]
               }
             },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "known_version": 1,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": []
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "page_delete_drops_unsent_commands",
+      "description": "A delete removes the entity even with unsent commands queued for it: they're dropped, as a gone receipt drops them, and so are its dhikr_personal and that record's unsent command.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": null,
+                "references": []
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "known_version": 1,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "known_version": 1,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000030",
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 3,
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": null,
+                "references": []
+              },
+              "sent": false
+            },
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000031",
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 2,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "step": {
+          "kind": "page",
+          "page": {
+            "changes": [
+              {
+                "entity_type": "custom_dhikr",
+                "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                "state": "deleted",
+                "version": 4,
+                "revision": 11,
+                "document": null
+              },
+              {
+                "entity_type": "dhikr_personal",
+                "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                "state": "deleted",
+                "version": 3,
+                "revision": 11,
+                "document": null
+              }
+            ],
+            "next_after": 11,
+            "has_more": false,
+            "head_revision": 11
+          }
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 11,
+          "entities": [
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "known_version": 1,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "known_version": 1,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": []
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "page_delete_custom_dhikr_removes_unsynced_personal_record",
+      "description": "A deleted custom dhikr's dhikr_personal goes with it even when the server never had that record (so no delete arrives for it): the record and its unsent create are dropped.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": null,
+                "references": []
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "known_version": 0,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "known_version": 1,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "known_version": 1,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000032",
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 0,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "step": {
+          "kind": "page",
+          "page": {
+            "changes": [
+              {
+                "entity_type": "custom_dhikr",
+                "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                "state": "deleted",
+                "version": 4,
+                "revision": 11,
+                "document": null
+              }
+            ],
+            "next_after": 11,
+            "has_more": false,
+            "head_revision": 11
+          }
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 11,
+          "entities": [
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "known_version": 1,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "known_version": 1,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": []
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "page_delete_tag_cleans_personal_records",
+      "description": "A deleted tag is removed locally from every dhikr_personal and unsent command, including a record the server doesn't have yet (no cascade arrives for it); records the server did change arrive as changes at the same revision.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001",
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+              "known_version": 0,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001",
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "known_version": 1,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "known_version": 1,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000033",
+              "entity_type": "dhikr_personal",
+              "entity_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+              "op": "put",
+              "base_version": 0,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001",
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "step": {
+          "kind": "page",
+          "page": {
+            "changes": [
+              {
+                "entity_type": "dhikr_personal",
+                "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                "state": "active",
+                "version": 3,
+                "revision": 11,
+                "document": {
+                  "tag_ids": [
+                    "0192f0a0-0000-7000-8000-000000000002"
+                  ]
+                }
+              },
+              {
+                "entity_type": "dhikr_personal",
+                "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                "state": "active",
+                "version": 2,
+                "revision": 11,
+                "document": {
+                  "tag_ids": []
+                }
+              },
+              {
+                "entity_type": "user_tag",
+                "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+                "state": "deleted",
+                "version": 2,
+                "revision": 11,
+                "document": null
+              }
+            ],
+            "next_after": 11,
+            "has_more": false,
+            "head_revision": 11
+          }
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 11,
+          "entities": [
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+              "known_version": 0,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "known_version": 2,
+              "document": {
+                "tag_ids": []
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000033",
+              "entity_type": "dhikr_personal",
+              "entity_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+              "op": "put",
+              "base_version": 0,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "page_delete_closes_open_conflict",
+      "description": "A delete of an entity with an open conflict removes it and closes the conflict: there's nothing left to keep or take.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "known_version": 4,
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": null,
+                "references": []
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "known_version": 1,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": [
+            {
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "local_op": "put",
+              "server": {
+                "version": 4,
+                "state": "active",
+                "document": {
+                  "kind": "dhikr",
+                  "arabic": "سُبْحَانَ ٱللَّهِ",
+                  "title": {
+                    "en": "Subhanallah",
+                    "ar": null,
+                    "ml": null
+                  },
+                  "transliteration": {
+                    "en": "Subhanallah",
+                    "ml": null
+                  },
+                  "translation": {
+                    "en": "Glory be to Allah",
+                    "ar": null,
+                    "ml": null
+                  },
+                  "audio": null,
+                  "references": []
+                }
+              }
+            }
+          ]
+        },
+        "step": {
+          "kind": "page",
+          "page": {
+            "changes": [
+              {
+                "entity_type": "custom_dhikr",
+                "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                "state": "deleted",
+                "version": 5,
+                "revision": 12,
+                "document": null
+              },
+              {
+                "entity_type": "dhikr_personal",
+                "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                "state": "deleted",
+                "version": 3,
+                "revision": 12,
+                "document": null
+              }
+            ],
+            "next_after": 12,
+            "has_more": false,
+            "head_revision": 12
+          }
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 12,
+          "entities": [
             {
               "entity_type": "user_tag",
               "entity_id": "0192f0a0-0000-7000-8000-000000000001",
@@ -2190,7 +2847,8 @@
               "command_id": "0192f0c0-0000-7000-8000-00000000000a",
               "status": "applied",
               "version": 4,
-              "revision": 11
+              "revision": 11,
+              "cascaded": null
             }
           ]
         }
@@ -2413,7 +3071,8 @@
               "command_id": "0192f0c0-0000-7000-8000-00000000000b",
               "status": "applied",
               "version": 4,
-              "revision": 11
+              "revision": 11,
+              "cascaded": null
             }
           ]
         }
@@ -2517,6 +3176,229 @@
               "sent": false
             }
           ],
+          "conflicts": []
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "receipt_applied_tag_delete_applies_cascaded",
+      "description": "A tag delete was saved locally (the tag taken out of both records, with no dhikr_personal put queued) and sent. Its applied receipt lists the records the server changed at the same revision; their known versions move to those at once, so the next edit of either is made on the right version.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "known_version": 1,
+              "document": {
+                "tag_ids": []
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000034",
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "op": "delete",
+              "base_version": 1,
+              "document": null,
+              "sent": true
+            }
+          ],
+          "conflicts": []
+        },
+        "step": {
+          "kind": "receipts",
+          "receipts": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000034",
+              "status": "applied",
+              "version": 2,
+              "revision": 11,
+              "cascaded": [
+                {
+                  "entity_type": "dhikr_personal",
+                  "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                  "state": "active",
+                  "version": 3,
+                  "revision": 11
+                },
+                {
+                  "entity_type": "dhikr_personal",
+                  "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                  "state": "active",
+                  "version": 2,
+                  "revision": 11
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "known_version": 2,
+              "document": {
+                "tag_ids": []
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": []
+        },
+        "notices": []
+      }
+    },
+    {
+      "id": "receipt_applied_custom_dhikr_delete_applies_cascaded",
+      "description": "A custom dhikr delete's receipt lists its deleted dhikr_personal. The phone removed that record when it saved the delete, so the entry finds nothing to change.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "known_version": 1,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "known_version": 1,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000035",
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "op": "delete",
+              "base_version": 3,
+              "document": null,
+              "sent": true
+            }
+          ],
+          "conflicts": []
+        },
+        "step": {
+          "kind": "receipts",
+          "receipts": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000035",
+              "status": "applied",
+              "version": 4,
+              "revision": 11,
+              "cascaded": [
+                {
+                  "entity_type": "dhikr_personal",
+                  "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                  "state": "deleted",
+                  "version": 3,
+                  "revision": 11
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "known_version": 1,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "known_version": 1,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "known_version": 2,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            }
+          ],
+          "outbox": [],
           "conflicts": []
         },
         "notices": []
@@ -2629,7 +3511,8 @@
                 "command_id": "0192f0c0-0000-7000-8000-00000000000d",
                 "status": "applied",
                 "version": 1,
-                "revision": 11
+                "revision": 11,
+                "cascaded": null
               }
             }
           ]
@@ -4340,13 +5223,15 @@
               "command_id": "0192f0c0-0000-7000-8000-00000000001a",
               "status": "applied",
               "version": 1,
-              "revision": 11
+              "revision": 11,
+              "cascaded": null
             },
             {
               "command_id": "0192f0c0-0000-7000-8000-00000000001b",
               "status": "applied",
               "version": 3,
-              "revision": 12
+              "revision": 12,
+              "cascaded": null
             }
           ]
         }

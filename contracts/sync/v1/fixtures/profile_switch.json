@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "profile_switch",
-  "description": "Who the data on a phone belongs to (Android and iOS). Given the profile registry, one event and the user's answer to any question it raises, the resulting registry, the question asked (`prompt`), the profile whose every entity is queued as a put (`queue_all`), the profile that syncs now (`sync`: send its queue, then pull), and the profiles erased. Events: `edit` (a saved change in the active profile), `sign_in`, `sign_out`, `remove_profile` (Settings, Remove from this device) and `account_deleted` (the phone learned the profile's account no longer exists). Rules: before any sign-in there is one anonymous profile whose edits are saved but never queued; the first sign-in asks `anonymous_data` only if that profile has data (`add_to_account` adopts it and queues everything, `erase` replaces it with a fresh profile) and otherwise adopts it silently; signing out keeps the active profile, whose later edits are queued but not sent; signing in as an account that has a profile reactivates it without a question; signing in as a new account creates its profile (`new_profile_id`) and leaves the others untouched; removing a profile with unsent changes asks `unsent_changes` first (`remove` or `cancel`); `account_deleted` asks to `remove` or `keep`; removing the active profile signs out and starts a fresh anonymous profile. A profile only syncs when the signed-in account equals its account, and every sync request carries that account in X-Awrad-Account. The scenario_NN cases are one story: each starts where the previous one ended.",
+  "description": "Who the data on a phone belongs to (Android and iOS). Given the profile registry, one event and the user's answer to any question it raises, the resulting registry, the question asked (`prompt`), the profile whose every entity is queued as a put (`queue_all`), an anonymous profile merged into an existing one (`merge`), the profile that syncs now (`sync`: send its queue, then pull), and the profiles erased. Events: `edit` (a saved change in the active profile), `sign_in`, `sign_out`, `remove_profile` (Settings, Remove from this device) and `account_deleted` (the phone learned the profile's account no longer exists). Rules: before any sign-in there is one anonymous profile whose edits are saved but never queued; the first sign-in asks `anonymous_data` only if that profile has data (`add_to_account` adopts it and queues everything, `erase` replaces it with a fresh profile) and otherwise adopts it silently; signing in with an anonymous profile that has data as an account that already has a profile asks `anonymous_data` too (`add_to_account` merges the anonymous data into that profile, reported in `merge`: same-name tags fold together locally and every merged entity is queued as a put; `erase` discards the anonymous profile), and either way the account's profile becomes active; signing out keeps the active profile, whose later edits are queued but not sent; signing in as an account that has a profile reactivates it without a question; signing in as a new account creates its profile (`new_profile_id`) and leaves the others untouched; removing a profile with unsent changes asks `unsent_changes` first (`remove` or `cancel`); `account_deleted` asks to `remove` or `keep`, and `keep` marks the profile `account_deleted` (for the active profile it also signs out; the profile stays active and usable offline, never syncs, and can be removed later); removing the active profile signs out and activates the anonymous profile if there is one, or else starts a fresh one. There is at most one anonymous profile at a time. A profile only syncs when the signed-in account equals its account, and every sync request carries that account in X-Awrad-Account. The scenario_NN cases are one story: each starts where the previous one ended.",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#clients-android-and-ios (Local profiles)",
     "contracts/sync/v1/README.md",
@@ -40,7 +40,8 @@
                 "email",
                 "after",
                 "has_data",
-                "has_unsent"
+                "has_unsent",
+                "account_deleted"
               ],
               "properties": {
                 "profile_id": {
@@ -76,6 +77,10 @@
                 "has_unsent": {
                   "type": "boolean",
                   "description": "Its queue holds commands not yet acknowledged."
+                },
+                "account_deleted": {
+                  "type": "boolean",
+                  "description": "The profile's account no longer exists and the user kept the profile: it stays usable offline, never syncs, and can be removed from Settings."
                 }
               }
             }
@@ -191,7 +196,8 @@
       "registry",
       "queue_all",
       "sync",
-      "erased"
+      "erased",
+      "merge"
     ],
     "properties": {
       "prompt": {
@@ -224,7 +230,8 @@
                 "email",
                 "after",
                 "has_data",
-                "has_unsent"
+                "has_unsent",
+                "account_deleted"
               ],
               "properties": {
                 "profile_id": {
@@ -260,6 +267,10 @@
                 "has_unsent": {
                   "type": "boolean",
                   "description": "Its queue holds commands not yet acknowledged."
+                },
+                "account_deleted": {
+                  "type": "boolean",
+                  "description": "The profile's account no longer exists and the user kept the profile: it stays usable offline, never syncs, and can be removed from Settings."
                 }
               }
             }
@@ -303,7 +314,32 @@
         "type": "array",
         "items": {
           "$ref": "urn:awrad:sync:1#/$defs/uuid"
-        }
+        },
+        "description": "Profiles whose local database is deleted, in registry order."
+      },
+      "merge": {
+        "description": "Add to my account when the account already has a profile on this phone: the anonymous profile (from) is merged into it (into). Tags with the same normalized_name fold together locally, onto the account's tag, and every merged entity is queued as a put in the into profile. The from profile's database is then deleted, so it is also listed in erased. null otherwise.",
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "from_profile_id",
+              "into_profile_id"
+            ],
+            "properties": {
+              "from_profile_id": {
+                "$ref": "urn:awrad:sync:1#/$defs/uuid"
+              },
+              "into_profile_id": {
+                "$ref": "urn:awrad:sync:1#/$defs/uuid"
+              }
+            }
+          }
+        ]
       }
     }
   },
@@ -320,7 +356,8 @@
               "email": null,
               "after": 0,
               "has_data": false,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -342,13 +379,15 @@
               "email": null,
               "after": 0,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
           "signed_in_account_id": null
         },
         "queue_all": null,
+        "merge": null,
         "sync": null,
         "erased": []
       }
@@ -365,7 +404,8 @@
               "email": null,
               "after": 0,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -389,13 +429,15 @@
               "email": "amina@example.com",
               "after": 0,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "queue_all": "0192f0e0-0000-7000-8000-000000000001",
+        "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
         "erased": []
       }
@@ -412,7 +454,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -434,13 +477,15 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
           "signed_in_account_id": null
         },
         "queue_all": null,
+        "merge": null,
         "sync": null,
         "erased": []
       }
@@ -457,7 +502,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -479,13 +525,15 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
           "signed_in_account_id": null
         },
         "queue_all": null,
+        "merge": null,
         "sync": null,
         "erased": []
       }
@@ -502,7 +550,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -526,13 +575,15 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "queue_all": null,
+        "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
         "erased": []
       }
@@ -549,7 +600,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -573,7 +625,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000003",
@@ -581,13 +634,15 @@
               "email": "bilal@example.com",
               "after": 0,
               "has_data": false,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
         },
         "queue_all": null,
+        "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000003",
         "erased": []
       }
@@ -604,7 +659,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000003",
@@ -612,7 +668,8 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
@@ -636,7 +693,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000003",
@@ -644,13 +702,15 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "queue_all": null,
+        "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
         "erased": []
       }
@@ -667,7 +727,8 @@
               "email": null,
               "after": 0,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -691,13 +752,15 @@
               "email": "amina@example.com",
               "after": 0,
               "has_data": false,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "queue_all": null,
+        "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000003",
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
@@ -716,7 +779,8 @@
               "email": null,
               "after": 0,
               "has_data": false,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -740,13 +804,208 @@
               "email": "amina@example.com",
               "after": 0,
               "has_data": false,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "queue_all": null,
+        "merge": null,
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": []
+      }
+    },
+    {
+      "id": "sign_in_existing_profile_anonymous_data_add_to_account",
+      "description": "A's profile is on the phone, and the active anonymous profile has data. Signing in as A asks once; Add to my account merges the anonymous data into A's profile (same-name tags fold together locally, every merged entity is queued as a put), erases the anonymous profile and makes A's profile active.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina@example.com"
+        },
+        "choice": "add_to_account",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000004"
+      },
+      "expect": {
+        "prompt": "anonymous_data",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": null,
+        "merge": {
+          "from_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "into_profile_id": "0192f0e0-0000-7000-8000-000000000001"
+        },
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000003"
+        ]
+      }
+    },
+    {
+      "id": "sign_in_existing_profile_anonymous_data_erase",
+      "description": "The same sign-in answered with Erase discards the anonymous data and makes A's profile active as it was.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina@example.com"
+        },
+        "choice": "erase",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000004"
+      },
+      "expect": {
+        "prompt": "anonymous_data",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": null,
+        "merge": null,
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000003"
+        ]
+      }
+    },
+    {
+      "id": "sign_in_existing_profile_empty_anonymous_no_prompt",
+      "description": "An empty anonymous profile asks nothing when signing in as an account that has a profile: that profile becomes active and the anonymous one stays, untouched.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina@example.com"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000004"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": null,
+        "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
         "erased": []
       }
@@ -763,7 +1022,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -785,13 +1045,15 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "queue_all": null,
+        "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
         "erased": []
       }
@@ -808,7 +1070,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -832,13 +1095,15 @@
               "email": "amina.new@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "queue_all": null,
+        "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
         "erased": []
       }
@@ -855,7 +1120,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -863,7 +1129,8 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -886,13 +1153,15 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
         },
         "queue_all": null,
+        "merge": null,
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
@@ -911,7 +1180,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -919,7 +1189,8 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -942,7 +1213,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -950,13 +1222,15 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
         },
         "queue_all": null,
+        "merge": null,
         "sync": null,
         "erased": []
       }
@@ -973,7 +1247,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -981,7 +1256,8 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -1004,13 +1280,15 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
         },
         "queue_all": null,
+        "merge": null,
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
@@ -1029,7 +1307,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -1037,7 +1316,8 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -1060,7 +1340,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000003",
@@ -1068,16 +1349,96 @@
               "email": null,
               "after": 0,
               "has_data": false,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
           "signed_in_account_id": null
         },
         "queue_all": null,
+        "merge": null,
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000002"
+        ]
+      }
+    },
+    {
+      "id": "remove_active_profile_activates_existing_anonymous",
+      "description": "Removing the active profile when an anonymous profile is already on the phone signs out and activates that one; no second anonymous profile is made.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false,
+              "account_deleted": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000004",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000004",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "event": {
+          "type": "remove_profile",
+          "profile_id": "0192f0e0-0000-7000-8000-000000000004"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000005"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": null
+        },
+        "queue_all": null,
+        "merge": null,
+        "sync": null,
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000004"
         ]
       }
     },
@@ -1093,7 +1454,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -1101,7 +1463,8 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -1124,13 +1487,15 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
         },
         "queue_all": null,
+        "merge": null,
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
@@ -1139,7 +1504,7 @@
     },
     {
       "id": "account_deleted_profile_kept",
-      "description": "The user may keep the deleted account's profile on the phone; nothing of it is ever sent again.",
+      "description": "The user may keep the deleted account's profile on the phone: it's marked account_deleted and nothing of it is ever sent again.",
       "given": {
         "registry": {
           "profiles": [
@@ -1149,7 +1514,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": false
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -1157,7 +1523,8 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -1180,7 +1547,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true
+              "has_unsent": true,
+              "account_deleted": true
             },
             {
               "profile_id": "0192f0e0-0000-7000-8000-000000000002",
@@ -1188,13 +1556,15 @@
               "email": "bilal@example.com",
               "after": 9,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
           "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
         },
         "queue_all": null,
+        "merge": null,
         "sync": null,
         "erased": []
       }
@@ -1211,7 +1581,8 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
@@ -1234,13 +1605,115 @@
               "email": null,
               "after": 0,
               "has_data": false,
-              "has_unsent": false
+              "has_unsent": false,
+              "account_deleted": false
             }
           ],
           "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
           "signed_in_account_id": null
         },
         "queue_all": null,
+        "merge": null,
+        "sync": null,
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000001"
+        ]
+      }
+    },
+    {
+      "id": "account_deleted_active_profile_kept",
+      "description": "Keep for the active profile of a deleted account signs out; the profile stays active and usable offline, marked account_deleted, and never syncs again.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "event": {
+          "type": "account_deleted",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "choice": "keep",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": "account_deleted",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true,
+              "account_deleted": true
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "queue_all": null,
+        "merge": null,
+        "sync": null,
+        "erased": []
+      }
+    },
+    {
+      "id": "account_deleted_kept_profile_removed_later",
+      "description": "A kept profile of a deleted account can be removed later from Settings. It's the active profile and there's no anonymous one, so a fresh anonymous profile becomes active.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": true
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "remove_profile",
+          "profile_id": "0192f0e0-0000-7000-8000-000000000001"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": null
+        },
+        "queue_all": null,
+        "merge": null,
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
