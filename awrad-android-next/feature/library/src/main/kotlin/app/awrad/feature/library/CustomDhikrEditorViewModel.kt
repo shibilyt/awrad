@@ -1,5 +1,7 @@
 package app.awrad.feature.library
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.core.domain.AwradId
@@ -13,11 +15,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -34,8 +32,8 @@ internal class CustomDhikrEditorViewModel @AssistedInject constructor(
 ) : ViewModel() {
 
     private val id: AwradId = dhikrId?.let(AwradId::parse) ?: AwradId.random()
-    private val mutableState = MutableStateFlow(EditorUiState(isNew = dhikrId == null))
-    val state: StateFlow<EditorUiState> = mutableState.asStateFlow()
+    private val mutableState = mutableStateOf(EditorUiState(isNew = dhikrId == null))
+    val state: State<EditorUiState> = mutableState
 
     private var player: AudioPlayer? = null
 

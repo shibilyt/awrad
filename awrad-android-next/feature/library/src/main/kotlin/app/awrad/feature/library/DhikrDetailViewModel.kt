@@ -1,5 +1,7 @@
 package app.awrad.feature.library
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleObserver
@@ -24,12 +26,8 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
@@ -47,8 +45,8 @@ internal class DhikrDetailViewModel @AssistedInject constructor(
     private val playerFactory: AudioPlayerFactory,
 ) : ViewModel() {
 
-    private val mutableState = MutableStateFlow(DhikrDetailUiState())
-    val state: StateFlow<DhikrDetailUiState> = mutableState.asStateFlow()
+    private val mutableState = mutableStateOf(DhikrDetailUiState())
+    val state: State<DhikrDetailUiState> = mutableState
 
     private val tagSheet = DhikrTagSheet(tags, viewModelScope, mutableState)
     private var player: AudioPlayer? = null

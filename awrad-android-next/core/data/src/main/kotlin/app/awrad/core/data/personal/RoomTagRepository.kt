@@ -82,19 +82,16 @@ internal class RoomTagRepository(
     }
 
     /**
-     * Deletes the tag. Each personal record that has it first gets a put without it, so its next edit chains on
-     * the right version; then the tag's delete is queued (the server would also take it out of every record).
+     * Deletes the tag, queuing only the tag delete (`outbox_enqueue`): the server takes it out of every personal
+     * record itself and reports them in the receipt's `cascaded`. Locally, in the same transaction, the tag leaves
+     * every personal record (here) and every never-sent personal-record command (the queue rules).
      */
     override suspend fun delete(id: AwradId) {
         profiles.write { profile ->
             val store = RoomSyncStore(profile.database.syncDao(), clock::millis)
             store.entities(EntityType.DHIKR_PERSONAL).forEach { record ->
                 val tags = PersonalDocument.tagIds(record.document)
-                if (id in tags) {
-                    val document = PersonalDocument.of(tags - id)
-                    store.putEntity(record.copy(document = document))
-                    enqueue(profile, store, LocalEdit(newId(), record.key, SyncOp.PUT, document))
-                }
+                if (id in tags) store.putEntity(record.copy(document = PersonalDocument.of(tags - id)))
             }
             val key = EntityKey(EntityType.USER_TAG, id)
             enqueue(profile, store, LocalEdit(newId(), key, SyncOp.DELETE, null))
@@ -124,6 +121,6 @@ internal class RoomTagRepository(
 
     /** Queues [edit] when the profile belongs to an account; the anonymous profile only saves. */
     private fun enqueue(profile: OpenProfile, store: RoomSyncStore, edit: LocalEdit) {
-        if (profile.accountId != null) Outbox.enqueue(store, edit)
+        if (profile.queuesEdits) Outbox.enqueue(store, edit)
     }
 }

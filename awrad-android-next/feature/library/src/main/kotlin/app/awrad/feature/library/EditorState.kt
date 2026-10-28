@@ -50,6 +50,9 @@ internal enum class EditorProblem {
     TITLE_REQUIRED,
     TEXT_TOO_LONG,
     QURAN_INVALID,
+
+    /** The Qur'an reference ends before it starts (field error `range` on `ayah_end`). */
+    QURAN_RANGE,
     REFERENCE_INVALID,
     TOO_MANY_REFERENCES,
     LIMIT_REACHED,
@@ -188,6 +191,8 @@ internal fun problemsOf(errors: List<FieldError>, hasQuran: Boolean): Set<Editor
         error.field == "/arabic" -> EditorProblem.ARABIC_REQUIRED
         error.field == "/title" -> EditorProblem.TITLE_REQUIRED
         error.field == "/references" -> EditorProblem.TOO_MANY_REFERENCES
+        error.field == "/references/0/ayah_end" && error.code == FieldErrorCode.RANGE && hasQuran ->
+            EditorProblem.QURAN_RANGE
         error.field == "/references/0" && hasQuran -> EditorProblem.QURAN_INVALID
         error.field.startsWith("/references/") -> EditorProblem.REFERENCE_INVALID
         else -> EditorProblem.TEXT_TOO_LONG

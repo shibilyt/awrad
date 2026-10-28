@@ -12,7 +12,8 @@ import kotlinx.serialization.json.longOrNull
 
 /**
  * Which custom dhikr documents are valid (fixture `custom_dhikr_validity`): exactly those matching
- * `urn:awrad:sync:1#/$defs/custom_dhikr_document`. Errors are `{field, code}`, the field a JSON Pointer into the
+ * `urn:awrad:sync:1#/$defs/custom_dhikr_document` whose Qur'an references also end at or after they start (`range`
+ * on `ayah_end`, the one rule the schema can't express). Errors are `{field, code}`, the field a JSON Pointer into the
  * document, sorted by field and then code. The phone checks before saving; the server checks every put.
  */
 public object CustomDhikrValidity {
@@ -58,8 +59,20 @@ public object CustomDhikrValidity {
         else -> listOfNotNull(
             FieldError("/references", FieldErrorCode.TOO_MANY).takeIf { references.size > CustomDhikr.MAX_REFERENCES },
         ) + references.mapIndexedNotNull { index, reference ->
-            FieldError("/references/$index", FieldErrorCode.INVALID).takeUnless { ReferenceJson.isValid(reference) }
+            when {
+                !ReferenceJson.isValid(reference) -> FieldError("/references/$index", FieldErrorCode.INVALID)
+                isReversedRange(reference) -> FieldError("/references/$index/ayah_end", FieldErrorCode.RANGE)
+                else -> null
+            }
         }
+    }
+
+    /** A Qur'an reference whose `ayah_end` is below its `ayah_start`: the one rule the schema can't express. */
+    private fun isReversedRange(reference: JsonElement): Boolean {
+        val quran = (reference as? JsonObject)?.takeIf { it["type"]?.stringOrNull() == "quran" }
+        val start = quran?.get("ayah_start")?.integerOrNull()
+        val end = quran?.get("ayah_end")?.integerOrNull()
+        return start != null && end != null && end < start
     }
 
     /** Whether [document] is a valid custom dhikr document. */

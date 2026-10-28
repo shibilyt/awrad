@@ -7,12 +7,11 @@
     <string name="library_no_tagged">لا يوجد ذكر يحمل كل هذه الوسوم</string>
     <string name="library_no_tagged_hint">اختر وسومًا أقل، أو أضف وسمًا إلى ذكر من صفحته.</string>
     <string name="library_conflict_title">تغيّر على جهاز آخر</string>
-    <string name="library_conflict_dhikr">تغيّر هذا الذكر على جهاز آخر بعد أن عدّلته هنا. هل تُبقي نسختك أم تأخذ النسخة الأخرى؟</string>
-    <string name="library_conflict_tags">تغيّرت وسوم هذا الذكر على جهاز آخر بعد أن غيّرتها هنا. هل تُبقي وسومك أم تأخذ الوسوم الأخرى؟</string>
     <string name="library_conflict_keep_mine">أبقِ نسختي</string>
     <string name="library_conflict_use_theirs">خذ النسخة الأخرى</string>
     <string name="library_edit">تعديل</string>
     <string name="library_references">المراجع</string>
+    <string name="library_sources">المصادر</string>
     <string name="library_no_tags">لا وسوم بعد</string>
     <string name="library_delete_dhikr">حذف الذكر</string>
     <string name="library_tags_empty">ليس لديك وسوم بعد. أنشئ وسمًا أدناه.</string>
@@ -68,6 +67,7 @@
     <string name="editor_problem_too_long">هذا النص أطول من اللازم</string>
     <string name="editor_problem_title">أضف عنوانًا بلغة واحدة على الأقل</string>
     <string name="editor_problem_quran">أدخل سورة من ١ إلى ١١٤ وآياتها</string>
+    <string name="editor_problem_quran_range">لا يمكن أن تأتي الآية الأخيرة قبل الأولى</string>
     <string name="editor_problem_reference">اكتب المرجع أو أزله</string>
     <string name="editor_problem_references">يمكن للذكر أن يذكر ٢٠ مرجعًا على الأكثر</string>
     <string name="editor_problem_limit">لديك ١٬٠٠٠ ذكر من إنشائك، وهو الحد الأقصى.</string>

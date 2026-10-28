@@ -1,13 +1,12 @@
 package app.awrad.feature.library
 
+import androidx.compose.runtime.MutableState
 import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.personal.TagError
 import app.awrad.core.domain.personal.TagOutcome
 import app.awrad.core.domain.personal.TagRepository
 import app.awrad.core.domain.personal.UserTag
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /** The "Manage tags" sheet of a dhikr while it's open: the new tag's name and why it couldn't be made. */
@@ -34,7 +33,7 @@ internal sealed interface TagSheetAction {
 internal class DhikrTagSheet(
     private val tags: TagRepository,
     private val scope: CoroutineScope,
-    private val state: MutableStateFlow<DhikrDetailUiState>,
+    private val state: MutableState<DhikrDetailUiState>,
 ) {
     fun onAction(action: TagSheetAction, dhikrId: AwradId?) {
         when (action) {

@@ -32,6 +32,7 @@
     <string name="sync_profile_anonymous">Not signed in (this phone only)</string>
     <string name="sync_profile_active">In use</string>
     <string name="sync_profile_unsent">Has changes that haven’t been synced</string>
+    <string name="sync_profile_account_deleted">Account deleted</string>
     <string name="sync_remove_profile">Remove from this device</string>
     <string name="sync_remove_title">Remove %1$s’s data from this phone?</string>
     <string name="sync_remove_body">The dhikrs, tags and recordings kept here for it are erased from this phone. What’s already synced stays in the account.</string>
@@ -45,16 +46,16 @@
     <string name="sync_deleted_title">This account no longer exists</string>
     <string name="sync_deleted_body">%1$s was deleted, so its data on this phone can’t be synced again. Remove it from this phone, or keep it here?</string>
     <string name="sync_deleted_keep">Keep</string>
-    <string name="sync_rejected_title">A change wasn’t saved</string>
-    <string name="sync_rejected_body">%1$s was undone: %2$s</string>
-    <string name="sync_rejected_dhikr">A change to a dhikr</string>
-    <string name="sync_rejected_tag">A change to a tag</string>
-    <string name="sync_rejected_tags">A change to a dhikr’s tags</string>
-    <string name="sync_reason_tag_name_taken">another tag already has that name.</string>
-    <string name="sync_reason_tag_limit">the account already has 100 tags.</string>
-    <string name="sync_reason_dhikr_limit">the account already has 1,000 dhikrs of its own.</string>
-    <string name="sync_reason_too_large">it was too large to save.</string>
-    <string name="sync_reason_not_found">something it refers to was deleted.</string>
-    <string name="sync_reason_invalid">the server couldn’t accept it.</string>
+    <string name="sync_rejected_title">Change refused</string>
+    <string name="sync_reason_document_invalid">The server couldn’t accept this change.</string>
+    <string name="sync_reason_document_too_large">This change is too large to save.</string>
+    <string name="sync_reason_custom_dhikr_limit">Your account already has 1,000 dhikrs of its own.</string>
+    <string name="sync_reason_tag_limit">Your account already has 100 tags.</string>
+    <string name="sync_reason_tag_name_taken">Another tag already has this name.</string>
+    <string name="sync_reason_tag_not_found">A tag this change uses was deleted.</string>
+    <string name="sync_reason_dhikr_not_found">The dhikr this change is for was deleted.</string>
+    <string name="sync_reason_entity_not_found">What this change edits no longer exists.</string>
+    <string name="sync_reason_delete_not_allowed">This can’t be deleted.</string>
+    <string name="sync_reason_command_id_reused">The server had already received a different change with the same ID.</string>
     <string name="sync_ok">OK</string>
 </resources>

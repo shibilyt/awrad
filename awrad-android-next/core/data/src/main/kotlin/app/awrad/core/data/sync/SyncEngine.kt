@@ -69,7 +69,7 @@ internal class SyncEngine(
         val account = (accounts.session.first() as? SignInState.SignedIn)?.account
             ?: return@withLock SyncOutcome.Skipped
         val profile = profiles.current()
-        if (profile.accountId != account.id) return@withLock SyncOutcome.Skipped
+        if (profile.accountId != account.id || profile.accountDeleted) return@withLock SyncOutcome.Skipped
         if (mismatch == profile.profileId to account.id) return@withLock SyncOutcome.AccountMismatch
         mutableState.value = EngineState.SYNCING
         val outcome = send(profile.profileId, account.id) ?: pull(profile.profileId, account.id) ?: run {

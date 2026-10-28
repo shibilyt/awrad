@@ -4,14 +4,17 @@ import app.awrad.core.data.sync.RoomSyncStore
 import app.awrad.core.database.CustomDhikrEntity
 import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.personal.PersonalDocument
-import app.awrad.core.domain.personal.UserTag
 import app.awrad.core.domain.personal.UserTagJson
 import app.awrad.core.domain.sync.EntityKey
 import app.awrad.core.domain.sync.EntityType
 import app.awrad.core.domain.sync.LocalEdit
 import app.awrad.core.domain.sync.LocalEntity
 import app.awrad.core.domain.sync.Outbox
+import app.awrad.core.domain.sync.PersonalRecord
+import app.awrad.core.domain.sync.ProfileData
+import app.awrad.core.domain.sync.ProfileMerge
 import app.awrad.core.domain.sync.SyncOp
+import kotlinx.serialization.json.JsonObject
 import java.io.File
 import java.time.Clock
 
@@ -44,52 +47,45 @@ internal class ProfileTransfers(
         }
     }
 
+    /** Keep on a deleted account's profile: its unsent commands can never be sent, so they're dropped. */
+    suspend fun dropQueue(profileId: AwradId) {
+        databases.writeTo(profileId) { profile ->
+            RoomSyncStore(profile.database.syncDao(), clock::millis).replaceOutbox(emptyList())
+        }
+    }
+
     /**
-     * Adds the anonymous profile [from]'s data to the account's existing profile [into] and queues it there. A tag
-     * whose name [into] already has becomes that tag; a dhikr tagged in both keeps both sets of tags (up to 20).
-     * Recordings are copied into [into]'s files.
+     * Adds the anonymous profile [from]'s data to the account's existing profile [into] and queues it there
+     * ([ProfileMerge]): same-name tags fold onto [into]'s, a dhikr tagged in both gets the union of their tags,
+     * and the new tags, every custom dhikr, then the new or changed personal records are queued as puts, in that
+     * order. Recordings are copied into [into]'s files.
      */
     suspend fun mergeAnonymous(from: AwradId, into: AwradId) {
         val source = databases.writeTo(from) { profile ->
             val dao = profile.database.syncDao()
-            val store = RoomSyncStore(dao, clock::millis)
-            AnonymousData(
-                tags = store.entities(EntityType.USER_TAG).mapNotNull { UserTagJson.decode(it.key.id, it.document) },
-                dhikrs = dao.customDhikrs(),
-                personals = store.entities(EntityType.DHIKR_PERSONAL),
-            )
+            AnonymousData(RoomSyncStore(dao, clock::millis).profileData(), dao.customDhikrs())
         }
         databases.writeTo(into) { profile ->
             val dao = profile.database.syncDao()
             val store = RoomSyncStore(dao, clock::millis)
-            val existingTags = store.entities(
-                EntityType.USER_TAG,
-            ).mapNotNull { UserTagJson.decode(it.key.id, it.document) }
-            val tagIds = source.tags.associate { tag ->
-                val same = existingTags.firstOrNull { it.normalizedName == tag.normalizedName }
-                if (same == null) {
-                    val key = EntityKey(EntityType.USER_TAG, tag.id)
-                    val document = UserTagJson.encode(tag)
-                    store.putEntity(LocalEntity(key, 0, document))
-                    Outbox.enqueue(store, LocalEdit(newId(), key, SyncOp.PUT, document))
-                }
-                tag.id to (same?.id ?: tag.id)
+            val merged = ProfileMerge.merge(anonymous = source.data, account = store.profileData())
+            fun put(key: EntityKey, document: JsonObject) {
+                store.putEntity(LocalEntity(key, store.entity(key)?.knownVersion ?: 0, document))
+                Outbox.enqueue(store, LocalEdit(newId(), key, SyncOp.PUT, document))
+            }
+            val tags = merged.tags.associateBy { it.id }
+            val records = merged.personalRecords.associateBy { it.dhikrId }
+            merged.queued.filter { it.type == EntityType.USER_TAG }.forEach { key ->
+                put(key, UserTagJson.encode(tags.getValue(key.id)))
             }
             source.dhikrs.forEach { dhikr ->
                 val audio = dhikr.audioFile?.let { copyInto(File(it), profile.filesDir) }
                 dao.upsertCustomDhikr(dhikr.copy(knownVersion = 0, audioFile = audio))
                 val key = EntityKey(EntityType.CUSTOM_DHIKR, AwradId(dhikr.id))
-                Outbox.enqueue(store, LocalEdit(newId(), key, SyncOp.PUT, store.entity(key)!!.document))
+                Outbox.enqueue(store, LocalEdit(newId(), key, SyncOp.PUT, checkNotNull(store.entity(key)).document))
             }
-            source.personals.forEach { record ->
-                val tags = PersonalDocument.tagIds(record.document).mapNotNull { tagIds[it] }
-                val existing = store.entity(record.key)
-                val merged = (existing?.let { PersonalDocument.tagIds(it.document) }.orEmpty() + tags)
-                    .distinct()
-                    .take(UserTag.PER_DHIKR)
-                val document = PersonalDocument.of(merged)
-                store.putEntity(LocalEntity(record.key, existing?.knownVersion ?: 0, document))
-                Outbox.enqueue(store, LocalEdit(newId(), record.key, SyncOp.PUT, document))
+            merged.queued.filter { it.type == EntityType.DHIKR_PERSONAL }.forEach { key ->
+                put(key, PersonalDocument.of(records.getValue(key.id).tagIds))
             }
         }
     }
@@ -101,11 +97,15 @@ internal class ProfileTransfers(
         return target.path
     }
 
-    private class AnonymousData(
-        val tags: List<UserTag>,
-        val dhikrs: List<CustomDhikrEntity>,
-        val personals: List<LocalEntity>,
+    /** The profile's tags and personal records, as the merge rule reads them. */
+    private fun RoomSyncStore.profileData() = ProfileData(
+        tags = entities(EntityType.USER_TAG).mapNotNull { UserTagJson.decode(it.key.id, it.document) },
+        personalRecords = entities(EntityType.DHIKR_PERSONAL).map {
+            PersonalRecord(it.key.id, PersonalDocument.tagIds(it.document))
+        },
     )
+
+    private class AnonymousData(val data: ProfileData, val dhikrs: List<CustomDhikrEntity>)
 
     private companion object {
         val ORDER = listOf(EntityType.USER_TAG, EntityType.CUSTOM_DHIKR, EntityType.DHIKR_PERSONAL)

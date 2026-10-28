@@ -27,7 +27,6 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradCard
 import app.awrad.core.designsystem.component.AwradChip
 import app.awrad.core.designsystem.component.AwradSectionTitle
@@ -36,12 +35,12 @@ import app.awrad.core.designsystem.component.AwradTopBar
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.domain.dhikr.ContentLanguage
 import app.awrad.core.domain.dhikr.DhikrKind
+import app.awrad.core.domain.dhikr.Reference
 import app.awrad.core.domain.dhikr.ReferenceLabel
 import app.awrad.core.domain.dhikr.Virtue
 import app.awrad.core.domain.dhikr.textIn
 import app.awrad.core.domain.personal.textIn
 import app.awrad.core.domain.sync.ConflictChoice
-import app.awrad.core.domain.sync.EntityType
 
 @Composable
 internal fun DhikrDetailRoute(
@@ -54,7 +53,7 @@ internal fun DhikrDetailRoute(
         creationCallback = { it.create(dhikrId) },
     ),
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state
     // The page stopping (another page on top, Home, another app, the screen off) pauses the recording, and so
     // does the page leaving; the ViewModel releases the player when it's cleared.
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -80,9 +79,9 @@ internal fun DhikrDetailRoute(
 /**
  * A top bar with Back, the title and, for the user's own dhikr, Edit; a conflict banner when the dhikr or its
  * tags changed on another device; the Arabic card (with the player bar when there's a recording), then the
- * transliteration, translation, references (of a custom dhikr), tags with "Manage tags" and virtues, each under
- * its `sectionTitle`. A section with nothing to show is left out (components.md, "Dhikr detail screen"). A custom
- * dhikr ends with Delete.
+ * transliteration, translation, tags with "Manage tags", virtues and sources, each under its `sectionTitle`. A
+ * section with nothing to show is left out (components.md, "Dhikr detail screen"). A custom dhikr ends with
+ * Delete.
  */
 @Composable
 internal fun DhikrDetailScreen(
@@ -147,15 +146,8 @@ private fun DhikrDetailContent(
             .padding(top = spacing.sm, bottom = spacing.sectionGap + navigationBar),
         verticalArrangement = Arrangement.spacedBy(spacing.sectionGap),
     ) {
-        state.conflict?.let { conflict ->
+        if (state.conflict != null) {
             ConflictBanner(
-                message = stringResource(
-                    if (conflict.key.type == EntityType.DHIKR_PERSONAL) {
-                        R.string.library_conflict_tags
-                    } else {
-                        R.string.library_conflict_dhikr
-                    },
-                ),
                 onKeepMine = { onAction(DhikrDetailAction.Resolve(ConflictChoice.KEEP_MINE)) },
                 onUseTheirs = { onAction(DhikrDetailAction.Resolve(ConflictChoice.USE_THEIRS)) },
             )
@@ -173,6 +165,7 @@ private fun DhikrDetailContent(
             onManage = { onAction(DhikrDetailAction.Tags(TagSheetAction.Open)) },
         )
         if (dhikr.virtues.isNotEmpty()) Virtues(virtues = dhikr.virtues, language = language)
+        dhikr.sources.takeIf { it.isNotEmpty() }?.let { Sources(references = it) }
         if (state.custom != null) {
             AwradTextButton(
                 text = stringResource(R.string.library_delete_dhikr),
@@ -185,7 +178,7 @@ private fun DhikrDetailContent(
 
 /**
  * "Transliteration" (none in Arabic) and "Translation", left out for a name of Allah (its title is the
- * transliteration, its meaning is in the card); a custom dhikr may have neither, and lists its "References".
+ * transliteration, its meaning is in the card); a custom dhikr may have neither.
  */
 @Composable
 private fun TextSections(state: DhikrDetailUiState, language: ContentLanguage, modifier: Modifier = Modifier) {
@@ -203,11 +196,6 @@ private fun TextSections(state: DhikrDetailUiState, language: ContentLanguage, m
         }
         translation?.takeUnless { isName }?.let {
             TextSection(title = stringResource(R.string.library_translation), text = it)
-        }
-        if (custom != null && custom.references.isNotEmpty()) {
-            DetailSection(title = stringResource(R.string.library_references)) {
-                custom.references.forEach { ReferenceLine(label = referenceLabel(it)) }
-            }
         }
     }
 }
@@ -280,6 +268,17 @@ private fun Virtues(virtues: List<Virtue>, language: ContentLanguage, modifier: 
                 virtue.references.forEach { reference -> ReferenceLine(label = referenceLabel(reference)) }
             }
         }
+    }
+}
+
+/**
+ * "Sources" (slice 3b), after Virtues: the references not already shown, one per line, in the dhikr's order
+ * ([app.awrad.core.domain.dhikr.Dhikr.sources]). A custom dhikr, which has no virtues, lists all of its own.
+ */
+@Composable
+private fun Sources(references: List<Reference>, modifier: Modifier = Modifier) {
+    DetailSection(title = stringResource(R.string.library_sources), modifier = modifier) {
+        references.forEach { ReferenceLine(label = referenceLabel(it)) }
     }
 }
 

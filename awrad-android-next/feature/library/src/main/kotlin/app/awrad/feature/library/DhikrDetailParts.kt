@@ -25,7 +25,6 @@ import app.awrad.core.domain.audio.PlaybackStatus
 import app.awrad.core.domain.dhikr.ContentLanguage
 import app.awrad.core.domain.dhikr.Dhikr
 import app.awrad.core.domain.dhikr.DhikrKind
-import app.awrad.core.domain.dhikr.Reference
 import app.awrad.core.domain.dhikr.textIn
 import java.util.Locale
 
@@ -57,7 +56,7 @@ internal fun ArabicCard(
                 }
                 DhikrKind.QURAN -> {
                     dhikr.arabicLines.forEach { CentredText(text = it, style = AwradTheme.type.quran) }
-                    dhikr.references.filterIsInstance<Reference.Quran>().firstOrNull()?.let { reference ->
+                    dhikr.cardReference?.let { reference ->
                         Text(
                             text = referenceLabel(reference).text,
                             style = AwradTheme.type.caption,

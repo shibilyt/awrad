@@ -7,12 +7,11 @@
     <string name="library_no_tagged">No dhikr has all these tags</string>
     <string name="library_no_tagged_hint">Choose fewer tags, or tag a dhikr from its page.</string>
     <string name="library_conflict_title">Changed on another device</string>
-    <string name="library_conflict_dhikr">This dhikr was changed on another device after you edited it here. Keep your version, or use the other one?</string>
-    <string name="library_conflict_tags">This dhikr’s tags were changed on another device after you changed them here. Keep your tags, or use the other ones?</string>
     <string name="library_conflict_keep_mine">Keep mine</string>
     <string name="library_conflict_use_theirs">Use theirs</string>
     <string name="library_edit">Edit</string>
     <string name="library_references">References</string>
+    <string name="library_sources">Sources</string>
     <string name="library_no_tags">No tags yet</string>
     <string name="library_delete_dhikr">Delete dhikr</string>
     <string name="library_tags_empty">You have no tags yet. Make one below.</string>
@@ -68,6 +67,7 @@
     <string name="editor_problem_too_long">This is too long</string>
     <string name="editor_problem_title">Add a title in at least one language</string>
     <string name="editor_problem_quran">Enter a surah from 1 to 114 and its ayat</string>
+    <string name="editor_problem_quran_range">The last ayah can’t come before the first</string>
     <string name="editor_problem_reference">Write the reference, or remove it</string>
     <string name="editor_problem_references">A dhikr can cite up to 20 references</string>
     <string name="editor_problem_limit">You have 1,000 dhikrs of your own, the most there can be.</string>

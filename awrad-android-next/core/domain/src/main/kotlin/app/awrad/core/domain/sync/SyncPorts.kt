@@ -57,13 +57,14 @@ public interface SyncService {
     public suspend fun dismissNotice(notice: SyncNotice)
 }
 
-/** A profile as Settings lists it. */
+/** A profile as Settings lists it. [accountDeleted]: kept after its account was deleted; it never syncs. */
 public data class LocalProfile(
     val profileId: AwradId,
     val email: String?,
     val isActive: Boolean,
     val hasUnsent: Boolean,
     val lastUsedAt: Instant?,
+    val accountDeleted: Boolean = false,
 )
 
 /** A question waiting for the user, with what it's about. */

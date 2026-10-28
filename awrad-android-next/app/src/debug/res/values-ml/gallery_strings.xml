@@ -27,6 +27,10 @@
     <string name="gallery_chip_debt">കടം</string>
     <string name="gallery_chip_morning">പ്രഭാതം</string>
     <string name="gallery_filter_chips">ഫിൽട്ടർ ചിപ്പുകൾ</string>
+    <string name="gallery_conflict_banner">വൈരുദ്ധ്യ ബാനർ</string>
+    <string name="gallery_conflict_text">മറ്റൊരു ഉപകരണത്തിൽ മാറ്റം വന്നു</string>
+    <string name="gallery_conflict_keep_mine">എന്റേത് നിലനിർത്തുക</string>
+    <string name="gallery_conflict_use_theirs">മറ്റേത് ഉപയോഗിക്കുക</string>
     <string name="gallery_multi_line">പരിഭാഷ</string>
     <string name="gallery_multi_line_placeholder">പല വരികളുള്ള വാചകം</string>
     <string name="gallery_state_disabled">പ്രവർത്തനരഹിതം</string>

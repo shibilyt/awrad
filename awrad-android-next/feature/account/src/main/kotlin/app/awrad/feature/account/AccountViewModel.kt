@@ -1,5 +1,7 @@
 package app.awrad.feature.account
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.core.domain.account.AccountError
@@ -11,10 +13,6 @@ import app.awrad.core.domain.account.InputProblem
 import app.awrad.core.domain.account.SignInState
 import app.awrad.core.domain.account.SignOutReason
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,8 +25,8 @@ internal class AccountViewModel @Inject constructor(
     private val accounts: AccountRepository,
 ) : ViewModel() {
 
-    private val mutableState = MutableStateFlow(AccountUiState())
-    val state: StateFlow<AccountUiState> = mutableState.asStateFlow()
+    private val mutableState = mutableStateOf(AccountUiState())
+    val state: State<AccountUiState> = mutableState
 
     private val cooldown = ResendCooldown(viewModelScope) { left ->
         mutableState.update { it.copy(resendCooldownSeconds = left) }

@@ -7,12 +7,11 @@
     <string name="library_no_tagged">ഈ എല്ലാ ടാഗുകളുമുള്ള ദിക്ർ ഇല്ല</string>
     <string name="library_no_tagged_hint">കുറച്ച് ടാഗുകൾ തിരഞ്ഞെടുക്കുക, അല്ലെങ്കിൽ ഒരു ദിക്റിന്റെ പേജിൽ നിന്ന് ടാഗ് ചേർക്കുക.</string>
     <string name="library_conflict_title">മറ്റൊരു ഉപകരണത്തിൽ മാറ്റം വന്നു</string>
-    <string name="library_conflict_dhikr">നിങ്ങൾ ഇവിടെ തിരുത്തിയ ശേഷം ഈ ദിക്ർ മറ്റൊരു ഉപകരണത്തിൽ മാറ്റപ്പെട്ടു. നിങ്ങളുടെ പതിപ്പ് നിലനിർത്തണോ, മറ്റേത് ഉപയോഗിക്കണോ?</string>
-    <string name="library_conflict_tags">നിങ്ങൾ ഇവിടെ മാറ്റിയ ശേഷം ഈ ദിക്റിന്റെ ടാഗുകൾ മറ്റൊരു ഉപകരണത്തിൽ മാറ്റപ്പെട്ടു. നിങ്ങളുടെ ടാഗുകൾ നിലനിർത്തണോ, മറ്റേവ ഉപയോഗിക്കണോ?</string>
     <string name="library_conflict_keep_mine">എന്റേത് നിലനിർത്തുക</string>
     <string name="library_conflict_use_theirs">മറ്റേത് ഉപയോഗിക്കുക</string>
     <string name="library_edit">തിരുത്തുക</string>
     <string name="library_references">അവലംബങ്ങൾ</string>
+    <string name="library_sources">സ്രോതസ്സുകൾ</string>
     <string name="library_no_tags">ഇതുവരെ ടാഗുകളില്ല</string>
     <string name="library_delete_dhikr">ദിക്ർ ഇല്ലാതാക്കുക</string>
     <string name="library_tags_empty">നിങ്ങൾക്ക് ഇതുവരെ ടാഗുകളില്ല. താഴെ ഒന്ന് ഉണ്ടാക്കുക.</string>
@@ -68,6 +67,7 @@
     <string name="editor_problem_too_long">ഇത് വളരെ നീളമുള്ളതാണ്</string>
     <string name="editor_problem_title">ഒരു ഭാഷയിലെങ്കിലും തലക്കെട്ട് ചേർക്കുക</string>
     <string name="editor_problem_quran">1 മുതൽ 114 വരെയുള്ള സൂറത്തും അതിന്റെ ആയത്തുകളും നൽകുക</string>
+    <string name="editor_problem_quran_range">അവസാന ആയത്ത് ആദ്യത്തേതിന് മുമ്പ് വരാൻ പാടില്ല</string>
     <string name="editor_problem_reference">അവലംബം എഴുതുക, അല്ലെങ്കിൽ നീക്കം ചെയ്യുക</string>
     <string name="editor_problem_references">ഒരു ദിക്റിന് പരമാവധി 20 അവലംബങ്ങൾ</string>
     <string name="editor_problem_limit">നിങ്ങൾക്ക് സ്വന്തമായി 1,000 ദിക്റുകളുണ്ട്, അതാണ് പരമാവധി.</string>

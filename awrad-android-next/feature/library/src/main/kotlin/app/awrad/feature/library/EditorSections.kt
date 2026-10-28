@@ -130,7 +130,9 @@ internal fun ReferencesSection(state: EditorUiState, onAction: (EditorAction) ->
     EditorSection(title = stringResource(R.string.library_references), modifier = modifier) {
         QuranReferenceFields(
             quran = state.quran,
-            isInvalid = EditorProblem.QURAN_INVALID in state.problems,
+            problem = state.problems.firstOrNull {
+                it == EditorProblem.QURAN_INVALID || it == EditorProblem.QURAN_RANGE
+            },
             onChange = { onAction(EditorAction.QuranChanged(it)) },
         )
         state.kept.forEachIndexed { index, reference ->
@@ -164,11 +166,14 @@ internal fun ReferencesSection(state: EditorUiState, onAction: (EditorAction) ->
     }
 }
 
-/** Surah, from ayah and to ayah (the same ayah when left empty), in a row of number fields. */
+/**
+ * Surah, from ayah and to ayah (the same ayah when left empty), in a row of number fields; under them the
+ * [problem], such as a range that ends before it starts.
+ */
 @Composable
 private fun QuranReferenceFields(
     quran: QuranFields,
-    isInvalid: Boolean,
+    problem: EditorProblem?,
     onChange: (QuranFields) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -197,9 +202,9 @@ private fun QuranReferenceFields(
                 keyboardOptions = number,
             )
         }
-        if (isInvalid) {
+        if (problem != null) {
             Text(
-                text = problemText(EditorProblem.QURAN_INVALID),
+                text = problemText(problem),
                 style = AwradTheme.type.caption,
                 color = AwradTheme.colors.error,
             )

@@ -84,7 +84,7 @@ internal class RoomCustomDhikrRepository(
                 createdAt = existing?.createdAt ?: clock.millis(),
             ),
         )
-        if (profile.accountId != null) {
+        if (profile.queuesEdits) {
             val key = EntityKey(EntityType.CUSTOM_DHIKR, dhikr.id)
             Outbox.enqueue(RoomSyncStore(dao, clock::millis), LocalEdit(newId(), key, SyncOp.PUT, document))
         }
@@ -97,7 +97,7 @@ internal class RoomCustomDhikrRepository(
         val orphaned = profiles.write { profile ->
             val store = RoomSyncStore(profile.database.syncDao(), clock::millis)
             // The queue rules first, on the whole queue: they drop a never-sent create and its tags' commands.
-            if (profile.accountId != null) Outbox.enqueue(store, LocalEdit(newId(), key, SyncOp.DELETE, null))
+            if (profile.queuesEdits) Outbox.enqueue(store, LocalEdit(newId(), key, SyncOp.DELETE, null))
             // The server deletes the personal record itself; locally it goes with the dhikr.
             listOf(key, personal).forEach { gone ->
                 store.removeEntity(gone)

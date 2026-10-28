@@ -56,12 +56,27 @@ public sealed interface SyncReceiptBody {
     public val status: String
 }
 
+/**
+ * An entity a `user_tag` or `custom_dhikr` delete changed on the server at the same revision
+ * (`$defs/cascaded_change`).
+ */
+@Serializable
+public data class SyncCascadedBody(
+    @SerialName("entity_type") val entityType: String,
+    @SerialName("entity_id") val entityId: String,
+    val state: String,
+    val version: Long,
+    val revision: Long,
+)
+
+/** Done. [cascaded] is a list for a `user_tag` or `custom_dhikr` delete, null for every other command. */
 @Serializable
 public data class SyncAppliedReceipt(
     @SerialName("command_id") override val commandId: String,
     override val status: String,
     val version: Long,
     val revision: Long,
+    val cascaded: List<SyncCascadedBody>? = null,
 ) : SyncReceiptBody
 
 @Serializable
