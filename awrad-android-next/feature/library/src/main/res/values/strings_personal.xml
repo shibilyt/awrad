@@ -68,7 +68,8 @@
     <string name="editor_problem_title">Add a title in at least one language</string>
     <string name="editor_problem_quran">Enter a surah from 1 to 114 and its ayat</string>
     <string name="editor_problem_quran_range">The last ayah can’t come before the first</string>
-    <string name="editor_problem_reference">Write the reference, or remove it</string>
+    <string name="editor_problem_reference">Fix this reference, or remove it</string>
+    <string name="editor_problem_kept_reference">This reference can’t be saved. Remove it</string>
     <string name="editor_problem_references">A dhikr can cite up to 20 references</string>
     <string name="editor_problem_limit">You have 1,000 dhikrs of your own, the most there can be.</string>
     <string name="editor_problem_not_saved">It wasn’t saved, because the account changed. Try again.</string>

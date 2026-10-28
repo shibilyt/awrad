@@ -17,19 +17,27 @@ import androidx.compose.ui.focus.focusRequester
  */
 @Stable
 internal class ProblemTargets {
-    val views: Map<ProblemSpot, BringIntoViewRequester> =
-        ProblemSpot.entries.associateWith { BringIntoViewRequester() }
-    val focus: Map<ProblemSpot, FocusRequester> = ProblemSpot.entries.associateWith { FocusRequester() }
+    private val views = mutableMapOf<ProblemSpot, BringIntoViewRequester>()
+    private val focusers = mutableMapOf<ProblemSpot, FocusRequester>()
 
+    fun view(spot: ProblemSpot): BringIntoViewRequester = views.getOrPut(spot) { BringIntoViewRequester() }
+
+    fun focus(spot: ProblemSpot): FocusRequester = focusers.getOrPut(spot) { FocusRequester() }
+
+    /** Scrolls to [spot] and focuses it; a spot nothing marked is skipped. */
     suspend fun reveal(spot: ProblemSpot) {
-        views.getValue(spot).bringIntoView()
-        focus.getValue(spot).requestFocus()
+        val focuser = focusers[spot] ?: return
+        views[spot]?.bringIntoView()
+        focuser.requestFocus()
     }
 }
 
-/** Marks where [spot] shows, for [targets]. Mark each spot once at most, before the spot's own modifiers. */
+/**
+ * Marks where [spot] shows, for [targets]. Mark each spot once at most, before the spot's own modifiers; a spot
+ * without a focusable element of its own focuses the first one inside it.
+ */
 internal fun Modifier.problemSpot(targets: ProblemTargets, spot: ProblemSpot): Modifier =
-    bringIntoViewRequester(targets.views.getValue(spot)).focusRequester(targets.focus.getValue(spot))
+    bringIntoViewRequester(targets.view(spot)).focusRequester(targets.focus(spot))
 
 /** The editor's [ProblemTargets], revealing the first problem after each failed save. */
 @Composable

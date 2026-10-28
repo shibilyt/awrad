@@ -68,7 +68,8 @@
     <string name="editor_problem_title">أضف عنوانًا بلغة واحدة على الأقل</string>
     <string name="editor_problem_quran">أدخل سورة من ١ إلى ١١٤ وآياتها</string>
     <string name="editor_problem_quran_range">لا يمكن أن تأتي الآية الأخيرة قبل الأولى</string>
-    <string name="editor_problem_reference">اكتب المرجع أو أزله</string>
+    <string name="editor_problem_reference">صحّح هذا المرجع أو أزله</string>
+    <string name="editor_problem_kept_reference">لا يمكن حفظ هذا المرجع. أزله</string>
     <string name="editor_problem_references">يمكن للذكر أن يذكر ٢٠ مرجعًا على الأكثر</string>
     <string name="editor_problem_limit">لديك ١٬٠٠٠ ذكر من إنشائك، وهو الحد الأقصى.</string>
     <string name="editor_problem_not_saved">لم يُحفظ لأن الحساب تغيّر. حاول مرة أخرى.</string>

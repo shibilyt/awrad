@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
@@ -17,7 +16,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardType
 import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradCard
 import app.awrad.core.designsystem.component.AwradChip
@@ -39,9 +37,9 @@ import app.awrad.core.domain.dhikr.DhikrKind
  * "Check the fields marked below". Focusable, so a failed save can move focus (and a screen reader) here.
  */
 @Composable
-internal fun ProblemsLine(problems: Set<EditorProblem>, modifier: Modifier = Modifier) {
+internal fun ProblemsLine(problems: Map<ProblemSpot, EditorProblem>, modifier: Modifier = Modifier) {
     if (problems.isEmpty()) return
-    val whole = problems.firstOrNull { it in WHOLE_DHIKR_PROBLEMS }
+    val whole = problems[ProblemSpot.SUMMARY]
     Text(
         text = whole?.let { problemText(it) } ?: stringResource(R.string.editor_problems),
         modifier = modifier
@@ -51,10 +49,6 @@ internal fun ProblemsLine(problems: Set<EditorProblem>, modifier: Modifier = Mod
         color = AwradTheme.colors.error,
     )
 }
-
-/** Problems no single field shows, so the summary line says them. */
-private val WHOLE_DHIKR_PROBLEMS =
-    setOf(EditorProblem.LIMIT_REACHED, EditorProblem.NOT_SAVED, EditorProblem.TOO_MANY_REFERENCES)
 
 /** "Kind": one chip per kind, one chosen. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -81,9 +75,7 @@ internal fun ArabicSection(
     targets: ProblemTargets,
     modifier: Modifier = Modifier,
 ) {
-    val problem = state.problems.firstOrNull {
-        it == EditorProblem.ARABIC_REQUIRED || it == EditorProblem.ARABIC_TOO_LONG
-    }
+    val problem = state.problems[ProblemSpot.ARABIC]
     AwradTextField(
         value = state.arabic,
         onValueChange = { onAction(EditorAction.ArabicChanged(it)) },
@@ -115,17 +107,12 @@ internal fun TextsSection(
             selectedIndex = languages.indexOf(language),
             onSelect = { onAction(EditorAction.LanguageShown(languages[it])) },
         )
-        val tooLong = EditorProblem.TEXT_TOO_LONG in state.problems
         AwradTextField(
             value = state.titles[language],
             onValueChange = { onAction(EditorAction.TitleChanged(it)) },
             label = stringResource(R.string.editor_title_field, languageName(language)),
             modifier = Modifier.problemSpot(targets, ProblemSpot.TITLE),
-            error = when {
-                EditorProblem.TITLE_REQUIRED in state.problems -> problemText(EditorProblem.TITLE_REQUIRED)
-                tooLong -> problemText(EditorProblem.TEXT_TOO_LONG)
-                else -> null
-            },
+            error = state.problems[ProblemSpot.TITLE]?.let { problemText(it) },
             supportingText = stringResource(R.string.editor_title_hint),
         )
         if (language != ContentLanguage.AR) {
@@ -142,106 +129,6 @@ internal fun TextsSection(
             label = stringResource(R.string.editor_translation_field, languageName(language)),
             singleLine = false,
         )
-    }
-}
-
-/** An optional Qur'an reference (surah and ayat), then any other references as free text. */
-@Composable
-internal fun ReferencesSection(
-    state: EditorUiState,
-    onAction: (EditorAction) -> Unit,
-    targets: ProblemTargets,
-    modifier: Modifier = Modifier,
-) {
-    EditorSection(title = stringResource(R.string.library_references), modifier = modifier) {
-        QuranReferenceFields(
-            quran = state.quran,
-            problem = state.problems.firstOrNull {
-                it == EditorProblem.QURAN_INVALID || it == EditorProblem.QURAN_RANGE
-            },
-            onChange = { onAction(EditorAction.QuranChanged(it)) },
-            modifier = Modifier.problemSpot(targets, ProblemSpot.QURAN),
-        )
-        state.kept.forEachIndexed { index, reference ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = referenceLabel(reference).text,
-                    modifier = Modifier.weight(1f),
-                    style = AwradTheme.type.bodySmall,
-                    color = AwradTheme.colors.onSurfaceVariant,
-                )
-                RemoveButton(onClick = { onAction(EditorAction.RemoveKeptReference(index)) })
-            }
-        }
-        val blankIsProblem = EditorProblem.REFERENCE_INVALID in state.problems
-        val firstBlank = state.otherReferences.indexOfFirst(String::isBlank)
-        state.otherReferences.forEachIndexed { index, text ->
-            key(index) {
-                AwradTextField(
-                    value = text,
-                    onValueChange = { onAction(EditorAction.ReferenceChanged(index, it)) },
-                    label = stringResource(R.string.editor_reference, index + 1),
-                    modifier = if (index == firstBlank) {
-                        Modifier.problemSpot(targets, ProblemSpot.REFERENCE)
-                    } else {
-                        Modifier
-                    },
-                    error = problemText(EditorProblem.REFERENCE_INVALID).takeIf { blankIsProblem && text.isBlank() },
-                    trailingIcon = { RemoveButton(onClick = { onAction(EditorAction.RemoveReference(index)) }) },
-                )
-            }
-        }
-        AwradTextButton(
-            text = stringResource(R.string.editor_add_reference),
-            onClick = { onAction(EditorAction.AddReference) },
-            leadingIcon = AwradIcons.Add,
-        )
-    }
-}
-
-/**
- * Surah, from ayah and to ayah (the same ayah when left empty), in a row of number fields; under them the
- * [problem], such as a range that ends before it starts.
- */
-@Composable
-private fun QuranReferenceFields(
-    quran: QuranFields,
-    problem: EditorProblem?,
-    onChange: (QuranFields) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val number = KeyboardOptions(keyboardType = KeyboardType.Number)
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.xs)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm)) {
-            AwradTextField(
-                value = quran.surah,
-                onValueChange = { onChange(quran.copy(surah = it)) },
-                label = stringResource(R.string.editor_surah),
-                modifier = Modifier.weight(1f),
-                keyboardOptions = number,
-            )
-            AwradTextField(
-                value = quran.ayahStart,
-                onValueChange = { onChange(quran.copy(ayahStart = it)) },
-                label = stringResource(R.string.editor_ayah_start),
-                modifier = Modifier.weight(1f),
-                keyboardOptions = number,
-            )
-            AwradTextField(
-                value = quran.ayahEnd,
-                onValueChange = { onChange(quran.copy(ayahEnd = it)) },
-                label = stringResource(R.string.editor_ayah_end),
-                modifier = Modifier.weight(1f),
-                keyboardOptions = number,
-            )
-        }
-        if (problem != null) {
-            Text(
-                text = problemText(problem),
-                style = AwradTheme.type.caption,
-                color = AwradTheme.colors.error,
-            )
-        }
     }
 }
 
@@ -354,7 +241,7 @@ internal fun EditorTagsSection(state: EditorUiState, onAction: (EditorAction) ->
 }
 
 @Composable
-private fun EditorSection(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+internal fun EditorSection(title: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm)) {
         AwradSectionTitle(text = title)
         content()
@@ -362,7 +249,7 @@ private fun EditorSection(title: String, modifier: Modifier = Modifier, content:
 }
 
 @Composable
-private fun RemoveButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun RemoveButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     AwradIconButton(
         icon = AwradIcons.Close,
         contentDescription = stringResource(R.string.editor_remove),

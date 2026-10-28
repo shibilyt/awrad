@@ -11,8 +11,6 @@ import app.awrad.core.domain.personal.CustomDhikr
 import app.awrad.core.domain.personal.CustomTransliteration
 import app.awrad.core.domain.personal.OptionalTexts
 import app.awrad.core.domain.personal.UserTag
-import app.awrad.core.domain.sync.FieldError
-import app.awrad.core.domain.sync.FieldErrorCode
 
 /** One text per app language, as typed. */
 internal data class LanguageFields(val en: String = "", val ar: String = "", val ml: String = "") {
@@ -43,28 +41,11 @@ internal data class QuranFields(val surah: String = "", val ayahStart: String = 
 /** The recording being edited: [localUri] is null when it was made on another device. */
 internal data class AudioField(val localUri: String?, val isNew: Boolean)
 
-/** What the editor checks or was told, mapped to text by the screen. */
-internal enum class EditorProblem {
-    ARABIC_REQUIRED,
-    ARABIC_TOO_LONG,
-    TITLE_REQUIRED,
-    TEXT_TOO_LONG,
-    QURAN_INVALID,
-
-    /** The Qur'an reference ends before it starts (field error `range` on `ayah_end`). */
-    QURAN_RANGE,
-    REFERENCE_INVALID,
-    TOO_MANY_REFERENCES,
-    LIMIT_REACHED,
-
-    /** The profile changed while saving (signing in as another account). */
-    NOT_SAVED,
-}
-
 /**
  * The custom dhikr editor. [shownLanguage] picks which language's title, transliteration and translation are
  * shown (the three are compact, one language at a time). [otherReferences] are free-text references; [kept] are
- * references of other types the dhikr already had, kept as they are. [problems] are the last save's.
+ * references of other types the dhikr already had, kept as they are. [problems] are the last save's, each where it
+ * shows.
  */
 internal data class EditorUiState(
     val isLoading: Boolean = true,
@@ -83,7 +64,7 @@ internal data class EditorUiState(
     val playback: PlaybackState = PlaybackState(),
     val tags: List<UserTag> = emptyList(),
     val selectedTags: List<AwradId> = emptyList(),
-    val problems: Set<EditorProblem> = emptySet(),
+    val problems: Map<ProblemSpot, EditorProblem> = emptyMap(),
     /** Saves that came back with [problems]; each one takes the reader to the first ([firstProblemSpot]). */
     val failedSaves: Int = 0,
     val isSaving: Boolean = false,
@@ -91,30 +72,6 @@ internal data class EditorUiState(
     /** Saved or deleted: the editor closes. */
     val isDone: Boolean = false,
 )
-
-/**
- * Where a problem shows, top to bottom: the summary line above the form (for problems of the whole dhikr), then
- * the Arabic text, the title, the Qur'an reference and the other references.
- */
-internal enum class ProblemSpot { SUMMARY, ARABIC, TITLE, QURAN, REFERENCE }
-
-/**
- * Where a failed save takes the reader: the topmost field that shows one of [EditorUiState.problems], else the
- * summary line; null without problems. A blank reference is marked only when there's one to mark.
- */
-internal fun EditorUiState.firstProblemSpot(): ProblemSpot? {
-    if (problems.isEmpty()) return null
-    val fields = problems.mapNotNull { problem ->
-        when (problem) {
-            EditorProblem.ARABIC_REQUIRED, EditorProblem.ARABIC_TOO_LONG -> ProblemSpot.ARABIC
-            EditorProblem.TITLE_REQUIRED, EditorProblem.TEXT_TOO_LONG -> ProblemSpot.TITLE
-            EditorProblem.QURAN_INVALID, EditorProblem.QURAN_RANGE -> ProblemSpot.QURAN
-            EditorProblem.REFERENCE_INVALID -> ProblemSpot.REFERENCE.takeIf { otherReferences.any(String::isBlank) }
-            EditorProblem.TOO_MANY_REFERENCES, EditorProblem.LIMIT_REACHED, EditorProblem.NOT_SAVED -> null
-        }
-    }
-    return fields.minOrNull() ?: ProblemSpot.SUMMARY
-}
 
 internal sealed interface EditorAction {
     data class KindChanged(val kind: DhikrKind) : EditorAction
@@ -209,21 +166,6 @@ internal fun EditorUiState.loaded(dhikr: CustomDhikr): EditorUiState {
         audio = dhikr.audio?.let { AudioField(it.localUri, isNew = false) },
     )
 }
-
-/** The problems [errors] (from the shared validity rules) point at; [hasQuran] puts the Qur'an reference first. */
-internal fun problemsOf(errors: List<FieldError>, hasQuran: Boolean): Set<EditorProblem> = errors.map { error ->
-    when {
-        error.field == "/arabic" && error.code == FieldErrorCode.TOO_LONG -> EditorProblem.ARABIC_TOO_LONG
-        error.field == "/arabic" -> EditorProblem.ARABIC_REQUIRED
-        error.field == "/title" -> EditorProblem.TITLE_REQUIRED
-        error.field == "/references" -> EditorProblem.TOO_MANY_REFERENCES
-        error.field == "/references/0/ayah_end" && error.code == FieldErrorCode.RANGE && hasQuran ->
-            EditorProblem.QURAN_RANGE
-        error.field == "/references/0" && hasQuran -> EditorProblem.QURAN_INVALID
-        error.field.startsWith("/references/") -> EditorProblem.REFERENCE_INVALID
-        else -> EditorProblem.TEXT_TOO_LONG
-    }
-}.toSet()
 
 private fun String.trimmedOrNull(): String? = trim().takeIf { it.isNotEmpty() }
 

@@ -68,7 +68,8 @@
     <string name="editor_problem_title">ഒരു ഭാഷയിലെങ്കിലും തലക്കെട്ട് ചേർക്കുക</string>
     <string name="editor_problem_quran">1 മുതൽ 114 വരെയുള്ള സൂറത്തും അതിന്റെ ആയത്തുകളും നൽകുക</string>
     <string name="editor_problem_quran_range">അവസാന ആയത്ത് ആദ്യത്തേതിന് മുമ്പ് വരാൻ പാടില്ല</string>
-    <string name="editor_problem_reference">അവലംബം എഴുതുക, അല്ലെങ്കിൽ നീക്കം ചെയ്യുക</string>
+    <string name="editor_problem_reference">ഈ അവലംബം തിരുത്തുക, അല്ലെങ്കിൽ നീക്കം ചെയ്യുക</string>
+    <string name="editor_problem_kept_reference">ഈ അവലംബം സേവ് ചെയ്യാനാവില്ല. അത് നീക്കം ചെയ്യുക</string>
     <string name="editor_problem_references">ഒരു ദിക്റിന് പരമാവധി 20 അവലംബങ്ങൾ</string>
     <string name="editor_problem_limit">നിങ്ങൾക്ക് സ്വന്തമായി 1,000 ദിക്റുകളുണ്ട്, അതാണ് പരമാവധി.</string>
     <string name="editor_problem_not_saved">അക്കൗണ്ട് മാറിയതിനാൽ സേവ് ചെയ്തില്ല. വീണ്ടും ശ്രമിക്കുക.</string>
