@@ -163,7 +163,6 @@ struct ProfileSwitchingTests {
         let accountProfile = await harness.store.state().registry.activeProfileID
         let morning = try await harness.store.createTag(named: "Morning")
         try await harness.store.setTags([morning.id], on: Sample.builtIn)
-        await harness.sync()
         await harness.signOut()
         // Bilal's profile, removed while active, leaves a fresh anonymous profile active.
         _ = try await harness.signIn(email: "bilal@example.com")

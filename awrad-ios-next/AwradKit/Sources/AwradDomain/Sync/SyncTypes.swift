@@ -112,6 +112,13 @@ public struct OutboxCommand: Hashable, Sendable {
         self.document = document
         self.sent = sent
     }
+
+    /// The entities the command's document names, which the server must have first: a personal
+    /// record's tags and its own custom dhikr. Tags, custom dhikrs and deletes name nothing.
+    public var references: Set<SyncEntityKey> {
+        guard let tagIDs = document?.tagIDs else { return [] }
+        return Set(tagIDs.map { SyncEntityKey(.userTag, $0) }).union([SyncEntityKey(.customDhikr, key.id)])
+    }
 }
 
 /// One saved local change: a put of the whole new document, or a delete.

@@ -24,6 +24,8 @@ public protocol SyncLocalState {
     /// Replaces the command with the same `commandID`, keeping its place in the queue.
     mutating func replaceCommand(_ command: OutboxCommand)
     mutating func removeCommand(_ commandID: AwradID)
+    /// Moves a command to just after `target`, a later command; the rest keep their order.
+    mutating func moveCommand(_ commandID: AwradID, after target: AwradID)
 
     func conflict(_ key: SyncEntityKey) -> SyncConflict?
     mutating func setConflict(_ conflict: SyncConflict?, for key: SyncEntityKey)
@@ -79,6 +81,13 @@ public struct InMemorySyncState: SyncLocalState, Hashable, Sendable {
     }
 
     public mutating func removeCommand(_ commandID: AwradID) { outbox.removeAll { $0.commandID == commandID } }
+
+    public mutating func moveCommand(_ commandID: AwradID, after target: AwradID) {
+        guard let index = outbox.firstIndex(where: { $0.commandID == commandID }) else { return }
+        let command = outbox.remove(at: index)
+        let destination = outbox.firstIndex { $0.commandID == target }.map { $0 + 1 } ?? index
+        outbox.insert(command, at: destination)
+    }
 
     /// Marks commands as having been in a request.
     public mutating func markSent(_ commandIDs: Set<AwradID>) {

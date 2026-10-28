@@ -34,9 +34,12 @@ extension SyncRules {
 
     /// Queues one edit's command (`outbox_enqueue.json`):
     ///
-    /// - If the entity's last queued command was never sent, the edit replaces it in place,
-    ///   keeping its `command_id`, `base_version` and position. A delete that replaces a never-sent
-    ///   create (`base_version` 0) removes it instead: the server never heard of the entity.
+    /// - If the entity's last queued command was never sent, the edit replaces it, keeping its
+    ///   `command_id`, `base_version` and position. A delete that replaces a never-sent create
+    ///   (`base_version` 0) removes it instead: the server never heard of the entity.
+    /// - A replacement whose new document references an entity with a never-sent put later in the
+    ///   queue moves to just after the last such put, so the server meets what it names first
+    ///   (`moveAfterLaterReferences`).
     /// - Otherwise a command is added at the end, chained on the entity's last queued command
     ///   (`base_version` + 1), or on the known version when nothing is queued for it.
     /// - Deleting a custom dhikr also drops never-sent commands for its personal record.
@@ -52,6 +55,7 @@ extension SyncRules {
                 last.op = edit.op
                 last.document = edit.op == .put ? edit.document : nil
                 state.replaceCommand(last)
+                moveAfterLaterReferences(last, in: &state)
             }
         } else {
             let base = queued.last.map { $0.baseVersion + 1 } ?? state.knownVersion(edit.key)
@@ -88,6 +92,18 @@ extension SyncRules {
     }
 
     // MARK: - Shared steps
+
+    /// Moves a replaced command to just after the last never-sent put of an entity its document
+    /// references (the tags in `tag_ids`, and a personal record's own custom dhikr), when that put
+    /// sits later in the queue. Every other command keeps its relative order.
+    static func moveAfterLaterReferences(_ command: OutboxCommand, in state: inout some SyncLocalState) {
+        let references = command.references
+        guard !references.isEmpty else { return }
+        let outbox = state.outbox
+        guard let index = outbox.firstIndex(where: { $0.commandID == command.commandID }) else { return }
+        let later = outbox[(index + 1)...].last { !$0.sent && $0.op == .put && references.contains($0.key) }
+        if let later { state.moveCommand(command.commandID, after: later.commandID) }
+    }
 
     static func dropUnsentCommands(for key: SyncEntityKey, in state: inout some SyncLocalState) {
         for command in state.commands(for: key) where !command.sent {
