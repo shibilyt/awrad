@@ -193,7 +193,7 @@ describe("slice 3b dialogs", () => {
     expect(dialog.querySelector("svg")).not.toBeNull();
     const buttons = within(dialog).getAllByRole("button");
     expect(buttons.map((button) => button.textContent)).toEqual(["Keep mine", "Use theirs"]);
-    expect(buttons[0]).toHaveClass("text-accent");
+    expect(buttons[0]).toHaveClass("text-on-secondary-container");
     await userEvent.keyboard("{Escape}");
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Use theirs" }));

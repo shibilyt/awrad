@@ -75,7 +75,8 @@ export function ConfirmDialog({
  *   the scrim, up to `dialogMaxWidth` wide.
  * - The `error` icon at the start, then the title in `body`, both `onSecondaryContainer`; then the
  *   content (inside counts as a `surface` area, so a card there is `background`).
- * - Two text buttons at the end, `first` then `second`; both wait while `isPending`.
+ * - Two text buttons at the end, `first` then `second`, labelled in `onSecondaryContainer` (in dark
+ *   mode `accent` is the fill's own colour); both wait while `isPending`.
  */
 export function ChoiceDialog({
   isOpen,
@@ -111,10 +112,10 @@ export function ChoiceDialog({
             <div className="flex flex-col gap-sm text-body">{children}</div>
           </OnSurface>
           <div className="flex flex-wrap justify-end gap-lg">
-            <TextButton isDisabled={isPending} onPress={first.onPress}>
+            <TextButton on="secondaryContainer" isDisabled={isPending} onPress={first.onPress}>
               {first.label}
             </TextButton>
-            <TextButton isDisabled={isPending} onPress={second.onPress}>
+            <TextButton on="secondaryContainer" isDisabled={isPending} onPress={second.onPress}>
               {second.label}
             </TextButton>
           </div>

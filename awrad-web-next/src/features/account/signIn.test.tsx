@@ -1,5 +1,6 @@
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import i18next from "i18next";
 import { afterEach, describe, expect, test } from "vitest";
 import { setCsrfToken } from "@/shared/api/client";
 import { recordRequests, renderRoute } from "@/test/render";
@@ -107,5 +108,26 @@ describe("sign in", () => {
     await signIn("amina@example.com", "a long passphrase");
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Too many attempts.");
+  });
+});
+
+describe("account form submit buttons", () => {
+  test.each([
+    ["en", "/sign-in", "account.signIn.submit"],
+    ["ar", "/sign-in", "account.signIn.submit"],
+    ["ml", "/sign-in", "account.signIn.submit"],
+    ["ar", "/register", "account.register.submit"],
+    ["ml", "/forgot-password", "account.forgot.submit"],
+  ])("%s %s: named by the label itself (%s), not only through its wrapper", async (language, path, key) => {
+    await i18next.changeLanguage(language);
+    const label = i18next.t(key);
+    server.use(specHandler("get_browser_csrf_token", 200));
+    const { container } = renderRoute(path);
+
+    const submit = await screen.findByRole("button", { name: label });
+    expect(label).not.toBe(key);
+    expect(submit).toHaveAttribute("type", "submit");
+    expect(submit).toHaveAttribute("aria-label", label);
+    expect(container.querySelectorAll("button[type=submit]:not([aria-label])")).toHaveLength(0);
   });
 });

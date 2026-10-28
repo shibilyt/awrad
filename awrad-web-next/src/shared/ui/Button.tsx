@@ -53,6 +53,10 @@ function PendingIndicator(): ReactElement {
  * `row` sized. React Aria handles focus, keyboard, press, pending and RTL. While `isPending` the
  * label gives way to a progress indicator; the button keeps its size, ignores presses and isn't
  * drawn as disabled. Disabled, it keeps its colours at the `disabled` opacity.
+ *
+ * A text label also names the button (`aria-label`): the label sits in a wrapper span, which some
+ * accessibility trees don't look into (a submit button showed up nameless), and while pending
+ * React Aria then names it "label Loading".
  */
 export function Button({
   variant = "main",
@@ -63,8 +67,10 @@ export function Button({
   ...props
 }: ButtonProps): ReactElement {
   const secondary = useSecondaryFill();
+  const named = props["aria-label"] !== undefined || props["aria-labelledby"] !== undefined;
   return (
     <AriaButton
+      {...(typeof children === "string" && !named ? { "aria-label": children } : {})}
       {...props}
       className={cx(
         "relative inline-flex items-center justify-center rounded-button text-button select-fade",
@@ -87,13 +93,35 @@ export function Button({
   );
 }
 
-/** A text button's look, shared with `TextButtonLink` (a text button that navigates). */
-export const TEXT_BUTTON = cx("inline-flex min-h-touch-target items-center rounded-xs text-label text-accent", STATES);
+/**
+ * What a text button sits on: no fill (`accent`), or a `secondaryContainer` or `primary` fill,
+ * where it takes the fill's paired content colour (components.md "Buttons"; in dark mode `accent`
+ * is the `secondaryContainer` colour, so it would vanish there).
+ */
+export type TextButtonOn = "none" | "secondaryContainer" | "primary";
 
-/** A link-like action (View All): no fill, `accent`, `label` style, `touchTarget` tall. */
-export function TextButton({ children, ...props }: AriaProps & { children: ReactNode }): ReactElement {
+const TEXT_BUTTON_COLORS: Record<TextButtonOn, string> = {
+  none: "text-accent",
+  secondaryContainer: "text-on-secondary-container",
+  primary: "text-on-primary",
+};
+
+/** A text button's look, shared with `TextButtonLink` (a text button that navigates). */
+export function textButtonClasses(on: TextButtonOn = "none"): string {
+  return cx("inline-flex min-h-touch-target items-center rounded-xs text-label", TEXT_BUTTON_COLORS[on], STATES);
+}
+
+/**
+ * A link-like action (View All): no fill, `accent`, `label` style, `touchTarget` tall. `on` names
+ * the fill it sits on when that's `secondaryContainer` or `primary` (the conflict banner).
+ */
+export function TextButton({
+  on = "none",
+  children,
+  ...props
+}: AriaProps & { on?: TextButtonOn; children: ReactNode }): ReactElement {
   return (
-    <AriaButton {...props} className={TEXT_BUTTON}>
+    <AriaButton {...props} className={textButtonClasses(on)}>
       {children}
     </AriaButton>
   );

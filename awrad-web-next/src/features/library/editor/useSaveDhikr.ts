@@ -42,6 +42,8 @@ export function useSaveDhikr(
   isPending: boolean;
   conflict: OpenConflict | null;
   refused: Refusal | null;
+  /** How many saves have stopped on field problems (the client's checks or the server's): the editor jumps to the first. */
+  fieldFailures: number;
 } {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -55,6 +57,11 @@ export function useSaveDhikr(
   }));
   const [problems, setProblems] = useState<FieldProblem[]>([]);
   const [alert, setAlert] = useState<string | null>(null);
+  const [fieldFailures, setFieldFailures] = useState(0);
+  const showProblems = (found: FieldProblem[]) => {
+    setProblems(found);
+    if (found.length > 0) setFieldFailures((count) => count + 1);
+  };
 
   // Why an edit didn't go through, under the form; a refusal's reason is in its own dialog.
   const showSettled = (settled: Settled) => {
@@ -65,7 +72,7 @@ export function useSaveDhikr(
   const save = async (values: EditorValues): Promise<void> => {
     const document = documentFrom(values, existing?.document.audio ?? null);
     const found = customDhikrProblems(document);
-    setProblems(found);
+    showProblems(found);
     setAlert(found.length === 0 ? null : t("library.editor.errors.check"));
     if (found.length > 0) return;
     try {
@@ -76,7 +83,7 @@ export function useSaveDhikr(
         base_version: base.dhikr,
         document,
       });
-      if (dhikr.status === "rejected") setProblems(dhikr.fields);
+      if (dhikr.status === "rejected") showProblems(dhikr.fields);
       // Saved: trying again (if the tags fail) builds on this version, not the one the editor opened with.
       if (dhikr.status === "applied") setBase((previous) => ({ ...previous, dhikr: dhikr.version }));
       if (!wentThrough(dhikr)) {
@@ -105,5 +112,5 @@ export function useSaveDhikr(
     }
   };
 
-  return { save, errors: errorMessages(problems, t), alert, isPending, conflict, refused };
+  return { save, errors: errorMessages(problems, t), alert, isPending, conflict, refused, fieldFailures };
 }

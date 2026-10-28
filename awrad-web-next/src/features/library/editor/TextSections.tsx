@@ -5,7 +5,10 @@ import { DHIKR_KINDS } from "@/shared/sync";
 import { OptionRadioGroup, OptionRow } from "@/shared/ui/OptionRow";
 import { TextField } from "@/shared/ui/TextField";
 
-/** A titled group of the editor's fields, with a message for the group as a whole (`title` missing). */
+/**
+ * A titled group of the editor's fields, with a message for the group as a whole (`title`
+ * missing); `data-invalid` while it has one, so a failed save can jump to it.
+ */
 export function FieldGroup({
   title,
   hint,
@@ -19,7 +22,11 @@ export function FieldGroup({
 }): ReactElement {
   const heading = useId();
   return (
-    <section aria-labelledby={heading} className="flex flex-col gap-row-gap">
+    <section
+      aria-labelledby={heading}
+      data-invalid={error === undefined ? undefined : true}
+      className="flex flex-col gap-row-gap"
+    >
       <div className="flex flex-col gap-xs">
         <h2 id={heading} className="text-section-title text-on-surface">
           {title}

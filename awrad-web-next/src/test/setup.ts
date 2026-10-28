@@ -9,8 +9,10 @@ import { initI18n } from "@/shared/i18n";
 // Whole-app tests load route chunks lazily; give slow CI machines room.
 configure({ asyncUtilTimeout: 3000 });
 
-// jsdom doesn't implement scrolling; the router restores scroll on every navigation.
+// jsdom doesn't implement scrolling; the router restores scroll on every navigation, and a
+// failed editor save scrolls to its first error.
 window.scrollTo = () => undefined;
+Element.prototype.scrollIntoView = () => undefined;
 
 /** Requests no test handled fail loudly instead of reaching the network. */
 export const server = setupServer();
