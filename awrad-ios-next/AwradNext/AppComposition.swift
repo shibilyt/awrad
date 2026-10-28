@@ -10,6 +10,8 @@ final class AppComposition {
     let onboardingStatus: any OnboardingStatusStore
     let goals: any GoalRepository
     let account: any AccountService
+    /// The local profiles and the active one's custom dhikrs and tags (one adapter, two ports).
+    let profiles: LocalProfileStore
     /// The built-in dhikrs, decoded once from the bundled copy of the contract's catalog.
     let catalog: DhikrCatalog
     /// The app language, which picks the catalog's text.
@@ -19,12 +21,13 @@ final class AppComposition {
 
     init(
         onboardingStatus: any OnboardingStatusStore, goals: any GoalRepository, account: any AccountService,
-        catalog: DhikrCatalog, language: CatalogLanguage,
+        profiles: LocalProfileStore, catalog: DhikrCatalog, language: CatalogLanguage,
         makeAudioPlayer: @escaping @MainActor () -> any DhikrAudioPlayer
     ) {
         self.onboardingStatus = onboardingStatus
         self.goals = goals
         self.account = account
+        self.profiles = profiles
         self.catalog = catalog
         self.language = language
         self.makeAudioPlayer = makeAudioPlayer
@@ -46,21 +49,35 @@ final class AppComposition {
             fatalError("Couldn't read the bundled dhikr catalog: \(error)")
         }
         let language = appLanguage()
+        let session = AuthSession(
+            baseURL: APIEnvironment.baseURL,
+            transport: URLSessionTransport(),
+            store: KeychainStore(service: "app.awrad.awrad.next.account"),
+            marker: UserDefaultsInstallationMarker(),
+            deviceName: DeviceName.current(),
+            language: { language }
+        )
+        let profiles: LocalProfileStore
+        do {
+            profiles = try LocalProfileStore(directory: profilesDirectory(), session: session)
+        } catch {
+            // Can't continue without the profile store; it already recreated an incompatible one.
+            fatalError("Couldn't open the local profiles: \(error)")
+        }
         return AppComposition(
             onboardingStatus: UserDefaultsOnboardingStatusStore(),
             goals: SwiftDataGoalRepository(modelContainer: container),
-            account: AuthSession(
-                baseURL: APIEnvironment.baseURL,
-                transport: URLSessionTransport(),
-                store: KeychainStore(service: "app.awrad.awrad.next.account"),
-                marker: UserDefaultsInstallationMarker(),
-                deviceName: DeviceName.current(),
-                language: { language }
-            ),
+            account: session,
+            profiles: profiles,
             catalog: catalog,
             language: CatalogLanguage(languageCode: language),
             makeAudioPlayer: { AVDhikrAudioPlayer() }
         )
+    }
+
+    /// Application Support/Profiles: the profile registry and one directory per profile.
+    private static func profilesDirectory() -> URL {
+        URL.applicationSupportDirectory.appending(path: "Profiles", directoryHint: .isDirectory)
     }
 
     /// The language the app runs in (`en`, `ar` or `ml`), sent as `Accept-Language` so emails

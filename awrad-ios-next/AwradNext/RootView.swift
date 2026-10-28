@@ -1,3 +1,4 @@
+import AwradData
 import AwradDesignSystem
 import FeatureAccount
 import FeatureOnboarding
@@ -8,6 +9,7 @@ struct RootView: View {
     let composition: AppComposition
     @State private var destination: Destination?
     @State private var showsAccount = false
+    @Environment(\.scenePhase) private var scenePhase
 
     enum Destination {
         case onboarding
@@ -51,16 +53,29 @@ struct RootView: View {
                     }
                 )
                 .sheet(isPresented: $showsAccount) {
-                    AccountRoute(service: composition.account) { showsAccount = false }
-                        .awradSheet()
+                    AccountRoute(service: composition.account, profiles: composition.profiles) {
+                        showsAccount = false
+                    }
+                    .awradSheet()
+                    // The account-deleted question also shows over the account sheet.
+                    .awradProfilePrompts(composition.profiles)
                 }
             case nil:
                 AwradColors.background.ignoresSafeArea()
             }
         }
         .awradContentSwap(value: destination)
+        .awradProfilePrompts(composition.profiles)
         .task {
+            #if DEBUG
+                await SampleLaunchState.seedIfAsked(composition.profiles)
+            #endif
+            await composition.profiles.start()
             destination = await composition.onboardingStatus.isOnboarded() ? .home : .onboarding
+        }
+        // Sync at launch and on returning to the foreground, then every 5 minutes while active.
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            Task { await composition.profiles.setAppActive(phase == .active) }
         }
     }
 }

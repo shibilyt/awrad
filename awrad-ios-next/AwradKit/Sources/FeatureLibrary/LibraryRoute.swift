@@ -3,7 +3,8 @@ import AwradDomain
 import SwiftUI
 
 /// The Library tab's entry point: its navigation stack over `LibraryModel`, which the app owns.
-/// `makePlayer` gives each dhikr screen its own audio player.
+/// `makePlayer` gives each dhikr screen its own audio player. It follows the user's library while
+/// it's on screen.
 public struct LibraryRoute: View {
     private let model: LibraryModel
     private let makePlayer: @MainActor () -> any DhikrAudioPlayer
@@ -14,10 +15,14 @@ public struct LibraryRoute: View {
     }
 
     public var body: some View {
-        LibraryScreen(state: model.state, content: model.content, makePlayer: makePlayer) { action in
+        LibraryScreen(
+            state: model.state, content: model.content,
+            services: LibraryServices(library: model.library, makePlayer: makePlayer)
+        ) { action in
             // Typing and navigation apply synchronously.
             if !model.apply(action) { Task { await model.send(action) } }
         }
+        .task { await model.observePersonalLibrary() }
     }
 }
 
@@ -25,19 +30,29 @@ public struct LibraryRoute: View {
 struct LibraryScreen: View {
     let state: LibraryModel.State
     let content: LibraryContent
-    let makePlayer: @MainActor () -> any DhikrAudioPlayer
+    let services: LibraryServices
     let send: (LibraryModel.Action) -> Void
+    @State private var isFilterSheetShown = false
 
     var body: some View {
         NavigationStack(path: Binding(get: { state.path }, set: { send(.pathChanged($0)) })) {
             ScrollView {
                 VStack(alignment: .leading, spacing: AwradSpacing.sectionGap) {
+                    ForEach(state.personal.notices, id: \.self) { notice in
+                        NoticeCard(notice: notice) { send(.dismissNotice(notice)) }
+                            .pageInset()
+                    }
                     LibrarySearchField(
                         query: state.query, onChange: { send(.queryChanged($0)) }, onClear: { send(.clearSearch) }
                     )
-                    .padding(.horizontal, AwradSpacing.pageMargin)
+                    .pageInset()
+                    if !state.personal.tags.isEmpty {
+                        TagFilterBar(
+                            selected: state.filterTags, onOpen: { isFilterSheetShown = true },
+                            onClear: { send(.clearTagFilter) })
+                    }
                     if let results = state.results {
-                        searchResults(results)
+                        listing(results)
                     } else {
                         browse
                     }
@@ -47,8 +62,14 @@ struct LibraryScreen: View {
             .scrollDismissesKeyboard(.immediately)
             .background(AwradColors.background)
             .awradLargeTitle(Strings.title)
+            .toolbar { NewDhikrButton { send(.openEditor(nil)) } }
             .navigationDestination(for: LibraryModel.Destination.self) { destination in
                 self.destination(destination)
+            }
+            .awradBottomSheet(isPresented: $isFilterSheetShown) {
+                TagFilterSheet(tags: state.personal.tags, selected: state.tagFilter, send: send) {
+                    isFilterSheetShown = false
+                }
             }
         }
         // Accent text for the back button, readable in light and dark.
@@ -58,32 +79,33 @@ struct LibraryScreen: View {
     @ViewBuilder private var browse: some View {
         VStack(alignment: .leading, spacing: AwradSpacing.md) {
             AwradSectionTitle(Strings.collections)
-            CollectionTilesRow(content: content) { send(.openCollection(key: $0.key)) }
+            CollectionTilesRow(
+                content: content, yourDhikrsCount: state.personal.customDhikrs.count,
+                onOpenYourDhikrs: { send(.openYourDhikrs) }, onOpen: { send(.openCollection(key: $0.key)) })
         }
         VStack(alignment: .leading, spacing: AwradSpacing.md) {
             AwradSectionTitle(Strings.allDhikrs)
-            DhikrRows(dhikrs: content.catalog.dhikrs, content: content) { send(.openDhikr(key: $0.key)) }
+            listing(state.dhikrs)
         }
     }
 
-    @ViewBuilder private func searchResults(_ results: [Dhikr]) -> some View {
-        if results.isEmpty {
-            SearchEmptyState()
+    /// Rows, or the empty state when nothing matches the search or the tag filter.
+    @ViewBuilder private func listing(_ dhikrs: [Dhikr]) -> some View {
+        if dhikrs.isEmpty {
+            SearchEmptyState(message: state.isFiltering ? Strings.noFilterMatchBody : Strings.noResultsBody)
         } else {
-            DhikrRows(dhikrs: results, content: content) { send(.openDhikr(key: $0.key)) }
+            DhikrRows(dhikrs: dhikrs, content: content) { send(.openDhikr(key: $0.key)) }
         }
     }
+}
 
-    @ViewBuilder private func destination(_ destination: LibraryModel.Destination) -> some View {
-        switch destination {
-        case .collection(let key):
-            if let collection = content.catalog.collection(key) {
-                CollectionScreen(collection: collection, content: content) { send(.openDhikr(key: $0.key)) }
-            }
-        case .dhikr(let key):
-            if let dhikr = content.catalog.dhikr(key) {
-                DhikrDetailRoute(dhikr: dhikr, content: content, makePlayer: makePlayer)
-            }
+/// The + in the navigation bar: a new dhikr.
+struct NewDhikrButton: ToolbarContent {
+    let action: () -> Void
+
+    var body: some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            AwradRoundButton(icon: .add, label: Strings.newDhikr, size: .small, action: action)
         }
     }
 }
@@ -123,24 +145,40 @@ struct CollectionScreen: View {
     }
 }
 
-#Preview("Library") {
-    let model = LibraryModel(catalog: (try? DhikrCatalog.bundled()) ?? .empty, language: .en)
-    LibraryRoute(model: model) { PreviewAudioPlayer() }
-}
+#if DEBUG
+    #Preview("Library") {
+        libraryPreview(language: .en)
+    }
 
-#Preview("Library, Arabic") {
-    let model = LibraryModel(catalog: (try? DhikrCatalog.bundled()) ?? .empty, language: .ar)
-    LibraryRoute(model: model) { PreviewAudioPlayer() }
-        .environment(\.locale, Locale(identifier: "ar"))
-        .environment(\.layoutDirection, .rightToLeft)
-}
+    #Preview("Library, Arabic") {
+        libraryPreview(language: .ar)
+            .environment(\.locale, Locale(identifier: "ar"))
+            .environment(\.layoutDirection, .rightToLeft)
+    }
 
-#Preview("Search, dark") {
-    let model = LibraryModel(catalog: (try? DhikrCatalog.bundled()) ?? .empty, language: .en)
-    model.apply(.queryChanged("astaghfirullah"))
-    return LibraryRoute(model: model) { PreviewAudioPlayer() }
-        .preferredColorScheme(.dark)
-}
+    #Preview("Library, tags and a notice") {
+        libraryPreview(language: .en, personal: PreviewContent.conflicted) { model in
+            model.apply(.toggleTagFilter(PreviewContent.morning.id))
+        }
+    }
+
+    #Preview("Search, dark") {
+        libraryPreview(language: .en) { $0.apply(.queryChanged("astaghfirullah")) }
+            .preferredColorScheme(.dark)
+    }
+
+    @MainActor
+    private func libraryPreview(
+        language: CatalogLanguage, personal: PersonalContent = .empty, prepare: (LibraryModel) -> Void = { _ in }
+    ) -> some View {
+        let model = LibraryModel(
+            catalog: (try? DhikrCatalog.bundled()) ?? .empty, language: language,
+            library: PreviewPersonalLibrary(personal))
+        model.apply(.personalContentChanged(personal))
+        prepare(model)
+        return LibraryRoute(model: model) { PreviewAudioPlayer() }
+    }
+#endif
 
 /// A player for previews that only reports what it's asked to do.
 @MainActor

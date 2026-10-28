@@ -67,10 +67,13 @@ public enum FixtureLoader {
 
     /// Loads `<rule>.json`, checks its format and rule name, and decodes every case.
     /// Fails when the file is missing, malformed, has no cases, or has a case that doesn't decode.
+    /// `convertingSnakeCase: false` keeps every key as written, for fixtures whose values hold JSON
+    /// documents (the decoder's key strategy would also rewrite their member names).
     public static func load<Given: Decodable & Sendable, Expect: Decodable & Sendable>(
         _ file: URL,
         rule: String,
-        as _: (Given.Type, Expect.Type)
+        as _: (Given.Type, Expect.Type),
+        convertingSnakeCase: Bool = true
     ) throws -> [FixtureCase<Given, Expect>] {
         let path = file.path()
         guard FileManager.default.fileExists(atPath: path) else { throw FixtureError.missingFile(path) }
@@ -96,12 +99,13 @@ public enum FixtureLoader {
             throw FixtureError.malformedFile(path, reason: "cases isn't an array of objects")
         }
         guard !cases.isEmpty else { throw FixtureError.noCases(path) }
-        return try cases.map { try decodeCase($0, file: path) }
+        return try cases.map { try decodeCase($0, file: path, convertingSnakeCase: convertingSnakeCase) }
     }
 
     private static func decodeCase<Given: Decodable & Sendable, Expect: Decodable & Sendable>(
         _ raw: [String: Any],
-        file: String
+        file: String,
+        convertingSnakeCase: Bool
     ) throws -> FixtureCase<Given, Expect> {
         guard let id = raw["id"] as? String else {
             throw FixtureError.malformedFile(file, reason: "a case has no id")
@@ -113,8 +117,8 @@ public enum FixtureLoader {
             return FixtureCase(
                 id: id,
                 summary: raw["description"] as? String ?? "",
-                given: try decode(Given.self, from: given),
-                expect: try decode(Expect.self, from: expect)
+                given: try decode(Given.self, from: given, convertingSnakeCase: convertingSnakeCase),
+                expect: try decode(Expect.self, from: expect, convertingSnakeCase: convertingSnakeCase)
             )
         } catch let error as FixtureError {
             throw error
@@ -123,9 +127,11 @@ public enum FixtureLoader {
         }
     }
 
-    private static func decode<Value: Decodable>(_: Value.Type, from object: Any) throws -> Value {
+    private static func decode<Value: Decodable>(
+        _: Value.Type, from object: Any, convertingSnakeCase: Bool
+    ) throws -> Value {
         let decoder = JSONDecoder()
-        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        if convertingSnakeCase { decoder.keyDecodingStrategy = .convertFromSnakeCase }
         return try decoder.decode(Value.self, from: JSONSerialization.data(withJSONObject: object))
     }
 }

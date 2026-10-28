@@ -13,6 +13,8 @@ struct DhikrCatalogTests {
     @Test func itDecodesEveryDhikrCollectionAndTag() throws {
         let catalog = try DhikrCatalog.bundled()
         #expect(catalog.version == 1)
+        // Revision 4 renamed Qur'an references to `ayah_start`/`ayah_end` (slice 3b).
+        #expect(catalog.contentRevision == 4)
         #expect(catalog.dhikrs.count == 113)
         #expect(
             catalog.collections.map(\.key) == ["daily-essentials", "dhikrs", "swalaths", "ramadan", "asma-ul-husna"])
@@ -72,6 +74,17 @@ struct DhikrCatalogTests {
         #expect(throws: DhikrCatalogError.unknownDhikr(collection: "c", dhikr: "nope")) {
             try DhikrCatalog(json: Data(json.utf8))
         }
+    }
+
+    /// Qur'an references use the snake_case names since content revision 4; the camelCase ones are unknown.
+    @Test(arguments: [
+        (#"{"id":"q","type":"quran","surah":1,"ayah_start":1,"ayah_end":7}"#, true),
+        (#"{"id":"q","type":"quran","surah":1,"ayahStart":1,"ayahEnd":7}"#, false),
+        (#"{"id":"q","type":"quran","surah":1,"ayah_start":7,"ayah_end":1}"#, false),
+    ])
+    func quranReferenceKeys(_ json: String, _ decodes: Bool) {
+        let reference = try? JSONDecoder().decode(Reference.self, from: Data(json.utf8))
+        #expect((reference == .quran(id: "q", surah: 1, ayahs: 1...7)) == decodes)
     }
 
     @Test func anotherVersionFails() {

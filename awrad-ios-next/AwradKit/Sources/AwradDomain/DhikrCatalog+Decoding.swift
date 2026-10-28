@@ -171,7 +171,11 @@ extension Reference: Decodable {
         case type
     }
 
-    private enum QuranKeys: String, CodingKey, CaseIterable { case id, type, surah, ayahStart, ayahEnd }
+    private enum QuranKeys: String, CodingKey, CaseIterable {
+        case id, type, surah
+        case ayahStart = "ayah_start"
+        case ayahEnd = "ayah_end"
+    }
     private enum HadithKeys: String, CodingKey, CaseIterable { case id, type, collection, number, narrator, grade }
     private enum BookKeys: String, CodingKey, CaseIterable { case id, type, title, author, volume, page }
     private enum ShaykhKeys: String, CodingKey, CaseIterable { case id, type, name, note }
@@ -185,7 +189,7 @@ extension Reference: Decodable {
             let container = try decoder.strictContainer(QuranKeys.self)
             let start = try container.decode(Int.self, forKey: .ayahStart)
             let end = try container.decode(Int.self, forKey: .ayahEnd)
-            guard start <= end else { throw container.corrupted(.ayahEnd, "ayahEnd before ayahStart") }
+            guard start <= end else { throw container.corrupted(.ayahEnd, "ayah_end before ayah_start") }
             self = .quran(
                 id: try container.decode(String.self, forKey: .id),
                 surah: try container.decode(Int.self, forKey: .surah), ayahs: start...end)

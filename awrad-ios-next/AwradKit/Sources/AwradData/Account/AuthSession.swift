@@ -26,6 +26,8 @@ public actor AuthSession: AccountService {
     /// Changes whenever the session is replaced or ended, so a refresh that was in flight
     /// meanwhile can't bring back the session it started from.
     private var epoch = 0
+    /// The account a refresh found deleted (`401 account_deleted`), until the profiles take it.
+    private var deletedAccount: AwradID?
 
     /// - Parameters:
     ///   - baseURL: The API origin, such as `http://localhost:4000`.
@@ -201,6 +203,11 @@ public actor AuthSession: AccountService {
         switch problem.code {
         case "refresh_token_invalid", "refresh_reuse_detected":
             forget()
+        case "account_deleted":
+            // The account is gone: signed out like a revoked session, and the local profiles
+            // offer to remove its data (`takeDeletedAccount()`).
+            deletedAccount = credentials.flatMap { AwradID($0.account.id) }
+            forget()
         case "idempotency_key_reused":
             // The key was already used with another body: the next attempt needs a new one.
             if var stored = credentials {
@@ -238,6 +245,12 @@ public actor AuthSession: AccountService {
     private func keep(_ stored: StoredCredentials) {
         credentials = stored
         vault.save(stored)
+    }
+
+    /// The account a refresh found deleted since the last call, if any. Taking it clears it.
+    public func takeDeletedAccount() -> AwradID? {
+        defer { deletedAccount = nil }
+        return deletedAccount
     }
 
     /// Signs this device out locally. The installation ID stays.
