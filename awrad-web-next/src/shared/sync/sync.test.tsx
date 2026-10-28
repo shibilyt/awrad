@@ -7,12 +7,22 @@ import { currentAccountQuery, type Account } from "@/shared/session";
 import { recordRequests } from "@/test/render";
 import { server } from "@/test/setup";
 import { specHandler, specProblem } from "@/test/spec";
-import { fetchSyncState, syncQuery, useSendEdit, type Change, type Edit, type Receipt, type SyncState } from ".";
+import {
+  applyReceipt,
+  fetchSyncState,
+  syncQuery,
+  useSendEdit,
+  type Change,
+  type Edit,
+  type Receipt,
+  type SyncState,
+} from ".";
 
 const ACCOUNT = "0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90"; // get_current_account's example
 const CSRF = "SXlPVEZ3Zm9MUw4JHQ0rNTI8KyorFxUZ"; // get_browser_csrf_token's example
 const DHIKR = "0192f0d0-0000-7000-8000-000000000002"; // the custom dhikr in the spec's examples
 const TAHLEEL = "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961";
+const UNKNOWN = "0192f0d0-0000-7000-8000-0000000000ff";
 const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 interface ChangesPage {
@@ -178,13 +188,68 @@ describe("every receipt status", () => {
   test("duplicate: treated as its original receipt", async () => {
     server.use(
       specHandler("get_browser_csrf_token", 200),
-      receiptAt(6),
+      receiptAt(7),
       changesPage(() => [], false, 13),
     );
     const { send } = setup(STATE);
     expect(await send(RENAME)).toEqual({ status: "applied", version: 1 });
   });
+});
 
+describe("cascades in receipts", () => {
+  test("applied with cascaded: a tag delete sets the known version of every record it left", async () => {
+    server.use(
+      specHandler("get_browser_csrf_token", 200),
+      receiptAt(6),
+      changesPage(() => [], false, 13),
+    );
+    const evening = "0192f0a0-0000-7000-8000-000000000002";
+    const initial: SyncState = {
+      ...STATE,
+      user_tag: { [evening]: { id: evening, version: 2, document: { name: "Evening", normalized_name: "evening" } } },
+      dhikr_personal: { [TAHLEEL]: { id: TAHLEEL, version: 2, document: { tag_ids: [evening] } } },
+    };
+    const { queryClient, send } = setup(initial);
+    const seen: (SyncState | undefined)[] = [];
+    queryClient.getQueryCache().subscribe(() => {
+      seen.push(queryClient.getQueryData<SyncState>(syncQuery(ACCOUNT).queryKey));
+    });
+
+    expect(await send({ entity_type: "user_tag", entity_id: evening, op: "delete", base_version: 2 })).toEqual({
+      status: "applied",
+      version: 3,
+    });
+    const applied = seen.find((state) => state?.headRevision === 13);
+    expect(applied?.user_tag).toEqual({});
+    expect(applied?.dhikr_personal[TAHLEEL]).toEqual({ id: TAHLEEL, version: 3, document: { tag_ids: [] } });
+  });
+
+  test("a deleted cascade entry goes; one for a record this page doesn't have is ignored", () => {
+    const personal = { id: DHIKR, version: 1, document: { tag_ids: [] } };
+    const state: SyncState = { ...STATE, dhikr_personal: { ...STATE.dhikr_personal, [DHIKR]: personal } };
+    const edit: Edit = { entity_type: "custom_dhikr", entity_id: DHIKR, op: "delete", base_version: 1 };
+    const cascaded = [
+      { entity_type: "dhikr_personal" as const, entity_id: DHIKR, state: "deleted" as const, version: 2, revision: 20 },
+      {
+        entity_type: "dhikr_personal" as const,
+        entity_id: UNKNOWN,
+        state: "active" as const,
+        version: 4,
+        revision: 20,
+      },
+    ];
+    const receipt: Receipt = { command_id: DHIKR, status: "applied", version: 2, revision: 20, cascaded };
+
+    const { state: next } = applyReceipt(state, edit, receipt);
+
+    expect(next.dhikr_personal[DHIKR]).toBeUndefined();
+    expect(next.dhikr_personal[UNKNOWN]).toBeUndefined();
+    expect(next.dhikr_personal[TAHLEEL]).toEqual(STATE.dhikr_personal[TAHLEEL]);
+    expect(next.headRevision).toBe(20);
+  });
+});
+
+describe("other receipt statuses", () => {
   test("conflict: the server's copy, and the edit to keep", async () => {
     server.use(
       specHandler("get_browser_csrf_token", 200),

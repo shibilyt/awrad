@@ -6,7 +6,16 @@
  */
 
 export type FieldCode =
-  "required" | "blank" | "too_long" | "too_many" | "duplicate" | "not_allowed" | "invalid" | "mismatch" | "not_found";
+  | "required"
+  | "blank"
+  | "too_long"
+  | "too_many"
+  | "duplicate"
+  | "not_allowed"
+  | "invalid"
+  | "mismatch"
+  | "not_found"
+  | "range";
 
 export interface FieldProblem {
   field: string;
@@ -104,12 +113,23 @@ export function isValidReference(reference: unknown): boolean {
   return !("url" in reference) || (typeof reference["url"] === "string" && URL.canParse(reference["url"]));
 }
 
+/**
+ * The rule the schema can't express: a Qur'an reference ends at or after it starts (equal for one
+ * ayah). Only asked of a reference whose shape is already valid.
+ */
+function isReversedRange(reference: unknown): boolean {
+  if (!isObject(reference) || reference["type"] !== "quran") return false;
+  return (reference["ayah_end"] as number) < (reference["ayah_start"] as number);
+}
+
 function referencesProblems(value: unknown): FieldProblem[] {
   if (!Array.isArray(value)) return [{ field: "/references", code: "invalid" }];
   const problems: FieldProblem[] = [];
   if (value.length > REFERENCES_MAX) problems.push({ field: "/references", code: "too_many" });
   value.forEach((reference: unknown, index) => {
-    if (!isValidReference(reference)) problems.push({ field: `/references/${String(index)}`, code: "invalid" });
+    const field = `/references/${String(index)}`;
+    if (!isValidReference(reference)) problems.push({ field, code: "invalid" });
+    else if (isReversedRange(reference)) problems.push({ field: `${field}/ayah_end`, code: "range" });
   });
   return problems;
 }

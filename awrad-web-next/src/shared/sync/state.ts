@@ -1,4 +1,5 @@
 import type {
+  CascadedChange,
   Change,
   Current,
   DocumentOf,
@@ -71,13 +72,27 @@ function adopt(next: Draft, type: EntityType, id: string, current: Current | nul
   else put(next, type, id, current.version, current.document);
 }
 
+/**
+ * An `applied` receipt's `cascaded` entries (a tag or custom dhikr delete): the entities the
+ * server changed at the same revision. `remove` already made the same change to the documents, so
+ * an active entry only takes its version; a deleted one goes.
+ */
+function applyCascaded(next: Draft, cascaded: readonly CascadedChange[] | null): void {
+  for (const change of cascaded ?? []) {
+    const entity = next[change.entity_type][change.entity_id];
+    if (change.state === "deleted") remove(next, change.entity_type, change.entity_id);
+    else if (entity !== undefined) put(next, change.entity_type, change.entity_id, change.version, entity.document);
+  }
+}
+
 function rejectedFields(fields: readonly { field: string; code: RejectedField["code"] }[]): RejectedField[] {
   return fields.map(({ field, code }) => ({ field: field.replace(/^\/document(?=\/|$)/, ""), code }));
 }
 
 /**
  * Applies an edit's receipt to the state and says what became of it:
- * - `applied`: the edit as the server now has it (a put's document, or gone);
+ * - `applied`: the edit as the server now has it (a put's document, or gone), and the versions
+ *   of the entities it cascaded to (`cascaded`);
  * - `duplicate`: as its original receipt;
  * - `conflict`: the server's copy, which the user may keep or override (Keep mine);
  * - `merged`: the surviving tag, under its own ID;
@@ -93,6 +108,7 @@ export function applyReceipt(state: SyncState, edit: Edit, receipt: Receipt): { 
     case "applied":
       if (edit.op === "put") put(next, type, id, outcome.version, edit.document);
       else remove(next, type, id);
+      applyCascaded(next, outcome.cascaded);
       next.headRevision = Math.max(next.headRevision, outcome.revision);
       result = { status: "applied", version: outcome.version };
       break;

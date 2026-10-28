@@ -57,3 +57,14 @@ export function citedLabels(dhikr: Dhikr, ids: readonly string[], t: TFunction, 
 export function quranReference(dhikr: Dhikr): Reference | undefined {
   return dhikr.references.find((reference) => reference.type === "quran");
 }
+
+/**
+ * The references the detail's "Sources" lists (components.md, slice 3b): those not shown
+ * elsewhere, in the dhikr's order. Not the Qur'an reference a `quran` dhikr shows in its card, nor
+ * one a virtue cites, so a custom dhikr (no virtues) lists all of its others.
+ */
+export function sourceReferences(dhikr: Dhikr): Reference[] {
+  const inCard = dhikr.kind === "quran" ? quranReference(dhikr) : undefined;
+  const cited = new Set(dhikr.virtues.flatMap((virtue) => virtue.references));
+  return dhikr.references.filter((reference) => reference !== inCard && !cited.has(reference.id));
+}

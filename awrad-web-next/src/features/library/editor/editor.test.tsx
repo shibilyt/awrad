@@ -76,6 +76,38 @@ describe("validation (the shared custom_dhikr_validity rules)", () => {
     expect(screen.getByText(/Fill in what this reference needs/)).toBeInTheDocument();
     expect(requests.some((request) => request.method === "POST")).toBe(false);
   });
+
+  test("a Qur'an reference that ends before it starts shows the range error on its last ayah", async () => {
+    const requests = recordRequests();
+    server.use(...signedInWithEntities());
+    renderRoute("/library/dhikrs/new");
+
+    await userEvent.type(await screen.findByRole("textbox", { name: "Arabic text" }), "قل هو الله أحد");
+    await userEvent.type(field("English"), "Al-Ikhlas");
+    await userEvent.click(screen.getByRole("button", { name: "Add reference" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Qur'an" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Surah" }), "112");
+    await userEvent.type(screen.getByRole("textbox", { name: "First ayah" }), "4");
+    await userEvent.type(screen.getByRole("textbox", { name: "Last ayah" }), "1");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByText("Check the highlighted fields.")).toBeInTheDocument();
+    const lastAyah = screen.getByRole("textbox", { name: "Last ayah" });
+    expect(lastAyah).toHaveAttribute("aria-invalid", "true");
+    expect(lastAyah).toHaveAccessibleDescription(expect.stringContaining("The last ayah can't come before the first."));
+    expect(screen.getByRole("textbox", { name: "First ayah" })).not.toHaveAttribute("aria-invalid");
+    expect(requests.some((request) => request.method === "POST")).toBe(false);
+  });
+
+  test("the multi-line fields start one line tall and grow up to 6 lines", async () => {
+    server.use(...signedInWithEntities());
+    renderRoute("/library/dhikrs/new");
+
+    const arabic = await screen.findByRole("textbox", { name: "Arabic text" });
+    expect(arabic.tagName).toBe("TEXTAREA");
+    expect(arabic).toHaveAttribute("rows", "1");
+    expect(arabic).toHaveClass("min-h-control", "field-sizing-content", "field-max-lines");
+  });
 });
 
 describe("saving", () => {
@@ -138,8 +170,10 @@ describe("saving", () => {
     expect(command).toMatchObject({ entity_id: MORNING_DHIKR_ID, base_version: 1 });
     expect(command?.document).toEqual({ ...MORNING_DHIKR, title: { en: "Morning remembrance", ar: null, ml: null } });
   });
+});
 
-  test("a rejected save shows why", async () => {
+describe("refused by the server", () => {
+  test("a rejected save opens Change refused with the reason; OK closes it and the editor stays", async () => {
     server.use(
       ...signedInWithEntities(),
       receiptHandler((receipts) => ({
@@ -148,14 +182,52 @@ describe("saving", () => {
         fields: [],
       })),
     );
-    renderRoute("/library/dhikrs/new");
+    const { router } = renderRoute("/library/dhikrs/new");
 
     await userEvent.type(await screen.findByRole("textbox", { name: "Arabic text" }), "سبحان الله");
     await userEvent.type(field("English"), "Subhanallah");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
+    const dialog = await screen.findByRole("alertdialog", { name: "Change refused" });
+    expect(dialog).toHaveTextContent("You have 1,000 dhikrs of your own, the most an account can have.");
     expect(
-      await screen.findByText("You have 1,000 dhikrs of your own, the most an account can have."),
-    ).toBeInTheDocument();
+      within(dialog)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["OK"]);
+    await userEvent.click(within(dialog).getByRole("button", { name: "OK" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    });
+    expect(router.state.location.pathname).toBe("/library/dhikrs/new");
+    expect(field("English")).toHaveValue("Subhanallah");
+  });
+
+  test("a range error from the server lands on the last ayah", async () => {
+    server.use(
+      ...signedInWithEntities(),
+      receiptHandler((receipts) => ({
+        ...(receipts[5] as Receipt & { status: "rejected" }),
+        code: "document_invalid",
+        fields: [{ field: "/document/references/0/ayah_end", code: "range" }],
+      })),
+    );
+    renderRoute("/library/dhikrs/new");
+
+    await userEvent.type(await screen.findByRole("textbox", { name: "Arabic text" }), "قل هو الله أحد");
+    await userEvent.type(field("English"), "Al-Ikhlas");
+    await userEvent.click(screen.getByRole("button", { name: "Add reference" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Qur'an" }));
+    await userEvent.type(screen.getByRole("textbox", { name: "Surah" }), "112");
+    await userEvent.type(screen.getByRole("textbox", { name: "First ayah" }), "1");
+    await userEvent.type(screen.getByRole("textbox", { name: "Last ayah" }), "4");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    const dialog = await screen.findByRole("alertdialog", { name: "Change refused" });
+    expect(dialog).toHaveTextContent("Check the highlighted fields.");
+    await userEvent.click(within(dialog).getByRole("button", { name: "OK" }));
+    expect(screen.getByRole("textbox", { name: "Last ayah" })).toHaveAccessibleDescription(
+      expect.stringContaining("The last ayah can't come before the first."),
+    );
   });
 });

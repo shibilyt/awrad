@@ -1,13 +1,24 @@
 import { useTranslation } from "react-i18next";
 import { newUuidV7 } from "@/shared/identity";
 import { normalizeTagName, type Edit, type SyncState, type TagName } from "@/shared/sync";
-import { problemKey, settledKey, useEdit, type OpenConflict, type Settled } from "../custom/useEdit";
+import {
+  problemKey,
+  settledKey,
+  useEdit,
+  wentThrough,
+  type OpenConflict,
+  type Refusal,
+  type Settled,
+} from "../custom/useEdit";
 
 /** 100 active tags per account (contracts/sync/v1/README.md "Limits"). */
 export const TAG_LIMIT = 100;
 
-/** What a tag action came to: done (with the tag's ID), or a message to show. */
-export type TagActionResult = { ok: true; tagId: string } | { ok: false; message: string };
+/**
+ * What a tag action came to: done (with the tag's ID), or a message to show (`null` when the
+ * "Change refused" dialog already says why).
+ */
+export type TagActionResult = { ok: true; tagId: string } | { ok: false; message: string | null };
 
 const NAME_PROBLEMS = {
   empty: "library.tags.errors.empty",
@@ -29,9 +40,10 @@ export function useTagActions(
   remove: (tagId: string) => Promise<TagActionResult>;
   isPending: boolean;
   conflict: OpenConflict | null;
+  refused: Refusal | null;
 } {
   const { t } = useTranslation();
-  const { send, isPending, conflict } = useEdit(accountId);
+  const { send, isPending, conflict, refused } = useEdit(accountId);
 
   const owner = (name: TagName & { accepted: true }) =>
     Object.values(state.user_tag).find((tag) => tag.document.normalized_name === name.normalized_name);
@@ -40,8 +52,11 @@ export function useTagActions(
     try {
       const settled = await send(edit);
       // Deleting something already deleted elsewhere is done all the same.
-      const problem = edit.op === "delete" && settled.status === "gone" ? null : settledKey(settled);
-      return problem === null ? { ok: true, tagId: done(settled) } : { ok: false, message: t(problem) };
+      if (wentThrough(settled) || (edit.op === "delete" && settled.status === "gone")) {
+        return { ok: true, tagId: done(settled) };
+      }
+      const problem = settledKey(settled);
+      return { ok: false, message: problem === null ? null : t(problem) };
     } catch (error) {
       return { ok: false, message: t(problemKey(error)) };
     }
@@ -86,5 +101,5 @@ export function useTagActions(
     return run({ entity_type: "user_tag", entity_id: tagId, op: "delete", base_version: tag.version }, () => tagId);
   };
 
-  return { create, rename, remove, isPending, conflict };
+  return { create, rename, remove, isPending, conflict, refused };
 }

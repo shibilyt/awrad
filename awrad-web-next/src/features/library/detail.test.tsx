@@ -31,6 +31,8 @@ describe("dhikr detail by kind", () => {
     expect(arabicLines()).toEqual(dhikr("surah-ikhlas").arabic.split("\n"));
     expect(arabicLines()).toHaveLength(5);
     expect(screen.getByText("Qur'an 112:1–4")).toBeInTheDocument();
+    // The card's Qur'an reference isn't repeated under Sources, which is left out with nothing else to list.
+    expect(screen.queryByRole("region", { name: "Sources" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Transliteration" })).toBeInTheDocument();
     expect(screen.getByText(/Qul huwallahu ahad/)).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Translation" })).toBeInTheDocument();
