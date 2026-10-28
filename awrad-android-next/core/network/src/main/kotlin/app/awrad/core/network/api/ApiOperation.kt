@@ -11,6 +11,7 @@ import java.net.URLEncoder
  * @property isPublic `security: []`. A public operation never carries a bearer token (STYLE §11).
  * @property sendsLanguage takes `Accept-Language`: the request may send an email in the app's language.
  * @property idempotent takes `Idempotency-Key` (STYLE §10).
+ * @property namesAccount takes `X-Awrad-Account`: the account the request's data belongs to (the change queue).
  */
 public enum class ApiOperation(
     public val operationId: String,
@@ -19,6 +20,7 @@ public enum class ApiOperation(
     public val isPublic: Boolean,
     public val sendsLanguage: Boolean,
     public val idempotent: Boolean,
+    public val namesAccount: Boolean = false,
 ) {
     REGISTER_ACCOUNT("register_account", HttpMethod.POST, "/api/v1/accounts", true, true, true),
     VERIFY_ACCOUNT_EMAIL("verify_account_email", HttpMethod.POST, "/api/v1/accounts/verify_email", true, false, true),
@@ -92,6 +94,24 @@ public enum class ApiOperation(
         true,
     ),
     DELETE_ACCOUNT("delete_account", HttpMethod.POST, "/api/v1/account/delete", false, true, true),
+    POST_SYNC_COMMANDS(
+        "post_sync_commands",
+        HttpMethod.POST,
+        "/api/v1/sync/commands",
+        isPublic = false,
+        sendsLanguage = false,
+        idempotent = true,
+        namesAccount = true,
+    ),
+    LIST_SYNC_CHANGES(
+        "list_sync_changes",
+        HttpMethod.GET,
+        "/api/v1/sync/changes",
+        isPublic = false,
+        sendsLanguage = false,
+        idempotent = false,
+        namesAccount = true,
+    ),
     ;
 
     /** [path] with each `{name}` replaced by its URL-encoded value. Fails when one is missing. */

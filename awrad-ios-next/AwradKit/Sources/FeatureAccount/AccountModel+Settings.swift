@@ -17,6 +17,7 @@ extension AccountModel {
                 ask(.deleteAccount)
             }
         case .confirmationDismissed: state.confirmation = nil
+        case .profileQuestionDismissed: dismissProfileQuestion()
         default: return false
         }
         return true
@@ -43,7 +44,7 @@ extension AccountModel {
             let sessions = try await service.sessions()
             state.sessions = .loaded(sessions.filter(\.isCurrent) + sessions.filter { !$0.isCurrent })
         } catch .signedOut {
-            showSignedOut(.signedOut)
+            await sessionEnded()
         } catch {
             if case .loaded = state.sessions {} else { state.sessions = .unavailable }
             state.feedback = Self.feedback(for: error)
@@ -99,6 +100,7 @@ extension AccountModel {
         let account = try await service.confirmEmailChange(code: code)
         state.phase = .signedIn(email: account.email)
         finishSettings(.emailChanged)
+        await profileSignedIn(account)
     }
 
     // MARK: - Delete
@@ -108,6 +110,7 @@ extension AccountModel {
         guard checkCurrentPassword() else { return }
         try await service.deleteAccount(currentPassword: state.currentPassword)
         showSignedOut(.accountDeleted, keepEmail: false)
+        await profiles.handle(.signOut, choice: nil)
     }
 
     // MARK: - Steps

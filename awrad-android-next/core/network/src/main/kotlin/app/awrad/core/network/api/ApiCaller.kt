@@ -53,11 +53,15 @@ internal class ApiCaller(
         require(operation.isPublic == (options.accessToken == null)) {
             "${operation.operationId}: a bearer token goes on authenticated operations only"
         }
+        require(operation.namesAccount == (options.accountId != null)) {
+            "${operation.operationId}: X-Awrad-Account goes on the change queue's operations only"
+        }
         val headers = buildMap {
             put("Accept", "application/json, application/problem+json")
             options.accessToken?.let { put("Authorization", "Bearer $it") }
             if (operation.idempotent) put("Idempotency-Key", options.idempotencyKey ?: ids.newId())
             if (operation.sendsLanguage) put("Accept-Language", language.current())
+            options.accountId?.let { put(ACCOUNT_HEADER, it) }
         }
         val path = operation.pathWith(options.pathParameters)
         val reply = try {
@@ -96,18 +100,21 @@ internal class ApiCaller(
 
     private companion object {
         val SUCCESS = 200..299
+        const val ACCOUNT_HEADER = "X-Awrad-Account"
     }
 }
 
 /**
  * The per-call parts of a request. [idempotencyKey] null means a fresh one (when the operation takes one);
- * [accessToken] must be set exactly for authenticated operations.
+ * [accessToken] must be set exactly for authenticated operations, [accountId] exactly for those that name the
+ * account (`X-Awrad-Account`).
  */
 internal data class CallOptions(
     val accessToken: String? = null,
     val idempotencyKey: String? = null,
     val pathParameters: Map<String, String> = emptyMap(),
     val query: Map<String, String> = emptyMap(),
+    val accountId: String? = null,
 ) {
     override fun toString(): String = "CallOptions(path=$pathParameters, query=${query.keys})"
 }

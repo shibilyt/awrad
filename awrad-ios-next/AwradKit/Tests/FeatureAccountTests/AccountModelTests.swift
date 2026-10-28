@@ -19,11 +19,12 @@ nonisolated final class TestClock: Sendable {
 @MainActor
 struct AccountModelTests {
     let service = FakeAccountService()
+    let profiles = FakeLocalProfiles()
     let clock = TestClock()
 
     func model(_ service: FakeAccountService? = nil) -> AccountModel {
         let clock = clock
-        return AccountModel(service: service ?? self.service, now: { clock.now })
+        return AccountModel(service: service ?? self.service, profiles: profiles, now: { clock.now })
     }
 
     @Test func startsSignedOutWithoutAnAccount() async {

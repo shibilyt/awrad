@@ -40,7 +40,12 @@
     "icons": "The shared icon set, by name. Back and forward flip in right to left.",
     "collectionTile": "Collection tiles: on the page; a long title takes two lines",
     "collectionTileOnCard": "Collection tiles on a card",
-    "searchField": "Search field: empty, filled (with clear), disabled"
+    "searchField": "Search field: empty, filled (with clear), disabled",
+    "choiceDialog": "Choice dialog: no destructive action, and a choice is required",
+    "fieldMultiline": "Text field: several lines; Arabic, right to left",
+    "tagChips": "Tag chips: on the page, on a card",
+    "filterChips": "Filter chips: the first chosen",
+    "noticeDialog": "Notice dialog: one message, OK closes it"
   },
   "sample": {
     "todaysGoals": "Today's goals",
@@ -110,6 +115,17 @@
     "asmaUlHusna": "Asma-ul Husna",
     "longCollection": "Salawat for every day of the week",
     "searchLabel": "Search dhikrs",
-    "searchValue": "astaghfirullah"
+    "searchValue": "astaghfirullah",
+    "choiceTitle": "Changed on another device",
+    "choiceBody": "This was changed on another device after you opened it.",
+    "useTheirs": "Use theirs",
+    "keepMine": "Keep mine",
+    "translation": "Translation",
+    "translationValue": "Glory be to Allah.\nAll praise is for Allah.",
+    "arabicText": "Arabic text",
+    "filter": "Filter by tag",
+    "noticeTitle": "Change refused",
+    "noticeBody": "You have 100 tags, the most an account can have.",
+    "ok": "OK"
   }
 }

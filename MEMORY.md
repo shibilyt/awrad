@@ -319,6 +319,18 @@ Use this format:
 - Evidence: `contracts/identity/v1/README.md`, `DECISIONS.md`
 - Commit: see git log
 
+### 2026-10-28 — Slice 3b: custom dhikrs, tags and the change queue
+
+- Area: Cross-project
+- Change:
+  - The change queue (ADR-2026-10-28) replaces progress sync v1 for the rebuild. It has two endpoints: `POST /api/v1/sync/commands` (1–100 commands, a receipt for each: applied, duplicate, conflict, merged, gone or rejected) and `GET /api/v1/sync/changes?after=N`. One revision per account; whole-document version checks; deletes are final. `X-Awrad-Account` must match the signed-in account (`409 account_mismatch`).
+  - Entities: `custom_dhikr`, `user_tag` and `dhikr_personal` (a user's tags on one dhikr, built-in or custom). Same-name tags merge, and the server rewrites aliases. A delete's `applied` receipt lists its `cascaded` changes. Never-sent commands are replaced in place, but move after a later create they now reference.
+  - Phones keep one local profile per account (plus one anonymous profile). Signing out keeps the profile and queues edits. A different account switches profiles, and A's unsent edits wait for A. `401 account_deleted` on refresh offers to remove the profile. Signed out, phones make no API calls.
+  - The web sends each edit straight away and has no queue. Custom audio stays on the phone until slice 3c.
+  - Seven shared fixture files (`contracts/sync/v1/fixtures/`, about 200 cases). End-to-end checks against the real server passed on the server API, Android, iOS and the web.
+- Evidence: `docs/slices/03b-custom-dhikrs-sync.md`, `contracts/sync/v1/README.md`
+- Commit: see git log
+
 ### 2026-10-28 — Mobile apps are complete without an account
 
 - Area: Cross-project

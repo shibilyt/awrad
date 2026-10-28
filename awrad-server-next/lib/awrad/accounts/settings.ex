@@ -21,6 +21,7 @@ defmodule Awrad.Accounts.Settings do
 
   alias Awrad.Accounts.{
     AccountSessions,
+    DeletedRefreshToken,
     EmailCode,
     Input,
     RateLimiter,
@@ -101,6 +102,8 @@ defmodule Awrad.Accounts.Settings do
       {:ok, :ok} =
         Repo.transact(fn ->
           :ok = RateLimiter.delete_account_windows(user.id)
+          # Its live refresh tokens answer `account_deleted` from now on (ADR 0010).
+          :ok = DeletedRefreshToken.remember(user.id, DateTime.utc_now(:second))
           # Every table that keeps account data references users ON DELETE CASCADE.
           Repo.delete_all(from(u in User, where: u.id == ^user.id))
           {:ok, :ok}

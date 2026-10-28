@@ -3,34 +3,52 @@ import AwradDomain
 import SwiftUI
 
 /// A dhikr's screen: owns its model (and so its audio), which stops when the screen goes away and
-/// pauses when the app goes to the background.
+/// pauses when the app goes to the background. `navigate` takes the Library action for Edit, Manage
+/// tags and leaving after a delete.
 struct DhikrDetailRoute: View {
     @State private var model: DhikrDetailModel
     @Environment(\.scenePhase) private var scenePhase
     private let content: LibraryContent
+    private let navigate: (LibraryModel.Action) -> Void
 
-    init(dhikr: Dhikr, content: LibraryContent, makePlayer: @escaping @MainActor () -> any DhikrAudioPlayer) {
-        _model = State(initialValue: DhikrDetailModel(dhikr: dhikr, makePlayer: makePlayer))
+    init(
+        dhikr: Dhikr, content: LibraryContent, personal: PersonalContent, services: LibraryServices,
+        navigate: @escaping (LibraryModel.Action) -> Void
+    ) {
+        _model = State(
+            initialValue: DhikrDetailModel(
+                dhikr: dhikr, library: services.library, personal: personal, makePlayer: services.makePlayer))
         self.content = content
+        self.navigate = navigate
     }
 
     var body: some View {
-        DhikrDetailScreen(state: model.state, content: content) { action in
-            if !model.apply(action) { Task { await model.send(action) } }
-        }
+        DhikrDetailScreen(
+            state: model.state, content: content,
+            send: { action in if !model.apply(action) { Task { await model.send(action) } } },
+            onEdit: { navigate(.openEditor(model.state.dhikr.id)) },
+            onManageTags: { navigate(.openManageTags(dhikr: model.state.dhikr.id)) }
+        )
+        .task { await model.observe() }
         .onDisappear { model.apply(.disappeared) }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background { model.apply(.backgrounded) }
         }
+        .onChange(of: model.state.isRemoved) { _, isRemoved in
+            if isRemoved { navigate(.popToRoot) }
+        }
     }
 }
 
-/// Stateless: the Arabic card by kind with the audio player bar at its bottom, then the
-/// transliteration, translation, tags and virtues (components.md, "Dhikr detail screen").
+/// Stateless: the conflict banner, the Arabic card by kind with the audio player bar at its bottom, then
+/// the transliteration, translation, tags, virtues and sources (components.md, "Dhikr detail screen").
+/// A custom dhikr also has Edit and Delete.
 struct DhikrDetailScreen: View {
     let state: DhikrDetailModel.State
     let content: LibraryContent
     let send: (DhikrDetailModel.Action) -> Void
+    let onEdit: () -> Void
+    let onManageTags: () -> Void
     /// Reference labels format their numbers for the screen's locale.
     @Environment(\.locale) private var locale
 
@@ -40,16 +58,25 @@ struct DhikrDetailScreen: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AwradSpacing.sectionGap) {
+                if !state.conflicts.isEmpty {
+                    ConflictBanner(
+                        name: nil, onKeepMine: { send(.resolveConflicts(.keepMine)) },
+                        onUseTheirs: { send(.resolveConflicts(.useTheirs)) }
+                    )
+                    .pageInset()
+                }
                 AwradCard {
                     recitedText
                     if state.audio != .unavailable {
                         DhikrAudioBar(audio: state.audio) { send(.playPauseTapped) }
                     }
                 }
-                .padding(.horizontal, AwradSpacing.pageMargin)
+                .pageInset()
                 details
                 tags
                 virtues
+                sources
+                if state.custom != nil { deleteSection }
             }
             .padding(.vertical, AwradSpacing.sm)
         }
@@ -58,6 +85,23 @@ struct DhikrDetailScreen: View {
         #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
         #endif
+        .toolbar {
+            if state.custom != nil {
+                ToolbarItem(placement: .primaryAction) {
+                    Button(action: onEdit) { Text(Strings.edit) }
+                        .tint(AwradColors.accent)
+                }
+            }
+        }
+        .awradDialog(
+            isPresented: Binding(get: { state.isConfirmingDelete }, set: { if !$0 { send(.deleteDismissed) } }),
+            title: Strings.deleteDhikrTitle, message: Strings.deleteDhikrMessage
+        ) {
+            AwradButton(Strings.cancel, variant: .text, layout: .row) { send(.deleteDismissed) }
+            AwradButton(Strings.delete, variant: .error, layout: .row, role: .destructive) {
+                send(.deleteConfirmed)
+            }
+        }
     }
 
     /// The Arabic, centred and right to left: one ayah per line with its reference for Qur'an, or a
@@ -76,10 +120,12 @@ struct DhikrDetailScreen: View {
                 }
             case .nameOfAllah:
                 ArabicText(dhikr.arabic, style: .nameOfAllah)
-                Text(verbatim: display.translation)
-                    .awradTextStyle(.title)
-                    .foregroundStyle(AwradColors.onSurface)
-                    .multilineTextAlignment(.center)
+                if !display.translation.isEmpty {
+                    Text(verbatim: display.translation)
+                        .awradTextStyle(.title)
+                        .foregroundStyle(AwradColors.onSurface)
+                        .multilineTextAlignment(.center)
+                }
             case .dhikr, .dua, .salawat:
                 ArabicText(dhikr.arabic)
             }
@@ -87,27 +133,32 @@ struct DhikrDetailScreen: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// The transliteration and translation; a name of Allah has neither (its title is the
-    /// transliteration and its meaning is in the card).
+    /// The transliteration and translation, each left out when empty; a name of Allah has neither (its
+    /// title is the transliteration and its meaning is in the card).
     @ViewBuilder private var details: some View {
         if dhikr.kind != .nameOfAllah {
-            if let transliteration = display.transliteration {
+            if let transliteration = display.transliteration, !transliteration.isEmpty {
                 DetailSection(title: Strings.transliteration, text: transliteration)
             }
-            DetailSection(title: Strings.translation, text: display.translation)
+            if !display.translation.isEmpty {
+                DetailSection(title: Strings.translation, text: display.translation)
+            }
         }
     }
 
-    @ViewBuilder private var tags: some View {
-        let tags = dhikr.tags.compactMap(content.catalog.tag)
-        if !tags.isEmpty {
-            VStack(alignment: .leading, spacing: AwradSpacing.md) {
-                AwradSectionTitle(Strings.tags)
-                HStack(spacing: AwradSpacing.sm) {
-                    ForEach(tags) { TagChip(title: $0.title.resolved(in: content.language)) }
-                }
-                .padding(.horizontal, AwradSpacing.pageMargin)
+    /// The catalog's tags and the user's, as chips, and "Manage tags".
+    private var tags: some View {
+        let catalogTags = dhikr.tags.compactMap(content.catalog.tag).map {
+            TagChipItem(id: $0.key, title: $0.title.resolved(in: content.language))
+        }
+        let userTags = state.userTags.map { TagChipItem(id: $0.id.description, title: $0.name) }
+        return VStack(alignment: .leading, spacing: AwradSpacing.md) {
+            AwradSectionTitle(Strings.tags)
+            VStack(alignment: .leading, spacing: AwradSpacing.sm) {
+                if !catalogTags.isEmpty || !userTags.isEmpty { TagChips(items: catalogTags + userTags) }
+                AwradButton(Strings.manageTags, variant: .text, layout: .row, action: onManageTags)
             }
+            .pageInset()
         }
     }
 
@@ -120,9 +171,32 @@ struct DhikrDetailScreen: View {
                         text: virtue.text.resolved(in: content.language), references: dhikr.references(of: virtue),
                         locale: locale)
                 }
-                .padding(.horizontal, AwradSpacing.pageMargin)
+                .pageInset()
             }
         }
+    }
+
+    /// The references not shown in the card or under a virtue, one per line.
+    @ViewBuilder private var sources: some View {
+        let sources = dhikr.sources
+        if !sources.isEmpty {
+            VStack(alignment: .leading, spacing: AwradSpacing.md) {
+                AwradSectionTitle(Strings.sources)
+                VStack(alignment: .leading, spacing: AwradSpacing.xs) {
+                    ForEach(sources, id: \.id) { ReferenceLine(reference: $0, locale: locale) }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .pageInset()
+            }
+        }
+    }
+
+    private var deleteSection: some View {
+        VStack(spacing: AwradSpacing.rowGap) {
+            if let failure = state.failure { FailureText(failure: failure) }
+            AwradButton(Strings.deleteDhikr, variant: .error) { send(.deleteTapped) }
+        }
+        .pageInset()
     }
 }
 
@@ -172,21 +246,6 @@ private struct DetailSection: View {
     }
 }
 
-/// A catalog tag: `label` text in a `chip`, filled like a secondary control.
-private struct TagChip: View {
-    let title: String
-    @Environment(\.awradContainer) private var container
-
-    var body: some View {
-        Text(verbatim: title)
-            .awradTextStyle(.label)
-            .foregroundStyle(container.onSecondaryFill)
-            .padding(.horizontal, AwradSpacing.md)
-            .padding(.vertical, AwradSpacing.xs)
-            .background(container.secondaryFill, in: AwradRadius.chip.shape)
-    }
-}
-
 /// A virtue in a `tile` card: its text, then each reference's label (and link).
 private struct VirtueCard: View {
     let text: String
@@ -198,45 +257,62 @@ private struct VirtueCard: View {
             Text(verbatim: text)
                 .awradTextStyle(.body)
                 .foregroundStyle(AwradColors.onSurface)
-            ForEach(references, id: \.id) { reference in
-                VStack(alignment: .leading, spacing: AwradSpacing.xxs) {
-                    Text(verbatim: ReferenceLabel.text(reference, locale: locale))
+            ForEach(references, id: \.id) { ReferenceLine(reference: $0, locale: locale) }
+        }
+    }
+}
+
+/// A reference's label in `caption`, `onSurfaceVariant`, and its link when it has one.
+private struct ReferenceLine: View {
+    let reference: Reference
+    let locale: Locale
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AwradSpacing.xxs) {
+            Text(verbatim: ReferenceLabel.text(reference, locale: locale))
+                .awradTextStyle(.caption)
+                .foregroundStyle(AwradColors.onSurfaceVariant)
+            if let url = ReferenceLabel.link(reference) {
+                Link(destination: url) {
+                    Text(verbatim: url.absoluteString)
                         .awradTextStyle(.caption)
-                        .foregroundStyle(AwradColors.onSurfaceVariant)
-                    if let url = ReferenceLabel.link(reference) {
-                        Link(destination: url) {
-                            Text(verbatim: url.absoluteString)
-                                .awradTextStyle(.caption)
-                                .foregroundStyle(AwradColors.accent)
-                        }
-                    }
+                        .foregroundStyle(AwradColors.accent)
                 }
             }
         }
     }
 }
 
-#Preview("Surah Ikhlas") {
-    detailPreview("surah-ikhlas")
-}
+#if DEBUG
+    #Preview("Surah Ikhlas") {
+        detailPreview("surah-ikhlas")
+    }
 
-#Preview("Isthighfar, Malayalam") {
-    detailPreview("isthighfar", language: .ml)
-}
+    #Preview("Isthighfar, Malayalam") {
+        detailPreview("isthighfar", language: .ml)
+    }
 
-#Preview("Name, Arabic, dark") {
-    detailPreview("asma-ul-husna-ar-rahman", language: .ar)
-        .environment(\.layoutDirection, .rightToLeft)
-        .preferredColorScheme(.dark)
-}
+    #Preview("Custom dhikr, conflict") {
+        detailPreview(PreviewContent.custom.id.description, personal: PreviewContent.conflicted)
+    }
 
-@MainActor
-private func detailPreview(_ key: String, language: CatalogLanguage = .en) -> some View {
-    let catalog = (try? DhikrCatalog.bundled()) ?? .empty
-    let content = LibraryContent(catalog: catalog, language: language)
-    return NavigationStack {
-        if let dhikr = catalog.dhikr(key) {
-            DhikrDetailRoute(dhikr: dhikr, content: content) { PreviewAudioPlayer() }
+    #Preview("Name, Arabic, dark") {
+        detailPreview("asma-ul-husna-ar-rahman", language: .ar)
+            .environment(\.layoutDirection, .rightToLeft)
+            .preferredColorScheme(.dark)
+    }
+
+    @MainActor
+    private func detailPreview(
+        _ key: String, language: CatalogLanguage = .en, personal: PersonalContent = .empty
+    ) -> some View {
+        let catalog = (try? DhikrCatalog.bundled()) ?? .empty
+        let content = LibraryContent(catalog: catalog, language: language)
+        let services = LibraryServices(library: PreviewPersonalLibrary(personal)) { PreviewAudioPlayer() }
+        return NavigationStack {
+            if let dhikr = content.dhikr(key, in: personal) {
+                DhikrDetailRoute(dhikr: dhikr, content: content, personal: personal, services: services) { _ in }
+            }
         }
     }
-}
+#endif

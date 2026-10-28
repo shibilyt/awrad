@@ -113,6 +113,19 @@ class DeviceSessionManagerTest {
     }
 
     @Test
+    fun `account_deleted from refresh signs out and names the deleted account`() = runTest {
+        transport.on(refreshPath) { Responses.problem(401, "account_deleted") }
+
+        manager.accessToken(stale = null)
+
+        assertNull(store.credentials.session)
+        assertEquals(
+            DeviceSessionState.SignedOut(SignOutCause.ACCOUNT_DELETED, Responses.ACCOUNT_ID),
+            manager.state.first(),
+        )
+    }
+
+    @Test
     fun `a session revoked elsewhere signs the device out on its next call, keeping nothing queued`() = runTest {
         transport.on(refreshPath) {
             if (transport.requestsTo(refreshPath).size == 1) {
@@ -140,7 +153,10 @@ class DeviceSessionManagerTest {
 
         manager.accountDeleted()
 
-        assertEquals(DeviceSessionState.SignedOut(SignOutCause.ACCOUNT_DELETED), manager.state.first())
+        assertEquals(
+            DeviceSessionState.SignedOut(SignOutCause.ACCOUNT_DELETED, Responses.ACCOUNT_ID),
+            manager.state.first(),
+        )
         assertEquals(StoredCredentials(), store.credentials)
         assertEquals(listOf(refreshPath), transport.requests.map { it.path })
         assertEquals(ApiResult.Failure(ApiFailure.NotSignedIn), manager.accessToken(stale = null))

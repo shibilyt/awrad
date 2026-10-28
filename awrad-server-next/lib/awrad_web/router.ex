@@ -92,6 +92,17 @@ defmodule AwradWeb.Router do
     end
   end
 
+  # The change queue (slice 3b): a bearer token, or the cookie session with
+  # CSRF on the POST. AccountAuth checks each request against only one of
+  # them, chosen by whether it has an Authorization header. The controller
+  # then checks X-Awrad-Account against the signed-in account.
+  scope "/api/v1/sync", AwradWeb do
+    pipe_through [:api, :any_account]
+
+    post "/commands", SyncController, :commands
+    get "/changes", SyncController, :changes
+  end
+
   scope "/api/v1/browser", AwradWeb do
     pipe_through [:api, :browser_session]
 

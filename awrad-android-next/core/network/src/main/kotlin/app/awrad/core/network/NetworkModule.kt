@@ -5,6 +5,7 @@ import android.os.Build
 import app.awrad.core.network.api.AccountSettingsApi
 import app.awrad.core.network.api.AccountsApi
 import app.awrad.core.network.api.AppLanguage
+import app.awrad.core.network.api.SyncApi
 import app.awrad.core.network.http.HttpTransport
 import app.awrad.core.network.http.OkHttpTransport
 import app.awrad.core.network.session.DeviceSessionManager
@@ -40,6 +41,10 @@ internal object NetworkModule {
     @Provides
     fun accountSettingsApi(transport: HttpTransport, ids: IdGenerator, language: AppLanguage): AccountSettingsApi =
         AccountSettingsApi(transport, ids, language)
+
+    @Provides
+    fun syncApi(transport: HttpTransport, ids: IdGenerator, language: AppLanguage): SyncApi =
+        SyncApi(transport, ids, language)
 
     @Provides
     @Singleton

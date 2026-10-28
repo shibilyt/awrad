@@ -13,11 +13,12 @@ export function mainTabOf(pathname: string): "home" | "library" {
 }
 
 /**
- * Whether a path shows the bottom bar: not on pages pushed onto a tab (a collection, a dhikr),
+ * Whether a path shows the bottom bar: not on pages pushed onto a tab (a collection, "Your dhikrs", a dhikr, its editor,
+ * Manage tags),
  * which have their own Back; on every other page, including Home and `/library`.
  */
 export function showsBottomBar(pathname: string): boolean {
-  return !/^\/library\/(?:collections|dhikrs)\//.test(pathname);
+  return !/^\/library\/(?:collections\/|dhikrs\/|tags$|yours$)/.test(pathname);
 }
 
 /**

@@ -13,7 +13,7 @@ export interface Segment {
  * "Segmented pills"). Pills are `chip` shaped, `touchTarget` tall, `sm` apart; the selected one
  * is `primary` with a `tabIndicator` bar `xs` under it, the others `secondaryContainer`. The web
  * cross-fades the colours (`select`) instead of moving the fill and bar. Put a `SegmentPanel`
- * per segment in `children`.
+ * per segment in `children`. Each pill is named by its label (`aria-label`: the label sits in a span).
  */
 export function SegmentedPills({
   label,
@@ -33,6 +33,7 @@ export function SegmentedPills({
         {(segment) => (
           <Tab
             id={segment.id}
+            aria-label={segment.label}
             className="group flex cursor-default flex-col items-center gap-xs outline-none data-disabled:opacity-disabled"
           >
             <span

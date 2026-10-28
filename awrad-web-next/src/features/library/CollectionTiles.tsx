@@ -5,13 +5,17 @@ import { useLanguage } from "@/shared/i18n";
 import { CollectionTile } from "@/shared/ui/CollectionTile";
 import { TextButtonLink } from "@/shared/ui/TextLink";
 
-/** Every collection as a tile, in a row that scrolls sideways, `pageMargin` at both ends. */
-export function CollectionTiles({ label }: { label: string }): ReactElement {
+/**
+ * Every collection as a tile, in a row that scrolls sideways, `pageMargin` at both ends. `first`
+ * is a tile that goes before them ("Your dhikrs" in the Library), when there is one.
+ */
+export function CollectionTiles({ label, first }: { label: string; first?: ReactElement | null }): ReactElement {
   const { t } = useTranslation();
   const language = useLanguage();
   const catalog = useCatalog();
   return (
     <ul aria-label={label} className="flex gap-md overflow-x-auto px-page-margin">
+      {first != null && <li className="flex">{first}</li>}
       {catalog.collections.map((collection) => (
         <li key={collection.key} className="flex">
           <CollectionTile

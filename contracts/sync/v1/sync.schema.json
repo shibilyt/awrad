@@ -1,0 +1,445 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:awrad:sync:1",
+  "title": "Awrad change queue (sync v1)",
+  "description": "Wire shapes of the change queue: commands, receipts, changes and the three entity documents of slice 3b. Protocol rules, and the limits a schema can't express (64 KB per document, tag-name graphemes and bytes, normalized_name recomputation, account limits): README.md. A batch whose envelope breaks this schema is a 422; a command whose document breaks it is a `rejected` receipt.",
+  "$defs": {
+    "uuid": {
+      "description": "Lowercase, hyphenated UUID, any version except nil and max (contracts/identity/v1/fixtures/uuid_format.json). IDs we generate are UUIDv7.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "not": {
+        "enum": ["00000000-0000-0000-0000-000000000000", "ffffffff-ffff-ffff-ffff-ffffffffffff"]
+      }
+    },
+    "int53": {
+      "description": "A non-negative JSON integer up to 2^53 - 1 (contracts/api/STYLE.md §5).",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "entity_type": {
+      "enum": ["custom_dhikr", "user_tag", "dhikr_personal"]
+    },
+    "op": {
+      "description": "`put` creates (base_version 0) or replaces the whole document; `delete` makes a final tombstone.",
+      "enum": ["put", "delete"]
+    },
+    "state": {
+      "enum": ["active", "deleted"]
+    },
+    "version": {
+      "description": "Per-entity version: 0 means the entity doesn't exist yet, and every applied change (including a delete or a server-side cascade) adds one.",
+      "$ref": "#/$defs/int53"
+    },
+    "revision": {
+      "description": "Per-account revision. Every applied command takes the next one; its cascades share it.",
+      "$ref": "#/$defs/int53"
+    },
+    "title_text": {
+      "$ref": "urn:awrad:dhikr-catalog:1#/$defs/text",
+      "type": "string",
+      "maxLength": 120
+    },
+    "long_text": {
+      "$ref": "urn:awrad:dhikr-catalog:1#/$defs/text",
+      "type": "string",
+      "maxLength": 5000
+    },
+    "optional_title_text": {
+      "oneOf": [{ "$ref": "#/$defs/title_text" }, { "type": "null" }]
+    },
+    "optional_long_text": {
+      "oneOf": [{ "$ref": "#/$defs/long_text" }, { "type": "null" }]
+    },
+    "custom_dhikr_document": {
+      "description": "A user's own dhikr: urn:awrad:dhikr-catalog:1#/$defs/dhikr without id (the entity_id is the ID), key, virtues, aliases or catalog tags (user tags live in dhikr_personal). Every language key is always present, null when empty; the title needs at least one. Audio is never uploaded in 3b: null, or a marker that a recording exists on the device that made it. Lengths count Unicode code points. One rule this schema can't express: a Qur'an reference's ayah_end must be at least its ayah_start (field error `range` on /references/N/ayah_end; fixtures/custom_dhikr_validity.json).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "arabic", "title", "transliteration", "translation", "audio", "references"],
+      "properties": {
+        "kind": {
+          "$ref": "urn:awrad:dhikr-catalog:1#/$defs/dhikr/properties/kind"
+        },
+        "arabic": {
+          "$ref": "#/$defs/long_text"
+        },
+        "title": {
+          "description": "Every language key is present (STYLE §3), null when the user gave none; at least one is text, because the user writes the title in their own language. Apps show the app language, then en, then any.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["en", "ar", "ml"],
+          "properties": {
+            "en": { "$ref": "#/$defs/optional_title_text" },
+            "ar": { "$ref": "#/$defs/optional_title_text" },
+            "ml": { "$ref": "#/$defs/optional_title_text" }
+          },
+          "anyOf": [
+            { "properties": { "en": { "type": "string" } } },
+            { "properties": { "ar": { "type": "string" } } },
+            { "properties": { "ml": { "type": "string" } } }
+          ]
+        },
+        "transliteration": {
+          "description": "en and ml, each text or null. Arabic has none.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["en", "ml"],
+          "properties": {
+            "en": { "$ref": "#/$defs/optional_long_text" },
+            "ml": { "$ref": "#/$defs/optional_long_text" }
+          }
+        },
+        "translation": {
+          "description": "en, ar and ml, each text or null.",
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["en", "ar", "ml"],
+          "properties": {
+            "en": { "$ref": "#/$defs/optional_long_text" },
+            "ar": { "$ref": "#/$defs/optional_long_text" },
+            "ml": { "$ref": "#/$defs/optional_long_text" }
+          }
+        },
+        "audio": {
+          "description": "null, or {\"local_only\": true}: a recording kept only on the device that imported it (uploading is slice 3c).",
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["local_only"],
+              "properties": {
+                "local_only": { "const": true }
+              }
+            }
+          ]
+        },
+        "references": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "$ref": "urn:awrad:dhikr-catalog:1#/$defs/reference"
+          }
+        }
+      }
+    },
+    "tag_name": {
+      "description": "Display name: trimmed, inner White_Space runs collapsed to one space, NFC. 1-40 extended grapheme clusters and at most 128 UTF-8 bytes (README.md; fixtures/tag_name_normalization.json). The schema can only bound code points.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "\\S"
+    },
+    "user_tag_document": {
+      "description": "A user's tag. The server recomputes normalized_name from name and rejects a mismatch; two active tags never share a normalized_name.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "normalized_name"],
+      "properties": {
+        "name": { "$ref": "#/$defs/tag_name" },
+        "normalized_name": {
+          "description": "Unicode Default Case Folding of name, then NFC. Full case folding can lengthen a name, so this bound is looser than name's.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 384,
+          "pattern": "\\S"
+        }
+      }
+    },
+    "dhikr_personal_document": {
+      "description": "A user's own data about one dhikr (built-in or custom); its entity_id is the dhikr's ID. For now only its tags, in the user's order. Clients clear tags with an empty list; they never delete this entity.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tag_ids"],
+      "properties": {
+        "tag_ids": {
+          "type": "array",
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/uuid" }
+        }
+      }
+    },
+    "document": {
+      "description": "Any of the three entity documents.",
+      "oneOf": [
+        { "$ref": "#/$defs/custom_dhikr_document" },
+        { "$ref": "#/$defs/user_tag_document" },
+        { "$ref": "#/$defs/dhikr_personal_document" }
+      ]
+    },
+    "command_envelope": {
+      "description": "What every command in a batch must look like for the batch to be accepted: a batch with a command that breaks this is a 422 and nothing is applied. The document only has to be an object here; its content is checked per command, and a bad one is a `rejected` receipt.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_id", "entity_type", "entity_id", "op", "base_version"],
+      "properties": {
+        "command_id": {
+          "description": "A new UUIDv7 per command. Its receipt is kept for 90 days; resending the same command replays it.",
+          "$ref": "#/$defs/uuid"
+        },
+        "entity_type": { "$ref": "#/$defs/entity_type" },
+        "entity_id": { "$ref": "#/$defs/uuid" },
+        "op": { "$ref": "#/$defs/op" },
+        "base_version": {
+          "description": "The entity version this command was made on: 0 to create.",
+          "$ref": "#/$defs/version"
+        },
+        "document": {
+          "description": "The whole new document. Required for put, absent for delete.",
+          "type": "object"
+        }
+      },
+      "if": { "properties": { "op": { "const": "put" } } },
+      "then": { "properties": { "document": true }, "required": ["document"] },
+      "else": { "not": { "properties": { "document": true }, "required": ["document"] } }
+    },
+    "command": {
+      "description": "A valid command: the envelope plus the document schema of its entity_type. Applied in batch order; each gets one receipt.",
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/command_envelope" },
+        {
+          "if": { "properties": { "entity_type": { "const": "custom_dhikr" } } },
+          "then": { "properties": { "document": { "$ref": "#/$defs/custom_dhikr_document" } } }
+        },
+        {
+          "if": { "properties": { "entity_type": { "const": "user_tag" } } },
+          "then": { "properties": { "document": { "$ref": "#/$defs/user_tag_document" } } }
+        },
+        {
+          "if": { "properties": { "entity_type": { "const": "dhikr_personal" } } },
+          "then": { "properties": { "document": { "$ref": "#/$defs/dhikr_personal_document" } } }
+        }
+      ]
+    },
+    "command_batch": {
+      "description": "The body of post_sync_commands. 0 or more than 100 commands, or any command that breaks command_envelope, is a 422.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commands"],
+      "properties": {
+        "commands": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/command_envelope" }
+        }
+      }
+    },
+    "current": {
+      "description": "The server's current copy of the command's entity, as receipts carry it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "state", "document"],
+      "properties": {
+        "version": { "$ref": "#/$defs/version" },
+        "state": { "$ref": "#/$defs/state" },
+        "document": {
+          "oneOf": [{ "$ref": "#/$defs/document" }, { "type": "null" }]
+        }
+      },
+      "if": { "properties": { "state": { "const": "deleted" } } },
+      "then": { "properties": { "document": { "type": "null" } } },
+      "else": { "properties": { "document": { "$ref": "#/$defs/document" } } }
+    },
+    "field_error": {
+      "description": "One problem with a command. field is a JSON Pointer into the command (for example /document/title/en). `range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its ayah_start (on ayah_end).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "code"],
+      "properties": {
+        "field": { "type": "string" },
+        "code": {
+          "enum": ["required", "blank", "too_long", "too_many", "duplicate", "not_allowed", "invalid", "mismatch", "not_found", "range"]
+        }
+      }
+    },
+    "rejection_code": {
+      "enum": [
+        "document_invalid",
+        "document_too_large",
+        "custom_dhikr_limit_reached",
+        "tag_limit_reached",
+        "tag_name_taken",
+        "tag_not_found",
+        "dhikr_not_found",
+        "entity_not_found",
+        "delete_not_allowed",
+        "command_id_reused"
+      ]
+    },
+    "cascaded_change": {
+      "description": "An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal that a user_tag delete removed the tag from (active), or the dhikr_personal of a deleted custom_dhikr (deleted). The phone sets its known version from it; the document is in the changes feed.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity_type", "entity_id", "state", "version", "revision"],
+      "properties": {
+        "entity_type": { "$ref": "#/$defs/entity_type" },
+        "entity_id": { "$ref": "#/$defs/uuid" },
+        "state": { "$ref": "#/$defs/state" },
+        "version": { "$ref": "#/$defs/version", "type": "integer", "minimum": 1 },
+        "revision": { "$ref": "#/$defs/revision", "type": "integer", "minimum": 1 }
+      }
+    },
+    "applied_receipt": {
+      "description": "cascaded is an array exactly when the command is a user_tag or custom_dhikr delete: every other entity the server changed at the same revision, ordered by entity_type, then entity_id, and empty when nothing cascaded. For every other command it is null.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_id", "status", "version", "revision", "cascaded"],
+      "properties": {
+        "command_id": { "$ref": "#/$defs/uuid" },
+        "status": { "const": "applied" },
+        "version": { "$ref": "#/$defs/version" },
+        "revision": { "$ref": "#/$defs/revision" },
+        "cascaded": {
+          "oneOf": [
+            { "type": "array", "items": { "$ref": "#/$defs/cascaded_change" } },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "conflict_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_id", "status", "current"],
+      "properties": {
+        "command_id": { "$ref": "#/$defs/uuid" },
+        "status": { "const": "conflict" },
+        "current": { "$ref": "#/$defs/current" }
+      }
+    },
+    "merged_receipt": {
+      "description": "A user_tag create whose normalized_name an active tag already has. The new ID becomes an alias of merged_into; current is that tag.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_id", "status", "merged_into", "current"],
+      "properties": {
+        "command_id": { "$ref": "#/$defs/uuid" },
+        "status": { "const": "merged" },
+        "merged_into": { "$ref": "#/$defs/uuid" },
+        "current": { "$ref": "#/$defs/current" }
+      }
+    },
+    "gone_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_id", "status"],
+      "properties": {
+        "command_id": { "$ref": "#/$defs/uuid" },
+        "status": { "const": "gone" }
+      }
+    },
+    "rejected_receipt": {
+      "description": "current is the entity as the server has it, so the client can undo to it; null when the server has no such entity.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_id", "status", "code", "fields", "current"],
+      "properties": {
+        "command_id": { "$ref": "#/$defs/uuid" },
+        "status": { "const": "rejected" },
+        "code": { "$ref": "#/$defs/rejection_code" },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/field_error" }
+        },
+        "current": {
+          "oneOf": [{ "$ref": "#/$defs/current" }, { "type": "null" }]
+        }
+      }
+    },
+    "outcome": {
+      "description": "A receipt as first decided, which a duplicate replays.",
+      "oneOf": [
+        { "$ref": "#/$defs/applied_receipt" },
+        { "$ref": "#/$defs/conflict_receipt" },
+        { "$ref": "#/$defs/merged_receipt" },
+        { "$ref": "#/$defs/gone_receipt" },
+        { "$ref": "#/$defs/rejected_receipt" }
+      ]
+    },
+    "duplicate_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command_id", "status", "original"],
+      "properties": {
+        "command_id": { "$ref": "#/$defs/uuid" },
+        "status": { "const": "duplicate" },
+        "original": { "$ref": "#/$defs/outcome" }
+      }
+    },
+    "receipt": {
+      "oneOf": [{ "$ref": "#/$defs/outcome" }, { "$ref": "#/$defs/duplicate_receipt" }]
+    },
+    "receipt_batch": {
+      "description": "The response of post_sync_commands: one receipt per command, in the same order.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipts", "head_revision"],
+      "properties": {
+        "receipts": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": { "$ref": "#/$defs/receipt" }
+        },
+        "head_revision": { "$ref": "#/$defs/revision" }
+      }
+    },
+    "change": {
+      "description": "An entity's latest state in the changes feed (and a row of server state in the fixtures). document is null when deleted.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity_type", "entity_id", "state", "version", "revision", "document"],
+      "properties": {
+        "entity_type": { "$ref": "#/$defs/entity_type" },
+        "entity_id": { "$ref": "#/$defs/uuid" },
+        "state": { "$ref": "#/$defs/state" },
+        "version": { "$ref": "#/$defs/version", "type": "integer", "minimum": 1 },
+        "revision": { "$ref": "#/$defs/revision", "type": "integer", "minimum": 1 },
+        "document": {}
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "deleted" } } },
+          "then": { "properties": { "document": { "type": "null" } } }
+        },
+        {
+          "if": {
+            "properties": { "state": { "const": "active" }, "entity_type": { "const": "custom_dhikr" } }
+          },
+          "then": { "properties": { "document": { "$ref": "#/$defs/custom_dhikr_document" } } }
+        },
+        {
+          "if": {
+            "properties": { "state": { "const": "active" }, "entity_type": { "const": "user_tag" } }
+          },
+          "then": { "properties": { "document": { "$ref": "#/$defs/user_tag_document" } } }
+        },
+        {
+          "if": {
+            "properties": { "state": { "const": "active" }, "entity_type": { "const": "dhikr_personal" } }
+          },
+          "then": { "properties": { "document": { "$ref": "#/$defs/dhikr_personal_document" } } }
+        }
+      ]
+    },
+    "changes_page": {
+      "description": "The response of list_sync_changes. Ordered by revision, then entity_type, then entity_id. A page never splits a revision.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["changes", "next_after", "has_more", "head_revision"],
+      "properties": {
+        "changes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/change" }
+        },
+        "next_after": { "$ref": "#/$defs/revision" },
+        "has_more": { "type": "boolean" },
+        "head_revision": { "$ref": "#/$defs/revision" }
+      }
+    }
+  }
+}

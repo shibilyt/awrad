@@ -52,7 +52,8 @@ const ROW = cx(
 /**
  * A selectable row (components.md "Option row"), announced as a radio or a checkbox by the
  * group around it. Unselected `secondaryContainer` (`useSecondaryFill`); selected `primary` with an
- * `onPrimaryVariant` label and a check in a circle. Colours cross-fade (`select`).
+ * `onPrimaryVariant` label and a check in a circle. Colours cross-fade (`select`). The label also
+ * names the input itself (it sits in a span, which some accessibility trees skip).
  */
 export function OptionRow({
   value,
@@ -94,11 +95,11 @@ export function OptionRow({
     </>
   );
   return mode === "single" ? (
-    <RadioField value={value} isDisabled={isDisabled}>
+    <RadioField value={value} isDisabled={isDisabled} aria-label={label}>
       <RadioButton className={cx(ROW, fill)}>{content}</RadioButton>
     </RadioField>
   ) : (
-    <CheckboxField value={value} isDisabled={isDisabled}>
+    <CheckboxField value={value} isDisabled={isDisabled} aria-label={label}>
       <CheckboxButton className={cx(ROW, fill)}>{content}</CheckboxButton>
     </CheckboxField>
   );

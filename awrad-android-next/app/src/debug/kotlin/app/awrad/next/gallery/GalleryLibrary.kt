@@ -18,6 +18,7 @@ import androidx.compose.ui.res.stringResource
 import app.awrad.core.designsystem.component.AwradCard
 import app.awrad.core.designsystem.component.AwradChip
 import app.awrad.core.designsystem.component.AwradCollectionTile
+import app.awrad.core.designsystem.component.AwradConflictBanner
 import app.awrad.core.designsystem.component.AwradLinearProgress
 import app.awrad.core.designsystem.component.AwradRoundButton
 import app.awrad.core.designsystem.component.AwradSearchField
@@ -62,6 +63,7 @@ internal fun LibrarySection(modifier: Modifier = Modifier) {
             AwradChip(text = stringResource(R.string.gallery_chip_debt))
             AwradChip(text = stringResource(R.string.gallery_chip_morning))
         }
+        FilterChips()
         AwradCard {
             StateLabel(text = stringResource(R.string.gallery_on_card))
             AwradChip(text = stringResource(R.string.gallery_chip_debt))
@@ -82,6 +84,43 @@ internal fun LibrarySection(modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+/**
+ * Tag filter chips (slice 3b): selected (with its check) and unselected, each toggling on its own since several
+ * can be selected, and disabled. Then the conflict banner.
+ */
+@Composable
+private fun FilterChips() {
+    var morning by rememberSaveable { mutableStateOf(true) }
+    var debt by rememberSaveable { mutableStateOf(false) }
+    StateLabel(text = stringResource(R.string.gallery_filter_chips))
+    Row(horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.sm)) {
+        AwradChip(
+            text = stringResource(R.string.gallery_chip_morning),
+            selected = morning,
+            onSelectedChange = { morning = it },
+        )
+        AwradChip(
+            text = stringResource(R.string.gallery_chip_debt),
+            selected = debt,
+            onSelectedChange = { debt = it },
+        )
+        AwradChip(
+            text = stringResource(R.string.gallery_state_disabled),
+            selected = false,
+            onSelectedChange = {},
+            enabled = false,
+        )
+    }
+    StateLabel(text = stringResource(R.string.gallery_conflict_banner))
+    AwradConflictBanner(
+        text = stringResource(R.string.gallery_conflict_text),
+        keepMine = stringResource(R.string.gallery_conflict_keep_mine),
+        useTheirs = stringResource(R.string.gallery_conflict_use_theirs),
+        onKeepMine = {},
+        onUseTheirs = {},
+    )
 }
 
 @Composable

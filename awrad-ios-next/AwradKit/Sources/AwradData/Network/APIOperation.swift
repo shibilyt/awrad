@@ -24,6 +24,8 @@ public struct APIOperation: Hashable, Sendable, CustomStringConvertible {
     public let sendsAcceptLanguage: Bool
     /// The query parameters the app may send. The contract test checks the spec has each.
     public var queryParameters: [String] = []
+    /// Whether it sends `X-Awrad-Account`, the account its data belongs to (the change queue).
+    public var sendsAccountHeader = false
 
     public var description: String { id }
 
@@ -84,11 +86,19 @@ extension APIOperation {
         id: "delete_account", method: .post, path: "/api/v1/account/delete", credential: .bearer,
         sendsAcceptLanguage: true)
 
+    // The change queue (slice 3b). Both carry the active profile's account in `X-Awrad-Account`.
+    static let postSyncCommands = APIOperation(
+        id: "post_sync_commands", method: .post, path: "/api/v1/sync/commands", credential: .bearer,
+        sendsAcceptLanguage: false, sendsAccountHeader: true)
+    static let listSyncChanges = APIOperation(
+        id: "list_sync_changes", method: .get, path: "/api/v1/sync/changes", credential: .bearer,
+        sendsAcceptLanguage: false, queryParameters: ["after", "limit"], sendsAccountHeader: true)
+
     /// Every operation the app uses. The contract test fails if one has no example in the spec.
     public static let used: [APIOperation] = [
         registerAccount, verifyAccountEmail, resendVerificationCode, requestPasswordReset, resetPassword,
         getCurrentAccount, createDeviceSession, refreshDeviceSession, signOutDeviceSession,
         listAccountSessions, revokeAccountSession, revokeOtherAccountSessions, changePassword,
-        requestEmailChange, confirmEmailChange, deleteAccount,
+        requestEmailChange, confirmEmailChange, deleteAccount, postSyncCommands, listSyncChanges,
     ]
 }

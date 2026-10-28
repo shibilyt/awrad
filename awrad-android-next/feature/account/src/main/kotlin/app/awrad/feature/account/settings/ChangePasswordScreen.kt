@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.motion.AwradContentSwap
 import app.awrad.core.designsystem.theme.AwradTheme
@@ -24,7 +23,7 @@ internal fun ChangePasswordRoute(
     modifier: Modifier = Modifier,
     viewModel: ChangePasswordViewModel = hiltViewModel(),
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state
     ChangePasswordScreen(state = state, onAction = viewModel::onAction, onBack = onBack, modifier = modifier)
 }
 

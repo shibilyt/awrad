@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.feature.account.AccountPage
@@ -23,7 +22,7 @@ internal fun DeleteAccountRoute(
     modifier: Modifier = Modifier,
     viewModel: DeleteAccountViewModel = hiltViewModel(),
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state by viewModel.state
     DeleteAccountScreen(state = state, onAction = viewModel::onAction, onBack = onBack, modifier = modifier)
 }
 

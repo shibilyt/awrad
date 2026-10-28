@@ -1,32 +1,19 @@
-import { queryOptions } from "@tanstack/react-query";
 import { api, idempotencyKey, setCsrfToken } from "@/shared/api/client";
 import { problemOf } from "@/shared/api/problem";
-import type { components } from "@/shared/api/schema.gen";
+import type { Account } from "@/shared/session";
 
 /**
  * The account operations the web uses (tags `accounts` and `browser`). Each
  * throws an `ApiProblem` on failure. `device_sessions` are mobile-only and
- * never called here (ADR-2026-10-15).
+ * never called here (ADR-2026-10-15). Who is signed in (`currentAccountQuery`)
+ * lives in `@/shared/session`, since the Library needs it too.
  */
-export type Account = components["schemas"]["Account"];
+export { currentAccountQuery, type Account } from "@/shared/session";
 
 /** Retryable POSTs carry a fresh `Idempotency-Key` per user action (STYLE §10). */
 function retryable() {
   return { header: { "Idempotency-Key": idempotencyKey() } };
 }
-
-/** `get_current_account`: the signed-in account, or `null` when this browser is signed out. */
-export const currentAccountQuery = queryOptions({
-  queryKey: ["account", "current"],
-  retry: false,
-  queryFn: async (): Promise<Account | null> => {
-    const result = await api.GET("/api/v1/account");
-    const problem = problemOf(result);
-    if (problem?.code === "unauthenticated") return null;
-    if (problem !== null) throw problem;
-    return result.data ?? null;
-  },
-});
 
 export async function registerAccount(email: string, password: string): Promise<void> {
   const problem = problemOf(await api.POST("/api/v1/accounts", { params: retryable(), body: { email, password } }));

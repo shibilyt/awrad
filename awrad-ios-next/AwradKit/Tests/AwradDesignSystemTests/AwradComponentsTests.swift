@@ -58,6 +58,13 @@ struct AwradComponentsTests {
         #expect(AwradOptionRow.Selection.multiple.traits(isSelected: false) == .isToggle)
     }
 
+    // MARK: Filter chip
+
+    @Test func aFilterChipReadsAsAToggleWithItsSelection() {
+        #expect(AwradFilterChip.traits(isSelected: true) == [.isToggle, .isSelected])
+        #expect(AwradFilterChip.traits(isSelected: false) == .isToggle)
+    }
+
     // MARK: Buttons
 
     @Test(arguments: [AwradButton.Variant.main, .secondary, .error])
@@ -92,6 +99,29 @@ struct AwradComponentsTests {
         }
         let destructive = AwradButtonAppearance(variant: .text, layout: .row, isDestructive: true)
         #expect(Self.resolved(destructive.content, scheme) == Self.resolved(AwradColors.error, scheme))
+    }
+
+    /// components.md, Buttons: a text button on a `secondaryContainer` or `primary` fill takes the
+    /// fill's content colour. In dark mode `accent` is `secondaryContainer`, so the conflict banner's
+    /// Keep mine and Use theirs were invisible.
+    @Test(arguments: [ColorScheme.light, .dark])
+    func aTextButtonOnAFillUsesTheFillsContentColour(scheme: ColorScheme) {
+        let pairs: [AwradFill: Color] = [
+            .secondaryContainer: AwradColors.onSecondaryContainer, .primary: AwradColors.onPrimary,
+        ]
+        for (fill, content) in pairs {
+            let appearance = AwradButtonAppearance(variant: .text, layout: .row, onFill: fill)
+            #expect(Self.resolved(appearance.content, scheme) == Self.resolved(content, scheme))
+            #expect(Self.resolved(appearance.content, scheme) != Self.resolved(fill.color, scheme))
+        }
+        #expect(
+            Self.resolved(AwradColors.accent, .dark) == Self.resolved(AwradColors.secondaryContainer, .dark),
+            "the clash the fill colour avoids")
+        // Filled buttons keep their own colours on a fill.
+        let main = AwradButtonAppearance(variant: .main, layout: .row, onFill: .secondaryContainer)
+        #expect(Self.resolved(main.content, scheme) == Self.resolved(AwradColors.onPrimary, scheme))
+        // Off a fill, text stays `accent`.
+        #expect(EnvironmentValues().awradFill == nil)
     }
 
     // MARK: Containers

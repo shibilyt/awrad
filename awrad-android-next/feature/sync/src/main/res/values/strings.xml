@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sync_title">Data and sync</string>
+    <string name="sync_section_status">Sync</string>
+    <string name="sync_state_signed_out">Not signed in. Everything is kept on this phone.</string>
+    <string name="sync_state_waiting">Waiting for your answer about this phone’s data</string>
+    <string name="sync_state_syncing">Syncing…</string>
+    <string name="sync_state_idle">Up to date</string>
+    <plurals name="sync_conflicts_open">
+        <item quantity="one">%d conflict to resolve</item>
+        <item quantity="other">%d conflicts to resolve</item>
+    </plurals>
+    <string name="sync_state_retrying">Couldn’t reach the server. Trying again soon.</string>
+    <string name="sync_state_mismatch">This data belongs to a different account, so it isn’t sent.</string>
+    <string name="sync_last_synced">Last synced %1$s</string>
+    <string name="sync_last_synced_now">Last synced just now</string>
+    <string name="sync_never_synced">Not synced yet</string>
+    <string name="sync_nothing_pending">No changes waiting</string>
+    <plurals name="sync_pending">
+        <item quantity="one">%d change waiting to sync</item>
+        <item quantity="other">%d changes waiting to sync</item>
+    </plurals>
+    <string name="sync_now">Sync now</string>
+    <string name="sync_sign_in">Sign in to sync</string>
+    <string name="sync_section_conflicts">Changed on another device</string>
+    <string name="sync_conflict_dhikr">“%1$s” was changed on another device after you edited it here.</string>
+    <string name="sync_conflict_dhikr_unnamed">A dhikr was changed on another device after you changed it here.</string>
+    <string name="sync_conflict_tags">The tags of “%1$s” were changed on another device after you changed them here.</string>
+    <string name="sync_conflict_tags_unnamed">A dhikr’s tags were changed on another device after you changed them here.</string>
+    <string name="sync_conflict_tag">The tag “%1$s” was changed on another device after you changed it here.</string>
+    <string name="sync_conflict_tag_unnamed">A tag was changed on another device after you changed it here.</string>
+    <string name="sync_keep_mine">Keep mine</string>
+    <string name="sync_use_theirs">Use theirs</string>
+    <string name="sync_section_profiles">On this device</string>
+    <string name="sync_profiles_hint">Each account’s data is kept apart on this phone. Removing it here doesn’t touch the account.</string>
+    <string name="sync_profile_anonymous">Not signed in (this phone only)</string>
+    <string name="sync_profile_active">In use</string>
+    <string name="sync_profile_unsent">Has changes that haven’t been synced</string>
+    <string name="sync_profile_account_deleted">Account deleted</string>
+    <string name="sync_remove_profile">Remove from this device</string>
+    <string name="sync_remove_title">Remove %1$s’s data from this phone?</string>
+    <string name="sync_remove_body">The dhikrs, tags and recordings kept here for it are erased from this phone. What’s already synced stays in the account.</string>
+    <string name="sync_remove_unsent">Some changes were never synced. Removing erases them for good, along with everything else kept here for it.</string>
+    <string name="sync_remove_confirm">Remove</string>
+    <string name="sync_cancel">Cancel</string>
+    <string name="sync_anonymous_title">Add this phone’s data to your account?</string>
+    <string name="sync_anonymous_body">You made dhikrs or tags on this phone before signing in as %1$s. Add them to the account, or erase them from this phone?</string>
+    <string name="sync_anonymous_add">Add to my account</string>
+    <string name="sync_anonymous_erase">Erase</string>
+    <string name="sync_deleted_title">This account no longer exists</string>
+    <string name="sync_deleted_body">%1$s was deleted, so its data on this phone can’t be synced again. Remove it from this phone, or keep it here?</string>
+    <string name="sync_deleted_keep">Keep</string>
+    <string name="sync_rejected_title">Change refused</string>
+    <string name="sync_reason_document_invalid">The server couldn’t accept this change.</string>
+    <string name="sync_reason_document_too_large">This change is too large to save.</string>
+    <string name="sync_reason_custom_dhikr_limit">Your account already has 1,000 dhikrs of its own.</string>
+    <string name="sync_reason_tag_limit">Your account already has 100 tags.</string>
+    <string name="sync_reason_tag_name_taken">Another tag already has this name.</string>
+    <string name="sync_reason_tag_not_found">A tag this change uses was deleted.</string>
+    <string name="sync_reason_dhikr_not_found">The dhikr this change is for was deleted.</string>
+    <string name="sync_reason_entity_not_found">What this change edits no longer exists.</string>
+    <string name="sync_reason_delete_not_allowed">This can’t be deleted.</string>
+    <string name="sync_reason_command_id_reused">The server had already received a different change with the same ID.</string>
+    <string name="sync_ok">OK</string>
+</resources>

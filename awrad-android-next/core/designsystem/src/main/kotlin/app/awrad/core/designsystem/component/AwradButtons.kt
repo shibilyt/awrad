@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import app.awrad.core.designsystem.R
 import app.awrad.core.designsystem.motion.AwradPressTarget
 import app.awrad.core.designsystem.motion.pressFeedback
+import app.awrad.core.designsystem.theme.AwradColors
 import app.awrad.core.designsystem.theme.AwradTheme
 
 /*
@@ -96,7 +97,8 @@ public fun AwradRowButton(
 
 /**
  * A text-only action (links, "View all", a dialog's cancel): no fill, `accent` text in the `label` style, or
- * `error` when [isDestructive]; `touchTarget` tall.
+ * `error` when [isDestructive]; `touchTarget` tall. On a filled container, say so with [onFill]: the label then
+ * takes the fill's paired content colour ([AwradTextButtonFill]).
  */
 @Composable
 public fun AwradTextButton(
@@ -106,8 +108,9 @@ public fun AwradTextButton(
     enabled: Boolean = true,
     isDestructive: Boolean = false,
     leadingIcon: ImageVector? = null,
+    onFill: AwradTextButtonFill = AwradTextButtonFill.None,
 ) {
-    val content = if (isDestructive) AwradTheme.colors.error else AwradTheme.colors.accent
+    val content = AwradTheme.colors.textButtonContent(onFill = onFill, isDestructive = isDestructive)
     ButtonFrame(
         onClick = onClick,
         enabled = enabled,
@@ -125,6 +128,17 @@ public fun AwradTextButton(
         )
     }
 }
+
+/**
+ * A text button's label colour: the paired content colour of the fill it sits on, else `error` when
+ * [isDestructive], else `accent`.
+ */
+internal fun AwradColors.textButtonContent(onFill: AwradTextButtonFill, isDestructive: Boolean): Color =
+    when (onFill) {
+        AwradTextButtonFill.SecondaryContainer -> onSecondaryContainer
+        AwradTextButtonFill.Primary -> onPrimary
+        AwradTextButtonFill.None -> if (isDestructive) error else accent
+    }
 
 @Composable
 private fun FilledButton(

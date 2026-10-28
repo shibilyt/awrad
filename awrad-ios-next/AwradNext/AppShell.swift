@@ -1,3 +1,4 @@
+import AwradData
 import AwradDesignSystem
 import AwradDomain
 import FeatureLibrary
@@ -25,7 +26,8 @@ struct AppShell: View {
         self.composition = composition
         self.onShowAccount = onShowAccount
         self.onRestartOnboarding = onRestartOnboarding
-        let library = LibraryModel(catalog: composition.catalog, language: composition.language)
+        let library = LibraryModel(
+            catalog: composition.catalog, language: composition.language, library: composition.profiles)
         var tab = Tab.home
         #if DEBUG
             LibraryLaunchState.apply(to: library, tab: &tab)
@@ -39,7 +41,12 @@ struct AppShell: View {
             switch tab {
             case .home:
                 HomeView(
-                    content: library.content,
+                    content: library.content, yourDhikrsCount: library.state.personal.customDhikrs.count,
+                    onOpenYourDhikrs: {
+                        library.apply(.showRoot)
+                        library.apply(.openYourDhikrs)
+                        tab = .library
+                    },
                     onOpenCollection: { collection in
                         library.apply(.openCollection(key: collection.key))
                         tab = .library
@@ -60,12 +67,16 @@ struct AppShell: View {
             selection: $tab, items: Self.items, isPresented: tab == .home || library.state.path.isEmpty
         )
         .background(AwradColors.background)
+        // The shell follows the user's library, so Home's tiles know about their dhikrs too.
+        .task { await library.observePersonalLibrary() }
     }
 }
 
 /// Home: the placeholder content from earlier slices, then the featured dhikr collections.
 struct HomeView: View {
     let content: LibraryContent
+    let yourDhikrsCount: Int
+    let onOpenYourDhikrs: () -> Void
     let onOpenCollection: (DhikrCollection) -> Void
     let onViewAll: () -> Void
     let onShowAccount: () -> Void
@@ -78,7 +89,9 @@ struct HomeView: View {
         ScrollView {
             VStack(spacing: AwradSpacing.xl3) {
                 placeholder
-                FeaturedCollections(content: content, onOpen: onOpenCollection, onViewAll: onViewAll)
+                FeaturedCollections(
+                    content: content, yourDhikrsCount: yourDhikrsCount, onOpenYourDhikrs: onOpenYourDhikrs,
+                    onOpen: onOpenCollection, onViewAll: onViewAll)
             }
             .padding(.vertical, AwradSpacing.xl3)
         }
@@ -111,7 +124,9 @@ struct HomeView: View {
 #if DEBUG
     /// Launch arguments that open the Library in a given state, for simulator screenshots (debug
     /// builds only): `-AwradTab library`, `-AwradLibrarySearch <query>`,
-    /// `-AwradLibraryCollection <key>`, `-AwradLibraryDhikr <key>` (pushed on the collection, if any).
+    /// `-AwradLibraryCollection <key>`, `-AwradLibraryDhikr <key>` (pushed on the collection, if any;
+    /// a custom dhikr's key is its ID), `-AwradLibraryYourDhikrs YES`, `-AwradLibraryEditor new|<id>`,
+    /// `-AwradLibraryManageTags all|<dhikr id>` and `-AwradLibraryFilter <tag id>`.
     enum LibraryLaunchState {
         static func apply(to library: LibraryModel, tab: inout AppShell.Tab, defaults: UserDefaults = .standard) {
             if defaults.string(forKey: "AwradTab") == "library" { tab = .library }
@@ -123,10 +138,39 @@ struct HomeView: View {
                 tab = .library
                 library.apply(.openCollection(key: key))
             }
+            if defaults.bool(forKey: "AwradLibraryYourDhikrs") {
+                tab = .library
+                library.apply(.openYourDhikrs)
+            }
             if let key = defaults.string(forKey: "AwradLibraryDhikr") {
                 tab = .library
                 library.apply(.openDhikr(key: key))
             }
+            applyPersonal(to: library, tab: &tab, defaults: defaults)
+        }
+
+        private static func applyPersonal(to library: LibraryModel, tab: inout AppShell.Tab, defaults: UserDefaults) {
+            if let tag = defaults.string(forKey: "AwradLibraryFilter").flatMap(AwradID.init) {
+                tab = .library
+                library.apply(.toggleTagFilter(tag))
+            }
+            if let editor = defaults.string(forKey: "AwradLibraryEditor") {
+                tab = .library
+                library.apply(.openEditor(AwradID(editor)))
+            }
+            if let dhikr = defaults.string(forKey: "AwradLibraryManageTags") {
+                tab = .library
+                library.apply(.openManageTags(dhikr: AwradID(dhikr)))
+            }
+        }
+    }
+
+    /// `-AwradSampleData YES` fills an empty active profile with sample custom dhikrs, tags and a
+    /// conflict before the app starts (debug builds only, for screenshots).
+    enum SampleLaunchState {
+        static func seedIfAsked(_ profiles: LocalProfileStore, defaults: UserDefaults = .standard) async {
+            guard defaults.bool(forKey: "AwradSampleData") else { return }
+            await profiles.seedSample()
         }
     }
 #endif

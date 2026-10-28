@@ -25,10 +25,13 @@ class AccountErrorsTest {
         errors = fieldCodes.map { FieldError(field = "/password", code = it, detail = "") },
     )
 
+    /** The account operations; the change queue's own problems are the sync engine's (SyncEngineTest). */
+    private val accountOperations = ApiOperation.entries.filterNot { it.namesAccount }
+
     @Test
     fun `every error code the app's operations document has its own domain error`() {
         val operations = operations()
-        val codes = ApiOperation.entries.flatMap { operation ->
+        val codes = accountOperations.flatMap { operation ->
             operations.getValue(operation.operationId)
                 .getValue("x-error-codes")
                 .jsonArray
@@ -44,7 +47,7 @@ class AccountErrorsTest {
     @Test
     fun `every field code the app's operations document becomes an input problem`() {
         val operations = operations()
-        val fieldCodes = ApiOperation.entries.flatMap { operation ->
+        val fieldCodes = accountOperations.flatMap { operation ->
             val spec = operations.getValue(operation.operationId)
             val topLevel = spec.getValue("x-error-codes").jsonArray.map { it.jsonPrimitive.content }.toSet()
             val response = spec.getValue("responses").jsonObject["422"]?.let(::resolve)?.jsonObject

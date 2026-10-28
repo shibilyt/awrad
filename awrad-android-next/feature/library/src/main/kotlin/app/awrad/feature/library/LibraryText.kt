@@ -9,6 +9,8 @@ import app.awrad.core.domain.dhikr.ContentLanguage
 import app.awrad.core.domain.dhikr.Reference
 import app.awrad.core.domain.dhikr.ReferenceLabel
 import app.awrad.core.domain.dhikr.label
+import app.awrad.core.domain.personal.TagError
+import app.awrad.core.domain.personal.TagNameProblem
 
 /*
  * The app's language and the library's localized bits that come from resources rather than the catalog.
@@ -35,3 +37,19 @@ internal fun dhikrCount(count: Int): String = pluralStringResource(R.plurals.lib
 @ReadOnlyComposable
 internal fun referenceLabel(reference: Reference): ReferenceLabel =
     reference.label(stringResource(R.string.library_quran))
+
+/** Why a tag couldn't be saved, in the app's language. */
+@Composable
+@ReadOnlyComposable
+internal fun tagErrorText(error: TagError): String = stringResource(
+    when (error) {
+        is TagError.InvalidName -> when (error.problem) {
+            TagNameProblem.EMPTY -> R.string.library_tag_error_empty
+            TagNameProblem.TOO_MANY_GRAPHEMES, TagNameProblem.TOO_MANY_BYTES -> R.string.library_tag_error_too_long
+        }
+        TagError.NameTaken -> R.string.library_tag_error_taken
+        TagError.LimitReached -> R.string.library_tag_error_limit
+        TagError.TooManyOnDhikr -> R.string.library_tag_error_per_dhikr
+        TagError.NotFound -> R.string.library_tag_error_missing
+    },
+)

@@ -36,7 +36,7 @@ class DhikrCatalogShapeTest {
         )
         assertEquals(
             listOf("dhikrs[tahleel].references[0]: unknown key 'page'"),
-            problems(catalog(references = """[{"id": "q", "type": "quran", "surah": 1, "ayahStart": 1, "ayahEnd": 2, "page": 3}]""")),
+            problems(catalog(references = """[{"id": "q", "type": "quran", "surah": 1, "ayah_start": 1, "ayah_end": 2, "page": 3}]""")),
         )
     }
 

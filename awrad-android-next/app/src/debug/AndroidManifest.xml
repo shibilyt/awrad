@@ -13,6 +13,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Fills the active profile with sample custom dhikrs and tags (screenshots, manual checks). -->
+        <activity
+            android:name=".debug.DebugSeedActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
     </application>
 
 </manifest>

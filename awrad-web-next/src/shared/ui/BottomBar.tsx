@@ -16,8 +16,9 @@ export interface BottomBarItem {
 
 /**
  * The floating main navigation (components.md "Bottom bar"): Home, Goals, Library, Community,
- * announced as a tab bar with each item's selected state. `navBar` tall, `surfaceBar`, the
- * `navBar` shape and the `floating` shadow (none in dark), `pageMargin` inside the side safe areas
+ * announced as a tab bar with each item's selected state; each item is named by its label
+ * (`aria-label`: the label sits in a span under the icon, which some accessibility trees skip).
+ * `navBar` tall, `surfaceBar`, the `navBar` shape and the `floating` shadow (none in dark), `pageMargin` inside the side safe areas
  * and `lg` above the bottom one (`bottom-bar-offset`). From `contentMaxWidth` up it stays that wide, centred. Items are
  * equal widths: the icon over the label, `onSurfaceVariant`; the selected one has a
  * `primaryContainer` pill behind an `onPrimaryContainer` icon and an `accent` label. The icon is
@@ -52,6 +53,7 @@ export function BottomBar({
         {(item) => (
           <Tab
             id={item.id}
+            aria-label={item.label}
             {...(item.href === undefined ? {} : { href: item.href })}
             className={cx(
               "group flex min-w-0 flex-1 cursor-default flex-col items-center justify-center gap-xs rounded-tile",

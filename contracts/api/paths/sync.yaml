@@ -1,0 +1,401 @@
+# The change queue (slice 3b, ADR-2026-10-28 "The change queue"). Protocol: contracts/sync/v1/README.md; wire shapes:
+# contracts/sync/v1/sync.schema.json, restated under components/schemas/Sync* because the bundler can't follow its
+# urn: references. tools/check-sync-contract.mjs validates every example here against that schema.
+# Phones use bearer tokens; the web uses its cookie session plus CSRF for the POST. Both send X-Awrad-Account.
+
+commands:
+  post:
+    operationId: post_sync_commands
+    tags: [sync]
+    summary: Apply a batch of commands
+    description: >-
+      Applies 1 to 100 commands in order and returns one receipt per command, in the same order. A command's outcome
+      never undoes the others. The account's batches are serialized; every applied command takes the next revision.
+
+
+      **Batch versus command problems.** The batch is refused as a whole (`422 validation_failed`, nothing applied)
+      only when it has 0 or more than 100 commands, or a command's envelope is wrong: `command_id` or `entity_id` not a
+      UUID, an unknown `entity_type` or `op`, `base_version` not an integer in range, `document` missing on a put,
+      present on a delete or not an object, or an unknown member (sync.schema.json `command_envelope`). Everything
+      else is a per-command `rejected` receipt, including a document that doesn't match its schema below: the server
+      checks each document itself, so one bad command never blocks a phone's queue.
+
+
+      Receipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every
+      other entity the server changed at the same revision, whose known versions phones update straight away; null
+      for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt),
+      `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag
+      already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected`
+      (`code`, `fields`, and the server's copy or null). Receipts are kept for 90 days.
+
+
+      `Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts
+      the header and ignores it. Responses are `Cache-Control: no-store`.
+    security:
+      - bearerAuth: []
+      - cookieAuth: []
+        csrfToken: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/AwradAccount"
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+        description: Accepted and ignored; commands are idempotent by command_id.
+    x-error-codes: [malformed_request, unauthenticated, csrf_token_invalid, account_mismatch, validation_failed, rate_limited]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [commands]
+            properties:
+              commands:
+                type: array
+                minItems: 1
+                maxItems: 100
+                items:
+                  $ref: "../openapi.yaml#/components/schemas/SyncCommand"
+          example:
+            commands:
+              - command_id: 0192f0c0-0000-7000-8000-000000000001
+                entity_type: custom_dhikr
+                entity_id: 0192f0d0-0000-7000-8000-000000000002
+                op: put
+                base_version: 0
+                document:
+                  kind: dua
+                  arabic: حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ
+                  title:
+                    en: null
+                    ar: null
+                    ml: ഹസ്ബിയല്ലാഹ്
+                  transliteration:
+                    en: null
+                    ml: null
+                  translation:
+                    en: Allah is sufficient for me; there is no god but Him.
+                    ar: null
+                    ml: null
+                  audio:
+                    local_only: true
+                  references:
+                    - id: quran
+                      type: quran
+                      surah: 9
+                      ayah_start: 129
+                      ayah_end: 129
+              - command_id: 0192f0c0-0000-7000-8000-000000000002
+                entity_type: user_tag
+                entity_id: 0192f0a0-0000-7000-8000-000000000003
+                op: put
+                base_version: 0
+                document:
+                  name: MORNING
+                  normalized_name: morning
+              - command_id: 0192f0c0-0000-7000-8000-000000000003
+                entity_type: dhikr_personal
+                entity_id: 6f04f77e-dcb6-4a29-9dc5-fcd3649c2961
+                op: put
+                base_version: 1
+                document:
+                  tag_ids:
+                    - 0192f0a0-0000-7000-8000-000000000003
+                    - 0192f0a0-0000-7000-8000-000000000002
+              - command_id: 0192f0c0-0000-7000-8000-000000000004
+                entity_type: custom_dhikr
+                entity_id: 0192f0d0-0000-7000-8000-000000000001
+                op: delete
+                base_version: 2
+              - command_id: 0192f0c0-0000-7000-8000-000000000005
+                entity_type: user_tag
+                entity_id: 0192f0a0-0000-7000-8000-000000000009
+                op: delete
+                base_version: 2
+              - command_id: 0192f0c0-0000-7000-8000-000000000006
+                entity_type: user_tag
+                entity_id: 0192f0a0-0000-7000-8000-000000000004
+                op: put
+                base_version: 0
+                document:
+                  name: Night
+                  normalized_name: Night
+              - command_id: 0192f0c0-0000-7000-8000-000000000007
+                entity_type: user_tag
+                entity_id: 0192f0a0-0000-7000-8000-000000000002
+                op: delete
+                base_version: 2
+              - command_id: 0192f0c0-0000-7000-8000-000000000001
+                entity_type: custom_dhikr
+                entity_id: 0192f0d0-0000-7000-8000-000000000002
+                op: put
+                base_version: 0
+                document:
+                  kind: dua
+                  arabic: حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ
+                  title:
+                    en: null
+                    ar: null
+                    ml: ഹസ്ബിയല്ലാഹ്
+                  transliteration:
+                    en: null
+                    ml: null
+                  translation:
+                    en: Allah is sufficient for me; there is no god but Him.
+                    ar: null
+                    ml: null
+                  audio:
+                    local_only: true
+                  references:
+                    - id: quran
+                      type: quran
+                      surah: 9
+                      ayah_start: 129
+                      ayah_end: 129
+    responses:
+      "200":
+        description: One receipt per command, in order, and the account's head revision after the batch.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [receipts, head_revision]
+              properties:
+                receipts:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items:
+                    $ref: "../openapi.yaml#/components/schemas/SyncReceipt"
+                head_revision:
+                  $ref: "../openapi.yaml#/components/schemas/Revision"
+            example:
+              receipts:
+                - command_id: 0192f0c0-0000-7000-8000-000000000001
+                  status: applied
+                  version: 1
+                  revision: 11
+                  cascaded: null
+                - command_id: 0192f0c0-0000-7000-8000-000000000002
+                  status: merged
+                  merged_into: 0192f0a0-0000-7000-8000-000000000001
+                  current:
+                    version: 1
+                    state: active
+                    document:
+                      name: Morning
+                      normalized_name: morning
+                - command_id: 0192f0c0-0000-7000-8000-000000000003
+                  status: applied
+                  version: 2
+                  revision: 12
+                  cascaded: null
+                - command_id: 0192f0c0-0000-7000-8000-000000000004
+                  status: conflict
+                  current:
+                    version: 3
+                    state: active
+                    document:
+                      kind: dhikr
+                      arabic: سُبْحَانَ ٱللَّهِ
+                      title:
+                        en: Subhanallah
+                        ar: null
+                        ml: null
+                      transliteration:
+                        en: Subhanallah
+                        ml: null
+                      translation:
+                        en: Glory be to Allah
+                        ar: null
+                        ml: null
+                      audio: null
+                      references: []
+                - command_id: 0192f0c0-0000-7000-8000-000000000005
+                  status: gone
+                - command_id: 0192f0c0-0000-7000-8000-000000000006
+                  status: rejected
+                  code: document_invalid
+                  fields:
+                    - field: /document/normalized_name
+                      code: mismatch
+                  current: null
+                - command_id: 0192f0c0-0000-7000-8000-000000000007
+                  status: applied
+                  version: 3
+                  revision: 13
+                  cascaded:
+                    - entity_type: dhikr_personal
+                      entity_id: 6f04f77e-dcb6-4a29-9dc5-fcd3649c2961
+                      state: active
+                      version: 3
+                      revision: 13
+                - command_id: 0192f0c0-0000-7000-8000-000000000001
+                  status: duplicate
+                  original:
+                    command_id: 0192f0c0-0000-7000-8000-000000000001
+                    status: applied
+                    version: 1
+                    revision: 11
+                    cascaded: null
+              head_revision: 13
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../openapi.yaml#/components/responses/Unauthorized"
+      "403":
+        $ref: "../openapi.yaml#/components/responses/CsrfTokenInvalid"
+      "409":
+        $ref: "../openapi.yaml#/components/responses/AccountMismatch"
+      "422":
+        description: >-
+          `validation_failed`: the batch is malformed, and nothing was applied. Field codes: `batch_size_invalid` on
+          `/commands` (0 or more than 100 commands); `command_malformed` on `/commands/{i}` or a member of it (the
+          command's envelope is wrong). Problems inside a document are `rejected` receipts, never this.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/problem+json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/Problem"
+            example:
+              type: urn:awrad:problem:validation_failed
+              title: Request validation failed
+              status: 422
+              code: validation_failed
+              detail: a batch holds 1 to 100 commands
+              errors:
+                - field: /commands
+                  code: batch_size_invalid
+                  detail: 101 commands; the maximum is 100
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+changes:
+  get:
+    operationId: list_sync_changes
+    tags: [sync]
+    summary: Read the account's changes after a revision
+    description: >-
+      Each entity changed after `after`, in its latest state, ordered by revision, then `entity_type`, then
+      `entity_id`. `after=0` is a full download and lists only active entities; `after>0` includes deletes
+      (`state: deleted`, `document: null`), and a client ignores a delete for something it doesn't have. A page adds
+      whole revisions until it holds at least `limit` changes, so a revision (a command and its cascades) is never
+      split and a page can exceed `limit`. When more remain, `has_more` is true and `next_after` is the page's last
+      revision; otherwise `next_after` is `head_revision`. An `after` above `head_revision` gets an empty page with
+      `next_after = head_revision`. Each page is read from one consistent snapshot. Clients store `next_after`
+      together with the changes, in one transaction. Responses are `Cache-Control: no-store`.
+    security:
+      - bearerAuth: []
+      - cookieAuth: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/AwradAccount"
+      - name: after
+        in: query
+        required: false
+        description: >-
+          Return changes after this revision: a decimal integer from 0 to 2^53 - 1 (STYLE §5), normally the last
+          `next_after`. Default 0 (full download). Anything else is `400 malformed_request`.
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 9007199254740991
+          default: 0
+      - name: limit
+        in: query
+        required: false
+        description: Page size. Default 200, maximum 500. Anything outside is `400 malformed_request`.
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 200
+    x-error-codes: [malformed_request, unauthenticated, account_mismatch, rate_limited]
+    responses:
+      "200":
+        description: One page of changes.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [changes, next_after, has_more, head_revision]
+              properties:
+                changes:
+                  type: array
+                  items:
+                    $ref: "../openapi.yaml#/components/schemas/SyncChange"
+                next_after:
+                  $ref: "../openapi.yaml#/components/schemas/Revision"
+                has_more:
+                  type: boolean
+                head_revision:
+                  $ref: "../openapi.yaml#/components/schemas/Revision"
+            example:
+              changes:
+                - entity_type: custom_dhikr
+                  entity_id: 0192f0d0-0000-7000-8000-000000000002
+                  state: active
+                  version: 1
+                  revision: 11
+                  document:
+                    kind: dua
+                    arabic: حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ
+                    title:
+                      en: null
+                      ar: null
+                      ml: ഹസ്ബിയല്ലാഹ്
+                    transliteration:
+                      en: null
+                      ml: null
+                    translation:
+                      en: Allah is sufficient for me; there is no god but Him.
+                      ar: null
+                      ml: null
+                    audio:
+                      local_only: true
+                    references:
+                      - id: quran
+                        type: quran
+                        surah: 9
+                        ayah_start: 129
+                        ayah_end: 129
+                - entity_type: dhikr_personal
+                  entity_id: 6f04f77e-dcb6-4a29-9dc5-fcd3649c2961
+                  state: active
+                  version: 2
+                  revision: 12
+                  document:
+                    tag_ids:
+                      - 0192f0a0-0000-7000-8000-000000000001
+                      - 0192f0a0-0000-7000-8000-000000000002
+                - entity_type: user_tag
+                  entity_id: 0192f0a0-0000-7000-8000-000000000007
+                  state: deleted
+                  version: 3
+                  revision: 13
+                  document: null
+              next_after: 13
+              has_more: false
+              head_revision: 13
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../openapi.yaml#/components/responses/Unauthorized"
+      "409":
+        $ref: "../openapi.yaml#/components/responses/AccountMismatch"
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"

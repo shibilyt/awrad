@@ -129,9 +129,9 @@ if (AYAHS.length !== 114 || AYAHS.reduce((a, b) => a + b) !== 6236) problems.pus
 for (const d of catalog.dhikrs)
   for (const q of d.references.filter((r) => r.type === "quran")) {
     const where = `${d.key} reference "${q.id}"`;
-    if (q.ayahStart > q.ayahEnd) problems.push(`${where} starts after it ends`);
-    if (q.ayahEnd > AYAHS[q.surah - 1])
-      problems.push(`${where} ends at ${q.ayahEnd}, surah ${q.surah} has ${AYAHS[q.surah - 1]} ayahs`);
+    if (q.ayah_start > q.ayah_end) problems.push(`${where} starts after it ends`);
+    if (q.ayah_end > AYAHS[q.surah - 1])
+      problems.push(`${where} ends at ${q.ayah_end}, surah ${q.surah} has ${AYAHS[q.surah - 1]} ayahs`);
   }
 
 report();

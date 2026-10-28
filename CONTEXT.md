@@ -123,6 +123,28 @@ _Avoid_: Benefit (in product text, unless sourced)
 **Alias**:
 Another spelling or name people search for a dhikr by, per language (Istighfar, Astaghfirullah).
 
+**Custom dhikr**:
+A dhikr a user wrote. It has the same shape as a built-in, lives in that user's data, and syncs when they're signed in.
+
+**Tag**:
+A user's own label for dhikrs, such as "Morning". Tag names compare case-insensitively, and two tags with the same name merge.
+
+**Personal record**:
+A user's own data about one dhikr, built-in or custom. For now, that's its tags.
+
+**Change queue**:
+How user data reaches the server. Every edit on a phone is saved with a command in one step, and commands are sent in order when the phone is signed in and online. The web sends each edit straight away.
+_Avoid_: Ledger, outbox (in product text)
+
+**Revision**:
+The server's running number for one account's changes. Devices ask for the changes after the revision they last saw.
+
+**Conflict**:
+An edit made against an older version than the server's. The user chooses Keep mine or Use theirs; nothing is overwritten silently.
+
+**Local profile**:
+One account's data on a phone, kept in its own store, or the anonymous data before any sign-in. Two accounts' data never mix.
+
 ## Account language
 
 **Account**:

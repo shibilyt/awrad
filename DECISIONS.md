@@ -690,6 +690,72 @@ The frozen apps verified emails and reset passwords with links, and the web also
 
 The verification-link and request-id parts of the frozen implementation. ADR-2026-07-12 and ADR-2026-10-15 otherwise stand.
 
+## ADR-2026-10-28: The change queue
+
+Status: Accepted
+
+### Context
+
+The rebuild needs custom dhikrs, tags, goals and counts to reach every device of an account while phones stay offline-first. The frozen progress sync v1 (ADR-2026-07-16, ADR-2026-07-24) works, but it carries actors, contiguous sequences, transfer sessions, checksums, generations, incarnations, restore fences and a double write to JSONB plus legacy tables. Its tag coalescing also broke the old iOS client when a merge and the tag's use arrived in one batch. Nothing is released, so the rebuild can start from a smaller protocol. Slice 3b (`docs/slices/03b-custom-dhikrs-sync.md`) is its first user.
+
+### Decision
+
+- **The change queue replaces progress sync v1 for the rebuild.** Its contract is `contracts/sync/v1/` (schema, README, fixtures) and `contracts/api/paths/sync.yaml`:
+  - `POST /api/v1/sync/commands` applies 1–100 commands in order;
+  - `GET /api/v1/sync/changes?after&limit` returns each entity changed after a revision.
+- **Entities** are whole JSON documents with a per-entity version and a final tombstone on delete. In 3b they are `custom_dhikr`, `user_tag` and `dhikr_personal` (a user's per-dhikr record, for now its tag IDs).
+- **Commands** carry a UUIDv7 `command_id`, `put` or `delete`, and the `base_version` they were made on.
+  - Each command gets one stored receipt: `applied`, `duplicate`, `conflict`, `merged`, `gone` or `rejected`.
+  - Only a malformed envelope fails the whole batch; a bad command never blocks the queue.
+- **Ordering.** The server serializes each account's batches on its revision row. Every applied command takes the next revision, and its cascades share it.
+- **Tags.** Duplicate tag names merge: the server keeps the merged ID as an alias and rewrites later references itself.
+- **Phones.** Each edit is queued with its command in one local transaction. Only a never-sent command may be replaced; a sent one is followed by a new command chained on `base_version + 1`.
+- **Local profiles.** A phone keeps each account's data in its own local profile and never mixes two accounts.
+  - Before the first sign-in there is one anonymous profile, which the first sign-in adds to the account or erases.
+  - Signing out keeps the active profile; signing in as another account switches profiles and leaves the others, unsent commands included, untouched.
+  - The engine sends only when the signed-in account owns the active profile, and every request names its account in `X-Awrad-Account` (`409 account_mismatch` otherwise).
+- **The web** sends each edit as a one-command batch through the same endpoint, with its cookie session and CSRF. It has no queue.
+
+What is kept from progress sync v1 and what is dropped:
+
+| Old | New |
+|---|---|
+| Per-account revision under a row lock | **Keep** |
+| Command IDs with idempotent receipts and a payload hash | **Keep** (IDs are UUIDv7) |
+| Whole-document version checks | **Keep** |
+| Tombstones | **Keep**. A delete is final; no restore, purge or fences |
+| Actors, contiguous sequences, fork and adoption, incarnations | **Drop**. Receipts plus in-order batches are enough |
+| Transfer sessions, checksums, generations | **Drop**. One "changes after revision N" feed |
+| JSONB entities plus legacy tables (written twice) | **Drop**. One entity table |
+| Separate tag-assignment entities, coalesced on receipt | **Change**. A per-dhikr personal record holds `tag_ids`; the server remembers merged tag IDs and rewrites references itself |
+| Rewriting a command after it was sent | **Drop**. Only a never-sent command may be replaced |
+| iOS diffing the whole database on every write | **Drop**. Each edit records its own command |
+| Local data bound forever to the first account | **Change**. One local profile per account, plus the anonymous one before the first sign-in |
+
+### Consequences
+
+- Quran references in the catalog and in custom dhikr documents use `ayah_start` and `ayah_end`, as STYLE's snake_case rule asks (the catalog's camelCase is renamed now, before more code reads it).
+- A phone learns that its account was deleted from `401 account_deleted` on refresh, and offers to remove that profile.
+
+- **Simpler state.** The server keeps four things per account: a head revision, one entity table, receipts for 90 days, and tag aliases. Phones keep an outbox, known versions and a feed position per profile.
+- **Reuse.** Goals (slice 4) and counts (slice 5) add entity types to the same queue. Counts will need their own merge rule on top of it, because whole-document versions would lose concurrent taps.
+- **Behaviour is fixed by fixtures.** The server runs `sync_receipts` and `sync_changes_feed`; Android and iOS run `outbox_enqueue`, `apply_changes` and `profile_switch`; all four run `tag_name_normalization` and `custom_dhikr_validity`.
+- **Stale references.** API STYLE §2, §8 and §9 still describe the frozen sync (resource endpoints for web writes, its transfer protocol, `basis_revision`). Once this ADR is accepted, they read as this queue.
+- **Wire naming.** References use the catalog's member names, which are snake_case (`ayah_start`, `ayah_end`) since 2026-10-28.
+
+### Evidence
+
+- `docs/slices/03b-custom-dhikrs-sync.md`
+- `contracts/sync/v1/` (README, `sync.schema.json`, fixtures)
+- `contracts/api/paths/sync.yaml`
+- `contracts/tools/check-sync-contract.mjs`
+
+### Supersedes
+
+ADR-2026-07-16 (Offline-first progress synchronization), ADR-2026-07-24 (Capability-gated dhikr tags in progress sync v1) and ADR-2026-09-04 (Browser companion actors) for the rebuild. They stay accepted for the frozen apps.
+
+Local profiles replace the account-binding rules those ADRs and ADR-2026-09-09 describe; where ADR-2026-10-28 (the mobile apps are complete without an account) says signing in binds local data, local profiles are how. How practice settings merge at the first sign-in (ADR-2026-09-09) is revisited in slice 3d.
+
 ## ADR-2026-10-28: Every generated ID is a UUIDv7
 
 Status: Accepted

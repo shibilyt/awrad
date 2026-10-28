@@ -131,15 +131,16 @@ Each slice goes contract → server → Android → iOS → web and is done only
 | later | Sign in with Apple and Google, together | [ ] |
 | DS | Design system: shared tokens (colour, type, spacing, shape, motion), components and their states, en/ar/ml and RTL rules, applied to Android, iOS and web. Tokens done 2026-10-27: colours, fonts, shape, spacing, type and motion (`contracts/design-tokens/v1/`, generated on every app with drift checks and raw-value guards; Android page transitions and screen depth, press feedback and content swaps live). Key components done 2026-10-27 (containers, buttons, inputs, navigation; `contracts/design-system/v1/components.md`), with a debug component gallery per app and one shared icon set (Material Symbols Rounded, `contracts/design-tokens/v1/icons/`). Feature components (goal row, collection tile, counter) come with their slices | [x] 2026-10-27 |
 | 3a | Dhikr catalog and library: one shared built-in catalog (`contracts/dhikr-catalog/v1/`), collections as data, search, dhikr detail by kind, built-in audio ([brief](slices/03a-dhikr-catalog.md)) | [x] 2026-10-27 |
-| 3b | Custom dhikrs: create, edit, delete on mobile, with tags and imported audio | [ ] |
-| 3c | Practice settings (proposed): day reset, week start, Hijri corrections, location and device context, the account policy API | [ ] |
-| 4 | Goals with sync: create, edit, evaluate; offline-first on mobile; the change queue and goal sync (option B, chosen 2026-10-27) | [ ] |
+| 3b | Custom dhikrs, tags and the change queue: create, edit, delete offline on phones and online on the web; sync when signed in ([brief](slices/03b-custom-dhikrs-sync.md)) | [x] 2026-10-28 |
+| 3c | Private audio upload for custom dhikrs (R2, signed in): 10 MB per file, 500 MB per account, MP3 and M4A/AAC | [ ] |
+| 3d | Practice settings (proposed): day reset, week start, Hijri corrections, location and device context, the account policy API | [ ] |
+| 4 | Goals: create, edit, evaluate; offline-first on mobile; synced through the change queue from 3b | [ ] |
 | 5 | Counting and progress sync | [ ] |
 | 6+ | Onboarding, wird, reminders, community / collective counters | [ ] |
 | later | Sequenced dhikr in one goal (e.g. Tasbih Fatimah 33/33/34): its own brief; relates to "Practice plan" | [ ] |
 | later | Carry-over / make-up rule: a missed amount moves to the next due day | [ ] |
 
-**Decided 2026-10-27:** dhikrs first (3a, 3b), then goals built together with sync (option B: the change queue and goal sync in one slice). Practice settings (3c) is still proposed.
+**Decided 2026-10-27:** dhikrs first (3a, 3b), then goals built together with sync (option B: the change queue and goal sync in one slice). Sync moved to 3b on 2026-10-28 (custom dhikrs and tags are its first users); practice settings (3d) is still proposed.
 
 **Revisit as slices progress:** the provisional judgment calls in [slice 1's fixtures](slices/01-domain-foundation.md#judgment-calls-accepted-provisionally-2026-10-25): partial-period required days, future counts ignored, `not_due` outside the period, anchor after start, one-time = cumulative. (The sixth, a missing streak-threshold value, was settled on 2026-10-26: such goals are invalid.) Re-check each one when slice 3 (goals) builds validation and screens.
 

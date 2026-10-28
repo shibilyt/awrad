@@ -2,6 +2,7 @@ import { createLink } from "@tanstack/react-router";
 import type { AnchorHTMLAttributes, ReactElement, Ref } from "react";
 import { SmallRoundIcon } from "./Button";
 import { cx } from "./cx";
+import { nameFromText } from "./nameFromText";
 import { ForwardIcon } from "./icons.gen";
 import { useFill } from "./Surface";
 
@@ -18,6 +19,7 @@ function TileAnchor({ ref, heading, count, className, ...props }: TileProps): Re
   return (
     <a
       ref={ref}
+      {...nameFromText(`${heading} ${count}`, props)}
       {...props}
       className={cx(
         "flex size-collection-tile shrink-0 flex-col justify-between rounded-tile p-md text-start",
@@ -42,6 +44,7 @@ function TileAnchor({ ref, heading, count, className, ...props }: TileProps): Re
  * (`useFill`), `tile` corners, the title over its count in `caption`, and a small round
  * `forward` arrow at the end (it flips in right-to-left layouts). The whole tile is one link to
  * the collection, so the arrow is drawn, not a separate button; the link's name is the title and
- * the count (a space between them, so they don't run together). Pressed, it dims like a card.
+ * the count (a space between them, so they don't run together), also set as its `aria-label`
+ * because both sit in spans. Pressed, it dims like a card.
  */
 export const CollectionTile = createLink(TileAnchor);

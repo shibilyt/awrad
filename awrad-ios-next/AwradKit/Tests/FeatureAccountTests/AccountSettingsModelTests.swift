@@ -14,11 +14,12 @@ struct AccountSettingsModelTests {
     let pixel = AccountSession.sample("Pixel 9", platform: .android, minutesAgo: 90)
     let browser = AccountSession.sample(nil, kind: .browser, platform: .web, minutesAgo: 600)
     let clock = TestClock()
+    let profiles = FakeLocalProfiles()
 
     func signedIn() async -> (AccountModel, FakeAccountService) {
         let service = FakeAccountService(signedInAs: "amina@example.com", sessions: [pixel, phone, browser])
         let clock = clock
-        let model = AccountModel(service: service, now: { clock.now })
+        let model = AccountModel(service: service, profiles: profiles, now: { clock.now })
         await model.send(.appeared)
         return (model, service)
     }

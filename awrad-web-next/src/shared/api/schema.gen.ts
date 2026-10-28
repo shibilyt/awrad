@@ -368,6 +368,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sync/commands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply a batch of commands
+         * @description Applies 1 to 100 commands in order and returns one receipt per command, in the same order. A command's outcome never undoes the others. The account's batches are serialized; every applied command takes the next revision.
+         *
+         *     **Batch versus command problems.** The batch is refused as a whole (`422 validation_failed`, nothing applied) only when it has 0 or more than 100 commands, or a command's envelope is wrong: `command_id` or `entity_id` not a UUID, an unknown `entity_type` or `op`, `base_version` not an integer in range, `document` missing on a put, present on a delete or not an object, or an unknown member (sync.schema.json `command_envelope`). Everything else is a per-command `rejected` receipt, including a document that doesn't match its schema below: the server checks each document itself, so one bad command never blocks a phone's queue.
+         *
+         *     Receipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null). Receipts are kept for 90 days.
+         *
+         *     `Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts the header and ignores it. Responses are `Cache-Control: no-store`.
+         */
+        post: operations["post_sync_commands"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sync/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the account's changes after a revision
+         * @description Each entity changed after `after`, in its latest state, ordered by revision, then `entity_type`, then `entity_id`. `after=0` is a full download and lists only active entities; `after>0` includes deletes (`state: deleted`, `document: null`), and a client ignores a delete for something it doesn't have. A page adds whole revisions until it holds at least `limit` changes, so a revision (a command and its cascades) is never split and a page can exceed `limit`. When more remain, `has_more` is true and `next_after` is the page's last revision; otherwise `next_after` is `head_revision`. An `after` above `head_revision` gets an empty page with `next_after = head_revision`. Each page is read from one consistent snapshot. Clients store `next_after` together with the changes, in one transaction. Responses are `Cache-Control: no-store`.
+         */
+        get: operations["list_sync_changes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -481,7 +527,7 @@ export interface components {
         };
         /** @description Invalid values are `validation_failed` with field codes `installation_id_invalid`, `device_name_invalid` or `platform_invalid` under `/device/...`. */
         DeviceInfo: {
-            /** @description Random UUIDv4 the app creates once per installation and keeps in secure storage. */
+            /** @description Random UUID the app creates once per installation and keeps in secure storage (UUIDv7 since ADR-2026-10-28). */
             installation_id: components["schemas"]["Uuid"];
             /** @description The device model, for example "Pixel 9" or "iPhone 16". Shown in the device list. */
             name: string;
@@ -514,6 +560,156 @@ export interface components {
             field: string;
             code: string;
             detail: string;
+        };
+        /**
+         * @description What a sync entity is (contracts/sync/v1/README.md).
+         * @enum {string}
+         */
+        SyncEntityType: "custom_dhikr" | "user_tag" | "dhikr_personal";
+        /**
+         * @description Per-entity version. 0 means the entity doesn't exist yet; every applied change adds one.
+         * @example 3
+         */
+        SyncVersion: number;
+        /** @description Non-blank text of at most 120 code points, or null. */
+        SyncOptionalTitleText: string | null;
+        /** @description Non-blank text of at most 5,000 code points, or null. */
+        SyncOptionalLongText: string | null;
+        /** @description A user's own dhikr (sync.schema.json `custom_dhikr_document`): the catalog dhikr shape without id (the entity_id is the ID), key, aliases, virtues or catalog tags. Lengths are Unicode code points. Invalid ones are rejected per command (custom_dhikr_validity.json). */
+        CustomDhikrDocument: {
+            /** @enum {string} */
+            kind: "quran" | "dhikr" | "dua" | "salawat" | "name_of_allah";
+            arabic: string;
+            /** @description Every key present, null when not given (STYLE §3); at least one is text. */
+            title: {
+                en: components["schemas"]["SyncOptionalTitleText"];
+                ar: components["schemas"]["SyncOptionalTitleText"];
+                ml: components["schemas"]["SyncOptionalTitleText"];
+            };
+            /** @description Arabic has none. */
+            transliteration: {
+                en: components["schemas"]["SyncOptionalLongText"];
+                ml: components["schemas"]["SyncOptionalLongText"];
+            };
+            translation: {
+                en: components["schemas"]["SyncOptionalLongText"];
+                ar: components["schemas"]["SyncOptionalLongText"];
+                ml: components["schemas"]["SyncOptionalLongText"];
+            };
+            /** @description null, or a recording kept only on the device that imported it (uploading is slice 3c). */
+            audio: null | {
+                /** @constant */
+                local_only: true;
+            };
+            references: unknown[];
+        };
+        /** @description A user's tag. `name` is trimmed, collapsed and NFC, with 1-40 graphemes and at most 128 UTF-8 bytes; `normalized_name` is its case fold (tag_name_normalization.json). The server recomputes it. */
+        UserTagDocument: {
+            name: string;
+            normalized_name: string;
+        };
+        /** @description A user's own data about one dhikr; its entity_id is the dhikr's ID, built-in or custom. Clients clear tags with an empty list and never delete it. */
+        DhikrPersonalDocument: {
+            tag_ids: components["schemas"]["Uuid"][];
+        };
+        /** @description The entity's whole document; which one depends on entity_type. */
+        SyncDocument: components["schemas"]["CustomDhikrDocument"] | components["schemas"]["UserTagDocument"] | components["schemas"]["DhikrPersonalDocument"];
+        /** @description One change. `put` creates (base_version 0) or replaces the whole document; `delete` makes a final tombstone. command_id is a new UUIDv7 per command. */
+        SyncCommand: {
+            command_id: components["schemas"]["Uuid"];
+            entity_type: components["schemas"]["SyncEntityType"];
+            entity_id: components["schemas"]["Uuid"];
+            /** @constant */
+            op: "put";
+            base_version: components["schemas"]["SyncVersion"];
+            document: components["schemas"]["SyncDocument"];
+        } | {
+            command_id: components["schemas"]["Uuid"];
+            entity_type: components["schemas"]["SyncEntityType"];
+            entity_id: components["schemas"]["Uuid"];
+            /** @constant */
+            op: "delete";
+            base_version: components["schemas"]["SyncVersion"];
+        };
+        /** @description The server's copy of a command's entity. document is null when deleted. */
+        SyncCurrent: {
+            version: components["schemas"]["SyncVersion"];
+            /** @enum {string} */
+            state: "active" | "deleted";
+            document: components["schemas"]["SyncDocument"] | null;
+        };
+        SyncFieldError: {
+            /** @description JSON Pointer into the command, for example /document/title/en. */
+            field: string;
+            /**
+             * @description `range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its ayah_start (reported on ayah_end).
+             * @enum {string}
+             */
+            code: "required" | "blank" | "too_long" | "too_many" | "duplicate" | "not_allowed" | "invalid" | "mismatch" | "not_found" | "range";
+        };
+        /** @description An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal a user_tag delete removed the tag from (active), or the dhikr_personal of a deleted custom_dhikr (deleted). */
+        SyncCascadedChange: {
+            entity_type: components["schemas"]["SyncEntityType"];
+            entity_id: components["schemas"]["Uuid"];
+            /** @enum {string} */
+            state: "active" | "deleted";
+            version: components["schemas"]["SyncVersion"];
+            revision: components["schemas"]["Revision"];
+        };
+        SyncAppliedReceipt: {
+            command_id: components["schemas"]["Uuid"];
+            /** @constant */
+            status: "applied";
+            version: components["schemas"]["SyncVersion"];
+            revision: components["schemas"]["Revision"];
+            /** @description An array exactly when the command is a user_tag or custom_dhikr delete: every other entity the server changed at the same revision, ordered by entity_type, then entity_id, and empty when nothing cascaded. Phones set those entities' known versions from it straight away, so the next edit doesn't conflict. null for every other command. */
+            cascaded: components["schemas"]["SyncCascadedChange"][] | null;
+        };
+        SyncConflictReceipt: {
+            command_id: components["schemas"]["Uuid"];
+            /** @constant */
+            status: "conflict";
+            current: components["schemas"]["SyncCurrent"];
+        };
+        SyncMergedReceipt: {
+            command_id: components["schemas"]["Uuid"];
+            /** @constant */
+            status: "merged";
+            merged_into: components["schemas"]["Uuid"];
+            current: components["schemas"]["SyncCurrent"];
+        };
+        SyncGoneReceipt: {
+            command_id: components["schemas"]["Uuid"];
+            /** @constant */
+            status: "gone";
+        };
+        SyncRejectedReceipt: {
+            command_id: components["schemas"]["Uuid"];
+            /** @constant */
+            status: "rejected";
+            /** @enum {string} */
+            code: "document_invalid" | "document_too_large" | "custom_dhikr_limit_reached" | "tag_limit_reached" | "tag_name_taken" | "tag_not_found" | "dhikr_not_found" | "entity_not_found" | "delete_not_allowed" | "command_id_reused";
+            fields: components["schemas"]["SyncFieldError"][];
+            /** @description The server's copy to undo to, or null when it has none. */
+            current: components["schemas"]["SyncCurrent"] | null;
+        };
+        /** @description A receipt as first decided. */
+        SyncOutcome: components["schemas"]["SyncAppliedReceipt"] | components["schemas"]["SyncConflictReceipt"] | components["schemas"]["SyncMergedReceipt"] | components["schemas"]["SyncGoneReceipt"] | components["schemas"]["SyncRejectedReceipt"];
+        SyncReceipt: components["schemas"]["SyncAppliedReceipt"] | components["schemas"]["SyncConflictReceipt"] | components["schemas"]["SyncMergedReceipt"] | components["schemas"]["SyncGoneReceipt"] | components["schemas"]["SyncRejectedReceipt"] | {
+            command_id: components["schemas"]["Uuid"];
+            /** @constant */
+            status: "duplicate";
+            original: components["schemas"]["SyncOutcome"];
+        };
+        /** @description An entity's latest state. document is null when deleted. */
+        SyncChange: {
+            entity_type: components["schemas"]["SyncEntityType"];
+            entity_id: components["schemas"]["Uuid"];
+            /** @enum {string} */
+            state: "active" | "deleted";
+            version: components["schemas"]["SyncVersion"];
+            revision: components["schemas"]["Revision"];
+            document: components["schemas"]["SyncDocument"] | null;
         };
     };
     responses: {
@@ -795,6 +991,27 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
+        /** @description `account_mismatch`: X-Awrad-Account names a different account from the one signed in. Nothing was read or written. A phone stops syncing that profile until the right account signs in. */
+        AccountMismatch: {
+            headers: {
+                "Cache-Control": components["headers"]["CacheControl"];
+                "x-request-id": components["headers"]["RequestId"];
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "type": "urn:awrad:problem:account_mismatch",
+                 *       "title": "Account mismatch",
+                 *       "status": 409,
+                 *       "code": "account_mismatch",
+                 *       "detail": "X-Awrad-Account is not the signed-in account",
+                 *       "errors": []
+                 *     }
+                 */
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description Rate limited. */
         TooManyRequests: {
             headers: {
@@ -819,14 +1036,16 @@ export interface components {
         };
     };
     parameters: {
-        /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+        /** @description The account this request's data belongs to: on a phone, the active local profile's account; on the web, the signed-in account. If it isn't the authenticated account, the request is refused with `409 account_mismatch` and nothing is read or written. Missing or not a UUID is `400 malformed_request`. */
+        AwradAccount: components["schemas"]["Uuid"];
+        /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
         IdempotencyKey: components["schemas"]["Uuid"];
         /**
          * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
          * @example ar
          */
         AcceptLanguage: string;
-        /** @description UUIDv4, required on this operation. A retry with the same key gets the same result. */
+        /** @description A UUID (clients generate UUIDv7), required on this operation. A retry with the same key gets the same result. */
         RequiredIdempotencyKey: components["schemas"]["Uuid"];
         Cursor: components["schemas"]["Cursor"];
         /** @description Page size. Each list operation documents its own default and maximum. */
@@ -858,7 +1077,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -894,7 +1113,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
             };
             path?: never;
@@ -925,7 +1144,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -957,7 +1176,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -989,7 +1208,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
             };
             path?: never;
@@ -1154,7 +1373,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
             };
             path?: never;
@@ -1171,7 +1390,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1209,7 +1428,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1273,7 +1492,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1367,7 +1586,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1403,7 +1622,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1474,7 +1693,7 @@ export interface operations {
         parameters: {
             query?: never;
             header: {
-                /** @description UUIDv4, required on this operation. A retry with the same key gets the same result. */
+                /** @description A UUID (clients generate UUIDv7), required on this operation. A retry with the same key gets the same result. */
                 "Idempotency-Key": components["parameters"]["RequiredIdempotencyKey"];
             };
             path?: never;
@@ -1493,7 +1712,7 @@ export interface operations {
         responses: {
             200: components["responses"]["DeviceSessionGranted"];
             400: components["responses"]["BadRequest"];
-            /** @description `refresh_token_invalid` (unknown, expired, or its session ended) or `refresh_reuse_detected` (the session is now revoked). Either way the device is signed out. */
+            /** @description `refresh_token_invalid` (unknown, expired, or its session ended), `refresh_reuse_detected` (the session is now revoked) or `account_deleted` (the token belonged to an account that no longer exists; only the holder of a once-valid refresh token learns this, so it reveals nothing to others). Either way the device is signed out. On `account_deleted` a phone offers to remove that account's local profile (contracts/sync/v1, `profile_switch`). */
             401: {
                 headers: {
                     "Cache-Control": components["headers"]["CacheControl"];
@@ -1522,7 +1741,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
             };
             path?: never;
@@ -1576,7 +1795,7 @@ export interface operations {
         parameters: {
             query?: never;
             header?: {
-                /** @description UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
                 "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
                 /**
                  * @description Language for any email this request sends: `en`, `ar` or `ml` (the first supported one wins; default `en`). Clients send the app's current language.
@@ -1651,6 +1870,420 @@ export interface operations {
             204: components["responses"]["NoContent"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["CsrfTokenInvalid"];
+        };
+    };
+    post_sync_commands: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The account this request's data belongs to: on a phone, the active local profile's account; on the web, the signed-in account. If it isn't the authenticated account, the request is refused with `409 account_mismatch` and nothing is read or written. Missing or not a UUID is `400 malformed_request`. */
+                "X-Awrad-Account": components["parameters"]["AwradAccount"];
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "commands": [
+                 *         {
+                 *           "command_id": "0192f0c0-0000-7000-8000-000000000001",
+                 *           "entity_type": "custom_dhikr",
+                 *           "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+                 *           "op": "put",
+                 *           "base_version": 0,
+                 *           "document": {
+                 *             "kind": "dua",
+                 *             "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+                 *             "title": {
+                 *               "en": null,
+                 *               "ar": null,
+                 *               "ml": "ഹസ്ബിയല്ലാഹ്"
+                 *             },
+                 *             "transliteration": {
+                 *               "en": null,
+                 *               "ml": null
+                 *             },
+                 *             "translation": {
+                 *               "en": "Allah is sufficient for me; there is no god but Him.",
+                 *               "ar": null,
+                 *               "ml": null
+                 *             },
+                 *             "audio": {
+                 *               "local_only": true
+                 *             },
+                 *             "references": [
+                 *               {
+                 *                 "id": "quran",
+                 *                 "type": "quran",
+                 *                 "surah": 9,
+                 *                 "ayah_start": 129,
+                 *                 "ayah_end": 129
+                 *               }
+                 *             ]
+                 *           }
+                 *         },
+                 *         {
+                 *           "command_id": "0192f0c0-0000-7000-8000-000000000002",
+                 *           "entity_type": "user_tag",
+                 *           "entity_id": "0192f0a0-0000-7000-8000-000000000003",
+                 *           "op": "put",
+                 *           "base_version": 0,
+                 *           "document": {
+                 *             "name": "MORNING",
+                 *             "normalized_name": "morning"
+                 *           }
+                 *         },
+                 *         {
+                 *           "command_id": "0192f0c0-0000-7000-8000-000000000003",
+                 *           "entity_type": "dhikr_personal",
+                 *           "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                 *           "op": "put",
+                 *           "base_version": 1,
+                 *           "document": {
+                 *             "tag_ids": [
+                 *               "0192f0a0-0000-7000-8000-000000000003",
+                 *               "0192f0a0-0000-7000-8000-000000000002"
+                 *             ]
+                 *           }
+                 *         },
+                 *         {
+                 *           "command_id": "0192f0c0-0000-7000-8000-000000000004",
+                 *           "entity_type": "custom_dhikr",
+                 *           "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+                 *           "op": "delete",
+                 *           "base_version": 2
+                 *         },
+                 *         {
+                 *           "command_id": "0192f0c0-0000-7000-8000-000000000005",
+                 *           "entity_type": "user_tag",
+                 *           "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+                 *           "op": "delete",
+                 *           "base_version": 2
+                 *         },
+                 *         {
+                 *           "command_id": "0192f0c0-0000-7000-8000-000000000006",
+                 *           "entity_type": "user_tag",
+                 *           "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+                 *           "op": "put",
+                 *           "base_version": 0,
+                 *           "document": {
+                 *             "name": "Night",
+                 *             "normalized_name": "Night"
+                 *           }
+                 *         },
+                 *         {
+                 *           "command_id": "0192f0c0-0000-7000-8000-000000000007",
+                 *           "entity_type": "user_tag",
+                 *           "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+                 *           "op": "delete",
+                 *           "base_version": 2
+                 *         },
+                 *         {
+                 *           "command_id": "0192f0c0-0000-7000-8000-000000000001",
+                 *           "entity_type": "custom_dhikr",
+                 *           "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+                 *           "op": "put",
+                 *           "base_version": 0,
+                 *           "document": {
+                 *             "kind": "dua",
+                 *             "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+                 *             "title": {
+                 *               "en": null,
+                 *               "ar": null,
+                 *               "ml": "ഹസ്ബിയല്ലാഹ്"
+                 *             },
+                 *             "transliteration": {
+                 *               "en": null,
+                 *               "ml": null
+                 *             },
+                 *             "translation": {
+                 *               "en": "Allah is sufficient for me; there is no god but Him.",
+                 *               "ar": null,
+                 *               "ml": null
+                 *             },
+                 *             "audio": {
+                 *               "local_only": true
+                 *             },
+                 *             "references": [
+                 *               {
+                 *                 "id": "quran",
+                 *                 "type": "quran",
+                 *                 "surah": 9,
+                 *                 "ayah_start": 129,
+                 *                 "ayah_end": 129
+                 *               }
+                 *             ]
+                 *           }
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                "application/json": {
+                    commands: components["schemas"]["SyncCommand"][];
+                };
+            };
+        };
+        responses: {
+            /** @description One receipt per command, in order, and the account's head revision after the batch. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "receipts": [
+                     *         {
+                     *           "command_id": "0192f0c0-0000-7000-8000-000000000001",
+                     *           "status": "applied",
+                     *           "version": 1,
+                     *           "revision": 11,
+                     *           "cascaded": null
+                     *         },
+                     *         {
+                     *           "command_id": "0192f0c0-0000-7000-8000-000000000002",
+                     *           "status": "merged",
+                     *           "merged_into": "0192f0a0-0000-7000-8000-000000000001",
+                     *           "current": {
+                     *             "version": 1,
+                     *             "state": "active",
+                     *             "document": {
+                     *               "name": "Morning",
+                     *               "normalized_name": "morning"
+                     *             }
+                     *           }
+                     *         },
+                     *         {
+                     *           "command_id": "0192f0c0-0000-7000-8000-000000000003",
+                     *           "status": "applied",
+                     *           "version": 2,
+                     *           "revision": 12,
+                     *           "cascaded": null
+                     *         },
+                     *         {
+                     *           "command_id": "0192f0c0-0000-7000-8000-000000000004",
+                     *           "status": "conflict",
+                     *           "current": {
+                     *             "version": 3,
+                     *             "state": "active",
+                     *             "document": {
+                     *               "kind": "dhikr",
+                     *               "arabic": "سُبْحَانَ ٱللَّهِ",
+                     *               "title": {
+                     *                 "en": "Subhanallah",
+                     *                 "ar": null,
+                     *                 "ml": null
+                     *               },
+                     *               "transliteration": {
+                     *                 "en": "Subhanallah",
+                     *                 "ml": null
+                     *               },
+                     *               "translation": {
+                     *                 "en": "Glory be to Allah",
+                     *                 "ar": null,
+                     *                 "ml": null
+                     *               },
+                     *               "audio": null,
+                     *               "references": []
+                     *             }
+                     *           }
+                     *         },
+                     *         {
+                     *           "command_id": "0192f0c0-0000-7000-8000-000000000005",
+                     *           "status": "gone"
+                     *         },
+                     *         {
+                     *           "command_id": "0192f0c0-0000-7000-8000-000000000006",
+                     *           "status": "rejected",
+                     *           "code": "document_invalid",
+                     *           "fields": [
+                     *             {
+                     *               "field": "/document/normalized_name",
+                     *               "code": "mismatch"
+                     *             }
+                     *           ],
+                     *           "current": null
+                     *         },
+                     *         {
+                     *           "command_id": "0192f0c0-0000-7000-8000-000000000007",
+                     *           "status": "applied",
+                     *           "version": 3,
+                     *           "revision": 13,
+                     *           "cascaded": [
+                     *             {
+                     *               "entity_type": "dhikr_personal",
+                     *               "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                     *               "state": "active",
+                     *               "version": 3,
+                     *               "revision": 13
+                     *             }
+                     *           ]
+                     *         },
+                     *         {
+                     *           "command_id": "0192f0c0-0000-7000-8000-000000000001",
+                     *           "status": "duplicate",
+                     *           "original": {
+                     *             "command_id": "0192f0c0-0000-7000-8000-000000000001",
+                     *             "status": "applied",
+                     *             "version": 1,
+                     *             "revision": 11,
+                     *             "cascaded": null
+                     *           }
+                     *         }
+                     *       ],
+                     *       "head_revision": 13
+                     *     }
+                     */
+                    "application/json": {
+                        receipts: components["schemas"]["SyncReceipt"][];
+                        head_revision: components["schemas"]["Revision"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["CsrfTokenInvalid"];
+            409: components["responses"]["AccountMismatch"];
+            /** @description `validation_failed`: the batch is malformed, and nothing was applied. Field codes: `batch_size_invalid` on `/commands` (0 or more than 100 commands); `command_malformed` on `/commands/{i}` or a member of it (the command's envelope is wrong). Problems inside a document are `rejected` receipts, never this. */
+            422: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "urn:awrad:problem:validation_failed",
+                     *       "title": "Request validation failed",
+                     *       "status": 422,
+                     *       "code": "validation_failed",
+                     *       "detail": "a batch holds 1 to 100 commands",
+                     *       "errors": [
+                     *         {
+                     *           "field": "/commands",
+                     *           "code": "batch_size_invalid",
+                     *           "detail": "101 commands; the maximum is 100"
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    list_sync_changes: {
+        parameters: {
+            query?: {
+                /** @description Return changes after this revision: a decimal integer from 0 to 2^53 - 1 (STYLE §5), normally the last `next_after`. Default 0 (full download). Anything else is `400 malformed_request`. */
+                after?: number;
+                /** @description Page size. Default 200, maximum 500. Anything outside is `400 malformed_request`. */
+                limit?: number;
+            };
+            header: {
+                /** @description The account this request's data belongs to: on a phone, the active local profile's account; on the web, the signed-in account. If it isn't the authenticated account, the request is refused with `409 account_mismatch` and nothing is read or written. Missing or not a UUID is `400 malformed_request`. */
+                "X-Awrad-Account": components["parameters"]["AwradAccount"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of changes. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "changes": [
+                     *         {
+                     *           "entity_type": "custom_dhikr",
+                     *           "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+                     *           "state": "active",
+                     *           "version": 1,
+                     *           "revision": 11,
+                     *           "document": {
+                     *             "kind": "dua",
+                     *             "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+                     *             "title": {
+                     *               "en": null,
+                     *               "ar": null,
+                     *               "ml": "ഹസ്ബിയല്ലാഹ്"
+                     *             },
+                     *             "transliteration": {
+                     *               "en": null,
+                     *               "ml": null
+                     *             },
+                     *             "translation": {
+                     *               "en": "Allah is sufficient for me; there is no god but Him.",
+                     *               "ar": null,
+                     *               "ml": null
+                     *             },
+                     *             "audio": {
+                     *               "local_only": true
+                     *             },
+                     *             "references": [
+                     *               {
+                     *                 "id": "quran",
+                     *                 "type": "quran",
+                     *                 "surah": 9,
+                     *                 "ayah_start": 129,
+                     *                 "ayah_end": 129
+                     *               }
+                     *             ]
+                     *           }
+                     *         },
+                     *         {
+                     *           "entity_type": "dhikr_personal",
+                     *           "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                     *           "state": "active",
+                     *           "version": 2,
+                     *           "revision": 12,
+                     *           "document": {
+                     *             "tag_ids": [
+                     *               "0192f0a0-0000-7000-8000-000000000001",
+                     *               "0192f0a0-0000-7000-8000-000000000002"
+                     *             ]
+                     *           }
+                     *         },
+                     *         {
+                     *           "entity_type": "user_tag",
+                     *           "entity_id": "0192f0a0-0000-7000-8000-000000000007",
+                     *           "state": "deleted",
+                     *           "version": 3,
+                     *           "revision": 13,
+                     *           "document": null
+                     *         }
+                     *       ],
+                     *       "next_after": 13,
+                     *       "has_more": false,
+                     *       "head_revision": 13
+                     *     }
+                     */
+                    "application/json": {
+                        changes: components["schemas"]["SyncChange"][];
+                        next_after: components["schemas"]["Revision"];
+                        has_more: boolean;
+                        head_revision: components["schemas"]["Revision"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            409: components["responses"]["AccountMismatch"];
+            429: components["responses"]["TooManyRequests"];
         };
     };
 }

@@ -1,8 +1,7 @@
 import type { ReactElement, ReactNode } from "react";
 import { Form } from "react-aria-components";
 import { Button } from "@/shared/ui/Button";
-import { ErrorIcon } from "@/shared/ui/icons.gen";
-import { useFill } from "@/shared/ui/Surface";
+import { FormAlert } from "@/shared/ui/FormAlert";
 
 /** The frame every account screen shares: a heading, an optional intro, the content, then links. */
 export function AccountScreen({
@@ -26,38 +25,8 @@ export function AccountScreen({
   );
 }
 
-/**
- * A request-level message, filled (no outline) in `error` text beside the decorative `error` icon.
- * `role="alert"` announces it when it appears.
- */
-export function FormAlert({ message }: { message: string | null }): ReactElement | null {
-  const fill = useFill();
-  if (message === null) return null;
-  return (
-    <p
-      key={message}
-      role="alert"
-      className={`content-swap flex items-start gap-inline-gap rounded-field px-lg py-md text-body-small text-error ${fill}`}
-    >
-      <ErrorIcon size="small" />
-      <span className="min-w-0 flex-1">{message}</span>
-    </p>
-  );
-}
-
-/** A confirmation (code sent, email verified). `role="status"` announces it politely. */
-export function FormNotice({ message }: { message: string | null }): ReactElement | null {
-  if (message === null) return null;
-  return (
-    <p
-      key={message}
-      role="status"
-      className="content-swap rounded-field bg-primary-container px-lg py-md text-body-small text-on-primary-container"
-    >
-      {message}
-    </p>
-  );
-}
+// The form messages are shared with the Library (slice 3b).
+export { FormAlert, FormNotice } from "@/shared/ui/FormAlert";
 
 /**
  * An account form. Validation is React Aria's ARIA mode: no browser bubbles,

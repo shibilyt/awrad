@@ -1,5 +1,19 @@
 import SwiftUI
 
+#if canImport(UIKit)
+    import UIKit
+#endif
+
+/// Ends text editing: the keyboard goes and no field keeps focus. Call it before opening a sheet
+/// over a form. Otherwise, when the sheet closes, UIKit gives focus back to the field the user last
+/// typed in. The keyboard returns and the form scrolls to that field, away from the button the user
+/// was about to tap (the editor's Save after choosing tags).
+@MainActor public func awradEndEditing() {
+    #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    #endif
+}
+
 extension View {
     /// The bottom sheet: the native sheet (it follows the finger and settles itself) with `sheet`
     /// corners, a `surfaceBar` fill and the drag handle (`outline`, `tabIndicator` shape) on top.
@@ -76,6 +90,10 @@ public struct AwradDialog<Actions: View>: View {
                 Text(message)
                     .awradTextStyle(.body)
                     .foregroundStyle(AwradColors.onSurfaceVariant)
+                    // An email or name in the message is plain text: the localized string's
+                    // Markdown would otherwise turn it into a tappable, tinted link.
+                    .tint(AwradColors.onSurfaceVariant)
+                    .environment(\.openURL, OpenURLAction { _ in .discarded })
             }
             HStack(spacing: AwradSpacing.sm) {
                 Spacer(minLength: AwradSpacing.none)

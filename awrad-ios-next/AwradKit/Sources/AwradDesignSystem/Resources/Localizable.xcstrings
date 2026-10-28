@@ -254,6 +254,52 @@
         }
       }
     },
+    "gallery.change_refused" : {
+      "comment" : "Sample text in the debug-only component gallery: the \"Change refused\" dialog's title.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رُفض التغيير"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Change refused"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മാറ്റം നിരസിച്ചു"
+          }
+        }
+      }
+    },
+    "gallery.change_refused_reason" : {
+      "comment" : "Sample text in the debug-only component gallery: the \"Change refused\" dialog's reason.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يوجد وسم آخر بهذا الاسم."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Another tag already has that name."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ആ പേരിൽ മറ്റൊരു ടാഗ് ഇതിനകം ഉണ്ട്."
+          }
+        }
+      }
+    },
     "gallery.community" : {
       "comment" : "Sample text in the debug-only component gallery.",
       "localizations" : {
@@ -273,6 +319,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "കമ്മ്യൂണിറ്റി"
+          }
+        }
+      }
+    },
+    "gallery.conflict" : {
+      "comment" : "Sample text in the debug-only component gallery: the conflict banner's message.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم التغيير على جهاز آخر"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changed on another device"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മറ്റൊരു ഉപകരണത്തിൽ മാറ്റി"
           }
         }
       }
@@ -705,6 +774,29 @@
         }
       }
     },
+    "gallery.keep_mine" : {
+      "comment" : "Sample text in the debug-only component gallery: a conflict banner button.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احتفظ بنسختي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep mine"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "എന്റേത് നിലനിർത്തുക"
+          }
+        }
+      }
+    },
     "gallery.library" : {
       "comment" : "Sample text in the debug-only component gallery.",
       "localizations" : {
@@ -839,6 +931,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "അറിയിപ്പുകൾ"
+          }
+        }
+      }
+    },
+    "gallery.ok" : {
+      "comment" : "Sample text in the debug-only component gallery: a dialog's only button.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حسنًا"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ശരി"
           }
         }
       }
@@ -1004,6 +1119,29 @@
         }
       }
     },
+    "gallery.required" : {
+      "comment" : "Sample text in the debug-only component gallery: a field's error message.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل النص العربي."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the Arabic text."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അറബി വാചകം നൽകുക."
+          }
+        }
+      }
+    },
     "gallery.rtl" : {
       "comment" : "Sample text in the debug-only component gallery.",
       "localizations" : {
@@ -1165,6 +1303,75 @@
         }
       }
     },
+    "gallery.tag_evening" : {
+      "comment" : "Sample text in the debug-only component gallery: a user's tag on a filter chip.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المساء"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Evening"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സന്ധ്യ"
+          }
+        }
+      }
+    },
+    "gallery.tag_morning" : {
+      "comment" : "Sample text in the debug-only component gallery: a user's tag on a filter chip.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصباح"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Morning"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പ്രഭാതം"
+          }
+        }
+      }
+    },
+    "gallery.tag_travel" : {
+      "comment" : "Sample text in the debug-only component gallery: a user's tag on a filter chip.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السفر"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Travel"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "യാത്ര"
+          }
+        }
+      }
+    },
     "gallery.title" : {
       "comment" : "Sample text in the debug-only component gallery.",
       "localizations" : {
@@ -1211,6 +1418,52 @@
         }
       }
     },
+    "gallery.translation" : {
+      "comment" : "Sample text in the debug-only component gallery: a multi-line field's label.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الترجمة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Translation"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പരിഭാഷ"
+          }
+        }
+      }
+    },
+    "gallery.translation_sample" : {
+      "comment" : "Sample text in the debug-only component gallery: a multi-line field's text, long enough to wrap.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سبحان الله وبحمده، سبحان الله العظيم. من قالها مئة مرة في اليوم حُطّت خطاياه."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glory be to Allah and praise be to Him, glory be to Allah the Magnificent. Whoever says it a hundred times a day has their sins wiped away."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അല്ലാഹു പരിശുദ്ധനാണ്, അവന് സ്തുതി; മഹാനായ അല്ലാഹു പരിശുദ്ധനാണ്. ദിവസം നൂറു തവണ ഇത് പറയുന്നവരുടെ പാപങ്ങൾ മായ്ക്കപ്പെടും."
+          }
+        }
+      }
+    },
     "gallery.upcoming" : {
       "comment" : "Sample text in the debug-only component gallery.",
       "localizations" : {
@@ -1234,6 +1487,29 @@
         }
       }
     },
+    "gallery.use_theirs" : {
+      "comment" : "Sample text in the debug-only component gallery: a conflict banner button.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدم النسخة الأخرى"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use theirs"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മറ്റേത് ഉപയോഗിക്കുക"
+          }
+        }
+      }
+    },
     "gallery.view_all" : {
       "comment" : "Sample text in the debug-only component gallery.",
       "localizations" : {
@@ -1253,6 +1529,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "എല്ലാം കാണുക"
+          }
+        }
+      }
+    },
+    "gallery.your_dhikrs" : {
+      "comment" : "Sample text in the debug-only component gallery: the \"Your dhikrs\" collection tile's title.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذكارك"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your dhikrs"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങളുടെ ദിക്റുകൾ"
           }
         }
       }

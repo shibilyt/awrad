@@ -4,13 +4,10 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.room.Room
 import app.awrad.core.data.account.NetworkAccountRepository
 import app.awrad.core.data.account.NetworkAccountSettingsRepository
 import app.awrad.core.data.audio.ExoAudioPlayerFactory
 import app.awrad.core.data.dhikr.BundledDhikrCatalogSource
-import app.awrad.core.database.AwradDatabase
-import app.awrad.core.database.GoalDao
 import app.awrad.core.domain.UuidV7
 import app.awrad.core.domain.account.AccountRepository
 import app.awrad.core.domain.account.AccountSettingsRepository
@@ -54,14 +51,6 @@ internal interface DataModule {
     fun audioPlayerFactory(adapter: ExoAudioPlayerFactory): AudioPlayerFactory
 
     companion object {
-        @Provides
-        @Singleton
-        fun database(@ApplicationContext context: Context): AwradDatabase =
-            Room.databaseBuilder(context, AwradDatabase::class.java, AwradDatabase.NAME).build()
-
-        @Provides
-        fun goalDao(database: AwradDatabase): GoalDao = database.goalDao()
-
         @Provides
         @Singleton
         fun preferences(@ApplicationContext context: Context): DataStore<Preferences> = context.awradPreferences

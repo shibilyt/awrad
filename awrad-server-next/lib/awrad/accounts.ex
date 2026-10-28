@@ -21,6 +21,7 @@ defmodule Awrad.Accounts do
   alias Awrad.Accounts.{
     AccountSessions,
     BrowserSessions,
+    DeletedRefreshToken,
     DeviceSession,
     DeviceSessions,
     EmailCode,
@@ -142,7 +143,11 @@ defmodule Awrad.Accounts do
   @doc "Rotates a refresh token. `key` is the request's required `Idempotency-Key`."
   @spec refresh_device_session(String.t(), Ecto.UUID.t()) ::
           {:ok, Grant.t()}
-          | {:error, :refresh_token_invalid | :refresh_reuse_detected | :idempotency_key_reused}
+          | {:error,
+             :refresh_token_invalid
+             | :refresh_reuse_detected
+             | :idempotency_key_reused
+             | :account_deleted}
   defdelegate refresh_device_session(refresh_token, key), to: DeviceSessions, as: :refresh
 
   @doc "Revokes the session owning a refresh token. Always `:ok`."
@@ -215,7 +220,11 @@ defmodule Awrad.Accounts do
 
   ## Housekeeping
 
-  @doc "Deletes expired email codes and old rate-limit windows. Returns how many rows went."
+  @doc """
+  Deletes expired email codes, old rate-limit windows and expired deleted-account
+  refresh tokens. Returns how many rows went.
+  """
   @spec prune(DateTime.t()) :: non_neg_integer()
-  def prune(now), do: EmailCode.prune(now) + RateLimiter.prune(now)
+  def prune(now),
+    do: EmailCode.prune(now) + RateLimiter.prune(now) + DeletedRefreshToken.prune(now)
 end

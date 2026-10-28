@@ -7,8 +7,8 @@ public struct AccountRoute: View {
     @State private var model: AccountModel
     private let onClose: () -> Void
 
-    public init(service: any AccountService, onClose: @escaping () -> Void) {
-        _model = State(initialValue: AccountModel(service: service))
+    public init(service: any AccountService, profiles: any LocalProfiles, onClose: @escaping () -> Void) {
+        _model = State(initialValue: AccountModel(service: service, profiles: profiles))
         self.onClose = onClose
     }
 
@@ -18,6 +18,7 @@ public struct AccountRoute: View {
             if !model.apply(action) { Task { await model.send(action) } }
         }
         .task { await model.send(.appeared) }
+        .task { await model.observeProfiles() }
     }
 }
 
@@ -45,6 +46,7 @@ struct AccountScreen: View {
         // The back button and toolbar items are accent text, which reads on light and dark
         // backgrounds (the primary green doesn't on dark).
         .tint(AwradColors.accent)
+        .modifier(ProfileQuestionDialog(question: state.profileQuestion, send: send))
     }
 
     /// Loading, sign in and the overview swap in place with the `contentSwap` fade.
@@ -76,6 +78,7 @@ struct AccountScreen: View {
         case .changeEmail: ChangeEmailForm(state: state, send: send)
         case .confirmEmailChange: ConfirmEmailChangeForm(state: state, send: send)
         case .deleteAccount: DeleteAccountForm(state: state, send: send)
+        case .profiles: ProfilesView(state: state, send: send)
         }
     }
 }

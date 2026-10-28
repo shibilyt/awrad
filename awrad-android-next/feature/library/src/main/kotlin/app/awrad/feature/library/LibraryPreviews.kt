@@ -93,6 +93,7 @@ private fun DhikrDetailPreview() {
                 playback = PlaybackState(PlaybackStatus.PLAYING, positionMs = 4_000, durationMs = 12_000),
             ),
             onAction = {},
+            onEdit = {},
             onBack = {},
         )
     }

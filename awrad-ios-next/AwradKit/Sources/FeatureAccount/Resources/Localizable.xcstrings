@@ -617,6 +617,190 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "കുറഞ്ഞത് %lld പ്രതീകങ്ങൾ ഉപയോഗിക്കുക. സ്‌പേസുകളും ഇമോജികളും ഏത് ഭാഷയിലെ അക്ഷരങ്ങളും എണ്ണും." } }
       }
     },
+    "account.profiles.account_deleted" : {
+      "comment" : "Marks a kept profile whose account no longer exists: it stays on this phone, usable offline, and never syncs.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الحساب محذوف" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Account deleted" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട് ഇല്ലാതാക്കി" } }
+      }
+    },
+    "account.profiles.add_data.add" : {
+      "comment" : "Dialog button: keep this phone's data and add it to the account.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أضِف إلى حسابي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add to my account" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "എന്റെ അക്കൗണ്ടിലേക്ക് ചേർക്കുക" } }
+      }
+    },
+    "account.profiles.add_data.erase" : {
+      "comment" : "Dialog button: delete this phone's data made before signing in.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "مسح" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Erase" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മായ്ക്കുക" } }
+      }
+    },
+    "account.profiles.add_data.message %@" : {
+      "comment" : "Dialog body. The argument is the account's email.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أنشأتَ هذه قبل تسجيل الدخول. أضفها إلى الحساب %@، أو امسحها. المسح يحذفها من هذا الهاتف نهائيًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "You made these before signing in. Add them to the account %@, or erase them. Erasing deletes them from this phone for good." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഇൻ ചെയ്യുന്നതിന് മുമ്പ് നിങ്ങൾ ഇവ ഉണ്ടാക്കിയതാണ്. ഇവ %@ എന്ന അക്കൗണ്ടിലേക്ക് ചേർക്കുക, അല്ലെങ്കിൽ മായ്ക്കുക. മായ്ച്ചാൽ ഈ ഫോണിൽ നിന്ന് എന്നെന്നേക്കുമായി ഇല്ലാതാകും." } }
+      }
+    },
+    "account.profiles.add_data.title" : {
+      "comment" : "Dialog title after the first sign-in on a phone that holds dhikrs and tags made before it.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "هل تريد إضافة أذكار هذا الهاتف ووسومه إلى حسابك؟" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Add this phone's dhikrs and tags to your account?" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ഫോണിലെ ദിക്റുകളും ടാഗുകളും നിങ്ങളുടെ അക്കൗണ്ടിലേക്ക് ചേർക്കണോ?" } }
+      }
+    },
+    "account.profiles.anonymous" : {
+      "comment" : "Name of the profile made before any sign-in.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "هذا الهاتف فقط (دون تسجيل الدخول)" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This phone only (not signed in)" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ഫോൺ മാത്രം (സൈൻ ഇൻ ചെയ്തിട്ടില്ല)" } }
+      }
+    },
+    "account.profiles.body" : {
+      "comment" : "Explains the profiles screen: each account's data is kept apart on the phone.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تُحفظ أذكار كل حساب ووسومه منفصلة على هذا الهاتف. الإزالة تحذفها من هذا الهاتف فقط." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Each account's dhikrs and tags are kept apart on this phone. Removing one deletes it from this phone only." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഓരോ അക്കൗണ്ടിന്റെയും ദിക്റുകളും ടാഗുകളും ഈ ഫോണിൽ വേറിട്ടാണ് സൂക്ഷിക്കുന്നത്. നീക്കം ചെയ്താൽ ഈ ഫോണിൽ നിന്ന് മാത്രമേ ഇല്ലാതാകൂ." } }
+      }
+    },
+    "account.profiles.deleted.keep" : {
+      "comment" : "Dialog button: keep the deleted account's data on the phone.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إبقاء" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Keep" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിലനിർത്തുക" } }
+      }
+    },
+    "account.profiles.deleted.message %@" : {
+      "comment" : "Dialog body when an account no longer exists. The argument is its email.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الحساب %@ لم يعد موجودًا. هل تريد إزالة أذكاره ووسومه من هذا الهاتف؟" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The account %@ no longer exists. Remove its dhikrs and tags from this phone?" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%@ എന്ന അക്കൗണ്ട് ഇപ്പോൾ നിലവിലില്ല. അതിന്റെ ദിക്റുകളും ടാഗുകളും ഈ ഫോണിൽ നിന്ന് നീക്കം ചെയ്യണോ?" } }
+      }
+    },
+    "account.profiles.deleted.message_unknown" : {
+      "comment" : "Dialog body when an account no longer exists and its email is unknown.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "هذا الحساب لم يعد موجودًا. هل تريد إزالة أذكاره ووسومه من هذا الهاتف؟" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "That account no longer exists. Remove its dhikrs and tags from this phone?" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ആ അക്കൗണ്ട് ഇപ്പോൾ നിലവിലില്ല. അതിന്റെ ദിക്റുകളും ടാഗുകളും ഈ ഫോണിൽ നിന്ന് നീക്കം ചെയ്യണോ?" } }
+      }
+    },
+    "account.profiles.deleted.title" : {
+      "comment" : "Dialog title when an account on this phone no longer exists.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم حذف هذا الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This account was deleted" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ അക്കൗണ്ട് ഇല്ലാതാക്കി" } }
+      }
+    },
+    "account.profiles.in_use" : {
+      "comment" : "Marks the profile that is in use now.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "قيد الاستخدام" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "In use" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഉപയോഗത്തിലുണ്ട്" } }
+      }
+    },
+    "account.profiles.remove" : {
+      "comment" : "Button on a profile's card that deletes its data from this phone.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إزالة من هذا الجهاز" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove from this device" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ഉപകരണത്തിൽ നിന്ന് നീക്കം ചെയ്യുക" } }
+      }
+    },
+    "account.profiles.remove.a11y %@" : {
+      "comment" : "VoiceOver label of a profile's remove button. The argument is the account's email.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إزالة %@ من هذا الجهاز" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove %@ from this device" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%@ ഈ ഉപകരണത്തിൽ നിന്ന് നീക്കം ചെയ്യുക" } }
+      }
+    },
+    "account.profiles.remove.a11y_anonymous" : {
+      "comment" : "VoiceOver label of the remove button of the profile made before any sign-in.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إزالة البيانات التي أُنشئت قبل تسجيل الدخول من هذا الجهاز" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove the data made before signing in from this device" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഇൻ ചെയ്യുന്നതിന് മുമ്പ് ഉണ്ടാക്കിയ ഡാറ്റ ഈ ഉപകരണത്തിൽ നിന്ന് നീക്കം ചെയ്യുക" } }
+      }
+    },
+    "account.profiles.remove_confirm.button" : {
+      "comment" : "Destructive button that removes a profile from the phone.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إزالة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നീക്കം ചെയ്യുക" } }
+      }
+    },
+    "account.profiles.remove_confirm.message %@" : {
+      "comment" : "Confirmation body for an account's profile. The argument is the account's email.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تُحذف أذكار الحساب %@ ووسومه من هذا الهاتف. وتبقى في الحساب وتعود عند تسجيل الدخول مجددًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The dhikrs and tags of %@ are deleted from this phone. They stay on the account and come back when you sign in again." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%@ അക്കൗണ്ടിന്റെ ദിക്റുകളും ടാഗുകളും ഈ ഫോണിൽ നിന്ന് ഇല്ലാതാക്കും. അവ അക്കൗണ്ടിൽ തന്നെ തുടരും, വീണ്ടും സൈൻ ഇൻ ചെയ്യുമ്പോൾ തിരിച്ചുവരും." } }
+      }
+    },
+    "account.profiles.remove_confirm.message_anonymous" : {
+      "comment" : "Confirmation body for the profile made before any sign-in.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تُحذف الأذكار والوسوم التي أنشأتها قبل تسجيل الدخول من هذا الهاتف. لا يمكن التراجع عن ذلك." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The dhikrs and tags you made before signing in are deleted from this phone. This can't be undone." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഇൻ ചെയ്യുന്നതിന് മുമ്പ് ഉണ്ടാക്കിയ ദിക്റുകളും ടാഗുകളും ഈ ഫോണിൽ നിന്ന് ഇല്ലാതാക്കും. ഇത് തിരുത്താനാവില്ല." } }
+      }
+    },
+    "account.profiles.remove_confirm.title" : {
+      "comment" : "Title of the confirmation before removing a profile from the phone.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إزالة من هذا الجهاز؟" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove from this device?" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ഉപകരണത്തിൽ നിന്ന് നീക്കം ചെയ്യണോ?" } }
+      }
+    },
+    "account.profiles.remove_unsent.message" : {
+      "comment" : "Body of the warning before removing a profile that has changes not yet sent.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "في هذا الملف تغييرات لم تُرسل إلى الحساب بعد. إذا أزلته فستضيع هذه التغييرات نهائيًا." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This profile has changes that haven't been sent to the account yet. If you remove it, those changes are lost for good." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ പ്രൊഫൈലിൽ അക്കൗണ്ടിലേക്ക് ഇനിയും അയയ്ക്കാത്ത മാറ്റങ്ങളുണ്ട്. നീക്കം ചെയ്താൽ ആ മാറ്റങ്ങൾ എന്നെന്നേക്കുമായി നഷ്ടപ്പെടും." } }
+      }
+    },
+    "account.profiles.remove_unsent.title" : {
+      "comment" : "Title of the warning before removing a profile that has changes not yet sent.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إزالة وفقدان التغييرات غير المرسلة؟" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove and lose unsent changes?" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നീക്കം ചെയ്ത് അയയ്ക്കാത്ത മാറ്റങ്ങൾ നഷ്ടപ്പെടുത്തണോ?" } }
+      }
+    },
+    "account.profiles.title" : {
+      "comment" : "Title of the screen listing the profiles on this device, its row in Settings, and the text button on the sign-in screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الملفات على هذا الجهاز" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Profiles on this device" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ഉപകരണത്തിലെ പ്രൊഫൈലുകൾ" } }
+      }
+    },
+    "account.profiles.unsent" : {
+      "comment" : "Marks a profile with changes not yet sent to its account.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "فيه تغييرات لم تُرسل بعد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Has changes not sent yet" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അയയ്ക്കാത്ത മാറ്റങ്ങളുണ്ട്" } }
+      }
+    },
     "account.register.button" : {
       "comment" : "Primary button on the create-account screen.",
       "localizations" : {
@@ -719,6 +903,137 @@
         "ar" : { "stringUnit" : { "state" : "translated", "value" : "تبقى أذكارك وأهدافك وأعدادك على هذا الجهاز عند تسجيل الخروج." } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Your dhikr, goals and counts stay on this device when you sign out." } },
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "സൈൻ ഔട്ട് ചെയ്താലും നിങ്ങളുടെ ദിക്റുകളും ലക്ഷ്യങ്ങളും എണ്ണങ്ങളും ഈ ഉപകരണത്തിൽ തന്നെ ഉണ്ടാകും." } }
+      }
+    },
+    "account.sync.account_mismatch" : {
+      "comment" : "Sync status when the signed-in account isn't the one the data belongs to.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تم تسجيل الدخول بحساب غير حساب هذه البيانات" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Signed in to a different account than this data" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ഡാറ്റയുടേതല്ലാത്ത മറ്റൊരു അക്കൗണ്ടിലാണ് സൈൻ ഇൻ ചെയ്തിരിക്കുന്നത്" } }
+      }
+    },
+    "account.sync.label" : {
+      "comment" : "Small label above the sync status in Settings.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المزامنة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sync" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സമന്വയം" } }
+      }
+    },
+    "account.sync.not_syncing" : {
+      "comment" : "Sync status: nothing is being sent.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "غير متزامن" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not syncing" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സമന്വയിപ്പിക്കുന്നില്ല" } }
+      }
+    },
+    "account.sync.retrying %@" : {
+      "comment" : "Sync status after a failed attempt. The argument is when it tries again, as a relative time (in 2 minutes).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعذّرت المزامنة. ستُعاد المحاولة %@" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't sync. Trying again %@" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സമന്വയിപ്പിക്കാനായില്ല. %@ വീണ്ടും ശ്രമിക്കും" } }
+      }
+    },
+    "account.sync.syncing" : {
+      "comment" : "Sync status: a sync is running.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "جارٍ المزامنة…" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Syncing…" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സമന്വയിപ്പിക്കുന്നു…" } }
+      }
+    },
+    "account.sync.unsent" : {
+      "comment" : "The number of changes waiting to be sent, under the sync status.",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا تغييرات بانتظار الإرسال"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تغيير واحد بانتظار الإرسال"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تغييران بانتظار الإرسال"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تغييرات بانتظار الإرسال"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تغييرًا بانتظار الإرسال"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تغيير بانتظار الإرسال"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld change waiting to be sent"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld changes waiting to be sent"
+                }
+              }
+            }
+          }
+        },
+        "ml" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld മാറ്റം അയയ്ക്കാൻ കാത്തിരിക്കുന്നു"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld മാറ്റങ്ങൾ അയയ്ക്കാൻ കാത്തിരിക്കുന്നു"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "account.sync.up_to_date %@" : {
+      "comment" : "Sync status. The argument is when it last finished, as a relative time (5 minutes ago).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "محدَّث، آخر مزامنة %@" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Up to date, synced %@" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അപ്‌ഡേറ്റ് ആണ്, %@ സമന്വയിപ്പിച്ചു" } }
       }
     },
     "account.title" : {

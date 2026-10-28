@@ -33,8 +33,8 @@ public class FakeAccountRepository(initial: SignInState = SignInState.SignedOut(
     public var refreshResult: AccountResult<Account> = AccountResult.Success(ACCOUNT)
 
     /** The session ended without this device asking: revoked elsewhere (a `401` from refresh), or deleted. */
-    public fun endSession(reason: SignOutReason = SignOutReason.SESSION_ENDED) {
-        state.value = SignInState.SignedOut(reason)
+    public fun endSession(reason: SignOutReason = SignOutReason.SESSION_ENDED, accountId: AwradId? = null) {
+        state.value = SignInState.SignedOut(reason, accountId)
     }
 
     /** The signed-in account changed, as after a confirmed email change. */

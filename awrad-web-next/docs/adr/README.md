@@ -12,3 +12,4 @@ Web-only decisions for `awrad-web-next`. Cross-project decisions live in the roo
 | [0006](0006-shape-spacing-type-motion-from-shared-tokens.md) | Shapes, spacing, type and motion generated from the shared tokens | Accepted |
 | [0007](0007-key-components-and-gallery.md)                   | Key components, colour cross-fades and a dev-only gallery         | Accepted |
 | [0008](0008-bundled-dhikr-catalog.md)                        | The dhikr catalog is a generated, typed module in a lazy chunk    | Accepted |
+| [0009](0009-change-queue-without-a-queue.md)                 | The web edits through the change queue with no queue of its own   | Accepted |

@@ -1,5 +1,7 @@
 package app.awrad.feature.account.settings
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.awrad.core.domain.account.AccountError
@@ -7,11 +9,8 @@ import app.awrad.core.domain.account.AccountResult
 import app.awrad.core.domain.account.AccountSettingsRepository
 import app.awrad.core.domain.account.InputProblem
 import app.awrad.feature.account.firstOf
+import app.awrad.feature.account.update
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -50,8 +49,8 @@ internal class DeleteAccountViewModel @Inject constructor(
     private val settings: AccountSettingsRepository,
 ) : ViewModel() {
 
-    private val mutableState = MutableStateFlow(DeleteAccountUiState())
-    val state: StateFlow<DeleteAccountUiState> = mutableState.asStateFlow()
+    private val mutableState = mutableStateOf(DeleteAccountUiState())
+    val state: State<DeleteAccountUiState> = mutableState
 
     fun onAction(action: DeleteAccountAction) {
         when (action) {

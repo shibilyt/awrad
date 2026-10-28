@@ -20,7 +20,7 @@ You can't merge around these, so don't try:
 - New feature: a `:feature:<name>` module using `id("awrad.android.feature")`.
   It exposes one `@Serializable` destination plus one `NavGraphBuilder.<name>Screen(...)` extension. Everything else is `internal`.
 - Screens are a stateful `…Route` (ViewModel and side effects) wrapping a stateless `…Screen(state, onAction)`.
-  ViewModels expose one `StateFlow<…UiState>` and one `onAction(…Action)`.
+  ViewModels expose one `StateFlow<…UiState>` and one `onAction(…Action)`; one behind text fields exposes a Compose `State<…UiState>` instead, read directly, so fast typing keeps every character ([ARCHITECTURE.md](ARCHITECTURE.md), "Components").
 - Errors are typed (enums or sealed types) and mapped to string resources in the UI. No sentinel strings.
 - Colours are roles from the shared tokens (`AwradTheme.colors`, `MaterialTheme.colorScheme`), never hex values; the build rejects colour literals ([ARCHITECTURE.md](ARCHITECTURE.md), "Colours"). To change a colour, change `contracts/design-tokens/` first, then run `./gradlew :core:designsystem:generateAwradColors`.
 - Shapes, strokes, spacing, sizes, text styles, the disabled opacity and motion are tokens too (`AwradTheme.shapes`, `.strokes`, `.spacing`, `.sizes`, `.type`, `.states`, `.motion`), never a `.dp`/`.sp` number, a corner radius, a `MaterialTheme.typography` slot or a raw `tween`/`spring`; the build rejects them outside `:core:designsystem` ([ARCHITECTURE.md](ARCHITECTURE.md), "Design tokens" and "Motion"). Regenerate with `./gradlew :core:designsystem:generateAwradTokens`. A new destination wraps its content in `AwradPage(scope = this, key = entry)`.

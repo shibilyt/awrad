@@ -112,6 +112,22 @@ public data class Dhikr(
 ) {
     /** The Arabic, one line (one ayah, for Qur'an) per entry. */
     public val arabicLines: List<String> get() = arabic.lines().filter { it.isNotBlank() }
+
+    /** The Qur'an reference a Qur'an dhikr shows in its Arabic card, under the ayahs; null for other kinds. */
+    public val cardReference: Reference.Quran?
+        get() = references.filterIsInstance<Reference.Quran>().firstOrNull().takeIf { kind == DhikrKind.QURAN }
+
+    /**
+     * The detail page's "Sources" (components.md, "Dhikr detail screen"): the references not already shown, in
+     * the dhikr's order. That leaves out those a virtue cites and the [cardReference]. A custom dhikr has no
+     * virtues, so it lists all of its own.
+     */
+    public val sources: List<Reference>
+        get() {
+            val shown = virtues.flatMapTo(HashSet()) { virtue -> virtue.references.map { it.id } }
+            val card = cardReference
+            return references.filter { it.id !in shown && it != card }
+        }
 }
 
 /** An ordered list of dhikrs with a title. A dhikr can be in several collections. */
@@ -128,10 +144,14 @@ public class DhikrCatalog(
     public val tags: List<CatalogTag>,
 ) {
     private val dhikrsByKey = dhikrs.associateBy { it.key }
+    private val dhikrsById = dhikrs.associateBy { it.id }
     private val collectionsByKey = collections.associateBy { it.key }
 
     /** The dhikr with [key], or null. */
     public fun dhikr(key: String): Dhikr? = dhikrsByKey[key]
+
+    /** The dhikr with [id], or null. */
+    public fun dhikr(id: AwradId): Dhikr? = dhikrsById[id]
 
     /** The collection with [key], or null. */
     public fun collection(key: String): Collection? = collectionsByKey[key]

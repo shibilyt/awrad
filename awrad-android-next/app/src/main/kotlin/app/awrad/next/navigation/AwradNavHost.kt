@@ -23,6 +23,9 @@ import app.awrad.feature.account.accountScreen
 import app.awrad.feature.library.libraryScreen
 import app.awrad.feature.onboarding.OnboardingDestination
 import app.awrad.feature.onboarding.onboardingScreen
+import app.awrad.feature.sync.DataSyncDestination
+import app.awrad.feature.sync.SyncPrompts
+import app.awrad.feature.sync.dataSyncScreen
 import app.awrad.next.AppShellViewModel
 import app.awrad.next.StartDestination
 
@@ -70,13 +73,20 @@ fun AwradNavHost(
                     MainShell(
                         onNavigate = { navController.navigate(it) },
                         onOpenAccount = { navController.navigate(AccountDestination) },
+                        onOpenDataSync = { navController.navigate(DataSyncDestination) },
                         onRestartOnboarding = { navController.replaceStackWith(OnboardingDestination) },
                     )
                 }
             }
             libraryScreen(onNavigate = { navController.navigate(it) }, onBack = { navController.popBackStack() })
             accountScreen(onBack = { navController.popBackStack() })
+            dataSyncScreen(
+                onBack = { navController.popBackStack() },
+                onOpenAccount = { navController.navigate(AccountDestination) },
+            )
         }
+        // The first sign-in's question, a deleted account's data, and refused changes, over any page.
+        SyncPrompts()
     }
 }
 

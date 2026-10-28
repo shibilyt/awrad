@@ -3,16 +3,21 @@ import AwradDomain
 import SwiftUI
 
 /// Home's "Featured dhikr collections": the section title with a "View all" text button, then the
-/// collection tiles in a horizontal row.
+/// collection tiles in a horizontal row, "Your dhikrs" first when the user has any.
 public struct FeaturedCollections: View {
     private let content: LibraryContent
+    private let yourDhikrsCount: Int
+    private let onOpenYourDhikrs: () -> Void
     private let onOpen: (DhikrCollection) -> Void
     private let onViewAll: () -> Void
 
     public init(
-        content: LibraryContent, onOpen: @escaping (DhikrCollection) -> Void, onViewAll: @escaping () -> Void
+        content: LibraryContent, yourDhikrsCount: Int = 0, onOpenYourDhikrs: @escaping () -> Void = {},
+        onOpen: @escaping (DhikrCollection) -> Void, onViewAll: @escaping () -> Void
     ) {
         self.content = content
+        self.yourDhikrsCount = yourDhikrsCount
+        self.onOpenYourDhikrs = onOpenYourDhikrs
         self.onOpen = onOpen
         self.onViewAll = onViewAll
     }
@@ -29,19 +34,27 @@ public struct FeaturedCollections: View {
                     .fixedSize()
             }
             .padding(.horizontal, AwradSpacing.pageMargin)
-            CollectionTilesRow(content: content, onOpen: onOpen)
+            CollectionTilesRow(
+                content: content, yourDhikrsCount: yourDhikrsCount, onOpenYourDhikrs: onOpenYourDhikrs, onOpen: onOpen)
         }
     }
 }
 
-/// The collection tiles, scrolling sideways, inset by `pageMargin`.
+/// The collection tiles, scrolling sideways, inset by `pageMargin`. "Your dhikrs" comes first whenever
+/// the profile has custom dhikrs (components.md "Your dhikrs" collection tile).
 struct CollectionTilesRow: View {
     let content: LibraryContent
+    var yourDhikrsCount = 0
+    var onOpenYourDhikrs: () -> Void = {}
     let onOpen: (DhikrCollection) -> Void
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top, spacing: AwradSpacing.md) {
+                if yourDhikrsCount > 0 {
+                    AwradCollectionTile(
+                        Strings.yourDhikrs, detail: Strings.dhikrCount(yourDhikrsCount), action: onOpenYourDhikrs)
+                }
                 ForEach(content.collections) { collection in
                     AwradCollectionTile(
                         content.title(collection), detail: Strings.dhikrCount(collection.dhikrKeys.count)
@@ -131,14 +144,16 @@ struct LibrarySearchField: View {
     }
 }
 
-/// No search results: a title and a hint, centred.
+/// Nothing to list (no search results, or no dhikr with the chosen tags): a title and a hint, centred.
 struct SearchEmptyState: View {
+    var message = Strings.noResultsBody
+
     var body: some View {
         VStack(spacing: AwradSpacing.sm) {
             Text(Strings.noResultsTitle)
                 .awradTextStyle(.cardTitle)
                 .foregroundStyle(AwradColors.onSurface)
-            Text(Strings.noResultsBody)
+            Text(message)
                 .awradTextStyle(.body)
                 .foregroundStyle(AwradColors.onSurfaceVariant)
         }
@@ -147,5 +162,69 @@ struct SearchEmptyState: View {
         .padding(.vertical, AwradSpacing.xl4)
         .padding(.horizontal, AwradSpacing.pageMargin)
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// Over the Library's lists, when the user has tags: "Filter by tag", then each tag as a filter chip
+/// (components.md "Filter chip"). A dhikr must have every chosen tag; tapping a chip again unchooses
+/// it.
+struct TagFilterChips: View {
+    let tags: [UserTag]
+    let selected: Set<AwradID>
+    let onToggle: (AwradID) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AwradSpacing.xs) {
+            Text(Strings.filterByTag)
+                .awradTextStyle(.label)
+                .foregroundStyle(AwradColors.onSurfaceVariant)
+                .accessibilityAddTraits(.isHeader)
+            FlowLayout(spacing: AwradSpacing.sm) {
+                ForEach(tags) { tag in
+                    AwradFilterChip(verbatim: tag.name, isSelected: selected.contains(tag.id)) { onToggle(tag.id) }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .pageInset()
+    }
+}
+
+/// The user's own dhikrs as rows, or an empty state with "Create a dhikr".
+struct YourDhikrsScreen: View {
+    let customDhikrs: [CustomDhikr]
+    let content: LibraryContent
+    let onOpen: (Dhikr) -> Void
+    let onCreate: () -> Void
+
+    var body: some View {
+        ScrollView {
+            if customDhikrs.isEmpty {
+                VStack(spacing: AwradSpacing.lg) {
+                    VStack(spacing: AwradSpacing.sm) {
+                        Text(Strings.yourEmptyTitle)
+                            .awradTextStyle(.cardTitle)
+                            .foregroundStyle(AwradColors.onSurface)
+                        Text(Strings.yourEmptyBody)
+                            .awradTextStyle(.body)
+                            .foregroundStyle(AwradColors.onSurfaceVariant)
+                    }
+                    .multilineTextAlignment(.center)
+                    .accessibilityElement(children: .combine)
+                    AwradButton(Strings.createDhikr, action: onCreate)
+                }
+                .padding(.vertical, AwradSpacing.xl4)
+                .pageInset()
+            } else {
+                DhikrRows(dhikrs: customDhikrs.map(\.dhikr), content: content, onOpen: onOpen)
+                    .padding(.vertical, AwradSpacing.sm)
+            }
+        }
+        .background(AwradColors.background)
+        .navigationTitle(Text(Strings.yourDhikrs))
+        #if os(iOS)
+            .navigationBarTitleDisplayMode(.large)
+        #endif
+        .toolbar { NewDhikrButton(action: onCreate) }
     }
 }

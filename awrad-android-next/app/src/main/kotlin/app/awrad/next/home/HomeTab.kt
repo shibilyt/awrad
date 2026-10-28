@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.awrad.core.designsystem.component.AwradButton
+import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.component.awradBottomBarPadding
 import app.awrad.core.designsystem.theme.AwradTheme
@@ -27,6 +28,7 @@ import app.awrad.next.R
 @Composable
 fun HomeTab(
     onOpenAccount: () -> Unit,
+    onOpenDataSync: () -> Unit,
     onRestartOnboarding: () -> Unit,
     onNavigate: (LibraryDestination) -> Unit,
     onViewLibrary: () -> Unit,
@@ -58,6 +60,11 @@ fun HomeTab(
                 color = AwradTheme.colors.onSurfaceVariant,
             )
             AwradButton(text = stringResource(R.string.home_placeholder_account), onClick = onOpenAccount)
+            AwradButton(
+                text = stringResource(R.string.home_placeholder_data_sync),
+                onClick = onOpenDataSync,
+                variant = AwradButtonVariant.Secondary,
+            )
             AwradTextButton(
                 text = stringResource(R.string.home_placeholder_restart),
                 onClick = { viewModel.restartOnboarding(onRestartOnboarding) },

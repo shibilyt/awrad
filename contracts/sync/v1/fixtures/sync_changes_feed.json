@@ -1,0 +1,1426 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "sync_changes_feed",
+  "description": "The server side of list_sync_changes: given an account's entities (each at the revision of its last change) and the request's after and limit, the page. Changes are entities whose revision is above after, ordered by revision, entity_type, entity_id. after=0 lists only active entities; after>0 includes deletes. Whole revisions are added until the page holds at least limit changes, so a revision is never split. When more remain, has_more is true and next_after is the page's last revision; otherwise next_after is head_revision. The page is read in one consistent snapshot.",
+  "references": [
+    "docs/slices/03b-custom-dhikrs-sync.md#changes-feed-get-apiv1syncchangesafternlimit200",
+    "contracts/sync/v1/README.md"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "entities",
+      "head_revision",
+      "after",
+      "limit"
+    ],
+    "properties": {
+      "entities": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:sync:1#/$defs/change"
+        }
+      },
+      "head_revision": {
+        "$ref": "urn:awrad:sync:1#/$defs/revision"
+      },
+      "after": {
+        "$ref": "urn:awrad:sync:1#/$defs/revision"
+      },
+      "limit": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 500
+      }
+    }
+  },
+  "expect_schema": {
+    "$ref": "urn:awrad:sync:1#/$defs/changes_page"
+  },
+  "cases": [
+    {
+      "id": "full_download_lists_only_active",
+      "description": "after=0 is a full download: every active entity, by revision; deleted ones are left out. The last page's next_after is head_revision.",
+      "given": {
+        "entities": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 2,
+            "revision": 10,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000002"
+              ]
+            }
+          }
+        ],
+        "head_revision": 10,
+        "after": 0,
+        "limit": 200
+      },
+      "expect": {
+        "changes": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 2,
+            "revision": 10,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000002"
+              ]
+            }
+          }
+        ],
+        "next_after": 10,
+        "has_more": false,
+        "head_revision": 10
+      }
+    },
+    {
+      "id": "full_download_skips_trailing_deletes",
+      "description": "When the newest revisions are all deletes, a full download still ends at head_revision, so the client doesn't read them again.",
+      "given": {
+        "entities": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          }
+        ],
+        "head_revision": 8,
+        "after": 0,
+        "limit": 200
+      },
+      "expect": {
+        "changes": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          }
+        ],
+        "next_after": 8,
+        "has_more": false,
+        "head_revision": 8
+      }
+    },
+    {
+      "id": "delta_includes_deletes",
+      "description": "after>0 lists every entity changed after that revision, deletes included, so clients remove them.",
+      "given": {
+        "entities": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 2,
+            "revision": 10,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000002"
+              ]
+            }
+          }
+        ],
+        "head_revision": 10,
+        "after": 5,
+        "limit": 200
+      },
+      "expect": {
+        "changes": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 2,
+            "revision": 10,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000002"
+              ]
+            }
+          }
+        ],
+        "next_after": 10,
+        "has_more": false,
+        "head_revision": 10
+      }
+    },
+    {
+      "id": "up_to_date_is_empty",
+      "description": "Reading from head_revision returns no changes and next_after equal to it.",
+      "given": {
+        "entities": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 2,
+            "revision": 10,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000002"
+              ]
+            }
+          }
+        ],
+        "head_revision": 10,
+        "after": 10,
+        "limit": 200
+      },
+      "expect": {
+        "changes": [],
+        "next_after": 10,
+        "has_more": false,
+        "head_revision": 10
+      }
+    },
+    {
+      "id": "after_beyond_head_is_empty",
+      "description": "An after above head_revision returns no changes and next_after = head_revision.",
+      "given": {
+        "entities": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 2,
+            "revision": 10,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000002"
+              ]
+            }
+          }
+        ],
+        "head_revision": 10,
+        "after": 50,
+        "limit": 200
+      },
+      "expect": {
+        "changes": [],
+        "next_after": 10,
+        "has_more": false,
+        "head_revision": 10
+      }
+    },
+    {
+      "id": "first_page_by_limit",
+      "description": "A page stops once it holds limit changes; next_after is the last change's revision and has_more is true.",
+      "given": {
+        "entities": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 2,
+            "revision": 10,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000002"
+              ]
+            }
+          }
+        ],
+        "head_revision": 10,
+        "after": 0,
+        "limit": 2
+      },
+      "expect": {
+        "changes": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          }
+        ],
+        "next_after": 5,
+        "has_more": true,
+        "head_revision": 10
+      }
+    },
+    {
+      "id": "next_page_continues_after",
+      "description": "The next page starts after next_after.",
+      "given": {
+        "entities": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 2,
+            "revision": 10,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000002"
+              ]
+            }
+          }
+        ],
+        "head_revision": 10,
+        "after": 5,
+        "limit": 2
+      },
+      "expect": {
+        "changes": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          }
+        ],
+        "next_after": 7,
+        "has_more": true,
+        "head_revision": 10
+      }
+    },
+    {
+      "id": "last_page",
+      "description": "The last page has has_more false and next_after = head_revision.",
+      "given": {
+        "entities": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 2,
+            "revision": 5,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            }
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 2,
+            "revision": 10,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000002"
+              ]
+            }
+          }
+        ],
+        "head_revision": 10,
+        "after": 7,
+        "limit": 2
+      },
+      "expect": {
+        "changes": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 2,
+            "revision": 10,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000002"
+              ]
+            }
+          }
+        ],
+        "next_after": 10,
+        "has_more": false,
+        "head_revision": 10
+      }
+    },
+    {
+      "id": "revision_never_split",
+      "description": "Changes sharing a revision (a command and its cascades) are never split across pages, so a page can hold more than limit: with limit 2 the page takes revision 11 and then all three changes of revision 12. Within a revision, changes are ordered by entity_type, then entity_id.",
+      "given": {
+        "entities": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 1,
+            "revision": 11,
+            "document": {
+              "kind": "dua",
+              "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+              "title": {
+                "en": null,
+                "ar": null,
+                "ml": "ഹസ്ബിയല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": null,
+                "ml": null
+              },
+              "translation": {
+                "en": "Allah is sufficient for me; there is no god but Him.",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": [
+                {
+                  "id": "quran",
+                  "type": "quran",
+                  "surah": 9,
+                  "ayah_start": 129,
+                  "ayah_end": 129
+                }
+              ]
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 12,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "state": "active",
+            "version": 2,
+            "revision": 12,
+            "document": {
+              "tag_ids": []
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "deleted",
+            "version": 3,
+            "revision": 12,
+            "document": null
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000003",
+            "state": "active",
+            "version": 1,
+            "revision": 13,
+            "document": {
+              "name": "Travel",
+              "normalized_name": "travel"
+            }
+          }
+        ],
+        "head_revision": 13,
+        "after": 10,
+        "limit": 2
+      },
+      "expect": {
+        "changes": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 1,
+            "revision": 11,
+            "document": {
+              "kind": "dua",
+              "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+              "title": {
+                "en": null,
+                "ar": null,
+                "ml": "ഹസ്ബിയല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": null,
+                "ml": null
+              },
+              "translation": {
+                "en": "Allah is sufficient for me; there is no god but Him.",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": [
+                {
+                  "id": "quran",
+                  "type": "quran",
+                  "surah": 9,
+                  "ayah_start": 129,
+                  "ayah_end": 129
+                }
+              ]
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 12,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "state": "active",
+            "version": 2,
+            "revision": 12,
+            "document": {
+              "tag_ids": []
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "deleted",
+            "version": 3,
+            "revision": 12,
+            "document": null
+          }
+        ],
+        "next_after": 12,
+        "has_more": true,
+        "head_revision": 13
+      }
+    },
+    {
+      "id": "revision_larger_than_limit",
+      "description": "A single revision larger than limit still comes whole.",
+      "given": {
+        "entities": [
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 2,
+            "document": {
+              "name": "Morning",
+              "normalized_name": "morning"
+            }
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 6,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "state": "active",
+            "version": 1,
+            "revision": 7,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+            "state": "deleted",
+            "version": 2,
+            "revision": 8,
+            "document": null
+          },
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "state": "active",
+            "version": 1,
+            "revision": 11,
+            "document": {
+              "kind": "dua",
+              "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+              "title": {
+                "en": null,
+                "ar": null,
+                "ml": "ഹസ്ബിയല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": null,
+                "ml": null
+              },
+              "translation": {
+                "en": "Allah is sufficient for me; there is no god but Him.",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": [
+                {
+                  "id": "quran",
+                  "type": "quran",
+                  "surah": 9,
+                  "ayah_start": 129,
+                  "ayah_end": 129
+                }
+              ]
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 12,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "state": "active",
+            "version": 2,
+            "revision": 12,
+            "document": {
+              "tag_ids": []
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "deleted",
+            "version": 3,
+            "revision": 12,
+            "document": null
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000003",
+            "state": "active",
+            "version": 1,
+            "revision": 13,
+            "document": {
+              "name": "Travel",
+              "normalized_name": "travel"
+            }
+          }
+        ],
+        "head_revision": 13,
+        "after": 11,
+        "limit": 1
+      },
+      "expect": {
+        "changes": [
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 12,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "state": "active",
+            "version": 2,
+            "revision": 12,
+            "document": {
+              "tag_ids": []
+            }
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+            "state": "deleted",
+            "version": 3,
+            "revision": 12,
+            "document": null
+          }
+        ],
+        "next_after": 12,
+        "has_more": true,
+        "head_revision": 13
+      }
+    }
+  ]
+}

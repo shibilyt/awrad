@@ -3,11 +3,27 @@ package app.awrad.feature.library
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
+import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.audio.PlaybackState
 import app.awrad.core.domain.audio.PlaybackStatus
+import app.awrad.core.domain.dhikr.DhikrKind
+import app.awrad.core.domain.personal.CustomDhikr
+import app.awrad.core.domain.personal.OptionalTexts
+import app.awrad.core.domain.personal.TagError
+import app.awrad.core.domain.personal.TagOutcome
+import app.awrad.core.domain.sync.ConflictChoice
+import app.awrad.core.domain.sync.EntityKey
+import app.awrad.core.domain.sync.EntityType
+import app.awrad.core.domain.sync.OpenConflict
+import app.awrad.core.domain.sync.SyncOp
 import app.awrad.core.testing.FakeAudioPlayerFactory
+import app.awrad.core.testing.FakeCustomDhikrRepository
 import app.awrad.core.testing.FakeDhikrCatalogSource
+import app.awrad.core.testing.FakeSyncService
+import app.awrad.core.testing.FakeTagRepository
 import app.awrad.core.testing.MainDispatcherRule
+import app.awrad.core.testing.contractCatalog
+import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -22,7 +38,19 @@ class DhikrDetailViewModelTest {
 
     private val players = FakeAudioPlayerFactory()
 
-    private fun viewModel(key: String) = DhikrDetailViewModel(key, FakeDhikrCatalogSource(), players)
+    private val customDhikrs = FakeCustomDhikrRepository()
+    private val tags = FakeTagRepository()
+    private val sync = FakeSyncService()
+
+    /** The page for the built-in with catalog [key] (by its ID), or for [key] itself when no dhikr has it. */
+    private fun viewModel(key: String) = DhikrDetailViewModel(
+        contractCatalog.dhikr(key)?.id?.value ?: key,
+        FakeDhikrCatalogSource(),
+        customDhikrs,
+        tags,
+        sync,
+        players,
+    )
 
     @Test
     fun `the dhikr loads by key, and an unknown key loads nothing`() {
@@ -118,8 +146,76 @@ class DhikrDetailViewModelTest {
         assertTrue(players.players.isEmpty())
     }
 
+    @Test
+    fun `a custom dhikr loads by its ID and can be deleted after confirming`() = runTest {
+        customDhikrs.save(CUSTOM)
+        val viewModel = viewModel(CUSTOM.id.value)
+        assertEquals(CUSTOM, viewModel.state.value.custom)
+        assertEquals("Morning remembrance", viewModel.state.value.dhikr?.title?.en)
+
+        viewModel.onAction(DhikrDetailAction.AskDelete)
+        assertTrue(viewModel.state.value.isDeleteConfirmOpen)
+        viewModel.onAction(DhikrDetailAction.ConfirmDelete)
+
+        assertTrue(customDhikrs.current.isEmpty())
+        assertTrue(viewModel.state.value.isDeleted)
+    }
+
+    @Test
+    fun `a built-in is never deletable`() {
+        val viewModel = viewModel("tahleel")
+        assertNull(viewModel.state.value.custom)
+        viewModel.onAction(DhikrDetailAction.ConfirmDelete)
+        assertFalse(viewModel.state.value.isDeleted)
+    }
+
+    @Test
+    fun `Manage tags toggles a built-in's tags and creates new ones on it`() = runTest {
+        val morning = (tags.create("Morning") as TagOutcome.Saved).tag
+        val viewModel = viewModel("tahleel")
+        val id = contractCatalog.dhikr("tahleel")!!.id
+
+        viewModel.onAction(DhikrDetailAction.Tags(TagSheetAction.Open))
+        viewModel.onAction(DhikrDetailAction.Tags(TagSheetAction.Toggle(morning.id)))
+        viewModel.onAction(DhikrDetailAction.Tags(TagSheetAction.NameChanged("Evening")))
+        viewModel.onAction(DhikrDetailAction.Tags(TagSheetAction.Create))
+
+        assertEquals(listOf("Morning", "Evening"), viewModel.state.value.tags.map { it.name })
+        assertEquals(2, tags.currentTagsByDhikr.getValue(id).size)
+
+        viewModel.onAction(DhikrDetailAction.Tags(TagSheetAction.NameChanged("morning")))
+        viewModel.onAction(DhikrDetailAction.Tags(TagSheetAction.Create))
+        assertEquals(TagError.NameTaken, viewModel.state.value.sheet?.error)
+
+        viewModel.onAction(DhikrDetailAction.Tags(TagSheetAction.Toggle(morning.id)))
+        assertEquals(listOf("Evening"), viewModel.state.value.tags.map { it.name })
+    }
+
+    @Test
+    fun `a conflict on the dhikr shows, and Keep mine resolves it`() = runTest {
+        customDhikrs.save(CUSTOM)
+        val key = EntityKey(EntityType.CUSTOM_DHIKR, CUSTOM.id)
+        sync.conflictState.value = listOf(OpenConflict(key, SyncOp.PUT))
+        val viewModel = viewModel(CUSTOM.id.value)
+        assertEquals(key, viewModel.state.value.conflict?.key)
+
+        viewModel.onAction(DhikrDetailAction.Resolve(ConflictChoice.KEEP_MINE))
+
+        assertEquals(listOf(key to ConflictChoice.KEEP_MINE), sync.resolved)
+        assertNull(viewModel.state.value.conflict)
+    }
+
     /** A page's lifecycle, moved by hand (no main-thread checks). */
     private class TestPage : LifecycleOwner {
         override val lifecycle: LifecycleRegistry = LifecycleRegistry.createUnsafe(this)
+    }
+
+    private companion object {
+        val CUSTOM = CustomDhikr(
+            id = AwradId("0192f0d0-0000-7000-8000-000000000001"),
+            kind = DhikrKind.DHIKR,
+            arabic = "سُبْحَانَ ٱللَّهِ",
+            title = OptionalTexts(en = "Morning remembrance"),
+        )
     }
 }

@@ -1,21 +1,21 @@
 import i18next from "i18next";
 import { describe, expect, test } from "vitest";
-import type { Reference } from "@/shared/dhikr-catalog";
-import { referenceLabel } from "./referenceLabel";
+import type { Dhikr, Reference } from "@/shared/dhikr-catalog";
+import { referenceLabel, sourceReferences } from "./referenceLabel";
 
 const t = i18next.t.bind(i18next);
 
 describe("reference labels", () => {
   test("Qur'an: surah and ayah, or a range with an en dash", () => {
-    const one: Reference = { id: "q", type: "quran", surah: 71, ayahStart: 10, ayahEnd: 10 };
-    const range: Reference = { id: "q", type: "quran", surah: 112, ayahStart: 1, ayahEnd: 4 };
+    const one: Reference = { id: "q", type: "quran", surah: 71, ayah_start: 10, ayah_end: 10 };
+    const range: Reference = { id: "q", type: "quran", surah: 112, ayah_start: 1, ayah_end: 4 };
     expect(referenceLabel(one, t, "en")).toBe("Qur'an 71:10");
     expect(referenceLabel(range, t, "en")).toBe("Qur'an 112:1–4");
   });
 
   test("in Arabic the numbers are isolated left to right, so they keep their order", async () => {
     await i18next.changeLanguage("ar");
-    const range: Reference = { id: "q", type: "quran", surah: 112, ayahStart: 1, ayahEnd: 4 };
+    const range: Reference = { id: "q", type: "quran", surah: 112, ayah_start: 1, ayah_end: 4 };
     expect(referenceLabel(range, t, "ar")).toBe("القرآن \u2066112:1–4\u2069");
   });
 
@@ -45,5 +45,37 @@ describe("reference labels", () => {
       "Shaykh A (oral)",
     );
     expect(referenceLabel({ id: "o", type: "other", text: "Local tradition" }, t, "en")).toBe("Local tradition");
+  });
+});
+
+describe("Sources: the references not shown elsewhere, in the dhikr's order", () => {
+  const quran: Reference = { id: "quran", type: "quran", surah: 112, ayah_start: 1, ayah_end: 4 };
+  const muslim: Reference = { id: "muslim", type: "hadith", collection: "Sahih Muslim", number: "408" };
+  const book: Reference = { id: "book", type: "book", title: "Al-Adhkar" };
+  const dhikr: Dhikr = {
+    id: "d",
+    key: "d",
+    kind: "dhikr",
+    arabic: "سُبْحَانَ ٱللَّهِ",
+    title: { en: "Subhanallah", ar: "سبحان الله", ml: "സുബ്ഹാനല്ലാഹ്" },
+    transliteration: { en: "Subhanallah" },
+    translation: { en: "Glory be to Allah" },
+    audio: null,
+    references: [quran, muslim, book],
+    virtues: [],
+  };
+
+  test("a built-in leaves out what its virtues cite", () => {
+    const virtues = [{ text: { en: "A virtue" }, references: ["muslim"] }];
+    expect(sourceReferences({ ...dhikr, virtues })).toEqual([quran, book]);
+  });
+
+  test("a custom dhikr, with no virtues, lists them all", () => {
+    expect(sourceReferences(dhikr)).toEqual([quran, muslim, book]);
+  });
+
+  test("a quran dhikr never repeats the Qur'an reference its card shows", () => {
+    expect(sourceReferences({ ...dhikr, kind: "quran" })).toEqual([muslim, book]);
+    expect(sourceReferences({ ...dhikr, kind: "quran", references: [quran] })).toEqual([]);
   });
 });

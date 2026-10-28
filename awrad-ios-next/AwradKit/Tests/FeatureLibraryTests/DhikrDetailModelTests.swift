@@ -12,7 +12,7 @@ struct DhikrDetailModelTests {
     private func model(_ key: String) throws -> DhikrDetailModel {
         let dhikr = try #require(try DhikrCatalog.bundled().dhikr(key))
         let player = self.player
-        return DhikrDetailModel(dhikr: dhikr) { player }
+        return DhikrDetailModel(dhikr: dhikr, library: FakePersonalLibrary(customDhikrs: [])) { player }
     }
 
     private var nariyya: URL {
@@ -102,7 +102,7 @@ struct DhikrDetailModelTests {
         var made = 0
         let dhikr = try #require(try DhikrCatalog.bundled().dhikr("surah-ikhlas"))
         let player = self.player
-        let model = DhikrDetailModel(dhikr: dhikr) {
+        let model = DhikrDetailModel(dhikr: dhikr, library: FakePersonalLibrary(customDhikrs: [])) {
             made += 1
             return player
         }

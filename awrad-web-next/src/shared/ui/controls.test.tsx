@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 import { BottomBar, BottomBarPanel } from "./BottomBar";
 import { BottomSheet } from "./BottomSheet";
 import { Checkbox, Switch } from "./Checkbox";
-import { ConfirmDialog } from "./ConfirmDialog";
+import { ChoiceDialog, ConfirmDialog, NoticeDialog } from "./ConfirmDialog";
 import { GoalsIcon, HomeIcon, LibraryIcon } from "./icons.gen";
 import { OptionCheckboxGroup, OptionRadioGroup, OptionRow } from "./OptionRow";
 import { SegmentPanel, SegmentedPills } from "./SegmentedPills";
@@ -170,5 +170,63 @@ describe("overlays", () => {
     await userEvent.tab();
     expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
     expect(screen.getByRole("button", { name: "Delete" })).toHaveClass("bg-error");
+  });
+});
+
+describe("slice 3b dialogs", () => {
+  it("choice dialog: the conflict banner, secondaryContainer with the error icon, two text buttons, no dismissing", async () => {
+    const chosen: string[] = [];
+    render(
+      <ChoiceDialog
+        isOpen
+        title="Changed on another device"
+        first={{ label: "Keep mine", onPress: () => chosen.push("mine") }}
+        second={{ label: "Use theirs", onPress: () => chosen.push("theirs") }}
+      >
+        <p>This was changed on another device after you opened it.</p>
+      </ChoiceDialog>,
+    );
+    const dialog = screen.getByRole("alertdialog", { name: "Changed on another device" });
+    const card = dialog.closest(".rounded-card");
+    expect(card).toHaveClass("bg-secondary-container", "text-on-secondary-container", "p-card-padding");
+    expect(card?.className).not.toMatch(/\berror\b/);
+    expect(dialog.querySelector("svg")).not.toBeNull();
+    const buttons = within(dialog).getAllByRole("button");
+    expect(buttons.map((button) => button.textContent)).toEqual(["Keep mine", "Use theirs"]);
+    expect(buttons[0]).toHaveClass("text-on-secondary-container");
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Use theirs" }));
+    expect(chosen).toEqual(["theirs"]);
+  });
+
+  it("notice dialog: an alertdialog with its message and a single OK that closes it", async () => {
+    function Harness() {
+      const [isOpen, setOpen] = useState(true);
+      return (
+        <NoticeDialog
+          isOpen={isOpen}
+          onClose={() => {
+            setOpen(false);
+          }}
+          title="Change refused"
+          closeLabel="OK"
+        >
+          <p>You have 100 tags, the most an account can have.</p>
+        </NoticeDialog>
+      );
+    }
+    render(<Harness />);
+    const dialog = screen.getByRole("alertdialog", { name: "Change refused" });
+    expect(dialog).toHaveTextContent("You have 100 tags");
+    expect(
+      within(dialog)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["OK"]);
+    await userEvent.click(screen.getByRole("button", { name: "OK" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    });
   });
 });

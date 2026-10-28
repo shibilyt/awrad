@@ -61,9 +61,13 @@ public actor FakeAccountService: AccountService {
     /// The address a requested email change goes to, until it's confirmed.
     public private(set) var pendingEmail: String?
     private var failures: [Operation: AccountError] = [:]
+    /// One account per email, so signing in again as the same email is the same account.
+    private var accounts: [String: Account] = [:]
 
     public init(signedInAs email: String? = nil, sessions: [AccountSession] = []) {
-        account = email.map(Self.account(email:))
+        let account = email.map(Self.account(email:))
+        self.account = account
+        if let account { accounts[account.email] = account }
         accountSessions = sessions
     }
 
@@ -101,7 +105,8 @@ public actor FakeAccountService: AccountService {
 
     public func signIn(email: String, password: String) throws(AccountError) -> Account {
         try record(.signIn(email: email, password: password), .signIn)
-        let account = Self.account(email: email)
+        let account = accounts[email] ?? Self.account(email: email)
+        accounts[email] = account
         self.account = account
         return account
     }

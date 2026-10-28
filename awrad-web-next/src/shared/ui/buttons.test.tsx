@@ -75,6 +75,19 @@ describe("Button", () => {
     const button = screen.getByRole("button", { name: "Add" });
     expect(button.querySelector("svg")).toHaveAttribute("aria-hidden", "true");
   });
+
+  it("is named by its text label itself (aria-label), not only through the wrapper span; an explicit name wins", () => {
+    render(
+      <>
+        <Button type="submit">Sign in</Button>
+        <Button isPending>Save</Button>
+        <Button aria-label="Remove the Qur'an reference">Remove</Button>
+      </>,
+    );
+    expect(screen.getByRole("button", { name: "Sign in" })).toHaveAttribute("aria-label", "Sign in");
+    expect(screen.getByRole("button", { name: "Save Loading" })).toHaveAttribute("aria-label", "Save");
+    expect(screen.getByRole("button", { name: "Remove the Qur'an reference" })).toBeInTheDocument();
+  });
 });
 
 describe("text, round and icon buttons", () => {
