@@ -9,6 +9,7 @@
     <string name="sync_state_retrying">تعذّر الوصول إلى الخادم. ستُعاد المحاولة قريبًا.</string>
     <string name="sync_state_mismatch">هذه البيانات تخص حسابًا آخر، لذلك لا تُرسل.</string>
     <string name="sync_last_synced">آخر مزامنة %1$s</string>
+    <string name="sync_last_synced_now">آخر مزامنة قبل لحظات</string>
     <string name="sync_never_synced">لم تتم المزامنة بعد</string>
     <string name="sync_nothing_pending">لا تغييرات بانتظار المزامنة</string>
     <plurals name="sync_pending">

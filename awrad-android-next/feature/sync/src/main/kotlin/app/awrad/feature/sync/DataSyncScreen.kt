@@ -36,6 +36,7 @@ import app.awrad.core.domain.sync.ConflictChoice
 import app.awrad.core.domain.sync.LocalProfile
 import app.awrad.core.domain.sync.SyncState
 import app.awrad.core.domain.sync.SyncStatus
+import java.time.Instant
 
 @Composable
 internal fun DataSyncRoute(
@@ -105,12 +106,7 @@ private fun StatusSection(
         AwradCard(spacing = AwradTheme.spacing.sm) {
             Text(text = stateText(status.state), style = AwradTheme.type.rowTitle, color = AwradTheme.colors.onSurface)
             Text(
-                text = status.lastSyncedAt?.let {
-                    stringResource(
-                        R.string.sync_last_synced,
-                        DateUtils.getRelativeTimeSpanString(it.toEpochMilli()).toString(),
-                    )
-                } ?: stringResource(R.string.sync_never_synced),
+                text = status.lastSyncedAt?.let { lastSyncedText(it) } ?: stringResource(R.string.sync_never_synced),
                 style = AwradTheme.type.bodySmall,
                 color = AwradTheme.colors.onSurfaceVariant,
             )
@@ -234,6 +230,19 @@ private fun RemoveDialog(removing: Removing, onAction: (DataSyncAction) -> Unit,
             )
         },
     )
+}
+
+/** "Last synced just now" within a minute, else "Last synced 5 minutes ago" (Android's relative time). */
+@Composable
+private fun lastSyncedText(at: Instant): String {
+    val millis = at.toEpochMilli()
+    val now = System.currentTimeMillis()
+    return if (now - millis < DateUtils.MINUTE_IN_MILLIS) {
+        stringResource(R.string.sync_last_synced_now)
+    } else {
+        val relative = DateUtils.getRelativeTimeSpanString(millis, now, DateUtils.MINUTE_IN_MILLIS).toString()
+        stringResource(R.string.sync_last_synced, relative)
+    }
 }
 
 @Composable

@@ -9,6 +9,7 @@
     <string name="sync_state_retrying">സെർവറിൽ എത്താനായില്ല. ഉടൻ വീണ്ടും ശ്രമിക്കും.</string>
     <string name="sync_state_mismatch">ഈ ഡാറ്റ മറ്റൊരു അക്കൗണ്ടിന്റേതാണ്, അതിനാൽ അയയ്ക്കുന്നില്ല.</string>
     <string name="sync_last_synced">അവസാനം സമന്വയിപ്പിച്ചത് %1$s</string>
+    <string name="sync_last_synced_now">ഇപ്പോൾ സമന്വയിപ്പിച്ചു</string>
     <string name="sync_never_synced">ഇതുവരെ സമന്വയിപ്പിച്ചിട്ടില്ല</string>
     <string name="sync_nothing_pending">കാത്തിരിക്കുന്ന മാറ്റങ്ങളില്ല</string>
     <plurals name="sync_pending">
