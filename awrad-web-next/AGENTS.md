@@ -17,6 +17,7 @@ Applies inside `awrad-web-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
   - jsx-a11y strict;
   - **no hard-coded UI text** (`i18next/no-literal-string`);
   - no direct `fetch`;
+  - no `crypto.randomUUID`: new IDs come from `newUuidV7()` in `src/shared/identity` (UUIDv7);
   - 400-line files.
 - **Prettier** formatting.
 - **Module rules** (dependency-cruiser):

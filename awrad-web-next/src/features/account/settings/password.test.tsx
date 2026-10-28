@@ -41,7 +41,9 @@ describe("change password", () => {
     expect(screen.getByRole("heading", { name: "Your account" })).toBeInTheDocument();
     const change = requests.find((request) => request.method === "POST");
     expect(change?.body).toEqual({ current_password: "a long passphrase", new_password: "another long passphrase" });
-    expect(change?.headers.get("Idempotency-Key")).toMatch(/^[0-9a-f-]{36}$/);
+    expect(change?.headers.get("Idempotency-Key")).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
   });
 
   test("a wrong current password is shown on that field", async () => {
