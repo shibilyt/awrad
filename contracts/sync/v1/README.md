@@ -22,7 +22,7 @@ Everything synced is an **entity**: an `entity_type`, an `entity_id` (a UUID), a
   - no `id` (the `entity_id` is the ID), `key`, `aliases`, `virtues` or catalog `tags` (user tags live in `dhikr_personal`);
   - `title` `{en, ar, ml}`, `transliteration` `{en, ml}` and `translation` `{en, ar, ml}` always carry every language key, each text or `null` (API STYLE §3), and the title has at least one text;
   - `audio` is `null` or `{"local_only": true}`: a recording that stays on the device that imported it, until uploads arrive in slice 3c;
-  - references keep the catalog's member names, so a Qur'an reference has `ayah_start` and `ayah_end` in camelCase.
+  - references keep the catalog's member names, so a Qur'an reference has `ayah_start` and `ayah_end`.
 - **Tag.** `name` is the display form and `normalized_name` its case fold, both defined by [`fixtures/tag_name_normalization.json`](fixtures/tag_name_normalization.json). Two active tags never share a `normalized_name`.
 - **Personal record** (`dhikr_personal`): a user's own data about one dhikr. For now only its tags, in the user's order. Clients never delete one; they put `{"tag_ids": []}`.
 

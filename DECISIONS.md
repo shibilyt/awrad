@@ -741,7 +741,7 @@ What is kept from progress sync v1 and what is dropped:
 - **Reuse.** Goals (slice 4) and counts (slice 5) add entity types to the same queue. Counts will need their own merge rule on top of it, because whole-document versions would lose concurrent taps.
 - **Behaviour is fixed by fixtures.** The server runs `sync_receipts` and `sync_changes_feed`; Android and iOS run `outbox_enqueue`, `apply_changes` and `profile_switch`; all four run `tag_name_normalization` and `custom_dhikr_validity`.
 - **Stale references.** API STYLE §2, §8 and §9 still describe the frozen sync (resource endpoints for web writes, its transfer protocol, `basis_revision`). Once this ADR is accepted, they read as this queue.
-- **Wire naming.** Custom dhikr references keep the catalog's camelCase `ayahStart` and `ayahEnd` until the catalog shape is migrated to snake_case.
+- **Wire naming.** References use the catalog's member names, which are snake_case (`ayah_start`, `ayah_end`) since 2026-10-28.
 
 ### Evidence
 

@@ -273,7 +273,7 @@ components:
       properties:
         installation_id:
           $ref: "#/components/schemas/Uuid"
-          description: Random UUIDv4 the app creates once per installation and keeps in secure storage.
+          description: Random UUID the app creates once per installation and keeps in secure storage (UUIDv7 since ADR-2026-10-28).
         name:
           type: string
           minLength: 1
@@ -432,8 +432,8 @@ components:
           items:
             description: >-
               A reference exactly as in contracts/dhikr-catalog/v1 `$defs/reference`: `quran` (surah, ayah_start,
-              ayah_end), `hadith`, `book`, `shaykh` or `other`, each with an `id`. Not restated here because the
-              catalog's camelCase member names (ayah_start, ayah_end) can't pass this spec's snake_case lint.
+              ayah_end), `hadith`, `book`, `shaykh` or `other`, each with an `id`. Not restated here; the catalog
+              schema is the single definition.
     UserTagDocument:
       type: object
       additionalProperties: false
@@ -680,7 +680,7 @@ components:
       name: Idempotency-Key
       in: header
       required: false
-      description: UUIDv4. Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST.
+      description: A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST.
       schema:
         $ref: "#/components/schemas/Uuid"
     AcceptLanguage:
@@ -698,7 +698,7 @@ components:
       name: Idempotency-Key
       in: header
       required: true
-      description: UUIDv4, required on this operation. A retry with the same key gets the same result.
+      description: A UUID (clients generate UUIDv7), required on this operation. A retry with the same key gets the same result.
       schema:
         $ref: "#/components/schemas/Uuid"
     Cursor:
