@@ -8,7 +8,7 @@ import Foundation
 enum Strings {
     static let bundle = LocalizedStringResource.BundleDescription.atURL(Bundle.module.bundleURL)
 
-    private static func text(_ key: StaticString, _ english: String.LocalizationValue) -> LocalizedStringResource {
+    static func text(_ key: StaticString, _ english: String.LocalizationValue) -> LocalizedStringResource {
         LocalizedStringResource(key, defaultValue: english, bundle: bundle)
     }
 

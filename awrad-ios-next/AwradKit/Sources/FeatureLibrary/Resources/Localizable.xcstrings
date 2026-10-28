@@ -222,6 +222,328 @@
         }
       }
     },
+    "library.common.add" : {
+      "comment" : "Add button.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ചേർക്കുക"
+          }
+        }
+      }
+    },
+    "library.common.cancel" : {
+      "comment" : "Cancel button in dialogs and sheets.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancel"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "റദ്ദാക്കുക"
+          }
+        }
+      }
+    },
+    "library.common.delete" : {
+      "comment" : "Delete button in a confirmation.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇല്ലാതാക്കുക"
+          }
+        }
+      }
+    },
+    "library.common.dismiss" : {
+      "comment" : "Button that hides a notice.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إخفاء"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismiss"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഒഴിവാക്കുക"
+          }
+        }
+      }
+    },
+    "library.common.done" : {
+      "comment" : "Done button that closes a sheet.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പൂർത്തിയായി"
+          }
+        }
+      }
+    },
+    "library.common.edit" : {
+      "comment" : "Edit button on a custom dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "എഡിറ്റ് ചെയ്യുക"
+          }
+        }
+      }
+    },
+    "library.common.save" : {
+      "comment" : "Save button.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സംരക്ഷിക്കുക"
+          }
+        }
+      }
+    },
+    "library.conflict.body" : {
+      "comment" : "Explains a conflict between two devices.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم تغيير هذا هنا وعلى جهاز آخر. اختر النسخة التي تريد الاحتفاظ بها."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This was changed here and on another device. Choose which version to keep."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇത് ഇവിടെയും മറ്റൊരു ഉപകരണത്തിലും മാറ്റിയിട്ടുണ്ട്. ഏത് പതിപ്പ് നിലനിർത്തണമെന്ന് തിരഞ്ഞെടുക്കുക."
+          }
+        }
+      }
+    },
+    "library.conflict.keep_mine" : {
+      "comment" : "Resolves a conflict with this device's version.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احتفظ بنسختي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep mine"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "എന്റേത് നിലനിർത്തുക"
+          }
+        }
+      }
+    },
+    "library.conflict.title" : {
+      "comment" : "Title of the card shown when a dhikr or tag was changed on two devices.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم التغيير على جهاز آخر"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Changed on another device"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മറ്റൊരു ഉപകരണത്തിൽ മാറ്റി"
+          }
+        }
+      }
+    },
+    "library.conflict.use_theirs" : {
+      "comment" : "Resolves a conflict with the other device's version.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدم النسخة الأخرى"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use theirs"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മറ്റേത് ഉപയോഗിക്കുക"
+          }
+        }
+      }
+    },
+    "library.delete_dhikr" : {
+      "comment" : "Button that deletes a custom dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف الذكر"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete dhikr"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ദിക്ർ ഇല്ലാതാക്കുക"
+          }
+        }
+      }
+    },
+    "library.delete_dhikr.message" : {
+      "comment" : "Message of the confirmation for deleting a custom dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيُحذف من مكتبتك ومن كل جهاز سجّلت الدخول منه. لا يمكن التراجع عن ذلك."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It's deleted from your library and from every device you're signed in on. This can't be undone."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇത് നിങ്ങളുടെ ലൈബ്രറിയിൽ നിന്നും സൈൻ ഇൻ ചെയ്ത എല്ലാ ഉപകരണങ്ങളിൽ നിന്നും ഇല്ലാതാകും. ഇത് തിരികെ എടുക്കാനാവില്ല."
+          }
+        }
+      }
+    },
+    "library.delete_dhikr.title" : {
+      "comment" : "Title of the confirmation for deleting a custom dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف هذا الذكر؟"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this dhikr?"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഈ ദിക്ർ ഇല്ലാതാക്കണോ?"
+          }
+        }
+      }
+    },
     "library.detail.tags" : {
       "comment" : "Section title over a dhikr's topic tags.",
       "localizations" : {
@@ -314,6 +636,765 @@
         }
       }
     },
+    "library.editor.arabic" : {
+      "comment" : "Label of the Arabic text field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النص العربي"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arabic text"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അറബി പാഠം"
+          }
+        }
+      }
+    },
+    "library.editor.audio" : {
+      "comment" : "Section title of a dhikr's own recording.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التسجيل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "റെക്കോർഡിങ്"
+          }
+        }
+      }
+    },
+    "library.editor.audio.add" : {
+      "comment" : "Button that picks a recording file.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة تسجيل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add recording"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "റെക്കോർഡിങ് ചേർക്കുക"
+          }
+        }
+      }
+    },
+    "library.editor.audio.hint" : {
+      "comment" : "Which recordings are accepted. The number is the size limit in megabytes.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MP3 أو M4A، حتى %lld ميغابايت"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MP3 or M4A, up to %lld MB"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MP3 അല്ലെങ്കിൽ M4A, %lld MB വരെ"
+          }
+        }
+      }
+    },
+    "library.editor.audio.remove" : {
+      "comment" : "Button that removes the recording.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إزالة"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നീക്കം ചെയ്യുക"
+          }
+        }
+      }
+    },
+    "library.editor.audio.replace" : {
+      "comment" : "Button that picks another recording file.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استبدال"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Replace"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മാറ്റിസ്ഥാപിക്കുക"
+          }
+        }
+      }
+    },
+    "library.editor.error.arabic_blank" : {
+      "comment" : "The Arabic text is empty.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل النص العربي."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the Arabic text."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അറബി പാഠം നൽകുക."
+          }
+        }
+      }
+    },
+    "library.editor.error.reference_invalid" : {
+      "comment" : "A reference is not valid.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحقق من هذا المرجع."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check this reference."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഈ അവലംബം പരിശോധിക്കുക."
+          }
+        }
+      }
+    },
+    "library.editor.error.title_required" : {
+      "comment" : "No language has a title.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أعطه عنوانًا بلغة واحدة على الأقل."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Give it a title in at least one language."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "കുറഞ്ഞത് ഒരു ഭാഷയിലെങ്കിലും ഒരു തലക്കെട്ട് നൽകുക."
+          }
+        }
+      }
+    },
+    "library.editor.error.too_many_references" : {
+      "comment" : "A dhikr has the most references it can. The number is the limit.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم بلوغ الحد: %lld مرجعًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limit reached: %lld references."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പരിധി എത്തി: %lld അവലംബങ്ങൾ."
+          }
+        }
+      }
+    },
+    "library.editor.kind" : {
+      "comment" : "Label of the dhikr type choice.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النوع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "തരം"
+          }
+        }
+      }
+    },
+    "library.editor.language.ar" : {
+      "comment" : "The language's own name, on the language switch of the editor.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العربية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العربية"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العربية"
+          }
+        }
+      }
+    },
+    "library.editor.language.en" : {
+      "comment" : "The language's own name, on the language switch of the editor.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "English"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "English"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "English"
+          }
+        }
+      }
+    },
+    "library.editor.language.ml" : {
+      "comment" : "The language's own name, on the language switch of the editor.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മലയാളം"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മലയാളം"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മലയാളം"
+          }
+        }
+      }
+    },
+    "library.editor.reference.add" : {
+      "comment" : "Button and sheet title for adding a reference.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إضافة مرجع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add reference"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അവലംബം ചേർക്കുക"
+          }
+        }
+      }
+    },
+    "library.editor.reference.remove" : {
+      "comment" : "Accessibility label of the button that removes a reference.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إزالة المرجع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Remove reference"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അവലംബം നീക്കം ചെയ്യുക"
+          }
+        }
+      }
+    },
+    "library.editor.references" : {
+      "comment" : "Section title of a dhikr's references.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المراجع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "References"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അവലംബങ്ങൾ"
+          }
+        }
+      }
+    },
+    "library.editor.title.edit" : {
+      "comment" : "Title of the editor for an existing dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل الذكر"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit dhikr"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ദിക്ർ എഡിറ്റ് ചെയ്യുക"
+          }
+        }
+      }
+    },
+    "library.editor.title.new" : {
+      "comment" : "Title of the editor for a new dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ذكر جديد"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New dhikr"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പുതിയ ദിക്ർ"
+          }
+        }
+      }
+    },
+    "library.editor.title_label" : {
+      "comment" : "Label of the title field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العنوان"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Title"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "തലക്കെട്ട്"
+          }
+        }
+      }
+    },
+    "library.failure.audio_too_large" : {
+      "comment" : "A recording is too big. The number is the limit in megabytes.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حجم التسجيل يتجاوز %lld ميغابايت."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That recording is over %lld MB."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ആ റെക്കോർഡിങ് %lld MB-യിൽ കൂടുതലാണ്."
+          }
+        }
+      }
+    },
+    "library.failure.audio_unreadable" : {
+      "comment" : "The picked file could not be opened.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر فتح هذا الملف."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't open that file."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ആ ഫയൽ തുറക്കാനായില്ല."
+          }
+        }
+      }
+    },
+    "library.failure.audio_unsupported" : {
+      "comment" : "A recording is not MP3 or M4A.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر ملف MP3 أو M4A."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose an MP3 or M4A file."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MP3 അല്ലെങ്കിൽ M4A ഫയൽ തിരഞ്ഞെടുക്കുക."
+          }
+        }
+      }
+    },
+    "library.failure.dhikr_limit" : {
+      "comment" : "The custom dhikr limit is reached. The number is the limit.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وصلت إلى الحد الأقصى للأذكار الخاصة (%lld)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've reached the limit of %lld custom dhikrs."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സ്വന്തം ദിക്റുകളുടെ പരിധിയായ %lld ൽ എത്തി."
+          }
+        }
+      }
+    },
+    "library.failure.dhikr_tags" : {
+      "comment" : "A dhikr has the most tags it can. The number is the limit.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم بلوغ الحد: %lld وسمًا للذكر الواحد."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Limit reached: %lld tags on one dhikr."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പരിധി എത്തി: ഒരു ദിക്റിൽ %lld ടാഗുകൾ."
+          }
+        }
+      }
+    },
+    "library.failure.invalid" : {
+      "comment" : "Saving found problems with the fields.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بعض الحقول تحتاج إلى انتباهك."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some fields need your attention."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ചില ഫീൽഡുകൾ ശ്രദ്ധിക്കേണ്ടതുണ്ട്."
+          }
+        }
+      }
+    },
+    "library.failure.not_found" : {
+      "comment" : "The dhikr or tag was deleted meanwhile.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يعد موجودًا. ربما حُذف على جهاز آخر."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It no longer exists. It may have been deleted on another device."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇത് ഇപ്പോൾ നിലവിലില്ല. മറ്റൊരു ഉപകരണത്തിൽ ഇല്ലാതാക്കിയതാകാം."
+          }
+        }
+      }
+    },
+    "library.failure.storage" : {
+      "comment" : "The device could not save.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر الحفظ. حاول مرة أخرى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Couldn't save. Try again."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സംരക്ഷിക്കാനായില്ല. വീണ്ടും ശ്രമിക്കുക."
+          }
+        }
+      }
+    },
+    "library.failure.tag_empty" : {
+      "comment" : "A tag name is empty.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل اسمًا للوسم."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a name for the tag."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ടാഗിന് ഒരു പേര് നൽകുക."
+          }
+        }
+      }
+    },
+    "library.failure.tag_limit" : {
+      "comment" : "The tag limit is reached. The number is the limit.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وصلت إلى الحد الأقصى للوسوم (%lld)."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've reached the limit of %lld tags."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ടാഗുകളുടെ പരിധിയായ %lld ൽ എത്തി."
+          }
+        }
+      }
+    },
+    "library.failure.tag_taken" : {
+      "comment" : "Another tag has this name.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لديك وسم بهذا الاسم بالفعل."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You already have a tag with that name."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ആ പേരിൽ നിങ്ങൾക്ക് ഇതിനകം ഒരു ടാഗ് ഉണ്ട്."
+          }
+        }
+      }
+    },
+    "library.failure.tag_too_many_bytes" : {
+      "comment" : "A tag name is too long in bytes.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاسم طويل جدًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That name is too long."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ആ പേര് വളരെ നീണ്ടതാണ്."
+          }
+        }
+      }
+    },
+    "library.failure.too_long" : {
+      "comment" : "A text is longer than allowed. The number is the limit.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استخدم %lld حرفًا أو أقل."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Use %lld characters or fewer."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld അക്ഷരങ്ങളോ അതിൽ കുറവോ ഉപയോഗിക്കുക."
+          }
+        }
+      }
+    },
     "library.featured" : {
       "comment" : "Home section title over the collection tiles.",
       "localizations" : {
@@ -333,6 +1414,903 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "പ്രധാന ദിക്ർ ശേഖരങ്ങൾ"
+          }
+        }
+      }
+    },
+    "library.filter.by_tag" : {
+      "comment" : "Button and sheet title for filtering the Library by tag.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تصفية حسب الوسم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Filter by tag"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ടാഗ് അനുസരിച്ച് അരിച്ചെടുക്കുക"
+          }
+        }
+      }
+    },
+    "library.filter.clear" : {
+      "comment" : "Button that removes the tag filter.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسح"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clear"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മായ്ക്കുക"
+          }
+        }
+      }
+    },
+    "library.filter.empty.body" : {
+      "comment" : "Shown when no dhikr has every selected tag.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يوجد ذكر يحمل كل الوسوم المحددة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No dhikr has all of the selected tags."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "തിരഞ്ഞെടുത്ത എല്ലാ ടാഗുകളും ഉള്ള ദിക്ർ ഇല്ല."
+          }
+        }
+      }
+    },
+    "library.kind.dhikr" : {
+      "comment" : "A dhikr type.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ذكر"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dhikr"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ദിക്ർ"
+          }
+        }
+      }
+    },
+    "library.kind.dua" : {
+      "comment" : "A dhikr type.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دعاء"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dua"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ദുആ"
+          }
+        }
+      }
+    },
+    "library.kind.name_of_allah" : {
+      "comment" : "A dhikr type.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسم من أسماء الله"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name of Allah"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അല്ലാഹുവിന്റെ നാമം"
+          }
+        }
+      }
+    },
+    "library.kind.quran" : {
+      "comment" : "A dhikr type.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قرآن"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qur'an"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഖുർആൻ"
+          }
+        }
+      }
+    },
+    "library.kind.salawat" : {
+      "comment" : "A dhikr type.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صلوات"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Salawat"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സ്വലാത്ത്"
+          }
+        }
+      }
+    },
+    "library.manage_tags" : {
+      "comment" : "Title of the screen and the button for managing tags.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إدارة الوسوم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage tags"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ടാഗുകൾ കൈകാര്യം ചെയ്യുക"
+          }
+        }
+      }
+    },
+    "library.new_dhikr" : {
+      "comment" : "Accessibility label of the + button that creates a dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ذكر جديد"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New dhikr"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പുതിയ ദിക്ർ"
+          }
+        }
+      }
+    },
+    "library.notice.reason.dhikr_limit" : {
+      "comment" : "Why a change was undone.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وصلت إلى الحد الأقصى للأذكار الخاصة."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've reached the limit of custom dhikrs."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സ്വന്തം ദിക്റുകളുടെ പരിധിയിൽ എത്തി."
+          }
+        }
+      }
+    },
+    "library.notice.reason.invalid" : {
+      "comment" : "Why a change was undone.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يكن صالحًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It wasn't valid."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇത് സാധുവായിരുന്നില്ല."
+          }
+        }
+      }
+    },
+    "library.notice.reason.not_found" : {
+      "comment" : "Why a change was undone.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يعد موجودًا."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It no longer exists."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇത് ഇപ്പോൾ നിലവിലില്ല."
+          }
+        }
+      }
+    },
+    "library.notice.reason.other" : {
+      "comment" : "Why a change was undone.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر حفظه."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It couldn't be saved."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇത് സംരക്ഷിക്കാനായില്ല."
+          }
+        }
+      }
+    },
+    "library.notice.reason.tag_limit" : {
+      "comment" : "Why a change was undone.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وصلت إلى الحد الأقصى للوسوم."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You've reached the limit of tags."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ടാഗുകളുടെ പരിധിയിൽ എത്തി."
+          }
+        }
+      }
+    },
+    "library.notice.reason.tag_name_taken" : {
+      "comment" : "Why a change was undone.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يوجد وسم آخر بهذا الاسم."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Another tag already has that name."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ആ പേരിൽ മറ്റൊരു ടാഗ് ഇതിനകം ഉണ്ട്."
+          }
+        }
+      }
+    },
+    "library.notice.title.custom_dhikr" : {
+      "comment" : "Title of a notice: the server refused a change to a custom dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم التراجع عن تغيير ذكرك"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your dhikr change was undone"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങളുടെ ദിക്റിലെ മാറ്റം പിൻവലിച്ചു"
+          }
+        }
+      }
+    },
+    "library.notice.title.dhikr_personal" : {
+      "comment" : "Title of a notice: the server refused the tags chosen for a dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم التراجع عن اختيار الوسوم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your tag choice was undone"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങളുടെ ടാഗ് തിരഞ്ഞെടുപ്പ് പിൻവലിച്ചു"
+          }
+        }
+      }
+    },
+    "library.notice.title.user_tag" : {
+      "comment" : "Title of a notice: the server refused a change to a tag.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم التراجع عن تغيير الوسم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your tag change was undone"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങളുടെ ടാഗിലെ മാറ്റം പിൻവലിച്ചു"
+          }
+        }
+      }
+    },
+    "library.reference.field.author" : {
+      "comment" : "Label of a field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المؤلف (اختياري)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Author (optional)"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "രചയിതാവ് (ഓപ്ഷണൽ)"
+          }
+        }
+      }
+    },
+    "library.reference.field.ayah_end" : {
+      "comment" : "Label of a field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآية الأخيرة (اختياري)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last ayah (optional)"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അവസാന ആയത്ത് (ഓപ്ഷണൽ)"
+          }
+        }
+      }
+    },
+    "library.reference.field.ayah_start" : {
+      "comment" : "Label of a field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآية الأولى"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "First ayah"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ആദ്യ ആയത്ത്"
+          }
+        }
+      }
+    },
+    "library.reference.field.book_title" : {
+      "comment" : "Label of the book title field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العنوان"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Title"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "തലക്കെട്ട്"
+          }
+        }
+      }
+    },
+    "library.reference.field.collection" : {
+      "comment" : "Label of the hadith collection field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كتاب الحديث"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Collection"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഹദീസ് ഗ്രന്ഥം"
+          }
+        }
+      }
+    },
+    "library.reference.field.grade" : {
+      "comment" : "Label of a field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحكم (اختياري)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grade (optional)"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പദവി (ഓപ്ഷണൽ)"
+          }
+        }
+      }
+    },
+    "library.reference.field.link" : {
+      "comment" : "Label of a field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رابط (اختياري)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link (optional)"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ലിങ്ക് (ഓപ്ഷണൽ)"
+          }
+        }
+      }
+    },
+    "library.reference.field.name" : {
+      "comment" : "Label of the shaykh's name field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاسم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പേര്"
+          }
+        }
+      }
+    },
+    "library.reference.field.narrator" : {
+      "comment" : "Label of a field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الراوي (اختياري)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Narrator (optional)"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിവേദകൻ (ഓപ്ഷണൽ)"
+          }
+        }
+      }
+    },
+    "library.reference.field.note" : {
+      "comment" : "Label of a field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ملاحظة (اختياري)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Note (optional)"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "കുറിപ്പ് (ഓപ്ഷണൽ)"
+          }
+        }
+      }
+    },
+    "library.reference.field.number" : {
+      "comment" : "Label of a field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرقم (اختياري)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Number (optional)"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നമ്പർ (ഓപ്ഷണൽ)"
+          }
+        }
+      }
+    },
+    "library.reference.field.page" : {
+      "comment" : "Label of a field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصفحة (اختياري)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page (optional)"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പേജ് (ഓപ്ഷണൽ)"
+          }
+        }
+      }
+    },
+    "library.reference.field.surah" : {
+      "comment" : "Label of the surah field. The numbers are the first and last surah.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السورة (%lld–%lld)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Surah (%lld–%lld)"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സൂറ (%lld–%lld)"
+          }
+        }
+      }
+    },
+    "library.reference.field.text" : {
+      "comment" : "Label of the text field of an other reference.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النص"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Text"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പാഠം"
+          }
+        }
+      }
+    },
+    "library.reference.field.volume" : {
+      "comment" : "Label of a field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المجلد (اختياري)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Volume (optional)"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "വാല്യം (ഓപ്ഷണൽ)"
+          }
+        }
+      }
+    },
+    "library.reference.problem.ayah_number" : {
+      "comment" : "The ayah is not a number.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل رقم آية."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter an ayah number."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഒരു ആയത്ത് നമ്പർ നൽകുക."
+          }
+        }
+      }
+    },
+    "library.reference.problem.ayah_order" : {
+      "comment" : "The last ayah is before the first.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن أن تسبق الآية الأخيرة الأولى."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The last ayah can't come before the first."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അവസാന ആയത്ത് ആദ്യത്തേതിന് മുമ്പാകരുത്."
+          }
+        }
+      }
+    },
+    "library.reference.problem.link" : {
+      "comment" : "The link is not a full link.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل رابطًا كاملًا، مثل https://example.org."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a full link, like https://example.org."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "https://example.org പോലെ പൂർണ്ണമായ ഒരു ലിങ്ക് നൽകുക."
+          }
+        }
+      }
+    },
+    "library.reference.problem.required" : {
+      "comment" : "A required field is empty.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا الحقل مطلوب."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This is required."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇത് ആവശ്യമാണ്."
+          }
+        }
+      }
+    },
+    "library.reference.problem.surah_range" : {
+      "comment" : "The surah is outside the range. The numbers are the first and last surah.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل رقم سورة من %lld إلى %lld."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a surah from %lld to %lld."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld മുതൽ %lld വരെയുള്ള ഒരു സൂറ നൽകുക."
           }
         }
       }
@@ -379,6 +2357,144 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ഖുർആൻ %1$lld:%2$lld–%3$lld"
+          }
+        }
+      }
+    },
+    "library.reference.type" : {
+      "comment" : "Label of the reference type choice.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "النوع"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "തരം"
+          }
+        }
+      }
+    },
+    "library.reference.type.book" : {
+      "comment" : "A reference type.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كتاب"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Book"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പുസ്തകം"
+          }
+        }
+      }
+    },
+    "library.reference.type.hadith" : {
+      "comment" : "A reference type.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حديث"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hadith"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഹദീസ്"
+          }
+        }
+      }
+    },
+    "library.reference.type.other" : {
+      "comment" : "A reference type.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أخرى"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Other"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "മറ്റുള്ളവ"
+          }
+        }
+      }
+    },
+    "library.reference.type.quran" : {
+      "comment" : "A reference type.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القرآن"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Qur'an"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഖുർആൻ"
+          }
+        }
+      }
+    },
+    "library.reference.type.shaykh" : {
+      "comment" : "A reference type.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "شيخ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shaykh"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ശൈഖ്"
           }
         }
       }
@@ -475,6 +2591,236 @@
         }
       }
     },
+    "library.tags.choose" : {
+      "comment" : "Button and sheet title for choosing a dhikr's tags.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختيار الوسوم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Choose tags"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ടാഗുകൾ തിരഞ്ഞെടുക്കുക"
+          }
+        }
+      }
+    },
+    "library.tags.delete.message" : {
+      "comment" : "Message of the confirmation for deleting a tag.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيُزال من كل ذكر موسوم به."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It's removed from every dhikr it's on."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഇത് ഉള്ള എല്ലാ ദിക്റുകളിൽ നിന്നും നീക്കം ചെയ്യപ്പെടും."
+          }
+        }
+      }
+    },
+    "library.tags.delete.title" : {
+      "comment" : "Title of the confirmation for deleting a tag.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف هذا الوسم؟"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete this tag?"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഈ ടാഗ് ഇല്ലാതാക്കണോ?"
+          }
+        }
+      }
+    },
+    "library.tags.edit" : {
+      "comment" : "Button that shows rename and delete on the tags.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل الوسوم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Edit tags"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ടാഗുകൾ എഡിറ്റ് ചെയ്യുക"
+          }
+        }
+      }
+    },
+    "library.tags.empty" : {
+      "comment" : "Shown when the user has no tags.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس لديك وسوم بعد. أضف وسمًا أعلاه."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have no tags yet. Add one above."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങൾക്ക് ഇതുവരെ ടാഗുകളൊന്നുമില്ല. മുകളിൽ ഒന്ന് ചേർക്കുക."
+          }
+        }
+      }
+    },
+    "library.tags.name" : {
+      "comment" : "Label of the tag name field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاسم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പേര്"
+          }
+        }
+      }
+    },
+    "library.tags.new" : {
+      "comment" : "Label of the new tag field.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وسم جديد"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New tag"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പുതിയ ടാഗ്"
+          }
+        }
+      }
+    },
+    "library.tags.none_yet" : {
+      "comment" : "Shown in the tag chooser when the user has no tags.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس لديك وسوم بعد."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have no tags yet."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങൾക്ക് ഇതുവരെ ടാഗുകളൊന്നുമില്ല."
+          }
+        }
+      }
+    },
+    "library.tags.rename" : {
+      "comment" : "Button that renames a tag.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعادة تسمية"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "പേര് മാറ്റുക"
+          }
+        }
+      }
+    },
+    "library.tags.rename.title" : {
+      "comment" : "Title of the sheet that renames a tag.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إعادة تسمية الوسم"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rename tag"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ടാഗിന്റെ പേര് മാറ്റുക"
+          }
+        }
+      }
+    },
     "library.title" : {
       "comment" : "Title of the Library tab and its large title.",
       "localizations" : {
@@ -517,6 +2863,98 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "എല്ലാം കാണുക"
+          }
+        }
+      }
+    },
+    "library.your.create" : {
+      "comment" : "Button that opens the editor for a new dhikr.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إنشاء ذكر"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create a dhikr"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഒരു ദിക്ർ സൃഷ്ടിക്കുക"
+          }
+        }
+      }
+    },
+    "library.your.empty.body" : {
+      "comment" : "Empty state of the user's own dhikrs.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اكتب ذكرًا بكلماتك، وأضف تسجيلك الخاص."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Write a dhikr in your own words, and add your own recording."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സ്വന്തം വാക്കുകളിൽ ഒരു ദിക്ർ എഴുതുക, സ്വന്തം റെക്കോർഡിങ്ങും ചേർക്കുക."
+          }
+        }
+      }
+    },
+    "library.your.empty.title" : {
+      "comment" : "Empty state of the user's own dhikrs.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا توجد أذكار خاصة بك بعد"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No dhikrs of your own yet"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "സ്വന്തമായി ദിക്റുകളൊന്നും ഇതുവരെ ഇല്ല"
+          }
+        }
+      }
+    },
+    "library.your_dhikrs" : {
+      "comment" : "Title of the user's own dhikrs: a collection tile and a screen.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أذكارك"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your dhikrs"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങളുടെ ദിക്റുകൾ"
           }
         }
       }

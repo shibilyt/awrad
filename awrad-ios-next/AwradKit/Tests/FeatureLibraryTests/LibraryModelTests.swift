@@ -7,7 +7,8 @@ import Testing
 
 struct LibraryModelTests {
     private func model(_ language: CatalogLanguage = .en) throws -> LibraryModel {
-        LibraryModel(catalog: try DhikrCatalog.bundled(), language: language)
+        LibraryModel(
+            catalog: try DhikrCatalog.bundled(), language: language, library: FakePersonalLibrary(customDhikrs: []))
     }
 
     @Test func typingSearchesAtOnce() throws {
