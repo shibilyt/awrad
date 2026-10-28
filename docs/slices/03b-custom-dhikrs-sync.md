@@ -127,7 +127,7 @@ The request has 1–100 commands, applied in order. Each command is:
 
 ### Clients (Android and iOS)
 
-**Saving an edit:** the change and its command go into the queue in one local transaction. The command is `pending`, and its `base_version` is the last version this device knows for the entity. If the same entity already has a pending, never-sent command, that command is replaced in place; once it has been sent, a new command is added after it.
+**Saving an edit:** the change and its command go into the queue in one local transaction. The command is `pending`, and its `base_version` is the last version this device knows for the entity. If the same entity already has a pending, never-sent command, that command is replaced (same `command_id`, same position unless its document now references a tag or custom dhikr whose never-sent put is later in the queue, in which case it moves to just after the last of those); once it has been sent, a new command is added after it.
 
 **Sending:**
 - When signed in and online: send pending commands in order, in batches.
