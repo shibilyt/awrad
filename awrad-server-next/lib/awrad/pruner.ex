@@ -1,15 +1,17 @@
 defmodule Awrad.Pruner do
   @moduledoc """
-  Deletes expired rows every hour: idempotency results, email codes and
-  rate-limit windows. Expired rows are already ignored when read; this only
-  keeps the tables small. Disabled in tests (`config :awrad, Awrad.Pruner`).
+  Deletes expired rows every hour: idempotency results, email codes,
+  rate-limit windows, deleted accounts' refresh tokens (ADR 0010) and sync
+  receipts older than 90 days. Expired rows are already ignored when read
+  (sync receipts excepted: their 90 days are the retention itself). Disabled
+  in tests (`config :awrad, Awrad.Pruner`).
   """
 
   use GenServer
 
   require Logger
 
-  alias Awrad.{Accounts, Idempotency}
+  alias Awrad.{Accounts, Idempotency, Sync}
 
   @interval :timer.hours(1)
 
@@ -23,7 +25,8 @@ defmodule Awrad.Pruner do
 
   @doc "Prunes once. Returns how many rows were deleted."
   @spec prune(DateTime.t()) :: non_neg_integer()
-  def prune(now \\ DateTime.utc_now(:second)), do: Idempotency.prune(now) + Accounts.prune(now)
+  def prune(now \\ DateTime.utc_now(:second)),
+    do: Idempotency.prune(now) + Accounts.prune(now) + Sync.prune(now)
 
   @impl GenServer
   def init(_opts) do
