@@ -76,16 +76,14 @@ defmodule Awrad.Accounts.AccountSessions do
   """
   @spec revoke(Scope.t(), String.t()) :: :ok | :not_found
   def revoke(%Scope{user: user} = scope, session_id) when is_binary(session_id) do
-    case Ecto.UUID.cast(session_id) do
-      {:ok, id} ->
-        reason = if Scope.current_session_id(scope) == id, do: "signed_out", else: "revoked"
+    if Awrad.ID.valid?(session_id) do
+      reason = if Scope.current_session_id(scope) == session_id, do: "signed_out", else: "revoked"
 
-        with :not_found <- DeviceSessions.revoke(user, id, reason) do
-          BrowserSessions.delete(user, id)
-        end
-
-      :error ->
-        :not_found
+      with :not_found <- DeviceSessions.revoke(user, session_id, reason) do
+        BrowserSessions.delete(user, session_id)
+      end
+    else
+      :not_found
     end
   end
 
@@ -161,7 +159,7 @@ defmodule Awrad.Accounts.AccountSessions do
          [unix, id] <- String.split(decoded, ":", parts: 2),
          {unix, ""} <- Integer.parse(unix),
          {:ok, seen_at} <- DateTime.from_unix(unix),
-         {:ok, ^id} <- Ecto.UUID.cast(id) do
+         true <- Awrad.ID.valid?(id) do
       {:ok, {seen_at, id}}
     else
       _invalid -> {:error, :cursor_invalid}

@@ -30,14 +30,18 @@ defmodule Awrad.AccountsFixtures do
 
   def device(attrs \\ %{}) do
     Map.merge(
-      %{installation_id: Ecto.UUID.generate(), name: "Pixel 9", platform: :android},
+      %{installation_id: Awrad.UUIDv7.generate(), name: "Pixel 9", platform: :android},
       attrs
     )
   end
 
   def device_params(attrs \\ %{}) do
     Map.merge(
-      %{"installation_id" => Ecto.UUID.generate(), "name" => "Pixel 9", "platform" => "android"},
+      %{
+        "installation_id" => Awrad.UUIDv7.generate(),
+        "name" => "Pixel 9",
+        "platform" => "android"
+      },
       attrs
     )
   end

@@ -25,7 +25,6 @@ defmodule Awrad.Accounts.Input do
   # The EmailCode schema: six ASCII digits. The server doesn't normalise other
   # digit scripts; clients do (account-model email_code_input).
   @code ~r/\A[0-9]{6}\z/
-  @uuid ~r/\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/
   # The sign-in password is checked against the hash, not the rules; only the
   # API's bounds apply (minLength 1, maxLength 1024 code points).
   @max_sign_in_password 1024
@@ -85,10 +84,10 @@ defmodule Awrad.Accounts.Input do
 
   def code(_code), do: {:error, :code_invalid}
 
-  @doc "A mobile installation ID: a lowercase, hyphenated UUID."
+  @doc "A mobile installation ID: an ID (`Awrad.ID.valid?/1`)."
   @spec installation_id(term()) :: {:ok, String.t()} | {:error, :installation_id_invalid}
   def installation_id(id) when is_binary(id) do
-    if Regex.match?(@uuid, id), do: {:ok, id}, else: {:error, :installation_id_invalid}
+    if Awrad.ID.valid?(id), do: {:ok, id}, else: {:error, :installation_id_invalid}
   end
 
   def installation_id(_id), do: {:error, :installation_id_invalid}

@@ -36,7 +36,7 @@ defmodule Awrad.Accounts.UserToken do
           inserted_at: DateTime.t() | nil
         }
 
-  @primary_key {:id, :binary_id, autogenerate: true}
+  @primary_key {:id, Awrad.UUIDv7, autogenerate: true}
   @foreign_key_type :binary_id
   schema "users_tokens" do
     field :token, :binary, redact: true

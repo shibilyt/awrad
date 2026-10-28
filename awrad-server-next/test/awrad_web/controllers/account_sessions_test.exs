@@ -251,7 +251,17 @@ defmodule AwradWeb.AccountSessionsTest do
       stranger = grant_fixture(user_fixture())
       revoke(bearer_request(ctx.conn, ctx.phone), ctx.other_phone.session.id)
 
-      for id <- [stranger.session.id, ctx.other_phone.session.id, Ecto.UUID.generate(), "nope"] do
+      # The caller's own session in upper case isn't an ID (identity uuid_format).
+      unknown = [
+        String.upcase(ctx.phone.session.id),
+        stranger.session.id,
+        ctx.other_phone.session.id,
+        Awrad.UUIDv7.generate(),
+        "00000000-0000-0000-0000-000000000000",
+        "nope"
+      ]
+
+      for id <- unknown do
         conn = ctx.conn |> bearer_request(ctx.phone) |> revoke(id)
         assert assert_conforms(conn, "revoke_account_session")["code"] == "not_found"
       end
@@ -323,7 +333,7 @@ defmodule AwradWeb.AccountSessionsTest do
 
     test "a repeat with the same Idempotency-Key replays; another account's key is its own",
          ctx do
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
       first = ctx.conn |> bearer_request(ctx.phone) |> revoke_others([{"idempotency-key", key}])
       assert first.status == 204
 

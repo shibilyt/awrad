@@ -142,7 +142,7 @@ defmodule AwradWeb.BrowserControllerTest do
       conn: conn
     } do
       user = user_fixture()
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
       {anon, csrf} = anonymous(conn)
       body = %{email: user.email, password: valid_password()}
 

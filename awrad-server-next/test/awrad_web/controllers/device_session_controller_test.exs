@@ -133,6 +133,24 @@ defmodule AwradWeb.DeviceSessionControllerTest do
                assert_conforms(conn, "create_device_session")["errors"]
     end
 
+    test "an installation ID must be a lowercase UUID, not nil (identity uuid_format)", %{
+      conn: conn
+    } do
+      user = user_fixture()
+      upper = String.upcase(Awrad.UUIDv7.generate())
+
+      for id <- [upper, "00000000-0000-0000-0000-000000000000"] do
+        conn = sign_in(fresh(conn), user, device_params(%{"installation_id" => id}))
+
+        assert [%{"field" => "/device/installation_id", "code" => "installation_id_invalid"}] =
+                 assert_conforms(conn, "create_device_session")["errors"]
+      end
+
+      # Any version is accepted: a v4 ID too.
+      v4 = "3285e014-551b-46a4-aedc-8b6664b59bc7"
+      assert sign_in(fresh(conn), user, device_params(%{"installation_id" => v4})).status == 201
+    end
+
     test "400 for an unknown device field", %{conn: conn} do
       user = user_fixture()
       conn = sign_in(conn, user, Map.put(device_params(), "model", "Pixel"))
@@ -153,7 +171,7 @@ defmodule AwradWeb.DeviceSessionControllerTest do
 
     test "a repeated Idempotency-Key replays the same grant", %{conn: conn} do
       user = user_fixture()
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
       body = %{email: user.email, password: valid_password(), device: device_params()}
 
       first = post_json(conn, ~p"/api/v1/device_sessions", body, [{"idempotency-key", key}])
@@ -173,7 +191,7 @@ defmodule AwradWeb.DeviceSessionControllerTest do
     end
 
     test "200 with new tokens", %{conn: conn, grant: grant} do
-      conn = refresh(conn, grant["refresh_token"], Ecto.UUID.generate())
+      conn = refresh(conn, grant["refresh_token"], Awrad.UUIDv7.generate())
 
       body = assert_conforms(conn, "refresh_device_session")
       assert conn.status == 200
@@ -183,7 +201,7 @@ defmodule AwradWeb.DeviceSessionControllerTest do
 
     test "a retry with the same key returns the same tokens (a lost response doesn't sign out)",
          %{conn: conn, grant: grant} do
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
 
       first = refresh(conn, grant["refresh_token"], key)
       retry = refresh(fresh(conn), grant["refresh_token"], key)
@@ -194,7 +212,7 @@ defmodule AwradWeb.DeviceSessionControllerTest do
         refresh(
           fresh(conn),
           Jason.decode!(first.resp_body)["refresh_token"],
-          Ecto.UUID.generate()
+          Awrad.UUIDv7.generate()
         )
 
       assert next.status == 200
@@ -202,8 +220,8 @@ defmodule AwradWeb.DeviceSessionControllerTest do
 
     test "reusing a spent token with another key is 401 refresh_reuse_detected and revokes the session",
          %{conn: conn, grant: grant} do
-      first = refresh(conn, grant["refresh_token"], Ecto.UUID.generate())
-      replay = refresh(fresh(conn), grant["refresh_token"], Ecto.UUID.generate())
+      first = refresh(conn, grant["refresh_token"], Awrad.UUIDv7.generate())
+      replay = refresh(fresh(conn), grant["refresh_token"], Awrad.UUIDv7.generate())
 
       assert assert_conforms(replay, "refresh_device_session")["code"] == "refresh_reuse_detected"
       assert replay.status == 401
@@ -212,7 +230,7 @@ defmodule AwradWeb.DeviceSessionControllerTest do
         refresh(
           fresh(conn),
           Jason.decode!(first.resp_body)["refresh_token"],
-          Ecto.UUID.generate()
+          Awrad.UUIDv7.generate()
         )
 
       assert assert_conforms(successor, "refresh_device_session")["code"] ==
@@ -225,7 +243,7 @@ defmodule AwradWeb.DeviceSessionControllerTest do
     end
 
     test "401 refresh_token_invalid for an unknown token", %{conn: conn} do
-      conn = refresh(conn, "an-unknown-refresh-token-value", Ecto.UUID.generate())
+      conn = refresh(conn, "an-unknown-refresh-token-value", Awrad.UUIDv7.generate())
       assert assert_conforms(conn, "refresh_device_session")["code"] == "refresh_token_invalid"
     end
 
@@ -234,7 +252,7 @@ defmodule AwradWeb.DeviceSessionControllerTest do
       grant: grant
     } do
       other = conn |> fresh() |> sign_in(user_fixture()) |> json_response(201)
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
       refresh(fresh(conn), grant["refresh_token"], key)
 
       conn = refresh(fresh(conn), other["refresh_token"], key)
@@ -252,13 +270,14 @@ defmodule AwradWeb.DeviceSessionControllerTest do
       malformed = refresh(fresh(conn), grant["refresh_token"], "ABC")
       assert assert_conforms(malformed, "refresh_device_session")["code"] == "malformed_request"
       # The token wasn't spent.
-      assert refresh(fresh(conn), grant["refresh_token"], Ecto.UUID.generate()).status == 200
+      assert refresh(fresh(conn), grant["refresh_token"], Awrad.UUIDv7.generate()).status == 200
     end
 
     test "429 after 60 refreshes from one IP in 15 minutes", %{conn: conn} do
-      for _ <- 1..60, do: refresh(fresh(conn), "unknown-refresh-token-0000", Ecto.UUID.generate())
+      for _ <- 1..60,
+          do: refresh(fresh(conn), "unknown-refresh-token-0000", Awrad.UUIDv7.generate())
 
-      conn = refresh(fresh(conn), "unknown-refresh-token-0000", Ecto.UUID.generate())
+      conn = refresh(fresh(conn), "unknown-refresh-token-0000", Awrad.UUIDv7.generate())
       assert assert_conforms(conn, "refresh_device_session")["code"] == "rate_limited"
     end
   end

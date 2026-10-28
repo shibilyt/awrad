@@ -12,9 +12,11 @@ defmodule Awrad do
   use Boundary,
     deps: [],
     exports: [
+      ID,
       Mailer,
       Pruner,
       Repo,
+      UUIDv7,
       {Accounts, []},
       {Dhikrs, []},
       {Goals, []},
