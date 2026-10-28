@@ -3,16 +3,21 @@ import AwradDomain
 import SwiftUI
 
 /// Home's "Featured dhikr collections": the section title with a "View all" text button, then the
-/// collection tiles in a horizontal row.
+/// collection tiles in a horizontal row, "Your dhikrs" first when the user has any.
 public struct FeaturedCollections: View {
     private let content: LibraryContent
+    private let yourDhikrsCount: Int
+    private let onOpenYourDhikrs: () -> Void
     private let onOpen: (DhikrCollection) -> Void
     private let onViewAll: () -> Void
 
     public init(
-        content: LibraryContent, onOpen: @escaping (DhikrCollection) -> Void, onViewAll: @escaping () -> Void
+        content: LibraryContent, yourDhikrsCount: Int = 0, onOpenYourDhikrs: @escaping () -> Void = {},
+        onOpen: @escaping (DhikrCollection) -> Void, onViewAll: @escaping () -> Void
     ) {
         self.content = content
+        self.yourDhikrsCount = yourDhikrsCount
+        self.onOpenYourDhikrs = onOpenYourDhikrs
         self.onOpen = onOpen
         self.onViewAll = onViewAll
     }
@@ -29,23 +34,24 @@ public struct FeaturedCollections: View {
                     .fixedSize()
             }
             .padding(.horizontal, AwradSpacing.pageMargin)
-            CollectionTilesRow(content: content, onOpen: onOpen)
+            CollectionTilesRow(
+                content: content, yourDhikrsCount: yourDhikrsCount, onOpenYourDhikrs: onOpenYourDhikrs, onOpen: onOpen)
         }
     }
 }
 
-/// The collection tiles, scrolling sideways, inset by `pageMargin`. In the Library, "Your dhikrs" comes
-/// first (give its count and what opens it).
+/// The collection tiles, scrolling sideways, inset by `pageMargin`. "Your dhikrs" comes first whenever
+/// the profile has custom dhikrs (components.md "Your dhikrs" collection tile).
 struct CollectionTilesRow: View {
     let content: LibraryContent
-    var yourDhikrsCount: Int?
+    var yourDhikrsCount = 0
     var onOpenYourDhikrs: () -> Void = {}
     let onOpen: (DhikrCollection) -> Void
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(alignment: .top, spacing: AwradSpacing.md) {
-                if let yourDhikrsCount {
+                if yourDhikrsCount > 0 {
                     AwradCollectionTile(
                         Strings.yourDhikrs, detail: Strings.dhikrCount(yourDhikrsCount), action: onOpenYourDhikrs)
                 }
@@ -159,56 +165,28 @@ struct SearchEmptyState: View {
     }
 }
 
-/// Over the Library's lists, when the user has tags: "Filter by tag" and, while a filter is on, its
-/// tags as chips with "Clear".
-struct TagFilterBar: View {
-    let selected: [UserTag]
-    let onOpen: () -> Void
-    let onClear: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: AwradSpacing.sm) {
-            HStack(spacing: AwradSpacing.sm) {
-                AwradButton(Strings.filterByTag, variant: .text, layout: .row, action: onOpen)
-                Spacer(minLength: AwradSpacing.none)
-                if !selected.isEmpty {
-                    AwradButton(Strings.clearFilter, variant: .text, layout: .row, action: onClear)
-                }
-            }
-            if !selected.isEmpty {
-                TagChips(items: selected.map { TagChipItem(id: $0.id.description, title: $0.name) })
-            }
-        }
-        .pageInset()
-    }
-}
-
-/// The tag filter's sheet: the user's tags as multiple-choice rows (a dhikr must have all the chosen).
-struct TagFilterSheet: View {
+/// Over the Library's lists, when the user has tags: "Filter by tag", then each tag as a filter chip
+/// (components.md "Filter chip"). A dhikr must have every chosen tag; tapping a chip again unchooses
+/// it.
+struct TagFilterChips: View {
     let tags: [UserTag]
     let selected: Set<AwradID>
-    let send: (LibraryModel.Action) -> Void
-    let onDone: () -> Void
+    let onToggle: (AwradID) -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: AwradSpacing.lg) {
-                Text(Strings.filterByTag)
-                    .awradTextStyle(.title)
-                    .foregroundStyle(AwradColors.onSurface)
-                    .accessibilityAddTraits(.isHeader)
-                VStack(spacing: AwradSpacing.rowGap) {
-                    ForEach(tags) { tag in
-                        AwradOptionRow(
-                            Strings.verbatim(tag.name), isSelected: selected.contains(tag.id), selection: .multiple
-                        ) { send(.toggleTagFilter(tag.id)) }
-                    }
+        VStack(alignment: .leading, spacing: AwradSpacing.xs) {
+            Text(Strings.filterByTag)
+                .awradTextStyle(.label)
+                .foregroundStyle(AwradColors.onSurfaceVariant)
+                .accessibilityAddTraits(.isHeader)
+            FlowLayout(spacing: AwradSpacing.sm) {
+                ForEach(tags) { tag in
+                    AwradFilterChip(verbatim: tag.name, isSelected: selected.contains(tag.id)) { onToggle(tag.id) }
                 }
-                AwradButton(Strings.done, action: onDone)
             }
-            .pageInset()
-            .padding(.bottom, AwradSpacing.lg)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .pageInset()
     }
 }
 

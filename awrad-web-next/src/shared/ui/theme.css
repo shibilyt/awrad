@@ -130,6 +130,18 @@
   padding-bottom: calc(var(--awrad-size-nav-bar) + var(--awrad-space-lg) + var(--awrad-space-lg));
 }
 
+/*
+ * The multi-line text field (TextField `multiline`, components.md "Multi-line text field"): it
+ * grows with its text (`field-sizing-content`) up to 6 lines of `input` text, plus its `md`
+ * padding and the error stroke above and below; beyond that it scrolls inside.
+ */
+@utility field-max-lines {
+  max-height: calc(
+    6 * var(--awrad-text-input-line-height) + 2 * var(--awrad-space-md) + 2 * var(--awrad-stroke-field-error)
+  );
+  overflow-y: auto;
+}
+
 /* SearchField draws its own clear button, so the browser's own one stays hidden. */
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration {

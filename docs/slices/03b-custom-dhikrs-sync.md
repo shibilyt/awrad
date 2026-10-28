@@ -30,6 +30,7 @@ Gaps found while building the four platforms, closed in `contracts/` (sync READM
 5. **Cascades in receipts.** The `applied` receipt of a `user_tag` or `custom_dhikr` delete carries `cascaded` (`{entity_type, entity_id, state, version, revision}` for every entity changed at that revision; `null` on other applied receipts). Phones update their known versions from it straight away; an edit already queued or in the same batch conflicts as normal. Deleting a tag queues only the tag delete, never personal-record puts.
 6. **Ranges and sizes.** A Qur'an reference needs `ayah_end` ≥ `ayah_start` (field error `range`; the catalog check enforces it for built-ins). 64 KB per document means 65,536 bytes of UTF-8 JSON; 10 MB of audio (3c) means 10,000,000 bytes.
 7. **Components:** filter chip, conflict banner, "Change refused" notice, multi-line text field, the Sources section on the dhikr detail, and the "Your dhikrs" collection tile (`contracts/design-system/v1/components.md`).
+8. **Queue order on replace.** A replaced never-sent command keeps its place and `command_id`, unless its new document references a tag or custom dhikr whose never-sent put sits later in the queue; then it moves to just after the last such put, so the server never sees a personal record before its tag or dhikr exists (`outbox_enqueue.json`).
 
 ## Scope
 
@@ -126,7 +127,7 @@ The request has 1–100 commands, applied in order. Each command is:
 
 ### Clients (Android and iOS)
 
-**Saving an edit:** the change and its command go into the queue in one local transaction. The command is `pending`, and its `base_version` is the last version this device knows for the entity. If the same entity already has a pending, never-sent command, that command is replaced in place; once it has been sent, a new command is added after it.
+**Saving an edit:** the change and its command go into the queue in one local transaction. The command is `pending`, and its `base_version` is the last version this device knows for the entity. If the same entity already has a pending, never-sent command, that command is replaced (same `command_id`, same position unless its document now references a tag or custom dhikr whose never-sent put is later in the queue, in which case it moves to just after the last of those); once it has been sent, a new command is added after it.
 
 **Sending:**
 - When signed in and online: send pending commands in order, in batches.

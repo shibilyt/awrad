@@ -383,7 +383,7 @@ export interface paths {
          *
          *     **Batch versus command problems.** The batch is refused as a whole (`422 validation_failed`, nothing applied) only when it has 0 or more than 100 commands, or a command's envelope is wrong: `command_id` or `entity_id` not a UUID, an unknown `entity_type` or `op`, `base_version` not an integer in range, `document` missing on a put, present on a delete or not an object, or an unknown member (sync.schema.json `command_envelope`). Everything else is a per-command `rejected` receipt, including a document that doesn't match its schema below: the server checks each document itself, so one bad command never blocks a phone's queue.
          *
-         *     Receipts: `applied`, `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null). Receipts are kept for 90 days.
+         *     Receipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null). Receipts are kept for 90 days.
          *
          *     `Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts the header and ignores it. Responses are `Cache-Control: no-store`.
          */
@@ -641,8 +641,20 @@ export interface components {
         SyncFieldError: {
             /** @description JSON Pointer into the command, for example /document/title/en. */
             field: string;
+            /**
+             * @description `range`: a value is out of order with another, such as a Qur'an reference whose ayah_end is below its ayah_start (reported on ayah_end).
+             * @enum {string}
+             */
+            code: "required" | "blank" | "too_long" | "too_many" | "duplicate" | "not_allowed" | "invalid" | "mismatch" | "not_found" | "range";
+        };
+        /** @description An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal a user_tag delete removed the tag from (active), or the dhikr_personal of a deleted custom_dhikr (deleted). */
+        SyncCascadedChange: {
+            entity_type: components["schemas"]["SyncEntityType"];
+            entity_id: components["schemas"]["Uuid"];
             /** @enum {string} */
-            code: "required" | "blank" | "too_long" | "too_many" | "duplicate" | "not_allowed" | "invalid" | "mismatch" | "not_found";
+            state: "active" | "deleted";
+            version: components["schemas"]["SyncVersion"];
+            revision: components["schemas"]["Revision"];
         };
         SyncAppliedReceipt: {
             command_id: components["schemas"]["Uuid"];
@@ -650,6 +662,8 @@ export interface components {
             status: "applied";
             version: components["schemas"]["SyncVersion"];
             revision: components["schemas"]["Revision"];
+            /** @description An array exactly when the command is a user_tag or custom_dhikr delete: every other entity the server changed at the same revision, ordered by entity_type, then entity_id, and empty when nothing cascaded. Phones set those entities' known versions from it straight away, so the next edit doesn't conflict. null for every other command. */
+            cascaded: components["schemas"]["SyncCascadedChange"][] | null;
         };
         SyncConflictReceipt: {
             command_id: components["schemas"]["Uuid"];
@@ -1962,6 +1976,13 @@ export interface operations {
                  *           }
                  *         },
                  *         {
+                 *           "command_id": "0192f0c0-0000-7000-8000-000000000007",
+                 *           "entity_type": "user_tag",
+                 *           "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+                 *           "op": "delete",
+                 *           "base_version": 2
+                 *         },
+                 *         {
                  *           "command_id": "0192f0c0-0000-7000-8000-000000000001",
                  *           "entity_type": "custom_dhikr",
                  *           "entity_id": "0192f0d0-0000-7000-8000-000000000002",
@@ -2022,7 +2043,8 @@ export interface operations {
                      *           "command_id": "0192f0c0-0000-7000-8000-000000000001",
                      *           "status": "applied",
                      *           "version": 1,
-                     *           "revision": 11
+                     *           "revision": 11,
+                     *           "cascaded": null
                      *         },
                      *         {
                      *           "command_id": "0192f0c0-0000-7000-8000-000000000002",
@@ -2041,7 +2063,8 @@ export interface operations {
                      *           "command_id": "0192f0c0-0000-7000-8000-000000000003",
                      *           "status": "applied",
                      *           "version": 2,
-                     *           "revision": 12
+                     *           "revision": 12,
+                     *           "cascaded": null
                      *         },
                      *         {
                      *           "command_id": "0192f0c0-0000-7000-8000-000000000004",
@@ -2088,17 +2111,33 @@ export interface operations {
                      *           "current": null
                      *         },
                      *         {
+                     *           "command_id": "0192f0c0-0000-7000-8000-000000000007",
+                     *           "status": "applied",
+                     *           "version": 3,
+                     *           "revision": 13,
+                     *           "cascaded": [
+                     *             {
+                     *               "entity_type": "dhikr_personal",
+                     *               "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                     *               "state": "active",
+                     *               "version": 3,
+                     *               "revision": 13
+                     *             }
+                     *           ]
+                     *         },
+                     *         {
                      *           "command_id": "0192f0c0-0000-7000-8000-000000000001",
                      *           "status": "duplicate",
                      *           "original": {
                      *             "command_id": "0192f0c0-0000-7000-8000-000000000001",
                      *             "status": "applied",
                      *             "version": 1,
-                     *             "revision": 11
+                     *             "revision": 11,
+                     *             "cascaded": null
                      *           }
                      *         }
                      *       ],
-                     *       "head_revision": 12
+                     *       "head_revision": 13
                      *     }
                      */
                     "application/json": {

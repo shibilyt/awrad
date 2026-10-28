@@ -40,9 +40,9 @@ struct DhikrDetailRoute: View {
     }
 }
 
-/// Stateless: the conflict card, the Arabic card by kind with the audio player bar at its bottom, then
-/// the transliteration, translation, tags and virtues (components.md, "Dhikr detail screen"). A custom
-/// dhikr also has Edit and Delete.
+/// Stateless: the conflict banner, the Arabic card by kind with the audio player bar at its bottom, then
+/// the transliteration, translation, tags, virtues and sources (components.md, "Dhikr detail screen").
+/// A custom dhikr also has Edit and Delete.
 struct DhikrDetailScreen: View {
     let state: DhikrDetailModel.State
     let content: LibraryContent
@@ -59,7 +59,7 @@ struct DhikrDetailScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: AwradSpacing.sectionGap) {
                 if !state.conflicts.isEmpty {
-                    ConflictCard(
+                    ConflictBanner(
                         name: nil, onKeepMine: { send(.resolveConflicts(.keepMine)) },
                         onUseTheirs: { send(.resolveConflicts(.useTheirs)) }
                     )
@@ -75,6 +75,7 @@ struct DhikrDetailScreen: View {
                 details
                 tags
                 virtues
+                sources
                 if state.custom != nil { deleteSection }
             }
             .padding(.vertical, AwradSpacing.sm)
@@ -175,6 +176,21 @@ struct DhikrDetailScreen: View {
         }
     }
 
+    /// The references not shown in the card or under a virtue, one per line.
+    @ViewBuilder private var sources: some View {
+        let sources = dhikr.sources
+        if !sources.isEmpty {
+            VStack(alignment: .leading, spacing: AwradSpacing.md) {
+                AwradSectionTitle(Strings.sources)
+                VStack(alignment: .leading, spacing: AwradSpacing.xs) {
+                    ForEach(sources, id: \.id) { ReferenceLine(reference: $0, locale: locale) }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .pageInset()
+            }
+        }
+    }
+
     private var deleteSection: some View {
         VStack(spacing: AwradSpacing.rowGap) {
             if let failure = state.failure { FailureText(failure: failure) }
@@ -241,18 +257,26 @@ private struct VirtueCard: View {
             Text(verbatim: text)
                 .awradTextStyle(.body)
                 .foregroundStyle(AwradColors.onSurface)
-            ForEach(references, id: \.id) { reference in
-                VStack(alignment: .leading, spacing: AwradSpacing.xxs) {
-                    Text(verbatim: ReferenceLabel.text(reference, locale: locale))
+            ForEach(references, id: \.id) { ReferenceLine(reference: $0, locale: locale) }
+        }
+    }
+}
+
+/// A reference's label in `caption`, `onSurfaceVariant`, and its link when it has one.
+private struct ReferenceLine: View {
+    let reference: Reference
+    let locale: Locale
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: AwradSpacing.xxs) {
+            Text(verbatim: ReferenceLabel.text(reference, locale: locale))
+                .awradTextStyle(.caption)
+                .foregroundStyle(AwradColors.onSurfaceVariant)
+            if let url = ReferenceLabel.link(reference) {
+                Link(destination: url) {
+                    Text(verbatim: url.absoluteString)
                         .awradTextStyle(.caption)
-                        .foregroundStyle(AwradColors.onSurfaceVariant)
-                    if let url = ReferenceLabel.link(reference) {
-                        Link(destination: url) {
-                            Text(verbatim: url.absoluteString)
-                                .awradTextStyle(.caption)
-                                .foregroundStyle(AwradColors.accent)
-                        }
-                    }
+                        .foregroundStyle(AwradColors.accent)
                 }
             }
         }

@@ -143,6 +143,8 @@ function messageFor(problem: FieldProblem, t: TFunction): string {
       if (name === "kind") return t("library.editor.errors.kind");
       if (name.startsWith("references.")) return t("library.editor.errors.reference");
       return t("library.editor.errors.invalid");
+    case "range":
+      return t("library.editor.errors.ayahRange");
     case "duplicate":
     case "mismatch":
     case "not_allowed":

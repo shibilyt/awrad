@@ -60,7 +60,8 @@ final class KnownVersionRecord {
     }
 }
 
-/// A queued command. `position` orders the outbox; a replaced command keeps its position.
+/// A queued command. `position` orders the outbox; a replaced command keeps its position unless it
+/// moves after a later put it references (`SyncRules.moveAfterLaterReferences`).
 @Model
 final class OutboxCommandRecord {
     @Attribute(.unique) var commandID: UUID

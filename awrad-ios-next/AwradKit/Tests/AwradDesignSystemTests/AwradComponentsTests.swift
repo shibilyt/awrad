@@ -58,6 +58,13 @@ struct AwradComponentsTests {
         #expect(AwradOptionRow.Selection.multiple.traits(isSelected: false) == .isToggle)
     }
 
+    // MARK: Filter chip
+
+    @Test func aFilterChipReadsAsAToggleWithItsSelection() {
+        #expect(AwradFilterChip.traits(isSelected: true) == [.isToggle, .isSelected])
+        #expect(AwradFilterChip.traits(isSelected: false) == .isToggle)
+    }
+
     // MARK: Buttons
 
     @Test(arguments: [AwradButton.Variant.main, .secondary, .error])

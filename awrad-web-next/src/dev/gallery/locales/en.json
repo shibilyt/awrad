@@ -44,7 +44,8 @@
     "choiceDialog": "Choice dialog: no destructive action, and a choice is required",
     "fieldMultiline": "Text field: several lines; Arabic, right to left",
     "tagChips": "Tag chips: on the page, on a card",
-    "filterChips": "Filter chips: the first chosen"
+    "filterChips": "Filter chips: the first chosen",
+    "noticeDialog": "Notice dialog: one message, OK closes it"
   },
   "sample": {
     "todaysGoals": "Today's goals",
@@ -122,6 +123,9 @@
     "translation": "Translation",
     "translationValue": "Glory be to Allah.\nAll praise is for Allah.",
     "arabicText": "Arabic text",
-    "filter": "Filter by tag"
+    "filter": "Filter by tag",
+    "noticeTitle": "Change refused",
+    "noticeBody": "You have 100 tags, the most an account can have.",
+    "ok": "OK"
   }
 }

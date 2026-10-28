@@ -150,6 +150,21 @@ struct SwiftDataSyncState: SyncLocalState {
         fetchOne(#Predicate<OutboxCommandRecord> { $0.commandID == id }).map(context.delete)
     }
 
+    /// Gives the command `target`'s position and shifts the commands between them back by one.
+    func moveCommand(_ commandID: AwradID, after target: AwradID) {
+        let records = commandRecords()
+        guard let moved = records.first(where: { $0.commandID == commandID.value }),
+            let destination = records.first(where: { $0.commandID == target.value }),
+            moved.position < destination.position
+        else { return }
+        let from = moved.position
+        let to = destination.position
+        for record in records where record.position > from && record.position <= to {
+            record.position -= 1
+        }
+        moved.position = to
+    }
+
     // MARK: - Conflicts
 
     func conflict(_ key: SyncEntityKey) -> SyncConflict? {

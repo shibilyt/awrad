@@ -35,6 +35,13 @@ describe("conflict: changed on another device", () => {
     expect(within(dialog).getByText("This was changed on another device after you opened it.")).toBeInTheDocument();
     expect(within(dialog).getByText("Subhanallah")).toBeInTheDocument();
     expect(within(dialog).getByText("سُبْحَانَ ٱللَّهِ")).toBeInTheDocument();
+    // components.md "Conflict banner": secondaryContainer, not the error roles; Keep mine, then Use theirs.
+    expect(dialog.closest(".rounded-card")).toHaveClass("bg-secondary-container", "text-on-secondary-container");
+    expect(
+      within(dialog)
+        .getAllByRole("button")
+        .map((button) => button.textContent),
+    ).toEqual(["Keep mine", "Use theirs"]);
 
     await userEvent.click(within(dialog).getByRole("button", { name: "Keep mine" }));
 
@@ -74,7 +81,7 @@ describe("conflict: changed on another device", () => {
 });
 
 describe("a custom dhikr's page", () => {
-  test("its text, Edit, its tags with Manage tags, its references and Delete", async () => {
+  test("its text, Edit, its tags with Manage tags, its references under Sources and Delete", async () => {
     server.use(...signedInWithEntities());
     renderRoute(`/library/dhikrs/${MORNING_DHIKR_ID}`);
 
@@ -88,7 +95,8 @@ describe("a custom dhikr's page", () => {
     ).toBeInTheDocument();
     expect(within(screen.getByRole("list", { name: "Your tags" })).getByText("Morning")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Manage tags" })).toBeInTheDocument();
-    expect(screen.getByText("Sahih Muslim 2723")).toBeInTheDocument();
+    const sources = screen.getByRole("region", { name: "Sources" });
+    expect(within(sources).getByText("Sahih Muslim 2723")).toHaveClass("text-caption", "text-on-surface-variant");
     expect(screen.queryByRole("heading", { name: "Translation" })).toBeInTheDocument();
   });
 

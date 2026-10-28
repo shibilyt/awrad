@@ -48,6 +48,11 @@ struct ProfileCard: View {
                         .awradTextStyle(.bodySmall)
                         .foregroundStyle(AwradColors.accent)
                 }
+                if profile.accountDeleted {
+                    Text(ProfileStrings.accountDeleted)
+                        .awradTextStyle(.bodySmall)
+                        .foregroundStyle(AwradColors.onSurfaceVariant)
+                }
                 if profile.hasUnsent {
                     Text(ProfileStrings.hasUnsent)
                         .awradTextStyle(.bodySmall)
@@ -159,9 +164,13 @@ enum PreviewProfiles {
             id: .random(), accountID: .random(), email: "omar@example.com", hasData: true, hasUnsent: true,
             lastUsed: .now.addingTimeInterval(-86_400 * 3))
         let phone = LocalProfile(id: .random(), hasData: true, lastUsed: .now.addingTimeInterval(-86_400 * 20))
+        let bilal = LocalProfile(
+            id: .random(), accountID: .random(), email: "bilal@example.com", hasData: true, accountDeleted: true,
+            lastUsed: .now.addingTimeInterval(-86_400 * 40))
         return ProfilesState(
             registry: ProfileRegistry(
-                profiles: [phone, omar, amina], activeProfileID: amina.id, signedInAccountID: amina.accountID),
+                profiles: [phone, omar, amina, bilal], activeProfileID: amina.id,
+                signedInAccountID: amina.accountID),
             syncStatus: syncStatus, unsentCount: unsent)
     }
 }

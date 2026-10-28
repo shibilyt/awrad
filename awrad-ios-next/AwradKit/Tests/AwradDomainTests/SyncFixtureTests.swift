@@ -63,7 +63,15 @@ struct SyncFixtureTests {
         let outcome = ProfileSwitch.apply(
             try given.event.event(), choice: choice, to: try given.registry.registry(),
             newProfileID: try #require(AwradID(given.newProfileID)))
-        #expect(ProfileSwitchExpect(outcome) == fixture.expect, "\(fixture.id): \(fixture.summary)")
+        // A merge runs over the two profiles' data when the case gives it.
+        var mergedData: MergedDataShape?
+        if let data = given.mergeData, outcome.merge != nil {
+            var account = try data.account.state()
+            SyncRules.merge(try data.anonymous.state(), into: &account)
+            mergedData = try MergedDataShape(account, given: data)
+        }
+        #expect(
+            ProfileSwitchExpect(outcome, mergedData: mergedData) == fixture.expect, "\(fixture.id): \(fixture.summary)")
     }
 }
 

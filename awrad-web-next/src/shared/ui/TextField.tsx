@@ -18,7 +18,10 @@ export interface TextFieldProps extends Omit<AriaTextFieldProps, "children" | "c
   autoCapitalize?: "none" | "sentences";
   /** An example of what to type, in `onSurfaceVariant`; never a substitute for the label. */
   placeholder?: string;
-  /** Several lines (Arabic text, a translation): a text area that starts `control` tall and grows with Enter. */
+  /**
+   * Several lines (Arabic text, a translation): a text area that starts one line, `control`, tall
+   * and grows with its text up to 6 lines, then scrolls inside (`field-max-lines`).
+   */
   multiline?: boolean;
   /** The language typed, when it isn't the page's (Arabic in an English page): sets `lang` and `dir`. */
   textLanguage?: "ar";
@@ -58,7 +61,7 @@ export function TextField({
       "outline-none data-focus-visible:outline-focus-ring data-focus-visible:outline-offset-focus-ring",
       "data-focus-visible:outline-accent",
       "data-invalid:border-error",
-      multiline ? "field-sizing-content resize-none py-md" : "",
+      multiline ? "field-sizing-content field-max-lines resize-none py-md" : "",
       textLanguage === "ar" ? "font-arabic" : "",
     ].join(" "),
   };
@@ -66,7 +69,7 @@ export function TextField({
     <AriaTextField {...props} className="flex flex-col gap-xs text-start data-disabled:opacity-disabled">
       <Label className="text-label text-on-surface">{label}</Label>
       {multiline ? (
-        <TextArea {...inputProps} />
+        <TextArea {...inputProps} rows={1} />
       ) : (
         <Input
           {...inputProps}

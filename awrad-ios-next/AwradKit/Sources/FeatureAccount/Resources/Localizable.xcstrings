@@ -617,6 +617,14 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "കുറഞ്ഞത് %lld പ്രതീകങ്ങൾ ഉപയോഗിക്കുക. സ്‌പേസുകളും ഇമോജികളും ഏത് ഭാഷയിലെ അക്ഷരങ്ങളും എണ്ണും." } }
       }
     },
+    "account.profiles.account_deleted" : {
+      "comment" : "Marks a kept profile whose account no longer exists: it stays on this phone, usable offline, and never syncs.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الحساب محذوف" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Account deleted" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അക്കൗണ്ട് ഇല്ലാതാക്കി" } }
+      }
+    },
     "account.profiles.add_data.add" : {
       "comment" : "Dialog button: keep this phone's data and add it to the account.",
       "localizations" : {

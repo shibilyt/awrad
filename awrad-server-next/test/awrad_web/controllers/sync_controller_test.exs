@@ -99,6 +99,70 @@ defmodule AwradWeb.SyncControllerTest do
       assert personal.document == %{"tag_ids" => [morning]}
     end
 
+    test "200: a delete's applied receipt lists its cascades, other applied receipts carry null",
+         %{conn: conn, grant: grant} do
+      dhikr_id = Awrad.UUIDv7.generate()
+      morning = Awrad.UUIDv7.generate()
+      night = Awrad.UUIDv7.generate()
+
+      delete = fn type, id, base_version ->
+        %{
+          "command_id" => Awrad.UUIDv7.generate(),
+          "entity_type" => type,
+          "entity_id" => id,
+          "op" => "delete",
+          "base_version" => base_version
+        }
+      end
+
+      commands = [
+        put("custom_dhikr", dhikr_id, 0, @dhikr),
+        tag(morning, "Morning"),
+        tag(night, "Night"),
+        put("dhikr_personal", dhikr_id, 0, %{"tag_ids" => [morning]}),
+        put("dhikr_personal", @builtin, 0, %{"tag_ids" => [morning]}),
+        delete.("user_tag", morning, 1),
+        delete.("user_tag", night, 1),
+        delete.("custom_dhikr", dhikr_id, 1)
+      ]
+
+      conn = conn |> bearer(grant) |> post_commands(commands)
+      body = assert_conforms(conn, "post_sync_commands")
+
+      assert Enum.map(body["receipts"], &{&1["status"], &1["revision"]}) ==
+               Enum.map(1..8, &{"applied", &1})
+
+      assert body["receipts"] |> Enum.take(5) |> Enum.map(& &1["cascaded"]) ==
+               [nil, nil, nil, nil, nil]
+
+      [tag_delete, unused_tag_delete, dhikr_delete] = Enum.drop(body["receipts"], 5)
+
+      # Ordered by entity_type, then entity_id.
+      assert tag_delete["cascaded"] ==
+               for(
+                 id <- Enum.sort([dhikr_id, @builtin]),
+                 do: %{
+                   "entity_type" => "dhikr_personal",
+                   "entity_id" => id,
+                   "state" => "active",
+                   "version" => 2,
+                   "revision" => 6
+                 }
+               )
+
+      assert unused_tag_delete["cascaded"] == []
+
+      assert dhikr_delete["cascaded"] == [
+               %{
+                 "entity_type" => "dhikr_personal",
+                 "entity_id" => dhikr_id,
+                 "state" => "deleted",
+                 "version" => 3,
+                 "revision" => 8
+               }
+             ]
+    end
+
     test "200 for a browser with its cookie session and CSRF token", %{conn: conn, user: user} do
       {browser, csrf} = sign_in_browser(conn, user)
 

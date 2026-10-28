@@ -5,7 +5,8 @@ import Foundation
 
 /// A change-queue server in memory, following contracts/sync/v1 README's rules closely enough for
 /// the engine tests: receipts (applied, duplicate, conflict, merged, gone, rejected), tag aliases and
-/// reference rewriting, cascades, and a feed that pages by whole revisions. One account.
+/// reference rewriting (`tag_not_found` for a tag the account never had), cascades, and a feed
+/// that pages by whole revisions. One account.
 actor FakeSyncServer: SyncServer {
     struct Entity: Equatable {
         var version: Int
@@ -134,6 +135,9 @@ actor FakeSyncServer: SyncServer {
                 commandID: id, current: current(key) ?? SyncCurrentWire(version: 0, state: "deleted", document: .null))
         }
         if let merged = mergeTag(command, key: key) { return merged }
+        if type == .dhikrPersonal, namesUnknownTag(command.document ?? .null) {
+            return .rejected(commandID: id, code: "tag_not_found", fields: [], current: current(key))
+        }
         let document = type == .dhikrPersonal ? rewritten(command.document ?? .null) : command.document ?? .null
         if !rejections.isEmpty {
             return .rejected(commandID: id, code: rejections.removeFirst(), fields: [], current: current(key))
@@ -143,8 +147,8 @@ actor FakeSyncServer: SyncServer {
         let deleted = command.op == "delete"
         entities[key] = Entity(
             version: version, state: deleted ? .deleted : .active, revision: head, document: deleted ? .null : document)
-        if deleted { cascade(key) }
-        return .applied(commandID: id, version: version, revision: head)
+        let cascaded = deleted && type != .dhikrPersonal ? cascade(key) : nil
+        return .applied(commandID: id, version: version, revision: head, cascaded: cascaded)
     }
 
     /// A tag create whose name an active tag has is merged (its ID becomes an alias); a rename onto
@@ -166,6 +170,13 @@ actor FakeSyncServer: SyncServer {
             current: current(survivor) ?? SyncCurrentWire(version: 0, state: "deleted", document: .null))
     }
 
+    /// Whether a personal record names a tag the account never had (neither a tag nor an alias).
+    private func namesUnknownTag(_ document: AwradJSON) -> Bool {
+        (document["tag_ids"]?.arrayValue ?? []).compactMap(\.stringValue).compactMap(AwradID.init).contains {
+            aliases[$0] == nil && entities[SyncEntityKey(.userTag, $0)] == nil
+        }
+    }
+
     /// A personal record's tags: aliases become their tag, deleted tags go, repeats go.
     private func rewritten(_ document: AwradJSON) -> AwradJSON {
         var seen = Set<String>()
@@ -177,13 +188,18 @@ actor FakeSyncServer: SyncServer {
         return .object(["tag_ids": .array(ids.map(AwradJSON.string))])
     }
 
-    private func cascade(_ key: SyncEntityKey) {
+    /// Applies a delete's cascade at the current revision and lists what it changed, as an `applied`
+    /// receipt's `cascaded` does.
+    @discardableResult
+    private func cascade(_ key: SyncEntityKey) -> [SyncCascadeWire] {
+        var changed: [SyncEntityKey] = []
         switch key.type {
         case .customDhikr:
             let personal = SyncEntityKey(.dhikrPersonal, key.id)
             if let entity = entities[personal], entity.state == .active {
                 entities[personal] = Entity(
                     version: entity.version + 1, state: .deleted, revision: head, document: .null)
+                changed.append(personal)
             }
         case .userTag:
             for (other, entity) in entities where other.type == .dhikrPersonal && entity.state == .active {
@@ -193,9 +209,17 @@ actor FakeSyncServer: SyncServer {
                 entities[other] = Entity(
                     version: entity.version + 1, state: .active, revision: head,
                     document: .object(["tag_ids": .array(kept)]))
+                changed.append(other)
             }
         case .dhikrPersonal:
             break
+        }
+        return changed.sorted().compactMap { changedKey in
+            entities[changedKey].map {
+                SyncCascadeWire(
+                    entityType: changedKey.type.rawValue, entityID: changedKey.id.description,
+                    state: $0.state.rawValue, version: $0.version, revision: $0.revision)
+            }
         }
     }
 

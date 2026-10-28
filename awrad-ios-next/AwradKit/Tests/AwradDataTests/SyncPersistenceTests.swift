@@ -40,6 +40,19 @@ struct SyncPersistenceTests {
         #expect(result == fixture.expect, "\(fixture.id): \(fixture.summary)")
     }
 
+    /// profile_switch's merge cases: the anonymous data merged into the account's SwiftData profile.
+    @Test(arguments: try SyncFixtures.profileSwitch().filter { $0.given.mergeData != nil })
+    func profileMergeOnSwiftData(_ fixture: FixtureCase<ProfileSwitchGiven, ProfileSwitchExpect>) throws {
+        let data = try #require(fixture.given.mergeData)
+        let context = ModelContext(try ProfileStorage.inMemoryContainer())
+        var state = SwiftDataSyncState(context: context)
+        try copy(data.account.state(), into: &state)
+        SyncRules.merge(try data.anonymous.state(), into: &state)
+        try context.save()
+        let merged = try MergedDataShape(try snapshot(state, keys: []), given: data)
+        #expect(merged == fixture.expect.mergedData, "\(fixture.id)")
+    }
+
     @Test func anEditAndItsCommandAreSavedTogether() async throws {
         let directory = FileManager.default.temporaryDirectory.appending(path: "awrad-store-\(AwradID.random())")
         defer { try? FileManager.default.removeItem(at: directory) }

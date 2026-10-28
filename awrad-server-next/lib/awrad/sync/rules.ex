@@ -19,7 +19,8 @@ defmodule Awrad.Sync.Rules do
 
   `write/4` applies the command at its revision: the entity's version goes up
   by one, and the cascades share the revision (a deleted tag leaves every
-  `dhikr_personal`; a deleted custom dhikr deletes its `dhikr_personal`).
+  `dhikr_personal`; a deleted custom dhikr deletes its `dhikr_personal`) and
+  are returned for the receipt's `cascaded`.
   """
 
   import Ecto.Query
@@ -135,9 +136,15 @@ defmodule Awrad.Sync.Rules do
     end
   end
 
-  @doc "Applies the command at `revision`, with its cascades. Returns the entity's new version."
+  @doc """
+  Applies the command at `revision`, with its cascades. Returns the entity's
+  new version and the receipt's `cascaded`: for a `user_tag` or
+  `custom_dhikr` delete, every other entity changed at `revision`
+  (`$defs/cascaded_change`), ordered by entity type, then ID, and `[]` when
+  nothing cascaded; `nil` for every other command.
+  """
   @spec write(Ecto.UUID.t(), map(), Entity.t() | nil, {map() | nil, pos_integer()}) ::
-          integer()
+          {integer(), [map()] | nil}
   def write(user_id, command, nil, {document, revision}) do
     Repo.insert!(%Entity{
       user_id: user_id,
@@ -149,20 +156,19 @@ defmodule Awrad.Sync.Rules do
       document: document
     })
 
-    1
+    {1, nil}
   end
 
   def write(_user_id, %{"op" => "put"}, %Entity{version: version} = entity, {document, revision})
       when is_integer(version) do
     change(entity, "active", document, revision)
-    version + 1
+    {version + 1, nil}
   end
 
   def write(user_id, %{"op" => "delete"}, %Entity{version: version} = entity, {nil, revision})
       when is_integer(version) do
     change(entity, "deleted", nil, revision)
-    cascade(user_id, entity, revision)
-    version + 1
+    {version + 1, cascade(user_id, entity, revision)}
   end
 
   # A deleted tag leaves every active dhikr_personal that names it.
@@ -171,20 +177,36 @@ defmodule Awrad.Sync.Rules do
       where: fragment("? @> ?", e.document, type(^%{"tag_ids" => [tag_id]}, :map))
     )
     |> Repo.all()
-    |> Enum.each(fn personal ->
+    |> Enum.map(fn personal ->
       tag_ids = List.delete(personal.document["tag_ids"], tag_id)
       change(personal, "active", %{personal.document | "tag_ids" => tag_ids}, revision)
     end)
+    |> cascaded()
   end
 
   # A deleted custom dhikr deletes its dhikr_personal.
   defp cascade(user_id, %Entity{entity_type: "custom_dhikr", entity_id: id}, revision) do
     from(e in active(user_id, "dhikr_personal"), where: e.entity_id == ^id)
     |> Repo.all()
-    |> Enum.each(&change(&1, "deleted", nil, revision))
+    |> Enum.map(&change(&1, "deleted", nil, revision))
+    |> cascaded()
   end
 
-  defp cascade(_user_id, _entity, _revision), do: :ok
+  defp cascade(_user_id, _entity, _revision), do: nil
+
+  defp cascaded(entities) do
+    entities
+    |> Enum.sort_by(&{&1.entity_type, &1.entity_id})
+    |> Enum.map(fn %Entity{} = entity ->
+      %{
+        "entity_type" => entity.entity_type,
+        "entity_id" => entity.entity_id,
+        "state" => entity.state,
+        "version" => entity.version,
+        "revision" => entity.revision
+      }
+    end)
+  end
 
   defp change(%Entity{} = entity, state, document, revision) do
     entity

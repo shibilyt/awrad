@@ -9,7 +9,7 @@ import { Card } from "@/shared/ui/Card";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { FormAlert } from "@/shared/ui/FormAlert";
 import { TextField } from "@/shared/ui/TextField";
-import { ConflictDialog } from "../custom/ConflictDialog";
+import { ConflictDialog, RefusedDialog } from "../custom/ConflictDialog";
 import { sortedTags, useYours } from "../custom/data";
 import { NotReady } from "../custom/NotReady";
 import { BackBar } from "../LibraryScreen";
@@ -188,6 +188,7 @@ function TagManager({ accountId, state }: { accountId: string; state: SyncState 
         <p>{t("library.tags.deleteBody")}</p>
       </ConfirmDialog>
       <ConflictDialog conflict={actions.conflict} state={state} isPending={actions.isPending} />
+      <RefusedDialog refused={actions.refused} />
     </>
   );
 }

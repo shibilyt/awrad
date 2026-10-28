@@ -13,7 +13,7 @@ import { DeleteDhikr } from "./custom/DeleteDhikr";
 import { NotReady } from "./custom/NotReady";
 import { DhikrText } from "./DhikrText";
 import { BackBar, NotFound } from "./LibraryScreen";
-import { citedLabels, referenceLabel } from "./referenceLabel";
+import { citedLabels, referenceLabel, sourceReferences } from "./referenceLabel";
 import { YourTags } from "./tags/YourTags";
 
 const route = getRouteApi("/library/dhikrs/$key");
@@ -71,20 +71,25 @@ function Virtues({ dhikr }: { dhikr: Dhikr }): ReactElement | null {
   );
 }
 
-/** A custom dhikr's references, each as its label (built-ins cite theirs in their virtues). */
-function References({ dhikr }: { dhikr: Dhikr }): ReactElement | null {
+/**
+ * "Sources" (components.md, slice 3b): the reference labels not already shown, one per line in
+ * `caption`, in the dhikr's order. A built-in lists those no virtue cites; a custom dhikr all of
+ * its own; neither repeats the Qur'an reference a `quran` dhikr shows in its card.
+ */
+function Sources({ dhikr }: { dhikr: Dhikr }): ReactElement | null {
   const { t } = useTranslation();
   const language = useLanguage();
   const heading = useId();
-  if (dhikr.references.length === 0) return null;
+  const references = sourceReferences(dhikr);
+  if (references.length === 0) return null;
   return (
     <section aria-labelledby={heading} className="flex flex-col gap-row-gap">
       <h2 id={heading} className="text-section-title text-on-surface">
-        {t("library.detail.references")}
+        {t("library.detail.sources")}
       </h2>
       <ul className="flex flex-col gap-xs">
-        {dhikr.references.map((reference) => (
-          <li key={reference.id} dir="auto" className="text-body text-on-surface">
+        {references.map((reference) => (
+          <li key={reference.id} dir="auto" className="text-caption text-on-surface-variant">
             {referenceLabel(reference, t, language)}
           </li>
         ))}
@@ -95,8 +100,8 @@ function References({ dhikr }: { dhikr: Dhikr }): ReactElement | null {
 
 /**
  * A dhikr's page, built-in or the account's own: the text by kind, the catalog's tags, the
- * account's tags with "Manage tags" (signed in), virtues or references, and for the account's
- * own Edit (in the top bar), a note about its phone recording, and Delete.
+ * account's tags with "Manage tags" (signed in), virtues, sources, and for the account's own Edit
+ * (in the top bar), a note about its phone recording, and Delete.
  */
 function DhikrDetail({
   dhikr,
@@ -126,7 +131,7 @@ function DhikrDetail({
         <Tags dhikr={dhikr} />
         {yours.status === "ready" && <YourTags accountId={yours.accountId} state={yours.state} dhikrId={dhikr.id} />}
         <Virtues dhikr={dhikr} />
-        {custom !== null && <References dhikr={dhikr} />}
+        <Sources dhikr={dhikr} />
         {custom !== null && yours.status === "ready" && (
           <DeleteDhikr accountId={yours.accountId} state={yours.state} dhikrId={dhikr.id} title={title} />
         )}
@@ -138,8 +143,8 @@ function DhikrDetail({
 /**
  * `/library/dhikrs/$key` (components.md "Dhikr detail screen"): a built-in by its catalog key, or
  * one of the account's own dhikrs by its ID, once they're read. Back and the title in the top bar,
- * the text by kind with the audio player bar, then the tags and the virtues with their
- * references. An unknown key shows not found; an ID while signed out offers sign-in.
+ * the text by kind with the audio player bar, then the tags, the virtues with their references,
+ * and the other sources. An unknown key shows not found; an ID while signed out offers sign-in.
  */
 export function DhikrPage(): ReactElement {
   const { t } = useTranslation();

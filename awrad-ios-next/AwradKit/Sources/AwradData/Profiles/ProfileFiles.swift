@@ -12,8 +12,9 @@ import SwiftData
 ///
 /// Removing a profile deletes its directory, so nothing of it stays.
 struct ProfileFiles: Sendable {
-    /// 10 MB per recording (slice 3b brief; uploads in 3c use the same limit).
-    static let maxAudioBytes = 10 * 1024 * 1024
+    /// 10 MB per recording, meaning 10,000,000 bytes (sync README "Limits"; uploads in 3c use the
+    /// same limit).
+    static let maxAudioBytes = 10_000_000
     static let audioExtensions = ["mp3", "m4a"]
     private static let log = Logger(subsystem: "app.awrad.awrad.next", category: "profiles")
 
@@ -108,6 +109,20 @@ struct ProfileFiles: Sendable {
         }
     }
 
+    /// Moves every saved recording of `source` into `target` ("Add to my account" merging an
+    /// anonymous profile into an existing one). Staged picks stay behind and go with `source`.
+    func moveAudio(from source: AwradID, to target: AwradID) {
+        let manager = FileManager.default
+        let files =
+            (try? manager.contentsOfDirectory(at: audioDirectory(source), includingPropertiesForKeys: nil)) ?? []
+        try? manager.createDirectory(at: audioDirectory(target), withIntermediateDirectories: true)
+        for file in files where Self.audioExtensions.contains(file.pathExtension.lowercased()) {
+            let destination = audioDirectory(target).appending(path: file.lastPathComponent)
+            try? manager.removeItem(at: destination)
+            try? manager.moveItem(at: file, to: destination)
+        }
+    }
+
     func removeAudio(for dhikr: AwradID, profile: AwradID) {
         for url in Self.audioExtensions.map({ audioDirectory(profile).appending(path: "\(dhikr).\($0)") }) {
             try? FileManager.default.removeItem(at: url)
@@ -130,6 +145,7 @@ private struct RegistryFile: Codable {
         let after: Int
         let hasData: Bool
         let hasUnsent: Bool
+        let accountDeleted: Bool
         let lastUsed: Date?
     }
 
@@ -143,7 +159,8 @@ private struct RegistryFile: Codable {
         profiles = registry.profiles.map {
             Profile(
                 id: $0.id.description, accountID: $0.accountID?.description, email: $0.email, after: $0.after,
-                hasData: $0.hasData, hasUnsent: $0.hasUnsent, lastUsed: $0.lastUsed)
+                hasData: $0.hasData, hasUnsent: $0.hasUnsent, accountDeleted: $0.accountDeleted,
+                lastUsed: $0.lastUsed)
         }
         activeProfileID = registry.activeProfileID.description
         signedInAccountID = registry.signedInAccountID?.description
@@ -155,7 +172,7 @@ private struct RegistryFile: Codable {
                 LocalProfile(
                     id: $0, accountID: profile.accountID.flatMap(AwradID.init), email: profile.email,
                     after: profile.after, hasData: profile.hasData, hasUnsent: profile.hasUnsent,
-                    lastUsed: profile.lastUsed)
+                    accountDeleted: profile.accountDeleted, lastUsed: profile.lastUsed)
             }
         }
         guard version == 1, let active = AwradID(activeProfileID), profiles.contains(where: { $0.id == active })

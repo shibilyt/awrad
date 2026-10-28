@@ -6,8 +6,8 @@ import { Button } from "@/shared/ui/Button";
 import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { FormAlert } from "@/shared/ui/FormAlert";
 import { DeleteIcon } from "@/shared/ui/icons.gen";
-import { ConflictDialog } from "./ConflictDialog";
-import { problemKey, settledKey, useEdit } from "./useEdit";
+import { ConflictDialog, RefusedDialog } from "./ConflictDialog";
+import { problemKey, settledKey, useEdit, wentThrough } from "./useEdit";
 
 /**
  * "Delete dhikr" on one of the account's dhikrs: a destructive confirmation (it's final, and it
@@ -26,7 +26,7 @@ export function DeleteDhikr({
 }): ReactElement {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { send, isPending, conflict } = useEdit(accountId);
+  const { send, isPending, conflict, refused } = useEdit(accountId);
   const [isOpen, setOpen] = useState(false);
   const [alert, setAlert] = useState<string | null>(null);
 
@@ -42,9 +42,12 @@ export function DeleteDhikr({
       setOpen(false);
       if (settled.status === "theirs") return;
       // Gone already (deleted on another device) is what was asked for.
-      const problem = settled.status === "gone" ? null : settledKey(settled);
-      if (problem === null) await navigate({ to: "/library", replace: true });
-      else setAlert(t(problem));
+      if (wentThrough(settled) || settled.status === "gone") {
+        await navigate({ to: "/library", replace: true });
+        return;
+      }
+      const problem = settledKey(settled);
+      setAlert(problem === null ? null : t(problem));
     } catch (error) {
       setOpen(false);
       setAlert(t(problemKey(error)));
@@ -75,6 +78,7 @@ export function DeleteDhikr({
         <p>{t("library.custom.deleteBody")}</p>
       </ConfirmDialog>
       <ConflictDialog conflict={conflict} state={state} isPending={isPending} />
+      <RefusedDialog refused={refused} />
     </div>
   );
 }

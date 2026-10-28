@@ -156,6 +156,66 @@ struct ProfileSwitchingTests {
         #expect(state.registry.signedInAccountID == nil)
     }
 
+    @Test func addToMyAccountMergesIntoTheAccountsExistingProfile() async throws {
+        let harness = try await StoreHarness(signedIn: false)
+        defer { harness.removeDirectory() }
+        _ = try await harness.signIn()
+        let accountProfile = await harness.store.state().registry.activeProfileID
+        let morning = try await harness.store.createTag(named: "Morning")
+        try await harness.store.setTags([morning.id], on: Sample.builtIn)
+        await harness.signOut()
+        // Bilal's profile, removed while active, leaves a fresh anonymous profile active.
+        _ = try await harness.signIn(email: "bilal@example.com")
+        let bilal = await harness.store.state().registry.activeProfileID
+        await harness.signOut()
+        await harness.store.handle(.removeProfile(bilal), choice: nil)
+        let anonymous = await harness.store.state().registry.activeProfileID
+        let mine = try await harness.store.createTag(named: "MORNING")
+        let travel = try await harness.store.createTag(named: "Travel")
+        try await harness.store.setTags([travel.id, mine.id], on: Sample.builtIn)
+        let dhikr = try await harness.store.saveCustomDhikr(id: nil, document: Sample.dhikr("Travel dua"))
+
+        _ = try await harness.signIn(choice: .addToAccount)
+
+        let state = await harness.store.state()
+        #expect(state.registry.activeProfileID == accountProfile)
+        #expect(state.registry.profile(anonymous) == nil)
+        #expect(
+            !FileManager.default.fileExists(atPath: harness.directory.appending(path: anonymous.description).path()))
+        let content = await harness.store.content()
+        #expect(content.tags.map(\.name).sorted() == ["Morning", "Travel"], "MORNING folds onto Morning")
+        #expect(content.tags(on: Sample.builtIn).map(\.id) == [morning.id, travel.id])
+        #expect(content.customDhikr(dhikr) != nil)
+        #expect(await harness.server.document(SyncEntityKey(.customDhikr, dhikr)) != nil, "the merge is sent")
+        #expect(state.unsentCount == 0)
+    }
+
+    @Test func keepingADeletedAccountsProfileDropsItsQueueAndNeverQueuesAgain() async throws {
+        let harness = try await StoreHarness(signedIn: false)
+        defer { harness.removeDirectory() }
+        _ = try await harness.signIn()
+        let profile = await harness.store.state().registry.activeProfileID
+        await harness.signOut()
+        _ = try await harness.store.saveCustomDhikr(id: nil, document: Sample.dhikr("Unsent"))
+        #expect(await harness.store.state().unsentCount == 1)
+        let requests = await harness.server.requestCount
+        await harness.store.askAboutDeletedAccount(harness.accountID)
+
+        await harness.store.answerPendingPrompt(.keep)
+
+        var state = await harness.store.state()
+        #expect(state.registry.activeProfileID == profile)
+        #expect(state.registry.active?.accountDeleted == true)
+        #expect(state.unsentCount == 0, "its commands can never be sent")
+        _ = try await harness.store.saveCustomDhikr(id: nil, document: Sample.dhikr("Offline"))
+        state = await harness.store.state()
+        #expect(state.unsentCount == 0)
+        #expect(state.registry.active?.hasUnsent == false)
+        #expect(await harness.store.content().customDhikrs.count == 2)
+        await harness.store.syncNow()
+        #expect(await harness.server.requestCount == requests, "it never syncs again")
+    }
+
     @Test func updatesFollowAProfileSwitch() async throws {
         let harness = try await StoreHarness(signedIn: false)
         defer { harness.removeDirectory() }

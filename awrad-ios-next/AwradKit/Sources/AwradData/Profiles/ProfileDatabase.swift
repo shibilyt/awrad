@@ -150,6 +150,30 @@ actor ProfileDatabase {
         try modelContext.save()
     }
 
+    /// Every document in this profile, for merging it into another (`SyncRules.merge`).
+    func documents() -> InMemorySyncState {
+        var memory = InMemorySyncState()
+        let state = self.state
+        for key in state.allKeys() {
+            if let document = state.document(key) { memory.setDocument(document, for: key) }
+        }
+        return memory
+    }
+
+    /// "Add to my account" into this existing profile: the anonymous profile's documents are merged
+    /// in and queued, in one transaction.
+    func merge(_ source: InMemorySyncState) throws {
+        var state = self.state
+        SyncRules.merge(source, into: &state)
+        try modelContext.save()
+    }
+
+    /// Keeping a deleted account's profile: its commands can never be sent, so they go.
+    func discardOutbox() throws {
+        for record in state.commandRecords() { modelContext.delete(record) }
+        try modelContext.save()
+    }
+
     // MARK: - Notices
 
     func notices() -> [SyncNotice] {

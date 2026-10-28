@@ -9,6 +9,7 @@ enum ProfileStrings {
     static let anonymous = Strings.text("account.profiles.anonymous")
     static let inUse = Strings.text("account.profiles.in_use")
     static let hasUnsent = Strings.text("account.profiles.unsent")
+    static let accountDeleted = Strings.text("account.profiles.account_deleted")
     static let remove = Strings.text("account.profiles.remove")
     static let removeAnonymousLabel = Strings.text("account.profiles.remove.a11y_anonymous")
 
