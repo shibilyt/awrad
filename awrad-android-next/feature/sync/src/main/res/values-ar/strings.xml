@@ -6,6 +6,14 @@
     <string name="sync_state_waiting">بانتظار إجابتك عن بيانات هذا الهاتف</string>
     <string name="sync_state_syncing">جارٍ المزامنة…</string>
     <string name="sync_state_idle">محدّث</string>
+    <plurals name="sync_conflicts_open">
+        <item quantity="zero">لا تعارضات بانتظار الحل</item>
+        <item quantity="one">تعارض واحد بانتظار الحل</item>
+        <item quantity="two">تعارضان بانتظار الحل</item>
+        <item quantity="few">%d تعارضات بانتظار الحل</item>
+        <item quantity="many">%d تعارضًا بانتظار الحل</item>
+        <item quantity="other">%d تعارض بانتظار الحل</item>
+    </plurals>
     <string name="sync_state_retrying">تعذّر الوصول إلى الخادم. ستُعاد المحاولة قريبًا.</string>
     <string name="sync_state_mismatch">هذه البيانات تخص حسابًا آخر، لذلك لا تُرسل.</string>
     <string name="sync_last_synced">آخر مزامنة %1$s</string>

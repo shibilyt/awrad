@@ -84,11 +84,37 @@ internal data class EditorUiState(
     val tags: List<UserTag> = emptyList(),
     val selectedTags: List<AwradId> = emptyList(),
     val problems: Set<EditorProblem> = emptySet(),
+    /** Saves that came back with [problems]; each one takes the reader to the first ([firstProblemSpot]). */
+    val failedSaves: Int = 0,
     val isSaving: Boolean = false,
     val isDeleteConfirmOpen: Boolean = false,
     /** Saved or deleted: the editor closes. */
     val isDone: Boolean = false,
 )
+
+/**
+ * Where a problem shows, top to bottom: the summary line above the form (for problems of the whole dhikr), then
+ * the Arabic text, the title, the Qur'an reference and the other references.
+ */
+internal enum class ProblemSpot { SUMMARY, ARABIC, TITLE, QURAN, REFERENCE }
+
+/**
+ * Where a failed save takes the reader: the topmost field that shows one of [EditorUiState.problems], else the
+ * summary line; null without problems. A blank reference is marked only when there's one to mark.
+ */
+internal fun EditorUiState.firstProblemSpot(): ProblemSpot? {
+    if (problems.isEmpty()) return null
+    val fields = problems.mapNotNull { problem ->
+        when (problem) {
+            EditorProblem.ARABIC_REQUIRED, EditorProblem.ARABIC_TOO_LONG -> ProblemSpot.ARABIC
+            EditorProblem.TITLE_REQUIRED, EditorProblem.TEXT_TOO_LONG -> ProblemSpot.TITLE
+            EditorProblem.QURAN_INVALID, EditorProblem.QURAN_RANGE -> ProblemSpot.QURAN
+            EditorProblem.REFERENCE_INVALID -> ProblemSpot.REFERENCE.takeIf { otherReferences.any(String::isBlank) }
+            EditorProblem.TOO_MANY_REFERENCES, EditorProblem.LIMIT_REACHED, EditorProblem.NOT_SAVED -> null
+        }
+    }
+    return fields.minOrNull() ?: ProblemSpot.SUMMARY
+}
 
 internal sealed interface EditorAction {
     data class KindChanged(val kind: DhikrKind) : EditorAction

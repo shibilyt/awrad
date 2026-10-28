@@ -6,6 +6,10 @@
     <string name="sync_state_waiting">ഈ ഫോണിലെ ഡാറ്റയെക്കുറിച്ചുള്ള നിങ്ങളുടെ മറുപടിക്കായി കാത്തിരിക്കുന്നു</string>
     <string name="sync_state_syncing">സമന്വയിപ്പിക്കുന്നു…</string>
     <string name="sync_state_idle">പുതുക്കിയിരിക്കുന്നു</string>
+    <plurals name="sync_conflicts_open">
+        <item quantity="one">പരിഹരിക്കാൻ %d വൈരുദ്ധ്യം</item>
+        <item quantity="other">പരിഹരിക്കാൻ %d വൈരുദ്ധ്യങ്ങൾ</item>
+    </plurals>
     <string name="sync_state_retrying">സെർവറിൽ എത്താനായില്ല. ഉടൻ വീണ്ടും ശ്രമിക്കും.</string>
     <string name="sync_state_mismatch">ഈ ഡാറ്റ മറ്റൊരു അക്കൗണ്ടിന്റേതാണ്, അതിനാൽ അയയ്ക്കുന്നില്ല.</string>
     <string name="sync_last_synced">അവസാനം സമന്വയിപ്പിച്ചത് %1$s</string>

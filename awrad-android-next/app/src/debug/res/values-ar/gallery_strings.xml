@@ -40,6 +40,7 @@
     <string name="gallery_state_disabled">معطّل</string>
     <string name="gallery_state_loading">جارٍ التحميل</string>
     <string name="gallery_on_card">على بطاقة</string>
+    <string name="gallery_on_fill">على حاوية ملوّنة</string>
 
     <string name="gallery_get_started">ابدأ</string>
     <string name="gallery_notifications">الإشعارات</string>

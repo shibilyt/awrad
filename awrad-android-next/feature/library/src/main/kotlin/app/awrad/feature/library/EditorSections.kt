@@ -1,5 +1,6 @@
 package app.awrad.feature.library
 
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -33,18 +34,27 @@ import app.awrad.core.domain.audio.PlaybackStatus
 import app.awrad.core.domain.dhikr.ContentLanguage
 import app.awrad.core.domain.dhikr.DhikrKind
 
-/** What kept the last save from going through, announced. */
+/**
+ * What kept the last save from going through, announced: a problem of the whole dhikr, which no field shows, or
+ * "Check the fields marked below". Focusable, so a failed save can move focus (and a screen reader) here.
+ */
 @Composable
 internal fun ProblemsLine(problems: Set<EditorProblem>, modifier: Modifier = Modifier) {
     if (problems.isEmpty()) return
-    val whole = problems.firstOrNull { it == EditorProblem.LIMIT_REACHED || it == EditorProblem.NOT_SAVED }
+    val whole = problems.firstOrNull { it in WHOLE_DHIKR_PROBLEMS }
     Text(
         text = whole?.let { problemText(it) } ?: stringResource(R.string.editor_problems),
-        modifier = modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        modifier = modifier
+            .focusable()
+            .semantics { liveRegion = LiveRegionMode.Polite },
         style = AwradTheme.type.bodySmall,
         color = AwradTheme.colors.error,
     )
 }
+
+/** Problems no single field shows, so the summary line says them. */
+private val WHOLE_DHIKR_PROBLEMS =
+    setOf(EditorProblem.LIMIT_REACHED, EditorProblem.NOT_SAVED, EditorProblem.TOO_MANY_REFERENCES)
 
 /** "Kind": one chip per kind, one chosen. */
 @OptIn(ExperimentalLayoutApi::class)
@@ -65,7 +75,12 @@ internal fun KindSection(kind: DhikrKind, onAction: (EditorAction) -> Unit, modi
 
 /** The Arabic text, required, several lines; for Qur'an, one ayah per line. */
 @Composable
-internal fun ArabicSection(state: EditorUiState, onAction: (EditorAction) -> Unit, modifier: Modifier = Modifier) {
+internal fun ArabicSection(
+    state: EditorUiState,
+    onAction: (EditorAction) -> Unit,
+    targets: ProblemTargets,
+    modifier: Modifier = Modifier,
+) {
     val problem = state.problems.firstOrNull {
         it == EditorProblem.ARABIC_REQUIRED || it == EditorProblem.ARABIC_TOO_LONG
     }
@@ -73,7 +88,7 @@ internal fun ArabicSection(state: EditorUiState, onAction: (EditorAction) -> Uni
         value = state.arabic,
         onValueChange = { onAction(EditorAction.ArabicChanged(it)) },
         label = stringResource(R.string.editor_arabic),
-        modifier = modifier,
+        modifier = modifier.problemSpot(targets, ProblemSpot.ARABIC),
         singleLine = false,
         error = problem?.let { problemText(it) },
         supportingText = stringResource(R.string.editor_arabic_hint),
@@ -85,7 +100,12 @@ internal fun ArabicSection(state: EditorUiState, onAction: (EditorAction) -> Uni
  * Arabic has no transliteration. At least one title is needed, in any language.
  */
 @Composable
-internal fun TextsSection(state: EditorUiState, onAction: (EditorAction) -> Unit, modifier: Modifier = Modifier) {
+internal fun TextsSection(
+    state: EditorUiState,
+    onAction: (EditorAction) -> Unit,
+    targets: ProblemTargets,
+    modifier: Modifier = Modifier,
+) {
     val language = state.shownLanguage
     val languages = ContentLanguage.entries
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(AwradTheme.spacing.rowGap)) {
@@ -100,6 +120,7 @@ internal fun TextsSection(state: EditorUiState, onAction: (EditorAction) -> Unit
             value = state.titles[language],
             onValueChange = { onAction(EditorAction.TitleChanged(it)) },
             label = stringResource(R.string.editor_title_field, languageName(language)),
+            modifier = Modifier.problemSpot(targets, ProblemSpot.TITLE),
             error = when {
                 EditorProblem.TITLE_REQUIRED in state.problems -> problemText(EditorProblem.TITLE_REQUIRED)
                 tooLong -> problemText(EditorProblem.TEXT_TOO_LONG)
@@ -126,7 +147,12 @@ internal fun TextsSection(state: EditorUiState, onAction: (EditorAction) -> Unit
 
 /** An optional Qur'an reference (surah and ayat), then any other references as free text. */
 @Composable
-internal fun ReferencesSection(state: EditorUiState, onAction: (EditorAction) -> Unit, modifier: Modifier = Modifier) {
+internal fun ReferencesSection(
+    state: EditorUiState,
+    onAction: (EditorAction) -> Unit,
+    targets: ProblemTargets,
+    modifier: Modifier = Modifier,
+) {
     EditorSection(title = stringResource(R.string.library_references), modifier = modifier) {
         QuranReferenceFields(
             quran = state.quran,
@@ -134,6 +160,7 @@ internal fun ReferencesSection(state: EditorUiState, onAction: (EditorAction) ->
                 it == EditorProblem.QURAN_INVALID || it == EditorProblem.QURAN_RANGE
             },
             onChange = { onAction(EditorAction.QuranChanged(it)) },
+            modifier = Modifier.problemSpot(targets, ProblemSpot.QURAN),
         )
         state.kept.forEachIndexed { index, reference ->
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -147,12 +174,18 @@ internal fun ReferencesSection(state: EditorUiState, onAction: (EditorAction) ->
             }
         }
         val blankIsProblem = EditorProblem.REFERENCE_INVALID in state.problems
+        val firstBlank = state.otherReferences.indexOfFirst(String::isBlank)
         state.otherReferences.forEachIndexed { index, text ->
             key(index) {
                 AwradTextField(
                     value = text,
                     onValueChange = { onAction(EditorAction.ReferenceChanged(index, it)) },
                     label = stringResource(R.string.editor_reference, index + 1),
+                    modifier = if (index == firstBlank) {
+                        Modifier.problemSpot(targets, ProblemSpot.REFERENCE)
+                    } else {
+                        Modifier
+                    },
                     error = problemText(EditorProblem.REFERENCE_INVALID).takeIf { blankIsProblem && text.isBlank() },
                     trailingIcon = { RemoveButton(onClick = { onAction(EditorAction.RemoveReference(index)) }) },
                 )
