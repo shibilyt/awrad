@@ -25,6 +25,9 @@ step "Dhikr catalog matches contracts/dhikr-catalog"; python3 -I scripts/check-d
 step "No raw shape, spacing, type or motion values outside AwradDesignSystem; no SF Symbols"
 python3 -I scripts/check-raw-design-values.py --self-test
 python3 -I scripts/check-raw-design-values.py
+step "Every generated ID is a UUIDv7: no UUID() outside tests"
+python3 -I scripts/check-uuid-generation.py --self-test
+python3 -I scripts/check-uuid-generation.py
 step "swift format";            swift format lint --strict --recursive "${SOURCES[@]}"
 step "SwiftLint (strict)";      mise exec -- swiftlint lint --strict --quiet
 step "AwradKit build and tests (macOS, warnings as errors)"

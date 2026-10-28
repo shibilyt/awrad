@@ -12,7 +12,8 @@ defmodule Awrad.SharedFixturesTest do
   @runners %{
     "account-model/v1" => "test/awrad/accounts",
     "goal-model/v1" => "test/awrad/goals/rules",
-    "hijri-calendar/v1" => "test/awrad/hijri"
+    "hijri-calendar/v1" => "test/awrad/hijri",
+    "identity/v1" => "test/awrad/identity"
   }
 
   # Client-only rules the server deliberately doesn't run, with the reason.

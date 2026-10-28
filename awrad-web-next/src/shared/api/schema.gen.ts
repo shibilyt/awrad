@@ -374,8 +374,8 @@ export interface components {
     schemas: {
         /**
          * Format: uuid
-         * @description Lowercase, hyphenated UUID. User-owned entities use client-generated UUIDv4 (STYLE §4).
-         * @example 3285e014-551b-46a4-aedc-8b6664b59bc7
+         * @description Lowercase, hyphenated UUID, any version except nil and max. New IDs are UUIDv7, client-generated for user-owned entities (STYLE §4).
+         * @example 017f22e2-79b0-7cc3-98c4-dc0c0c07398f
          */
         Uuid: string;
         /**

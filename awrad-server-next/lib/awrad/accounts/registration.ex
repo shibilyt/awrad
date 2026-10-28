@@ -89,7 +89,7 @@ defmodule Awrad.Accounts.Registration do
     now = DateTime.utc_now(:second)
 
     row = %{
-      id: Ecto.UUID.generate(),
+      id: Awrad.UUIDv7.generate(),
       email: email,
       hashed_password: hashed_password,
       inserted_at: now,

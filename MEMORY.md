@@ -309,6 +309,16 @@ Use this format:
 - Evidence: `contracts/design-tokens/v1/README.md`
 - Commit: see git log
 
+### 2026-10-28 — Every generated ID is a UUIDv7
+
+- Area: Cross-project
+- Change:
+  - ADR-2026-10-28: every ID a project generates is a UUIDv7. That covers entities, installation IDs and `Idempotency-Key`s. Validation accepts any lowercase UUID except nil and max, and built-in dhikr IDs stay fixed v4 constants. No ID's timestamp may order, expire or authorize anything.
+  - `contracts/identity/v1/` fixes the v7 layout and the valid-ID rule as shared fixtures. Every project runs both.
+  - Each project has a small generator (Java, Foundation and Ecto only make v4) and a guard against the old v4 calls. The server's seven tables autogenerate v7, and it rejects upper-case IDs (404/400/422).
+- Evidence: `contracts/identity/v1/README.md`, `DECISIONS.md`
+- Commit: see git log
+
 ### 2026-10-27 — Slice 3a: dhikr catalog and library
 
 - Area: Cross-project

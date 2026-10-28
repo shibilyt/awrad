@@ -14,7 +14,7 @@ defmodule Awrad.Accounts.RefreshToken do
 
   alias Awrad.Accounts.DeviceSession
 
-  @primary_key {:id, :binary_id, autogenerate: true}
+  @primary_key {:id, Awrad.UUIDv7, autogenerate: true}
   @foreign_key_type :binary_id
 
   @type t :: %__MODULE__{}

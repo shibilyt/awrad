@@ -690,6 +690,36 @@ The frozen apps verified emails and reset passwords with links, and the web also
 
 The verification-link and request-id parts of the frozen implementation. ADR-2026-07-12 and ADR-2026-10-15 otherwise stand.
 
+## ADR-2026-10-28: Every generated ID is a UUIDv7
+
+Status: Accepted
+
+### Context
+
+All IDs were random UUIDv4 (ADR-2026-07-13). Random keys scatter inserts across PostgreSQL indexes, which bloats them and slows writes as tables grow, and the tables that will grow most (count commands and progress, once sync lands) are still to be built. Nothing is released, so the generators can change now at no migration cost.
+
+### Decision
+
+- Every ID a project generates is a UUIDv7 (RFC 9562): entities created on clients or the server, installation IDs and `Idempotency-Key`s. The layout is fixed by `contracts/identity/v1/fixtures/uuid_v7_layout.json`, and each platform's generator takes its clock and random source as inputs so that fixture drives it.
+- Validation accepts any lowercase, hyphenated UUID except nil and max (`uuid_format.json`). Ownership, not the version digit, protects data.
+- Built-in content keeps its fixed IDs: the 113 built-in dhikr UUIDv4 constants and the deterministic wird IDs.
+- An ID's timestamp is never used to order, expire or authorize anything; device clocks can be wrong, and sync orders by server revisions.
+
+### Consequences
+
+- Server indexes stay compact and IDs sort roughly by creation.
+- Each platform carries a small generator, because java.util.UUID, Foundation's UUID and Ecto only generate v4.
+- IDs reveal when they were made, which is acceptable because they aren't public.
+
+### Evidence
+
+- `contracts/identity/v1/` (README and fixtures)
+- `contracts/api/STYLE.md` §4
+
+### Supersedes
+
+The UUIDv4 generation rule of ADR-2026-07-13. Its built-in identity pairs stay.
+
 ## ADR-2026-10-27: A dhikr is one foundational entity, from one shared catalog
 
 Status: Proposed

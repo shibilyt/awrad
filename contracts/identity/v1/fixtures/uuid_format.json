@@ -1,0 +1,135 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "uuid_format",
+  "description": "Which strings every platform and the API accept as an ID: lowercase hexadecimal, hyphenated 8-4-4-4-12, any version (new IDs are v7; built-in dhikr constants are v4), excluding the nil and max UUIDs. Nothing is trimmed or case-folded.",
+  "references": [
+    "contracts/api/STYLE.md §4",
+    "DECISIONS.md ADR-2026-10-28 (UUIDv7)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "text"
+    ],
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "valid"
+    ],
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "v7_lowercase",
+      "description": "A lowercase UUIDv7 is accepted.",
+      "given": {
+        "text": "017f22e2-79b0-7cc3-98c4-dc0c0c07398f"
+      },
+      "expect": {
+        "valid": true
+      }
+    },
+    {
+      "id": "v4_lowercase",
+      "description": "A lowercase UUIDv4 is accepted (built-in dhikr constants, older IDs).",
+      "given": {
+        "text": "3285e014-551b-46a4-aedc-8b6664b59bc7"
+      },
+      "expect": {
+        "valid": true
+      }
+    },
+    {
+      "id": "uppercase",
+      "description": "Upper case is rejected; IDs are lowercase on the wire.",
+      "given": {
+        "text": "017F22E2-79B0-7CC3-98C4-DC0C0C07398F"
+      },
+      "expect": {
+        "valid": false
+      }
+    },
+    {
+      "id": "no_hyphens",
+      "description": "The 32-digit form without hyphens is rejected.",
+      "given": {
+        "text": "017f22e279b07cc398c4dc0c0c07398f"
+      },
+      "expect": {
+        "valid": false
+      }
+    },
+    {
+      "id": "braces",
+      "description": "Braced form is rejected.",
+      "given": {
+        "text": "{017f22e2-79b0-7cc3-98c4-dc0c0c07398f}"
+      },
+      "expect": {
+        "valid": false
+      }
+    },
+    {
+      "id": "too_short",
+      "description": "A truncated ID is rejected.",
+      "given": {
+        "text": "017f22e2-79b0-7cc3-98c4-dc0c0c07398"
+      },
+      "expect": {
+        "valid": false
+      }
+    },
+    {
+      "id": "non_hex",
+      "description": "A non-hex digit is rejected.",
+      "given": {
+        "text": "017f22e2-79b0-7cc3-98c4-dc0c0c07398g"
+      },
+      "expect": {
+        "valid": false
+      }
+    },
+    {
+      "id": "surrounding_space",
+      "description": "Whitespace isn't trimmed; the ID is rejected.",
+      "given": {
+        "text": " 017f22e2-79b0-7cc3-98c4-dc0c0c07398f"
+      },
+      "expect": {
+        "valid": false
+      }
+    },
+    {
+      "id": "nil_uuid",
+      "description": "The nil UUID is rejected.",
+      "given": {
+        "text": "00000000-0000-0000-0000-000000000000"
+      },
+      "expect": {
+        "valid": false
+      }
+    },
+    {
+      "id": "max_uuid",
+      "description": "The max UUID is rejected.",
+      "given": {
+        "text": "ffffffff-ffff-ffff-ffff-ffffffffffff"
+      },
+      "expect": {
+        "valid": false
+      }
+    }
+  ]
+}

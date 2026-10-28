@@ -46,7 +46,8 @@ struct CalendarDayTests {
     }
 
     @Test func idsPrintLowercaseLikeTheWireFormat() throws {
-        let id = try #require(AwradID("3285E014-551B-46A4-AEDC-8B6664B59BC7"))
+        let id = try #require(AwradID("3285e014-551b-46a4-aedc-8b6664b59bc7"))
         #expect(id.description == "3285e014-551b-46a4-aedc-8b6664b59bc7")
+        #expect(AwradID(id.value).description == id.description)
     }
 }

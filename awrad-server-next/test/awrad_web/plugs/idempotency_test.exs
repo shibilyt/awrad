@@ -12,7 +12,7 @@ defmodule AwradWeb.Plugs.IdempotencyTest do
   end
 
   test "an error isn't stored: fixing the body and retrying with the same key runs", %{conn: conn} do
-    key = Ecto.UUID.generate()
+    key = Awrad.UUIDv7.generate()
     email = unique_email()
 
     failed =
@@ -38,7 +38,7 @@ defmodule AwradWeb.Plugs.IdempotencyTest do
 
   test "stored bodies are encrypted and fingerprints are keyed hashes", %{conn: conn} do
     user = user_fixture()
-    key = Ecto.UUID.generate()
+    key = Awrad.UUIDv7.generate()
 
     conn =
       post_json(
@@ -59,7 +59,7 @@ defmodule AwradWeb.Plugs.IdempotencyTest do
   end
 
   test "the same key on another operation is independent", %{conn: conn} do
-    key = Ecto.UUID.generate()
+    key = Awrad.UUIDv7.generate()
     email = unique_email()
 
     assert post_json(conn, ~p"/api/v1/accounts/resend_verification_code", %{email: email}, [
@@ -78,15 +78,15 @@ defmodule AwradWeb.Plugs.IdempotencyTest do
   end
 
   test "a result for an account deleted meanwhile isn't stored, and doesn't fail" do
-    key = Ecto.UUID.generate()
-    for_key = {"POST /api/v1/account/change_password", key, Ecto.UUID.generate()}
+    key = Awrad.UUIDv7.generate()
+    for_key = {"POST /api/v1/account/change_password", key, Awrad.UUIDv7.generate()}
 
     assert Awrad.Idempotency.store(for_key, "fingerprint", 204, nil, "") == :ok
     refute Repo.get_by(Record, key: key)
   end
 
   test "expired results are ignored and pruned", %{conn: conn} do
-    key = Ecto.UUID.generate()
+    key = Awrad.UUIDv7.generate()
 
     post_json(conn, ~p"/api/v1/accounts/resend_verification_code", %{email: unique_email()}, [
       {"idempotency-key", key}

@@ -8,7 +8,7 @@ A mobile device session has an installation ID, a single-use refresh token and a
 
 ## Decision
 
-- **Keychain** (`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`, data-protection keychain, one service): the installation ID (UUIDv4) and one `device_session` item with the account, the refresh token and any pending refresh key.
+- **Keychain** (`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`, data-protection keychain, one service): the installation ID (UUIDv4 when written; new IDs are UUIDv7 since root ADR-2026-10-28) and one `device_session` item with the account, the refresh token and any pending refresh key.
 - **The access token stays in memory.** The first authenticated request after a launch refreshes it.
 - **Reinstall means a new installation:** a `UserDefaults` marker (deleted with the app) is set the first time the session loads. If it's missing, Keychain leftovers from an earlier install are removed first. The check runs on first account use, not at launch, so it doesn't race prewarming before the first unlock.
 - **Refresh:** one at a time in the `AuthSession` actor; callers join the one in flight. Its `Idempotency-Key` is saved with the refresh token before sending, so retrying the same refresh (also after a relaunch) reuses it. Credentials are dropped only on `refresh_token_invalid` or `refresh_reuse_detected`; network errors, `5xx` and `429` keep them. A session epoch stops a refresh that was in flight during sign-out or sign-in from restoring the old session.

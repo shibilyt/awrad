@@ -39,7 +39,7 @@ defmodule Awrad.Accounts.DeviceSessionsTest do
 
       assert Repo.get!(DeviceSession, second.session.id).revoked_at == nil
 
-      assert DeviceSessions.refresh(first.refresh_token, Ecto.UUID.generate()) ==
+      assert DeviceSessions.refresh(first.refresh_token, Awrad.UUIDv7.generate()) ==
                {:error, :refresh_token_invalid}
 
       assert DeviceSessions.identify(first.access_token) == :error
@@ -54,7 +54,7 @@ defmodule Awrad.Accounts.DeviceSessionsTest do
 
   describe "refresh/2" do
     test "rotates: new tokens, the old refresh token is spent", %{grant: grant} do
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
 
       assert {:ok, next} = DeviceSessions.refresh(grant.refresh_token, key)
       assert next.refresh_token != grant.refresh_token
@@ -64,7 +64,7 @@ defmodule Awrad.Accounts.DeviceSessionsTest do
     end
 
     test "a retry with the same key within 60 seconds returns the same tokens", %{grant: grant} do
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
 
       assert {:ok, first} = DeviceSessions.refresh(grant.refresh_token, key)
       assert {:ok, retry} = DeviceSessions.refresh(grant.refresh_token, key)
@@ -74,11 +74,11 @@ defmodule Awrad.Accounts.DeviceSessionsTest do
       assert retry.access_token_expires_at == first.access_token_expires_at
       assert retry.session.id == first.session.id
       # The session is still live and its successor token works.
-      assert {:ok, _} = DeviceSessions.refresh(first.refresh_token, Ecto.UUID.generate())
+      assert {:ok, _} = DeviceSessions.refresh(first.refresh_token, Awrad.UUIDv7.generate())
     end
 
     test "the same key after 60 seconds is reuse: the session is revoked", %{grant: grant} do
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
       {:ok, next} = DeviceSessions.refresh(grant.refresh_token, key)
 
       Repo.update_all(RefreshToken,
@@ -88,21 +88,21 @@ defmodule Awrad.Accounts.DeviceSessionsTest do
       assert DeviceSessions.refresh(grant.refresh_token, key) == {:error, :refresh_reuse_detected}
       assert_revoked(grant.session.id, "refresh_reuse")
 
-      assert DeviceSessions.refresh(next.refresh_token, Ecto.UUID.generate()) ==
+      assert DeviceSessions.refresh(next.refresh_token, Awrad.UUIDv7.generate()) ==
                {:error, :refresh_token_invalid}
 
       assert DeviceSessions.identify(next.access_token) == :error
     end
 
     test "a spent token with another key is reuse: the session is revoked", %{grant: grant} do
-      {:ok, next} = DeviceSessions.refresh(grant.refresh_token, Ecto.UUID.generate())
+      {:ok, next} = DeviceSessions.refresh(grant.refresh_token, Awrad.UUIDv7.generate())
 
-      assert DeviceSessions.refresh(grant.refresh_token, Ecto.UUID.generate()) ==
+      assert DeviceSessions.refresh(grant.refresh_token, Awrad.UUIDv7.generate()) ==
                {:error, :refresh_reuse_detected}
 
       assert_revoked(grant.session.id, "refresh_reuse")
 
-      assert DeviceSessions.refresh(next.refresh_token, Ecto.UUID.generate()) ==
+      assert DeviceSessions.refresh(next.refresh_token, Awrad.UUIDv7.generate()) ==
                {:error, :refresh_token_invalid}
     end
 
@@ -111,16 +111,16 @@ defmodule Awrad.Accounts.DeviceSessionsTest do
       grant: grant
     } do
       other = grant_fixture(user)
-      key = Ecto.UUID.generate()
+      key = Awrad.UUIDv7.generate()
       {:ok, _} = DeviceSessions.refresh(grant.refresh_token, key)
 
       assert DeviceSessions.refresh(other.refresh_token, key) == {:error, :idempotency_key_reused}
       # Nothing was spent or revoked.
-      assert {:ok, _} = DeviceSessions.refresh(other.refresh_token, Ecto.UUID.generate())
+      assert {:ok, _} = DeviceSessions.refresh(other.refresh_token, Awrad.UUIDv7.generate())
     end
 
     test "an unknown token is invalid" do
-      assert DeviceSessions.refresh("not-a-real-refresh-token", Ecto.UUID.generate()) ==
+      assert DeviceSessions.refresh("not-a-real-refresh-token", Awrad.UUIDv7.generate()) ==
                {:error, :refresh_token_invalid}
     end
 
@@ -128,14 +128,14 @@ defmodule Awrad.Accounts.DeviceSessionsTest do
       soon = DateTime.add(DateTime.utc_now(:second), 10, :day)
       Repo.update_all(DeviceSession, set: [absolute_expires_at: soon])
 
-      {:ok, next} = DeviceSessions.refresh(grant.refresh_token, Ecto.UUID.generate())
+      {:ok, next} = DeviceSessions.refresh(grant.refresh_token, Awrad.UUIDv7.generate())
       assert next.session.idle_expires_at == soon
     end
 
     test "an idle-expired session can't refresh", %{grant: grant} do
       expire(:idle_expires_at)
 
-      assert DeviceSessions.refresh(grant.refresh_token, Ecto.UUID.generate()) ==
+      assert DeviceSessions.refresh(grant.refresh_token, Awrad.UUIDv7.generate()) ==
                {:error, :refresh_token_invalid}
 
       assert DeviceSessions.identify(grant.access_token) == :error
@@ -144,7 +144,7 @@ defmodule Awrad.Accounts.DeviceSessionsTest do
     test "an absolute-expired session can't refresh", %{grant: grant} do
       expire(:absolute_expires_at)
 
-      assert DeviceSessions.refresh(grant.refresh_token, Ecto.UUID.generate()) ==
+      assert DeviceSessions.refresh(grant.refresh_token, Awrad.UUIDv7.generate()) ==
                {:error, :refresh_token_invalid}
     end
   end
@@ -156,12 +156,12 @@ defmodule Awrad.Accounts.DeviceSessionsTest do
       assert_revoked(grant.session.id, "signed_out")
       assert DeviceSessions.identify(grant.access_token) == :error
 
-      assert DeviceSessions.refresh(grant.refresh_token, Ecto.UUID.generate()) ==
+      assert DeviceSessions.refresh(grant.refresh_token, Awrad.UUIDv7.generate()) ==
                {:error, :refresh_token_invalid}
     end
 
     test "works with a spent token of the session too", %{grant: grant} do
-      {:ok, _next} = DeviceSessions.refresh(grant.refresh_token, Ecto.UUID.generate())
+      {:ok, _next} = DeviceSessions.refresh(grant.refresh_token, Awrad.UUIDv7.generate())
 
       assert DeviceSessions.sign_out(grant.refresh_token) == :ok
       assert_revoked(grant.session.id, "signed_out")

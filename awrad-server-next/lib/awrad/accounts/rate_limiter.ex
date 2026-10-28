@@ -59,7 +59,7 @@ defmodule Awrad.Accounts.RateLimiter do
           | :request_email_change
           | :confirm_email_change
 
-  @primary_key {:id, :binary_id, autogenerate: true}
+  @primary_key {:id, Awrad.UUIDv7, autogenerate: true}
 
   schema "auth_rate_limits" do
     field :scope, :string

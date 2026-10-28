@@ -12,7 +12,7 @@ Jetpack Security's `EncryptedSharedPreferences` is deprecated, and DataStore has
 
 - **One AES-256-GCM key in the Android Keystore** (`awrad_next_account_credentials`), generated on first use, non-exportable, randomized IVs.
 - **Two files in `noBackupFilesDir/account_credentials/`**, written atomically (`AtomicFile`), each `version ‖ IV ‖ ciphertext`:
-  - `installation.bin`: the installation id, a random UUIDv4 created on first use. It survives sign-out and only goes away with the app's data.
+  - `installation.bin`: the installation id, a random UUID created on first use (UUIDv4 when written; UUIDv7 since root ADR-2026-10-28). It survives sign-out and only goes away with the app's data.
   - `credentials.bin`: one JSON document with the session (refresh token, account id and email, and the `Idempotency-Key` of an unanswered refresh), plus the queue of sign-outs the server hasn't confirmed.
 - **The access token is never stored.** After a restart the first authenticated call refreshes.
 - **A file that won't decrypt is deleted and reads as empty** (for example, a lost key after a restore to another device). The device is then signed out, or gets a new installation id. Practice data isn't affected.

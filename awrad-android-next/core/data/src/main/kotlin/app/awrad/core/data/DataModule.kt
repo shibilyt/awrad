@@ -11,12 +11,14 @@ import app.awrad.core.data.audio.ExoAudioPlayerFactory
 import app.awrad.core.data.dhikr.BundledDhikrCatalogSource
 import app.awrad.core.database.AwradDatabase
 import app.awrad.core.database.GoalDao
+import app.awrad.core.domain.UuidV7
 import app.awrad.core.domain.account.AccountRepository
 import app.awrad.core.domain.account.AccountSettingsRepository
 import app.awrad.core.domain.audio.AudioPlayerFactory
 import app.awrad.core.domain.dhikr.DhikrCatalogSource
 import app.awrad.core.domain.goal.GoalRepository
 import app.awrad.core.domain.onboarding.OnboardingStatusStore
+import app.awrad.core.network.IdGenerator
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -66,5 +68,9 @@ internal interface DataModule {
 
         @Provides
         fun clock(): Clock = Clock.systemDefaultZone()
+
+        /** `:core:network`'s installation id and idempotency keys are the domain's UUIDv7 (ADR-2026-10-28). */
+        @Provides
+        fun idGenerator(clock: Clock): IdGenerator = IdGenerator { UuidV7.generate(clock) }
     }
 }

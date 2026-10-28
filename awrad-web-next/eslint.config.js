@@ -32,7 +32,21 @@ export default tseslint.config(
       "@typescript-eslint/switch-exhaustiveness-check": "error",
       "@typescript-eslint/consistent-type-imports": "error",
       "no-restricted-globals": ["error", { name: "fetch", message: "Use `api` from @/shared/api/client." }],
+      // New IDs are UUIDv7 (root ADR-2026-10-28); randomUUID makes v4. Any `.randomUUID`, so
+      // `globalThis.crypto.randomUUID` and `window.crypto.randomUUID` are caught too.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "MemberExpression[property.name='randomUUID']",
+          message: "Use newUuidV7() from @/shared/identity.",
+        },
+      ],
     },
+  },
+  {
+    // The one place IDs are generated.
+    files: ["src/shared/identity/**"],
+    rules: { "no-restricted-syntax": "off" },
   },
   {
     // Tests and the API client may use fetch and test-only literals.

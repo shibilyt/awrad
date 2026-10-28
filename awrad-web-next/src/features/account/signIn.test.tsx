@@ -37,7 +37,9 @@ describe("sign in", () => {
     const create = requests.find((request) => request.method === "POST");
     expect(create?.body).toEqual({ email: "amina@example.com", password: "a long passphrase", remember_me: true });
     expect(create?.headers.get("X-CSRF-Token")).toBe("anonymous-token");
-    expect(create?.headers.get("Idempotency-Key")).toMatch(/^[0-9a-f-]{36}$/);
+    expect(create?.headers.get("Idempotency-Key")).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
 
     server.use(specProblem("get_current_account", "unauthenticated"));
     await userEvent.click(screen.getByRole("button", { name: "Sign out" }));

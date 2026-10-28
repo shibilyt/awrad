@@ -26,6 +26,7 @@ public enum class FixtureModel(public val directory: String) {
     HIJRI_CALENDAR("hijri-calendar"),
     ACCOUNT_MODEL("account-model"),
     DHIKR_CATALOG("dhikr-catalog"),
+    IDENTITY("identity"),
 }
 
 /**

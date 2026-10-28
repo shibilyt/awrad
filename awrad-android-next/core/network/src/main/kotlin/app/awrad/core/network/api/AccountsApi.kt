@@ -1,13 +1,14 @@
 package app.awrad.core.network.api
 
+import app.awrad.core.network.IdGenerator
 import app.awrad.core.network.http.HttpTransport
 
 /**
  * The account and device-session operations (tags `accounts` and `device_sessions`). Stateless: tokens are
  * passed in. Public operations get no `Authorization` header; every POST gets an `Idempotency-Key`.
  */
-public class AccountsApi(transport: HttpTransport, language: AppLanguage) {
-    private val caller = ApiCaller(transport, language)
+public class AccountsApi(transport: HttpTransport, ids: IdGenerator, language: AppLanguage) {
+    private val caller = ApiCaller(transport, ids, language)
 
     public suspend fun registerAccount(body: RegisterAccountRequest): ApiResult<Unit> =
         caller.send(ApiOperation.REGISTER_ACCOUNT, body, RegisterAccountRequest.serializer(), null)

@@ -21,7 +21,7 @@ defmodule Awrad.Accounts.EmailCode do
   @validity_minutes 15
   @max_attempts 5
 
-  @primary_key {:id, :binary_id, autogenerate: true}
+  @primary_key {:id, Awrad.UUIDv7, autogenerate: true}
   @foreign_key_type :binary_id
 
   @type purpose :: :verify_email | :reset_password | :change_email
