@@ -20,6 +20,10 @@ function Fields(): ReactElement {
         />
         <TextField label={t("sample.code")} defaultValue="123456" isDisabled />
       </Specimen>
+      <Specimen title={t("specimen.fieldMultiline")}>
+        <TextField label={t("sample.translation")} multiline defaultValue={t("sample.translationValue")} />
+        <TextField label={t("sample.arabicText")} multiline textLanguage="ar" defaultValue="سُبْحَانَ ٱللَّهِ" />
+      </Specimen>
       <Specimen title={t("specimen.fieldError")}>
         <Form validationBehavior="aria" validationErrors={{ email: t("sample.emailError") }}>
           <TextField name="email" label={t("sample.email")} defaultValue={t("sample.emailValue")} />

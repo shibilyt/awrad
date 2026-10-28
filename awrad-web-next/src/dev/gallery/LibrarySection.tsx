@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { Card } from "@/shared/ui/Card";
 import { CollectionTile } from "@/shared/ui/CollectionTile";
 import { SearchField } from "@/shared/ui/SearchField";
+import { FilterChips, TagChip } from "@/shared/ui/TagChips";
 import { GallerySection, Specimen } from "./Specimen";
 
 /** The gallery only shows the tiles; following one would leave the gallery. */
@@ -73,11 +74,42 @@ function SearchFields(): ReactElement {
   );
 }
 
+function Chips(): ReactElement {
+  const { t } = useTranslation("gallery");
+  const [selected, setSelected] = useState(["morning"]);
+  const chips = [
+    { id: "morning", label: t("sample.morningAdhkar") },
+    { id: "evening", label: t("sample.eveningAdhkar") },
+    { id: "salawat", label: t("sample.salawat") },
+  ];
+  const tags = (
+    <ul className="flex flex-wrap gap-sm">
+      {chips.map((chip) => (
+        <li key={chip.id}>
+          <TagChip>{chip.label}</TagChip>
+        </li>
+      ))}
+    </ul>
+  );
+  return (
+    <>
+      <Specimen title={t("specimen.tagChips")}>
+        {tags}
+        <Card>{tags}</Card>
+      </Specimen>
+      <Specimen title={t("specimen.filterChips")}>
+        <FilterChips label={t("sample.filter")} chips={chips} selected={selected} onChange={setSelected} />
+      </Specimen>
+    </>
+  );
+}
+
 function LibrarySpecimens(): ReactElement {
   return (
     <div className="flex flex-col gap-section-gap">
       <Tiles />
       <SearchFields />
+      <Chips />
     </div>
   );
 }

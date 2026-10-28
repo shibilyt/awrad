@@ -212,7 +212,8 @@
       "title": "Not in the library",
       "collection": "This collection isn't in the library. The link may be old or mistyped.",
       "dhikr": "This dhikr isn't in the library. The link may be old or mistyped.",
-      "back": "Go to the library"
+      "back": "Go to the library",
+      "custom": "This dhikr isn't in your library. It may have been deleted on another device."
     },
     "detail": {
       "transliteration": "Transliteration",
@@ -223,7 +224,8 @@
       "pause": "Pause audio",
       "position": "Playback position",
       "time": "{{elapsed}} / {{duration}}",
-      "audioFailed": "Couldn't play the audio. Check your connection and try again."
+      "audioFailed": "Couldn't play the audio. Check your connection and try again.",
+      "references": "References"
     },
     "reference": {
       "quran": "Qur'an {{place}}",
@@ -233,6 +235,153 @@
       "separator": ", ",
       "withNote": "{{name}} ({{note}})",
       "list": "; "
+    },
+    "kinds": {
+      "quran": "Qur'an",
+      "dhikr": "Dhikr",
+      "dua": "Du'a",
+      "salawat": "Salawat",
+      "name_of_allah": "Name of Allah"
+    },
+    "yours": {
+      "title": "Your dhikrs",
+      "loading": "Loading your dhikrs…",
+      "signedOut": "Sign in to write your own dhikrs and tag any dhikr. They reach your phone too.",
+      "signIn": "Sign in",
+      "retry": "Try again",
+      "empty": "You haven't added a dhikr of your own yet.",
+      "new": "New dhikr"
+    },
+    "filter": {
+      "title": "Filter by tag",
+      "results_one": "{{count}} dhikr has every chosen tag",
+      "results_other": "{{count}} dhikrs have every chosen tag",
+      "resultsLabel": "Tagged dhikrs",
+      "empty": "No dhikr has every chosen tag."
+    },
+    "custom": {
+      "edit": "Edit",
+      "delete": "Delete dhikr",
+      "deleteTitle": "Delete “{{title}}”?",
+      "deleteBody": "It's deleted from every device signed in to your account. This can't be undone.",
+      "deleteConfirm": "Delete"
+    },
+    "editor": {
+      "newTitle": "New dhikr",
+      "editTitle": "Edit dhikr",
+      "kind": "Kind",
+      "arabic": "Arabic text",
+      "arabicHint": "Required. For Qur'an, put each ayah on its own line.",
+      "title": "Title",
+      "titleHint": "In at least one language.",
+      "inLanguage": {
+        "en": "English",
+        "ar": "Arabic",
+        "ml": "Malayalam"
+      },
+      "audio": "Audio",
+      "audioFromPhone": "Audio is added from the phone app.",
+      "audioOnPhone": "Its recording is on the phone that added it. Audio is added from the phone app.",
+      "save": "Save",
+      "references": {
+        "title": "References",
+        "none": "No references yet.",
+        "add": "Add reference",
+        "addTitle": "Add a reference",
+        "remove": "Remove",
+        "removeLabel": "Remove the {{type}} reference",
+        "types": {
+          "quran": "Qur'an",
+          "hadith": "Hadith",
+          "book": "Book",
+          "shaykh": "Shaykh",
+          "other": "Other"
+        },
+        "fields": {
+          "surah": "Surah",
+          "ayah_start": "First ayah",
+          "ayah_end": "Last ayah",
+          "collection": "Collection",
+          "number": "Number",
+          "narrator": "Narrator",
+          "grade": "Grade",
+          "title": "Title",
+          "author": "Author",
+          "volume": "Volume",
+          "page": "Page",
+          "name": "Name",
+          "note": "Note",
+          "text": "Source",
+          "url": "Link"
+        }
+      },
+      "errors": {
+        "check": "Check the highlighted fields.",
+        "arabicRequired": "Enter the Arabic text.",
+        "titleRequired": "Give it a title in at least one language.",
+        "tooLong": "Use at most {{max}} characters.",
+        "tooManyReferences": "Use at most {{max}} references.",
+        "kind": "Choose what kind of text this is.",
+        "reference": "Fill in what this reference needs. A surah is 1 to 114, and ayahs are numbers from 1.",
+        "invalid": "Check this field."
+      }
+    },
+    "tags": {
+      "manage": "Manage tags",
+      "yours": "Your tags",
+      "hint": "Up to {{max}} tags on each dhikr.",
+      "none": "You have no tags yet.",
+      "noneOnDhikr": "No tags of yours on this dhikr.",
+      "dhikrTitle": "Tags on this dhikr",
+      "new": "New tag",
+      "add": "Add tag",
+      "name": "Name",
+      "save": "Save",
+      "rename": "Rename",
+      "renameLabel": "Rename {{name}}",
+      "renameTitle": "Rename tag",
+      "delete": "Delete",
+      "deleteLabel": "Delete {{name}}",
+      "deleteTitle": "Delete “{{name}}”?",
+      "deleteBody": "It's removed from every dhikr, on every device. This can't be undone.",
+      "cancel": "Cancel",
+      "listLabel": "Your tags",
+      "errors": {
+        "empty": "Enter a name.",
+        "tooLong": "Use at most 40 characters.",
+        "exists": "You already have a tag called “{{name}}”."
+      }
+    },
+    "conflict": {
+      "title": "Changed on another device",
+      "body": "This was changed on another device after you opened it.",
+      "bodyDelete": "This was changed on another device after you opened it. Delete it anyway?",
+      "theirs": "On the other device",
+      "deleted": "It was deleted there.",
+      "noTags": "No tags",
+      "useTheirs": "Use theirs",
+      "keepMine": "Keep mine"
+    },
+    "sync": {
+      "gone": "That was deleted on another device.",
+      "problems": {
+        "network": "Couldn't reach Awrad. Check your connection and try again.",
+        "unexpected": "Something went wrong. Try again.",
+        "unauthenticated": "You're signed out. Sign in again.",
+        "csrf_token_invalid": "Your session changed in another tab. Reload the page and try again.",
+        "account_mismatch": "This browser is now signed in to another account, so this page has switched to it.",
+        "rate_limited": "Too many changes at once. Wait a little and try again."
+      },
+      "rejected": {
+        "document_invalid": "Check the highlighted fields.",
+        "document_too_large": "This dhikr is too long to save. Shorten its texts.",
+        "custom_dhikr_limit_reached": "You have 1,000 dhikrs of your own, the most an account can have.",
+        "tag_limit_reached": "You have 100 tags, the most an account can have.",
+        "tag_name_taken": "Another tag already has this name.",
+        "tag_not_found": "One of these tags was deleted on another device. Check the tags and save again.",
+        "dhikr_not_found": "This dhikr was deleted on another device, so it can't be tagged.",
+        "entity_not_found": "That was deleted on another device."
+      }
     }
   }
 }

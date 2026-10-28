@@ -1,8 +1,8 @@
-import { queryOptions, type QueryClient } from "@tanstack/react-query";
+import { queryOptions } from "@tanstack/react-query";
 import { api, idempotencyKey, setCsrfToken } from "@/shared/api/client";
 import { ApiProblem, problemOf } from "@/shared/api/problem";
 import type { components } from "@/shared/api/schema.gen";
-import { currentAccountQuery, type Account } from "../api";
+import { ACCOUNT_QUERY_KEY, type Account } from "@/shared/session";
 
 /**
  * The account settings operations (tag `account_settings`, slice 2b). The
@@ -12,21 +12,8 @@ import { currentAccountQuery, type Account } from "../api";
  */
 export type AccountSession = components["schemas"]["AccountSession"];
 
-/** Every query under this key belongs to the signed-in account. */
-const ACCOUNT_QUERY_KEY = ["account"] as const;
-
-/**
- * Signed out (sign-out, session ended, account deleted): the current account
- * becomes `null`, which pages already watching it see, and everything else
- * cached for the account is dropped.
- */
-export function forgetAccount(queryClient: QueryClient): void {
-  queryClient.setQueryData(currentAccountQuery.queryKey, null);
-  queryClient.removeQueries({
-    queryKey: ACCOUNT_QUERY_KEY,
-    predicate: (query) => query.queryKey[1] !== currentAccountQuery.queryKey[1],
-  });
-}
+/** Signed out: the current account becomes `null` and the rest of its cache is dropped. */
+export { forgetAccount } from "@/shared/session";
 
 const PAGE_SIZE = 100;
 /** Pages are followed to the end, but not forever: an account rarely has more than one. */
