@@ -60,7 +60,7 @@ const SHAPES = {
     required: ["url", "style", "repetitions"],
   },
   reciter: { keys: ["name"], required: "all" },
-  quran: { keys: ["id", "type", "surah", "ayahStart", "ayahEnd"], required: "all" },
+  quran: { keys: ["id", "type", "surah", "ayah_start", "ayah_end"], required: "all" },
   hadith: { keys: ["id", "type", "collection", "number", "narrator", "grade"], required: ["id", "type", "collection"] },
   book: { keys: ["id", "type", "title", "author", "volume", "page"], required: ["id", "type", "title"] },
   shaykh: { keys: ["id", "type", "name", "note"], required: ["id", "type", "name"] },

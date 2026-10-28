@@ -64,3 +64,51 @@ export function ConfirmDialog({
     </ModalOverlay>
   );
 }
+
+/**
+ * Asks the person to choose between two ways forward, neither destructive (a conflict: Use theirs
+ * or Keep mine). The same dialog as `ConfirmDialog`, but it can't be dismissed (no Escape, no
+ * press outside): one of the two must be chosen. The first is secondary, the second the main
+ * button.
+ */
+export function ChoiceDialog({
+  isOpen,
+  title,
+  children,
+  first,
+  second,
+  isPending = false,
+}: {
+  isOpen: boolean;
+  title: string;
+  children: ReactNode;
+  first: { label: string; onPress: () => void };
+  second: { label: string; onPress: () => void };
+  isPending?: boolean;
+}): ReactElement {
+  return (
+    <ModalOverlay
+      isOpen={isOpen}
+      isDismissable={false}
+      isKeyboardDismissDisabled
+      className="overlay-fade fixed inset-0 z-10 flex items-center justify-center bg-scrim p-page-margin"
+    >
+      <Modal className="max-h-full w-full max-w-dialog overflow-y-auto rounded-dialog bg-surface-bar p-card-padding">
+        <Dialog role="alertdialog" className="flex flex-col gap-lg outline-none">
+          <Heading slot="title" className="text-card-title text-on-surface">
+            {title}
+          </Heading>
+          <div className="flex flex-col gap-sm text-body text-on-surface-variant">{children}</div>
+          <div className="flex flex-wrap justify-end gap-sm">
+            <Button variant="secondary" width="label" isDisabled={isPending} onPress={first.onPress}>
+              {first.label}
+            </Button>
+            <Button width="label" onPress={second.onPress} isPending={isPending}>
+              {second.label}
+            </Button>
+          </div>
+        </Dialog>
+      </Modal>
+    </ModalOverlay>
+  );
+}

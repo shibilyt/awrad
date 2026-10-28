@@ -1,27 +1,19 @@
 import { getRouteApi } from "@tanstack/react-router";
-import { useId, useState, type ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
 import { searchDhikrs, useCatalog } from "@/shared/dhikr-catalog";
 import { useLanguage } from "@/shared/i18n";
+import { RoundButton } from "@/shared/ui/Button";
+import { AddIcon } from "@/shared/ui/icons.gen";
 import { LargeTitleHeader } from "@/shared/ui/LargeTitleHeader";
 import { SearchField } from "@/shared/ui/SearchField";
 import { CollectionTiles } from "./CollectionTiles";
+import { useYours } from "./custom/data";
+import { TagFilter, YourDhikrs } from "./custom/YourDhikrs";
 import { DhikrList } from "./DhikrList";
+import { Section } from "./LibraryScreen";
 
 const route = getRouteApi("/library/");
-
-/** A titled part of the Library: the title in `sectionTitle`, inside the page margin. */
-function Section({ title, children }: { title: string; children: ReactElement }): ReactElement {
-  const heading = useId();
-  return (
-    <section aria-labelledby={heading} className="flex flex-col gap-row-gap">
-      <h2 id={heading} className="px-page-margin text-section-title text-on-surface">
-        {title}
-      </h2>
-      {children}
-    </section>
-  );
-}
 
 /** Search results only: how many (announced as they change), the rows, or an empty state. */
 function SearchResults({ query }: { query: string }): ReactElement {
@@ -48,14 +40,16 @@ function SearchResults({ query }: { query: string }): ReactElement {
 }
 
 /**
- * `/library`: a large title, a search field whose query is kept in the URL (`?q=`), then the
- * collections as tiles and every dhikr as a row. While searching it shows only the results.
+ * `/library`: a large title (with "New dhikr" when signed in), a search field whose query is kept
+ * in the URL (`?q=`), then "Your dhikrs", the tag filter (`?tags=`, signed in), the collections as
+ * tiles and every dhikr as a row. While searching it shows only the results.
  */
 export function LibraryPage(): ReactElement {
   const { t } = useTranslation();
   const catalog = useCatalog();
-  const { q = "" } = route.useSearch();
+  const { q = "", tags = [] } = route.useSearch();
   const navigate = route.useNavigate();
+  const yours = useYours();
   // The field follows what's typed at once; the URL follows it (replaced, not pushed per key).
   // A navigation that clears the query (the Library tab) clears the field too.
   const [query, setQuery] = useState(q);
@@ -69,14 +63,33 @@ export function LibraryPage(): ReactElement {
   return (
     <main className="mx-auto flex w-full max-w-content flex-col gap-section-gap pb-page-margin">
       <div className="flex flex-col">
-        <LargeTitleHeader title={t("library.title")} />
+        <LargeTitleHeader
+          title={t("library.title")}
+          {...(yours.status === "ready"
+            ? {
+                action: (
+                  <RoundButton
+                    icon={AddIcon}
+                    aria-label={t("library.yours.new")}
+                    onPress={() => void navigate({ to: "/library/dhikrs/new" })}
+                  />
+                ),
+              }
+            : {})}
+        />
         <div className="px-page-margin">
           <SearchField
             label={t("library.search.label")}
             value={query}
             onChange={(value) => {
               setQuery(value);
-              void navigate({ search: value.trim() === "" ? {} : { q: value }, replace: true });
+              void navigate({
+                search: (previous) => ({
+                  ...(previous.tags === undefined ? {} : { tags: previous.tags }),
+                  ...(value.trim() === "" ? {} : { q: value }),
+                }),
+                replace: true,
+              });
             }}
           />
         </div>
@@ -85,6 +98,22 @@ export function LibraryPage(): ReactElement {
         <SearchResults query={query} />
       ) : (
         <>
+          <YourDhikrs yours={yours} />
+          {yours.status === "ready" && (
+            <TagFilter
+              state={yours.state}
+              selected={tags}
+              onChange={(selected) => {
+                void navigate({
+                  search: (previous) => ({
+                    ...(previous.q === undefined ? {} : { q: previous.q }),
+                    ...(selected.length === 0 ? {} : { tags: selected }),
+                  }),
+                  replace: true,
+                });
+              }}
+            />
+          )}
           <Section title={t("library.collections")}>
             <CollectionTiles label={t("library.collections")} />
           </Section>

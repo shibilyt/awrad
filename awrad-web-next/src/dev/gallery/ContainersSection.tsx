@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { BottomSheet } from "@/shared/ui/BottomSheet";
 import { Button } from "@/shared/ui/Button";
 import { Card, ClickableCard, ContentSheet, ContentSheetSection } from "@/shared/ui/Card";
-import { ConfirmDialog } from "@/shared/ui/ConfirmDialog";
+import { ChoiceDialog, ConfirmDialog } from "@/shared/ui/ConfirmDialog";
 import { OptionCheckboxGroup, OptionRadioGroup, OptionRow } from "@/shared/ui/OptionRow";
 import { GallerySection, Specimen, noop } from "./Specimen";
 
@@ -119,6 +119,34 @@ function DialogDemo(): ReactElement {
   );
 }
 
+function ChoiceDemo(): ReactElement {
+  const { t } = useTranslation("gallery");
+  const [isOpen, setOpen] = useState(false);
+  const close = () => {
+    setOpen(false);
+  };
+  return (
+    <Specimen title={t("specimen.choiceDialog")}>
+      <Button
+        variant="secondary"
+        onPress={() => {
+          setOpen(true);
+        }}
+      >
+        {t("sample.openDialog")}
+      </Button>
+      <ChoiceDialog
+        isOpen={isOpen}
+        title={t("sample.choiceTitle")}
+        first={{ label: t("sample.useTheirs"), onPress: close }}
+        second={{ label: t("sample.keepMine"), onPress: close }}
+      >
+        <p>{t("sample.choiceBody")}</p>
+      </ChoiceDialog>
+    </Specimen>
+  );
+}
+
 function Options(): ReactElement {
   const { t } = useTranslation("gallery");
   return (
@@ -148,6 +176,7 @@ export function ContainersSection(): ReactElement {
       <Cards />
       <SheetDemo />
       <DialogDemo />
+      <ChoiceDemo />
       <Options />
     </GallerySection>
   );

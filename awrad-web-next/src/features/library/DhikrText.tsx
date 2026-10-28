@@ -52,7 +52,7 @@ function TextCard({ dhikr, children }: { dhikr: Dhikr; children: ReactNode }): R
  * - `name_of_allah`: the name in `nameOfAllah`, then its meaning in `title`, both in the card;
  * - `dhikr`, `dua`, `salawat`: the Arabic, then the transliteration and translation.
  * The transliteration and translation are in the UI language, falling back to English; Arabic
- * shows no transliteration.
+ * shows no transliteration. A text the dhikr doesn't have (a custom dhikr's) leaves its section out.
  */
 export function DhikrText({ dhikr }: { dhikr: Dhikr }): ReactElement {
   const { t } = useTranslation();
@@ -82,10 +82,10 @@ export function DhikrText({ dhikr }: { dhikr: Dhikr }): ReactElement {
           <p className="text-caption text-on-surface-variant">{referenceLabel(reference, t, language)}</p>
         )}
       </TextCard>
-      {transliteration !== null && (
+      {transliteration !== null && transliteration !== "" && (
         <TextSection title={t("library.detail.transliteration")}>{transliteration}</TextSection>
       )}
-      <TextSection title={t("library.detail.translation")}>{translation}</TextSection>
+      {translation !== "" && <TextSection title={t("library.detail.translation")}>{translation}</TextSection>}
     </>
   );
 }

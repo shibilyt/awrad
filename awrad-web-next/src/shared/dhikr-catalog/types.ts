@@ -37,8 +37,8 @@ export interface QuranReference {
   readonly id: string;
   readonly type: "quran";
   readonly surah: number;
-  readonly ayahStart: number;
-  readonly ayahEnd: number;
+  readonly ayah_start: number;
+  readonly ayah_end: number;
 }
 
 export interface HadithReference {

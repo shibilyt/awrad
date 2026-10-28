@@ -7,15 +7,15 @@ const t = i18next.t.bind(i18next);
 
 describe("reference labels", () => {
   test("Qur'an: surah and ayah, or a range with an en dash", () => {
-    const one: Reference = { id: "q", type: "quran", surah: 71, ayahStart: 10, ayahEnd: 10 };
-    const range: Reference = { id: "q", type: "quran", surah: 112, ayahStart: 1, ayahEnd: 4 };
+    const one: Reference = { id: "q", type: "quran", surah: 71, ayah_start: 10, ayah_end: 10 };
+    const range: Reference = { id: "q", type: "quran", surah: 112, ayah_start: 1, ayah_end: 4 };
     expect(referenceLabel(one, t, "en")).toBe("Qur'an 71:10");
     expect(referenceLabel(range, t, "en")).toBe("Qur'an 112:1–4");
   });
 
   test("in Arabic the numbers are isolated left to right, so they keep their order", async () => {
     await i18next.changeLanguage("ar");
-    const range: Reference = { id: "q", type: "quran", surah: 112, ayahStart: 1, ayahEnd: 4 };
+    const range: Reference = { id: "q", type: "quran", surah: 112, ayah_start: 1, ayah_end: 4 };
     expect(referenceLabel(range, t, "ar")).toBe("القرآن \u2066112:1–4\u2069");
   });
 
