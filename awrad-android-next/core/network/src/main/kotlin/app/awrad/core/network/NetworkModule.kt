@@ -34,20 +34,26 @@ internal object NetworkModule {
     }
 
     @Provides
-    fun accountsApi(transport: HttpTransport, language: AppLanguage): AccountsApi = AccountsApi(transport, language)
+    fun accountsApi(transport: HttpTransport, ids: IdGenerator, language: AppLanguage): AccountsApi =
+        AccountsApi(transport, ids, language)
 
     @Provides
-    fun accountSettingsApi(transport: HttpTransport, language: AppLanguage): AccountSettingsApi =
-        AccountSettingsApi(transport, language)
+    fun accountSettingsApi(transport: HttpTransport, ids: IdGenerator, language: AppLanguage): AccountSettingsApi =
+        AccountSettingsApi(transport, ids, language)
 
     @Provides
     @Singleton
-    fun deviceSessionManager(api: AccountsApi, @ApplicationContext context: Context): DeviceSessionManager =
+    fun deviceSessionManager(
+        api: AccountsApi,
+        ids: IdGenerator,
+        @ApplicationContext context: Context,
+    ): DeviceSessionManager =
         DeviceSessionManager(
             api = api,
-            store = KeystoreCredentialStore(context),
+            store = KeystoreCredentialStore(context, ids),
             deviceName = deviceNameOf(Build.MANUFACTURER, Build.MODEL),
             clock = Clock.systemUTC(),
+            ids = ids,
         )
 }
 

@@ -112,12 +112,21 @@ internal fun Project.configureDesignLiterals() {
     tasks.matching { it.name == "check" || it.name == "detekt" }.configureEach { dependsOn(verify) }
 }
 
+/** Calls the app must not make outside tests, such as `UUID.randomUUID` (ADR-2026-10-28). `detekt` runs it. */
+internal fun Project.configureForbiddenCalls() {
+    val verify = tasks.register("verifyForbiddenCalls", ForbiddenCallTask::class.java) {
+        sources.from(fileTree("src") { include("main/**/*.kt", "debug/**/*.kt") })
+    }
+    tasks.matching { it.name == "check" || it.name == "detekt" }.configureEach { dependsOn(verify) }
+}
+
 private const val DESIGN_SYSTEM = ":core:designsystem"
 
 internal fun Project.configureDetekt() {
     configureSourceFileSize()
     configureColorLiterals()
     configureDesignLiterals()
+    configureForbiddenCalls()
     pluginManager.apply("io.gitlab.arturbosch.detekt")
     extensions.configure<DetektExtension> {
         buildUponDefaultConfig = true

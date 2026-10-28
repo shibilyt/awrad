@@ -36,7 +36,7 @@ internal data class StoredCredentials(
 
 /** Secure storage for the installation id and the credentials. The Keystore adapter is the real one. */
 internal interface CredentialStore {
-    /** This installation's random UUIDv4, created on first use and kept until the app is uninstalled. */
+    /** This installation's UUIDv7, created on first use and kept until the app is uninstalled. */
     suspend fun installationId(): String
 
     suspend fun read(): StoredCredentials

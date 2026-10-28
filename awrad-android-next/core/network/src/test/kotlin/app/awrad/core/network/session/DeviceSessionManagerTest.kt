@@ -3,6 +3,7 @@ package app.awrad.core.network.session
 import app.awrad.core.network.FakeTransport
 import app.awrad.core.network.InMemoryCredentialStore
 import app.awrad.core.network.Responses
+import app.awrad.core.network.SequentialIds
 import app.awrad.core.network.api.AccountsApi
 import app.awrad.core.network.api.ApiFailure
 import app.awrad.core.network.api.ApiOperation
@@ -39,9 +40,12 @@ class DeviceSessionManagerTest {
     private var keys = 0
 
     /** A new manager over the same store is an app restart: no access token in memory. */
-    private fun restart() = DeviceSessionManager(AccountsApi(transport) { "en" }, store, "Google Pixel 9", clock) {
-        "key-${++keys}"
-    }
+    private fun restart() = DeviceSessionManager(
+        api = AccountsApi(transport, SequentialIds()) { "en" },
+        store = store,
+        deviceName = "Google Pixel 9",
+        clock = clock,
+    ) { "key-${++keys}" }
 
     private val manager = restart()
 
@@ -119,7 +123,7 @@ class DeviceSessionManagerTest {
         }
         transport.on(accountPath) { Responses.problem(401, "unauthenticated") }
         manager.accessToken(stale = null)
-        val api = AccountsApi(transport) { "en" }
+        val api = AccountsApi(transport, SequentialIds()) { "en" }
 
         val result = manager.authorized { token -> api.getCurrentAccount(token) }
 
@@ -155,7 +159,7 @@ class DeviceSessionManagerTest {
                 Responses.json(200, """{"id":"${Responses.ACCOUNT_ID}","email":"x@y.co","created_at":"t"}""")
             }
         }
-        val api = AccountsApi(transport) { "en" }
+        val api = AccountsApi(transport, SequentialIds()) { "en" }
 
         val result = manager.authorized { token -> api.getCurrentAccount(token) }
 

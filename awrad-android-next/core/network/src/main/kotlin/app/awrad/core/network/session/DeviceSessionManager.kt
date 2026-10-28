@@ -1,5 +1,6 @@
 package app.awrad.core.network.session
 
+import app.awrad.core.network.IdGenerator
 import app.awrad.core.network.api.AccountResponse
 import app.awrad.core.network.api.AccountsApi
 import app.awrad.core.network.api.ApiFailure
@@ -18,7 +19,6 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeParseException
-import java.util.UUID
 
 /** Whether this installation holds a device session. */
 public sealed interface DeviceSessionState {
@@ -60,7 +60,7 @@ public class DeviceSessionManager internal constructor(
     private val store: CredentialStore,
     private val deviceName: String,
     private val clock: Clock,
-    private val newKey: () -> String = { UUID.randomUUID().toString() },
+    private val ids: IdGenerator,
 ) {
     private val mutex = Mutex()
     private val mutableState = MutableStateFlow<DeviceSessionState>(DeviceSessionState.Loading)
@@ -123,7 +123,7 @@ public class DeviceSessionManager internal constructor(
             val credentials = store.read()
             val session = credentials.session ?: return@withLock
             // Queued before anything else, so a crash or no network still revokes it later.
-            val pending = PendingSignOut(session.refreshToken, newKey())
+            val pending = PendingSignOut(session.refreshToken, ids.newId())
             store.write(StoredCredentials(session = null, pendingSignOuts = credentials.pendingSignOuts + pending))
             access = null
             mutableState.value = DeviceSessionState.SignedOut(SignOutCause.SIGNED_OUT)
@@ -177,7 +177,7 @@ public class DeviceSessionManager internal constructor(
     private suspend fun refreshLocked(): ApiResult<String> {
         val credentials = store.read()
         val session = credentials.session ?: return ApiResult.Failure(ApiFailure.NotSignedIn)
-        val key = session.pendingRefreshKey ?: newKey().also { key ->
+        val key = session.pendingRefreshKey ?: ids.newId().also { key ->
             store.write(credentials.copy(session = session.copy(pendingRefreshKey = key)))
         }
         return when (val result = api.refreshDeviceSession(RefreshTokenRequest(session.refreshToken), key)) {

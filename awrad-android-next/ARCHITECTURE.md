@@ -62,8 +62,18 @@ flowchart TD
 | Fonts are the shared files | `verifyAwradFonts` | Fonts that drift from the other apps |
 | Icons only from the shared set | `verifyAwradIcons` (and the generator's tests), detekt `ForbiddenImport` on `androidx.compose.material.icons` in every module | Material Icons, filled and outlined, picked per screen |
 | Shapes, spacing, type and motion only from the shared tokens | `verifyAwradTokens`, `verifyDesignLiterals` (run by `detekt`) | 16 different durations, radii and paddings typed per screen |
+| New IDs are UUIDv7 | `verifyForbiddenCalls` (run by `detekt`) rejects `randomUUID` outside tests | Random UUIDv4 keys made wherever an ID was needed |
 
 Every rule lives in `build-logic/` or `config/detekt/detekt.yml`, so changing a standard is a reviewed diff.
+
+## Identity
+
+Root ADR-2026-10-28 and `contracts/identity/v1/`.
+
+- **Format:** `AwradId` holds a lowercase, hyphenated UUID of any version except nil and max. `AwradId.parse` returns null for anything else and the constructor throws; nothing is trimmed or case-folded. It runs the shared `uuid_format` fixtures.
+- **New IDs are UUIDv7** (`UuidV7` in `:core:domain`). `UuidV7.format(unixMs, random)` is the pure layout from a time and 10 random bytes, run against the shared `uuid_v7_layout` fixtures. `UuidV7.generate(clock, random)` feeds it the clock (system UTC by default) and a `SecureRandom`; `AwradId.random()` wraps it.
+- **`:core:network`** can't see `:core:domain`, so it makes its installation id and `Idempotency-Key`s through its `IdGenerator` port, which `DataModule` binds to `UuidV7.generate`.
+- Built-in dhikr IDs are fixed UUIDv4 content constants and are never regenerated. Nothing orders, expires or authorizes by an ID's timestamp.
 
 ## Goal domain
 
@@ -90,9 +100,9 @@ Slice 2a ([`docs/slices/02-accounts.md`](../docs/slices/02-accounts.md)), follow
 - **Input rules** (`app.awrad.core.domain.account`, `AccountInput.kt`): `EmailAddress.parse` (trim an explicit whitespace set, basic shape, at most 160 code points), `PasswordPolicy.errors` (12 to 128 code points after NFC) and `EmailCode.parse` (spaces and hyphens removed; Arabic-Indic, Eastern Arabic-Indic and fullwidth digits to ASCII). They run the shared `contracts/account-model/v1/` fixtures, and the client only checks length: the server is the authority and also rejects common passwords.
 - **Ports:** `AccountRepository` (the `SignInState` flow, register, verify, resend, request and reset password, sign in, refresh account, sign out) and `AccountSettingsRepository` (slice 2b, below). Results are `AccountResult`; failures are a sealed `AccountError`. `:core:data`'s `NetworkAccountRepository` and `NetworkAccountSettingsRepository` map the API's problem `code`, and only it, to an `AccountError` (`AccountErrors.kt`), and `validation_failed` field codes to `InputProblem`s; unknown codes are `Unexpected`. Tests read every `x-error-codes` entry of the operations the app uses, and every field code their `422` responses document, and fail when one has no specific error or input problem.
 - **Signed out, and why:** `SignInState.SignedOut` carries a `SignOutReason`: not signed in at start, signed out here, `SESSION_ENDED` (the server ended the session: revoked from another device, a password change or reset elsewhere, expiry) or `ACCOUNT_DELETED`. The account screen shows each with its own message. The reason is kept in memory only.
-- **API client** (`:core:network`, ADR 0005): hand-written `@Serializable` classes (`ApiModels.kt`, `AccountSettingsModels.kt`), `ApiOperation` (every operation used, with method, path template and headers), `AccountsApi` and `AccountSettingsApi` over a shared `ApiCaller` and an `HttpTransport` (OkHttp in the app, a fake in tests). Errors decode as RFC 9457 `Problem` with `Retry-After`. Public operations never carry a bearer token; every POST sends a fresh `Idempotency-Key`; operations that may send email send `Accept-Language` with the app's language (`en`, `ar` or `ml`). `ApiContractTest` checks each `ApiOperation` against `contracts/api/openapi.bundled.json` and round-trips every request and response example of those operations through the classes, failing on any difference.
+- **API client** (`:core:network`, ADR 0005): hand-written `@Serializable` classes (`ApiModels.kt`, `AccountSettingsModels.kt`), `ApiOperation` (every operation used, with method, path template and headers), `AccountsApi` and `AccountSettingsApi` over a shared `ApiCaller` and an `HttpTransport` (OkHttp in the app, a fake in tests). Errors decode as RFC 9457 `Problem` with `Retry-After`. Public operations never carry a bearer token; every POST sends a fresh UUIDv7 `Idempotency-Key`; operations that may send email send `Accept-Language` with the app's language (`en`, `ar` or `ml`). `ApiContractTest` checks each `ApiOperation` against `contracts/api/openapi.bundled.json` and round-trips every request and response example of those operations through the classes, failing on any difference.
 - **Device session** (`DeviceSessionManager`):
-  - Sign-in sends the installation id (a random UUIDv4 in secure storage), the device's real model name (`Build.MANUFACTURER` + `Build.MODEL`) and `android`.
+  - Sign-in sends the installation id (a UUIDv7 made once and kept in secure storage), the device's real model name (`Build.MANUFACTURER` + `Build.MODEL`) and `android`.
   - The refresh token is stored encrypted (ADR 0006); the access token stays in memory and is refreshed 30 seconds before it expires, or once after a `401`.
   - **Single flight:** a `Mutex` guards the tokens, so concurrent callers share one refresh.
   - **Refresh keys:** each refresh gets an `Idempotency-Key` that is stored before the call and reused until the refresh gets an answer, also across a restart. The server then replays a rotation it already did instead of treating the retry as token reuse.
