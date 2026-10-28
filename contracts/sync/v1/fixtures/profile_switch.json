@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "profile_switch",
-  "description": "Who the data on a phone belongs to (Android and iOS). Given the profile registry, one event and the user's answer to any question it raises, the resulting registry, the question asked (`prompt`), the profile whose every entity is queued as a put (`queue_all`), an anonymous profile merged into an existing one (`merge`), the profile that syncs now (`sync`: send its queue, then pull), and the profiles erased. Events: `edit` (a saved change in the active profile), `sign_in`, `sign_out`, `remove_profile` (Settings, Remove from this device) and `account_deleted` (the phone learned the profile's account no longer exists). Rules: before any sign-in there is one anonymous profile whose edits are saved but never queued; the first sign-in asks `anonymous_data` only if that profile has data (`add_to_account` adopts it and queues everything, `erase` replaces it with a fresh profile) and otherwise adopts it silently; signing in with an anonymous profile that has data as an account that already has a profile asks `anonymous_data` too (`add_to_account` merges the anonymous data into that profile, reported in `merge`: same-name tags fold together locally and every merged entity is queued as a put; `erase` discards the anonymous profile), and either way the account's profile becomes active; signing out keeps the active profile, whose later edits are queued but not sent; signing in as an account that has a profile reactivates it without a question; signing in as a new account creates its profile (`new_profile_id`) and leaves the others untouched; removing a profile with unsent changes asks `unsent_changes` first (`remove` or `cancel`); `account_deleted` asks to `remove` or `keep`, and `keep` marks the profile `account_deleted` (for the active profile it also signs out; the profile stays active and usable offline, never syncs, and can be removed later); removing the active profile signs out and activates the anonymous profile if there is one, or else starts a fresh one. There is at most one anonymous profile at a time. A profile only syncs when the signed-in account equals its account, and every sync request carries that account in X-Awrad-Account. The scenario_NN cases are one story: each starts where the previous one ended.",
+  "description": "Who the data on a phone belongs to (Android and iOS). Given the profile registry, one event and the user's answer to any question it raises, the resulting registry, the question asked (`prompt`), the profile whose every entity is queued as a put (`queue_all`), an anonymous profile merged into an existing one (`merge`), the profile that syncs now (`sync`: send its queue, then pull), and the profiles erased. Events: `edit` (a saved change in the active profile), `sign_in`, `sign_out`, `remove_profile` (Settings, Remove from this device) and `account_deleted` (the phone learned the profile's account no longer exists). Rules: before any sign-in there is one anonymous profile whose edits are saved but never queued; the first sign-in asks `anonymous_data` only if that profile has data (`add_to_account` adopts it and queues everything, `erase` replaces it with a fresh profile) and otherwise adopts it silently; signing in with an anonymous profile that has data as an account that already has a profile asks `anonymous_data` too (`add_to_account` merges the anonymous data into that profile, reported in `merge` and, where a case gives the data, `merged_data`: same-name tags fold together locally, a personal record both profiles have gets the union of their tags (the account profile's first, then the anonymous-only ones, deduplicated after folding, capped at 20 with the account's kept), and every merged entity is queued as a put; `erase` discards the anonymous profile), and either way the account's profile becomes active; signing out keeps the active profile, whose later edits are queued but not sent; signing in as an account that has a profile reactivates it without a question; signing in as a new account creates its profile (`new_profile_id`) and leaves the others untouched; removing a profile with unsent changes asks `unsent_changes` first (`remove` or `cancel`); `account_deleted` asks to `remove` or `keep`, and `keep` marks the profile `account_deleted` and drops its unsent commands (for the active profile it also signs out; the profile stays active and usable offline, its edits are saved but never queued, it never syncs, and it can be removed later); removing the active profile signs out and activates the anonymous profile if there is one, or else starts a fresh one. There is at most one anonymous profile at a time. A profile only syncs when the signed-in account equals its account, and every sync request carries that account in X-Awrad-Account. The scenario_NN cases are one story: each starts where the previous one ended.",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#clients-android-and-ios (Local profiles)",
     "contracts/sync/v1/README.md",
@@ -15,7 +15,8 @@
       "registry",
       "event",
       "choice",
-      "new_profile_id"
+      "new_profile_id",
+      "merge_data"
     ],
     "properties": {
       "registry": {
@@ -185,6 +186,138 @@
       "new_profile_id": {
         "$ref": "urn:awrad:sync:1#/$defs/uuid",
         "description": "The local ID a profile created by this event gets."
+      },
+      "merge_data": {
+        "description": "Only for a case that merges (expect.merge): the tags and personal records of the anonymous profile and of the account's profile. null otherwise.",
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "anonymous",
+              "account"
+            ],
+            "properties": {
+              "anonymous": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "tags",
+                  "personal_records"
+                ],
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "tag_id",
+                        "name",
+                        "normalized_name"
+                      ],
+                      "properties": {
+                        "tag_id": {
+                          "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "normalized_name": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "personal_records": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "dhikr_id",
+                        "tag_ids"
+                      ],
+                      "properties": {
+                        "dhikr_id": {
+                          "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                        },
+                        "tag_ids": {
+                          "type": "array",
+                          "maxItems": 20,
+                          "uniqueItems": true,
+                          "items": {
+                            "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "account": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "tags",
+                  "personal_records"
+                ],
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "tag_id",
+                        "name",
+                        "normalized_name"
+                      ],
+                      "properties": {
+                        "tag_id": {
+                          "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "normalized_name": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "personal_records": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "dhikr_id",
+                        "tag_ids"
+                      ],
+                      "properties": {
+                        "dhikr_id": {
+                          "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                        },
+                        "tag_ids": {
+                          "type": "array",
+                          "maxItems": 20,
+                          "uniqueItems": true,
+                          "items": {
+                            "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     }
   },
@@ -197,7 +330,8 @@
       "queue_all",
       "sync",
       "erased",
-      "merge"
+      "merge",
+      "merged_data"
     ],
     "properties": {
       "prompt": {
@@ -318,7 +452,7 @@
         "description": "Profiles whose local database is deleted, in registry order."
       },
       "merge": {
-        "description": "Add to my account when the account already has a profile on this phone: the anonymous profile (from) is merged into it (into). Tags with the same normalized_name fold together locally, onto the account's tag, and every merged entity is queued as a put in the into profile. The from profile's database is then deleted, so it is also listed in erased. null otherwise.",
+        "description": "Add to my account when the account already has a profile on this phone: the anonymous profile (from) is merged into it (into). Tags with the same normalized_name fold together locally, onto the account's tag, and every merged entity is queued as a put in the into profile. A personal record both profiles have gets the union of their tag_ids: the account profile's tags first in their order, then the anonymous-only ones, deduplicated after folding and capped at 20 (the account profile's tags always kept). The from profile's database is then deleted, so it is also listed in erased. null otherwise.",
         "oneOf": [
           {
             "type": "null"
@@ -336,6 +470,91 @@
               },
               "into_profile_id": {
                 "$ref": "urn:awrad:sync:1#/$defs/uuid"
+              }
+            }
+          }
+        ]
+      },
+      "merged_data": {
+        "description": "The account profile's tags and personal records after the merge, and the entities queued as puts (in the order queued: tags, then personal records, each in their listed order). null when given.merge_data is null.",
+        "oneOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "tags",
+              "personal_records",
+              "queued"
+            ],
+            "properties": {
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "tag_id",
+                    "name",
+                    "normalized_name"
+                  ],
+                  "properties": {
+                    "tag_id": {
+                      "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "normalized_name": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "personal_records": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "dhikr_id",
+                    "tag_ids"
+                  ],
+                  "properties": {
+                    "dhikr_id": {
+                      "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                    },
+                    "tag_ids": {
+                      "type": "array",
+                      "maxItems": 20,
+                      "uniqueItems": true,
+                      "items": {
+                        "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                      }
+                    }
+                  }
+                }
+              },
+              "queued": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "entity_type",
+                    "entity_id"
+                  ],
+                  "properties": {
+                    "entity_type": {
+                      "$ref": "urn:awrad:sync:1#/$defs/entity_type"
+                    },
+                    "entity_id": {
+                      "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                    }
+                  }
+                }
               }
             }
           }
@@ -367,7 +586,8 @@
           "type": "edit"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -389,7 +609,8 @@
         "queue_all": null,
         "merge": null,
         "sync": null,
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -417,7 +638,8 @@
           "email": "amina@example.com"
         },
         "choice": "add_to_account",
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": "anonymous_data",
@@ -439,7 +661,8 @@
         "queue_all": "0192f0e0-0000-7000-8000-000000000001",
         "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -465,7 +688,8 @@
           "type": "sign_out"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -487,7 +711,8 @@
         "queue_all": null,
         "merge": null,
         "sync": null,
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -513,7 +738,8 @@
           "type": "edit"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -535,7 +761,8 @@
         "queue_all": null,
         "merge": null,
         "sync": null,
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -563,7 +790,8 @@
           "email": "amina@example.com"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -585,7 +813,8 @@
         "queue_all": null,
         "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -613,7 +842,8 @@
           "email": "bilal@example.com"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -644,7 +874,8 @@
         "queue_all": null,
         "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000003",
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -681,7 +912,8 @@
           "email": "amina@example.com"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -712,7 +944,8 @@
         "queue_all": null,
         "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -740,7 +973,8 @@
           "email": "amina@example.com"
         },
         "choice": "erase",
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": "anonymous_data",
@@ -764,7 +998,8 @@
         "sync": "0192f0e0-0000-7000-8000-000000000003",
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
-        ]
+        ],
+        "merged_data": null
       }
     },
     {
@@ -792,7 +1027,8 @@
           "email": "amina@example.com"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -814,7 +1050,8 @@
         "queue_all": null,
         "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -851,7 +1088,8 @@
           "email": "amina@example.com"
         },
         "choice": "add_to_account",
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000004"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000004",
+        "merge_data": null
       },
       "expect": {
         "prompt": "anonymous_data",
@@ -878,7 +1116,175 @@
         "sync": "0192f0e0-0000-7000-8000-000000000001",
         "erased": [
           "0192f0e0-0000-7000-8000-000000000003"
-        ]
+        ],
+        "merged_data": null
+      }
+    },
+    {
+      "id": "add_to_account_merges_shared_personal_records",
+      "description": "Merging into an existing profile when both profiles tagged the same dhikr: the anonymous \"MORNING\" tag folds onto the account's \"Morning\"; the shared record keeps the account's tags in order, then adds the anonymous-only ones, without repeats (at most 20, the account's always kept). The new tag and both changed records are queued as puts; the folded tag isn't.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina@example.com"
+        },
+        "choice": "add_to_account",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000004",
+        "merge_data": {
+          "anonymous": {
+            "tags": [
+              {
+                "tag_id": "0192f0a0-0000-7000-8000-000000000011",
+                "name": "MORNING",
+                "normalized_name": "morning"
+              },
+              {
+                "tag_id": "0192f0a0-0000-7000-8000-000000000012",
+                "name": "Travel",
+                "normalized_name": "travel"
+              }
+            ],
+            "personal_records": [
+              {
+                "dhikr_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000012",
+                  "0192f0a0-0000-7000-8000-000000000011"
+                ]
+              },
+              {
+                "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000011"
+                ]
+              }
+            ]
+          },
+          "account": {
+            "tags": [
+              {
+                "tag_id": "0192f0a0-0000-7000-8000-000000000001",
+                "name": "Morning",
+                "normalized_name": "morning"
+              },
+              {
+                "tag_id": "0192f0a0-0000-7000-8000-000000000002",
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            ],
+            "personal_records": [
+              {
+                "dhikr_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000002",
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "prompt": "anonymous_data",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": null,
+        "merge": {
+          "from_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "into_profile_id": "0192f0e0-0000-7000-8000-000000000001"
+        },
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000003"
+        ],
+        "merged_data": {
+          "tags": [
+            {
+              "tag_id": "0192f0a0-0000-7000-8000-000000000001",
+              "name": "Morning",
+              "normalized_name": "morning"
+            },
+            {
+              "tag_id": "0192f0a0-0000-7000-8000-000000000002",
+              "name": "Evening",
+              "normalized_name": "evening"
+            },
+            {
+              "tag_id": "0192f0a0-0000-7000-8000-000000000012",
+              "name": "Travel",
+              "normalized_name": "travel"
+            }
+          ],
+          "personal_records": [
+            {
+              "dhikr_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000002",
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000012"
+              ]
+            },
+            {
+              "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            }
+          ],
+          "queued": [
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000012"
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961"
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "3285e014-551b-46a4-aedc-8b6664b59bc7"
+            }
+          ]
+        }
       }
     },
     {
@@ -915,7 +1321,8 @@
           "email": "amina@example.com"
         },
         "choice": "erase",
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000004"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000004",
+        "merge_data": null
       },
       "expect": {
         "prompt": "anonymous_data",
@@ -939,7 +1346,8 @@
         "sync": "0192f0e0-0000-7000-8000-000000000001",
         "erased": [
           "0192f0e0-0000-7000-8000-000000000003"
-        ]
+        ],
+        "merged_data": null
       }
     },
     {
@@ -976,7 +1384,8 @@
           "email": "amina@example.com"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000004"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000004",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -1007,7 +1416,8 @@
         "queue_all": null,
         "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -1033,7 +1443,8 @@
           "type": "edit"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -1055,7 +1466,8 @@
         "queue_all": null,
         "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -1083,7 +1495,8 @@
           "email": "amina.new@example.com"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -1105,7 +1518,8 @@
         "queue_all": null,
         "merge": null,
         "sync": "0192f0e0-0000-7000-8000-000000000001",
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -1141,7 +1555,8 @@
           "profile_id": "0192f0e0-0000-7000-8000-000000000001"
         },
         "choice": "remove",
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": "unsent_changes",
@@ -1165,7 +1580,8 @@
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
-        ]
+        ],
+        "merged_data": null
       }
     },
     {
@@ -1201,7 +1617,8 @@
           "profile_id": "0192f0e0-0000-7000-8000-000000000001"
         },
         "choice": "cancel",
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": "unsent_changes",
@@ -1232,7 +1649,8 @@
         "queue_all": null,
         "merge": null,
         "sync": null,
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -1268,7 +1686,8 @@
           "profile_id": "0192f0e0-0000-7000-8000-000000000001"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -1292,7 +1711,8 @@
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
-        ]
+        ],
+        "merged_data": null
       }
     },
     {
@@ -1328,7 +1748,8 @@
           "profile_id": "0192f0e0-0000-7000-8000-000000000002"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -1361,7 +1782,8 @@
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000002"
-        ]
+        ],
+        "merged_data": null
       }
     },
     {
@@ -1406,7 +1828,8 @@
           "profile_id": "0192f0e0-0000-7000-8000-000000000004"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000005"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000005",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -1439,7 +1862,8 @@
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000004"
-        ]
+        ],
+        "merged_data": null
       }
     },
     {
@@ -1475,7 +1899,8 @@
           "account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "choice": "remove",
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": "account_deleted",
@@ -1499,12 +1924,13 @@
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
-        ]
+        ],
+        "merged_data": null
       }
     },
     {
       "id": "account_deleted_profile_kept",
-      "description": "The user may keep the deleted account's profile on the phone: it's marked account_deleted and nothing of it is ever sent again.",
+      "description": "The user may keep the deleted account's profile on the phone: it's marked account_deleted, its unsent commands are dropped because they can never be sent, and it never syncs again.",
       "given": {
         "registry": {
           "profiles": [
@@ -1535,7 +1961,8 @@
           "account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "choice": "keep",
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": "account_deleted",
@@ -1547,7 +1974,7 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true,
+              "has_unsent": false,
               "account_deleted": true
             },
             {
@@ -1566,7 +1993,8 @@
         "queue_all": null,
         "merge": null,
         "sync": null,
-        "erased": []
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -1593,7 +2021,8 @@
           "account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "choice": "remove",
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": "account_deleted",
@@ -1617,12 +2046,13 @@
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
-        ]
+        ],
+        "merged_data": null
       }
     },
     {
       "id": "account_deleted_active_profile_kept",
-      "description": "Keep for the active profile of a deleted account signs out; the profile stays active and usable offline, marked account_deleted, and never syncs again.",
+      "description": "Keep for the active profile of a deleted account signs out and drops its unsent commands; the profile stays active and usable offline, marked account_deleted, and never syncs again.",
       "given": {
         "registry": {
           "profiles": [
@@ -1644,7 +2074,8 @@
           "account_id": "0192f0b0-0000-7000-8000-000000000001"
         },
         "choice": "keep",
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": "account_deleted",
@@ -1656,7 +2087,7 @@
               "email": "amina@example.com",
               "after": 14,
               "has_data": true,
-              "has_unsent": true,
+              "has_unsent": false,
               "account_deleted": true
             }
           ],
@@ -1666,7 +2097,58 @@
         "queue_all": null,
         "merge": null,
         "sync": null,
-        "erased": []
+        "erased": [],
+        "merged_data": null
+      }
+    },
+    {
+      "id": "account_deleted_profile_edit_queues_nothing",
+      "description": "An edit in a kept profile of a deleted account is saved locally only: nothing is queued or sent.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": true
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "edit"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": true
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "queue_all": null,
+        "merge": null,
+        "sync": null,
+        "erased": [],
+        "merged_data": null
       }
     },
     {
@@ -1693,7 +2175,8 @@
           "profile_id": "0192f0e0-0000-7000-8000-000000000001"
         },
         "choice": null,
-        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
       },
       "expect": {
         "prompt": null,
@@ -1717,7 +2200,8 @@
         "sync": null,
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
-        ]
+        ],
+        "merged_data": null
       }
     }
   ]

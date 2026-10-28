@@ -85,7 +85,7 @@ Everything else, including a document that breaks its schema, is a `rejected` re
 | `gone` | Deleted, or a merged tag ID | — |
 | `rejected` | Invalid, over a limit, or a reused `command_id` | `code`, `fields` (`{field, code}`, pointers into the command), `current` (the server's copy to undo to, or `null`) |
 
-**Cascades in receipts.** The `applied` receipt of a `user_tag` or `custom_dhikr` delete carries `cascaded`: one `{entity_type, entity_id, state, version, revision}` for every other entity the server changed at the same revision, ordered by `entity_type`, then `entity_id`, and empty when nothing cascaded. Every other `applied` receipt has `cascaded: null` (STYLE §3). Phones apply the entries to their known versions straight away, so the next edit of a cascaded record doesn't conflict; the documents arrive in the changes feed.
+**Cascades in receipts.** The `applied` receipt of a `user_tag` or `custom_dhikr` delete carries `cascaded`: one `{entity_type, entity_id, state, version, revision}` for every other entity the server changed at the same revision, ordered by `entity_type`, then `entity_id`, and empty when nothing cascaded. Every other `applied` receipt has `cascaded: null` (STYLE §3). Phones apply the entries to their known versions straight away, so the next edit of a cascaded record doesn't conflict; the documents arrive in the changes feed. A command already queued for a cascaded record before the receipt arrives, or sent in the same batch after the delete, still carries the old `base_version` and conflicts as normal.
 
 Every receipt except `command_id_reused` is stored for 90 days, whatever its status, `cascaded` included. The response also carries `head_revision`.
 
@@ -184,12 +184,12 @@ Each account's data lives in its own **profile**, a separate local database. A r
 - **Signing in again** as the same account sends its queue without asking.
 - **Signing in as another account** switches to that account's profile, creating it if needed. The other profiles, unsent commands included, stay untouched.
 - **Signing in from an anonymous profile with data, as an account that already has a profile on the phone,** asks the same question:
-  - **Add to my account** merges the anonymous data into the account's profile: tags with the same name fold together locally (onto the account's tag), and every merged entity is queued as a put. The anonymous profile is then deleted;
+  - **Add to my account** merges the anonymous data into the account's profile: tags with the same name fold together locally (onto the account's tag), and every merged entity is queued as a put. A personal record both profiles have gets the union of their tags: the account profile's first, in their order, then the anonymous-only ones, without repeats after folding and capped at 20, keeping the account profile's. The anonymous profile is then deleted;
   - **Erase** discards the anonymous data.
 
   Either way the account's profile becomes active. An empty anonymous profile asks nothing and stays as it is.
 - **Remove from this device** warns first if the profile has unsent changes. Removing the active profile signs out and activates the anonymous profile if there is one, or else starts a fresh one. There is at most one anonymous profile at a time.
-- **When an account no longer exists**, the phone offers to remove its profile or keep it. **Keep** marks the profile `account_deleted`: it stays usable offline and never syncs again, and it can be removed later. If it's the active profile, the phone signs out and the profile stays active.
+- **When an account no longer exists**, the phone offers to remove its profile or keep it. **Keep** marks the profile `account_deleted` and drops its unsent commands, which can never be sent: it stays usable offline, its edits are saved but never queued, it never syncs again, and it can be removed later. If it's the active profile, the phone signs out and the profile stays active.
 
 **Two safety checks** keep accounts from mixing:
 - the sync engine sends only when the signed-in account equals the active profile's account;
