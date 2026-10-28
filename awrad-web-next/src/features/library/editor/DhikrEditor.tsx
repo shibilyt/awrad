@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from "react";
+import { useEffect, useRef, useState, type ReactElement } from "react";
 import { Form } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/shared/i18n";
@@ -9,6 +9,7 @@ import { OptionCheckboxGroup, OptionRow } from "@/shared/ui/OptionRow";
 import { TextLink } from "@/shared/ui/TextLink";
 import { ConflictDialog, RefusedDialog } from "../custom/ConflictDialog";
 import { sortedTags, tagIdsOf } from "../custom/data";
+import { focusFirstError } from "./focusFirstError";
 import { EMPTY_VALUES, valuesFrom, type EditorValues } from "./form";
 import { ReferencesEditor } from "./ReferencesEditor";
 import { ArabicField, FieldGroup, KindField, LanguageFields } from "./TextSections";
@@ -119,13 +120,21 @@ export function DhikrEditor({
   const [values, setValues] = useState<EditorValues>(() =>
     existing === null ? EMPTY_VALUES : valuesFrom(existing.document, tagIdsOf(state, existing.id)),
   );
-  const { save, errors, alert, isPending, conflict, refused } = useSaveDhikr(accountId, state, existing);
+  const { save, errors, alert, isPending, conflict, refused, fieldFailures } = useSaveDhikr(accountId, state, existing);
   const set = <K extends keyof EditorValues>(key: K, value: EditorValues[K]) => {
     setValues((previous) => ({ ...previous, [key]: value }));
   };
+  // A save that stopped on field problems lands on the first of them, once they're drawn; when the
+  // server refused it, once "Change refused" has closed (focus can't leave a modal).
+  const form = useRef<HTMLFormElement>(null);
+  const isRefused = refused !== null;
+  useEffect(() => {
+    if (fieldFailures > 0 && !isRefused) focusFirstError(form.current);
+  }, [fieldFailures, isRefused]);
 
   return (
     <Form
+      ref={form}
       validationBehavior="aria"
       validationErrors={errors}
       onSubmit={(event) => {

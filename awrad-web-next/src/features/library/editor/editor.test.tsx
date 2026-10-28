@@ -1,6 +1,6 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import type { Receipt } from "@/shared/sync";
 import { recordRequests, type RecordedRequest } from "@/test/render";
 import { renderRoute } from "@/test/render";
@@ -55,6 +55,33 @@ describe("validation (the shared custom_dhikr_validity rules)", () => {
     expect(field("Arabic text")).toHaveAccessibleDescription(expect.stringContaining("Enter the Arabic text."));
     expect(screen.getByText("Give it a title in at least one language.")).toBeInTheDocument();
     expect(requests.some((request) => request.method === "POST")).toBe(false);
+  });
+
+  test("a failed save scrolls to the first error and focuses it: a field, or a group's first field", async () => {
+    server.use(...signedInWithEntities());
+    const scrolled: Element[] = [];
+    const scrollIntoView = vi.spyOn(Element.prototype, "scrollIntoView").mockImplementation(function (this: Element) {
+      scrolled.push(this);
+    });
+    renderRoute("/library/dhikrs/new");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Save" }));
+
+    await waitFor(() => {
+      expect(field("Arabic text")).toHaveFocus();
+    });
+    expect(scrolled.at(-1)).toContainElement(field("Arabic text"));
+
+    await userEvent.type(field("Arabic text"), "سبحان الله");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    // No title in any language: the message is the group's, so its first field (English) takes focus.
+    await waitFor(() => {
+      expect(field("English")).toHaveFocus();
+    });
+    expect(scrolled.at(-1)).toHaveAccessibleName("Title");
+    expect(scrolled.at(-1)).toHaveTextContent("Give it a title in at least one language.");
+    scrollIntoView.mockRestore();
   });
 
   test("a title over 120 characters and a reference outside the Qur'an are caught before sending", async () => {
@@ -226,8 +253,11 @@ describe("refused by the server", () => {
     const dialog = await screen.findByRole("alertdialog", { name: "Change refused" });
     expect(dialog).toHaveTextContent("Check the highlighted fields.");
     await userEvent.click(within(dialog).getByRole("button", { name: "OK" }));
-    expect(screen.getByRole("textbox", { name: "Last ayah" })).toHaveAccessibleDescription(
-      expect.stringContaining("The last ayah can't come before the first."),
-    );
+    const lastAyah = screen.getByRole("textbox", { name: "Last ayah" });
+    expect(lastAyah).toHaveAccessibleDescription(expect.stringContaining("The last ayah can't come before the first."));
+    // Once the dialog has closed, focus goes to the field the server named.
+    await waitFor(() => {
+      expect(lastAyah).toHaveFocus();
+    });
   });
 });

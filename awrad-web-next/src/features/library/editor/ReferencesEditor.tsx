@@ -28,7 +28,7 @@ function ReferenceCard({
   const type = t(`library.editor.references.types.${reference.type}`);
   return (
     <Card shape="tile">
-      <div className="flex flex-col gap-lg">
+      <div data-invalid={error === undefined ? undefined : true} className="flex flex-col gap-lg">
         <div className="flex items-center justify-between gap-md">
           <h3 className="text-row-title text-on-surface">{type}</h3>
           <TextButton aria-label={t("library.editor.references.removeLabel", { type })} onPress={onRemove}>

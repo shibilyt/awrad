@@ -1,6 +1,6 @@
 import { createLink } from "@tanstack/react-router";
 import type { AnchorHTMLAttributes, ReactElement, Ref } from "react";
-import { TEXT_BUTTON } from "./Button";
+import { textButtonClasses } from "./Button";
 import { cx } from "./cx";
 
 type AnchorProps = AnchorHTMLAttributes<HTMLAnchorElement> & { ref?: Ref<HTMLAnchorElement> };
@@ -25,7 +25,7 @@ export const TextLink = createLink(StyledAnchor);
 
 function TextButtonAnchor({ ref, className, children, ...props }: AnchorProps): ReactElement {
   return (
-    <a ref={ref} {...props} className={cx(TEXT_BUTTON, "active:opacity-90", className)}>
+    <a ref={ref} {...props} className={cx(textButtonClasses(), "active:opacity-90", className)}>
       {children}
     </a>
   );
