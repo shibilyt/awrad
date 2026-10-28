@@ -4,6 +4,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.AtomicFile
+import app.awrad.core.network.IdGenerator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
@@ -12,7 +13,6 @@ import java.io.File
 import java.io.IOException
 import java.security.GeneralSecurityException
 import java.security.KeyStore
-import java.util.UUID
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -23,7 +23,7 @@ import javax.crypto.spec.GCMParameterSpec
  * Android Keystore key (ADR 0006). A file that can't be decrypted (for example after the key was lost) is
  * deleted and reads as empty: the device is then signed out, and a lost installation id is replaced.
  */
-internal class KeystoreCredentialStore(context: Context) : CredentialStore {
+internal class KeystoreCredentialStore(context: Context, private val ids: IdGenerator) : CredentialStore {
 
     private val directory = File(context.noBackupFilesDir, DIRECTORY)
     private val key: SecretKey by lazy(::loadOrCreateKey)
@@ -31,7 +31,7 @@ internal class KeystoreCredentialStore(context: Context) : CredentialStore {
     private val lock = Any()
 
     override suspend fun installationId(): String = io {
-        readFile(INSTALLATION_FILE) ?: UUID.randomUUID().toString().also { writeFile(INSTALLATION_FILE, it) }
+        readFile(INSTALLATION_FILE) ?: ids.newId().also { writeFile(INSTALLATION_FILE, it) }
     }
 
     override suspend fun read(): StoredCredentials = io {

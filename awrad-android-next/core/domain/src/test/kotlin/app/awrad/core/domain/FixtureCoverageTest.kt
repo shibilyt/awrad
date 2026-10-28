@@ -60,4 +60,15 @@ class FixtureCoverageTest {
             FixtureRunner.rules(FixtureModel.DHIKR_CATALOG),
         )
     }
+
+    @Test
+    fun `every identity rule file has a runner`() {
+        assertEquals(
+            setOf(
+                "uuid_format", // UuidFormatFixtureTest
+                "uuid_v7_layout", // UuidV7LayoutFixtureTest
+            ),
+            FixtureRunner.rules(FixtureModel.IDENTITY),
+        )
+    }
 }

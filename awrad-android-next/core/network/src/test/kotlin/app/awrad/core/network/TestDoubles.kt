@@ -6,7 +6,6 @@ import app.awrad.core.network.http.HttpTransport
 import app.awrad.core.network.session.CredentialStore
 import app.awrad.core.network.session.StoredCredentials
 import java.io.IOException
-import java.util.UUID
 
 /** Answers each request with [respond] (by default per path from [routes]) and records every request. */
 internal class FakeTransport : HttpTransport {
@@ -61,7 +60,7 @@ internal object Responses {
 
 /** [CredentialStore] in memory; a new manager over the same store is an app restart. */
 internal class InMemoryCredentialStore(var credentials: StoredCredentials = StoredCredentials()) : CredentialStore {
-    private val installation = UUID.randomUUID().toString()
+    private val installation = "017f22e2-79b0-7cc3-98c4-dc0c0c07398f"
 
     override suspend fun installationId(): String = installation
 
@@ -70,4 +69,11 @@ internal class InMemoryCredentialStore(var credentials: StoredCredentials = Stor
     override suspend fun write(credentials: StoredCredentials) {
         this.credentials = credentials
     }
+}
+
+/** Numbered IDs, so a test can tell which call made which key. */
+internal class SequentialIds(private val prefix: String = "id") : IdGenerator {
+    private var next = 0
+
+    override fun newId(): String = "$prefix-${++next}"
 }

@@ -49,6 +49,9 @@ tasks.test {
     inputs.files(fileTree(rootDir.resolve("../contracts/account-model")))
         .withPropertyName("accountModelFixtures")
         .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(fileTree(rootDir.resolve("../contracts/identity")))
+        .withPropertyName("identityFixtures")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
     // The dhikr search fixtures run over the contract's catalog.json, which the catalog tests parse too.
     inputs.files(fileTree(rootDir.resolve("../contracts/dhikr-catalog")))
         .withPropertyName("dhikrCatalog")

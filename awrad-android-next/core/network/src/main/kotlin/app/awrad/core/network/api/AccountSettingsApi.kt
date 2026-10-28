@@ -1,5 +1,6 @@
 package app.awrad.core.network.api
 
+import app.awrad.core.network.IdGenerator
 import app.awrad.core.network.http.HttpTransport
 
 /**
@@ -7,8 +8,8 @@ import app.awrad.core.network.http.HttpTransport
  * password or email, and deleting the account. Every one is authenticated: the caller passes the access
  * token (normally through `DeviceSessionManager.authorized`).
  */
-public class AccountSettingsApi(transport: HttpTransport, language: AppLanguage) {
-    private val caller = ApiCaller(transport, language)
+public class AccountSettingsApi(transport: HttpTransport, ids: IdGenerator, language: AppLanguage) {
+    private val caller = ApiCaller(transport, ids, language)
 
     /** One page of sessions; [cursor] is the previous page's `next_cursor`, null for the first. */
     public suspend fun listAccountSessions(accessToken: String, cursor: String? = null): ApiResult<AccountSessionPage> =

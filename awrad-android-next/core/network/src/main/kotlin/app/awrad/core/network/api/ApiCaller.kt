@@ -1,5 +1,6 @@
 package app.awrad.core.network.api
 
+import app.awrad.core.network.IdGenerator
 import app.awrad.core.network.http.HttpRequest
 import app.awrad.core.network.http.HttpResponse
 import app.awrad.core.network.http.HttpTransport
@@ -7,7 +8,6 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.IOException
-import java.util.UUID
 
 /** The app's current language (`en`, `ar` or `ml`), sent as `Accept-Language` where an email may go out. */
 public fun interface AppLanguage {
@@ -23,11 +23,12 @@ internal val ApiJson: Json = Json {
 
 /**
  * Sends one [ApiOperation] and reads its answer; shared by the API classes. Headers follow the operation:
- * a bearer token only on authenticated operations (STYLE §11), `Idempotency-Key` where the spec takes one
- * (§10), and `Accept-Language` where an email may go out. Errors decode as RFC 9457 [Problem]s (§7).
+ * a bearer token only on authenticated operations (STYLE §11), a new UUIDv7 `Idempotency-Key` where the spec
+ * takes one (§10), and `Accept-Language` where an email may go out. Errors decode as RFC 9457 [Problem]s (§7).
  */
 internal class ApiCaller(
     private val transport: HttpTransport,
+    private val ids: IdGenerator,
     private val language: AppLanguage,
 ) {
     /** Sends [body] (null = none). [response] null means the body of a success is ignored (`202`, `204`). */
@@ -55,7 +56,7 @@ internal class ApiCaller(
         val headers = buildMap {
             put("Accept", "application/json, application/problem+json")
             options.accessToken?.let { put("Authorization", "Bearer $it") }
-            if (operation.idempotent) put("Idempotency-Key", options.idempotencyKey ?: newIdempotencyKey())
+            if (operation.idempotent) put("Idempotency-Key", options.idempotencyKey ?: ids.newId())
             if (operation.sendsLanguage) put("Accept-Language", language.current())
         }
         val path = operation.pathWith(options.pathParameters)
@@ -92,8 +93,6 @@ internal class ApiCaller(
             ApiFailure.ProblemResponse(problem, reply.header("Retry-After")?.trim()?.toLongOrNull())
         }
     }
-
-    private fun newIdempotencyKey(): String = UUID.randomUUID().toString()
 
     private companion object {
         val SUCCESS = 200..299

@@ -2,6 +2,7 @@ package app.awrad.core.network.api
 
 import app.awrad.core.network.FakeTransport
 import app.awrad.core.network.Responses
+import app.awrad.core.network.SequentialIds
 import app.awrad.core.network.http.HttpMethod
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -14,8 +15,8 @@ import kotlin.test.assertTrue
 class AccountsApiTest {
 
     private val transport = FakeTransport()
-    private val api = AccountsApi(transport) { "ar" }
-    private val settings = AccountSettingsApi(transport) { "ar" }
+    private val api = AccountsApi(transport, SequentialIds()) { "ar" }
+    private val settings = AccountSettingsApi(transport, SequentialIds()) { "ar" }
 
     private fun ApiOperation.testPath(): String = pathWith(mapOf("session_id" to SESSION_ID))
 
