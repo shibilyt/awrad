@@ -20,7 +20,7 @@ extension AccountModel {
             let account = try await service.currentAccount()
             state.phase = .signedIn(email: account.email)
         } catch .signedOut {
-            showSignedOut(.signedOut)
+            await sessionEnded()
         } catch {
             // Offline or a server fault: still signed in on this device.
         }
@@ -85,14 +85,16 @@ extension AccountModel {
     func signOut() async {
         await service.signOut()
         showSignedOut(nil, keepEmail: false)
+        await profiles.handle(.signOut, choice: nil)
     }
 
     // MARK: - Steps
 
     private func signIn(email: String, password: String) async throws(AccountError) {
         let account = try await service.signIn(email: email, password: password)
-        state = State()
+        resetState()
         state.phase = .signedIn(email: account.email)
+        await profileSignedIn(account)
     }
 
     /// After a verified email or a new password: signs in with the password the person typed. If
@@ -120,7 +122,7 @@ extension AccountModel {
     /// Shows sign in, with the email filled in unless the account is gone.
     func showSignedOut(_ feedback: Feedback?, keepEmail: Bool = true) {
         let email = signedInEmail ?? state.email
-        state = State()
+        resetState()
         state.phase = .signedOut
         state.email = keepEmail ? email : ""
         state.feedback = feedback
