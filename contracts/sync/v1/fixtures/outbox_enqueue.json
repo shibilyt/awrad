@@ -1,0 +1,1769 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "outbox_enqueue",
+  "description": "How a phone queues one saved edit (Android and iOS; the web has no queue). Given the versions this device knows, the queue (oldest first; `sent` once a command has been in a request) and the edit, the queue afterwards. If the entity's last queued command was never sent, the edit replaces it in place, keeping its command_id, base_version and position; but a delete that replaces a never-sent create (base_version 0) removes it instead, since the server never heard of the entity. Otherwise a new command is added at the end with base_version = the entity's last queued command's base_version + 1, or the known version (0 if unknown) when nothing is queued for it. Deleting a custom dhikr also drops never-sent commands for its dhikr_personal. The edit and its queue change are one local transaction; the queue's document for a delete is null (the wire command omits it). Phones only queue for a profile that belongs to an account (profile_switch).",
+  "references": [
+    "docs/slices/03b-custom-dhikrs-sync.md#clients-android-and-ios",
+    "contracts/sync/v1/README.md",
+    "DECISIONS.md ADR-2026-10-28 (The change queue)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "known_versions",
+      "outbox",
+      "edit"
+    ],
+    "properties": {
+      "known_versions": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "entity_type",
+            "entity_id",
+            "version"
+          ],
+          "properties": {
+            "entity_type": {
+              "$ref": "urn:awrad:sync:1#/$defs/entity_type"
+            },
+            "entity_id": {
+              "$ref": "urn:awrad:sync:1#/$defs/uuid"
+            },
+            "version": {
+              "$ref": "urn:awrad:sync:1#/$defs/version"
+            }
+          }
+        }
+      },
+      "outbox": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "command_id",
+            "entity_type",
+            "entity_id",
+            "op",
+            "base_version",
+            "document",
+            "sent"
+          ],
+          "properties": {
+            "command_id": {
+              "$ref": "urn:awrad:sync:1#/$defs/uuid"
+            },
+            "entity_type": {
+              "$ref": "urn:awrad:sync:1#/$defs/entity_type"
+            },
+            "entity_id": {
+              "$ref": "urn:awrad:sync:1#/$defs/uuid"
+            },
+            "op": {
+              "$ref": "urn:awrad:sync:1#/$defs/op"
+            },
+            "base_version": {
+              "$ref": "urn:awrad:sync:1#/$defs/version"
+            },
+            "document": {
+              "oneOf": [
+                {
+                  "$ref": "urn:awrad:sync:1#/$defs/document"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sent": {
+              "type": "boolean",
+              "description": "True once the command has been in a request, whether or not its receipt came back."
+            }
+          }
+        }
+      },
+      "edit": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "command_id",
+          "entity_type",
+          "entity_id",
+          "op",
+          "document"
+        ],
+        "properties": {
+          "command_id": {
+            "$ref": "urn:awrad:sync:1#/$defs/uuid",
+            "description": "The new command's ID, if one is added."
+          },
+          "entity_type": {
+            "$ref": "urn:awrad:sync:1#/$defs/entity_type"
+          },
+          "entity_id": {
+            "$ref": "urn:awrad:sync:1#/$defs/uuid"
+          },
+          "op": {
+            "$ref": "urn:awrad:sync:1#/$defs/op"
+          },
+          "document": {
+            "oneOf": [
+              {
+                "$ref": "urn:awrad:sync:1#/$defs/document"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "outbox"
+    ],
+    "properties": {
+      "outbox": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "command_id",
+            "entity_type",
+            "entity_id",
+            "op",
+            "base_version",
+            "document",
+            "sent"
+          ],
+          "properties": {
+            "command_id": {
+              "$ref": "urn:awrad:sync:1#/$defs/uuid"
+            },
+            "entity_type": {
+              "$ref": "urn:awrad:sync:1#/$defs/entity_type"
+            },
+            "entity_id": {
+              "$ref": "urn:awrad:sync:1#/$defs/uuid"
+            },
+            "op": {
+              "$ref": "urn:awrad:sync:1#/$defs/op"
+            },
+            "base_version": {
+              "$ref": "urn:awrad:sync:1#/$defs/version"
+            },
+            "document": {
+              "oneOf": [
+                {
+                  "$ref": "urn:awrad:sync:1#/$defs/document"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "sent": {
+              "type": "boolean",
+              "description": "True once the command has been in a request, whether or not its receipt came back."
+            }
+          }
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "first_edit_uses_known_version",
+      "description": "With nothing queued for the entity, the command's base_version is the last version this device knows.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000001",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+          "op": "put",
+          "document": {
+            "kind": "dhikr",
+            "arabic": "سُبْحَانَ ٱللَّهِ",
+            "title": {
+              "en": "Subhanallah",
+              "ar": null,
+              "ml": "സുബ്ഹാനല്ലാഹ്"
+            },
+            "transliteration": {
+              "en": "Subhanallah",
+              "ml": null
+            },
+            "translation": {
+              "en": "Glory be to Allah",
+              "ar": null,
+              "ml": null
+            },
+            "audio": {
+              "local_only": true
+            },
+            "references": []
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000001",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "create_uses_base_version_zero",
+      "description": "An entity the server has never seen has known version 0, so its first command creates it.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000002",
+          "entity_type": "user_tag",
+          "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+          "op": "put",
+          "document": {
+            "name": "Travel",
+            "normalized_name": "travel"
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000002",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Travel",
+              "normalized_name": "travel"
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "replaces_unsent_command_in_place",
+      "description": "A command that was never sent is replaced in place: same command_id, base_version and queue position, new document.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000003",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000004",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "name": "Mornings",
+              "normalized_name": "mornings"
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000005",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+          "op": "put",
+          "document": {
+            "kind": "dhikr",
+            "arabic": "ٱلْحَمْدُ لِلَّهِ",
+            "title": {
+              "en": "Alhamdulillah",
+              "ar": null,
+              "ml": null
+            },
+            "transliteration": {
+              "en": "Alhamdulillah",
+              "ml": null
+            },
+            "translation": {
+              "en": "All praise is for Allah",
+              "ar": null,
+              "ml": null
+            },
+            "audio": null,
+            "references": []
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000003",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "ٱلْحَمْدُ لِلَّهِ",
+              "title": {
+                "en": "Alhamdulillah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Alhamdulillah",
+                "ml": null
+              },
+              "translation": {
+                "en": "All praise is for Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000004",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "name": "Mornings",
+              "normalized_name": "mornings"
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "appends_after_sent_command",
+      "description": "Once a command has been sent it's never rewritten: the edit is a new command after it, on the version that command will produce (its base_version + 1).",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000006",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": true
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000007",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+          "op": "put",
+          "document": {
+            "kind": "dhikr",
+            "arabic": "ٱلْحَمْدُ لِلَّهِ",
+            "title": {
+              "en": "Alhamdulillah",
+              "ar": null,
+              "ml": null
+            },
+            "transliteration": {
+              "en": "Alhamdulillah",
+              "ml": null
+            },
+            "translation": {
+              "en": "All praise is for Allah",
+              "ar": null,
+              "ml": null
+            },
+            "audio": null,
+            "references": []
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000006",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000007",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 4,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "ٱلْحَمْدُ لِلَّهِ",
+              "title": {
+                "en": "Alhamdulillah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Alhamdulillah",
+                "ml": null
+              },
+              "translation": {
+                "en": "All praise is for Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "chains_after_sent_create",
+      "description": "After a sent create (base_version 0), the next command expects version 1.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000008",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Travel",
+              "normalized_name": "travel"
+            },
+            "sent": true
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000009",
+          "entity_type": "user_tag",
+          "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+          "op": "put",
+          "document": {
+            "name": "Travel home",
+            "normalized_name": "travel home"
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000008",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Travel",
+              "normalized_name": "travel"
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000009",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "name": "Travel home",
+              "normalized_name": "travel home"
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "chains_across_two_sent_commands",
+      "description": "Each sent command adds one: after sent commands on versions 3 and 4, the next expects 5.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000000a",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000000b",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 4,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "ٱلْحَمْدُ لِلَّهِ",
+              "title": {
+                "en": "Alhamdulillah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Alhamdulillah",
+                "ml": null
+              },
+              "translation": {
+                "en": "All praise is for Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": true
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-00000000000c",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+          "op": "put",
+          "document": {
+            "kind": "dua",
+            "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+            "title": {
+              "en": null,
+              "ar": null,
+              "ml": "ഹസ്ബിയല്ലാഹ്"
+            },
+            "transliteration": {
+              "en": null,
+              "ml": null
+            },
+            "translation": {
+              "en": "Allah is sufficient for me; there is no god but Him.",
+              "ar": null,
+              "ml": null
+            },
+            "audio": null,
+            "references": [
+              {
+                "id": "quran",
+                "type": "quran",
+                "surah": 9,
+                "ayahStart": 129,
+                "ayahEnd": 129
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000000a",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000000b",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 4,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "ٱلْحَمْدُ لِلَّهِ",
+              "title": {
+                "en": "Alhamdulillah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Alhamdulillah",
+                "ml": null
+              },
+              "translation": {
+                "en": "All praise is for Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000000c",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 5,
+            "document": {
+              "kind": "dua",
+              "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+              "title": {
+                "en": null,
+                "ar": null,
+                "ml": "ഹസ്ബിയല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": null,
+                "ml": null
+              },
+              "translation": {
+                "en": "Allah is sufficient for me; there is no god but Him.",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": [
+                {
+                  "id": "quran",
+                  "type": "quran",
+                  "surah": 9,
+                  "ayahStart": 129,
+                  "ayahEnd": 129
+                }
+              ]
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "replaces_unsent_after_sent",
+      "description": "With a sent command and an unsent one after it, the unsent one is replaced and keeps its chained base_version.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000000d",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000000e",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 4,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "ٱلْحَمْدُ لِلَّهِ",
+              "title": {
+                "en": "Alhamdulillah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Alhamdulillah",
+                "ml": null
+              },
+              "translation": {
+                "en": "All praise is for Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-00000000000f",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+          "op": "put",
+          "document": {
+            "kind": "dua",
+            "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+            "title": {
+              "en": null,
+              "ar": null,
+              "ml": "ഹസ്ബിയല്ലാഹ്"
+            },
+            "transliteration": {
+              "en": null,
+              "ml": null
+            },
+            "translation": {
+              "en": "Allah is sufficient for me; there is no god but Him.",
+              "ar": null,
+              "ml": null
+            },
+            "audio": null,
+            "references": [
+              {
+                "id": "quran",
+                "type": "quran",
+                "surah": 9,
+                "ayahStart": 129,
+                "ayahEnd": 129
+              }
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000000d",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000000e",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 4,
+            "document": {
+              "kind": "dua",
+              "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+              "title": {
+                "en": null,
+                "ar": null,
+                "ml": "ഹസ്ബിയല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": null,
+                "ml": null
+              },
+              "translation": {
+                "en": "Allah is sufficient for me; there is no god but Him.",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": [
+                {
+                  "id": "quran",
+                  "type": "quran",
+                  "surah": 9,
+                  "ayahStart": 129,
+                  "ayahEnd": 129
+                }
+              ]
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "delete_after_unsent_create_drops_it",
+      "description": "Deleting an entity whose create was never sent removes that create: the server never hears of the entity.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000010",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Travel",
+              "normalized_name": "travel"
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000011",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "name": "Mornings",
+              "normalized_name": "mornings"
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000012",
+          "entity_type": "user_tag",
+          "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+          "op": "delete",
+          "document": null
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000011",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "name": "Mornings",
+              "normalized_name": "mornings"
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "delete_after_sent_create_appends",
+      "description": "Deleting an entity whose create was already sent queues a delete on version 1.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000013",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Travel",
+              "normalized_name": "travel"
+            },
+            "sent": true
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000014",
+          "entity_type": "user_tag",
+          "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+          "op": "delete",
+          "document": null
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000013",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Travel",
+              "normalized_name": "travel"
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000014",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000004",
+            "op": "delete",
+            "base_version": 1,
+            "document": null,
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "delete_replaces_unsent_update",
+      "description": "A delete replaces an unsent update in place; the document goes.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000015",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000016",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+          "op": "delete",
+          "document": null
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000015",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "delete",
+            "base_version": 3,
+            "document": null,
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "delete_custom_dhikr_drops_unsent_personal",
+      "description": "Deleting a custom dhikr drops the unsent command for its dhikr_personal: the server deletes that record itself.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000017",
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 2,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000018",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+          "op": "delete",
+          "document": null
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000018",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "delete",
+            "base_version": 3,
+            "document": null,
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "delete_custom_dhikr_keeps_sent_personal",
+      "description": "A dhikr_personal command already sent stays; only commands never sent are dropped.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000019",
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 2,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": true
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-00000000001a",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+          "op": "delete",
+          "document": null
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000019",
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 2,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000001a",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "delete",
+            "base_version": 3,
+            "document": null,
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "delete_never_sent_custom_dhikr_drops_both",
+      "description": "A custom dhikr and its tags that never left the phone disappear from the queue entirely.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000001b",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "kind": "dua",
+              "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ",
+              "title": {
+                "en": null,
+                "ar": null,
+                "ml": "ഹസ്ബിയല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": null,
+                "ml": null
+              },
+              "translation": {
+                "en": "Allah is sufficient for me; there is no god but Him.",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": [
+                {
+                  "id": "quran",
+                  "type": "quran",
+                  "surah": 9,
+                  "ayahStart": 129,
+                  "ayahEnd": 129
+                }
+              ]
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000001c",
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001"
+              ]
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-00000000001d",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+          "op": "delete",
+          "document": null
+        }
+      },
+      "expect": {
+        "outbox": []
+      }
+    },
+    {
+      "id": "other_entities_untouched",
+      "description": "Commands for other entities keep their place; the edit goes at the end.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000001e",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "name": "Mornings",
+              "normalized_name": "mornings"
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000001f",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": true
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000020",
+          "entity_type": "dhikr_personal",
+          "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+          "op": "put",
+          "document": {
+            "tag_ids": [
+              "0192f0a0-0000-7000-8000-000000000001",
+              "0192f0a0-0000-7000-8000-000000000004"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000001e",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "name": "Mornings",
+              "normalized_name": "mornings"
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000001f",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": "സുബ്ഹാനല്ലാഹ്"
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "local_only": true
+              },
+              "references": []
+            },
+            "sent": true
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000020",
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "tag_ids": [
+                "0192f0a0-0000-7000-8000-000000000001",
+                "0192f0a0-0000-7000-8000-000000000004"
+              ]
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "clearing_tags_is_a_put",
+      "description": "Removing a dhikr's last tag is a put of an empty list; a dhikr_personal is never deleted by a client.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000021",
+          "entity_type": "dhikr_personal",
+          "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+          "op": "put",
+          "document": {
+            "tag_ids": []
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000021",
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "tag_ids": []
+            },
+            "sent": false
+          }
+        ]
+      }
+    }
+  ]
+}

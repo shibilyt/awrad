@@ -1,0 +1,1515 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "custom_dhikr_validity",
+  "description": "Which custom dhikr documents are valid, and why not. A valid document is exactly one that matches urn:awrad:sync:1#/$defs/custom_dhikr_document: the catalog dhikr shape without id, key, aliases, virtues or catalog tags; kind and a non-blank Arabic text required; title (en, ar, ml), transliteration (en, ml) and translation (en, ar, ml) with every language key present and each value text or null (STYLE §3), the title with at least one text; audio null or {\"local_only\": true}; references in the catalog's reference shape. Limits, in Unicode code points: title 120 per language; Arabic, transliteration and translation 5,000 each; 20 references. Errors are {field, code} with field a JSON Pointer into the document, sorted by field and then code; a `rejected` receipt reports the same errors with /document in front. Clients check before saving; the server checks every put.",
+  "references": [
+    "docs/slices/03b-custom-dhikrs-sync.md#the-change-queue (Entities in 3b)",
+    "contracts/sync/v1/sync.schema.json ($defs/custom_dhikr_document)",
+    "contracts/dhikr-catalog/v1/dhikr-catalog.schema.json ($defs/dhikr, $defs/reference)",
+    "DECISIONS.md ADR-2026-10-27 (custom dhikrs use the catalog dhikr shape)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "document"
+    ],
+    "properties": {
+      "document": {
+        "type": "object",
+        "description": "Any JSON object; it may be invalid."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "valid",
+      "errors"
+    ],
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:sync:1#/$defs/field_error"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "valid_minimal_title_en",
+      "description": "The smallest valid custom dhikr: kind, Arabic and an English title; every other language key is null.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": null,
+            "ml": null
+          },
+          "translation": {
+            "en": null,
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_full",
+      "description": "Every member filled: all three title languages, both transliterations, all translations, a local recording and two references.",
+      "given": {
+        "document": {
+          "kind": "dua",
+          "arabic": "حَسْبِيَ ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ ٱلْعَرْشِ ٱلْعَظِيمِ",
+          "title": {
+            "en": "Hasbiyallah",
+            "ar": "حسبي الله",
+            "ml": "ഹസ്ബിയല്ലാഹ്"
+          },
+          "transliteration": {
+            "en": "Hasbiyallahu la ilaha illa huwa, 'alayhi tawakkaltu wa huwa rabbul-'arshil-'azim",
+            "ml": "ഹസ്ബിയല്ലാഹു ലാ ഇലാഹ ഇല്ലാ ഹുവ"
+          },
+          "translation": {
+            "en": "Allah is sufficient for me. There is no god but Him. In Him I put my trust, and He is the Lord of the Mighty Throne.",
+            "ar": "الله كافيني",
+            "ml": "അല്ലാഹു എനിക്ക് മതി"
+          },
+          "audio": {
+            "local_only": true
+          },
+          "references": [
+            {
+              "id": "quran",
+              "type": "quran",
+              "surah": 9,
+              "ayahStart": 129,
+              "ayahEnd": 129
+            },
+            {
+              "id": "abu-dawud",
+              "type": "hadith",
+              "collection": "Sunan Abi Dawud",
+              "number": "5081"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_title_ml_only",
+      "description": "A title in Malayalam only is enough: the user writes it in their own language.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": null,
+            "ar": null,
+            "ml": "സുബ്ഹാനല്ലാഹ്"
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_title_ar_only",
+      "description": "A title in Arabic only is enough.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": null,
+            "ar": "سبحان الله",
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_quran_kind_without_quran_reference",
+      "description": "Unlike the built-in catalog, a custom quran-kind dhikr needn't cite the Qur'an.",
+      "given": {
+        "document": {
+          "kind": "quran",
+          "arabic": "قُلْ هُوَ ٱللَّهُ أَحَدٌ",
+          "title": {
+            "en": "Al-Ikhlas, first ayah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_title_120",
+      "description": "A 120-character title is at the limit.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_arabic_5000",
+      "description": "5,000 code points of Arabic is at the limit.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "بببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببب",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_references_20",
+      "description": "20 references is at the limit.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": [
+            {
+              "id": "r1",
+              "type": "other",
+              "text": "Source 1"
+            },
+            {
+              "id": "r2",
+              "type": "other",
+              "text": "Source 2"
+            },
+            {
+              "id": "r3",
+              "type": "other",
+              "text": "Source 3"
+            },
+            {
+              "id": "r4",
+              "type": "other",
+              "text": "Source 4"
+            },
+            {
+              "id": "r5",
+              "type": "other",
+              "text": "Source 5"
+            },
+            {
+              "id": "r6",
+              "type": "other",
+              "text": "Source 6"
+            },
+            {
+              "id": "r7",
+              "type": "other",
+              "text": "Source 7"
+            },
+            {
+              "id": "r8",
+              "type": "other",
+              "text": "Source 8"
+            },
+            {
+              "id": "r9",
+              "type": "other",
+              "text": "Source 9"
+            },
+            {
+              "id": "r10",
+              "type": "other",
+              "text": "Source 10"
+            },
+            {
+              "id": "r11",
+              "type": "other",
+              "text": "Source 11"
+            },
+            {
+              "id": "r12",
+              "type": "other",
+              "text": "Source 12"
+            },
+            {
+              "id": "r13",
+              "type": "other",
+              "text": "Source 13"
+            },
+            {
+              "id": "r14",
+              "type": "other",
+              "text": "Source 14"
+            },
+            {
+              "id": "r15",
+              "type": "other",
+              "text": "Source 15"
+            },
+            {
+              "id": "r16",
+              "type": "other",
+              "text": "Source 16"
+            },
+            {
+              "id": "r17",
+              "type": "other",
+              "text": "Source 17"
+            },
+            {
+              "id": "r18",
+              "type": "other",
+              "text": "Source 18"
+            },
+            {
+              "id": "r19",
+              "type": "other",
+              "text": "Source 19"
+            },
+            {
+              "id": "r20",
+              "type": "other",
+              "text": "Source 20"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "title_all_null",
+      "description": "A title with every language null is missing.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": null,
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/title",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "title_empty_object",
+      "description": "Language keys are always present: an empty title object lacks all three, and has no title either.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {},
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/title",
+            "code": "required"
+          },
+          {
+            "field": "/title/ar",
+            "code": "required"
+          },
+          {
+            "field": "/title/en",
+            "code": "required"
+          },
+          {
+            "field": "/title/ml",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "language_key_missing",
+      "description": "A language key that's left out, rather than null, is missing (STYLE §3: fields are always present).",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/translation/ml",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "title_missing",
+      "description": "The title member is required.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/title",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "title_blank",
+      "description": "A title of only spaces is blank.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "   ",
+            "ar": null,
+            "ml": "സുബ്ഹാനല്ലാഹ്"
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/title/en",
+            "code": "blank"
+          }
+        ]
+      }
+    },
+    {
+      "id": "title_unknown_language",
+      "description": "Only en, ar and ml are allowed.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null,
+            "fr": "Gloire à Allah"
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/title/fr",
+            "code": "not_allowed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "title_121",
+      "description": "A 121-character title is too long.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/title/en",
+            "code": "too_long"
+          }
+        ]
+      }
+    },
+    {
+      "id": "arabic_missing",
+      "description": "The Arabic text is required.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/arabic",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "arabic_empty",
+      "description": "An empty Arabic text is blank.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/arabic",
+            "code": "blank"
+          }
+        ]
+      }
+    },
+    {
+      "id": "arabic_blank",
+      "description": "An Arabic text of only spaces is blank.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "  ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/arabic",
+            "code": "blank"
+          }
+        ]
+      }
+    },
+    {
+      "id": "arabic_5001",
+      "description": "5,001 code points of Arabic is too long.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "ببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببببب",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/arabic",
+            "code": "too_long"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kind_missing",
+      "description": "kind is required.",
+      "given": {
+        "document": {
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/kind",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "kind_unknown",
+      "description": "kind must be one of the catalog's kinds.",
+      "given": {
+        "document": {
+          "kind": "wird",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/kind",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "key_not_allowed",
+      "description": "Catalog keys belong to built-ins only.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": [],
+          "key": "my-dhikr"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/key",
+            "code": "not_allowed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "catalog_only_members_not_allowed",
+      "description": "id (the entity_id is the ID), key, aliases, virtues and catalog tags aren't part of a custom dhikr.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": [],
+          "id": "0192f0d0-0000-7000-8000-000000000001",
+          "key": "my-dhikr",
+          "aliases": {
+            "en": [
+              "Subhan"
+            ]
+          },
+          "virtues": [
+            {
+              "text": {
+                "en": "A virtue"
+              },
+              "references": [
+                "r1"
+              ]
+            }
+          ],
+          "tags": [
+            "debt"
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/aliases",
+            "code": "not_allowed"
+          },
+          {
+            "field": "/id",
+            "code": "not_allowed"
+          },
+          {
+            "field": "/key",
+            "code": "not_allowed"
+          },
+          {
+            "field": "/tags",
+            "code": "not_allowed"
+          },
+          {
+            "field": "/virtues",
+            "code": "not_allowed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "audio_missing",
+      "description": "audio is required; null means no recording.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "audio_catalog_recording_not_allowed",
+      "description": "A hosted recording is for built-ins only; custom audio is only ever local in 3b.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "url": "https://dhikrs.awrad.app/tahleel.mp3",
+            "style": "recitation",
+            "repetitions": 1
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "audio_local_only_false",
+      "description": "The local marker is exactly {\"local_only\": true}.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "local_only": false
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "transliteration_arabic_not_allowed",
+      "description": "Arabic has no transliteration.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null,
+            "ar": "سبحان الله"
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/transliteration/ar",
+            "code": "not_allowed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "transliteration_missing",
+      "description": "transliteration is required, even when both languages are null.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/transliteration",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "translation_missing",
+      "description": "translation is required, even when every language is null.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/translation",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "translation_blank",
+      "description": "A translation that isn't null can't be blank.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": " "
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/translation/ml",
+            "code": "blank"
+          }
+        ]
+      }
+    },
+    {
+      "id": "references_missing",
+      "description": "references is required, even if empty.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/references",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "references_21",
+      "description": "21 references is too many.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": [
+            {
+              "id": "r1",
+              "type": "other",
+              "text": "Source 1"
+            },
+            {
+              "id": "r2",
+              "type": "other",
+              "text": "Source 2"
+            },
+            {
+              "id": "r3",
+              "type": "other",
+              "text": "Source 3"
+            },
+            {
+              "id": "r4",
+              "type": "other",
+              "text": "Source 4"
+            },
+            {
+              "id": "r5",
+              "type": "other",
+              "text": "Source 5"
+            },
+            {
+              "id": "r6",
+              "type": "other",
+              "text": "Source 6"
+            },
+            {
+              "id": "r7",
+              "type": "other",
+              "text": "Source 7"
+            },
+            {
+              "id": "r8",
+              "type": "other",
+              "text": "Source 8"
+            },
+            {
+              "id": "r9",
+              "type": "other",
+              "text": "Source 9"
+            },
+            {
+              "id": "r10",
+              "type": "other",
+              "text": "Source 10"
+            },
+            {
+              "id": "r11",
+              "type": "other",
+              "text": "Source 11"
+            },
+            {
+              "id": "r12",
+              "type": "other",
+              "text": "Source 12"
+            },
+            {
+              "id": "r13",
+              "type": "other",
+              "text": "Source 13"
+            },
+            {
+              "id": "r14",
+              "type": "other",
+              "text": "Source 14"
+            },
+            {
+              "id": "r15",
+              "type": "other",
+              "text": "Source 15"
+            },
+            {
+              "id": "r16",
+              "type": "other",
+              "text": "Source 16"
+            },
+            {
+              "id": "r17",
+              "type": "other",
+              "text": "Source 17"
+            },
+            {
+              "id": "r18",
+              "type": "other",
+              "text": "Source 18"
+            },
+            {
+              "id": "r19",
+              "type": "other",
+              "text": "Source 19"
+            },
+            {
+              "id": "r20",
+              "type": "other",
+              "text": "Source 20"
+            },
+            {
+              "id": "r21",
+              "type": "other",
+              "text": "Source 21"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/references",
+            "code": "too_many"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference_surah_out_of_range",
+      "description": "A reference must match the catalog's reference shape: there is no surah 115.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": [
+            {
+              "id": "quran",
+              "type": "quran",
+              "surah": 115,
+              "ayahStart": 1,
+              "ayahEnd": 1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/references/0",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "reference_unknown_type",
+      "description": "Reference types are quran, hadith, book, shaykh and other.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": [
+            {
+              "id": "abu-dawud",
+              "type": "hadith",
+              "collection": "Sunan Abi Dawud",
+              "number": "5081"
+            },
+            {
+              "id": "web",
+              "type": "website",
+              "text": "somewhere"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/references/1",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "several_errors_sorted",
+      "description": "Every problem is reported, sorted by field and then code.",
+      "given": {
+        "document": {
+          "kind": "wird",
+          "arabic": " ",
+          "title": {
+            "en": null,
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": null,
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/arabic",
+            "code": "blank"
+          },
+          {
+            "field": "/kind",
+            "code": "invalid"
+          },
+          {
+            "field": "/title",
+            "code": "required"
+          }
+        ]
+      }
+    }
+  ]
+}
