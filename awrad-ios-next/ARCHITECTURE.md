@@ -35,6 +35,16 @@ flowchart TD
 
 **Platforms:** the package targets **iOS 18 and macOS 15**, so `swift test` runs domain, data and model tests on the Mac in milliseconds. Only app-level checks need a simulator.
 
+## IDs
+
+Every ID is an `AwradID`, and every ID the app generates is a UUIDv7 ([`contracts/identity/v1`](../contracts/identity/v1/README.md), root ADR-2026-10-28): entity IDs, the installation ID and `Idempotency-Key`s.
+
+- **Generator** (`AwradDomain/UUIDv7.swift`): `UUIDv7.uuid(unixMilliseconds:random:)` is the pure layout from a time and 10 random bytes, run against `uuid_v7_layout.json`. `UUIDv7.generate(now:using:)` takes the clock and a `RandomNumberGenerator`; production (`AwradID.random()`) uses `Date.init` and `SystemRandomNumberGenerator`, which is cryptographically secure on Apple platforms. A clock before 1970 gives time zero.
+- **Validation:** `AwradID.init?(_:)` accepts only the wire form (`uuid_format.json`): lowercase, hyphenated, any version (built-in dhikrs keep their fixed UUIDv4s), never the nil or max UUID, nothing trimmed or case-folded.
+- **Never by timestamp:** nothing orders, expires or authorizes by an ID's time; the device clock can be wrong.
+- **Check:** `scripts/check-uuid-generation.py` (in `scripts/validate`, after its `--self-test`) rejects `UUID()`, `UUID.init()` and `NSUUID()` in `AwradKit/Sources` and `AwradNext`, since Foundation only makes v4. Tests may use them for throwaway names.
+- **Runner:** `IdentityFixtures` runs `identity/v1/fixtures/`; `UUIDv7GeneratorTests` checks that consecutive IDs are valid v7 that sort by time.
+
 ## Goal model and rules (slice 1)
 
 `AwradDomain` models the goal of [`contracts/goal-model/v1`](../contracts/goal-model/v1/README.md) as Sendable value types in `Goal.swift`: `Schedule`, `ActivePeriod`, `PausedRange`, `CountPolicy` (with its `CountThreshold` streak threshold), `GoalSession`, `Requirement`, `CompletionPolicy` and `CountEntry`.
@@ -62,7 +72,7 @@ An account is optional: everything offline works without one, and signing in or 
 - **Port:** `AccountService` (`AwradDomain`), with `Account`, `AccountSession` and `AccountError`. The fake is `FakeAccountService`.
 - **API client** (`AwradData/Network/`, ADR 0004):
   - `APIOperation` lists every operation the app calls, by `operationId`.
-  - `APIClient` attaches a bearer token only to operations that take one, an `Idempotency-Key` (lowercase UUIDv4) to every `POST`, and `Accept-Language` (the app language) where the spec declares it. An operation's `path` is the spec's template; `pathParameters` fill its `{name}`s, and `queryParameters` lists the query names it may send.
+  - `APIClient` attaches a bearer token only to operations that take one, an `Idempotency-Key` (lowercase UUIDv7) to every `POST`, and `Accept-Language` (the app language) where the spec declares it. An operation's `path` is the spec's template; `pathParameters` fill its `{name}`s, and `queryParameters` lists the query names it may send.
   - Nullable response fields (`AccountSession.name`, `next_cursor`) are encoded as `null`, never left out, so a round trip is exact. Unknown `kind` or `platform` values become `.other`.
   - Wire types are hand-written `Codable` structs (root ADR-2026-10-16). Problems are RFC 9457 and map to `AccountError` by `code` only.
   - Transport: an ephemeral `URLSession` without cookies or cache.

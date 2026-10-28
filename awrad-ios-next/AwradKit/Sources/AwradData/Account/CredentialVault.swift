@@ -35,7 +35,7 @@ struct CredentialVault: Sendable {
         marker.mark()
     }
 
-    /// This installation's UUIDv4, created on first use.
+    /// This installation's ID, a UUIDv7 created on first use.
     func installationID() -> String {
         if let data = try? store.data(for: Self.installationIDKey),
             let stored = String(data: data, encoding: .utf8),

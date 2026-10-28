@@ -72,7 +72,7 @@ struct APIClient: Sendable {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
         if operation.sendsIdempotencyKey {
-            // Lowercase UUIDv4, as every ID on the wire (STYLE §4, §10).
+            // A lowercase UUIDv7, as every ID we generate (STYLE §4, §10).
             let key = idempotencyKey ?? AwradID.random().description
             request.setValue(key, forHTTPHeaderField: "Idempotency-Key")
         }
