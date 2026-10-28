@@ -25,7 +25,7 @@ Awrad is being **rebuilt** as four contract-first projects (root ADR-2026-10-14)
 - **Contract first.** A change to routes, JSON, auth, IDs or shared domain behaviour lands in `contracts/` (spec, schema or fixture) before or with the implementation, never after.
 - **Shared fixtures are the parity test.** A domain rule implemented on more than one platform needs fixture cases in `contracts/`, and every platform runs them.
 - **Shared identity is binding:** built-in content catalog keys and their fixed IDs (ADR-2026-07-13), UUIDv7 for every ID we generate (ADR-2026-10-28), and the account/device-session model (ADR-2026-07-12).
-- **Offline-first mobile:** dhikr, goals, counting and wird work without a network; only account features may require the API. The web app is online-only.
+- **Offline-first mobile, no account needed:** dhikr, goals, counting and wird work signed out and without a network. There's no sign-in gate, and sign-in and sync are opt-in (ADR-2026-10-28). Only account features may require the API. The web app is online-only.
 - **Auth surfaces stay separate:** browsers use Phoenix cookie sessions plus CSRF (ADR-2026-10-15); mobile uses bearer tokens with device sessions. Neither pipeline accepts the other's credential.
 - **Accepted ADRs aren't re-argued.** Supersede them with a new ADR instead.
 - **Strings live in localization resources** (en, ar, ml together), never inline in UI code.
