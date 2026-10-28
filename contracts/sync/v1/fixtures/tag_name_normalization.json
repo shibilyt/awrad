@@ -1,0 +1,510 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "tag_name_normalization",
+  "description": "Turning what the user typed into a tag's display `name` and its `normalized_name`. Display: trim leading and trailing characters with the Unicode White_Space property, collapse each inner White_Space run to one U+0020, then NFC. Normalized: Unicode Default Case Folding (full folding, not lowercasing, not locale-specific) of the display name, then NFC. Diacritics, Arabic marks, tatweel and joiners are never stripped. The display name is rejected when it's empty (`empty`), longer than 40 extended grapheme clusters (`too_many_graphemes`), or longer than 128 UTF-8 bytes (`too_many_bytes`), checked in that order. Two tags are the same when their normalized names are equal. Clients compute both names; the server recomputes them and rejects a `user_tag` document that differs.",
+  "references": [
+    "docs/slices/03b-custom-dhikrs-sync.md#the-change-queue (Tag names)",
+    "contracts/behavior-model/v1/fixtures/behavior-cases.json (tag_normalization)",
+    "contracts/behavior-model/v1/fixtures/tag-normalization-contract.json",
+    "DECISIONS.md ADR-2026-07-24 (shared full-casefold/White_Space contract)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "input"
+    ],
+    "properties": {
+      "input": {
+        "type": "string",
+        "description": "What the user typed."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "accepted",
+      "name",
+      "normalized_name",
+      "reason"
+    ],
+    "properties": {
+      "accepted": {
+        "type": "boolean"
+      },
+      "name": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "normalized_name": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "reason": {
+        "enum": [
+          null,
+          "empty",
+          "too_many_graphemes",
+          "too_many_bytes"
+        ]
+      }
+    },
+    "if": {
+      "properties": {
+        "accepted": {
+          "const": true
+        }
+      }
+    },
+    "then": {
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "normalized_name": {
+          "type": "string"
+        },
+        "reason": {
+          "const": null
+        }
+      }
+    },
+    "else": {
+      "properties": {
+        "name": {
+          "const": null
+        },
+        "normalized_name": {
+          "const": null
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "trim_collapse_casefold",
+      "description": "Ported (behavior-cases trim_collapse_casefold; contract trim_collapse_ascii_spaces): leading and trailing spaces go, inner runs become one space, and case folds.",
+      "given": {
+        "input": "  Before   Sleep  "
+      },
+      "expect": {
+        "accepted": true,
+        "name": "Before Sleep",
+        "normalized_name": "before sleep",
+        "reason": null
+      }
+    },
+    {
+      "id": "nfc_and_casefold",
+      "description": "Ported (behavior-cases nfc_and_casefold): an accented letter keeps its accent; only case folds.",
+      "given": {
+        "input": "Beforé Sleep"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "Beforé Sleep",
+        "normalized_name": "beforé sleep",
+        "reason": null
+      }
+    },
+    {
+      "id": "arabic_marks_preserved_with_fatha",
+      "description": "Ported (behavior-cases arabic_marks_preserved, input_a): Arabic harakat are kept, so this is a different tag from arabic_marks_preserved_without_fatha.",
+      "given": {
+        "input": "سَلام"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "سَلام",
+        "normalized_name": "سَلام",
+        "reason": null
+      }
+    },
+    {
+      "id": "arabic_marks_preserved_without_fatha",
+      "description": "Ported (behavior-cases arabic_marks_preserved, input_b): the same word without the fatha.",
+      "given": {
+        "input": "سلام"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "سلام",
+        "normalized_name": "سلام",
+        "reason": null
+      }
+    },
+    {
+      "id": "reject_blank",
+      "description": "Ported (behavior-cases reject_empty_and_oversized): only spaces is empty after trimming.",
+      "given": {
+        "input": "   "
+      },
+      "expect": {
+        "accepted": false,
+        "name": null,
+        "normalized_name": null,
+        "reason": "empty"
+      }
+    },
+    {
+      "id": "reject_41_graphemes",
+      "description": "Ported (behavior-cases reject_empty_and_oversized): 41 letters is over the 40-grapheme limit.",
+      "given": {
+        "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "expect": {
+        "accepted": false,
+        "name": null,
+        "normalized_name": null,
+        "reason": "too_many_graphemes"
+      }
+    },
+    {
+      "id": "accept_plain_word",
+      "description": "Ported (behavior-cases reject_empty_and_oversized): an ordinary word is accepted as it is.",
+      "given": {
+        "input": "Sleep"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "Sleep",
+        "normalized_name": "sleep",
+        "reason": null
+      }
+    },
+    {
+      "id": "sharp_s_full_casefold",
+      "description": "Ported (behavior-cases sharp_s_full_casefold, input_a): full case folding turns ß into ss, so Straße and STRASSE are the same tag.",
+      "given": {
+        "input": "Straße"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "Straße",
+        "normalized_name": "strasse",
+        "reason": null
+      }
+    },
+    {
+      "id": "sharp_s_upper_full_casefold",
+      "description": "Ported (behavior-cases sharp_s_full_casefold, input_b; contract eszett_ss_full_casefold, input_b): STRASSE folds to the same name as Straße.",
+      "given": {
+        "input": "STRASSE"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "STRASSE",
+        "normalized_name": "strasse",
+        "reason": null
+      }
+    },
+    {
+      "id": "eszett_lowercase_full_casefold",
+      "description": "Ported (contract eszett_ss_full_casefold, input_a): lowercase straße folds to strasse too; the display name keeps ß.",
+      "given": {
+        "input": "straße"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "straße",
+        "normalized_name": "strasse",
+        "reason": null
+      }
+    },
+    {
+      "id": "dotted_i_full_casefold",
+      "description": "Ported (behavior-cases dotted_i_full_casefold; contract dotted_capital_i_full_casefold): İ (U+0130) folds to i plus U+0307 COMBINING DOT ABOVE, not to a Turkish dotless or dotted i.",
+      "given": {
+        "input": "İstanbul"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "İstanbul",
+        "normalized_name": "i\u0307stanbul",
+        "reason": null
+      }
+    },
+    {
+      "id": "unicode_whitespace_collapse",
+      "description": "Ported (behavior-cases unicode_whitespace_collapse): two NARROW NO-BREAK SPACEs (U+202F) and a FIGURE SPACE (U+2007) are White_Space and collapse like ordinary spaces.",
+      "given": {
+        "input": "Before\u202f\u202fSleep\u2007Night"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "Before Sleep Night",
+        "normalized_name": "before sleep night",
+        "reason": null
+      }
+    },
+    {
+      "id": "nnbsp_and_figure_space_collapse",
+      "description": "Ported (contract nnbsp_and_figure_space_collapse): a single U+202F and a single U+2007 each become U+0020.",
+      "given": {
+        "input": "Before\u202fSleep\u2007Now"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "Before Sleep Now",
+        "normalized_name": "before sleep now",
+        "reason": null
+      }
+    },
+    {
+      "id": "decomposed_accent_composed",
+      "description": "e followed by U+0301 COMBINING ACUTE ACCENT is composed (NFC) in both names, so it's the same tag as nfc_and_casefold.",
+      "given": {
+        "input": "Before\u0301 Sleep"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "Beforé Sleep",
+        "normalized_name": "beforé sleep",
+        "reason": null
+      }
+    },
+    {
+      "id": "arabic_trim_collapse",
+      "description": "Arabic names are trimmed and collapsed. Arabic has no case, so the normalized name equals the display name.",
+      "given": {
+        "input": "  أذكار   الصباح  "
+      },
+      "expect": {
+        "accepted": true,
+        "name": "أذكار الصباح",
+        "normalized_name": "أذكار الصباح",
+        "reason": null
+      }
+    },
+    {
+      "id": "arabic_tatweel_preserved",
+      "description": "Tatweel (U+0640) isn't whitespace and is kept.",
+      "given": {
+        "input": "ذكـر"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "ذكـر",
+        "normalized_name": "ذكـر",
+        "reason": null
+      }
+    },
+    {
+      "id": "malayalam_collapse",
+      "description": "Malayalam words with two NO-BREAK SPACEs (U+00A0) between them: one space. Malayalam has no case.",
+      "given": {
+        "input": "രാവിലെ\u00a0\u00a0ദിക്ർ"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "രാവിലെ ദിക്ർ",
+        "normalized_name": "രാവിലെ ദിക്ർ",
+        "reason": null
+      }
+    },
+    {
+      "id": "malayalam_zwj_chillu_preserved",
+      "description": "The old chillu spelling (RA, VIRAMA, ZERO WIDTH JOINER) isn't canonically equivalent to the atomic chillu U+0D7C, so NFC keeps it, and it's a different tag from the one in malayalam_collapse. ZWJ isn't White_Space.",
+      "given": {
+        "input": "ദിക്ര്\u200d"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "ദിക്ര്\u200d",
+        "normalized_name": "ദിക്ര്\u200d",
+        "reason": null
+      }
+    },
+    {
+      "id": "mixed_whitespace",
+      "description": "TAB, LF, NO-BREAK SPACE (U+00A0) and IDEOGRAPHIC SPACE (U+3000) are all White_Space: trimmed at the ends, one space between words.",
+      "given": {
+        "input": "\tMorning\n\u00a0Adhkar\u3000"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "Morning Adhkar",
+        "normalized_name": "morning adhkar",
+        "reason": null
+      }
+    },
+    {
+      "id": "line_separators_collapse",
+      "description": "LINE SEPARATOR (U+2028) and NEXT LINE (U+0085) are White_Space too.",
+      "given": {
+        "input": "Night\u2028Prayer\u0085"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "Night Prayer",
+        "normalized_name": "night prayer",
+        "reason": null
+      }
+    },
+    {
+      "id": "zero_width_space_kept",
+      "description": "ZERO WIDTH SPACE (U+200B) isn't White_Space, so it's neither trimmed nor collapsed.",
+      "given": {
+        "input": "Night\u200bPrayer"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "Night\u200bPrayer",
+        "normalized_name": "night\u200bprayer",
+        "reason": null
+      }
+    },
+    {
+      "id": "greek_capital_sigma_folds",
+      "description": "Case folding maps every Σ to σ, where lowercasing would give a final ς.",
+      "given": {
+        "input": "ΟΔΟΣ"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "ΟΔΟΣ",
+        "normalized_name": "οδοσ",
+        "reason": null
+      }
+    },
+    {
+      "id": "greek_final_sigma_folds",
+      "description": "A final ς folds to σ, so this is the same tag as greek_capital_sigma_folds.",
+      "given": {
+        "input": "οδος"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "οδος",
+        "normalized_name": "οδοσ",
+        "reason": null
+      }
+    },
+    {
+      "id": "fullwidth_not_width_folded",
+      "description": "Case folding isn't compatibility normalization: fullwidth capitals fold to fullwidth small letters, not to ASCII.",
+      "given": {
+        "input": "ＭＯＲＮ"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "ＭＯＲＮ",
+        "normalized_name": "ｍｏｒｎ",
+        "reason": null
+      }
+    },
+    {
+      "id": "reject_empty_string",
+      "description": "An empty string is empty.",
+      "given": {
+        "input": ""
+      },
+      "expect": {
+        "accepted": false,
+        "name": null,
+        "normalized_name": null,
+        "reason": "empty"
+      }
+    },
+    {
+      "id": "reject_only_unicode_whitespace",
+      "description": "Only IDEOGRAPHIC SPACE, NO-BREAK SPACE and TAB is empty after trimming.",
+      "given": {
+        "input": "\u3000\u00a0\t"
+      },
+      "expect": {
+        "accepted": false,
+        "name": null,
+        "normalized_name": null,
+        "reason": "empty"
+      }
+    },
+    {
+      "id": "accept_40_graphemes",
+      "description": "Exactly 40 graphemes is accepted.",
+      "given": {
+        "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "normalized_name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": null
+      }
+    },
+    {
+      "id": "limits_count_after_trimming",
+      "description": "Limits apply to the display name, after trimming: 40 letters with spaces around them are accepted.",
+      "given": {
+        "input": "   AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA   "
+      },
+      "expect": {
+        "accepted": true,
+        "name": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+        "normalized_name": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "reason": null
+      }
+    },
+    {
+      "id": "accept_40_graphemes_with_combining_marks",
+      "description": "40 × (e + U+0301) is 80 code points but 40 graphemes, composed to 40 × U+00E9 (80 bytes): accepted.",
+      "given": {
+        "input": "e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "éééééééééééééééééééééééééééééééééééééééé",
+        "normalized_name": "éééééééééééééééééééééééééééééééééééééééé",
+        "reason": null
+      }
+    },
+    {
+      "id": "reject_41_graphemes_with_combining_marks",
+      "description": "41 × (e + U+0301) is 41 graphemes: rejected.",
+      "given": {
+        "input": "e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301e\u0301"
+      },
+      "expect": {
+        "accepted": false,
+        "name": null,
+        "normalized_name": null,
+        "reason": "too_many_graphemes"
+      }
+    },
+    {
+      "id": "accept_128_bytes",
+      "description": "32 × (seen + fatha) is 32 graphemes and exactly 128 UTF-8 bytes: accepted.",
+      "given": {
+        "input": "سَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَ"
+      },
+      "expect": {
+        "accepted": true,
+        "name": "سَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَ",
+        "normalized_name": "سَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَ",
+        "reason": null
+      }
+    },
+    {
+      "id": "reject_129_bytes",
+      "description": "32 × (seen + fatha) and one ASCII letter is 33 graphemes but 129 UTF-8 bytes: rejected for bytes.",
+      "given": {
+        "input": "سَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَسَa"
+      },
+      "expect": {
+        "accepted": false,
+        "name": null,
+        "normalized_name": null,
+        "reason": "too_many_bytes"
+      }
+    }
+  ]
+}

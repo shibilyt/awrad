@@ -1,0 +1,1251 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "profile_switch",
+  "description": "Who the data on a phone belongs to (Android and iOS). Given the profile registry, one event and the user's answer to any question it raises, the resulting registry, the question asked (`prompt`), the profile whose every entity is queued as a put (`queue_all`), the profile that syncs now (`sync`: send its queue, then pull), and the profiles erased. Events: `edit` (a saved change in the active profile), `sign_in`, `sign_out`, `remove_profile` (Settings, Remove from this device) and `account_deleted` (the phone learned the profile's account no longer exists). Rules: before any sign-in there is one anonymous profile whose edits are saved but never queued; the first sign-in asks `anonymous_data` only if that profile has data (`add_to_account` adopts it and queues everything, `erase` replaces it with a fresh profile) and otherwise adopts it silently; signing out keeps the active profile, whose later edits are queued but not sent; signing in as an account that has a profile reactivates it without a question; signing in as a new account creates its profile (`new_profile_id`) and leaves the others untouched; removing a profile with unsent changes asks `unsent_changes` first (`remove` or `cancel`); `account_deleted` asks to `remove` or `keep`; removing the active profile signs out and starts a fresh anonymous profile. A profile only syncs when the signed-in account equals its account, and every sync request carries that account in X-Awrad-Account. The scenario_NN cases are one story: each starts where the previous one ended.",
+  "references": [
+    "docs/slices/03b-custom-dhikrs-sync.md#clients-android-and-ios (Local profiles)",
+    "contracts/sync/v1/README.md",
+    "DECISIONS.md ADR-2026-10-28 (The change queue)",
+    "DECISIONS.md ADR-2026-07-12 (accounts and device sessions)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "registry",
+      "event",
+      "choice",
+      "new_profile_id"
+    ],
+    "properties": {
+      "registry": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "profiles",
+          "active_profile_id",
+          "signed_in_account_id"
+        ],
+        "properties": {
+          "profiles": {
+            "description": "Every profile on the phone, in creation order. Each is its own local database.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "profile_id",
+                "account_id",
+                "email",
+                "after",
+                "has_data",
+                "has_unsent"
+              ],
+              "properties": {
+                "profile_id": {
+                  "$ref": "urn:awrad:sync:1#/$defs/uuid",
+                  "description": "Local ID, a UUIDv7 made on the phone."
+                },
+                "account_id": {
+                  "oneOf": [
+                    {
+                      "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "null only for the anonymous profile."
+                },
+                "email": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "For display; null for the anonymous profile."
+                },
+                "after": {
+                  "$ref": "urn:awrad:sync:1#/$defs/revision",
+                  "description": "This profile's changes-feed position."
+                },
+                "has_data": {
+                  "type": "boolean",
+                  "description": "Holds at least one custom dhikr, tag or personal record."
+                },
+                "has_unsent": {
+                  "type": "boolean",
+                  "description": "Its queue holds commands not yet acknowledged."
+                }
+              }
+            }
+          },
+          "active_profile_id": {
+            "$ref": "urn:awrad:sync:1#/$defs/uuid"
+          },
+          "signed_in_account_id": {
+            "oneOf": [
+              {
+                "$ref": "urn:awrad:sync:1#/$defs/uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "event": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type"
+            ],
+            "properties": {
+              "type": {
+                "enum": [
+                  "edit",
+                  "sign_out"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "account_id",
+              "email"
+            ],
+            "properties": {
+              "type": {
+                "const": "sign_in"
+              },
+              "account_id": {
+                "$ref": "urn:awrad:sync:1#/$defs/uuid"
+              },
+              "email": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "profile_id"
+            ],
+            "properties": {
+              "type": {
+                "const": "remove_profile"
+              },
+              "profile_id": {
+                "$ref": "urn:awrad:sync:1#/$defs/uuid"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "account_id"
+            ],
+            "properties": {
+              "type": {
+                "const": "account_deleted"
+              },
+              "account_id": {
+                "$ref": "urn:awrad:sync:1#/$defs/uuid"
+              }
+            }
+          }
+        ]
+      },
+      "choice": {
+        "enum": [
+          null,
+          "add_to_account",
+          "erase",
+          "remove",
+          "cancel",
+          "keep"
+        ],
+        "description": "The user's answer when the event asks; null otherwise."
+      },
+      "new_profile_id": {
+        "$ref": "urn:awrad:sync:1#/$defs/uuid",
+        "description": "The local ID a profile created by this event gets."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "prompt",
+      "registry",
+      "queue_all",
+      "sync",
+      "erased"
+    ],
+    "properties": {
+      "prompt": {
+        "enum": [
+          null,
+          "anonymous_data",
+          "unsent_changes",
+          "account_deleted"
+        ]
+      },
+      "registry": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "profiles",
+          "active_profile_id",
+          "signed_in_account_id"
+        ],
+        "properties": {
+          "profiles": {
+            "description": "Every profile on the phone, in creation order. Each is its own local database.",
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "profile_id",
+                "account_id",
+                "email",
+                "after",
+                "has_data",
+                "has_unsent"
+              ],
+              "properties": {
+                "profile_id": {
+                  "$ref": "urn:awrad:sync:1#/$defs/uuid",
+                  "description": "Local ID, a UUIDv7 made on the phone."
+                },
+                "account_id": {
+                  "oneOf": [
+                    {
+                      "$ref": "urn:awrad:sync:1#/$defs/uuid"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "null only for the anonymous profile."
+                },
+                "email": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "For display; null for the anonymous profile."
+                },
+                "after": {
+                  "$ref": "urn:awrad:sync:1#/$defs/revision",
+                  "description": "This profile's changes-feed position."
+                },
+                "has_data": {
+                  "type": "boolean",
+                  "description": "Holds at least one custom dhikr, tag or personal record."
+                },
+                "has_unsent": {
+                  "type": "boolean",
+                  "description": "Its queue holds commands not yet acknowledged."
+                }
+              }
+            }
+          },
+          "active_profile_id": {
+            "$ref": "urn:awrad:sync:1#/$defs/uuid"
+          },
+          "signed_in_account_id": {
+            "oneOf": [
+              {
+                "$ref": "urn:awrad:sync:1#/$defs/uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "queue_all": {
+        "oneOf": [
+          {
+            "$ref": "urn:awrad:sync:1#/$defs/uuid"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "sync": {
+        "oneOf": [
+          {
+            "$ref": "urn:awrad:sync:1#/$defs/uuid"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "erased": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:sync:1#/$defs/uuid"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "scenario_01_anonymous_edit_is_saved_not_queued",
+      "description": "Scenario step 1. Before any sign-in there is one anonymous profile. An edit is saved there; nothing is queued, because the data belongs to no account yet.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "edit"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "queue_all": null,
+        "sync": null,
+        "erased": []
+      }
+    },
+    {
+      "id": "scenario_02_first_sign_in_add_to_account",
+      "description": "Scenario step 2. The first sign-in (A) finds anonymous data and asks once. Add to my account: the anonymous profile becomes A's, every entity in it is queued as a put, and the phone sends and then pulls A's data.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina@example.com"
+        },
+        "choice": "add_to_account",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": "anonymous_data",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 0,
+              "has_data": true,
+              "has_unsent": true
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": "0192f0e0-0000-7000-8000-000000000001",
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": []
+      }
+    },
+    {
+      "id": "scenario_03_sign_out_keeps_profile",
+      "description": "Scenario step 3. The queue has been sent (after 14). Signing out keeps A's profile active; nothing is erased or sent.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "event": {
+          "type": "sign_out"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "queue_all": null,
+        "sync": null,
+        "erased": []
+      }
+    },
+    {
+      "id": "scenario_04_edit_while_signed_out_is_queued_not_sent",
+      "description": "Scenario step 4. Signed out, edits go on being saved and queued for A; they just aren't sent.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "edit"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "queue_all": null,
+        "sync": null,
+        "erased": []
+      }
+    },
+    {
+      "id": "scenario_05_sign_in_same_account_sends_queue",
+      "description": "Scenario step 5. Signing in as A again asks nothing: A's profile stays active and its queue is sent, then pulled.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina@example.com"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": null,
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": []
+      }
+    },
+    {
+      "id": "scenario_06_sign_in_other_account_switches",
+      "description": "Scenario step 6. A signed out with edits still unsent (say the phone was offline). Signing in as B switches to a new profile for B, downloaded fresh; A's profile and its unsent commands stay untouched.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000002",
+          "email": "bilal@example.com"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "queue_all": null,
+        "sync": "0192f0e0-0000-7000-8000-000000000003",
+        "erased": []
+      }
+    },
+    {
+      "id": "scenario_07_sign_in_first_account_again",
+      "description": "Scenario step 7. B has synced and signed out. Signing in as A makes A's profile active again, with no question, and only now are A's kept commands sent, with A's token.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina@example.com"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": null,
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": []
+      }
+    },
+    {
+      "id": "first_sign_in_erase",
+      "description": "At the first sign-in the user chooses Erase: the anonymous profile is deleted and A's profile is downloaded fresh into a new one.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina@example.com"
+        },
+        "choice": "erase",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": "anonymous_data",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": null,
+        "sync": "0192f0e0-0000-7000-8000-000000000003",
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000001"
+        ]
+      }
+    },
+    {
+      "id": "first_sign_in_empty_anonymous_no_prompt",
+      "description": "An empty anonymous profile needs no question: it simply becomes A's profile and A's data is downloaded into it.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina@example.com"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": null,
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": []
+      }
+    },
+    {
+      "id": "edit_while_signed_in_sends",
+      "description": "Signed in as the active profile's account, an edit is queued and sent (after the debounce).",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "event": {
+          "type": "edit"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": null,
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": []
+      }
+    },
+    {
+      "id": "sign_in_updates_profile_email",
+      "description": "The profile's display email follows the account's current email at sign-in.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina.new@example.com"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina.new@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": null,
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": []
+      }
+    },
+    {
+      "id": "remove_profile_with_unsent_warns_then_removes",
+      "description": "Remove from this device on a profile with unsent changes warns first; confirming erases it, unsent commands included.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "event": {
+          "type": "remove_profile",
+          "profile_id": "0192f0e0-0000-7000-8000-000000000001"
+        },
+        "choice": "remove",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": "unsent_changes",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "queue_all": null,
+        "sync": null,
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000001"
+        ]
+      }
+    },
+    {
+      "id": "remove_profile_with_unsent_cancelled",
+      "description": "Cancelling the warning keeps everything.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "event": {
+          "type": "remove_profile",
+          "profile_id": "0192f0e0-0000-7000-8000-000000000001"
+        },
+        "choice": "cancel",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": "unsent_changes",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "queue_all": null,
+        "sync": null,
+        "erased": []
+      }
+    },
+    {
+      "id": "remove_profile_without_unsent_no_warning",
+      "description": "A profile with nothing unsent is removed without the warning.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "event": {
+          "type": "remove_profile",
+          "profile_id": "0192f0e0-0000-7000-8000-000000000001"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "queue_all": null,
+        "sync": null,
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000001"
+        ]
+      }
+    },
+    {
+      "id": "remove_active_profile_starts_anonymous",
+      "description": "Removing the active profile signs its account out and leaves a fresh, empty anonymous profile active, as on a new install.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "event": {
+          "type": "remove_profile",
+          "profile_id": "0192f0e0-0000-7000-8000-000000000002"
+        },
+        "choice": null,
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": null,
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": null
+        },
+        "queue_all": null,
+        "sync": null,
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000002"
+        ]
+      }
+    },
+    {
+      "id": "account_deleted_profile_removed",
+      "description": "When the phone learns that a profile's account no longer exists, it offers to remove that profile; its unsent changes can never be sent, so there's no separate warning.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "event": {
+          "type": "account_deleted",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "choice": "remove",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": "account_deleted",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "queue_all": null,
+        "sync": null,
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000001"
+        ]
+      }
+    },
+    {
+      "id": "account_deleted_profile_kept",
+      "description": "The user may keep the deleted account's profile on the phone; nothing of it is ever sent again.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "event": {
+          "type": "account_deleted",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "choice": "keep",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": "account_deleted",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": true
+            },
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000002",
+              "account_id": "0192f0b0-0000-7000-8000-000000000002",
+              "email": "bilal@example.com",
+              "after": 9,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000002",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000002"
+        },
+        "queue_all": null,
+        "sync": null,
+        "erased": []
+      }
+    },
+    {
+      "id": "account_deleted_active_profile",
+      "description": "If the deleted account is the active, signed-in one, it's signed out; removing its profile leaves a fresh anonymous profile.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 14,
+              "has_data": true,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "event": {
+          "type": "account_deleted",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "choice": "remove",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003"
+      },
+      "expect": {
+        "prompt": "account_deleted",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000003",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": false,
+              "has_unsent": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+          "signed_in_account_id": null
+        },
+        "queue_all": null,
+        "sync": null,
+        "erased": [
+          "0192f0e0-0000-7000-8000-000000000001"
+        ]
+      }
+    }
+  ]
+}
