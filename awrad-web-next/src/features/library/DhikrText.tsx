@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { localized, transliterationFor, type Dhikr } from "@/shared/dhikr-catalog";
 import { useLanguage } from "@/shared/i18n";
 import { Card } from "@/shared/ui/Card";
-import { AudioPlayer } from "./AudioPlayer";
+import { AudioPlayer, type PlayerSource } from "./AudioPlayer";
 import { quranReference, referenceLabel } from "./referenceLabel";
 
 /** A labelled block of text under the Arabic: the transliteration or the translation. */
@@ -33,13 +33,32 @@ function ArabicText({ dhikr }: { dhikr: Dhikr }): ReactElement {
   );
 }
 
-/** The card holding the recited text, with the audio player bar at its bottom when there's a recording. */
-function TextCard({ dhikr, children }: { dhikr: Dhikr; children: ReactNode }): ReactElement {
+/** A recording the catalog doesn't have: a custom dhikr's upload, by its asset ID (so a new one plays afresh). */
+export interface Recording {
+  id: string;
+  source: PlayerSource;
+}
+
+/**
+ * The card holding the recited text, with the audio player bar at its bottom when there's a
+ * recording: the catalog's, or the one given (a custom dhikr's upload).
+ */
+function TextCard({
+  dhikr,
+  recording,
+  children,
+}: {
+  dhikr: Dhikr;
+  recording: Recording | null;
+  children: ReactNode;
+}): ReactElement {
+  const player: Recording | null =
+    recording ?? (dhikr.audio === null ? null : { id: dhikr.key, source: { kind: "url", url: dhikr.audio.url } });
   return (
     <Card>
       <div className="flex flex-col items-center gap-lg py-sm">
         {children}
-        {dhikr.audio !== null && <AudioPlayer key={dhikr.key} audio={dhikr.audio} />}
+        {player !== null && <AudioPlayer key={player.id} source={player.source} />}
       </div>
     </Card>
   );
@@ -53,15 +72,16 @@ function TextCard({ dhikr, children }: { dhikr: Dhikr; children: ReactNode }): R
  * - `dhikr`, `dua`, `salawat`: the Arabic, then the transliteration and translation.
  * The transliteration and translation are in the UI language, falling back to English; Arabic
  * shows no transliteration. A text the dhikr doesn't have (a custom dhikr's) leaves its section out.
+ * The player bar plays the catalog's recording, or `recording` (a custom dhikr's upload).
  */
-export function DhikrText({ dhikr }: { dhikr: Dhikr }): ReactElement {
+export function DhikrText({ dhikr, recording = null }: { dhikr: Dhikr; recording?: Recording | null }): ReactElement {
   const { t } = useTranslation();
   const language = useLanguage();
   const translation = localized(dhikr.translation, language);
 
   if (dhikr.kind === "name_of_allah") {
     return (
-      <TextCard dhikr={dhikr}>
+      <TextCard dhikr={dhikr} recording={recording}>
         <p lang="ar" dir="rtl" className="text-center text-name-of-allah text-on-surface">
           {dhikr.arabic}
         </p>
@@ -76,7 +96,7 @@ export function DhikrText({ dhikr }: { dhikr: Dhikr }): ReactElement {
   const reference = dhikr.kind === "quran" ? quranReference(dhikr) : undefined;
   return (
     <>
-      <TextCard dhikr={dhikr}>
+      <TextCard dhikr={dhikr} recording={recording}>
         <ArabicText dhikr={dhikr} />
         {reference !== undefined && (
           <p className="text-caption text-on-surface-variant">{referenceLabel(reference, t, language)}</p>

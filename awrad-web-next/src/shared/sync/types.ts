@@ -15,6 +15,12 @@ export type Change = Schemas["SyncChange"];
 export type CascadedChange = Schemas["SyncCascadedChange"];
 export type Current = Schemas["SyncCurrent"];
 export type RejectionCode = Schemas["SyncRejectedReceipt"]["code"];
+/** An uploaded recording, as a custom dhikr names it (sync.schema.json `uploaded_audio`). */
+export type UploadedAudio = Schemas["UploadedAudio"];
+/** A recording that stays on the phone that imported it (slice 3b). */
+export interface LocalAudio {
+  local_only: true;
+}
 
 /** Text in each language, or `null` where the user gave none (API STYLE §3). */
 export interface Languages3 {
@@ -30,8 +36,11 @@ export interface CustomDhikrDocument {
   title: Languages3;
   transliteration: { en: string | null; ml: string | null };
   translation: Languages3;
-  /** A recording kept on the phone that added it; the web never has audio (uploads are slice 3c). */
-  audio: null | { local_only: true };
+  /**
+   * `null`, a recording kept on the phone that added it (`{local_only: true}`), or one uploaded to
+   * the account's private storage (slice 3c, contracts/audio/v1), which the web can add and play.
+   */
+  audio: null | LocalAudio | UploadedAudio;
   references: readonly Reference[];
 }
 
