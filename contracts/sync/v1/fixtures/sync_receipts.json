@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "sync_receipts",
-  "description": "The server side of post_sync_commands: given an account's sync state and a batch, the receipts and the resulting state. State: `entities` (one row per entity, in the changes-feed shape: version, state, the revision of its last change, and document, null when deleted), `head_revision`, stored `receipts` (each original command with its first receipt), `tag_aliases` (merged tag ID to surviving tag ID) and `audio_assets` (the account's audio uploads, `pending` or `ready`; contracts/audio/v1). Commands apply in order, each checked in this order: (1) a stored command_id replays as `duplicate` with the same payload, else `rejected` `command_id_reused` (not stored); (2) a dhikr_personal delete is `delete_not_allowed`; (3) a put's document must be valid (`document_invalid`, `document_too_large`); (4) a user_tag ID that is an alias, or a deleted entity, is `gone`; an entity the server doesn't have needs a put with base_version 0 (`entity_not_found`); otherwise base_version must equal its version (`conflict`); (5) entity rules: a user_tag create whose normalized name an active tag has is `merged`, a rename onto one is `tag_name_taken`, more than 100 active tags or 1,000 active custom dhikrs is `*_limit_reached`, a dhikr_personal needs a built-in or active custom dhikr (`dhikr_not_found`) and known tags (`tag_not_found`), with aliases rewritten to their tag, deleted tags dropped and repeats removed; and a custom_dhikr put whose audio names an asset_id that isn't a ready asset of the account (unknown, pending, or another account's) is `audio_not_found`, with a `not_found` field error on /document/audio/asset_id. Each applied command takes head_revision + 1 and adds one to the entity's version; its cascades (a deleted tag removed from dhikr_personal documents, a deleted custom dhikr's dhikr_personal deleted) share that revision, and the applied receipt of a user_tag or custom_dhikr delete lists them in `cascaded` ({entity_type, entity_id, state, version, revision}, ordered by entity_type, entity_id; empty when nothing cascaded; null on every other applied receipt) so phones can update their known versions at once. Every receipt except command_id_reused is stored. Expect: the receipts in batch order; the new head_revision; `changes`, the entities whose revision is now above the given head_revision, ordered by revision, entity_type, entity_id (what list_sync_changes returns after it); every tag alias, ordered by alias_id; and every stored command_id, sorted.",
+  "description": "The server side of post_sync_commands: given an account's sync state and a batch, the receipts and the resulting state. State: `entities` (one row per entity, in the changes-feed shape: version, state, the revision of its last change, and document, null when deleted), `head_revision`, stored `receipts` (each original command with its first receipt), `tag_aliases` (merged tag ID to surviving tag ID) and `audio_assets` (the account's audio uploads: asset_id, `pending` or `ready`, byte_size and content_type; contracts/audio/v1). Commands apply in order, each checked in this order: (1) a stored command_id replays as `duplicate` with the same payload, else `rejected` `command_id_reused` (not stored); (2) a dhikr_personal delete is `delete_not_allowed`; (3) a put's document must be valid (`document_invalid`, `document_too_large`); (4) a user_tag ID that is an alias, or a deleted entity, is `gone`; an entity the server doesn't have needs a put with base_version 0 (`entity_not_found`); otherwise base_version must equal its version (`conflict`); (5) entity rules: a user_tag create whose normalized name an active tag has is `merged`, a rename onto one is `tag_name_taken`, more than 100 active tags or 1,000 active custom dhikrs is `*_limit_reached`, a dhikr_personal needs a built-in or active custom dhikr (`dhikr_not_found`) and known tags (`tag_not_found`), with aliases rewritten to their tag, deleted tags dropped and repeats removed; and a custom_dhikr put whose audio names an asset_id that isn't a ready asset of the account (unknown, pending, or another account's) is `audio_not_found`, with a `not_found` field error on /document/audio/asset_id; one naming a ready asset but with a different byte_size or content_type is `audio_mismatch`, with a `mismatch` field error on each disagreeing member under /document/audio. Each applied command takes head_revision + 1 and adds one to the entity's version; its cascades (a deleted tag removed from dhikr_personal documents, a deleted custom dhikr's dhikr_personal deleted) share that revision, and the applied receipt of a user_tag or custom_dhikr delete lists them in `cascaded` ({entity_type, entity_id, state, version, revision}, ordered by entity_type, entity_id; empty when nothing cascaded; null on every other applied receipt) so phones can update their known versions at once. Every receipt except command_id_reused is stored. Expect: the receipts in batch order; the new head_revision; `changes`, the entities whose revision is now above the given head_revision, ordered by revision, entity_type, entity_id (what list_sync_changes returns after it); every tag alias, ordered by alias_id; and every stored command_id, sorted.",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#the-change-queue",
     "contracts/sync/v1/README.md",
@@ -79,13 +79,15 @@
           },
           "audio_assets": {
             "type": "array",
-            "description": "The account's audio uploads (contracts/audio/v1): only a ready one may be named by a custom dhikr document.",
+            "description": "The account's audio uploads (contracts/audio/v1) with their status and declared size and type: a custom dhikr document may name only a ready one, with the same byte_size and content_type.",
             "items": {
               "type": "object",
               "additionalProperties": false,
               "required": [
                 "asset_id",
-                "status"
+                "status",
+                "byte_size",
+                "content_type"
               ],
               "properties": {
                 "asset_id": {
@@ -96,6 +98,12 @@
                     "pending",
                     "ready"
                   ]
+                },
+                "byte_size": {
+                  "$ref": "urn:awrad:audio:1#/$defs/byte_size"
+                },
+                "content_type": {
+                  "$ref": "urn:awrad:audio:1#/$defs/content_type"
                 }
               }
             }
@@ -8600,11 +8608,15 @@
           "audio_assets": [
             {
               "asset_id": "0192f0e0-0000-7000-8000-000000000001",
-              "status": "ready"
+              "status": "ready",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
             },
             {
               "asset_id": "0192f0e0-0000-7000-8000-000000000002",
-              "status": "pending"
+              "status": "pending",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
             }
           ]
         },
@@ -8771,11 +8783,15 @@
           "audio_assets": [
             {
               "asset_id": "0192f0e0-0000-7000-8000-000000000001",
-              "status": "ready"
+              "status": "ready",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
             },
             {
               "asset_id": "0192f0e0-0000-7000-8000-000000000002",
-              "status": "pending"
+              "status": "pending",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
             }
           ]
         },
@@ -8959,11 +8975,15 @@
           "audio_assets": [
             {
               "asset_id": "0192f0e0-0000-7000-8000-000000000001",
-              "status": "ready"
+              "status": "ready",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
             },
             {
               "asset_id": "0192f0e0-0000-7000-8000-000000000002",
-              "status": "pending"
+              "status": "pending",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
             }
           ]
         },
@@ -9150,11 +9170,15 @@
           "audio_assets": [
             {
               "asset_id": "0192f0e0-0000-7000-8000-000000000001",
-              "status": "ready"
+              "status": "ready",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
             },
             {
               "asset_id": "0192f0e0-0000-7000-8000-000000000002",
-              "status": "pending"
+              "status": "pending",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
             }
           ]
         },
@@ -9257,6 +9281,781 @@
         "tag_aliases": [],
         "stored_receipts": [
           "0192f0c0-0000-7000-8000-000000000073"
+        ]
+      }
+    },
+    {
+      "id": "custom_dhikr_audio_size_mismatch_rejected",
+      "description": "A ready asset named with a byte_size other than the asset's is rejected with audio_mismatch, pointing at byte_size; the server's copy comes back to undo to.",
+      "given": {
+        "state": {
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 1,
+              "revision": 2,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "state": "active",
+              "version": 2,
+              "revision": 5,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            },
+            {
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 3,
+              "revision": 6,
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": {
+                  "local_only": true
+                },
+                "references": []
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "state": "active",
+              "version": 1,
+              "revision": 7,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+              "state": "deleted",
+              "version": 2,
+              "revision": 8,
+              "document": null
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 10,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001",
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": [
+            {
+              "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+              "status": "ready",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
+            },
+            {
+              "asset_id": "0192f0e0-0000-7000-8000-000000000002",
+              "status": "pending",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
+            }
+          ]
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000074",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+                "byte_size": 4182734,
+                "content_type": "audio/mpeg",
+                "duration_ms": 31250
+              },
+              "references": []
+            }
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000074",
+            "status": "rejected",
+            "code": "audio_mismatch",
+            "fields": [
+              {
+                "field": "/document/audio/byte_size",
+                "code": "mismatch"
+              }
+            ],
+            "current": {
+              "version": 3,
+              "state": "active",
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": {
+                  "local_only": true
+                },
+                "references": []
+              }
+            }
+          }
+        ],
+        "head_revision": 10,
+        "changes": [],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000074"
+        ]
+      }
+    },
+    {
+      "id": "custom_dhikr_audio_type_mismatch_rejected",
+      "description": "A ready asset named with a content_type other than the asset's is rejected with audio_mismatch, pointing at content_type.",
+      "given": {
+        "state": {
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 1,
+              "revision": 2,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "state": "active",
+              "version": 2,
+              "revision": 5,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            },
+            {
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 3,
+              "revision": 6,
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": {
+                  "local_only": true
+                },
+                "references": []
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "state": "active",
+              "version": 1,
+              "revision": 7,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+              "state": "deleted",
+              "version": 2,
+              "revision": 8,
+              "document": null
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 10,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001",
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": [
+            {
+              "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+              "status": "ready",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
+            },
+            {
+              "asset_id": "0192f0e0-0000-7000-8000-000000000002",
+              "status": "pending",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
+            }
+          ]
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000075",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+                "byte_size": 4182733,
+                "content_type": "audio/mp4",
+                "duration_ms": 31250
+              },
+              "references": []
+            }
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000075",
+            "status": "rejected",
+            "code": "audio_mismatch",
+            "fields": [
+              {
+                "field": "/document/audio/content_type",
+                "code": "mismatch"
+              }
+            ],
+            "current": {
+              "version": 3,
+              "state": "active",
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": {
+                  "local_only": true
+                },
+                "references": []
+              }
+            }
+          }
+        ],
+        "head_revision": 10,
+        "changes": [],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000075"
+        ]
+      }
+    },
+    {
+      "id": "custom_dhikr_audio_size_and_type_mismatch_rejected",
+      "description": "Every disagreeing member is reported, sorted by field.",
+      "given": {
+        "state": {
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 1,
+              "revision": 2,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "state": "active",
+              "version": 2,
+              "revision": 5,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            },
+            {
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 3,
+              "revision": 6,
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": {
+                  "local_only": true
+                },
+                "references": []
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "state": "active",
+              "version": 1,
+              "revision": 7,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+              "state": "deleted",
+              "version": 2,
+              "revision": 8,
+              "document": null
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 10,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001",
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": [
+            {
+              "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+              "status": "ready",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
+            },
+            {
+              "asset_id": "0192f0e0-0000-7000-8000-000000000002",
+              "status": "pending",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
+            }
+          ]
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000076",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+                "byte_size": 1,
+                "content_type": "audio/mp4",
+                "duration_ms": 31250
+              },
+              "references": []
+            }
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000076",
+            "status": "rejected",
+            "code": "audio_mismatch",
+            "fields": [
+              {
+                "field": "/document/audio/byte_size",
+                "code": "mismatch"
+              },
+              {
+                "field": "/document/audio/content_type",
+                "code": "mismatch"
+              }
+            ],
+            "current": {
+              "version": 3,
+              "state": "active",
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": {
+                  "local_only": true
+                },
+                "references": []
+              }
+            }
+          }
+        ],
+        "head_revision": 10,
+        "changes": [],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000076"
+        ]
+      }
+    },
+    {
+      "id": "custom_dhikr_audio_duration_is_not_compared",
+      "description": "duration_ms is the client's measurement, which the asset doesn't record: any value, or null, applies.",
+      "given": {
+        "state": {
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 1,
+              "revision": 2,
+              "document": {
+                "name": "Morning",
+                "normalized_name": "morning"
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000002",
+              "state": "active",
+              "version": 2,
+              "revision": 5,
+              "document": {
+                "name": "Evening",
+                "normalized_name": "evening"
+              }
+            },
+            {
+              "entity_type": "custom_dhikr",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 3,
+              "revision": 6,
+              "document": {
+                "kind": "dhikr",
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "transliteration": {
+                  "en": "Subhanallah",
+                  "ml": null
+                },
+                "translation": {
+                  "en": "Glory be to Allah",
+                  "ar": null,
+                  "ml": null
+                },
+                "audio": {
+                  "local_only": true
+                },
+                "references": []
+              }
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+              "state": "active",
+              "version": 1,
+              "revision": 7,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001"
+                ]
+              }
+            },
+            {
+              "entity_type": "user_tag",
+              "entity_id": "0192f0a0-0000-7000-8000-000000000009",
+              "state": "deleted",
+              "version": 2,
+              "revision": 8,
+              "document": null
+            },
+            {
+              "entity_type": "dhikr_personal",
+              "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 10,
+              "document": {
+                "tag_ids": [
+                  "0192f0a0-0000-7000-8000-000000000001",
+                  "0192f0a0-0000-7000-8000-000000000002"
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": [
+            {
+              "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+              "status": "ready",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
+            },
+            {
+              "asset_id": "0192f0e0-0000-7000-8000-000000000002",
+              "status": "pending",
+              "byte_size": 4182733,
+              "content_type": "audio/mpeg"
+            }
+          ]
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000077",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 3,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+                "byte_size": 4182733,
+                "content_type": "audio/mpeg",
+                "duration_ms": null
+              },
+              "references": []
+            }
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000077",
+            "status": "applied",
+            "version": 4,
+            "revision": 11,
+            "cascaded": null
+          }
+        ],
+        "head_revision": 11,
+        "changes": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 4,
+            "revision": 11,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": {
+                "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+                "byte_size": 4182733,
+                "content_type": "audio/mpeg",
+                "duration_ms": null
+              },
+              "references": []
+            }
+          }
+        ],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000077"
         ]
       }
     }

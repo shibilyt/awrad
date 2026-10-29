@@ -657,6 +657,7 @@ components:
             - delete_not_allowed
             - command_id_reused
             - audio_not_found
+            - audio_mismatch
         fields:
           type: array
           items:
@@ -749,7 +750,8 @@ components:
       description: >-
         A recording uploaded to the account's private storage (sync.schema.json `uploaded_audio`). Every member is
         present. A put naming an `asset_id` that isn't a ready asset of the account is `rejected` with
-        `audio_not_found`.
+        `audio_not_found`; one whose `byte_size` or `content_type` differs from the asset's is `rejected` with
+        `audio_mismatch`.
       properties:
         asset_id:
           $ref: "#/components/schemas/Uuid"

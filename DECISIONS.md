@@ -870,7 +870,7 @@ Slice 3b keeps a custom dhikr's recording on the phone that imported it (`{"loca
   - Clients ask for a new link when one expires, and never store links.
 - **R2 enforces the checksum.** The client declares the file's SHA-256 when it reserves the upload. The `PUT` link is signed with `x-amz-checksum-sha256` and `content-type`, so R2 itself refuses other bytes or another type. Confirming the upload checks the stored object's size, type and checksum again, and deletes an object that doesn't match. The server never decodes audio.
 - **Limits in decimal bytes:** 1 to 10,000,000 bytes per file; 500,000,000 bytes per account, ready and pending uploads together; `audio/mpeg` and `audio/mp4` only, matched exactly. Checked in that order of type, size, then quota, by clients before they ask and by the server (`contracts/audio/v1/fixtures/audio_upload_validity.json`).
-- **A document names only a ready asset.** The custom dhikr document's `audio` may be an uploaded recording `{asset_id, byte_size, content_type, duration_ms}`. A put naming anything but a ready asset of the account is `rejected` with `audio_not_found`.
+- **A document names only a ready asset.** The custom dhikr document's `audio` may be an uploaded recording `{asset_id, byte_size, content_type, duration_ms}`. A put naming anything but a ready asset of the account is `rejected` with `audio_not_found`; one whose size or type isn't the asset's is `rejected` with `audio_mismatch`. A phone never loses an edit to either: it keeps its document, falls back to `{"local_only": true}` and uploads again if it still has the file (or `null` if not), and queues the put again.
 - **Cleanup after 24 hours.** Server jobs delete a pending upload never confirmed within 24 hours, and a ready asset that no active custom dhikr has referenced for 24 hours (replaced, removed, or its dhikr deleted). The delay lets a queued edit that still names the asset land. Deleting the account deletes all its objects.
 - **Phones cache.** A phone downloads a recording on first play into the active profile's files and plays it from there afterwards, offline too. The cached file goes when the dhikr's audio changes or the dhikr is deleted. The web plays from the signed link. Signed out, recordings stay local as in 3b, and nothing is uploaded.
 - **Secrets come from the environment only:** `AWRAD_R2_ACCOUNT_ID`, `AWRAD_R2_PRIVATE_BUCKET`, `AWRAD_R2_ACCESS_KEY_ID` and `AWRAD_R2_SECRET_ACCESS_KEY`. Locally they live in `awrad-server-next/mise.local.toml`, which git ignores; in production, in Dokploy environment variables. They're never committed, logged or sent to clients; clients only ever see signed links.
@@ -888,7 +888,7 @@ Slice 3b keeps a custom dhikr's recording on the phone that imported it (`{"loca
 
 - `docs/slices/03c-audio-upload.md`
 - `contracts/audio/v1/` (README, `audio.schema.json`, `fixtures/audio_upload_validity.json`)
-- `contracts/sync/v1/sync.schema.json` (`$defs/uploaded_audio`, `audio_not_found`) and its fixtures
+- `contracts/sync/v1/sync.schema.json` (`$defs/uploaded_audio`, `audio_not_found`, `audio_mismatch`) and its fixtures (`custom_dhikr_validity`, `sync_receipts`, `apply_changes`)
 - `contracts/api/paths/audio.yaml`
 - `contracts/tools/check-audio-contract.mjs`
 

@@ -48,7 +48,7 @@ The bytes go straight between the client and storage; they never pass through th
    - No object yet: `409 upload_incomplete`. PUT again, then confirm again.
    - A mismatch: the server deletes the object and the pending upload, and answers `422 upload_mismatch`. The recording stays local; a retry starts over with a new `asset_id`.
    - An unknown `asset_id`, another account's, or one already cleaned up: `404`.
-4. **Point the dhikr at it.** The client queues the custom dhikr `put` whose `audio` is `{asset_id, byte_size, content_type, duration_ms}`, through the change queue as usual. A put naming an `asset_id` that isn't a ready asset of the account is `rejected` with `audio_not_found` ([`sync_receipts.json`](../../sync/v1/fixtures/sync_receipts.json)). So a client always completes the upload before it queues the put.
+4. **Point the dhikr at it.** The client queues the custom dhikr `put` whose `audio` is `{asset_id, byte_size, content_type, duration_ms}`, through the change queue as usual. `byte_size` and `content_type` are copied from the asset. A put naming an `asset_id` that isn't a ready asset of the account is `rejected` with `audio_not_found`; one whose `byte_size` or `content_type` isn't the asset's is `rejected` with `audio_mismatch` ([`sync_receipts.json`](../../sync/v1/fixtures/sync_receipts.json)). So a client always completes the upload before it queues the put.
 
 ## Playing
 
@@ -84,12 +84,15 @@ A cleaned-up `asset_id` is gone for good: a put naming it is `audio_not_found`, 
 - **"Add to my account"** (slice 3b) uploads each local recording, then queues its dhikr.
 - **A recording that can't upload** (`storage_full`, `file_too_large`, `unsupported_audio_type`, `invalid_size`, `upload_mismatch`) stays local, with a notice ("Audio couldn't be uploaded: storage full"). The dhikr still syncs, with `{"local_only": true}`.
 - **Pending uploads persist** in the profile, alongside the change queue, and survive restarts.
+- **An `audio_not_found` or `audio_mismatch` rejection loses nothing** ([`apply_changes.json`](../../sync/v1/fixtures/apply_changes.json); sync README, "Sending and pulling"). The phone keeps its local document. If the recording's file is still on the phone, `audio` goes back to `{"local_only": true}` and the upload is queued again under a new `asset_id`; otherwise `audio` becomes `null`. Either way a put of the kept document is queued on the server's version, ahead of other unsent commands, and the user gets a notice.
 
 ## Fixtures
 
 | File | Who runs it | Cases |
 |---|---|---|
 | `audio_upload_validity.json` | All four | `byte_size`, `content_type` and `used_bytes`: allowed, or the error |
+
+The sync fixtures cover the rest: `custom_dhikr_validity` (the document's `audio` shape), `sync_receipts` (`audio_not_found`, `audio_mismatch`) and `apply_changes` (phones keeping an audio-rejected edit).
 
 `npm test` in `contracts/` validates the fixture and runs `tools/check-audio-contract.mjs`. That script checks that:
 - the OpenAPI examples match `audio.schema.json`, and a reserved upload's headers carry the request's type and its SHA-256 in base64;

@@ -72,7 +72,7 @@ Everything else, including a document that breaks its schema, is a `rejected` re
      - repeats are removed, keeping first-occurrence order.
 
      An ID the account never had is `rejected` with `tag_not_found`.
-   - A `custom_dhikr` put whose `audio` names an `asset_id` that isn't a ready asset of the account (never uploaded, still pending, cleaned up, or another account's) is `rejected` with `audio_not_found`, with a `not_found` error on `/document/audio/asset_id`. Clients confirm the upload before they queue the put.
+   - A `custom_dhikr` put whose `audio` names an `asset_id` that isn't a ready asset of the account (never uploaded, still pending, cleaned up, or another account's) is `rejected` with `audio_not_found`, with a `not_found` error on `/document/audio/asset_id`. One naming a ready asset but with a different `byte_size` or `content_type` is `rejected` with `audio_mismatch`, with a `mismatch` error on each disagreeing member (`/document/audio/byte_size`, `/document/audio/content_type`). `duration_ms` isn't compared. Clients confirm the upload before they queue the put, and copy the asset's size and type.
 6. **Apply.** The command takes `head_revision + 1`.
    - Deleting a tag removes it from every `dhikr_personal` that has it.
    - Deleting a custom dhikr deletes its `dhikr_personal`.
@@ -132,6 +132,7 @@ Returns `{changes, next_after, has_more, head_revision}`. Each change is an enti
 | 64 KB per document: at most 65,536 UTF-8 bytes of its compact JSON, non-ASCII unescaped | Server: `document_too_large` |
 | Uploaded audio: 1–10,000,000 bytes, `audio/mpeg` or `audio/mp4` | Schema: `document_invalid` (`invalid` on `/audio`) |
 | Uploaded audio names a ready asset of the account | Server: `audio_not_found` |
+| Uploaded audio's `byte_size` and `content_type` are the asset's | Server: `audio_mismatch` |
 | Upload limits (per file, 500,000,000 bytes per account, types) | [`../../audio/v1/`](../../audio/v1/), at upload time |
 | Changes page: `limit` 1–500, default 200 | Schema (OpenAPI) |
 | Receipts kept 90 days | Server |
@@ -165,7 +166,14 @@ The rules are in [`fixtures/apply_changes.json`](fixtures/apply_changes.json).
    | `conflict` | Keeps the local edit and opens a conflict ("Changed on another device": **Keep mine** re-queues it on the server's version, **Use theirs** takes the server's copy). Later unsent commands for the entity are dropped |
    | `merged` | Rewrites the tag ID everywhere locally, in documents and unsent commands |
    | `gone` | Removes the entity |
-   | `rejected` | Restores the server's copy, or removes the entity, and tells the user |
+   | `rejected` | Restores the server's copy, or removes the entity, and tells the user. Except `audio_not_found` and `audio_mismatch` on a custom dhikr put (below) |
+
+   **Audio rejections lose nothing.** A custom dhikr put rejected with `audio_not_found` or `audio_mismatch` (for example, its asset was cleaned up while the put waited offline) keeps the local document:
+   - if the recording's file is still on the phone, `audio` goes back to `{"local_only": true}` and the upload is queued again; it gets a new `asset_id`, and once confirmed it queues its own put naming the new asset;
+   - otherwise `audio` becomes `null`;
+   - the known version becomes the server's (`current.version`, or 0 when `current` is `null`), and the entity's unsent commands are replaced by one put of the kept document on that version, queued ahead of every other unsent command, where the rejected put was. So a dhikr whose create was rejected reaches the server before its personal record does, and its text syncs now rather than after the upload;
+   - if the user has deleted the dhikr since, its unsent delete is replaced by a delete on the server's version, or dropped when the server has no copy;
+   - the user gets a notice with the code.
 
 2. Pull pages from the stored `after`. Each page is applied in one transaction together with its `next_after`.
    - A change other than a delete, to an entity with a queued command or an open conflict, updates only its known version.
@@ -211,7 +219,7 @@ Each account's data lives in its own **profile**, a separate local database. A r
 | `sync_receipts.json` | Server | A state (entities, receipts, tag aliases, audio assets) and a batch: receipts, head, changes, aliases, stored receipts |
 | `sync_changes_feed.json` | Server | Entities, `after`, `limit`: the page |
 | `outbox_enqueue.json` | Android, iOS | Known versions, queue and an edit: the queue |
-| `apply_changes.json` | Android, iOS | Local state and a page, receipts or a resolution: local state and notices |
+| `apply_changes.json` | Android, iOS | Local state, which recording files are on the phone, and a page, receipts or a resolution: local state, uploads queued again and notices |
 | `profile_switch.json` | Android, iOS | Registry, event and choice: the prompt, the registry, what's queued, merged, synced and erased |
 
 `npm test` in `contracts/` validates the fixtures and runs `tools/check-sync-contract.mjs`. That script checks that:
@@ -219,5 +227,6 @@ Each account's data lives in its own **profile**, a separate local database. A r
 - `custom_dhikr_validity` agrees with `$defs/custom_dhikr_document` plus the Qur'an range rule, with a `range` error for each reversed range;
 - the non-rejected commands in `sync_receipts` are valid commands;
 - each `applied` receipt in `sync_receipts` has `cascaded` exactly when its command is a `user_tag` or `custom_dhikr` delete, listing the entities changed at its revision;
-- in `sync_receipts`, a put naming uploaded audio is applied only for a ready asset, and `audio_not_found` exactly when the asset isn't ready;
+- in `sync_receipts`, a put naming uploaded audio is applied only for a ready asset with the same size and type, `audio_not_found` exactly when the asset isn't ready, and `audio_mismatch` exactly when it is ready but disagrees;
+- in `apply_changes`, an `audio_not_found` or `audio_mismatch` rejection keeps the local document, fixes its audio, re-queues it ahead of other unsent commands, queues the upload again exactly when the file is on the phone, and adds a notice;
 - the names `tag_name_normalization` accepts make valid tag documents.
