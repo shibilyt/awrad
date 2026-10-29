@@ -136,11 +136,12 @@ Each slice goes contract → server → Android → iOS → web and is done only
 | 3d | Practice settings (proposed): day reset, week start, Hijri corrections, location and device context, the account policy API | [ ] |
 | 4 | Goals: create, edit, evaluate; offline-first on mobile; synced through the change queue from 3b | [ ] |
 | 5 | Counting and progress sync | [ ] |
-| 6+ | Onboarding, wird, reminders, community / collective counters | [ ] |
+| 6 | Onboarding: the full first-run flow (intro, language, and the steps that set up practice settings, reminders and a first goal), built after 3d and 4 (decided 2026-10-29). Optional sign-in only, never a gate (ADR-2026-10-28) | [ ] |
+| 7+ | Wird, reminders, Home screen (Hijri date, today's goals, next prayer), prayer times, history and stats, community / collective counters: to be split into slices | [ ] |
 | later | Sequenced dhikr in one goal (e.g. Tasbih Fatimah 33/33/34): its own brief; relates to "Practice plan" | [ ] |
 | later | Carry-over / make-up rule: a missed amount moves to the next due day | [ ] |
 
-**Decided 2026-10-27:** dhikrs first (3a, 3b), then goals built together with sync (option B: the change queue and goal sync in one slice). Sync moved to 3b on 2026-10-28 (custom dhikrs and tags are its first users); practice settings (3d) is still proposed.
+**Decided 2026-10-27:** dhikrs first (3a, 3b), then goals built together with sync (option B: the change queue and goal sync in one slice). Sync moved to 3b on 2026-10-28 (custom dhikrs and tags are its first users); practice settings (3d) is next (2026-10-29), then goals (4), then onboarding (6).
 
 **Revisit as slices progress:** the provisional judgment calls in [slice 1's fixtures](slices/01-domain-foundation.md#judgment-calls-accepted-provisionally-2026-10-25): partial-period required days, future counts ignored, `not_due` outside the period, anchor after start, one-time = cumulative. (The sixth, a missing streak-threshold value, was settled on 2026-10-26: such goals are invalid.) Re-check each one when slice 3 (goals) builds validation and screens.
 
