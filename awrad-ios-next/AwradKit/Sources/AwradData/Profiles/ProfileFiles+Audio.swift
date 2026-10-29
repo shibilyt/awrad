@@ -22,7 +22,7 @@ extension ProfileFiles {
     /// The uploaded recording's copy on this phone, if there is one.
     func cachedAudio(_ audio: UploadedAudio, profile: AwradID) -> URL? {
         let url = cacheURL(audio, profile: profile)
-        return FileManager.default.fileExists(atPath: url.path()) ? url : nil
+        return FileManager.default.fileExists(atPath: url.path(percentEncoded: false)) ? url : nil
     }
 
     /// Where each custom dhikr's recording is on this phone: its imported file, else the cached copy
@@ -44,7 +44,7 @@ extension ProfileFiles {
     func cacheUploaded(_ file: URL, as audio: UploadedAudio, profile: AwradID) {
         let destination = cacheURL(audio, profile: profile)
         let manager = FileManager.default
-        guard !manager.fileExists(atPath: destination.path()) else { return }
+        guard !manager.fileExists(atPath: destination.path(percentEncoded: false)) else { return }
         try? manager.createDirectory(at: cacheDirectory(profile), withIntermediateDirectories: true)
         if (try? manager.linkItem(at: file, to: destination)) == nil {
             try? manager.copyItem(at: file, to: destination)
@@ -62,20 +62,27 @@ extension ProfileFiles {
     }
 
     /// Moves a finished download into the cache: first next to it, then renamed into place, so a
-    /// cached file is always whole.
+    /// cached file is always whole. A copy already in place (a play that finished first) is
+    /// replaced atomically; on any failure nothing is left in `Partial/`.
     func storeDownload(_ download: URL, as audio: UploadedAudio, profile: AwradID) throws -> URL {
         let manager = FileManager.default
         let partial = cacheDirectory(profile).appending(path: "Partial", directoryHint: .isDirectory)
-        try manager.createDirectory(at: partial, withIntermediateDirectories: true)
         let staging = partial.appending(path: AwradID.random().description)
-        try manager.moveItem(at: download, to: staging)
         let destination = cacheURL(audio, profile: profile)
-        if manager.fileExists(atPath: destination.path()) {
-            _ = try manager.replaceItemAt(destination, withItemAt: staging)
-        } else {
-            try manager.moveItem(at: staging, to: destination)
+        do {
+            try manager.createDirectory(at: partial, withIntermediateDirectories: true)
+            try manager.moveItem(at: download, to: staging)
+            do {
+                try manager.moveItem(at: staging, to: destination)
+            } catch CocoaError.fileWriteFileExists {
+                _ = try manager.replaceItemAt(destination, withItemAt: staging)
+            }
+            return destination
+        } catch {
+            try? manager.removeItem(at: staging)
+            try? manager.removeItem(at: download)
+            throw error
         }
-        return destination
     }
 
     /// Removes recordings no document needs: cached copies of assets no custom dhikr names, and

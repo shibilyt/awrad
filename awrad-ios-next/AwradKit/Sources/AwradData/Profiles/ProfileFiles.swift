@@ -62,7 +62,8 @@ struct ProfileFiles: Sendable {
         } catch {
             Self.log.error("Profile store incompatible, recreating (pre-release policy)")
             for suffix in ["", "-shm", "-wal"] {
-                try? FileManager.default.removeItem(at: URL(filePath: storeURL(profile).path() + suffix))
+                try? FileManager.default.removeItem(
+                    at: URL(filePath: storeURL(profile).path(percentEncoded: false) + suffix))
             }
             return try ModelContainer(for: ProfileSchema.schema, configurations: configuration)
         }
@@ -109,7 +110,7 @@ struct ProfileFiles: Sendable {
     /// The custom dhikr's recording on this device.
     func audioURL(for dhikr: AwradID, profile: AwradID) -> URL? {
         Self.audioExtensions.map { audioDirectory(profile).appending(path: "\(dhikr).\($0)") }
-            .first { FileManager.default.fileExists(atPath: $0.path()) }
+            .first { FileManager.default.fileExists(atPath: $0.path(percentEncoded: false)) }
     }
 
     /// Moves a staged recording into place as the dhikr's, replacing any earlier one.

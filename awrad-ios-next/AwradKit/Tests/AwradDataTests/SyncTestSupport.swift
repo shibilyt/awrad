@@ -21,7 +21,7 @@ struct StoreHarness {
 
     /// `signedIn`: whether the account is signed in when the store opens.
     init(signedIn: Bool, serverAccount: AwradID? = nil) async throws {
-        directory = FileManager.default.temporaryDirectory.appending(path: "awrad-profiles-\(AwradID.random())")
+        directory = TestDirectory.profiles("awrad-profiles")
         account = FakeAccountService()
         accountID = try await account.signIn(email: Self.email, password: "password").id
         if !signedIn { await account.signOut() }
@@ -74,7 +74,23 @@ struct StoreHarness {
     }
 
     func removeDirectory() {
-        try? FileManager.default.removeItem(at: directory)
+        TestDirectory.remove(directory)
+    }
+}
+
+/// A fresh profiles root for a test. Like the app's `Library/Application Support/Profiles`, its
+/// path has a space, and non-ASCII characters too, so a file-system call handed a percent-encoded
+/// path (`URL.path()` gives `Application%20Support`) fails here just as it does in the app.
+enum TestDirectory {
+    static func profiles(_ name: String) -> URL {
+        FileManager.default.temporaryDirectory
+            .appending(path: "\(name)-\(AwradID.random())", directoryHint: .isDirectory)
+            .appending(path: "Application Support/Profilé s", directoryHint: .isDirectory)
+    }
+
+    /// Removes the test's whole temporary folder: `profiles` and the picked files beside it.
+    static func remove(_ profiles: URL) {
+        try? FileManager.default.removeItem(at: profiles.deletingLastPathComponent().deletingLastPathComponent())
     }
 }
 

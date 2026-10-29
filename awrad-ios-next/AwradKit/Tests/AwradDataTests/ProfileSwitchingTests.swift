@@ -60,7 +60,8 @@ struct ProfileSwitchingTests {
         #expect(state.registry.profiles.count == 1)
         #expect(await harness.store.content().customDhikrs.isEmpty)
         #expect(
-            !FileManager.default.fileExists(atPath: harness.directory.appending(path: anonymous.description).path()))
+            !FileManager.default.fileExists(
+                atPath: harness.directory.appending(path: anonymous.description).path(percentEncoded: false)))
     }
 
     @Test func signingOutKeepsTheProfileAndQueuesUntilTheSameAccountReturns() async throws {
@@ -123,7 +124,9 @@ struct ProfileSwitchingTests {
         #expect(state.registry.profile(first) == nil)
         #expect(state.registry.active?.isAnonymous == true)
         #expect(await harness.store.content().customDhikrs.isEmpty)
-        #expect(!FileManager.default.fileExists(atPath: harness.directory.appending(path: first.description).path()))
+        #expect(
+            !FileManager.default.fileExists(
+                atPath: harness.directory.appending(path: first.description).path(percentEncoded: false)))
     }
 
     @Test func theRegistryAndDataSurviveARelaunch() async throws {
@@ -181,7 +184,8 @@ struct ProfileSwitchingTests {
         #expect(state.registry.activeProfileID == accountProfile)
         #expect(state.registry.profile(anonymous) == nil)
         #expect(
-            !FileManager.default.fileExists(atPath: harness.directory.appending(path: anonymous.description).path()))
+            !FileManager.default.fileExists(
+                atPath: harness.directory.appending(path: anonymous.description).path(percentEncoded: false)))
         let content = await harness.store.content()
         #expect(content.tags.map(\.name).sorted() == ["Morning", "Travel"], "MORNING folds onto Morning")
         #expect(content.tags(on: Sample.builtIn).map(\.id) == [morning.id, travel.id])

@@ -25,7 +25,8 @@ public enum AwradStore {
             log.error(
                 "Store incompatible, recreating (pre-release policy): \(error.localizedDescription, privacy: .public)")
             for suffix in ["", "-shm", "-wal"] {
-                try? FileManager.default.removeItem(at: URL(filePath: configuration.url.path() + suffix))
+                try? FileManager.default.removeItem(
+                    at: URL(filePath: configuration.url.path(percentEncoded: false) + suffix))
             }
             return try ModelContainer(for: schema, configurations: configuration)
         }

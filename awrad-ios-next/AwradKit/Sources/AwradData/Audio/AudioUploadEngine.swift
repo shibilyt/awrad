@@ -96,7 +96,7 @@ struct AudioUploadEngine: Sendable {
             let asset = upload.assetID
             switch upload.stage {
             case .reserve:
-                guard FileManager.default.fileExists(atPath: file.path()) else {
+                guard FileManager.default.fileExists(atPath: file.path(percentEncoded: false)) else {
                     try await storage { try await context.database.removeUpload(for: upload.dhikrID) }
                     return .done
                 }
@@ -227,7 +227,7 @@ struct AudioUploadEngine: Sendable {
         let audio = UploadedAudio(
             assetID: upload.assetID, byteSize: upload.byteSize, contentType: type,
             durationMilliseconds: upload.durationMilliseconds)
-        if FileManager.default.fileExists(atPath: file.path()) {
+        if FileManager.default.fileExists(atPath: file.path(percentEncoded: false)) {
             files.cacheUploaded(file, as: audio, profile: context.profile)
         }
         let attached = try await storage {

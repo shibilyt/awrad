@@ -31,7 +31,7 @@ struct AudioImportTests {
         }
         let audio = await harness.store.files.audioDirectory(harness.store.registry.activeProfileID)
         let staging = audio.appending(path: "Staged")
-        let staged = (try? FileManager.default.contentsOfDirectory(atPath: staging.path())) ?? []
+        let staged = (try? FileManager.default.contentsOfDirectory(atPath: staging.path(percentEncoded: false))) ?? []
         #expect(staged.isEmpty)
     }
 
@@ -48,5 +48,47 @@ struct AudioImportTests {
 
         #expect(await harness.objects.puts.first?.headers["content-type"] == "audio/mp4")
         #expect(await harness.document(id)?.audio?.uploaded?.contentType == .mp4)
+    }
+
+    // The app's profiles live under `Application Support`, a path with a space: an imported file
+    // must be found there, or it's never queued and the editor and detail screen hide it.
+
+    @Test func theProfilesRootHasASpaceAndNonASCIICharacters() async throws {
+        let harness = try await StoreHarness(signedIn: false)
+        defer { harness.removeDirectory() }
+        #expect(harness.directory.path(percentEncoded: false).hasSuffix("/Application Support/Profilé s/"))
+    }
+
+    @Test func anImportedRecordingIsFoundAndQueuedForUpload() async throws {
+        let harness = try await StoreHarness(signedIn: true)
+        defer { harness.removeDirectory() }
+        _ = try await harness.signIn()
+        await harness.objects.failPut(.transport)  // Keeps it in the queue after this sync.
+        let id = try await harness.saveDhikrWithRecording(bytes: 2048)
+
+        let file = try #require(await harness.store.audioURL(for: id))
+        #expect(try Data(contentsOf: file).count == 2048)
+
+        await harness.sync()
+
+        #expect(await harness.store.database.uploads().map(\.dhikrID) == [id])
+        #expect(await harness.audio.calls.contains("create_audio_upload"))
+    }
+
+    @Test func aRecordingImportedSignedOutIsFoundAndUploadsOnSignIn() async throws {
+        let harness = try await StoreHarness(signedIn: false)
+        defer { harness.removeDirectory() }
+        let id = try await harness.saveDhikrWithRecording(bytes: 2048)
+
+        // Slice 3b's local recording: kept on the phone, found for the editor and to play.
+        #expect(await harness.document(id)?.audio == .localOnly)
+        let file = try #require(await harness.store.audioURL(for: id))
+        #expect(try Data(contentsOf: file).count == 2048)
+
+        _ = try await harness.signIn(choice: .addToAccount)
+        await harness.sync()
+
+        #expect(await harness.document(id)?.audio?.uploaded?.byteSize == 2048)
+        #expect(await harness.store.audioURL(for: id) != nil, "played from the cached copy now")
     }
 }
