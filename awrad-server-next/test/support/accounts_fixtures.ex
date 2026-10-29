@@ -17,9 +17,13 @@ defmodule Awrad.AccountsFixtures do
   def unique_email, do: "user#{System.unique_integer([:positive])}@example.com"
   def valid_password, do: @password
 
-  @doc "A verified account with `valid_password/0`, inserted directly."
+  @doc """
+  A verified account with `valid_password/0`, inserted directly. `:id` sets
+  its ID (a fixture's `account_id`); otherwise one is generated.
+  """
   def user_fixture(attrs \\ %{}) do
     Repo.insert!(%User{
+      id: attrs[:id],
       email: attrs[:email] || unique_email(),
       hashed_password: User.hash(attrs[:password] || @password),
       confirmed_at: Map.get(attrs, :confirmed_at, DateTime.utc_now(:second))

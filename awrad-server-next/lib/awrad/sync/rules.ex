@@ -19,6 +19,8 @@ defmodule Awrad.Sync.Rules do
       IDs are rewritten: an alias becomes its tag, a deleted tag is dropped,
       repeats go (first occurrence kept); an ID the account never had is
       `tag_not_found`.
+    * `practice_policy`: nothing more; its ID and document were checked
+      before (`Awrad.Sync.Commands`).
 
   `write/4` applies the command at its revision: the entity's version goes up
   by one, and the cascades share the revision (a deleted tag leaves every
@@ -75,6 +77,10 @@ defmodule Awrad.Sync.Rules do
       {:stop, Receipt.rejected(command, "dhikr_not_found", fields, entity)}
     end
   end
+
+  # Its ID (the account's) and document are already checked.
+  def check(_user_id, %{"entity_type" => "practice_policy", "document" => document}, _entity),
+    do: {:ok, document}
 
   defp merge(user_id, command, %Entity{} = tag) do
     Repo.insert!(%TagAlias{

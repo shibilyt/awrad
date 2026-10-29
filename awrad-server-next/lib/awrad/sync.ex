@@ -1,8 +1,9 @@
 defmodule Awrad.Sync do
   @moduledoc """
   The change queue (slice 3b, root ADR-2026-10-28 "The change queue",
-  `contracts/sync/v1/`): how a user's custom dhikrs, tags and per-dhikr
-  records move between their phones, the web and the server.
+  `contracts/sync/v1/`): how a user's custom dhikrs, tags, per-dhikr
+  records and practice policy (slice 3d) move between their phones, the web
+  and the server.
 
   The only entry point to the context. Ownership is the `user_id` the caller
   authenticated; nothing here reads an account from the request.
@@ -13,7 +14,7 @@ defmodule Awrad.Sync do
     * `prune/1`: drops receipts older than 90 days.
   """
 
-  use Boundary, deps: [Awrad, Awrad.Audio, Awrad.Dhikrs], exports: []
+  use Boundary, deps: [Awrad, Awrad.Audio, Awrad.Dhikrs, Awrad.Hijri], exports: []
 
   import Ecto.Query
 

@@ -15,6 +15,7 @@ defmodule Awrad.SharedFixturesTest do
     "goal-model/v1" => "test/awrad/goals/rules",
     "hijri-calendar/v1" => "test/awrad/hijri",
     "identity/v1" => "test/awrad/identity",
+    "practice-settings/v1" => "test/awrad/sync",
     "sync/v1" => "test/awrad/sync"
   }
 
@@ -26,6 +27,13 @@ defmodule Awrad.SharedFixturesTest do
       # normalise what the user typed (spaces, hyphens, Arabic-Indic and
       # fullwidth digits) before sending, so there's nothing for the server to run.
       "email_code_input" => "the server accepts ASCII digits only; clients normalise"
+    },
+    # The server only stores and validates the practice policy (slice 3d); the
+    # clients merge it, choose it at the first sign-in and compute Maghrib.
+    "practice-settings/v1" => %{
+      "practice_policy_merge" => "clients merge a conflicting policy; the server only conflicts",
+      "practice_policy_first_sign_in" => "the phones' first sign-in; the server has no profiles",
+      "maghrib_time" => "the server never computes Maghrib (API STYLE §6)"
     },
     # The phones' side of the change queue (contracts/sync/v1/README.md,
     # "Fixtures"): their outbox, how they apply receipts and pages, and their
