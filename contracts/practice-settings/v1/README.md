@@ -71,6 +71,7 @@ The server answers an invalid put with `rejected document_invalid`, with the sam
   - if the merged corrections aren't valid, the server's corrections are kept and the user gets the notice `hijri_corrections_replaced`;
   - the result is sorted, becomes the local document, and the server copy becomes the base. If the result differs from the server's copy, it's queued as a put on the server's version; otherwise nothing is sent.
 - **The web** does the same with the document it loaded as the base, then sends the merged policy straight away.
+- **The policy is never removed from a phone.** A `rejected` put takes the server's copy when the receipt carries one; with `current: null` the phone keeps its document, its known version goes back to 0 and its base to the default policy. Clients validate before saving, so neither should happen in practice.
 
 ## The first sign-in
 
@@ -81,6 +82,7 @@ The server answers an invalid put with `rejected document_invalid`, with the sam
   - it has none, and the anonymous policy is chosen: the phone keeps it and queues a create (`base_version` 0);
   - it has none, and the policy is untouched: nothing is sent, and the account stays without a policy until someone chooses one.
 - **Into an account profile already on the phone:** that profile keeps its own policy; the anonymous one is discarded.
+- **When it's decided:** at the end of the first complete pull after signing in. An edit made before then stays local; if the account turns out to have a policy, the account's replaces it.
 - **Settings alone don't count as data** for the Add / Erase question: a profile with only a chosen policy is "empty", and adopted without asking.
 - **Two phones seeding one account at once:** the second create conflicts (`sync_receipts` `practice_policy_second_seed_conflicts`) and merges with the default policy as its base.
 
