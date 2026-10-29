@@ -12,6 +12,7 @@ import app.awrad.core.testing.fixtures.toOutboxCommand
 import app.awrad.core.testing.fixtures.toReceipt
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
@@ -57,6 +58,9 @@ class ApplyChangesFixtureTest {
                 entities = local.getValue("entities").jsonArray.map { it.jsonObject.toLocalEntity() },
                 outbox = local.getValue("outbox").jsonArray.map { it.jsonObject.toOutboxCommand() },
                 conflicts = local.getValue("conflicts").jsonArray.map { it.jsonObject.toConflict() },
+                audioFiles = given.getValue("local_audio_files").jsonArray
+                    .map { AwradId(it.jsonPrimitive.content) }
+                    .toSet(),
             )
             val step = given.getValue("step").jsonObject
             val notices = when (val kind = step.getValue("kind").jsonPrimitive.content) {
@@ -64,10 +68,16 @@ class ApplyChangesFixtureTest {
                     ApplyChanges.applyPage(store, step.getValue("page").jsonObject.toChangesPage())
                     emptyList()
                 }
-                "receipts" -> ApplyChanges.applyReceipts(
-                    store,
-                    step.getValue("receipts").jsonArray.map { it.jsonObject.toReceipt() },
-                )
+                "receipts" -> {
+                    val newIds = step.getValue("new_command_ids").jsonArray
+                        .map { AwradId(it.jsonPrimitive.content) }
+                        .iterator()
+                    ApplyChanges.applyReceipts(
+                        store,
+                        step.getValue("receipts").jsonArray.map { it.jsonObject.toReceipt() },
+                        newCommandId = newIds::next,
+                    )
+                }
                 "resolve" -> {
                     resolve(store, step.getValue("resolve").jsonObject)
                     emptyList()
@@ -76,6 +86,7 @@ class ApplyChangesFixtureTest {
             }
             buildJsonObject {
                 put("local", store.toJson())
+                putJsonArray("uploads_queued") { store.uploadsQueued.map { it.value }.sorted().forEach { add(it) } }
                 putJsonArray("notices") {
                     notices.forEach { notice ->
                         addJsonObject {

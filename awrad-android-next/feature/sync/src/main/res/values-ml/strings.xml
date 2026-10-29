@@ -61,5 +61,23 @@
     <string name="sync_reason_entity_not_found">ഈ മാറ്റം തിരുത്തുന്നത് ഇനി നിലവിലില്ല.</string>
     <string name="sync_reason_delete_not_allowed">ഇത് ഇല്ലാതാക്കാൻ കഴിയില്ല.</string>
     <string name="sync_reason_command_id_reused">ഇതേ ഐഡിയിൽ മറ്റൊരു മാറ്റം സെർവറിന് മുമ്പേ ലഭിച്ചിരുന്നു.</string>
+    <string name="sync_reason_audio_not_found">ഈ തിരുത്തിൽ പറയുന്ന റെക്കോർഡിംഗ് ഇപ്പോൾ നിങ്ങളുടെ അക്കൗണ്ടിലില്ല. തിരുത്ത് സൂക്ഷിച്ചിട്ടുണ്ട്, വീണ്ടും സമന്വയിപ്പിക്കുന്നു; ഈ ഫോണിലുള്ള റെക്കോർഡിംഗ് വീണ്ടും അപ്‌ലോഡ് ചെയ്യും.</string>
+    <string name="sync_reason_audio_mismatch">ഈ തിരുത്തിലെ റെക്കോർഡിംഗ് വിവരങ്ങൾ അക്കൗണ്ടിലെ പകർപ്പുമായി പൊരുത്തപ്പെട്ടില്ല. തിരുത്ത് സൂക്ഷിച്ചിട്ടുണ്ട്, വീണ്ടും സമന്വയിപ്പിക്കുന്നു; ഈ ഫോണിലുള്ള റെക്കോർഡിംഗ് വീണ്ടും അപ്‌ലോഡ് ചെയ്യും.</string>
+    <plurals name="sync_audio_storage">
+        <item quantity="one">ഓഡിയോ സംഭരണം: %2$s MB-യിൽ %1$s ഉപയോഗിച്ചു</item>
+        <item quantity="other">ഓഡിയോ സംഭരണം: %2$s MB-യിൽ %1$s ഉപയോഗിച്ചു</item>
+    </plurals>
+    <string name="sync_upload_failed_title">ഓഡിയോ അപ്‌ലോഡ് ചെയ്യാനായില്ല</string>
+    <string name="sync_upload_failed_body">%1$s റെക്കോർഡിംഗ് ഈ ഫോണിൽ തന്നെ നിലനിൽക്കും; ദിക്ർ അതില്ലാതെ സമന്വയിപ്പിക്കും.</string>
+    <string name="sync_upload_unsupported_type">ഇത് ഒരു MP3 അല്ലെങ്കിൽ M4A ഫയലല്ല.</string>
+    <string name="sync_upload_invalid_size">ഫയൽ ശൂന്യമാണ്.</string>
+    <string name="sync_upload_too_large">ഇത് 10 MB-യിൽ കൂടുതലാണ്.</string>
+    <string name="sync_upload_storage_full">നിങ്ങളുടെ അക്കൗണ്ടിലെ ഓഡിയോ സംഭരണം നിറഞ്ഞു.</string>
+    <string name="sync_upload_storage_full_used">നിങ്ങളുടെ അക്കൗണ്ടിലെ ഓഡിയോ സംഭരണം നിറഞ്ഞു (%1$s).</string>
+    <plurals name="sync_audio_storage_used">
+        <item quantity="one">%2$s MB-യിൽ %1$s ഉപയോഗിച്ചു</item>
+        <item quantity="other">%2$s MB-യിൽ %1$s ഉപയോഗിച്ചു</item>
+    </plurals>
+    <string name="sync_upload_mismatch">പലതവണ ശ്രമിച്ചിട്ടും അപ്‌ലോഡ് ചെയ്ത ഫയൽ റെക്കോർഡിംഗുമായി പൊരുത്തപ്പെട്ടില്ല.</string>
     <string name="sync_ok">ശരി</string>
 </resources>

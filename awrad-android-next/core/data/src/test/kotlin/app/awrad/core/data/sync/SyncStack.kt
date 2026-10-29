@@ -1,5 +1,9 @@
 package app.awrad.core.data.sync
 
+import app.awrad.core.data.audio.AudioUploader
+import app.awrad.core.data.audio.FakeAudioServer
+import app.awrad.core.data.audio.FakeObjectStore
+import app.awrad.core.data.audio.ProfileCustomAudioService
 import app.awrad.core.data.personal.AudioFiles
 import app.awrad.core.data.personal.RoomCustomDhikrRepository
 import app.awrad.core.data.personal.RoomTagRepository
@@ -24,7 +28,28 @@ internal class SyncStack(scope: TestScope, signedIn: Account? = ACCOUNT) {
     val databases = profiles.databases
     val accounts = FakeAccountRepository(signedIn?.let { SignInState.SignedIn(it) } ?: SignInState.SignedOut())
     val server = FakeSyncServer(ACCOUNT.id)
-    val engine = SyncEngine(databases, profiles.registry, accounts, server, profiles.clock)
+    val io = StandardTestDispatcher(scope.testScheduler)
+    val objects = FakeObjectStore()
+    val audioServer = FakeAudioServer(ACCOUNT.id, objects, server.readyAssets)
+    val uploader = AudioUploader(
+        profiles = databases,
+        remote = audioServer,
+        links = objects,
+        probe = { DURATION_MS },
+        clock = profiles.clock,
+        newId = profiles.ids::next,
+        io = io,
+    )
+    val engine = SyncEngine(
+        databases,
+        profiles.registry,
+        accounts,
+        server,
+        profiles.clock,
+        uploads = uploader,
+        newId = profiles.ids::next,
+    )
+    val audio = ProfileCustomAudioService(databases, accounts, audioServer, objects, io)
     val scheduler = SyncScheduler(engine::syncOnce)
     val sync = ProfileSyncService(
         databases,
@@ -41,7 +66,7 @@ internal class SyncStack(scope: TestScope, signedIn: Account? = ACCOUNT) {
         sync,
         profiles.clock,
         profiles.ids::next,
-        StandardTestDispatcher(scope.testScheduler),
+        io,
     )
     val tags = RoomTagRepository(databases, sync, profiles.clock, profiles.ids::next)
     val manager = ProfileManager(
@@ -79,6 +104,9 @@ internal class SyncStack(scope: TestScope, signedIn: Account? = ACCOUNT) {
     companion object {
         val ACCOUNT = Account(AwradId("0192f0b0-0000-7000-8000-000000000001"), "amina@example.com")
         val OTHER = Account(AwradId("0192f0b0-0000-7000-8000-000000000002"), "bilal@example.com")
+
+        /** What the fake duration probe measures for every recording. */
+        const val DURATION_MS = 31_250L
 
         /** A built-in dhikr's ID (the catalog's tahleel), which personal records can tag. */
         val BUILT_IN = AwradId("6f04f77e-dcb6-4a29-9dc5-fcd3649c2961")

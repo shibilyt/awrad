@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performTextInput
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.testing.FakeAudioPlayerFactory
+import app.awrad.core.testing.FakeCustomAudioService
 import app.awrad.core.testing.FakeCustomDhikrRepository
 import app.awrad.core.testing.FakeTagRepository
 import org.junit.Rule
@@ -36,6 +37,7 @@ class FastTypingTest {
             customDhikrs = FakeCustomDhikrRepository(),
             tags = FakeTagRepository(),
             playerFactory = FakeAudioPlayerFactory(),
+            audio = FakeCustomAudioService(),
         )
         compose.setContent {
             AwradTheme {

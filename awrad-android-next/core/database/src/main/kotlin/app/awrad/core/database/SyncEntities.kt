@@ -11,7 +11,10 @@ import androidx.room.PrimaryKey
  * aren't kept.
  */
 
-/** A custom dhikr. [audioFile] is its recording in the profile's private files, which never syncs. */
+/**
+ * A custom dhikr. [audioFile] is its recording in the profile's private files: imported here, or the uploaded
+ * recording downloaded on its first play. The file itself never goes through the change queue.
+ */
 @Entity(tableName = "custom_dhikrs")
 public data class CustomDhikrEntity(
     @PrimaryKey val id: String,
@@ -81,5 +84,34 @@ public data class SyncMetaEntity(
 ) {
     public companion object {
         public const val ONLY_ROW: Int = 0
+    }
+}
+
+/**
+ * A recording waiting to upload to the account (slice 3c), one per custom dhikr. [assetId] is a new UUIDv7 for
+ * this file; [sha256], [byteSize], [contentType] and [durationMs] are measured on the first attempt and kept, so a
+ * retry reserves the same body. [state] is `queued` or `failed`; a failed one keeps the recording on the phone and
+ * is a notice ([problem], with the account's [usedBytes] and [limitBytes] when it's full) until dismissed.
+ * [mismatches] counts `upload_mismatch` answers in a row.
+ */
+@Entity(tableName = "audio_uploads", indices = [Index(value = ["dhikr_id"], unique = true)])
+public data class AudioUploadEntity(
+    @PrimaryKey @ColumnInfo(name = "asset_id") val assetId: String,
+    @ColumnInfo(name = "dhikr_id") val dhikrId: String,
+    @ColumnInfo(name = "audio_file") val audioFile: String,
+    @ColumnInfo(name = "state") val state: String,
+    @ColumnInfo(name = "created_at") val createdAt: Long,
+    @ColumnInfo(name = "sha256") val sha256: String? = null,
+    @ColumnInfo(name = "byte_size") val byteSize: Long? = null,
+    @ColumnInfo(name = "content_type") val contentType: String? = null,
+    @ColumnInfo(name = "duration_ms") val durationMs: Long? = null,
+    @ColumnInfo(name = "problem") val problem: String? = null,
+    @ColumnInfo(name = "used_bytes") val usedBytes: Long? = null,
+    @ColumnInfo(name = "limit_bytes") val limitBytes: Long? = null,
+    @ColumnInfo(name = "mismatches") val mismatches: Int = 0,
+) {
+    public companion object {
+        public const val QUEUED: String = "queued"
+        public const val FAILED: String = "failed"
     }
 }

@@ -68,13 +68,25 @@ public object ApplyChanges {
      * removes its command, then: `applied` records the version and closes any conflict; `duplicate` acts as its
      * original; `conflict` keeps the local document, opens a conflict and drops later unsent commands for the
      * entity; `merged` moves every local use of the tag to the surviving one; `gone` removes the entity;
-     * `rejected` restores the server's copy (or removes the entity) and returns a notice.
+     * `rejected` restores the server's copy (or removes the entity) and returns a notice, except that a custom
+     * dhikr put rejected for its audio keeps the local edit ([AudioRejections]). Commands this queues take IDs from
+     * [newCommandId], in order.
      */
-    public fun applyReceipts(store: SyncStore, receipts: List<Receipt>): List<SyncNotice> =
+    public fun applyReceipts(
+        store: SyncStore,
+        receipts: List<Receipt>,
+        newCommandId: () -> AwradId,
+    ): List<SyncNotice> =
         receipts.mapNotNull { receipt ->
             val command = store.outbox().firstOrNull { it.commandId == receipt.commandId } ?: return@mapNotNull null
             store.replaceOutbox(store.outbox().filterNot { it.commandId == command.commandId })
-            apply(store, command, receipt.outcome)
+            val outcome = receipt.outcome
+            if (outcome is Receipt.Rejected && AudioRejections.applies(command, outcome)) {
+                AudioRejections.keepEdit(store, command.key, outcome.current, newCommandId)
+                SyncNotice(outcome.code, command.key)
+            } else {
+                apply(store, command, outcome)
+            }
         }
 
     private fun apply(store: SyncStore, command: OutboxCommand, outcome: Receipt): SyncNotice? {

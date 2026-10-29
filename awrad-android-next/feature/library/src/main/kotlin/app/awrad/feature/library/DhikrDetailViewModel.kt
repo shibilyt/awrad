@@ -11,10 +11,13 @@ import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.audio.AudioPlayer
 import app.awrad.core.domain.audio.AudioPlayerFactory
 import app.awrad.core.domain.audio.PlaybackState
+import app.awrad.core.domain.audio.PlaybackStatus
 import app.awrad.core.domain.dhikr.Dhikr
 import app.awrad.core.domain.dhikr.DhikrCatalogSource
+import app.awrad.core.domain.personal.CustomAudioService
 import app.awrad.core.domain.personal.CustomDhikr
 import app.awrad.core.domain.personal.CustomDhikrRepository
+import app.awrad.core.domain.personal.RecordingPlayback
 import app.awrad.core.domain.personal.TagRepository
 import app.awrad.core.domain.personal.UserTag
 import app.awrad.core.domain.personal.asDhikr
@@ -25,6 +28,7 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
@@ -32,7 +36,8 @@ import kotlinx.coroutines.launch
 
 /**
  * One dhikr by its [id], built-in or the user's own, with its tags, any conflict on it, and its recording. The
- * player is made on the first play, so a page that's only read never loads audio, and released with the page.
+ * player is made on the first play, so a page that's only read never loads audio, and released with the page. A
+ * custom dhikr's recording that's only in the account is downloaded on its first play, then played from the file.
  */
 @HiltViewModel(assistedFactory = DhikrDetailViewModel.Factory::class)
 @Suppress("LongParameterList") // The ports this page reads, each a separate seam.
@@ -43,6 +48,7 @@ internal class DhikrDetailViewModel @AssistedInject constructor(
     private val tags: TagRepository,
     private val sync: SyncService,
     private val playerFactory: AudioPlayerFactory,
+    private val audio: CustomAudioService,
 ) : ViewModel() {
 
     private val mutableState = mutableStateOf(DhikrDetailUiState())
@@ -50,6 +56,7 @@ internal class DhikrDetailViewModel @AssistedInject constructor(
 
     private val tagSheet = DhikrTagSheet(tags, viewModelScope, mutableState)
     private var player: AudioPlayer? = null
+    private var download: Job? = null
 
     init {
         viewModelScope.launch {
@@ -84,7 +91,10 @@ internal class DhikrDetailViewModel @AssistedInject constructor(
     fun onAction(action: DhikrDetailAction) {
         when (action) {
             DhikrDetailAction.TogglePlayback -> togglePlayback()
-            DhikrDetailAction.Pause -> player?.pause()
+            DhikrDetailAction.Pause -> {
+                if (download?.isActive == true) cancelDownload()
+                player?.pause()
+            }
             DhikrDetailAction.AskDelete -> mutableState.update { it.copy(isDeleteConfirmOpen = true) }
             DhikrDetailAction.CancelDelete -> mutableState.update { it.copy(isDeleteConfirmOpen = false) }
             DhikrDetailAction.ConfirmDelete -> delete()
@@ -96,6 +106,7 @@ internal class DhikrDetailViewModel @AssistedInject constructor(
     private fun delete() {
         val custom = mutableState.value.custom ?: return
         mutableState.update { it.copy(isDeleteConfirmOpen = false) }
+        download?.cancel()
         player?.pause()
         viewModelScope.launch {
             customDhikrs.delete(custom.id)
@@ -108,13 +119,40 @@ internal class DhikrDetailViewModel @AssistedInject constructor(
         viewModelScope.launch { sync.resolve(conflict.key, choice) }
     }
 
+    /**
+     * Play or pause. A custom dhikr's recording that isn't on this phone is downloaded first (`LOADING` meanwhile,
+     * `FAILED` if it can't be); later plays find its file in the refreshed dhikr. Pausing stops a download.
+     */
     private fun togglePlayback() {
-        val url = mutableState.value.dhikr?.audio?.url ?: return
-        if (mutableState.value.playback.isPlaying) {
-            player?.pause()
-        } else {
-            (player ?: startPlayer()).play(url)
+        val current = mutableState.value
+        if (!current.hasRecording) return
+        val url = current.dhikr?.audio?.url
+        when {
+            download?.isActive == true -> cancelDownload()
+            current.playback.isPlaying -> player?.pause()
+            url != null -> play(url)
+            else -> current.custom?.let { downloadAndPlay(it) }
         }
+    }
+
+    private fun play(url: String) {
+        (player ?: startPlayer()).play(url)
+    }
+
+    private fun downloadAndPlay(custom: CustomDhikr) {
+        mutableState.update { it.copy(playback = it.playback.copy(status = PlaybackStatus.LOADING)) }
+        download = viewModelScope.launch {
+            when (val playable = audio.playable(custom.id)) {
+                is RecordingPlayback.Ready -> play(playable.localUri)
+                is RecordingPlayback.Failed ->
+                    mutableState.update { it.copy(playback = it.playback.copy(status = PlaybackStatus.FAILED)) }
+            }
+        }
+    }
+
+    private fun cancelDownload() {
+        download?.cancel()
+        mutableState.update { it.copy(playback = it.playback.copy(status = PlaybackStatus.IDLE)) }
     }
 
     private fun startPlayer(): AudioPlayer = playerFactory.create().also { created ->
@@ -151,7 +189,10 @@ internal data class DhikrDetailUiState(
     val sheet: TagSheetState? = null,
     val isDeleteConfirmOpen: Boolean = false,
     val isDeleted: Boolean = false,
-)
+) {
+    /** The player bar shows: the dhikr has a recording on this phone or online, or one uploaded to the account. */
+    val hasRecording: Boolean get() = dhikr?.audio != null || custom?.audio?.uploaded != null
+}
 
 internal sealed interface DhikrDetailAction {
     /** Play, or pause while playing. */

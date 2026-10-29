@@ -1,5 +1,6 @@
 package app.awrad.core.data.sync
 
+import app.awrad.core.data.audio.AudioUploader
 import app.awrad.core.data.profile.OpenProfile
 import app.awrad.core.data.profile.ProfileDatabases
 import app.awrad.core.database.NoticeEntity
@@ -50,12 +51,16 @@ internal enum class EngineState { IDLE, SYNCING, RETRYING, ACCOUNT_MISMATCH }
  * writes are bound to the profile the run started with, so a profile switch mid-run stops it instead of mixing
  * data.
  */
+@Suppress("LongParameterList") // The seams a run crosses: profiles, registry, session, server, uploads, clock, IDs.
 internal class SyncEngine(
     private val profiles: ProfileDatabases,
     private val registry: RegistryDao,
     private val accounts: AccountRepository,
     private val remote: SyncRemote,
     private val clock: Clock,
+    /** Uploads the profile's queued recordings first, so a confirmed one's put goes out in the same run. */
+    private val uploads: AudioUploader? = null,
+    private val newId: () -> AwradId = { AwradId.random(clock) },
 ) {
     private val mutex = Mutex()
     private val mutableState = MutableStateFlow(EngineState.IDLE)
@@ -72,13 +77,7 @@ internal class SyncEngine(
         if (profile.accountId != account.id || profile.accountDeleted) return@withLock SyncOutcome.Skipped
         if (mismatch == profile.profileId to account.id) return@withLock SyncOutcome.AccountMismatch
         mutableState.value = EngineState.SYNCING
-        val outcome = send(profile.profileId, account.id) ?: pull(profile.profileId, account.id) ?: run {
-            profiles.write(profile.profileId) { open ->
-                val dao = open.database.syncDao()
-                dao.upsertMeta(SyncMetaEntity(after = dao.meta()?.after ?: 0, lastSyncedAt = clock.millis()))
-            }
-            SyncOutcome.Done
-        }
+        val outcome = run(profile.profileId, account.id)
         if (outcome == SyncOutcome.AccountMismatch) mismatch = profile.profileId to account.id
         mutableState.value = when (outcome) {
             SyncOutcome.Done, SyncOutcome.Skipped -> EngineState.IDLE
@@ -88,22 +87,50 @@ internal class SyncEngine(
         outcome
     }
 
+    /**
+     * Uploads queued recordings, then sends the queue and pulls. A recording left to retry doesn't hold back the
+     * queue; the run still backs off for it. When the receipts queued a recording again (an audio rejection), one
+     * more round uploads it and sends the put naming it.
+     */
+    private suspend fun run(profileId: AwradId, accountId: AwradId): SyncOutcome {
+        var rounds = 0
+        var outcome: SyncOutcome
+        do {
+            val uploaded = uploads?.uploadAll(profileId, accountId) ?: SyncOutcome.Done
+            if (uploaded == SyncOutcome.Skipped || uploaded == SyncOutcome.AccountMismatch) return uploaded
+            val exchanged = exchange(profileId, accountId)
+            outcome = if (exchanged == SyncOutcome.Done && uploaded is SyncOutcome.Failed) uploaded else exchanged
+            rounds++
+        } while (outcome == SyncOutcome.Done && rounds < MAX_ROUNDS && uploads?.hasQueued(profileId) == true)
+        return outcome
+    }
+
+    /** Sends the queue, then pulls every page, then records the sync. */
+    private suspend fun exchange(profileId: AwradId, accountId: AwradId): SyncOutcome =
+        send(profileId, accountId) ?: pull(profileId, accountId) ?: run {
+            profiles.write(profileId) { open ->
+                val dao = open.database.syncDao()
+                dao.upsertMeta(SyncMetaEntity(after = dao.meta()?.after ?: 0, lastSyncedAt = clock.millis()))
+            }
+            SyncOutcome.Done
+        }
+
     /** Sends the queue in batches of up to 100, applying each batch's receipts. Null when it all went. */
     @Suppress("ReturnCount") // Each step can end the run: a profile switch, a failure, an empty queue.
     private suspend fun send(profileId: AwradId, accountId: AwradId): SyncOutcome? {
-        var queued = Int.MAX_VALUE
+        val sentThisRun = mutableSetOf<AwradId>()
         while (true) {
-            val batch = profiles.write(profileId) { open ->
+            val commands = profiles.write(profileId) { open ->
                 val dao = open.database.syncDao()
                 val commands = dao.outbox().take(SyncCadence.BATCH_SIZE)
                 // Marked before the request: a sent command is never rewritten, even if no receipt comes back.
                 if (commands.isNotEmpty()) dao.markSent(commands.map { it.commandId })
-                dao.outboxCount() to commands.map { it.toCommand() }
+                commands.map { it.toCommand() }
             } ?: return SyncOutcome.Skipped
-            val (size, commands) = batch
-            // Stop when the queue is empty, or a round didn't shrink it (a receipt didn't come back).
-            if (commands.isEmpty() || size >= queued) return null
-            queued = size
+            // Stop when the queue is empty, or holds only commands already sent this run (a receipt didn't come
+            // back). Commands the receipts queued (an audio rejection's put) go in the next round.
+            if (commands.all { it.commandId in sentThisRun }) return null
+            sentThisRun += commands.map { it.commandId }
             val result = remote.postCommands(accountId, SyncCommandBatch(commands.map { it.toWire() }))
             val receipts = when (result) {
                 is ApiResult.Success -> result.value.receipts.mapNotNull { it.toDomain() }
@@ -117,8 +144,8 @@ internal class SyncEngine(
 
     private fun applyReceipts(open: OpenProfile, receipts: List<app.awrad.core.domain.sync.Receipt>): List<String> {
         val dao = open.database.syncDao()
-        val store = RoomSyncStore(dao, clock::millis)
-        ApplyChanges.applyReceipts(store, receipts).forEach { notice -> dao.insertNotice(notice.toEntity()) }
+        val store = RoomSyncStore(dao, now = clock::millis)
+        ApplyChanges.applyReceipts(store, receipts, newId).forEach { notice -> dao.insertNotice(notice.toEntity()) }
         return store.orphanedAudio
     }
 
@@ -133,7 +160,7 @@ internal class SyncEngine(
                 is ApiResult.Failure -> return outcomeOf(result.failure)
             }
             val orphaned = profiles.write(profileId) { open ->
-                val store = RoomSyncStore(open.database.syncDao(), clock::millis)
+                val store = RoomSyncStore(open.database.syncDao(), now = clock::millis)
                 ApplyChanges.applyPage(store, page)
                 store.orphanedAudio
             } ?: return SyncOutcome.Skipped
@@ -159,6 +186,8 @@ internal class SyncEngine(
     }
 
     private companion object {
+        /** Upload-and-exchange rounds in one run: the first, and one for recordings the receipts queued again. */
+        const val MAX_ROUNDS = 2
         const val ACCOUNT_MISMATCH = "account_mismatch"
         const val UNAUTHORIZED = 401
     }

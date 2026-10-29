@@ -49,6 +49,11 @@ class ApiContractTest {
         ApiOperation.DELETE_ACCOUNT to (CurrentPasswordRequest.serializer() to null),
         ApiOperation.POST_SYNC_COMMANDS to (SyncCommandBatch.serializer() to SyncReceiptBatch.serializer()),
         ApiOperation.LIST_SYNC_CHANGES to (null to SyncChangesPage.serializer()),
+        ApiOperation.CREATE_AUDIO_UPLOAD to
+            (AudioUploadRequest.serializer() to AudioUploadReservationSerializer),
+        ApiOperation.COMPLETE_AUDIO_UPLOAD to (null to AudioAssetResult.serializer()),
+        ApiOperation.GET_AUDIO_DOWNLOAD to (null to AudioDownloadLink.serializer()),
+        ApiOperation.GET_AUDIO_USAGE to (null to AudioUsage.serializer()),
     )
 
     @Test
@@ -112,10 +117,17 @@ class ApiContractTest {
         println("contracts/api: $checked examples round-tripped")
     }
 
-    /** Every media type's example; fails when one has none (STYLE §15 requires examples). */
+    /**
+     * Every media type's `example` and every named `examples.*.value`; fails when a media type has neither
+     * (STYLE §15 requires examples).
+     */
     private fun examples(body: JsonObject): List<Pair<String, JsonElement>> =
-        body["content"]?.jsonObject.orEmpty().map { (media, value) ->
-            media to (value.jsonObject["example"] ?: fail("$media has no example"))
+        body["content"]?.jsonObject.orEmpty().flatMap { (media, value) ->
+            val single = value.jsonObject["example"]?.let { media to it }
+            val named = value.jsonObject["examples"]?.jsonObject.orEmpty().map { (name, example) ->
+                "$media $name" to (example.jsonObject["value"] ?: fail("$media example $name has no value"))
+            }
+            listOfNotNull(single) + named.ifEmpty { if (single == null) fail("$media has no example") else emptyList() }
         }
 
     @Suppress("UNCHECKED_CAST")

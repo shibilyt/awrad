@@ -1,6 +1,9 @@
 package app.awrad.feature.library
 
 import app.awrad.core.domain.AwradId
+import app.awrad.core.domain.audio.AudioContentType
+import app.awrad.core.domain.audio.PlaybackState
+import app.awrad.core.domain.audio.PlaybackStatus
 import app.awrad.core.domain.dhikr.ContentLanguage
 import app.awrad.core.domain.dhikr.DhikrKind
 import app.awrad.core.domain.dhikr.Reference
@@ -9,10 +12,14 @@ import app.awrad.core.domain.personal.AudioImportError
 import app.awrad.core.domain.personal.CustomAudio
 import app.awrad.core.domain.personal.CustomDhikr
 import app.awrad.core.domain.personal.OptionalTexts
+import app.awrad.core.domain.personal.RecordingDownloadError
+import app.awrad.core.domain.personal.RecordingUpload
 import app.awrad.core.domain.personal.TagOutcome
+import app.awrad.core.domain.personal.UploadedAudio
 import app.awrad.core.domain.sync.FieldError
 import app.awrad.core.domain.sync.FieldErrorCode
 import app.awrad.core.testing.FakeAudioPlayerFactory
+import app.awrad.core.testing.FakeCustomAudioService
 import app.awrad.core.testing.FakeCustomDhikrRepository
 import app.awrad.core.testing.FakeTagRepository
 import app.awrad.core.testing.MainDispatcherRule
@@ -31,8 +38,9 @@ class CustomDhikrEditorViewModelTest {
     private val dhikrs = FakeCustomDhikrRepository()
     private val tags = FakeTagRepository()
     private val players = FakeAudioPlayerFactory()
+    private val audio = FakeCustomAudioService()
 
-    private fun editor(id: String? = null) = CustomDhikrEditorViewModel(id, dhikrs, tags, players)
+    private fun editor(id: String? = null) = CustomDhikrEditorViewModel(id, dhikrs, tags, players, audio)
 
     @Test
     fun `a new dhikr needs Arabic and a title in some language`() {
@@ -105,7 +113,7 @@ class CustomDhikrEditorViewModelTest {
     @Test
     fun `an invalid kept reference is marked on its own row`() {
         val dhikrs = FakeCustomDhikrRepository(listOf(EXISTING.copy(references = MISSING_TITLE)))
-        val editor = CustomDhikrEditorViewModel(EXISTING.id.value, dhikrs, tags, players)
+        val editor = CustomDhikrEditorViewModel(EXISTING.id.value, dhikrs, tags, players, audio)
 
         editor.onAction(EditorAction.Save)
 
@@ -225,6 +233,81 @@ class CustomDhikrEditorViewModelTest {
     }
 
     @Test
+    fun `an uploaded recording survives a text edit and save`() = runTest {
+        val recording = CustomAudio("file:///profile/audio/mine.mp3", UPLOADED)
+        dhikrs.save(EXISTING.copy(audio = recording))
+        val editor = editor(EXISTING.id.value)
+        assertEquals(UPLOADED, editor.state.value.audio?.uploaded)
+
+        editor.onAction(EditorAction.TitleChanged("Tasbih"))
+        editor.onAction(EditorAction.Save)
+
+        assertEquals(recording, dhikrs.current.single().audio)
+    }
+
+    @Test
+    fun `replacing an uploaded recording drops the account's copy, so the new one uploads`() = runTest {
+        dhikrs.save(EXISTING.copy(audio = CustomAudio("file:///profile/audio/mine.mp3", UPLOADED)))
+        val editor = editor(EXISTING.id.value)
+
+        editor.onAction(EditorAction.ImportAudio("content://picked/new.m4a"))
+        val replaced = editor.state.value.audio?.localUri
+        assertNull(editor.state.value.audio?.uploaded)
+        editor.onAction(EditorAction.Save)
+
+        assertEquals(CustomAudio(replaced), dhikrs.current.single().audio)
+    }
+
+    @Test
+    fun `the recording card says where the recording stands`() = runTest {
+        dhikrs.save(EXISTING.copy(audio = CustomAudio("file:///profile/audio/mine.mp3")))
+        val editor = editor(EXISTING.id.value)
+        assertEquals(RecordingPlace.PHONE, editor.state.value.recordingPlace)
+
+        audio.uploads.value = mapOf(EXISTING.id to RecordingUpload.QUEUED)
+        assertEquals(RecordingPlace.WAITING_TO_UPLOAD, editor.state.value.recordingPlace)
+        audio.uploads.value = mapOf(EXISTING.id to RecordingUpload.FAILED)
+        assertEquals(RecordingPlace.PHONE_ONLY, editor.state.value.recordingPlace)
+
+        // A file imported but not saved isn't the one that failed.
+        editor.onAction(EditorAction.ImportAudio("content://picked/new.m4a"))
+        assertEquals(RecordingPlace.PHONE, editor.state.value.recordingPlace)
+
+        val uploaded = EditorUiState(audio = AudioField(null, isNew = false, uploaded = UPLOADED))
+        assertEquals(RecordingPlace.ACCOUNT, uploaded.recordingPlace)
+        assertEquals(RecordingPlace.OTHER_DEVICE, EditorUiState(audio = AudioField(null, false)).recordingPlace)
+    }
+
+    @Test
+    fun `a recording only in the account downloads before it plays, and a failed download says why`() = runTest {
+        dhikrs.save(EXISTING.copy(audio = CustomAudio(localUri = null, uploaded = UPLOADED)))
+        val editor = editor(EXISTING.id.value)
+        assertTrue(editor.state.value.audio?.isPlayable == true)
+
+        audio.downloadError = RecordingDownloadError.OFFLINE
+        editor.onAction(EditorAction.TogglePlayback)
+        assertEquals(PlaybackStatus.FAILED, editor.state.value.playback.status)
+        assertEquals(RecordingDownloadError.OFFLINE, editor.state.value.downloadError)
+        assertTrue(players.players.isEmpty())
+
+        audio.files[EXISTING.id] = DOWNLOADED
+        editor.onAction(EditorAction.TogglePlayback)
+        assertNull(editor.state.value.downloadError)
+        val player = players.players.single()
+        assertEquals(listOf(DOWNLOADED), player.played)
+
+        // Played to the end, it plays again from the downloaded file without asking again.
+        player.emit(PlaybackState(PlaybackStatus.ENDED))
+        editor.onAction(EditorAction.TogglePlayback)
+        assertEquals(listOf(DOWNLOADED, DOWNLOADED), player.played)
+        assertEquals(listOf(EXISTING.id, EXISTING.id), audio.playableCalls)
+
+        // Saving keeps the dhikr's own recording as it was.
+        editor.onAction(EditorAction.Save)
+        assertEquals(CustomAudio(localUri = null, uploaded = UPLOADED), dhikrs.current.single().audio)
+    }
+
+    @Test
     fun `delete asks first, then deletes`() = runTest {
         dhikrs.save(EXISTING)
         val editor = editor(EXISTING.id.value)
@@ -238,6 +321,15 @@ class CustomDhikrEditorViewModelTest {
     }
 
     private companion object {
+        const val DOWNLOADED = "file:///profile/audio/downloaded.mp3"
+
+        val UPLOADED = UploadedAudio(
+            assetId = AwradId("0192f0d0-0000-7000-8000-0000000000a1"),
+            byteSize = 4_182_733,
+            contentType = AudioContentType.MPEG,
+            durationMs = 31_250,
+        )
+
         /** A hadith, then a book reference without a title, which can't be saved. */
         val MISSING_TITLE = listOf(Reference.Hadith("abu-dawud", "Sunan Abi Dawud"), Reference.Book("book", " "))
 

@@ -33,12 +33,14 @@ import java.util.Locale
  * - Qur'an: one ayah per line in `quran`, then its reference ("Qur'an 112:1–4") in `caption`;
  * - a name of Allah: the name in `nameOfAllah`, then its meaning in `title`;
  * - the others: the Arabic in `quran`.
- * The player bar sits at the bottom when the dhikr has a recording.
+ * The player bar sits at the bottom when the dhikr has a recording ([hasRecording]: on this phone, online, or in
+ * the account).
  */
 @Composable
 internal fun ArabicCard(
     dhikr: Dhikr,
     language: ContentLanguage,
+    hasRecording: Boolean,
     playback: PlaybackState,
     onTogglePlayback: () -> Unit,
     modifier: Modifier = Modifier,
@@ -69,7 +71,7 @@ internal fun ArabicCard(
                     dhikr.arabicLines.forEach { CentredText(text = it, style = AwradTheme.type.quran) }
             }
         }
-        dhikr.audio?.let { PlayerBar(playback = playback, onToggle = onTogglePlayback) }
+        if (hasRecording) PlayerBar(playback = playback, onToggle = onTogglePlayback)
     }
 }
 

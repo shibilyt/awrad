@@ -32,6 +32,7 @@ import app.awrad.core.designsystem.component.AwradSectionTitle
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.component.AwradTopBar
 import app.awrad.core.designsystem.theme.AwradTheme
+import app.awrad.core.domain.personal.AudioStorage
 import app.awrad.core.domain.sync.ConflictChoice
 import app.awrad.core.domain.sync.LocalProfile
 import app.awrad.core.domain.sync.SyncState
@@ -56,9 +57,9 @@ internal fun DataSyncRoute(
 }
 
 /**
- * "Data and sync": a top bar with Back; "Sync" (where it stands, when it last synced, how many changes wait, and
- * Sync now while signed in); "Changed on another device" (each open conflict with Keep mine and Use theirs); and
- * "On this device", every local profile with "Remove from this device".
+ * "Data and sync": a top bar with Back; "Sync" (where it stands, when it last synced, how many changes wait, the
+ * account's audio storage when known, and Sync now while signed in); "Changed on another device" (each open
+ * conflict with Keep mine and Use theirs); and "On this device", every local profile with "Remove from this device".
  */
 @Composable
 internal fun DataSyncScreen(
@@ -89,6 +90,7 @@ internal fun DataSyncScreen(
             StatusSection(
                 headline = state.headline,
                 status = state.status,
+                audioStorage = state.audioStorage,
                 onAction = onAction,
                 onOpenAccount = onOpenAccount,
             )
@@ -103,6 +105,7 @@ internal fun DataSyncScreen(
 private fun StatusSection(
     headline: SyncHeadline,
     status: SyncStatus,
+    audioStorage: AudioStorage?,
     onAction: (DataSyncAction) -> Unit,
     onOpenAccount: () -> Unit,
     modifier: Modifier = Modifier,
@@ -125,6 +128,13 @@ private fun StatusSection(
                 style = AwradTheme.type.bodySmall,
                 color = AwradTheme.colors.onSurfaceVariant,
             )
+            audioStorage?.let { storage ->
+                Text(
+                    text = audioStorageText(storage),
+                    style = AwradTheme.type.bodySmall,
+                    color = AwradTheme.colors.onSurfaceVariant,
+                )
+            }
             if (status.state == SyncState.SIGNED_OUT) {
                 AwradTextButton(text = stringResource(R.string.sync_sign_in), onClick = onOpenAccount)
             } else {

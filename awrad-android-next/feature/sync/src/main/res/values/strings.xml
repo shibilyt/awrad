@@ -61,5 +61,23 @@
     <string name="sync_reason_entity_not_found">What this change edits no longer exists.</string>
     <string name="sync_reason_delete_not_allowed">This can’t be deleted.</string>
     <string name="sync_reason_command_id_reused">The server had already received a different change with the same ID.</string>
+    <string name="sync_reason_audio_not_found">Your account no longer has the recording this edit named. The edit was kept and is syncing again, and a recording still on this phone uploads again.</string>
+    <string name="sync_reason_audio_mismatch">The recording details in this edit didn’t match your account’s copy. The edit was kept and is syncing again, and a recording still on this phone uploads again.</string>
+    <plurals name="sync_audio_storage">
+        <item quantity="one">Audio storage: %1$s of %2$s MB</item>
+        <item quantity="other">Audio storage: %1$s of %2$s MB</item>
+    </plurals>
+    <string name="sync_upload_failed_title">Audio couldn’t be uploaded</string>
+    <string name="sync_upload_failed_body">%1$s The recording stays on this phone, and the dhikr still syncs without it.</string>
+    <string name="sync_upload_unsupported_type">It isn’t an MP3 or M4A file.</string>
+    <string name="sync_upload_invalid_size">The file is empty.</string>
+    <string name="sync_upload_too_large">It’s over 10 MB.</string>
+    <string name="sync_upload_storage_full">Your account’s audio storage is full.</string>
+    <string name="sync_upload_storage_full_used">Your account’s audio storage is full (%1$s).</string>
+    <plurals name="sync_audio_storage_used">
+        <item quantity="one">%1$s of %2$s MB used</item>
+        <item quantity="other">%1$s of %2$s MB used</item>
+    </plurals>
+    <string name="sync_upload_mismatch">The uploaded file didn’t match the recording, after several tries.</string>
     <string name="sync_ok">OK</string>
 </resources>
