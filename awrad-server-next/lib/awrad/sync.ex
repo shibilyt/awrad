@@ -13,7 +13,7 @@ defmodule Awrad.Sync do
     * `prune/1`: drops receipts older than 90 days.
   """
 
-  use Boundary, deps: [Awrad, Awrad.Dhikrs], exports: []
+  use Boundary, deps: [Awrad, Awrad.Audio, Awrad.Dhikrs], exports: []
 
   import Ecto.Query
 

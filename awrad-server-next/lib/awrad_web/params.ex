@@ -10,7 +10,8 @@ defmodule AwradWeb.Params do
   """
 
   # `:array` checks only that the value is a JSON array; its items are the domain's.
-  @type type :: :string | :boolean | :array | {:object, spec()}
+  # `:integer` is a JSON number without a fraction; its range is the caller's.
+  @type type :: :string | :boolean | :integer | :array | {:object, spec()}
   @type spec :: [{atom(), {type(), :required | :optional}}]
 
   @doc """
@@ -67,6 +68,9 @@ defmodule AwradWeb.Params do
   defp cast_field(value, :boolean, _path, name, acc) when is_boolean(value),
     do: {:cont, {:ok, Map.put(acc, name, value)}}
 
+  defp cast_field(value, :integer, _path, name, acc) when is_integer(value),
+    do: {:cont, {:ok, Map.put(acc, name, value)}}
+
   defp cast_field(value, {:object, spec}, path, name, acc) do
     case cast_object(value, spec, path <> "/") do
       {:ok, nested} -> {:cont, {:ok, Map.put(acc, name, nested)}}
@@ -89,5 +93,6 @@ defmodule AwradWeb.Params do
 
   defp type_name(:string), do: "a string"
   defp type_name(:boolean), do: "a boolean"
+  defp type_name(:integer), do: "an integer"
   defp type_name(:array), do: "an array"
 end

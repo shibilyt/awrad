@@ -5,11 +5,13 @@ defmodule Awrad.Fixtures.Sync do
 
   State is inserted as rows, never through commands, so a fixture's state is
   exactly what it says: entities at their versions and revisions, the head,
-  stored receipts (with the payload hash of their command) and tag aliases.
+  stored receipts (with the payload hash of their command), tag aliases and
+  audio uploads.
   """
 
   import Ecto.Query
 
+  alias Awrad.Audio.Asset
   alias Awrad.Repo
   alias Awrad.Sync.{Entity, Head, Receipt, TagAlias}
 
@@ -43,7 +45,29 @@ defmodule Awrad.Fixtures.Sync do
       Repo.insert!(%TagAlias{user_id: user_id, alias_id: alias_id, tag_id: tag_id})
     end
 
+    for asset <- Map.get(state, "audio_assets", []), do: put_audio_asset!(user_id, asset)
+
     :ok
+  end
+
+  # An upload in the state's `audio_assets`, pending or ready, with its
+  # declared size and type (the checksum isn't part of the fixtures).
+  defp put_audio_asset!(user_id, %{"asset_id" => asset_id, "status" => status} = asset) do
+    now = DateTime.utc_now(:second)
+    ready? = status == "ready"
+
+    Repo.insert!(%Asset{
+      user_id: user_id,
+      asset_id: asset_id,
+      object_key: Asset.object_key(user_id, asset_id),
+      byte_size: asset["byte_size"],
+      content_type: asset["content_type"],
+      sha256: String.duplicate("0", 64),
+      status: status,
+      upload_expires_at: DateTime.add(now, 15, :minute),
+      ready_at: if(ready?, do: now),
+      last_referenced_at: if(ready?, do: now)
+    })
   end
 
   @doc "The account's entities changed after `revision`, in feed order, as `$defs/change` maps."

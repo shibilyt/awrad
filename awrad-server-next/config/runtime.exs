@@ -22,6 +22,18 @@ end
 
 config :awrad, AwradWeb.Endpoint, http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+# The private audio bucket (slice 3c, root ADR-2026-10-29, server ADR 0011). Read in
+# development and production, from awrad-server-next/mise.local.toml locally (ignored by
+# git) and the environment in production. They're needed only when audio is used:
+# Awrad.Audio.R2 raises naming the missing variable then. Never log or print them.
+if config_env() in [:dev, :prod] do
+  config :awrad, Awrad.Audio.R2,
+    account_id: System.get_env("AWRAD_R2_ACCOUNT_ID"),
+    bucket: System.get_env("AWRAD_R2_PRIVATE_BUCKET"),
+    access_key_id: System.get_env("AWRAD_R2_ACCESS_KEY_ID"),
+    secret_access_key: System.get_env("AWRAD_R2_SECRET_ACCESS_KEY")
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

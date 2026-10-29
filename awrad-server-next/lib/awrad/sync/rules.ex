@@ -11,6 +11,9 @@ defmodule Awrad.Sync.Rules do
     * `user_tag` rename onto another active tag's name: `tag_name_taken`.
     * Creating past 100 active tags or 1,000 active custom dhikrs:
       `tag_limit_reached`, `custom_dhikr_limit_reached`.
+    * A `custom_dhikr` put naming an uploaded recording: a ready asset of the
+      account (`audio_not_found`) with the same size and type
+      (`audio_mismatch`), checked after the limit (`Awrad.Sync.AudioReferences`).
     * `dhikr_personal`: its ID must be a built-in dhikr (`Awrad.Dhikrs.Catalog`)
       or an active custom dhikr of the account (`dhikr_not_found`). Its tag
       IDs are rewritten: an alias becomes its tag, a deleted tag is dropped,
@@ -27,7 +30,7 @@ defmodule Awrad.Sync.Rules do
 
   alias Awrad.Dhikrs.Catalog
   alias Awrad.Repo
-  alias Awrad.Sync.{Entity, Receipt, TagAlias}
+  alias Awrad.Sync.{AudioReferences, Entity, Receipt, TagAlias}
 
   @max_tags 100
   @max_custom_dhikrs 1_000
@@ -57,9 +60,11 @@ defmodule Awrad.Sync.Rules do
   end
 
   def check(user_id, %{"entity_type" => "custom_dhikr"} = command, entity) do
-    if is_nil(entity) and count_active(user_id, "custom_dhikr") >= @max_custom_dhikrs,
-      do: {:stop, Receipt.rejected(command, "custom_dhikr_limit_reached", [], nil)},
-      else: {:ok, command["document"]}
+    if is_nil(entity) and count_active(user_id, "custom_dhikr") >= @max_custom_dhikrs do
+      {:stop, Receipt.rejected(command, "custom_dhikr_limit_reached", [], nil)}
+    else
+      with :ok <- AudioReferences.check(user_id, command, entity), do: {:ok, command["document"]}
+    end
   end
 
   def check(user_id, %{"entity_type" => "dhikr_personal"} = command, entity) do

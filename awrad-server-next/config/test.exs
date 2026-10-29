@@ -35,6 +35,19 @@ config :argon2_elixir, t_cost: 1, m_cost: 8
 # Tests own the database through the sandbox; no background pruning.
 config :awrad, Awrad.Pruner, enabled: false
 
+# Tests never reach R2: recordings go to an in-memory stand-in (test/support), and the
+# cleanup job runs on demand (Awrad.Audio.clean/1). The R2 client's own test routes its
+# requests to Req.Test; these values only shape the signed links.
+config :awrad, Awrad.Audio, storage: Awrad.Audio.FakeStorage
+config :awrad, Awrad.Audio.Cleaner, enabled: false
+
+config :awrad, Awrad.Audio.R2,
+  account_id: "test-account",
+  bucket: "awrad-private-dhikr",
+  access_key_id: "TESTACCESSKEY",
+  secret_access_key: "test-secret-access-key-not-for-production",
+  req_options: [plug: {Req.Test, Awrad.Audio.R2}]
+
 # In test we don't send emails
 config :awrad, Awrad.Mailer, adapter: Swoosh.Adapters.Test
 

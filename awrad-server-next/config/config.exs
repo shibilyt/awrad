@@ -37,6 +37,10 @@ config :awrad, Awrad.Accounts.UserNotifier, from: {"Awrad", "no-reply@awrad.loca
 # Removes expired idempotency results, rate-limit windows and email codes hourly.
 config :awrad, Awrad.Pruner, enabled: true
 
+# Deletes abandoned and unreferenced recordings, and deleted accounts' objects, every
+# 10 minutes (Awrad.Audio.Cleaner). Storage is R2 (Awrad.Audio.R2) outside tests.
+config :awrad, Awrad.Audio.Cleaner, enabled: true
+
 # Browser cookies get the Secure flag in production only (prod.exs), so plain-http
 # localhost works in development (ADR-2026-10-15).
 config :awrad, :secure_cookies, false

@@ -3,7 +3,7 @@
 The Awrad JSON API, rebuilt contract-first to replace `awrad_server/` (root ADR-2026-10-14).
 - **Stack:** Phoenix 1.8.15 on Elixir 1.20.4 / OTP 29, Ecto with Postgres 18, Bandit.
 - **API only:** no HTML, assets, LiveView or static files.
-- **Status:** the goal rules and the Hijri calendar (slices 1a and 1b), accounts (slice 2a): registration, email verification and password reset by emailed code, mobile device sessions, browser cookie sessions; and account settings (slice 2b): the session list, password and email changes, account deletion; the built-in dhikr catalog's identity (slice 3a); and the change queue for custom dhikrs and tags (slice 3b). Features arrive in slices (`../docs/rebuild-plan.md`).
+- **Status:** the goal rules and the Hijri calendar (slices 1a and 1b), accounts (slice 2a): registration, email verification and password reset by emailed code, mobile device sessions, browser cookie sessions; and account settings (slice 2b): the session list, password and email changes, account deletion; the built-in dhikr catalog's identity (slice 3a); the change queue for custom dhikrs and tags (slice 3b); and private audio for custom dhikrs (slice 3c). Features arrive in slices (`../docs/rebuild-plan.md`).
 
 ## Boundaries
 
@@ -18,6 +18,7 @@ flowchart TD
   idem["Awrad.Idempotency<br/>stored POST results"]
   dhikrs["Awrad.Dhikrs<br/>built-in catalog identity"]
   sync["Awrad.Sync<br/>change queue"]
+  audio["Awrad.Audio<br/>private recordings, R2"]
   secrets["Awrad.Secrets<br/>keys (not re-exported)"]
   app --> web
   app --> domain
@@ -28,7 +29,10 @@ flowchart TD
   domain --- idem
   domain --- dhikrs
   domain --- sync
+  domain --- audio
   sync --> dhikrs
+  sync --> audio
+  accounts --> audio
   goals --> hijri
   accounts --> secrets
   idem --> secrets
@@ -38,14 +42,15 @@ flowchart TD
 |---|---|---|
 | `Awrad.Application` (top level) | `Awrad`, `AwradWeb` | – |
 | `AwradWeb` | `Awrad` | `Endpoint`, `Telemetry` |
-| `Awrad` | nothing | `ID`, `Mailer`, `Pruner`, `Repo`, `UUIDv7`, and each context sub-boundary with its exports (`{Accounts, []}`, `{Dhikrs, []}`, `{Goals, []}`, `{Hijri, []}`, `{Idempotency, []}`, `{Sync, []}`) |
-| `Awrad.Accounts` (sub-boundary) | `Awrad` (`Repo`, `Mailer`, `Gettext`), `Awrad.Secrets` | The `Awrad.Accounts` facade, `DeviceSession`, `EmailInput`, `Grant`, `RateLimiter`, `Scope`, `User` |
+| `Awrad` | nothing | `ID`, `Mailer`, `Pruner`, `Repo`, `UUIDv7`, and each context sub-boundary with its exports (`{Accounts, []}`, `{Audio, []}`, `{Dhikrs, []}`, `{Goals, []}`, `{Hijri, []}`, `{Idempotency, []}`, `{Sync, []}`) |
+| `Awrad.Accounts` (sub-boundary) | `Awrad` (`Repo`, `Mailer`, `Gettext`), `Awrad.Audio` (to wake its cleanup on deletion), `Awrad.Secrets` | The `Awrad.Accounts` facade, `DeviceSession`, `EmailInput`, `Grant`, `RateLimiter`, `Scope`, `User` |
 | `Awrad.Idempotency` (sub-boundary) | `Awrad`, `Awrad.Secrets` | The facade and `Record` |
 | `Awrad.Secrets` (sub-boundary) | nothing | Its root module, to its siblings only: `Awrad` doesn't re-export it, so `AwradWeb` can't read secrets |
 | `Awrad.Goals` (sub-boundary of `Awrad`) | `Awrad.Hijri` | `Rules` and the goal-model structs (`Goal`, `ActivePeriod`, `PausedRange`, `CountPolicy`, `Session`, `CountEntry`, `Standing`, `SessionStanding`, `DaysPerPeriodStanding`) |
 | `Awrad.Hijri` (sub-boundary of `Awrad`) | nothing | `Corrections`, `HijriDate` (and the `Awrad.Hijri` facade) |
 | `Awrad.Dhikrs` (sub-boundary of `Awrad`) | nothing | `Catalog`, `Catalog.Entry` |
-| `Awrad.Sync` (sub-boundary of `Awrad`) | `Awrad` (`Repo`, `ID`, `UUIDv7`), `Awrad.Dhikrs` | Only the `Awrad.Sync` facade |
+| `Awrad.Sync` (sub-boundary of `Awrad`) | `Awrad` (`Repo`, `ID`, `UUIDv7`), `Awrad.Audio`, `Awrad.Dhikrs` | Only the `Awrad.Sync` facade |
+| `Awrad.Audio` (sub-boundary of `Awrad`) | `Awrad` (`Repo`, `UUIDv7`) | The `Awrad.Audio` facade, `Storage` (the R2 behaviour) and `Cleaner` (the job) |
 
 Boundary checks these rules at compile time, and `mix validate` fails on any violation (ADR 0001). Test support (`test/support/`) sits outside the production boundaries.
 
@@ -89,10 +94,47 @@ Boundary checks these rules at compile time, and `mix validate` fails on any vio
 - **Applying a batch** (`Sync.Commands`, `Sync.Rules`): one transaction holding the account's `sync_heads` row `FOR UPDATE`. Each command, in order, is checked as the contract orders it (receipt store and payload hash; `dhikr_personal` delete; document; entity state; entity rules) and is either applied at `head + 1` with its cascades at the same revision, or answered without touching any entity. The `applied` receipt of a `user_tag` or `custom_dhikr` delete lists its cascades in `cascaded` (`{entity_type, entity_id, state, version, revision}`, ordered by type, then ID; `[]` when nothing cascaded); every other `applied` receipt has `cascaded: null`. Every receipt but `command_id_reused` is stored, `cascaded` included, so a duplicate replays it.
 - **Documents** (`Sync.Documents`): 64 KB of compact JSON first (`document_too_large`), then the shape, by hand: `CustomDhikrDocument` (the `custom_dhikr_validity` codes, including `range` on `/references/N/ayah_end` for a Qur'an reference that ends before it starts), `TagName` (trim and collapse `White_Space`, NFC, full case folding with `:string.casefold/1`, 40 graphemes, 128 bytes; `normalized_name` must equal the server's fold, `mismatch`), and `{tag_ids}` (at most 20 distinct UUIDs). Field pointers get `/document` in front in a receipt.
 - **Entity rules:** a tag create whose normalized name is taken merges (an alias row, no revision); a rename onto a taken name is `tag_name_taken`; at most 100 active tags and 1,000 active custom dhikrs; a `dhikr_personal` needs a built-in (`Catalog.builtin?/1`) or an active custom dhikr of the account (`dhikr_not_found`), and its tag IDs are rewritten (alias to tag, deleted dropped, repeats removed; never seen is `tag_not_found` at its index). Deleting a tag removes it from every `dhikr_personal`; deleting a custom dhikr deletes its `dhikr_personal`.
+- **Recordings** (`Sync.AudioReferences`, slice 3c): after the custom dhikr limit, a put whose `audio` names an uploaded recording needs a ready asset of the account (`audio_not_found`, `not_found` on `/document/audio/asset_id`) with the same `byte_size` and `content_type` (`audio_mismatch`, `mismatch` on each disagreeing member). The check locks the asset row until the batch commits. Once a custom dhikr is written or deleted, the assets its old and new documents named are told whether an active custom dhikr still names them (`referenced`, `last_referenced_at`), which the audio cleanup reads.
 - **Feed** (`Sync.Feed`): one SQL statement per page (one snapshot): matching changes (revision above `after`, active only when `after` is 0) ordered by revision, `entity_type` (`COLLATE "C"`) and `entity_id`, up to the revision of the `limit`-th one; `has_more` when any match lies beyond it, `next_after` that revision or else the head.
 - **Housekeeping:** `Awrad.Pruner` deletes receipts older than 90 days.
 - **No rate limit yet.** The contract allows `429` on both operations, but no limit has been agreed; `RateLimiter` holds account-action limits only.
-- **The fixtures are the spec** (`test/awrad/sync/`): `sync_receipts_test.exs` puts each case's state into the database for a fresh account (`test/support/fixtures/sync.ex`), runs the batch through `Awrad.Sync.apply_batch/2` and compares receipts, head, changes, aliases and stored receipts; `sync_changes_feed_test.exs`, `tag_name_normalization_test.exs` and `custom_dhikr_validity_test.exs` run the other server-side files. `server_limits_test.exs` covers what the fixtures leave out (1,000 custom dhikrs, 64 KB, 90 days). `test/awrad/shared_fixtures_test.exs` fails when a `sync/v1` fixture file has no runner; `outbox_enqueue`, `apply_changes` and `profile_switch` are exempt as phone-only.
+- **The fixtures are the spec** (`test/awrad/sync/`): `sync_receipts_test.exs` puts each case's state (audio uploads included) into the database for a fresh account (`test/support/fixtures/sync.ex`), runs the batch through `Awrad.Sync.apply_batch/2` and compares receipts, head, changes, aliases and stored receipts; `sync_changes_feed_test.exs`, `tag_name_normalization_test.exs` and `custom_dhikr_validity_test.exs` run the other server-side files. `server_limits_test.exs` covers what the fixtures leave out (1,000 custom dhikrs, 64 KB, 90 days). `test/awrad/shared_fixtures_test.exs` fails when a `sync/v1` fixture file has no runner; `outbox_enqueue`, `apply_changes` and `profile_switch` are exempt as phone-only.
+
+## Private audio (slice 3c)
+
+`Awrad.Audio` is the only entry point (`docs/slices/03c-audio-upload.md`, root ADR-2026-10-29, `contracts/audio/v1/`, server ADR 0011). Clients `PUT` recordings to and `GET` them from the private R2 bucket with short-lived signed links; the bytes never pass through the server or the change queue.
+
+- **API** (`AwradWeb.AudioController`, `contracts/api/paths/audio.yaml`), behind `AccountAuth` (bearer, or cookie plus CSRF on the POSTs), with `X-Awrad-Account` checked first as on the change queue (`AwradWeb.AccountHeader`). `Idempotency-Key` is accepted and ignored.
+  - `create_audio_upload` (`POST /api/v1/audio_uploads`): the body must match the request schema (`400 malformed_request`). An `asset_id` already used is looked at first, under a per-account advisory lock: the account's own with the same body is `200` (a fresh link while pending, `{asset}` once ready); a different body, one being deleted, or another account's is `409 asset_id_in_use`. Then the rules (`Audio.Rules`, `audio_upload_validity`): `415 unsupported_audio_type`, `422 invalid_size`, `413 file_too_large`, `422 storage_full` with `used_bytes` and `limit_bytes` (ready plus pending, against 500,000,000). Otherwise a pending row and `201` with a `PUT` link for 15 minutes, signed with `content-type` and `x-amz-checksum-sha256`.
+  - `complete_audio_upload` (`POST /api/v1/audio_uploads/{asset_id}/complete`): `HEAD` the object; none is `409 upload_incomplete`; one whose size, type or checksum differs is deleted, its row becomes `deleting`, and the answer is `422 upload_mismatch`. A match turns the row `ready` (only if still pending, so a race can't confirm a cleaned-up upload). A ready asset is returned again; anything else (unknown, another account's, cleaned up, not an ID) is `404`.
+  - `get_audio_download` (`GET /api/v1/audio_assets/{asset_id}/download`): a `GET` link for 10 minutes to a ready asset of the account, else `404`.
+  - `get_audio_usage` (`GET /api/v1/audio_assets/usage`): `{used_bytes, limit_bytes}`.
+  - No rate limit yet: the contract allows `429`, but none has been agreed, as on the change queue.
+- **Storage** (`Audio.Storage`, ADR 0011): a behaviour; `Audio.R2` signs with Req's SigV4 (path-style `https://<account>.r2.cloudflarestorage.com/<bucket>/<key>`, region `auto`). `HEAD` sends `x-amz-checksum-mode: ENABLED`, so R2 returns the stored SHA-256. Object keys are `users/<account_id>/audio/<asset_id>`.
+- **Secrets:** `AWRAD_R2_ACCOUNT_ID`, `AWRAD_R2_PRIVATE_BUCKET`, `AWRAD_R2_ACCESS_KEY_ID` and `AWRAD_R2_SECRET_ACCESS_KEY`, read by `config/runtime.exs` in dev and prod (locally from `mise.local.toml`, which git ignores). They're needed only when audio is used: a missing one raises `Audio.R2.ConfigError`, which names the variable but never a value.
+- **Cleanup** (`Audio.Cleanup`, run by `Audio.Cleaner` every 10 minutes and woken by account deletion; `Audio.clean/1` on demand in tests). It runs in two steps.
+  - Conditional updates mark rows `deleting`:
+    - a pending upload reserved more than 24 hours ago;
+    - a ready asset with `referenced` false and `last_referenced_at` more than 24 hours ago;
+    - every row of a deleted account.
+
+    Each row gets `delete_after`, which is never before its latest upload link expires.
+  - Due rows are then swept: the object is deleted, then the row. When R2 fails, the row stays and the next run retries.
+
+  A `deleting` row is invisible to clients (not an asset, not counted), and its `asset_id` stays in use until it goes.
+- **Account deletion:** `audio_assets.user_id` is `ON DELETE SET NULL`, unlike every other account table. The rows outlive the account only as cleanup work, holding the object key, so no object is forgotten.
+- **Real bucket:** `mix awrad.r2_check` (run where the `AWRAD_R2_*` variables are set) round-trips a small object under `r2-check/`, and prints statuses only:
+  - a presigned `PUT`, and R2 refusing other bytes (400) or another type (403);
+  - `HEAD` and the confirmation comparison;
+  - a presigned `GET`, with the bytes compared;
+  - `DELETE`.
+- **Tests:**
+  - `test/awrad/audio/audio_upload_validity_test.exs` runs the fixture;
+  - `test/awrad_web/controllers/audio_uploads_test.exs` and `audio_assets_test.exs` cover every operation and status with `assert_conforms`, including the signed links' host, path, expiry and signed headers;
+  - `cleanup_test.exs` covers the job, through the change queue, and account deletion;
+  - `r2_test.exs` checks the client against an independent SigV4 computation and `Req.Test`.
+
+  Tests use `Awrad.Audio.FakeStorage` (`test/support/`) and never reach R2.
 
 ## IDs
 
@@ -148,7 +190,7 @@ Root ADR-2026-10-28, `contracts/identity/v1/`. Every ID the server generates is 
 - **Email change** (`Settings.request_email_change/4`, `confirm_email_change/3`):
   - request: current password, `EmailInput` (`email_invalid`), not the current email ignoring case (`email_unchanged`); the earlier `change_email` code is cancelled; if the address has an account (verified or not), that address gets an `email_taken` notice, otherwise a `change_email` code (`email_codes.new_email`, part of the HMAC). Same `202` either way.
   - confirm: the code (15 minutes, 5 tries) switches the email; `409 email_taken` if the address got an account meanwhile (checked, and the unique index as backstop; the code then stays usable); pending reset codes are deleted; the old address gets an `email_changed` notice naming the new one. Sessions stay.
-- **Delete account** (`Settings.delete/3`): current password, then in one transaction the account's ID-keyed rate-limit windows, the hashes of its still-working refresh tokens into `deleted_account_refresh_tokens` (ADR 0010), and the `users` row, which cascades to `users_tokens`, `email_codes`, `device_sessions` (→ `refresh_tokens`), the account's `idempotency_records` and its `sync_*` rows. IP- and email-keyed windows stay until pruned (anti-abuse). A cookie caller's cookies are cleared; an `account_deleted` email goes to the address.
+- **Delete account** (`Settings.delete/3`): current password, then in one transaction the account's ID-keyed rate-limit windows, the hashes of its still-working refresh tokens into `deleted_account_refresh_tokens` (ADR 0010), and the `users` row, which cascades to `users_tokens`, `email_codes`, `device_sessions` (→ `refresh_tokens`), the account's `idempotency_records` and its `sync_*` rows. Its `audio_assets` rows lose their account (`SET NULL`) and the audio cleanup job is woken to delete every object. IP- and email-keyed windows stay until pruned (anti-abuse). A cookie caller's cookies are cleared; an `account_deleted` email goes to the address.
 - **Idempotency:** `revoke_others`, `change_password`, `request_email_change` and `confirm_email_change` run the `:idempotent` pipeline after `AccountAuth`, so stored results are per account (ADR 0008). `delete_account` checks the key's shape only; a repeat after success is `401`.
 
 ### Client IP and proxies
@@ -163,7 +205,7 @@ Per-IP rate limits use `conn.remote_ip`, the TCP peer. That's correct when Bandi
 |---|---|---|
 | `:api` | Every `/api/v1` route | JSON only |
 | `:idempotent` | Public account `POST`s, `create_device_session`, and the account settings `POST`s (after `:any_account`, so results are per account) | `Idempotency` (`mode: :replay`; ADR 0007, 0008) |
-| `:any_account` | `get_current_account`, the account settings (`/api/v1/account/...`) and the change queue (`/api/v1/sync/...`) | `AccountAuth`: with an `Authorization` header, **only** the bearer token is checked; without one, **only** the cookie session, after the CSRF check on state-changing methods (`403 csrf_token_invalid`) |
+| `:any_account` | `get_current_account`, the account settings (`/api/v1/account/...`), the change queue (`/api/v1/sync/...`) and audio (`/api/v1/audio_uploads...`, `/api/v1/audio_assets/...`) | `AccountAuth`: with an `Authorization` header, **only** the bearer token is checked; without one, **only** the cookie session, after the CSRF check on state-changing methods (`403 csrf_token_invalid`) |
 | `:browser_session` | Browser routes | Cookie session (`_awrad_session`), CSRF check on state-changing methods (`X-CSRF-Token`, `403 csrf_token_invalid`), current user from the cookie only (ADR-2026-10-15) |
 | `:idempotent_browser_sign_in` | `create_browser_session` | `Idempotency` (`mode: :rerun`: a cookie can't be replayed) |
 | `:require_browser_user` | `delete_browser_session` | `401 unauthenticated` without a signed-in cookie session |
@@ -213,8 +255,9 @@ Every table's primary key is a Postgres `uuid` that the server generates as a UU
 | `sync_entities` | Every synced entity's latest state (`jsonb` document; tombstones kept), unique per account, type and ID |
 | `sync_receipts` | Each command's first receipt and payload hash, 90 days |
 | `sync_tag_aliases` | Merged tag IDs and the tag each became |
+| `audio_assets` | Each upload of a recording, from its reservation to the deletion of its object: account, `asset_id` (unique per account), object key, declared size, type and SHA-256, `pending`/`ready`/`deleting`, link expiry, `referenced` and `last_referenced_at`, `delete_after` |
 
-Every table holding account data references `users` with `ON DELETE CASCADE` (directly, or through `device_sessions` for `refresh_tokens`); `auth_rate_limits` holds only HMACs and is cleared by account ID on deletion, and `deleted_account_refresh_tokens` holds only hashes of random secrets.
+Every table holding account data references `users` with `ON DELETE CASCADE` (directly, or through `device_sessions` for `refresh_tokens`), except `audio_assets` (`SET NULL`, so its cleanup can still delete the objects); `auth_rate_limits` holds only HMACs and is cleared by account ID on deletion, and `deleted_account_refresh_tokens` holds only hashes of random secrets.
 
 API JSON is mapped field by field (`AwradWeb.AccountJSON`), never straight from schemas.
 

@@ -18,6 +18,8 @@ defmodule Awrad.Application do
       # Background email delivery (Awrad.Accounts.UserNotifier).
       {Task.Supervisor, name: Awrad.TaskSupervisor},
       Awrad.Pruner,
+      # Deletes abandoned and unreferenced recordings (slice 3c).
+      Awrad.Audio.Cleaner,
       # Start to serve requests, typically the last entry
       AwradWeb.Endpoint
     ]

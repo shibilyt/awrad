@@ -36,7 +36,19 @@ defmodule AwradWeb.Problem do
     "not_found" => {404, "Not found", "no such resource"},
     "email_change_code_invalid" =>
       {422, "Email change code invalid", "the code is wrong, expired or already used"},
-    "email_taken" => {409, "Email taken", "the new email now belongs to another account"}
+    "email_taken" => {409, "Email taken", "the new email now belongs to another account"},
+    # Audio (slice 3c, contracts/api/paths/audio.yaml). Most carry their own detail.
+    "asset_id_in_use" =>
+      {409, "Asset ID in use", "asset_id was already used for a different file"},
+    "unsupported_audio_type" =>
+      {415, "Unsupported audio type", "content_type is not audio/mpeg or audio/mp4"},
+    "invalid_size" => {422, "Invalid size", "byte_size must be at least 1"},
+    "file_too_large" => {413, "File too large", "byte_size is above the 10000000-byte limit"},
+    "storage_full" => {422, "Storage full", "the upload would pass the account's limit"},
+    "upload_incomplete" =>
+      {409, "Upload incomplete", "no object has been uploaded for this asset yet"},
+    "upload_mismatch" =>
+      {422, "Upload mismatch", "the stored object isn't the upload that was reserved"}
   }
 
   # Request fields as JSON Pointers, and an English detail per field code.
@@ -82,6 +94,22 @@ defmodule AwradWeb.Problem do
   def send_code(conn, code) do
     {status, title, detail} = Map.fetch!(@problems, code)
     send_problem(conn, status, code, title, detail)
+  end
+
+  @doc """
+  The catalogued problem for `code` with its own `detail`, plus extension
+  members next to the usual ones (STYLE.md §7), such as `storage_full`'s
+  `used_bytes` and `limit_bytes`.
+  """
+  @spec send_code(Plug.Conn.t(), String.t(), String.t(), map()) :: Plug.Conn.t()
+  def send_code(conn, code, detail, extensions \\ %{}) do
+    {status, title, _detail} = Map.fetch!(@problems, code)
+    body = Map.merge(extensions, body(status, code, title, detail))
+
+    conn
+    |> put_resp_content_type("application/problem+json")
+    |> send_resp(status, Jason.encode_to_iodata!(body))
+    |> halt()
   end
 
   @doc "`400 malformed_request`: bad JSON, wrong types, unknown or missing fields."
