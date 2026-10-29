@@ -46,11 +46,14 @@ export interface CustomDhikrDocument {
 
 export type UserTagDocument = Schemas["UserTagDocument"];
 export type DhikrPersonalDocument = Schemas["DhikrPersonalDocument"];
+/** The account practice policy (slice 3d, contracts/practice-settings/v1): one per account, its ID the account's. */
+export type PracticePolicyDocument = Schemas["PracticePolicyDocument"];
 
 export interface DocumentOf {
   custom_dhikr: CustomDhikrDocument;
   user_tag: UserTagDocument;
   dhikr_personal: DhikrPersonalDocument;
+  practice_policy: PracticePolicyDocument;
 }
 
 /** An active entity: its ID, the version the server last told us, and its document. */
@@ -65,6 +68,8 @@ export interface SyncState {
   readonly custom_dhikr: Readonly<Record<string, Entity<CustomDhikrDocument>>>;
   readonly user_tag: Readonly<Record<string, Entity<UserTagDocument>>>;
   readonly dhikr_personal: Readonly<Record<string, Entity<DhikrPersonalDocument>>>;
+  /** At most one, keyed by the account's ID; none until someone chooses practice settings. */
+  readonly practice_policy: Readonly<Record<string, Entity<PracticePolicyDocument>>>;
   readonly headRevision: number;
 }
 

@@ -84,6 +84,7 @@ const STATE: SyncState = {
   dhikr_personal: {
     [TAHLEEL]: { id: TAHLEEL, version: 1, document: { tag_ids: ["0192f0a0-0000-7000-8000-000000000001"] } },
   },
+  practice_policy: {},
   headRevision: 10,
 };
 
