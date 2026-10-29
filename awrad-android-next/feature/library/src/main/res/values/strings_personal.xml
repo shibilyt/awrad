@@ -81,7 +81,7 @@
     <string name="editor_problem_limit">You have 1,000 dhikrs of your own, the most there can be.</string>
     <string name="editor_problem_not_saved">It wasn’t saved, because the account changed. Try again.</string>
     <string name="editor_audio_too_large">This recording is over 10 MB.</string>
-    <string name="editor_audio_unsupported">Choose an MP3 or M4A recording.</string>
+    <string name="editor_audio_unsupported">This type of file isn’t supported. Choose an MP3 or M4A recording.</string>
     <string name="editor_audio_unreadable">This file couldn’t be read.</string>
 
     <string name="tags_rename">Rename</string>

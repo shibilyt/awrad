@@ -81,7 +81,7 @@
     <string name="editor_problem_limit">നിങ്ങൾക്ക് സ്വന്തമായി 1,000 ദിക്റുകളുണ്ട്, അതാണ് പരമാവധി.</string>
     <string name="editor_problem_not_saved">അക്കൗണ്ട് മാറിയതിനാൽ സേവ് ചെയ്തില്ല. വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="editor_audio_too_large">ഈ റെക്കോർഡിംഗ് 10 MB-യിൽ കൂടുതലാണ്.</string>
-    <string name="editor_audio_unsupported">ഒരു MP3 അല്ലെങ്കിൽ M4A റെക്കോർഡിംഗ് തിരഞ്ഞെടുക്കുക.</string>
+    <string name="editor_audio_unsupported">ഈ തരം ഫയൽ പിന്തുണയ്ക്കുന്നില്ല. ഒരു MP3 അല്ലെങ്കിൽ M4A റെക്കോർഡിംഗ് തിരഞ്ഞെടുക്കുക.</string>
     <string name="editor_audio_unreadable">ഈ ഫയൽ വായിക്കാനായില്ല.</string>
 
     <string name="tags_rename">പേര് മാറ്റുക</string>

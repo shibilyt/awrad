@@ -192,6 +192,17 @@ internal data class DhikrDetailUiState(
 ) {
     /** The player bar shows: the dhikr has a recording on this phone or online, or one uploaded to the account. */
     val hasRecording: Boolean get() = dhikr?.audio != null || custom?.audio?.uploaded != null
+
+    /**
+     * What the player bar shows: [playback], with the recording's known length (the catalog's, or the custom
+     * document's `duration_ms`) as the total until the player measures it, so it reads "0:00 / 0:31" before the
+     * first play (contracts/audio/v1/README.md, "Phones").
+     */
+    val player: PlaybackState
+        get() {
+            val known = dhikr?.audio?.durationMs ?: custom?.audio?.uploaded?.durationMs
+            return if (playback.durationMs == null && known != null) playback.copy(durationMs = known) else playback
+        }
 }
 
 internal sealed interface DhikrDetailAction {

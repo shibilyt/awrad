@@ -153,6 +153,9 @@ public interface SyncDao {
     @Query("SELECT * FROM audio_uploads WHERE state = 'queued' ORDER BY created_at, asset_id")
     public fun queuedUploads(): List<AudioUploadEntity>
 
+    @Query("SELECT * FROM audio_uploads WHERE state = 'failed' AND problem = :problem ORDER BY created_at, asset_id")
+    public fun failedUploads(problem: String): List<AudioUploadEntity>
+
     @Query("DELETE FROM audio_uploads WHERE asset_id = :assetId")
     public fun deleteUpload(assetId: String)
 

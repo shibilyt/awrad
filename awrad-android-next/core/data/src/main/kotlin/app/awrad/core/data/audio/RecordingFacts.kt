@@ -44,7 +44,8 @@ internal object RecordingFiles {
     /**
      * The facts of [file], or null when it can't be read. The type comes from the extension the import gave it
      * (contracts/audio/v1/README.md, "Media types on import"): `.mp3` is `audio/mpeg` and `.m4a` is `audio/mp4`.
-     * A raw `.aac` stream isn't an M4A container, so it keeps `audio/aac`, which the upload rules refuse.
+     * Imports take nothing else now; a raw `.aac` stream imported before that isn't an M4A container, so it keeps
+     * `audio/aac`, which the upload rules refuse.
      */
     fun measure(file: File, probe: DurationProbe): RecordingFacts? = try {
         val digest = MessageDigest.getInstance("SHA-256")

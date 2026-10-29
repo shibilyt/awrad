@@ -91,8 +91,8 @@ public data class SyncMetaEntity(
  * A recording waiting to upload to the account (slice 3c), one per custom dhikr. [assetId] is a new UUIDv7 for
  * this file; [sha256], [byteSize], [contentType] and [durationMs] are measured on the first attempt and kept, so a
  * retry reserves the same body. [state] is `queued` or `failed`; a failed one keeps the recording on the phone and
- * is a notice ([problem], with the account's [usedBytes] and [limitBytes] when it's full) until dismissed.
- * [mismatches] counts `upload_mismatch` answers in a row.
+ * is a notice ([problem], with the account's [usedBytes] and [limitBytes] when it's full) until dismissed; a full
+ * one is queued again once the account has room for it. [mismatches] counts `upload_mismatch` answers in a row.
  */
 @Entity(tableName = "audio_uploads", indices = [Index(value = ["dhikr_id"], unique = true)])
 public data class AudioUploadEntity(

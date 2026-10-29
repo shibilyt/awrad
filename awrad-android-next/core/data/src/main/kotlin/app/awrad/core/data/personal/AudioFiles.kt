@@ -2,7 +2,7 @@ package app.awrad.core.data.personal
 
 import android.content.ContentResolver
 import android.net.Uri
-import android.webkit.MimeTypeMap
+import android.provider.OpenableColumns
 import androidx.core.net.toUri
 import app.awrad.core.domain.personal.AudioImport
 import app.awrad.core.domain.personal.AudioImportError
@@ -12,8 +12,10 @@ import java.io.IOException
 import java.io.InputStream
 
 /**
- * Custom dhikr recordings, kept in the profile's private files (`audio/` under its directory) and never synced in
- * slice 3b. Imports accept MP3 and M4A/AAC up to 10 MB.
+ * Custom dhikr recordings, kept in the profile's private files (`audio/` under its directory). Imports accept only
+ * an `.mp3` (`audio/mpeg`) or an `.m4a` (`audio/mp4`, or `audio/x-m4a` as some systems report it) up to 10 MB
+ * (contracts/audio/v1/README.md, "Phones"); anything else, a raw `.aac` stream included, is refused, so it never
+ * becomes a recording that can't upload.
  */
 internal class AudioFiles(private val resolver: ContentResolver) {
 
@@ -23,7 +25,8 @@ internal class AudioFiles(private val resolver: ContentResolver) {
      */
     fun import(source: String, profileDir: File, name: String): AudioImport {
         val uri = source.toUri()
-        val extension = extensionOf(uri) ?: return AudioImport.Failed(AudioImportError.UNSUPPORTED_TYPE)
+        val extension = importExtension(resolver.getType(uri), nameOf(uri))
+            ?: return AudioImport.Failed(AudioImportError.UNSUPPORTED_TYPE)
         val target = File(File(profileDir, AUDIO_DIR).apply { mkdirs() }, "$name.$extension")
         val error = try {
             val input = resolver.openInputStream(uri)
@@ -47,12 +50,18 @@ internal class AudioFiles(private val resolver: ContentResolver) {
     /** The `file://` URI of the recording at [path]. */
     fun uriOf(path: String): String = File(path).toUri().toString()
 
-    private fun extensionOf(uri: Uri): String? {
-        val type = resolver.getType(uri)?.lowercase()
-        val fromType = type?.let { MIME_TYPES[it] }
-        val fromName = uri.lastPathSegment?.substringAfterLast('.', "")?.lowercase()?.takeIf { it in EXTENSIONS }
-        val fromMap = type?.let { MimeTypeMap.getSingleton().getExtensionFromMimeType(it) }?.takeIf { it in EXTENSIONS }
-        return fromType ?: fromMap ?: fromName.takeIf { type == null || type == "application/octet-stream" }
+    /** The picked file's display name, or the URI's last segment when the provider has none. */
+    private fun nameOf(uri: Uri): String? {
+        val displayName = try {
+            resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getString(0) else null
+            }
+        } catch (_: SecurityException) {
+            null
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+        return displayName ?: uri.lastPathSegment
     }
 
     /** Copies [input] to [target]; false (and nothing more read) once it passes [limit] bytes. */
@@ -70,18 +79,25 @@ internal class AudioFiles(private val resolver: ContentResolver) {
         }
     }
 
-    private companion object {
-        const val AUDIO_DIR = "audio"
-        const val BUFFER_SIZE = 64 * 1024
-        val MIME_TYPES = mapOf(
-            "audio/mpeg" to "mp3",
-            "audio/mp3" to "mp3",
-            "audio/mp4" to "m4a",
-            "audio/x-m4a" to "m4a",
-            "audio/m4a" to "m4a",
-            "audio/aac" to "aac",
-            "audio/aacp" to "aac",
-        )
-        val EXTENSIONS = setOf("mp3", "m4a", "aac")
+    companion object {
+        private const val AUDIO_DIR = "audio"
+        private const val BUFFER_SIZE = 64 * 1024
+
+        /** By the file's name: an `.mp3` is MP3, an `.m4a` is M4A. */
+        private val EXTENSIONS = setOf("mp3", "m4a")
+
+        /** By the type the system reports, when the name has no extension. */
+        private val SYSTEM_TYPES = mapOf("audio/mpeg" to "mp3", "audio/mp4" to "m4a", "audio/x-m4a" to "m4a")
+
+        /**
+         * The extension an import is kept under (`mp3` or `m4a`): the file [name]'s own when it has one, else the
+         * one for the [type] the system reports. Null refuses the import: any other extension (`.aac`, `.wav`…),
+         * or no extension and another type.
+         */
+        fun importExtension(type: String?, name: String?): String? {
+            val extension = name?.substringAfterLast('.', "")?.lowercase().orEmpty()
+            if (extension.isNotEmpty()) return extension.takeIf { it in EXTENSIONS }
+            return type?.substringBefore(';')?.trim()?.lowercase()?.let(SYSTEM_TYPES::get)
+        }
     }
 }

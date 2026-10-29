@@ -131,6 +131,64 @@ class AudioUploaderTest {
     }
 
     @Test
+    fun `a storage_full failure uploads on a later sync once the usage shows room for it`() = runTest {
+        val stack = signedInStack()
+        stack.audioServer.otherUsedBytes = USED_NEARLY_ALL
+        stack.saveWithRecording()
+        stack.engine.syncOnce()
+        assertEquals(RecordingUpload.FAILED, stack.audio.upload(dhikrId).first())
+
+        // Still full: the usage is read, and nothing is reserved.
+        stack.audioServer.calls.clear()
+        stack.engine.syncOnce()
+        assertEquals(listOf("usage"), stack.audioServer.calls)
+        assertEquals(AudioUploadProblem.STORAGE_FULL, stack.audio.uploadNotices.first().single().problem)
+
+        // Exactly enough room: it goes, in the same run.
+        stack.audioServer.otherUsedBytes = 500_000_000L - BYTES
+        stack.audioServer.calls.clear()
+        assertEquals(SyncOutcome.Done, stack.engine.syncOnce())
+
+        val asset = stack.audioServer.ready.keys.single()
+        assertEquals(listOf("usage", "create $asset", "complete $asset"), stack.audioServer.calls)
+        assertTrue(stack.audio.uploadNotices.first().isEmpty())
+        assertEquals(asset, CustomAudioJson.uploaded(stack.server.document()["audio"])?.assetId?.value)
+    }
+
+    @Test
+    fun `without a storage_full failure the usage isn't read`() = runTest {
+        val stack = signedInStack()
+        stack.saveWithRecording()
+        stack.audioServer.createFailures += problem(413, "file_too_large")
+
+        stack.engine.syncOnce()
+        stack.engine.syncOnce()
+
+        assertTrue("usage" !in stack.audioServer.calls)
+        assertEquals(AudioUploadProblem.FILE_TOO_LARGE, stack.audio.uploadNotices.first().single().problem)
+    }
+
+    @Test
+    fun `replacing or removing a recording clears its storage_full failure`() = runTest {
+        val stack = signedInStack()
+        stack.audioServer.otherUsedBytes = USED_NEARLY_ALL
+        stack.saveWithRecording()
+        stack.engine.syncOnce()
+        assertEquals(RecordingUpload.FAILED, stack.audio.upload(dhikrId).first())
+
+        stack.saveWithRecording(name = "replacement.m4a")
+        assertTrue(stack.audio.uploadNotices.first().isEmpty())
+        assertEquals(RecordingUpload.QUEUED, stack.audio.upload(dhikrId).first())
+
+        stack.engine.syncOnce()
+        assertEquals(RecordingUpload.FAILED, stack.audio.upload(dhikrId).first())
+        val saved = checkNotNull(stack.dhikrs.dhikr(dhikrId).first())
+        stack.dhikrs.save(saved.copy(audio = null))
+        assertTrue(stack.audio.uploadNotices.first().isEmpty())
+        assertEquals(RecordingUpload.NONE, stack.audio.upload(dhikrId).first())
+    }
+
+    @Test
     fun `upload_incomplete PUTs again and confirms`() = runTest {
         val stack = signedInStack()
         stack.saveWithRecording()
@@ -162,16 +220,22 @@ class AudioUploaderTest {
     }
 
     @Test
-    fun `mismatch after mismatch keeps the recording local with a notice`() = runTest {
+    fun `a second mismatch in a row keeps the recording local with a notice, after one retry`() = runTest {
         val stack = signedInStack()
         stack.saveWithRecording()
-        stack.objects.corruptPuts = AudioUploader.MAX_MISMATCHES
+        stack.objects.corruptPuts = 2
 
         stack.engine.syncOnce()
 
         assertEquals(AudioUploadProblem.UPLOAD_MISMATCH, stack.audio.uploadNotices.first().single().problem)
         assertTrue(stack.audioServer.ready.isEmpty())
-        assertEquals(AudioUploader.MAX_MISMATCHES, stack.audioServer.calls.count { it.startsWith("create") })
+        val creates = stack.audioServer.calls.filter { it.startsWith("create") }.map { it.substringAfter(' ') }
+        assertEquals(2, creates.toSet().size)
+
+        // It stays local: later runs don't try it again.
+        stack.audioServer.calls.clear()
+        stack.engine.syncOnce()
+        assertTrue(stack.audioServer.calls.isEmpty())
     }
 
     @Test
