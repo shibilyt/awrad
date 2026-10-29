@@ -76,8 +76,8 @@ struct SyncTransportTests {
 
     @Test func signedOutTheRealStackMakesNoRequest() async throws {
         let harness = SessionHarness { _ in .init(status: 500, body: Data()) }
-        let directory = FileManager.default.temporaryDirectory.appending(path: "awrad-offline-\(AwradID.random())")
-        defer { try? FileManager.default.removeItem(at: directory) }
+        let directory = TestDirectory.profiles("awrad-offline")
+        defer { TestDirectory.remove(directory) }
         let store = try LocalProfileStore(directory: directory, session: harness.session)
         await store.start()
         await store.setAppActive(true)

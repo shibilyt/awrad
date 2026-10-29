@@ -48,8 +48,8 @@ struct SyncPersistenceTests {
     }
 
     @Test func anEditAndItsCommandAreSavedTogether() async throws {
-        let directory = FileManager.default.temporaryDirectory.appending(path: "awrad-store-\(AwradID.random())")
-        defer { try? FileManager.default.removeItem(at: directory) }
+        let directory = TestDirectory.profiles("awrad-store")
+        defer { TestDirectory.remove(directory) }
         let files = ProfileFiles(root: directory)
         let profile = AwradID.random()
         let id = AwradID.random()

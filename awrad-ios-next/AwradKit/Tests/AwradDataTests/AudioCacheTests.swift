@@ -45,6 +45,86 @@ struct AudioCacheTests {
         #expect(await harness.objects.downloads == 1)
     }
 
+    /// The files in the profile's `Audio/Cache/Partial/`.
+    private func partialFiles(_ harness: StoreHarness) async -> [URL] {
+        let files = await harness.store.files
+        let partial = files.cacheDirectory(await harness.store.registry.activeProfileID).appending(path: "Partial")
+        return (try? FileManager.default.contentsOfDirectory(at: partial, includingPropertiesForKeys: nil)) ?? []
+    }
+
+    @Test func playingTwiceUsesTheCopyTheSecondTime() async throws {
+        let harness = try await StoreHarness(signedIn: true)
+        defer { harness.removeDirectory() }
+        let (id, _) = try await pulledRecording(harness)
+
+        let first = try await harness.store.downloadAudio(for: id)
+        let second = try await harness.store.downloadAudio(for: id)
+
+        #expect(second == first)
+        #expect(try Data(contentsOf: second) == Self.bytes)
+        #expect(await harness.audio.calls.filter { $0 == "get_audio_download" }.count == 1)
+        #expect(await harness.objects.downloads == 1, "no network the second time")
+        #expect(await partialFiles(harness).isEmpty)
+    }
+
+    @Test func anUploadedRecordingPlaysFromItsCopyWhenTheNetworkFails() async throws {
+        let harness = try await StoreHarness(signedIn: true)
+        defer { harness.removeDirectory() }
+        _ = try await harness.signIn()
+        let id = try await harness.saveDhikrWithRecording(bytes: 2048)
+        await harness.sync()
+        #expect(await harness.document(id)?.audio?.uploaded != nil)
+
+        await harness.audio.fail(.sync(.unavailable))
+        await harness.objects.setFailsDownloads(true)
+        let file = try await harness.store.downloadAudio(for: id)
+
+        #expect(file.deletingLastPathComponent().lastPathComponent == "Cache")
+        #expect(try Data(contentsOf: file).count == 2048)
+        #expect(!(await harness.audio.calls.contains("get_audio_download")))
+        #expect(await harness.objects.downloads == 0)
+    }
+
+    @Test func aDownloadOfACachedRecordingReplacesTheCopy() async throws {
+        let harness = try await StoreHarness(signedIn: true)
+        defer { harness.removeDirectory() }
+        let (_, audio) = try await pulledRecording(harness)
+        let files = await harness.store.files
+        let profile = await harness.store.registry.activeProfileID
+
+        for bytes in [Data("first".utf8), Self.bytes] {
+            let download = harness.directory.deletingLastPathComponent().appending(path: "download é")
+            try bytes.write(to: download)
+            let cached = try files.storeDownload(download, as: audio, profile: profile)
+            #expect(try Data(contentsOf: cached) == bytes)
+            #expect(!FileManager.default.fileExists(atPath: download.path(percentEncoded: false)))
+        }
+        #expect(await partialFiles(harness).isEmpty)
+    }
+
+    @Test func aDownloadThatCantBeStoredLeavesNothingBehind() async throws {
+        let harness = try await StoreHarness(signedIn: true)
+        defer { harness.removeDirectory() }
+        let (_, audio) = try await pulledRecording(harness)
+        let files = await harness.store.files
+        let profile = await harness.store.registry.activeProfileID
+        let cache = files.cacheDirectory(profile)
+        let manager = FileManager.default
+        try manager.createDirectory(at: cache.appending(path: "Partial"), withIntermediateDirectories: true)
+        // The cache can't take new files, while `Partial/` can.
+        try manager.setAttributes([.posixPermissions: 0o555], ofItemAtPath: cache.path(percentEncoded: false))
+        defer {
+            try? manager.setAttributes([.posixPermissions: 0o755], ofItemAtPath: cache.path(percentEncoded: false))
+        }
+        let download = harness.directory.deletingLastPathComponent().appending(path: "download é")
+        try Self.bytes.write(to: download)
+
+        #expect(throws: (any Error).self) { try files.storeDownload(download, as: audio, profile: profile) }
+
+        #expect(await partialFiles(harness).isEmpty)
+        #expect(files.cachedAudio(audio, profile: profile) == nil)
+    }
+
     @Test func changingTheRecordingRemovesTheCopy() async throws {
         let harness = try await StoreHarness(signedIn: true)
         defer { harness.removeDirectory() }
@@ -58,7 +138,7 @@ struct AudioCacheTests {
         await harness.server.put(SyncEntityKey(.customDhikr, id), .customDhikr(document))
         await harness.sync()
 
-        #expect(!FileManager.default.fileExists(atPath: file.path()))
+        #expect(!FileManager.default.fileExists(atPath: file.path(percentEncoded: false)))
         #expect(await harness.store.audioURL(for: id) == nil)
     }
 
@@ -71,7 +151,7 @@ struct AudioCacheTests {
         let document = try #require(await harness.document(id))
         _ = try await harness.store.saveCustomDhikr(id: id, document: document, audio: .remove)
 
-        #expect(!FileManager.default.fileExists(atPath: file.path()))
+        #expect(!FileManager.default.fileExists(atPath: file.path(percentEncoded: false)))
         #expect(await harness.document(id)?.audio == nil)
     }
 
@@ -89,7 +169,7 @@ struct AudioCacheTests {
             await harness.sync()
         }
 
-        #expect(!FileManager.default.fileExists(atPath: file.path()))
+        #expect(!FileManager.default.fileExists(atPath: file.path(percentEncoded: false)))
     }
 
     @Test func signedOutARecordingNotHereCantBeFetched() async throws {

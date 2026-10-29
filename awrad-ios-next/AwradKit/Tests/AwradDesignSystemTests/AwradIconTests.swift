@@ -77,7 +77,7 @@ struct AwradIconTests {
     }
 
     @Test func theCatalogHoldsOnlyTheContractsIcons() throws {
-        let names = try FileManager.default.contentsOfDirectory(atPath: Self.catalog.path())
+        let names = try FileManager.default.contentsOfDirectory(atPath: Self.catalog.path(percentEncoded: false))
             .filter { $0.hasSuffix(".imageset") }
         #expect(Set(names) == Set(AwradIcon.allCases.map { "\($0.rawValue).imageset" }))
     }

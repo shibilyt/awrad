@@ -47,9 +47,9 @@ struct AudioUploadTests {
 
         // The file is now the asset's cached copy; nothing is left to upload.
         let cached = try #require(await harness.store.audioURL(for: id))
-        #expect(cached.path().contains("/Audio/Cache/\(asset.assetID).mp3"))
+        #expect(cached.path(percentEncoded: false).contains("/Audio/Cache/\(asset.assetID).mp3"))
         #expect(try Data(contentsOf: cached) == bytes)
-        #expect(!FileManager.default.fileExists(atPath: file.path()))
+        #expect(!FileManager.default.fileExists(atPath: file.path(percentEncoded: false)))
         #expect(await harness.store.database.uploads().isEmpty)
     }
 
@@ -313,7 +313,7 @@ struct AudioUploadTests {
             ])
         // Only the new asset's copy is kept.
         let cache = await harness.store.files.cacheDirectory(harness.store.registry.activeProfileID)
-        let files = try FileManager.default.contentsOfDirectory(atPath: cache.path())
+        let files = try FileManager.default.contentsOfDirectory(atPath: cache.path(percentEncoded: false))
         #expect(files == ["\(audio.assetID).mp3"])
     }
 
