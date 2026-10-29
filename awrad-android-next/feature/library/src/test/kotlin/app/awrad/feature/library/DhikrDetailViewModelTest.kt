@@ -234,6 +234,25 @@ class DhikrDetailViewModelTest {
     }
 
     @Test
+    fun `before the first play the player shows the document's duration_ms, then the player's own`() = runTest {
+        customDhikrs.save(UPLOADED_DHIKR)
+        audio.files[UPLOADED_DHIKR.id] = DOWNLOADED
+        val viewModel = viewModel(UPLOADED_DHIKR.id.value)
+        assertEquals(PlaybackState(durationMs = 31_250), viewModel.state.value.player)
+
+        viewModel.onAction(DhikrDetailAction.TogglePlayback)
+        players.players.single().emit(PlaybackState(PlaybackStatus.PLAYING, positionMs = 1_000, durationMs = 31_400))
+        assertEquals(31_400, viewModel.state.value.player.durationMs)
+    }
+
+    @Test
+    fun `a recording without a known length shows no total before it plays`() = runTest {
+        val unmeasured = UPLOADED_DHIKR.copy(audio = CustomAudio(null, UPLOADED.copy(durationMs = null)))
+        customDhikrs.save(unmeasured)
+        assertNull(viewModel(unmeasured.id.value).state.value.player.durationMs)
+    }
+
+    @Test
     fun `a recording that can't be downloaded fails, and playing again retries`() = runTest {
         customDhikrs.save(UPLOADED_DHIKR)
         val viewModel = viewModel(UPLOADED_DHIKR.id.value)

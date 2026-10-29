@@ -81,7 +81,7 @@
     <string name="editor_problem_limit">لديك ١٬٠٠٠ ذكر من إنشائك، وهو الحد الأقصى.</string>
     <string name="editor_problem_not_saved">لم يُحفظ لأن الحساب تغيّر. حاول مرة أخرى.</string>
     <string name="editor_audio_too_large">هذا التسجيل أكبر من ١٠ ميغابايت.</string>
-    <string name="editor_audio_unsupported">اختر تسجيلًا بصيغة MP3 أو M4A.</string>
+    <string name="editor_audio_unsupported">نوع هذا الملف غير مدعوم. اختر تسجيلًا بصيغة MP3 أو M4A.</string>
     <string name="editor_audio_unreadable">تعذّرت قراءة هذا الملف.</string>
 
     <string name="tags_rename">إعادة تسمية</string>

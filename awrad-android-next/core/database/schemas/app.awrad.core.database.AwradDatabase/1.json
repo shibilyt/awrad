@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "99e7b1a2d5158ad61dcd4ae37e7b9ae2",
+    "identityHash": "6fc6e0bb4b130506612453ca43386122",
     "entities": [
       {
         "tableName": "goals",
@@ -361,7 +361,7 @@
       },
       {
         "tableName": "audio_uploads",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`asset_id` TEXT NOT NULL, `dhikr_id` TEXT NOT NULL, `audio_file` TEXT NOT NULL, `state` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `sha256` TEXT, `byte_size` INTEGER, `content_type` TEXT, `duration_ms` INTEGER, `problem` TEXT, `used_bytes` INTEGER, `limit_bytes` INTEGER, `mismatches` INTEGER NOT NULL, PRIMARY KEY(`asset_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`asset_id` TEXT NOT NULL, `dhikr_id` TEXT NOT NULL, `audio_file` TEXT NOT NULL, `state` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `sha256` TEXT, `byte_size` INTEGER, `content_type` TEXT, `duration_ms` INTEGER, `problem` TEXT, `used_bytes` INTEGER, `limit_bytes` INTEGER, `mismatches` INTEGER NOT NULL, `dismissed` INTEGER NOT NULL, PRIMARY KEY(`asset_id`))",
         "fields": [
           {
             "fieldPath": "assetId",
@@ -440,6 +440,12 @@
             "columnName": "mismatches",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "dismissed",
+            "columnName": "dismissed",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -465,7 +471,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '99e7b1a2d5158ad61dcd4ae37e7b9ae2')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6fc6e0bb4b130506612453ca43386122')"
     ]
   }
 }

@@ -96,6 +96,10 @@ public interface CustomAudioService {
     /** Recordings that couldn't upload, until the user dismisses them. */
     public val uploadNotices: Flow<List<AudioUploadNotice>>
 
+    /**
+     * Hides [notice]. A `storage_full` upload stays and is still retried once the account has room (showing a
+     * notice again only if it fails again); any other failed upload is given up until the recording changes.
+     */
     public suspend fun dismissUploadNotice(notice: AudioUploadNotice)
 
     /**

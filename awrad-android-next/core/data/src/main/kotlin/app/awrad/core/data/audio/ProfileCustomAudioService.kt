@@ -67,15 +67,26 @@ internal class ProfileCustomAudioService(
     }.distinctUntilChanged()
 
     override val uploadNotices: Flow<List<AudioUploadNotice>> = uploads.map { rows ->
-        rows.filter { it.state == AudioUploadEntity.FAILED }.mapNotNull { row ->
+        rows.filter { it.state == AudioUploadEntity.FAILED && !it.dismissed }.mapNotNull { row ->
             val problem = AudioUploadProblem.entries.firstOrNull { it.name == row.problem } ?: return@mapNotNull null
             val storage = row.usedBytes?.let { used -> row.limitBytes?.let { AudioStorage(used, it) } }
             AudioUploadNotice(AwradId(row.dhikrId), problem, storage)
         }
     }
 
+    /**
+     * A full account's upload stays, so it's still retried once there's room ([AudioUploader]); only its notice
+     * goes. Any other failed upload goes with its notice.
+     */
     override suspend fun dismissUploadNotice(notice: AudioUploadNotice) {
-        profiles.write { profile -> profile.database.syncDao().deleteFailedUploadFor(notice.dhikrId.value) }
+        profiles.write { profile ->
+            val dao = profile.database.syncDao()
+            if (notice.problem == AudioUploadProblem.STORAGE_FULL) {
+                dao.dismissFailedUploadFor(notice.dhikrId.value)
+            } else {
+                dao.deleteFailedUploadFor(notice.dhikrId.value)
+            }
+        }
     }
 
     override suspend fun playable(dhikrId: AwradId): RecordingPlayback = downloads.withLock {

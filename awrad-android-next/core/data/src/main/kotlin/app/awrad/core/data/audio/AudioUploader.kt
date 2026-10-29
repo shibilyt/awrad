@@ -40,9 +40,11 @@ import java.time.Duration
  * Each recording: reserve (`create_audio_upload`), PUT the file to the signed link with exactly its headers,
  * confirm (`complete_audio_upload`), then point the dhikr at the ready asset and queue its put, in one transaction,
  * so the run's send step carries it straight away. What can't succeed stays on the phone with a notice:
- * - `413`, `415` or `invalid_size` (or the same rules checked here first), and `storage_full` with the account's use;
- * - `upload_mismatch`: retried at once with a new asset ID and the file measured again, and given up on after
- *   [MAX_MISMATCHES] in a row.
+ * - `413`, `415` or `invalid_size` (or the same rules checked here first): until the recording changes;
+ * - `storage_full`, with the account's use: until a later run reads the account's usage
+ *   (`get_audio_usage`) and finds room for the file's size, then it's queued again ([requeueWhereRoom]);
+ * - `upload_mismatch`: retried straight away, once, with a new asset ID and the file measured again; a second
+ *   mismatch in a row ([MAX_MISMATCHES]) gives up.
  * `upload_incomplete` PUTs again; `asset_id_in_use` and a cleaned-up pending upload (`404`) start over with a new
  * asset ID. A failure of the network or server ends the run for backoff, like the change queue's.
  */
@@ -62,6 +64,7 @@ internal class AudioUploader(
 ) {
     /** Uploads every queued recording of [profileId] for [accountId]; [SyncOutcome.Done] when none is left to retry. */
     suspend fun uploadAll(profileId: AwradId, accountId: AwradId): SyncOutcome {
+        requeueWhereRoom(profileId, accountId)
         val queued = profiles.write(profileId) { it.database.syncDao().queuedUploads() } ?: return SyncOutcome.Skipped
         var later = false
         for (row in queued) {
@@ -72,6 +75,33 @@ internal class AudioUploader(
             }
         }
         return if (later) SyncOutcome.Failed(retryAfter = null) else SyncOutcome.Done
+    }
+
+    /**
+     * Queues again each `storage_full` failure the account now has room for, oldest first, counting each one's size
+     * against the room left, its notice dismissed or not (a new failure shows a new notice). Only asks for the usage
+     * when there's such a failure; without an answer, they wait.
+     */
+    private suspend fun requeueWhereRoom(profileId: AwradId, accountId: AwradId) {
+        val full = profiles.write(profileId) { it.database.syncDao().failedUploads(STORAGE_FULL_PROBLEM) }
+        if (full.isNullOrEmpty()) return
+        val usage = (remote.usage(accountId) as? ApiResult.Success)?.value ?: return
+        var used = usage.usedBytes
+        val fitting = full.filter { row ->
+            val size = row.byteSize ?: 0L
+            (size > 0 && used + size <= usage.limitBytes).also { fits -> if (fits) used += size }
+        }
+        if (fitting.isEmpty()) return
+        profiles.write(profileId) { open ->
+            val dao = open.database.syncDao()
+            fitting.mapNotNull { dao.upload(it.assetId) }
+                .filter { it.state == AudioUploadEntity.FAILED && it.problem == STORAGE_FULL_PROBLEM }
+                .forEach { stored ->
+                    val queued = AudioUploadEntity.QUEUED
+                    val cleared = stored.copy(problem = null, usedBytes = null, limitBytes = null, dismissed = false)
+                    dao.upsertUpload(cleared.copy(state = queued))
+                }
+        }
     }
 
     /** Whether [profileId] has recordings waiting to upload. */
@@ -245,6 +275,7 @@ internal class AudioUploader(
             problem = problem.name,
             usedBytes = storage?.usedBytes,
             limitBytes = storage?.limitBytes,
+            dismissed = false,
         )
         val written = profiles.write(profileId) { open ->
             val dao = open.database.syncDao()
@@ -315,14 +346,15 @@ internal class AudioUploader(
         /** Reserve, PUT and confirm rounds for one recording in one run. */
         const val MAX_ATTEMPTS = 3
 
-        /** `upload_mismatch` answers in a row before the recording stays local with a notice. */
-        const val MAX_MISMATCHES = 3
+        /** `upload_mismatch` answers in a row before the recording stays local with a notice: one retry. */
+        const val MAX_MISMATCHES = 2
 
         private val RETRY = SyncOutcome.Failed(retryAfter = null)
         private const val FILE_TOO_LARGE = "file_too_large"
         private const val UNSUPPORTED_AUDIO_TYPE = "unsupported_audio_type"
         private const val INVALID_SIZE = "invalid_size"
         private const val STORAGE_FULL = "storage_full"
+        private val STORAGE_FULL_PROBLEM = AudioUploadProblem.STORAGE_FULL.name
         private const val ASSET_ID_IN_USE = "asset_id_in_use"
         private const val UPLOAD_INCOMPLETE = "upload_incomplete"
         private const val UPLOAD_MISMATCH = "upload_mismatch"

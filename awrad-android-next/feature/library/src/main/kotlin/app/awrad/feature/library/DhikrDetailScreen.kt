@@ -156,7 +156,7 @@ private fun DhikrDetailContent(
             dhikr = dhikr,
             language = language,
             hasRecording = state.hasRecording,
-            playback = state.playback,
+            playback = state.player,
             onTogglePlayback = { onAction(DhikrDetailAction.TogglePlayback) },
         )
         TextSections(state = state, language = language)

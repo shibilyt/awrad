@@ -22,7 +22,7 @@ public enum class AudioImportError {
     /** Over 10 MB. */
     TOO_LARGE,
 
-    /** Not MP3 or M4A/AAC. */
+    /** Not an `.mp3` or `.m4a` (a raw `.aac` stream included). */
     UNSUPPORTED_TYPE,
 
     /** The file couldn't be read. */

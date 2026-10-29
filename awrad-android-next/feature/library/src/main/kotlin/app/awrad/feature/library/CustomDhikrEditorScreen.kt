@@ -130,5 +130,5 @@ internal fun CustomDhikrEditorScreen(
 /** The navigation key of the editor for a new dhikr. */
 private const val NEW_DHIKR = "new"
 
-/** MP3 and M4A/AAC, as slice 3c will upload (contracts: 10 MB, MP3 and M4A/AAC). */
-private val AUDIO_TYPES = arrayOf("audio/mpeg", "audio/mp4", "audio/x-m4a", "audio/aac")
+/** The types an import accepts (contracts/audio/v1/README.md, "Phones"): MP3 and M4A, never a raw AAC stream. */
+private val AUDIO_TYPES = arrayOf("audio/mpeg", "audio/mp4", "audio/x-m4a")
