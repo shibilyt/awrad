@@ -59,6 +59,10 @@ nonisolated public enum AwradIcon: String, CaseIterable, Sendable {
     case pause
     /// Search field (`search.svg`).
     case search
+    /// Settings: Practice settings (`tune.svg`).
+    case practice
+    /// Practice settings: Use my location (`my_location.svg`).
+    case location
 
     /// Whether it flips in right-to-left layouts (`mirrorInRtl`): the asset is "Left to Right, Mirrors".
     public var mirrorsInRightToLeft: Bool {
@@ -101,5 +105,7 @@ nonisolated public enum AwradIcon: String, CaseIterable, Sendable {
         "play": "play_arrow.svg",
         "pause": "pause.svg",
         "search": "search.svg",
+        "practice": "tune.svg",
+        "location": "my_location.svg",
     ]
 }

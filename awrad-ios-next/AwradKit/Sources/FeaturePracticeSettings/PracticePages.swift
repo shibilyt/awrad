@@ -13,7 +13,7 @@ struct LocationPage: View {
         PracticePage(title: Strings.location) {
             Note(Strings.locationNote)
             VStack(alignment: .leading, spacing: AwradSpacing.sm) {
-                AwradButton(Strings.useMyLocation, variant: .secondary, isLoading: state.isLocating) {
+                AwradButton(Strings.useMyLocation, variant: .secondary, icon: .location, isLoading: state.isLocating) {
                     send(.useMyLocation)
                 }
                 .disabled(state.isLocating)

@@ -548,9 +548,9 @@
     "practice.title" : {
       "comment" : "Title of the practice settings screen.",
       "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إعدادات الورد" } },
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إعدادات العبادة" } },
         "en" : { "stringUnit" : { "state" : "translated", "value" : "Practice settings" } },
-        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ദിനചര്യ ക്രമീകരണങ്ങൾ" } }
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ആരാധനാ ക്രമീകരണങ്ങൾ" } }
       }
     },
     "practice.today.maghrib" : {
