@@ -10,6 +10,7 @@ import Foundation
 /// | Answer | What happens |
 /// |---|---|
 /// | `413`, `415`, `invalid_size`, `storage_full` (or the same rule checked first on the phone) | The recording stays local, with a notice; the dhikr syncs without it |
+/// | `storage_full`, on a later sync | Queued again once the usage endpoint shows room for it |
 /// | `upload_incomplete`, a `PUT` storage refused, `404` on completing | Reserve again (a fresh link), `PUT` again, confirm again |
 /// | `upload_mismatch` | Start over once under a new asset with the file as it is now; a second mismatch stays local, with a notice |
 /// | `asset_id_in_use` | Start over under a new asset |
@@ -37,7 +38,11 @@ struct AudioUploadEngine: Sendable {
         try await enqueueMissing(database, profile: profile)
         var context = Context(database: database, profile: profile, account: account)
         var run = Run()
-        for upload in await database.uploads() where upload.stage != .failed {
+        for queued in await database.uploads() {
+            var upload = queued
+            if upload.stage == .failed {
+                guard try await retriesStorageFull(&upload, in: &context) else { continue }
+            }
             switch try await advance(upload, in: &context) {
             case .attached: run.attached += 1
             case .retryLater: run.needsRetry = true
@@ -113,10 +118,25 @@ struct AudioUploadEngine: Sendable {
         return .retryLater
     }
 
-    /// The upload rules, checked on the phone before reserving with the account's usage.
-    private func precheck(_ upload: PendingUpload, in context: inout Context) async throws(SyncFailure)
-        -> AudioRefusal?
+    /// A `storage_full` failure goes back in the queue once the usage endpoint shows room for it
+    /// (contracts/audio/v1 README, "Phones": Retries), and its notice goes. Other failures wait
+    /// for the recording to change. Returns whether `upload` is queued again.
+    private func retriesStorageFull(_ upload: inout PendingUpload, in context: inout Context) async throws(SyncFailure)
+        -> Bool
     {
+        guard upload.failure == .storageFull, let usage = try await usage(in: &context),
+            AudioUploadRules.check(
+                byteSize: upload.byteSize, contentType: upload.contentType, usedBytes: usage.usedBytes,
+                limitBytes: usage.limitBytes) == nil
+        else { return false }
+        upload.stage = .reserve
+        upload.failure = nil
+        let retried = upload
+        return try await storage { try await context.database.retryUpload(retried) }
+    }
+
+    /// The account's usage, read once a run; `nil` when it can't be read.
+    private func usage(in context: inout Context) async throws(SyncFailure) -> AudioUsage? {
         if context.usage == nil {
             do {
                 context.usage = .some(try await server.usage(account: context.account).usage)
@@ -126,7 +146,14 @@ struct AudioUploadEngine: Sendable {
                 context.usage = .some(nil)
             }
         }
-        let usage = context.usage ?? nil
+        return context.usage ?? nil
+    }
+
+    /// The upload rules, checked on the phone before reserving with the account's usage.
+    private func precheck(_ upload: PendingUpload, in context: inout Context) async throws(SyncFailure)
+        -> AudioRefusal?
+    {
+        let usage = try await usage(in: &context)
         guard
             let error = AudioUploadRules.check(
                 byteSize: upload.byteSize, contentType: upload.contentType, usedBytes: usage?.usedBytes ?? 0,

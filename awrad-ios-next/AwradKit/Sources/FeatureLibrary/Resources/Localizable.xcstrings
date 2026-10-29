@@ -1143,24 +1143,24 @@
       }
     },
     "library.failure.audio_unsupported" : {
-      "comment" : "A recording is not MP3 or M4A.",
+      "comment" : "A picked file is refused at import: it isn't an MP3 or M4A (a raw AAC file included).",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "اختر ملف MP3 أو M4A."
+            "value" : "نوع هذا الملف غير مدعوم. اختر ملف MP3 أو M4A."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Choose an MP3 or M4A file."
+            "value" : "That file type isn't supported. Choose an MP3 or M4A file."
           }
         },
         "ml" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MP3 അല്ലെങ്കിൽ M4A ഫയൽ തിരഞ്ഞെടുക്കുക."
+            "value" : "ആ ഫയൽ തരം പിന്തുണയ്ക്കുന്നില്ല. MP3 അല്ലെങ്കിൽ M4A ഫയൽ തിരഞ്ഞെടുക്കുക."
           }
         }
       }

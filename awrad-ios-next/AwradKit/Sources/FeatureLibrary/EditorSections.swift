@@ -183,7 +183,9 @@ struct EditorRecordingSection: View {
             AwradSectionTitle(Strings.recording)
             AwradCard {
                 if state.recording != .none {
-                    DhikrAudioBar(audio: state.audio) { send(.playPauseTapped) }
+                    DhikrAudioBar(audio: state.audio, recordingLength: state.recordingLength) {
+                        send(.playPauseTapped)
+                    }
                     HStack(spacing: AwradSpacing.sm) {
                         AwradButton(Strings.replaceRecording, variant: .secondary, layout: .row) {
                             send(.addRecordingTapped)

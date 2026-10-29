@@ -31,6 +31,15 @@ public final class DhikrDetailModel {
             default: nil
             }
         }
+
+        /// What the bar's time shows: the position (0 before playing), with the length the player
+        /// reports, or until it does `recordingLength`, the document's `duration_ms`
+        /// (contracts/audio/v1 README, "Phones": Before the first play).
+        public func shownPosition(recordingLength: Duration?) -> PlaybackPosition {
+            var shown = position ?? PlaybackPosition(elapsed: .zero)
+            if shown.duration == nil { shown.duration = recordingLength }
+            return shown
+        }
     }
 
     public struct State: Equatable, Sendable {
@@ -48,6 +57,10 @@ public final class DhikrDetailModel {
         public var custom: CustomDhikr? { personal.customDhikr(dhikr.id) }
         public var userTags: [UserTag] { personal.tags(on: dhikr.id) }
         public var conflicts: [SyncConflict] { personal.conflicts(about: dhikr.id) }
+        /// The length the custom dhikr's uploaded recording names (`duration_ms`), when it does.
+        public var recordingLength: Duration? {
+            custom?.document.audio?.uploaded?.durationMilliseconds.map { .milliseconds($0) }
+        }
     }
 
     public enum Action: Sendable {

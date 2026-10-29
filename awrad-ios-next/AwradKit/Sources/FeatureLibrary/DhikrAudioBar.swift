@@ -4,14 +4,17 @@ import SwiftUI
 
 /// The audio player bar at the bottom of the Arabic card (components.md, "Audio player bar"): the
 /// round play/pause button (a progress indicator while loading), a progress line and the time,
-/// "0:14 / 0:26", or the elapsed time alone until the length is known. The button keeps its place
-/// whatever the time shows. A failure shows its message under the bar.
+/// "0:14 / 0:26" (before the first play, "0:00" and the document's length), or the elapsed time
+/// alone until the length is known. The button keeps its place whatever the time shows. A failure
+/// shows its message under the bar.
 struct DhikrAudioBar: View {
     let audio: DhikrDetailModel.Audio
+    /// The length the dhikr's document names, shown until the player reports one.
+    var recordingLength: Duration?
     let action: () -> Void
 
     private var position: PlaybackPosition {
-        audio.position ?? PlaybackPosition(elapsed: .zero)
+        audio.shownPosition(recordingLength: recordingLength)
     }
 
     var body: some View {

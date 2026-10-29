@@ -27,6 +27,16 @@ struct AudioFixtureTests {
         #expect(AudioContentType.allCases.map(\.fileExtension) == ["mp3", "m4a"])
     }
 
+    @Test func anImportedM4AReportedAsXM4AIsMP4() {
+        #expect(AudioContentType(importedMediaType: "audio/mpeg") == .mpeg)
+        #expect(AudioContentType(importedMediaType: "audio/mp4") == .mp4)
+        #expect(AudioContentType(importedMediaType: "audio/x-m4a") == .mp4)
+        #expect(AudioContentType(importedMediaType: "Audio/X-M4A") == .mp4)
+        for refused in ["audio/aac", "audio/x-aac", "audio/wav", "video/mp4", ""] {
+            #expect(AudioContentType(importedMediaType: refused) == nil, "\(refused)")
+        }
+    }
+
     @Test func aDocumentRoundTripsItsUploadedRecording() throws {
         let audio = UploadedAudio(
             assetID: try #require(AwradID("0192f0e0-0000-7000-8000-000000000001")), byteSize: 4_182_733,

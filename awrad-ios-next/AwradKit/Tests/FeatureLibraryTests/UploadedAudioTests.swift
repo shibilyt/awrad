@@ -82,6 +82,60 @@ struct UploadedAudioTests {
         #expect(document.audio == custom.document.audio)
     }
 
+    @Test func beforeTheFirstPlayTheDetailShowsTheDocumentsLength() async throws {
+        let custom = try Self.uploadedDhikr()
+        let library = FakePersonalLibrary(customDhikrs: [custom])
+        await library.setDownload(Self.downloaded, for: custom.id)
+        let player = self.player
+        let model = DhikrDetailModel(dhikr: custom.dhikr, library: library, personal: await library.content()) {
+            player
+        }
+        await model.refreshLocalAudio()
+
+        #expect(model.state.recordingLength == .milliseconds(31_250))
+        #expect(
+            model.state.audio.shownPosition(recordingLength: model.state.recordingLength)
+                == PlaybackPosition(elapsed: .zero, duration: .milliseconds(31_250)))
+
+        // Once playing, the length the player reports wins; until then the document's stays.
+        await model.send(.playPauseTapped)
+        player.emit(.playing(PlaybackPosition(elapsed: .seconds(2))))
+        #expect(
+            model.state.audio.shownPosition(recordingLength: model.state.recordingLength)
+                == PlaybackPosition(elapsed: .seconds(2), duration: .milliseconds(31_250)))
+        player.emit(.playing(PlaybackPosition(elapsed: .seconds(3), duration: .milliseconds(31_300))))
+        #expect(
+            model.state.audio.shownPosition(recordingLength: model.state.recordingLength)
+                == PlaybackPosition(elapsed: .seconds(3), duration: .milliseconds(31_300)))
+    }
+
+    @Test func aRecordingWithoutALengthShowsTheElapsedTimeAlone() async {
+        let custom = CustomDhikr(id: .random(), document: Personal.document(audio: .localOnly))
+        let library = FakePersonalLibrary(customDhikrs: [custom])
+        let model = DhikrDetailModel(dhikr: custom.dhikr, library: library, personal: await library.content()) {
+            FakeDhikrAudioPlayer()
+        }
+        #expect(model.state.recordingLength == nil)
+        #expect(model.state.audio.shownPosition(recordingLength: nil) == PlaybackPosition(elapsed: .zero))
+    }
+
+    @Test func theEditorShowsTheLengthUntilTheRecordingChanges() async throws {
+        let custom = try Self.uploadedDhikr()
+        let library = FakePersonalLibrary(customDhikrs: [custom])
+        let player = self.player
+        let model = CustomDhikrEditorModel(library: library, existing: custom) { player }
+        await model.loadRecording()
+        #expect(model.state.recordingLength == .milliseconds(31_250))
+
+        await model.send(.audioPicked(URL(filePath: "/tmp/awrad-test/other.m4a")))
+        #expect(model.state.recordingLength == nil, "a new pick has no length until it's uploaded")
+
+        let reopened = CustomDhikrEditorModel(library: library, existing: custom) { player }
+        await reopened.loadRecording()
+        reopened.apply(.recordingRemoved)
+        #expect(reopened.state.recordingLength == nil)
+    }
+
     @Test func refusedChangesComeBeforeRecordingNotices() {
         let id = AwradID.random()
         let sync = SyncNotice(code: .audioNotFound, key: SyncEntityKey(.customDhikr, id))

@@ -96,11 +96,61 @@ struct AudioUploadTests {
         #expect(await harness.store.audioURL(for: id) != nil)
         #expect(await harness.store.state().unsentCount == 0)
 
-        // It isn't tried again until the recording changes.
+        // It isn't tried again until the recording changes (or, for storage_full, there's room).
+        if failure == .storageFull { await harness.audio.setUsage(other: usage.limitBytes) }
         await harness.sync()
         #expect(await harness.audio.calls.filter { $0 == "create_audio_upload" }.count == 1)
         await harness.store.dismissAudioNotice(expected)
         #expect(await harness.store.content().audioNotices.isEmpty)
+    }
+
+    @Test func storageFullIsRetriedOnceTheUsageShowsRoom() async throws {
+        let harness = try await StoreHarness(signedIn: true)
+        defer { harness.removeDirectory() }
+        _ = try await harness.signIn()
+        await harness.audio.setUsage(other: 499_999_000)
+        let id = try await harness.saveDhikrWithRecording(bytes: 4096)
+        await harness.sync()
+        #expect(await harness.store.content().audioNotices.map(\.failure) == [.storageFull])
+
+        // Still full: the usage is read again, and nothing is reserved.
+        await harness.audio.setUsage(other: 499_996_000)
+        let usageReads = await harness.audio.calls.filter { $0 == "get_audio_usage" }.count
+        await harness.sync()
+        let calls = await harness.audio.calls
+        #expect(calls.filter { $0 == "get_audio_usage" }.count > usageReads)
+        #expect(!calls.contains("create_audio_upload"))
+        #expect(await harness.store.database.uploads().map(\.stage) == [.failed])
+
+        // Exactly enough room: it uploads, the dhikr names the asset, and the notice goes.
+        await harness.audio.setUsage(other: 499_995_904)
+        await harness.sync()
+        let asset = try #require(await harness.audio.ready.values.first)
+        #expect(await harness.document(id)?.audio?.uploaded?.assetID.description == asset.assetID)
+        #expect(
+            await harness.server.document(SyncEntityKey(.customDhikr, id))?["audio"]?["asset_id"]
+                == .string(asset.assetID))
+        #expect(await harness.store.content().audioNotices.isEmpty)
+        #expect(await harness.store.database.uploads().isEmpty)
+    }
+
+    @Test func removingAFailedRecordingClearsItsFailure() async throws {
+        let harness = try await StoreHarness(signedIn: true)
+        defer { harness.removeDirectory() }
+        _ = try await harness.signIn()
+        await harness.audio.setUsage(other: 499_999_000)
+        let id = try await harness.saveDhikrWithRecording(bytes: 4096)
+        await harness.sync()
+        #expect(await harness.store.database.uploads().map(\.stage) == [.failed])
+
+        let document = try #require(await harness.document(id))
+        _ = try await harness.store.saveCustomDhikr(id: id, document: document, audio: .remove)
+        #expect(await harness.store.database.uploads().isEmpty)
+        await harness.audio.setUsage(other: 0)
+        await harness.sync()
+
+        #expect(await harness.store.database.uploads().isEmpty)
+        #expect(!(await harness.audio.calls.contains("create_audio_upload")))
     }
 
     @Test func anIncompleteUploadIsPutAgain() async throws {

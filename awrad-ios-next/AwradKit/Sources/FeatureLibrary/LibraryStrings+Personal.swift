@@ -156,7 +156,8 @@ extension Strings {
         case .audioTooLarge:
             LocalizedStringResource(
                 "library.failure.audio_too_large", defaultValue: "That recording is over \(10) MB.", bundle: bundle)
-        case .audioUnsupported: text("library.failure.audio_unsupported", "Choose an MP3 or M4A file.")
+        case .audioUnsupported:
+            text("library.failure.audio_unsupported", "That file type isn't supported. Choose an MP3 or M4A file.")
         default: text("library.failure.audio_unreadable", "Couldn't open that file.")
         }
     }

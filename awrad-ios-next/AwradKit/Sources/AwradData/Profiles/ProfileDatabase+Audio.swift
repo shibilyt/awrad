@@ -36,8 +36,8 @@ extension ProfileDatabase {
         try modelContext.save()
     }
 
-    /// A recording that can't be uploaded: its entry stays, failed, so it isn't tried again until
-    /// the recording changes, and the user gets a notice.
+    /// A recording that can't be uploaded: its entry stays, failed, and the user gets a notice. It
+    /// isn't tried again until the recording changes, or for `storage_full` until there's room.
     func failUpload(_ upload: PendingUpload, asset: AwradID, notice: AudioUploadNotice) throws {
         guard let record = uploadRecord(upload.dhikrID), record.assetID == asset.value else { return }
         var failed = upload
@@ -52,6 +52,21 @@ extension ProfileDatabase {
                 position: position, dhikrID: notice.dhikrID.value, failure: notice.failure.rawValue,
                 usedBytes: notice.usage?.usedBytes, limitBytes: notice.usage?.limitBytes))
         try modelContext.save()
+    }
+
+    /// Queues a failed entry again (`storage_full` once there's room) and drops its notice, which no
+    /// longer holds. Returns `false`, saving nothing, when the entry changed meanwhile.
+    func retryUpload(_ upload: PendingUpload) throws -> Bool {
+        guard let record = uploadRecord(upload.dhikrID), record.assetID == upload.assetID.value,
+            let failure = record.failure
+        else { return false }
+        upload.write(to: record)
+        let id = upload.dhikrID.value
+        let notices = FetchDescriptor<AudioNoticeRecord>(
+            predicate: #Predicate { $0.dhikrID == id && $0.failure == failure })
+        for notice in (try? modelContext.fetch(notices)) ?? [] { modelContext.delete(notice) }
+        try modelContext.save()
+        return true
     }
 
     /// Points the dhikr at its uploaded recording and queues the put naming it, in one transaction

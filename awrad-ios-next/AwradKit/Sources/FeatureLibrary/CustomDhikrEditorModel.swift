@@ -62,6 +62,9 @@ final class CustomDhikrEditorModel {
         var personal: PersonalContent
         var recording = Recording.none
         var audio = DhikrDetailModel.Audio.unavailable
+        /// The length the saved document names for the recording (`duration_ms`); `nil` once it's
+        /// replaced or removed.
+        var recordingLength: Duration?
         /// Why a picked recording was refused.
         var audioFailure: EditFailure?
         var isPickingAudio = false
@@ -146,6 +149,9 @@ final class CustomDhikrEditorModel {
             state.recording = .inAccount
             state.audio = .stopped
         }
+        if state.recording != .none {
+            state.recordingLength = audio?.uploaded?.durationMilliseconds.map { .milliseconds($0) }
+        }
     }
 
     /// The first play of a recording that's only in the account: download it, then play it.
@@ -220,6 +226,7 @@ final class CustomDhikrEditorModel {
             let staged = try await library.stageAudio(from: url)
             driver.stop()
             state.recording = .staged(staged)
+            state.recordingLength = nil
             state.audio = .stopped
             state.audioFailure = nil
         } catch {
