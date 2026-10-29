@@ -101,7 +101,7 @@ describe("reading the changes feed", () => {
     const requests = recordRequests();
     server.use(
       changesPage((changes) => changes.slice(0, 2), true, 12),
-      changesPage((changes) => changes.slice(2), false, 13),
+      changesPage((changes) => changes.slice(2), false, 14),
     );
 
     const state = await fetchSyncState(ACCOUNT);
@@ -114,7 +114,7 @@ describe("reading the changes feed", () => {
     expect(state.dhikr_personal[TAHLEEL]?.document.tag_ids).toHaveLength(2);
     // The deleted tag on the second page isn't kept.
     expect(state.user_tag).toEqual({});
-    expect(state.headRevision).toBe(13);
+    expect(state.headRevision).toBe(14);
   });
 
   test("the page queries carry after and limit", async () => {

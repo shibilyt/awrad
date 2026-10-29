@@ -5,6 +5,7 @@ import { readBrowserLocation, type DeviceLocation, type PracticeToday } from "@/
 import { Button } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { FormAlert } from "@/shared/ui/FormAlert";
+import { LocationIcon } from "@/shared/ui/icons.gen";
 import { Section } from "./ChoiceSections";
 import { CitySearchSheet } from "./CitySearchSheet";
 import { locationText, timeText } from "./format";
@@ -67,7 +68,7 @@ export function LocationSection({
   timeZone,
 }: {
   location: DeviceLocation | null;
-  onLocation: (location: DeviceLocation) => void;
+  onLocation: (location: DeviceLocation | null) => void;
   today: PracticeToday;
   timeZone: string;
 }): ReactElement {
@@ -94,7 +95,13 @@ export function LocationSection({
       <Place location={location} today={today} timeZone={timeZone} />
       <FormAlert message={alert} />
       <div className="flex flex-wrap gap-row-gap">
-        <Button variant="secondary" width="label" isPending={locating} onPress={() => void locate()}>
+        <Button
+          variant="secondary"
+          width="label"
+          icon={LocationIcon}
+          isPending={locating}
+          onPress={() => void locate()}
+        >
           {t("practice.location.useMine")}
         </Button>
         <Button
@@ -107,6 +114,18 @@ export function LocationSection({
         >
           {t("practice.location.chooseCity")}
         </Button>
+        {location !== null && (
+          <Button
+            variant="secondary"
+            width="label"
+            onPress={() => {
+              setAlert(null);
+              onLocation(null);
+            }}
+          >
+            {t("practice.location.remove")}
+          </Button>
+        )}
       </div>
       <CitySearchSheet isOpen={searching} onOpenChange={setSearching} onChoose={onLocation} />
     </Section>

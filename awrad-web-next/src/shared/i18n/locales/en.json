@@ -442,6 +442,7 @@
       "noMaghrib": "The sun doesn't set here today",
       "useMine": "Use my location",
       "chooseCity": "Choose a city",
+      "remove": "Remove location",
       "denied": "This site isn't allowed to use your location. Allow it in your browser, or choose a city.",
       "unavailable": "Couldn't find your location. Try again, or choose a city.",
       "searchTitle": "Choose a city",

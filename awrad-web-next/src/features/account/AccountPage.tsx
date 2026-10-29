@@ -13,6 +13,7 @@ import {
   DevicesIcon,
   EmailIcon,
   PasswordIcon,
+  PracticeIcon,
   type Icon as IconComponent,
 } from "@/shared/ui/icons.gen";
 import { TextLink } from "@/shared/ui/TextLink";
@@ -140,7 +141,7 @@ function Settings(): ReactElement {
     <nav aria-label={t("account.page.settings")}>
       <Card padded={false}>
         <ul className="flex flex-col">
-          <SettingsLink to="/account/practice" icon={null} label={t("account.page.practiceSettings")} />
+          <SettingsLink to="/account/practice" icon={PracticeIcon} label={t("account.page.practiceSettings")} />
           <SettingsLink to="/account/devices" icon={DevicesIcon} label={t("account.page.devices")} />
           <SettingsLink to="/account/password" icon={PasswordIcon} label={t("account.page.changePassword")} />
           <SettingsLink to="/account/email" icon={EmailIcon} label={t("account.page.changeEmail")} />
