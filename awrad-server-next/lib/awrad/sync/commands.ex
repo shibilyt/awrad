@@ -13,7 +13,9 @@ defmodule Awrad.Sync.Commands do
   Each command is checked in the contract's order:
 
     1. the receipt store (`duplicate`, or `command_id_reused`, which isn't stored);
-    2. a `dhikr_personal` delete (`delete_not_allowed`);
+    2. a `dhikr_personal` or `practice_policy` delete (`delete_not_allowed`),
+       and a `practice_policy` whose `entity_id` isn't the account's ID
+       (`entity_id_invalid`, a `mismatch` on `/entity_id`, `current` null);
     3. a put's document (`document_too_large`, `document_invalid`);
     4. the entity's state (`gone` for a deleted entity or a merged tag ID;
        `entity_not_found` for anything but a create of an unknown entity;
@@ -109,6 +111,7 @@ defmodule Awrad.Sync.Commands do
     entity = fetch_entity(user_id, command)
 
     with :ok <- check_delete(command, entity),
+         :ok <- check_entity_id(user_id, command),
          :ok <- check_document(command, entity),
          :ok <- check_state(user_id, command, entity),
          {:ok, document} <- Rules.check(user_id, command, entity) do
@@ -128,10 +131,23 @@ defmodule Awrad.Sync.Commands do
     end
   end
 
-  defp check_delete(%{"op" => "delete", "entity_type" => "dhikr_personal"} = command, entity),
-    do: {:stop, Receipt.rejected(command, "delete_not_allowed", [], entity)}
+  defp check_delete(%{"op" => "delete", "entity_type" => type} = command, entity)
+       when type in ~w(dhikr_personal practice_policy),
+       do: {:stop, Receipt.rejected(command, "delete_not_allowed", [], entity)}
 
   defp check_delete(_command, _entity), do: :ok
+
+  # The practice policy is one per account, and its ID is the account's.
+  defp check_entity_id(
+         user_id,
+         %{"entity_type" => "practice_policy", "entity_id" => id} = command
+       )
+       when id != user_id do
+    fields = [%{"field" => "/entity_id", "code" => "mismatch"}]
+    {:stop, Receipt.rejected(command, "entity_id_invalid", fields, nil)}
+  end
+
+  defp check_entity_id(_user_id, _command), do: :ok
 
   defp check_document(%{"op" => "put"} = command, entity) do
     case Documents.check(command["entity_type"], command["document"]) do
