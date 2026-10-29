@@ -4,7 +4,7 @@ The Awrad web app (React 19, TypeScript, Vite), an online-only client of `awrad-
 
 ```bash
 npm ci
-npm run dev          # http://localhost:5173, proxying /api and /socket to Phoenix on :4000
+npm run dev          # http://localhost:5180, proxying /api and /socket to Phoenix on :4000
 AWRAD_API_ORIGIN=http://localhost:4001 npm run dev   # a server on another port
 npm run validate     # the validation command CI runs
 ```
