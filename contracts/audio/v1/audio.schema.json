@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:awrad:audio:1",
+  "title": "Awrad private audio (audio v1)",
+  "description": "Wire shapes of a user's uploaded recordings (slice 3c): the upload request and its answer, a ready asset, a download link and storage used, plus the limits they rest on. Protocol and lifetimes: README.md. A custom dhikr document points at an asset through urn:awrad:sync:1#/$defs/uploaded_audio, which reuses byte_size, content_type and duration_ms from here. The OpenAPI (contracts/api/paths/audio.yaml) restates these shapes, and tools/check-audio-contract.mjs checks its examples against this file.",
+  "$defs": {
+    "content_type": {
+      "description": "The recording's media type, exactly as written: MP3 is audio/mpeg, M4A/AAC is audio/mp4. Lowercase, no parameters; anything else (AUDIO/MPEG, audio/x-m4a, audio/wav) is unsupported_audio_type.",
+      "enum": ["audio/mpeg", "audio/mp4"]
+    },
+    "byte_size": {
+      "description": "Size of the file in bytes: 1 to 10,000,000 (10 MB, decimal). 0 is invalid_size; above the maximum is file_too_large.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000000
+    },
+    "account_limit_bytes": {
+      "description": "Bytes one account may hold, ready and pending uploads together: 500,000,000 (500 MB, decimal). An upload is allowed while used_bytes + byte_size stays at or below it; otherwise storage_full.",
+      "const": 500000000
+    },
+    "duration_ms": {
+      "description": "Length in milliseconds, measured by the client that imported the file, or null when it couldn't measure it. The server never decodes audio, so it trusts this value only for display.",
+      "oneOf": [
+        { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        { "type": "null" }
+      ]
+    },
+    "sha256": {
+      "description": "SHA-256 of the file's bytes, as 64 lowercase hex digits.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "int53": {
+      "description": "A non-negative JSON integer up to 2^53 - 1 (contracts/api/STYLE.md §5).",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "instant": {
+      "description": "RFC 3339 instant in UTC with a Z suffix.",
+      "type": "string",
+      "format": "date-time",
+      "pattern": "Z$"
+    },
+    "upload_error": {
+      "description": "Why an upload is refused, in the order the checks run: the type, then the size, then the account's quota (fixtures/audio_upload_validity.json). HTTP: unsupported_audio_type 415, invalid_size 422, file_too_large 413, storage_full 422.",
+      "enum": ["unsupported_audio_type", "invalid_size", "file_too_large", "storage_full"]
+    },
+    "upload_request": {
+      "description": "The body of create_audio_upload. byte_size and content_type are deliberately loose here, so a size or type the rules refuse gets its own error code instead of a 400.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_id", "byte_size", "content_type", "sha256"],
+      "properties": {
+        "asset_id": {
+          "description": "A new UUIDv7 made by the client. It makes the call idempotent and becomes the asset's ID.",
+          "$ref": "urn:awrad:sync:1#/$defs/uuid"
+        },
+        "byte_size": { "$ref": "#/$defs/int53" },
+        "content_type": { "type": "string", "maxLength": 255 },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "upload_headers": {
+      "description": "Headers the client sends, verbatim and all of them, with its PUT to upload_url. Today content-type (the asset's content_type) and x-amz-checksum-sha256 (the base64 SHA-256 the server signed, so R2 refuses any other bytes). Names are lowercase HTTP header names; clients pass the map through rather than building it.",
+      "type": "object",
+      "required": ["content-type", "x-amz-checksum-sha256"],
+      "properties": {
+        "content-type": { "$ref": "#/$defs/content_type" },
+        "x-amz-checksum-sha256": {
+          "description": "Base64 (RFC 4648 §4, padded) of the 32-byte SHA-256 digest: the request's sha256 in another encoding.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9+/]{43}=$"
+        }
+      },
+      "additionalProperties": { "type": "string" }
+    },
+    "upload": {
+      "description": "A pending upload's signed PUT link. 201 for a new upload; 200 with a fresh link for a repeat while it is still pending.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_id", "upload_url", "upload_headers", "expires_at"],
+      "properties": {
+        "asset_id": { "$ref": "urn:awrad:sync:1#/$defs/uuid" },
+        "upload_url": {
+          "description": "Signed R2 PUT link, valid until expires_at (15 minutes).",
+          "type": "string",
+          "format": "uri"
+        },
+        "upload_headers": { "$ref": "#/$defs/upload_headers" },
+        "expires_at": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "asset": {
+      "description": "A confirmed recording of the account. Only ready assets are ever returned or referenced; a pending upload isn't an asset yet.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_id", "byte_size", "content_type", "status", "created_at"],
+      "properties": {
+        "asset_id": { "$ref": "urn:awrad:sync:1#/$defs/uuid" },
+        "byte_size": { "$ref": "#/$defs/byte_size" },
+        "content_type": { "$ref": "#/$defs/content_type" },
+        "status": { "const": "ready" },
+        "created_at": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "asset_response": {
+      "description": "The body of complete_audio_upload, and of a create_audio_upload repeat for an asset that is already ready.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset"],
+      "properties": {
+        "asset": { "$ref": "#/$defs/asset" }
+      }
+    },
+    "create_response": {
+      "description": "Every success body of create_audio_upload: a signed link while pending, or the asset once ready.",
+      "oneOf": [{ "$ref": "#/$defs/upload" }, { "$ref": "#/$defs/asset_response" }]
+    },
+    "download": {
+      "description": "The body of get_audio_download: a signed R2 GET link, valid until expires_at (10 minutes).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "expires_at"],
+      "properties": {
+        "url": { "type": "string", "format": "uri" },
+        "expires_at": { "$ref": "#/$defs/instant" }
+      }
+    },
+    "usage": {
+      "description": "The body of get_audio_usage. used_bytes counts ready assets and pending uploads, by their declared byte_size; limit_bytes is account_limit_bytes today.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["used_bytes", "limit_bytes"],
+      "properties": {
+        "used_bytes": { "$ref": "#/$defs/int53" },
+        "limit_bytes": { "$ref": "#/$defs/int53" }
+      }
+    },
+    "storage_full_problem": {
+      "description": "The extension members of a 422 storage_full problem (contracts/api/STYLE.md §7), next to the usual ones.",
+      "type": "object",
+      "required": ["code", "used_bytes", "limit_bytes"],
+      "properties": {
+        "code": { "const": "storage_full" },
+        "used_bytes": { "$ref": "#/$defs/int53" },
+        "limit_bytes": { "$ref": "#/$defs/int53" }
+      }
+    }
+  }
+}

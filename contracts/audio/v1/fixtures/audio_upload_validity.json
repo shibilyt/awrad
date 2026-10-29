@@ -1,0 +1,421 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "audio_upload_validity",
+  "description": "Whether an account may upload a recording, and if not, why (slice 3c). Given the file's byte_size, its content_type and the account's used_bytes (ready assets plus pending uploads), checks run in this order and the first failure wins: (1) content_type must be exactly audio/mpeg or audio/mp4, lowercase and without parameters, else unsupported_audio_type; (2) byte_size below 1 is invalid_size, and above 10,000,000 is file_too_large; (3) used_bytes + byte_size above 500,000,000 is storage_full (equal is allowed). Limits are decimal bytes. Clients pre-check with this before reserving an upload; create_audio_upload enforces it (415, 422, 413, 422).",
+  "references": [
+    "docs/slices/03c-audio-upload.md#decisions-2026-10-28-and-2026-10-29",
+    "contracts/audio/v1/README.md",
+    "contracts/audio/v1/audio.schema.json ($defs/content_type, $defs/byte_size, $defs/account_limit_bytes, $defs/upload_error)",
+    "DECISIONS.md ADR-2026-10-29 (user audio in a private bucket)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "byte_size",
+      "content_type",
+      "used_bytes"
+    ],
+    "properties": {
+      "byte_size": {
+        "$ref": "urn:awrad:audio:1#/$defs/int53"
+      },
+      "content_type": {
+        "type": "string",
+        "maxLength": 255
+      },
+      "used_bytes": {
+        "$ref": "urn:awrad:audio:1#/$defs/int53"
+      }
+    }
+  },
+  "expect_schema": {
+    "oneOf": [
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "allowed",
+          "error"
+        ],
+        "properties": {
+          "allowed": {
+            "const": true
+          },
+          "error": {
+            "type": "null"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "allowed",
+          "error"
+        ],
+        "properties": {
+          "allowed": {
+            "const": false
+          },
+          "error": {
+            "$ref": "urn:awrad:audio:1#/$defs/upload_error"
+          }
+        }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "mp3_allowed",
+      "description": "An MP3 within every limit is allowed.",
+      "given": {
+        "byte_size": 4182733,
+        "content_type": "audio/mpeg",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": true,
+        "error": null
+      }
+    },
+    {
+      "id": "m4a_allowed",
+      "description": "M4A/AAC is audio/mp4.",
+      "given": {
+        "byte_size": 2650112,
+        "content_type": "audio/mp4",
+        "used_bytes": 120000000
+      },
+      "expect": {
+        "allowed": true,
+        "error": null
+      }
+    },
+    {
+      "id": "size_1_allowed",
+      "description": "The smallest file is one byte.",
+      "given": {
+        "byte_size": 1,
+        "content_type": "audio/mpeg",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": true,
+        "error": null
+      }
+    },
+    {
+      "id": "size_10000000_allowed",
+      "description": "10,000,000 bytes is the largest file: the limit is decimal, not 10 MiB.",
+      "given": {
+        "byte_size": 10000000,
+        "content_type": "audio/mpeg",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": true,
+        "error": null
+      }
+    },
+    {
+      "id": "size_10000001_too_large",
+      "description": "One byte more is file_too_large.",
+      "given": {
+        "byte_size": 10000001,
+        "content_type": "audio/mpeg",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "file_too_large"
+      }
+    },
+    {
+      "id": "size_10485760_too_large",
+      "description": "10 MiB (10,485,760 bytes) is above the decimal limit.",
+      "given": {
+        "byte_size": 10485760,
+        "content_type": "audio/mp4",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "file_too_large"
+      }
+    },
+    {
+      "id": "size_0_invalid",
+      "description": "An empty file is invalid_size, not too large.",
+      "given": {
+        "byte_size": 0,
+        "content_type": "audio/mpeg",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "invalid_size"
+      }
+    },
+    {
+      "id": "quota_exactly_full_allowed",
+      "description": "used_bytes + byte_size equal to 500,000,000 is allowed: the account is then exactly full.",
+      "given": {
+        "byte_size": 10000000,
+        "content_type": "audio/mpeg",
+        "used_bytes": 490000000
+      },
+      "expect": {
+        "allowed": true,
+        "error": null
+      }
+    },
+    {
+      "id": "quota_one_byte_over_full",
+      "description": "One byte past 500,000,000 is storage_full.",
+      "given": {
+        "byte_size": 10000000,
+        "content_type": "audio/mpeg",
+        "used_bytes": 490000001
+      },
+      "expect": {
+        "allowed": false,
+        "error": "storage_full"
+      }
+    },
+    {
+      "id": "quota_last_byte_allowed",
+      "description": "A one-byte file fits into the account's last free byte.",
+      "given": {
+        "byte_size": 1,
+        "content_type": "audio/mp4",
+        "used_bytes": 499999999
+      },
+      "expect": {
+        "allowed": true,
+        "error": null
+      }
+    },
+    {
+      "id": "quota_full_account_refuses_any_file",
+      "description": "A full account refuses even a one-byte file.",
+      "given": {
+        "byte_size": 1,
+        "content_type": "audio/mpeg",
+        "used_bytes": 500000000
+      },
+      "expect": {
+        "allowed": false,
+        "error": "storage_full"
+      }
+    },
+    {
+      "id": "quota_over_limit_account_refuses",
+      "description": "An account already above the limit (if it is ever lowered) refuses every upload.",
+      "given": {
+        "byte_size": 1,
+        "content_type": "audio/mpeg",
+        "used_bytes": 500000001
+      },
+      "expect": {
+        "allowed": false,
+        "error": "storage_full"
+      }
+    },
+    {
+      "id": "type_uppercase_rejected",
+      "description": "The type must be lowercase exact: AUDIO/MPEG is unsupported_audio_type.",
+      "given": {
+        "byte_size": 4182733,
+        "content_type": "AUDIO/MPEG",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_mixed_case_rejected",
+      "description": "Audio/Mp4 isn't audio/mp4 either.",
+      "given": {
+        "byte_size": 4182733,
+        "content_type": "Audio/Mp4",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_x_m4a_rejected",
+      "description": "audio/x-m4a, which some systems report for M4A files, isn't accepted; clients send audio/mp4.",
+      "given": {
+        "byte_size": 4182733,
+        "content_type": "audio/x-m4a",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_wav_rejected",
+      "description": "WAV isn't supported.",
+      "given": {
+        "byte_size": 4182733,
+        "content_type": "audio/wav",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_mp3_alias_rejected",
+      "description": "audio/mp3 isn't the registered MP3 type; clients send audio/mpeg.",
+      "given": {
+        "byte_size": 4182733,
+        "content_type": "audio/mp3",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_with_parameter_rejected",
+      "description": "No media type parameters: the type is exactly audio/mpeg or audio/mp4.",
+      "given": {
+        "byte_size": 4182733,
+        "content_type": "audio/mpeg; codecs=mp3",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_with_space_rejected",
+      "description": "No surrounding whitespace.",
+      "given": {
+        "byte_size": 4182733,
+        "content_type": " audio/mpeg",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_empty_rejected",
+      "description": "An empty type is unsupported.",
+      "given": {
+        "byte_size": 4182733,
+        "content_type": "",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_video_mp4_rejected",
+      "description": "video/mp4 isn't audio, even if the container is the same.",
+      "given": {
+        "byte_size": 4182733,
+        "content_type": "video/mp4",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_checked_before_size",
+      "description": "Precedence: an unsupported type that is also too large is unsupported_audio_type.",
+      "given": {
+        "byte_size": 10000001,
+        "content_type": "audio/wav",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_checked_before_invalid_size",
+      "description": "Precedence: an unsupported type with size 0 is unsupported_audio_type.",
+      "given": {
+        "byte_size": 0,
+        "content_type": "audio/wav",
+        "used_bytes": 0
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "type_checked_before_quota",
+      "description": "Precedence: an unsupported type on a full account is unsupported_audio_type.",
+      "given": {
+        "byte_size": 1,
+        "content_type": "audio/wav",
+        "used_bytes": 500000000
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    },
+    {
+      "id": "size_checked_before_quota",
+      "description": "Precedence: a file that is too large on a full account is file_too_large, so the user isn't told to free space that wouldn't help.",
+      "given": {
+        "byte_size": 10000001,
+        "content_type": "audio/mpeg",
+        "used_bytes": 500000000
+      },
+      "expect": {
+        "allowed": false,
+        "error": "file_too_large"
+      }
+    },
+    {
+      "id": "invalid_size_checked_before_quota",
+      "description": "Precedence: size 0 on an account above its limit is invalid_size.",
+      "given": {
+        "byte_size": 0,
+        "content_type": "audio/mpeg",
+        "used_bytes": 500000001
+      },
+      "expect": {
+        "allowed": false,
+        "error": "invalid_size"
+      }
+    },
+    {
+      "id": "everything_wrong_reports_type",
+      "description": "Every check fails: the type wins.",
+      "given": {
+        "byte_size": 10000001,
+        "content_type": "AUDIO/MPEG",
+        "used_bytes": 500000000
+      },
+      "expect": {
+        "allowed": false,
+        "error": "unsupported_audio_type"
+      }
+    }
+  ]
+}

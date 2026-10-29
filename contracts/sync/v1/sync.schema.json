@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:awrad:sync:1",
   "title": "Awrad change queue (sync v1)",
-  "description": "Wire shapes of the change queue: commands, receipts, changes and the three entity documents of slice 3b. Protocol rules, and the limits a schema can't express (64 KB per document, tag-name graphemes and bytes, normalized_name recomputation, account limits): README.md. A batch whose envelope breaks this schema is a 422; a command whose document breaks it is a `rejected` receipt.",
+  "description": "Wire shapes of the change queue: commands, receipts, changes and the three entity documents of slice 3b, with the uploaded recordings of slice 3c. Protocol rules, and the limits a schema can't express (64 KB per document, tag-name graphemes and bytes, normalized_name recomputation, account limits, audio assets being ready): README.md. A batch whose envelope breaks this schema is a 422; a command whose document breaks it is a `rejected` receipt.",
   "$defs": {
     "uuid": {
       "description": "Lowercase, hyphenated UUID, any version except nil and max (contracts/identity/v1/fixtures/uuid_format.json). IDs we generate are UUIDv7.",
@@ -53,7 +53,7 @@
       "oneOf": [{ "$ref": "#/$defs/long_text" }, { "type": "null" }]
     },
     "custom_dhikr_document": {
-      "description": "A user's own dhikr: urn:awrad:dhikr-catalog:1#/$defs/dhikr without id (the entity_id is the ID), key, virtues, aliases or catalog tags (user tags live in dhikr_personal). Every language key is always present, null when empty; the title needs at least one. Audio is never uploaded in 3b: null, or a marker that a recording exists on the device that made it. Lengths count Unicode code points. One rule this schema can't express: a Qur'an reference's ayah_end must be at least its ayah_start (field error `range` on /references/N/ayah_end; fixtures/custom_dhikr_validity.json).",
+      "description": "A user's own dhikr: urn:awrad:dhikr-catalog:1#/$defs/dhikr without id (the entity_id is the ID), key, virtues, aliases or catalog tags (user tags live in dhikr_personal). Every language key is always present, null when empty; the title needs at least one. Audio is null, a marker that a recording exists on the device that made it, or an uploaded recording (slice 3c). Lengths count Unicode code points. One rule this schema can't express: a Qur'an reference's ayah_end must be at least its ayah_start (field error `range` on /references/N/ayah_end; fixtures/custom_dhikr_validity.json).",
       "type": "object",
       "additionalProperties": false,
       "required": ["kind", "arabic", "title", "transliteration", "translation", "audio", "references"],
@@ -102,17 +102,11 @@
           }
         },
         "audio": {
-          "description": "null, or {\"local_only\": true}: a recording kept only on the device that imported it (uploading is slice 3c).",
+          "description": "null (no recording), {\"local_only\": true} (a recording kept only on the device that imported it) or an uploaded recording (slice 3c). Any other shape is a field error `invalid` on /audio.",
           "oneOf": [
             { "type": "null" },
-            {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["local_only"],
-              "properties": {
-                "local_only": { "const": true }
-              }
-            }
+            { "$ref": "#/$defs/local_audio" },
+            { "$ref": "#/$defs/uploaded_audio" }
           ]
         },
         "references": {
@@ -122,6 +116,27 @@
             "$ref": "urn:awrad:dhikr-catalog:1#/$defs/reference"
           }
         }
+      }
+    },
+    "local_audio": {
+      "description": "A recording that exists only on the device that imported it: signed out, offline, or not uploaded yet (slice 3b). Other devices and the web show no audio.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["local_only"],
+      "properties": {
+        "local_only": { "const": true }
+      }
+    },
+    "uploaded_audio": {
+      "description": "A recording uploaded to the account's private storage (slice 3c, contracts/audio/v1). Every member is present (STYLE §3). The server applies a put naming it only when asset_id is a ready asset of the account; otherwise the put is `rejected` with audio_not_found. byte_size and content_type copy the asset's; duration_ms is the importing client's measurement, or null.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["asset_id", "byte_size", "content_type", "duration_ms"],
+      "properties": {
+        "asset_id": { "$ref": "#/$defs/uuid" },
+        "byte_size": { "$ref": "urn:awrad:audio:1#/$defs/byte_size" },
+        "content_type": { "$ref": "urn:awrad:audio:1#/$defs/content_type" },
+        "duration_ms": { "$ref": "urn:awrad:audio:1#/$defs/duration_ms" }
       }
     },
     "tag_name": {
@@ -267,7 +282,8 @@
         "dhikr_not_found",
         "entity_not_found",
         "delete_not_allowed",
-        "command_id_reused"
+        "command_id_reused",
+        "audio_not_found"
       ]
     },
     "cascaded_change": {

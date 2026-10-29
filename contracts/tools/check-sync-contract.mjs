@@ -8,7 +8,10 @@
 //   4. every name tag_name_normalization.json accepts makes a valid $defs/user_tag_document;
 //   5. in sync_receipts.json, an `applied` receipt (or a duplicate's original) has an array `cascaded` exactly when
 //      its command is a user_tag or custom_dhikr delete (null otherwise), listing the other entities changed at that
-//      revision, in changes-feed order, as the expected changes show them.
+//      revision, in changes-feed order, as the expected changes show them;
+//   6. in sync_receipts.json, a custom_dhikr put naming uploaded audio is `applied` only when its asset_id is a ready
+//      asset in the state's audio_assets, and `rejected` `audio_not_found` exactly when it isn't (with a `not_found`
+//      error on /document/audio/asset_id); no other command is audio_not_found.
 // Usage: node tools/check-sync-contract.mjs
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -71,13 +74,33 @@ for (const c of read("sync/v1/fixtures/custom_dhikr_validity.json").cases) {
   }
 }
 
-// 3 and 5. sync_receipts
+// 3, 5 and 6. sync_receipts
 const entityKey = (e) => `${e.entity_type} ${e.entity_id}`;
+const assetOf = (command) =>
+  command.entity_type === "custom_dhikr" && command.op === "put" && typeof command.document?.audio?.asset_id === "string"
+    ? command.document.audio.asset_id
+    : null;
 for (const c of read("sync/v1/fixtures/sync_receipts.json").cases) {
+  const ready = new Set(c.given.state.audio_assets.filter((a) => a.status === "ready").map((a) => a.asset_id));
   c.given.batch.forEach((command, i) => {
     const where = `sync_receipts "${c.id}" /expect/receipts/${i}`;
     const receipt = c.expect.receipts[i];
     const outcome = receipt.status === "duplicate" ? receipt.original : receipt;
+    // 6. audio_not_found (a duplicate replays a decision made against an earlier state, so only fresh receipts count)
+    if (receipt.status !== "duplicate") {
+      checks += 1;
+      const asset = assetOf(command);
+      const audioRejected = outcome.status === "rejected" && outcome.code === "audio_not_found";
+      if (audioRejected && (asset === null || ready.has(asset))) {
+        problems.push(`${where}: audio_not_found, but the command names ${asset === null ? "no uploaded audio" : "a ready asset"}`);
+      }
+      if (audioRejected && JSON.stringify(outcome.fields) !== JSON.stringify([{ field: "/document/audio/asset_id", code: "not_found" }])) {
+        problems.push(`${where}: audio_not_found carries fields [{"field": "/document/audio/asset_id", "code": "not_found"}]`);
+      }
+      if (outcome.status === "applied" && asset !== null && !ready.has(asset)) {
+        problems.push(`${where}: applied, but ${asset} isn't a ready asset in given.state.audio_assets (audio_not_found)`);
+      }
+    }
     if (outcome.status !== "rejected") {
       expectValid("command", command, `sync_receipts "${c.id}" /given/batch/${i}`);
       if (command.entity_type === "custom_dhikr" && command.op === "put" && rangeErrors(command.document).length > 0) {
@@ -134,4 +157,4 @@ if (problems.length > 0) {
   for (const p of problems) console.error(p);
   process.exit(1);
 }
-console.log(`sync contract: ${checks} checks pass (OpenAPI examples, validity and Qur'an ranges, receipts and cascades, tag names agree with sync.schema.json)`);
+console.log(`sync contract: ${checks} checks pass (OpenAPI examples, validity and Qur'an ranges, receipts, cascades and audio_not_found, tag names agree with sync.schema.json)`);

@@ -26,7 +26,8 @@ commands:
       for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt),
       `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag
       already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected`
-      (`code`, `fields`, and the server's copy or null). Receipts are kept for 90 days.
+      (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset
+      that isn't a ready asset of the account, contracts/audio/v1). Receipts are kept for 90 days.
 
 
       `Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts
@@ -214,7 +215,11 @@ commands:
                         en: Glory be to Allah
                         ar: null
                         ml: null
-                      audio: null
+                      audio:
+                        asset_id: 0192f0e0-0000-7000-8000-000000000001
+                        byte_size: 4182733
+                        content_type: audio/mpeg
+                        duration_ms: 31250
                       references: []
                 - command_id: 0192f0c0-0000-7000-8000-000000000005
                   status: gone

@@ -21,7 +21,10 @@ Everything synced is an **entity**: an `entity_type`, an `entity_id` (a UUID), a
 - **Custom dhikr.** The catalog dhikr shape (`urn:awrad:dhikr-catalog:1#/$defs/dhikr`), reusing its `kind`, text and `reference` definitions, but:
   - no `id` (the `entity_id` is the ID), `key`, `aliases`, `virtues` or catalog `tags` (user tags live in `dhikr_personal`);
   - `title` `{en, ar, ml}`, `transliteration` `{en, ml}` and `translation` `{en, ar, ml}` always carry every language key, each text or `null` (API STYLE §3), and the title has at least one text;
-  - `audio` is `null` or `{"local_only": true}`: a recording that stays on the device that imported it, until uploads arrive in slice 3c;
+  - `audio` is one of:
+    - `null`: no recording;
+    - `{"local_only": true}`: a recording that stays on the device that imported it (signed out, offline, or not uploaded yet);
+    - `{"asset_id", "byte_size", "content_type", "duration_ms"}` (`$defs/uploaded_audio`, slice 3c): a recording uploaded to the account's private storage ([`../../audio/v1/`](../../audio/v1/)). Every member is present: `asset_id` a UUID, `byte_size` 1–10,000,000, `content_type` `audio/mpeg` or `audio/mp4`, `duration_ms` an integer ≥ 1 or `null` when the client couldn't measure it. Any other `audio` is a field error `invalid` on `/audio`;
   - references keep the catalog's member names, so a Qur'an reference has `ayah_start` and `ayah_end`;
   - a Qur'an reference's `ayah_end` is at least its `ayah_start` (equal for one ayah). The schema can't compare two members, so a reversed range is a field error `range` on `/references/N/ayah_end`; the built-in catalog has the same check in `tools/check-dhikr-catalog.mjs`.
 - **Tag.** `name` is the display form and `normalized_name` its case fold, both defined by [`fixtures/tag_name_normalization.json`](fixtures/tag_name_normalization.json). Two active tags never share a `normalized_name`.
@@ -69,6 +72,7 @@ Everything else, including a document that breaks its schema, is a `rejected` re
      - repeats are removed, keeping first-occurrence order.
 
      An ID the account never had is `rejected` with `tag_not_found`.
+   - A `custom_dhikr` put whose `audio` names an `asset_id` that isn't a ready asset of the account (never uploaded, still pending, cleaned up, or another account's) is `rejected` with `audio_not_found`, with a `not_found` error on `/document/audio/asset_id`. Clients confirm the upload before they queue the put.
 6. **Apply.** The command takes `head_revision + 1`.
    - Deleting a tag removes it from every `dhikr_personal` that has it.
    - Deleting a custom dhikr deletes its `dhikr_personal`.
@@ -83,7 +87,7 @@ Everything else, including a document that breaks its schema, is a `rejected` re
 | `conflict` | `base_version` is stale | `current`: the server's `{version, state, document}` |
 | `merged` | A tag create whose name exists | `merged_into` (the surviving tag), `current` (that tag) |
 | `gone` | Deleted, or a merged tag ID | — |
-| `rejected` | Invalid, over a limit, or a reused `command_id` | `code`, `fields` (`{field, code}`, pointers into the command), `current` (the server's copy to undo to, or `null`) |
+| `rejected` | Invalid, over a limit, naming something missing, or a reused `command_id` | `code`, `fields` (`{field, code}`, pointers into the command), `current` (the server's copy to undo to, or `null`) |
 
 **Cascades in receipts.** The `applied` receipt of a `user_tag` or `custom_dhikr` delete carries `cascaded`: one `{entity_type, entity_id, state, version, revision}` for every other entity the server changed at the same revision, ordered by `entity_type`, then `entity_id`, and empty when nothing cascaded. Every other `applied` receipt has `cascaded: null` (STYLE §3). Phones apply the entries to their known versions straight away, so the next edit of a cascaded record doesn't conflict; the documents arrive in the changes feed. A command already queued for a cascaded record before the receipt arrives, or sent in the same batch after the delete, still carries the old `base_version` and conflicts as normal.
 
@@ -126,7 +130,9 @@ Returns `{changes, next_after, has_more, head_revision}`. Each change is an enti
 | Custom dhikr: title 120 per language; Arabic, transliteration and translation 5,000 per language; 20 references | Schema, counted in Unicode code points: `document_invalid` |
 | Tag name: 1–40 extended grapheme clusters, ≤ 128 UTF-8 bytes, already in display form; `normalized_name` equal to the server's | Server (the schema only bounds code points): `document_invalid` |
 | 64 KB per document: at most 65,536 UTF-8 bytes of its compact JSON, non-ASCII unescaped | Server: `document_too_large` |
-| Audio upload (slice 3c): 10 MB per file, meaning 10,000,000 bytes | Server, from slice 3c |
+| Uploaded audio: 1–10,000,000 bytes, `audio/mpeg` or `audio/mp4` | Schema: `document_invalid` (`invalid` on `/audio`) |
+| Uploaded audio names a ready asset of the account | Server: `audio_not_found` |
+| Upload limits (per file, 500,000,000 bytes per account, types) | [`../../audio/v1/`](../../audio/v1/), at upload time |
 | Changes page: `limit` 1–500, default 200 | Schema (OpenAPI) |
 | Receipts kept 90 days | Server |
 
@@ -202,7 +208,7 @@ Each account's data lives in its own **profile**, a separate local database. A r
 |---|---|---|
 | `tag_name_normalization.json` | All four | Display and normalized tag names, limits |
 | `custom_dhikr_validity.json` | All four | Which custom dhikr documents are valid, with `{field, code}` errors |
-| `sync_receipts.json` | Server | A state and a batch: receipts, head, changes, aliases, stored receipts |
+| `sync_receipts.json` | Server | A state (entities, receipts, tag aliases, audio assets) and a batch: receipts, head, changes, aliases, stored receipts |
 | `sync_changes_feed.json` | Server | Entities, `after`, `limit`: the page |
 | `outbox_enqueue.json` | Android, iOS | Known versions, queue and an edit: the queue |
 | `apply_changes.json` | Android, iOS | Local state and a page, receipts or a resolution: local state and notices |
@@ -213,4 +219,5 @@ Each account's data lives in its own **profile**, a separate local database. A r
 - `custom_dhikr_validity` agrees with `$defs/custom_dhikr_document` plus the Qur'an range rule, with a `range` error for each reversed range;
 - the non-rejected commands in `sync_receipts` are valid commands;
 - each `applied` receipt in `sync_receipts` has `cascaded` exactly when its command is a `user_tag` or `custom_dhikr` delete, listing the entities changed at its revision;
+- in `sync_receipts`, a put naming uploaded audio is applied only for a ready asset, and `audio_not_found` exactly when the asset isn't ready;
 - the names `tag_name_normalization` accepts make valid tag documents.
