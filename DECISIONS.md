@@ -864,7 +864,7 @@ Slice 3b keeps a custom dhikr's recording on the phone that imported it (`{"loca
 
 - **A separate private bucket.** User recordings live in R2 bucket `awrad-private-dhikr`, apart from the public built-in bucket:
   - it has no public access and no public domain;
-  - its CORS allows only the web origin(s), for `PUT`, `GET` and `HEAD`.
+  - its CORS allows only the web origin(s), for `PUT`, `GET` and `HEAD`, with the request headers `content-type` and `x-amz-checksum-sha256`.
 - **Signed links only.** Every read and write uses a short-lived SigV4 link that the server signs for the account's own asset. The bytes go straight between the client and R2, never through the API or the change queue.
   - An upload `PUT` link lives **15 minutes**; a download `GET` link lives **10 minutes**.
   - Clients ask for a new link when one expires, and never store links.

@@ -54,7 +54,7 @@ The bytes go straight between the client and storage; they never pass through th
 
 - **`GET /api/v1/audio_assets/{asset_id}/download`** (`get_audio_download`) returns `{url, expires_at}`: a signed `GET` link valid for **10 minutes**, for the account's own ready assets only. Anything else (unknown, pending, another account's, cleaned up) is `404`. Ask for a link when playback starts; don't store one.
 - **Phones** download a recording on its first play into the active profile's files, and play it from there afterwards, offline too. The cached file goes when the dhikr's `audio` changes or the dhikr is deleted, and with its profile.
-- **The web** plays from the signed link. The bucket's CORS allows the web origin(s) to `PUT`, `GET` and `HEAD`.
+- **The web** plays from the signed link. The bucket's CORS allows the web origin(s) to `PUT`, `GET` and `HEAD`, with the request headers `content-type` and `x-amz-checksum-sha256` (the signed upload sends both, so the browser's preflight asks for them).
 
 ## Storage used
 

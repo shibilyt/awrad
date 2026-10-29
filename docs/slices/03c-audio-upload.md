@@ -18,7 +18,7 @@ A signed-in user's custom dhikr recording reaches every device and the web. A re
 - **A private bucket,** `awrad-private-dhikr`, separate from the public built-in bucket (`dhikrs.awrad.app`):
   - no public access;
   - every read and write uses a short-lived signed link from the server;
-  - CORS allows the web origin(s) to `PUT`, `GET` and `HEAD`.
+  - CORS allows the web origin(s) to `PUT`, `GET` and `HEAD`, with the request headers `content-type` and `x-amz-checksum-sha256`.
 - **Secrets:**
   - locally, `awrad-server-next/mise.local.toml` (ignored by git);
   - in production, Dokploy environment variables;
