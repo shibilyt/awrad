@@ -56,7 +56,12 @@ export function recordRequests(): RecordedRequest[] {
       .clone()
       .text()
       .then((text) => {
-        entry.body = text === "" ? undefined : JSON.parse(text);
+        // JSON from the API; anything else (a file PUT to storage) as its text.
+        try {
+          entry.body = text === "" ? undefined : JSON.parse(text);
+        } catch {
+          entry.body = text;
+        }
       });
   });
   return requests;

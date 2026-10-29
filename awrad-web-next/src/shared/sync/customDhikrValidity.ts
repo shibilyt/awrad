@@ -4,6 +4,7 @@
  * every put and stays the authority. Errors are `{field, code}`, `field` a JSON Pointer into the
  * document, sorted by field and then code, like a `rejected` receipt's (without `/document`).
  */
+import { isValidId } from "@/shared/identity";
 
 export type FieldCode =
   | "required"
@@ -138,6 +139,30 @@ function isLocalAudio(value: unknown): boolean {
   return isObject(value) && Object.keys(value).length === 1 && value["local_only"] === true;
 }
 
+/** The two media types an uploaded recording may have, exactly as written (contracts/audio/v1). */
+export const AUDIO_CONTENT_TYPES = ["audio/mpeg", "audio/mp4"] as const;
+/** The largest recording, in decimal bytes (10 MB, not 10 MiB). */
+export const AUDIO_MAX_BYTES = 10_000_000;
+
+const UPLOADED_AUDIO_MEMBERS = ["asset_id", "byte_size", "content_type", "duration_ms"];
+
+/** `uploaded_audio`: every member and nothing else, each within its schema. */
+function isUploadedAudio(value: unknown): boolean {
+  if (!isObject(value)) return false;
+  const keys = Object.keys(value);
+  if (keys.length !== UPLOADED_AUDIO_MEMBERS.length || !UPLOADED_AUDIO_MEMBERS.every((key) => key in value)) {
+    return false;
+  }
+  const { asset_id: assetId, byte_size: byteSize, content_type: contentType, duration_ms: durationMs } = value;
+  return (
+    typeof assetId === "string" &&
+    isValidId(assetId) &&
+    isPositiveInteger(byteSize, AUDIO_MAX_BYTES) &&
+    (AUDIO_CONTENT_TYPES as readonly unknown[]).includes(contentType) &&
+    (durationMs === null || isPositiveInteger(durationMs))
+  );
+}
+
 function memberProblems(document: Json, member: string): FieldProblem[] {
   const field = `/${member}`;
   if (!(member in document)) return [{ field, code: "required" }];
@@ -157,7 +182,7 @@ function memberProblems(document: Json, member: string): FieldProblem[] {
     case "translation":
       return languageProblems(field, value, ["en", "ar", "ml"], LONG_TEXT_MAX);
     case "audio":
-      return value === null || isLocalAudio(value) ? [] : [{ field, code: "invalid" }];
+      return value === null || isLocalAudio(value) || isUploadedAudio(value) ? [] : [{ field, code: "invalid" }];
     default:
       return referencesProblems(value);
   }

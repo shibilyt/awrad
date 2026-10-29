@@ -70,7 +70,7 @@ export function useSaveDhikr(
   };
 
   const save = async (values: EditorValues): Promise<void> => {
-    const document = documentFrom(values, existing?.document.audio ?? null);
+    const document = documentFrom(values);
     const found = customDhikrProblems(document);
     showProblems(found);
     setAlert(found.length === 0 ? null : t("library.editor.errors.check"));

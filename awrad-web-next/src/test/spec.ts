@@ -8,6 +8,8 @@ import spec from "../../../contracts/api/openapi.bundled.json";
  */
 interface MediaType {
   example?: unknown;
+  /** Named examples, where a status serves several codes (`422` `storage_full` and `invalid_size`). */
+  examples?: Record<string, { value?: unknown }>;
 }
 interface Header {
   example?: unknown;
@@ -99,15 +101,22 @@ export function specHandler(operationId: string, status: number, options: Option
   return handler(operationId, status, response, body, options);
 }
 
-function problemExample(response: Response): { code?: unknown; status?: unknown } | undefined {
-  return Object.values(resolve(response).content ?? {})[0]?.example as { code?: unknown; status?: unknown } | undefined;
+type ProblemExample = { code?: unknown; status?: unknown } | undefined;
+
+/** The problem examples a response documents: its `example`, or each of its named `examples`. */
+function problemExamples(response: Response): ProblemExample[] {
+  const media = Object.values(resolve(response).content ?? {})[0];
+  if (media === undefined) return [];
+  if (media.example !== undefined) return [media.example as ProblemExample];
+  return Object.values(media.examples ?? {}).map((example) => example.value as ProblemExample);
 }
 
 /**
  * A handler answering `operationId` with the problem `code`. The code must be in
  * the operation's `x-error-codes`, and the example comes from the operation's own
- * responses or, when a status is shared by several codes (`403`), from the
- * spec's shared response for that code, at a status the operation documents.
+ * responses (its `example`, or the one of its named `examples` with that code)
+ * or, when a status is shared by several codes (`403`), from the spec's shared
+ * response for that code, at a status the operation documents.
  */
 export function specProblem(operationId: string, code: string, options: Options = {}): HttpHandler {
   const { operation } = find(operationId);
@@ -116,9 +125,14 @@ export function specProblem(operationId: string, code: string, options: Options 
   }
   const candidates = [...Object.values(operation.responses), ...Object.values(document.components.responses)];
   for (const candidate of candidates) {
-    const example = problemExample(candidate);
-    if (example?.code === code && typeof example.status === "number" && String(example.status) in operation.responses) {
-      return handler(operationId, example.status, resolve(candidate), example, options);
+    for (const example of problemExamples(candidate)) {
+      if (
+        example?.code === code &&
+        typeof example.status === "number" &&
+        String(example.status) in operation.responses
+      ) {
+        return handler(operationId, example.status, resolve(candidate), example, options);
+      }
     }
   }
   throw new Error(`${operationId}: the spec has no example for ${code}`);

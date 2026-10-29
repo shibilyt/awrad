@@ -1,6 +1,7 @@
 import { getRouteApi } from "@tanstack/react-router";
 import { useId, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
+import { getAudioDownload } from "@/shared/audio";
 import { findDhikr, findTag, localized, useCatalog, type Dhikr } from "@/shared/dhikr-catalog";
 import { useLanguage } from "@/shared/i18n";
 import { isValidId } from "@/shared/identity";
@@ -11,7 +12,7 @@ import { TextButtonLink } from "@/shared/ui/TextLink";
 import { asDhikr, useYours, type Yours } from "./custom/data";
 import { DeleteDhikr } from "./custom/DeleteDhikr";
 import { NotReady } from "./custom/NotReady";
-import { DhikrText } from "./DhikrText";
+import { DhikrText, type Recording } from "./DhikrText";
 import { BackBar, NotFound } from "./LibraryScreen";
 import { citedLabels, referenceLabel, sourceReferences } from "./referenceLabel";
 import { YourTags } from "./tags/YourTags";
@@ -99,9 +100,21 @@ function Sources({ dhikr }: { dhikr: Dhikr }): ReactElement | null {
 }
 
 /**
+ * A custom dhikr's uploaded recording, for the player bar: played from a signed link to the
+ * account's private storage (`get_audio_download`), asked for when playback starts.
+ */
+function recordingOf(custom: Entity<CustomDhikrDocument> | null, yours: Yours): Recording | null {
+  const audio = custom?.document.audio ?? null;
+  if (audio === null || "local_only" in audio || yours.status !== "ready") return null;
+  const { accountId } = yours;
+  return { id: audio.asset_id, source: { kind: "signed", link: () => getAudioDownload(accountId, audio.asset_id) } };
+}
+
+/**
  * A dhikr's page, built-in or the account's own: the text by kind, the catalog's tags, the
  * account's tags with "Manage tags" (signed in), virtues, sources, and for the account's own Edit
- * (in the top bar), a note about its phone recording, and Delete.
+ * (in the top bar), its uploaded recording in the player bar or a note that it's on a phone, and
+ * Delete.
  */
 function DhikrDetail({
   dhikr,
@@ -124,8 +137,8 @@ function DhikrDetail({
     <main className="mx-auto flex w-full max-w-content flex-col pb-page-margin">
       <BackBar title={title} {...(custom === null ? {} : { end: edit })} />
       <div className="flex flex-col gap-section-gap px-page-margin">
-        <DhikrText dhikr={dhikr} />
-        {(custom?.document.audio ?? null) !== null && (
+        <DhikrText dhikr={dhikr} recording={recordingOf(custom, yours)} />
+        {custom !== null && custom.document.audio !== null && "local_only" in custom.document.audio && (
           <p className="text-caption text-on-surface-variant">{t("library.editor.audioOnPhone")}</p>
         )}
         <Tags dhikr={dhikr} />

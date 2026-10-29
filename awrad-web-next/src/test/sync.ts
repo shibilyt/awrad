@@ -25,6 +25,24 @@ export const MORNING_DHIKR: CustomDhikrDocument = {
   references: [{ id: "ref-1", type: "hadith", collection: "Sahih Muslim", number: "2723" }],
 };
 
+/** A custom dhikr whose recording was uploaded (slice 3c): the asset in the audio examples. */
+export const UPLOADED_DHIKR_ID = "0192f0d0-0000-7000-8000-000000000007";
+export const UPLOADED_ASSET_ID = "0192f0e0-0000-7000-8000-000000000001";
+export const UPLOADED_DHIKR: CustomDhikrDocument = {
+  ...MORNING_DHIKR,
+  title: { en: "Evening words", ar: null, ml: null },
+  audio: { asset_id: UPLOADED_ASSET_ID, byte_size: 4182733, content_type: "audio/mpeg", duration_ms: 31250 },
+};
+
+/** The account's changes plus the dhikr with an uploaded recording: `signedInWithEntities(withUploadedDhikr)`. */
+export function withUploadedDhikr(changes: Change[]): Change[] {
+  const document = UPLOADED_DHIKR as Change["document"];
+  return [
+    ...changes,
+    { entity_type: "custom_dhikr", entity_id: UPLOADED_DHIKR_ID, state: "active", version: 3, revision: 16, document },
+  ];
+}
+
 interface ChangesPage {
   changes: Change[];
   next_after: number;

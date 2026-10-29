@@ -77,6 +77,9 @@
       "title": "Your account",
       "loading": "Loading your account…",
       "retry": "Try again",
+      "audioStorage": "Audio storage",
+      "audioStorageUsed": "{{used}} of {{limit}}",
+      "audioStorageFailed": "Couldn't load your audio storage.",
       "signOut": "Sign out",
       "settings": "Account settings",
       "devices": "Devices",
@@ -280,8 +283,28 @@
         "ml": "Malayalam"
       },
       "audio": "Audio",
-      "audioFromPhone": "Audio is added from the phone app.",
-      "audioOnPhone": "Its recording is on the phone that added it. Audio is added from the phone app.",
+      "audioHint": "An MP3 or M4A file, up to 10 MB.",
+      "audioOnPhone": "Audio is on the phone that added it.",
+      "audioUpload": {
+        "none": "No recording yet.",
+        "add": "Add audio",
+        "replace": "Replace recording",
+        "remove": "Remove recording",
+        "uploaded": "Recording, {{size}}",
+        "uploadedWithLength": "Recording, {{size}}, {{length}}",
+        "uploading": "Uploading {{name}}…",
+        "progress": "Upload progress",
+        "retry": "Try again",
+        "errors": {
+          "unsupported_audio_type": "Choose an MP3 or M4A file.",
+          "invalid_size": "This file is empty. Choose another recording.",
+          "file_too_large": "This file is larger than 10 MB. Choose a smaller recording.",
+          "storage_full": "Your audio storage is full ({{used}} of {{limit}} used). Remove recordings from other dhikrs to make room.",
+          "upload_mismatch": "The recording didn't arrive intact. Try again.",
+          "upload_failed": "Couldn't upload the recording. Check your connection and try again.",
+          "unavailable": "This recording is no longer in your storage. Add it again, or remove it, then save."
+        }
+      },
       "save": "Save",
       "references": {
         "title": "References",
@@ -381,7 +404,9 @@
         "tag_name_taken": "Another tag already has this name.",
         "tag_not_found": "One of these tags was deleted on another device. Check the tags and save again.",
         "dhikr_not_found": "This dhikr was deleted on another device, so it can't be tagged.",
-        "entity_not_found": "That was deleted on another device."
+        "entity_not_found": "That was deleted on another device.",
+        "audio_not_found": "This dhikr's recording is no longer in your storage. Add it again, or remove it, then save.",
+        "audio_mismatch": "This dhikr's recording doesn't match the uploaded file. Add it again, then save."
       },
       "refused": {
         "title": "Change refused",

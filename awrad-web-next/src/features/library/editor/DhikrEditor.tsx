@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactElement } from "react";
+import { useState, type ReactElement } from "react";
 import { Form } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/shared/i18n";
@@ -9,10 +9,12 @@ import { OptionCheckboxGroup, OptionRow } from "@/shared/ui/OptionRow";
 import { TextLink } from "@/shared/ui/TextLink";
 import { ConflictDialog, RefusedDialog } from "../custom/ConflictDialog";
 import { sortedTags, tagIdsOf } from "../custom/data";
-import { focusFirstError } from "./focusFirstError";
+import { AudioField } from "./AudioField";
+import { useFocusFirstError } from "./focusFirstError";
 import { EMPTY_VALUES, valuesFrom, type EditorValues } from "./form";
 import { ReferencesEditor } from "./ReferencesEditor";
 import { ArabicField, FieldGroup, KindField, LanguageFields } from "./TextSections";
+import { useAudioUpload } from "./useAudioUpload";
 import { useSaveDhikr } from "./useSaveDhikr";
 
 const MAX_TAGS = 20;
@@ -103,9 +105,9 @@ function TranslatedTexts({
 }
 
 /**
- * The custom dhikr editor (slice 3b): kind, the Arabic (required), a title in at least one
- * language, transliteration and translation per language, references and tags. No audio on the
- * web: a recording is added from the phone app and stays on that phone.
+ * The custom dhikr editor (slices 3b and 3c): kind, the Arabic (required), a title in at least
+ * one language, transliteration and translation per language, references, tags, and its
+ * recording, uploaded from here or kept as a phone left it. Save waits while a recording uploads.
  */
 export function DhikrEditor({
   accountId,
@@ -124,13 +126,10 @@ export function DhikrEditor({
   const set = <K extends keyof EditorValues>(key: K, value: EditorValues[K]) => {
     setValues((previous) => ({ ...previous, [key]: value }));
   };
-  // A save that stopped on field problems lands on the first of them, once they're drawn; when the
-  // server refused it, once "Change refused" has closed (focus can't leave a modal).
-  const form = useRef<HTMLFormElement>(null);
-  const isRefused = refused !== null;
-  useEffect(() => {
-    if (fieldFailures > 0 && !isRefused) focusFirstError(form.current);
-  }, [fieldFailures, isRefused]);
+  const audioUpload = useAudioUpload(accountId, (audio) => {
+    set("audio", audio);
+  });
+  const form = useFocusFirstError(fieldFailures, refused !== null);
 
   return (
     <Form
@@ -171,15 +170,16 @@ export function DhikrEditor({
           set("tagIds", tagIds);
         }}
       />
-      <FieldGroup title={t("library.editor.audio")}>
-        <p className="text-body text-on-surface-variant">
-          {existing?.document.audio === null || existing === null
-            ? t("library.editor.audioFromPhone")
-            : t("library.editor.audioOnPhone")}
-        </p>
-      </FieldGroup>
+      <AudioField
+        audio={values.audio}
+        uploader={audioUpload}
+        errors={errors}
+        onRemove={() => {
+          set("audio", null);
+        }}
+      />
       <FormAlert message={alert} />
-      <Button type="submit" isPending={isPending}>
+      <Button type="submit" isPending={isPending} isDisabled={audioUpload.state.status === "uploading"}>
         {t("library.editor.save")}
       </Button>
       <ConflictDialog conflict={conflict} state={state} isPending={isPending} />

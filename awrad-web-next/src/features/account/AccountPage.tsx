@@ -1,7 +1,9 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRouteApi, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactElement } from "react";
 import { useTranslation } from "react-i18next";
+import { audioUsageQuery, formatMegabytes } from "@/shared/audio";
+import { useLanguage } from "@/shared/i18n";
 import { Button } from "@/shared/ui/Button";
 import { Card } from "@/shared/ui/Card";
 import { cx } from "@/shared/ui/cx";
@@ -99,6 +101,35 @@ function SettingsLink({
   );
 }
 
+/**
+ * "Audio storage: 120.5 MB of 500 MB" (slice 3c): what the account's recordings use, ready and
+ * pending uploads together, in decimal megabytes like the limits (`get_audio_usage`).
+ */
+function AudioStorage({ account }: { account: Account }): ReactElement {
+  const { t } = useTranslation();
+  const language = useLanguage();
+  const usage = useQuery(audioUsageQuery(account.id));
+  const value =
+    usage.data === undefined
+      ? usage.isError
+        ? t("account.page.audioStorageFailed")
+        : t("ui.loading")
+      : t("account.page.audioStorageUsed", {
+          used: formatMegabytes(usage.data.used_bytes, language),
+          limit: formatMegabytes(usage.data.limit_bytes, language),
+        });
+  return (
+    <Card>
+      <dl className="flex flex-col gap-xs">
+        <dt className="text-body-small text-on-surface-variant">{t("account.page.audioStorage")}</dt>
+        <dd aria-live="polite" className="text-row-title">
+          {value}
+        </dd>
+      </dl>
+    </Card>
+  );
+}
+
 /** Links to the account settings (slice 2b). */
 function Settings(): ReactElement {
   const { t } = useTranslation();
@@ -126,6 +157,7 @@ export function AccountPage(): ReactElement {
     <AccountScreen title={t("account.page.title")}>
       <FormNotice message={notice === undefined ? null : t(`account.page.notice.${notice}`)} />
       <AccountDetails account={account} />
+      <AudioStorage account={account} />
       <Settings />
       <SignOut />
     </AccountScreen>

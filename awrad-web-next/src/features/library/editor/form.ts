@@ -42,6 +42,8 @@ export interface EditorValues {
   translation: { en: string; ar: string; ml: string };
   references: ReferenceDraft[];
   tagIds: string[];
+  /** None, a phone's recording (kept as it is), or one uploaded to the account's storage (slice 3c). */
+  audio: CustomDhikrDocument["audio"];
 }
 
 export const EMPTY_VALUES: EditorValues = {
@@ -52,6 +54,7 @@ export const EMPTY_VALUES: EditorValues = {
   translation: { en: "", ar: "", ml: "" },
   references: [],
   tagIds: [],
+  audio: null,
 };
 
 function referenceDraft(reference: Reference): ReferenceDraft {
@@ -76,6 +79,7 @@ export function valuesFrom(document: CustomDhikrDocument, tagIds: readonly strin
     },
     references: document.references.map(referenceDraft),
     tagIds: [...tagIds],
+    audio: document.audio,
   };
 }
 
@@ -109,15 +113,15 @@ function referenceFrom(draft: ReferenceDraft): Reference {
   return reference as unknown as Reference;
 }
 
-/** The document to save. `audio` is kept as it was: a phone's recording stays on that phone. */
-export function documentFrom(values: EditorValues, audio: CustomDhikrDocument["audio"]): CustomDhikrDocument {
+/** The document to save, with the recording the editor ends with. */
+export function documentFrom(values: EditorValues): CustomDhikrDocument {
   return {
     kind: values.kind,
     arabic: values.arabic.trim(),
     title: languages(values.title),
     transliteration: { en: text(values.transliteration.en), ml: text(values.transliteration.ml) },
     translation: languages(values.translation),
-    audio,
+    audio: values.audio,
     references: values.references.map(referenceFrom),
   };
 }
@@ -129,6 +133,8 @@ export function fieldName(pointer: string): string {
 
 function messageFor(problem: FieldProblem, t: TFunction): string {
   const name = fieldName(problem.field);
+  // The recording: refused by the server (audio_not_found, audio_mismatch), or not a valid shape.
+  if (name === "audio" || name.startsWith("audio.")) return t("library.editor.audioUpload.errors.unavailable");
   switch (problem.code) {
     case "required":
     case "blank":
