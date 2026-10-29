@@ -9,8 +9,8 @@ import java.time.LocalDate
  */
 public object HijriAdjustment {
 
-    /** In the last this-many days of a month, Settings offers the next month too: sightings are announced then. */
-    public const val NEXT_MONTH_DAYS: Int = 3
+    /** From this day of a month on, Settings offers the next month too: sightings are announced then. */
+    public const val NEXT_MONTH_FROM_DAY: Int = 29
 
     /** The offset from the table in force for [year]-[month]: its own correction, else the last earlier one, else 0. */
     public fun offsetInForce(corrections: HijriCorrections, year: Int, month: Int): Int =
@@ -44,13 +44,13 @@ public object HijriAdjustment {
         create(corrections.corrections.filterNot { it == correction })
 
     /**
-     * The months Settings offers to adjust on [today]: its month, and the next one in the month's last
-     * [NEXT_MONTH_DAYS] days (while it's still in the table).
+     * The months Settings offers to adjust on [today]: its month, and from its day [NEXT_MONTH_FROM_DAY] on the next
+     * one too (while it's still in the table).
      */
     public fun adjustableMonths(calendar: HijriCalendar, today: LocalDate): List<HijriMonth> {
         val month = calendar.monthOf(today) ?: return emptyList()
         val day = month.dateOf(today).day
-        val next = if (day > month.length - NEXT_MONTH_DAYS) calendar.monthOf(month.lastDay.plusDays(1)) else null
+        val next = if (day >= NEXT_MONTH_FROM_DAY) calendar.monthOf(month.lastDay.plusDays(1)) else null
         return listOfNotNull(month, next)
     }
 

@@ -5,6 +5,7 @@
     <string name="home_placeholder_body">This is the Awrad Next scaffold. Features land here slice by slice.</string>
     <string name="home_placeholder_restart">Restart onboarding</string>
     <string name="home_placeholder_account">Account</string>
+    <string name="home_placeholder_practice">Practice settings</string>
     <string name="home_placeholder_data_sync">Data and sync</string>
     <string name="shell_tab_home">Home</string>
     <string name="shell_tab_library">Library</string>

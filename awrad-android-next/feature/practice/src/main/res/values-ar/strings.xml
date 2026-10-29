@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="practice_title">إعدادات العبادة</string>
+
+    <string name="practice_section_today">اليوم</string>
+    <string name="practice_hijri_date">%1$d %2$s %3$d</string>
+    <string name="practice_hijri_outside">لا يوجد تاريخ هجري لهذا اليوم</string>
+    <string name="practice_maghrib_at">المغرب اليوم الساعة %1$s</string>
+    <string name="practice_maghrib_no_location">اختر موقعًا لترى وقت المغرب اليوم.</string>
+    <string name="practice_maghrib_no_sunset">لا تغرب الشمس هنا اليوم، فلا يوجد وقت للمغرب.</string>
+
+    <string name="practice_section_day_reset">يبدأ اليوم الجديد</string>
+    <string name="practice_day_reset_midnight">عند منتصف الليل</string>
+    <string name="practice_day_reset_maghrib">عند المغرب</string>
+    <string name="practice_maghrib_hint_no_location">بدون موقع لا يُعرف وقت المغرب، فيبدأ اليوم عند منتصف الليل. اختر موقعًا أدناه.</string>
+
+    <string name="practice_section_location">الموقع</string>
+    <string name="practice_location_none">لم يُختر موقع</string>
+    <string name="practice_location_gps">موقعك الحالي</string>
+    <string name="practice_location_note">يُستخدم على هذا الهاتف لحساب وقت المغرب، ولا يُرسل إلى أي مكان.</string>
+    <string name="practice_use_my_location">استخدم موقعي</string>
+    <string name="practice_search_place">ابحث عن مكان</string>
+    <string name="practice_clear_location">إزالة الموقع</string>
+    <string name="practice_location_denied">لا يستطيع أوراد قراءة موقعك دون إذن. ابحث عن مدينتك بدلًا من ذلك.</string>
+    <string name="practice_location_unavailable">موقعك غير متاح الآن. فعّل الموقع، أو ابحث عن مدينتك.</string>
+
+    <string name="practice_section_method">أوقات الصلاة</string>
+    <string name="practice_method_label">طريقة الحساب</string>
+    <string name="practice_method_note">بعض الطرق تجعل المغرب بعد الغروب ببضع دقائق.</string>
+    <string name="practice_method_karachi">جامعة العلوم الإسلامية، كراتشي</string>
+    <string name="practice_method_north_america">الجمعية الإسلامية لأمريكا الشمالية</string>
+    <string name="practice_method_muslim_world_league">رابطة العالم الإسلامي</string>
+    <string name="practice_method_egyptian">الهيئة المصرية العامة للمساحة</string>
+    <string name="practice_method_umm_al_qura">جامعة أم القرى، مكة المكرمة</string>
+    <string name="practice_method_moonsighting_committee">لجنة رؤية الهلال</string>
+    <string name="practice_method_dubai">دبي</string>
+    <string name="practice_method_kuwait">الكويت</string>
+    <string name="practice_method_qatar">قطر</string>
+    <string name="practice_method_singapore">سنغافورة</string>
+
+    <string name="practice_section_madhab">وقت العصر</string>
+    <string name="practice_madhab_shafi">الجمهور (الشافعي والمالكي والحنبلي)</string>
+    <string name="practice_madhab_hanafi">الحنفي</string>
+    <string name="practice_madhab_note">يؤثر هذا في وقت العصر فقط.</string>
+
+    <string name="practice_section_week_start">يبدأ الأسبوع يوم</string>
+    <string name="practice_week_saturday">السبت</string>
+    <string name="practice_week_sunday">الأحد</string>
+    <string name="practice_week_monday">الاثنين</string>
+
+    <string name="practice_section_hijri">التقويم الهجري</string>
+    <string name="practice_hijri_note">إذا رُئي الهلال في يوم مختلف حيث أنت، فحرّك بداية الشهر لتوافقه.</string>
+    <string name="practice_month_year">%1$s %2$d</string>
+    <string name="practice_adjust_month">تعديل %1$s</string>
+    <string name="practice_adjust_title">متى يبدأ %1$s</string>
+    <string name="practice_adjust_note">كل شهر ٢٩ أو ٣٠ يومًا، فهذه هي البدايات الممكنة فقط.</string>
+    <string name="practice_offset_minus_2">قبل التقويم بيومين</string>
+    <string name="practice_offset_minus_1">قبل التقويم بيوم</string>
+    <string name="practice_offset_zero">كما في التقويم</string>
+    <string name="practice_offset_plus_1">بعد التقويم بيوم</string>
+    <string name="practice_offset_plus_2">بعد التقويم بيومين</string>
+    <string name="practice_corrections_title">تصحيحاتك</string>
+    <string name="practice_correction_line">%1$s: %2$s</string>
+    <string name="practice_correction_remove">إزالة</string>
+
+    <string name="practice_search_title">اختر مكانًا</string>
+    <string name="practice_search_placeholder">ابحث عن مدينة</string>
+    <string name="practice_search_cities">المدن</string>
+    <string name="practice_search_more">أماكن أخرى</string>
+    <string name="practice_search_empty">لا يوجد مكان يطابق «%1$s».</string>
+    <string name="practice_list_separator">، </string>
+
+    <string-array name="practice_hijri_months">
+        <item>محرم</item>
+        <item>صفر</item>
+        <item>ربيع الأول</item>
+        <item>ربيع الآخر</item>
+        <item>جمادى الأولى</item>
+        <item>جمادى الآخرة</item>
+        <item>رجب</item>
+        <item>شعبان</item>
+        <item>رمضان</item>
+        <item>شوال</item>
+        <item>ذو القعدة</item>
+        <item>ذو الحجة</item>
+    </string-array>
+</resources>

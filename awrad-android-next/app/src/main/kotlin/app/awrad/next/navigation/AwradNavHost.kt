@@ -23,6 +23,8 @@ import app.awrad.feature.account.accountScreen
 import app.awrad.feature.library.libraryScreen
 import app.awrad.feature.onboarding.OnboardingDestination
 import app.awrad.feature.onboarding.onboardingScreen
+import app.awrad.feature.practice.PracticeSettingsDestination
+import app.awrad.feature.practice.practiceSettingsScreen
 import app.awrad.feature.sync.DataSyncDestination
 import app.awrad.feature.sync.SyncPrompts
 import app.awrad.feature.sync.dataSyncScreen
@@ -74,12 +76,14 @@ fun AwradNavHost(
                         onNavigate = { navController.navigate(it) },
                         onOpenAccount = { navController.navigate(AccountDestination) },
                         onOpenDataSync = { navController.navigate(DataSyncDestination) },
+                        onOpenPracticeSettings = { navController.navigate(PracticeSettingsDestination) },
                         onRestartOnboarding = { navController.replaceStackWith(OnboardingDestination) },
                     )
                 }
             }
             libraryScreen(onNavigate = { navController.navigate(it) }, onBack = { navController.popBackStack() })
             accountScreen(onBack = { navController.popBackStack() })
+            practiceSettingsScreen(onBack = { navController.popBackStack() })
             dataSyncScreen(
                 onBack = { navController.popBackStack() },
                 onOpenAccount = { navController.navigate(AccountDestination) },

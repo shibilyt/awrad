@@ -239,6 +239,16 @@ class SyncViewModelsTest {
         assertEquals(AudioUploadProblem.entries.size, problems.toSet().size)
     }
 
+    @Test
+    fun `a practice-policy merge that dropped corrections has its own title and reason`() {
+        assertEquals(R.string.sync_hijri_replaced_title, noticeTitle(RejectionCode.HIJRI_CORRECTIONS_REPLACED))
+        assertEquals(R.string.sync_rejected_title, noticeTitle(RejectionCode.ENTITY_ID_INVALID))
+        assertEquals(
+            R.string.sync_reason_hijri_corrections_replaced,
+            refusedReason(RejectionCode.HIJRI_CORRECTIONS_REPLACED),
+        )
+    }
+
     private companion object {
         val STORAGE = AudioStorage(usedBytes = 120_500_000, limitBytes = 500_000_000)
         val DHIKR = AwradId("0192f0d0-0000-7000-8000-000000000001")

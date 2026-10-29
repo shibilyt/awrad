@@ -42,6 +42,7 @@ dependencies {
     implementation(project(":feature:account"))
     implementation(project(":feature:library"))
     implementation(project(":feature:sync"))
+    implementation(project(":feature:practice"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
