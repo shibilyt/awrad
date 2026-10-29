@@ -24,17 +24,22 @@ extension ProfileDatabase {
 
     /// Saves the user's policy and marks it chosen. In an account's profile (`account`), the put is
     /// queued as any edit is; the anonymous profile only saves. Either way it's one transaction.
+    /// While a first sign-in waits for the account's first full read, the edit stays local and isn't
+    /// queued: the account's policy, if it has one, replaces it (`finishFirstSignIn`).
     func savePolicy(_ policy: PracticePolicy, account: AwradID?) throws(PracticeSettingsError) {
         var state = policyState
+        let waiting = state.policyRecord()?.signInDocument != nil
         if let account {
-            SyncRules.save(.put(.practicePolicy(policy), id: account), queue: true, in: &state)
+            SyncRules.save(.put(.practicePolicy(policy), id: account), queue: !waiting, in: &state)
         } else {
             state.setDocument(.practicePolicy(policy), for: SyncEntityKey(.practicePolicy, .random()))
         }
         if let record = state.policyRecord() {
             record.chosen = true
-            // The user's own edit is queued and merges like any other: the first-sign-in rule is done.
-            record.signInDocument = nil
+            // Waiting: the edit is the policy the first sign-in carries. Otherwise it's queued and
+            // merges like any other edit: the first-sign-in rule is done.
+            record.signInDocument = waiting ? policy.json.encoded() : nil
+            record.signInChosen = waiting
         }
         do {
             try modelContext.save()

@@ -68,6 +68,38 @@ struct PracticePolicySyncTests {
         }
     }
 
+    @Test func anEditBeforeTheFirstReadIsReplacedByTheAccountsPolicy() async throws {
+        let harness = try await StoreHarness(signedIn: false)
+        defer { harness.removeDirectory() }
+        let account = PracticePolicy(
+            dayReset: .midnight, calculationMethod: .muslimWorldLeague, madhab: .hanafi, weekStart: .sunday,
+            hijriCorrections: .none)
+        await harness.server.put(policyKey(harness), .practicePolicy(account))
+        await harness.server.fail(.unavailable)
+        _ = try await harness.signIn()
+
+        try await harness.store.savePolicy(Self.maghrib)
+        #expect(await harness.store.state().unsentCount == 0, "the edit stays local until the first read")
+        await harness.sync()
+
+        #expect(await harness.store.practiceSettings().policy == account)
+        let sent = await harness.server.sentBatches.flatMap(\.self).filter { $0.entityType == "practice_policy" }
+        #expect(sent.isEmpty)
+    }
+
+    @Test func anEditBeforeTheFirstReadSeedsAnUnsetAccount() async throws {
+        let harness = try await StoreHarness(signedIn: false)
+        defer { harness.removeDirectory() }
+        await harness.server.fail(.unavailable)
+        _ = try await harness.signIn()
+
+        try await harness.store.savePolicy(Self.maghrib)
+        await harness.sync()
+
+        #expect(await harness.store.practiceSettings().policy == Self.maghrib)
+        #expect(await harness.server.document(policyKey(harness)) == Self.maghrib.json)
+    }
+
     @Test func untouchedDefaultsAreNeverUploaded() async throws {
         let harness = try await StoreHarness(signedIn: false)
         defer { harness.removeDirectory() }
