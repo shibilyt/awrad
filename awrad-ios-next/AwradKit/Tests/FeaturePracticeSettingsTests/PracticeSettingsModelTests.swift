@@ -148,6 +148,20 @@ struct PracticeSettingsModelTests {
         #expect(await h.places.queries == ["calicut"])
     }
 
+    @Test func aPlatformResultNearAShownCityIsLeftOut() async {
+        let sameCity = PlaceResult(
+            name: "Calicut", region: "Kerala", country: "India", latitude: 11.25, longitude: 75.77)
+        let beach = PlaceResult(
+            name: "Kozhikode Beach", region: "Kerala", country: "India", latitude: 11, longitude: 75)
+        let h = harness(places: [sameCity, beach])
+        await h.model.send(.appeared)
+        _ = h.model.apply(.queryChanged("calicut"))
+        await h.model.send(.queryChanged("calicut"))
+
+        #expect(h.model.state.cities == [Self.kozhikode])
+        #expect(h.model.state.places == [beach], "Kozhikode is listed once")
+    }
+
     @Test func aStaleQueryNeverShowsItsPlaces() async {
         let h = harness(places: [PlaceResult(name: "X", region: nil, country: nil, latitude: 1, longitude: 1)])
         await h.model.send(.appeared)

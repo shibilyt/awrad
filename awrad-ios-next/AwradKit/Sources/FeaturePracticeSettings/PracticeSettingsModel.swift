@@ -227,7 +227,7 @@ public final class PracticeSettingsModel {
         let places = await services.places.search(query)
         // A newer query may have arrived meanwhile.
         guard state.query == query else { return }
-        state.places = places
+        state.places = PlaceResult.leavingOutThoseNear(state.cities, from: places)
     }
 
     private func useMyLocation() async {
