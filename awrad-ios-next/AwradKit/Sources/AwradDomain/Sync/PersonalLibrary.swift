@@ -39,16 +39,19 @@ public struct PersonalContent: Hashable, Sendable {
     public var conflicts: [SyncConflict]
     /// Rejected changes that were undone, until the user dismisses them.
     public var notices: [SyncNotice]
+    /// Recordings that couldn't be uploaded and stay on this phone, until the user dismisses them.
+    public var audioNotices: [AudioUploadNotice]
 
     public init(
         customDhikrs: [CustomDhikr] = [], tags: [UserTag] = [], tagsByDhikr: [AwradID: [AwradID]] = [:],
-        conflicts: [SyncConflict] = [], notices: [SyncNotice] = []
+        conflicts: [SyncConflict] = [], notices: [SyncNotice] = [], audioNotices: [AudioUploadNotice] = []
     ) {
         self.customDhikrs = customDhikrs
         self.tags = tags
         self.tagsByDhikr = tagsByDhikr
         self.conflicts = conflicts
         self.notices = notices
+        self.audioNotices = audioNotices
     }
 
     public static let empty = PersonalContent()
@@ -131,11 +134,59 @@ public protocol PersonalLibrary: Sendable {
 
     func resolveConflict(_ key: SyncEntityKey, choice: ConflictChoice) async
     func dismissNotice(_ notice: SyncNotice) async
+    func dismissAudioNotice(_ notice: AudioUploadNotice) async
 
     /// Copies a picked recording (MP3 or M4A, at most 10 MB) into the profile's private area.
     func stageAudio(from source: URL) async throws(PersonalLibraryError) -> StagedAudio
-    /// The custom dhikr's recording on this device, if it has one here.
+    /// The custom dhikr's recording on this device, if it has one here: the imported file, or the
+    /// downloaded copy of its uploaded recording. Never touches the network.
     func audioURL(for dhikr: AwradID) async -> URL?
+    /// The custom dhikr's uploaded recording as a file on this device: downloaded into the profile's
+    /// files on the first play, and from there afterwards, offline too.
+    func downloadAudio(for dhikr: AwradID) async throws(AudioDownloadError) -> URL
+}
+
+/// Why an uploaded recording couldn't be fetched for playing.
+public enum AudioDownloadError: Error, Hashable, Sendable {
+    /// The dhikr has no uploaded recording (or no longer exists).
+    case noRecording
+    /// Not signed in to the profile's account, or no connection: it can't be fetched now.
+    case unavailable
+    /// The account doesn't have the recording any more.
+    case notFound
+}
+
+/// Why a recording couldn't be uploaded: one of the upload rules, or a file that kept not matching
+/// what was uploaded.
+public enum AudioUploadFailure: String, Hashable, Sendable {
+    case unsupportedAudioType = "unsupported_audio_type"
+    case invalidSize = "invalid_size"
+    case fileTooLarge = "file_too_large"
+    case storageFull = "storage_full"
+    case uploadMismatch = "upload_mismatch"
+
+    public init(_ error: AudioUploadError) {
+        switch error {
+        case .unsupportedAudioType: self = .unsupportedAudioType
+        case .invalidSize: self = .invalidSize
+        case .fileTooLarge: self = .fileTooLarge
+        case .storageFull: self = .storageFull
+        }
+    }
+}
+
+/// "Audio couldn't be uploaded": a custom dhikr's recording stays on this phone (the dhikr still
+/// syncs without it). `usage` is the account's storage for `storageFull`.
+public struct AudioUploadNotice: Hashable, Sendable {
+    public let dhikrID: AwradID
+    public let failure: AudioUploadFailure
+    public let usage: AudioUsage?
+
+    public init(dhikrID: AwradID, failure: AudioUploadFailure, usage: AudioUsage? = nil) {
+        self.dhikrID = dhikrID
+        self.failure = failure
+        self.usage = usage
+    }
 }
 
 extension PersonalLibrary {

@@ -31,10 +31,10 @@ enum Personal {
 
     /// A document the editor accepts.
     static func document(
-        arabic: String = "سبحان الله", title: String = "Glory be", hasLocalAudio: Bool = false
+        arabic: String = "سبحان الله", title: String = "Glory be", audio: CustomDhikrAudio? = nil
     ) -> CustomDhikrDocument {
         CustomDhikrDocument(
-            kind: .dhikr, arabic: arabic, title: LanguageTexts(en: title), hasLocalAudio: hasLocalAudio)
+            kind: .dhikr, arabic: arabic, title: LanguageTexts(en: title), audio: audio)
     }
 
     @MainActor

@@ -3,7 +3,7 @@ import Foundation
 extension PersonalContent {
     /// What the screens show of a profile's sync state: custom dhikrs and tags by name (never by
     /// an ID's time, root ADR-2026-10-28), personal records with tags, open conflicts.
-    public init(state: InMemorySyncState, notices: [SyncNotice] = []) {
+    public init(state: InMemorySyncState, notices: [SyncNotice] = [], audioNotices: [AudioUploadNotice] = []) {
         var dhikrs: [CustomDhikr] = []
         var tags: [UserTag] = []
         var tagsByDhikr: [AwradID: [AwradID]] = [:]
@@ -20,7 +20,7 @@ extension PersonalContent {
             customDhikrs: dhikrs.sorted { ($0.sortName, $0.id) < ($1.sortName, $1.id) },
             tags: tags.sorted { ($0.name.localizedLowercase, $0.id) < ($1.name.localizedLowercase, $1.id) },
             tagsByDhikr: tagsByDhikr, conflicts: state.conflicts.keys.sorted().compactMap { state.conflicts[$0] },
-            notices: notices)
+            notices: notices, audioNotices: audioNotices)
     }
 }
 

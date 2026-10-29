@@ -94,11 +94,26 @@ extension APIOperation {
         id: "list_sync_changes", method: .get, path: "/api/v1/sync/changes", credential: .bearer,
         sendsAcceptLanguage: false, queryParameters: ["after", "limit"], sendsAccountHeader: true)
 
+    // Private audio (slice 3c). All four name the account; the bytes go to and from R2 directly.
+    static let createAudioUpload = APIOperation(
+        id: "create_audio_upload", method: .post, path: "/api/v1/audio_uploads", credential: .bearer,
+        sendsAcceptLanguage: false, sendsAccountHeader: true)
+    static let completeAudioUpload = APIOperation(
+        id: "complete_audio_upload", method: .post, path: "/api/v1/audio_uploads/{asset_id}/complete",
+        credential: .bearer, sendsAcceptLanguage: false, sendsAccountHeader: true)
+    static let getAudioDownload = APIOperation(
+        id: "get_audio_download", method: .get, path: "/api/v1/audio_assets/{asset_id}/download",
+        credential: .bearer, sendsAcceptLanguage: false, sendsAccountHeader: true)
+    static let getAudioUsage = APIOperation(
+        id: "get_audio_usage", method: .get, path: "/api/v1/audio_assets/usage", credential: .bearer,
+        sendsAcceptLanguage: false, sendsAccountHeader: true)
+
     /// Every operation the app uses. The contract test fails if one has no example in the spec.
     public static let used: [APIOperation] = [
         registerAccount, verifyAccountEmail, resendVerificationCode, requestPasswordReset, resetPassword,
         getCurrentAccount, createDeviceSession, refreshDeviceSession, signOutDeviceSession,
         listAccountSessions, revokeAccountSession, revokeOtherAccountSessions, changePassword,
         requestEmailChange, confirmEmailChange, deleteAccount, postSyncCommands, listSyncChanges,
+        createAudioUpload, completeAudioUpload, getAudioDownload, getAudioUsage,
     ]
 }

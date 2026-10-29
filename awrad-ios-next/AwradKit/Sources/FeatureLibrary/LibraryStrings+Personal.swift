@@ -43,8 +43,53 @@ extension Strings {
             text("library.notice.reason.not_found", "It no longer exists.")
         case .documentInvalid, .documentTooLarge:
             text("library.notice.reason.invalid", "It wasn't valid.")
+        case .audioNotFound, .audioMismatch:
+            text(
+                "library.notice.reason.audio",
+                "Your change was kept, but its recording wasn't in your account. If the recording is still on this phone, it uploads again."
+            )
         case .deleteNotAllowed, .commandIDReused, .other:
             text("library.notice.reason.other", "It couldn't be saved.")
+        }
+    }
+
+    // MARK: - Recordings (slice 3c)
+
+    /// The dialog's title when a change was kept but its recording wasn't in the account.
+    static let recordingNotInAccount = text("library.notice.recording_not_in_account", "Recording not in your account")
+    /// The dialog's title when a recording couldn't be uploaded and stays on the phone.
+    static let audioNotUploaded = text("library.notice.audio_not_uploaded", "Audio couldn't be uploaded")
+
+    /// Why the recording couldn't be uploaded. Storage amounts are decimal megabytes, as the limits are.
+    static func audioNotUploadedReason(_ notice: AudioUploadNotice, locale: Locale) -> LocalizedStringResource {
+        switch notice.failure {
+        case .storageFull:
+            guard let usage = notice.usage else {
+                return text(
+                    "library.notice.audio.storage_full",
+                    "Your account's audio storage is full. The recording stays on this phone.")
+            }
+            let used = AudioUsage.megabytes(usage.usedBytes, locale: locale)
+            let limit = AudioUsage.megabytes(usage.limitBytes, locale: locale)
+            return LocalizedStringResource(
+                "library.notice.audio.storage_full_usage",
+                defaultValue:
+                    "Your account's audio storage is full (\(used) of \(limit)). The recording stays on this phone.",
+                bundle: bundle)
+        case .fileTooLarge:
+            return LocalizedStringResource(
+                "library.notice.audio.too_large",
+                defaultValue: "The recording is larger than \(10) MB. It stays on this phone.", bundle: bundle)
+        case .unsupportedAudioType:
+            return text(
+                "library.notice.audio.unsupported",
+                "Only MP3 and M4A recordings can be uploaded. It stays on this phone.")
+        case .invalidSize:
+            return text("library.notice.audio.empty", "The recording is empty. It stays on this phone.")
+        case .uploadMismatch:
+            return text(
+                "library.notice.audio.mismatch", "The recording changed while it was uploading. It stays on this phone."
+            )
         }
     }
 

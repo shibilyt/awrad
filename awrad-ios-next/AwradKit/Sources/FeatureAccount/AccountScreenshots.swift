@@ -28,7 +28,8 @@
             case .settings:
                 state.feedback = .passwordChanged
                 state.profiles = PreviewProfiles.state(
-                    syncStatus: .waitingToRetry(retryAt: .now.addingTimeInterval(120)), unsent: 3)
+                    syncStatus: .waitingToRetry(retryAt: .now.addingTimeInterval(120)), unsent: 3,
+                    audio: PreviewProfiles.audioUsage)
             case .devices:
                 state.path = [.devices]
                 state.sessions = .loaded(PreviewSessions.all)

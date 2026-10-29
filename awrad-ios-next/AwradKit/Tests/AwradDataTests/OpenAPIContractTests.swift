@@ -30,6 +30,10 @@ struct OpenAPIContractTests {
         "delete_account": (WireType(CurrentPasswordBody.self), nil),
         "post_sync_commands": (WireType(SyncCommandBatchWire.self), WireType(SyncReceiptBatchWire.self)),
         "list_sync_changes": (nil, WireType(SyncChangesPageWire.self)),
+        "create_audio_upload": (WireType(AudioUploadRequestWire.self), WireType(AudioCreateResponseWire.self)),
+        "complete_audio_upload": (nil, WireType(AudioAssetResultWire.self)),
+        "get_audio_download": (nil, WireType(AudioDownloadWire.self)),
+        "get_audio_usage": (nil, WireType(AudioUsageWire.self)),
     ]
 
     @Test(arguments: APIOperation.used)
@@ -99,7 +103,7 @@ struct OpenAPIContractTests {
     /// The mobile operations in the spec are exactly the ones the app implements.
     @Test func theAppCoversEveryMobileOperation() throws {
         let spec = try Spec.load()
-        let mobile = spec.operationIDs(taggedAny: ["accounts", "device_sessions", "account_settings", "sync"])
+        let mobile = spec.operationIDs(taggedAny: ["accounts", "device_sessions", "account_settings", "sync", "audio"])
         #expect(Set(APIOperation.used.map(\.id)) == mobile)
         #expect(Set(Self.wireTypes.keys) == mobile)
     }

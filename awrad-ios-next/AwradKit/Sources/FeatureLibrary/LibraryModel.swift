@@ -61,6 +61,7 @@ public final class LibraryModel {
         /// The library's content changed (`observePersonalLibrary` sends it).
         case personalContentChanged(PersonalContent)
         case dismissNotice(SyncNotice)
+        case dismissAudioNotice(AudioUploadNotice)
         case resolveConflict(SyncEntityKey, ConflictChoice)
     }
 
@@ -111,7 +112,7 @@ public final class LibraryModel {
             state.tagFilter.formIntersection(personal.tags.map(\.id))
             index = DhikrSearchIndex(dhikrs: allDhikrs, language: content.language)
             refresh()
-        case .dismissNotice, .resolveConflict:
+        case .dismissNotice, .dismissAudioNotice, .resolveConflict:
             return false
         }
         return true
@@ -123,6 +124,8 @@ public final class LibraryModel {
         switch action {
         case .dismissNotice(let notice):
             await library.dismissNotice(notice)
+        case .dismissAudioNotice(let notice):
+            await library.dismissAudioNotice(notice)
         case .resolveConflict(let key, let choice):
             await library.resolveConflict(key, choice: choice)
         default:

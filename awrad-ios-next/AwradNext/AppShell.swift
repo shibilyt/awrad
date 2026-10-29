@@ -165,12 +165,14 @@ struct HomeView: View {
         }
     }
 
-    /// `-AwradSampleData YES` fills an empty active profile with sample custom dhikrs, tags and a
-    /// conflict before the app starts (debug builds only, for screenshots).
+    /// `-AwradSampleData YES` fills an empty active profile with sample custom dhikrs (one with a
+    /// recording in the account), tags and a conflict before the app starts; with
+    /// `-AwradSampleAudioNotice YES`, also a recording that couldn't be uploaded (debug builds only,
+    /// for screenshots).
     enum SampleLaunchState {
         static func seedIfAsked(_ profiles: LocalProfileStore, defaults: UserDefaults = .standard) async {
             guard defaults.bool(forKey: "AwradSampleData") else { return }
-            await profiles.seedSample()
+            await profiles.seedSample(audioNotice: defaults.bool(forKey: "AwradSampleAudioNotice"))
         }
     }
 #endif

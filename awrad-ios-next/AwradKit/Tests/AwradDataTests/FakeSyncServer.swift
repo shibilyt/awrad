@@ -29,6 +29,8 @@ actor FakeSyncServer: SyncServer {
     var rejections: [String] = []
     /// Applies the next batch, then fails as if its response were lost.
     var losesNextResponse = false
+    /// The account's ready audio assets, by ID, as `FakeAudioServer` confirms them.
+    var readyAssets: [String: AudioAssetWire] = [:]
     private(set) var sentBatches: [[SyncCommandWire]] = []
     private(set) var feedRequests: [Int] = []
 
@@ -139,6 +141,9 @@ actor FakeSyncServer: SyncServer {
             return .rejected(commandID: id, code: "tag_not_found", fields: [], current: current(key))
         }
         let document = type == .dhikrPersonal ? rewritten(command.document ?? .null) : command.document ?? .null
+        if let code = audioRejection(command) {
+            return .rejected(commandID: id, code: code, fields: [], current: current(key))
+        }
         if !rejections.isEmpty {
             return .rejected(commandID: id, code: rejections.removeFirst(), fields: [], current: current(key))
         }
@@ -222,6 +227,24 @@ actor FakeSyncServer: SyncServer {
             }
         }
     }
+
+    /// A custom dhikr put naming uploaded audio: `audio_not_found` unless it's a ready asset of the
+    /// account, `audio_mismatch` unless its size and type are the asset's (slice 3c).
+    private func audioRejection(_ command: SyncCommandWire) -> String? {
+        guard command.entityType == SyncEntityType.customDhikr.rawValue, command.op == "put",
+            let audio = command.document?["audio"], let assetID = audio["asset_id"]?.stringValue
+        else { return nil }
+        guard let asset = readyAssets[assetID] else { return "audio_not_found" }
+        let matches =
+            audio["byte_size"]?.intValue == asset.byteSize && audio["content_type"]?.stringValue == asset.contentType
+        return matches ? nil : "audio_mismatch"
+    }
+
+    /// The audio server confirmed an upload; a put may now name it.
+    func addReadyAsset(_ asset: AudioAssetWire) { readyAssets[asset.assetID] = asset }
+
+    /// The cleanup job removed an asset.
+    func removeReadyAsset(_ assetID: String) { readyAssets[assetID] = nil }
 
     private func current(_ key: SyncEntityKey) -> SyncCurrentWire? {
         entities[key].map { SyncCurrentWire(version: $0.version, state: $0.state.rawValue, document: $0.document) }

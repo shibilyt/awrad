@@ -128,7 +128,22 @@ struct SwiftDataSyncState: SyncLocalState {
     func appendCommand(_ command: OutboxCommand) {
         var last = FetchDescriptor<OutboxCommandRecord>(sortBy: [SortDescriptor(\.position, order: .reverse)])
         last.fetchLimit = 1
-        let position = ((try? context.fetch(last).first?.position) ?? 0) + 1
+        insert(command, position: ((try? context.fetch(last).first?.position) ?? 0) + 1)
+    }
+
+    /// Takes the position of the command now at `index`, and moves it and every later one back one.
+    func insertCommand(_ command: OutboxCommand, at index: Int) {
+        let records = commandRecords()
+        guard index < records.count else {
+            appendCommand(command)
+            return
+        }
+        let position = records[max(index, 0)].position
+        for record in records where record.position >= position { record.position += 1 }
+        insert(command, position: position)
+    }
+
+    private func insert(_ command: OutboxCommand, position: Int) {
         context.insert(
             OutboxCommandRecord(
                 commandID: command.commandID.value, position: position, entityType: command.key.type.rawValue,

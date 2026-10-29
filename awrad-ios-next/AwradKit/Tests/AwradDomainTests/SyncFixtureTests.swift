@@ -40,19 +40,12 @@ struct SyncFixtureTests {
     @Test(arguments: try SyncFixtures.applyChanges())
     func applyChanges(_ fixture: FixtureCase<ApplyChangesGiven, ApplyChangesExpect>) throws {
         var state = try fixture.given.local.state()
-        var notices: [SyncNotice] = []
-        switch fixture.given.step {
-        case .page(let page):
-            SyncRules.apply(page, to: &state)
-        case .receipts(let receipts):
-            notices = SyncRules.apply(receipts, to: &state)
-        case .resolve(let key, let choice, let commandID):
-            SyncRules.resolve(key, choice: choice, commandID: commandID ?? .random(), in: &state)
-        }
-        let result = ApplyChangesExpect(local: LocalShape(state), notices: notices.map(NoticeShape.init))
+        let (notices, uploads) = try fixture.given.run(on: &state)
+        let result = ApplyChangesExpect(local: LocalShape(state), notices: notices, uploadsQueued: uploads)
         #expect(result.local.entities == fixture.expect.local.entities, "\(fixture.id): entities")
         #expect(result.local.outbox == fixture.expect.local.outbox, "\(fixture.id): outbox")
         #expect(result.local.conflicts == fixture.expect.local.conflicts, "\(fixture.id): conflicts")
+        #expect(result.uploadsQueued == fixture.expect.uploadsQueued, "\(fixture.id): uploads_queued")
         #expect(result == fixture.expect, "\(fixture.id): \(fixture.summary)")
     }
 

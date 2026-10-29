@@ -6,7 +6,8 @@ import SwiftData
 extension LocalProfileStore: LocalProfiles {
     public func state() -> ProfilesState {
         ProfilesState(
-            registry: registry, syncStatus: syncStatus, unsentCount: unsentCount, pendingPrompt: pendingPrompt)
+            registry: registry, syncStatus: syncStatus, unsentCount: unsentCount, pendingPrompt: pendingPrompt,
+            audioUsage: registry.activeProfileMaySync ? audioUsage : nil)
     }
 
     public nonisolated func updates() -> AsyncStream<ProfilesState> {

@@ -14,15 +14,20 @@ public actor FakePersonalLibrary: PersonalLibrary {
         case setTags([AwradID], AwradID)
         case resolve(SyncEntityKey, ConflictChoice)
         case dismiss(SyncNotice)
+        case dismissAudio(AudioUploadNotice)
         case stage(URL)
+        case download(AwradID)
     }
 
     public private(set) var state: InMemorySyncState
     public private(set) var calls: [Call] = []
     public private(set) var notices: [SyncNotice]
+    public private(set) var audioNotices: [AudioUploadNotice] = []
     public var queues: Bool
     private var failure: PersonalLibraryError?
     private var audio: [AwradID: URL] = [:]
+    private var downloads: [AwradID: URL] = [:]
+    private var downloadFailure: AudioDownloadError?
     private var continuations: [Int: AsyncStream<PersonalContent>.Continuation] = [:]
     private var nextSubscriber = 0
 
@@ -63,7 +68,9 @@ public actor FakePersonalLibrary: PersonalLibrary {
 
     // MARK: - PersonalLibrary
 
-    public func content() -> PersonalContent { PersonalContent(state: state, notices: notices) }
+    public func content() -> PersonalContent {
+        PersonalContent(state: state, notices: notices, audioNotices: audioNotices)
+    }
 
     public nonisolated func updates() -> AsyncStream<PersonalContent> {
         let (stream, continuation) = AsyncStream.makeStream(of: PersonalContent.self)
@@ -81,13 +88,16 @@ public actor FakePersonalLibrary: PersonalLibrary {
         let id = id ?? .random()
         var document = document
         switch change {
-        case .unchanged: break
+        case .unchanged:
+            if case .customDhikr(let old)? = state.document(SyncEntityKey(.customDhikr, id)) {
+                document.audio = old.audio
+            }
         case .replace(let staged):
             audio[id] = staged.url
-            document.hasLocalAudio = true
+            document.audio = .localOnly
         case .remove:
             audio[id] = nil
-            document.hasLocalAudio = false
+            document.audio = nil
         }
         save(.put(.customDhikr(document), id: id))
         return id
@@ -147,6 +157,33 @@ public actor FakePersonalLibrary: PersonalLibrary {
     }
 
     public func audioURL(for dhikr: AwradID) -> URL? { audio[dhikr] }
+
+    public func dismissAudioNotice(_ notice: AudioUploadNotice) {
+        calls.append(.dismissAudio(notice))
+        audioNotices.removeAll { $0 == notice }
+        publish()
+    }
+
+    /// Answers with the file `downloads` holds for the dhikr (then also its local copy), or
+    /// `downloadFailure`.
+    public func downloadAudio(for dhikr: AwradID) throws(AudioDownloadError) -> URL {
+        calls.append(.download(dhikr))
+        if let downloadFailure { throw downloadFailure }
+        guard let url = downloads[dhikr] else { throw .noRecording }
+        audio[dhikr] = url
+        return url
+    }
+
+    public func addAudioNotice(_ notice: AudioUploadNotice) {
+        audioNotices.append(notice)
+        publish()
+    }
+
+    /// The file an uploaded recording downloads to, or the failure every download gets.
+    public func setDownload(_ url: URL?, for dhikr: AwradID, failure: AudioDownloadError? = nil) {
+        downloads[dhikr] = url
+        downloadFailure = failure
+    }
 
     // MARK: - Helpers
 
