@@ -11,6 +11,7 @@ import app.awrad.core.domain.places.CitySource
 import app.awrad.core.domain.places.FoundPlace
 import app.awrad.core.domain.places.PlaceSearch
 import app.awrad.core.domain.places.PlaceSearchResult
+import app.awrad.core.domain.places.withoutPlacesNear
 import app.awrad.core.domain.practice.DeviceContextStore
 import app.awrad.core.domain.practice.DeviceLocation
 import app.awrad.core.domain.practice.LocationSource
@@ -107,7 +108,8 @@ internal class LocationSearchViewModel(
             if (query.trim().length < PLATFORM_MIN_QUERY) return@launch
             delay(PLATFORM_DEBOUNCE_MS)
             val more = (places.search(query) as? PlaceSearchResult.Found)?.places.orEmpty()
-            mutableState.update { it.copy(places = more) }
+            // A platform result within 10 km of a city shown above is the same place: leave it out.
+            mutableState.update { it.copy(places = more.withoutPlacesNear(found)) }
         }
     }
 
