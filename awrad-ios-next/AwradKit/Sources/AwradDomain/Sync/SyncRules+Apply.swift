@@ -50,7 +50,7 @@ extension SyncRules {
     /// | `conflict` | Keeps the local document, drops later unsent commands for the entity, opens a conflict |
     /// | `merged` | Moves every local use of the tag ID to the surviving tag |
     /// | `gone` | Removes the entity |
-    /// | `rejected` | Restores the server's copy, or removes the entity when there is none |
+    /// | `rejected` | Restores the server's copy, or removes the entity when there is none (not the practice policy) |
     /// | `rejected` `audio_not_found`/`audio_mismatch` of a custom dhikr put | Keeps the edit (`keepAfterAudioRejection`) |
     ///
     /// - Parameters:
@@ -173,9 +173,19 @@ extension SyncRules {
 
     /// Puts the server's copy back, or removes the entity when the server has none (or deleted it).
     /// Later unsent commands for the entity are dropped: they were made on the undone version.
+    ///
+    /// The practice policy is never removed: with no server copy the phone keeps its document, its known
+    /// version goes back to 0 and its base to the default policy (practice-settings/v1 "Syncing the policy").
     private static func restore(_ key: SyncEntityKey, to copy: ServerCopy?, in state: inout some SyncLocalState) {
         guard let copy, copy.state == .active, let document = copy.document else {
-            remove(key, in: &state)
+            if key.type == .practicePolicy {
+                dropUnsentCommands(for: key, in: &state)
+                state.setConflict(nil, for: key)
+                state.setKnownVersion(nil, for: key)
+                state.setBaseDocument(nil, for: key)
+            } else {
+                remove(key, in: &state)
+            }
             return
         }
         dropUnsentCommands(for: key, in: &state)

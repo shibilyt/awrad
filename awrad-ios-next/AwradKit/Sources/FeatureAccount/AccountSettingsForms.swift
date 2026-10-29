@@ -27,8 +27,7 @@ struct AccountOverview: View {
                 SyncCard(profiles: profiles)
                     .awradExpandingContent()
             }
-            // No icon yet: the shared icon set has none for it.
-            SettingsRow(icon: nil, title: Strings.practiceSettingsRow) { send(.practiceSettingsTapped) }
+            SettingsRow(icon: .practice, title: Strings.practiceSettingsRow) { send(.practiceSettingsTapped) }
                 .padding(.vertical, AwradSpacing.xs)
                 .awradCard()
             // Rows in a card are separated by spacing, not divider lines.
