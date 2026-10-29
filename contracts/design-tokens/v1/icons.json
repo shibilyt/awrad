@@ -132,6 +132,16 @@
       "file": "search.svg",
       "use": "Search field",
       "mirrorInRtl": false
+    },
+    "practice": {
+      "file": "tune.svg",
+      "use": "Settings: Practice settings",
+      "mirrorInRtl": false
+    },
+    "location": {
+      "file": "my_location.svg",
+      "use": "Practice settings: Use my location",
+      "mirrorInRtl": false
     }
   }
 }
