@@ -5,11 +5,14 @@ import app.awrad.core.database.ConflictEntity
 import app.awrad.core.database.CustomDhikrEntity
 import app.awrad.core.database.DhikrPersonalEntity
 import app.awrad.core.database.OutboxEntity
+import app.awrad.core.database.PracticePolicyEntity
 import app.awrad.core.database.SyncDao
 import app.awrad.core.database.SyncMetaEntity
 import app.awrad.core.database.UserTagEntity
 import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.personal.uploadedAssetOf
+import app.awrad.core.domain.practice.PracticePolicy
+import app.awrad.core.domain.practice.PracticePolicyJson
 import app.awrad.core.domain.sync.EntityKey
 import app.awrad.core.domain.sync.EntityState
 import app.awrad.core.domain.sync.EntityType
@@ -54,12 +57,14 @@ internal class RoomSyncStore(
         EntityType.CUSTOM_DHIKR -> dao.customDhikr(key.id.value)?.toLocal()
         EntityType.USER_TAG -> dao.userTag(key.id.value)?.toLocal()
         EntityType.DHIKR_PERSONAL -> dao.personal(key.id.value)?.toLocal()
+        EntityType.PRACTICE_POLICY -> dao.practicePolicy()?.takeIf { it.entityId == key.id.value }?.toLocal()
     }
 
     override fun entities(type: EntityType): List<LocalEntity> = when (type) {
         EntityType.CUSTOM_DHIKR -> dao.customDhikrs().map { it.toLocal() }
         EntityType.USER_TAG -> dao.userTags().map { it.toLocal() }
         EntityType.DHIKR_PERSONAL -> dao.personals().map { it.toLocal() }
+        EntityType.PRACTICE_POLICY -> listOfNotNull(dao.practicePolicy()?.toLocal())
     }.sortedBy { it.key }
 
     override fun putEntity(entity: LocalEntity) {
@@ -94,6 +99,19 @@ internal class RoomSyncStore(
             EntityType.DHIKR_PERSONAL -> dao.upsertPersonal(
                 DhikrPersonalEntity(id, entity.knownVersion, entity.document.getValue("tag_ids").jsonArray.toString()),
             )
+            EntityType.PRACTICE_POLICY -> {
+                val existing = dao.practicePolicy()
+                dao.upsertPracticePolicy(
+                    PracticePolicyEntity(
+                        entityId = id,
+                        knownVersion = entity.knownVersion,
+                        document = entity.document.toString(),
+                        baseDocument = entity.baseDocument?.toString(),
+                        chosen = existing?.chosen ?: false,
+                        seedPending = existing?.seedPending ?: false,
+                    ),
+                )
+            }
         }
     }
 
@@ -107,6 +125,10 @@ internal class RoomSyncStore(
             }
             EntityType.USER_TAG -> dao.deleteUserTag(id)
             EntityType.DHIKR_PERSONAL -> dao.deletePersonal(id)
+            // A profile always has a policy: the server no longer knowing it only resets its sync state.
+            EntityType.PRACTICE_POLICY -> dao.practicePolicy()?.takeIf { it.entityId == id }?.let {
+                dao.upsertPracticePolicy(it.copy(knownVersion = 0, baseDocument = null))
+            }
         }
     }
 
@@ -209,6 +231,16 @@ internal fun DhikrPersonalEntity.toLocal() = LocalEntity(
     knownVersion,
     JsonObject(mapOf("tag_ids" to Json.parseToJsonElement(tagIds) as JsonArray)),
 )
+
+/** The policy as the account's entity, or null in the anonymous profile. Without a known base, the default. */
+internal fun PracticePolicyEntity.toLocal(): LocalEntity? = entityId?.let { id ->
+    LocalEntity(
+        key = EntityKey(EntityType.PRACTICE_POLICY, AwradId(id)),
+        knownVersion = knownVersion,
+        document = parseDocument(document),
+        baseDocument = baseDocument?.let(::parseDocument) ?: PracticePolicyJson.encode(PracticePolicy.DEFAULT),
+    )
+}
 
 internal fun OutboxEntity.toCommand() = OutboxCommand(
     commandId = AwradId(commandId),

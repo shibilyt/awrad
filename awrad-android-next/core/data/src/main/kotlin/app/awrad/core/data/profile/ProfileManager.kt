@@ -136,6 +136,11 @@ internal class ProfileManager(
     /** Carries out [event] with [choice]: the registry first, then the active database, then the data. */
     private suspend fun apply(current: ProfileRegistry, event: ProfileEvent, choice: ProfileChoice?) {
         val outcome = ProfileSwitch.apply(current, event, choice, newId())
+        // A first sign-in from the anonymous profile into a new account profile: its practice policy follows.
+        val firstSignIn = (event as? ProfileEvent.SignIn)
+            ?.takeIf { current.active.isAnonymous && current.profileOf(it.accountId) == null }
+        // Read before the switch: on Erase the anonymous profile leaves the registry.
+        val anonymousPolicy = firstSignIn?.let { transfers.practicePolicyOf(current.activeProfileId) }
         signedIn = outcome.registry.signedInAccountId
         saveRegistry(outcome)
         outcome.merge?.let { transfers.mergeAnonymous(from = it.from, into = it.into) }
@@ -146,6 +151,9 @@ internal class ProfileManager(
             databases.refresh()
         }
         outcome.queueAll?.let { transfers.queueAll(it) }
+        firstSignIn?.let {
+            transfers.startPolicySeed(outcome.registry.activeProfileId, anonymousPolicy, it.accountId)
+        }
         outcome.erased.forEach { databases.erase(it) }
         if (outcome.sync != null) requestSync()
     }

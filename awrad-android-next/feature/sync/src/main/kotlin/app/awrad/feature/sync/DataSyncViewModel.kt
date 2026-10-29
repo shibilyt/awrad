@@ -63,6 +63,8 @@ internal class DataSyncViewModel @Inject constructor(
                         EntityType.CUSTOM_DHIKR -> ConflictName.Dhikr(dhikrTitle)
                         EntityType.DHIKR_PERSONAL -> ConflictName.Tags(dhikrTitle)
                         EntityType.USER_TAG -> ConflictName.Tag(allTags.firstOrNull { it.id == key.id }?.name)
+                        // A practice policy merges instead of opening a conflict; this is only for completeness.
+                        EntityType.PRACTICE_POLICY -> ConflictName.PracticeSettings
                     }
                 }
                 Loaded(status, list, conflicts.map { NamedConflict(it, names(it.key)) })
@@ -131,6 +133,8 @@ internal sealed interface ConflictName {
     data class Tags(val dhikrTitle: String?) : ConflictName
 
     data class Tag(val name: String?) : ConflictName
+
+    data object PracticeSettings : ConflictName
 }
 
 internal data class NamedConflict(val conflict: OpenConflict, val name: ConflictName)

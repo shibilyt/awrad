@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="practice_title">ആരാധനാ ക്രമീകരണങ്ങൾ</string>
+
+    <string name="practice_section_today">ഇന്ന്</string>
+    <string name="practice_hijri_date">%1$d %2$s %3$d</string>
+    <string name="practice_hijri_outside">ഇന്നേക്ക് ഹിജ്റ തീയതിയില്ല</string>
+    <string name="practice_maghrib_at">ഇന്ന് മഗ്‌രിബ് %1$s-ന്</string>
+    <string name="practice_maghrib_no_location">ഇന്നത്തെ മഗ്‌രിബ് കാണാൻ ഒരു സ്ഥലം തിരഞ്ഞെടുക്കുക.</string>
+    <string name="practice_maghrib_no_sunset">ഇന്ന് ഇവിടെ സൂര്യൻ അസ്തമിക്കുന്നില്ല, അതിനാൽ മഗ്‌രിബില്ല.</string>
+
+    <string name="practice_section_day_reset">പുതിയ ദിവസം തുടങ്ങുന്നത്</string>
+    <string name="practice_day_reset_midnight">അർധരാത്രിയിൽ</string>
+    <string name="practice_day_reset_maghrib">മഗ്‌രിബിൽ</string>
+    <string name="practice_maghrib_hint_no_location">സ്ഥലമില്ലാതെ മഗ്‌രിബ് അറിയാനാവില്ല, അതിനാൽ ദിവസം അർധരാത്രിയിൽ തുടങ്ങുന്നു. താഴെ ഒരു സ്ഥലം തിരഞ്ഞെടുക്കുക.</string>
+
+    <string name="practice_section_location">സ്ഥലം</string>
+    <string name="practice_location_none">സ്ഥലം തിരഞ്ഞെടുത്തിട്ടില്ല</string>
+    <string name="practice_location_gps">നിങ്ങളുടെ ഇപ്പോഴത്തെ സ്ഥലം</string>
+    <string name="practice_location_note">മഗ്‌രിബ് കണക്കാക്കാൻ ഈ ഫോണിൽ മാത്രം ഉപയോഗിക്കുന്നു. ഒരിടത്തേക്കും അയയ്ക്കില്ല.</string>
+    <string name="practice_use_my_location">എന്റെ സ്ഥലം ഉപയോഗിക്കുക</string>
+    <string name="practice_search_place">ഒരു സ്ഥലം തിരയുക</string>
+    <string name="practice_clear_location">സ്ഥലം നീക്കുക</string>
+    <string name="practice_location_denied">അനുമതിയില്ലാതെ അവ്റാദിന് നിങ്ങളുടെ സ്ഥലം അറിയാനാവില്ല. പകരം നിങ്ങളുടെ നഗരം തിരയുക.</string>
+    <string name="practice_location_unavailable">നിങ്ങളുടെ സ്ഥലം ഇപ്പോൾ ലഭ്യമല്ല. ലൊക്കേഷൻ ഓണാക്കുക, അല്ലെങ്കിൽ നിങ്ങളുടെ നഗരം തിരയുക.</string>
+
+    <string name="practice_section_method">നമസ്കാര സമയങ്ങൾ</string>
+    <string name="practice_method_label">കണക്കുകൂട്ടൽ രീതി</string>
+    <string name="practice_method_note">ചില രീതികളിൽ മഗ്‌രിബ് സൂര്യാസ്തമയത്തിന് ഏതാനും മിനിറ്റ് കഴിഞ്ഞാണ്.</string>
+    <string name="practice_method_karachi">യൂണിവേഴ്സിറ്റി ഓഫ് ഇസ്‌ലാമിക് സയൻസസ്, കറാച്ചി</string>
+    <string name="practice_method_north_america">ഇസ്‌ലാമിക് സൊസൈറ്റി ഓഫ് നോർത്ത് അമേരിക്ക</string>
+    <string name="practice_method_muslim_world_league">മുസ്‌ലിം വേൾഡ് ലീഗ്</string>
+    <string name="practice_method_egyptian">ഈജിപ്ഷ്യൻ ജനറൽ അതോറിറ്റി ഓഫ് സർവേ</string>
+    <string name="practice_method_umm_al_qura">ഉമ്മുൽ ഖുറാ യൂണിവേഴ്സിറ്റി, മക്ക</string>
+    <string name="practice_method_moonsighting_committee">മൂൺസൈറ്റിംഗ് കമ്മിറ്റി</string>
+    <string name="practice_method_dubai">ദുബായ്</string>
+    <string name="practice_method_kuwait">കുവൈത്ത്</string>
+    <string name="practice_method_qatar">ഖത്തർ</string>
+    <string name="practice_method_singapore">സിംഗപ്പൂർ</string>
+
+    <string name="practice_section_madhab">അസ്ർ സമയം</string>
+    <string name="practice_madhab_shafi">സാധാരണ (ശാഫിഈ, മാലികി, ഹമ്പലി)</string>
+    <string name="practice_madhab_hanafi">ഹനഫി</string>
+    <string name="practice_madhab_note">ഇത് അസ്‌റിനെ മാത്രമേ ബാധിക്കൂ.</string>
+
+    <string name="practice_section_week_start">ആഴ്ച തുടങ്ങുന്നത്</string>
+    <string name="practice_week_saturday">ശനി</string>
+    <string name="practice_week_sunday">ഞായർ</string>
+    <string name="practice_week_monday">തിങ്കൾ</string>
+
+    <string name="practice_section_hijri">ഹിജ്റ കലണ്ടർ</string>
+    <string name="practice_hijri_note">നിങ്ങളുടെ പ്രദേശത്ത് മാസപ്പിറവി മറ്റൊരു ദിവസമാണ് കണ്ടതെങ്കിൽ, മാസത്തിന്റെ തുടക്കം അതിനനുസരിച്ച് മാറ്റുക.</string>
+    <string name="practice_month_year">%1$s %2$d</string>
+    <string name="practice_adjust_month">%1$s ക്രമീകരിക്കുക</string>
+    <string name="practice_adjust_title">%1$s തുടങ്ങുന്നത് എപ്പോൾ</string>
+    <string name="practice_adjust_note">ഓരോ മാസവും 29 അല്ലെങ്കിൽ 30 ദിവസമാണ്, അതിനാൽ ഈ തുടക്കങ്ങൾ മാത്രമേ സാധ്യമാകൂ.</string>
+    <string name="practice_offset_minus_2">കലണ്ടറിനേക്കാൾ 2 ദിവസം മുമ്പ്</string>
+    <string name="practice_offset_minus_1">കലണ്ടറിനേക്കാൾ 1 ദിവസം മുമ്പ്</string>
+    <string name="practice_offset_zero">കലണ്ടറിലുള്ളതുപോലെ</string>
+    <string name="practice_offset_plus_1">കലണ്ടറിനേക്കാൾ 1 ദിവസം കഴിഞ്ഞ്</string>
+    <string name="practice_offset_plus_2">കലണ്ടറിനേക്കാൾ 2 ദിവസം കഴിഞ്ഞ്</string>
+    <string name="practice_corrections_title">നിങ്ങളുടെ തിരുത്തലുകൾ</string>
+    <string name="practice_correction_line">%1$s: %2$s</string>
+    <string name="practice_correction_remove">നീക്കുക</string>
+
+    <string name="practice_search_title">ഒരു സ്ഥലം തിരഞ്ഞെടുക്കുക</string>
+    <string name="practice_search_placeholder">ഒരു നഗരം തിരയുക</string>
+    <string name="practice_search_cities">നഗരങ്ങൾ</string>
+    <string name="practice_search_more">കൂടുതൽ സ്ഥലങ്ങൾ</string>
+    <string name="practice_search_empty">“%1$s” എന്നതിന് യോജിക്കുന്ന സ്ഥലമില്ല.</string>
+    <string name="practice_list_separator">, </string>
+
+    <string-array name="practice_hijri_months">
+        <item>മുഹർറം</item>
+        <item>സഫർ</item>
+        <item>റബീഉൽ അവ്വൽ</item>
+        <item>റബീഉൽ ആഖിർ</item>
+        <item>ജുമാദൽ ഊലാ</item>
+        <item>ജുമാദൽ ആഖിറ</item>
+        <item>റജബ്</item>
+        <item>ശഅബാൻ</item>
+        <item>റമദാൻ</item>
+        <item>ശവ്വാൽ</item>
+        <item>ദുൽ ഖഅദ</item>
+        <item>ദുൽ ഹിജ്ജ</item>
+    </string-array>
+</resources>

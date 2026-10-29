@@ -2,6 +2,10 @@ package app.awrad.core.domain.sync
 
 import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.personal.PersonalDocument
+import app.awrad.core.domain.practice.PracticePolicy
+import app.awrad.core.domain.practice.PracticePolicyJson
+import app.awrad.core.domain.practice.PracticePolicyMerge
+import kotlinx.serialization.json.JsonObject
 
 /** The user's answer to a conflict ("Changed on another device"). */
 public enum class ConflictChoice(public val wire: String) {
@@ -19,6 +23,10 @@ public enum class ConflictChoice(public val wire: String) {
  *
  * Removing an entity cascades the way the server does: a custom dhikr takes its `dhikr_personal` with it, and a
  * tag leaves every local `dhikr_personal` document and unsent command.
+ *
+ * A `practice_policy` keeps `base_document`, the server copy it was edited from: a page with nothing queued for it
+ * and an applied put set it to the server's document, and a conflict on it opens no conflict but merges by setting
+ * ([PracticePolicyMerge]).
  */
 public object ApplyChanges {
 
@@ -45,7 +53,7 @@ public object ApplyChanges {
                 else -> {
                     val document = checkNotNull(change.document) { "An active change of $key has no document" }
                     if (local == null || change.version >= local.knownVersion) {
-                        store.putEntity(LocalEntity(key, change.version, document))
+                        store.putEntity(LocalEntity(key, change.version, document, baseOf(key, document)))
                     }
                 }
             }
@@ -85,41 +93,76 @@ public object ApplyChanges {
                 AudioRejections.keepEdit(store, command.key, outcome.current, newCommandId)
                 SyncNotice(outcome.code, command.key)
             } else {
-                apply(store, command, outcome)
+                apply(store, command, outcome, newCommandId)
             }
         }
 
-    private fun apply(store: SyncStore, command: OutboxCommand, outcome: Receipt): SyncNotice? {
+    private fun apply(
+        store: SyncStore,
+        command: OutboxCommand,
+        outcome: Receipt,
+        newCommandId: () -> AwradId,
+    ): SyncNotice? {
         val key = command.key
-        when (outcome) {
+        return when (outcome) {
             is Receipt.Applied -> {
-                store.entity(key)?.let { store.putEntity(it.copy(knownVersion = outcome.version)) }
-                store.removeConflict(key)
-                outcome.cascaded.orEmpty().forEach { applyCascaded(store, it) }
+                applied(store, command, outcome)
+                null
             }
-            is Receipt.Conflict -> {
-                val local = store.entity(key)
-                local?.let { store.putEntity(it.copy(knownVersion = outcome.current.version)) }
-                dropUnsent(store, key)
-                val localOp = if (local != null) SyncOp.PUT else SyncOp.DELETE
-                store.putConflict(SyncConflict(key, localOp, outcome.current))
+            is Receipt.Conflict -> conflict(store, key, outcome.current, newCommandId)
+            is Receipt.Merged -> {
+                merge(store, key.id, outcome)
+                null
             }
-            is Receipt.Merged -> merge(store, key.id, outcome)
-            is Receipt.Gone -> remove(store, key)
-            is Receipt.Rejected -> {
-                val current = outcome.current
-                if (current != null && current.state == EntityState.ACTIVE && current.document != null) {
-                    dropUnsent(store, key)
-                    store.removeConflict(key)
-                    store.putEntity(LocalEntity(key, current.version, current.document))
-                } else {
-                    remove(store, key)
-                }
-                return SyncNotice(outcome.code, key)
+            is Receipt.Gone -> {
+                remove(store, key)
+                null
             }
+            is Receipt.Rejected -> rejected(store, key, outcome)
             // Receipt.outcome never is a duplicate.
-            is Receipt.Duplicate -> Unit
+            is Receipt.Duplicate -> null
         }
+    }
+
+    /** Restores the server's copy (or removes the entity, when it has none) and tells the user. */
+    private fun rejected(store: SyncStore, key: EntityKey, outcome: Receipt.Rejected): SyncNotice {
+        val current = outcome.current
+        if (current != null && current.state == EntityState.ACTIVE && current.document != null) {
+            dropUnsent(store, key)
+            store.removeConflict(key)
+            store.putEntity(LocalEntity(key, current.version, current.document, baseOf(key, current.document)))
+        } else {
+            remove(store, key)
+        }
+        return SyncNotice(outcome.code, key)
+    }
+
+    private fun applied(store: SyncStore, command: OutboxCommand, outcome: Receipt.Applied) {
+        val key = command.key
+        store.entity(key)?.let { local ->
+            // The sent document is now the server's: a policy's later edits merge against it.
+            val base = if (key.type == EntityType.PRACTICE_POLICY) command.document else local.baseDocument
+            store.putEntity(local.copy(knownVersion = outcome.version, baseDocument = base))
+        }
+        store.removeConflict(key)
+        outcome.cascaded.orEmpty().forEach { applyCascaded(store, it) }
+    }
+
+    /** A stale put or delete: a conflict opens, except on the practice policy, which merges ([mergePolicy]). */
+    private fun conflict(
+        store: SyncStore,
+        key: EntityKey,
+        current: ServerCopy,
+        newCommandId: () -> AwradId,
+    ): SyncNotice? {
+        val local = store.entity(key)
+        if (key.type == EntityType.PRACTICE_POLICY && local != null) {
+            return mergePolicy(store, local, current, newCommandId)
+        }
+        local?.let { store.putEntity(it.copy(knownVersion = current.version)) }
+        dropUnsent(store, key)
+        val localOp = if (local != null) SyncOp.PUT else SyncOp.DELETE
+        store.putConflict(SyncConflict(key, localOp, current))
         return null
     }
 
@@ -159,12 +202,49 @@ public object ApplyChanges {
             dropUnsent(store, key)
             val document = server.document
             if (server.state == EntityState.ACTIVE && document != null) {
-                store.putEntity(LocalEntity(key, server.version, document))
+                store.putEntity(LocalEntity(key, server.version, document, baseOf(key, document)))
             } else {
                 remove(store, key)
             }
         }
     }
+
+    /**
+     * A conflict on the practice policy (fixture `practice_policy_merge`): no "Changed on another device" prompt.
+     * The local document merges by setting with the server's against `base_document`; the server's copy becomes the
+     * base and the known version; the entity's unsent commands go (the local document already holds them); and the
+     * result is queued on the server's version unless the server already has it. A notice says when the merge
+     * dropped this phone's Hijri corrections.
+     */
+    private fun mergePolicy(
+        store: SyncStore,
+        local: LocalEntity,
+        current: ServerCopy,
+        newCommandId: () -> AwradId,
+    ): SyncNotice? {
+        val key = local.key
+        dropUnsent(store, key)
+        store.removeConflict(key)
+        val theirsDocument = current.document?.takeIf { current.state == EntityState.ACTIVE }
+        val theirs = theirsDocument?.let(PracticePolicyJson::decode)
+        val mine = PracticePolicyJson.decode(local.document)
+        val base = local.baseDocument?.let(PracticePolicyJson::decode) ?: PracticePolicy.DEFAULT
+        val merge = if (theirs != null && mine != null) PracticePolicyMerge.merge(base, mine, theirs) else null
+        when {
+            merge != null -> {
+                val document = PracticePolicyJson.encode(merge.policy)
+                store.putEntity(LocalEntity(key, current.version, document, theirsDocument))
+                if (merge.requeue) Outbox.enqueue(store, LocalEdit(newCommandId(), key, SyncOp.PUT, document))
+            }
+            // A server copy this phone can't read (or a local one it can't) is taken as it is.
+            theirsDocument != null -> store.putEntity(LocalEntity(key, current.version, theirsDocument, theirsDocument))
+        }
+        return SyncNotice(RejectionCode.HIJRI_CORRECTIONS_REPLACED, key).takeIf { merge?.correctionsReplaced == true }
+    }
+
+    /** The base a policy stored from the server keeps: that same document. Other entities have none. */
+    private fun baseOf(key: EntityKey, document: JsonObject): JsonObject? =
+        document.takeIf { key.type == EntityType.PRACTICE_POLICY }
 
     /** Removes [key] with its unsent commands and conflict, cascading as the server does. */
     public fun remove(store: SyncStore, key: EntityKey) {
@@ -174,7 +254,7 @@ public object ApplyChanges {
         when (key.type) {
             EntityType.CUSTOM_DHIKR -> remove(store, personalKeyOf(key.id))
             EntityType.USER_TAG -> rewriteTag(store, key.id, replacement = null)
-            EntityType.DHIKR_PERSONAL -> Unit
+            EntityType.DHIKR_PERSONAL, EntityType.PRACTICE_POLICY -> Unit
         }
     }
 

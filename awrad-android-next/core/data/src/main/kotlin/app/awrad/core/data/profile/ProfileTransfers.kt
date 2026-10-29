@@ -1,7 +1,9 @@
 package app.awrad.core.data.profile
 
+import app.awrad.core.data.practice.PolicySeed
 import app.awrad.core.data.sync.RoomSyncStore
 import app.awrad.core.database.CustomDhikrEntity
+import app.awrad.core.database.PracticePolicyEntity
 import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.personal.CustomAudioJson
 import app.awrad.core.domain.personal.PersonalDocument
@@ -53,6 +55,19 @@ internal class ProfileTransfers(
     /** Queues the upload of [dhikrId]'s recording if it's only on this phone and its file is here. */
     private fun queueLocalRecording(store: RoomSyncStore, dhikrId: AwradId, document: JsonObject) {
         if (CustomAudioJson.isLocalOnly(document["audio"]) && store.hasAudioFile(dhikrId)) store.queueUpload(dhikrId)
+    }
+
+    /** [profileId]'s practice policy row, or null while it's untouched. */
+    suspend fun practicePolicyOf(profileId: AwradId): PracticePolicyEntity? =
+        databases.writeTo(profileId) { it.database.syncDao().practicePolicy() }
+
+    /**
+     * A first sign-in from the anonymous profile made [into] the account's (the same profile when adopted, a fresh
+     * one on Erase): [into] takes the anonymous practice policy ([anonymous], read before the switch) and waits for
+     * the account's ([PolicySeed]). Settings alone never count as data, so this runs whatever the user answered.
+     */
+    suspend fun startPolicySeed(into: AwradId, anonymous: PracticePolicyEntity?, accountId: AwradId) {
+        databases.writeTo(into) { PolicySeed.start(it.database.syncDao(), anonymous, accountId) }
     }
 
     /** Keep on a deleted account's profile: its unsent commands can never be sent, so they're dropped. */

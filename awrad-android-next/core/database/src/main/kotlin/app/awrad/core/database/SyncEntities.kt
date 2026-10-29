@@ -117,3 +117,29 @@ public data class AudioUploadEntity(
         public const val FAILED: String = "failed"
     }
 }
+
+/**
+ * The profile's practice policy (slice 3d), one row. Every profile has a policy, the anonymous one included; until
+ * the user changes it there's no row and it's the default.
+ * - [document] is the `practice_policy` document; [chosen] says the user changed a setting since the profile was
+ *   created.
+ * - [entityId] is the account's ID once the policy is the account's `practice_policy` entity (null in the
+ *   anonymous profile); [knownVersion] and [baseDocument] are its change-queue state: the last server version seen
+ *   and the server document the local one was edited from.
+ * - [seedPending]: the first sign-in made this profile the account's, and the account's own policy isn't known yet;
+ *   the first complete pull settles it (contracts/practice-settings/v1, "The first sign-in").
+ */
+@Entity(tableName = "practice_policy")
+public data class PracticePolicyEntity(
+    @PrimaryKey val id: Int = ONLY_ROW,
+    @ColumnInfo(name = "entity_id") val entityId: String?,
+    @ColumnInfo(name = "known_version") val knownVersion: Long,
+    @ColumnInfo(name = "document") val document: String,
+    @ColumnInfo(name = "base_document") val baseDocument: String?,
+    @ColumnInfo(name = "chosen") val chosen: Boolean,
+    @ColumnInfo(name = "seed_pending") val seedPending: Boolean = false,
+) {
+    public companion object {
+        public const val ONLY_ROW: Int = 0
+    }
+}

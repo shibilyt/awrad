@@ -14,6 +14,9 @@ public enum class EntityType(public val wire: String) {
     CUSTOM_DHIKR("custom_dhikr"),
     USER_TAG("user_tag"),
     DHIKR_PERSONAL("dhikr_personal"),
+
+    /** The account practice policy (slice 3d): one per account, its ID the account's, never deleted. */
+    PRACTICE_POLICY("practice_policy"),
     ;
 
     public companion object {
@@ -54,8 +57,17 @@ public enum class EntityState(public val wire: String) {
 /**
  * An entity present on the phone: its [document] and the last server version this phone has seen of it
  * ([knownVersion], 0 while the server hasn't confirmed it). Deleted entities aren't kept.
+ *
+ * A [practice policy][EntityType.PRACTICE_POLICY] also keeps [baseDocument]: the server copy its document was edited
+ * from (the default policy when the phone knows none), which a conflict merges against. It's null for every other
+ * entity.
  */
-public data class LocalEntity(val key: EntityKey, val knownVersion: Long, val document: JsonObject)
+public data class LocalEntity(
+    val key: EntityKey,
+    val knownVersion: Long,
+    val document: JsonObject,
+    val baseDocument: JsonObject? = null,
+)
 
 /**
  * One queued command, oldest first in the outbox. [sent] is true once it has been in a request, whether or not

@@ -5,6 +5,7 @@ import app.awrad.core.domain.personal.CustomDhikrValidity
 import app.awrad.core.domain.personal.PersonalDocument
 import app.awrad.core.domain.personal.TagName
 import app.awrad.core.domain.personal.TagNameResult
+import app.awrad.core.domain.practice.PracticePolicyJson
 import app.awrad.core.network.api.ApiFailure
 import app.awrad.core.network.api.ApiResult
 import app.awrad.core.network.api.Problem
@@ -131,8 +132,11 @@ internal class FakeSyncServer(private val accountId: AwradId, var tagLimit: Int 
     @Suppress("ReturnCount", "CyclomaticComplexMethod")
     private fun decide(command: SyncCommandBody): SyncReceiptBody {
         val key = command.entityType to command.entityId
-        if (command.entityType == PERSONAL && command.op == "delete") {
+        if ((command.entityType == PERSONAL || command.entityType == POLICY) && command.op == "delete") {
             return rejected(command, "delete_not_allowed", null)
+        }
+        if (command.entityType == POLICY && command.entityId != accountId.value) {
+            return rejected(command, "entity_id_invalid", null)
         }
         if (command.op == "put" && !isValid(command)) return rejected(command, "document_invalid", current(key))
         val existing = entities[key]
@@ -228,6 +232,7 @@ internal class FakeSyncServer(private val accountId: AwradId, var tagLimit: Int 
             CUSTOM -> CustomDhikrValidity.isValid(document)
             TAG -> (TagName.of(document["name"]?.jsonPrimitive?.content.orEmpty()) as? TagNameResult.Accepted)
                 ?.name?.normalized == document["normalized_name"]?.jsonPrimitive?.content
+            POLICY -> PracticePolicyJson.errors(document).isEmpty()
             else -> true
         }
     }
@@ -249,6 +254,7 @@ internal class FakeSyncServer(private val accountId: AwradId, var tagLimit: Int 
         const val CUSTOM = "custom_dhikr"
         const val TAG = "user_tag"
         const val PERSONAL = "dhikr_personal"
+        const val POLICY = "practice_policy"
         const val ACTIVE = "active"
         const val DELETED = "deleted"
         const val CONFLICT = 409

@@ -5,6 +5,7 @@
     <string name="home_placeholder_body">هذا هو الهيكل الأساسي لأوراد نكست. ستُضاف الميزات هنا تباعًا.</string>
     <string name="home_placeholder_restart">إعادة بدء التهيئة</string>
     <string name="home_placeholder_account">الحساب</string>
+    <string name="home_placeholder_practice">إعدادات العبادة</string>
     <string name="home_placeholder_data_sync">البيانات والمزامنة</string>
     <string name="shell_tab_home">الرئيسية</string>
     <string name="shell_tab_library">المكتبة</string>

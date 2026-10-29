@@ -1,6 +1,7 @@
 package app.awrad.core.data.sync
 
 import app.awrad.core.data.audio.AudioUploader
+import app.awrad.core.data.practice.PolicySeed
 import app.awrad.core.data.profile.OpenProfile
 import app.awrad.core.data.profile.ProfileDatabases
 import app.awrad.core.database.NoticeEntity
@@ -105,9 +106,12 @@ internal class SyncEngine(
         return outcome
     }
 
-    /** Sends the queue, then pulls every page, then records the sync. */
+    /**
+     * Sends the queue, then pulls every page, then settles a first sign-in's practice policy (sending the create it
+     * may queue), then records the sync.
+     */
     private suspend fun exchange(profileId: AwradId, accountId: AwradId): SyncOutcome =
-        send(profileId, accountId) ?: pull(profileId, accountId) ?: run {
+        send(profileId, accountId) ?: pull(profileId, accountId) ?: seedPolicy(profileId, accountId) ?: run {
             profiles.write(profileId) { open ->
                 val dao = open.database.syncDao()
                 dao.upsertMeta(SyncMetaEntity(after = dao.meta()?.after ?: 0, lastSyncedAt = clock.millis()))
@@ -168,6 +172,17 @@ internal class SyncEngine(
             registry.setAfter(profileId.value, page.nextAfter)
             if (!page.hasMore) return null
         }
+    }
+
+    /**
+     * After the first complete pull of a profile a first sign-in made, whose policy wins is known: the account's, if
+     * the feed had one, else this phone's chosen one, queued and sent now ([PolicySeed]). Null when nothing's left.
+     */
+    private suspend fun seedPolicy(profileId: AwradId, accountId: AwradId): SyncOutcome? {
+        val queued = profiles.write(profileId) { open ->
+            PolicySeed.settle(open.database.syncDao(), accountId, clock::millis, newId)
+        } ?: return SyncOutcome.Skipped
+        return if (queued) send(profileId, accountId) else null
     }
 
     private fun outcomeOf(failure: ApiFailure): SyncOutcome = when (failure) {

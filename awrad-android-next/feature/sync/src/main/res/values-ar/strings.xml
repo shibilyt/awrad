@@ -96,4 +96,8 @@
     </plurals>
     <string name="sync_upload_mismatch">لم يطابق الملفُ المرفوع التسجيلَ رغم عدة محاولات.</string>
     <string name="sync_ok">حسنًا</string>
+    <string name="sync_conflict_practice">تغيّرت إعدادات العبادة على جهاز آخر بعد أن غيّرتها هنا.</string>
+    <string name="sync_reason_entity_id_invalid">إعدادات العبادة هذه تخص حسابًا آخر.</string>
+    <string name="sync_hijri_replaced_title">استُبدلت تصحيحات التقويم الهجري</string>
+    <string name="sync_reason_hijri_corrections_replaced">غيّر جهاز آخر تصحيحات التقويم الهجري في الوقت نفسه، وتعذّر الجمع بينهما. احتُفظ بتصحيحاته، وحُفظت بقية إعداداتك.</string>
 </resources>

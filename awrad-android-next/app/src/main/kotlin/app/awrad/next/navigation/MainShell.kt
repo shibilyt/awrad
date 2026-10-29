@@ -38,6 +38,7 @@ fun MainShell(
     onNavigate: (LibraryDestination) -> Unit,
     onOpenAccount: () -> Unit,
     onOpenDataSync: () -> Unit,
+    onOpenPracticeSettings: () -> Unit,
     onRestartOnboarding: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -64,6 +65,7 @@ fun MainShell(
                     MainTab.Home -> HomeTab(
                         onOpenAccount = onOpenAccount,
                         onOpenDataSync = onOpenDataSync,
+                        onOpenPracticeSettings = onOpenPracticeSettings,
                         onRestartOnboarding = onRestartOnboarding,
                         onNavigate = onNavigate,
                         onViewLibrary = { tab = MainTab.Library },

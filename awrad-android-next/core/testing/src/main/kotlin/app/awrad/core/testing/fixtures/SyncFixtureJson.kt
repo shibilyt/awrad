@@ -44,8 +44,13 @@ internal fun JsonObject.document(member: String = "document"): JsonObject? =
 public fun JsonObject.entityKey(): EntityKey =
     EntityKey(checkNotNull(EntityType.fromWire(string("entity_type"))) { "entity_type" }, id("entity_id"))
 
-public fun JsonObject.toLocalEntity(): LocalEntity =
-    LocalEntity(entityKey(), number("known_version"), checkNotNull(document()) { "entity document" })
+/** An entity; a `practice_policy` carries its `base_document`, which no other entity has. */
+public fun JsonObject.toLocalEntity(): LocalEntity = LocalEntity(
+    key = entityKey(),
+    knownVersion = number("known_version"),
+    document = checkNotNull(document()) { "entity document" },
+    baseDocument = if ("base_document" in this) document("base_document") else null,
+)
 
 public fun JsonObject.toOutboxCommand(): OutboxCommand = OutboxCommand(
     commandId = id("command_id"),
@@ -126,6 +131,7 @@ public fun LocalEntity.toJson(): JsonObject = buildJsonObject {
     key.encodeInto(this)
     put("known_version", knownVersion)
     put("document", document)
+    baseDocument?.let { put("base_document", it) }
 }
 
 public fun OutboxCommand.toJson(): JsonObject = buildJsonObject {
