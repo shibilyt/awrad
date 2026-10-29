@@ -29,6 +29,8 @@ public enum class FixtureModel(public val directory: String) {
     IDENTITY("identity"),
     SYNC("sync"),
     AUDIO("audio"),
+    PRACTICE_SETTINGS("practice-settings"),
+    PLACES("places"),
 }
 
 /**

@@ -23,6 +23,9 @@ detekt = "1.23.8"
 composeRules = "0.4.22"
 robolectric = "4.16.1"
 androidxTestCore = "1.7.0"
+# adhan-kotlin (batoulapps), for Maghrib. 0.0.5 is the newest built with a Kotlin this compiler reads (0.0.6 needs
+# 2.2, 0.0.7 needs 2.4); move with the Kotlin bump.
+adhan = "0.0.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -52,6 +55,7 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 javax-inject = { group = "javax.inject", name = "javax.inject", version.ref = "javaxInject" }
+adhan = { group = "com.batoulapps.adhan", name = "adhan2", version.ref = "adhan" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }

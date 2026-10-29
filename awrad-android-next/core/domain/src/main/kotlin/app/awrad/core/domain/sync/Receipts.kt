@@ -49,7 +49,10 @@ public sealed interface Receipt {
  */
 public data class CascadedChange(val key: EntityKey, val state: EntityState, val version: Long, val revision: Long)
 
-/** Why a command was `rejected` (`$defs/rejection_code`). [UNKNOWN] is a code this app doesn't know yet. */
+/**
+ * Why a command was `rejected` (`$defs/rejection_code`), and so why the user gets a notice (`$defs/notice_code`, which
+ * adds [HIJRI_CORRECTIONS_REPLACED]). [UNKNOWN] is a code this app doesn't know yet.
+ */
 public enum class RejectionCode(public val wire: String) {
     DOCUMENT_INVALID("document_invalid"),
     DOCUMENT_TOO_LARGE("document_too_large"),
@@ -67,6 +70,15 @@ public enum class RejectionCode(public val wire: String) {
 
     /** A custom dhikr put's uploaded audio has another `byte_size` or `content_type` than its asset. */
     AUDIO_MISMATCH("audio_mismatch"),
+
+    /** A `practice_policy` whose `entity_id` isn't the account's ID (slice 3d). */
+    ENTITY_ID_INVALID("entity_id_invalid"),
+
+    /**
+     * Not a rejection: the notice (`$defs/notice_code`) when merging a conflicting `practice_policy` dropped this
+     * phone's Hijri corrections, because the merged set wasn't valid and the server's were kept (slice 3d).
+     */
+    HIJRI_CORRECTIONS_REPLACED("hijri_corrections_replaced"),
     UNKNOWN("unknown"),
     ;
 
@@ -99,5 +111,8 @@ public enum class FieldErrorCode(public val wire: String) {
     }
 }
 
-/** Something the user is told after a sync: a change of theirs to [key] was refused with [code] and undone. */
+/**
+ * Something the user is told after a sync: a change of theirs to [key] was refused with [code] and undone, or (for
+ * [RejectionCode.HIJRI_CORRECTIONS_REPLACED]) partly replaced by a merge.
+ */
 public data class SyncNotice(val code: RejectionCode, val key: EntityKey)
