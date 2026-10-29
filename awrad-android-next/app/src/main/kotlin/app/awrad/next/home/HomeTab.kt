@@ -16,6 +16,7 @@ import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.component.awradBottomBarPadding
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.feature.library.FeaturedCollections
 import app.awrad.feature.library.LibraryDestination
@@ -71,6 +72,7 @@ fun HomeTab(
                 text = stringResource(R.string.home_placeholder_practice),
                 onClick = onOpenPracticeSettings,
                 variant = AwradButtonVariant.Secondary,
+                leadingIcon = AwradIcons.Practice,
             )
             AwradTextButton(
                 text = stringResource(R.string.home_placeholder_restart),
