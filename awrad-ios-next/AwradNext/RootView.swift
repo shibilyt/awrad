@@ -2,6 +2,7 @@ import AwradData
 import AwradDesignSystem
 import FeatureAccount
 import FeatureOnboarding
+import FeaturePracticeSettings
 import SwiftUI
 
 /// Decides where the app starts and switches between top-level destinations.
@@ -53,9 +54,11 @@ struct RootView: View {
                     }
                 )
                 .sheet(isPresented: $showsAccount) {
-                    AccountRoute(service: composition.account, profiles: composition.profiles) {
-                        showsAccount = false
-                    }
+                    AccountRoute(
+                        service: composition.account, profiles: composition.profiles,
+                        practiceSettings: { AnyView(PracticeSettingsRoute(services: composition.practice)) },
+                        onClose: { showsAccount = false }
+                    )
                     .awradSheet()
                     // The account-deleted question also shows over the account sheet.
                     .awradProfilePrompts(composition.profiles)

@@ -1,0 +1,622 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "practice.day_reset.maghrib" : {
+      "comment" : "Day reset option: at Maghrib.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المغرب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Maghrib" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മഗ്‌രിബ്" } }
+      }
+    },
+    "practice.day_reset.midnight" : {
+      "comment" : "Day reset option: at local midnight.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "منتصف الليل" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Midnight" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അർധരാത്രി" } }
+      }
+    },
+    "practice.day_reset.no_location" : {
+      "comment" : "Hint when the Maghrib reset is chosen without a location.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اختر موقعًا ليبدأ اليوم عند المغرب. حتى ذلك الحين، يبدأ اليوم عند منتصف الليل." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a location to reset at Maghrib. Until then, the day resets at midnight." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മഗ്‌രിബിൽ ദിവസം മാറാൻ ഒരു സ്ഥലം തിരഞ്ഞെടുക്കുക. അതുവരെ അർധരാത്രിയിലാണ് ദിവസം മാറുക." } }
+      }
+    },
+    "practice.day_reset.no_sunset" : {
+      "comment" : "Hint when the Maghrib reset is chosen where the sun doesn't set today.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "لا يوجد مغرب هنا اليوم، لذا يبدأ اليوم عند منتصف الليل." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "There's no Maghrib here today, so the day resets at midnight." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇന്ന് ഇവിടെ മഗ്‌രിബ് ഇല്ല, അതിനാൽ അർധരാത്രിയിൽ ദിവസം മാറും." } }
+      }
+    },
+    "practice.day_reset.note" : {
+      "comment" : "Explains the Maghrib day reset.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "مع المغرب، يُحتسب وردك اليومي من غروب الشمس، كما يبدأ اليوم في الإسلام." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "With Maghrib, your day's practice counts from sunset, as the Islamic day does." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മഗ്‌രിബ് തിരഞ്ഞെടുത്താൽ, ഇസ്‌ലാമിക ദിവസം പോലെ സൂര്യാസ്തമയം മുതൽ നിങ്ങളുടെ ദിനചര്യ കണക്കാക്കും." } }
+      }
+    },
+    "practice.day_reset.title" : {
+      "comment" : "Heading of the day reset setting.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يبدأ اليوم الجديد عند" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "New day starts at" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "പുതിയ ദിവസം തുടങ്ങുന്നത്" } }
+      }
+    },
+    "practice.hijri.adjust_next" : {
+      "comment" : "Heading: correcting next Hijri month, offered in the last days of a month.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل الشهر القادم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Adjust next month" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അടുത്ത മാസം ക്രമീകരിക്കുക" } }
+      }
+    },
+    "practice.hijri.adjust_this" : {
+      "comment" : "Heading: correcting the current Hijri month.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديل هذا الشهر" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Adjust this month" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ മാസം ക്രമീകരിക്കുക" } }
+      }
+    },
+    "practice.hijri.date" : {
+      "comment" : "A Hijri date: the day, the month's name, then the year, such as \"18 Jumada al-Ula 1448 AH\".",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld %2$@ %3$lld هـ" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld %2$@ %3$lld AH" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%1$lld %2$@ %3$lld ഹിജ്റ" } }
+      }
+    },
+    "practice.hijri.earlier" : {
+      "comment" : "Heading of the list of other Hijri corrections.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعديلات سابقة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Earlier corrections" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മുമ്പത്തെ തിരുത്തലുകൾ" } }
+      }
+    },
+    "practice.hijri.month.1" : {
+      "comment" : "Hijri month 1.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "محرم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Muharram" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മുഹർറം" } }
+      }
+    },
+    "practice.hijri.month.10" : {
+      "comment" : "Hijri month 10.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "شوال" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shawwal" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ശവ്വാൽ" } }
+      }
+    },
+    "practice.hijri.month.11" : {
+      "comment" : "Hijri month 11.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ذو القعدة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dhu al-Qadah" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ദുൽഖഅ്ദ" } }
+      }
+    },
+    "practice.hijri.month.12" : {
+      "comment" : "Hijri month 12.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ذو الحجة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dhu al-Hijjah" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ദുൽഹിജ്ജ" } }
+      }
+    },
+    "practice.hijri.month.2" : {
+      "comment" : "Hijri month 2.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "صفر" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Safar" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സഫർ" } }
+      }
+    },
+    "practice.hijri.month.3" : {
+      "comment" : "Hijri month 3.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ربيع الأول" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rabi al-Awwal" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "റബീഉൽ അവ്വൽ" } }
+      }
+    },
+    "practice.hijri.month.4" : {
+      "comment" : "Hijri month 4.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ربيع الآخر" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rabi al-Thani" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "റബീഉൽ ആഖിർ" } }
+      }
+    },
+    "practice.hijri.month.5" : {
+      "comment" : "Hijri month 5.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "جمادى الأولى" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Jumada al-Ula" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ജുമാദൽ ഊലാ" } }
+      }
+    },
+    "practice.hijri.month.6" : {
+      "comment" : "Hijri month 6.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "جمادى الآخرة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Jumada al-Akhirah" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ജുമാദൽ ആഖിറ" } }
+      }
+    },
+    "practice.hijri.month.7" : {
+      "comment" : "Hijri month 7.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "رجب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Rajab" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "റജബ്" } }
+      }
+    },
+    "practice.hijri.month.8" : {
+      "comment" : "Hijri month 8.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "شعبان" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Shaban" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ശഅ്ബാൻ" } }
+      }
+    },
+    "practice.hijri.month.9" : {
+      "comment" : "Hijri month 9.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "رمضان" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Ramadan" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "റമദാൻ" } }
+      }
+    },
+    "practice.hijri.month_year" : {
+      "comment" : "A Hijri month: its name, then the year, such as \"Ramadan 1448 AH\".",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ %2$lld هـ" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ %2$lld AH" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%1$@ %2$lld ഹിജ്റ" } }
+      }
+    },
+    "practice.hijri.note" : {
+      "comment" : "Explains Hijri corrections.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إذا رُئي الهلال عندكم قبل يوم أو بعده، فحرّك بداية الشهر لتوافق ذلك." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "If the new moon was sighted a day earlier or later where you are, move the month to match." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ പ്രദേശത്ത് ചന്ദ്രപ്പിറവി ഒരു ദിവസം മുമ്പോ ശേഷമോ കണ്ടാൽ, അതിനനുസരിച്ച് മാസം മാറ്റുക." } }
+      }
+    },
+    "practice.hijri.offset.earlier_1" : {
+      "comment" : "Hijri correction: the month starts one day before the Umm al-Qura calendar.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يبدأ قبل يوم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Starts 1 day earlier" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഒരു ദിവസം മുമ്പ് തുടങ്ങുന്നു" } }
+      }
+    },
+    "practice.hijri.offset.earlier_2" : {
+      "comment" : "Hijri correction: the month starts two days before the Umm al-Qura calendar.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يبدأ قبل يومين" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Starts 2 days earlier" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "2 ദിവസം മുമ്പ് തുടങ്ങുന്നു" } }
+      }
+    },
+    "practice.hijri.offset.later_1" : {
+      "comment" : "Hijri correction: the month starts one day after the Umm al-Qura calendar.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يبدأ بعد يوم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Starts 1 day later" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഒരു ദിവസം കഴിഞ്ഞ് തുടങ്ങുന്നു" } }
+      }
+    },
+    "practice.hijri.offset.later_2" : {
+      "comment" : "Hijri correction: the month starts two days after the Umm al-Qura calendar.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يبدأ بعد يومين" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Starts 2 days later" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "2 ദിവസം കഴിഞ്ഞ് തുടങ്ങുന്നു" } }
+      }
+    },
+    "practice.hijri.offset.table" : {
+      "comment" : "Hijri correction: no change from the Umm al-Qura calendar.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "كما في تقويم أم القرى" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "As in the Umm al-Qura calendar" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഉമ്മുൽ ഖുറാ കലണ്ടറിലേത് പോലെ" } }
+      }
+    },
+    "practice.hijri.outside" : {
+      "comment" : "Shown instead of a Hijri date outside the calendar's table.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "هذا التاريخ خارج نطاق التقويم الهجري." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "This date is outside the Hijri calendar." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ തീയതി ഹിജ്റ കലണ്ടറിന്റെ പരിധിക്ക് പുറത്താണ്." } }
+      }
+    },
+    "practice.hijri.remove" : {
+      "comment" : "Button that removes a Hijri correction.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إزالة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നീക്കം ചെയ്യുക" } }
+      }
+    },
+    "practice.hijri.remove_blocked" : {
+      "comment" : "Why a Hijri correction can't be removed now.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أزل التعديل اللاحق أولًا: إزالة هذا التعديل تجعل أحد الشهور أطول أو أقصر مما يجب." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove the later correction first: removing this one would leave a month too long or too short." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ആദ്യം പിന്നീടുള്ള തിരുത്തൽ നീക്കം ചെയ്യുക: ഇത് നീക്കിയാൽ ഒരു മാസം ആവശ്യത്തിലധികം നീളുകയോ ചുരുങ്ങുകയോ ചെയ്യും." } }
+      }
+    },
+    "practice.hijri.replaced.body" : {
+      "comment" : "Dialog text when a sync merge kept the other device's Hijri corrections.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تغيّرت هذه الإعدادات على جهاز آخر أيضًا. لم تتوافق تعديلاته للتقويم الهجري مع تعديلاتك، فاحتُفظ بتعديلاته." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "These settings were also changed on another device. Its Hijri corrections didn't fit with yours, so its corrections were kept." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ക്രമീകരണങ്ങൾ മറ്റൊരു ഉപകരണത്തിലും മാറ്റിയിരുന്നു. അതിലെ ഹിജ്റ തിരുത്തലുകൾ നിങ്ങളുടേതുമായി ഒത്തുപോകാത്തതിനാൽ അവ നിലനിർത്തി." } }
+      }
+    },
+    "practice.hijri.replaced.title" : {
+      "comment" : "Dialog title when a sync merge kept the other device's Hijri corrections.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "استُبدلت تعديلات التقويم الهجري" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hijri corrections replaced" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഹിജ്റ തിരുത്തലുകൾ മാറ്റിസ്ഥാപിച്ചു" } }
+      }
+    },
+    "practice.hijri.title" : {
+      "comment" : "Heading of the Hijri calendar setting and its page.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "التقويم الهجري" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hijri calendar" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഹിജ്റ കലണ്ടർ" } }
+      }
+    },
+    "practice.location.cities" : {
+      "comment" : "Heading of the bundled city results.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المدن" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Cities" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നഗരങ്ങൾ" } }
+      }
+    },
+    "practice.location.clear" : {
+      "comment" : "Button that clears the city search.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "مسح البحث" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear search" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "തിരച്ചിൽ മായ്ക്കുക" } }
+      }
+    },
+    "practice.location.current" : {
+      "comment" : "Value of the location setting when it came from the phone's position.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "موقعي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "My location" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "എന്റെ സ്ഥലം" } }
+      }
+    },
+    "practice.location.denied" : {
+      "comment" : "Error when location access is refused.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الوصول إلى الموقع متوقف. اسمح به في تطبيق الإعدادات، أو ابحث عن مدينتك." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Location access is off. Allow it in the Settings app, or search for your city." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ലൊക്കേഷൻ ആക്‌സസ് ഓഫാണ്. സെറ്റിംഗ്‌സ് ആപ്പിൽ അനുവദിക്കുക, അല്ലെങ്കിൽ നിങ്ങളുടെ നഗരം തിരയുക." } }
+      }
+    },
+    "practice.location.detail" : {
+      "comment" : "Where a city is: its region, then its country, both as written in the data.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "%1$@، %2$@" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "%1$@, %2$@" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "%1$@, %2$@" } }
+      }
+    },
+    "practice.location.more_places" : {
+      "comment" : "Heading of the results from the phone's online place search, after the bundled cities.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "أماكن أخرى" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "More places" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "കൂടുതൽ സ്ഥലങ്ങൾ" } }
+      }
+    },
+    "practice.location.no_results" : {
+      "comment" : "Shown when no bundled city matches the search.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "لم يُعثر على مدن. تحقق من الإملاء، أو جرّب مدينة قريبة." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "No cities found. Check the spelling, or try a nearby city." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നഗരങ്ങളൊന്നും കണ്ടെത്തിയില്ല. അക്ഷരത്തെറ്റ് പരിശോധിക്കുക, അല്ലെങ്കിൽ അടുത്തുള്ള ഒരു നഗരം തിരയുക." } }
+      }
+    },
+    "practice.location.not_set" : {
+      "comment" : "Value of the location setting when none is chosen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "غير محدد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Not set" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "തിരഞ്ഞെടുത്തിട്ടില്ല" } }
+      }
+    },
+    "practice.location.note" : {
+      "comment" : "Explains that the location stays on the phone.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يبقى موقعك على هذا الهاتف، ويُستخدم فقط لمعرفة وقت المغرب." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your location stays on this phone. It's used only to find Maghrib." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ സ്ഥലം ഈ ഫോണിൽ മാത്രം നിലനിൽക്കും. മഗ്‌രിബ് സമയം കണ്ടെത്താൻ മാത്രമാണ് ഇത് ഉപയോഗിക്കുന്നത്." } }
+      }
+    },
+    "practice.location.remove" : {
+      "comment" : "Button that clears the chosen location; Maghrib then can't be found and the day resets at midnight.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إزالة الموقع" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove location" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സ്ഥലം നീക്കം ചെയ്യുക" } }
+      }
+    },
+    "practice.location.search" : {
+      "comment" : "Label of the city search field.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "ابحث عن مدينة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Search for a city" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഒരു നഗരം തിരയുക" } }
+      }
+    },
+    "practice.location.search_prompt" : {
+      "comment" : "Placeholder of the city search field.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اسم المدينة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "City name" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നഗരത്തിന്റെ പേര്" } }
+      }
+    },
+    "practice.location.title" : {
+      "comment" : "Heading of the location setting and its page.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الموقع" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Location" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സ്ഥലം" } }
+      }
+    },
+    "practice.location.unavailable" : {
+      "comment" : "Error when no position could be read.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعذّر تحديد موقعك. حاول مرة أخرى، أو ابحث عن مدينتك." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't find your location. Try again, or search for your city." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ സ്ഥലം കണ്ടെത്താനായില്ല. വീണ്ടും ശ്രമിക്കുക, അല്ലെങ്കിൽ നിങ്ങളുടെ നഗരം തിരയുക." } }
+      }
+    },
+    "practice.location.use_mine" : {
+      "comment" : "Button that reads the phone's position once.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "استخدم موقعي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Use my location" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "എന്റെ സ്ഥലം ഉപയോഗിക്കുക" } }
+      }
+    },
+    "practice.madhab.hanafi" : {
+      "comment" : "Asr option: Hanafi.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الحنفي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Hanafi" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഹനഫി" } }
+      }
+    },
+    "practice.madhab.note" : {
+      "comment" : "Explains the Asr options.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الجمهور هو وقت الشافعية والمالكية والحنابلة. يتغير وقت العصر فقط." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Standard is the Shafi'i, Maliki and Hanbali time. Only Asr changes." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഷാഫിഈ, മാലികി, ഹമ്പലി സമയമാണ് സാധാരണ. അസ്ർ സമയം മാത്രമേ മാറുകയുള്ളൂ." } }
+      }
+    },
+    "practice.madhab.shafi" : {
+      "comment" : "Asr option: Shafi'i, Maliki and Hanbali.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الجمهور" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Standard" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സാധാരണ" } }
+      }
+    },
+    "practice.madhab.title" : {
+      "comment" : "Heading of the madhab (Asr) setting.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "وقت العصر" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Asr time" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "അസ്ർ സമയം" } }
+      }
+    },
+    "practice.method.dubai" : {
+      "comment" : "Calculation method.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "دبي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Dubai" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ദുബായ്" } }
+      }
+    },
+    "practice.method.egyptian" : {
+      "comment" : "Calculation method.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الهيئة المصرية العامة للمساحة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Egyptian General Authority of Survey" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈജിപ്ഷ്യൻ ജനറൽ അതോറിറ്റി ഓഫ് സർവേ" } }
+      }
+    },
+    "practice.method.karachi" : {
+      "comment" : "Calculation method.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "جامعة العلوم الإسلامية، كراتشي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "University of Islamic Sciences, Karachi" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "യൂണിവേഴ്സിറ്റി ഓഫ് ഇസ്‌ലാമിക് സയൻസസ്, കറാച്ചി" } }
+      }
+    },
+    "practice.method.kuwait" : {
+      "comment" : "Calculation method.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الكويت" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Kuwait" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "കുവൈത്ത്" } }
+      }
+    },
+    "practice.method.moonsighting_committee" : {
+      "comment" : "Calculation method.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "لجنة رؤية الهلال" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Moonsighting Committee" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മൂൺസൈറ്റിംഗ് കമ്മിറ്റി" } }
+      }
+    },
+    "practice.method.muslim_world_league" : {
+      "comment" : "Calculation method.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "رابطة العالم الإسلامي" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Muslim World League" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മുസ്‌ലിം വേൾഡ് ലീഗ്" } }
+      }
+    },
+    "practice.method.north_america" : {
+      "comment" : "Calculation method.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الجمعية الإسلامية لأمريكا الشمالية" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Islamic Society of North America" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇസ്‌ലാമിക് സൊസൈറ്റി ഓഫ് നോർത്ത് അമേരിക്ക" } }
+      }
+    },
+    "practice.method.note" : {
+      "comment" : "Explains which methods change Maghrib.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "لا يغيّر وقتَ المغرب إلا طريقتا دبي ولجنة رؤية الهلال، بثلاث دقائق." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Only Dubai and the Moonsighting Committee move Maghrib, by 3 minutes." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ദുബായ്, മൂൺസൈറ്റിംഗ് കമ്മിറ്റി എന്നീ രീതികൾ മാത്രമാണ് മഗ്‌രിബ് സമയം 3 മിനിറ്റ് മാറ്റുന്നത്." } }
+      }
+    },
+    "practice.method.qatar" : {
+      "comment" : "Calculation method.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "قطر" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Qatar" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഖത്തർ" } }
+      }
+    },
+    "practice.method.singapore" : {
+      "comment" : "Calculation method.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "سنغافورة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Singapore" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "സിംഗപ്പൂർ" } }
+      }
+    },
+    "practice.method.title" : {
+      "comment" : "Heading of the prayer-time calculation method setting.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "طريقة الحساب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Calculation method" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "കണക്കുകൂട്ടൽ രീതി" } }
+      }
+    },
+    "practice.method.umm_al_qura" : {
+      "comment" : "Calculation method.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "جامعة أم القرى، مكة المكرمة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Umm al-Qura University, Makkah" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഉമ്മുൽ ഖുറാ യൂണിവേഴ്സിറ്റി, മക്ക" } }
+      }
+    },
+    "practice.ok" : {
+      "comment" : "Button that closes a dialog.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "حسنًا" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ശരി" } }
+      }
+    },
+    "practice.save_failed" : {
+      "comment" : "Dialog title when a setting couldn't be saved on the phone.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعذّر حفظ التغيير. حاول مرة أخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't save the change. Try again." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മാറ്റം സേവ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കുക." } }
+      }
+    },
+    "practice.title" : {
+      "comment" : "Title of the practice settings screen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إعدادات الورد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Practice settings" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ദിനചര്യ ക്രമീകരണങ്ങൾ" } }
+      }
+    },
+    "practice.today.maghrib" : {
+      "comment" : "Label before today's Maghrib time.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "المغرب" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Maghrib" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മഗ്‌രിബ്" } }
+      }
+    },
+    "practice.today.maghrib_needs_location" : {
+      "comment" : "Shown instead of today's Maghrib time when no location is chosen.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اختر موقعًا لمعرفة وقت المغرب." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose a location to see Maghrib." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "മഗ്‌രിബ് സമയം കാണാൻ ഒരു സ്ഥലം തിരഞ്ഞെടുക്കുക." } }
+      }
+    },
+    "practice.today.maghrib_none" : {
+      "comment" : "Shown instead of today's Maghrib time where the sun doesn't set today (polar regions).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "لا تغرب الشمس هنا اليوم." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "The sun doesn't set here today." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇന്ന് ഇവിടെ സൂര്യൻ അസ്തമിക്കുന്നില്ല." } }
+      }
+    },
+    "practice.today.title" : {
+      "comment" : "Label of the card previewing today's Hijri date and Maghrib.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اليوم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Today" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇന്ന്" } }
+      }
+    },
+    "practice.week_start.monday" : {
+      "comment" : "Weekday.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الاثنين" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Monday" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "തിങ്കൾ" } }
+      }
+    },
+    "practice.week_start.saturday" : {
+      "comment" : "Weekday.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "السبت" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Saturday" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ശനി" } }
+      }
+    },
+    "practice.week_start.sunday" : {
+      "comment" : "Weekday.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "الأحد" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sunday" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഞായർ" } }
+      }
+    },
+    "practice.week_start.title" : {
+      "comment" : "Heading of the week start setting.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يبدأ الأسبوع يوم" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Week starts on" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ആഴ്ച തുടങ്ങുന്നത്" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

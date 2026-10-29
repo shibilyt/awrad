@@ -44,6 +44,8 @@ struct SwiftDataSyncState: SyncLocalState {
             return fetchOne(#Predicate<DhikrPersonalRecord> { $0.id == id }).map {
                 .dhikrPersonal(DhikrPersonalDocument(tagIDs: $0.tagIDs.compactMap(AwradID.init)))
             }
+        case .practicePolicy:
+            return policyRecord().flatMap { Self.policy($0.document) }.map(SyncDocument.practicePolicy)
         }
     }
 
@@ -77,7 +79,38 @@ struct SwiftDataSyncState: SyncLocalState {
             fetchOne(#Predicate<UserTagRecord> { $0.id == id }).map(context.delete)
         case (.dhikrPersonal, _):
             fetchOne(#Predicate<DhikrPersonalRecord> { $0.id == id }).map(context.delete)
+        case (.practicePolicy, .practicePolicy(let policy)):
+            let data = policy.json.encoded()
+            if let record = policyRecord() {
+                record.document = data
+            } else {
+                context.insert(PracticePolicyRecord(document: data))
+            }
+        case (.practicePolicy, _):
+            // Back to the default policy, untouched.
+            policyRecord().map(context.delete)
         }
+    }
+
+    // MARK: - Practice policy
+
+    /// The profile's one policy row: the `practice_policy` whatever the key's ID (the account's).
+    func policyRecord() -> PracticePolicyRecord? {
+        try? context.fetch(FetchDescriptor<PracticePolicyRecord>()).first
+    }
+
+    static func policy(_ data: Data?) -> PracticePolicy? {
+        data.flatMap { try? AwradJSON.decode($0) }.flatMap { try? PracticePolicy(json: $0) }
+    }
+
+    func baseDocument(_ key: SyncEntityKey) -> SyncDocument? {
+        guard key.type == .practicePolicy else { return nil }
+        return Self.policy(policyRecord()?.baseDocument).map(SyncDocument.practicePolicy)
+    }
+
+    func setBaseDocument(_ document: SyncDocument?, for key: SyncEntityKey) {
+        guard key.type == .practicePolicy, let record = policyRecord() else { return }
+        record.baseDocument = document?.json.encoded()
     }
 
     func personalRecords(tagged tag: AwradID) -> [SyncEntityKey] {

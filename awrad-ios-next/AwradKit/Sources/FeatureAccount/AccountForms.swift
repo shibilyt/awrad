@@ -27,6 +27,9 @@ struct SignInForm: View {
                 .disabled(state.isWorking)
             AwradButton(ProfileStrings.title, variant: .text) { send(.profilesTapped) }
                 .disabled(state.isWorking)
+            // Signed out too: practice settings never need an account.
+            AwradButton(Strings.practiceSettingsRow, variant: .text) { send(.practiceSettingsTapped) }
+                .disabled(state.isWorking)
         }
     }
 }

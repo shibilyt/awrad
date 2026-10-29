@@ -39,13 +39,14 @@ Applies inside `awrad-ios-next/` and extends [`../AGENTS.md`](../AGENTS.md). Rea
 ## Validation
 
 ```bash
-scripts/validate        # Xcode version, module rules, translations, Hijri table, colour, token, icon and font freshness, dhikr catalog copy, raw design values, no UUID() outside tests, no URL.path() outside tests, swift format, SwiftLint, package build + tests, app build
+scripts/validate        # Xcode version, module rules, translations, Hijri table, colour, token, icon and font freshness, dhikr catalog and city list copies, raw design values, no UUID() outside tests, no URL.path() outside tests, swift format, SwiftLint, package build + tests, app build
 swift format -i -r AwradKit/Sources AwradKit/Tests AwradKit/Package.swift AwradNext   # fix layout
 scripts/generate-hijri-table.py   # regenerate AwradDomain/UmmAlQuraTable.swift after contracts/hijri-calendar changes
 scripts/generate-colors.py        # regenerate AwradColors.swift and AccentColor after contracts/design-tokens changes
 scripts/generate-design-tokens.py # regenerate AwradRadius/AwradStroke/AwradElevation/AwradSpacing/AwradTextStyle/AwradMotion after contracts/design-tokens changes
 scripts/generate-icons.py         # regenerate Icons.xcassets and AwradIcon.swift after contracts/design-tokens/v1/icons changes
 scripts/check-dhikr-catalog.py --fix  # copy contracts/dhikr-catalog/v1/catalog.json into AwradDomain/Resources after it changes
+scripts/check-city-list.py --fix      # copy contracts/places/v1/cities.json into AwradDomain/Resources after it changes
 ```
 
 Simulator runs are for UI checks. Domain, data and model logic is tested with `swift test` on macOS.

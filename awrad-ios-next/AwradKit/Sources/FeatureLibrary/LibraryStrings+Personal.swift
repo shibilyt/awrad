@@ -48,7 +48,8 @@ extension Strings {
                 "library.notice.reason.audio",
                 "Your change was kept, but its recording wasn't in your account. If the recording is still on this phone, it uploads again."
             )
-        case .deleteNotAllowed, .commandIDReused, .other:
+        // Practice-policy codes never reach the Library: Practice settings shows its own notice.
+        case .deleteNotAllowed, .commandIDReused, .entityIDInvalid, .hijriCorrectionsReplaced, .other:
             text("library.notice.reason.other", "It couldn't be saved.")
         }
     }

@@ -10,19 +10,25 @@ public struct EntityShape: Codable, Equatable, Sendable {
     public let entityID: String
     public let knownVersion: Int
     public let document: AwradJSON
+    /// A `practice_policy`'s base (slice 3d); absent for every other entity.
+    public let baseDocument: AwradJSON?
 
     enum CodingKeys: String, CodingKey {
         case document
         case entityType = "entity_type"
         case entityID = "entity_id"
         case knownVersion = "known_version"
+        case baseDocument = "base_document"
     }
 
-    public init(entityType: String, entityID: String, knownVersion: Int, document: AwradJSON) {
+    public init(
+        entityType: String, entityID: String, knownVersion: Int, document: AwradJSON, baseDocument: AwradJSON? = nil
+    ) {
         self.entityType = entityType
         self.entityID = entityID
         self.knownVersion = knownVersion
         self.document = document
+        self.baseDocument = baseDocument
     }
 }
 
@@ -80,6 +86,7 @@ public struct LocalShape: Codable, Equatable, Sendable {
             let key = SyncEntityKey(type, try wireID(entity.entityID))
             state.setDocument(try wireDocument(entity.document, type: type), for: key)
             state.setKnownVersion(entity.knownVersion, for: key)
+            if let base = entity.baseDocument { state.setBaseDocument(try wireDocument(base, type: type), for: key) }
         }
         for shape in outbox {
             let command = try shape.command()
@@ -106,7 +113,10 @@ public struct LocalShape: Codable, Equatable, Sendable {
             state.documents[key].map {
                 EntityShape(
                     entityType: key.type.rawValue, entityID: key.id.description,
-                    knownVersion: state.knownVersion(key), document: $0.json)
+                    knownVersion: state.knownVersion(key), document: $0.json,
+                    // A policy always has a base: the default policy when the phone knows none.
+                    baseDocument: key.type == .practicePolicy
+                        ? (state.baseDocument(key)?.json ?? PracticePolicy.default.json) : nil)
             }
         }
         outbox = state.outbox.map(CommandShape.init)

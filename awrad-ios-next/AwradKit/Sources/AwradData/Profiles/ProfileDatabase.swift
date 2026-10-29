@@ -49,7 +49,9 @@ actor ProfileDatabase {
                 .dhikrPersonal(DhikrPersonalDocument(tagIDs: ids)), for: SyncEntityKey(.dhikrPersonal, dhikr))
         }
         for conflict in state.allConflicts() { memory.setConflict(conflict, for: conflict.key) }
-        return PersonalContent(state: memory, notices: notices(), audioNotices: audioNotices())
+        // Practice settings shows the policy's own notice; the Library never does.
+        let notices = notices().filter { $0.key.type != .practicePolicy }
+        return PersonalContent(state: memory, notices: notices, audioNotices: audioNotices())
     }
 
     func summary() -> ProfileDatabaseSummary {
@@ -106,7 +108,8 @@ actor ProfileDatabase {
             for tag in personal.tagIDs where state.document(SyncEntityKey(.userTag, tag)) == nil {
                 throw .notFound
             }
-        case nil:
+        case .practicePolicy, nil:
+            // The practice policy is saved through `savePolicy`, never as a library edit.
             throw .notFound
         }
     }

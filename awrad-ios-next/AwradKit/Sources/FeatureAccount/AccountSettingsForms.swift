@@ -27,6 +27,10 @@ struct AccountOverview: View {
                 SyncCard(profiles: profiles)
                     .awradExpandingContent()
             }
+            // No icon yet: the shared icon set has none for it.
+            SettingsRow(icon: nil, title: Strings.practiceSettingsRow) { send(.practiceSettingsTapped) }
+                .padding(.vertical, AwradSpacing.xs)
+                .awradCard()
             // Rows in a card are separated by spacing, not divider lines.
             VStack(spacing: AwradSpacing.xs) {
                 SettingsRow(icon: .devices, title: Strings.devicesRow) { send(.devicesTapped) }
@@ -50,7 +54,8 @@ struct AccountOverview: View {
 /// A row that opens a settings screen: a leading icon, its title, and a trailing chevron that flips
 /// in right-to-left.
 struct SettingsRow: View {
-    let icon: AwradIcon
+    /// `nil` leaves the row without a leading icon.
+    let icon: AwradIcon?
     let title: LocalizedStringResource
     var isDestructive = false
     let action: () -> Void
@@ -58,8 +63,10 @@ struct SettingsRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: AwradSpacing.lg) {
-                AwradIconImage(icon, size: AwradSize.iconSmall)
-                    .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.accent)
+                if let icon {
+                    AwradIconImage(icon, size: AwradSize.iconSmall)
+                        .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.accent)
+                }
                 Text(title)
                     .awradTextStyle(.body)
                     .foregroundStyle(isDestructive ? AwradColors.error : AwradColors.onSurface)
