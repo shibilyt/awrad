@@ -138,6 +138,17 @@ public interface SyncDao {
     @Query("SELECT * FROM sync_meta WHERE id = 0")
     public fun observeMeta(): Flow<SyncMetaEntity?>
 
+    // Practice policy (one row; none until the user changes it)
+
+    @Query("SELECT * FROM practice_policy WHERE id = 0")
+    public fun practicePolicy(): PracticePolicyEntity?
+
+    @Upsert
+    public fun upsertPracticePolicy(entity: PracticePolicyEntity)
+
+    @Query("SELECT * FROM practice_policy WHERE id = 0")
+    public fun observePracticePolicy(): Flow<PracticePolicyEntity?>
+
     // Recordings waiting to upload
 
     /** Queues an upload; one already queued or failed for the same dhikr is replaced. */

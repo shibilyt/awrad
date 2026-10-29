@@ -9,6 +9,7 @@ import app.awrad.core.data.audio.ProfileCustomAudioService
 import app.awrad.core.data.personal.AudioFiles
 import app.awrad.core.data.personal.RoomCustomDhikrRepository
 import app.awrad.core.data.personal.RoomTagRepository
+import app.awrad.core.data.practice.RoomPracticeSettingsRepository
 import app.awrad.core.data.profile.ProfileDatabases
 import app.awrad.core.data.sync.NetworkSyncRemote
 import app.awrad.core.data.sync.ProfileSyncService
@@ -21,6 +22,7 @@ import app.awrad.core.domain.account.AccountRepository
 import app.awrad.core.domain.personal.CustomAudioService
 import app.awrad.core.domain.personal.CustomDhikrRepository
 import app.awrad.core.domain.personal.TagRepository
+import app.awrad.core.domain.practice.PracticeSettingsRepository
 import app.awrad.core.domain.sync.SyncService
 import app.awrad.core.network.http.SignedLinkTransport
 import dagger.Module
@@ -128,4 +130,13 @@ internal object SyncModule {
     @Singleton
     fun tagRepository(profiles: ProfileDatabases, sync: SyncService, clock: Clock): TagRepository =
         RoomTagRepository(profiles, sync, clock) { AwradId.random(clock) }
+
+    /** The practice policy (slice 3d) is a change-queue entity like the tags. */
+    @Provides
+    @Singleton
+    fun practiceSettingsRepository(
+        profiles: ProfileDatabases,
+        sync: SyncService,
+        clock: Clock,
+    ): PracticeSettingsRepository = RoomPracticeSettingsRepository(profiles, sync, clock) { AwradId.random(clock) }
 }

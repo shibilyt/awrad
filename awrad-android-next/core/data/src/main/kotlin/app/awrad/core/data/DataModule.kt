@@ -8,6 +8,10 @@ import app.awrad.core.data.account.NetworkAccountRepository
 import app.awrad.core.data.account.NetworkAccountSettingsRepository
 import app.awrad.core.data.audio.ExoAudioPlayerFactory
 import app.awrad.core.data.dhikr.BundledDhikrCatalogSource
+import app.awrad.core.data.practice.AndroidCurrentLocation
+import app.awrad.core.data.practice.BundledCitySource
+import app.awrad.core.data.practice.DataStoreDeviceContextStore
+import app.awrad.core.data.practice.GeocoderPlaceSearch
 import app.awrad.core.domain.UuidV7
 import app.awrad.core.domain.account.AccountRepository
 import app.awrad.core.domain.account.AccountSettingsRepository
@@ -15,6 +19,10 @@ import app.awrad.core.domain.audio.AudioPlayerFactory
 import app.awrad.core.domain.dhikr.DhikrCatalogSource
 import app.awrad.core.domain.goal.GoalRepository
 import app.awrad.core.domain.onboarding.OnboardingStatusStore
+import app.awrad.core.domain.places.CitySource
+import app.awrad.core.domain.places.CurrentLocation
+import app.awrad.core.domain.places.PlaceSearch
+import app.awrad.core.domain.practice.DeviceContextStore
 import app.awrad.core.network.IdGenerator
 import dagger.Binds
 import dagger.Module
@@ -49,6 +57,18 @@ internal interface DataModule {
 
     @Binds
     fun audioPlayerFactory(adapter: ExoAudioPlayerFactory): AudioPlayerFactory
+
+    @Binds
+    fun deviceContextStore(adapter: DataStoreDeviceContextStore): DeviceContextStore
+
+    @Binds
+    fun citySource(adapter: BundledCitySource): CitySource
+
+    @Binds
+    fun placeSearch(adapter: GeocoderPlaceSearch): PlaceSearch
+
+    @Binds
+    fun currentLocation(adapter: AndroidCurrentLocation): CurrentLocation
 
     companion object {
         @Provides

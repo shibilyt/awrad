@@ -19,6 +19,7 @@ import androidx.room.RoomDatabase
         NoticeEntity::class,
         SyncMetaEntity::class,
         AudioUploadEntity::class,
+        PracticePolicyEntity::class,
     ],
     version = 1,
     exportSchema = true,
