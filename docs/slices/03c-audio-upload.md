@@ -1,6 +1,6 @@
 # Slice 3c: Private audio for custom dhikrs
 
-Status: Draft
+Status: Done 2026-10-29
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 3c
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 
@@ -107,17 +107,24 @@ The custom dhikr editor gets "Add audio" (MP3/M4A file picker, the same checks),
 
 | Project | Work | Validation | Status |
 |---|---|---|---|
-| awrad-server-next | Asset table, the four endpoints, R2 signing (SigV4) with a stand-in for tests, cleanup jobs, quota | `mix validate`, plus a real-bucket check | ☐ |
-| awrad-android-next | Upload worker, the `local_only` → asset swap, the download cache, quota in Settings | Gradle validation | ☐ |
-| awrad-ios-next | Same as Android | `scripts/validate` | ☐ |
-| awrad-web-next | Add audio in the editor, upload, play, quota in Settings | `npm run validate` | ☐ |
+| awrad-server-next | Asset table, the four endpoints, R2 signing (SigV4) with a stand-in for tests, cleanup jobs, quota | `mix validate`, plus a real-bucket check | ☑ |
+| awrad-android-next | Upload worker, the `local_only` → asset swap, the download cache, quota in Settings | Gradle validation | ☑ |
+| awrad-ios-next | Same as Android | `scripts/validate` | ☑ |
+| awrad-web-next | Add audio in the editor, upload, play, quota in Settings | `npm run validate` | ☑ |
 
 ## Integration evidence
 
 | Flow | Android | iOS | Web |
 |---|---|---|---|
-| Add audio while signed in; it plays on another device | ☐ | ☐ | ☐ |
-| Add audio offline, then sign in and Add to my account; it uploads | ☐ | ☐ | — |
-| An 11 MB file and an over-quota upload are refused clearly | ☐ | ☐ | ☐ |
-| Replace or remove a recording; the old object is cleaned up after 24 hours (the job runs on demand in tests) | ☐ | ☐ | ☐ |
-| Play an uploaded recording offline after the first play | ☐ | ☐ | — |
+| Add audio while signed in; it plays on another device | ☑ | ☑ | ☑ |
+| Add audio offline, then sign in and Add to my account; it uploads | ☑ | ☑ | — |
+| An 11 MB file and an over-quota upload are refused clearly | ☑ | ☑ | ☑ |
+| Replace or remove a recording; the old object is cleaned up after 24 hours (the job runs on demand in tests) | ☑ | ☑ | ☑ |
+| Play an uploaded recording offline after the first play | ☑ | ☑ | — |
+
+Evidence (2026-10-29), against the real server and the private R2 bucket:
+- **API run:** 18 of 18 checks pass: signed `PUT` with R2 refusing altered bytes, confirm, `audio_mismatch`, `audio_not_found`, a second device downloading identical bytes, 413, 415, `storage_full` and usage.
+- **Android emulator:** 5 of 5 flows.
+- **iOS simulator:** 4 of 4, after fixing a percent-encoded path bug that hid every file under `Application Support`.
+- **Web in the browser** on port 5180 (CORS): upload, play, the 10 MB and type refusals, and the storage card.
+- **Cleanup timing** is covered by server tests with a moved clock.
