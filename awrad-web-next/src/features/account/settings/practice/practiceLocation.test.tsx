@@ -102,6 +102,24 @@ describe("location", () => {
     expect(screen.getByText("19 Jumada al-Ula 1448")).toBeInTheDocument();
   });
 
+  test("Remove location forgets it, and the Maghrib reset falls back to midnight with its hint", async () => {
+    storeLocation(ACCOUNT_ID, { latitude: 11.248, longitude: 75.7804, name: "Kozhikode", source: "city", city_id: 1 });
+    server.use(...signedInWithPolicy(policyWith({ day_reset: "maghrib" }), 1));
+    await openPage();
+    expect(within(placeCard()).getByText("Kozhikode")).toBeInTheDocument();
+    expect(screen.queryByText(/^This browser has no location yet/)).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Remove location" }));
+
+    expect(within(placeCard()).getByText("No location yet")).toBeInTheDocument();
+    expect(within(placeCard()).getByText("Choose a location to see it")).toBeInTheDocument();
+    expect(
+      screen.getByText(/^This browser has no location yet, so here the day starts at midnight/),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Remove location" })).not.toBeInTheDocument();
+    expect(storedLocation(ACCOUNT_ID)).toBeNull();
+  });
+
   test("where the sun doesn't set today, the Maghrib reset says it falls back to midnight", async () => {
     storeLocation(ACCOUNT_ID, { latitude: 69.6496, longitude: 18.956, name: "Tromso", source: "city", city_id: 2 });
     setClock("2026-06-21T10:00:00Z", "Europe/Oslo");
@@ -148,6 +166,19 @@ describe("Hijri corrections", () => {
     expect(screen.getByText("29 Jumada al-Ula 1448")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Adjust Jumada al-Akhirah 1448" }));
     expect(await screen.findByRole("dialog", { name: "When did Jumada al-Akhirah 1448 start?" })).toBeInTheDocument();
+  });
+
+  test("Remove is disabled where removing the correction would leave an invalid set", async () => {
+    const corrections = [
+      { year: 1447, month: 9, offset_days: 1 },
+      { year: 1447, month: 10, offset_days: 1 },
+    ];
+    server.use(...signedInWithPolicy(policyWith({ hijri_corrections: corrections }), 4));
+    await openPage();
+
+    const list = screen.getByRole("list", { name: "Your corrections" });
+    const buttons = within(list).getAllByRole("button");
+    expect(buttons.map((button) => button.hasAttribute("disabled"))).toEqual([true, false]);
   });
 
   test("earlier corrections are listed, and removing one sends the rest", async () => {
