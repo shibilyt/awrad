@@ -913,6 +913,14 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഈ ഡാറ്റയുടേതല്ലാത്ത മറ്റൊരു അക്കൗണ്ടിലാണ് സൈൻ ഇൻ ചെയ്തിരിക്കുന്നത്" } }
       }
     },
+    "account.sync.audio_storage %@ %@" : {
+      "comment" : "Under the sync status: how much of the account's storage its recordings use. The arguments are amounts in decimal megabytes, used then the limit (120 MB, 500 MB).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "مساحة التسجيلات: %1$@ من %2$@" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Audio storage: %1$@ of %2$@" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഓഡിയോ സ്റ്റോറേജ്: %2$@-ൽ %1$@" } }
+      }
+    },
     "account.sync.label" : {
       "comment" : "Small label above the sync status in Settings.",
       "localizations" : {

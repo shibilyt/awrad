@@ -201,9 +201,10 @@ struct APIClientTests {
     func headersFollowTheOperation(_ operation: APIOperation) throws {
         let id = "4c2e8f10-7b3a-4d5e-9f61-2a8b0c1d3e45"
         let request = try client.request(
-            operation, body: NoBody?.none, accessToken: "access-1", pathParameters: ["session_id": id])
+            operation, body: NoBody?.none, accessToken: "access-1", pathParameters: ["session_id": id, "asset_id": id])
 
         let path = operation.path.replacingOccurrences(of: "{session_id}", with: id)
+            .replacingOccurrences(of: "{asset_id}", with: id)
         #expect(request.url?.absoluteString == "http://localhost:4000\(path)")
         #expect(request.httpMethod == operation.method.rawValue)
         let bearer = request.value(forHTTPHeaderField: "Authorization")

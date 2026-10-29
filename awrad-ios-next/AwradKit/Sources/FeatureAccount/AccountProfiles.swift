@@ -87,11 +87,17 @@ struct SyncCard: View {
                         .foregroundStyle(AwradColors.onSurfaceVariant)
                         .awradExpandingContent()
                 }
+                if let usage = profiles.audioUsage {
+                    Text(ProfileStrings.audioStorage(usage, locale: locale))
+                        .awradTextStyle(.bodySmall)
+                        .foregroundStyle(AwradColors.onSurfaceVariant)
+                        .awradExpandingContent()
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
         }
-        .awradExpand(value: profiles.unsentCount > 0)
+        .awradExpand(value: [profiles.unsentCount > 0, profiles.audioUsage != nil])
     }
 
     /// "5 minutes ago" or "in 2 minutes", in the locale's words and digits.
@@ -156,7 +162,7 @@ struct ProfileQuestionDialog: ViewModifier {
 
 /// Sample profiles for previews and the debug screenshots.
 enum PreviewProfiles {
-    static func state(syncStatus: SyncStatus = .syncing, unsent: Int = 0) -> ProfilesState {
+    static func state(syncStatus: SyncStatus = .syncing, unsent: Int = 0, audio: AudioUsage? = nil) -> ProfilesState {
         let amina = LocalProfile(
             id: .random(), accountID: .random(), email: "amina@example.com", hasData: true,
             lastUsed: .now.addingTimeInterval(-60))
@@ -171,8 +177,11 @@ enum PreviewProfiles {
             registry: ProfileRegistry(
                 profiles: [phone, omar, amina, bilal], activeProfileID: amina.id,
                 signedInAccountID: amina.accountID),
-            syncStatus: syncStatus, unsentCount: unsent)
+            syncStatus: syncStatus, unsentCount: unsent, audioUsage: audio)
     }
+
+    /// "120 MB of 500 MB".
+    static let audioUsage = AudioUsage(usedBytes: 120_482_733, limitBytes: 500_000_000)
 }
 
 #Preview("Profiles") {
@@ -198,7 +207,9 @@ enum PreviewProfiles {
 
 #Preview("Sync") {
     VStack {
-        SyncCard(profiles: PreviewProfiles.state(syncStatus: .upToDate(lastSynced: .now.addingTimeInterval(-300))))
+        SyncCard(
+            profiles: PreviewProfiles.state(
+                syncStatus: .upToDate(lastSynced: .now.addingTimeInterval(-300)), audio: PreviewProfiles.audioUsage))
         SyncCard(
             profiles: PreviewProfiles.state(
                 syncStatus: .waitingToRetry(retryAt: .now.addingTimeInterval(120)), unsent: 3)

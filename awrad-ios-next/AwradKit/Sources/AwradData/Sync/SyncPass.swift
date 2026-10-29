@@ -11,11 +11,21 @@ struct SyncPass: Sendable {
     /// Guards against a server that never lets the queue drain or the feed end.
     static let maxRounds = 1000
 
-    let server: any SyncServer
-
-    /// Returns the notices of rejected changes.
-    func run(_ database: ProfileDatabase, account: AwradID) async throws(SyncFailure) -> [SyncNotice] {
+    /// What a pass leaves for the phone.
+    struct Result: Equatable, Sendable {
         var notices: [SyncNotice] = []
+        /// Recordings to upload again after an `audio_not_found` or `audio_mismatch` rejection, with
+        /// the file each is on the phone.
+        var uploadsQueued: [AwradID: URL] = [:]
+    }
+
+    let server: any SyncServer
+    /// Each custom dhikr's recording file on the phone, read only when a batch has a put rejected
+    /// for its recording.
+    var recordingFiles: @Sendable () async -> [AwradID: URL] = { [:] }
+
+    func run(_ database: ProfileDatabase, account: AwradID) async throws(SyncFailure) -> Result {
+        var result = Result()
         for _ in 0..<Self.maxRounds {
             let batch = try await storage { try await database.nextBatch(limit: Self.batchSize) }
             guard !batch.isEmpty else { break }
@@ -25,7 +35,12 @@ struct SyncPass: Sendable {
             let receipts = wire.receipts.compactMap { receipt in
                 types[receipt.commandID].flatMap(receipt.receipt(type:))
             }
-            notices += try await storage { try await database.apply(receipts) }
+            let files = receipts.contains(where: \.isAudioRejection) ? await recordingFiles() : [:]
+            let outcome = try await storage {
+                try await database.apply(receipts, localAudioFiles: Set(files.keys))
+            }
+            result.notices += outcome.notices
+            for dhikr in outcome.uploadsQueued { result.uploadsQueued[dhikr] = files[dhikr] }
             // A batch whose receipts the client can't read leaves its commands queued: stop here
             // instead of resending them in a loop; the next sync tries again.
             guard !receipts.isEmpty else { break }
@@ -38,7 +53,7 @@ struct SyncPass: Sendable {
             guard page.hasMore, page.nextAfter > after else { break }
             after = page.nextAfter
         }
-        return notices
+        return result
     }
 
     /// A local write that failed: treated like an unavailable server, so the pass is retried.
@@ -48,5 +63,13 @@ struct SyncPass: Sendable {
         } catch {
             throw .unavailable
         }
+    }
+}
+
+extension SyncReceipt {
+    /// A rejection about a put's recording (`audio_not_found`, `audio_mismatch`).
+    var isAudioRejection: Bool {
+        if case .rejected(_, let code, _, _) = outcome { return code.isAboutAudio }
+        return false
     }
 }

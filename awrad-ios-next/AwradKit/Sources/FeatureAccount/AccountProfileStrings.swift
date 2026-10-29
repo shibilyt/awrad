@@ -61,6 +61,14 @@ enum ProfileStrings {
         }
     }
 
+    /// "Audio storage: 120 MB of 500 MB", in decimal megabytes as the limits are (contracts/audio/v1),
+    /// with the locale's digits.
+    static func audioStorage(_ usage: AudioUsage, locale: Locale) -> LocalizedStringResource {
+        let used = AudioUsage.megabytes(usage.usedBytes, locale: locale)
+        let limit = AudioUsage.megabytes(usage.limitBytes, locale: locale)
+        return Strings.text("account.sync.audio_storage \(used) \(limit)")
+    }
+
     /// "3 changes waiting to be sent" (plural variants in the catalog).
     static func unsent(_ count: Int) -> LocalizedStringResource {
         LocalizedStringResource(

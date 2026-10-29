@@ -1625,6 +1625,167 @@
         }
       }
     },
+    "library.notice.audio.empty" : {
+      "comment" : "Why a recording couldn't be uploaded: the file is empty.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التسجيل فارغ. يبقى على هذا الهاتف."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The recording is empty. It stays on this phone."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "റെക്കോർഡിംഗ് ശൂന്യമാണ്. അത് ഈ ഫോണിൽ തന്നെ തുടരും."
+          }
+        }
+      }
+    },
+    "library.notice.audio.mismatch" : {
+      "comment" : "Why a recording couldn't be uploaded: the stored file didn't match the recording, twice.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تغيّر التسجيل أثناء رفعه. يبقى على هذا الهاتف."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The recording changed while it was uploading. It stays on this phone."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "അപ്‌ലോഡ് ചെയ്യുന്നതിനിടെ റെക്കോർഡിംഗ് മാറി. അത് ഈ ഫോണിൽ തന്നെ തുടരും."
+          }
+        }
+      }
+    },
+    "library.notice.audio.storage_full" : {
+      "comment" : "Why a recording couldn't be uploaded: the account's storage is full.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مساحة التسجيلات في حسابك ممتلئة. يبقى التسجيل على هذا الهاتف."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your account's audio storage is full. The recording stays on this phone."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങളുടെ അക്കൗണ്ടിലെ ഓഡിയോ സ്റ്റോറേജ് നിറഞ്ഞു. റെക്കോർഡിംഗ് ഈ ഫോണിൽ തന്നെ തുടരും."
+          }
+        }
+      }
+    },
+    "library.notice.audio.storage_full_usage" : {
+      "comment" : "Why a recording couldn't be uploaded: the account's storage is full. The arguments are amounts in decimal megabytes, used then the limit (497 MB, 500 MB).",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مساحة التسجيلات في حسابك ممتلئة (%1$@ من %2$@). يبقى التسجيل على هذا الهاتف."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your account's audio storage is full (%1$@ of %2$@). The recording stays on this phone."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങളുടെ അക്കൗണ്ടിലെ ഓഡിയോ സ്റ്റോറേജ് നിറഞ്ഞു (%2$@-ൽ %1$@). റെക്കോർഡിംഗ് ഈ ഫോണിൽ തന്നെ തുടരും."
+          }
+        }
+      }
+    },
+    "library.notice.audio.too_large" : {
+      "comment" : "Why a recording couldn't be uploaded. The number is the size limit in megabytes.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التسجيل أكبر من %lld ميغابايت. يبقى على هذا الهاتف."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The recording is larger than %lld MB. It stays on this phone."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "റെക്കോർഡിംഗ് %lld MB-യിൽ കൂടുതലാണ്. അത് ഈ ഫോണിൽ തന്നെ തുടരും."
+          }
+        }
+      }
+    },
+    "library.notice.audio.unsupported" : {
+      "comment" : "Why a recording couldn't be uploaded: it isn't MP3 or M4A.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يمكن رفع إلا تسجيلات MP3 وM4A. يبقى التسجيل على هذا الهاتف."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only MP3 and M4A recordings can be uploaded. It stays on this phone."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MP3, M4A റെക്കോർഡിംഗുകൾ മാത്രമേ അപ്‌ലോഡ് ചെയ്യാനാകൂ. അത് ഈ ഫോണിൽ തന്നെ തുടരും."
+          }
+        }
+      }
+    },
+    "library.notice.audio_not_uploaded" : {
+      "comment" : "Title of the dialog shown when a recording couldn't be uploaded to the account and stays on the phone. Its body is the reason.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر رفع التسجيل"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Audio couldn't be uploaded"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ഓഡിയോ അപ്‌ലോഡ് ചെയ്യാനായില്ല"
+          }
+        }
+      }
+    },
     "library.notice.change_refused" : {
       "comment" : "Title of the dialog shown when the server refused a change, which has already been undone. Its body is the reason.",
       "localizations" : {
@@ -1644,6 +1805,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "മാറ്റം നിരസിച്ചു"
+          }
+        }
+      }
+    },
+    "library.notice.reason.audio" : {
+      "comment" : "Why a change came back from the server: its recording wasn't in the account. The change was kept, not undone.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احتُفظ بتغييرك، لكن تسجيله لم يكن في حسابك. إن كان التسجيل لا يزال على هذا الهاتف فسيُرفع من جديد."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your change was kept, but its recording wasn't in your account. If the recording is still on this phone, it uploads again."
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "നിങ്ങളുടെ മാറ്റം നിലനിർത്തി, പക്ഷേ അതിന്റെ റെക്കോർഡിംഗ് നിങ്ങളുടെ അക്കൗണ്ടിൽ ഉണ്ടായിരുന്നില്ല. റെക്കോർഡിംഗ് ഇപ്പോഴും ഈ ഫോണിലുണ്ടെങ്കിൽ, അത് വീണ്ടും അപ്‌ലോഡ് ചെയ്യും."
           }
         }
       }
@@ -1782,6 +1966,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ആ പേരിൽ മറ്റൊരു ടാഗ് ഇതിനകം ഉണ്ട്."
+          }
+        }
+      }
+    },
+    "library.notice.recording_not_in_account" : {
+      "comment" : "Title of the dialog shown when a change was kept but its recording wasn't in the account.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التسجيل ليس في حسابك"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recording not in your account"
+          }
+        },
+        "ml" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "റെക്കോർഡിംഗ് നിങ്ങളുടെ അക്കൗണ്ടിൽ ഇല്ല"
           }
         }
       }

@@ -7,14 +7,14 @@ import SwiftData
 ///
 /// - `registry.json`: the profile registry;
 /// - `<profile-id>/profile.store`: the profile's SwiftData database;
-/// - `<profile-id>/Audio/<dhikr-id>.mp3|m4a`: its custom dhikrs' recordings (never uploaded in 3b),
-///   and `Audio/Staged/` for a picked recording waiting for its dhikr to be saved.
+/// - `<profile-id>/Audio/<dhikr-id>.mp3|m4a`: recordings imported on this phone, until uploaded;
+///   `Audio/Staged/` for a picked recording waiting for its dhikr to be saved; and `Audio/Cache/`
+///   for uploaded recordings (`ProfileFiles+Audio.swift`).
 ///
 /// Removing a profile deletes its directory, so nothing of it stays.
 struct ProfileFiles: Sendable {
-    /// 10 MB per recording, meaning 10,000,000 bytes (sync README "Limits"; uploads in 3c use the
-    /// same limit).
-    static let maxAudioBytes = 10_000_000
+    /// 10 MB per recording, meaning 10,000,000 bytes: the upload limit (contracts/audio/v1).
+    static let maxAudioBytes = AudioUploadRules.maxFileBytes
     static let audioExtensions = ["mp3", "m4a"]
     private static let log = Logger(subsystem: "app.awrad.awrad.next", category: "profiles")
 

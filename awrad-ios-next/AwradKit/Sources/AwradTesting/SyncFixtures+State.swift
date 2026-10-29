@@ -117,11 +117,13 @@ public struct LocalShape: Codable, Equatable, Sendable {
 /// One step: a changes page, the receipts for the sent commands, or a conflict resolution.
 public enum StepShape: Decodable, Sendable {
     case page(ChangesPage)
-    case receipts([SyncReceipt])
+    /// The receipts, and the IDs of the commands the step queues, in order.
+    case receipts([SyncReceipt], newCommandIDs: [AwradID])
     case resolve(SyncEntityKey, ConflictChoice, commandID: AwradID?)
 
     enum CodingKeys: String, CodingKey {
         case kind, page, receipts, resolve
+        case newCommandIDs = "new_command_ids"
     }
 
     public init(from decoder: any Decoder) throws {
@@ -130,7 +132,9 @@ public enum StepShape: Decodable, Sendable {
         case "page":
             self = .page(try container.decode(PageShape.self, forKey: .page).page())
         case "receipts":
-            self = .receipts(try container.decode([ReceiptShape].self, forKey: .receipts).map { try $0.receipt() })
+            self = .receipts(
+                try container.decode([ReceiptShape].self, forKey: .receipts).map { try $0.receipt() },
+                newCommandIDs: try container.decode([String].self, forKey: .newCommandIDs).map(wireID))
         default:
             let resolve = try container.decode(ResolveShape.self, forKey: .resolve)
             let key = SyncEntityKey(try wireEntityType(resolve.entityType), try wireID(resolve.entityID))
@@ -143,6 +147,33 @@ public enum StepShape: Decodable, Sendable {
 public struct ApplyChangesGiven: Decodable, Sendable {
     public let local: LocalShape
     public let step: StepShape
+    /// Custom dhikr IDs whose recording file is on the phone (slice 3c).
+    public let localAudioFiles: [String]
+
+    enum CodingKeys: String, CodingKey {
+        case local, step
+        case localAudioFiles = "local_audio_files"
+    }
+
+    public func audioFiles() throws -> Set<AwradID> { Set(try localAudioFiles.map(wireID)) }
+
+    /// Runs the step on `state` with the case's recording files and new command IDs: the notices
+    /// and the recordings queued for upload again, as the fixture writes them.
+    public func run(on state: inout some SyncLocalState) throws -> (notices: [NoticeShape], uploads: [String]) {
+        switch step {
+        case .page(let page):
+            SyncRules.apply(page, to: &state)
+            return ([], [])
+        case .receipts(let receipts, let newCommandIDs):
+            var ids = newCommandIDs.makeIterator()
+            let outcome = SyncRules.apply(
+                receipts, to: &state, localAudioFiles: try audioFiles(), newCommandID: { ids.next() ?? .random() })
+            return (outcome.notices.map(NoticeShape.init), outcome.uploadsQueued.map(\.description))
+        case .resolve(let key, let choice, let commandID):
+            SyncRules.resolve(key, choice: choice, commandID: commandID ?? .random(), in: &state)
+            return ([], [])
+        }
+    }
 }
 
 public struct NoticeShape: Codable, Equatable, Sendable {
@@ -166,9 +197,17 @@ public struct NoticeShape: Codable, Equatable, Sendable {
 public struct ApplyChangesExpect: Decodable, Equatable, Sendable {
     public let local: LocalShape
     public let notices: [NoticeShape]
+    /// Custom dhikr IDs whose recording the step queued for upload again, sorted.
+    public let uploadsQueued: [String]
 
-    public init(local: LocalShape, notices: [NoticeShape]) {
+    enum CodingKeys: String, CodingKey {
+        case local, notices
+        case uploadsQueued = "uploads_queued"
+    }
+
+    public init(local: LocalShape, notices: [NoticeShape], uploadsQueued: [String]) {
         self.local = local
         self.notices = notices
+        self.uploadsQueued = uploadsQueued
     }
 }

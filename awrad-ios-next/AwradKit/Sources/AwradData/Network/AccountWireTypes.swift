@@ -133,18 +133,25 @@ struct ProblemWire: Codable, Equatable, Sendable, Error {
     let code: String
     let detail: String
     let errors: [FieldError]
+    /// `storage_full`'s extension members (slice 3c): the account's used bytes and its limit.
+    let usedBytes: Int?
+    let limitBytes: Int?
 
     enum CodingKeys: String, CodingKey {
         case type, title, status, code, detail, errors
+        case usedBytes = "used_bytes"
+        case limitBytes = "limit_bytes"
     }
 
-    init(code: String, status: Int, errors: [FieldError] = []) {
+    init(code: String, status: Int, errors: [FieldError] = [], usedBytes: Int? = nil, limitBytes: Int? = nil) {
         type = "urn:awrad:problem:\(code)"
         title = code
         self.status = status
         self.code = code
         detail = code
         self.errors = errors
+        self.usedBytes = usedBytes
+        self.limitBytes = limitBytes
     }
 
     init(from decoder: any Decoder) throws {
@@ -155,6 +162,8 @@ struct ProblemWire: Codable, Equatable, Sendable, Error {
         status = try values.decodeIfPresent(Int.self, forKey: .status) ?? 0
         detail = try values.decodeIfPresent(String.self, forKey: .detail) ?? ""
         errors = try values.decodeIfPresent([FieldError].self, forKey: .errors) ?? []
+        usedBytes = try values.decodeIfPresent(Int.self, forKey: .usedBytes)
+        limitBytes = try values.decodeIfPresent(Int.self, forKey: .limitBytes)
     }
 }
 

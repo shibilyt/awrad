@@ -24,12 +24,13 @@ extension LocalProfileStore: PersonalLibrary {
         var document = document
         switch audio {
         case .unchanged:
-            if case .customDhikr(let old) = existing { document.hasLocalAudio = old.hasLocalAudio }
+            if case .customDhikr(let old) = existing { document.audio = old.audio }
         case .replace(let staged):
             guard files.isStaged(staged.url, profile: profile) else { throw .storage }
-            document.hasLocalAudio = true
+            // Local until it's uploaded; the upload then queues a put naming the asset.
+            document.audio = .localOnly
         case .remove:
-            document.hasLocalAudio = false
+            document.audio = nil
         }
         try await edit(.put(.customDhikr(document), id: dhikrID))
         switch audio {
@@ -37,12 +38,22 @@ extension LocalProfileStore: PersonalLibrary {
         case .replace(let staged): try files.commitAudio(staged, for: dhikrID, profile: profile)
         case .remove: files.removeAudio(for: dhikrID, profile: profile)
         }
+        if audio != .unchanged { await recordingChanged(dhikrID) }
         return dhikrID
     }
 
     public func deleteCustomDhikr(_ id: AwradID) async throws(PersonalLibraryError) {
         try await edit(.delete(SyncEntityKey(.customDhikr, id)))
         files.removeAudio(for: id, profile: registry.activeProfileID)
+        await recordingChanged(id)
+    }
+
+    /// A dhikr's recording was replaced or removed, or the dhikr deleted: an upload of the old one
+    /// stops, and its downloaded copy goes.
+    private func recordingChanged(_ dhikr: AwradID) async {
+        try? await database.removeUpload(for: dhikr)
+        await sweepAudio()
+        await publishAll()
     }
 
     public func createTag(named name: String) async throws(PersonalLibraryError) -> UserTag {
@@ -82,10 +93,6 @@ extension LocalProfileStore: PersonalLibrary {
 
     public func stageAudio(from source: URL) async throws(PersonalLibraryError) -> StagedAudio {
         try files.stageAudio(from: source, profile: registry.activeProfileID)
-    }
-
-    public func audioURL(for dhikr: AwradID) async -> URL? {
-        files.audioURL(for: dhikr, profile: registry.activeProfileID)
     }
 
     // MARK: - Editing

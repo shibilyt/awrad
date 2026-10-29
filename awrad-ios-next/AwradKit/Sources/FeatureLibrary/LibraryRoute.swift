@@ -62,7 +62,12 @@ struct LibraryScreen: View {
                 self.destination(destination)
             }
         }
-        .changeRefusedNotice(state.personal.notices) { send(.dismissNotice($0)) }
+        .personalNotice(state.personal) { notice in
+            switch notice {
+            case .sync(let notice): send(.dismissNotice(notice))
+            case .audio(let notice): send(.dismissAudioNotice(notice))
+            }
+        }
         // Accent text for the back button, readable in light and dark.
         .tint(AwradColors.accent)
     }

@@ -46,7 +46,7 @@ public enum CustomDhikrValidation {
             errors += languageErrors(
                 translation, field: "/translation", keys: ["en", "ar", "ml"], maxLength: maxTextLength)
         }
-        if let audio = members["audio"], audio != .null, audio != .object(["local_only": .bool(true)]) {
+        if let audio = members["audio"], audio != .null, CustomDhikrAudio(json: audio) == nil {
             errors.append(SyncFieldError(field: "/audio", code: "invalid"))
         }
         if let references = members["references"] {

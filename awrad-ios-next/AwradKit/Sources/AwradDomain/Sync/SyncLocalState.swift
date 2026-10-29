@@ -21,6 +21,9 @@ public protocol SyncLocalState {
     mutating func setKnownVersion(_ version: Int?, for key: SyncEntityKey)
 
     mutating func appendCommand(_ command: OutboxCommand)
+    /// Inserts a command at `index` of the outbox (at the end when `index` is past it); the
+    /// commands from there on move back one.
+    mutating func insertCommand(_ command: OutboxCommand, at index: Int)
     /// Replaces the command with the same `commandID`, keeping its place in the queue.
     mutating func replaceCommand(_ command: OutboxCommand)
     mutating func removeCommand(_ commandID: AwradID)
@@ -74,6 +77,10 @@ public struct InMemorySyncState: SyncLocalState, Hashable, Sendable {
     public mutating func setKnownVersion(_ version: Int?, for key: SyncEntityKey) { knownVersions[key] = version }
 
     public mutating func appendCommand(_ command: OutboxCommand) { outbox.append(command) }
+
+    public mutating func insertCommand(_ command: OutboxCommand, at index: Int) {
+        outbox.insert(command, at: min(max(index, 0), outbox.count))
+    }
 
     public mutating func replaceCommand(_ command: OutboxCommand) {
         guard let index = outbox.firstIndex(where: { $0.commandID == command.commandID }) else { return }

@@ -14,6 +14,8 @@ public actor LocalProfileStore {
     let files: ProfileFiles
     let account: any AccountService
     let server: (any SyncServer)?
+    /// Private audio (slice 3c): the four operations and storage's signed links.
+    let audio: AudioServices?
     let deletions: (any DeletedAccountSource)?
     let now: @Sendable () -> Date
     let timing: SyncScheduler.Timing
@@ -24,6 +26,8 @@ public actor LocalProfileStore {
     var syncStatus = SyncStatus.notSyncing
     var unsentCount = 0
     var pendingPrompt: PendingProfilePrompt?
+    /// The signed-in account's audio storage, as last read.
+    var audioUsage: AudioUsage?
     var libraryObservers: [Int: AsyncStream<PersonalContent>.Continuation] = [:]
     var profileObservers: [Int: AsyncStream<ProfilesState>.Continuation] = [:]
     var nextObserver = 0
@@ -34,11 +38,13 @@ public actor LocalProfileStore {
     /// The app's store under `directory` (Application Support/Profiles), syncing through `session`.
     public init(directory: URL, session: AuthSession) throws {
         try self.init(
-            directory: directory, account: session, server: APISyncServer(session: session), deletions: session)
+            directory: directory, account: session, server: APISyncServer(session: session),
+            audio: AudioServices(server: APIAudioServer(session: session), objects: URLSessionObjectStore()),
+            deletions: session)
     }
 
     init(
-        directory: URL, account: any AccountService, server: (any SyncServer)?,
+        directory: URL, account: any AccountService, server: (any SyncServer)?, audio: AudioServices? = nil,
         deletions: (any DeletedAccountSource)? = nil, now: @escaping @Sendable () -> Date = Date.init,
         timing: SyncScheduler.Timing = SyncScheduler.Timing(),
         sleep: @escaping SyncScheduler.Sleep = { try await Task.sleep(for: $0) }
@@ -46,6 +52,7 @@ public actor LocalProfileStore {
         files = ProfileFiles(root: directory)
         self.account = account
         self.server = server
+        self.audio = audio
         self.deletions = deletions
         self.now = now
         self.timing = timing
@@ -114,6 +121,7 @@ public actor LocalProfileStore {
         if registry.activeProfileID != previousActive || outcome.erased.contains(previousActive) {
             await scheduler.stop()
             syncStatus = .notSyncing
+            audioUsage = nil
             openActiveDatabase()
         }
         if outcome.queueAll == registry.activeProfileID {
@@ -192,13 +200,12 @@ public actor LocalProfileStore {
             await handle(.signOut, choice: nil)
             return .stopped
         }
-        let database = self.database
         syncStatus = .syncing
         publish()
         do {
-            _ = try await SyncPass(server: server).run(database, account: accountID)
+            let uploadsWait = try await syncWithAudio(server: server, account: accountID)
             syncStatus = .upToDate(lastSynced: now())
-            return await finished(.synced)
+            return await finished(uploadsWait ? .failed(retryAfter: nil) : .synced)
         } catch .accountMismatch {
             syncStatus = .accountMismatch
             return await finished(.stopped)
