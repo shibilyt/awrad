@@ -165,6 +165,10 @@ public interface SyncDao {
     @Query("DELETE FROM audio_uploads WHERE dhikr_id = :dhikrId AND state = 'failed'")
     public fun deleteFailedUploadFor(dhikrId: String)
 
+    /** Hides a failed upload's notice and keeps the upload. */
+    @Query("UPDATE audio_uploads SET dismissed = 1 WHERE dhikr_id = :dhikrId AND state = 'failed'")
+    public fun dismissFailedUploadFor(dhikrId: String)
+
     @Query("SELECT * FROM audio_uploads ORDER BY created_at, asset_id")
     public fun observeUploads(): Flow<List<AudioUploadEntity>>
 }

@@ -91,8 +91,9 @@ public data class SyncMetaEntity(
  * A recording waiting to upload to the account (slice 3c), one per custom dhikr. [assetId] is a new UUIDv7 for
  * this file; [sha256], [byteSize], [contentType] and [durationMs] are measured on the first attempt and kept, so a
  * retry reserves the same body. [state] is `queued` or `failed`; a failed one keeps the recording on the phone and
- * is a notice ([problem], with the account's [usedBytes] and [limitBytes] when it's full) until dismissed; a full
- * one is queued again once the account has room for it. [mismatches] counts `upload_mismatch` answers in a row.
+ * is a notice ([problem], with the account's [usedBytes] and [limitBytes] when it's full) until dismissed. A full
+ * one stays when its notice is [dismissed] (only the notice goes) and is queued again once the account has room for
+ * it; any other is deleted on dismissal. [mismatches] counts `upload_mismatch` answers in a row.
  */
 @Entity(tableName = "audio_uploads", indices = [Index(value = ["dhikr_id"], unique = true)])
 public data class AudioUploadEntity(
@@ -109,6 +110,7 @@ public data class AudioUploadEntity(
     @ColumnInfo(name = "used_bytes") val usedBytes: Long? = null,
     @ColumnInfo(name = "limit_bytes") val limitBytes: Long? = null,
     @ColumnInfo(name = "mismatches") val mismatches: Int = 0,
+    @ColumnInfo(name = "dismissed") val dismissed: Boolean = false,
 ) {
     public companion object {
         public const val QUEUED: String = "queued"

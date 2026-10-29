@@ -115,19 +115,79 @@ class AudioUploaderTest {
     }
 
     @Test
-    fun `storage_full keeps it local, with the account's use and limit, until dismissed`() = runTest {
+    fun `storage_full keeps it local with the account's use and limit, and dismissing only hides the notice`() =
+        runTest {
+            val stack = signedInStack()
+            stack.audioServer.otherUsedBytes = USED_NEARLY_ALL
+            stack.saveWithRecording()
+
+            stack.engine.syncOnce()
+
+            val notice = stack.audio.uploadNotices.first().single()
+            assertEquals(AudioUploadProblem.STORAGE_FULL, notice.problem)
+            assertEquals(AudioStorage(USED_NEARLY_ALL, 500_000_000), notice.storage)
+            stack.audio.dismissUploadNotice(notice)
+            assertTrue(stack.audio.uploadNotices.first().isEmpty())
+            assertEquals(RecordingUpload.FAILED, stack.audio.upload(dhikrId).first())
+        }
+
+    @Test
+    fun `a dismissed storage_full upload still goes once there's room, with no notice again`() = runTest {
         val stack = signedInStack()
         stack.audioServer.otherUsedBytes = USED_NEARLY_ALL
         stack.saveWithRecording()
+        stack.engine.syncOnce()
+        stack.audio.dismissUploadNotice(stack.audio.uploadNotices.first().single())
 
+        // Still full: it's checked again, and the dismissed notice stays hidden.
+        stack.audioServer.calls.clear()
+        stack.engine.syncOnce()
+        assertEquals(listOf("usage"), stack.audioServer.calls)
+        assertTrue(stack.audio.uploadNotices.first().isEmpty())
+
+        stack.audioServer.otherUsedBytes = 0
+        assertEquals(SyncOutcome.Done, stack.engine.syncOnce())
+
+        val asset = stack.audioServer.ready.keys.single()
+        assertEquals(asset, CustomAudioJson.uploaded(stack.server.document()["audio"])?.assetId?.value)
+        assertTrue(stack.audio.uploadNotices.first().isEmpty())
+        assertEquals(RecordingUpload.NONE, stack.audio.upload(dhikrId).first())
+    }
+
+    @Test
+    fun `a dismissed storage_full upload that fails again shows a new notice`() = runTest {
+        val stack = signedInStack()
+        stack.audioServer.otherUsedBytes = USED_NEARLY_ALL
+        stack.saveWithRecording()
+        stack.engine.syncOnce()
+        stack.audio.dismissUploadNotice(stack.audio.uploadNotices.first().single())
+
+        // The usage shows room, but the account fills up again before the reservation.
+        stack.audioServer.otherUsedBytes = 0
+        stack.audioServer.createFailures += ApiFailure.ProblemResponse(
+            Problem(status = 422, code = "storage_full", usedBytes = USED_NEARLY_ALL, limitBytes = 500_000_000),
+            null,
+        )
         stack.engine.syncOnce()
 
         val notice = stack.audio.uploadNotices.first().single()
         assertEquals(AudioUploadProblem.STORAGE_FULL, notice.problem)
         assertEquals(AudioStorage(USED_NEARLY_ALL, 500_000_000), notice.storage)
-        stack.audio.dismissUploadNotice(notice)
-        assertTrue(stack.audio.uploadNotices.first().isEmpty())
+    }
+
+    @Test
+    fun `dismissing any other failure gives the upload up until the recording changes`() = runTest {
+        val stack = signedInStack()
+        stack.saveWithRecording()
+        stack.audioServer.createFailures += problem(413, "file_too_large")
+        stack.engine.syncOnce()
+
+        stack.audio.dismissUploadNotice(stack.audio.uploadNotices.first().single())
+
         assertEquals(RecordingUpload.NONE, stack.audio.upload(dhikrId).first())
+        stack.audioServer.calls.clear()
+        stack.engine.syncOnce()
+        assertTrue(stack.audioServer.calls.isEmpty())
     }
 
     @Test

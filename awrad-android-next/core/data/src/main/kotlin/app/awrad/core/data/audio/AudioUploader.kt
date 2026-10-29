@@ -79,7 +79,8 @@ internal class AudioUploader(
 
     /**
      * Queues again each `storage_full` failure the account now has room for, oldest first, counting each one's size
-     * against the room left. Only asks for the usage when there's such a failure; without an answer, they wait.
+     * against the room left, its notice dismissed or not (a new failure shows a new notice). Only asks for the usage
+     * when there's such a failure; without an answer, they wait.
      */
     private suspend fun requeueWhereRoom(profileId: AwradId, accountId: AwradId) {
         val full = profiles.write(profileId) { it.database.syncDao().failedUploads(STORAGE_FULL_PROBLEM) }
@@ -97,7 +98,8 @@ internal class AudioUploader(
                 .filter { it.state == AudioUploadEntity.FAILED && it.problem == STORAGE_FULL_PROBLEM }
                 .forEach { stored ->
                     val queued = AudioUploadEntity.QUEUED
-                    dao.upsertUpload(stored.copy(state = queued, problem = null, usedBytes = null, limitBytes = null))
+                    val cleared = stored.copy(problem = null, usedBytes = null, limitBytes = null, dismissed = false)
+                    dao.upsertUpload(cleared.copy(state = queued))
                 }
         }
     }
@@ -273,6 +275,7 @@ internal class AudioUploader(
             problem = problem.name,
             usedBytes = storage?.usedBytes,
             limitBytes = storage?.limitBytes,
+            dismissed = false,
         )
         val written = profiles.write(profileId) { open ->
             val dao = open.database.syncDao()
