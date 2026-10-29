@@ -20,6 +20,8 @@ public final class AccountModel {
         case confirmEmailChange
         case deleteAccount
         case profiles
+        /// Practice settings (slice 3d): signed in or out, shown by the view the app passes in.
+        case practiceSettings
     }
 
     public enum Phase: Equatable, Sendable {
@@ -119,6 +121,7 @@ public final class AccountModel {
         case deleteConfirmed
         // Profiles
         case profilesTapped
+        case practiceSettingsTapped
         case removeProfileTapped(AwradID)
         case profileAnswered(ProfileChoice)
         /// The dialog was dismissed without choosing (the scrim, the escape gesture).
@@ -199,6 +202,7 @@ public final class AccountModel {
         case .changeEmailTapped: push(.changeEmail)
         case .deleteAccountTapped: push(.deleteAccount)
         case .profilesTapped: push(.profiles)
+        case .practiceSettingsTapped: push(.practiceSettings)
         default: return false
         }
         return true

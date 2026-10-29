@@ -1,5 +1,6 @@
 import AwradData
 import AwradDomain
+import FeaturePracticeSettings
 import Foundation
 import SwiftData
 
@@ -18,11 +19,14 @@ final class AppComposition {
     let language: CatalogLanguage
     /// A new audio player for each dhikr screen.
     let makeAudioPlayer: @MainActor () -> any DhikrAudioPlayer
+    /// Practice settings (slice 3d): the active profile's policy, the device context, location,
+    /// place search, Maghrib and the bundled cities.
+    let practice: PracticeSettingsServices
 
     init(
         onboardingStatus: any OnboardingStatusStore, goals: any GoalRepository, account: any AccountService,
         profiles: LocalProfileStore, catalog: DhikrCatalog, language: CatalogLanguage,
-        makeAudioPlayer: @escaping @MainActor () -> any DhikrAudioPlayer
+        makeAudioPlayer: @escaping @MainActor () -> any DhikrAudioPlayer, practice: PracticeSettingsServices
     ) {
         self.onboardingStatus = onboardingStatus
         self.goals = goals
@@ -31,6 +35,7 @@ final class AppComposition {
         self.catalog = catalog
         self.language = language
         self.makeAudioPlayer = makeAudioPlayer
+        self.practice = practice
     }
 
     static func live() -> AppComposition {
@@ -64,6 +69,11 @@ final class AppComposition {
             // Can't continue without the profile store; it already recreated an incompatible one.
             fatalError("Couldn't open the local profiles: \(error)")
         }
+        let cities = CityDirectoryCache()
+        let practice = PracticeSettingsServices(
+            settings: profiles, deviceContext: UserDefaultsDeviceContextStore(),
+            locationProvider: CoreLocationProvider(), places: GeocoderPlaceSearch(locale: Locale(identifier: language)),
+            maghrib: AdhanMaghribCalculator(), cities: { await cities.directory() })
         return AppComposition(
             onboardingStatus: UserDefaultsOnboardingStatusStore(),
             goals: SwiftDataGoalRepository(modelContainer: container),
@@ -71,7 +81,8 @@ final class AppComposition {
             profiles: profiles,
             catalog: catalog,
             language: CatalogLanguage(languageCode: language),
-            makeAudioPlayer: { AVDhikrAudioPlayer() }
+            makeAudioPlayer: { AVDhikrAudioPlayer() },
+            practice: practice
         )
     }
 
@@ -85,6 +96,21 @@ final class AppComposition {
     private static func appLanguage() -> String {
         let supported = ["en", "ar", "ml"]
         return Bundle.main.preferredLocalizations.first { supported.contains($0) } ?? "en"
+    }
+}
+
+/// The bundled city list, decoded and indexed once, off the main actor, the first time Practice
+/// settings opens.
+actor CityDirectoryCache {
+    private var cached: CityDirectory?
+
+    func directory() -> CityDirectory? {
+        if let cached { return cached }
+        // The bundled copy is checked against the contract and decoded in tests.
+        guard let list = try? CityList.bundled() else { return nil }
+        let directory = CityDirectory(index: CitySearchIndex(cities: list.cities), attribution: list.attribution)
+        cached = directory
+        return directory
     }
 }
 

@@ -1,3 +1,0 @@
-import AwradDomain
-
-enum PracticeSettingsPlaceholder {}

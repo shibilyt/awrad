@@ -246,6 +246,12 @@ struct AccountProfilesTests {
         #expect(model.state.path == [.profiles])
     }
 
+    @Test func practiceSettingsOpenSignedInOrOut() {
+        let model = model(FakeAccountService())
+        #expect(model.apply(.practiceSettingsTapped))
+        #expect(model.state.path == [.practiceSettings])
+    }
+
     @Test func removingAProfileWithUnsentChangesWarnsFirst() async {
         let (model, _) = await signedInAsAmina()
         await model.send(.removeProfileTapped(omar.id))

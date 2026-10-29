@@ -2,7 +2,7 @@
 
 The Awrad iOS app, rebuilt to replace `awrad-ios/` (root ADR-2026-10-14).
 - **Stack:** SwiftUI, SwiftData and Observation on iOS 18, built with Xcode 26.2 / Swift 6.2.
-- **Status:** scaffold plus the slice 1 goal rules, the slice 1b Hijri calendar, the slice 2a and 2b accounts, the slice 3a dhikr catalog and Library, the slice 3b custom dhikrs, tags, local profiles and change queue, and the slice 3c private audio uploads. A placeholder onboarding screen and home screen prove the wiring; features arrive in slices (`../docs/rebuild-plan.md`).
+- **Status:** scaffold plus the slice 1 goal rules, the slice 1b Hijri calendar, the slice 2a and 2b accounts, the slice 3a dhikr catalog and Library, the slice 3b custom dhikrs, tags, local profiles and change queue, the slice 3c private audio uploads, and the slice 3d practice settings. A placeholder onboarding screen and home screen prove the wiring; features arrive in slices (`../docs/rebuild-plan.md`).
 
 ## Modules
 
@@ -25,7 +25,7 @@ flowchart TD
 | Target | May depend on | Isolation |
 |---|---|---|
 | `AwradDomain` | nothing (Foundation) | nonisolated |
-| `AwradData` | `AwradDomain` | nonisolated (actors for state) |
+| `AwradData` | `AwradDomain`, and `Adhan` (adhan-swift, ADR 0006) | nonisolated (actors for state) |
 | `AwradDesignSystem` | nothing | `@MainActor` by default |
 | `Feature*` | `AwradDomain`, `AwradDesignSystem` | `@MainActor` by default |
 | `AwradTesting` | `AwradDomain` | nonisolated |
@@ -203,6 +203,31 @@ A signed-in user's custom dhikr recording follows the account ([`contracts/audio
 - **UI:** the Library shows one notice dialog at a time (`PersonalNotice`): refused changes first ("Recording not in your account" for the audio codes: the change was kept), then "Audio couldn't be uploaded" with the reason ("storage is full (497 MB of 500 MB)"). The account Sync card adds "Audio storage: 120 MB of 500 MB" while `ProfilesState.audioUsage` is set (signed in as the active profile's account).
 - **Screenshots** (debug builds): `-AwradSampleData YES` now includes a dhikr whose recording is in the account (`LocalProfileStore.Sample.tasbih`); `-AwradSampleAudioNotice YES` adds a storage-full notice; `-AwradAccountScreenshot settings` shows the storage line.
 - **Tests:** `AudioUploadTests` (success with exact headers and the resulting put, the phone's pre-check, each refusal, incomplete, one and two mismatches, `storage_full` retried once there's room, a removed failed recording, ID in use, unreachable storage, restart, signed out, "Add to my account", an `audio_not_found` round trip, a replaced recording), `AudioCacheTests` (first play, offline replay, a changed, removed or deleted recording, signed out, not found, Settings' usage), `AudioImportTests` (accepted and refused types, a raw `.aac`, an `.m4a` sent as `audio/mp4`), `UploadedAudioTests` (including the document's length before the first play) and `AudioStorageTests` for the screens.
+
+## Practice settings (slice 3d)
+
+How practice is measured ([`contracts/practice-settings/v1`](../contracts/practice-settings/v1/README.md), [`contracts/places/v1`](../contracts/places/v1/README.md), root ADR-2026-10-29). All of it works signed out and offline; only the platform's place search needs the network.
+
+- **Domain** (`AwradDomain/Practice/`, pure and fixture-driven):
+  - `PracticePolicy` (`DayReset`, `CalculationMethod` with adhan's names, `Madhab`, `WeekStart`, `HijriCorrections`), `.default` (midnight, Karachi, Shafi'i, Monday, none). `init(json:)` goes through `PracticePolicyValidation.errors(in:)` (the fixture's `{field, code}` errors on raw JSON); `json` writes corrections sorted.
+  - `PracticePolicy.merge(base:mine:theirs:)`: by setting, Hijri corrections month by month, falling back to theirs with `correctionsReplaced`. `PracticePolicy.afterSignIn(_:local:account:)`: the first-sign-in rule over `LocalPracticePolicy` (policy and `chosen`).
+  - `HijriCorrections+Adjusting`: `offset(year:month:)` in force, `allowedOffsets` (only those that keep every month 29 or 30 days), `setting(_:year:month:)` (drops the month's own correction when it would inherit the offset anyway) and `removing`, each `nil` when the set would be invalid.
+  - `PracticeToday`: the effective practice day at an instant (`EffectivePracticeDay`), with Maghrib on the local date at the device's location and the Hijri date with corrections. No location, or no sunset, falls back to midnight.
+  - Device context: `DeviceLocation` (`latitude`, `longitude`, `name`, `source` `gps`/`city`/`search`, `cityID`). Ports: `DeviceContextStore`, `LocationProvider`, `PlaceSearch`, `MaghribCalculator`, `PracticeSettings` (the active profile's policy). Fakes in `AwradTesting/FakePracticeSettings.swift`.
+- **Change queue:** `SyncEntityType.practicePolicy`, `SyncDocument.practicePolicy`; `SyncLocalState` gains `baseDocument`/`setBaseDocument`. A page with nothing queued and an `applied` put set the base; a `conflict` on the policy never opens a conflict: it merges against the base, takes the server copy as base and version, and queues the result on that version unless the server has it (notice `hijri_corrections_replaced`, which only Practice settings shows). `queueAll` and the profile merge leave the policy out.
+- **City list:** `AwradDomain/Resources/cities.json` is a byte-identical copy of `contracts/places/v1/cities.json`; `scripts/check-city-list.py` (in `scripts/validate`) fails on drift and `--fix` copies it. `CityList.bundled()` decodes it; `CitySearchIndex` keys every name and alias once (`CitySearchKey.key`: NFKD, accents, harakat, tatweel, alef forms, apostrophes, punctuation) and matches UTF-8 bytes (exact, start, later word; names above aliases; then population, then ID). The app decodes and indexes it once, off the main actor, when Practice settings first opens (`CityDirectoryCache`).
+- **Maghrib:** `AdhanMaghribCalculator` (`AwradData/Practice/`) over adhan-swift's `PrayerTimes`, `nil` where the library finds no sunset (ADR 0006).
+- **Data:**
+  - Each profile's database has one `PracticePolicyRecord` (document, `baseDocument`, `chosen`, and the anonymous policy kept during a first sign-in), the anonymous profile included; in an account's profile it's the `practice_policy` entity, whatever the key's ID (the account's). Saving marks it chosen and, in an account's profile, queues the put like any edit; it never sets `hasData`, so settings alone never ask Add / Erase.
+  - **First sign-in** (`LocalProfileStore.apply`): signing in from the anonymous profile to an account without a profile here reads the anonymous policy before Erase can remove it, then `beginFirstSignIn` stores it in the account's profile. After the first full sync pass, `finishFirstSignIn` applies `afterSignIn` (the account's policy if the feed had one, else the anonymous one, queued as a create only if chosen) and syncs again if it queued. A user edit in between ends the rule: it's queued like any edit and merges if needed.
+  - `UserDefaultsDeviceContextStore`: the installation's location, as the contract's `location` shape, shared by every profile, never sent. `CoreLocationProvider`: when-in-use permission, then one `requestLocation()` at `kCLLocationAccuracyReduced`. `GeocoderPlaceSearch`: `CLGeocoder` (deprecated in iOS 26 in favour of MapKit's `MKGeocodingRequest`; fine at the iOS 18 deployment target), nothing offline. The permission text is `NSLocationWhenInUseUsageDescription`, translated in `AwradNext/InfoPlist.xcstrings`.
+- **UI** (`FeaturePracticeSettings`): `PracticeSettingsRoute` over `PracticeSettingsModel`, pushed from the account sheet's Practice settings row (signed in) or text button (signed out) through `AccountRoute(practiceSettings:)`; its pages push with `navigationDestination(isPresented:)` inside the account stack.
+  - Main page: a Today card (Hijri date, Maghrib time or why there's none), day reset pills with the fallback hint (no location, or no sunset today), Location, Calculation method and Hijri calendar rows that open their pages, Asr (Standard / Hanafi) and week start pills.
+  - Location: Use my location (error line when denied or unavailable), Remove location, the city search (bundled results under Cities at once, then the platform's under More places after a 600 ms pause, stale answers dropped), and the GeoNames attribution line.
+  - Calculation method: option rows. Hijri calendar: today's date, Adjust this month (only allowed offsets), Adjust next month from the 29th, and earlier corrections with Remove (disabled, with the reason, when a later correction depends on it).
+  - Dialogs: a save that failed (the change is undone), and corrections replaced by a merge.
+  - Rows without an icon: the shared icon set has none for location or practice settings yet.
+- **Runners:** `PracticeSettingsFixtureTests` (validity, merge, first sign-in), `CitySearchFixtureTests` (over the bundled list), `PracticeSettingsFixtureCoverageTests` (both directories), `MaghribFixtureTests` (through the adapter, within 60 s, `nil` where expected, every method covered); `SyncFixtureTests` and `SyncPersistenceTests` run the new `apply_changes` cases in memory and on SwiftData. `PracticePolicySyncTests` covers the profiles (signed out, seeding, the account winning after Add or Erase, untouched defaults, merge by setting, the notice, per-profile policies); `DeviceContextStoreTests`; `PracticeSettingsModelTests` and `HijriAdjustmentTests` the screen.
 
 ## Screens
 

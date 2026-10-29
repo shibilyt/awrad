@@ -5,15 +5,22 @@ import SwiftUI
 /// Stateful entry point: owns the model and the close callback, nothing else.
 public struct AccountRoute: View {
     @State private var model: AccountModel
+    private let practiceSettings: () -> AnyView
     private let onClose: () -> Void
 
-    public init(service: any AccountService, profiles: any LocalProfiles, onClose: @escaping () -> Void) {
+    /// - Parameter practiceSettings: the Practice settings screen (another feature), pushed from
+    ///   the Practice settings row.
+    public init(
+        service: any AccountService, profiles: any LocalProfiles,
+        practiceSettings: @escaping () -> AnyView = { AnyView(EmptyView()) }, onClose: @escaping () -> Void
+    ) {
         _model = State(initialValue: AccountModel(service: service, profiles: profiles))
+        self.practiceSettings = practiceSettings
         self.onClose = onClose
     }
 
     public var body: some View {
-        AccountScreen(state: model.state, onClose: onClose) { action in
+        AccountScreen(state: model.state, practiceSettings: practiceSettings, onClose: onClose) { action in
             // Typing and navigation apply synchronously; only server work runs in a task.
             if !model.apply(action) { Task { await model.send(action) } }
         }
@@ -27,6 +34,7 @@ public struct AccountRoute: View {
 /// overview and pushes the settings.
 struct AccountScreen: View {
     let state: AccountModel.State
+    var practiceSettings: () -> AnyView = { AnyView(EmptyView()) }
     let onClose: () -> Void
     let send: (AccountModel.Action) -> Void
 
@@ -79,6 +87,7 @@ struct AccountScreen: View {
         case .confirmEmailChange: ConfirmEmailChangeForm(state: state, send: send)
         case .deleteAccount: DeleteAccountForm(state: state, send: send)
         case .profiles: ProfilesView(state: state, send: send)
+        case .practiceSettings: practiceSettings()
         }
     }
 }
