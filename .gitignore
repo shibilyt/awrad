@@ -35,3 +35,10 @@ node_modules/
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# Local secrets and per-machine settings: never committed.
+mise.local.toml
+**/mise.local.toml
+.env
+.env.*
+!.env.example
