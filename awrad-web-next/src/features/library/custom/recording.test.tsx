@@ -1,12 +1,14 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import type { Change, CustomDhikrDocument } from "@/shared/sync";
 import { recordRequests, renderRoute, type RecordedRequest } from "@/test/render";
 import { server } from "@/test/setup";
 import { specHandler, specProblem } from "@/test/spec";
 import {
   MORNING_DHIKR_ID,
   UPLOADED_ASSET_ID,
+  UPLOADED_DHIKR,
   UPLOADED_DHIKR_ID,
   signedInWithEntities,
   withUploadedDhikr,
@@ -160,5 +162,46 @@ describe("an uploaded recording", () => {
 
     expect(await screen.findByText("Audio is on the phone that added it.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Play audio" })).not.toBeInTheDocument();
+  });
+});
+
+/** Audio README, "Phones": before the first play the player shows the document's `duration_ms`. */
+describe("the time before the first play", () => {
+  test("is the document's duration_ms as the total, until the file's own length is known", async () => {
+    server.use(...signedInWithEntities(withUploadedDhikr));
+    downloads();
+    fakePlayback();
+    const requests = recordRequests();
+    renderRoute(`/library/dhikrs/${UPLOADED_DHIKR_ID}`);
+
+    // duration_ms 31250, and nothing loaded yet.
+    const position = await screen.findByRole("progressbar", { name: "Playback position" });
+    expect(position).toHaveAttribute("aria-valuetext", "0:00 / 0:31");
+    expect(screen.getByText("0:00 / 0:31")).toBeInTheDocument();
+    expect(downloadRequests(requests)).toHaveLength(0);
+
+    // Once loaded, the element's length takes over.
+    await userEvent.click(screen.getByRole("button", { name: "Play audio" }));
+    Object.defineProperties(audioElement(), { duration: { value: 33.4 } });
+    fireEvent.durationChange(audioElement());
+    await waitFor(() => {
+      expect(position).toHaveAttribute("aria-valuetext", "0:00 / 0:33");
+    });
+  });
+
+  test("is only the elapsed time when the uploader couldn't measure it (duration_ms null)", async () => {
+    const dhikr: CustomDhikrDocument = {
+      ...UPLOADED_DHIKR,
+      audio: { asset_id: UPLOADED_ASSET_ID, byte_size: 4182733, content_type: "audio/mpeg", duration_ms: null },
+    };
+    const unmeasured = (changes: Change[]): Change[] =>
+      withUploadedDhikr(changes).map((change) =>
+        change.entity_id === UPLOADED_DHIKR_ID ? { ...change, document: dhikr as Change["document"] } : change,
+      );
+    server.use(...signedInWithEntities(unmeasured));
+    renderRoute(`/library/dhikrs/${UPLOADED_DHIKR_ID}`);
+
+    const position = await screen.findByRole("progressbar", { name: "Playback position" });
+    expect(position).toHaveAttribute("aria-valuetext", "0:00");
   });
 });
