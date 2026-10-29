@@ -128,6 +128,7 @@ struct CurrentShape: Decodable {
             case .null: nil
             case let json where json["kind"] != nil: .customDhikr
             case let json where json["name"] != nil: .userTag
+            case let json where json["day_reset"] != nil: .practicePolicy
             default: .dhikrPersonal
             }
         return ServerCopy(

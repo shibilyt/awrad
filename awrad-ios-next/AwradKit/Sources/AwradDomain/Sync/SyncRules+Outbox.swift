@@ -82,7 +82,8 @@ extension SyncRules {
             let right = order.firstIndex(of: rhs.type) ?? 0
             return left == right ? lhs < rhs : left < right
         }
-        for key in keys {
+        // The practice policy follows its own first-sign-in rule (`PracticePolicy.afterSignIn`).
+        for key in keys where key.type != .practicePolicy {
             guard let document = state.document(key), state.commands(for: key).isEmpty else { continue }
             state.appendCommand(
                 OutboxCommand(
@@ -123,6 +124,7 @@ extension SyncRules {
         case .customDhikr: remove(SyncEntityKey(.dhikrPersonal, key.id), in: &state)
         case .userTag: removeTagFromPersonalRecords(key.id, in: &state)
         case .dhikrPersonal: break
+        case .practicePolicy: state.setBaseDocument(nil, for: key)
         }
     }
 

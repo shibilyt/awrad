@@ -104,6 +104,7 @@ struct SyncPersistenceTests {
         state.after = source.after
         for (key, document) in source.documents { state.setDocument(document, for: key) }
         for (key, version) in source.knownVersions { state.setKnownVersion(version, for: key) }
+        for (key, base) in source.baseDocuments { state.setBaseDocument(base, for: key) }
         for command in source.outbox { state.appendCommand(command) }
         for (key, conflict) in source.conflicts { state.setConflict(conflict, for: key) }
         try state.context.save()
@@ -116,6 +117,7 @@ struct SyncPersistenceTests {
             if let document = state.document(key) {
                 memory.setDocument(document, for: key)
                 memory.setKnownVersion(state.knownVersion(key), for: key)
+                memory.setBaseDocument(state.baseDocument(key), for: key)
             }
         }
         for conflict in state.allConflicts() { memory.setConflict(conflict, for: conflict.key) }

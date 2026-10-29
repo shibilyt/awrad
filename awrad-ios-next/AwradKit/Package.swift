@@ -28,15 +28,23 @@ let package = Package(
         .library(name: "FeatureOnboarding", targets: ["FeatureOnboarding"]),
         .library(name: "FeatureAccount", targets: ["FeatureAccount"]),
         .library(name: "FeatureLibrary", targets: ["FeatureLibrary"]),
+        .library(name: "FeaturePracticeSettings", targets: ["FeaturePracticeSettings"]),
     ],
+    // adhan-swift computes Maghrib for the day reset (slice 3d, ADR 0006); only AwradData uses it.
+    dependencies: [.package(url: "https://github.com/batoulapps/adhan-swift", exact: "1.5.0")],
     targets: [
         .target(
             name: "AwradDomain",
-            // An identical copy of contracts/dhikr-catalog/v1/catalog.json (scripts/check-dhikr-catalog.py).
-            resources: [.copy("Resources/dhikr-catalog.json")],
+            // Identical copies of contracts/dhikr-catalog/v1/catalog.json (scripts/check-dhikr-catalog.py)
+            // and contracts/places/v1/cities.json (scripts/check-city-list.py).
+            resources: [.copy("Resources/dhikr-catalog.json"), .copy("Resources/cities.json")],
             swiftSettings: strict
         ),
-        .target(name: "AwradData", dependencies: ["AwradDomain"], swiftSettings: strict),
+        .target(
+            name: "AwradData",
+            dependencies: ["AwradDomain", .product(name: "Adhan", package: "adhan-swift")],
+            swiftSettings: strict
+        ),
         .target(
             name: "AwradDesignSystem",
             resources: [
@@ -59,6 +67,12 @@ let package = Package(
         ),
         .target(
             name: "FeatureLibrary",
+            dependencies: ["AwradDomain", "AwradDesignSystem"],
+            resources: [.process("Resources")],
+            swiftSettings: ui
+        ),
+        .target(
+            name: "FeaturePracticeSettings",
             dependencies: ["AwradDomain", "AwradDesignSystem"],
             resources: [.process("Resources")],
             swiftSettings: ui
@@ -89,6 +103,11 @@ let package = Package(
         .testTarget(
             name: "FeatureLibraryTests",
             dependencies: ["FeatureLibrary", "AwradDomain", "AwradTesting"],
+            swiftSettings: ui
+        ),
+        .testTarget(
+            name: "FeaturePracticeSettingsTests",
+            dependencies: ["FeaturePracticeSettings", "AwradDomain", "AwradTesting"],
             swiftSettings: ui
         ),
     ]

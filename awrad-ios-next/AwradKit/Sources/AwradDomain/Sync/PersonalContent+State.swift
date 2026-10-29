@@ -13,7 +13,7 @@ extension PersonalContent {
             case .userTag(let tag):
                 tags.append(UserTag(id: key.id, name: tag.name, normalizedName: tag.normalizedName))
             case .dhikrPersonal(let personal) where !personal.tagIDs.isEmpty: tagsByDhikr[key.id] = personal.tagIDs
-            case .dhikrPersonal: break
+            case .dhikrPersonal, .practicePolicy: break
             }
         }
         self.init(

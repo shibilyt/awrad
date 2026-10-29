@@ -12,7 +12,8 @@ from pathlib import Path
 PACKAGE = Path(__file__).resolve().parent.parent / "AwradKit"
 ALLOWED = {
     "AwradDomain": set(),
-    "AwradData": {"AwradDomain"},
+    # Adhan (batoulapps/adhan-swift) computes Maghrib behind the MaghribCalculator port (ADR 0006).
+    "AwradData": {"AwradDomain", "Adhan"},
     "AwradDesignSystem": set(),
     "AwradTesting": {"AwradDomain"},
 }
@@ -35,7 +36,7 @@ def main() -> int:
     problems = []
     for target in dump["targets"]:
         name, kind = target["name"], target["type"]
-        deps = {d.get("byName", d.get("target", [None]))[0] for d in target["dependencies"]}
+        deps = {d.get("byName", d.get("target", d.get("product", [None])))[0] for d in target["dependencies"]}
         allowed = allowed_for(name, kind)
         if kind != "test" and allowed is None:
             problems.append(f"{name} has no rule; add one to scripts/check-module-rules.py")
