@@ -3,6 +3,7 @@
 package app.awrad.core.data.practice
 
 import app.awrad.core.data.sync.FakeSyncServer
+import app.awrad.core.data.sync.RoomSyncStore
 import app.awrad.core.data.sync.SyncOutcome
 import app.awrad.core.data.sync.SyncStack
 import app.awrad.core.data.sync.SyncStack.Companion.ACCOUNT
@@ -11,9 +12,14 @@ import app.awrad.core.domain.practice.DayReset
 import app.awrad.core.domain.practice.PracticePolicy
 import app.awrad.core.domain.practice.PracticePolicyJson
 import app.awrad.core.domain.practice.WeekStart
+import app.awrad.core.domain.sync.ApplyChanges
 import app.awrad.core.domain.sync.EntityKey
+import app.awrad.core.domain.sync.EntityState
 import app.awrad.core.domain.sync.EntityType
 import app.awrad.core.domain.sync.ProfileChoice
+import app.awrad.core.domain.sync.Receipt
+import app.awrad.core.domain.sync.RejectionCode
+import app.awrad.core.domain.sync.ServerCopy
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -143,5 +149,45 @@ class PracticePolicySyncTest {
         assertEquals(merged, policies.policy.first())
         assertEquals(PracticePolicyJson.encode(merged), stack.server.policy()?.document)
         assertTrue(stack.conflicts().isEmpty(), "a policy never opens a conflict")
+    }
+
+    /** Signs in, edits the policy, and has the server reject that put with [current]; returns the stack. */
+    private suspend fun TestScope.rejectedPut(current: ServerCopy?): SyncStack {
+        val stack = signedOut()
+        stack.accounts.updateAccount(ACCOUNT)
+        runCurrent()
+        stack.policies().update { it.copy(dayReset = DayReset.MAGHRIB) }
+        val command = stack.outbox().single()
+        val rejected = Receipt.Rejected(command.commandId, RejectionCode.DOCUMENT_INVALID, emptyList(), current)
+        stack.databases.write { profile ->
+            val store = RoomSyncStore(profile.database.syncDao()) { 0L }
+            ApplyChanges.applyReceipts(store, listOf(rejected), stack.profiles.ids::next)
+        }
+        return stack
+    }
+
+    @Test
+    fun `a rejected policy put takes the server's copy`() = runTest {
+        val server = PracticePolicy.DEFAULT.copy(weekStart = WeekStart.SATURDAY)
+        val copy = ServerCopy(3, EntityState.ACTIVE, PracticePolicyJson.encode(server))
+
+        val stack = rejectedPut(copy)
+
+        assertEquals(server, stack.policies().policy.first())
+        val entity = stack.entities().single()
+        assertEquals(3, entity.knownVersion)
+        assertEquals(PracticePolicyJson.encode(server), entity.baseDocument)
+        assertTrue(stack.outbox().isEmpty())
+    }
+
+    @Test
+    fun `a rejected policy put with no server copy keeps the document at version 0 on the default base`() = runTest {
+        val stack = rejectedPut(null)
+
+        assertEquals(maghrib, stack.policies().policy.first())
+        val entity = stack.entities().single()
+        assertEquals(0, entity.knownVersion)
+        assertEquals(PracticePolicyJson.encode(PracticePolicy.DEFAULT), entity.baseDocument)
+        assertTrue(stack.outbox().isEmpty())
     }
 }

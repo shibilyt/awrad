@@ -65,6 +65,7 @@ internal fun LocationSection(
             text = stringResource(R.string.practice_use_my_location),
             onClick = onUseMyLocation,
             variant = AwradButtonVariant.Secondary,
+            leadingIcon = AwradIcons.Location,
             isLoading = state.isLocating,
         )
         AwradButton(
