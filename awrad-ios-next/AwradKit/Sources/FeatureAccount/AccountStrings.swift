@@ -118,7 +118,7 @@ enum Strings {
         }
     }
 
-    /// The notices, and "something went wrong" for anything else.
+    /// The notices, the device-storage messages, and "something went wrong" for anything else.
     private static func notice(_ feedback: AccountModel.Feedback) -> LocalizedStringResource {
         switch feedback {
         case .codeSent: text("account.notice.code_sent")
@@ -128,6 +128,8 @@ enum Strings {
         case .sessionSignedOut: text("account.notice.session_signed_out")
         case .otherSessionsSignedOut: text("account.notice.other_sessions_signed_out")
         case .accountDeleted: text("account.notice.account_deleted")
+        case .credentialsNotSaved: text("account.error.credentials_not_saved")
+        case .signInNotSaved: text("account.error.sign_in_not_saved")
         default: text("account.error.unexpected")
         }
     }

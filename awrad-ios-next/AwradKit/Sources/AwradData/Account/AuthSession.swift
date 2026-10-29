@@ -9,13 +9,15 @@ import Foundation
 /// - A refresh always sends an `Idempotency-Key`, and a retry of the same refresh reuses it.
 /// - Credentials are dropped only when the refresh is rejected (`refresh_token_invalid`,
 ///   `refresh_reuse_detected`), never on network errors or server faults.
+/// - A sign-in must be saved or it fails. A refresh whose rotated tokens can't be saved keeps
+///   using them in memory (`hasUnsavedSignIn()`) and saves them again on the next refresh.
 /// - Nothing here touches local practice data.
 public actor AuthSession: AccountService {
     /// How long before its stated expiry an access token is treated as expired.
     static let expiryMargin: TimeInterval = 60
 
     let client: APIClient
-    private let vault: CredentialVault
+    private var vault: CredentialVault
     private let deviceName: String
     private let now: @Sendable () -> Date
 
@@ -28,6 +30,9 @@ public actor AuthSession: AccountService {
     private var epoch = 0
     /// The account a refresh found deleted (`401 account_deleted`), until the profiles take it.
     private var deletedAccount: AwradID?
+    /// Secure storage refused the latest tokens: this launch signs in from memory, and the next
+    /// refresh saves them again.
+    private var credentialsUnsaved = false
 
     /// - Parameters:
     ///   - baseURL: The API origin, such as `http://localhost:4000`.
@@ -52,6 +57,10 @@ public actor AuthSession: AccountService {
 
     public func signedInAccount() -> Account? {
         loadIfNeeded()?.account.account
+    }
+
+    public func hasUnsavedSignIn() -> Bool {
+        credentials != nil && credentialsUnsaved
     }
 
     public func currentAccount() async throws(AccountError) -> Account {
@@ -94,7 +103,7 @@ public actor AuthSession: AccountService {
             throw AccountError(error)
         }
         epoch += 1
-        return try adopt(grant)
+        return try await adoptSignIn(grant)
     }
 
     public func signOut() async {
@@ -181,7 +190,9 @@ public actor AuthSession: AccountService {
         guard var stored = loadIfNeeded() else { return .failure(.signedOut) }
         let startedIn = epoch
         let key = stored.pendingRefreshKey ?? AwradID.random().description
-        if stored.pendingRefreshKey == nil {
+        if vault.hasUnsavedInstallationID { _ = vault.installationID() }
+        // Also the retry of a save that was refused earlier.
+        if stored.pendingRefreshKey == nil || credentialsUnsaved {
             stored.pendingRefreshKey = key
             keep(stored)
         }
@@ -226,25 +237,58 @@ public actor AuthSession: AccountService {
     private func loadIfNeeded() -> StoredCredentials? {
         if !loaded {
             loaded = true
-            vault.claimIfNewInstallation()
-            credentials = vault.credentials()
+            credentials = vault.claimIfNewInstallation() ? vault.credentials() : nil
         }
         return credentials
     }
 
-    /// Stores a grant's tokens and returns its account.
-    private func adopt(_ grant: DeviceSessionGrantWire) throws(AccountError) -> Account {
+    /// A grant's account and the instant its access token expires, or `.unexpected` if unreadable.
+    private func details(of grant: DeviceSessionGrantWire) throws(AccountError) -> (Account, Date) {
         guard let account = grant.account.account,
             let expiresAt = WireInstant.date(grant.accessTokenExpiresAt)
         else { throw .unexpected(code: nil) }
+        return (account, expiresAt)
+    }
+
+    /// Keeps a refresh's rotated tokens. If secure storage refuses them they still work in memory
+    /// for this launch, and the next refresh saves them again.
+    private func adopt(_ grant: DeviceSessionGrantWire) throws(AccountError) -> Account {
+        let (account, expiresAt) = try details(of: grant)
         keep(StoredCredentials(account: grant.account, refreshToken: grant.refreshToken, pendingRefreshKey: nil))
         access = (grant.accessToken, expiresAt)
         return account
     }
 
+    /// Keeps a new sign-in, or fails with `.credentialsNotSaved` and leaves this device signed out:
+    /// a session that lives only in memory would be gone on the next launch. The session the
+    /// server just made is ended, best effort.
+    private func adoptSignIn(_ grant: DeviceSessionGrantWire) async throws(AccountError) -> Account {
+        let (account, expiresAt) = try details(of: grant)
+        let stored = StoredCredentials(account: grant.account, refreshToken: grant.refreshToken, pendingRefreshKey: nil)
+        do {
+            try vault.save(stored)
+        } catch {
+            CredentialLog.failed("saving the sign-in", error)
+            forget()
+            try? await client.send(.signOutDeviceSession, body: RefreshTokenBody(refreshToken: grant.refreshToken))
+            throw .credentialsNotSaved
+        }
+        credentials = stored
+        credentialsUnsaved = false
+        access = (grant.accessToken, expiresAt)
+        return account
+    }
+
+    /// Updates the stored copy. The copy in memory stays in use if the save is refused.
     private func keep(_ stored: StoredCredentials) {
         credentials = stored
-        vault.save(stored)
+        do {
+            try vault.save(stored)
+            credentialsUnsaved = false
+        } catch {
+            credentialsUnsaved = true
+            CredentialLog.failed("saving the sign-in", error)
+        }
     }
 
     /// The account a refresh found deleted since the last call, if any. Taking it clears it.
@@ -258,6 +302,12 @@ public actor AuthSession: AccountService {
         epoch += 1
         credentials = nil
         access = nil
-        vault.clearCredentials()
+        credentialsUnsaved = false
+        do {
+            try vault.clearCredentials()
+        } catch {
+            // Signed out here either way; the server rejects a leftover token on the next launch.
+            CredentialLog.failed("removing the sign-in", error)
+        }
     }
 }
