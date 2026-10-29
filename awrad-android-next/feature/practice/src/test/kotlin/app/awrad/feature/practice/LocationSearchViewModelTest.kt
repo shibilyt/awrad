@@ -56,6 +56,22 @@ class LocationSearchViewModelTest {
     }
 
     @Test
+    fun `a platform result within 10 km of a bundled city shown is left out`() {
+        places.result = PlaceSearchResult.Found(
+            listOf(
+                FoundPlace("Kozhikode, Kerala, India", 11.2588, 75.7804),
+                FoundPlace("Ponnani, Kerala, India", 10.77, 75.92),
+            ),
+        )
+        val viewModel = viewModel()
+        viewModel.onAction(LocationSearchAction.QueryChanged("Calicut"))
+        mainDispatcher.dispatcher.scheduler.advanceTimeBy(600)
+
+        assertEquals(1_265_873L, viewModel.state.value.cities.first().id)
+        assertEquals(listOf("Ponnani, Kerala, India"), viewModel.state.value.places.map { it.name })
+    }
+
+    @Test
     fun `choosing a city or a place saves it on this phone and closes`() {
         val viewModel = viewModel()
         viewModel.onAction(LocationSearchAction.QueryChanged("Kozhikode"))
