@@ -82,8 +82,16 @@ A cleaned-up `asset_id` is gone for good: a put naming it is `audio_not_found`, 
 
 - **Importing audio** while signed in and online uploads in the background, then queues the `put` once the upload is confirmed. Offline, or not uploaded yet, the document keeps `{"local_only": true}`, and the upload runs once signed in and online.
 - **"Add to my account"** (slice 3b) uploads each local recording, then queues its dhikr.
-- **A recording that can't upload** (`storage_full`, `file_too_large`, `unsupported_audio_type`, `invalid_size`, `upload_mismatch`) stays local, with a notice ("Audio couldn't be uploaded: storage full"). The dhikr still syncs, with `{"local_only": true}`.
+- **A recording that can't upload** (`storage_full`, `file_too_large`, `unsupported_audio_type`, `invalid_size`, or a second `upload_mismatch`) stays local, with a notice ("Audio couldn't be uploaded: storage full"). The dhikr still syncs, with `{"local_only": true}`.
 - **Pending uploads persist** in the profile, alongside the change queue, and survive restarts.
+- **Importing:** phones and the web accept only `.mp3` (`audio/mpeg`) and `.m4a` (`audio/mp4`; a file the system reports as `audio/x-m4a` is sent as `audio/mp4`). Any other file, including a raw `.aac` stream, is refused at import with an "unsupported type" message, so it never becomes a local recording that can't upload.
+- **Retries** (decided 2026-10-29):
+  - `upload_incomplete`, a `404` on confirm, `asset_id_in_use`, or storage refusing the `PUT` (an expired link): reserve again and retry, under a new `asset_id` where the old one can't be reused.
+  - `upload_mismatch`: one retry under a new `asset_id`, measuring the file again; a second mismatch in a row leaves it local with the notice.
+  - `storage_full`: the upload stays failed with the notice, and is retried automatically on a later sync once the usage endpoint shows enough free space for it. Replacing or removing the recording also clears the failure.
+  - `file_too_large`, `unsupported_audio_type`, `invalid_size`: not retried; the recording stays local until it changes.
+- **Quota pre-check** is optional: a client may skip it, because the server's `storage_full` carries the real figures.
+- **Before the first play** the player shows the document's `duration_ms` (when present) as the total time.
 - **An `audio_not_found` or `audio_mismatch` rejection loses nothing** ([`apply_changes.json`](../../sync/v1/fixtures/apply_changes.json); sync README, "Sending and pulling"). The phone keeps its local document. If the recording's file is still on the phone, `audio` goes back to `{"local_only": true}` and the upload is queued again under a new `asset_id`; otherwise `audio` becomes `null`. Either way a put of the kept document is queued on the server's version, ahead of other unsent commands, and the user gets a notice.
 
 ## Fixtures
