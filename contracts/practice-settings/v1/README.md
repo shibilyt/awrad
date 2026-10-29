@@ -54,7 +54,11 @@ The effective practice day itself is `goal-model/v1/fixtures/effective_practice_
 
 The server answers an invalid put with `rejected document_invalid`, with the same errors under `/document`.
 
-**What the UI offers.** Because every month is 29 or 30 days, a month can usually move only one day from the month before, in one direction. "Adjust this month" offers only the offsets that keep the set valid; two days apart takes two months in a row.
+**What the UI offers.** Because every month is 29 or 30 days, a month can usually move only one day from the month before, in one direction. So, on every platform:
+- "Adjust this month" offers only the offsets that keep the set valid; two days apart takes two months in a row.
+- From day 29 of the current Hijri month (of the effective practice day), the next month can be adjusted too, since sightings are announced then.
+- Earlier corrections are listed with Remove, which is disabled when removing that correction would leave an invalid set.
+- The location can be cleared; the Maghrib reset then falls back to midnight, with the hint.
 
 ## Syncing the policy
 

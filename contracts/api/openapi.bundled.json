@@ -1619,7 +1619,7 @@
                   {
                     "command_id": "0192f0c0-0000-7000-8000-000000000008",
                     "entity_type": "practice_policy",
-                    "entity_id": "0192f000-0000-7000-8000-000000000001",
+                    "entity_id": "0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90",
                     "op": "put",
                     "base_version": 0,
                     "document": {
@@ -2029,11 +2029,31 @@
                       "version": 3,
                       "revision": 13,
                       "document": null
+                    },
+                    {
+                      "entity_type": "practice_policy",
+                      "entity_id": "0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90",
+                      "state": "active",
+                      "version": 1,
+                      "revision": 14,
+                      "document": {
+                        "day_reset": "maghrib",
+                        "calculation_method": "karachi",
+                        "madhab": "shafi",
+                        "week_start": "monday",
+                        "hijri_corrections": [
+                          {
+                            "year": 1448,
+                            "month": 5,
+                            "offset_days": -1
+                          }
+                        ]
+                      }
                     }
                   ],
-                  "next_after": 13,
+                  "next_after": 14,
                   "has_more": false,
-                  "head_revision": 13
+                  "head_revision": 14
                 }
               }
             }

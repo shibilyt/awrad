@@ -20,7 +20,7 @@ Users choose how their practice is measured: when the day resets (midnight or Ma
 - **Method and madhab both land now,** as in the frozen policy. The method moves Maghrib by up to 3 minutes for some methods; madhab affects only Asr, which no screen uses until the prayer-times slice.
 - **First sign-in:** an account that has ever saved practice settings keeps them, and the phone takes them. An account that never has takes this phone's settings, but only if the user actually changed them; untouched defaults are never uploaded.
 - **Two devices editing before they sync merge by setting,** with no prompt. Each setting you changed keeps your value; the others come from the other device. Hijri corrections merge month by month.
-- **Hijri corrections UI:** Settings shows today's Hijri date with "Adjust this month". Near the end of a month it also offers the next month, since sightings are announced then. Earlier corrections are listed and can be removed.
+- **Hijri corrections UI:** Settings shows today's Hijri date with "Adjust this month". From day 29 of a Hijri month it also offers the next month, since sightings are announced then. Earlier corrections are listed with Remove, disabled when removing one would leave an invalid set. The location can be cleared.
   - It offers only the offsets the rules allow. Every month is 29 or 30 days, so a month usually moves one day from the month before, in one direction; two days takes two months in a row (found while writing the contract).
 - **Defaults** are the frozen ones: midnight reset, Karachi method, Shafi'i madhab, Monday week start.
 
