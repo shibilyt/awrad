@@ -3,6 +3,7 @@ import { RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { queryClient, router } from "@/app/router";
+import { guardViewTransitions } from "@/app/viewTransitions";
 import { initI18n } from "@/shared/i18n";
 import "@/shared/ui/theme.css";
 
@@ -12,6 +13,7 @@ if (root === null) throw new Error("index.html is missing #root");
 /** The dev-only component gallery's path. Production builds drop it, and the gallery's code, entirely. */
 const GALLERY_PATH = "/dev/components";
 
+guardViewTransitions();
 await initI18n();
 if (import.meta.env.DEV && window.location.pathname === GALLERY_PATH) {
   const { renderGallery } = await import("@/dev/gallery/ComponentGallery");
