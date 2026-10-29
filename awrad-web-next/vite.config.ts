@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
+import { searchForWorkspaceRoot } from "vite";
 import { defineConfig } from "vitest/config";
 
 // The API runs on Phoenix (awrad-server-next). In development, Vite proxies /api and
@@ -24,6 +25,15 @@ export default defineConfig({
   server: {
     port: 5180, // fixed and uncommon, so it never clashes with other local projects (the R2 CORS rule allows it)
     strictPort: true,
+    // The contract data the app imports as it is (slice 3d), beside this project's own files.
+    // Directories, since a `?raw` import is checked with its query.
+    fs: {
+      allow: [
+        searchForWorkspaceRoot(process.cwd()),
+        fileURLToPath(new URL("../contracts/hijri-calendar/v1", import.meta.url)),
+        fileURLToPath(new URL("../contracts/places/v1", import.meta.url)),
+      ],
+    },
     proxy: {
       "/api": { target: api, changeOrigin: false },
       "/socket": { target: api, ws: true, changeOrigin: false },

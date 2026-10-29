@@ -383,7 +383,7 @@ export interface paths {
          *
          *     **Batch versus command problems.** The batch is refused as a whole (`422 validation_failed`, nothing applied) only when it has 0 or more than 100 commands, or a command's envelope is wrong: `command_id` or `entity_id` not a UUID, an unknown `entity_type` or `op`, `base_version` not an integer in range, `document` missing on a put, present on a delete or not an object, or an unknown member (sync.schema.json `command_envelope`). Everything else is a per-command `rejected` receipt, including a document that doesn't match its schema below: the server checks each document itself, so one bad command never blocks a phone's queue.
          *
-         *     Receipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's, contracts/audio/v1). Receipts are kept for 90 days.
+         *     Receipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's, contracts/audio/v1; `entity_id_invalid` when a `practice_policy` entity_id isn't the account's ID; `delete_not_allowed` for a `dhikr_personal` or `practice_policy` delete). Receipts are kept for 90 days.
          *
          *     `Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts the header and ignores it. Responses are `Cache-Control: no-store`.
          */
@@ -658,10 +658,10 @@ export interface components {
             detail: string;
         };
         /**
-         * @description What a sync entity is (contracts/sync/v1/README.md).
+         * @description What a sync entity is (contracts/sync/v1/README.md). practice_policy is one per account, with the account ID as its entity_id.
          * @enum {string}
          */
-        SyncEntityType: "custom_dhikr" | "user_tag" | "dhikr_personal";
+        SyncEntityType: "custom_dhikr" | "user_tag" | "dhikr_personal" | "practice_policy";
         /**
          * @description Per-entity version. 0 means the entity doesn't exist yet; every applied change adds one.
          * @example 3
@@ -708,8 +708,24 @@ export interface components {
         DhikrPersonalDocument: {
             tag_ids: components["schemas"]["Uuid"][];
         };
+        /** @description The account practice policy (practice-settings.schema.json `practice_policy_document`, slice 3d). Device context (time zone, location) is never part of it. Corrections must also be one per month and keep every month 29 or 30 days (practice_policy_validity.json). */
+        PracticePolicyDocument: {
+            /** @enum {string} */
+            day_reset: "midnight" | "maghrib";
+            /** @enum {string} */
+            calculation_method: "karachi" | "north_america" | "muslim_world_league" | "egyptian" | "umm_al_qura" | "moonsighting_committee" | "dubai" | "kuwait" | "qatar" | "singapore";
+            /** @enum {string} */
+            madhab: "shafi" | "hanafi";
+            /** @enum {string} */
+            week_start: "saturday" | "sunday" | "monday";
+            hijri_corrections: {
+                year: number;
+                month: number;
+                offset_days: number;
+            }[];
+        };
         /** @description The entity's whole document; which one depends on entity_type. */
-        SyncDocument: components["schemas"]["CustomDhikrDocument"] | components["schemas"]["UserTagDocument"] | components["schemas"]["DhikrPersonalDocument"];
+        SyncDocument: components["schemas"]["CustomDhikrDocument"] | components["schemas"]["UserTagDocument"] | components["schemas"]["DhikrPersonalDocument"] | components["schemas"]["PracticePolicyDocument"];
         /** @description One change. `put` creates (base_version 0) or replaces the whole document; `delete` makes a final tombstone. command_id is a new UUIDv7 per command. */
         SyncCommand: {
             command_id: components["schemas"]["Uuid"];
@@ -784,7 +800,7 @@ export interface components {
             /** @constant */
             status: "rejected";
             /** @enum {string} */
-            code: "document_invalid" | "document_too_large" | "custom_dhikr_limit_reached" | "tag_limit_reached" | "tag_name_taken" | "tag_not_found" | "dhikr_not_found" | "entity_not_found" | "delete_not_allowed" | "command_id_reused" | "audio_not_found" | "audio_mismatch";
+            code: "document_invalid" | "document_too_large" | "custom_dhikr_limit_reached" | "tag_limit_reached" | "tag_name_taken" | "tag_not_found" | "dhikr_not_found" | "entity_not_found" | "delete_not_allowed" | "command_id_reused" | "audio_not_found" | "audio_mismatch" | "entity_id_invalid";
             fields: components["schemas"]["SyncFieldError"][];
             /** @description The server's copy to undo to, or null when it has none. */
             current: components["schemas"]["SyncCurrent"] | null;
@@ -2130,6 +2146,26 @@ export interface operations {
                  *           "base_version": 2
                  *         },
                  *         {
+                 *           "command_id": "0192f0c0-0000-7000-8000-000000000008",
+                 *           "entity_type": "practice_policy",
+                 *           "entity_id": "0192f000-0000-7000-8000-000000000001",
+                 *           "op": "put",
+                 *           "base_version": 0,
+                 *           "document": {
+                 *             "day_reset": "maghrib",
+                 *             "calculation_method": "karachi",
+                 *             "madhab": "shafi",
+                 *             "week_start": "monday",
+                 *             "hijri_corrections": [
+                 *               {
+                 *                 "year": 1448,
+                 *                 "month": 5,
+                 *                 "offset_days": -1
+                 *               }
+                 *             ]
+                 *           }
+                 *         },
+                 *         {
                  *           "command_id": "0192f0c0-0000-7000-8000-000000000001",
                  *           "entity_type": "custom_dhikr",
                  *           "entity_id": "0192f0d0-0000-7000-8000-000000000002",
@@ -2278,6 +2314,13 @@ export interface operations {
                      *           ]
                      *         },
                      *         {
+                     *           "command_id": "0192f0c0-0000-7000-8000-000000000008",
+                     *           "status": "applied",
+                     *           "version": 1,
+                     *           "revision": 14,
+                     *           "cascaded": null
+                     *         },
+                     *         {
                      *           "command_id": "0192f0c0-0000-7000-8000-000000000001",
                      *           "status": "duplicate",
                      *           "original": {
@@ -2289,7 +2332,7 @@ export interface operations {
                      *           }
                      *         }
                      *       ],
-                     *       "head_revision": 13
+                     *       "head_revision": 14
                      *     }
                      */
                     "application/json": {
