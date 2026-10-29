@@ -28,6 +28,7 @@ public enum class FixtureModel(public val directory: String) {
     DHIKR_CATALOG("dhikr-catalog"),
     IDENTITY("identity"),
     SYNC("sync"),
+    AUDIO("audio"),
 }
 
 /**

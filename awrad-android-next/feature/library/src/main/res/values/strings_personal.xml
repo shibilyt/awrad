@@ -59,9 +59,16 @@
     <string name="editor_import_recording">Import a recording</string>
     <string name="editor_recording_here">Recording on this phone</string>
     <string name="editor_recording_elsewhere">Recording on another device</string>
+    <string name="editor_recording_account">Saved in your account</string>
+    <string name="editor_recording_waiting">Waiting to upload to your account</string>
+    <string name="editor_recording_phone_only">Kept on this phone only</string>
     <string name="editor_replace_recording">Replace</string>
     <string name="editor_remove_recording">Remove</string>
-    <string name="editor_recording_hint">MP3 or M4A, up to 10 MB. It stays on this phone.</string>
+    <string name="editor_recording_hint">MP3 or M4A, up to 10 MB. Signed in, it’s saved to your account; signed out, it stays on this phone.</string>
+    <string name="editor_download_offline">Connect to the internet to play it here the first time.</string>
+    <string name="editor_download_not_signed_in">Sign in to the account it belongs to, to play it here.</string>
+    <string name="editor_download_not_found">Your account no longer has this recording.</string>
+    <string name="editor_download_failed">The recording couldn’t be downloaded. Try again.</string>
     <string name="editor_tags_empty">No tags yet. Make them in Manage tags, on the Library.</string>
     <string name="editor_problem_arabic">Enter the Arabic text</string>
     <string name="editor_problem_too_long">This is too long</string>

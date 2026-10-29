@@ -10,6 +10,9 @@ import app.awrad.core.domain.personal.CustomAudio
 import app.awrad.core.domain.personal.CustomDhikr
 import app.awrad.core.domain.personal.CustomTransliteration
 import app.awrad.core.domain.personal.OptionalTexts
+import app.awrad.core.domain.personal.RecordingDownloadError
+import app.awrad.core.domain.personal.RecordingUpload
+import app.awrad.core.domain.personal.UploadedAudio
 import app.awrad.core.domain.personal.UserTag
 
 /** One text per app language, as typed. */
@@ -38,8 +41,15 @@ internal data class QuranFields(val surah: String = "", val ayahStart: String = 
     val isEmpty: Boolean get() = surah.isBlank() && ayahStart.isBlank() && ayahEnd.isBlank()
 }
 
-/** The recording being edited: [localUri] is null when it was made on another device. */
-internal data class AudioField(val localUri: String?, val isNew: Boolean)
+/**
+ * The recording being edited: [localUri] is null when it isn't on this phone (made on another device, not played
+ * here yet). [uploaded] is the account's copy, kept through a save; a newly imported file has none, so it uploads
+ * again.
+ */
+internal data class AudioField(val localUri: String?, val isNew: Boolean, val uploaded: UploadedAudio? = null) {
+    /** It can play: from this phone, or downloaded from the account first. */
+    val isPlayable: Boolean get() = localUri != null || uploaded != null
+}
 
 /**
  * The custom dhikr editor. [shownLanguage] picks which language's title, transliteration and translation are
@@ -61,7 +71,11 @@ internal data class EditorUiState(
     val kept: List<Reference> = emptyList(),
     val audio: AudioField? = null,
     val audioError: AudioImportError? = null,
+    /** Where the saved recording stands on its way to the account. */
+    val upload: RecordingUpload = RecordingUpload.NONE,
     val playback: PlaybackState = PlaybackState(),
+    /** Why the uploaded recording couldn't be downloaded to play; cleared by the next play. */
+    val downloadError: RecordingDownloadError? = null,
     val tags: List<UserTag> = emptyList(),
     val selectedTags: List<AwradId> = emptyList(),
     val problems: Map<ProblemSpot, EditorProblem> = emptyMap(),
@@ -114,6 +128,26 @@ internal sealed interface EditorAction {
     data object ConfirmDelete : EditorAction
 }
 
+/** Where the recording is, as the card says it. */
+internal enum class RecordingPlace { ACCOUNT, WAITING_TO_UPLOAD, PHONE_ONLY, PHONE, OTHER_DEVICE }
+
+/**
+ * Uploaded: in the account; else the saved recording's upload (waiting, or kept on this phone after it failed);
+ * else on this phone or another device. A newly imported file isn't saved yet, so no upload is its.
+ */
+internal val EditorUiState.recordingPlace: RecordingPlace?
+    get() {
+        val audio = audio ?: return null
+        val saved = if (audio.isNew) RecordingUpload.NONE else upload
+        return when {
+            audio.uploaded != null -> RecordingPlace.ACCOUNT
+            saved == RecordingUpload.QUEUED -> RecordingPlace.WAITING_TO_UPLOAD
+            saved == RecordingUpload.FAILED -> RecordingPlace.PHONE_ONLY
+            audio.localUri != null -> RecordingPlace.PHONE
+            else -> RecordingPlace.OTHER_DEVICE
+        }
+    }
+
 /** The dhikr these fields describe, with [id]; references in order: the Qur'an, kept ones, then the others. */
 internal fun EditorUiState.toDhikr(id: AwradId): CustomDhikr {
     val quran = quran.takeUnless { it.isEmpty }?.let {
@@ -138,7 +172,7 @@ internal fun EditorUiState.toDhikr(id: AwradId): CustomDhikr {
         transliteration = transliterations.toTexts().let { CustomTransliteration(it.en, it.ml) },
         translation = translations.toTexts(),
         references = listOfNotNull(quran) + kept + others,
-        audio = audio?.let { CustomAudio(it.localUri) },
+        audio = audio?.let { CustomAudio(it.localUri, it.uploaded) },
     )
 }
 
@@ -163,7 +197,7 @@ internal fun EditorUiState.loaded(dhikr: CustomDhikr): EditorUiState {
             .filter { it.url == null }
             .map { it.text },
         kept = dhikr.references.filterNot { it == quran || (it is Reference.Other && it.url == null) },
-        audio = dhikr.audio?.let { AudioField(it.localUri, isNew = false) },
+        audio = dhikr.audio?.let { AudioField(it.localUri, isNew = false, uploaded = it.uploaded) },
     )
 }
 

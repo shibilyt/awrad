@@ -3,6 +3,7 @@ package app.awrad.core.data.profile
 import app.awrad.core.data.sync.RoomSyncStore
 import app.awrad.core.database.CustomDhikrEntity
 import app.awrad.core.domain.AwradId
+import app.awrad.core.domain.personal.CustomAudioJson
 import app.awrad.core.domain.personal.PersonalDocument
 import app.awrad.core.domain.personal.UserTagJson
 import app.awrad.core.domain.sync.EntityKey
@@ -34,23 +35,30 @@ internal class ProfileTransfers(
 
     /**
      * "Add to my account": queues every entity of [profileId] as a put, tags first, then custom dhikrs, then the
-     * personal records that name them, so the server meets each before it's referenced.
+     * personal records that name them, so the server meets each before it's referenced; and every recording kept
+     * only on this phone for upload, which queues its dhikr's put again once it's confirmed.
      */
     suspend fun queueAll(profileId: AwradId) {
         databases.writeTo(profileId) { profile ->
-            val store = RoomSyncStore(profile.database.syncDao(), clock::millis)
+            val store = RoomSyncStore(profile.database.syncDao(), now = clock::millis)
             ORDER.forEach { type ->
                 store.entities(type).forEach { entity ->
                     Outbox.enqueue(store, LocalEdit(newId(), entity.key, SyncOp.PUT, entity.document))
+                    if (type == EntityType.CUSTOM_DHIKR) queueLocalRecording(store, entity.key.id, entity.document)
                 }
             }
         }
     }
 
+    /** Queues the upload of [dhikrId]'s recording if it's only on this phone and its file is here. */
+    private fun queueLocalRecording(store: RoomSyncStore, dhikrId: AwradId, document: JsonObject) {
+        if (CustomAudioJson.isLocalOnly(document["audio"]) && store.hasAudioFile(dhikrId)) store.queueUpload(dhikrId)
+    }
+
     /** Keep on a deleted account's profile: its unsent commands can never be sent, so they're dropped. */
     suspend fun dropQueue(profileId: AwradId) {
         databases.writeTo(profileId) { profile ->
-            RoomSyncStore(profile.database.syncDao(), clock::millis).replaceOutbox(emptyList())
+            RoomSyncStore(profile.database.syncDao(), now = clock::millis).replaceOutbox(emptyList())
         }
     }
 
@@ -58,16 +66,16 @@ internal class ProfileTransfers(
      * Adds the anonymous profile [from]'s data to the account's existing profile [into] and queues it there
      * ([ProfileMerge]): same-name tags fold onto [into]'s, a dhikr tagged in both gets the union of their tags,
      * and the new tags, every custom dhikr, then the new or changed personal records are queued as puts, in that
-     * order. Recordings are copied into [into]'s files.
+     * order. Recordings are copied into [into]'s files and queued for upload.
      */
     suspend fun mergeAnonymous(from: AwradId, into: AwradId) {
         val source = databases.writeTo(from) { profile ->
             val dao = profile.database.syncDao()
-            AnonymousData(RoomSyncStore(dao, clock::millis).profileData(), dao.customDhikrs())
+            AnonymousData(RoomSyncStore(dao, now = clock::millis).profileData(), dao.customDhikrs())
         }
         databases.writeTo(into) { profile ->
             val dao = profile.database.syncDao()
-            val store = RoomSyncStore(dao, clock::millis)
+            val store = RoomSyncStore(dao, now = clock::millis)
             val merged = ProfileMerge.merge(anonymous = source.data, account = store.profileData())
             fun put(key: EntityKey, document: JsonObject) {
                 store.putEntity(LocalEntity(key, store.entity(key)?.knownVersion ?: 0, document))
@@ -82,7 +90,9 @@ internal class ProfileTransfers(
                 val audio = dhikr.audioFile?.let { copyInto(File(it), profile.filesDir) }
                 dao.upsertCustomDhikr(dhikr.copy(knownVersion = 0, audioFile = audio))
                 val key = EntityKey(EntityType.CUSTOM_DHIKR, AwradId(dhikr.id))
-                Outbox.enqueue(store, LocalEdit(newId(), key, SyncOp.PUT, checkNotNull(store.entity(key)).document))
+                val document = checkNotNull(store.entity(key)).document
+                Outbox.enqueue(store, LocalEdit(newId(), key, SyncOp.PUT, document))
+                queueLocalRecording(store, key.id, document)
             }
             merged.queued.filter { it.type == EntityType.DHIKR_PERSONAL }.forEach { key ->
                 put(key, PersonalDocument.of(records.getValue(key.id).tagIds))

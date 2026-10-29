@@ -133,8 +133,8 @@ internal fun TextsSection(
 }
 
 /**
- * The recording, kept on this phone only: import an MP3 or M4A (up to 10 MB), then play it, replace it or remove
- * it. A recording made on another device can only be removed here.
+ * The recording: import an MP3 or M4A (up to 10 MB), then play it, replace it or remove it. Signed in it's saved
+ * to the account, and one only in the account downloads on its first play here; signed out it stays on this phone.
  */
 @Composable
 internal fun AudioSection(
@@ -155,6 +155,14 @@ internal fun AudioSection(
         } else {
             RecordingCard(audio = audio, state = state, onAction = onAction, onPickAudio = onPickAudio)
         }
+        state.downloadError?.let { error ->
+            Text(
+                text = downloadErrorText(error),
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                style = AwradTheme.type.caption,
+                color = AwradTheme.colors.error,
+            )
+        }
         state.audioError?.let { error ->
             Text(
                 text = audioErrorText(error),
@@ -171,7 +179,10 @@ internal fun AudioSection(
     }
 }
 
-/** The recording: play and pause (when it's on this phone), where it is, then Replace and Remove. */
+/**
+ * The recording: play and pause (when it's on this phone or in the account), where it is (in the account, waiting
+ * to upload, kept on this phone only, on this phone, or on another device), then Replace and Remove.
+ */
 @Composable
 private fun RecordingCard(
     audio: AudioField,
@@ -186,7 +197,7 @@ private fun RecordingCard(
             horizontalArrangement = Arrangement.spacedBy(AwradTheme.spacing.md),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (audio.localUri != null) {
+            if (audio.isPlayable) {
                 AwradRoundButton(
                     icon = if (playing) AwradIcons.Pause else AwradIcons.Play,
                     contentDescription = stringResource(if (playing) R.string.library_pause else R.string.library_play),
@@ -195,9 +206,7 @@ private fun RecordingCard(
                 )
             }
             Text(
-                text = stringResource(
-                    if (audio.localUri == null) R.string.editor_recording_elsewhere else R.string.editor_recording_here,
-                ),
+                text = state.recordingPlace?.let { recordingPlaceText(it) }.orEmpty(),
                 modifier = Modifier.weight(1f),
                 style = AwradTheme.type.body,
                 color = AwradTheme.colors.onSurface,

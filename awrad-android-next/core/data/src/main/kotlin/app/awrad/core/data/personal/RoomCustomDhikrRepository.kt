@@ -7,6 +7,7 @@ import app.awrad.core.data.sync.parseDocument
 import app.awrad.core.database.CustomDhikrEntity
 import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.personal.AudioImport
+import app.awrad.core.domain.personal.CustomAudioJson
 import app.awrad.core.domain.personal.CustomDhikr
 import app.awrad.core.domain.personal.CustomDhikrError
 import app.awrad.core.domain.personal.CustomDhikrJson
@@ -32,8 +33,8 @@ import java.time.Clock
 
 /**
  * The active profile's custom dhikrs in Room. A save writes the dhikr and queues its command in one transaction
- * (only a profile that belongs to an account queues; ProfileSwitch.queuesEdits), then asks for a sync, which
- * does nothing while signed out.
+ * (only a profile that belongs to an account queues; ProfileSwitch.queuesEdits), with its recording's upload when
+ * it's new, then asks for a sync, which does nothing while signed out.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class RoomCustomDhikrRepository(
@@ -66,8 +67,12 @@ internal class RoomCustomDhikrRepository(
         return outcome.error
     }
 
-    /** Writes [dhikr] and queues its put, in the profile's transaction; a replaced recording is to be deleted. */
-    private fun write(profile: OpenProfile, dhikr: CustomDhikr, document: JsonObject): SaveOutcome {
+    /**
+     * Writes [dhikr] and queues its put, in the profile's transaction; a replaced recording is to be deleted. A new
+     * recording is queued to upload when the profile belongs to an account (the upload runs while signed in); the
+     * document says `{"local_only": true}` until the upload is confirmed and names the asset.
+     */
+    private fun write(profile: OpenProfile, dhikr: CustomDhikr, edited: JsonObject): SaveOutcome {
         val dao = profile.database.syncDao()
         val existing = dao.customDhikr(dhikr.id.value)
         if (existing == null && dao.customDhikrCount() >= CustomDhikr.LIMIT) {
@@ -75,6 +80,7 @@ internal class RoomCustomDhikrRepository(
         }
         // A recording made on another device has no local file: keep whatever this phone has.
         val audioFile = dhikr.audio?.let { it.localUri?.let(audio::pathOf) ?: existing?.audioFile }
+        val document = keepingUpload(edited, dhikr, existing, audioFile)
         dao.upsertCustomDhikr(
             CustomDhikrEntity(
                 id = dhikr.id.value,
@@ -84,18 +90,44 @@ internal class RoomCustomDhikrRepository(
                 createdAt = existing?.createdAt ?: clock.millis(),
             ),
         )
-        if (profile.queuesEdits) {
-            val key = EntityKey(EntityType.CUSTOM_DHIKR, dhikr.id)
-            Outbox.enqueue(RoomSyncStore(dao, clock::millis), LocalEdit(newId(), key, SyncOp.PUT, document))
-        }
+        queue(profile, dhikr, document, newRecording = audioFile != null && audioFile != existing?.audioFile)
         return SaveOutcome(null, existing?.audioFile?.takeIf { it != audioFile })
+    }
+
+    /**
+     * Queues the put of [document], and the upload of a [newRecording], where the profile queues edits. A removed
+     * or replaced recording's upload goes either way.
+     */
+    private fun queue(profile: OpenProfile, dhikr: CustomDhikr, document: JsonObject, newRecording: Boolean) {
+        val dao = profile.database.syncDao()
+        if (dhikr.audio == null || newRecording) dao.deleteUploadsFor(dhikr.id.value)
+        if (!profile.queuesEdits) return
+        val store = RoomSyncStore(dao, now = clock::millis)
+        Outbox.enqueue(store, LocalEdit(newId(), EntityKey(EntityType.CUSTOM_DHIKR, dhikr.id), SyncOp.PUT, document))
+        if (newRecording && dhikr.audio?.uploaded == null) store.queueUpload(dhikr.id)
+    }
+
+    /**
+     * [edited], unless it would lose the account's copy of the same recording: an editor opened before the upload
+     * was confirmed still says `{"local_only": true}` for the file the upload named.
+     */
+    private fun keepingUpload(
+        edited: JsonObject,
+        dhikr: CustomDhikr,
+        existing: CustomDhikrEntity?,
+        audioFile: String?,
+    ): JsonObject {
+        val stored = existing?.document?.let(::parseDocument)?.get("audio")
+        val sameRecording = audioFile != null && audioFile == existing?.audioFile
+        val upload = CustomAudioJson.uploaded(stored)?.takeIf { sameRecording && dhikr.audio?.uploaded == null }
+        return if (upload == null) edited else JsonObject(edited + ("audio" to CustomAudioJson.encode(upload)))
     }
 
     override suspend fun delete(id: AwradId) {
         val key = EntityKey(EntityType.CUSTOM_DHIKR, id)
         val personal = personalKeyOf(id)
         val orphaned = profiles.write { profile ->
-            val store = RoomSyncStore(profile.database.syncDao(), clock::millis)
+            val store = RoomSyncStore(profile.database.syncDao(), now = clock::millis)
             // The queue rules first, on the whole queue: they drop a never-sent create and its tags' commands.
             if (profile.queuesEdits) Outbox.enqueue(store, LocalEdit(newId(), key, SyncOp.DELETE, null))
             // The server deletes the personal record itself; locally it goes with the dhikr.

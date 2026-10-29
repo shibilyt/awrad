@@ -155,6 +155,7 @@ private fun DhikrDetailContent(
         ArabicCard(
             dhikr = dhikr,
             language = language,
+            hasRecording = state.hasRecording,
             playback = state.playback,
             onTogglePlayback = { onAction(DhikrDetailAction.TogglePlayback) },
         )

@@ -69,5 +69,31 @@
     <string name="sync_reason_entity_not_found">ما يعدّله هذا التغيير لم يعد موجودًا.</string>
     <string name="sync_reason_delete_not_allowed">لا يمكن حذف هذا.</string>
     <string name="sync_reason_command_id_reused">سبق أن تلقّى الخادم تغييرًا مختلفًا بالمعرّف نفسه.</string>
+    <string name="sync_reason_audio_not_found">لم يعد في حسابك التسجيل الذي يذكره هذا التعديل. احتُفظ بالتعديل وتجري مزامنته من جديد، والتسجيل الذي ما زال على هذا الهاتف يُرفع مرة أخرى.</string>
+    <string name="sync_reason_audio_mismatch">لم تطابق بيانات التسجيل في هذا التعديل نسخته في حسابك. احتُفظ بالتعديل وتجري مزامنته من جديد، والتسجيل الذي ما زال على هذا الهاتف يُرفع مرة أخرى.</string>
+    <plurals name="sync_audio_storage">
+        <item quantity="zero">مساحة التسجيلات: %1$s من %2$s ميغابايت</item>
+        <item quantity="one">مساحة التسجيلات: %1$s من %2$s ميغابايت</item>
+        <item quantity="two">مساحة التسجيلات: %1$s من %2$s ميغابايت</item>
+        <item quantity="few">مساحة التسجيلات: %1$s من %2$s ميغابايتات</item>
+        <item quantity="many">مساحة التسجيلات: %1$s من %2$s ميغابايتًا</item>
+        <item quantity="other">مساحة التسجيلات: %1$s من %2$s ميغابايت</item>
+    </plurals>
+    <string name="sync_upload_failed_title">تعذّر رفع التسجيل</string>
+    <string name="sync_upload_failed_body">%1$s يبقى التسجيل على هذا الهاتف، ويُزامَن الذكر من دونه.</string>
+    <string name="sync_upload_unsupported_type">الملف ليس بصيغة MP3 أو M4A.</string>
+    <string name="sync_upload_invalid_size">الملف فارغ.</string>
+    <string name="sync_upload_too_large">حجمه أكبر من ١٠ ميغابايت.</string>
+    <string name="sync_upload_storage_full">امتلأت مساحة التسجيلات في حسابك.</string>
+    <string name="sync_upload_storage_full_used">امتلأت مساحة التسجيلات في حسابك (%1$s).</string>
+    <plurals name="sync_audio_storage_used">
+        <item quantity="zero">استُخدم %1$s من %2$s ميغابايت</item>
+        <item quantity="one">استُخدم %1$s من %2$s ميغابايت</item>
+        <item quantity="two">استُخدم %1$s من %2$s ميغابايت</item>
+        <item quantity="few">استُخدم %1$s من %2$s ميغابايتات</item>
+        <item quantity="many">استُخدم %1$s من %2$s ميغابايتًا</item>
+        <item quantity="other">استُخدم %1$s من %2$s ميغابايت</item>
+    </plurals>
+    <string name="sync_upload_mismatch">لم يطابق الملفُ المرفوع التسجيلَ رغم عدة محاولات.</string>
     <string name="sync_ok">حسنًا</string>
 </resources>

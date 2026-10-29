@@ -1,6 +1,11 @@
 package app.awrad.core.data
 
 import android.content.Context
+import app.awrad.core.data.audio.AudioRemote
+import app.awrad.core.data.audio.AudioUploader
+import app.awrad.core.data.audio.MediaDurationProbe
+import app.awrad.core.data.audio.NetworkAudioRemote
+import app.awrad.core.data.audio.ProfileCustomAudioService
 import app.awrad.core.data.personal.AudioFiles
 import app.awrad.core.data.personal.RoomCustomDhikrRepository
 import app.awrad.core.data.personal.RoomTagRepository
@@ -13,9 +18,11 @@ import app.awrad.core.data.sync.SyncScheduler
 import app.awrad.core.database.RegistryDao
 import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.account.AccountRepository
+import app.awrad.core.domain.personal.CustomAudioService
 import app.awrad.core.domain.personal.CustomDhikrRepository
 import app.awrad.core.domain.personal.TagRepository
 import app.awrad.core.domain.sync.SyncService
+import app.awrad.core.network.http.SignedLinkTransport
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,7 +35,7 @@ import javax.inject.Singleton
 
 /**
  * Custom dhikrs and tags, and the change queue that syncs them (slice 3b): the engine, its schedule, the service
- * the screens use, and the repositories.
+ * the screens use, and the repositories; and their recordings' uploads, downloads and storage (slice 3c).
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -38,14 +45,45 @@ internal object SyncModule {
     fun syncRemote(adapter: NetworkSyncRemote): SyncRemote = adapter
 
     @Provides
+    fun audioRemote(adapter: NetworkAudioRemote): AudioRemote = adapter
+
+    @Provides
     @Singleton
+    fun audioUploader(
+        profiles: ProfileDatabases,
+        remote: AudioRemote,
+        links: SignedLinkTransport,
+        clock: Clock,
+    ): AudioUploader = AudioUploader(
+        profiles = profiles,
+        remote = remote,
+        links = links,
+        probe = MediaDurationProbe(),
+        clock = clock,
+        newId = { AwradId.random(clock) },
+        io = Dispatchers.IO,
+    )
+
+    @Provides
+    @Singleton
+    @Suppress("LongParameterList") // Each is a seam the engine crosses.
     fun syncEngine(
         profiles: ProfileDatabases,
         registry: RegistryDao,
         accounts: AccountRepository,
         remote: SyncRemote,
+        uploader: AudioUploader,
         clock: Clock,
-    ): SyncEngine = SyncEngine(profiles, registry, accounts, remote, clock)
+    ): SyncEngine = SyncEngine(profiles, registry, accounts, remote, clock, uploader)
+
+    @Provides
+    @Singleton
+    fun customAudioService(
+        profiles: ProfileDatabases,
+        accounts: AccountRepository,
+        remote: AudioRemote,
+        links: SignedLinkTransport,
+    ): CustomAudioService = ProfileCustomAudioService(profiles, accounts, remote, links, Dispatchers.IO)
 
     @Provides
     @Singleton

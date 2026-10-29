@@ -112,6 +112,42 @@ public enum class ApiOperation(
         idempotent = false,
         namesAccount = true,
     ),
+    CREATE_AUDIO_UPLOAD(
+        "create_audio_upload",
+        HttpMethod.POST,
+        "/api/v1/audio_uploads",
+        isPublic = false,
+        sendsLanguage = false,
+        idempotent = true,
+        namesAccount = true,
+    ),
+    COMPLETE_AUDIO_UPLOAD(
+        "complete_audio_upload",
+        HttpMethod.POST,
+        "/api/v1/audio_uploads/{asset_id}/complete",
+        isPublic = false,
+        sendsLanguage = false,
+        idempotent = true,
+        namesAccount = true,
+    ),
+    GET_AUDIO_DOWNLOAD(
+        "get_audio_download",
+        HttpMethod.GET,
+        "/api/v1/audio_assets/{asset_id}/download",
+        isPublic = false,
+        sendsLanguage = false,
+        idempotent = false,
+        namesAccount = true,
+    ),
+    GET_AUDIO_USAGE(
+        "get_audio_usage",
+        HttpMethod.GET,
+        "/api/v1/audio_assets/usage",
+        isPublic = false,
+        sendsLanguage = false,
+        idempotent = false,
+        namesAccount = true,
+    ),
     ;
 
     /** [path] with each `{name}` replaced by its URL-encoded value. Fails when one is missing. */

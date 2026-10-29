@@ -1,6 +1,7 @@
 package app.awrad.core.domain.personal
 
 import app.awrad.core.domain.AwradId
+import app.awrad.core.domain.audio.AudioUploadRules
 import app.awrad.core.domain.sync.FieldError
 import kotlinx.coroutines.flow.Flow
 
@@ -54,15 +55,15 @@ public interface CustomDhikrRepository {
     /** Deletes the dhikr, its recording and its personal record. */
     public suspend fun delete(id: AwradId)
 
-    /** Copies the MP3 or M4A at [sourceUri] (up to 10 MB) into the profile's private files. */
+    /** Copies the MP3 or M4A at [sourceUri] (up to 10,000,000 bytes) into the profile's private files. */
     public suspend fun importAudio(sourceUri: String): AudioImport
 
     /** Deletes an imported recording that was never saved (the editor was left). */
     public suspend fun discardAudio(localUri: String)
 
     public companion object {
-        /** The largest recording, in bytes (10 MB, as uploads will allow in slice 3c). */
-        public const val MAX_AUDIO_BYTES: Long = 10L * 1024 * 1024
+        /** The largest recording, in bytes: 10 MB, decimal, as uploads allow ([AudioUploadRules]). */
+        public const val MAX_AUDIO_BYTES: Long = AudioUploadRules.MAX_FILE_BYTES
     }
 }
 

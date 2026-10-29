@@ -3,7 +3,6 @@ package app.awrad.core.domain.personal
 import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.dhikr.DhikrKind
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -21,7 +20,10 @@ public data class UserTag(val id: AwradId, val name: String, val normalizedName:
     }
 }
 
-/** `$defs/custom_dhikr_document` to and from [CustomDhikr]. The recording's file never leaves the phone. */
+/**
+ * `$defs/custom_dhikr_document` to and from [CustomDhikr]. The recording's local file isn't in the document: only
+ * whether there is one (`{"local_only": true}`) or the uploaded asset it was confirmed as.
+ */
 public object CustomDhikrJson {
 
     private val KIND_NAMES = mapOf(
@@ -49,7 +51,7 @@ public object CustomDhikrJson {
             put("ar", dhikr.translation.ar)
             put("ml", dhikr.translation.ml)
         }
-        if (dhikr.audio == null) put("audio", JsonNull) else putJsonObject("audio") { put("local_only", true) }
+        put("audio", CustomAudioJson.encode(dhikr.audio))
         putJsonArray("references") { dhikr.references.forEach { add(ReferenceJson.encode(it)) } }
     }
 
@@ -75,7 +77,11 @@ public object CustomDhikrJson {
             ),
             translation = texts("translation"),
             references = document.getValue("references").jsonArray.mapNotNull(ReferenceJson::decode),
-            audio = if (document["audio"] is JsonObject) CustomAudio(audioUri) else null,
+            audio = if (document["audio"] is JsonObject) {
+                CustomAudio(audioUri, CustomAudioJson.uploaded(document["audio"]))
+            } else {
+                null
+            },
         )
     }
 }

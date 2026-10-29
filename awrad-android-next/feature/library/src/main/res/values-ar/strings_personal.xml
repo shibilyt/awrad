@@ -59,9 +59,16 @@
     <string name="editor_import_recording">استيراد تسجيل</string>
     <string name="editor_recording_here">تسجيل على هذا الهاتف</string>
     <string name="editor_recording_elsewhere">تسجيل على جهاز آخر</string>
+    <string name="editor_recording_account">محفوظ في حسابك</string>
+    <string name="editor_recording_waiting">بانتظار الرفع إلى حسابك</string>
+    <string name="editor_recording_phone_only">محفوظ على هذا الهاتف فقط</string>
     <string name="editor_replace_recording">استبدال</string>
     <string name="editor_remove_recording">إزالة</string>
-    <string name="editor_recording_hint">MP3 أو M4A، حتى ١٠ ميغابايت. يبقى على هذا الهاتف.</string>
+    <string name="editor_recording_hint">MP3 أو M4A، حتى ١٠ ميغابايت. إن كنت مسجّل الدخول يُحفظ في حسابك، وإلا يبقى على هذا الهاتف.</string>
+    <string name="editor_download_offline">اتصل بالإنترنت لتشغيله هنا أول مرة.</string>
+    <string name="editor_download_not_signed_in">سجّل الدخول إلى الحساب الذي يخصه لتشغيله هنا.</string>
+    <string name="editor_download_not_found">لم يعد هذا التسجيل في حسابك.</string>
+    <string name="editor_download_failed">تعذّر تنزيل التسجيل. حاول مرة أخرى.</string>
     <string name="editor_tags_empty">لا وسوم بعد. أنشئها من «إدارة الوسوم» في المكتبة.</string>
     <string name="editor_problem_arabic">أدخل النص العربي</string>
     <string name="editor_problem_too_long">هذا النص أطول من اللازم</string>

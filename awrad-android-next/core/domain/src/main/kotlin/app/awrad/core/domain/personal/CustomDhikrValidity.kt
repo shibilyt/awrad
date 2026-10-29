@@ -7,7 +7,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.longOrNull
 
 /**
@@ -43,11 +42,10 @@ public object CustomDhikrValidity {
         return errors.sortedWith(compareBy({ it.field }, { it.code.wire }))
     }
 
-    /** `audio` is required, and null or exactly `{"local_only": true}`. */
+    /** `audio` is required: null, exactly `{"local_only": true}`, or an uploaded recording ([CustomAudioJson]). */
     private fun audioError(document: JsonObject): FieldErrorCode? = when (val audio = document["audio"]) {
         null -> FieldErrorCode.REQUIRED
-        JsonNull -> null
-        else -> FieldErrorCode.INVALID.takeUnless { isLocalOnlyMarker(audio) }
+        else -> FieldErrorCode.INVALID.takeUnless { CustomAudioJson.isValid(audio) }
     }
 
     /** `references` is a required array of at most 20 references in the catalog's shape. */
@@ -122,10 +120,6 @@ public object CustomDhikrValidity {
             else -> null
         }
     }
-
-    private fun isLocalOnlyMarker(element: JsonElement): Boolean =
-        element is JsonObject && element.keys == setOf("local_only") &&
-            (element["local_only"] as? JsonPrimitive)?.takeUnless { it.isString }?.booleanOrNull == true
 }
 
 /** The text of a JSON string, or null for anything else. */

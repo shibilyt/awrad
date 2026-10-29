@@ -137,4 +137,31 @@ public interface SyncDao {
 
     @Query("SELECT * FROM sync_meta WHERE id = 0")
     public fun observeMeta(): Flow<SyncMetaEntity?>
+
+    // Recordings waiting to upload
+
+    /** Queues an upload; one already queued or failed for the same dhikr is replaced. */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    public fun insertUpload(entity: AudioUploadEntity)
+
+    @Upsert
+    public fun upsertUpload(entity: AudioUploadEntity)
+
+    @Query("SELECT * FROM audio_uploads WHERE asset_id = :assetId")
+    public fun upload(assetId: String): AudioUploadEntity?
+
+    @Query("SELECT * FROM audio_uploads WHERE state = 'queued' ORDER BY created_at, asset_id")
+    public fun queuedUploads(): List<AudioUploadEntity>
+
+    @Query("DELETE FROM audio_uploads WHERE asset_id = :assetId")
+    public fun deleteUpload(assetId: String)
+
+    @Query("DELETE FROM audio_uploads WHERE dhikr_id = :dhikrId")
+    public fun deleteUploadsFor(dhikrId: String)
+
+    @Query("DELETE FROM audio_uploads WHERE dhikr_id = :dhikrId AND state = 'failed'")
+    public fun deleteFailedUploadFor(dhikrId: String)
+
+    @Query("SELECT * FROM audio_uploads ORDER BY created_at, asset_id")
+    public fun observeUploads(): Flow<List<AudioUploadEntity>>
 }

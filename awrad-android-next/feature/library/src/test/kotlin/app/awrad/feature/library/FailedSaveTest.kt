@@ -26,6 +26,7 @@ import app.awrad.core.domain.personal.OptionalTexts
 import app.awrad.core.domain.sync.FieldError
 import app.awrad.core.domain.sync.FieldErrorCode
 import app.awrad.core.testing.FakeAudioPlayerFactory
+import app.awrad.core.testing.FakeCustomAudioService
 import app.awrad.core.testing.FakeCustomDhikrRepository
 import app.awrad.core.testing.FakeTagRepository
 import org.junit.Rule
@@ -124,6 +125,7 @@ class FailedSaveTest {
             customDhikrs = dhikrs,
             tags = FakeTagRepository(),
             playerFactory = FakeAudioPlayerFactory(),
+            audio = FakeCustomAudioService(),
         )
 
     private fun show(editor: CustomDhikrEditorViewModel) {

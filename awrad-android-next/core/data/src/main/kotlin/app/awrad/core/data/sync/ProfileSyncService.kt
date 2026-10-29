@@ -96,7 +96,7 @@ internal class ProfileSyncService(
 
     override suspend fun resolve(key: EntityKey, choice: ConflictChoice) {
         val orphaned = profiles.write { profile ->
-            val store = RoomSyncStore(profile.database.syncDao(), clock::millis)
+            val store = RoomSyncStore(profile.database.syncDao(), now = clock::millis)
             ApplyChanges.resolve(store, key, choice, newId())
             store.orphanedAudio
         }

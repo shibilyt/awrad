@@ -1,5 +1,6 @@
 package app.awrad.core.data.sync
 
+import app.awrad.core.database.AudioUploadEntity
 import app.awrad.core.database.ConflictEntity
 import app.awrad.core.database.CustomDhikrEntity
 import app.awrad.core.database.DhikrPersonalEntity
@@ -8,6 +9,7 @@ import app.awrad.core.database.SyncDao
 import app.awrad.core.database.SyncMetaEntity
 import app.awrad.core.database.UserTagEntity
 import app.awrad.core.domain.AwradId
+import app.awrad.core.domain.personal.uploadedAssetOf
 import app.awrad.core.domain.sync.EntityKey
 import app.awrad.core.domain.sync.EntityState
 import app.awrad.core.domain.sync.EntityType
@@ -25,13 +27,19 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
 
 /**
  * The queue rules' [SyncStore] over one profile's Room tables. Use it only inside a `runInTransaction`: every call
- * is a blocking query. A custom dhikr whose document drops its recording loses its local file reference; the
- * files to delete afterwards are in [orphanedAudio].
+ * is a blocking query. A custom dhikr whose document drops its recording, or names another uploaded one, loses its
+ * local file (and any upload of it); the files to delete afterwards are in [orphanedAudio]. Re-queued uploads take
+ * asset IDs from [newAssetId].
  */
-internal class RoomSyncStore(private val dao: SyncDao, private val now: () -> Long) : SyncStore {
+internal class RoomSyncStore(
+    private val dao: SyncDao,
+    private val newAssetId: () -> AwradId = { AwradId.random() },
+    private val now: () -> Long,
+) : SyncStore {
 
     /** Recordings no custom dhikr uses any more, to delete once the transaction has committed. */
     val orphanedAudio: MutableList<String> = mutableListOf()
@@ -59,9 +67,12 @@ internal class RoomSyncStore(private val dao: SyncDao, private val now: () -> Lo
         when (entity.key.type) {
             EntityType.CUSTOM_DHIKR -> {
                 val existing = dao.customDhikr(id)
-                val hasAudio = entity.document["audio"] is JsonObject
-                val audioFile = existing?.audioFile?.takeIf { hasAudio }
-                if (!hasAudio) existing?.audioFile?.let(orphanedAudio::add)
+                val keepsFile = existing != null && keepsRecording(parseDocument(existing.document), entity.document)
+                val audioFile = existing?.audioFile?.takeIf { keepsFile }
+                if (!keepsFile) {
+                    existing?.audioFile?.let(orphanedAudio::add)
+                    dao.deleteUploadsFor(id)
+                }
                 dao.upsertCustomDhikr(
                     CustomDhikrEntity(
                         id = id,
@@ -92,6 +103,7 @@ internal class RoomSyncStore(private val dao: SyncDao, private val now: () -> Lo
             EntityType.CUSTOM_DHIKR -> {
                 dao.customDhikr(id)?.audioFile?.let(orphanedAudio::add)
                 dao.deleteCustomDhikr(id)
+                dao.deleteUploadsFor(id)
             }
             EntityType.USER_TAG -> dao.deleteUserTag(id)
             EntityType.DHIKR_PERSONAL -> dao.deletePersonal(id)
@@ -112,8 +124,11 @@ internal class RoomSyncStore(private val dao: SyncDao, private val now: () -> Lo
         stored.filterNot { it.commandId in keptIds }.forEach { dao.deleteCommand(it.commandId) }
         var next = (stored.maxOfOrNull { it.position } ?: -1) + 1
         val keptPositions = commands.mapNotNull { storedById[it.commandId.value]?.position }
-        if (keptPositions.zipWithNext().any { (before, after) -> before > after }) {
-            // A replaced command moved after a put it names: renumber the queue, past every position in use.
+        val lastKept = commands.indexOfLast { it.commandId.value in storedById }
+        val insertsBetween = commands.take(lastKept.coerceAtLeast(0)).any { it.commandId.value !in storedById }
+        if (insertsBetween || keptPositions.zipWithNext().any { (before, after) -> before > after }) {
+            // A replaced command moved after a put it names, or a new one goes ahead of queued ones (an audio
+            // rejection's re-queued put): renumber the queue, past every position in use.
             commands.forEach { dao.upsertCommand(it.toEntity(next++)) }
             return
         }
@@ -145,6 +160,36 @@ internal class RoomSyncStore(private val dao: SyncDao, private val now: () -> Lo
 
     override fun removeConflict(key: EntityKey) {
         dao.deleteConflict(key.type.wire, key.id.value)
+    }
+
+    override fun hasAudioFile(dhikrId: AwradId): Boolean =
+        dao.customDhikr(dhikrId.value)?.audioFile?.let { File(it).isFile } == true
+
+    override fun queueUpload(dhikrId: AwradId) {
+        val file = dao.customDhikr(dhikrId.value)?.audioFile ?: return
+        dao.insertUpload(
+            AudioUploadEntity(
+                assetId = newAssetId().value,
+                dhikrId = dhikrId.value,
+                audioFile = file,
+                state = AudioUploadEntity.QUEUED,
+                createdAt = now(),
+            ),
+        )
+    }
+
+    private companion object {
+        /**
+         * Whether a custom dhikr's local file is still its recording after its document goes from [old] to [new]:
+         * it has a recording, and not another uploaded one. The upload confirming this phone's own recording
+         * writes its row directly (`AudioUploader`), so an asset arriving here in place of a local recording or
+         * another asset is another device's recording.
+         */
+        fun keepsRecording(old: JsonObject, new: JsonObject): Boolean {
+            if (new["audio"] !is JsonObject) return false
+            val asset = uploadedAssetOf(new)
+            return asset == null || asset == uploadedAssetOf(old)
+        }
     }
 }
 
