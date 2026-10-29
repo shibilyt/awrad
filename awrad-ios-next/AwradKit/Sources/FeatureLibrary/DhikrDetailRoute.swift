@@ -68,7 +68,9 @@ struct DhikrDetailScreen: View {
                 AwradCard {
                     recitedText
                     if state.audio != .unavailable {
-                        DhikrAudioBar(audio: state.audio) { send(.playPauseTapped) }
+                        DhikrAudioBar(audio: state.audio, recordingLength: state.recordingLength) {
+                            send(.playPauseTapped)
+                        }
                     }
                 }
                 .pageInset()

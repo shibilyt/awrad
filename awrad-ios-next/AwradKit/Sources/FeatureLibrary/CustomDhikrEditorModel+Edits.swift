@@ -88,6 +88,7 @@ extension CustomDhikrEditorModel {
         case .recordingRemoved:
             driver.stop()
             state.recording = .none
+            state.recordingLength = nil
             state.audio = .unavailable
             state.audioFailure = nil
             removedRecording = true

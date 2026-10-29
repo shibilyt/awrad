@@ -21,6 +21,17 @@ public enum AudioContentType: String, CaseIterable, Sendable, Hashable {
         }
     }
 
+    /// The type the system reports for an imported file: `audio/mpeg`, or `audio/mp4` and its alias
+    /// `audio/x-m4a` (contracts/audio/v1 README, "Phones": Importing). Anything else, raw AAC
+    /// (`audio/aac`) included, is `nil`.
+    public init?(importedMediaType mediaType: String) {
+        switch mediaType.lowercased() {
+        case "audio/mpeg": self = .mpeg
+        case "audio/mp4", "audio/x-m4a": self = .mp4
+        default: return nil
+        }
+    }
+
     /// The extension a file of this type is stored under.
     public var fileExtension: String {
         switch self {

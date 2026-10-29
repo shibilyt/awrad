@@ -2,6 +2,7 @@ import AwradDomain
 import Foundation
 import OSLog
 import SwiftData
+import UniformTypeIdentifiers
 
 /// Where local profiles live on disk, under one root (Application Support/Profiles in the app):
 ///
@@ -74,10 +75,23 @@ struct ProfileFiles: Sendable {
 
     // MARK: - Audio
 
+    /// The type of a picked file, when it's one a recording may have: an `.mp3` (`UTType.mp3`) or an
+    /// `.m4a` (`UTType.mpeg4Audio`, which the system reports as `audio/x-m4a`, sent as `audio/mp4`).
+    /// Anything else, a raw `.aac` stream included, is `nil` (contracts/audio/v1 README, "Phones").
+    static func importedType(of file: URL) -> AudioContentType? {
+        let ext = file.pathExtension.lowercased()
+        guard let byExtension = AudioContentType(fileExtension: ext), let type = UTType(filenameExtension: ext),
+            type.conforms(to: .mp3) || type.conforms(to: .mpeg4Audio),
+            let mediaType = type.preferredMIMEType,
+            AudioContentType(importedMediaType: mediaType) == byExtension
+        else { return nil }
+        return byExtension
+    }
+
     /// Copies a picked recording into the profile's staging area after checking its type and size.
     func stageAudio(from source: URL, profile: AwradID) throws(PersonalLibraryError) -> StagedAudio {
-        let ext = source.pathExtension.lowercased()
-        guard Self.audioExtensions.contains(ext) else { throw .audioUnsupported }
+        guard let type = Self.importedType(of: source) else { throw .audioUnsupported }
+        let ext = type.fileExtension
         let size = (try? source.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         guard size > 0 else { throw .audioUnsupported }
         guard size <= Self.maxAudioBytes else { throw .audioTooLarge }
