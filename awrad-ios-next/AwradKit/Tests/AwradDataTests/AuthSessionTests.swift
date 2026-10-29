@@ -116,7 +116,7 @@ struct AuthSessionRefreshTests {
         _ = try await harness.session.currentAccount()
 
         #expect(harness.transport.requests(to: .refreshDeviceSession).isEmpty, "the fresh access token is used")
-        let stored = try #require(harness.store.data(for: CredentialVault.credentialsKey))
+        let stored = try #require(try harness.store.data(for: CredentialVault.credentialsKey))
         #expect(!(String(data: stored, encoding: .utf8) ?? "access-1").contains("access-1"))
     }
 }
@@ -154,7 +154,7 @@ struct AuthSessionSignInTests {
     @Test func aNewInstallationForgetsKeychainLeftovers() async throws {
         let harness = SessionHarness { _ in .init(status: 204, body: Data()) }
         try harness.storeCredentials()
-        harness.store.set(Data("5f0c3b52-8d2e-4e57-9f0a-6b1d2c3e4f50".utf8), for: CredentialVault.installationIDKey)
+        try harness.store.set(Data("5f0c3b52-8d2e-4e57-9f0a-6b1d2c3e4f50".utf8), for: CredentialVault.installationIDKey)
         let fresh = AuthSession(
             baseURL: URL(filePath: "/"), transport: harness.transport, store: harness.store,
             marker: InMemoryInstallationMarker(marked: false), deviceName: "iPhone", language: { "en" })
@@ -168,7 +168,7 @@ struct AuthSessionSignOutTests {
     @Test func signOutRevokesWithTheRefreshTokenThenForgetsIt() async throws {
         let harness = SessionHarness { _ in .init(status: 204, body: Data()) }
         try harness.storeCredentials()
-        harness.store.set(Data("5f0c3b52-8d2e-4e57-9f0a-6b1d2c3e4f50".utf8), for: CredentialVault.installationIDKey)
+        try harness.store.set(Data("5f0c3b52-8d2e-4e57-9f0a-6b1d2c3e4f50".utf8), for: CredentialVault.installationIDKey)
 
         await harness.session.signOut()
 
@@ -201,9 +201,10 @@ struct APIClientTests {
     func headersFollowTheOperation(_ operation: APIOperation) throws {
         let id = "4c2e8f10-7b3a-4d5e-9f61-2a8b0c1d3e45"
         let request = try client.request(
-            operation, body: NoBody?.none, accessToken: "access-1", pathParameters: ["session_id": id])
+            operation, body: NoBody?.none, accessToken: "access-1", pathParameters: ["session_id": id, "asset_id": id])
 
         let path = operation.path.replacingOccurrences(of: "{session_id}", with: id)
+            .replacingOccurrences(of: "{asset_id}", with: id)
         #expect(request.url?.absoluteString == "http://localhost:4000\(path)")
         #expect(request.httpMethod == operation.method.rawValue)
         let bearer = request.value(forHTTPHeaderField: "Authorization")

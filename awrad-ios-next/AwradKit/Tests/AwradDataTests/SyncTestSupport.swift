@@ -14,19 +14,43 @@ struct StoreHarness {
     let account: FakeAccountService
     let accountID: AwradID
     let server: FakeSyncServer
+    /// Private audio (slice 3c): the four operations and storage.
+    let audio: FakeAudioServer
+    let objects: FakeObjectStore
     let store: LocalProfileStore
 
     /// `signedIn`: whether the account is signed in when the store opens.
     init(signedIn: Bool, serverAccount: AwradID? = nil) async throws {
-        directory = FileManager.default.temporaryDirectory.appending(path: "awrad-profiles-\(AwradID.random())")
+        directory = TestDirectory.profiles("awrad-profiles")
         account = FakeAccountService()
         accountID = try await account.signIn(email: Self.email, password: "password").id
         if !signedIn { await account.signOut() }
         server = FakeSyncServer(account: serverAccount ?? accountID)
+        objects = FakeObjectStore()
+        audio = FakeAudioServer(account: serverAccount ?? accountID, objects: objects, sync: server)
         store = try LocalProfileStore(
-            directory: directory, account: account, server: server, deletions: nil,
+            directory: directory, account: account, server: server,
+            audio: AudioServices(server: audio, objects: objects), deletions: nil,
             now: { Date(timeIntervalSince1970: 1_793_000_000) },
             sleep: { _ in try await Task.sleep(for: .seconds(1_000_000)) })
+    }
+
+    /// A recording file outside the profile (as the file picker hands one over), `bytes` long.
+    func recordingFile(_ name: String = "recording.mp3", bytes: Int = 4096) throws -> URL {
+        let file = directory.deletingLastPathComponent().appending(path: "pick-\(AwradID.random())-\(name)")
+        try Data((0..<bytes).map { UInt8(truncatingIfNeeded: $0 &* 31) }).write(to: file)
+        return file
+    }
+
+    /// Saves a new custom dhikr with a picked recording.
+    func saveDhikrWithRecording(_ title: String = "Tasbih", bytes: Int = 4096) async throws -> AwradID {
+        let staged = try await store.stageAudio(from: try recordingFile(bytes: bytes))
+        return try await store.saveCustomDhikr(id: nil, document: Sample.dhikr(title), audio: .replace(staged))
+    }
+
+    /// The custom dhikr's document on the phone.
+    func document(_ id: AwradID) async -> CustomDhikrDocument? {
+        await store.content().customDhikr(id)?.document
     }
 
     /// Signs in on the account service and reports it, answering the first-sign-in question.
@@ -50,7 +74,23 @@ struct StoreHarness {
     }
 
     func removeDirectory() {
-        try? FileManager.default.removeItem(at: directory)
+        TestDirectory.remove(directory)
+    }
+}
+
+/// A fresh profiles root for a test. Like the app's `Library/Application Support/Profiles`, its
+/// path has a space, and non-ASCII characters too, so a file-system call handed a percent-encoded
+/// path (`URL.path()` gives `Application%20Support`) fails here just as it does in the app.
+enum TestDirectory {
+    static func profiles(_ name: String) -> URL {
+        FileManager.default.temporaryDirectory
+            .appending(path: "\(name)-\(AwradID.random())", directoryHint: .isDirectory)
+            .appending(path: "Application Support/Profilé s", directoryHint: .isDirectory)
+    }
+
+    /// Removes the test's whole temporary folder: `profiles` and the picked files beside it.
+    static func remove(_ profiles: URL) {
+        try? FileManager.default.removeItem(at: profiles.deletingLastPathComponent().deletingLastPathComponent())
     }
 }
 

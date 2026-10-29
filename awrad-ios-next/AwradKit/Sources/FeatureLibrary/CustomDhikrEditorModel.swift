@@ -11,12 +11,15 @@ final class CustomDhikrEditorModel {
         case none
         /// The recording the dhikr has on this device.
         case existing(URL)
+        /// The dhikr's recording is in the account but not on this device yet: the first play
+        /// downloads it.
+        case inAccount
         /// A recording just picked, saved with the dhikr.
         case staged(StagedAudio)
 
         var url: URL? {
             switch self {
-            case .none: nil
+            case .none, .inAccount: nil
             case .existing(let url): url
             case .staged(let staged): staged.url
             }
@@ -59,6 +62,9 @@ final class CustomDhikrEditorModel {
         var personal: PersonalContent
         var recording = Recording.none
         var audio = DhikrDetailModel.Audio.unavailable
+        /// The length the saved document names for the recording (`duration_ms`); `nil` once it's
+        /// replaced or removed.
+        var recordingLength: Duration?
         /// Why a picked recording was refused.
         var audioFailure: EditFailure?
         var isPickingAudio = false
@@ -114,7 +120,8 @@ final class CustomDhikrEditorModel {
     private var savedID: AwradID?
     /// The tags the library has on the dhikr, to see whether saving changes them.
     private var appliedTagIDs: [AwradID]
-    private var hasLocalAudio: Bool
+    /// The recording the saved document names; saving with `.unchanged` keeps it.
+    private var audio: CustomDhikrAudio?
     var removedRecording = false
     private var didLoadRecording = false
 
@@ -126,7 +133,7 @@ final class CustomDhikrEditorModel {
         let form = existing.map { CustomDhikrForm($0, tagIDs: tagIDs) } ?? CustomDhikrForm(tagIDs: tagIDs)
         state = State(existing: existing, form: form, personal: personal)
         appliedTagIDs = tagIDs
-        hasLocalAudio = existing?.document.hasLocalAudio ?? false
+        audio = existing?.document.audio
         driver = AudioPlaybackDriver(makePlayer: makePlayer)
         driver.onStatus = { [weak self] status in self?.state.audio = .init(status) }
     }
@@ -138,6 +145,26 @@ final class CustomDhikrEditorModel {
         if let url = await library.audioURL(for: id) {
             state.recording = .existing(url)
             state.audio = .stopped
+        } else if audio?.uploaded != nil {
+            state.recording = .inAccount
+            state.audio = .stopped
+        }
+        if state.recording != .none {
+            state.recordingLength = audio?.uploaded?.durationMilliseconds.map { .milliseconds($0) }
+        }
+    }
+
+    /// The first play of a recording that's only in the account: download it, then play it.
+    func downloadAndPlay() async {
+        guard let id = state.existing?.id, state.recording == .inAccount, state.audio != .loading else { return }
+        state.audio = .loading
+        do {
+            let url = try await library.downloadAudio(for: id)
+            guard state.recording == .inAccount else { return }
+            state.recording = .existing(url)
+            driver.play(url)
+        } catch {
+            if state.recording == .inAccount { state.audio = .failed }
         }
     }
 
@@ -153,6 +180,7 @@ final class CustomDhikrEditorModel {
     /// whether it handled the action.
     @discardableResult
     func apply(_ action: Action) -> Bool {
+        if case .playPauseTapped = action, state.recording == .inAccount { return false }
         switch action {
         case .kindSelected, .arabicChanged, .languageSelected, .textChanged:
             edit(action)
@@ -181,6 +209,7 @@ final class CustomDhikrEditorModel {
         if apply(action) { return }
         switch action {
         case .audioPicked(let url): await stage(url)
+        case .playPauseTapped: await downloadAndPlay()
         case .saveTapped: await save()
         case .deleteConfirmed: await delete()
         default: break
@@ -197,6 +226,7 @@ final class CustomDhikrEditorModel {
             let staged = try await library.stageAudio(from: url)
             driver.stop()
             state.recording = .staged(staged)
+            state.recordingLength = nil
             state.audio = .stopped
             state.audioFailure = nil
         } catch {
@@ -208,14 +238,14 @@ final class CustomDhikrEditorModel {
         switch state.recording {
         case .staged(let staged): .replace(staged)
         case .none: removedRecording ? .remove : .unchanged
-        case .existing: .unchanged
+        case .existing, .inAccount: .unchanged
         }
     }
 
     private func save() async {
         state.failure = nil
         state.errors = [:]
-        let document = state.form.document(hasLocalAudio: hasLocalAudio)
+        let document = state.form.document(audio: audio)
         let problems = document.validationErrors
         guard problems.isEmpty else {
             show(problems)
@@ -224,10 +254,11 @@ final class CustomDhikrEditorModel {
         state.isSaving = true
         defer { state.isSaving = false }
         do {
+            let change = audioChange
             let id = try await library.saveCustomDhikr(
-                id: savedID ?? state.existing?.id, document: document, audio: audioChange)
+                id: savedID ?? state.existing?.id, document: document, audio: change)
             savedID = id
-            settleRecording()
+            settleRecording(change)
             if state.form.tagIDs != appliedTagIDs {
                 try await library.setTags(state.form.tagIDs, on: id)
                 appliedTagIDs = state.form.tagIDs
@@ -243,12 +274,14 @@ final class CustomDhikrEditorModel {
         }
     }
 
-    /// After the dhikr is saved, the recording it was saved with is the one it has.
-    private func settleRecording() {
+    /// After the dhikr is saved, the recording it was saved with is the one it has: a new one is
+    /// local until it's uploaded.
+    private func settleRecording(_ change: AudioChange) {
         if case .staged(let staged) = state.recording { state.recording = .existing(staged.url) }
-        switch state.recording {
-        case .none: if removedRecording { hasLocalAudio = false }
-        default: hasLocalAudio = true
+        switch change {
+        case .replace: audio = .localOnly
+        case .remove: audio = nil
+        case .unchanged: break
         }
         removedRecording = false
     }

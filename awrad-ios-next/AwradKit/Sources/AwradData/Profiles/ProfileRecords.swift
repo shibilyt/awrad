@@ -134,10 +134,69 @@ final class SyncPositionRecord {
     }
 }
 
+/// A custom dhikr's recording waiting to be uploaded (slice 3c): one per dhikr, made when the
+/// profile's account is signed in, kept across restarts until the dhikr's put names the asset.
+@Model
+final class AudioUploadRecord {
+    @Attribute(.unique) var dhikrID: UUID
+    /// A UUIDv7 made for this file; a new one when a retry has to start over.
+    var assetID: UUID
+    /// The file, under the profile's `Audio/` directory.
+    var fileName: String
+    /// The file's SHA-256, 64 lowercase hex digits.
+    var sha256: String
+    var byteSize: Int
+    var contentType: String
+    var durationMilliseconds: Int?
+    /// `PendingUpload.Stage`.
+    var stage: String
+    /// Whether the server has recorded the pending upload (it then counts in the account's usage).
+    var reserved: Bool
+    /// How many times a mismatching file has started over with a new asset.
+    var mismatchRetries: Int
+    /// Why it couldn't be uploaded, once it failed for good (`AudioUploadFailure`).
+    var failure: String?
+    var createdAt: Date
+
+    init(_ upload: PendingUpload, createdAt: Date) {
+        dhikrID = upload.dhikrID.value
+        assetID = upload.assetID.value
+        fileName = upload.fileName
+        sha256 = upload.sha256
+        byteSize = upload.byteSize
+        contentType = upload.contentType
+        durationMilliseconds = upload.durationMilliseconds
+        stage = upload.stage.rawValue
+        reserved = upload.reserved
+        mismatchRetries = upload.mismatchRetries
+        failure = upload.failure?.rawValue
+        self.createdAt = createdAt
+    }
+}
+
+/// A recording that couldn't be uploaded, until the user dismisses it.
+@Model
+final class AudioNoticeRecord {
+    var position: Int
+    var dhikrID: UUID
+    var failure: String
+    var usedBytes: Int?
+    var limitBytes: Int?
+
+    init(position: Int, dhikrID: UUID, failure: String, usedBytes: Int?, limitBytes: Int?) {
+        self.position = position
+        self.dhikrID = dhikrID
+        self.failure = failure
+        self.usedBytes = usedBytes
+        self.limitBytes = limitBytes
+    }
+}
+
 /// The schema of a profile's database.
 enum ProfileSchema {
     static let schema = Schema([
         CustomDhikrRecord.self, UserTagRecord.self, DhikrPersonalRecord.self, KnownVersionRecord.self,
         OutboxCommandRecord.self, SyncConflictRecord.self, SyncNoticeRecord.self, SyncPositionRecord.self,
+        AudioUploadRecord.self, AudioNoticeRecord.self,
     ])
 }

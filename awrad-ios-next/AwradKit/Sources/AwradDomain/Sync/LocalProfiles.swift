@@ -36,15 +36,19 @@ public struct ProfilesState: Hashable, Sendable {
     public var unsentCount: Int
     /// A question raised by something other than the user (an account found deleted).
     public var pendingPrompt: PendingProfilePrompt?
+    /// The storage the signed-in account's recordings use ("120 MB of 500 MB"), once the server has
+    /// said; `nil` while not syncing.
+    public var audioUsage: AudioUsage?
 
     public init(
         registry: ProfileRegistry, syncStatus: SyncStatus = .notSyncing, unsentCount: Int = 0,
-        pendingPrompt: PendingProfilePrompt? = nil
+        pendingPrompt: PendingProfilePrompt? = nil, audioUsage: AudioUsage? = nil
     ) {
         self.registry = registry
         self.syncStatus = syncStatus
         self.unsentCount = unsentCount
         self.pendingPrompt = pendingPrompt
+        self.audioUsage = audioUsage
     }
 
     /// The profiles for the Settings list: the active one first, then by last use.

@@ -9,6 +9,9 @@
         public enum Sample {
             public static let hasbiyallah = AwradID("0192f0d0-0000-7000-8000-000000000001") ?? .random()
             public static let morningDua = AwradID("0192f0d0-0000-7000-8000-000000000002") ?? .random()
+            /// A custom dhikr whose recording is in the account, not on this phone (slice 3c).
+            public static let tasbih = AwradID("0192f0d0-0000-7000-8000-000000000003") ?? .random()
+            static let tasbihAsset = AwradID("0192f0e0-0000-7000-8000-000000000001") ?? .random()
             public static let morning = AwradID("0192f0a0-0000-7000-8000-000000000001") ?? .random()
             public static let evening = AwradID("0192f0a0-0000-7000-8000-000000000002") ?? .random()
             public static let travel = AwradID("0192f0a0-0000-7000-8000-000000000003") ?? .random()
@@ -16,10 +19,21 @@
             static let ikhlas = AwradID("c88b9491-40ad-4b42-a5b8-e07c4b4d31ef") ?? .random()
         }
 
-        /// Fills an empty active profile with the sample.
-        public func seedSample() async {
+        /// Fills an empty active profile with the sample; `audioNotice` adds a recording that
+        /// couldn't be uploaded because the account's storage is full.
+        public func seedSample(audioNotice: Bool = false) async {
             guard !(registry.active?.hasData ?? false), await !database.summary().hasData else { return }
             try? await database.seed(Self.sampleSeed())
+            if audioNotice {
+                let notice = AudioUploadNotice(
+                    dhikrID: Sample.morningDua, failure: .storageFull,
+                    usage: AudioUsage(usedBytes: 497_300_000, limitBytes: AudioUploadRules.accountLimitBytes))
+                let upload = PendingUpload(
+                    dhikrID: Sample.morningDua, assetID: .random(), fileName: "\(Sample.morningDua).mp3",
+                    sha256: String(repeating: "0", count: 64), byteSize: 4_182_733, contentType: "audio/mpeg")
+                try? await database.addUpload(upload, now: now())
+                try? await database.failUpload(upload, asset: upload.assetID, notice: notice)
+            }
             await refreshSummary()
             await publishAll()
         }
@@ -42,6 +56,13 @@
                 kind: .dhikr, arabic: "أَصْبَحْنَا وَأَصْبَحَ ٱلْمُلْكُ لِلَّهِ",
                 title: LanguageTexts(en: "Asbahna wa asbahal mulk"),
                 translation: LanguageTexts(en: "We have entered the morning and the dominion belongs to Allah"))
+            let tasbih = CustomDhikrDocument(
+                kind: .dhikr, arabic: "سُبْحَانَ ٱللَّهِ وَبِحَمْدِهِ", title: LanguageTexts(en: "Subhanallahi wa bihamdihi"),
+                translation: LanguageTexts(en: "Glory be to Allah and praise Him"),
+                audio: .uploaded(
+                    UploadedAudio(
+                        assetID: Sample.tasbihAsset, byteSize: 4_182_733, contentType: .mpeg,
+                        durationMilliseconds: 31_250)))
             let tag = { (name: String) in
                 SyncDocument.userTag(UserTagDocument(name: name, normalizedName: name.lowercased()))
             }
@@ -50,6 +71,7 @@
                 documents: [
                     (SyncEntityKey(.customDhikr, Sample.hasbiyallah), .customDhikr(hasbiyallah)),
                     (SyncEntityKey(.customDhikr, Sample.morningDua), .customDhikr(morningDua)),
+                    (SyncEntityKey(.customDhikr, Sample.tasbih), .customDhikr(tasbih)),
                     (SyncEntityKey(.userTag, Sample.morning), tag("Morning")),
                     (SyncEntityKey(.userTag, Sample.evening), tag("Evening")),
                     (SyncEntityKey(.userTag, Sample.travel), tag("Travel")),

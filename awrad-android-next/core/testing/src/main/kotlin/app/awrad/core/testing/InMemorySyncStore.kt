@@ -1,5 +1,6 @@
 package app.awrad.core.testing
 
+import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.sync.EntityKey
 import app.awrad.core.domain.sync.EntityType
 import app.awrad.core.domain.sync.LocalEntity
@@ -7,13 +8,20 @@ import app.awrad.core.domain.sync.OutboxCommand
 import app.awrad.core.domain.sync.SyncConflict
 import app.awrad.core.domain.sync.SyncStore
 
-/** A [SyncStore] in memory, for the fixture runners and fakes. Entities and conflicts list in key order. */
+/**
+ * A [SyncStore] in memory, for the fixture runners and fakes. Entities and conflicts list in key order.
+ * [audioFiles] are the custom dhikrs whose recording file is on the phone; [uploadsQueued] records each upload
+ * queued, in order.
+ */
 public class InMemorySyncStore(
     override var after: Long = 0,
     entities: List<LocalEntity> = emptyList(),
     outbox: List<OutboxCommand> = emptyList(),
     conflicts: List<SyncConflict> = emptyList(),
+    private val audioFiles: Set<AwradId> = emptySet(),
 ) : SyncStore {
+
+    public val uploadsQueued: MutableList<AwradId> = mutableListOf()
 
     private val entities = sortedMapOf<EntityKey, LocalEntity>().apply { entities.forEach { put(it.key, it) } }
     private var queue: List<OutboxCommand> = outbox
@@ -51,5 +59,11 @@ public class InMemorySyncStore(
 
     override fun removeConflict(key: EntityKey) {
         conflicts.remove(key)
+    }
+
+    override fun hasAudioFile(dhikrId: AwradId): Boolean = dhikrId in audioFiles
+
+    override fun queueUpload(dhikrId: AwradId) {
+        uploadsQueued += dhikrId
     }
 }

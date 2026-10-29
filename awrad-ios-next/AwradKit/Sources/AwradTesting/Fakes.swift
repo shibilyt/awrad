@@ -61,6 +61,7 @@ public actor FakeAccountService: AccountService {
     /// The address a requested email change goes to, until it's confirmed.
     public private(set) var pendingEmail: String?
     private var failures: [Operation: AccountError] = [:]
+    private var signInUnsaved = false
     /// One account per email, so signing in again as the same email is the same account.
     private var accounts: [String: Account] = [:]
 
@@ -76,6 +77,11 @@ public actor FakeAccountService: AccountService {
     }
 
     public func signedInAccount() -> Account? { account }
+
+    public func hasUnsavedSignIn() -> Bool { account != nil && signInUnsaved }
+
+    /// Makes the fake report that secure storage refused the signed-in session.
+    public func setSignInUnsaved(_ unsaved: Bool) { signInUnsaved = unsaved }
 
     public func currentAccount() throws(AccountError) -> Account {
         try record(.currentAccount, .currentAccount)

@@ -42,7 +42,7 @@ public enum FixtureLoader {
         var directory = URL(filePath: filePath).deletingLastPathComponent()
         while directory.pathComponents.count > 1 {
             let contracts = directory.appending(path: "contracts", directoryHint: .isDirectory)
-            if FileManager.default.fileExists(atPath: contracts.appending(path: model).path()) {
+            if FileManager.default.fileExists(atPath: contracts.appending(path: model).path(percentEncoded: false)) {
                 return contracts
             }
             directory = directory.deletingLastPathComponent()
@@ -75,7 +75,7 @@ public enum FixtureLoader {
         as _: (Given.Type, Expect.Type),
         convertingSnakeCase: Bool = true
     ) throws -> [FixtureCase<Given, Expect>] {
-        let path = file.path()
+        let path = file.path(percentEncoded: false)
         guard FileManager.default.fileExists(atPath: path) else { throw FixtureError.missingFile(path) }
         let root: [String: Any]
         do {

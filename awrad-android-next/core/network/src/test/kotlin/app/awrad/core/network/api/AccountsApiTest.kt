@@ -19,7 +19,10 @@ class AccountsApiTest {
     private val settings = AccountSettingsApi(transport, SequentialIds()) { "ar" }
     private val sync = SyncApi(transport, SequentialIds()) { "ar" }
 
-    private fun ApiOperation.testPath(): String = pathWith(mapOf("session_id" to SESSION_ID))
+    private val audio = AudioApi(transport, SequentialIds()) { "ar" }
+
+    private fun ApiOperation.testPath(): String =
+        pathWith(mapOf("session_id" to SESSION_ID, "asset_id" to ASSET_ID))
 
     /** Calls each [ApiOperation] once. */
     private suspend fun callEveryOperation() {
@@ -52,6 +55,14 @@ class AccountsApiTest {
             SyncCommandBatch(listOf(SyncCommandBody(ACCOUNT, "user_tag", ACCOUNT, "delete", 1))),
         )
         sync.listChanges("access-token-0123456789", ACCOUNT, after = 0, limit = 200)
+        audio.createUpload(
+            "access-token-0123456789",
+            ACCOUNT,
+            AudioUploadRequest(ASSET_ID, 4_182_733, "audio/mpeg", "7959650f".repeat(8)),
+        )
+        audio.completeUpload("access-token-0123456789", ACCOUNT, ASSET_ID)
+        audio.download("access-token-0123456789", ACCOUNT, ASSET_ID)
+        audio.usage("access-token-0123456789", ACCOUNT)
     }
 
     @Test
@@ -189,5 +200,6 @@ class AccountsApiTest {
     private companion object {
         const val SESSION_ID = "4c2e8f10-7b3a-4d5e-9f61-2a8b0c1d3e45"
         const val ACCOUNT = "0192f0b0-0000-7000-8000-000000000001"
+        const val ASSET_ID = "0192f0e0-0000-7000-8000-000000000001"
     }
 }

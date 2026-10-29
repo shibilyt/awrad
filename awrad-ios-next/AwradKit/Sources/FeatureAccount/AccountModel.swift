@@ -70,6 +70,9 @@ public final class AccountModel {
         public var sessions = SessionList.loading
         public var confirmation: Confirmation?
         public var isWorking = false
+        /// The sign-in lives only in memory because this device refused to store it: it works
+        /// until the app closes, so the overview says so.
+        public var signInUnsaved = false
         public var feedback: Feedback?
         /// The profiles on this phone and the active one's sync; `nil` until the first update.
         public var profiles: ProfilesState?
@@ -155,6 +158,8 @@ public final class AccountModel {
         default:
             if let submission = submission(for: action) ?? settingsSubmission(for: action) { await run(submission) }
         }
+        // Any of these may have refreshed the session, and so saved it or failed to.
+        state.signInUnsaved = await service.hasUnsavedSignIn()
     }
 
     /// Applies an action that only changes local state (typing, navigation, asking to confirm)

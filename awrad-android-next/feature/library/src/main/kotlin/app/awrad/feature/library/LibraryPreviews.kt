@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.core.domain.AwradId
+import app.awrad.core.domain.audio.AudioContentType
 import app.awrad.core.domain.audio.PlaybackState
 import app.awrad.core.domain.audio.PlaybackStatus
 import app.awrad.core.domain.dhikr.Audio
@@ -17,6 +18,11 @@ import app.awrad.core.domain.dhikr.LocalizedText
 import app.awrad.core.domain.dhikr.Reference
 import app.awrad.core.domain.dhikr.Transliteration
 import app.awrad.core.domain.dhikr.Virtue
+import app.awrad.core.domain.personal.CustomAudio
+import app.awrad.core.domain.personal.CustomDhikr
+import app.awrad.core.domain.personal.OptionalTexts
+import app.awrad.core.domain.personal.UploadedAudio
+import app.awrad.core.domain.personal.asDhikr
 
 /*
  * The library's screens in light and dark, on sample data (preview text isn't user-facing).
@@ -94,6 +100,50 @@ private fun DhikrDetailPreview() {
             ),
             onAction = {},
             onEdit = {},
+            onBack = {},
+        )
+    }
+}
+
+/** A custom dhikr whose recording is in the account but not on this phone yet. */
+private val sampleUploaded = UploadedAudio(
+    assetId = AwradId("0192f0d0-0000-7000-8000-0000000000a1"),
+    byteSize = 4_182_733,
+    contentType = AudioContentType.MPEG,
+    durationMs = 31_250,
+)
+
+private val sampleCustom = CustomDhikr(
+    id = AwradId("0192f0d0-0000-7000-8000-000000000001"),
+    kind = DhikrKind.DHIKR,
+    arabic = "سُبْحَانَ ٱللَّٰهِ وَبِحَمْدِهِ",
+    title = OptionalTexts(en = "Morning tasbih"),
+    audio = CustomAudio(localUri = null, uploaded = sampleUploaded),
+)
+
+@Preview(name = "light")
+@Preview(name = "dark", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun UploadedRecordingDetailPreview() {
+    AwradTheme {
+        DhikrDetailScreen(
+            state = DhikrDetailUiState(isLoading = false, dhikr = sampleCustom.asDhikr(), custom = sampleCustom),
+            onAction = {},
+            onEdit = {},
+            onBack = {},
+        )
+    }
+}
+
+@Preview(name = "light")
+@Preview(name = "dark", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun UploadedRecordingEditorPreview() {
+    AwradTheme {
+        CustomDhikrEditorScreen(
+            state = EditorUiState(isLoading = false, isNew = false).loaded(sampleCustom),
+            onAction = {},
+            onPickAudio = {},
             onBack = {},
         )
     }

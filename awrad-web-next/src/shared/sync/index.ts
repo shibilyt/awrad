@@ -3,6 +3,8 @@
 // only: no queue, no local copy beyond the query cache.
 export { fetchSyncState, sendEdit, PAGE_SIZE } from "./api";
 export {
+  AUDIO_CONTENT_TYPES,
+  AUDIO_MAX_BYTES,
   customDhikrProblems,
   isValidReference,
   textProblems,

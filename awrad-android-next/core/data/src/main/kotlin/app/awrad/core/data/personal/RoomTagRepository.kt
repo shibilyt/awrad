@@ -62,7 +62,7 @@ internal class RoomTagRepository(
             is TagNameResult.Rejected -> return TagOutcome.Failed(TagError.InvalidName(result.problem))
         }
         val outcome = profiles.write { profile ->
-            val store = RoomSyncStore(profile.database.syncDao(), clock::millis)
+            val store = RoomSyncStore(profile.database.syncDao(), now = clock::millis)
             val existing = store.entities(EntityType.USER_TAG).mapNotNull { UserTagJson.decode(it.key.id, it.document) }
             val error = when {
                 id != null && existing.none { it.id == id } -> TagError.NotFound
@@ -88,7 +88,7 @@ internal class RoomTagRepository(
      */
     override suspend fun delete(id: AwradId) {
         profiles.write { profile ->
-            val store = RoomSyncStore(profile.database.syncDao(), clock::millis)
+            val store = RoomSyncStore(profile.database.syncDao(), now = clock::millis)
             store.entities(EntityType.DHIKR_PERSONAL).forEach { record ->
                 val tags = PersonalDocument.tagIds(record.document)
                 if (id in tags) store.putEntity(record.copy(document = PersonalDocument.of(tags - id)))
@@ -105,7 +105,7 @@ internal class RoomTagRepository(
         val tags = tagIds.distinct()
         if (tags.size > UserTag.PER_DHIKR) return TagError.TooManyOnDhikr
         val error = profiles.write { profile ->
-            val store = RoomSyncStore(profile.database.syncDao(), clock::millis)
+            val store = RoomSyncStore(profile.database.syncDao(), now = clock::millis)
             if (tags.any { store.entity(EntityKey(EntityType.USER_TAG, it)) == null }) return@write TagError.NotFound
             val key = personalKeyOf(dhikrId)
             val existing = store.entity(key)

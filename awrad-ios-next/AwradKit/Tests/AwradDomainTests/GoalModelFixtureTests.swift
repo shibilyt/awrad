@@ -76,7 +76,7 @@ struct FixtureRunnerTests {
     )
     func everyImplementedRuleHasAFixtureFileWithCases(_ rule: String) throws {
         let file = try Self.fixtureFile(rule)
-        #expect(FileManager.default.fileExists(atPath: file.path()), "\(rule).json")
+        #expect(FileManager.default.fileExists(atPath: file.path(percentEncoded: false)), "\(rule).json")
         let object = try JSONSerialization.jsonObject(with: Data(contentsOf: file))
         let count = ((object as? [String: Any])?["cases"] as? [Any])?.count ?? 0
         #expect(count > 0, "\(rule) has no cases")
@@ -99,7 +99,7 @@ struct FixtureRunnerTests {
     @Test func aMissingFileFails() throws {
         let missing = try GoalModelRule.goalStreak.fixtureFile().deletingLastPathComponent()
             .appending(path: "no_such_rule.json")
-        #expect(throws: FixtureError.missingFile(missing.path())) {
+        #expect(throws: FixtureError.missingFile(missing.path(percentEncoded: false))) {
             try FixtureLoader.load(missing, rule: "no_such_rule", as: (DueExpect.self, DueExpect.self))
         }
     }
@@ -108,7 +108,7 @@ struct FixtureRunnerTests {
         let file = FileManager.default.temporaryDirectory.appending(path: "empty_rule-\(UUID().uuidString).json")
         try Data(#"{"format": "awrad-fixture/1", "rule": "empty_rule", "cases": []}"#.utf8).write(to: file)
         defer { try? FileManager.default.removeItem(at: file) }
-        #expect(throws: FixtureError.noCases(file.path())) {
+        #expect(throws: FixtureError.noCases(file.path(percentEncoded: false))) {
             try FixtureLoader.load(file, rule: "empty_rule", as: (DueExpect.self, DueExpect.self))
         }
     }

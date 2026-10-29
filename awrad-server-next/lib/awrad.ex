@@ -18,6 +18,7 @@ defmodule Awrad do
       Repo,
       UUIDv7,
       {Accounts, []},
+      {Audio, []},
       {Dhikrs, []},
       {Goals, []},
       {Hijri, []},

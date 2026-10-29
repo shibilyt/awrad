@@ -216,6 +216,10 @@ public struct ChangesPage: Hashable, Sendable {
 public enum RejectionCode: Hashable, Sendable {
     case documentInvalid, documentTooLarge, customDhikrLimitReached, tagLimitReached, tagNameTaken
     case tagNotFound, dhikrNotFound, entityNotFound, deleteNotAllowed, commandIDReused
+    /// A custom dhikr put naming an asset that isn't a ready asset of the account (slice 3c).
+    case audioNotFound
+    /// A custom dhikr put whose `byte_size` or `content_type` isn't its asset's (slice 3c).
+    case audioMismatch
     case other(String)
 
     private static let byCode: [String: RejectionCode] = [
@@ -223,7 +227,7 @@ public enum RejectionCode: Hashable, Sendable {
         "custom_dhikr_limit_reached": .customDhikrLimitReached, "tag_limit_reached": .tagLimitReached,
         "tag_name_taken": .tagNameTaken, "tag_not_found": .tagNotFound, "dhikr_not_found": .dhikrNotFound,
         "entity_not_found": .entityNotFound, "delete_not_allowed": .deleteNotAllowed,
-        "command_id_reused": .commandIDReused,
+        "command_id_reused": .commandIDReused, "audio_not_found": .audioNotFound, "audio_mismatch": .audioMismatch,
     ]
 
     public init(code: String) {
@@ -233,6 +237,23 @@ public enum RejectionCode: Hashable, Sendable {
     public var code: String {
         if case .other(let code) = self { return code }
         return Self.byCode.first { $0.value == self }?.key ?? ""
+    }
+
+    /// The two rejections of a custom dhikr put about its uploaded recording, after which the phone
+    /// keeps its edit (`SyncRules.apply(_:to:localAudioFiles:newCommandID:)`).
+    public var isAboutAudio: Bool { self == .audioNotFound || self == .audioMismatch }
+}
+
+/// What applying a batch's receipts leaves for the phone to do.
+public struct ReceiptsOutcome: Hashable, Sendable {
+    /// Rejected changes to tell the user about.
+    public var notices: [SyncNotice] = []
+    /// Custom dhikrs whose recording goes back into the upload queue, sorted.
+    public var uploadsQueued: [AwradID] = []
+
+    public init(notices: [SyncNotice] = [], uploadsQueued: [AwradID] = []) {
+        self.notices = notices
+        self.uploadsQueued = uploadsQueued
     }
 }
 

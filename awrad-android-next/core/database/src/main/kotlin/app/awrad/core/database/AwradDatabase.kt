@@ -18,6 +18,7 @@ import androidx.room.RoomDatabase
         ConflictEntity::class,
         NoticeEntity::class,
         SyncMetaEntity::class,
+        AudioUploadEntity::class,
     ],
     version = 1,
     exportSchema = true,

@@ -11,7 +11,9 @@ defmodule Awrad.Sync.CustomDhikrDocument do
     * `too_many`: more than 20 references;
     * `not_allowed`: a member the shape doesn't have (`id`, `key`, `aliases`,
       `virtues`, catalog `tags`, an unknown language);
-    * `invalid`: a wrong type or value (`kind`, `audio`, a whole reference);
+    * `invalid`: a wrong type or value (`kind`, `audio`, a whole reference).
+      `audio` is `null`, `{"local_only": true}`, or an uploaded recording
+      `{asset_id, byte_size, content_type, duration_ms}` (slice 3c);
     * `range`: a valid Qur'an reference whose `ayah_end` is below its
       `ayah_start`, on `/references/N/ayah_end` (the one rule the schema
       can't express).
@@ -25,6 +27,7 @@ defmodule Awrad.Sync.CustomDhikrDocument do
   @title_max 120
   @long_max 5_000
   @max_references 20
+  @max_int53 9_007_199_254_740_991
 
   # ECMAScript's \s, which the schema's "\\S" pattern is written in.
   @blank ~r/\A[\x{0009}-\x{000D}\x{0020}\x{00A0}\x{1680}\x{2000}-\x{200A}\x{2028}\x{2029}\x{202F}\x{205F}\x{3000}\x{FEFF}]*\z/u
@@ -129,7 +132,29 @@ defmodule Awrad.Sync.CustomDhikrDocument do
   defp audio(:error), do: [{"/audio", "required"}]
   defp audio({:ok, nil}), do: []
   defp audio({:ok, %{"local_only" => true} = audio}) when map_size(audio) == 1, do: []
-  defp audio({:ok, _other}), do: [{"/audio", "invalid"}]
+
+  defp audio({:ok, audio}) do
+    if uploaded_audio?(audio), do: [], else: [{"/audio", "invalid"}]
+  end
+
+  # `$defs/uploaded_audio`: every member present, nothing else. Whether the
+  # asset exists and agrees is the entity rules' (`audio_not_found`,
+  # `audio_mismatch`), not the document's.
+  defp uploaded_audio?(
+         %{
+           "asset_id" => asset_id,
+           "byte_size" => byte_size,
+           "content_type" => content_type,
+           "duration_ms" => duration_ms
+         } = audio
+       )
+       when map_size(audio) == 4 and is_binary(asset_id) and is_integer(byte_size) and
+              is_binary(content_type) do
+    Awrad.ID.valid?(asset_id) and Awrad.Audio.recording?(byte_size, content_type) and
+      (is_nil(duration_ms) or (is_integer(duration_ms) and duration_ms in 1..@max_int53))
+  end
+
+  defp uploaded_audio?(_other), do: false
 
   defp references(:error), do: [{"/references", "required"}]
   defp references({:ok, nil}), do: [{"/references", "required"}]

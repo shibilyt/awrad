@@ -383,7 +383,7 @@ export interface paths {
          *
          *     **Batch versus command problems.** The batch is refused as a whole (`422 validation_failed`, nothing applied) only when it has 0 or more than 100 commands, or a command's envelope is wrong: `command_id` or `entity_id` not a UUID, an unknown `entity_type` or `op`, `base_version` not an integer in range, `document` missing on a put, present on a delete or not an object, or an unknown member (sync.schema.json `command_envelope`). Everything else is a per-command `rejected` receipt, including a document that doesn't match its schema below: the server checks each document itself, so one bad command never blocks a phone's queue.
          *
-         *     Receipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null). Receipts are kept for 90 days.
+         *     Receipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's, contracts/audio/v1). Receipts are kept for 90 days.
          *
          *     `Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts the header and ignores it. Responses are `Cache-Control: no-store`.
          */
@@ -406,6 +406,102 @@ export interface paths {
          * @description Each entity changed after `after`, in its latest state, ordered by revision, then `entity_type`, then `entity_id`. `after=0` is a full download and lists only active entities; `after>0` includes deletes (`state: deleted`, `document: null`), and a client ignores a delete for something it doesn't have. A page adds whole revisions until it holds at least `limit` changes, so a revision (a command and its cascades) is never split and a page can exceed `limit`. When more remain, `has_more` is true and `next_after` is the page's last revision; otherwise `next_after` is `head_revision`. An `after` above `head_revision` gets an empty page with `next_after = head_revision`. Each page is read from one consistent snapshot. Clients store `next_after` together with the changes, in one transaction. Responses are `Cache-Control: no-store`.
          */
         get: operations["list_sync_changes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audio_uploads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reserve an upload and get a signed PUT link
+         * @description Checks the recording against the upload rules and records a pending upload of it. The checks run in this order, and the first failure answers (contracts/audio/v1/fixtures/audio_upload_validity.json): `content_type` exactly `audio/mpeg` or `audio/mp4` (else `415 unsupported_audio_type`); `byte_size` at least 1 (else `422 invalid_size`) and at most 10,000,000 (else `413 file_too_large`); the account's used bytes, ready and pending together, plus `byte_size` at most 500,000,000 (else `422 storage_full`, with `used_bytes` and `limit_bytes`).
+         *
+         *     The answer is a signed R2 `PUT` link valid for 15 minutes and the headers to send with it. They include `x-amz-checksum-sha256`, so R2 itself refuses bytes that don't match `sha256`. The client then PUTs the file, unchanged, and calls `complete_audio_upload`.
+         *
+         *     **Idempotent by `asset_id`** (a new UUIDv7 per recording). An `asset_id` the account already has is looked at before the rules: the same body while the upload is pending is `200` with a fresh link (it doesn't count against the quota twice); the same body once the asset is ready is `200 {asset}`, and the client skips the PUT and the completion; a different body, or an ID another account uses, is `409 asset_id_in_use`. `Idempotency-Key` isn't needed: the server accepts the header and ignores it.
+         *
+         *     A body that breaks the request schema (a non-UUID `asset_id`, `sha256` not 64 lowercase hex digits, a negative `byte_size`, an unknown member) is `400 malformed_request`; clients never send one. Responses are `Cache-Control: no-store`.
+         */
+        post: operations["create_audio_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audio_uploads/{asset_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm an upload once the file is in storage
+         * @description No request body. The server looks up the stored object and compares its size, content type and SHA-256 with the upload's (it doesn't decode audio). If they match, the upload becomes a ready asset, which a custom dhikr document may now name: `200 {asset}`. Completing a ready asset again returns it again.
+         *
+         *     - No object yet (the PUT hasn't finished, or failed): `409 upload_incomplete`. PUT again (asking
+         *       `create_audio_upload` for a fresh link if this one expired), then complete again.
+         *
+         *     - An object that doesn't match: the server deletes the object and the pending upload, and answers
+         *       `422 upload_mismatch`. The recording stays local; a retry starts over with a new `asset_id`.
+         *
+         *     - An unknown `asset_id`, another account's, one already cleaned up, or not a UUID: `404`.
+         *
+         *     `Idempotency-Key` is accepted and ignored: completing is idempotent. Responses are `Cache-Control: no-store`.
+         */
+        post: operations["complete_audio_upload"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audio_assets/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Storage the account's recordings use
+         * @description `used_bytes` counts ready assets and pending uploads by their declared `byte_size`; `limit_bytes` is the account's limit (500,000,000). Settings shows it on phones and the web ("120 MB of 500 MB"), and clients may pre-check an upload with it (audio_upload_validity.json). Responses are `Cache-Control: no-store`.
+         */
+        get: operations["get_audio_usage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audio_assets/{asset_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a signed link to play or download a recording
+         * @description A signed R2 `GET` link to one of the account's ready assets, valid for 10 minutes. Ask for a new one each time playback starts rather than storing it. Phones download the file once into the active profile and play it from there afterwards, offline too; the web plays from the link. An unknown `asset_id`, a pending upload, another account's asset, one already cleaned up, or not a UUID is `404`. Responses are `Cache-Control: no-store`.
+         */
+        get: operations["get_audio_download"];
         put?: never;
         post?: never;
         delete?: never;
@@ -596,11 +692,11 @@ export interface components {
                 ar: components["schemas"]["SyncOptionalLongText"];
                 ml: components["schemas"]["SyncOptionalLongText"];
             };
-            /** @description null, or a recording kept only on the device that imported it (uploading is slice 3c). */
+            /** @description null (no recording), `{"local_only": true}` (a recording kept only on the device that imported it), or an uploaded recording (slice 3c). Any other shape is a field error `invalid` on /audio. */
             audio: null | {
                 /** @constant */
                 local_only: true;
-            };
+            } | components["schemas"]["UploadedAudio"];
             references: unknown[];
         };
         /** @description A user's tag. `name` is trimmed, collapsed and NFC, with 1-40 graphemes and at most 128 UTF-8 bytes; `normalized_name` is its case fold (tag_name_normalization.json). The server recomputes it. */
@@ -688,7 +784,7 @@ export interface components {
             /** @constant */
             status: "rejected";
             /** @enum {string} */
-            code: "document_invalid" | "document_too_large" | "custom_dhikr_limit_reached" | "tag_limit_reached" | "tag_name_taken" | "tag_not_found" | "dhikr_not_found" | "entity_not_found" | "delete_not_allowed" | "command_id_reused";
+            code: "document_invalid" | "document_too_large" | "custom_dhikr_limit_reached" | "tag_limit_reached" | "tag_name_taken" | "tag_not_found" | "dhikr_not_found" | "entity_not_found" | "delete_not_allowed" | "command_id_reused" | "audio_not_found" | "audio_mismatch";
             fields: components["schemas"]["SyncFieldError"][];
             /** @description The server's copy to undo to, or null when it has none. */
             current: components["schemas"]["SyncCurrent"] | null;
@@ -710,6 +806,57 @@ export interface components {
             version: components["schemas"]["SyncVersion"];
             revision: components["schemas"]["Revision"];
             document: components["schemas"]["SyncDocument"] | null;
+        };
+        /**
+         * @description The recording's media type, exactly as written: MP3 is `audio/mpeg`, M4A/AAC is `audio/mp4`. Lowercase, no parameters (audio.schema.json `content_type`).
+         * @example audio/mpeg
+         */
+        AudioContentType: "audio/mpeg" | "audio/mp4";
+        /**
+         * @description File size in bytes, 1 to 10,000,000 (10 MB, decimal).
+         * @example 4182733
+         */
+        AudioByteSize: number;
+        /** @description Length in milliseconds as the importing client measured it, or null. The server never decodes audio. */
+        AudioDurationMs: number | null;
+        /**
+         * @description SHA-256 of the file's bytes, as 64 lowercase hex digits.
+         * @example 7959650f9fa69b6279b3694e2506059cb67062cc0f7e9ad27a346528d341e5bc
+         */
+        Sha256: string;
+        /** @description A recording uploaded to the account's private storage (sync.schema.json `uploaded_audio`). Every member is present. A put naming an `asset_id` that isn't a ready asset of the account is `rejected` with `audio_not_found`; one whose `byte_size` or `content_type` differs from the asset's is `rejected` with `audio_mismatch`. */
+        UploadedAudio: {
+            asset_id: components["schemas"]["Uuid"];
+            byte_size: components["schemas"]["AudioByteSize"];
+            content_type: components["schemas"]["AudioContentType"];
+            duration_ms: components["schemas"]["AudioDurationMs"];
+        };
+        /** @description A confirmed recording of the account (audio.schema.json `asset`). A pending upload isn't an asset. */
+        AudioAsset: {
+            asset_id: components["schemas"]["Uuid"];
+            byte_size: components["schemas"]["AudioByteSize"];
+            content_type: components["schemas"]["AudioContentType"];
+            /** @constant */
+            status: "ready";
+            created_at: components["schemas"]["Instant"];
+        };
+        /** @description A ready asset (audio.schema.json `asset_response`). */
+        AudioAssetResult: {
+            asset: components["schemas"]["AudioAsset"];
+        };
+        /** @description A pending upload's signed PUT link (audio.schema.json `upload`). */
+        AudioUpload: {
+            asset_id: components["schemas"]["Uuid"];
+            /**
+             * Format: uri
+             * @description Signed R2 PUT link, valid until `expires_at` (15 minutes). Treat it as opaque.
+             */
+            upload_url: string;
+            /** @description Headers to send, verbatim and all of them, with the PUT: lowercase header names to values. Today `content-type` (the upload's content_type) and `x-amz-checksum-sha256` (the base64 SHA-256 the link is signed with, so R2 refuses any other bytes). Clients pass the map through rather than building it. */
+            upload_headers: {
+                [key: string]: string;
+            };
+            expires_at: components["schemas"]["Instant"];
         };
     };
     responses: {
@@ -2089,7 +2236,12 @@ export interface operations {
                      *                 "ar": null,
                      *                 "ml": null
                      *               },
-                     *               "audio": null,
+                     *               "audio": {
+                     *                 "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+                     *                 "byte_size": 4182733,
+                     *                 "content_type": "audio/mpeg",
+                     *                 "duration_ms": 31250
+                     *               },
                      *               "references": []
                      *             }
                      *           }
@@ -2282,6 +2434,308 @@ export interface operations {
             };
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
+            409: components["responses"]["AccountMismatch"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    create_audio_upload: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The account this request's data belongs to: on a phone, the active local profile's account; on the web, the signed-in account. If it isn't the authenticated account, the request is refused with `409 account_mismatch` and nothing is read or written. Missing or not a UUID is `400 malformed_request`. */
+                "X-Awrad-Account": components["parameters"]["AwradAccount"];
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+                 *       "byte_size": 4182733,
+                 *       "content_type": "audio/mpeg",
+                 *       "sha256": "7959650f9fa69b6279b3694e2506059cb67062cc0f7e9ad27a346528d341e5bc"
+                 *     }
+                 */
+                "application/json": {
+                    /** @description A new UUIDv7 made by the client. It makes the call idempotent and becomes the asset's ID. */
+                    asset_id: components["schemas"]["Uuid"];
+                    /** @description The file's size in bytes. Wider than the 1 to 10,000,000 an asset may have, so a size the rules refuse gets `invalid_size` or `file_too_large` instead of a 400. */
+                    byte_size: number;
+                    /** @description `audio/mpeg` or `audio/mp4`, exactly. Any other string is `415 unsupported_audio_type`, not a 400. */
+                    content_type: string;
+                    sha256: components["schemas"]["Sha256"];
+                };
+            };
+        };
+        responses: {
+            /** @description A repeat of an earlier request with the same body: while the upload is pending, the same shape as `201` with a fresh link; once the asset is ready, `{asset}`, as `complete_audio_upload` returns it. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AudioUpload"] | components["schemas"]["AudioAssetResult"];
+                };
+            };
+            /** @description A new pending upload, and its signed PUT link. */
+            201: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+                     *       "upload_url": "https://example-account.r2.cloudflarestorage.com/awrad-private-dhikr/0192f0e0-0000-7000-8000-000000000001?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEKEY%2F20261029%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261029T080000Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-checksum-sha256&X-Amz-Signature=0000000000000000000000000000000000000000000000000000000000000000",
+                     *       "upload_headers": {
+                     *         "content-type": "audio/mpeg",
+                     *         "x-amz-checksum-sha256": "eVllD5+mm2J5s2lOJQYFnLZwYswPfprSejRlKNNB5bw="
+                     *       },
+                     *       "expires_at": "2026-10-29T08:15:00Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["AudioUpload"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["CsrfTokenInvalid"];
+            /** @description `asset_id_in_use`: the account already used this `asset_id` with a different body, or another account uses it; make a new ID. `account_mismatch`: X-Awrad-Account isn't the signed-in account; nothing was recorded. */
+            409: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description `file_too_large`: `byte_size` is above 10,000,000. The recording stays on the phone. */
+            413: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "urn:awrad:problem:file_too_large",
+                     *       "title": "File too large",
+                     *       "status": 413,
+                     *       "code": "file_too_large",
+                     *       "detail": "byte_size 11534336 is above the 10000000-byte limit",
+                     *       "errors": []
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description `unsupported_audio_type`: `content_type` isn't exactly `audio/mpeg` or `audio/mp4`. */
+            415: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "urn:awrad:problem:unsupported_audio_type",
+                     *       "title": "Unsupported audio type",
+                     *       "status": 415,
+                     *       "code": "unsupported_audio_type",
+                     *       "detail": "content_type audio/wav is not audio/mpeg or audio/mp4",
+                     *       "errors": []
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description `storage_full`: the account's used bytes plus `byte_size` would pass its limit. The problem carries `used_bytes` and `limit_bytes`, for "120 MB of 500 MB"-style messages. `invalid_size`: `byte_size` is 0. */
+            422: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"] & {
+                        /** @description Bytes the account holds now, ready and pending uploads together. */
+                        used_bytes?: number;
+                        /** @description The account's limit (500,000,000). */
+                        limit_bytes?: number;
+                    };
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    complete_audio_upload: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The account this request's data belongs to: on a phone, the active local profile's account; on the web, the signed-in account. If it isn't the authenticated account, the request is refused with `409 account_mismatch` and nothing is read or written. Missing or not a UUID is `400 malformed_request`. */
+                "X-Awrad-Account": components["parameters"]["AwradAccount"];
+                /** @description A UUID (clients generate UUIDv7). Replays the stored result for 24 hours (STYLE §10). Clients send it on every retryable POST. */
+                "Idempotency-Key"?: components["parameters"]["IdempotencyKey"];
+            };
+            path: {
+                asset_id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The ready asset. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "asset": {
+                     *         "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+                     *         "byte_size": 4182733,
+                     *         "content_type": "audio/mpeg",
+                     *         "status": "ready",
+                     *         "created_at": "2026-10-29T08:01:12Z"
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["AudioAssetResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["CsrfTokenInvalid"];
+            404: components["responses"]["NotFound"];
+            /** @description `upload_incomplete`: storage has no object for this upload yet. `account_mismatch`: X-Awrad-Account isn't the signed-in account; nothing was read or changed. */
+            409: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            /** @description `upload_mismatch`: the stored object's size, content type or checksum isn't the upload's. The server has deleted the object and the pending upload. */
+            422: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "type": "urn:awrad:problem:upload_mismatch",
+                     *       "title": "Upload mismatch",
+                     *       "status": 422,
+                     *       "code": "upload_mismatch",
+                     *       "detail": "the stored object is 4182000 bytes, not 4182733",
+                     *       "errors": []
+                     *     }
+                     */
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    get_audio_usage: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The account this request's data belongs to: on a phone, the active local profile's account; on the web, the signed-in account. If it isn't the authenticated account, the request is refused with `409 account_mismatch` and nothing is read or written. Missing or not a UUID is `400 malformed_request`. */
+                "X-Awrad-Account": components["parameters"]["AwradAccount"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bytes used and the limit. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "used_bytes": 120482733,
+                     *       "limit_bytes": 500000000
+                     *     }
+                     */
+                    "application/json": {
+                        used_bytes: number;
+                        limit_bytes: number;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            409: components["responses"]["AccountMismatch"];
+            429: components["responses"]["TooManyRequests"];
+        };
+    };
+    get_audio_download: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description The account this request's data belongs to: on a phone, the active local profile's account; on the web, the signed-in account. If it isn't the authenticated account, the request is refused with `409 account_mismatch` and nothing is read or written. Missing or not a UUID is `400 malformed_request`. */
+                "X-Awrad-Account": components["parameters"]["AwradAccount"];
+            };
+            path: {
+                asset_id: components["schemas"]["Uuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The signed link. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["CacheControl"];
+                    "x-request-id": components["headers"]["RequestId"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "url": "https://example-account.r2.cloudflarestorage.com/awrad-private-dhikr/0192f0e0-0000-7000-8000-000000000001?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEKEY%2F20261029%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261029T090000Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&X-Amz-Signature=0000000000000000000000000000000000000000000000000000000000000000",
+                     *       "expires_at": "2026-10-29T09:10:00Z"
+                     *     }
+                     */
+                    "application/json": {
+                        /**
+                         * Format: uri
+                         * @description Signed R2 GET link, valid until `expires_at`. Treat it as opaque.
+                         */
+                        url: string;
+                        expires_at: components["schemas"]["Instant"];
+                    };
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
             409: components["responses"]["AccountMismatch"];
             429: components["responses"]["TooManyRequests"];
         };

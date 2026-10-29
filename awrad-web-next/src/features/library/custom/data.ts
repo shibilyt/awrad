@@ -54,7 +54,8 @@ export function pickText(text: Partial<Languages3>, language: Language): string 
  * A custom dhikr in the catalog's shape, so rows, the detail and search show it like a built-in.
  * Its ID is its key. Each text falls back from the UI language to English to any language; a
  * text it doesn't have at all is empty, and the detail leaves its section out. It has no virtues,
- * no catalog tags, and never audio on the web.
+ * no catalog tags and no catalog audio: an uploaded recording plays from a signed link instead
+ * (`DhikrPage`'s `recordingOf`).
  */
 export function asDhikr({ id, document }: Entity<CustomDhikrDocument>): Dhikr {
   const { title, transliteration, translation } = document;

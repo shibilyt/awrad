@@ -4,11 +4,13 @@ import app.awrad.core.domain.AwradId
 
 /**
  * One profile's synced state, seen inside one local transaction: the entities with their known versions, the
- * outbox, the open conflicts and the changes-feed position. The queue rules ([Outbox], [ApplyChanges]) read and
- * write it; `:core:data` backs it with the profile's Room database, the fixture runners with memory.
+ * outbox, the open conflicts, the changes-feed position, and the recordings on the phone and queued to upload.
+ * The queue rules ([Outbox], [ApplyChanges]) read and write it; `:core:data` backs it with the profile's Room
+ * database, the fixture runners with memory.
  *
  * Calls are blocking: an implementation runs them inside its own transaction.
  */
+@Suppress("TooManyFunctions") // One call per part of the state the rules read and write.
 public interface SyncStore {
     /** The changes-feed position: the last `next_after` applied. */
     public var after: Long
@@ -40,6 +42,15 @@ public interface SyncStore {
     public fun putConflict(conflict: SyncConflict)
 
     public fun removeConflict(key: EntityKey)
+
+    /** Whether the recording file of the custom dhikr [dhikrId] is on this phone (fixture `local_audio_files`). */
+    public fun hasAudioFile(dhikrId: AwradId): Boolean
+
+    /**
+     * Queues the recording of the custom dhikr [dhikrId] for upload (again), under a new asset ID; once confirmed,
+     * the upload queues its own put naming the asset (fixture `uploads_queued`).
+     */
+    public fun queueUpload(dhikrId: AwradId)
 }
 
 /** The queued commands for [key], oldest first. */

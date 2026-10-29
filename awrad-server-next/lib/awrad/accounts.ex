@@ -15,7 +15,7 @@ defmodule Awrad.Accounts do
   """
 
   use Boundary,
-    deps: [Awrad, Awrad.Secrets],
+    deps: [Awrad, Awrad.Audio, Awrad.Secrets],
     exports: [DeviceSession, EmailInput, Grant, RateLimiter, Scope, User]
 
   alias Awrad.Accounts.{

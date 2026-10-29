@@ -59,9 +59,16 @@
     <string name="editor_import_recording">ഒരു റെക്കോർഡിംഗ് ചേർക്കുക</string>
     <string name="editor_recording_here">ഈ ഫോണിലെ റെക്കോർഡിംഗ്</string>
     <string name="editor_recording_elsewhere">മറ്റൊരു ഉപകരണത്തിലെ റെക്കോർഡിംഗ്</string>
+    <string name="editor_recording_account">നിങ്ങളുടെ അക്കൗണ്ടിൽ സൂക്ഷിച്ചു</string>
+    <string name="editor_recording_waiting">നിങ്ങളുടെ അക്കൗണ്ടിലേക്ക് അപ്‌ലോഡ് ചെയ്യാൻ കാത്തിരിക്കുന്നു</string>
+    <string name="editor_recording_phone_only">ഈ ഫോണിൽ മാത്രം സൂക്ഷിച്ചിരിക്കുന്നു</string>
     <string name="editor_replace_recording">മാറ്റുക</string>
     <string name="editor_remove_recording">നീക്കം ചെയ്യുക</string>
-    <string name="editor_recording_hint">MP3 അല്ലെങ്കിൽ M4A, 10 MB വരെ. ഇത് ഈ ഫോണിൽ മാത്രം നിലനിൽക്കും.</string>
+    <string name="editor_recording_hint">MP3 അല്ലെങ്കിൽ M4A, 10 MB വരെ. സൈൻ ഇൻ ചെയ്തിട്ടുണ്ടെങ്കിൽ ഇത് നിങ്ങളുടെ അക്കൗണ്ടിൽ സൂക്ഷിക്കും; ഇല്ലെങ്കിൽ ഈ ഫോണിൽ മാത്രം നിലനിൽക്കും.</string>
+    <string name="editor_download_offline">ഇവിടെ ആദ്യമായി പ്ലേ ചെയ്യാൻ ഇന്റർനെറ്റുമായി ബന്ധിപ്പിക്കുക.</string>
+    <string name="editor_download_not_signed_in">ഇവിടെ പ്ലേ ചെയ്യാൻ ഇത് ഉൾപ്പെടുന്ന അക്കൗണ്ടിൽ സൈൻ ഇൻ ചെയ്യുക.</string>
+    <string name="editor_download_not_found">ഈ റെക്കോർഡിംഗ് ഇപ്പോൾ നിങ്ങളുടെ അക്കൗണ്ടിലില്ല.</string>
+    <string name="editor_download_failed">റെക്കോർഡിംഗ് ഡൗൺലോഡ് ചെയ്യാനായില്ല. വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="editor_tags_empty">ഇതുവരെ ടാഗുകളില്ല. ലൈബ്രറിയിലെ ടാഗുകൾ നിയന്ത്രിക്കുക എന്നതിൽ ഉണ്ടാക്കുക.</string>
     <string name="editor_problem_arabic">അറബി വാചകം നൽകുക</string>
     <string name="editor_problem_too_long">ഇത് വളരെ നീളമുള്ളതാണ്</string>
@@ -74,7 +81,7 @@
     <string name="editor_problem_limit">നിങ്ങൾക്ക് സ്വന്തമായി 1,000 ദിക്റുകളുണ്ട്, അതാണ് പരമാവധി.</string>
     <string name="editor_problem_not_saved">അക്കൗണ്ട് മാറിയതിനാൽ സേവ് ചെയ്തില്ല. വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="editor_audio_too_large">ഈ റെക്കോർഡിംഗ് 10 MB-യിൽ കൂടുതലാണ്.</string>
-    <string name="editor_audio_unsupported">ഒരു MP3 അല്ലെങ്കിൽ M4A റെക്കോർഡിംഗ് തിരഞ്ഞെടുക്കുക.</string>
+    <string name="editor_audio_unsupported">ഈ തരം ഫയൽ പിന്തുണയ്ക്കുന്നില്ല. ഒരു MP3 അല്ലെങ്കിൽ M4A റെക്കോർഡിംഗ് തിരഞ്ഞെടുക്കുക.</string>
     <string name="editor_audio_unreadable">ഈ ഫയൽ വായിക്കാനായില്ല.</string>
 
     <string name="tags_rename">പേര് മാറ്റുക</string>

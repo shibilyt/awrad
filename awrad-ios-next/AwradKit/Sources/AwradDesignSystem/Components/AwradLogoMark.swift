@@ -24,7 +24,7 @@ public struct AwradLogoMark: View {
         // The PNGs ship in the bundle; an empty image only if one were missing.
         let url = Bundle.module.url(forResource: name, withExtension: "png", subdirectory: "Images")
         #if canImport(UIKit)
-            return Image(uiImage: url.flatMap { UIImage(contentsOfFile: $0.path()) } ?? UIImage())
+            return Image(uiImage: url.flatMap { UIImage(contentsOfFile: $0.path(percentEncoded: false)) } ?? UIImage())
         #else
             return Image(nsImage: url.flatMap { NSImage(contentsOf: $0) } ?? NSImage())
         #endif

@@ -5,9 +5,12 @@ import android.os.Build
 import app.awrad.core.network.api.AccountSettingsApi
 import app.awrad.core.network.api.AccountsApi
 import app.awrad.core.network.api.AppLanguage
+import app.awrad.core.network.api.AudioApi
 import app.awrad.core.network.api.SyncApi
 import app.awrad.core.network.http.HttpTransport
+import app.awrad.core.network.http.OkHttpSignedLinkTransport
 import app.awrad.core.network.http.OkHttpTransport
+import app.awrad.core.network.http.SignedLinkTransport
 import app.awrad.core.network.session.DeviceSessionManager
 import app.awrad.core.network.session.KeystoreCredentialStore
 import dagger.Module
@@ -45,6 +48,14 @@ internal object NetworkModule {
     @Provides
     fun syncApi(transport: HttpTransport, ids: IdGenerator, language: AppLanguage): SyncApi =
         SyncApi(transport, ids, language)
+
+    @Provides
+    fun audioApi(transport: HttpTransport, ids: IdGenerator, language: AppLanguage): AudioApi =
+        AudioApi(transport, ids, language)
+
+    @Provides
+    @Singleton
+    fun signedLinkTransport(): SignedLinkTransport = OkHttpSignedLinkTransport()
 
     @Provides
     @Singleton

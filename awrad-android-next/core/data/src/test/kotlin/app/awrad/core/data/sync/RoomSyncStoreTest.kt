@@ -25,6 +25,7 @@ import app.awrad.core.testing.fixtures.toReceipt
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.add
 import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonArray
@@ -69,6 +70,7 @@ class RoomSyncStoreTest {
             database.runInTransaction<JsonObject> {
                 val store = RoomSyncStore(dao) { 0L }
                 load(store, given.getValue("local").jsonObject)
+                given.getValue("local_audio_files").jsonArray.forEach { attachRecording(it.jsonPrimitive.content) }
                 val step = given.getValue("step").jsonObject
                 val notices = when (step.getValue("kind").jsonPrimitive.content) {
                     "page" -> emptyList<app.awrad.core.domain.sync.SyncNotice>().also {
@@ -77,6 +79,8 @@ class RoomSyncStoreTest {
                     "receipts" -> ApplyChanges.applyReceipts(
                         store,
                         step.getValue("receipts").jsonArray.map { it.jsonObject.toReceipt() },
+                        step.getValue("new_command_ids").jsonArray.map { AwradId(it.jsonPrimitive.content) }
+                            .iterator()::next,
                     )
                     else -> {
                         resolve(store, step.getValue("resolve").jsonObject)
@@ -85,6 +89,8 @@ class RoomSyncStoreTest {
                 }
                 buildJsonObject {
                     put("local", dump(store))
+                    val uploads = dao.queuedUploads().map { it.dhikrId }.sorted()
+                    putJsonArray("uploads_queued") { uploads.forEach { add(it) } }
                     putJsonArray("notices") {
                         notices.forEach { notice ->
                             addJsonObject {
@@ -169,6 +175,72 @@ class RoomSyncStoreTest {
         }
     }
 
+    @Test
+    fun `a cached recording stays while the document names its asset, and goes with another one`() {
+        database.runInTransaction {
+            val store = RoomSyncStore(dao) { 0L }
+            val id = AwradId("0192f0d0-0000-7000-8000-000000000001")
+            val key = EntityKey(EntityType.CUSTOM_DHIKR, id)
+            dao.upsertCustomDhikr(
+                app.awrad.core.database.CustomDhikrEntity(id.value, 1, uploaded(ASSET).toString(), "/files/a.mp3", 0),
+            )
+
+            store.putEntity(LocalEntity(key, 2, uploaded(ASSET)))
+            assertEquals("/files/a.mp3", dao.customDhikr(id.value)?.audioFile)
+            // An audio rejection falls back to the local marker: the file is still the recording.
+            store.putEntity(LocalEntity(key, 3, DOCUMENT_WITH_AUDIO))
+            assertEquals("/files/a.mp3", dao.customDhikr(id.value)?.audioFile)
+            assertEquals(emptyList(), store.orphanedAudio)
+
+            store.putEntity(LocalEntity(key, 4, uploaded(OTHER_ASSET)))
+            assertEquals(null, dao.customDhikr(id.value)?.audioFile)
+            assertEquals(listOf("/files/a.mp3"), store.orphanedAudio)
+        }
+    }
+
+    @Test
+    fun `a recording waiting to upload goes when another device's recording replaces it, or the dhikr goes`() {
+        database.runInTransaction {
+            val store = RoomSyncStore(dao, newAssetId = { ASSET }) { 0L }
+            val id = AwradId("0192f0d0-0000-7000-8000-000000000001")
+            val key = EntityKey(EntityType.CUSTOM_DHIKR, id)
+            dao.upsertCustomDhikr(
+                app.awrad.core.database.CustomDhikrEntity(id.value, 1, DOCUMENT_WITH_AUDIO.toString(), "/files/a", 0),
+            )
+            store.queueUpload(id)
+            assertEquals(listOf(ASSET.value), dao.queuedUploads().map { it.assetId })
+
+            store.putEntity(LocalEntity(key, 2, uploaded(OTHER_ASSET)))
+            assertEquals(emptyList(), dao.queuedUploads())
+            assertEquals(listOf("/files/a"), store.orphanedAudio)
+
+            store.queueUpload(id) // no file any more: nothing to upload
+            assertEquals(emptyList(), dao.queuedUploads())
+            store.removeEntity(key)
+            assertEquals(null, dao.customDhikr(id.value))
+        }
+    }
+
+    @Test
+    fun `a command queued ahead of queued ones renumbers the queue`() {
+        database.runInTransaction {
+            val store = RoomSyncStore(dao) { 0L }
+            val a = command(1, sent = true)
+            val b = command(2)
+            store.replaceOutbox(listOf(a, b))
+
+            store.replaceOutbox(listOf(a, command(3), b))
+
+            assertEquals(listOf(a, command(3), b), store.outbox())
+        }
+    }
+
+    /** Gives the fixture's custom dhikr [id] a recording file on this phone (`local_audio_files`). */
+    private fun attachRecording(id: String) {
+        val file = java.io.File.createTempFile("recording", ".mp3").apply { deleteOnExit() }
+        dao.upsertCustomDhikr(checkNotNull(dao.customDhikr(id)).copy(audioFile = file.path))
+    }
+
     private fun load(store: RoomSyncStore, local: JsonObject) {
         store.after = local.getValue("after").jsonPrimitive.long
         local.getValue("entities").jsonArray.forEach { store.putEntity(it.jsonObject.toLocalEntity()) }
@@ -210,5 +282,19 @@ class RoomSyncStoreTest {
         val DOCUMENT_WITH_AUDIO: JsonObject = JsonObject(
             DOCUMENT_WITHOUT_AUDIO + ("audio" to JsonObject(mapOf("local_only" to JsonPrimitive(true)))),
         )
+        val ASSET = AwradId("0192f0e0-0000-7000-8000-000000000001")
+        val OTHER_ASSET = AwradId("0192f0e0-0000-7000-8000-000000000002")
+
+        fun uploaded(asset: AwradId): JsonObject {
+            val audio = JsonObject(
+                mapOf(
+                    "asset_id" to JsonPrimitive(asset.value),
+                    "byte_size" to JsonPrimitive(4_182_733),
+                    "content_type" to JsonPrimitive("audio/mpeg"),
+                    "duration_ms" to JsonPrimitive(31_250),
+                ),
+            )
+            return JsonObject(DOCUMENT_WITHOUT_AUDIO + ("audio" to audio))
+        }
     }
 }

@@ -49,7 +49,7 @@ actor ProfileDatabase {
                 .dhikrPersonal(DhikrPersonalDocument(tagIDs: ids)), for: SyncEntityKey(.dhikrPersonal, dhikr))
         }
         for conflict in state.allConflicts() { memory.setConflict(conflict, for: conflict.key) }
-        return PersonalContent(state: memory, notices: notices())
+        return PersonalContent(state: memory, notices: notices(), audioNotices: audioNotices())
     }
 
     func summary() -> ProfileDatabaseSummary {
@@ -123,12 +123,20 @@ actor ProfileDatabase {
         return records.compactMap(\.command)
     }
 
-    func apply(_ receipts: [SyncReceipt]) throws -> [SyncNotice] {
+    /// Applies a batch's receipts. `localAudioFiles` are the custom dhikrs whose recording file is on
+    /// the phone, for a put rejected for its recording. A recording queued again loses its earlier
+    /// queue entry, so it starts afresh under a new asset.
+    func apply(_ receipts: [SyncReceipt], localAudioFiles: Set<AwradID> = []) throws -> ReceiptsOutcome {
         var state = self.state
-        let notices = SyncRules.apply(receipts, to: &state)
-        addNotices(notices)
+        let outcome = SyncRules.apply(receipts, to: &state, localAudioFiles: localAudioFiles)
+        addNotices(outcome.notices)
+        for dhikr in outcome.uploadsQueued {
+            let id = dhikr.value
+            let entry = FetchDescriptor<AudioUploadRecord>(predicate: #Predicate { $0.dhikrID == id })
+            for record in (try? modelContext.fetch(entry)) ?? [] { modelContext.delete(record) }
+        }
         try modelContext.save()
-        return notices
+        return outcome
     }
 
     func apply(_ page: ChangesPage) throws {

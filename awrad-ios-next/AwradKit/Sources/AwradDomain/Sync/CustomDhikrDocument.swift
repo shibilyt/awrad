@@ -13,22 +13,22 @@ public struct CustomDhikrDocument: Hashable, Sendable {
     /// en and ml only (`ar` is always `nil`).
     public var transliteration: LanguageTexts
     public var translation: LanguageTexts
-    /// Whether a recording exists on the device that imported it (`{"local_only": true}`).
-    public var hasLocalAudio: Bool
+    /// The recording: `nil`, kept on the phone that imported it, or uploaded to the account.
+    public var audio: CustomDhikrAudio?
     /// Each reference exactly as the catalog's reference shape, kept as JSON so a document that
     /// came from elsewhere round-trips unchanged. `typedReferences` reads them.
     public var references: [AwradJSON]
 
     public init(
         kind: DhikrKind, arabic: String, title: LanguageTexts, transliteration: LanguageTexts = LanguageTexts(),
-        translation: LanguageTexts = LanguageTexts(), hasLocalAudio: Bool = false, references: [AwradJSON] = []
+        translation: LanguageTexts = LanguageTexts(), audio: CustomDhikrAudio? = nil, references: [AwradJSON] = []
     ) {
         self.kind = kind
         self.arabic = arabic
         self.title = title
         self.transliteration = LanguageTexts(en: transliteration.en, ml: transliteration.ml)
         self.translation = translation
-        self.hasLocalAudio = hasLocalAudio
+        self.audio = audio
         self.references = references
     }
 
@@ -43,7 +43,8 @@ public struct CustomDhikrDocument: Hashable, Sendable {
             kind: kind, arabic: arabic, title: LanguageTexts(json: members["title"]),
             transliteration: LanguageTexts(json: members["transliteration"]),
             translation: LanguageTexts(json: members["translation"]),
-            hasLocalAudio: members["audio"] != .null, references: members["references"]?.arrayValue ?? [])
+            audio: members["audio"].flatMap(CustomDhikrAudio.init(json:)),
+            references: members["references"]?.arrayValue ?? [])
     }
 
     /// The wire form, every language key present.
@@ -54,7 +55,7 @@ public struct CustomDhikrDocument: Hashable, Sendable {
             "title": title.json(["en", "ar", "ml"]),
             "transliteration": transliteration.json(["en", "ml"]),
             "translation": translation.json(["en", "ar", "ml"]),
-            "audio": hasLocalAudio ? .object(["local_only": .bool(true)]) : .null,
+            "audio": audio?.json ?? .null,
             "references": .array(references),
         ])
     }

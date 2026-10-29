@@ -112,14 +112,56 @@ struct ConflictBanner: View {
     }
 }
 
+/// Something sync tells the user once: a refused change, or a recording that couldn't be uploaded.
+enum PersonalNotice: Equatable {
+    case sync(SyncNotice)
+    case audio(AudioUploadNotice)
+
+    /// The first one to show: refused changes, then recordings.
+    init?(_ personal: PersonalContent) {
+        if let notice = personal.notices.first {
+            self = .sync(notice)
+        } else if let notice = personal.audioNotices.first {
+            self = .audio(notice)
+        } else {
+            return nil
+        }
+    }
+
+    var title: LocalizedStringResource {
+        switch self {
+        case .sync(let notice) where notice.code.isAboutAudio: Strings.recordingNotInAccount
+        case .sync: Strings.changeRefused
+        case .audio: Strings.audioNotUploaded
+        }
+    }
+
+    func message(locale: Locale) -> LocalizedStringResource {
+        switch self {
+        case .sync(let notice): Strings.noticeReason(notice.code)
+        case .audio(let notice): Strings.audioNotUploadedReason(notice, locale: locale)
+        }
+    }
+}
+
 extension View {
-    /// components.md "Change refused" notice: while the server has refused changes (each already
-    /// undone), a dialog with the first one's reason and a single OK that dismisses it.
-    func changeRefusedNotice(_ notices: [SyncNotice], dismiss: @escaping (SyncNotice) -> Void) -> some View {
-        let notice = notices.first
-        return awradDialog(
+    /// components.md "Change refused" notice, one at a time: while the server has refused changes
+    /// (each already undone, or kept for a recording), or recordings couldn't be uploaded, a dialog
+    /// with the first one's reason and a single OK that dismisses it.
+    func personalNotice(_ personal: PersonalContent, dismiss: @escaping (PersonalNotice) -> Void) -> some View {
+        modifier(PersonalNoticeDialog(notice: PersonalNotice(personal), dismiss: dismiss))
+    }
+}
+
+private struct PersonalNoticeDialog: ViewModifier {
+    let notice: PersonalNotice?
+    let dismiss: (PersonalNotice) -> Void
+    @Environment(\.locale) private var locale
+
+    func body(content: Content) -> some View {
+        content.awradDialog(
             isPresented: Binding(get: { notice != nil }, set: { if !$0, let notice { dismiss(notice) } }),
-            title: Strings.changeRefused, message: notice.map { Strings.noticeReason($0.code) }
+            title: notice?.title ?? Strings.changeRefused, message: notice?.message(locale: locale)
         ) {
             AwradButton(Strings.ok, variant: .text, layout: .row) {
                 if let notice { dismiss(notice) }

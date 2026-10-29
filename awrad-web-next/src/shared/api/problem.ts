@@ -4,6 +4,17 @@ import type { components } from "./schema.gen";
 export type Problem = components["schemas"]["Problem"];
 export type FieldError = components["schemas"]["FieldError"];
 
+/** The members every problem may have (RFC 9457 and STYLE §7); any other is an extension. */
+const STANDARD_MEMBERS: ReadonlySet<string> = new Set([
+  "type",
+  "title",
+  "status",
+  "detail",
+  "instance",
+  "code",
+  "errors",
+]);
+
 /**
  * Thrown for every non-2xx response. Callers switch on `code`, never on
  * `detail`: the API's English isn't shown to users. Map `code` to a
@@ -16,6 +27,11 @@ export class ApiProblem extends Error {
   readonly errors: readonly FieldError[];
   /** Seconds from `Retry-After` on a `429`, when the server sent it. */
   readonly retryAfter: number | null;
+  /**
+   * The problem's extension members (RFC 9457 §3.2), beyond the standard ones: `storage_full`'s
+   * `used_bytes` and `limit_bytes`, for instance. Read them by name, for the codes that define them.
+   */
+  readonly extensions: Readonly<Record<string, unknown>>;
 
   constructor(
     problem: Pick<Problem, "code" | "status" | "detail"> & { errors?: readonly FieldError[] },
@@ -27,6 +43,7 @@ export class ApiProblem extends Error {
     this.status = problem.status;
     this.errors = problem.errors ?? [];
     this.retryAfter = retryAfter;
+    this.extensions = Object.fromEntries(Object.entries(problem).filter(([key]) => !STANDARD_MEMBERS.has(key)));
   }
 }
 

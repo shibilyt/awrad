@@ -94,7 +94,7 @@ struct EditorRecordingTests {
             return
         }
         #expect(change == .unchanged)
-        #expect(document.hasLocalAudio)
+        #expect(document.audio == .localOnly)
         #expect(await library.audioURL(for: existing.id) == Personal.recording)
     }
 
@@ -112,7 +112,7 @@ struct EditorRecordingTests {
         }
         #expect(change == .remove)
         #expect(await library.audioURL(for: existing.id) == nil)
-        #expect(await library.content().customDhikr(existing.id)?.document.hasLocalAudio == false)
+        #expect(await library.content().customDhikr(existing.id)?.document.audio == nil)
     }
 
     @Test func replacingTheRecordingStagesTheNewFile() async throws {
@@ -135,7 +135,7 @@ struct EditorRecordingTests {
 
     @Test func aDhikrWhoseRecordingIsOnAnotherDeviceKeepsItsFlag() async throws {
         // The document says a recording exists, but this device doesn't have the file.
-        let existing = CustomDhikr(id: .random(), document: Personal.document(hasLocalAudio: true))
+        let existing = CustomDhikr(id: .random(), document: Personal.document(audio: .localOnly))
         let library = FakePersonalLibrary(customDhikrs: [existing])
         let model = model(library, existing: existing)
         await model.loadRecording()
@@ -146,7 +146,7 @@ struct EditorRecordingTests {
             return
         }
         #expect(change == .unchanged)
-        #expect(document.hasLocalAudio)
+        #expect(document.audio == .localOnly)
     }
 
     @Test func theBackgroundPausesPlayback() async throws {

@@ -13,6 +13,9 @@ import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradDialog
 import app.awrad.core.designsystem.component.AwradRowButton
 import app.awrad.core.designsystem.component.AwradTextButton
+import app.awrad.core.domain.personal.AudioUploadNotice
+import app.awrad.core.domain.personal.AudioUploadProblem
+import app.awrad.core.domain.personal.CustomAudioService
 import app.awrad.core.domain.sync.PendingProfilePrompt
 import app.awrad.core.domain.sync.ProfileChoice
 import app.awrad.core.domain.sync.ProfileService
@@ -27,29 +30,41 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/** What the app shell asks or tells, one at a time: a profile question first, then refused changes. */
-internal data class SyncPromptsUiState(val prompt: PendingProfilePrompt? = null, val notice: SyncNotice? = null)
+/**
+ * What the app shell asks or tells, one at a time: a profile question first, then refused changes, then
+ * recordings that couldn't upload.
+ */
+internal data class SyncPromptsUiState(
+    val prompt: PendingProfilePrompt? = null,
+    val notice: SyncNotice? = null,
+    val upload: AudioUploadNotice? = null,
+)
 
 internal sealed interface SyncPromptsAction {
     data class Answer(val choice: ProfileChoice) : SyncPromptsAction
 
     data class Dismiss(val notice: SyncNotice) : SyncPromptsAction
+
+    data class DismissUpload(val notice: AudioUploadNotice) : SyncPromptsAction
 }
 
 @HiltViewModel
 internal class SyncPromptsViewModel @Inject constructor(
     private val profiles: ProfileService,
     private val sync: SyncService,
+    private val audio: CustomAudioService,
 ) : ViewModel() {
-    val state: StateFlow<SyncPromptsUiState> = combine(profiles.prompt, sync.notices) { prompt, notices ->
-        SyncPromptsUiState(prompt, notices.firstOrNull())
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), SyncPromptsUiState())
+    val state: StateFlow<SyncPromptsUiState> =
+        combine(profiles.prompt, sync.notices, audio.uploadNotices) { prompt, notices, uploads ->
+            SyncPromptsUiState(prompt, notices.firstOrNull(), uploads.firstOrNull())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), SyncPromptsUiState())
 
     fun onAction(action: SyncPromptsAction) {
         viewModelScope.launch {
             when (action) {
                 is SyncPromptsAction.Answer -> profiles.answer(action.choice)
                 is SyncPromptsAction.Dismiss -> sync.dismissNotice(action.notice)
+                is SyncPromptsAction.DismissUpload -> audio.dismissUploadNotice(action.notice)
             }
         }
     }
@@ -68,7 +83,8 @@ internal fun SyncPromptsRoute(modifier: Modifier = Modifier, viewModel: SyncProm
 
 /**
  * The first sign-in with data made before it ("Add to my account" or "Erase", asked once), a deleted account
- * whose data is still here ("Remove" or "Keep"), and a change the server refused, which was undone ("OK").
+ * whose data is still here ("Remove" or "Keep"), a change the server refused ("OK"), and a recording that couldn't
+ * upload ("OK").
  */
 @Composable
 internal fun SyncPromptsContent(
@@ -78,16 +94,59 @@ internal fun SyncPromptsContent(
 ) {
     val prompt = state.prompt
     val notice = state.notice
+    val upload = state.upload
     when {
         prompt is PendingProfilePrompt.AnonymousData -> AnonymousDataDialog(prompt, onAction, modifier)
         prompt is PendingProfilePrompt.AccountDeleted -> AccountDeletedDialog(prompt, onAction, modifier)
         notice != null -> ChangeRefusedDialog(notice, onAction, modifier)
+        upload != null -> UploadFailedDialog(upload, onAction, modifier)
     }
 }
 
 /**
- * The "Change refused" notice (components.md): the server refused a change, which is already undone. The title,
- * the reason for its rejection code, and a single "OK" text button that closes it.
+ * "Audio couldn't be uploaded": why (with the account's use and limit when storage is full), and that the recording
+ * stays on this phone while the dhikr still syncs. A single "OK" closes it.
+ */
+@Composable
+private fun UploadFailedDialog(
+    notice: AudioUploadNotice,
+    onAction: (SyncPromptsAction) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val storage = notice.storage
+    val reason = if (notice.problem == AudioUploadProblem.STORAGE_FULL && storage != null) {
+        stringResource(R.string.sync_upload_storage_full_used, storageUsedText(storage))
+    } else {
+        stringResource(uploadProblemReason(notice.problem))
+    }
+    AwradDialog(
+        onDismissRequest = { onAction(SyncPromptsAction.DismissUpload(notice)) },
+        title = stringResource(R.string.sync_upload_failed_title),
+        text = stringResource(R.string.sync_upload_failed_body, reason),
+        modifier = modifier,
+        confirmButton = {
+            AwradTextButton(
+                text = stringResource(R.string.sync_ok),
+                onClick = { onAction(SyncPromptsAction.DismissUpload(notice)) },
+            )
+        },
+    )
+}
+
+/** Why a recording couldn't upload, one message per problem. */
+@StringRes
+internal fun uploadProblemReason(problem: AudioUploadProblem): Int = when (problem) {
+    AudioUploadProblem.UNSUPPORTED_TYPE -> R.string.sync_upload_unsupported_type
+    AudioUploadProblem.INVALID_SIZE -> R.string.sync_upload_invalid_size
+    AudioUploadProblem.FILE_TOO_LARGE -> R.string.sync_upload_too_large
+    AudioUploadProblem.STORAGE_FULL -> R.string.sync_upload_storage_full
+    AudioUploadProblem.UPLOAD_MISMATCH -> R.string.sync_upload_mismatch
+}
+
+/**
+ * The "Change refused" notice (components.md): the server refused a change, which is already undone (an edit naming
+ * a recording the account doesn't have is kept and sent again instead). The title, the reason for its rejection
+ * code, and a single "OK" text button that closes it.
  */
 @Composable
 private fun ChangeRefusedDialog(
@@ -182,4 +241,6 @@ internal fun refusedReason(code: RejectionCode): Int = when (code) {
     RejectionCode.ENTITY_NOT_FOUND -> R.string.sync_reason_entity_not_found
     RejectionCode.DELETE_NOT_ALLOWED -> R.string.sync_reason_delete_not_allowed
     RejectionCode.COMMAND_ID_REUSED -> R.string.sync_reason_command_id_reused
+    RejectionCode.AUDIO_NOT_FOUND -> R.string.sync_reason_audio_not_found
+    RejectionCode.AUDIO_MISMATCH -> R.string.sync_reason_audio_mismatch
 }

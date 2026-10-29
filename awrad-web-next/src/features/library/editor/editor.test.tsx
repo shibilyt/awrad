@@ -186,9 +186,7 @@ describe("saving", () => {
     server.use(...signedInWithEntities(), applied(2));
     renderRoute(`/library/dhikrs/${MORNING_DHIKR_ID}/edit`);
 
-    expect(
-      await screen.findByText("Its recording is on the phone that added it. Audio is added from the phone app."),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Audio is on the phone that added it.")).toBeInTheDocument();
     await userEvent.clear(field("English"));
     await userEvent.type(field("English"), "Morning remembrance");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));

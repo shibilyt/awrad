@@ -61,6 +61,12 @@ public enum class RejectionCode(public val wire: String) {
     ENTITY_NOT_FOUND("entity_not_found"),
     DELETE_NOT_ALLOWED("delete_not_allowed"),
     COMMAND_ID_REUSED("command_id_reused"),
+
+    /** A custom dhikr put named an `asset_id` that isn't a ready asset of the account (slice 3c). */
+    AUDIO_NOT_FOUND("audio_not_found"),
+
+    /** A custom dhikr put's uploaded audio has another `byte_size` or `content_type` than its asset. */
+    AUDIO_MISMATCH("audio_mismatch"),
     UNKNOWN("unknown"),
     ;
 

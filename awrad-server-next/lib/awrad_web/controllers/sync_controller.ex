@@ -14,6 +14,8 @@ defmodule AwradWeb.SyncController do
   use AwradWeb, :controller
 
   alias Awrad.Sync
+  import AwradWeb.AccountHeader, only: [account: 1]
+
   alias AwradWeb.{Params, SyncJSON}
 
   action_fallback AwradWeb.FallbackController
@@ -41,24 +43,6 @@ defmodule AwradWeb.SyncController do
       json(conn, SyncJSON.changes(Sync.changes(user_id, after_revision, limit)))
     end
   end
-
-  # The signed-in account, if X-Awrad-Account names it.
-  defp account(conn) do
-    %{id: user_id} = conn.assigns.current_scope.user
-
-    case get_req_header(conn, "x-awrad-account") do
-      [^user_id] ->
-        {:ok, user_id}
-
-      [value] ->
-        if Awrad.ID.valid?(value), do: {:error, :account_mismatch}, else: invalid_account()
-
-      _none_or_many ->
-        invalid_account()
-    end
-  end
-
-  defp invalid_account, do: {:error, "X-Awrad-Account must be one lowercase account ID"}
 
   # The body is `{"commands": [...]}` and nothing else (400 otherwise); the
   # commands themselves are the envelope's to check (422).

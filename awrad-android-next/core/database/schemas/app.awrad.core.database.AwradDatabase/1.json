@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "7b041e0ac06ca749848c6756a114e888",
+    "identityHash": "6fc6e0bb4b130506612453ca43386122",
     "entities": [
       {
         "tableName": "goals",
@@ -358,12 +358,120 @@
         },
         "indices": [],
         "foreignKeys": []
+      },
+      {
+        "tableName": "audio_uploads",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`asset_id` TEXT NOT NULL, `dhikr_id` TEXT NOT NULL, `audio_file` TEXT NOT NULL, `state` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `sha256` TEXT, `byte_size` INTEGER, `content_type` TEXT, `duration_ms` INTEGER, `problem` TEXT, `used_bytes` INTEGER, `limit_bytes` INTEGER, `mismatches` INTEGER NOT NULL, `dismissed` INTEGER NOT NULL, PRIMARY KEY(`asset_id`))",
+        "fields": [
+          {
+            "fieldPath": "assetId",
+            "columnName": "asset_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dhikrId",
+            "columnName": "dhikr_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "audioFile",
+            "columnName": "audio_file",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sha256",
+            "columnName": "sha256",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "byteSize",
+            "columnName": "byte_size",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "contentType",
+            "columnName": "content_type",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "duration_ms",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "problem",
+            "columnName": "problem",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "usedBytes",
+            "columnName": "used_bytes",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "limitBytes",
+            "columnName": "limit_bytes",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "mismatches",
+            "columnName": "mismatches",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dismissed",
+            "columnName": "dismissed",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "asset_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_audio_uploads_dhikr_id",
+            "unique": true,
+            "columnNames": [
+              "dhikr_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_audio_uploads_dhikr_id` ON `${TABLE_NAME}` (`dhikr_id`)"
+          }
+        ],
+        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7b041e0ac06ca749848c6756a114e888')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6fc6e0bb4b130506612453ca43386122')"
     ]
   }
 }

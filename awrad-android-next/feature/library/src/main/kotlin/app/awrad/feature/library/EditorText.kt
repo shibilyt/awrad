@@ -6,6 +6,7 @@ import androidx.compose.ui.res.stringResource
 import app.awrad.core.domain.dhikr.ContentLanguage
 import app.awrad.core.domain.dhikr.DhikrKind
 import app.awrad.core.domain.personal.AudioImportError
+import app.awrad.core.domain.personal.RecordingDownloadError
 
 /*
  * The editor's words that come from resources: kinds, languages and problems, typed in, text out.
@@ -58,5 +59,29 @@ internal fun audioErrorText(error: AudioImportError): String = stringResource(
         AudioImportError.TOO_LARGE -> R.string.editor_audio_too_large
         AudioImportError.UNSUPPORTED_TYPE -> R.string.editor_audio_unsupported
         AudioImportError.UNREADABLE -> R.string.editor_audio_unreadable
+    },
+)
+
+@Composable
+@ReadOnlyComposable
+internal fun recordingPlaceText(place: RecordingPlace): String = stringResource(
+    when (place) {
+        RecordingPlace.ACCOUNT -> R.string.editor_recording_account
+        RecordingPlace.WAITING_TO_UPLOAD -> R.string.editor_recording_waiting
+        RecordingPlace.PHONE_ONLY -> R.string.editor_recording_phone_only
+        RecordingPlace.PHONE -> R.string.editor_recording_here
+        RecordingPlace.OTHER_DEVICE -> R.string.editor_recording_elsewhere
+    },
+)
+
+/** Why an uploaded recording couldn't be downloaded to play. */
+@Composable
+@ReadOnlyComposable
+internal fun downloadErrorText(error: RecordingDownloadError): String = stringResource(
+    when (error) {
+        RecordingDownloadError.OFFLINE -> R.string.editor_download_offline
+        RecordingDownloadError.NOT_SIGNED_IN -> R.string.editor_download_not_signed_in
+        RecordingDownloadError.NOT_FOUND -> R.string.editor_download_not_found
+        RecordingDownloadError.FAILED -> R.string.editor_download_failed
     },
 )

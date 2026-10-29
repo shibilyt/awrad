@@ -4,19 +4,23 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import app.awrad.core.domain.AwradId
+import app.awrad.core.domain.audio.AudioContentType
 import app.awrad.core.domain.audio.PlaybackState
 import app.awrad.core.domain.audio.PlaybackStatus
 import app.awrad.core.domain.dhikr.DhikrKind
+import app.awrad.core.domain.personal.CustomAudio
 import app.awrad.core.domain.personal.CustomDhikr
 import app.awrad.core.domain.personal.OptionalTexts
 import app.awrad.core.domain.personal.TagError
 import app.awrad.core.domain.personal.TagOutcome
+import app.awrad.core.domain.personal.UploadedAudio
 import app.awrad.core.domain.sync.ConflictChoice
 import app.awrad.core.domain.sync.EntityKey
 import app.awrad.core.domain.sync.EntityType
 import app.awrad.core.domain.sync.OpenConflict
 import app.awrad.core.domain.sync.SyncOp
 import app.awrad.core.testing.FakeAudioPlayerFactory
+import app.awrad.core.testing.FakeCustomAudioService
 import app.awrad.core.testing.FakeCustomDhikrRepository
 import app.awrad.core.testing.FakeDhikrCatalogSource
 import app.awrad.core.testing.FakeSyncService
@@ -41,6 +45,7 @@ class DhikrDetailViewModelTest {
     private val customDhikrs = FakeCustomDhikrRepository()
     private val tags = FakeTagRepository()
     private val sync = FakeSyncService()
+    private val audio = FakeCustomAudioService()
 
     /** The page for the built-in with catalog [key] (by its ID), or for [key] itself when no dhikr has it. */
     private fun viewModel(key: String) = DhikrDetailViewModel(
@@ -50,6 +55,7 @@ class DhikrDetailViewModelTest {
         tags,
         sync,
         players,
+        audio,
     )
 
     @Test
@@ -205,6 +211,70 @@ class DhikrDetailViewModelTest {
         assertNull(viewModel.state.value.conflict)
     }
 
+    @Test
+    fun `the first play of a recording only in the account downloads it, then plays the file`() = runTest {
+        customDhikrs.save(UPLOADED_DHIKR)
+        audio.files[UPLOADED_DHIKR.id] = DOWNLOADED
+        val viewModel = viewModel(UPLOADED_DHIKR.id.value)
+        assertNull(viewModel.state.value.dhikr?.audio)
+        assertTrue(viewModel.state.value.hasRecording)
+
+        viewModel.onAction(DhikrDetailAction.TogglePlayback)
+        assertEquals(listOf(UPLOADED_DHIKR.id), audio.playableCalls)
+        val player = players.players.single()
+        assertEquals(listOf(DOWNLOADED), player.played)
+        assertEquals(PlaybackStatus.LOADING, viewModel.state.value.playback.status)
+
+        // The repository records the downloaded file; later plays use it from the refreshed dhikr.
+        customDhikrs.save(UPLOADED_DHIKR.copy(audio = CustomAudio(DOWNLOADED, UPLOADED)))
+        player.emit(PlaybackState(PlaybackStatus.ENDED))
+        viewModel.onAction(DhikrDetailAction.TogglePlayback)
+        assertEquals(listOf(DOWNLOADED, DOWNLOADED), player.played)
+        assertEquals(1, audio.playableCalls.size)
+    }
+
+    @Test
+    fun `before the first play the player shows the document's duration_ms, then the player's own`() = runTest {
+        customDhikrs.save(UPLOADED_DHIKR)
+        audio.files[UPLOADED_DHIKR.id] = DOWNLOADED
+        val viewModel = viewModel(UPLOADED_DHIKR.id.value)
+        assertEquals(PlaybackState(durationMs = 31_250), viewModel.state.value.player)
+
+        viewModel.onAction(DhikrDetailAction.TogglePlayback)
+        players.players.single().emit(PlaybackState(PlaybackStatus.PLAYING, positionMs = 1_000, durationMs = 31_400))
+        assertEquals(31_400, viewModel.state.value.player.durationMs)
+    }
+
+    @Test
+    fun `a recording without a known length shows no total before it plays`() = runTest {
+        val unmeasured = UPLOADED_DHIKR.copy(audio = CustomAudio(null, UPLOADED.copy(durationMs = null)))
+        customDhikrs.save(unmeasured)
+        assertNull(viewModel(unmeasured.id.value).state.value.player.durationMs)
+    }
+
+    @Test
+    fun `a recording that can't be downloaded fails, and playing again retries`() = runTest {
+        customDhikrs.save(UPLOADED_DHIKR)
+        val viewModel = viewModel(UPLOADED_DHIKR.id.value)
+
+        viewModel.onAction(DhikrDetailAction.TogglePlayback)
+        assertEquals(PlaybackStatus.FAILED, viewModel.state.value.playback.status)
+        assertTrue(players.players.isEmpty())
+
+        audio.files[UPLOADED_DHIKR.id] = DOWNLOADED
+        viewModel.onAction(DhikrDetailAction.TogglePlayback)
+        assertEquals(listOf(DOWNLOADED), players.players.single().played)
+    }
+
+    @Test
+    fun `a custom dhikr without a recording has no player bar`() = runTest {
+        customDhikrs.save(CUSTOM)
+        val viewModel = viewModel(CUSTOM.id.value)
+        assertFalse(viewModel.state.value.hasRecording)
+        viewModel.onAction(DhikrDetailAction.TogglePlayback)
+        assertTrue(audio.playableCalls.isEmpty())
+    }
+
     /** A page's lifecycle, moved by hand (no main-thread checks). */
     private class TestPage : LifecycleOwner {
         override val lifecycle: LifecycleRegistry = LifecycleRegistry.createUnsafe(this)
@@ -216,6 +286,20 @@ class DhikrDetailViewModelTest {
             kind = DhikrKind.DHIKR,
             arabic = "سُبْحَانَ ٱللَّهِ",
             title = OptionalTexts(en = "Morning remembrance"),
+        )
+
+        const val DOWNLOADED = "file:///profile/audio/downloaded.mp3"
+
+        val UPLOADED = UploadedAudio(
+            assetId = AwradId("0192f0d0-0000-7000-8000-0000000000a1"),
+            byteSize = 4_182_733,
+            contentType = AudioContentType.MPEG,
+            durationMs = 31_250,
+        )
+
+        val UPLOADED_DHIKR = CUSTOM.copy(
+            id = AwradId("0192f0d0-0000-7000-8000-000000000002"),
+            audio = CustomAudio(localUri = null, uploaded = UPLOADED),
         )
     }
 }

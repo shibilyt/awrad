@@ -81,6 +81,8 @@ const REJECTION_CODES: ReadonlySet<RejectionCode> = new Set<RejectionCode>([
   "tag_not_found",
   "dhikr_not_found",
   "entity_not_found",
+  "audio_not_found",
+  "audio_mismatch",
 ]);
 
 /** The translation key for why the server refused a change, by its rejection code. */

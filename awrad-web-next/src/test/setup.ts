@@ -14,6 +14,11 @@ configure({ asyncUtilTimeout: 3000 });
 window.scrollTo = () => undefined;
 Element.prototype.scrollIntoView = () => undefined;
 
+// jsdom never loads media, so a picked recording's length can't be read from it: without object
+// URLs, measuring gives up at once (`duration_ms: null`) instead of after its timeout.
+// file.test.ts puts one back to test the measurement.
+Object.defineProperty(URL, "createObjectURL", { value: undefined, configurable: true, writable: true });
+
 /** Requests no test handled fail loudly instead of reaching the network. */
 export const server = setupServer();
 

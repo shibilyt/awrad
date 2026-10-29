@@ -31,6 +31,15 @@ public final class DhikrDetailModel {
             default: nil
             }
         }
+
+        /// What the bar's time shows: the position (0 before playing), with the length the player
+        /// reports, or until it does `recordingLength`, the document's `duration_ms`
+        /// (contracts/audio/v1 README, "Phones": Before the first play).
+        public func shownPosition(recordingLength: Duration?) -> PlaybackPosition {
+            var shown = position ?? PlaybackPosition(elapsed: .zero)
+            if shown.duration == nil { shown.duration = recordingLength }
+            return shown
+        }
     }
 
     public struct State: Equatable, Sendable {
@@ -48,6 +57,10 @@ public final class DhikrDetailModel {
         public var custom: CustomDhikr? { personal.customDhikr(dhikr.id) }
         public var userTags: [UserTag] { personal.tags(on: dhikr.id) }
         public var conflicts: [SyncConflict] { personal.conflicts(about: dhikr.id) }
+        /// The length the custom dhikr's uploaded recording names (`duration_ms`), when it does.
+        public var recordingLength: Duration? {
+            custom?.document.audio?.uploaded?.durationMilliseconds.map { .milliseconds($0) }
+        }
     }
 
     public enum Action: Sendable {
@@ -71,6 +84,11 @@ public final class DhikrDetailModel {
     private let driver: AudioPlaybackDriver
     /// A custom dhikr's recording on this device.
     private var localAudioURL: URL?
+    /// A custom dhikr's uploaded recording, which the first play downloads when it isn't here yet.
+    private var uploadedAudio: UploadedAudio?
+
+    /// Playing needs the uploaded recording downloaded first.
+    private var needsDownload: Bool { localAudioURL == nil && uploadedAudio != nil && state.dhikr.audio == nil }
 
     /// The player is made on the first play, so showing the screen loads nothing.
     public init(
@@ -93,14 +111,32 @@ public final class DhikrDetailModel {
         }
     }
 
-    /// Looks the custom dhikr's recording up on the device.
+    /// Looks the custom dhikr's recording up on the device; an uploaded one that isn't here yet still
+    /// shows the player, and its first play downloads it.
     public func refreshLocalAudio() async {
         guard isCustom else { return }
         let url = await library.audioURL(for: state.dhikr.id)
-        guard url != localAudioURL else { return }
+        let uploaded = state.custom?.document.audio?.uploaded
+        guard url != localAudioURL || uploaded != uploadedAudio else { return }
         localAudioURL = url
+        uploadedAudio = uploaded
         driver.stop()
-        state.audio = url == nil ? .unavailable : .stopped
+        state.audio = url == nil && uploaded == nil ? .unavailable : .stopped
+    }
+
+    /// The first play of an uploaded recording: download it into the profile, then play it.
+    private func downloadAndPlay() async {
+        guard needsDownload, state.audio != .loading else { return }
+        let asset = uploadedAudio
+        state.audio = .loading
+        do {
+            let url = try await library.downloadAudio(for: state.dhikr.id)
+            guard uploadedAudio == asset, state.audio == .loading else { return }
+            localAudioURL = url
+            driver.play(url)
+        } catch {
+            if uploadedAudio == asset { state.audio = .failed }
+        }
     }
 
     /// Everything but the two writes to the library is local and immediate. Returns whether it
@@ -109,6 +145,7 @@ public final class DhikrDetailModel {
     public func apply(_ action: Action) -> Bool {
         switch action {
         case .playPauseTapped:
+            if needsDownload { return false }
             togglePlayback()
         case .disappeared:
             driver.stop()
@@ -133,6 +170,8 @@ public final class DhikrDetailModel {
     public func send(_ action: Action) async {
         if apply(action) { return }
         switch action {
+        case .playPauseTapped:
+            await downloadAndPlay()
         case .deleteConfirmed:
             await delete()
         case .resolveConflicts(let choice):

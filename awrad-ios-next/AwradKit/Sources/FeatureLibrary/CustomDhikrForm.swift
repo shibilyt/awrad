@@ -97,10 +97,10 @@ struct CustomDhikrForm: Equatable, Sendable {
     }
 
     /// The document to save (its transliteration has no Arabic, whatever the fields hold).
-    func document(hasLocalAudio: Bool) -> CustomDhikrDocument {
+    func document(audio: CustomDhikrAudio?) -> CustomDhikrDocument {
         CustomDhikrDocument(
             kind: kind, arabic: arabic.trimmingCharacters(in: .whitespacesAndNewlines), title: title.texts,
-            transliteration: transliteration.texts, translation: translation.texts, hasLocalAudio: hasLocalAudio,
+            transliteration: transliteration.texts, translation: translation.texts, audio: audio,
             references: references.map(\.json))
     }
 }

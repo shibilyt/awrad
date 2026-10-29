@@ -26,17 +26,11 @@ struct SyncPersistenceTests {
         var state = SwiftDataSyncState(context: context)
         let given = try fixture.given.local.state()
         try copy(given, into: &state)
-        var notices: [SyncNotice] = []
-        switch fixture.given.step {
-        case .page(let page): SyncRules.apply(page, to: &state)
-        case .receipts(let receipts): notices = SyncRules.apply(receipts, to: &state)
-        case .resolve(let key, let choice, let commandID):
-            SyncRules.resolve(key, choice: choice, commandID: commandID ?? .random(), in: &state)
-        }
+        let (notices, uploads) = try fixture.given.run(on: &state)
         try context.save()
         let result = ApplyChangesExpect(
             local: LocalShape(try snapshot(state, keys: Set(given.documents.keys).union(given.knownVersions.keys))),
-            notices: notices.map(NoticeShape.init))
+            notices: notices, uploadsQueued: uploads)
         #expect(result == fixture.expect, "\(fixture.id): \(fixture.summary)")
     }
 
@@ -54,8 +48,8 @@ struct SyncPersistenceTests {
     }
 
     @Test func anEditAndItsCommandAreSavedTogether() async throws {
-        let directory = FileManager.default.temporaryDirectory.appending(path: "awrad-store-\(AwradID.random())")
-        defer { try? FileManager.default.removeItem(at: directory) }
+        let directory = TestDirectory.profiles("awrad-store")
+        defer { TestDirectory.remove(directory) }
         let files = ProfileFiles(root: directory)
         let profile = AwradID.random()
         let id = AwradID.random()

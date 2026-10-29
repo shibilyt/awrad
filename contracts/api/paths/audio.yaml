@@ -1,0 +1,462 @@
+# Private audio for custom dhikrs (slice 3c, ADR-2026-10-29). Protocol: contracts/audio/v1/README.md; wire shapes:
+# contracts/audio/v1/audio.schema.json, restated under components/schemas/Audio* because the bundler can't follow its
+# urn: references. tools/check-audio-contract.mjs validates every example here against that schema.
+# The bytes never pass through the API: clients PUT to and GET from R2 with the signed links these operations return.
+# Phones use bearer tokens; the web uses its cookie session plus CSRF for the POSTs. Both send X-Awrad-Account.
+
+uploads:
+  post:
+    operationId: create_audio_upload
+    tags: [audio]
+    summary: Reserve an upload and get a signed PUT link
+    description: >-
+      Checks the recording against the upload rules and records a pending upload of it. The checks run in this order,
+      and the first failure answers (contracts/audio/v1/fixtures/audio_upload_validity.json): `content_type` exactly
+      `audio/mpeg` or `audio/mp4` (else `415 unsupported_audio_type`); `byte_size` at least 1 (else
+      `422 invalid_size`) and at most 10,000,000 (else `413 file_too_large`); the account's used bytes, ready and
+      pending together, plus `byte_size` at most 500,000,000 (else `422 storage_full`, with `used_bytes` and
+      `limit_bytes`).
+
+
+      The answer is a signed R2 `PUT` link valid for 15 minutes and the headers to send with it. They include
+      `x-amz-checksum-sha256`, so R2 itself refuses bytes that don't match `sha256`. The client then PUTs the file,
+      unchanged, and calls `complete_audio_upload`.
+
+
+      **Idempotent by `asset_id`** (a new UUIDv7 per recording). An `asset_id` the account already has is looked at
+      before the rules: the same body while the upload is pending is `200` with a fresh link (it doesn't count
+      against the quota twice); the same body once the asset is ready is `200 {asset}`, and the client skips the
+      PUT and the completion; a different body, or an ID another account uses, is `409 asset_id_in_use`.
+      `Idempotency-Key` isn't needed: the server accepts the header and ignores it.
+
+
+      A body that breaks the request schema (a non-UUID `asset_id`, `sha256` not 64 lowercase hex digits, a negative
+      `byte_size`, an unknown member) is `400 malformed_request`; clients never send one. Responses are
+      `Cache-Control: no-store`.
+    security:
+      - bearerAuth: []
+      - cookieAuth: []
+        csrfToken: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/AwradAccount"
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+        description: Accepted and ignored; uploads are idempotent by asset_id.
+    x-error-codes:
+      - malformed_request
+      - unauthenticated
+      - csrf_token_invalid
+      - account_mismatch
+      - asset_id_in_use
+      - file_too_large
+      - unsupported_audio_type
+      - invalid_size
+      - storage_full
+      - rate_limited
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [asset_id, byte_size, content_type, sha256]
+            properties:
+              asset_id:
+                $ref: "../openapi.yaml#/components/schemas/Uuid"
+                description: A new UUIDv7 made by the client. It makes the call idempotent and becomes the asset's ID.
+              byte_size:
+                type: integer
+                minimum: 0
+                maximum: 9007199254740991
+                description: >-
+                  The file's size in bytes. Wider than the 1 to 10,000,000 an asset may have, so a size the rules
+                  refuse gets `invalid_size` or `file_too_large` instead of a 400.
+              content_type:
+                type: string
+                maxLength: 255
+                description: >-
+                  `audio/mpeg` or `audio/mp4`, exactly. Any other string is `415 unsupported_audio_type`, not a 400.
+              sha256:
+                $ref: "../openapi.yaml#/components/schemas/Sha256"
+          example:
+            asset_id: 0192f0e0-0000-7000-8000-000000000001
+            byte_size: 4182733
+            content_type: audio/mpeg
+            sha256: 7959650f9fa69b6279b3694e2506059cb67062cc0f7e9ad27a346528d341e5bc
+    responses:
+      "201":
+        description: A new pending upload, and its signed PUT link.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/AudioUpload"
+            example: &pending_upload
+              asset_id: 0192f0e0-0000-7000-8000-000000000001
+              upload_url: https://example-account.r2.cloudflarestorage.com/awrad-private-dhikr/0192f0e0-0000-7000-8000-000000000001?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEKEY%2F20261029%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261029T080000Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost%3Bx-amz-checksum-sha256&X-Amz-Signature=0000000000000000000000000000000000000000000000000000000000000000
+              upload_headers:
+                content-type: audio/mpeg
+                x-amz-checksum-sha256: eVllD5+mm2J5s2lOJQYFnLZwYswPfprSejRlKNNB5bw=
+              expires_at: "2026-10-29T08:15:00Z"
+      "200":
+        description: >-
+          A repeat of an earlier request with the same body: while the upload is pending, the same shape as `201` with
+          a fresh link; once the asset is ready, `{asset}`, as `complete_audio_upload` returns it.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "../openapi.yaml#/components/schemas/AudioUpload"
+                - $ref: "../openapi.yaml#/components/schemas/AudioAssetResult"
+            examples:
+              pending:
+                summary: Still pending; a fresh link
+                value: *pending_upload
+              ready:
+                summary: Already complete; skip the PUT
+                value:
+                  asset:
+                    asset_id: 0192f0e0-0000-7000-8000-000000000001
+                    byte_size: 4182733
+                    content_type: audio/mpeg
+                    status: ready
+                    created_at: "2026-10-29T08:01:12Z"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../openapi.yaml#/components/responses/Unauthorized"
+      "403":
+        $ref: "../openapi.yaml#/components/responses/CsrfTokenInvalid"
+      "409":
+        description: >-
+          `asset_id_in_use`: the account already used this `asset_id` with a different body, or another account
+          uses it; make a new ID. `account_mismatch`: X-Awrad-Account isn't the signed-in account; nothing was
+          recorded.
+        headers: &problem_headers
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/problem+json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/Problem"
+            examples:
+              asset_id_in_use:
+                value:
+                  type: urn:awrad:problem:asset_id_in_use
+                  title: Asset ID in use
+                  status: 409
+                  code: asset_id_in_use
+                  detail: asset_id was already used for a different file
+                  errors: []
+              account_mismatch:
+                value:
+                  type: urn:awrad:problem:account_mismatch
+                  title: Account mismatch
+                  status: 409
+                  code: account_mismatch
+                  detail: X-Awrad-Account is not the signed-in account
+                  errors: []
+      "413":
+        description: "`file_too_large`: `byte_size` is above 10,000,000. The recording stays on the phone."
+        headers: *problem_headers
+        content:
+          application/problem+json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/Problem"
+            example:
+              type: urn:awrad:problem:file_too_large
+              title: File too large
+              status: 413
+              code: file_too_large
+              detail: byte_size 11534336 is above the 10000000-byte limit
+              errors: []
+      "415":
+        description: "`unsupported_audio_type`: `content_type` isn't exactly `audio/mpeg` or `audio/mp4`."
+        headers: *problem_headers
+        content:
+          application/problem+json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/Problem"
+            example:
+              type: urn:awrad:problem:unsupported_audio_type
+              title: Unsupported audio type
+              status: 415
+              code: unsupported_audio_type
+              detail: content_type audio/wav is not audio/mpeg or audio/mp4
+              errors: []
+      "422":
+        description: >-
+          `storage_full`: the account's used bytes plus `byte_size` would pass its limit. The problem carries
+          `used_bytes` and `limit_bytes`, for "120 MB of 500 MB"-style messages. `invalid_size`: `byte_size` is 0.
+        headers: *problem_headers
+        content:
+          application/problem+json:
+            schema:
+              allOf:
+                - $ref: "../openapi.yaml#/components/schemas/Problem"
+                - type: object
+                  description: Extension members, present exactly when `code` is `storage_full`.
+                  properties:
+                    used_bytes:
+                      type: integer
+                      minimum: 0
+                      maximum: 9007199254740991
+                      description: Bytes the account holds now, ready and pending uploads together.
+                    limit_bytes:
+                      type: integer
+                      minimum: 0
+                      maximum: 9007199254740991
+                      description: The account's limit (500,000,000).
+            examples:
+              storage_full:
+                value:
+                  type: urn:awrad:problem:storage_full
+                  title: Storage full
+                  status: 422
+                  code: storage_full
+                  detail: 4182733 more bytes would pass the account's 500000000-byte limit
+                  errors: []
+                  used_bytes: 497300000
+                  limit_bytes: 500000000
+              invalid_size:
+                value:
+                  type: urn:awrad:problem:invalid_size
+                  title: Invalid size
+                  status: 422
+                  code: invalid_size
+                  detail: byte_size must be at least 1
+                  errors: []
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+complete:
+  post:
+    operationId: complete_audio_upload
+    tags: [audio]
+    summary: Confirm an upload once the file is in storage
+    description: >-
+      No request body. The server looks up the stored object and compares its size, content type and SHA-256 with
+      the upload's (it doesn't decode audio). If they match, the upload becomes a ready asset, which a custom dhikr
+      document may now name: `200 {asset}`. Completing a ready asset again returns it again.
+
+
+      - No object yet (the PUT hasn't finished, or failed): `409 upload_incomplete`. PUT again (asking
+        `create_audio_upload` for a fresh link if this one expired), then complete again.
+
+      - An object that doesn't match: the server deletes the object and the pending upload, and answers
+        `422 upload_mismatch`. The recording stays local; a retry starts over with a new `asset_id`.
+
+      - An unknown `asset_id`, another account's, one already cleaned up, or not a UUID: `404`.
+
+
+      `Idempotency-Key` is accepted and ignored: completing is idempotent. Responses are `Cache-Control: no-store`.
+    security:
+      - bearerAuth: []
+      - cookieAuth: []
+        csrfToken: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/AwradAccount"
+      - $ref: "../openapi.yaml#/components/parameters/IdempotencyKey"
+        description: Accepted and ignored; completing is idempotent.
+      - name: asset_id
+        in: path
+        required: true
+        schema:
+          $ref: "../openapi.yaml#/components/schemas/Uuid"
+    x-error-codes:
+      - malformed_request
+      - unauthenticated
+      - csrf_token_invalid
+      - not_found
+      - account_mismatch
+      - upload_incomplete
+      - upload_mismatch
+      - rate_limited
+    responses:
+      "200":
+        description: The ready asset.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/AudioAssetResult"
+            example:
+              asset:
+                asset_id: 0192f0e0-0000-7000-8000-000000000001
+                byte_size: 4182733
+                content_type: audio/mpeg
+                status: ready
+                created_at: "2026-10-29T08:01:12Z"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../openapi.yaml#/components/responses/Unauthorized"
+      "403":
+        $ref: "../openapi.yaml#/components/responses/CsrfTokenInvalid"
+      "404":
+        $ref: "../openapi.yaml#/components/responses/NotFound"
+      "409":
+        description: >-
+          `upload_incomplete`: storage has no object for this upload yet. `account_mismatch`: X-Awrad-Account isn't the
+          signed-in account; nothing was read or changed.
+        headers: *problem_headers
+        content:
+          application/problem+json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/Problem"
+            examples:
+              upload_incomplete:
+                value:
+                  type: urn:awrad:problem:upload_incomplete
+                  title: Upload incomplete
+                  status: 409
+                  code: upload_incomplete
+                  detail: no object has been uploaded for this asset yet
+                  errors: []
+              account_mismatch:
+                value:
+                  type: urn:awrad:problem:account_mismatch
+                  title: Account mismatch
+                  status: 409
+                  code: account_mismatch
+                  detail: X-Awrad-Account is not the signed-in account
+                  errors: []
+      "422":
+        description: >-
+          `upload_mismatch`: the stored object's size, content type or checksum isn't the upload's. The server has
+          deleted the object and the pending upload.
+        headers: *problem_headers
+        content:
+          application/problem+json:
+            schema:
+              $ref: "../openapi.yaml#/components/schemas/Problem"
+            example:
+              type: urn:awrad:problem:upload_mismatch
+              title: Upload mismatch
+              status: 422
+              code: upload_mismatch
+              detail: the stored object is 4182000 bytes, not 4182733
+              errors: []
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+download:
+  get:
+    operationId: get_audio_download
+    tags: [audio]
+    summary: Get a signed link to play or download a recording
+    description: >-
+      A signed R2 `GET` link to one of the account's ready assets, valid for 10 minutes. Ask for a new one each time
+      playback starts rather than storing it. Phones download the file once into the active profile and play it from
+      there afterwards, offline too; the web plays from the link. An unknown `asset_id`, a pending upload, another
+      account's asset, one already cleaned up, or not a UUID is `404`. Responses are `Cache-Control: no-store`.
+    security:
+      - bearerAuth: []
+      - cookieAuth: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/AwradAccount"
+      - name: asset_id
+        in: path
+        required: true
+        schema:
+          $ref: "../openapi.yaml#/components/schemas/Uuid"
+    x-error-codes: [malformed_request, unauthenticated, not_found, account_mismatch, rate_limited]
+    responses:
+      "200":
+        description: The signed link.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [url, expires_at]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: Signed R2 GET link, valid until `expires_at`. Treat it as opaque.
+                expires_at:
+                  $ref: "../openapi.yaml#/components/schemas/Instant"
+            example:
+              url: https://example-account.r2.cloudflarestorage.com/awrad-private-dhikr/0192f0e0-0000-7000-8000-000000000001?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEKEY%2F20261029%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20261029T090000Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&X-Amz-Signature=0000000000000000000000000000000000000000000000000000000000000000
+              expires_at: "2026-10-29T09:10:00Z"
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../openapi.yaml#/components/responses/Unauthorized"
+      "404":
+        $ref: "../openapi.yaml#/components/responses/NotFound"
+      "409":
+        $ref: "../openapi.yaml#/components/responses/AccountMismatch"
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"
+
+usage:
+  get:
+    operationId: get_audio_usage
+    tags: [audio]
+    summary: Storage the account's recordings use
+    description: >-
+      `used_bytes` counts ready assets and pending uploads by their declared `byte_size`; `limit_bytes` is the
+      account's limit (500,000,000). Settings shows it on phones and the web ("120 MB of 500 MB"), and clients may
+      pre-check an upload with it (audio_upload_validity.json). Responses are `Cache-Control: no-store`.
+    security:
+      - bearerAuth: []
+      - cookieAuth: []
+    parameters:
+      - $ref: "../openapi.yaml#/components/parameters/AwradAccount"
+    x-error-codes: [malformed_request, unauthenticated, account_mismatch, rate_limited]
+    responses:
+      "200":
+        description: Bytes used and the limit.
+        headers:
+          Cache-Control:
+            $ref: "../openapi.yaml#/components/headers/CacheControl"
+          x-request-id:
+            $ref: "../openapi.yaml#/components/headers/RequestId"
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [used_bytes, limit_bytes]
+              properties:
+                used_bytes:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+                limit_bytes:
+                  type: integer
+                  minimum: 0
+                  maximum: 9007199254740991
+            example:
+              used_bytes: 120482733
+              limit_bytes: 500000000
+      "400":
+        $ref: "../openapi.yaml#/components/responses/BadRequest"
+      "401":
+        $ref: "../openapi.yaml#/components/responses/Unauthorized"
+      "409":
+        $ref: "../openapi.yaml#/components/responses/AccountMismatch"
+      "429":
+        $ref: "../openapi.yaml#/components/responses/TooManyRequests"

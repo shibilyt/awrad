@@ -76,8 +76,8 @@ struct SyncTransportTests {
 
     @Test func signedOutTheRealStackMakesNoRequest() async throws {
         let harness = SessionHarness { _ in .init(status: 500, body: Data()) }
-        let directory = FileManager.default.temporaryDirectory.appending(path: "awrad-offline-\(AwradID.random())")
-        defer { try? FileManager.default.removeItem(at: directory) }
+        let directory = TestDirectory.profiles("awrad-offline")
+        defer { TestDirectory.remove(directory) }
         let store = try LocalProfileStore(directory: directory, session: harness.session)
         await store.start()
         await store.setAppActive(true)
@@ -104,58 +104,124 @@ struct SyncCadenceTests {
     @Test func failuresRetryWithGrowingDelaysAndASuccessResets() async throws {
         let clock = ManualSleeper()
         let outcomes = Mutex<[SyncAttempt]>([.failed(retryAfter: nil), .failed(retryAfter: .seconds(60)), .synced])
-        let retries = Mutex<[Duration]>([])
+        let (attempted, attempt) = AsyncStream.makeStream(of: Void.self)
+        let (retried, retry) = AsyncStream.makeStream(of: Duration.self)
         let scheduler = SyncScheduler(
             sleep: { try await clock.sleep($0) }, jitter: { 0 },
-            attempt: { outcomes.withLock { $0.isEmpty ? .synced : $0.removeFirst() } },
-            onRetryScheduled: { delay in retries.withLock { $0.append(delay) } })
+            attempt: {
+                defer { attempt.yield() }
+                return outcomes.withLock { $0.isEmpty ? .synced : $0.removeFirst() }
+            },
+            onRetryScheduled: { retry.yield($0) })
 
         await scheduler.syncNow()
-        try await clock.fireNext()
-        try await clock.fireNext()
+        #expect(try await clock.fireNext() == .seconds(5))
+        #expect(try await clock.fireNext() == .seconds(60))
+        var attempts = attempted.makeAsyncIterator()
+        for _ in 0..<3 { _ = await attempts.next() }
+        var retries = retried.makeAsyncIterator()
+        let delays = [await retries.next(), await retries.next()]
 
         // The second failure waits the server's Retry-After, longer than the 10 s backoff.
-        #expect(retries.withLock { $0 } == [.seconds(5), .seconds(60)])
+        #expect(delays == [.seconds(5), .seconds(60)])
         #expect(outcomes.withLock { $0.isEmpty })
+        #expect(clock.pending == 0, "a success schedules no retry")
     }
 
     @Test func changesAreDebouncedAndARetryWins() async throws {
         let clock = ManualSleeper()
         let attempts = Mutex(0)
+        let (attempted, attempt) = AsyncStream.makeStream(of: Void.self)
         let scheduler = SyncScheduler(
             sleep: { try await clock.sleep($0) }, jitter: { 0 },
             attempt: {
                 attempts.withLock { $0 += 1 }
+                attempt.yield()
                 return .synced
             })
 
         await scheduler.changed()
         await scheduler.changed()
+        // The first debounce was cancelled, so only the second is left to fire.
         #expect(try await clock.fireNext() == .seconds(2))
+        var synced = attempted.makeAsyncIterator()
+        _ = await synced.next()
         #expect(attempts.withLock { $0 } == 1, "two changes, one sync")
+        #expect(clock.pending == 0)
     }
 }
 
-/// A `sleep` that waits until the test fires it.
-actor ManualSleeper {
-    private var sleepers: [(duration: Duration, continuation: CheckedContinuation<Void, any Error>)] = []
+/// A `sleep` that waits until the test fires it. A sleeper whose task is cancelled ends at once
+/// with `CancellationError`, as `Task.sleep` does, so a replaced debounce can never be fired.
+final class ManualSleeper: Sendable {
+    private struct Sleeper {
+        let id: Int
+        let duration: Duration
+        let continuation: CheckedContinuation<Void, any Error>
+    }
+
+    private struct State {
+        var nextID = 0
+        var sleepers: [Sleeper] = []
+        /// Sleepers cancelled before they were registered.
+        var cancelled: Set<Int> = []
+        /// `fireNext` calls waiting for a sleeper.
+        var waiters: [CheckedContinuation<Void, Never>] = []
+    }
+
+    private let state = Mutex(State())
+
+    /// Sleepers waiting to be fired.
+    var pending: Int { state.withLock { $0.sleepers.count } }
 
     func sleep(_ duration: Duration) async throws {
-        try await withCheckedThrowingContinuation { continuation in
-            sleepers.append((duration, continuation))
+        let id = state.withLock { state in
+            defer { state.nextID += 1 }
+            return state.nextID
+        }
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+                let waiters = state.withLock { state -> [CheckedContinuation<Void, Never>]? in
+                    guard !state.cancelled.contains(id) else { return nil }
+                    state.sleepers.append(Sleeper(id: id, duration: duration, continuation: continuation))
+                    defer { state.waiters.removeAll() }
+                    return state.waiters
+                }
+                guard let waiters else { return continuation.resume(throwing: CancellationError()) }
+                for waiter in waiters { waiter.resume() }
+            }
+        } onCancel: {
+            let sleeper = state.withLock { state -> Sleeper? in
+                guard let index = state.sleepers.firstIndex(where: { $0.id == id }) else {
+                    state.cancelled.insert(id)
+                    return nil
+                }
+                return state.sleepers.remove(at: index)
+            }
+            sleeper?.continuation.resume(throwing: CancellationError())
         }
     }
 
-    /// Wakes the most recent sleeper (a debounce replaces an earlier one) and waits for its work.
+    /// Waits for the one live sleeper, wakes it, and returns how long it was asked to sleep. More
+    /// than one live sleeper is a failure: the scheduler never runs two timers at once.
     @discardableResult
     func fireNext() async throws -> Duration {
-        try await Task.sleep(for: .milliseconds(20))
-        for _ in 0..<200 where sleepers.isEmpty { try await Task.sleep(for: .milliseconds(5)) }
-        guard let sleeper = sleepers.popLast() else { throw CancellationError() }
-        for stale in sleepers { stale.continuation.resume(throwing: CancellationError()) }
-        sleepers.removeAll()
+        await withCheckedContinuation { (waiter: CheckedContinuation<Void, Never>) in
+            let ready = state.withLock { state in
+                if state.sleepers.isEmpty { state.waiters.append(waiter) }
+                return !state.sleepers.isEmpty
+            }
+            if ready { waiter.resume() }
+        }
+        let sleeper = try state.withLock { state throws(ManualSleeperError) -> Sleeper in
+            guard state.sleepers.count == 1 else { throw .severalSleepers(state.sleepers.map(\.duration)) }
+            return state.sleepers.removeFirst()
+        }
         sleeper.continuation.resume()
-        try await Task.sleep(for: .milliseconds(50))
         return sleeper.duration
     }
+}
+
+enum ManualSleeperError: Error {
+    case severalSleepers([Duration])
 }

@@ -45,14 +45,47 @@ final class ScriptedTransport: HTTPTransport {
     }
 }
 
+/// A keychain in memory that can refuse writes (a locked or full keychain) or reads.
 final class InMemorySecureStore: SecureStore {
-    private let items = Mutex<[String: Data]>([:])
+    struct Refused: Error {}
 
-    var keys: Set<String> { Set(items.withLock { $0.keys }) }
+    private struct State {
+        var items: [String: Data] = [:]
+        /// Keys whose writes throw; `nil` refuses every key.
+        var refusedWrites: Set<String>?
+        var refusingWrites = false
+        var refusingReads = false
+    }
 
-    func data(for key: String) -> Data? { items.withLock { $0[key] } }
-    func set(_ data: Data, for key: String) { items.withLock { $0[key] = data } }
-    func remove(_ key: String) { _ = items.withLock { $0.removeValue(forKey: key) } }
+    private let state = Mutex(State())
+
+    var keys: Set<String> { Set(state.withLock { $0.items.keys }) }
+
+    /// Makes `set` throw, for every key or only for `keys`, until `acceptWrites()`.
+    func refuseWrites(only keys: Set<String>? = nil) {
+        state.withLock {
+            $0.refusingWrites = true
+            $0.refusedWrites = keys
+        }
+    }
+
+    func acceptWrites() { state.withLock { $0.refusingWrites = false } }
+    func refuseReads(_ refuse: Bool) { state.withLock { $0.refusingReads = refuse } }
+
+    func data(for key: String) throws -> Data? {
+        try state.withLock {
+            if $0.refusingReads { throw Refused() }
+            return $0.items[key]
+        }
+    }
+
+    func set(_ data: Data, for key: String) throws {
+        try state.withLock {
+            if $0.refusingWrites, $0.refusedWrites?.contains(key) ?? true { throw Refused() }
+            $0.items[key] = data
+        }
+    }
+    func remove(_ key: String) { _ = state.withLock { $0.items.removeValue(forKey: key) } }
 }
 
 final class InMemoryInstallationMarker: InstallationMarker {
@@ -118,11 +151,11 @@ struct SessionHarness {
     func storeCredentials(refresh: String = "refresh-token-0000") throws {
         let account = AccountWire(id: Wire.accountID, email: "amina@example.com", createdAt: "2026-10-26T08:00:00Z")
         let stored = StoredCredentials(account: account, refreshToken: refresh, pendingRefreshKey: nil)
-        store.set(try JSONEncoder().encode(stored), for: CredentialVault.credentialsKey)
+        try store.set(JSONEncoder().encode(stored), for: CredentialVault.credentialsKey)
     }
 
     func storedCredentials() -> StoredCredentials? {
-        store.data(for: CredentialVault.credentialsKey).flatMap {
+        ((try? store.data(for: CredentialVault.credentialsKey)) ?? nil).flatMap {
             try? JSONDecoder().decode(StoredCredentials.self, from: $0)
         }
     }

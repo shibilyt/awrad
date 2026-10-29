@@ -39,6 +39,9 @@ public enum AccountError: Error, Equatable, Sendable {
     case signedOut
     /// No response: offline, timed out, or the server couldn't be reached. Credentials are kept.
     case network
+    /// Signing in worked, but the sign-in couldn't be saved on this device (the Keychain refused
+    /// it). The device is left signed out.
+    case credentialsNotSaved
     /// Any other code, a server fault, or a response the client can't read.
     case unexpected(code: String?)
 }
@@ -76,6 +79,10 @@ public enum AccountFieldIssue: Equatable, Sendable {
 public protocol AccountService: Sendable {
     /// The account this device is signed in to, from secure storage only (no network).
     func signedInAccount() async -> Account?
+
+    /// Whether the session lives only in memory because secure storage refused its latest tokens:
+    /// it works until the app closes, and the next refresh saves it again. `false` when signed out.
+    func hasUnsavedSignIn() async -> Bool
 
     /// The signed-in account from the server, refreshing the session if needed. Throws
     /// `.signedOut` when the session has ended, and `.network` when offline.

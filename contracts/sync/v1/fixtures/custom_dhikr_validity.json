@@ -1,12 +1,14 @@
 {
   "format": "awrad-fixture/1",
   "rule": "custom_dhikr_validity",
-  "description": "Which custom dhikr documents are valid, and why not. A valid document is exactly one that matches urn:awrad:sync:1#/$defs/custom_dhikr_document and whose Qur'an references each have ayah_end ≥ ayah_start (the one rule that schema can't express; `range` on /references/N/ayah_end): the catalog dhikr shape without id, key, aliases, virtues or catalog tags; kind and a non-blank Arabic text required; title (en, ar, ml), transliteration (en, ml) and translation (en, ar, ml) with every language key present and each value text or null (STYLE §3), the title with at least one text; audio null or {\"local_only\": true}; references in the catalog's reference shape. Limits, in Unicode code points: title 120 per language; Arabic, transliteration and translation 5,000 each; 20 references. Errors are {field, code} with field a JSON Pointer into the document, sorted by field and then code; a `rejected` receipt reports the same errors with /document in front. Clients check before saving; the server checks every put.",
+  "description": "Which custom dhikr documents are valid, and why not. A valid document is exactly one that matches urn:awrad:sync:1#/$defs/custom_dhikr_document and whose Qur'an references each have ayah_end ≥ ayah_start (the one rule that schema can't express; `range` on /references/N/ayah_end): the catalog dhikr shape without id, key, aliases, virtues or catalog tags; kind and a non-blank Arabic text required; title (en, ar, ml), transliteration (en, ml) and translation (en, ar, ml) with every language key present and each value text or null (STYLE §3), the title with at least one text; audio null, {\"local_only\": true} or an uploaded recording {asset_id, byte_size 1-10,000,000, content_type audio/mpeg or audio/mp4, duration_ms ≥ 1 or null} with every member present (any other audio is `invalid` on /audio; whether the asset exists is the server's audio_not_found, outside this rule); references in the catalog's reference shape. Limits, in Unicode code points: title 120 per language; Arabic, transliteration and translation 5,000 each; 20 references. Errors are {field, code} with field a JSON Pointer into the document, sorted by field and then code; a `rejected` receipt reports the same errors with /document in front. Clients check before saving; the server checks every put.",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#the-change-queue (Entities in 3b)",
     "contracts/sync/v1/sync.schema.json ($defs/custom_dhikr_document)",
     "contracts/dhikr-catalog/v1/dhikr-catalog.schema.json ($defs/dhikr, $defs/reference)",
-    "DECISIONS.md ADR-2026-10-27 (custom dhikrs use the catalog dhikr shape)"
+    "DECISIONS.md ADR-2026-10-27 (custom dhikrs use the catalog dhikr shape)",
+    "docs/slices/03c-audio-upload.md#the-recording-in-the-custom-dhikr-document",
+    "contracts/audio/v1/audio.schema.json"
   ],
   "given_schema": {
     "type": "object",
@@ -1073,7 +1075,7 @@
     },
     {
       "id": "audio_catalog_recording_not_allowed",
-      "description": "A hosted recording is for built-ins only; custom audio is only ever local in 3b.",
+      "description": "A hosted catalog recording is for built-ins only; a custom recording is local or an uploaded asset.",
       "given": {
         "document": {
           "kind": "dhikr",
@@ -1133,6 +1135,466 @@
           },
           "audio": {
             "local_only": false
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "valid_uploaded_audio",
+      "description": "An uploaded recording names its asset with its size, type and measured length (slice 3c).",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 4182733,
+            "content_type": "audio/mpeg",
+            "duration_ms": 31250
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_uploaded_audio_m4a",
+      "description": "M4A/AAC recordings are audio/mp4.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 4182733,
+            "content_type": "audio/mp4",
+            "duration_ms": 31250
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_uploaded_audio_duration_null",
+      "description": "duration_ms is null when the importing client couldn't measure it; it is still present (STYLE §3).",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 4182733,
+            "content_type": "audio/mpeg",
+            "duration_ms": null
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "valid_uploaded_audio_10000000",
+      "description": "10,000,000 bytes is the largest file.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 10000000,
+            "content_type": "audio/mpeg",
+            "duration_ms": 31250
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "uploaded_audio_member_missing",
+      "description": "Every member of an uploaded recording is present: a left-out duration_ms isn't null.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 4182733,
+            "content_type": "audio/mpeg"
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "uploaded_audio_type_not_allowed",
+      "description": "Only audio/mpeg and audio/mp4, exactly as written.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 4182733,
+            "content_type": "audio/wav",
+            "duration_ms": 31250
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "uploaded_audio_type_uppercase",
+      "description": "Media types are lowercase exact: AUDIO/MPEG isn't audio/mpeg.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 4182733,
+            "content_type": "AUDIO/MPEG",
+            "duration_ms": 31250
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "uploaded_audio_size_0",
+      "description": "An empty file is no recording: byte_size is at least 1.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 0,
+            "content_type": "audio/mpeg",
+            "duration_ms": 31250
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "uploaded_audio_size_10000001",
+      "description": "One byte above 10,000,000 is too large.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 10000001,
+            "content_type": "audio/mpeg",
+            "duration_ms": 31250
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "uploaded_audio_duration_0",
+      "description": "A measured length is at least 1 ms; unmeasured is null.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 4182733,
+            "content_type": "audio/mpeg",
+            "duration_ms": 0
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "uploaded_audio_asset_id_not_uuid",
+      "description": "asset_id is a lowercase, hyphenated UUID.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "asset_id": "0192F0E0-0000-7000-8000-000000000001",
+            "byte_size": 4182733,
+            "content_type": "audio/mpeg",
+            "duration_ms": 31250
+          },
+          "references": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/audio",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "uploaded_audio_with_local_only",
+      "description": "A recording is local or uploaded, never both: the phone swaps the marker for the asset once the upload is confirmed.",
+      "given": {
+        "document": {
+          "kind": "dhikr",
+          "arabic": "سُبْحَانَ ٱللَّهِ",
+          "title": {
+            "en": "Subhanallah",
+            "ar": null,
+            "ml": null
+          },
+          "transliteration": {
+            "en": "Subhanallah",
+            "ml": null
+          },
+          "translation": {
+            "en": "Glory be to Allah",
+            "ar": null,
+            "ml": null
+          },
+          "audio": {
+            "local_only": true,
+            "asset_id": "0192f0e0-0000-7000-8000-000000000001",
+            "byte_size": 4182733,
+            "content_type": "audio/mpeg",
+            "duration_ms": 31250
           },
           "references": []
         }

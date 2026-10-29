@@ -21,13 +21,15 @@ defmodule Awrad.Sync.Commands do
     5. the entity rules (`Awrad.Sync.Rules`);
     6. apply, with cascades at the same revision (`Awrad.Sync.Rules.write/4`),
        which a `user_tag` or `custom_dhikr` delete's `applied` receipt lists
-       in `cascaded` (`null` on every other `applied` receipt).
+       in `cascaded` (`null` on every other `applied` receipt); a custom
+       dhikr's recordings learn whether they're still named
+       (`Awrad.Sync.AudioReferences.track/3`).
   """
 
   import Ecto.Query
 
   alias Awrad.Repo
-  alias Awrad.Sync.{Documents, Entity, Head, Receipt, Rules, TagAlias}
+  alias Awrad.Sync.{AudioReferences, Documents, Entity, Head, Receipt, Rules, TagAlias}
 
   @type result :: %{receipts: [map(), ...], head_revision: non_neg_integer()}
 
@@ -112,6 +114,7 @@ defmodule Awrad.Sync.Commands do
          {:ok, document} <- Rules.check(user_id, command, entity) do
       revision = revision + 1
       {version, cascaded} = Rules.write(user_id, command, entity, {document, revision})
+      :ok = AudioReferences.track(user_id, command, entity)
 
       {%{
          "command_id" => command["command_id"],

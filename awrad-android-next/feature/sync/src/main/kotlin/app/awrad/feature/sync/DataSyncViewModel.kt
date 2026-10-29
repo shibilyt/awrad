@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import app.awrad.core.domain.AwradId
 import app.awrad.core.domain.dhikr.ContentLanguage
 import app.awrad.core.domain.dhikr.DhikrCatalogSource
+import app.awrad.core.domain.personal.AudioStorage
+import app.awrad.core.domain.personal.AudioUsage
+import app.awrad.core.domain.personal.CustomAudioService
 import app.awrad.core.domain.personal.CustomDhikrRepository
 import app.awrad.core.domain.personal.TagRepository
 import app.awrad.core.domain.sync.ConflictChoice
@@ -21,14 +24,19 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
  * "Data and sync" in Settings: where syncing stands (last synced, changes waiting), open conflicts, and the
- * profiles on this phone, each removable after a confirmation that warns about unsent changes.
+ * profiles on this phone, each removable after a confirmation that warns about unsent changes. While signed in as
+ * the profile's account it also shows the account's audio storage, asked when the page opens, when syncing signs
+ * in, and after each sync run.
  */
 @HiltViewModel
 internal class DataSyncViewModel @Inject constructor(
@@ -37,6 +45,7 @@ internal class DataSyncViewModel @Inject constructor(
     customDhikrs: CustomDhikrRepository,
     tags: TagRepository,
     catalogSource: DhikrCatalogSource,
+    private val audio: CustomAudioService,
 ) : ViewModel() {
 
     private val mutableState = MutableStateFlow(DataSyncUiState())
@@ -68,6 +77,27 @@ internal class DataSyncViewModel @Inject constructor(
                 }
             }
         }
+        viewModelScope.launch { followAudioStorage() }
+    }
+
+    /**
+     * Asks the account's storage whenever syncing becomes signed in as the profile's account and after each sync
+     * run (back to idle); signed out or waiting, nothing is asked and nothing shows.
+     */
+    private suspend fun followAudioStorage() {
+        var previous: SyncState? = null
+        sync.status.map { it.state }.distinctUntilChanged().collectLatest { syncState ->
+            val signedIn = syncState.isSignedIn
+            val asks = signedIn && (previous?.isSignedIn != true || syncState == SyncState.IDLE)
+            previous = syncState
+            when {
+                !signedIn -> mutableState.update { it.copy(audioStorage = null) }
+                asks -> {
+                    val storage = (audio.usage() as? AudioUsage.Known)?.storage
+                    mutableState.update { it.copy(audioStorage = storage) }
+                }
+            }
+        }
     }
 
     fun onAction(action: DataSyncAction) {
@@ -88,6 +118,8 @@ internal class DataSyncViewModel @Inject constructor(
             }
         }
     }
+
+    private val SyncState.isSignedIn: Boolean get() = this != SyncState.SIGNED_OUT && this != SyncState.WAITING
 
     private class Loaded(val status: SyncStatus, val profiles: List<LocalProfile>, val conflicts: List<NamedConflict>)
 }
@@ -112,6 +144,8 @@ internal data class DataSyncUiState(
     val profiles: List<LocalProfile> = emptyList(),
     val conflicts: List<NamedConflict> = emptyList(),
     val removing: Removing? = null,
+    /** The account's audio storage; null signed out, or when it isn't known (then no line shows). */
+    val audioStorage: AudioStorage? = null,
 ) {
     /** The status card's first line: open conflicts instead of "Up to date", since syncing isn't done with them. */
     val headline: SyncHeadline

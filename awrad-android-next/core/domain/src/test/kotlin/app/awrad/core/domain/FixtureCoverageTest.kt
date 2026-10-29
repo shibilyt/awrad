@@ -76,6 +76,16 @@ class FixtureCoverageTest {
     }
 
     @Test
+    fun `every audio rule file has a runner`() {
+        assertEquals(
+            setOf(
+                "audio_upload_validity", // audio.AudioUploadValidityFixtureTest
+            ),
+            FixtureRunner.rules(FixtureModel.AUDIO),
+        )
+    }
+
+    @Test
     fun `every identity rule file has a runner`() {
         assertEquals(
             setOf(

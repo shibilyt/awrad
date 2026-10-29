@@ -1,5 +1,7 @@
 package app.awrad.core.network.api
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -109,7 +111,11 @@ public data class FieldError(
 /**
  * RFC 9457 problem details (STYLE §7). Clients switch on [code] only; [title] and [detail] are English,
  * for logs, and never shown. Only [code] is needed to handle a problem, so the rest have defaults.
+ *
+ * [usedBytes] and [limitBytes] are the `storage_full` extension members (slice 3c); they're absent from every other
+ * problem and omitted when sent.
  */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 public data class Problem(
     val type: String = "",
@@ -118,4 +124,6 @@ public data class Problem(
     val code: String,
     val detail: String = "",
     val errors: List<FieldError> = emptyList(),
+    @SerialName("used_bytes") @EncodeDefault(EncodeDefault.Mode.NEVER) val usedBytes: Long? = null,
+    @SerialName("limit_bytes") @EncodeDefault(EncodeDefault.Mode.NEVER) val limitBytes: Long? = null,
 )

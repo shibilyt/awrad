@@ -38,7 +38,8 @@ extension SyncRules {
     }
 
     /// Applies the receipts for sent commands, matched by `command_id`; each removes its command.
-    /// Returns a notice for every rejected change, which is undone.
+    /// Returns a notice for every rejected change, and the custom dhikrs whose recording must be
+    /// uploaded again.
     ///
     /// | Receipt | Effect |
     /// |---|---|
@@ -48,13 +49,34 @@ extension SyncRules {
     /// | `merged` | Moves every local use of the tag ID to the surviving tag |
     /// | `gone` | Removes the entity |
     /// | `rejected` | Restores the server's copy, or removes the entity when there is none |
+    /// | `rejected` `audio_not_found`/`audio_mismatch` of a custom dhikr put | Keeps the edit (`keepAfterAudioRejection`) |
+    ///
+    /// - Parameters:
+    ///   - localAudioFiles: the custom dhikrs whose recording file is on the phone.
+    ///   - newCommandID: the ID of each command this queues, in order.
     @discardableResult
-    public static func apply(_ receipts: [SyncReceipt], to state: inout some SyncLocalState) -> [SyncNotice] {
+    public static func apply(
+        _ receipts: [SyncReceipt], to state: inout some SyncLocalState, localAudioFiles: Set<AwradID> = [],
+        newCommandID: () -> AwradID = AwradID.random
+    ) -> ReceiptsOutcome {
         var notices: [SyncNotice] = []
+        var uploads = Set<AwradID>()
         for receipt in receipts {
-            guard let command = state.outbox.first(where: { $0.commandID == receipt.commandID }) else { continue }
+            guard let index = state.outbox.firstIndex(where: { $0.commandID == receipt.commandID }) else { continue }
+            let command = state.outbox[index]
             state.removeCommand(command.commandID)
             let key = command.key
+            if case .rejected(_, let code, _, let current) = receipt.outcome, code.isAboutAudio,
+                command.op == .put, key.type == .customDhikr, current?.state != .deleted
+            {
+                let rejection = AudioRejection(
+                    key: key, index: index, current: current, hasFile: localAudioFiles.contains(key.id))
+                if keepAfterAudioRejection(rejection, newCommandID: newCommandID(), in: &state) {
+                    uploads.insert(key.id)
+                }
+                notices.append(SyncNotice(code: code, key: key))
+                continue
+            }
             switch receipt.outcome {
             case .applied(_, let version, _, let cascaded):
                 if state.document(key) == nil, state.commands(for: key).isEmpty {
@@ -80,7 +102,7 @@ extension SyncRules {
                 break  // `outcome` is never a duplicate.
             }
         }
-        return notices
+        return ReceiptsOutcome(notices: notices, uploadsQueued: uploads.sorted { $0.description < $1.description })
     }
 
     /// The user's answer to an open conflict. Keep mine queues the local version (or its delete)

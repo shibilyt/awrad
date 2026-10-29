@@ -31,6 +31,10 @@ tags:
     description: >-
       The change queue: commands and the changes feed for custom dhikrs, tags and personal records (slice 3b,
       contracts/sync/v1).
+  - name: audio
+    description: >-
+      Private recordings for custom dhikrs: reserve an upload, PUT the file straight to storage, confirm it, then
+      fetch short-lived download links (slice 3c, contracts/audio/v1, ADR-2026-10-29).
 
 paths:
   /api/v1/accounts:
@@ -73,6 +77,14 @@ paths:
     $ref: paths/sync.yaml#/commands
   /api/v1/sync/changes:
     $ref: paths/sync.yaml#/changes
+  /api/v1/audio_uploads:
+    $ref: paths/audio.yaml#/uploads
+  /api/v1/audio_uploads/{asset_id}/complete:
+    $ref: paths/audio.yaml#/complete
+  /api/v1/audio_assets/usage:
+    $ref: paths/audio.yaml#/usage
+  /api/v1/audio_assets/{asset_id}/download:
+    $ref: paths/audio.yaml#/download
 
 components:
   securitySchemes:
@@ -416,7 +428,9 @@ components:
             ml:
               $ref: "#/components/schemas/SyncOptionalLongText"
         audio:
-          description: null, or a recording kept only on the device that imported it (uploading is slice 3c).
+          description: >-
+            null (no recording), `{"local_only": true}` (a recording kept only on the device that imported it), or an
+            uploaded recording (slice 3c). Any other shape is a field error `invalid` on /audio.
           oneOf:
             - type: "null"
             - type: object
@@ -426,6 +440,7 @@ components:
                 local_only:
                   type: boolean
                   const: true
+            - $ref: "#/components/schemas/UploadedAudio"
         references:
           type: array
           maxItems: 20
@@ -641,6 +656,8 @@ components:
             - entity_not_found
             - delete_not_allowed
             - command_id_reused
+            - audio_not_found
+            - audio_mismatch
         fields:
           type: array
           items:
@@ -697,6 +714,101 @@ components:
           oneOf:
             - $ref: "#/components/schemas/SyncDocument"
             - type: "null"
+
+    AudioContentType:
+      description: >-
+        The recording's media type, exactly as written: MP3 is `audio/mpeg`, M4A/AAC is `audio/mp4`. Lowercase, no
+        parameters (audio.schema.json `content_type`).
+      oneOf:
+        - type: string
+          const: audio/mpeg
+        - type: string
+          const: audio/mp4
+      examples: ["audio/mpeg"]
+    AudioByteSize:
+      type: integer
+      minimum: 1
+      maximum: 10000000
+      description: File size in bytes, 1 to 10,000,000 (10 MB, decimal).
+      examples: [4182733]
+    AudioDurationMs:
+      description: Length in milliseconds as the importing client measured it, or null. The server never decodes audio.
+      oneOf:
+        - type: integer
+          minimum: 1
+          maximum: 9007199254740991
+        - type: "null"
+    Sha256:
+      type: string
+      pattern: "^[0-9a-f]{64}$"
+      description: SHA-256 of the file's bytes, as 64 lowercase hex digits.
+      examples: ["7959650f9fa69b6279b3694e2506059cb67062cc0f7e9ad27a346528d341e5bc"]
+    UploadedAudio:
+      type: object
+      additionalProperties: false
+      required: [asset_id, byte_size, content_type, duration_ms]
+      description: >-
+        A recording uploaded to the account's private storage (sync.schema.json `uploaded_audio`). Every member is
+        present. A put naming an `asset_id` that isn't a ready asset of the account is `rejected` with
+        `audio_not_found`; one whose `byte_size` or `content_type` differs from the asset's is `rejected` with
+        `audio_mismatch`.
+      properties:
+        asset_id:
+          $ref: "#/components/schemas/Uuid"
+        byte_size:
+          $ref: "#/components/schemas/AudioByteSize"
+        content_type:
+          $ref: "#/components/schemas/AudioContentType"
+        duration_ms:
+          $ref: "#/components/schemas/AudioDurationMs"
+    AudioAsset:
+      type: object
+      additionalProperties: false
+      required: [asset_id, byte_size, content_type, status, created_at]
+      description: A confirmed recording of the account (audio.schema.json `asset`). A pending upload isn't an asset.
+      properties:
+        asset_id:
+          $ref: "#/components/schemas/Uuid"
+        byte_size:
+          $ref: "#/components/schemas/AudioByteSize"
+        content_type:
+          $ref: "#/components/schemas/AudioContentType"
+        status:
+          type: string
+          const: ready
+        created_at:
+          $ref: "#/components/schemas/Instant"
+    AudioAssetResult:
+      type: object
+      additionalProperties: false
+      required: [asset]
+      description: A ready asset (audio.schema.json `asset_response`).
+      properties:
+        asset:
+          $ref: "#/components/schemas/AudioAsset"
+    AudioUpload:
+      type: object
+      additionalProperties: false
+      required: [asset_id, upload_url, upload_headers, expires_at]
+      description: A pending upload's signed PUT link (audio.schema.json `upload`).
+      properties:
+        asset_id:
+          $ref: "#/components/schemas/Uuid"
+        upload_url:
+          type: string
+          format: uri
+          description: Signed R2 PUT link, valid until `expires_at` (15 minutes). Treat it as opaque.
+        upload_headers:
+          type: object
+          required: [content-type, x-amz-checksum-sha256]
+          additionalProperties:
+            type: string
+          description: >-
+            Headers to send, verbatim and all of them, with the PUT: lowercase header names to values. Today
+            `content-type` (the upload's content_type) and `x-amz-checksum-sha256` (the base64 SHA-256 the link is
+            signed with, so R2 refuses any other bytes). Clients pass the map through rather than building it.
+        expires_at:
+          $ref: "#/components/schemas/Instant"
 
   parameters:
     AwradAccount:

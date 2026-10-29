@@ -319,6 +319,18 @@ Use this format:
 - Evidence: `contracts/identity/v1/README.md`, `DECISIONS.md`
 - Commit: see git log
 
+### 2026-10-29 — Slice 3c: private audio for custom dhikrs
+
+- Area: Cross-project
+- Change:
+  - Signed-in users' custom dhikr recordings upload to the private R2 bucket `awrad-private-dhikr` (ADR-2026-10-29). There are four endpoints: reserve, confirm, download link, usage. Signed `PUT` links last 15 minutes, carry `x-amz-checksum-sha256` and are enforced by R2; `GET` links last 10 minutes. Limits: 10,000,000 bytes per file, 500,000,000 per account, `audio/mpeg` or `audio/mp4` only.
+  - The custom dhikr document's `audio` is `null`, `{"local_only": true}` or an uploaded asset. The server checks the asset exists, is ready and matches (`audio_not_found`, `audio_mismatch`). Phones never lose a dhikr on those rejections: they re-upload, or drop the audio.
+  - Phones keep a per-profile upload queue, cache downloaded recordings for offline play, and retry `storage_full` once space frees up. The web uploads straight to R2 from the browser.
+  - Secrets live only in the environment: `awrad-server-next/mise.local.toml` locally (ignored by git), and Dokploy in production. The bucket's CORS allows the web origin with the `content-type` and `x-amz-checksum-sha256` request headers. The web dev server moved to port 5180.
+  - Server cleanup deletes unconfirmed uploads and recordings unreferenced for 24 hours, and all of an account's files when it's deleted.
+- Evidence: `docs/slices/03c-audio-upload.md`, `contracts/audio/v1/README.md`
+- Commit: see git log
+
 ### 2026-10-28 — Slice 3b: custom dhikrs, tags and the change queue
 
 - Area: Cross-project

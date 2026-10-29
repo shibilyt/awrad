@@ -90,9 +90,7 @@ describe("a custom dhikr's page", () => {
       "href",
       `/library/dhikrs/${MORNING_DHIKR_ID}/edit`,
     );
-    expect(
-      screen.getByText("Its recording is on the phone that added it. Audio is added from the phone app."),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Audio is on the phone that added it.")).toBeInTheDocument();
     expect(within(screen.getByRole("list", { name: "Your tags" })).getByText("Morning")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Manage tags" })).toBeInTheDocument();
     const sources = screen.getByRole("region", { name: "Sources" });

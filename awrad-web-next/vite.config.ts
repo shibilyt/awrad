@@ -22,7 +22,7 @@ export default defineConfig({
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
   server: {
-    port: 5173,
+    port: 5180, // fixed and uncommon, so it never clashes with other local projects (the R2 CORS rule allows it)
     strictPort: true,
     proxy: {
       "/api": { target: api, changeOrigin: false },

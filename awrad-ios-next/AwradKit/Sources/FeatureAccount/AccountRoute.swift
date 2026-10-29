@@ -98,6 +98,13 @@ struct AccountScreen: View {
         .environment(\.layoutDirection, .rightToLeft)
 }
 
+#Preview("Signed in, sign-in not saved") {
+    var state = AccountModel.State()
+    state.phase = .signedIn(email: "amina@example.com")
+    state.signInUnsaved = true
+    return AccountScreen(state: state, onClose: {}, send: { _ in })
+}
+
 #Preview("Signed in, dark") {
     var state = AccountModel.State()
     state.phase = .signedIn(email: "amina@example.com")

@@ -49,6 +49,9 @@ internal class FakeSyncServer(private val accountId: AwradId, var tagLimit: Int 
     var head = 0L
         private set
 
+    /** The account's ready audio assets by ID, with their size and type (the audio server confirms them). */
+    val readyAssets = mutableMapOf<String, Pair<Long, String>>()
+
     /** Batches received, and pages asked for (`after`), in order. */
     val batches = mutableListOf<SyncCommandBatch>()
     val pageRequests = mutableListOf<Long>()
@@ -149,6 +152,7 @@ internal class FakeSyncServer(private val accountId: AwradId, var tagLimit: Int 
     @Suppress("ReturnCount", "CyclomaticComplexMethod")
     private fun entityRules(command: SyncCommandBody, existing: Entity?): SyncReceiptBody {
         var document = command.document
+        if (command.entityType == CUSTOM && command.op == "put") audioRejection(command)?.let { return it }
         if (command.entityType == TAG && command.op == "put") {
             val normalized = document!!.getValue("normalized_name").jsonPrimitive.content
             val same = activeTags().firstOrNull {
@@ -183,6 +187,18 @@ internal class FakeSyncServer(private val accountId: AwradId, var tagLimit: Int 
             .sortedWith(compareBy({ it.type }, { it.id }))
             .map { SyncCascadedBody(it.type, it.id, it.state, it.version, it.revision) }
         return SyncAppliedReceipt(command.commandId, "applied", version, revision, cascaded.takeIf { cascades })
+    }
+
+    /** A put naming an asset that isn't ready is `audio_not_found`; one disagreeing with it, `audio_mismatch`. */
+    @Suppress("ReturnCount") // No uploaded audio, no asset, or the comparison.
+    private fun audioRejection(command: SyncCommandBody): SyncReceiptBody? {
+        val audio = command.document?.get("audio") as? JsonObject ?: return null
+        val assetId = audio["asset_id"]?.jsonPrimitive?.content ?: return null
+        val current = current(CUSTOM to command.entityId)
+        val (size, type) = readyAssets[assetId] ?: return rejected(command, "audio_not_found", current)
+        val agrees = audio["byte_size"]?.jsonPrimitive?.content == size.toString() &&
+            audio["content_type"]?.jsonPrimitive?.content == type
+        return if (agrees) null else rejected(command, "audio_mismatch", current)
     }
 
     private fun cascade(type: String, id: String, revision: Long) {

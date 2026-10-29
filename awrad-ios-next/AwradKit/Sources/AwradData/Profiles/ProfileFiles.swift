@@ -2,19 +2,20 @@ import AwradDomain
 import Foundation
 import OSLog
 import SwiftData
+import UniformTypeIdentifiers
 
 /// Where local profiles live on disk, under one root (Application Support/Profiles in the app):
 ///
 /// - `registry.json`: the profile registry;
 /// - `<profile-id>/profile.store`: the profile's SwiftData database;
-/// - `<profile-id>/Audio/<dhikr-id>.mp3|m4a`: its custom dhikrs' recordings (never uploaded in 3b),
-///   and `Audio/Staged/` for a picked recording waiting for its dhikr to be saved.
+/// - `<profile-id>/Audio/<dhikr-id>.mp3|m4a`: recordings imported on this phone, until uploaded;
+///   `Audio/Staged/` for a picked recording waiting for its dhikr to be saved; and `Audio/Cache/`
+///   for uploaded recordings (`ProfileFiles+Audio.swift`).
 ///
 /// Removing a profile deletes its directory, so nothing of it stays.
 struct ProfileFiles: Sendable {
-    /// 10 MB per recording, meaning 10,000,000 bytes (sync README "Limits"; uploads in 3c use the
-    /// same limit).
-    static let maxAudioBytes = 10_000_000
+    /// 10 MB per recording, meaning 10,000,000 bytes: the upload limit (contracts/audio/v1).
+    static let maxAudioBytes = AudioUploadRules.maxFileBytes
     static let audioExtensions = ["mp3", "m4a"]
     private static let log = Logger(subsystem: "app.awrad.awrad.next", category: "profiles")
 
@@ -61,7 +62,8 @@ struct ProfileFiles: Sendable {
         } catch {
             Self.log.error("Profile store incompatible, recreating (pre-release policy)")
             for suffix in ["", "-shm", "-wal"] {
-                try? FileManager.default.removeItem(at: URL(filePath: storeURL(profile).path() + suffix))
+                try? FileManager.default.removeItem(
+                    at: URL(filePath: storeURL(profile).path(percentEncoded: false) + suffix))
             }
             return try ModelContainer(for: ProfileSchema.schema, configurations: configuration)
         }
@@ -74,10 +76,23 @@ struct ProfileFiles: Sendable {
 
     // MARK: - Audio
 
+    /// The type of a picked file, when it's one a recording may have: an `.mp3` (`UTType.mp3`) or an
+    /// `.m4a` (`UTType.mpeg4Audio`, which the system reports as `audio/x-m4a`, sent as `audio/mp4`).
+    /// Anything else, a raw `.aac` stream included, is `nil` (contracts/audio/v1 README, "Phones").
+    static func importedType(of file: URL) -> AudioContentType? {
+        let ext = file.pathExtension.lowercased()
+        guard let byExtension = AudioContentType(fileExtension: ext), let type = UTType(filenameExtension: ext),
+            type.conforms(to: .mp3) || type.conforms(to: .mpeg4Audio),
+            let mediaType = type.preferredMIMEType,
+            AudioContentType(importedMediaType: mediaType) == byExtension
+        else { return nil }
+        return byExtension
+    }
+
     /// Copies a picked recording into the profile's staging area after checking its type and size.
     func stageAudio(from source: URL, profile: AwradID) throws(PersonalLibraryError) -> StagedAudio {
-        let ext = source.pathExtension.lowercased()
-        guard Self.audioExtensions.contains(ext) else { throw .audioUnsupported }
+        guard let type = Self.importedType(of: source) else { throw .audioUnsupported }
+        let ext = type.fileExtension
         let size = (try? source.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         guard size > 0 else { throw .audioUnsupported }
         guard size <= Self.maxAudioBytes else { throw .audioTooLarge }
@@ -95,7 +110,7 @@ struct ProfileFiles: Sendable {
     /// The custom dhikr's recording on this device.
     func audioURL(for dhikr: AwradID, profile: AwradID) -> URL? {
         Self.audioExtensions.map { audioDirectory(profile).appending(path: "\(dhikr).\($0)") }
-            .first { FileManager.default.fileExists(atPath: $0.path()) }
+            .first { FileManager.default.fileExists(atPath: $0.path(percentEncoded: false)) }
     }
 
     /// Moves a staged recording into place as the dhikr's, replacing any earlier one.

@@ -11,6 +11,7 @@ defmodule Awrad.SharedFixturesTest do
   # `<rule>_test.exs` per `<rule>.json`, loading that file.
   @runners %{
     "account-model/v1" => "test/awrad/accounts",
+    "audio/v1" => "test/awrad/audio",
     "goal-model/v1" => "test/awrad/goals/rules",
     "hijri-calendar/v1" => "test/awrad/hijri",
     "identity/v1" => "test/awrad/identity",

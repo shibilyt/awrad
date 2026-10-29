@@ -70,9 +70,12 @@
         func setTags(_ tagIDs: [AwradID], on dhikr: AwradID) {}
         func resolveConflict(_ key: SyncEntityKey, choice: ConflictChoice) {}
         func dismissNotice(_ notice: SyncNotice) {}
+        func dismissAudioNotice(_ notice: AudioUploadNotice) {}
 
         func stageAudio(from source: URL) -> StagedAudio { StagedAudio(url: source) }
 
         func audioURL(for dhikr: AwradID) -> URL? { nil }
+
+        func downloadAudio(for dhikr: AwradID) throws(AudioDownloadError) -> URL { throw .unavailable }
     }
 #endif
