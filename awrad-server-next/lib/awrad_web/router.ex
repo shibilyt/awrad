@@ -103,6 +103,18 @@ defmodule AwradWeb.Router do
     get "/changes", SyncController, :changes
   end
 
+  # Private recordings (slice 3c): the same credentials and X-Awrad-Account
+  # check as the change queue. Uploads are idempotent by asset_id, so
+  # Idempotency-Key is accepted and ignored (no :idempotent pipeline).
+  scope "/api/v1", AwradWeb do
+    pipe_through [:api, :any_account]
+
+    post "/audio_uploads", AudioController, :create_upload
+    post "/audio_uploads/:asset_id/complete", AudioController, :complete_upload
+    get "/audio_assets/usage", AudioController, :usage
+    get "/audio_assets/:asset_id/download", AudioController, :download
+  end
+
   scope "/api/v1/browser", AwradWeb do
     pipe_through [:api, :browser_session]
 

@@ -12,7 +12,8 @@ defmodule Awrad.Accounts.Settings do
       sessions, and tells the old address.
     * `delete/3` deletes the account and everything stored for it (the
       database cascades from `users`), which ends every session; the address
-      gets a confirmation.
+      gets a confirmation. Its recordings are left to the audio cleanup job,
+      which deletes every object soon after (`Awrad.Audio.account_deleted/0`).
 
   Emails are localized in `locale`, the request's language.
   """
@@ -108,6 +109,10 @@ defmodule Awrad.Accounts.Settings do
           Repo.delete_all(from(u in User, where: u.id == ^user.id))
           {:ok, :ok}
         end)
+
+      # Its recordings outlive the row only as cleanup work (`audio_assets.user_id`
+      # is set to NULL); the job deletes every object, retrying when R2 fails.
+      :ok = Awrad.Audio.account_deleted()
 
       UserNotifier.deliver_notice(user.email, :account_deleted, locale)
     end

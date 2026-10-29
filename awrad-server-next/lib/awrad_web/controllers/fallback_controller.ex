@@ -8,6 +8,8 @@ defmodule AwradWeb.FallbackController do
     * `{:error, {:validation_at, errors}}`: the same, with errors that already
       carry their JSON Pointer and detail;
     * `{:error, {:rate_limited, seconds}}`: `429 rate_limited` with `Retry-After`;
+    * `{:error, {:problem, code, detail, extensions}}`: the catalogued problem
+      for `code` with its own detail and extension members;
     * `{:error, code}` with an atom: the catalogued problem for that code.
   """
 
@@ -25,6 +27,9 @@ defmodule AwradWeb.FallbackController do
 
   def call(conn, {:error, {:rate_limited, retry_after}}),
     do: Problem.rate_limited(conn, retry_after)
+
+  def call(conn, {:error, {:problem, code, detail, extensions}}),
+    do: Problem.send_code(conn, code, detail, extensions)
 
   def call(conn, {:error, code}) when is_atom(code),
     do: Problem.send_code(conn, Atom.to_string(code))
