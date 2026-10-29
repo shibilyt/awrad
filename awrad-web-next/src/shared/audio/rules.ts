@@ -43,11 +43,14 @@ const BY_SYSTEM_TYPE: Readonly<Record<string, AudioContentType>> = {
 };
 
 /**
- * The media type to upload a picked file as. The contract leaves the mapping to clients: an
- * `.mp3` is `audio/mpeg`; an `.m4a`, or a system type such as `audio/x-m4a`, is `audio/mp4`. A
- * file that is neither keeps its own type (or none), which `uploadRuleError` then refuses.
+ * The media type to upload a picked file as (audio README, "Phones": Importing): only an `.mp3`
+ * (`audio/mpeg`) or an `.m4a` (`audio/mp4`, however the system reports it, `audio/x-m4a`
+ * included). `null`, refused as `unsupported_audio_type`, for anything else: a file named with
+ * another extension (a raw `.aac` stream among them), even when the system calls it `audio/mp4`,
+ * or one with no extension and no system type of the two.
  */
-export function contentTypeOf(file: { name: string; type: string }): string {
-  const extension = /\.([^./\\]+)$/.exec(file.name)?.[1]?.toLowerCase() ?? "";
-  return BY_EXTENSION[extension] ?? BY_SYSTEM_TYPE[file.type] ?? file.type;
+export function contentTypeOf(file: { name: string; type: string }): AudioContentType | null {
+  const extension = /\.([^./\\]+)$/.exec(file.name)?.[1]?.toLowerCase();
+  if (extension === undefined) return BY_SYSTEM_TYPE[file.type] ?? null;
+  return BY_EXTENSION[extension] ?? null;
 }

@@ -101,13 +101,21 @@ function Sources({ dhikr }: { dhikr: Dhikr }): ReactElement | null {
 
 /**
  * A custom dhikr's uploaded recording, for the player bar: played from a signed link to the
- * account's private storage (`get_audio_download`), asked for when playback starts.
+ * account's private storage (`get_audio_download`), asked for when playback starts, with the
+ * document's `duration_ms` shown as the total time until the file has loaded.
  */
 function recordingOf(custom: Entity<CustomDhikrDocument> | null, yours: Yours): Recording | null {
   const audio = custom?.document.audio ?? null;
   if (audio === null || "local_only" in audio || yours.status !== "ready") return null;
   const { accountId } = yours;
-  return { id: audio.asset_id, source: { kind: "signed", link: () => getAudioDownload(accountId, audio.asset_id) } };
+  return {
+    id: audio.asset_id,
+    source: {
+      kind: "signed",
+      link: () => getAudioDownload(accountId, audio.asset_id),
+      durationMs: audio.duration_ms,
+    },
+  };
 }
 
 /**

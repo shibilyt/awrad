@@ -126,6 +126,12 @@ describe("a recording that can't upload", () => {
     await pick(file("song.wav", ["hello"], "audio/wav"));
     expect(await within(audioSection()).findByRole("alert")).toHaveTextContent("Choose an MP3 or M4A file.");
     expect(within(audioSection()).queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    // A raw AAC stream too (audio README, "Phones": Importing).
+    await pick(file("long.mp3", [new Uint8Array(10_000_001)]));
+    await within(audioSection()).findByText(/larger than 10 MB/);
+    await pick(file("dhikr.aac", ["hello"], "audio/aac"));
+    expect(await within(audioSection()).findByRole("alert")).toHaveTextContent("Choose an MP3 or M4A file.");
+    expect(within(audioSection()).getByText("No recording yet.")).toBeInTheDocument();
     expect(requests).toHaveLength(before);
   });
 

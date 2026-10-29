@@ -63,9 +63,21 @@ function Progress({ elapsed, duration }: { elapsed: number; duration: number | n
 
 /**
  * What the player plays: a public URL (a built-in's, on dhikrs.awrad.app), or a private recording
- * reached by a short-lived signed link (slice 3c), asked for when playback starts.
+ * reached by a short-lived signed link (slice 3c), asked for when playback starts, with its
+ * document's `duration_ms` (null when the uploader couldn't measure it).
  */
-export type PlayerSource = { kind: "url"; url: string } | { kind: "signed"; link: () => Promise<SignedLink> };
+export type PlayerSource =
+  { kind: "url"; url: string } | { kind: "signed"; link: () => Promise<SignedLink>; durationMs: number | null };
+
+/**
+ * The total time to show while the element doesn't know it (before the first play): a recording's
+ * `duration_ms`, in seconds (audio README, "Before the first play"). A catalog URL has none.
+ */
+function declaredDuration(source: PlayerSource): number | null {
+  return source.kind === "signed" && source.durationMs !== null && source.durationMs > 0
+    ? source.durationMs / 1000
+    : null;
+}
 
 /** A link this close to expiring is replaced before playing on: storage refuses an expired one. */
 const LINK_MARGIN_MS = 30_000;
@@ -134,7 +146,8 @@ function usePlayback(
 /**
  * The audio player bar (components.md "Audio player bar") at the bottom of the Arabic card: a
  * round `play` / `pause` button, a progress line (`ringStroke` high, `outline` track, `progress`
- * fill) and the time ("0:14 / 0:26", only the elapsed time until the duration is known), driven by
+ * fill) and the time ("0:14 / 0:26"; before the element knows the duration, an uploaded
+ * recording's `duration_ms` as the total, and otherwise only the elapsed time), driven by
  * an `<audio>` element on the source: the catalog's URL, or a signed link to the account's own
  * recording (fetched at the first play and again once it expires, after 10 minutes). Nothing loads
  * until the first play; while it loads the button shows the progress indicator. Playback stops
@@ -174,7 +187,7 @@ export function AudioPlayer({ source }: { source: PlayerSource }): ReactElement 
           isPending={loading}
           onPress={toggle}
         />
-        <Progress elapsed={elapsed} duration={duration} />
+        <Progress elapsed={elapsed} duration={duration ?? declaredDuration(source)} />
       </div>
       {/* The dhikr's text, transliteration and translation on the page are the recording's transcript. */}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption */}

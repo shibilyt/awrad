@@ -101,7 +101,9 @@ async function attempt(
  * session or rate problem) or network error that stopped it.
  */
 export async function uploadAudio(accountId: string, file: File, options: UploadOptions = {}): Promise<UploadedAudio> {
+  // Only an .mp3 or .m4a is imported; anything else is refused before it's read (audio README, "Phones").
   const contentType = contentTypeOf(file);
+  if (contentType === null) throw refused("unsupported_audio_type", 0, 0);
   const upload = { byte_size: file.size, content_type: contentType };
   // The type and size need no network; a file that is too large is refused before the quota is
   // looked at, so nobody is told to free space that wouldn't help.

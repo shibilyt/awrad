@@ -118,6 +118,12 @@ test("refuses an unsupported type, an empty file and one too large before asking
   expect(await failureOf(uploadAudio(ACCOUNT_ID, mp3("song.wav", ["hello"], "audio/wav")))).toEqual({
     code: "unsupported_audio_type",
   });
+  // A raw AAC stream isn't an .m4a, even when the system calls it audio/mp4.
+  for (const type of ["audio/aac", "audio/mp4"]) {
+    expect(await failureOf(uploadAudio(ACCOUNT_ID, mp3("dhikr.aac", ["hello"], type)))).toEqual({
+      code: "unsupported_audio_type",
+    });
+  }
   expect(await failureOf(uploadAudio(ACCOUNT_ID, mp3("empty.mp3", [])))).toEqual({ code: "invalid_size" });
   const big = new Uint8Array(10_000_001);
   expect(await failureOf(uploadAudio(ACCOUNT_ID, mp3("big.mp3", [big])))).toEqual({ code: "file_too_large" });
