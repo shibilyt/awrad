@@ -297,6 +297,22 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഇമെയിലിലെ %lld അക്ക കോഡ് നൽകുക." } }
       }
     },
+    "account.error.credentials_not_saved" : {
+      "comment" : "Error on sign in: the server accepted the sign-in but this device could not store it, so the person is not signed in.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعذّر حفظ تسجيل دخولك على هذا الجهاز. حاول مرة أخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't save your sign-in on this device. Try again." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ സൈൻ ഇൻ ഈ ഉപകരണത്തിൽ സംരക്ഷിക്കാനായില്ല. വീണ്ടും ശ്രമിക്കുക." } }
+      }
+    },
+    "account.error.sign_in_not_saved" : {
+      "comment" : "Warning on the signed-in screen: the device refused to store the sign-in, so it only lasts until the app closes.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "تعذّر حفظ تسجيل دخولك. قد تحتاج إلى تسجيل الدخول مرة أخرى." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Your sign-in couldn't be saved; you may need to sign in again." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ സൈൻ ഇൻ സംരക്ഷിക്കാനായില്ല; വീണ്ടും സൈൻ ഇൻ ചെയ്യേണ്ടി വന്നേക്കാം." } }
+      }
+    },
     "account.error.current_password_incorrect" : {
       "comment" : "Error: the re-entered current password is wrong (current_password_incorrect).",
       "localizations" : {

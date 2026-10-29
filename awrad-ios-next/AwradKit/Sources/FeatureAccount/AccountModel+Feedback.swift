@@ -24,6 +24,10 @@ extension AccountModel {
         case signedOut
         case network
         case unexpected
+        /// Signing in worked but the sign-in couldn't be saved on this device, so it's cancelled.
+        case credentialsNotSaved
+        /// Shown while signed in: the sign-in couldn't be saved and is kept in memory only.
+        case signInNotSaved
         /// A notice, not an error: a code is on its way to the email.
         case codeSent
         /// A notice: signing in needs the email verified first, and a code is on its way.
@@ -74,6 +78,7 @@ extension AccountModel {
         case .signedOut: .signedOut
         case .network: .network
         case .unexpected: .unexpected
+        case .credentialsNotSaved: .credentialsNotSaved
         default: codeFeedback(for: error)
         }
     }

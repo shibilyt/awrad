@@ -130,7 +130,7 @@ struct AccountSettingsTests {
 
     @Test func deletingTheAccountForgetsTheCredentials() async throws {
         let harness = try Self.harness(.deleteAccount) { _ in .init(status: 204, body: Data()) }
-        harness.store.set(Data("5f0c3b52-8d2e-4e57-9f0a-6b1d2c3e4f50".utf8), for: CredentialVault.installationIDKey)
+        try harness.store.set(Data("5f0c3b52-8d2e-4e57-9f0a-6b1d2c3e4f50".utf8), for: CredentialVault.installationIDKey)
 
         try await harness.session.deleteAccount(currentPassword: "a long passphrase")
 

@@ -11,7 +11,10 @@ struct AccountOverview: View {
     let send: (AccountModel.Action) -> Void
 
     var body: some View {
-        AccountForm(title: Strings.title, message: Strings.signedInNote, feedback: state.feedback) {
+        AccountForm(
+            title: Strings.title, message: Strings.signedInNote,
+            feedback: state.feedback ?? (state.signInUnsaved ? .signInNotSaved : nil)
+        ) {
             AwradCard {
                 VStack(alignment: .leading, spacing: AwradSpacing.xs) {
                     Text(Strings.signedInLabel)
