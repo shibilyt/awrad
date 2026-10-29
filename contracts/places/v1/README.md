@@ -65,4 +65,4 @@ Rebuilding from a newer dump can change `city_search` results; the checker then 
 
 4. **Order:** tier, then population (larger first), then ID; at most `limit` results.
 
-On phones, results from the platform's own place search (online only) are listed after these, under their own heading, and saved with `source` `search`.
+On phones, results from the platform's own place search (online only) are listed after these, under their own heading, and saved with `source` `search`. A platform result within 10 km of a city in the bundled results shown is left out, because it's the same place: search "calicut" shows Kozhikode once.
