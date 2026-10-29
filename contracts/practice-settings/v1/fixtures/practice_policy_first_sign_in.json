@@ -1,0 +1,633 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "practice_policy_first_sign_in",
+  "description": "The phone's practice policy after signing in from the anonymous profile. The account's policy wins once it has one, whatever the user chose for their data; an account that has none takes this phone's, only if the user chose it (chosen: changed a setting since the profile was created). Into an account profile already on the phone, that profile keeps its own.",
+  "references": [
+    "docs/slices/03d-practice-settings.md (Decisions: First sign-in)",
+    "contracts/sync/v1/fixtures/profile_switch.json",
+    "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/sync/PracticeSettingsReconciliation.kt:29-59",
+    "awrad-ios/awrad/awradTests/PracticeSettingsSyncTests.swift:13-54"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "event",
+      "choice",
+      "local",
+      "account",
+      "existing_profile"
+    ],
+    "properties": {
+      "event": {
+        "enum": [
+          "first_sign_in",
+          "existing_profile"
+        ],
+        "description": "first_sign_in: the anonymous profile becomes the account's. existing_profile: the account already has a profile on the phone."
+      },
+      "choice": {
+        "enum": [
+          "add",
+          "erase",
+          "none"
+        ],
+        "description": "The answer to Add to my account / Erase; none when the profile was empty and nothing was asked."
+      },
+      "local": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "document",
+          "chosen"
+        ],
+        "properties": {
+          "document": {
+            "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document"
+          },
+          "chosen": {
+            "type": "boolean"
+          }
+        }
+      },
+      "account": {
+        "description": "The account's practice_policy in the changes feed (after=0), or null when it has none.",
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "version",
+              "document"
+            ],
+            "properties": {
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "document": {
+                "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document"
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "existing_profile": {
+        "description": "The account profile already on the phone (existing_profile only).",
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "document",
+              "known_version"
+            ],
+            "properties": {
+              "document": {
+                "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document"
+              },
+              "known_version": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "document",
+      "known_version",
+      "queued"
+    ],
+    "properties": {
+      "document": {
+        "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document"
+      },
+      "known_version": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "queued": {
+        "description": "The practice_policy put queued, or null.",
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "base_version",
+              "document"
+            ],
+            "properties": {
+              "base_version": {
+                "const": 0
+              },
+              "document": {
+                "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document"
+              }
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "account_has_policy_add",
+      "description": "Add to my account, and the account has a policy: the phone takes it.",
+      "given": {
+        "event": "first_sign_in",
+        "choice": "add",
+        "local": {
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          },
+          "chosen": true
+        },
+        "account": {
+          "version": 3,
+          "document": {
+            "day_reset": "midnight",
+            "calculation_method": "muslim_world_league",
+            "madhab": "shafi",
+            "week_start": "sunday",
+            "hijri_corrections": []
+          }
+        },
+        "existing_profile": null
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "muslim_world_league",
+          "madhab": "shafi",
+          "week_start": "sunday",
+          "hijri_corrections": []
+        },
+        "known_version": 3,
+        "queued": null
+      }
+    },
+    {
+      "id": "account_has_policy_erase",
+      "description": "Erase: the same.",
+      "given": {
+        "event": "first_sign_in",
+        "choice": "erase",
+        "local": {
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          },
+          "chosen": true
+        },
+        "account": {
+          "version": 3,
+          "document": {
+            "day_reset": "midnight",
+            "calculation_method": "muslim_world_league",
+            "madhab": "shafi",
+            "week_start": "sunday",
+            "hijri_corrections": []
+          }
+        },
+        "existing_profile": null
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "muslim_world_league",
+          "madhab": "shafi",
+          "week_start": "sunday",
+          "hijri_corrections": []
+        },
+        "known_version": 3,
+        "queued": null
+      }
+    },
+    {
+      "id": "account_has_default_policy",
+      "description": "An account whose saved policy equals the defaults still has one: it wins.",
+      "given": {
+        "event": "first_sign_in",
+        "choice": "add",
+        "local": {
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          },
+          "chosen": true
+        },
+        "account": {
+          "version": 1,
+          "document": {
+            "day_reset": "midnight",
+            "calculation_method": "karachi",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": []
+          }
+        },
+        "existing_profile": null
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "known_version": 1,
+        "queued": null
+      }
+    },
+    {
+      "id": "account_unset_chosen_add",
+      "description": "No policy on the account, and the user chose this phone's: it's queued as the account's first policy.",
+      "given": {
+        "event": "first_sign_in",
+        "choice": "add",
+        "local": {
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          },
+          "chosen": true
+        },
+        "account": null,
+        "existing_profile": null
+      },
+      "expect": {
+        "document": {
+          "day_reset": "maghrib",
+          "calculation_method": "dubai",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": -1
+            }
+          ]
+        },
+        "known_version": 0,
+        "queued": {
+          "base_version": 0,
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "account_unset_chosen_erase",
+      "description": "Erase removes data, never chosen settings: the same.",
+      "given": {
+        "event": "first_sign_in",
+        "choice": "erase",
+        "local": {
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          },
+          "chosen": true
+        },
+        "account": null,
+        "existing_profile": null
+      },
+      "expect": {
+        "document": {
+          "day_reset": "maghrib",
+          "calculation_method": "dubai",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": -1
+            }
+          ]
+        },
+        "known_version": 0,
+        "queued": {
+          "base_version": 0,
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "account_unset_chosen_empty_profile",
+      "description": "An empty anonymous profile is adopted without asking; its chosen settings still seed the account. Settings alone don't make the prompt appear.",
+      "given": {
+        "event": "first_sign_in",
+        "choice": "none",
+        "local": {
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          },
+          "chosen": true
+        },
+        "account": null,
+        "existing_profile": null
+      },
+      "expect": {
+        "document": {
+          "day_reset": "maghrib",
+          "calculation_method": "dubai",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": -1
+            }
+          ]
+        },
+        "known_version": 0,
+        "queued": {
+          "base_version": 0,
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "account_unset_untouched",
+      "description": "Untouched defaults are never uploaded: the account stays unset.",
+      "given": {
+        "event": "first_sign_in",
+        "choice": "add",
+        "local": {
+          "document": {
+            "day_reset": "midnight",
+            "calculation_method": "karachi",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": []
+          },
+          "chosen": false
+        },
+        "account": null,
+        "existing_profile": null
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "known_version": 0,
+        "queued": null
+      }
+    },
+    {
+      "id": "account_unset_chosen_defaults",
+      "description": "The user changed a setting and changed it back: that's still a choice, and it's queued.",
+      "given": {
+        "event": "first_sign_in",
+        "choice": "add",
+        "local": {
+          "document": {
+            "day_reset": "midnight",
+            "calculation_method": "karachi",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": []
+          },
+          "chosen": true
+        },
+        "account": null,
+        "existing_profile": null
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "known_version": 0,
+        "queued": {
+          "base_version": 0,
+          "document": {
+            "day_reset": "midnight",
+            "calculation_method": "karachi",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": []
+          }
+        }
+      }
+    },
+    {
+      "id": "into_existing_profile",
+      "description": "The account already has a profile on this phone: it keeps its own policy, and the anonymous one is discarded.",
+      "given": {
+        "event": "existing_profile",
+        "choice": "add",
+        "local": {
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          },
+          "chosen": true
+        },
+        "account": {
+          "version": 3,
+          "document": {
+            "day_reset": "midnight",
+            "calculation_method": "muslim_world_league",
+            "madhab": "shafi",
+            "week_start": "sunday",
+            "hijri_corrections": []
+          }
+        },
+        "existing_profile": {
+          "document": {
+            "day_reset": "midnight",
+            "calculation_method": "karachi",
+            "madhab": "shafi",
+            "week_start": "saturday",
+            "hijri_corrections": []
+          },
+          "known_version": 2
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "saturday",
+          "hijri_corrections": []
+        },
+        "known_version": 2,
+        "queued": null
+      }
+    },
+    {
+      "id": "into_existing_profile_erase",
+      "description": "Erase: the same.",
+      "given": {
+        "event": "existing_profile",
+        "choice": "erase",
+        "local": {
+          "document": {
+            "day_reset": "maghrib",
+            "calculation_method": "dubai",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": [
+              {
+                "year": 1448,
+                "month": 5,
+                "offset_days": -1
+              }
+            ]
+          },
+          "chosen": true
+        },
+        "account": null,
+        "existing_profile": {
+          "document": {
+            "day_reset": "midnight",
+            "calculation_method": "karachi",
+            "madhab": "shafi",
+            "week_start": "monday",
+            "hijri_corrections": []
+          },
+          "known_version": 0
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "known_version": 0,
+        "queued": null
+      }
+    }
+  ]
+}

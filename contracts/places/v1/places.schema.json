@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:awrad:places:1",
+  "title": "Awrad places v1: the bundled city list",
+  "description": "cities.json, generated from GeoNames by tools/build-cities.mjs, and what city search returns. See README.md.",
+  "$defs": {
+    "city_id": {
+      "description": "The GeoNames ID. Stable across rebuilds of the list.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "city": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "country", "region", "latitude", "longitude", "population", "aliases"],
+      "properties": {
+        "id": { "$ref": "#/$defs/city_id" },
+        "name": { "description": "The display name in every app language: GeoNames' ASCII name.", "type": "string", "minLength": 1 },
+        "country": { "description": "ISO 3166-1 alpha-2. Apps show the country's name from the platform's locale data.", "type": "string", "pattern": "^[A-Z]{2}$" },
+        "region": { "description": "First-level region (state, province, emirate), GeoNames' ASCII name; null when unknown.", "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "null" }] },
+        "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+        "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
+        "population": { "type": "integer", "minimum": 0 },
+        "aliases": {
+          "description": "Other names search matches but never shows: Arabic- and Malayalam-script names, capitalised Latin names (Calicut, Trivandrum) and the name with its diacritics. Sorted, no repeats.",
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "city_list": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "source", "license", "attribution", "thresholds", "cities"],
+      "properties": {
+        "format": { "const": "awrad-cities/1" },
+        "source": { "type": "string" },
+        "license": { "const": "CC BY 4.0" },
+        "attribution": { "description": "Shown in each app's About (the licence requires it).", "type": "string" },
+        "thresholds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["default", "regions"],
+          "properties": {
+            "default": { "type": "integer", "minimum": 0 },
+            "regions": {
+              "description": "Lower minimum populations by country (SA) or country.admin1 (IN.13, Kerala).",
+              "type": "object",
+              "propertyNames": { "pattern": "^[A-Z]{2}(\\.[0-9A-Z]+)?$" },
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "cities": { "type": "array", "items": { "$ref": "#/$defs/city" } }
+      }
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
   "name": "awrad-contracts",
   "private": true,
-  "description": "Tooling for the shared Awrad contracts: OpenAPI lint/bundle and fixture-format checks.",
+  "description": "Tooling for the shared Awrad contracts: OpenAPI lint/bundle, fixture-format checks, and the city-list build.",
   "type": "module",
   "engines": {
     "node": ">=24"
@@ -13,17 +13,20 @@
     "check:rules": "node api/tests/check-rules.mjs",
     "check:fixtures": "node tools/check-fixtures.mjs",
     "check:fixture-format": "node tools/tests/check-fixture-format.mjs",
-    "test": "npm run check:bundle && npm run lint:api && npm run check:rules && npm run check:fixtures && npm run check:catalogs && npm run check:dhikr-catalog && npm run check:sync && npm run check:audio && npm run check:fixture-format",
+    "test": "npm run check:bundle && npm run lint:api && npm run check:rules && npm run check:fixtures && npm run check:catalogs && npm run check:dhikr-catalog && npm run check:sync && npm run check:audio && npm run check:practice-settings && npm run check:fixture-format",
     "check:catalogs": "node tools/check-catalogs.mjs",
     "check:dhikr-catalog": "node tools/check-dhikr-catalog.mjs",
     "check:sync": "node tools/check-sync-contract.mjs",
-    "check:audio": "node tools/check-audio-contract.mjs"
+    "check:audio": "node tools/check-audio-contract.mjs",
+    "check:practice-settings": "node tools/check-practice-settings.mjs",
+    "build:cities": "node tools/build-cities.mjs"
   },
   "devDependencies": {
     "@redocly/cli": "2.64.1",
     "@stoplight/spectral-cli": "6.17.0",
     "@stoplight/spectral-functions": "1.11.0",
     "@stoplight/spectral-rulesets": "1.23.0",
+    "adhan": "4.4.6",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1"
   }

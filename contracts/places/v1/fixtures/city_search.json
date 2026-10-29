@@ -1,0 +1,301 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "city_search",
+  "description": "Searching the bundled city list (places/v1/cities.json). Names and query compare by search key (README.md): NFKD, Latin accents, Arabic harakat and tatweel removed, Arabic alef forms, alef maksura and ta marbuta folded, apostrophes removed, lowercased, other punctuation as spaces. A name matches exactly, by its start, or by a later word's start; aliases match the same way but rank just below the name. Ranked by match, then population (larger first), then ID.",
+  "references": [
+    "docs/slices/03d-practice-settings.md (Design: The city list)",
+    "awrad_server/lib/awrad_server/location_search.ex:9"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "query",
+      "limit"
+    ],
+    "properties": {
+      "query": {
+        "type": "string"
+      },
+      "limit": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 50
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "city_ids"
+    ],
+    "properties": {
+      "city_ids": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:places:1#/$defs/city_id"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "prefix",
+      "description": "A name's start finds it; larger cities first.",
+      "given": {
+        "query": "koz",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          1265873,
+          306112,
+          1519922,
+          1500973,
+          527191
+        ]
+      }
+    },
+    {
+      "id": "full_name",
+      "description": "The whole name.",
+      "given": {
+        "query": "Kozhikode",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          1265873
+        ]
+      }
+    },
+    {
+      "id": "case_insensitive",
+      "description": "Case doesn't matter.",
+      "given": {
+        "query": "KOZHIKODE",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          1265873
+        ]
+      }
+    },
+    {
+      "id": "english_alias",
+      "description": "An older English name is an alias.",
+      "given": {
+        "query": "calicut",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          1265873
+        ]
+      }
+    },
+    {
+      "id": "malayalam_name",
+      "description": "A Malayalam-script name.",
+      "given": {
+        "query": "കോഴിക്കോട്",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          1265873
+        ]
+      }
+    },
+    {
+      "id": "arabic_name",
+      "description": "An Arabic-script name.",
+      "given": {
+        "query": "دبي",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          292223,
+          7289825
+        ]
+      }
+    },
+    {
+      "id": "arabic_hamza_and_ta_marbuta",
+      "description": "Alef forms and ta marbuta are folded, so مكه finds مكة.",
+      "given": {
+        "query": "مكه",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          104515
+        ]
+      }
+    },
+    {
+      "id": "arabic_with_harakat",
+      "description": "Harakat are ignored.",
+      "given": {
+        "query": "الرِّيَاض",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          108410
+        ]
+      }
+    },
+    {
+      "id": "diacritics_ignored",
+      "description": "Accents are ignored both ways.",
+      "given": {
+        "query": "São Paulo",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          3448439,
+          3471374
+        ]
+      }
+    },
+    {
+      "id": "kerala_small_town",
+      "description": "Kerala keeps towns of 15,000 people or more.",
+      "given": {
+        "query": "kondotty",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          1266200
+        ]
+      }
+    },
+    {
+      "id": "gulf_small_town",
+      "description": "So do the Gulf states.",
+      "given": {
+        "query": "hatta",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          292862
+        ]
+      }
+    },
+    {
+      "id": "word_prefix",
+      "description": "A later word's start matches too, after names that start with the query.",
+      "given": {
+        "query": "york",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          2633352,
+          4229476,
+          5128581,
+          5106292
+        ]
+      }
+    },
+    {
+      "id": "name_before_alias",
+      "description": "A match on the name ranks above the same match on an alias.",
+      "given": {
+        "query": "x",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          1790630,
+          1790645,
+          1788852,
+          1788534,
+          1790587
+        ]
+      }
+    },
+    {
+      "id": "punctuation_ignored",
+      "description": "Punctuation and apostrophes are ignored.",
+      "given": {
+        "query": "st johns",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          6324733,
+          3576022
+        ]
+      }
+    },
+    {
+      "id": "two_words",
+      "description": "A query of two words matches a name's start.",
+      "given": {
+        "query": "abu dh",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": [
+          292968
+        ]
+      }
+    },
+    {
+      "id": "limit",
+      "description": "At most limit results.",
+      "given": {
+        "query": "san",
+        "limit": 3
+      },
+      "expect": {
+        "city_ids": [
+          2451778,
+          3871336,
+          3492908
+        ]
+      }
+    },
+    {
+      "id": "no_match",
+      "description": "Nothing matches.",
+      "given": {
+        "query": "zzzzq",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": []
+      }
+    },
+    {
+      "id": "empty_query",
+      "description": "An empty query finds nothing.",
+      "given": {
+        "query": "",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": []
+      }
+    },
+    {
+      "id": "blank_query",
+      "description": "So does one with only spaces and punctuation.",
+      "given": {
+        "query": "  - ",
+        "limit": 5
+      },
+      "expect": {
+        "city_ids": []
+      }
+    }
+  ]
+}

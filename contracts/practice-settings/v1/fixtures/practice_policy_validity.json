@@ -1,0 +1,778 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "practice_policy_validity",
+  "description": "Which practice_policy documents are valid, with {field, code} errors sorted by field, then code. Pointers are into the document (the server prefixes /document in receipts).",
+  "references": [
+    "CONTEXT.md#practice-settings-language",
+    "docs/slices/03d-practice-settings.md",
+    "contracts/hijri-calendar/v1/fixtures/hijri_corrections_validity.json",
+    "awrad_server/lib/awrad_server/practice_settings/account_practice_policy.ex:7-44"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "document"
+    ],
+    "properties": {
+      "document": {
+        "type": "object",
+        "description": "Any JSON object; it may be invalid."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "valid",
+      "errors"
+    ],
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:sync:1#/$defs/field_error"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "default_policy",
+      "description": "The default policy is valid.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "every_member_set",
+      "description": "Maghrib reset, a method that moves Maghrib, Hanafi, Saturday and one correction.",
+      "given": {
+        "document": {
+          "day_reset": "maghrib",
+          "calculation_method": "dubai",
+          "madhab": "hanafi",
+          "week_start": "saturday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "week_start_sunday",
+      "description": "Sunday is a week start.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "sunday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "moonsighting_committee",
+      "description": "Methods use adhan's names.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "moonsighting_committee",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "corrections_in_steps",
+      "description": "Two days later, one day per month: each month stays 29 or 30 days.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1446,
+              "month": 12,
+              "offset_days": 1
+            },
+            {
+              "year": 1447,
+              "month": 1,
+              "offset_days": 2
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "corrections_any_order",
+      "description": "The server accepts corrections in any order; clients write them sorted.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            },
+            {
+              "year": 1447,
+              "month": 3,
+              "offset_days": 1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "empty_document",
+      "description": "Every member is required.",
+      "given": {
+        "document": {}
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/calculation_method",
+            "code": "required"
+          },
+          {
+            "field": "/day_reset",
+            "code": "required"
+          },
+          {
+            "field": "/hijri_corrections",
+            "code": "required"
+          },
+          {
+            "field": "/madhab",
+            "code": "required"
+          },
+          {
+            "field": "/week_start",
+            "code": "required"
+          }
+        ]
+      }
+    },
+    {
+      "id": "location_not_allowed",
+      "description": "Location is device context and never part of the policy.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [],
+          "location": {
+            "latitude": 11.2588,
+            "longitude": 75.7804
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/location",
+            "code": "not_allowed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "timezone_not_allowed",
+      "description": "So is the time zone.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [],
+          "timezone": "Asia/Kolkata"
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/timezone",
+            "code": "not_allowed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "day_reset_unknown",
+      "description": "Only midnight and maghrib.",
+      "given": {
+        "document": {
+          "day_reset": "sunset",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/day_reset",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "day_reset_uppercase",
+      "description": "Enum values are lowercase snake_case.",
+      "given": {
+        "document": {
+          "day_reset": "MAGHRIB",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/day_reset",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "day_reset_null",
+      "description": "null isn't a value.",
+      "given": {
+        "document": {
+          "day_reset": null,
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/day_reset",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "method_frozen_name",
+      "description": "The frozen apps' short names aren't accepted.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "mwl",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/calculation_method",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "method_not_offered",
+      "description": "adhan's Tehran and Turkey methods aren't offered.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "tehran",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/calculation_method",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "madhab_unknown",
+      "description": "Only shafi and hanafi.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "maliki",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/madhab",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "week_start_friday",
+      "description": "Only Saturday, Sunday or Monday.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "friday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/week_start",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "corrections_null",
+      "description": "hijri_corrections is a list.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": null
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "corrections_object",
+      "description": "A single correction must still be in a list.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": {
+            "year": 1447,
+            "month": 9,
+            "offset_days": 1
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "correction_offset_3",
+      "description": "At most 2 days from the table.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            },
+            {
+              "year": 1448,
+              "month": 1,
+              "offset_days": 3
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections/1",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "correction_year_before_table",
+      "description": "Inside 1400-1500.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1399,
+              "month": 12,
+              "offset_days": 0
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections/0",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "correction_month_13",
+      "description": "Months 1-12.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 13,
+              "offset_days": 0
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections/0",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "correction_extra_member",
+      "description": "A correction has exactly year, month and offset_days.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1,
+              "note": "Kerala"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections/0",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "correction_offset_string",
+      "description": "offset_days is an integer.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": "1"
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections/0",
+            "code": "invalid"
+          }
+        ]
+      }
+    },
+    {
+      "id": "correction_duplicate_month",
+      "description": "One correction per month: the later one is the error.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            },
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": -1
+            },
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 0
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections/2",
+            "code": "duplicate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "correction_month_31_days",
+      "description": "1447/10 one day later makes 1447/9 31 days long.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 10,
+              "offset_days": 1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections",
+            "code": "range"
+          }
+        ]
+      }
+    },
+    {
+      "id": "correction_two_days_at_once",
+      "description": "Two days in one month makes the month before 31 or 32 days.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 1,
+              "offset_days": 2
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections",
+            "code": "range"
+          }
+        ]
+      }
+    },
+    {
+      "id": "month_length_checked_last",
+      "description": "With a duplicate, month lengths aren't checked.",
+      "given": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 10,
+              "offset_days": 1
+            },
+            {
+              "year": 1447,
+              "month": 10,
+              "offset_days": 1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/hijri_corrections/1",
+            "code": "duplicate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "several_errors_sorted",
+      "description": "Errors are sorted by field, then code.",
+      "given": {
+        "document": {
+          "week_start": "friday",
+          "madhab": "maliki",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 5
+            }
+          ],
+          "extra": true
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          {
+            "field": "/calculation_method",
+            "code": "required"
+          },
+          {
+            "field": "/day_reset",
+            "code": "required"
+          },
+          {
+            "field": "/extra",
+            "code": "not_allowed"
+          },
+          {
+            "field": "/hijri_corrections/0",
+            "code": "invalid"
+          },
+          {
+            "field": "/madhab",
+            "code": "invalid"
+          },
+          {
+            "field": "/week_start",
+            "code": "invalid"
+          }
+        ]
+      }
+    }
+  ]
+}

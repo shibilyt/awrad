@@ -37,6 +37,8 @@ The shared source of truth for all four projects. Versioned folders, each with a
 | `progress-sync/v1/` | Sync protocol schema, protocol examples, count-reducer scenarios |
 | `behavior-model/v1/` | Language-neutral behaviour cases that every platform's domain tests must pass |
 | `wird-model/v1/` | Canonical wird model, manifest and fixtures |
+| `practice-settings/v1/` | The account practice policy and device location (slice 3d): schema, policy validity, merge and first-sign-in rules, Maghrib times |
+| `places/v1/` | The bundled city list from GeoNames (`cities.json`, built by `tools/build-cities.mjs`) and its search rule |
 | `api/` | OpenAPI 3.1 spec (`openapi.yaml` plus `paths/`, bundled into `openapi.bundled.json`), the [`STYLE.md`](contracts/api/STYLE.md) rules and their Spectral ruleset. See [`api/README.md`](contracts/api/README.md) |
 | `fixture.schema.json`, `tools/` | The `awrad-fixture/1` behaviour-fixture format and its checker ([`FIXTURES.md`](contracts/FIXTURES.md)) |
 

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:awrad:practice-settings:1",
+  "title": "Awrad practice settings v1",
+  "description": "The account practice policy (synced as the practice_policy entity of the change queue) and the device context (never leaves the device). See README.md and the root ADR on practice settings (slice 3d).",
+  "$defs": {
+    "day_reset": {
+      "description": "When the effective practice day changes: at local midnight, or at Maghrib (falling back to midnight without a known Maghrib). CONTEXT.md, Effective practice day.",
+      "enum": ["midnight", "maghrib"]
+    },
+    "calculation_method": {
+      "description": "Prayer-time calculation method, by the adhan library's names. Only dubai and moonsighting_committee move Maghrib (3 minutes after sunset); the others only change Fajr, Isha or Dhuhr.",
+      "enum": [
+        "karachi",
+        "north_america",
+        "muslim_world_league",
+        "egyptian",
+        "umm_al_qura",
+        "moonsighting_committee",
+        "dubai",
+        "kuwait",
+        "qatar",
+        "singapore"
+      ]
+    },
+    "madhab": {
+      "description": "The Asr shadow rule: shafi (Shafi'i, Maliki, Hanbali: shadow length 1) or hanafi (2).",
+      "enum": ["shafi", "hanafi"]
+    },
+    "practice_policy_document": {
+      "description": "The account practice policy, one per account: the practice_policy entity, whose entity_id is the account ID. Every member is always present. hijri_corrections is a valid set (urn:awrad:hijri-calendar:1#/$defs/corrections, fixtures/hijri_corrections_validity.json in hijri-calendar/v1): clients write it sorted by year, then month; the server accepts any order and stores it as sent. Rules the schema can't express (duplicate months, month lengths): fixtures/practice_policy_validity.json.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["day_reset", "calculation_method", "madhab", "week_start", "hijri_corrections"],
+      "properties": {
+        "day_reset": { "$ref": "#/$defs/day_reset" },
+        "calculation_method": { "$ref": "#/$defs/calculation_method" },
+        "madhab": { "$ref": "#/$defs/madhab" },
+        "week_start": { "$ref": "urn:awrad:goal-model:1#/$defs/week_start" },
+        "hijri_corrections": {
+          "type": "array",
+          "items": { "$ref": "urn:awrad:hijri-calendar:1#/$defs/correction" }
+        }
+      }
+    },
+    "default_policy": {
+      "description": "The policy of a new local profile, and the base a phone or the web merges against when it knows no server copy (the frozen defaults).",
+      "const": {
+        "day_reset": "midnight",
+        "calculation_method": "karachi",
+        "madhab": "shafi",
+        "week_start": "monday",
+        "hijri_corrections": []
+      }
+    },
+    "coordinates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["latitude", "longitude"],
+      "properties": {
+        "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+        "longitude": { "type": "number", "minimum": -180, "maximum": 180 }
+      }
+    },
+    "location": {
+      "description": "Where this device is, for Maghrib. Kept only on the device (phones: per installation, shared by its profiles; web: per account in that browser) and never sent to the server. name is what Settings shows: the city's name for a city, the place's name from the platform search, or null for GPS. city_id is the bundled city (urn:awrad:places:1) when source is city, else null.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["latitude", "longitude", "name", "source", "city_id"],
+      "properties": {
+        "latitude": { "type": "number", "minimum": -90, "maximum": 90 },
+        "longitude": { "type": "number", "minimum": -180, "maximum": 180 },
+        "name": { "oneOf": [{ "type": "string", "minLength": 1, "maxLength": 160 }, { "type": "null" }] },
+        "source": { "enum": ["gps", "city", "search"] },
+        "city_id": { "oneOf": [{ "type": "integer", "minimum": 1 }, { "type": "null" }] }
+      }
+    }
+  }
+}
