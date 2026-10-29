@@ -75,16 +75,18 @@ public protocol LocationProvider: Sendable {
 /// A place from the platform's own search.
 public struct PlaceResult: Hashable, Sendable, Identifiable {
     public let name: String
-    /// The region and country, for telling places apart; `nil` when unknown.
-    public let detail: String?
+    /// The region and country, as the service names them, for telling places apart.
+    public let region: String?
+    public let country: String?
     public let latitude: Double
     public let longitude: Double
 
     public var id: String { "\(name)|\(latitude)|\(longitude)" }
 
-    public init(name: String, detail: String?, latitude: Double, longitude: Double) {
+    public init(name: String, region: String?, country: String?, latitude: Double, longitude: Double) {
         self.name = name
-        self.detail = detail
+        self.region = region
+        self.country = country
         self.latitude = latitude
         self.longitude = longitude
     }

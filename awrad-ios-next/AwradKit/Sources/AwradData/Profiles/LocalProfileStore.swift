@@ -30,6 +30,7 @@ public actor LocalProfileStore {
     var audioUsage: AudioUsage?
     var libraryObservers: [Int: AsyncStream<PersonalContent>.Continuation] = [:]
     var profileObservers: [Int: AsyncStream<ProfilesState>.Continuation] = [:]
+    var practiceObservers: [Int: AsyncStream<PracticeSettingsState>.Continuation] = [:]
     var nextObserver = 0
     private var schedulerStorage: SyncScheduler?
     /// The sync an event started without waiting for it (`settle()` waits).
@@ -112,6 +113,8 @@ public actor LocalProfileStore {
         let outcome = ProfileSwitch.apply(event, choice: choice, to: registry, newProfileID: .random(), now: now())
         if outcome.prompt != nil, choice == nil || choice == .cancel { return }
         let previousActive = registry.activeProfileID
+        // The anonymous policy, read before Erase can remove its profile (slice 3d).
+        let firstSignInPolicy = await policyForFirstSignIn(event)
         registry = outcome.registry
         if let merge = outcome.merge { await self.merge(merge) }
         if let kept = outcome.discardUnsent { await discardUnsent(kept, isActive: kept == previousActive) }
@@ -127,6 +130,7 @@ public actor LocalProfileStore {
         if outcome.queueAll == registry.activeProfileID {
             try? await database.queueAll()
         }
+        if let firstSignInPolicy { try? await database.beginFirstSignIn(with: firstSignInPolicy) }
         if !registry.activeProfileMaySync {
             await scheduler.stop()
             syncStatus = .notSyncing
@@ -203,7 +207,11 @@ public actor LocalProfileStore {
         syncStatus = .syncing
         publish()
         do {
-            let uploadsWait = try await syncWithAudio(server: server, account: accountID)
+            var uploadsWait = try await syncWithAudio(server: server, account: accountID)
+            // A first sign-in whose policy seeds the account sends it straight away.
+            if (try? await database.finishFirstSignIn(account: accountID)) == true {
+                uploadsWait = try await syncWithAudio(server: server, account: accountID) || uploadsWait
+            }
             syncStatus = .upToDate(lastSynced: now())
             return await finished(uploadsWait ? .failed(retryAfter: nil) : .synced)
         } catch .accountMismatch {

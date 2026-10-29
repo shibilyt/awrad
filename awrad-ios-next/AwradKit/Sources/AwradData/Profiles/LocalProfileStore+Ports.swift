@@ -74,6 +74,7 @@ extension LocalProfileStore: LocalProfiles {
     /// Sends both the profiles state and the active profile's content.
     func publishAll() async {
         publish()
+        await publishPractice()
         guard !libraryObservers.isEmpty else { return }
         let content = await database.content()
         for continuation in libraryObservers.values { continuation.yield(content) }
