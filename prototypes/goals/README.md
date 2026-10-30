@@ -38,6 +38,14 @@ Add `?reset` to the URL to drop the saved state (goals, settings and variants pe
 
 From the browser console, `proto` exposes the state and helpers: `proto.count(99)`, `proto.set({ theme: "dark" })`, `proto.variant("ringStyle", "green")`, `proto.jump("create")`.
 
+## Decisions 37 to 40 and number grouping (v5)
+
+- Counter hint: "Tap anywhere to count" (the circle is at the bottom now); "Tap the circle to count" in circle-only mode. Numbers are grouped by locale everywhere ("12,667"), with Western digits in Arabic and Malayalam as before. The "Big numbers" variant is gone.
+- Adjust count (38): ⋮ → "Adjust count", or a 500 ms long press on the counter number (it doesn't count a tap). A sheet with a number field, − / +, Today / Yesterday and a save button; no going below 0 (inline reason), additions stop at the cap, shared goals are named ("Also changes ..."), and additions past the target fill the make-up day first. Code: `adjustModel`, `openAdjust`, `saveAdjust`, the long press in `boot`.
+- Undo and Reset (39): Undo removes only this counter session's own taps (`tapLog`), with no warning, and is disabled in ⋮ when there are none. "Reset today" always confirms and names the other goals it changes with the change (`openResetDialog`).
+- Deleting a custom dhikr (37): Library → "Your dhikrs" → trash button → warning with the number of goals that end → goals move to History as Ended and keep their name and Arabic text from `dhikr_snapshot` (`openDhikrDeleteDialog`, `deleteDhikr`, `ensureSnapshots`). Deleted dhikrs persist in the saved state; "Reset goals to the seed" restores them.
+- Empty state (40): no active goals shows the Istighfar suggestion on Home and in My Goals (`suggestionHTML`). Start this goal saves at once; Choose another goal opens a blank sentence. Preset: Data → "No goals". The virtue line is a placeholder marked `[needs source]` in the Lab notes.
+
 ## Decisions 34 to 36 (v4)
 
 - No "next goal" card (34): reaching today's target plays an alert only (strong haptic, chime, ring pulse, a banner that fades after about 2.5 s). Lab → Controls has a Sound toggle (on by default) and an event log.
@@ -57,6 +65,7 @@ Presets (Lab → Data, or `proto.preset(name)`):
 | `cap` | Cap of 110 on Fathimiyya, counter at 105 |
 | `totalStreak` | Istighfar (no end date) with a streak at 1,000 a day |
 | `tracker` | A "whenever I can" tracker on a streak, in the Tracking section |
+| `noGoals` | No goals at all: the Istighfar suggestion on Home and My Goals |
 
 Console: `proto.open(dhikr)`, `proto.tap(n)`, `proto.stats()`, `proto.edit(goalId)`.
 
