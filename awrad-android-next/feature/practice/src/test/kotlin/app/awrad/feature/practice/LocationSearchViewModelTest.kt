@@ -40,17 +40,18 @@ class LocationSearchViewModelTest {
 
     @Test
     fun `the platform search shows under the bundled results after a pause, and only when it finds some`() {
-        places.result = PlaceSearchResult.Found(listOf(FoundPlace("Ponnani Beach, Kerala, India", 10.77, 75.92)))
+        // Arikkulam isn't in the bundled list, so the platform's result is the only one.
+        places.result = PlaceSearchResult.Found(listOf(FoundPlace("Arikkulam, Kerala, India", 11.49, 75.73)))
         val viewModel = viewModel()
-        viewModel.onAction(LocationSearchAction.QueryChanged("Ponnani"))
+        viewModel.onAction(LocationSearchAction.QueryChanged("Arikkulam"))
         assertTrue(viewModel.state.value.places.isEmpty())
 
         mainDispatcher.dispatcher.scheduler.advanceTimeBy(600)
-        assertEquals(listOf("Ponnani"), places.queries)
-        assertEquals("Ponnani Beach, Kerala, India", viewModel.state.value.places.single().name)
+        assertEquals(listOf("Arikkulam"), places.queries)
+        assertEquals("Arikkulam, Kerala, India", viewModel.state.value.places.single().name)
 
         places.result = PlaceSearchResult.Unavailable
-        viewModel.onAction(LocationSearchAction.QueryChanged("Ponnanix"))
+        viewModel.onAction(LocationSearchAction.QueryChanged("Arikkulamx"))
         mainDispatcher.dispatcher.scheduler.advanceTimeBy(600)
         assertTrue(viewModel.state.value.places.isEmpty())
     }
