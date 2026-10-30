@@ -28,13 +28,13 @@ const VARIANTS = {
     label: "Create flow",
     note: "Three ways to create the same goal. A: one question per screen. B: an editable sentence in one sheet. C: templates, then a short form. The Controls tab has Try A / B / C buttons.",
     options: { wizard: "A. Wizard", sentence: "B. Sentence", templates: "C. Templates" },
-    value: "wizard",
+    value: "sentence",
   },
   ringStyle: {
     label: "Counter ring colour",
-    note: "Design: amber/gold arc (not a token). Green uses the `progress` token. Threshold switches gold → green once the minimum is reached.",
-    options: { gold: "Gold (design)", green: "Green (progress token)", threshold: "Gold → green at minimum" },
-    value: "gold",
+    note: "Decision 14: the ring is the green `progress` token (lighter below the minimum, stronger from the minimum to the target). The old amber/gold arc is not a token; it stays here for comparison.",
+    options: { green: "Green (progress token, decision 14)", gold: "Gold (old design, not a token)" },
+    value: "green",
   },
   overflowDisplay: {
     label: "Past the target",
@@ -43,10 +43,10 @@ const VARIANTS = {
     value: "lap",
   },
   minimumMarker: {
-    label: "Minimum marker on the ring",
-    note: "Not in the design. A small dot on the track where the minimum sits.",
-    options: { off: "Off (design)", dot: "Dot" },
-    value: "off",
+    label: "Minimum tick on the ring",
+    note: "Decision 14: a small tick on the ring where the minimum sits. It lights when the minimum is reached.",
+    options: { tick: "Tick (decision 14)", off: "Off" },
+    value: "tick",
   },
   counterChip: {
     label: "Chip under the counter",
@@ -62,9 +62,9 @@ const VARIANTS = {
   },
   tapArea: {
     label: "Counter tap area",
-    note: "The design says \"Tap the circle to count\". Whole screen = the lower half of the page counts.",
-    options: { circle: "Circle (design)", screen: "Whole lower area" },
-    value: "circle",
+    note: "Decision 16: any tap in the lower half (below the Arabic card and the buttons) counts; the circle is the visual. May revisit: circle only.",
+    options: { screen: "Lower half (decision 16)", circle: "Circle only" },
+    value: "screen",
   },
   goalRowLayout: {
     label: "My Goals card layout",
@@ -398,12 +398,16 @@ const weekdayName = (wd, style = "long") => new Intl.DateTimeFormat(LOCALE(), { 
  * (the fixtures' `counts`), and counts: "shared" | "dedicated" (whether counts are shared with
  * other goals on the same dhikr).
  */
-const activeEnd = (g) => {
+/* plannedEnd: the end the user set (end date or duration). activeEnd also stops at `g.ended`,
+   the last day of a goal that was ended by hand (decision 27) or replaced by a structural edit (23). */
+const plannedEnd = (g) => {
   const ap = g.active_period;
   const byDuration = ap.duration_days ? addDays(ap.start_date, ap.duration_days - 1) : null;
   if (ap.end_date && byDuration) return ap.end_date < byDuration ? ap.end_date : byDuration;
   return ap.end_date || byDuration;
 };
+const activeEnd = (g) => { const e = plannedEnd(g); return g.ended && (!e || g.ended < e) ? g.ended : e; };
+const excusedOn = (g, ds) => (g.excused || []).includes(ds);
 const inActive = (g, ds) => ds >= g.active_period.start_date && (!activeEnd(g) || ds <= activeEnd(g));
 const pausedOn = (g, ds) => (g.paused || []).some((p) => ds >= p.from && (p.to == null || ds <= p.to));
 function mdIn(m, d, s, e) {
@@ -431,10 +435,13 @@ function onSchedule(g, ds) {
     default: return false;
   }
 }
-const isDue = (g, ds) => inActive(g, ds) && !pausedOn(g, ds) && onSchedule(g, ds);
+const isDue = (g, ds) => inActive(g, ds) && !pausedOn(g, ds) && !excusedOn(g, ds) && onSchedule(g, ds);
 
 /* Count policy: the goal's, or each session's when it has sessions. */
-const policyOf = (g, session = null) => (session ? g.sessions.find((s) => s.id === session)?.count_policy : null) || (g.sessions.length ? g.sessions[0].count_policy : g.count_policy);
+/* Edits are dated versions (decision 23): g.versions holds the old settings with the last day they applied
+   (`until`), oldest first. snapAt(g, day) is what applied on that day, so a past day keeps its old target. */
+const snapAt = (g, ds) => (ds && (g.versions || []).find((x) => ds <= x.until)) || g;
+const policyOf = (g, session = null, ds = null) => { const S = snapAt(g, ds); return (session ? S.sessions.find((s) => s.id === session)?.count_policy : null) || (S.sessions.length ? S.sessions[0].count_policy : S.count_policy); };
 function displayPolicy(g) {
   if (!g.sessions.length) return g.count_policy;
   const sum = (k) => (g.sessions.every((s) => s.count_policy[k] != null) ? g.sessions.reduce((a, s) => a + s.count_policy[k], 0) : null);
@@ -466,15 +473,34 @@ function progressOf(g, ds, session) {
   const s = session === undefined ? (g.sessions.length ? undefined : null) : session;
   return countIn(g, from, ds, s);
 }
+/* Pace (decision 28): a total goal with an end date has a share per day = what's left ÷ the days left,
+   recalculated each day from the counts before that day. */
+function paceOf(g, ds) {
+  if (g.requirement.type !== "cumulative_total") return null;
+  const end = plannedEnd(g), target = policyOf(g).target;
+  if (!end || !target || ds > end) return null;
+  const done = countIn(g, g.active_period.start_date, addDays(ds, -1)), remaining = Math.max(0, target - done);
+  const days = Math.max(1, diffDays(ds, end) + 1);
+  return { share: Math.ceil(remaining / days), remaining, days, today: countOn(g, ds, null), done, total: target, end };
+}
+/* What a day must reach to keep the streak (decision 29 for total goals: the daily number, else today's share, else any count). */
+function dayThreshold(g, ds) {
+  const S = snapAt(g, ds);
+  if (g.requirement.type === "cumulative_total") { const pc = paceOf(g, ds); return S.count_policy.streak_amount || (pc ? pc.share : 1) || 1; }
+  return thresholdValue(S.count_policy);
+}
+/* The amount a list ring fills toward today, for total goals (null = the overall total). */
+function dailyAmount(g, ds) { const pc = paceOf(g, ds); return pc ? pc.share : g.count_policy.streak_amount || null; }
 function dayMet(g, ds) {
-  if (g.sessions.length) return g.sessions.every((s) => countOn(g, ds, s.id) >= thresholdValue(s.count_policy));
-  return countOn(g, ds, null) >= thresholdValue(g.count_policy);
+  const S = snapAt(g, ds);
+  if (S.sessions.length) return S.sessions.every((s) => countOn(g, ds, s.id) >= thresholdValue(s.count_policy));
+  return countOn(g, ds, null) >= dayThreshold(g, ds);
 }
 function streakOf(g, today) {
   const r = g.requirement;
   const running = !activeEnd(g) || today <= activeEnd(g);
   if (r.type === "period_total" || r.type === "days_per_period") {
-    let n = 0, ds = today;
+    let n = 0, ds = today, broken = false;
     for (let i = 0; i < 120; i++) {
       const [from, to] = periodWindow(r.period, ds);
       if (to < g.active_period.start_date) break;
@@ -484,21 +510,66 @@ function streakOf(g, today) {
           ? countIn(g, from, to, g.sessions.length ? undefined : null) >= policyOf(g).target
           : due.filter((d) => d <= today && dayMet(g, d)).length >= Math.min(r.days, due.length);
         const current = from <= today && today <= to;
-        if (met) n++; else if (!(current && running)) break;
+        if (met) n++; else if (!(current && running)) { broken = true; break; }
       }
       ds = addDays(from, -1);
     }
-    return { n, unit: r.period === "week" ? "week" : "month" };
+    return { n, unit: r.period === "week" ? "week" : "month", broken };
   }
-  let n = 0;
+  let n = 0, broken = false;
   for (let i = 0, ds = today; i < 1500 && ds >= g.active_period.start_date; i++, ds = addDays(ds, -1)) {
     if (!isDue(g, ds)) continue;
     if (dayMet(g, ds)) n++;
     else if (ds === today && running) continue;
-    else break;
+    else { broken = true; break; }
   }
-  return { n, unit: "day" };
+  return { n, unit: "day", broken };
 }
+/* Best streak: the longest run so far (days; for weekly and monthly goals, periods). */
+function bestStreakOf(g, today) {
+  const r = g.requirement;
+  let best = 0;
+  if (r.type === "period_total" || r.type === "days_per_period") {
+    const seen = new Set();
+    for (let ds = today, i = 0; i < 120 && ds >= g.active_period.start_date; ds = addDays(periodWindow(r.period, ds)[0], -1), i++) {
+      const to = periodWindow(r.period, ds)[1]; if (seen.has(to)) continue; seen.add(to);
+      best = Math.max(best, streakOf(g, to < today ? to : today).n);
+    }
+    return best;
+  }
+  let run = 0;
+  for (let ds = g.active_period.start_date; ds <= today; ds = addDays(ds, 1)) {
+    if (!isDue(g, ds)) continue;
+    if (dayMet(g, ds)) run++; else if (ds === today) continue; else run = 0;
+    best = Math.max(best, run);
+  }
+  return best;
+}
+/* Consistency (decision 19): met days of the last 30 due days (weekly and monthly goals: the last 12 periods). */
+function consistencyOf(g, today) {
+  const r = g.requirement;
+  if (r.type === "period_total" || r.type === "days_per_period") {
+    let met = 0, of = 0;
+    for (let ds = today, i = 0; i < 12 && ds >= g.active_period.start_date; i++) {
+      const [from, to] = periodWindow(r.period, ds), cur = from <= today && today <= to;
+      const due = []; for (let d = from; d <= to; d = addDays(d, 1)) if (isDue(g, d)) due.push(d);
+      if (due.length) {
+        const ok = r.type === "period_total" ? countIn(g, from, to, g.sessions.length ? undefined : null) >= policyOf(g).target : due.filter((d) => d <= today && dayMet(g, d)).length >= Math.min(r.days, due.length);
+        if (ok) { met++; of++; } else if (!cur) of++;
+      }
+      ds = addDays(from, -1);
+    }
+    return of >= 4 ? { met, of } : null;
+  }
+  const days = [];
+  for (let ds = today; days.length < 30 && ds >= g.active_period.start_date; ds = addDays(ds, -1)) {
+    if (!isDue(g, ds)) continue;
+    if (ds === today && !dayMet(g, ds)) continue;
+    days.push(ds);
+  }
+  return days.length >= 7 ? { met: days.filter((d) => dayMet(g, d)).length, of: days.length } : null;
+}
+const consistencyTag = (c) => (!c ? null : c.met / c.of >= 0.9 ? "devoted" : c.met / c.of >= 0.8 ? "steady" : null);
 function completedOn(g, today) {
   if (g.completion === "when_target_reached" && g.requirement.type === "cumulative_total") {
     const target = policyOf(g).target; let sum = 0;
@@ -506,7 +577,7 @@ function completedOn(g, today) {
     for (const c of sorted) { sum += c.count; if (sum >= target) return c.date; }
     return null;
   }
-  if (g.completion === "when_duration_ended") { const e = activeEnd(g); return e && today > e ? e : null; }
+  if (g.completion === "when_duration_ended") { const e = plannedEnd(g); return e && today > e && !(g.ended && g.ended < e) ? e : null; }
   return null;
 }
 function nextDue(g, from) {
@@ -514,15 +585,76 @@ function nextDue(g, from) {
   const d = findDate((x) => isDue(g, x) || (end && x > end), from, 800);
   return d && (!end || d <= end) && isDue(g, d) ? d : null;
 }
-/* Where a goal shows: today | upcoming | paused (Active tab) or completed | ended (History). */
+/* Where a goal shows: today | tracking | upcoming | paused (Active tab) or completed | ended (History). */
 function classify(g, today) {
+  if (g.ended && g.ended <= today) return completedOn(g, today) ? "completed" : "ended";
   if (completedOn(g, today)) return "completed";
   const end = activeEnd(g);
   if (end && today > end) return "ended";
   if (pausedOn(g, today)) return "paused";
-  if (isDue(g, today)) return "today";
+  if (isDue(g, today)) return g.requirement.type === "tracker" ? "tracking" : "today"; // decision 30: trackers get their own section
   return nextDue(g, today) ? "upcoming" : "ended";
 }
+
+/* --- Day states, make-up, finishing, results (decisions 15, 18, 20, 22, 24, 26) --- */
+/* met | min (streak reached, target not) | madeup | excused | paused | missed | today (open) | none | future */
+function dayState(g, ds, td) {
+  if (ds < g.active_period.start_date || (activeEnd(g) && ds > activeEnd(g))) return "none";
+  if (ds > td) return "future";
+  if (excusedOn(g, ds)) return "excused";
+  if (pausedOn(g, ds)) return "paused";
+  if (!onSchedule(g, ds)) return "none";
+  const rt = g.requirement.type, n = countIn(g, ds, ds);
+  if (rt === "period_total") return n > 0 ? "met" : ds === td ? "today" : "none";
+  if (dayMet(g, ds)) {
+    if ((g.makeup_days || []).includes(ds)) return "madeup";
+    const S = snapAt(g, ds);
+    const full = S.sessions.length ? S.sessions.every((x) => countOn(g, ds, x.id) >= (x.count_policy.target ?? 1)) : S.count_policy.target == null || rt === "cumulative_total" || n >= S.count_policy.target;
+    return full ? "met" : "min";
+  }
+  return ds === td ? "today" : "missed";
+}
+/* The missed day that extra counts fill once today's target is met (decision 18), or null. */
+function makeupInfo(g, td) {
+  if (!g.makeup || g.makeup === "off" || g.requirement.type !== "per_due_date" || g.sessions.length) return null;
+  for (let i = g.makeup === "three" ? 3 : 1; i >= 1; i--) {
+    const d = addDays(td, -i);
+    if (d < g.active_period.start_date || !isDue(g, d) || dayMet(g, d)) continue;
+    return { date: d, count: countOn(g, d, null), need: dayThreshold(g, d) };
+  }
+  return null;
+}
+/* Finished for today = its target reached (not just the minimum). */
+function doneToday(g, ds = today()) {
+  if (g.sessions.length) return g.sessions.every((s) => countOn(g, ds, s.id) >= (s.count_policy.target ?? 1));
+  const rt = g.requirement.type;
+  if (rt === "per_due_date") return countOn(g, ds, null) >= (g.count_policy.target ?? 1);
+  if (rt === "period_total") return progressOf(g, ds, null) >= (g.count_policy.target ?? 1);
+  return dayMet(g, ds);
+}
+/* Home's order (decision 24): unfinished first in the user's order (the order of state.goals), finished sink. */
+function orderedToday() {
+  const due = state.goals.filter((g) => classify(g, today()) === "today");
+  return [...due.filter((g) => !doneToday(g)), ...due.filter((g) => doneToday(g))];
+}
+const hasCounts = (g) => g.count_entries.some((c) => c.count > 0);
+/* Lifetime total for a dhikr: dedicated goals add up; goals that share counts hold the same counts, so the largest one stands. */
+function lifetimeTotal(g) {
+  const same = state.goals.filter((x) => x.dhikr === g.dhikr);
+  const sum = (x) => x.count_entries.reduce((a, c) => a + c.count, 0);
+  return same.filter((x) => x.counts === "dedicated").reduce((a, x) => a + sum(x), 0) + Math.max(0, ...same.filter((x) => x.counts !== "dedicated").map(sum));
+}
+const endedOn = (g, td) => completedOn(g, td) || activeEnd(g) || td;
+function goalResult(g, td) {
+  const done = completedOn(g, td), total = countIn(g, "0000", "9999");
+  if (done && g.completion === "when_target_reached") return t("res_done_in", fmtN(policyOf(g).target), diffDays(g.active_period.start_date, done) + 1);
+  if (g.requirement.type === "cumulative_total") return t("res_counted_of", fmtN(total), fmtN(policyOf(g).target));
+  let due = 0, met = 0;
+  for (let d = g.active_period.start_date, end = endedOn(g, td) < td ? endedOn(g, td) : td; d <= end; d = addDays(d, 1)) if (isDue(g, d)) { due++; if (dayMet(g, d)) met++; }
+  return t("res_met", met, due);
+}
+/* Edits that can't be applied in place (decision 23): a different dhikr, schedule type or requirement type. */
+const isStructural = (a, b) => a.dhikr !== b.dhikr || a.schedule.kind !== b.schedule.kind || a.requirement.type !== b.requirement.type;
 
 /* --- Derived text --- */
 const SEASON_PRESETS = { ramadan: [9, 1, 9, 30], ramadan_last_ten: [9, 21, 9, 30], dhul_hijjah_first_ten: [12, 1, 12, 10], ashura: [1, 9, 1, 10] };
@@ -564,11 +696,17 @@ function chipText(g) {
   if (r.type !== "tracker" && p.maximum != null) text += t("chip_cap", fmtN(p.maximum));
   return text;
 }
+/* Rows (decisions 19, 21): 🔥 N days while a streak runs; once it breaks, the consistency tag (Steady >= 80%,
+   Devoted >= 90%, nothing below) until a new streak reaches 3 days. */
 function streakHTML(g, today) {
-  const { n, unit } = streakOf(g, today);
+  const { n, unit, broken } = streakOf(g, today);
   const glyph = v("streakGlyph") === "emoji" ? `<span aria-hidden="true">🔥</span>` : `<span class="icon i-streak" aria-hidden="true"></span>`;
-  if (!n) return `<span class="streak none">${t("no_streak")}</span>`;
-  return `<span class="streak">${glyph} ${esc(t("streak_unit")[unit](n))}</span>`;
+  if (n >= 3 || (n >= 1 && !broken)) return `<span class="streak">${glyph} ${esc(t("streak_unit")[unit](n))}</span>`;
+  if (broken) {
+    const c = consistencyOf(g, today), tag = consistencyTag(c);
+    return tag ? `<span class="streak tag">${esc(t("tag_" + tag, c.met, c.of))}</span>` : "";
+  }
+  return `<span class="streak none">${t("no_streak")}</span>`;
 }
 function upcomingMeta(g, today) {
   const next = nextDue(g, today);
@@ -618,7 +756,13 @@ function makeGoal(o) {
     paused: [], count_policy: o.policy, sessions: o.sessions || [],
     requirement: o.requirement || { type: "per_due_date" }, completion: o.completion || "never",
     count_entries: [], counts: "shared", created: o.start,
+    makeup: o.makeup || "off", excused: [], makeup_days: [], versions: [], ended: null,
   };
+}
+/* Older saved goals and hand-edited JSON may lack the newer fields. */
+function normalizeGoal(g) {
+  g.paused ||= []; g.counts ||= "shared"; g.makeup ||= "off"; g.excused ||= []; g.makeup_days ||= []; g.versions ||= []; g.ended ||= null;
+  return g;
 }
 /* Fill counts so the goal has `streak` met due days before today, then a miss, then older history. */
 function seedCounts(g, today, { streak, perDay, todayCount = 0, older = 0, olderDays = 0, until = today }) {
@@ -641,7 +785,10 @@ function seedGoals(today) {
   goals.push(seedCounts(makeGoal({ dhikr: "swalath", start: addDays(today, -40), policy: policy(100) }), today, { streak: 12, perDay: 100, todayCount: 40, older: 900, olderDays: 10 }));
   goals.push(seedCounts(makeGoal({ dhikr: "swalath-al-fathimiyya", start: addDays(today, -60), policy: policy(100, 70) }), today, { streak: 15, perDay: (i) => [100, 84, 100, 72, 100][i % 5], older: 1200, olderDays: 14 }));
   goals.push(seedCounts(makeGoal({ dhikr: "isthighfar", start: addDays(today, -90), policy: policy(70000, null, null, "any_count"), requirement: { type: "cumulative_total" }, completion: "when_target_reached" }), today, { streak: 8, perDay: 1000, older: 15410, olderDays: 30 }));
-  goals.push(seedCounts(makeGoal({ dhikr: "swalath-al-nariyya", start: addDays(today, -21), policy: policy(4444, null, null, "any_count"), requirement: { type: "cumulative_total" }, completion: "when_target_reached" }), today, { streak: 4, perDay: 111, older: 876, olderDays: 6 }));
+  // A total goal with an end date: every past day reached that day's share, so the streak holds (decision 28)
+  const nariyya = makeGoal({ dhikr: "swalath-al-nariyya", start: addDays(today, -21), end: addDays(today, 30), policy: policy(4444, null, null, "any_count"), requirement: { type: "cumulative_total" }, completion: "when_target_reached" });
+  for (let d = nariyya.active_period.start_date; d < today; d = addDays(d, 1)) nariyya.count_entries.push({ date: d, session: null, count: paceOf(nariyya, d).share + (diffDays(nariyya.active_period.start_date, d) % 3 === 0 ? 12 : 0) });
+  goals.push(nariyya);
   // Upcoming
   const r1448 = gregorianOfHijri(hijri(today).m <= 9 ? hijri(today).y : hijri(today).y + 1, 9, 10, today);
   goals.push(makeGoal({
@@ -663,11 +810,25 @@ function seedGoals(today) {
       schedule: { kind: "yearly", calendar: "hijri", ranges: [{ start: { month: 9, day: 1 }, end: { month: 9, day: 30 } }] }, policy: policy(100) }), today, { streak: 27, perDay: 100, until: addDays(ramEnd, 1) }));
   }
   goals.push(seedCounts(makeGoal({ dhikr: "surah-ikhlas", start: addDays(today, -60), end: addDays(today, -15), policy: policy(3) }), today, { streak: 9, perDay: 3, until: addDays(today, -14), older: 60, olderDays: 20 }));
+  // More history, in this year and the one before (decision 26: grouped by year, a summary from 5 goals)
+  const hist = (dhikr, startOff, endOff, pol, o = {}) => {
+    const g = makeGoal({ dhikr, start: addDays(today, startOff), end: addDays(today, endOff), policy: pol, requirement: o.req, completion: o.completion || "when_duration_ended" });
+    g.ended = o.ended ? addDays(today, endOff - 6) : null;
+    const days = endOff - startOff + 1;
+    for (let i = 0; i < days; i++) if ((i * 0.618) % 1 < (o.rate ?? 0.85)) g.count_entries.push({ date: addDays(today, startOff + i), session: null, count: o.per ?? pol.target });
+    return g;
+  };
+  goals.push(hist("tahleel", -150, -112, policy(100, 70), { rate: 0.9 }));
+  goals.push(hist("swalath", -230, -190, policy(313), { ended: true, rate: 0.7 }));
+  goals.push(hist("isthighfar", -300, -265, policy(4000, null, null, "any_count"), { req: { type: "cumulative_total" }, completion: "when_target_reached", per: 130, rate: 0.95 }));
+  goals.push(hist("surah-ikhlas", -420, -391, policy(3), { rate: 0.93 }));
+  goals.push(hist("ya-wahhabu", -520, -480, policy(100), { ended: true, rate: 0.6 }));
+  goals.push(hist("swalath", -600, -575, policy(100), { rate: 0.8 }));
   return goals;
 }
 
 /* ============================================================== 7. State */
-const STORE_KEY = "awrad-goals-proto-v2";
+const STORE_KEY = "awrad-goals-proto-v3";
 const state = {
   settings: { theme: "light", dir: "ltr", reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches, today: localToday(), arabicSize: 0 },
   variants: {},
@@ -679,6 +840,9 @@ const state = {
   draft: null,
   overlay: null,
   labTab: "controls",
+  reorder: false,
+  targetCard: null,
+  lastRemoved: null,
 };
 function save() {
   localStorage.setItem(STORE_KEY, JSON.stringify({ settings: state.settings, variants: state.variants, goals: state.goals }));
@@ -687,7 +851,7 @@ function load() {
   if (new URLSearchParams(location.search).has("reset")) localStorage.removeItem(STORE_KEY);
   try {
     const s = JSON.parse(localStorage.getItem(STORE_KEY));
-    if (s && Array.isArray(s.goals)) { Object.assign(state.settings, s.settings); state.variants = s.variants || {}; state.goals = s.goals; return; }
+    if (s && Array.isArray(s.goals)) { Object.assign(state.settings, s.settings); state.variants = s.variants || {}; state.goals = s.goals.map(normalizeGoal); return; }
   } catch (e) { /* fall through to seed */ }
   state.goals = seedGoals(state.settings.today);
 }
@@ -695,63 +859,87 @@ const today = () => state.settings.today;
 const goalById = (id) => state.goals.find((g) => g.id === id);
 
 /* ============================================================== 8. Components */
+/* The ring (decision 14): green `progress`; lighter below the minimum, stronger from the minimum to the
+   target, a tick at the minimum; past the target a grey lap plus the overflow arc. */
 function ringGeometry(count, p) {
-  const style = v("ringStyle");
+  const color = v("ringStyle") === "gold" ? "var(--proto-gold)" : "var(--c-progress)";
   const target = p?.target;
-  const color = style === "green" || (style === "threshold" && p?.minimum != null && count >= p.minimum) || (style === "threshold" && p?.minimum == null && count >= target)
-    ? "var(--c-progress)" : "var(--proto-gold)";
-  if (!target) return { arc: 0, lap: false, color, minFrac: null };
-  if (count <= target || v("overflowDisplay") === "full") return { arc: Math.min(count / target, 1) * 100, lap: false, color, minFrac: p.minimum ? p.minimum / target : null };
-  return { arc: Math.min((count - target) / target, 1) * 100, lap: true, color, minFrac: null };
+  const none = { light: 0, strong: 0, start: 0, lap: false, color, minPct: null, lit: false };
+  if (!target) return none;
+  const minPct = p.minimum ? Math.min(p.minimum / target, 1) * 100 : null, lit = !!p.minimum && count >= p.minimum;
+  if (count > target && v("overflowDisplay") !== "full") return { ...none, strong: Math.min((count - target) / target, 1) * 100, lap: true, minPct, lit: true };
+  const arc = Math.min(count / target, 1) * 100;
+  if (minPct == null) return { ...none, strong: arc };
+  return { ...none, light: Math.min(arc, minPct), strong: Math.max(0, arc - minPct), start: minPct, minPct, lit };
 }
 function ringSVG(size, stroke, count, p, cls = "") {
   const r = (size - stroke) / 2, c = size / 2, g = ringGeometry(count, p);
-  let marker = "";
-  if (v("minimumMarker") === "dot" && g.minFrac != null) {
-    const a = g.minFrac * 2 * Math.PI;
-    marker = `<circle class="r-min" cx="${c + r * Math.cos(a)}" cy="${c + r * Math.sin(a)}" r="${Math.max(stroke * 0.32, 1.5)}" fill="var(--c-onSurface)" opacity=".55"/>`;
+  let tick = "";
+  if (v("minimumMarker") === "tick" && g.minPct != null && g.minPct < 100) {
+    const half = stroke / 2 + (size >= 100 ? 4 : 2);
+    tick = `<line class="r-tick ${g.lit ? "lit" : ""}" x1="${c + r - half}" y1="${c}" x2="${c + r + half}" y2="${c}" stroke="${g.lit ? "var(--c-onSurface)" : "var(--c-outlineStrong)"}" stroke-width="${size >= 100 ? 3 : 1.5}" stroke-linecap="round" transform="rotate(${g.minPct * 3.6} ${c} ${c})"/>`;
   }
+  const arc = (cls2, len, start, cap, op) => `<circle class="${cls2}" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${g.color}" stroke-width="${stroke}" stroke-linecap="${cap}" pathLength="100" stroke-dasharray="${len} 100" stroke-dashoffset="${-start}" opacity="${len > 0 ? op : 0}" data-len="${len}"/>`;
   return `<svg class="mirror-rtl ${cls}" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" aria-hidden="true">
     <g transform="rotate(-90 ${c} ${c})">
       <circle class="r-track" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--c-outline)" stroke-width="${stroke}"/>
       <circle class="r-lap" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--c-outlineStrong)" stroke-width="${stroke}" opacity="${g.lap ? 1 : 0}"/>
-      <circle class="r-arc" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${g.color}" stroke-width="${stroke}" stroke-linecap="round" pathLength="100" stroke-dasharray="${g.arc} 100" opacity="${g.arc > 0 ? 1 : 0}"/>
-      ${marker}
+      ${arc("r-arc r-arc-l", g.light, 0, "round", 0.4)}
+      ${arc("r-arc r-arc-s", g.strong, g.start, g.start ? "butt" : "round", 1)}
+      <circle class="r-pulse" cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${g.color}" stroke-width="${stroke}" opacity="0"/>
+      ${tick}
     </g></svg>`;
 }
 function ring(size, stroke, count, p, label = abbr(count)) {
   return `<span class="ring ${size >= 44 ? "md" : ""}" style="width:${size}px;height:${size}px">${ringSVG(size, stroke, count, p)}<span class="ring-label ${String(label).length >= 4 ? "long" : ""}">${esc(label)}</span></span>`;
 }
+/* What a list ring shows today. Total goals fill toward today's share (with an end date) or their daily number (decisions 28, 29). */
+function listRingModel(g, td) {
+  const p = displayPolicy(g);
+  if (g.requirement.type === "cumulative_total") { const da = dailyAmount(g, td); if (da) return { count: countOn(g, td, null), p: { minimum: null, target: da, maximum: null } }; }
+  return { count: progressOf(g, td), p };
+}
 function goalCard(g, kind = "today", opts = {}) {
   const td = today();
-  const count = kind === "upcoming" ? 0 : progressOf(g, kind === "today" || kind === "paused" ? td : (completedOn(g, td) || activeEnd(g) || td));
-  const p = displayPolicy(g);
+  const tracker = kind === "tracking";
+  const lr = kind === "today" || kind === "paused" ? listRingModel(g, td) : null;
+  const count = kind === "upcoming" ? 0 : lr ? lr.count : progressOf(g, completedOn(g, td) || activeEnd(g) || td);
+  const p = lr ? lr.p : displayPolicy(g);
+  const history = kind === "completed" || kind === "ended";
   let line2;
   if (kind === "upcoming") line2 = `<span class="meta">${esc(upcomingMeta(g, td))}</span>`;
-  else if (kind === "completed") line2 = `<span class="meta">${esc(t("completed_on", fmtDate(completedOn(g, td))))}</span>`;
-  else if (kind === "ended") line2 = `<span class="meta">${esc(t("ended_on", fmtDate(activeEnd(g) || td)))} · ${esc(t("counted", fmtN(countIn(g, "0000", "9999"))))}</span>`;
+  else if (history) line2 = `<span class="result">${esc(goalResult(g, td))}</span><span class="meta">${esc(kind === "completed" ? t("completed_on", fmtDate(completedOn(g, td))) : t("ended_on", fmtDate(activeEnd(g) || td)))}</span>`;
   else if (kind === "paused") line2 = `<span class="meta">${esc(t("paused_since", fmtDate(g.paused.find((x) => x.to == null || x.to >= td)?.from || td)))}</span>`;
   else if (opts.isNew) line2 = `<span class="streak none">${t("new_goal")}</span>`;
+  else if (tracker) line2 = `<span class="meta">${esc(t("tracker_row", fmtN(countOn(g, td, undefined)), fmtN(countIn(g, "0000", "9999"))))}</span>${streakHTML(g, td)}`;
   else line2 = streakHTML(g, td);
-  const histCount = kind === "ended" || kind === "completed" ? countIn(g, "0000", "9999") : count;
-  const ringEl = ring(48, 4, kind === "completed" ? Math.max(histCount, p.target || 0) : histCount, p, abbr(histCount));
+  const histCount = history ? countIn(g, "0000", "9999") : count;
+  const ringEl = tracker ? "" : ring(48, 4, kind === "completed" ? Math.max(histCount, p.target || 0) : histCount, p, abbr(histCount));
+  const pc = (kind === "today" || kind === "upcoming") && !opts.preview ? paceOf(g, kind === "today" ? td : nextDue(g, td) || td) : null;
+  const paceLine = pc && pc.remaining > 0 ? `<div class="line"><span class="meta pace">${esc(t("pace_row", fmtN(pc.share), fmtDate(pc.end)))}</span></div>` : "";
   const right = v("goalRowLayout") === "right";
-  return `<div class="card on-sheet goal-card pressable ${right ? "ring-right" : ""} ${kind === "paused" ? "paused" : ""}" role="button" tabindex="0" data-action="open-goal" data-id="${g.id}">
+  const act = opts.reorder ? "" : `role="button" tabindex="0" data-action="open-goal" data-kind="${kind}" data-id="${g.id}"`;
+  const tail = opts.preview ? "" : opts.reorder
+    ? `<div class="reorder-ctl"><button class="icon-btn pressable" data-action="move-goal" data-dir="-1" data-id="${g.id}" aria-label="${esc(t("move_up"))}">${icon("expand", "flip")}</button>
+        <button class="icon-btn pressable" data-action="move-goal" data-dir="1" data-id="${g.id}" aria-label="${esc(t("move_down"))}">${icon("expand")}</button>
+        <button class="icon-btn drag-handle" data-drag="${g.id}" aria-label="${esc(t("drag_handle"))}">${icon("goals")}</button></div>`
+    : `<button class="icon-btn" data-action="goal-menu" data-id="${g.id}" data-context="${history ? "history" : ""}" aria-label="${esc(t("more_label"))}"><span class="icon i-more"></span></button>`;
+  return `<div class="card on-sheet goal-card ${opts.reorder ? "" : "pressable"} ${right ? "ring-right" : ""} ${kind === "paused" ? "paused" : ""}" ${act} data-card="${g.id}">
     ${right ? "" : ringEl}
     <div class="body">
       <div class="title t-rowTitle">${esc(goalTitle(g))}</div>
       <span class="chip goal">${esc(chipText(g))}</span>
-      <div class="line">${line2}</div>
+      <div class="line">${line2}</div>${paceLine}
     </div>
     ${right ? ringEl : ""}
-    ${opts.preview ? "" : `<button class="icon-btn" data-action="goal-menu" data-id="${g.id}" aria-label="${esc(t("more_label"))}"><span class="icon i-more"></span></button>`}
+    ${tail}
   </div>`;
 }
 function homeRow(g, opts = {}) {
-  const count = progressOf(g, today());
-  return `<button class="home-row pressable" data-action="open-goal" data-id="${g.id}">
+  const lr = listRingModel(g, today()), done = !opts.preview && doneToday(g);
+  return `<button class="home-row pressable ${done ? "done" : ""}" data-action="open-goal" data-kind="today" data-id="${g.id}">
     <div class="body"><span class="title t-rowTitle">${esc(goalTitle(g))}</span>${opts.isNew ? `<span class="streak none">${t("new_goal")}</span>` : streakHTML(g, today())}</div>
-    ${ring(36, 4, count, displayPolicy(g))}
+    ${ring(36, 4, lr.count, lr.p)}
   </button>`;
 }
 const icon = (name, extra = "") => `<span class="icon i-${name} ${extra}" aria-hidden="true"></span>`;
@@ -761,9 +949,10 @@ const TABS = ["home", "goals", "library", "community"];
 const screens = {
   home() {
     const td = today();
-    const due = state.goals.filter((g) => classify(g, td) === "today");
+    const due = orderedToday(), allDone = due.length > 0 && due.every((g) => doneToday(g));
     const dateCls = v("homeDateStyle") === "title" ? "t-title" : "t-largeTitle";
-    const rows = due.length ? `<div class="home-rows">${due.slice(0, 4).map((g) => homeRow(g)).join("")}</div>`
+    const rows = allDone ? `<div class="all-done"><div class="t-rowTitle">${t("all_done_today")}</div><div class="done-rings">${due.slice(0, 6).map((g) => { const lr = listRingModel(g, td); return ring(36, 4, lr.count, lr.p); }).join("")}</div></div>`
+      : due.length ? `<div class="home-rows">${due.slice(0, 3).map((g) => homeRow(g)).join("")}</div>`
       : `<p class="t-bodySmall" style="margin:0;color:var(--c-onSurfaceVariant)">${t("nothing_today")}</p><button class="btn text" data-action="add-goal" style="margin-inline-start:-8px">${t("add_goal")}</button>`;
     const tiles = catalog.collections.map((c) => `<button class="tile pressable" data-action="toast-placeholder"><span class="t-rowTitle">${esc(c.title[lang()] || c.title.en)}</span><span class="meta">${esc(t("dhikrs_count", c.dhikrs.length))}</span><span class="arrow">${icon("forward", "mirror small")}</span></button>`).join("");
     return { cls: "with-nav", html: `
@@ -788,34 +977,42 @@ const screens = {
   },
 
   goals() {
-    const td = today(), groups = { today: [], upcoming: [], paused: [], completed: [], ended: [] };
+    const td = today(), groups = { today: [], tracking: [], upcoming: [], paused: [], completed: [], ended: [] };
     for (const g of state.goals) groups[classify(g, td)].push(g);
     groups.upcoming.sort((a, b) => (nextDue(a, td) < nextDue(b, td) ? -1 : 1));
-    const section = (title, list, kind) => (list.length ? `<section class="section"><h2 class="t-sectionTitle section-title">${title}</h2><div class="list">${list.map((g) => goalCard(g, kind)).join("")}</div></section>` : "");
+    const ro = state.reorder && state.goalsTab === "active";
+    const section = (title, list, kind) => (list.length ? `<section class="section"><h2 class="t-sectionTitle section-title">${title}</h2><div class="list" data-list="${kind}">${list.map((g) => goalCard(g, kind, { reorder: ro })).join("")}</div></section>` : "");
     const active = state.goalsTab === "active";
+    const yearGroups = () => {
+      const all = [...groups.completed, ...groups.ended].map((g) => ({ g, kind: groups.completed.includes(g) ? "completed" : "ended", end: endedOn(g, td) })).sort((a, b) => (a.end < b.end ? 1 : -1));
+      const years = [...new Set(all.map((x) => x.end.slice(0, 4)))];
+      return years.map((y) => {
+        const list = all.filter((x) => x.end.slice(0, 4) === y);
+        const summary = list.length >= 5 ? `<p class="year-summary t-bodySmall">${esc(t("year_summary", list.length, list.filter((x) => x.kind === "completed").length, fmtN(list.reduce((a, x) => a + countIn(x.g, "0000", "9999"), 0))))}</p>` : "";
+        return `<section class="section"><h2 class="t-sectionTitle section-title">${y}</h2>${summary}<div class="list">${list.map((x) => goalCard(x.g, x.kind)).join("")}</div></section>`;
+      }).join("");
+    };
     const body = active
-      ? section(t("todays_goals"), groups.today, "today") + section(t("upcoming"), groups.upcoming, "upcoming") + section(t("paused"), groups.paused, "paused") || `<p class="empty t-body">${t("no_active")}</p>`
-      : section(t("completed"), groups.completed, "completed") + section(t("ended"), groups.ended, "ended") || `<p class="empty t-body">${t("no_history")}</p>`;
+      ? section(t("todays_goals"), groups.today, "today") + section(t("upcoming"), groups.upcoming, "upcoming") + section(t("tracking"), groups.tracking, "tracking") + section(t("paused"), groups.paused, "paused") || `<p class="empty t-body">${t("no_active")}</p>`
+      : yearGroups() || `<p class="empty t-body">${t("no_history")}</p>`;
     return { cls: "with-nav sheet-screen", html: `
       <header class="lt-header"><h1 class="t-largeTitle" style="margin:0">${t("my_goals")}</h1>
-        <button class="round-btn pressable" data-action="add-goal" aria-label="${esc(t("add_label"))}">${icon("add")}</button></header>
+        <div class="head-actions">${active ? `<button class="btn text pressable" data-action="reorder-toggle" aria-pressed="${ro}">${ro ? t("pad_done") : t("edit_order")}</button>` : ""}
+        <button class="round-btn pressable" data-action="add-goal" aria-label="${esc(t("add_label"))}">${icon("add")}</button></div></header>
       <div class="seg" role="tablist">
         <div class="pill-wrap"><button class="pressable" role="tab" aria-selected="${active}" data-action="goals-tab" data-tab="active">${t("active")}</button><span class="bar"></span></div>
         <div class="pill-wrap"><button class="pressable" role="tab" aria-selected="${!active}" data-action="goals-tab" data-tab="history">${t("history")}</button><span class="bar"></span></div>
       </div>
-      <div class="content-sheet">${body}</div>` };
+      <div class="content-sheet">${ro ? `<p class="reorder-hint t-bodySmall">${t("reorder_hint")}</p>` : ""}${body}</div>` };
   },
 
   counting() {
     const g = goalById(state.route.goalId);
     if (!g) return screens.home();
-    const td = today();
-    if (g.sessions.length && !g.sessions.some((s) => s.id === state.session)) state.session = currentSessionId(g);
-    const session = g.sessions.length ? state.session : null;
-    const p = policyOf(g, session), count = progressOf(g, td, session);
+    const td = today(), V = counterView(g), { M, session, day } = V, p = M.p, count = M.count;
     const whole = v("tapArea") === "screen";
     const ar = goalArabic(g);
-    const sessions = g.sessions.length ? sessionPills(g, session, td) : "";
+    const sessions = g.sessions.length ? sessionPills(g, session, day) : "";
     return { cls: "fixed no-nav screen-counting", html: `
       <header class="count-head">
         <button class="icon-btn pressable" data-action="back" aria-label="${esc(t("back"))}">${icon("back", "mirror")}</button>
@@ -826,24 +1023,25 @@ const screens = {
         <button class="icon-btn aa pressable" data-action="text-size" aria-label="${esc(t("text_size"))}">Aa</button>
         <button class="icon-btn pressable" data-action="goal-menu" data-id="${g.id}" data-context="counting" aria-label="${esc(t("more_label"))}">${icon("more")}</button>
       </header>
+      ${day !== td ? `<div class="day-banner t-label"><span>${esc(t("counting_for", fmtDate(day, { weekday: "short", day: "numeric", month: "short" })))}</span><button class="btn text pressable" data-action="count-today">${t("back_to_today")}</button></div>` : ""}
       ${sessions}
       <div class="count-body">
         ${ar ? `<div class="arabic-card" data-size="${state.settings.arabicSize}"><div class="t-quran" lang="ar">${esc(ar)}</div></div>` : ""}
         <div class="count-actions">
           <button class="btn main pressable" data-action="audio" data-slot="audio">${icon("play")}<span>${t("start_audio")}</span></button>
           <button class="btn square pressable" data-action="timer" aria-label="${esc(t("timer"))}"><span class="t-label">${t("timer")}</span></button>
-          <button class="btn square pressable" data-action="count-list" aria-label="${esc(t("count_list"))}">${icon("goals")}</button>
+          <button class="btn square pressable" data-action="stats" aria-label="${esc(t("stats"))}">${icon("goals")}</button>
         </div>
         <div class="counter-zone ${whole ? "whole" : ""}" ${whole ? 'data-counter="zone"' : ""}>
           <div class="counter-ring" data-slot="ring">
             ${ringSVG(264, 10, count, p)}
-            <button class="counter-circle" data-counter="circle" aria-label="${esc(t("tap_circle"))}: ${count}">
+            <button class="counter-circle ${V.capped ? "capped" : ""}" data-counter="circle" aria-label="${esc(t("tap_circle"))}: ${count}">
               <span class="counter-num t-counter" data-slot="num"><span>${count}</span></span>
               ${v("circleSubLabel") === "target" && p.target ? `<span class="counter-sub" data-slot="sub">${esc(t("of_n", fmtN(p.target)))}</span>` : ""}
             </button>
           </div>
-          <div class="hint t-bodySmall">${whole ? t("tap_anywhere") : t("tap_circle")}</div>
-          <span class="chip goal" data-slot="cchip">${esc(counterChip(g, count, p, td))}</span>
+          <div class="slot" data-slot="slot">${V.slot}</div>
+          <span class="chip goal" data-slot="cchip">${esc(V.chip)}</span>
         </div>
       </div>` };
   },
@@ -863,16 +1061,51 @@ const screens = {
 function placeholder(key) {
   return { cls: "with-nav", html: `<header class="lt-header"><h1 class="t-largeTitle" style="margin:0">${t(key)}</h1></header><p class="placeholder-body t-body">${t("placeholder")}</p>` };
 }
-function counterChip(g, count, p, td) {
-  if (!isDue(g, td) && g.requirement.type !== "cumulative_total") return t("not_due");
-  if (g.requirement.type === "tracker" || !p.target) return t("any_count");
-  if (g.requirement.type === "cumulative_total") return count >= p.target ? t("target_reached") : t("to_go", fmtN(p.target - count));
+/* The counter's model for a day. std: the day's count against its policy. pace: a total goal with an end date shows today's share
+   (decision 28). total: a total goal without one shows the overall total (decision 29). */
+const countDay = () => (state.route.day && state.route.day === addDays(today(), -1) ? state.route.day : today());
+function counterModel(g, session, day) {
+  if (g.requirement.type === "cumulative_total") {
+    const pc = paceOf(g, day), total = progressOf(g, day);
+    if (pc) return { kind: "pace", count: pc.today, p: { minimum: null, target: pc.share, maximum: null, streak_threshold: "target" }, pc, total, today: pc.today };
+    return { kind: "total", count: total, p: policyOf(g, null, day), total, today: countOn(g, day, null) };
+  }
+  return { kind: "std", count: progressOf(g, day, session), p: policyOf(g, session, day) };
+}
+function counterChip(g, M, day, mu) {
+  const { p, count } = M;
+  if (M.kind === "pace") return p.target ? t("pace_today", fmtN(count), fmtN(p.target)) : t("target_reached");
+  if (M.kind === "total") return g.count_policy.streak_amount ? t("today_of", fmtN(M.today), fmtN(g.count_policy.streak_amount)) : t("today_n", fmtN(M.today));
+  if (g.requirement.type === "tracker") return t("total_n", fmtN(countIn(g, "0000", "9999")));
+  if (!isDue(g, day)) return t("not_due");
+  if (!p.target) return t("any_count");
+  if (mu) return t("making_up", weekdayName(weekday(mu.date), "short"), fmtN(mu.count), fmtN(mu.need));
   if (v("counterChip") === "minimum") return p.minimum != null ? t("minimum_n", fmtN(p.minimum)) : t("target_n", fmtN(p.target));
-  if (p.maximum != null && count >= p.maximum) return t("cap_n", fmtN(p.maximum));
   if (p.minimum != null && count < p.minimum) return t("minimum_n", fmtN(p.minimum));
   if (count < p.target) return t("target_n", fmtN(p.target));
   if (count === p.target) return t("target_reached");
   return t("over_n", fmtN(count - p.target));
+}
+function targetCardHTML(g) {
+  const next = orderedToday().find((x) => x.id !== g.id && !doneToday(x));
+  return next
+    ? `<button class="target-card pressable" data-action="goto-goal" data-id="${next.id}"><span class="tc-text"><strong>${t("target_reached_card")}</strong> · ${esc(t("next_goal", goalTitle(next)))}</span>${icon("forward", "mirror")}</button>`
+    : `<div class="target-card" role="status"><span class="tc-text"><strong>${t("all_goals_done")}</strong></span>${icon("check")}</div>`;
+}
+/* Everything the counter shows below the Arabic card, in one place so the first render and every count agree. */
+function counterView(g) {
+  const td = today(), day = countDay();
+  if (g.sessions.length && !g.sessions.some((s) => s.id === state.session)) state.session = currentSessionId(g);
+  const session = g.sessions.length ? state.session : null, M = counterModel(g, session, day), { p, count } = M;
+  const capped = p.maximum != null && count >= p.maximum;
+  const mu = day === td && M.kind === "std" && p.target && count >= p.target ? makeupInfo(g, td) : null;
+  const tc = state.targetCard, showCard = tc && tc.goalId === g.id && tc.day === day && p.target && count >= p.target && !capped && !g.sessions.length;
+  let slot;
+  if (capped) slot = `<div class="limit-msg t-label" role="status">${esc(t("cap_reached", fmtN(p.maximum)))}</div>`;
+  else if (showCard) slot = targetCardHTML(g);
+  else if (M.kind !== "std") slot = `<div class="hint t-bodySmall">${esc(t("total_line", fmtN(M.total), fmtN(policyOf(g).target)))}</div>`;
+  else slot = `<div class="hint t-bodySmall">${v("tapArea") === "screen" ? t("tap_anywhere") : t("tap_circle")}</div>`;
+  return { M, session, day, capped, mu, chip: counterChip(g, M, day, mu), slot };
 }
 
 /* ============================================================== 10. Create flows
@@ -959,6 +1192,7 @@ function draftToGoal(d, base = null) {
     completion: once ? "when_target_reached" : d.end ? "when_duration_ended" : "never",
     counts: d.countsMode,
     count_entries: base?.count_entries || [], created: base?.created || today(),
+    makeup: base?.makeup || "off", excused: base?.excused || [], makeup_days: base?.makeup_days || [], versions: base?.versions || [], ended: base?.ended || null,
   };
 }
 const dhikrName = (key) => { const x = catalog.byKey[key]; return x ? x.title[lang()] || x.title.en : key || ""; };
@@ -1076,6 +1310,7 @@ function reviewBody(d) {
       <div class="label t-label">${t("preview_home")}</div>
       ${homeRow(g, { preview: true, isNew: d.mode === "create" })}
     </div>
+    ${d.mode === "edit" ? editNoteHTML(g, goalById(d.goalId)) : ""}
     ${sharedQuestion(d)}
     <div class="summary" style="margin-top:var(--sectionGap)">
       ${row(t("s_dhikr"), dhikrName(g.dhikr))}
@@ -1204,7 +1439,8 @@ const SENTENCE_L10N = {
     min: (v) => `at least ${v}`, cap: (v) => `stop at ${v}`,
     periodClause: (start, end) => `${start} ${end}`, from: (v) => `from ${v}`, until: (v) => `until ${v}`, by: (v) => `by ${v}`, forDays: (v) => `for ${v}`, daysN: (n) => `${n} days`, open: "until I stop", today: "today",
     finishReach: "finish when I reach it", finishUntilWord: "keep going until", finishUntil: (w, dt) => `${w} ${dt}`,
-    streak: (v) => `my streak counts at ${v}`, streakVals: { minimum: "the minimum", target: "the target", any_count: "any count", maximum: "the cap" },
+    streak: (v) => `my streak counts at ${v}`, streakVals: { minimum: "the minimum", target: "the target", any_count: "any count", maximum: "the cap" }, perDay: (x) => `${x} a day`,
+    makeup: (v) => `if I miss a day, let me make it up ${v}`, makeupVals: { off: "not at all", next: "the next day", three: "within 3 days" },
     name: (v) => `call it ${v}`, quote: (v) => `“${v}”`,
     shared: (dh) => `count ${dh} from my other goal too`,
     readback: ({ main, sessions, clauses, streak, name, shared, dhikr }) => {
@@ -1248,7 +1484,8 @@ const SENTENCE_L10N = {
     min: (v) => `على الأقل ${v}`, cap: (v) => `توقف عند ${v}`,
     periodClause: (start, end) => `${start} ${end}`, from: (v) => `من ${v}`, until: (v) => `حتى ${v}`, by: (v) => `قبل ${v}`, forDays: (v) => `لمدة ${v}`, daysN: (n) => `${n} يومًا`, open: "حتى أتوقف", today: "اليوم",
     finishReach: "أنهِه عند بلوغه", finishUntilWord: "استمر حتى", finishUntil: (w, dt) => `${w} ${dt}`,
-    streak: (v) => `تُحسب سلسلتي عند ${v}`, streakVals: { minimum: "الحد الأدنى", target: "الهدف", any_count: "أي عدد", maximum: "الحد الأقصى" },
+    streak: (v) => `تُحسب سلسلتي عند ${v}`, streakVals: { minimum: "الحد الأدنى", target: "الهدف", any_count: "أي عدد", maximum: "الحد الأقصى" }, perDay: (x) => `${x} في اليوم`,
+    makeup: (v) => `إن فاتني يوم، أتيح لي تعويضه ${v}`, makeupVals: { off: "إطلاقًا", next: "في اليوم التالي", three: "خلال ٣ أيام" },
     name: (v) => `سمِّه ${v}`, quote: (v) => `«${v}»`,
     shared: (dh) => `احسب ${dh} من هدفي الآخر أيضًا`,
     readback: ({ main, sessions, clauses, streak, name, shared, dhikr }) => {
@@ -1293,7 +1530,8 @@ const SENTENCE_L10N = {
     min: (v) => `കുറഞ്ഞത് ${v}`, cap: (v) => `${v}ൽ നിർത്തുക`,
     periodClause: (start, end) => `${start} ${end}`, from: (v) => `${v} മുതൽ`, until: (v) => `${v} വരെ`, by: (v) => `${v}നകം`, forDays: (v) => v, daysN: (n) => `${n} ദിവസത്തേക്ക്`, open: "ഞാൻ നിർത്തുന്നത് വരെ", today: "ഇന്ന്",
     finishReach: "എത്തുമ്പോൾ പൂർത്തിയാക്കുക", finishUntilWord: "തുടരുക", finishUntil: (w, dt) => `${dt} വരെ ${w}`,
-    streak: (v) => `സ്ട്രീക്ക് ${v} എത്തുമ്പോൾ എണ്ണുക`, streakVals: { minimum: "കുറഞ്ഞത്", target: "ലക്ഷ്യം", any_count: "ഏത് എണ്ണവും", maximum: "പരമാവധി" },
+    streak: (v) => `സ്ട്രീക്ക് ${v} എത്തുമ്പോൾ എണ്ണുക`, streakVals: { minimum: "കുറഞ്ഞത്", target: "ലക്ഷ്യം", any_count: "ഏത് എണ്ണവും", maximum: "പരമാവധി" }, perDay: (x) => `ദിവസം ${x}`,
+    makeup: (v) => `ഒരു ദിവസം വിട്ടുപോയാൽ അത് ${v} നികത്താൻ അനുവദിക്കുക`, makeupVals: { off: "ഒട്ടും ഇല്ല", next: "അടുത്ത ദിവസം", three: "3 ദിവസത്തിനകം" },
     name: (v) => `പേര് ${v}`, quote: (v) => `“${v}”`,
     shared: (dh) => `മറ്റേ ലക്ഷ്യത്തിലെ ${dh} എണ്ണവും കൂട്ടുക`,
     // Clauses lead and the main sentence (with its verb) closes the read-back.
@@ -1381,8 +1619,70 @@ const SHEET_STRINGS = {
     sessions_done: (n, m) => `${m} സെഷനിൽ ${n} പൂർത്തിയായി`, session_now: (x) => `ഇപ്പോൾ: ${x}`,
   },
 };
+/* Strings added with decisions 14 to 30 (en, ar, ml). Malayalam covers the sentence sheet and the main moments; the rest falls back to English. */
+const V3_STRINGS = {
+  en: {
+    tag_steady: (m, n) => `Steady · ${m}/${n}`, tag_devoted: (m, n) => `Devoted · ${m}/${n}`,
+    pace_row: (n, d) => `About ${n} a day to finish by ${d}`, pace_today: (n, share) => `Today ${n} of about ${share}`,
+    all_done_today: "All done today", edit_order: "Edit order", reorder_hint: "Drag the handle, or use the arrows, to change the order. It decides what comes first on Home.",
+    move_up: "Move up", move_down: "Move down", drag_handle: "Drag to reorder",
+    year_summary: (n, c, total) => `${n} goals · ${c} completed · ${total} counted`,
+    res_done_in: (total, days) => `${total} ✓ in ${days} days`, res_counted_of: (n, total) => `${n} of ${total} counted`, res_met: (m, n) => `Met ${m} of ${n} days`,
+    tracking: "Tracking", tracker_row: (today, total) => `Today ${today} · Total ${total}`, total_n: (n) => `Total ${n}`,
+    today_n: (n) => `Today ${n}`, today_of: (n, a) => `Today ${n} of ${a}`, total_line: (n, target) => `Total ${n} of ${target}`,
+    making_up: (day, n, need) => `Making up ${day}: ${n}/${need}`, t_madeup: (day) => `${day} made up`,
+    target_reached_card: "Target reached", next_goal: (name) => `Next: ${name}`, all_goals_done: "All of today's goals are done",
+    cap_reached: (n) => `Reached your limit of ${n}`,
+    counting_for: (d) => `Counting for ${d}`, back_to_today: "Back to today", count_yesterday: "Count for yesterday", count_today: "Count for today",
+    stats: "Stats", undo_btn: "Undo", end_goal: "End goal", delete_goal: "Delete goal", start_again: "Start again",
+    t_ended: "Goal ended. It's in History", t_started_again: "Started again", t_new_goal_started: "Ended the old goal and started a new one",
+    delete_body_shared: "It leaves History. Counts shared with your other goals on this dhikr stay.", delete_body_dedicated: "It leaves History, and the counts only this goal had go with it.",
+    st_met: "Met", st_min: "Minimum only", st_madeup: "Made up", st_excused: "Excused", st_paused: "Paused", st_missed: "Missed", st_today: "Today", st_none: "Not due", st_future: "Later",
+    day_count: (n, tg) => `${n} of ${tg}`, mark_excused: "Mark as excused", remove_excused: "Remove excused",
+    excuse_left: (n, month) => `${n} left in ${month}. An excused day is skipped, like a pause.`, excuse_limit: (month) => `Limit reached: 2 excused days a month (${month}).`,
+    stat_streak: "Current streak", stat_best: "Best streak", stat_consistency: "Consistency (30 days)", stat_lifetime: "Lifetime total", stat_not_enough: "Not enough days yet",
+    read_only: "Read-only", prev_month: "Previous month", next_month: "Next month",
+    edit_note: "Changes apply from today; your past stays as it was.", edit_warn: "This ends the current goal and starts a new one.", save_new: "End this goal and start a new one",
+    sv_daily: "A number each day", sv_daily_sub: "A day counts when it reaches this", a_day: "a day", p_streak_amount: "Streak counts at, a day",
+    p_makeup: "If I miss a day", makeup_help: "After today's target, extra counts fill the missed day. A filled day is marked made up and the streak continues.", d_makeup: "Make up missed days",
+  },
+  ar: {
+    tag_steady: (m, n) => `ثابت · ${m}/${n}`, tag_devoted: (m, n) => `مواظب · ${m}/${n}`,
+    pace_row: (n, d) => `نحو ${n} يوميًا للإنهاء قبل ${d}`, pace_today: (n, share) => `اليوم ${n} من نحو ${share}`,
+    all_done_today: "اكتمل كل شيء اليوم", edit_order: "ترتيب الأهداف", reorder_hint: "اسحب المقبض أو استخدم الأسهم لتغيير الترتيب. يحدد ما يظهر أولًا في الرئيسية.",
+    move_up: "نقل للأعلى", move_down: "نقل للأسفل", drag_handle: "اسحب لإعادة الترتيب",
+    year_summary: (n, c, total) => `${n} أهداف · ${c} مكتملة · ${total} مرة`,
+    res_done_in: (total, days) => `${total} ✓ خلال ${days} يومًا`, res_counted_of: (n, total) => `${n} من ${total}`, res_met: (m, n) => `تحقق ${m} من ${n} يومًا`,
+    tracking: "التتبّع", tracker_row: (today, total) => `اليوم ${today} · المجموع ${total}`, total_n: (n) => `المجموع ${n}`,
+    today_n: (n) => `اليوم ${n}`, today_of: (n, a) => `اليوم ${n} من ${a}`, total_line: (n, target) => `المجموع ${n} من ${target}`,
+    making_up: (day, n, need) => `تعويض ${day}: ${n}/${need}`, t_madeup: (day) => `تم تعويض ${day}`,
+    target_reached_card: "تم بلوغ الهدف", next_goal: (name) => `التالي: ${name}`, all_goals_done: "اكتملت كل أهداف اليوم",
+    cap_reached: (n) => `بلغت حدّك وهو ${n}`,
+    counting_for: (d) => `العدّ ليوم ${d}`, back_to_today: "العودة إلى اليوم", count_yesterday: "عُدَّ لأمس", count_today: "عُدَّ لليوم",
+    stats: "الإحصاءات", undo_btn: "تراجع", end_goal: "إنهاء الهدف", delete_goal: "حذف الهدف", start_again: "ابدأ من جديد",
+    t_ended: "انتهى الهدف. تجده في السجل", t_started_again: "بدأ من جديد", t_new_goal_started: "انتهى الهدف القديم وبدأ هدف جديد",
+    delete_body_shared: "يخرج من السجل. تبقى الأعداد المشتركة مع أهدافك الأخرى لهذا الذكر.", delete_body_dedicated: "يخرج من السجل وتُحذف معه الأعداد الخاصة به.",
+    st_met: "تحقق", st_min: "الحد الأدنى فقط", st_madeup: "تم تعويضه", st_excused: "معذور", st_paused: "متوقف", st_missed: "فائت", st_today: "اليوم", st_none: "غير مستحق", st_future: "لاحقًا",
+    day_count: (n, tg) => `${n} من ${tg}`, mark_excused: "اعتبره معذورًا", remove_excused: "إزالة العذر",
+    excuse_left: (n, month) => `بقي ${n} في ${month}. يُتخطى اليوم المعذور كالتوقف المؤقت.`, excuse_limit: (month) => `بلغت الحد: يومان معذوران في الشهر (${month}).`,
+    stat_streak: "السلسلة الحالية", stat_best: "أفضل سلسلة", stat_consistency: "الانتظام (٣٠ يومًا)", stat_lifetime: "المجموع الكلي", stat_not_enough: "لا أيام كافية بعد",
+    read_only: "للقراءة فقط", prev_month: "الشهر السابق", next_month: "الشهر التالي",
+    edit_note: "تسري التغييرات من اليوم؛ يبقى ماضيك كما كان.", edit_warn: "هذا ينهي الهدف الحالي ويبدأ هدفًا جديدًا.", save_new: "أنهِ هذا الهدف وابدأ جديدًا",
+    sv_daily: "عدد في كل يوم", sv_daily_sub: "يُحسب اليوم إذا بلغه", a_day: "في اليوم", p_streak_amount: "تُحسب السلسلة عند، يوميًا",
+    p_makeup: "إن فاتني يوم", makeup_help: "بعد هدف اليوم، تملأ العدّات الزائدة اليوم الفائت. يُعلَّم اليوم المكتمل «تم تعويضه» وتستمر السلسلة.", d_makeup: "تعويض الأيام الفائتة",
+  },
+  ml: {
+    tag_steady: (m, n) => `സ്ഥിരം · ${m}/${n}`, tag_devoted: (m, n) => `നിഷ്ഠയോടെ · ${m}/${n}`,
+    all_done_today: "ഇന്നത്തേത് എല്ലാം പൂർത്തിയായി", target_reached_card: "ലക്ഷ്യം എത്തി", all_goals_done: "ഇന്നത്തെ എല്ലാ ലക്ഷ്യങ്ങളും പൂർത്തിയായി",
+    next_goal: (name) => `അടുത്തത്: ${name}`, cap_reached: (n) => `നിങ്ങളുടെ പരിധി ${n} എത്തി`, count_yesterday: "ഇന്നലത്തേക്ക് എണ്ണുക", undo_btn: "തിരിച്ചാക്കുക",
+    end_goal: "ലക്ഷ്യം അവസാനിപ്പിക്കുക", start_again: "വീണ്ടും തുടങ്ങുക", edit_note: "മാറ്റങ്ങൾ ഇന്ന് മുതൽ; കഴിഞ്ഞ ദിവസങ്ങൾ അതേപടി തുടരും.",
+    edit_warn: "ഇത് നിലവിലെ ലക്ഷ്യം അവസാനിപ്പിച്ച് പുതിയത് തുടങ്ങും.", p_makeup: "ഒരു ദിവസം വിട്ടുപോയാൽ", d_makeup: "വിട്ടുപോയ ദിവസം നികത്തുക",
+    makeup_help: "ഇന്നത്തെ ലക്ഷ്യത്തിന് ശേഷമുള്ള അധിക എണ്ണം വിട്ടുപോയ ദിവസം നിറയ്ക്കും.", sv_daily: "ദിവസം ഒരു എണ്ണം", sv_daily_sub: "ഇതിലെത്തിയാൽ ദിവസം കണക്കാകും", a_day: "ദിവസം", p_streak_amount: "ദിവസേന സ്ട്രീക്ക് എണ്ണുന്നത്",
+    stats: "കണക്കുകൾ", st_met: "പൂർത്തി", st_min: "കുറഞ്ഞത് മാത്രം", st_madeup: "നികത്തി", st_excused: "ഒഴിവാക്കി", st_paused: "നിർത്തിവെച്ചത്", st_missed: "വിട്ടുപോയി",
+  },
+};
 STRINGS.ml = STRINGS.ml || {};
-for (const l of ["en", "ar", "ml"]) Object.assign(STRINGS[l], SHEET_STRINGS[l]);
+for (const l of ["en", "ar", "ml"]) Object.assign(STRINGS[l], SHEET_STRINGS[l], V3_STRINGS[l]);
 
 /* --- The B draft --- */
 function sdNew(prefill = {}) {
@@ -1396,7 +1696,9 @@ function sdNormalize(d) {
   const D = d.details, req = sdReq(d);
   if (req === "cumulative_total" || req === "tracker") delete D.minimum;
   if (req === "cumulative_total") delete D.cap;
-  if (req !== "per_due_date") delete D.sessions;
+  if (req !== "per_due_date") { delete D.sessions; delete D.makeup; }
+  if (D.sessions) delete D.makeup;
+  if (req !== "cumulative_total" && D.streak?.value === "daily") delete D.streak;
   if (req !== "cumulative_total") delete D.finish;
   return d;
 }
@@ -1416,7 +1718,9 @@ function sdFromGoal(g) {
   const ap = g.active_period;
   if (ap.end_date || ap.duration_days || ap.start_date !== today()) D.period = { start: ap.start_date, mode: ap.duration_days ? "for" : ap.end_date ? "until" : "open", end: ap.end_date || "", days: String(ap.duration_days || 40) };
   if (req === "cumulative_total" && g.completion === "when_duration_ended") D.finish = { mode: "until" };
-  if (p0.streak_threshold !== autoStreak(d)) D.streak = { value: p0.streak_threshold };
+  if (g.count_policy.streak_amount) D.streak = { value: "daily", amount: String(g.count_policy.streak_amount) };
+  else if (p0.streak_threshold !== autoStreak(d)) D.streak = { value: p0.streak_threshold };
+  if (g.makeup && g.makeup !== "off") D.makeup = { value: g.makeup };
   if (g.name) D.name = { value: g.name[lang()] || g.name.en };
   if (g.counts === "dedicated") D.shared = false;
   return d;
@@ -1426,7 +1730,8 @@ function sdToGoal(d, base = null) {
   const num = (v) => { const n = intOrNull(v); return n > 0 ? n : 0; };
   const target = req === "tracker" ? null : num(d.amount);
   const fix = (th, p) => ((th === "minimum" && p.minimum == null) || (th === "maximum" && p.maximum == null) || (th === "target" && p.target == null) ? (p.target == null ? "any_count" : "target") : th);
-  const threshold = D.streak?.value || autoStreak(d);
+  const daily = D.streak?.value === "daily" && req === "cumulative_total";
+  const threshold = daily ? "any_count" : D.streak?.value || autoStreak(d);
   let schedule = structuredClone(d.schedule);
   if (req === "period_total" || (req === "days_per_period" && d.occasion !== "shawwal_six")) schedule = { kind: "every_day" };
   if (req === "cumulative_total") schedule = { kind: "one_time" };
@@ -1436,6 +1741,7 @@ function sdToGoal(d, base = null) {
   const requirement = req === "period_total" ? { type: req, period: d.period } : req === "days_per_period" ? { type: req, period: d.period, days: num(d.days) || 1 } : { type: req };
   const cp = { minimum: D.minimum ? num(D.minimum.value) : null, target, maximum: D.cap ? num(D.cap.value) : null, streak_threshold: null };
   cp.streak_threshold = fix(threshold, cp);
+  cp.streak_amount = daily ? num(D.streak.amount) || null : null;
   const sessions = D.sessions ? dedupeIds(D.sessions.list).map(({ id, s }) => {
     const p = { minimum: null, target: req === "tracker" ? null : num(s.amount), maximum: null, streak_threshold: null };
     p.streak_threshold = fix(threshold, p);
@@ -1454,6 +1760,8 @@ function sdToGoal(d, base = null) {
     completion: req === "cumulative_total" ? (D.finish?.mode === "until" ? "when_duration_ended" : "when_target_reached") : end || duration ? "when_duration_ended" : "never",
     counts: siblingsOf(d).length && D.shared === false ? "dedicated" : "shared",
     count_entries: base?.count_entries || [], created: base?.created || today(),
+    makeup: req === "per_due_date" && !D.sessions ? D.makeup?.value || "off" : "off",
+    excused: base?.excused || [], makeup_days: base?.makeup_days || [], versions: base?.versions || [], ended: base?.ended || null,
   };
 }
 const validMD = (cal, md) => Number.isInteger(md.month) && md.month >= 1 && md.month <= 12 && Number.isInteger(md.day) && md.day >= 1 && md.day <= (cal === "hijri" ? 30 : monthLen(2024, md.month));
@@ -1491,6 +1799,7 @@ function sdErrors(d) {
     if (v === "minimum" && !D.minimum) e.streak = t("err_streak_min");
     if (v === "maximum" && !D.cap) e.streak = t("err_streak_cap");
     if (v === "target" && req === "tracker") e.streak = t("err_streak_target");
+    if (v === "daily" && !(intOrNull(D.streak.amount) > 0)) e.streak = t("err_amount");
   }
   if (D.name && !D.name.value.trim()) e.name = t("err_name");
   return e;
@@ -1552,7 +1861,8 @@ function sdParts(d, T) {
   }
   if (D.finish) cl.finish = D.finish.mode === "reach" ? T(L.finishReach, { picker: "finish" }) : L.finishUntil(T(L.finishUntilWord, { picker: "finish" }), T(fmtD(D.period?.end), { picker: "finish" }, { bad: !!E.finish }));
   const streakVal = D.streak?.value || autoStreak(d);
-  if (D.streak) cl.streak = L.streak(T(L.streakVals[streakVal], { picker: "streak" }, { bad: !!E.streak }));
+  if (D.streak) cl.streak = L.streak(streakVal === "daily" ? L.perDay(numTok(D.streak.amount, "streakAmount", !!E.streak)) : T(L.streakVals[streakVal], { picker: "streak" }, { bad: !!E.streak }));
+  if (D.makeup) cl.makeup = L.makeup(T(L.makeupVals[D.makeup.value], { picker: "makeup" }));
   if (D.name) cl.name = L.name(T(D.name.value.trim() ? L.quote(D.name.value.trim()) : "?", { picker: "name" }, { bad: !!E.name }));
   const sib = siblingsOf(d).length > 0;
   if (sib && D.shared !== false) cl.shared = L.shared(T(dhikrName(d.dhikr), { picker: "shared" }));
@@ -1560,8 +1870,8 @@ function sdParts(d, T) {
 }
 function sdReadback(d) {
   const L = SL(), P = sdParts(d, plainTok), D = d.details;
-  return L.readback({ main: P.main, sessions: P.cl.sessions, clauses: [P.cl.minimum, P.cl.cap, P.cl.period, P.cl.finish].filter(Boolean),
-    streak: L.streakVals[P.streakVal], name: D.name?.value?.trim() ? L.quote(D.name.value.trim()) : null, shared: P.sib ? D.shared !== false : undefined, dhikr: dhikrName(d.dhikr) });
+  return L.readback({ main: P.main, sessions: P.cl.sessions, clauses: [P.cl.minimum, P.cl.cap, P.cl.period, P.cl.finish, P.cl.makeup].filter(Boolean),
+    streak: P.streakVal === "daily" ? L.perDay(gN(intOrNull(D.streak.amount) || 0)) : L.streakVals[P.streakVal], name: D.name?.value?.trim() ? L.quote(D.name.value.trim()) : null, shared: P.sib ? D.shared !== false : undefined, dhikr: dhikrName(d.dhikr) });
 }
 function sdPreview(d) {
   const g = sdToGoal(d, d.goalId ? goalById(d.goalId) : null);
@@ -1584,7 +1894,7 @@ const SD_EXAMPLES = [
 ];
 
 /* --- Level 1: the sentence, details, preview, read-back --- */
-const DETAIL_ORDER = ["minimum", "cap", "sessions", "period", "finish", "streak", "name", "shared"];
+const DETAIL_ORDER = ["minimum", "cap", "sessions", "period", "finish", "streak", "makeup", "name", "shared"];
 function sdLevel1(d) {
   const L = SL(), P = sdParts(d, uiTok), E = P.E;
   const reason = (k) => (typeof E[k] === "string" ? `<div class="sreason" role="alert">${esc(E[k])}</div>` : "");
@@ -1595,6 +1905,7 @@ function sdLevel1(d) {
       <button class="icon-btn pressable" data-action="close-create" aria-label="${esc(t("close"))}">${icon("close")}</button></div>
     <div class="sheet-scroll">
       <div class="examples" role="group" aria-label="${esc(t("s_examples"))}">${(L.examples || SENTENCE_L10N.en.examples).map((x, i) => `<button class="filter-chip pressable" data-action="s-example" data-i="${i}">${esc(x)}</button>`).join("")}</div>
+      ${d.mode === "edit" ? editNoteHTML(sdToGoal(d, goalById(d.goalId)), goalById(d.goalId)) : ""}
       <p class="sentence t-title">${P.main}</p>
       ${reason("amount")}${reason("days")}${reason("rhythm")}
       <div class="dlines t-body">${DETAIL_ORDER.filter((k) => P.cl[k]).map(line).join("")}</div>
@@ -1603,7 +1914,7 @@ function sdLevel1(d) {
     <div class="sheet-foot">
       <div data-slot="preview">${sdPreview(d)}</div>
       <p class="readback t-bodySmall" aria-live="polite">${esc(sdReadback(d))}</p>
-      <button class="btn main pressable" data-action="create-save" ${sdValid(d) ? "" : "disabled"}>${saveLabel(d)}</button>
+      <button class="btn main pressable" data-action="create-save" ${sdValid(d) ? "" : "disabled"}>${d.mode === "edit" && isStructural(goalById(d.goalId), sdToGoal(d, goalById(d.goalId))) ? t("save_new") : saveLabel(d)}</button>
     </div>`;
 }
 
@@ -1624,6 +1935,7 @@ const FIELD = {
   days: [(d) => d.days, (d, v) => (d.days = v)],
   minimum: [(d) => d.details.minimum?.value, (d, v) => (d.details.minimum.value = v)],
   cap: [(d) => d.details.cap?.value, (d, v) => (d.details.cap.value = v)],
+  streakAmount: [(d) => d.details.streak?.amount, (d, v) => (d.details.streak.amount = v)],
 };
 const fieldGet = (d, f) => (f.startsWith("session:") ? d.details.sessions.list[+f.slice(8)].amount : FIELD[f][0](d)) ?? "";
 const fieldSet = (d, f, v) => (f.startsWith("session:") ? (d.details.sessions.list[+f.slice(8)].amount = v) : FIELD[f][1](d, v));
@@ -1643,7 +1955,7 @@ function sdPicker(d) {
         <div class="options">${optionRow("any", t("s_anycount"), t("s_anycount_sub"), d.anyCount, "s-anycount")}</div>`) + foot;
     }
     case "number": {
-      const title = { days: t("p_days"), minimum: t("p_min"), cap: t("p_cap") }[p.field] || t("p_session_amount");
+      const title = { days: t("p_days"), minimum: t("p_min"), cap: t("p_cap"), streakAmount: t("p_streak_amount") }[p.field] || t("p_session_amount");
       return head(title) + body(padHTML(fieldGet(d, p.field))) + foot;
     }
     case "rhythm": {
@@ -1695,8 +2007,10 @@ function sdPicker(d) {
     case "streak": {
       const req = sdReq(d), cur = D.streak?.value || autoStreak(d);
       const vals = ["any_count", D.minimum && "minimum", !["tracker", "cumulative_total"].includes(req) && "target", D.cap && "maximum"].filter(Boolean);
-      return head(t("p_streak")) + body(`<div class="options">${vals.map((v) => optionRow(v, L.streakVals[v], "", cur === v, "s-streak")).join("")}</div>`);
+      const daily = req === "cumulative_total" ? optionRow("daily", t("sv_daily"), t("sv_daily_sub"), cur === "daily", "s-streak", `<div class="inline-fields">${input("details.streak.amount", D.streak?.amount || "", "number")}<span>${t("a_day")}</span></div>`) : "";
+      return head(t("p_streak")) + body(`<div class="options">${vals.map((v) => optionRow(v, L.streakVals[v], "", cur === v, "s-streak")).join("")}${daily}</div>`) + (cur === "daily" ? foot : "");
     }
+    case "makeup": return head(t("p_makeup")) + body(`<p class="t-bodySmall dim" style="margin:0 0 var(--s-md)">${t("makeup_help")}</p><div class="options">${["off", "next", "three"].map((k) => optionRow(k, L.makeupVals[k], "", (D.makeup?.value || "off") === k, "s-makeup")).join("")}</div>`);
     case "name": return head(t("p_name")) + body(input("details.name.value", D.name.value, "text", 'maxlength="40" autofocus')) + foot;
     case "shared": return head(t("p_shared")) + body(`<div class="options">${optionRow("share", t("sh_share"), t("shared_yes_sub"), D.shared !== false, "s-shared")}${optionRow("separate", t("sh_separate"), t("shared_no_sub"), D.shared === false, "s-shared")}</div>`);
     case "add": {
@@ -1705,7 +2019,7 @@ function sdPicker(d) {
         minimum: !D.minimum && !D.sessions && !["tracker", "cumulative_total"].includes(req),
         cap: !D.cap && !D.sessions && req !== "cumulative_total",
         sessions: !D.sessions && !D.minimum && !D.cap && req === "per_due_date",
-        period: !D.period, finish: !D.finish && req === "cumulative_total", streak: !D.streak, name: !D.name, shared: sib && D.shared === false,
+        period: !D.period, finish: !D.finish && req === "cumulative_total", streak: !D.streak, makeup: !D.makeup && !D.sessions && req === "per_due_date", name: !D.name, shared: sib && D.shared === false,
       };
       return head(t("s_add_detail")) + body(`<div class="options">${Object.keys(avail).filter((k) => avail[k]).map((k) => optionRow(k, t("d_" + k), "", false, "s-add")).join("")}
         <div><button class="option-row" disabled aria-disabled="true" style="opacity:var(--disabled-opacity)"><div class="body"><div class="t-rowTitle">${t("d_remind")}</div><div class="sub">${t("coming_soon")}</div></div></button></div></div>`);
@@ -1821,7 +2135,8 @@ function sentenceAction(a, el) {
     case "s-sess-rm": D.sessions.list.splice(+v, 1); d.picker = null; return done();
     case "s-end-mode": D.period.mode = v; if (v === "until" && !D.period.end) D.period.end = addDays(D.period.start, 30); return done();
     case "s-finish": D.finish.mode = v; if (v === "until") { D.period ||= { start: today(), mode: "until", end: "", days: "40" }; D.period.mode = "until"; if (!D.period.end) D.period.end = addDays(D.period.start, 60); } return done();
-    case "s-streak": D.streak = { value: v }; d.picker = null; return done();
+    case "s-streak": if (v === "daily") { D.streak = { value: "daily", amount: D.streak?.amount || "100" }; return done(); } D.streak = { value: v }; d.picker = null; return done();
+    case "s-makeup": D.makeup = { value: v }; d.picker = null; return done();
     case "s-shared": D.shared = v === "share"; d.picker = null; return done();
     case "s-add": {
       const target = intOrNull(d.amount) || 100;
@@ -1831,6 +2146,7 @@ function sentenceAction(a, el) {
       if (v === "period") { D.period = { start: today(), mode: "until", end: addDays(today(), 30), days: "40" }; d.picker = { kind: "end" }; }
       if (v === "finish") { D.finish = { mode: "reach" }; d.picker = { kind: "finish" }; }
       if (v === "streak") { D.streak = { value: autoStreak(d) }; d.picker = { kind: "streak" }; }
+      if (v === "makeup") { D.makeup = { value: "next" }; d.picker = { kind: "makeup" }; }
       if (v === "name") { D.name = { value: "" }; d.picker = { kind: "name" }; }
       if (v === "shared") { D.shared = true; d.picker = null; }
       return done();
@@ -1883,6 +2199,7 @@ function renderTemplates() {
         <input id="f-count" class="field t-input" inputmode="numeric" data-input="count" value="${esc(d.count)}">
         <div class="field-msg error" data-err="count"></div>
         <div class="chip-row" style="margin-top:var(--s-sm)">${quickCounts(d).map((n) => `<button class="filter-chip" aria-pressed="${String(n) === d.count}" data-action="quick-count" data-n="${n}">${fmtN(n)}</button>`).join("")}</div></div>
+      ${d.mode === "edit" ? editNoteHTML(draftToGoal(d, goalById(d.goalId)), goalById(d.goalId)) : ""}
       ${tp.extra ? `<div class="field-group">${d.template === "total" ? "" : `<div class="field-label t-label">${t("f_when")}</div>`}${tp.extra(d)}</div>` : ""}
       <button class="expander t-sectionTitle" data-action="toggle-more" aria-expanded="${d.moreOpen}" style="margin-top:0">${t("more_options")}${icon("expand")}</button>
       ${d.moreOpen ? morePanel(d, { skipEnd: !!tp.skipEnd }) : ""}
@@ -1925,16 +2242,39 @@ function refreshCreateValidation() {
   const pv = host.querySelector('[data-slot="preview"]');
   if (pv) pv.innerHTML = previewHTML(d);
 }
+/* The note on every edit (decision 23), plus the warning when the change can't be applied in place. */
+function editNoteHTML(g2, base) {
+  if (!base) return "";
+  return `<div class="edit-note t-bodySmall"><span class="dim">${t("edit_note")}</span>${isStructural(base, g2) ? `<div class="edit-warn t-label" role="alert">${t("edit_warn")}</div>` : ""}</div>`;
+}
 function saveDraft() {
   const d = state.draft, isB = d.flow === "sentence";
   if (isB ? !sdValid(d) : !draftValid(d)) return;
   const base = d.goalId ? goalById(d.goalId) : null;
-  const g = isB ? sdToGoal(d, base) : draftToGoal(d, base);
-  if (base) state.goals[state.goals.indexOf(base)] = g; else state.goals.push(g);
+  let g = isB ? sdToGoal(d, base) : draftToGoal(d, base);
+  const td = today(), yday = addDays(td, -1);
+  let msg = t("t_updated");
+  if (base) {
+    const idx = state.goals.indexOf(base);
+    if (isStructural(base, g)) {
+      // Ends the current goal (History, Ended) and starts a new one from today
+      Object.assign(g, { id: uuidv7(), count_entries: [], paused: [], excused: [], makeup_days: [], versions: [], ended: null, created: td });
+      g.active_period.start_date = td;
+      if (base.active_period.start_date >= td) state.goals[idx] = g;
+      else { base.ended = yday; state.goals.splice(idx, 0, g); }
+      msg = t("t_new_goal_started");
+    } else {
+      // In place, as a dated version: past days keep the settings they had
+      const changed = JSON.stringify([base.count_policy, base.sessions, base.makeup]) !== JSON.stringify([g.count_policy, g.sessions, g.makeup]);
+      g.versions = [...(base.versions || [])];
+      if (changed && base.active_period.start_date <= yday && !g.versions.some((x) => x.until === yday)) g.versions.push({ until: yday, count_policy: base.count_policy, sessions: base.sessions, makeup: base.makeup });
+      state.goals[idx] = g;
+    }
+  } else state.goals.push(g);
   save();
   if (d.flow === "sentence") closeOverlay();
   state.draft = null;
-  if (d.mode === "edit") { if (d.flow === "sentence") render(); else goBack(); toast(t("t_updated")); return; }
+  if (d.mode === "edit") { if (d.flow === "sentence") { if (state.route.name === "counting" && !goalById(state.route.goalId)) state.route = { name: "counting", goalId: g.id }; render(); } else goBack(); toast(msg); return; }
   state.goalsTab = "active"; state.stack = [];
   navigate({ name: "goals" }, d.flow === "sentence" && state.route.name === "goals" ? null : "pop");
   toast(t("t_saved")); flashGoal(g.id);
@@ -1993,26 +2333,103 @@ function createAction(a, el) {
 
 /* ============================================================== 11. Overlays */
 function openMenu(goalId, context) {
-  const g = goalById(goalId);
-  const paused = pausedOn(g, today());
+  const g = goalById(goalId), td = today(), paused = pausedOn(g, td);
   state.overlay = { kind: "menu", goalId, context };
-  const counting = context === "counting";
+  const counting = context === "counting", hist = context === "history";
+  const yday = addDays(td, -1), onYday = counting && countDay() === yday;
+  const row = (action, ic, label, cls = "") => `<button class="menu-row ${cls} pressable" data-action="${action}">${icon(ic)}${label}</button>`;
+  const rows = hist ? row("start-again", "play", t("start_again")) + row("ask-delete", "delete", t("delete_goal"), "danger")
+    : [counting ? row("set-goal-from\" data-dhikr=\"" + esc(g.dhikr), "add", t("set_goal")) : "",
+       counting ? (onYday ? row("count-today", "back", t("count_today")) : inActive(g, yday) ? row("count-yesterday", "back", t("count_yesterday")) : "") : "",
+       counting ? row("undo", "back", t("undo")).replace('icon i-back ', 'icon i-back mirror ') + row("reset-today", "close", t("reset_today")) : "",
+       row("edit-goal", "tune", t("edit")), row("toggle-pause", paused ? "play" : "pause", paused ? t("resume") : t("pause")),
+       hasCounts(g) ? row("end-goal", "close", t("end_goal"), "danger") : row("delete-goal", "delete", t("delete_goal"), "danger")].join("");
   renderOverlay(`<div class="overlay" data-overlay><div class="scrim" data-action="close-overlay"></div>
     <div class="bsheet" role="dialog" aria-label="${esc(goalTitle(g))}"><div class="handle"></div>
       <div class="sheet-title t-cardTitle">${esc(goalTitle(g))}</div><div class="sheet-sub t-caption">${esc(chipText(g))}</div>
-      ${counting ? `<button class="menu-row pressable" data-action="set-goal-from" data-dhikr="${esc(g.dhikr)}">${icon("add")}${t("set_goal")}</button>` : ""}
-      ${counting ? `<button class="menu-row pressable" data-action="undo">${icon("back", "mirror")}${t("undo")}</button><button class="menu-row pressable" data-action="reset-today">${icon("close")}${t("reset_today")}</button>` : ""}
-      <button class="menu-row pressable" data-action="edit-goal">${icon("tune")}${t("edit")}</button>
-      <button class="menu-row pressable" data-action="toggle-pause">${icon(paused ? "play" : "pause")}${paused ? t("resume") : t("pause")}</button>
-      <button class="menu-row danger pressable" data-action="ask-delete">${icon("delete")}${t("delete")}</button>
+      ${rows}
     </div></div>`, "sheet");
 }
 function openDeleteDialog(goalId) {
+  const g = goalById(goalId);
   state.overlay = { kind: "dialog", goalId };
   renderOverlay(`<div class="overlay center" data-overlay><div class="scrim" data-action="close-overlay"></div>
-    <div class="dialog" role="alertdialog" aria-labelledby="dlg-t"><h2 id="dlg-t" class="t-cardTitle">${t("delete_title")}</h2><p class="t-body">${t("delete_body")}</p>
+    <div class="dialog" role="alertdialog" aria-labelledby="dlg-t"><h2 id="dlg-t" class="t-cardTitle">${t("delete_title")}</h2><p class="t-body">${t(g.counts === "dedicated" ? "delete_body_dedicated" : "delete_body_shared")}</p>
       <div class="actions"><button class="btn text" data-action="close-overlay">${t("cancel")}</button><button class="btn error pressable" data-action="confirm-delete">${t("delete_btn")}</button></div></div></div>`, "dialog");
 }
+/* Remove a goal and offer a 5-second Undo (decision 27). */
+function removeGoal(g) {
+  const idx = state.goals.indexOf(g);
+  state.goals.splice(idx, 1); save();
+  toast(t("t_deleted"), () => { state.goals.splice(idx, 0, g); save(); render(); });
+}
+
+/* --- The stats sheet (decision 22): calendar, streak, best, consistency, lifetime total. Read-only for History. --- */
+const DAY_STATES = ["met", "min", "madeup", "excused", "paused", "missed"];
+function statsBody() {
+  const o = state.overlay, g = goalById(o.goalId), td = today(), yday = addDays(td, -1);
+  const [y, m] = o.month.split("-").map(Number), first = `${o.month}-01`, pad = WEEKDAYS.indexOf(weekday(first)), len = monthLen(y, m);
+  const monthName = fmtDate(first, { month: "long", year: "numeric" });
+  const startMonth = g.active_period.start_date.slice(0, 7), lastMonth = (activeEnd(g) && activeEnd(g) < td ? activeEnd(g) : td).slice(0, 7);
+  let cells = "".padEnd(0);
+  for (let i = 0; i < pad; i++) cells += `<span class="cal-day blank"></span>`;
+  for (let d = 1; d <= len; d++) {
+    const ds = `${o.month}-${String(d).padStart(2, "0")}`, st = dayState(g, ds, td), live = DAY_STATES.includes(st) || st === "today";
+    const inner = st === "madeup" ? icon("check", "small") : st === "paused" ? icon("pause", "small") : String(d);
+    cells += `<button class="cal-day st-${st} ${ds === td ? "is-today" : ""} ${o.sel === ds ? "sel" : ""}" ${live ? `data-action="cal-pick" data-date="${ds}"` : "disabled"} aria-label="${esc(fmtDate(ds, { day: "numeric", month: "long" }))}: ${esc(t("st_" + st))}" ${ds === td ? 'aria-current="date"' : ""}>${inner}</button>`;
+  }
+  const legend = DAY_STATES.map((k) => `<span class="lg"><i class="sw st-${k}"></i>${esc(t("st_" + k))}</span>`).join("");
+  let detail = "";
+  if (o.sel) {
+    const ds = o.sel, st = dayState(g, ds, td), S = snapAt(g, ds), n = countIn(g, ds, ds);
+    const tgt = S.sessions.length ? S.sessions.reduce((a, x) => a + (x.count_policy.target || 0), 0) : S.count_policy.target;
+    const monthCount = (g.excused || []).filter((x) => x.slice(0, 7) === ds.slice(0, 7)).length;
+    const canExcuse = st === "missed" && !o.readonly, atLimit = monthCount >= 2;
+    detail = `<div class="cal-detail"><div class="t-rowTitle">${esc(fmtDate(ds, { weekday: "long", day: "numeric", month: "long" }))}</div>
+      <div class="t-bodySmall dim">${esc(t("st_" + st))}${tgt && g.requirement.type !== "cumulative_total" ? " · " + esc(t("day_count", fmtN(n), fmtN(tgt))) : n ? " · " + fmtN(n) : ""}</div>
+      <div class="cal-actions">
+        ${!o.readonly && ds === yday && inActive(g, ds) && st !== "paused" ? `<button class="btn secondary pressable" data-action="count-yesterday">${t("count_yesterday")}</button>` : ""}
+        ${canExcuse ? `<button class="btn secondary pressable" data-action="excuse" data-date="${ds}" ${atLimit ? "disabled" : ""}>${t("mark_excused")}</button>${atLimit ? `<div class="field-msg">${esc(t("excuse_limit", fmtDate(ds, { month: "long" })))}</div>` : `<div class="field-msg">${esc(t("excuse_left", 2 - monthCount, fmtDate(ds, { month: "long" })))}</div>`}` : ""}
+        ${st === "excused" && !o.readonly ? `<button class="btn secondary pressable" data-action="unexcuse" data-date="${ds}">${t("remove_excused")}</button>` : ""}
+      </div></div>`;
+  }
+  const sk = streakOf(g, td), cons = consistencyOf(g, td);
+  const tile = (k, val, sub = "") => `<div class="stat"><div class="t-caption dim">${esc(k)}</div><div class="t-cardTitle">${esc(val)}</div>${sub ? `<div class="t-caption dim">${esc(sub)}</div>` : ""}</div>`;
+  const stats = `<div class="stats-grid">
+    ${tile(t("stat_streak"), sk.n ? t("streak_unit")[sk.unit](sk.n) : "0")}
+    ${tile(t("stat_best"), t("streak_unit")[sk.unit](bestStreakOf(g, td)))}
+    ${tile(t("stat_consistency"), cons ? `${cons.met}/${cons.of}` : "–", cons ? `${Math.round((cons.met / cons.of) * 100)}%` : t("stat_not_enough"))}
+    ${tile(t("stat_lifetime"), fmtN(lifetimeTotal(g)), dhikrName(g.dhikr))}
+  </div>`;
+  return `<div class="handle"></div>
+    <div class="sheet-head"><h2 class="t-cardTitle">${esc(goalTitle(g))}</h2><button class="icon-btn pressable" data-action="close-overlay" aria-label="${esc(t("close"))}">${icon("close")}</button></div>
+    <div class="sheet-scroll">
+      ${o.readonly ? `<p class="t-bodySmall dim" style="margin:0 0 var(--s-md)">${esc(t("read_only"))} · ${esc(goalResult(g, td))}</p>` : ""}
+      <div class="cal-head"><button class="icon-btn pressable" data-action="cal-prev" aria-label="${esc(t("prev_month"))}" ${o.month <= startMonth ? "disabled" : ""}>${icon("back", "mirror")}</button>
+        <div class="t-rowTitle">${esc(monthName)}</div>
+        <button class="icon-btn pressable" data-action="cal-next" aria-label="${esc(t("next_month"))}" ${o.month >= lastMonth ? "disabled" : ""}>${icon("forward", "mirror")}</button></div>
+      <div class="cal-grid cal-dow" aria-hidden="true">${WEEKDAYS.map((w) => `<span>${esc(weekdayName(w, "narrow"))}</span>`).join("")}</div>
+      <div class="cal-grid">${cells}</div>
+      <div class="cal-legend t-caption">${legend}</div>
+      ${detail}
+      ${stats}
+    </div>`;
+}
+function openStats(goalId, readonly = false) {
+  const td = today(), g = goalById(goalId);
+  const cap = activeEnd(g) && activeEnd(g) < td ? activeEnd(g) : td;
+  state.overlay = { kind: "stats", goalId, readonly, month: cap.slice(0, 7), sel: null };
+  renderOverlay(`<div class="overlay" data-overlay><div class="scrim" data-action="close-overlay"></div>
+    <div class="bsheet create-sheet stats-sheet" role="dialog" aria-label="${esc(t("stats"))}"><div class="level1">${statsBody()}</div></div></div>`, "sheet");
+}
+function renderStats() {
+  const l1 = document.querySelector("#overlay-host .stats-sheet .level1");
+  if (!l1) return;
+  const sc = l1.querySelector(".sheet-scroll")?.scrollTop || 0;
+  l1.innerHTML = statsBody();
+  l1.querySelector(".sheet-scroll").scrollTop = sc;
+}
+const shiftMonth = (mo, n) => { const [y, m] = mo.split("-").map(Number), d = new Date(Date.UTC(y, m - 1 + n, 1)); return d.toISOString().slice(0, 7); };
 function renderOverlay(html, kind) {
   const host = document.getElementById("overlay-host");
   host.innerHTML = html;
@@ -2033,29 +2450,30 @@ function closeOverlay() {
   if (panel && !reduced()) panel.animate([{ transform: "none" }, { transform: "translateY(40%)" }], { duration: MOTION.duration.short, easing: MOTION.easing.accelerate, fill: "forwards" });
   a.onfinish = () => { if (host.firstElementChild === el) host.innerHTML = ""; };
 }
-let toastTimer;
-function toast(msg) {
+let toastTimer, toastUndo = null;
+function toast(msg, undo = null) {
   const host = document.getElementById("toast-host");
-  host.innerHTML = `<div class="toast" role="status">${esc(msg)}</div>`;
+  toastUndo = undo;
+  host.innerHTML = `<div class="toast ${undo ? "with-action" : ""}" role="status"><span>${esc(msg)}</span>${undo ? `<button class="btn text pressable" data-action="toast-undo">${t("undo_btn")}</button>` : ""}</div>`;
   const el = host.firstElementChild;
   if (["counting", "create"].includes(state.route.name)) el.style.bottom = "calc(34px + var(--s-lg))";
   el.animate([{ opacity: 0, transform: reduced() ? "none" : "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: MOTION.duration.short, easing: MOTION.easing.decelerate });
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { const a = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: MOTION.duration.color, fill: "forwards" }); a.onfinish = () => el.remove(); }, 2200);
+  toastTimer = setTimeout(() => { toastUndo = null; const a = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: MOTION.duration.color, fill: "forwards" }); a.onfinish = () => el.remove(); }, undo ? 5000 : 2200);
 }
 
 /* ============================================================== 12. Motion */
 const reduced = () => state.settings.reducedMotion;
 let currentScreen = null;
 function navigate(route, kind = "push") {
-  stopAudio();
+  stopAudio(); state.targetCard = null;
   if (kind === "push") state.stack.push(state.route);
   state.route = route;
   render(kind);
 }
 function goBack() {
   const prev = state.stack.pop() || { name: "home" };
-  stopAudio();
+  stopAudio(); state.targetCard = null;
   state.route = prev;
   render("pop");
 }
@@ -2140,11 +2558,13 @@ function pressUp(el) {
 
 /* --- Counting --- */
 function haptic(kind) {
-  const pattern = { tick: 8, threshold: 20, success: [20, 60, 40] }[kind];
+  // soft: the minimum; threshold: kept for the pad; success: the target; strong: the cap (decision 15)
+  const pattern = { tick: 8, soft: 12, threshold: 20, success: [20, 60, 40], strong: [40, 50, 40, 50, 80] }[kind];
   const ok = typeof navigator.vibrate === "function" && navigator.vibrate(pattern);
   const log = document.getElementById("haptic-log");
   if (log) log.textContent = `${new Date().toLocaleTimeString()} haptic: ${kind}${ok ? "" : " (no vibrate API here)"}`;
 }
+/* Set today's absolute count for a goal (window-aware). Used by the Lab's "Counter at N". */
 function setCount(g, session, value) {
   const td = today();
   const [from] = windowOf(g, td);
@@ -2154,35 +2574,49 @@ function setCount(g, session, value) {
   if (entry) entry.count = todayValue; else if (todayValue) g.count_entries.push({ date: td, session, count: todayValue });
   if (entry && !entry.count) g.count_entries.splice(g.count_entries.indexOf(entry), 1);
 }
+/* Add (or remove) counts on a day: today, yesterday (late counting, decision 17) or a make-up day (decision 18). */
+function addCount(g, session, date, delta) {
+  const entry = g.count_entries.find((c) => c.date === date && c.session === session);
+  if (entry) { entry.count = Math.max(0, entry.count + delta); if (!entry.count) g.count_entries.splice(g.count_entries.indexOf(entry), 1); }
+  else if (delta > 0) g.count_entries.push({ date, session, count: delta });
+}
 /* counts: "shared" — a count on one goal also counts for the other shared goals on the same
    dhikr (prototype model: mirrored entries, goals without sessions, while both are active). */
-function shareDelta(g, delta) {
+function shareDelta(g, delta, date = today()) {
   if (!delta || g.counts !== "shared" || g.sessions.length) return;
-  const td = today();
   for (const o of state.goals) {
-    if (o === g || o.dhikr !== g.dhikr || o.counts !== "shared" || o.sessions.length || !inActive(o, td)) continue;
-    const entry = o.count_entries.find((c) => c.date === td && c.session === null);
-    if (entry) entry.count = Math.max(0, entry.count + delta); else if (delta > 0) o.count_entries.push({ date: td, session: null, count: delta });
+    if (o === g || o.dhikr !== g.dhikr || o.counts !== "shared" || o.sessions.length || !inActive(o, date)) continue;
+    addCount(o, null, date, delta);
   }
 }
 function increment(by = 1) {
   const g = goalById(state.route.goalId);
   if (!g) return;
-  const td = today(), session = g.sessions.length ? state.session : null, p = policyOf(g, session);
-  const before = progressOf(g, td, session);
-  if (p.maximum != null && before >= p.maximum) { haptic("threshold"); toast(t("t_cap", fmtN(p.maximum))); popCircle(true); return; }
-  setCount(g, session, before + by);
-  shareDelta(g, by);
-  const after = before + by;
-  save();
-  if (p.target && before < p.target && after >= p.target) {
-    haptic("success");
-    if (!g.sessions.length) toast(t("t_target"));
-    else toast(g.sessions.every((x) => countOn(g, td, x.id) >= (x.count_policy.target ?? 1)) ? t("t_all_sessions") : t("t_session_done", capFirst(sessionLabel(session))));
+  const td = today(), day = countDay(), session = g.sessions.length ? state.session : null;
+  const M = counterModel(g, session, day), p = M.p, before = M.count;
+  // Make-up (18): once today's target is met, extra counts fill the missed day first
+  const mu = day === td && M.kind === "std" && p.target && before >= p.target ? makeupInfo(g, td) : null;
+  if (mu) {
+    addCount(g, null, mu.date, by); shareDelta(g, by, mu.date);
+    const filled = mu.count + by >= mu.need;
+    if (filled) { g.makeup_days.push(mu.date); haptic("success"); toast(t("t_madeup", weekdayName(weekday(mu.date)))); } else haptic("tick");
+    save(); updateCounting(before, { pulse: filled }); popCircle();
+    return;
   }
-  else if (p.minimum && before < p.minimum && after >= p.minimum) { haptic("threshold"); toast(t("t_min")); }
+  if (p.maximum != null && before >= p.maximum) { haptic("strong"); popCircle(true); return; }
+  addCount(g, session, day, by); shareDelta(g, by, day);
+  const after = counterModel(g, session, day).count;
+  save();
+  let pulse = false;
+  if (p.maximum != null && after >= p.maximum) haptic("strong");
+  else if (p.target && before < p.target && after >= p.target) {
+    haptic("success"); pulse = true;
+    if (!g.sessions.length) { if (day === td) state.targetCard = { goalId: g.id, day }; }
+    else toast(g.sessions.every((x) => countOn(g, day, x.id) >= (x.count_policy.target ?? 1)) ? t("t_all_sessions") : t("t_session_done", capFirst(sessionLabel(session))));
+  }
+  else if (p.minimum && before < p.minimum && after >= p.minimum) haptic("soft");
   else haptic("tick");
-  updateCounting(before, after);
+  updateCounting(before, { pulse });
   popCircle();
 }
 /* Sessions on the counter (decision B): manual pills. The current (or next) session is
@@ -2219,47 +2653,66 @@ function sessionPills(g, selected, td) {
     <div class="session-state t-caption">${esc(t("sessions_done", done, g.sessions.length))}${cur !== selected ? ` · ${esc(t("session_now", sessionLabel(cur)))}` : ""}</div>
   </div>`;
 }
-function updateCounting(before, after) {
+function updateCounting(before, opts = {}) {
   const g = goalById(state.route.goalId), root = currentScreen;
   if (!g || !root) return;
-  const td = today(), session = g.sessions.length ? state.session : null, p = policyOf(g, session);
+  const V = counterView(g), { M, session } = V, p = M.p, after = M.count, td = today();
+  if (state.targetCard && !(p.target && after >= p.target)) state.targetCard = null;
   // number roll (countTap: numberTransition roll)
   const num = root.querySelector('[data-slot="num"]');
-  num.querySelectorAll(".out").forEach((n) => n.remove());
-  const old = num.firstElementChild, fresh = document.createElement("span");
-  fresh.textContent = after;
-  if (old) { old.classList.add("out"); num.appendChild(fresh); } else num.appendChild(fresh);
-  const up = after >= before ? 1 : -1;
-  if (reduced()) {
-    old?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: MOTION.duration.color, fill: "forwards" }).finished.then(() => old.remove()).catch(() => {});
-    fresh.animate([{ opacity: 0 }, { opacity: 1 }], { duration: MOTION.duration.color });
-  } else {
-    const s = spring("spatial");
-    old?.animate([{ transform: "none", opacity: 1 }, { transform: `translateY(${-60 * up}%)`, opacity: 0 }], { duration: MOTION.duration.short, easing: MOTION.easing.emphasized, fill: "forwards" }).finished.then(() => old.remove()).catch(() => {});
-    fresh.animate([{ transform: `translateY(${60 * up}%)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: s.duration, easing: s.easing });
+  if (after !== before || num.textContent.trim() !== String(after)) {
+    num.querySelectorAll(".out").forEach((n) => n.remove());
+    const old = num.firstElementChild, fresh = document.createElement("span");
+    fresh.textContent = after;
+    if (old) { old.classList.add("out"); num.appendChild(fresh); } else num.appendChild(fresh);
+    const up = after >= before ? 1 : -1;
+    if (reduced()) {
+      old?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: MOTION.duration.color, fill: "forwards" }).finished.then(() => old.remove()).catch(() => {});
+      fresh.animate([{ opacity: 0 }, { opacity: 1 }], { duration: MOTION.duration.color });
+    } else {
+      const s = spring("spatial");
+      old?.animate([{ transform: "none", opacity: 1 }, { transform: `translateY(${-60 * up}%)`, opacity: 0 }], { duration: MOTION.duration.short, easing: MOTION.easing.emphasized, fill: "forwards" }).finished.then(() => old.remove()).catch(() => {});
+      fresh.animate([{ transform: `translateY(${60 * up}%)`, opacity: 0 }, { transform: "none", opacity: 1 }], { duration: s.duration, easing: s.easing });
+    }
   }
   // ring fill (ringFill: spatial spring; countComplete: spatialSlow)
   const ringHost = root.querySelector('[data-slot="ring"]');
-  const oldArc = ringHost.querySelector(".r-arc"), oldDash = parseFloat(oldArc.getAttribute("stroke-dasharray"));
+  const olds = Object.fromEntries([...ringHost.querySelectorAll(".r-arc")].map((a) => [a.classList.contains("r-arc-l") ? "l" : "s", parseFloat(a.dataset.len)]));
   const svg = ringHost.querySelector("svg");
   const tmp = document.createElement("div"); tmp.innerHTML = ringSVG(264, 10, after, p);
   ringHost.replaceChild(tmp.firstElementChild, svg);
-  const arc = ringHost.querySelector(".r-arc"), newDash = parseFloat(arc.getAttribute("stroke-dasharray"));
   const crossedLap = p.target && (before <= p.target) !== (after <= p.target);
-  if (!reduced() && !crossedLap && oldDash !== newDash) {
+  if (!reduced() && !crossedLap) {
     const s = spring(p.target && after === p.target ? "spatialSlow" : "spatial");
-    arc.setAttribute("opacity", 1);
-    arc.animate([{ strokeDasharray: `${oldDash} 100` }, { strokeDasharray: `${newDash} 100` }], { duration: s.duration, easing: s.easing });
+    for (const [k, cls] of [["l", ".r-arc-l"], ["s", ".r-arc-s"]]) {
+      const arc = ringHost.querySelector(cls), n = parseFloat(arc.dataset.len);
+      if (olds[k] !== n && n > 0) { arc.setAttribute("opacity", k === "l" ? 0.4 : 1); arc.animate([{ strokeDasharray: `${olds[k] || 0} 100` }, { strokeDasharray: `${n} 100` }], { duration: s.duration, easing: s.easing }); }
+    }
   } else if (crossedLap && !reduced()) {
     ringHost.querySelector(".r-lap").animate([{ opacity: 0 }, { opacity: 1 }], { duration: MOTION.duration.color, easing: "linear" });
   }
-  // chip + streak + label (contentSwap)
-  const chip = root.querySelector('[data-slot="cchip"]'), next = counterChip(g, after, p, td);
-  if (chip.textContent !== next) { chip.textContent = next; chip.animate([{ opacity: 0 }, { opacity: 1 }], { duration: MOTION.duration.color, easing: "linear" }); }
+  if (opts.pulse) pulseRing();
+  // chip + slot + streak + label (contentSwap)
+  const swap = (el, html, isText) => {
+    const cur = isText ? el.textContent : el.innerHTML;
+    if (cur === html) return;
+    if (isText) el.textContent = html; else el.innerHTML = html;
+    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: MOTION.duration.color, easing: "linear" });
+  };
+  swap(root.querySelector('[data-slot="cchip"]'), V.chip, true);
+  swap(root.querySelector('[data-slot="slot"]'), V.slot, false);
+  root.querySelector('[data-counter="circle"]').classList.toggle("capped", V.capped);
   root.querySelector('[data-slot="streak"]').innerHTML = streakHTML(g, td);
   const pills = root.querySelector('[data-slot="sessions"]');
-  if (pills) { const sc = pills.querySelector(".seg")?.scrollLeft || 0; pills.outerHTML = sessionPills(g, session, td); root.querySelector('[data-slot="sessions"] .seg').scrollLeft = sc; }
+  if (pills) { const sc = pills.querySelector(".seg")?.scrollLeft || 0; pills.outerHTML = sessionPills(g, session, V.day); root.querySelector('[data-slot="sessions"] .seg').scrollLeft = sc; }
   root.querySelector('[data-counter="circle"]').setAttribute("aria-label", `${t("tap_circle")}: ${after}`);
+}
+/* Reaching the target: a pulse that grows out of the ring and fades (decision 15). */
+function pulseRing() {
+  const c = currentScreen?.querySelector(".r-pulse");
+  if (!c || reduced()) return;
+  c.style.transformBox = "fill-box"; c.style.transformOrigin = "center";
+  c.animate([{ opacity: 0.6, transform: "scale(1)" }, { opacity: 0, transform: "scale(1.14)" }], { duration: MOTION.duration.long, easing: MOTION.easing.decelerate });
 }
 function popCircle(blocked = false) {
   const c = currentScreen?.querySelector('[data-counter="circle"]');
@@ -2290,91 +2743,75 @@ function stopAudio() {
 /* ============================================================== 13. Lab */
 const NOTES = `
 <div class="notes">
-  <div class="tq"><strong>Token question: the gold ring.</strong> The approved counting design draws progress in amber/gold
-    (<span class="swatch" style="background:#D9A520"></span><code>#D9A520</code> light,
-    <span class="swatch" style="background:#E4B442"></span><code>#E4B442</code> dark here, both guessed). It isn't in
-    <code>colors.json</code>' palette, and <code>npm test</code> rejects off-palette role values. Options: add a palette colour and a role
-    such as <code>progressHighlight</code> (needs a 3 : 1 contrast pair against background, surface and the pale circle), or use
-    <code>progress</code> (try the "Counter ring colour" variant). Everything else uses token colours.</div>
+  <p class="sub" style="margin-top:0">Decisions 14 to 30 of <code>docs/slices/04-goals-decisions.md</code> are in. Each decision has a preset or a Jump button to see it (Controls and Data tabs). What's left below is open, assumed or not designed.</p>
 
-  <h3>Minimum / target display</h3>
+  <h3>Counter</h3>
   <ul>
-    <li>The design shows one arc that runs to the target, the chip "minimum 70" and "target 100" in the goal chip. How the minimum shows on the ring itself isn't designed. Variants: a minimum dot, and gold → green once the minimum is met.</li>
-    <li>Past the target the ring is a grey full lap plus a gold overflow arc. The grey isn't named; <code>outlineStrong</code> is used. A second overflow lap (count over 2× target) just stays full here.</li>
-    <li>The chip under the counter is "minimum 70" in the design. Draft: it shows the next threshold (minimum → target → "+10 over target"), with a variant for the static chip.</li>
-    <li>At exactly the target the ring is one full gold lap (not grey), so reaching the target reads as done.</li>
-    <li>A cap (maximum) blocks further taps with a shake, a threshold haptic and a toast. Not designed.</li>
+    <li>The ring is the green <code>progress</code> token: <code>progress</code> at 40% below the minimum, full from the minimum to the target. In dark mode <code>progress</code> is light grey, so the "green" is grey there. The gold arc is off (Variants).</li>
+    <li>The minimum tick, the ring pulse and the dimmed circle at the cap have no motion or colour tokens. The pulse is a stroke that grows 14% and fades over <code>long</code> (450 ms). The dim reuses the disabled opacity.</li>
+    <li>Haptics are web <code>navigator.vibrate</code> patterns: soft 12 ms (minimum), success (target), strong (cap). The real patterns are a platform choice.</li>
+    <li>The target card stays while you keep counting and goes when you leave the counter or undo below the target. It is not shown when the cap equals the target (the limit message wins), or for session goals (they keep a toast).</li>
+    <li>"Next: ..." takes the first unfinished due goal in the user's order. A goal with sessions keeps its place in that order; following its next session's time (decision 24) isn't modelled.</li>
+    <li>Tap area: the whole lower zone counts, except the card and buttons inside it. A "circle only" variant remains (decision 16 says it may be revisited).</li>
+    <li>Pace goals (28): the circle shows today's count against today's share, the chip "Today 40 of about 150", the line below the overall total. Open-ended total goals show the total in the circle and "Today N" in the chip.</li>
+    <li>Trackers (30): a plain count, no ring fill, no card; the chip shows the total.</li>
   </ul>
 
-  <h3>Copy and chips</h3>
+  <h3>Late counting, make-up, excused days</h3>
   <ul>
-    <li>The design's chip copy isn't systematic ("Daily 100" vs "minimum 70, target 100 daily" vs "10 every thursday"). The prototype reproduces those exactly and invents the rest (weekday lists, white days, caps, sessions). Needs a copy system and plural rules for ar and ml.</li>
-    <li>Capitalisation differs between chips ("Daily", "minimum", "Every", "every"). Kept as designed.</li>
-    <li>"70000 times" has no digit grouping in the design; variant for grouped digits. Arabic mode uses Western digits; Arabic-Indic digits are an open question.</li>
-    <li>Upcoming second line: "1 ramadan" and "5 thurdays" (typo in the design) are read as occurrences left. They could also mean "starts 1 Ramadan" and "5 Thursdays done"; variant shows the next due date instead.</li>
-    <li>Target 1 drops the number ("Every Ramadan 1-10 daily"), which is how the Ramadan design chip is reproduced.</li>
+    <li>Late counting is yesterday only, from the ⋮ menu or the calendar; after midnight plus a day it's final. Counts carry no marker and are mirrored to goals that share counts.</li>
+    <li>Make-up windows (next day, within 3 days) are still assumed. Extra counts fill the oldest missed day in the window to the amount that keeps the streak (for 100 / minimum 70 that is 70, not 100) rather than to the target. The user may expect the target.</li>
+    <li>Make-up exists for daily goals without sessions only. The sentence flow has the setting; A and C don't. While counting for yesterday, make-up isn't offered.</li>
+    <li>Excused days are limited per goal per calendar month of the excused day. They can't be set for today, or for a paused day. A weekly or monthly goal has no excused-period concept.</li>
+    <li>The "yesterday was missed" message that decision 20 mentions isn't built; excusing happens in the calendar only.</li>
   </ul>
 
-  <h3>Model and data assumptions</h3>
+  <h3>Streaks, tags and rows</h3>
   <ul>
-    <li>A goal's title is its dhikr's title, except "Ramadan first 10 dhikr" and "Dua Kumayl", which need a goal name (the schema has none) or a custom dhikr. Dua Kumayl isn't in the catalog, so it's a stand-in custom dhikr.</li>
-    <li>Rules are a simplified re-implementation for the prototype, not the fixture-tested domain code: Hijri dates come from <code>Intl</code> islamic-umalqura (no corrections, midnight reset, no Maghrib reset), week start is Monday.</li>
-    <li>With sessions, list rings show the sum across sessions against the summed targets; the counter shows one session at a time. Each session copies the goal's count policy (the draft has no per-session numbers yet).</li>
-    <li>A cumulative goal that reaches its total moves to History at once (completion "when target reached"). It might deserve a "done today" moment on Today's goals first.</li>
-    <li>"Once, with a total" maps to <code>one_time</code> + <code>cumulative_total</code> + <code>when_target_reached</code>. The design's 70000/4444 goals are modelled as <code>every_day</code> + <code>cumulative_total</code> (as in the streak fixture).</li>
-    <li>Streak threshold defaults: minimum when set, else target; cumulative goals use any count.</li>
-    <li>A paused goal moves to a "Paused" section on Active (not in the design). Resume ends the pause yesterday.</li>
-    <li>"Ramadan → First 10" isn't a preset (presets have whole month, last ten and odd nights), so it saves as a custom yearly Hijri range.</li>
+    <li>Consistency covers the last 30 due days ending today if met, else yesterday. Weekly and monthly goals use the last 12 periods (an assumption: the decision says "periods"). Under 7 due days (4 periods) there's no tag and the stats sheet says "Not enough days yet".</li>
+    <li>After a break, a new streak of 1 or 2 days shows the tag (or nothing under 80%); from 3 days it shows 🔥. A streak that never broke shows 🔥 from day 1.</li>
+    <li>Total goals (29): the streak amount defaults to any count, or to today's share when there's an end date. List rings fill toward the daily number when one is set; with neither, toward the overall total as before.</li>
+    <li>Best streak and the 30-day consistency are computed from the counts; they ignore days the goal's old settings made different (they use each day's own version).</li>
   </ul>
 
-  <h3>Create flows (A / B / C)</h3>
+  <h3>Stats sheet and calendar</h3>
   <ul>
-    <li>All three edit one draft and save through the same <code>draftToGoal</code>, so the saved goal is identical whichever flow made it. Edit opens the goal in the current flow.</li>
-    <li>Entry points: My Goals +, "Set a goal" on the counting page's ⋮ menu, and "Set a goal" on each dhikr of the Library stub (both pre-fill the dhikr; the wizard then starts at How many?).</li>
-    <li>B was reworked for advanced goals (below). Its tokens have a 48 touch target, and pickers open as a second level so the sheet keeps one height.</li>
-    <li>C's Ramadan and White days cards use a text avatar ("R", "13"): <code>icons.json</code> has no moon or calendar icon.</li>
-    <li>"In total" in B and C defaults to 10,000 / 70,000 when the number was a daily-sized one.</li>
+    <li>The ☰ (list icon) button is the third button under the Arabic card, where "count history" used to be. The timer is still a stub.</li>
+    <li>Day colours: met = <code>primary</code>, minimum only = <code>primary</code> at 40%, made up = <code>primary</code> with a check, excused = <code>surface</code>, paused = <code>outline</code> with a pause icon, missed = <code>error</code> text. These are a first attempt and need a design pass. Weekly and monthly goals mark any day with a count as met.</li>
+    <li>Lifetime total for the dhikr: dedicated goals add up; goals that share counts hold the same counts, so the largest one stands. The real model needs a dhikr-level count store.</li>
+    <li>History opens the same sheet read-only.</li>
   </ul>
 
-  <h3>B, the sentence: what doesn't fit</h3>
+  <h3>Editing, ending, deleting, History</h3>
   <ul>
-    <li>Session timing (after a prayer, at a time, between two times) isn't in the goal-model session (<code>{ id, count_policy }</code>), so it's encoded in the id: <code>after_fajr</code>, <code>at_0730</code>, <code>between_1800_2000</code>. A real schema needs a session kind.</li>
-    <li>A minimum or cap per session has no room in "[100] after [Fajr]", so minimum and cap are offered only without sessions (and sessions only without them).</li>
-    <li>"Days per period" with a narrower schedule (3 of my Mon–Fri) has no sentence; only the Shawwal occasion combines the two. A period total also resets the schedule to every day.</li>
-    <li>The active period is "until a date" or "for N days", not both, though the schema allows both (the earlier wins).</li>
-    <li>Yearly schedules edit one date or one range; several ranges come only from occasions (Ramadan odd nights).</li>
-    <li>A cumulative goal saved from B uses <code>one_time</code>; the seeded 70000/4444 goals use <code>every_day</code>, so editing them in B changes that.</li>
-    <li>For cumulative goals the streak offers "any count" only; "the target" would compare one day with the whole total.</li>
-    <li>"Read" (dua) and "Say" are the same verb in Malayalam here. Malayalam covers the sentence sheet only; the rest of the UI falls back to English. Arabic and Malayalam wording need a native review.</li>
-    <li>Not in the sentence: pausing (a menu action), Hijri corrections and the day reset (account settings), reminders (a disabled "coming soon" row).</li>
-    <li>The day grids are 48 tall but about 45 wide, under the 48 touch target width.</li>
+    <li>In-place edits keep dated versions of the count policy, sessions and make-up setting. The schedule, end date and name change from the edit on and aren't versioned.</li>
+    <li>A structural edit (dhikr, schedule type, requirement type) ends the old goal yesterday (it joins History as Ended with its results) and starts a new one today with no counts, in the old goal's place in the order. If the old goal started today it is simply replaced.</li>
+    <li>"End goal" sets the goal's last day to today. The Undo snackbar (5 s) puts it back. A goal without counts shows "Delete goal" and deletes at once, also with Undo.</li>
+    <li>"Shared counts stay; dedicated ones go" is only the dialog text here: the prototype keeps counts per goal, not per dhikr.</li>
+    <li>"Start again" copies the goal with no counts, starting today, and keeps the original length when it had an end date.</li>
+    <li>History groups by the year a goal finished. A year with 5 or more goals gets a summary. The seed has 3 years' worth: this year has 9.</li>
   </ul>
 
-  <h3>Sessions on the counter (decision B)</h3>
+  <h3>My Goals and Home</h3>
   <ul>
-    <li>Manual pills under the header, each with its own progress. The session whose window holds the current time (or the next one) is pre-selected; the Lab's "Time of day" moves the clock. Any session can be picked at any time, including a missed one; windows only guide.</li>
-    <li>A session's window runs from its start to its own end ("between") or to the next session's start. Prayer times are fixed stand-ins (Fajr 05:10, Dhuhr 12:25, Asr 15:42, Maghrib 18:05, Isha 19:20).</li>
-    <li>The day is met only when every session meets its own number, so the streak needs all of them. Home and My Goals rings show the day's combined progress.</li>
+    <li>My Goals shows the user's order as-is (finished goals don't sink there, so reordering stays predictable). Home sinks finished goals and shows 3.</li>
+    <li>Reorder moves goals inside their group (Today's, Upcoming, Tracking, Paused). The drag handle uses the <code>goals</code> icon and the arrows use <code>expand</code>: there is no drag-handle icon in <code>icons.json</code>.</li>
+    <li>Trackers are off Home (30). With no due goals left on Home but a tracker, Home reads "Nothing due today".</li>
   </ul>
 
-  <h3>Shared counts (decision C)</h3>
+  <h3>Still open from earlier</h3>
   <ul>
-    <li>When another live goal uses the same dhikr, every flow asks "Count X from your other goal too?" with shared pre-selected. Stored as <code>counts: "shared" | "dedicated"</code> on the goal; the count history moved to <code>count_entries</code> (state key bumped to v2, so saved prototype state reset).</li>
-    <li>Prototype model: a count on a shared goal is mirrored into the other shared goals on that dhikr for today (goals without sessions, while active). How the real model stores this, and whether history before the new goal counts, is open.</li>
-  </ul>
-
-  <h3>Design gaps</h3>
-  <ul>
-    <li>No timer icon in <code>icons.json</code>, so the timer button is a text label; no edit/pencil icon (<code>tune</code> used); no backspace icon (the pad's key says "Delete"). The list button uses the <code>goals</code> icon. What the timer and list buttons do isn't designed (toasts).</li>
-    <li>"Start audio count" is simulated: +1 every 1.2 s until stopped.</li>
-    <li>"Aa" cycles three Arabic sizes (24, 28, 32); only 24 (<code>quran</code>) is a token.</li>
-    <li>Ring sizes: My Goals uses 48 (no token; <code>ringSmall</code> is 36, used on Home). The counter circle (228), ring (264) and its stroke (10) have no tokens.</li>
-    <li>The streak glyph is 16 px (no token) and the goal chip uses <code>caption</code> text with xs × sm padding, tighter than the tag chip spec, to fit the design.</li>
-    <li>Counting in RTL mirrors the ring (it fills counter-clockwise). Unconfirmed.</li>
-    <li>No compact top bar when the large title scrolls away; no swipe-to-dismiss on sheets; toasts aren't a spec'd component.</li>
-    <li>Home's Next prayer card and collection tiles are static stand-ins.</li>
-    <li>The option rows in "When?" have no avatar circle (the spec has one, for language rows).</li>
-    <li>Strings: en and ar only (ml missing), kept in <code>STRINGS</code> in prototype.js, not localization resources.</li>
+    <li>Chip copy isn't systematic ("Daily 100" vs "minimum 70, target 100 daily"); capitalisation differs. Reproduced as designed.</li>
+    <li>"70000 times" has no digit grouping in the design (variant for grouping). Arabic mode uses Western digits.</li>
+    <li>Upcoming second line ("1 ramadan", "5 thurdays") is read as occurrences left; a variant shows the next due date.</li>
+    <li>A goal's title is its dhikr's title unless it has a name; the schema has no name field. Dua Kumayl is a stand-in custom dhikr.</li>
+    <li>Rules are a simplified re-implementation, not the fixture-tested domain code (Hijri from <code>Intl</code>, week start Monday, midnight reset).</li>
+    <li>Session goals: rings show the day's combined progress, the counter one session at a time; each session copies the goal's policy. Session timing is encoded in the session id.</li>
+    <li>Create flows (A, B, C) share one goal shape. B is the default now. B covers every schedule, requirement, make-up and the daily streak number; A and C cover the common cases.</li>
+    <li>Not in the sentence: pausing, Hijri corrections, the day reset, reminders (a disabled row).</li>
+    <li>No timer icon, no edit icon (<code>tune</code> stands in), no backspace icon. "Start audio count" is simulated (+1 every 1.2 s). "Aa" cycles three Arabic sizes; only 24 is a token.</li>
+    <li>Ring sizes (48 on My Goals, 264 and 228 on the counter) and the 16 px streak glyph have no tokens. RTL mirrors the ring (unconfirmed).</li>
+    <li>Strings are in <code>STRINGS</code> (en, ar, partly ml), not localization resources. Arabic and Malayalam wording need a native review; Malayalam falls back to English for most of the new stats and History text.</li>
   </ul>
 </div>`;
 function renderLab() {
@@ -2407,6 +2844,8 @@ function renderLab() {
     <div class="btns">${Object.entries(VARIANTS.createFlow.options).map(([k, label]) => `<button data-try="${k}" class="${v("createFlow") === k ? "primary" : ""}">Try ${esc(label)}</button>`).join("")}</div>
     <div class="msg">Opens the create flow from My Goals in that variant (and sets <code>createFlow</code>).</div>
     ${fath ? `<div class="btns" style="margin-top:6px">${[0, 13, 70, 99, 100, 110].map((n) => `<button data-jump="count" data-n="${n}">Counter at ${n}</button>`).join("")}</div>` : ""}
+    <div class="msg">Counts a goal with 100 / minimum 70. The cap and make-up demos need a preset first (Data tab).</div>
+    <div class="btns" style="margin-top:6px"><button data-open="swalath-al-nariyya">Counter: pace goal</button><button data-open="tahleel" data-tracker="1">Counter: tracker</button><button data-open="isthighfar">Counter: total goal</button></div>
     <h2>Haptics</h2>
     <div class="haptic-log" id="haptic-log">Each count fires navigator.vibrate when available; logged here.</div>
     <h2>Data</h2>
@@ -2420,7 +2859,11 @@ function renderLab() {
 const fmtHijriEn = (ds) => { const h = hijri(ds); return `${h.d} ${HIJRI_MONTHS.en[h.m - 1]} ${h.y}`; };
 function renderLabData() {
   document.getElementById("lab-data").innerHTML = `
-    <p class="sub" style="margin-top:0">The goals, in the goal-model shape plus prototype fields (<code>id</code>, <code>dhikr</code>, <code>name</code>, <code>preset</code>, <code>count_entries</code>, <code>counts</code>: shared | dedicated). Edit and apply.</p>
+    <h2 style="margin-top:0">Presets</h2>
+    <div class="btns">${Object.entries(PRESETS).map(([k, x]) => `<button data-preset="${k}">${esc(x.label)}</button>`).join("")}</div>
+    <div class="msg">${Object.values(PRESETS).map((x) => esc(x.note)).join("<br>")}</div>
+    <h2>Goals JSON</h2>
+    <p class="sub" style="margin-top:0">The goals, in the goal-model shape plus prototype fields (<code>id</code>, <code>dhikr</code>, <code>name</code>, <code>preset</code>, <code>count_entries</code>, <code>counts</code>: shared | dedicated, <code>makeup</code>, <code>excused</code>, <code>makeup_days</code>, <code>versions</code>, <code>ended</code>). Edit and apply.</p>
     <textarea id="lab-json" spellcheck="false">${esc(JSON.stringify(state.goals, null, 1))}</textarea>
     <div class="btns" style="margin-top:8px"><button class="primary" data-labaction="apply-json">Apply</button><button data-labaction="refresh-json">Reload from state</button><button data-labaction="reset">Reset to seed</button></div>
     <div class="msg" id="lab-json-msg"></div>`;
@@ -2432,11 +2875,60 @@ function applyJSON() {
     if (!Array.isArray(goals)) throw new Error("Expected an array of goals");
     goals.forEach((g, i) => {
       for (const k of ["id", "dhikr", "schedule", "active_period", "count_policy", "sessions", "requirement", "completion", "count_entries"]) if (!(k in g)) throw new Error(`Goal ${i}: missing "${k}"`);
-      g.paused ||= [];
-      g.counts ||= "shared";
+      normalizeGoal(g);
     });
     state.goals = goals; save(); render(); msg.className = "msg"; msg.textContent = `Applied ${goals.length} goals.`;
   } catch (e) { msg.className = "msg err"; msg.textContent = e.message; }
+}
+/* --- Lab data presets: rewrite the recent counts of the seed goals to show a state --- */
+const goalFor = (dhikr, kind = "today") => state.goals.find((g) => g.dhikr === dhikr && classify(g, today()) === kind) || state.goals.find((g) => g.dhikr === dhikr && !g.ended);
+/* Replace the counts before today. fn(offset, date) is the count `offset` days ago (0 = none); oldest first, so pace goals see their own shares. */
+function refill(g, fn, days = 45) {
+  const td = today();
+  g.count_entries = g.count_entries.filter((c) => c.date >= td);
+  for (let off = days; off >= 1; off--) {
+    const d = addDays(td, -off);
+    if (d < g.active_period.start_date || !onSchedule(g, d)) continue;
+    const n = fn(off, d);
+    if (n > 0) g.count_entries.push({ date: d, session: null, count: n });
+  }
+  g.count_entries.sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+const PRESETS = {
+  tags: { label: "Consistency tags", note: "Tags: Swalath breaks with 50% (no tag); Fathimiyya breaks with 28/30 (Devoted); Istighfar has a 2-day streak after a break with 27/30 (tag shows); Nariyya (pace) is back on a 3-day streak (🔥).",
+    run() {
+      const td = today();
+      refill(goalFor("swalath"), (off) => (off === 1 ? 0 : off % 2 === 0 ? 100 : 0));
+      refill(goalFor("swalath-al-fathimiyya"), (off) => (off === 1 || off === 11 ? 0 : off % 3 === 0 ? 72 : 100));
+      refill(goalFor("isthighfar"), (off) => (off === 3 || off === 10 || off === 20 ? 0 : 1000));
+      const n = goalFor("swalath-al-nariyya");
+      n.count_entries = n.count_entries.filter((c) => c.date >= td);
+      for (let off = 21; off >= 1; off--) { const d = addDays(td, -off); if (d >= n.active_period.start_date && off !== 4) n.count_entries.push({ date: d, session: null, count: paceOf(n, d).share + 6 }); }
+      n.count_entries.sort((a, b) => (a.date < b.date ? -1 : 1));
+    } },
+  calendar: { label: "Calendar states + make-up", note: "Fathimiyya (100, min 70, make-up next day): yesterday missed, then minimum only, met, made up, excused, paused, missed, and 2 excused days this month (a third is refused). Open the counter, count to 100, then keep counting to fill yesterday.",
+    run() {
+      const g = goalFor("swalath-al-fathimiyya"), td = today();
+      g.makeup = "next"; g.excused = [addDays(td, -5), addDays(td, -15)]; g.makeup_days = [addDays(td, -4)]; g.paused = [{ from: addDays(td, -7), to: addDays(td, -6) }]; g.versions = [];
+      refill(g, (off) => ({ 1: 0, 2: 75, 4: 100, 5: 0, 6: 0, 7: 0, 12: 0, 13: 80, 15: 0, 20: 0 }[off] ?? 100), 60);
+      g.count_entries = g.count_entries.filter((c) => c.date !== td); g.count_entries.push({ date: td, session: null, count: 0 });
+      g.count_entries = g.count_entries.filter((c) => c.count > 0);
+    } },
+  cap: { label: "Cap at 110", note: "Fathimiyya gets a cap of 110. Count past 110: the circle dims, \"Reached your limit of 110\" shows, nothing counts.",
+    run() { const g = goalFor("swalath-al-fathimiyya"); g.count_policy = { ...g.count_policy, maximum: 110 }; setCount(g, null, 105); } },
+  totalStreak: { label: "Total goal on a streak", note: "Istighfar (70,000, no end date) gets a streak that counts at 1,000 a day: the list ring fills toward 1,000 and the counter shows the total.",
+    run() { const g = goalFor("isthighfar"); g.count_policy = { ...g.count_policy, streak_amount: 1000 }; refill(g, (off) => (off <= 9 ? 1000 + off : off === 10 ? 0 : 1000)); } },
+  tracker: { label: "Tracker on a streak", note: "A \"whenever I can\" Tahleel tracker: Today 33 · Total 12,400 · 🔥 6 days, in the Tracking section.",
+    run() {
+      const td = today();
+      state.goals = state.goals.filter((g) => g.preset !== "lab-tracker");
+      const g = makeGoal({ dhikr: "tahleel", start: addDays(td, -30), policy: policy(null, null, null, "any_count"), requirement: { type: "tracker" }, preset: "lab-tracker" });
+      g.count_entries = [{ date: addDays(td, -12), session: null, count: 12067 }, ...[5, 4, 3, 2, 1].map((o) => ({ date: addDays(td, -o), session: null, count: 50 })), { date: td, session: null, count: 33 }];
+      state.goals.push(g);
+    } },
+};
+function applyPreset(name) {
+  PRESETS[name].run(); save(); state.reorder = false; render(); renderLab();
 }
 function applySettings() {
   const phone = document.getElementById("phone"), s = state.settings;
@@ -2457,7 +2949,12 @@ function handleAction(el, e) {
       haptic("tick"); state.stack = []; state.route = { name: tab }; stopAudio(); render("tab"); return;
     }
     case "goals-tab": if (state.goalsTab !== el.dataset.tab) { state.goalsTab = el.dataset.tab; render(); listAppear(currentScreen); } return;
-    case "open-goal": state.session = null; navigate({ name: "counting", goalId: id }); return;
+    case "open-goal": {
+      if (state.reorder) return;
+      if (["completed", "ended"].includes(el.dataset.kind)) { openStats(id, true); return; }
+      state.session = null; state.targetCard = null; navigate({ name: "counting", goalId: id }); return;
+    }
+    case "goto-goal": state.session = null; state.targetCard = null; stopAudio(); state.route = { name: "counting", goalId: id }; render("push"); return;
     case "back": goBack(); return;
     case "add-goal": openCreate(); return;
     case "set-goal-from": { const dhikr = el.dataset.dhikr; if (state.overlay) closeOverlay(); openCreate({ dhikr }); return; }
@@ -2470,23 +2967,49 @@ function handleAction(el, e) {
       else { g.paused.push({ from: td, to: null }); toast(t("t_paused")); }
       save(); closeOverlay(); render(); return;
     }
-    case "ask-delete": { const gid = state.overlay.goalId; openDeleteDialog(gid); return; }
-    case "confirm-delete": {
-      const gid = state.overlay.goalId;
-      state.goals = state.goals.filter((g) => g.id !== gid); save(); closeOverlay(); toast(t("t_deleted"));
+    // Ending and deleting (27): a goal with counts is ended into History; one without is deleted
+    case "end-goal": {
+      const g = goalById(state.overlay.goalId); closeOverlay(); g.ended = today(); save();
       if (state.route.name === "counting") goBack(); else render();
-      return;
+      toast(t("t_ended"), () => { g.ended = null; save(); render(); }); return;
     }
+    case "delete-goal": {
+      const g = goalById(state.overlay.goalId); closeOverlay(); removeGoal(g);
+      if (state.route.name === "counting") goBack(); else render(); return;
+    }
+    case "ask-delete": { const gid = state.overlay.goalId; openDeleteDialog(gid); return; }
+    case "confirm-delete": { const g = goalById(state.overlay.goalId); closeOverlay(); removeGoal(g); render(); return; }
+    case "start-again": {
+      const g = goalById(state.overlay.goalId), td = today(), len = plannedEnd(g) ? diffDays(g.active_period.start_date, plannedEnd(g)) : null;
+      const n = normalizeGoal(structuredClone(g));
+      Object.assign(n, { id: uuidv7(), count_entries: [], paused: [], excused: [], makeup_days: [], versions: [], ended: null, created: td });
+      n.active_period = { start_date: td, end_date: len != null ? addDays(td, len) : null, duration_days: null };
+      closeOverlay(); state.goals.push(n); save(); state.goalsTab = "active"; render(); toast(t("t_started_again")); flashGoal(n.id); return;
+    }
+    case "toast-undo": { const f = toastUndo; toastUndo = null; clearTimeout(toastTimer); document.getElementById("toast-host").innerHTML = ""; if (f) f(); return; }
+    // Late counting (17)
+    case "count-yesterday": { if (state.overlay) closeOverlay(); state.targetCard = null; state.route = { ...state.route, day: addDays(today(), -1) }; render(); return; }
+    case "count-today": { if (state.overlay) closeOverlay(); state.targetCard = null; state.route = { ...state.route, day: undefined }; render(); return; }
+    case "stats": openStats(state.route.goalId); return;
+    case "cal-prev": case "cal-next": { const o = state.overlay; o.month = shiftMonth(o.month, a === "cal-next" ? 1 : -1); o.sel = null; renderStats(); return; }
+    case "cal-pick": state.overlay.sel = el.dataset.date; renderStats(); return;
+    case "excuse": case "unexcuse": {
+      const g = goalById(state.overlay.goalId), ds = el.dataset.date;
+      if (a === "excuse") { if ((g.excused || []).filter((x) => x.slice(0, 7) === ds.slice(0, 7)).length >= 2) return; g.excused = [...(g.excused || []), ds].sort(); }
+      else g.excused = g.excused.filter((x) => x !== ds);
+      save(); renderStats(); render(); return;
+    }
+    case "reorder-toggle": state.reorder = !state.reorder; render(); return;
+    case "move-goal": moveGoal(id, +el.dataset.dir); return;
     case "undo": case "reset-today": {
-      const g = goalById(state.overlay.goalId), session = g.sessions.length ? state.session : null, before = progressOf(g, today(), session);
-      const todayCount = countOn(g, today(), session);
-      const after = a === "undo" ? Math.max(before - (todayCount > 0 ? 1 : 0), 0) : before - todayCount;
-      setCount(g, session, after); shareDelta(g, after - before); save(); closeOverlay(); updateCounting(before, after); toast(a === "undo" ? t("t_undo") : t("t_reset")); return;
+      const g = goalById(state.overlay.goalId), session = g.sessions.length ? state.session : null, day = countDay();
+      const before = counterModel(g, session, day).count, n = countOn(g, day, session);
+      const delta = a === "undo" ? (n > 0 ? -1 : 0) : -n;
+      addCount(g, session, day, delta); shareDelta(g, delta, day); save(); closeOverlay(); updateCounting(before); toast(a === "undo" ? t("t_undo") : t("t_reset")); return;
     }
     case "text-size": state.settings.arabicSize = (state.settings.arabicSize + 1) % 3; save(); currentScreen.querySelector(".arabic-card")?.setAttribute("data-size", state.settings.arabicSize); return;
     case "audio": toggleAudio(); return;
     case "timer": toast(t("t_timer")); return;
-    case "count-list": toast(t("t_list")); return;
     case "toast-placeholder": toast(t("placeholder")); return;
     case "session": state.session = el.dataset.session; render(); return;
   }
@@ -2507,6 +3030,8 @@ function boot() {
   // Press feedback + counting taps
   let pressed = null;
   phone.addEventListener("pointerdown", (e) => {
+    const handle = e.target.closest("[data-drag]");
+    if (handle) { startDrag(handle, e); return; }
     const counter = e.target.closest("[data-counter]");
     if (counter && state.route.name === "counting") {
       const whole = v("tapArea") === "screen";
@@ -2571,6 +3096,8 @@ function boot() {
     }
     if (b.dataset.today) { setToday(b.dataset.today); return; }
     if (b.dataset.jump) { jump(b.dataset.jump, +b.dataset.n); return; }
+    if (b.dataset.preset) { applyPreset(b.dataset.preset); if (b.dataset.preset === "cap") openByDhikr("swalath-al-fathimiyya"); else if (b.dataset.preset !== "calendar") jump("goals"); return; }
+    if (b.dataset.open) { openByDhikr(b.dataset.open, b.dataset.tracker); return; }
     if (b.dataset.try) { state.variants.createFlow = b.dataset.try; save(); jump("create"); renderLab(); return; }
     const la = b.dataset.labaction;
     if (la === "apply-json") applyJSON();
@@ -2586,6 +3113,43 @@ function boot() {
   render();
   renderLab();
   loadCatalog();
+}
+/* Reordering (25): the user's order is the order of state.goals; moves happen inside a group (Today's, Upcoming, ...). */
+function groupIds(id) { const td = today(), k = classify(goalById(id), td); return state.goals.filter((g) => classify(g, td) === k).map((g) => g.id); }
+function applyGroupOrder(ids) {
+  const slots = state.goals.map((g, i) => (ids.includes(g.id) ? i : -1)).filter((i) => i >= 0);
+  const byId = Object.fromEntries(state.goals.map((g) => [g.id, g]));
+  ids.forEach((id, k) => (state.goals[slots[k]] = byId[id]));
+  save();
+}
+function moveGoal(id, dir) {
+  const ids = groupIds(id), i = ids.indexOf(id), j = i + dir;
+  if (j < 0 || j >= ids.length) return;
+  [ids[i], ids[j]] = [ids[j], ids[i]];
+  applyGroupOrder(ids); render();
+  const el = currentScreen?.querySelector(`[data-card="${id}"] [data-action="move-goal"][data-dir="${dir}"]`); el?.focus();
+}
+function startDrag(handle, e) {
+  const card = handle.closest("[data-card]"), list = card.parentElement;
+  e.preventDefault(); handle.setPointerCapture?.(e.pointerId);
+  card.classList.add("dragging");
+  const onMove = (ev) => {
+    const cards = [...list.children].filter((c) => c !== card);
+    const next = cards.find((c) => ev.clientY < c.getBoundingClientRect().top + c.getBoundingClientRect().height / 2);
+    list.insertBefore(card, next || null);
+  };
+  const onUp = () => {
+    window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); window.removeEventListener("pointercancel", onUp);
+    card.classList.remove("dragging");
+    applyGroupOrder([...list.children].map((c) => c.dataset.card)); render();
+  };
+  window.addEventListener("pointermove", onMove); window.addEventListener("pointerup", onUp); window.addEventListener("pointercancel", onUp);
+}
+function openByDhikr(dhikr, tracker) {
+  if (state.overlay) closeOverlay(); stopAudio(); state.draft = null;
+  const g = state.goals.find((x) => x.dhikr === dhikr && !x.ended && (tracker ? x.requirement.type === "tracker" : x.requirement.type !== "tracker"));
+  if (!g) return;
+  state.session = null; state.targetCard = null; state.stack = [{ name: "goals" }]; state.route = { name: "counting", goalId: g.id }; render("push");
 }
 function setToday(ds) { state.settings.today = ds; save(); render(); renderLab(); }
 function jump(where, n) {
@@ -2637,6 +3201,12 @@ window.proto = {
   sentenceErrors: () => sdErrors(state.draft),
   variant(key, value) { state.variants[key] = value; save(); render(); renderLab(); },
   count(n) { jump("count", n); },
+  preset: (name) => applyPreset(name),
+  edit: (id) => { openEdit(goalById(id)); }, renderSentence,
+  open: (dhikr, tracker) => openByDhikr(dhikr, tracker),
+  tap: (n = 1) => { for (let i = 0; i < n; i++) increment(); },
+  stats: (goalId) => openStats(goalId || state.route.goalId),
+  PRESETS,
   rules: { isDue, classify, streakOf, chipText, progressOf, draftToGoal, goalToDraft, hijri, sdFromGoal, sdToGoal,
     project: (g) => (({ schedule, active_period, paused, count_policy, sessions, requirement, completion, name, preset, counts }) => ({ schedule, active_period, paused, count_policy, sessions, requirement, completion, name, preset, counts }))(g) },
 };

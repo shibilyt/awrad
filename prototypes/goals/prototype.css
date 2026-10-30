@@ -590,6 +590,74 @@ button { cursor: pointer; }
 .reduced * { transition-duration: var(--d-color) !important; transition-timing-function: linear !important; }
 .reduced .expander .icon { transition: none !important; }
 
+/* ================================================================== Decisions 14 to 30 */
+.icon.flip { transform: rotate(180deg); }
+.dim { color: var(--c-onSurfaceVariant); }
+.r-arc, .r-tick { transition: stroke var(--d-color) linear; }
+
+/* Rows: consistency tag, result, pace */
+.streak.tag { color: var(--c-accent); font-weight: 600; }
+.goal-card .result { color: var(--c-accent); font: 600 12px/16px var(--font-ui); }
+.goal-card .meta.pace { color: var(--c-onSurface); }
+.year-summary { margin: calc(-1 * var(--s-xs)) 0 var(--rowGap); padding: 0 var(--pageMargin); color: var(--c-onSurfaceVariant); }
+
+/* Home: finished goals sink and quiet down; all done */
+.home-row.done .title { color: var(--c-onSurfaceVariant); }
+.all-done { display: flex; flex-direction: column; gap: var(--s-md); padding: var(--s-xs) 0 var(--s-sm); }
+.done-rings { display: flex; flex-wrap: wrap; gap: var(--s-sm); }
+
+/* My Goals: reorder */
+.head-actions { display: flex; align-items: center; gap: var(--s-xs); }
+.reorder-hint { margin: 0 var(--pageMargin) var(--s-lg); color: var(--c-onSurfaceVariant); }
+.reorder-ctl { display: flex; align-items: center; flex: none; }
+.drag-handle { touch-action: none; cursor: grab; color: var(--c-onSurfaceVariant); }
+.goal-card.dragging { box-shadow: var(--elevation-floating); position: relative; z-index: 2; }
+
+/* Counter: late day banner, status slot, target card, cap */
+.day-banner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-sm); margin: var(--s-xs) var(--pageMargin) 0; padding: var(--s-xs) var(--s-md); border-radius: var(--r-tile); background: var(--c-primaryContainer); color: var(--c-onPrimaryContainer); }
+.day-banner .btn.text { color: var(--c-onPrimaryContainer); height: var(--touchTarget); margin-block: calc(-1 * var(--s-sm)); }
+.counter-zone .slot { display: flex; justify-content: center; width: 100%; min-height: 20px; }
+.target-card { display: flex; align-items: center; justify-content: space-between; gap: var(--s-md); width: 100%; min-height: var(--touchTarget); border: 0; border-radius: var(--r-tile); padding: var(--s-xs) var(--s-md) var(--s-xs) var(--s-lg); background: var(--c-primary); color: var(--c-onPrimary); text-align: start; font: 500 14px/20px var(--font-ui); }
+.target-card strong { font-weight: 700; }
+.limit-msg { color: var(--c-error); text-align: center; }
+.counter-circle.capped { opacity: var(--disabled-opacity); }
+.toast.with-action { display: flex; align-items: center; justify-content: space-between; gap: var(--s-md); pointer-events: auto; padding-block: var(--s-xs); }
+.toast .btn.text { color: var(--c-background); font-weight: 600; flex: none; }
+
+/* Stats sheet: calendar */
+.stats-sheet .sheet-scroll { padding-bottom: calc(34px + var(--s-lg)); }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin: 0 calc(-1 * var(--s-sm)) var(--s-xs); }
+.cal-head .icon-btn[disabled] { opacity: var(--disabled-opacity); pointer-events: none; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: var(--s-xs); }
+.cal-dow { margin-bottom: var(--s-xs); text-align: center; color: var(--c-onSurfaceVariant); font: 500 12px/16px var(--font-ui); }
+.cal-day { height: 40px; border: 0; border-radius: 50%; aspect-ratio: 1; justify-self: center; width: 40px; display: grid; place-items: center; background: none; color: var(--c-onSurface); font: 500 14px/20px var(--font-ui); position: relative; padding: 0; }
+.cal-day.blank { pointer-events: none; }
+.cal-day:disabled { color: var(--c-onSurfaceVariant); opacity: var(--disabled-opacity); }
+.cal-day.is-today { font-weight: 700; }
+.cal-day.sel::after { content: ""; position: absolute; bottom: -3px; width: var(--tabIndicatorWidth); height: var(--tabIndicatorHeight); border-radius: var(--r-tabIndicator); background: var(--c-primary); }
+.st-met { background: var(--c-primary); color: var(--c-onPrimary); }
+.st-min { background: color-mix(in srgb, var(--c-primary) 40%, transparent); color: var(--c-onSurface); }
+.st-madeup { background: var(--c-primary); color: var(--c-onPrimary); }
+.st-excused { background: var(--c-surface); color: var(--c-onSurface); }
+.st-paused { background: var(--c-outline); color: var(--c-onSurfaceVariant); }
+.st-missed { color: var(--c-error); }
+.st-today, .st-none, .st-future { background: none; }
+.cal-day.st-excused, .cal-day.st-paused { opacity: 1; }
+.cal-legend { display: flex; flex-wrap: wrap; gap: var(--s-xs) var(--s-md); margin: var(--s-md) 0; color: var(--c-onSurfaceVariant); }
+.cal-legend .lg { display: inline-flex; align-items: center; gap: var(--s-xs); }
+.cal-legend .sw { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.cal-legend .sw.st-missed { background: var(--c-error); }
+.cal-detail { background: var(--c-surface); border-radius: var(--r-card); padding: var(--cardPadding); margin-bottom: var(--sectionGap); display: flex; flex-direction: column; gap: var(--s-xs); }
+.cal-actions { display: flex; flex-direction: column; gap: var(--s-xs); margin-top: var(--s-sm); }
+.cal-actions .btn { height: var(--touchTarget); }
+.cal-actions .btn[disabled] { opacity: var(--disabled-opacity); }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--rowGap); }
+.stat { background: var(--c-surface); border-radius: var(--r-tile); padding: var(--s-md) var(--cardPadding); display: flex; flex-direction: column; gap: var(--s-xxs); }
+
+/* Edit sheet */
+.edit-note { margin: 0 0 var(--s-sm); display: flex; flex-direction: column; gap: var(--s-xs); }
+.edit-warn { background: var(--c-surface); color: var(--c-error); border-radius: var(--r-tile); padding: var(--s-sm) var(--s-md); }
+
 /* ================================================================== Lab panel (prototype chrome) */
 
 .lab {

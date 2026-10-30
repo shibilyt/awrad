@@ -21,7 +21,7 @@ Add `?reset` to the URL to drop the saved state (goals, settings and variants pe
   - **Controls:** light/dark, LTR/RTL (Arabic), reduced motion, the "today" date (with jumps to the next Thursday, white day and 1 Ramadan), shortcuts to each screen and to the counter at 0, 13, 70, 99, 100 and 110, a haptics log.
   - **Data:** the goals as editable JSON (goal-model shape plus prototype fields).
   - **Variants:** switches generated from `VARIANTS` in `prototype.js`.
-  - **Notes:** open questions, assumptions and design gaps, including the gold ring token question.
+  - **Notes:** what's still open, assumed or not designed after decisions 14 to 30. **Data** also has presets that rewrite the seed counts to show a state (below).
 
 ## Changing it
 
@@ -37,3 +37,27 @@ Add `?reset` to the URL to drop the saved state (goals, settings and variants pe
 | Change a token | Don't, here: tokens are copied from `contracts/design-tokens/v1/` into the top of `prototype.css` |
 
 From the browser console, `proto` exposes the state and helpers: `proto.count(99)`, `proto.set({ theme: "dark" })`, `proto.variant("ringStyle", "green")`, `proto.jump("create")`.
+
+## Decisions 14 to 30 (v3)
+
+The counter, rows, stats sheet, editing, History, pace, total-goal streaks and trackers follow `docs/slices/04-goals-decisions.md`. The saved state key is now `awrad-goals-proto-v3`, so older saved goals are dropped on first load. Defaults: create flow B, green ring with a minimum tick, lower-half tap area.
+
+Presets (Lab → Data, or `proto.preset(name)`):
+
+| Preset | Shows |
+|---|---|
+| `tags` | Swalath broken with no tag, Fathimiyya "Devoted", Istighfar a 2-day streak with a tag, Nariyya (pace) on 🔥 3 days |
+| `calendar` | Fathimiyya with make-up on: every calendar state, 2 excused days used, yesterday missed (count past 100 to fill it) |
+| `cap` | Cap of 110 on Fathimiyya, counter at 105 |
+| `totalStreak` | Istighfar (no end date) with a streak at 1,000 a day |
+| `tracker` | A "whenever I can" tracker on a streak, in the Tracking section |
+
+Console: `proto.open(dhikr)`, `proto.tap(n)`, `proto.stats()`, `proto.edit(goalId)`.
+
+| To | Edit |
+|---|---|
+| Day states, streak, best, consistency, tags | `dayState`, `streakOf`, `bestStreakOf`, `consistencyOf`, `streakHTML` |
+| Pace and the daily streak number | `paceOf`, `dayThreshold`, `dailyAmount`, `counterModel` |
+| Make-up, late counting | `makeupInfo`, `increment`, `countDay` |
+| Edit as dated versions, structural edits | `snapAt`, `isStructural`, `saveDraft` |
+| Counter's moments (card, cap, haptics) | `increment`, `counterView`, `targetCardHTML`, `haptic` |
