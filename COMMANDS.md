@@ -22,6 +22,8 @@ npm run bundle               # regenerate api/openapi.bundled.json after editing
 npm test                     # bundle fresh, spec lint clean, every rule fires, fixtures valid
 npm run lint:api             # just the Spectral lint
 npm run check:fixtures       # just the awrad-fixture/1 files
+npm run check:practice-settings   # slice 3d rules, Maghrib from adhan, the city list and its search
+npm run build:cities -- <dir>     # rebuild places/v1/cities.json from a GeoNames dump (cities15000.txt, admin1CodesASCII.txt)
 ```
 
 ### contracts/: v1 legacy folders (Python)
@@ -56,6 +58,7 @@ Working directory: `awrad-android-next/`. Prerequisites: JDK 17 (from `mise.toml
 ./gradlew :feature:onboarding:testDebugUnitTest --tests 'fully.qualified.TestClass'
 ./gradlew detekt                                              # static analysis, all modules
 ./gradlew help                                                # quick check of the module dependency rules
+./gradlew :core:data:generateCityList                         # copy contracts/places/v1/cities.json into the app (verifyCityList checks drift)
 
 # Run it (installs next to the frozen app; separate app id)
 ./gradlew :app:installDebug
@@ -101,6 +104,7 @@ swift format -i -r AwradKit/Sources AwradKit/Tests AwradKit/Package.swift AwradN
 scripts/generate-colors.py                            # regenerate AwradColors.swift and AccentColor after contracts/design-tokens changes
 scripts/generate-design-tokens.py                     # regenerate AwradRadius/AwradSpacing/AwradTextStyle/AwradMotion after contracts/design-tokens changes
 scripts/generate-icons.py                             # regenerate Icons.xcassets and AwradIcon.swift after contracts/design-tokens/v1/icons changes
+scripts/check-city-list.py --fix                      # copy contracts/places/v1/cities.json into AwradKit (validate checks drift)
 ```
 
 ## awrad-web-next

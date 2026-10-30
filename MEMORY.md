@@ -319,6 +319,19 @@ Use this format:
 - Evidence: `contracts/identity/v1/README.md`, `DECISIONS.md`
 - Commit: see git log
 
+### 2026-10-30 — Slice 3d: practice settings
+
+- Area: Cross-project
+- Change:
+  - The account practice policy (day reset, calculation method, madhab, week start, Hijri corrections) is the `practice_policy` entity of the change queue: one per account, its ID the account's, never deleted (ADR-2026-10-29, which replaces ADR-2026-09-09 ×2 for the rebuild). There is no separate settings API.
+  - A conflict merges by setting without a prompt; Hijri corrections merge month by month and fall back to the server's when invalid (notice `hijri_corrections_replaced`). Phones keep `base_document` for this.
+  - At the first sign-in the account's policy wins once it has one; an unset account takes the phone's only if the user changed something. Decided after the first complete pull.
+  - Location never leaves the device (phones: per installation; web: browser storage per account). Maghrib comes from adhan on Android, iOS and web (`maghrib_time` fixture, ±1 min); polar days have none and fall back to midnight. The server never computes Maghrib.
+  - The bundled city list (`contracts/places/v1/cities.json`, GeoNames CC BY 4.0, 11,976 cities: ≥15,000 people in Kerala and the Gulf, ≥50,000 elsewhere) has English names and search-only Arabic, Malayalam and old-English aliases. Phones add the platform's place search when online, skipping results within 10 km of a shown city.
+  - Every Hijri month is 29 or 30 days, so the UI offers only the offsets the rules allow (usually one day, one direction).
+- Evidence: `docs/slices/03d-practice-settings.md`, `contracts/practice-settings/v1/README.md`, `contracts/places/v1/README.md`
+- Commit: see git log
+
 ### 2026-10-29 — Slice 3c: private audio for custom dhikrs
 
 - Area: Cross-project

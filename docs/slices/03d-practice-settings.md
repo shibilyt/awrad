@@ -1,6 +1,6 @@
 # Slice 3d: Practice settings
 
-Status: In progress (contract accepted 2026-10-29)
+Status: Done 2026-10-30
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 3d
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 
@@ -165,20 +165,38 @@ Platforms: server ☑ (stores and validates the entity only) · Android ☑ · i
 
 | Project | Work | Validation | Status |
 |---|---|---|---|
-| awrad-server-next | Validate and store `practice_policy` in the change queue; runs `practice_policy_validity` | `mix validate` | ☐ |
-| awrad-android-next | Policy per profile, device context, adhan Maghrib, city list and platform search, first-sign-in and merge rules, Practice settings screen | Gradle validation | ☐ |
-| awrad-ios-next | The same in `AwradKit` | `scripts/validate` | ☐ |
-| awrad-web-next | Practice settings page, browser location and city list, adhan Maghrib, merge rule | `npm run validate` | ☐ |
+| awrad-server-next | `practice_policy` in the change queue: account-ID check, `delete_not_allowed`, document validity (reuses the Hijri corrections code); runs `practice_policy_validity` and the updated `sync_receipts` | `mix validate`: 828 tests | ☑ |
+| awrad-android-next | Policy per profile with `chosen` and `base_document`, device location per installation, adhan-kotlin (`adhan2` 0.0.5, the newest for Kotlin 2.0), bundled cities (`:core:data:generateCityList`) plus `Geocoder`, first-sign-in and merge rules, `:feature:practice` linked from Home | Gradle validation | ☑ |
+| awrad-ios-next | The same in `AwradKit`: adhan-swift 1.5.0 behind a port (iOS ADR 0006), bundled cities (`scripts/check-city-list.py`) plus `CLGeocoder`, `FeaturePracticeSettings` from the account sheet | `scripts/validate`: 446 tests | ☑ |
+| awrad-web-next | `/account/practice`: adhan-js, the Umm al-Qura table, the city list in a lazy chunk, browser location per account, merge on conflict | `npm run validate`: 805 tests | ☑ |
+
+Also, after the build:
+- **Two icons** were added to the shared set: `practice` (tune) and `location` (my_location).
+- **Two rules were pinned in the contract:**
+  - a rejected policy is never removed from a phone;
+  - the first-sign-in rule is decided after the first complete pull.
+- **Duplicate places:** a phone's platform search result within 10 km of a shown bundled city is left out.
 
 ## Integration evidence (step 6)
 
+Run on 2026-10-29 and 2026-10-30 against `mix phx.server` on port 4100: the web in the browser, Android on a Pixel 8 API 35 emulator, iOS on a fresh simulator with a signed debug build.
+
 | Flow | Android | iOS | Web | Notes |
 |---|---|---|---|---|
-| Signed out, offline: change every setting, set a city, see today's Hijri date and Maghrib (en) | ☐ | ☐ | n/a | |
-| First sign-in seeds an unset account; a second device takes it (en) | ☐ | ☐ | ☐ | |
-| Edit on two devices offline, then sync: merged by setting (en) | ☐ | ☐ | ☐ | |
-| Adjust this Hijri month; the date changes on every device (ar, RTL) | ☐ | ☐ | ☐ | |
-| Maghrib reset with no location shows the hint and uses midnight (ar, RTL) | ☐ | ☐ | ☐ | |
+| Signed out, offline: change every setting, set a city, see today's Hijri date and Maghrib (en) | ☑ | ☑ | n/a | "calicut" finds Kozhikode offline. Maghrib was 6:03 PM with Karachi and 6:06 PM with Dubai; today was 18 Jumada al-Ula 1448. Settings persisted after a restart. iOS ran signed out, without turning the network off |
+| First sign-in seeds an unset account; a second device takes it (en) | ☑ | ☑ | ☑ | The changes feed held version 1 with the phone's settings and correction, and no location. The web showed the Android account's settings |
+| Edit on two devices offline, then sync: merged by setting (en) | ☑ | tests | ☑ | Android set Sunday offline while the web set Shafi'i. Both ended with Sunday and Shafi'i, with no prompt. iOS is covered by `PracticePolicySyncTests` (merge on two devices) |
+| Adjust this Hijri month; the date changes on every device (ar, RTL) | ☑ | ☑ | ☑ | Only "1 day earlier" was offered (1448/5), and the date went to the 19th. Web and Android ran in Arabic, with Arabic-Indic digits on Android |
+| Maghrib reset with no location shows the hint and uses midnight (ar, RTL) | ☑ | ☑ | ☑ | Remove location brings the hint back |
+
+**Findings fixed during integration:**
+- On iOS, Kozhikode appeared twice when online, so the duplicate rule was added.
+- iOS removed a rejected policy, and queued edits made before the first pull.
+- The API examples were missing the policy and used the wrong account ID.
+
+**Known:**
+- Android's pre-release Room rule edits schema version 1 in place, so an old dev install crashes until its app data is cleared.
+- The GeoNames attribution line stays in English in every language.
 
 ## Definition of done
 
