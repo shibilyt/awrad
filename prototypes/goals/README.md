@@ -29,7 +29,9 @@ Add `?reset` to the URL to drop the saved state (goals, settings and variants pe
 |---|---|
 | Add an A/B switch | An entry in `VARIANTS` (`prototype.js`), then read it with `v('key')` |
 | Compare create flows | `VARIANTS.createFlow` (A wizard, B sentence sheet, C templates), or Lab → Controls → Try A / B / C |
-| Change a create flow | A: `STEP_DEFS` + `CREATE_STEPS`. B: `sentenceHTML`, `SUGGESTIONS`, `pickerView`. C: `TEMPLATES`. All share `newDraft` → `draftToGoal` |
+| Change a create flow | A: `STEP_DEFS` + `CREATE_STEPS`. C: `TEMPLATES`. Both share `newDraft` → `draftToGoal` |
+| Change the sentence flow (B) | Wording per language: `SENTENCE_L10N` (en, ar, ml templates with slots). Draft and conversion: `sdNew`, `sdToGoal`, `sdFromGoal`, `sdErrors`. Pickers: `sdPicker`. Examples: `SD_EXAMPLES`. Console: `proto.sentence(i)` opens example `i` |
+| Sessions on the counter | `sessionPills`, `currentSessionId`, `PRAYER_TIMES`; the Lab's "Time of day" picks the current session |
 | Change chip or streak copy | `STRINGS` (`chip_*`, `streak_unit`) and `chipText()` |
 | Change the seed goals | `seedGoals()` |
 | Change a token | Don't, here: tokens are copied from `contracts/design-tokens/v1/` into the top of `prototype.css` |

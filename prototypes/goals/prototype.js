@@ -342,9 +342,10 @@ const STRINGS = {
     prayer_name: "العصر", prayer_in: "بعد ١ س ١٢ د", prayer_place: "كوزيكود",
   },
 };
-const lang = () => (state.settings.dir === "rtl" ? "ar" : "en");
+const lang = () => state.settings.lang || (state.settings.dir === "rtl" ? "ar" : "en");
+const LOCALE = () => ({ en: "en-GB", ar: "ar-u-nu-latn", ml: "ml-u-nu-latn" }[lang()] || "en-GB");
 function t(key, ...args) {
-  const s = STRINGS[lang()][key] ?? STRINGS.en[key];
+  const s = STRINGS[lang()]?.[key] ?? STRINGS.en[key];
   return typeof s === "function" ? s(...args) : s;
 }
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -357,6 +358,8 @@ const HIJRI_MONTHS = {
   en: ["Muharram", "Safar", "Rabi al-Awwal", "Rabi al-Thani", "Jumada al-Awwal", "Jumada al-Thani", "Rajab", "Sha'ban", "Ramadan", "Shawwal", "Dhu al-Qadah", "Dhu al-Hijjah"],
   ar: ["محرم", "صفر", "ربيع الأول", "ربيع الآخر", "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان", "رمضان", "شوال", "ذو القعدة", "ذو الحجة"],
 };
+HIJRI_MONTHS.ml = ["മുഹർറം", "സഫർ", "റബീഉൽ അവ്വൽ", "റബീഉൽ ആഖിർ", "ജുമാദൽ ഊലാ", "ജുമാദൽ ആഖിറ", "റജബ്", "ശഅ്ബാൻ", "റമദാൻ", "ശവ്വാൽ", "ദുൽഖഅ്ദ", "ദുൽഹിജ്ജ"];
+const hMonths = () => HIJRI_MONTHS[lang()] || HIJRI_MONTHS.en;
 const toDate = (ds) => new Date(ds + "T00:00:00Z");
 const toDS = (d) => d.toISOString().slice(0, 10);
 const addDays = (ds, n) => { const d = toDate(ds); d.setUTCDate(d.getUTCDate() + n); return toDS(d); };
@@ -384,10 +387,10 @@ function findDate(pred, from, limit = 800, step = 1) {
 }
 const gregorianOfHijri = (y, m, d, from) => findDate((ds) => { const h = hijri(ds); return h.y === y && h.m === m && h.d === d; }, from, 1200) ;
 function fmtDate(ds, opts = { day: "numeric", month: "short" }) {
-  return new Intl.DateTimeFormat(lang() === "ar" ? "ar-u-nu-latn" : "en-GB", { timeZone: "UTC", ...opts }).format(toDate(ds));
+  return new Intl.DateTimeFormat(LOCALE(), { timeZone: "UTC", ...opts }).format(toDate(ds));
 }
-const fmtHijri = (ds, withYear = false) => { const h = hijri(ds); return `${h.d} ${HIJRI_MONTHS[lang()][h.m - 1]}${withYear ? " " + h.y : ""}`; };
-const weekdayName = (wd, style = "long") => new Intl.DateTimeFormat(lang() === "ar" ? "ar" : "en-GB", { weekday: style, timeZone: "UTC" }).format(toDate(addDays("2024-01-01", WEEKDAYS.indexOf(wd))));
+const fmtHijri = (ds, withYear = false) => { const h = hijri(ds); return `${h.d} ${hMonths()[h.m - 1]}${withYear ? " " + h.y : ""}`; };
+const weekdayName = (wd, style = "long") => new Intl.DateTimeFormat(LOCALE(), { weekday: style, timeZone: "UTC" }).format(toDate(addDays("2024-01-01", WEEKDAYS.indexOf(wd))));
 
 /* ============================================================== 5. Goal rules (simplified)
  * Shapes follow contracts/goal-model/v1/goal-model.schema.json (goal_shape), plus prototype-only
@@ -526,7 +529,7 @@ const SEASON_PRESETS = { ramadan: [9, 1, 9, 30], ramadan_last_ten: [9, 21, 9, 30
 function seasonLabel(g) {
   const s = g.schedule;
   if (s.kind !== "yearly" || s.calendar !== "hijri") return null;
-  const months = HIJRI_MONTHS[lang()];
+  const months = hMonths();
   if (s.ranges.length > 1 && s.ranges.every((r) => r.start.month === 9 && r.start.day === r.end.day)) return `${months[8]} ${lang() === "ar" ? "الليالي الوترية" : "odd nights"}`;
   const r = s.ranges[0];
   if (s.ranges.length === 1 && r.start.month === r.end.month) {
@@ -539,22 +542,26 @@ function chipText(g) {
   const p = displayPolicy(g), r = g.requirement, s = g.schedule;
   const T = p.target != null ? fmtN(p.target) : null, M = p.minimum != null ? fmtN(p.minimum) : null;
   let text;
-  if (r.type === "tracker") text = t("chip_tracker");
+  const rhythmOf = () => rhythmText({ rhythmReq: "per_due_date", schedule: s, occasion: occasionOf(s), period: "week" });
+  if (g.sessions.length && r.type !== "tracker") {
+    text = g.sessions.map((x) => `${fmtN(x.count_policy.target)} ${sessionLabel(x.id)}`).join(" · ");
+    return s.kind === "every_day" ? text : `${text}, ${rhythmOf()}`;
+  }
+  if (r.type === "tracker") text = t("chip_tracker") + (s.kind === "every_day" ? "" : `, ${rhythmOf()}`);
   else if (r.type === "cumulative_total") { text = t("chip_times", T); if (activeEnd(g)) text += t("chip_by", fmtDate(activeEnd(g))); }
   else if (r.type === "period_total") text = t("chip_period_total", T, t("period")[r.period]);
-  else if (r.type === "days_per_period") text = t("chip_days_per_period", r.days, t("period")[r.period]);
+  else if (r.type === "days_per_period") text = t("chip_dpp", T, r.days, t("period")[r.period]);
   else if (s.kind === "every_day") text = M ? t("chip_min_target_daily", M, T) : t("chip_daily", T);
   else {
     if (s.kind === "weekdays") {
       const days = s.weekdays.map((w) => weekdayName(w, s.weekdays.length > 2 ? "short" : "long")).join(", ");
       text = t("chip_weekdays", p.target, lang() === "en" ? days.toLowerCase() : days).replace(String(p.target), T);
     } else if (s.kind === "yearly" && s.calendar === "hijri") text = t("chip_season", seasonLabel(g), p.target).replace(String(p.target), T);
-    else if (s.kind === "hijri_month_days") text = t("chip_white", p.target).replace(String(p.target), T);
-    else text = t("chip_generic", T);
+    else if (s.kind === "hijri_month_days" && String(s.days) === "13,14,15") text = t("chip_white", p.target).replace(String(p.target), T);
+    else text = `${T} ${rhythmOf()}`;
     if (M) text = t("chip_min_prefix", M) + text;
   }
   if (r.type !== "tracker" && p.maximum != null) text += t("chip_cap", fmtN(p.maximum));
-  if (g.sessions.length > 1) text += t("chip_sessions", g.sessions.length);
   return text;
 }
 function streakHTML(g, today) {
@@ -588,7 +595,10 @@ function goalArabic(g) { return g.custom_arabic || dhikrOf(g)?.arabic || ""; }
 
 /* ============================================================== 6. Seed data */
 const FALLBACK_DHIKRS = /* subset of contracts/dhikr-catalog/v1/catalog.json, used only if the fetch fails */ [{"key": "surah-ikhlas", "kind": "quran", "arabic": "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ\nقُلۡ هُوَ ٱللَّهُ أَحَدٌ\nٱللَّهُ ٱلصَّمَدُ\nلَمۡ يَلِدۡ وَلَمۡ يُولَدۡ\nوَلَمۡ يَكُن لَّهُۥ كُفُوًا أَحَدُۢ", "title": {"en": "Surah Ikhlas", "ar": "سورة الإخلاص", "ml": "സൂറത് അൽ ഇഖ്ലാസ്"}, "aliases": {"en": ["Al-Ikhlas", "Qul Huwallahu Ahad", "Surah 112", "ikhlas"], "ar": ["الإخلاص", "قل هو الله أحد"], "ml": ["ഇഖ്ലാസ്"]}}, {"key": "tahleel", "kind": "dhikr", "arabic": "لَا إِلٰهَ إِلَّا ٱللَّٰهُ", "title": {"en": "Tahleel", "ar": "التهليل", "ml": "തഹ്‌ലീൽ"}, "aliases": {"en": ["Tahlil", "Lailahaillallah"], "ar": ["لا إله إلا الله"], "ml": ["ലാ ഇലാഹ ഇല്ലല്ലാഹ്"]}}, {"key": "ya-wahhabu", "kind": "dhikr", "arabic": "يَا وَهَّابُ", "title": {"en": "Ya Wahhabu", "ar": "يا وهاب", "ml": "യാ വഹ്ഹാബ്"}, "aliases": {"en": ["Ya Wahhab", "Wahhab"], "ar": ["الوهاب"], "ml": ["അൽ വഹ്ഹാബ്"]}}, {"key": "isthighfar", "kind": "dhikr", "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ", "title": {"en": "Isthighfar", "ar": "الاستغفار", "ml": "ഇസ്തിഗ്ഫാർ"}, "aliases": {"en": ["Istighfar", "Astaghfirullah", "Astaghfirullahal Azim"], "ar": ["أستغفر الله"], "ml": ["അസ്തഗ്ഫിറുല്ലാഹ്"]}}, {"key": "swalath-al-fathimiyya", "kind": "salawat", "arabic": "اللَّهُمَّ صَلِّ عَلَى النُّورِ وَأَهْلِهِ", "title": {"en": "Swalath Al Fathimiyya", "ar": "الصلاة الفاطمية", "ml": "സ്വലാത്ത് അൽ ഫാത്വിമിയ്യ"}, "aliases": {"en": ["Salawat al-Fatimiyya", "Swalath Fatimiya"]}}, {"key": "swalath", "kind": "salawat", "arabic": "صَلَّى ٱللَّٰهُ عَلَىٰ مُحَمَّدٍ، صَلَّى ٱللَّٰهُ عَلَيْهِ وَسَلَّمَ", "title": {"en": "Swalath", "ar": "الصلاة على النبي", "ml": "സ്വലാത്ത്"}, "aliases": {"en": ["Salawat", "Durood", "Sallallahu alayhi wa sallam"], "ar": ["صلى الله عليه وسلم"]}}, {"key": "swalath-al-nariyya", "kind": "salawat", "arabic": "اللَّهُمَّ صَلِّ صَلَاةً كَامِلَةً وَسَلِّمْ سَلَامًا تَامًّا عَلَىٰ سَيِّدِنَا مُحَمَّدٍ الَّذِي تَنْحَلُّ بِهِ الْعُقَدُ وَتَنْفَرِجُ بِهِ الْكُرَبُ وَتُقْضَىٰ بِهِ الْحَوَائِجُ وَتُنَالُ بِهِ الرَّغَائِبُ وَحُسْنُ الْخَوَاتِمِ وَيُسْتَسْقَى الْغَمَامُ بِوَجْهِهِ الْكَرِيمِ وَعَلَىٰ آلِهِ وَصَحْبِهِ فِي كُلِّ لَمْحَةٍ وَنَفَسٍ بِعَدَدِ كُلِّ مَعْلُومٍ لَكَ", "title": {"en": "Swalath al Nariyya", "ar": "الصلاة النارية", "ml": "സ്വലാത്തുന്നാരിയ്യ"}, "aliases": {"en": ["Salat an-Nariyya", "Salawat Nariyya", "Swalathunnariyya", "Salat Tafrijiyya"], "ar": ["الصلاة التفريجية"]}}, {"key": "ramadan-dhikr", "kind": "dua", "arabic": "أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا ٱللَّٰهُ، أَسْتَغْفِرُ ٱللَّٰهَ، أَسْأَلُكَ ٱلْجَنَّةَ وَأَعُوذُ بِكَ مِنَ ٱلنَّارِ", "title": {"en": "Ramadan Dhikr", "ar": "ذكر رمضان", "ml": "റമദാൻ ദിക്ർ"}, "aliases": {"en": ["Ramzan Dhikr"]}}, {"key": "ramadan-first-ten-nights", "kind": "dua", "arabic": "اللَّهُمَّ ٱرْحَمْنِي يَا أَرْحَمَ ٱلرَّاحِمِينَ", "title": {"en": "First 10 Nights", "ar": "العشر الأوائل من رمضان", "ml": "ആദ്യ പത്ത് രാത്രികൾ"}, "aliases": {"en": ["First Ashra", "Allahummarhamni"]}}];
-const catalog = { dhikrs: FALLBACK_DHIKRS, collections: [], byKey: {} };
+/* Stand-in custom dhikrs (the user's own). Dua Kumayl isn't in the built-in catalog. */
+const CUSTOM_DHIKRS = [{ key: "custom:dua-kumayl", kind: "dua", custom: true, title: { en: "Dua Kumayl", ar: "دعاء كميل", ml: "ദുആ കുമൈൽ" }, aliases: { en: ["kumail", "kumayl"] },
+  arabic: "اللَّهُمَّ إِنِّي أَسْأَلُكَ بِرَحْمَتِكَ الَّتِي وَسِعَتْ كُلَّ شَيْءٍ، وَبِقُوَّتِكَ الَّتِي قَهَرْتَ بِهَا كُلَّ شَيْءٍ" }];
+const catalog = { dhikrs: [...FALLBACK_DHIKRS, ...CUSTOM_DHIKRS], collections: [], byKey: {} };
 function indexCatalog() { catalog.byKey = Object.fromEntries(catalog.dhikrs.map((d) => [d.key, d])); }
 indexCatalog();
 
@@ -800,12 +810,12 @@ const screens = {
     const g = goalById(state.route.goalId);
     if (!g) return screens.home();
     const td = today();
-    if (g.sessions.length && !g.sessions.some((s) => s.id === state.session)) state.session = g.sessions[0].id;
+    if (g.sessions.length && !g.sessions.some((s) => s.id === state.session)) state.session = currentSessionId(g);
     const session = g.sessions.length ? state.session : null;
     const p = policyOf(g, session), count = progressOf(g, td, session);
     const whole = v("tapArea") === "screen";
     const ar = goalArabic(g);
-    const sessions = g.sessions.length > 1 ? `<div class="counter-sessions">${g.sessions.map((s) => `<button class="filter-chip" aria-pressed="${s.id === session}" data-action="session" data-session="${s.id}">${esc(t("session_names")[s.id] || s.id)} · ${progressOf(g, td, s.id)}</button>`).join("")}</div>` : "";
+    const sessions = g.sessions.length ? sessionPills(g, session, td) : "";
     return { cls: "fixed no-nav screen-counting", html: `
       <header class="count-head">
         <button class="icon-btn pressable" data-action="back" aria-label="${esc(t("back"))}">${icon("back", "mirror")}</button>
@@ -816,15 +826,15 @@ const screens = {
         <button class="icon-btn aa pressable" data-action="text-size" aria-label="${esc(t("text_size"))}">Aa</button>
         <button class="icon-btn pressable" data-action="goal-menu" data-id="${g.id}" data-context="counting" aria-label="${esc(t("more_label"))}">${icon("more")}</button>
       </header>
+      ${sessions}
       <div class="count-body">
         ${ar ? `<div class="arabic-card" data-size="${state.settings.arabicSize}"><div class="t-quran" lang="ar">${esc(ar)}</div></div>` : ""}
         <div class="count-actions">
           <button class="btn main pressable" data-action="audio" data-slot="audio">${icon("play")}<span>${t("start_audio")}</span></button>
-          <button class="btn square pressable" data-action="timer" aria-label="${esc(t("timer"))}">${icon("timer")}</button>
+          <button class="btn square pressable" data-action="timer" aria-label="${esc(t("timer"))}"><span class="t-label">${t("timer")}</span></button>
           <button class="btn square pressable" data-action="count-list" aria-label="${esc(t("count_list"))}">${icon("goals")}</button>
         </div>
         <div class="counter-zone ${whole ? "whole" : ""}" ${whole ? 'data-counter="zone"' : ""}>
-          ${sessions}
           <div class="counter-ring" data-slot="ring">
             ${ringSVG(264, 10, count, p)}
             <button class="counter-circle" data-counter="circle" aria-label="${esc(t("tap_circle"))}: ${count}">
@@ -966,7 +976,8 @@ function dhikrList(d) {
     const hits = catalog.dhikrs.filter((x) => [x.key, ...Object.values(x.title), ...Object.values(x.aliases || {}).flat(), x.arabic].some((s) => normalise(String(s)).includes(q)));
     return hits.length ? `<div class="dhikr-list">${hits.slice(0, 40).map(rowHTML).join("")}</div>` : `<p class="t-body" style="color:var(--c-onSurfaceVariant)">${t("no_results")}</p>`;
   }
-  const groups = catalog.collections.length ? catalog.collections : [{ key: "all", title: { en: "All" }, dhikrs: catalog.dhikrs.map((x) => x.key) }];
+  const groups = [{ key: "custom", title: { en: t("your_dhikrs"), ar: t("your_dhikrs"), ml: t("your_dhikrs") }, dhikrs: CUSTOM_DHIKRS.map((x) => x.key) },
+    ...(catalog.collections.length ? catalog.collections : [{ key: "all", title: { en: "All" }, dhikrs: catalog.dhikrs.map((x) => x.key) }])];
   return groups.map((c) => `<div class="dhikr-group-title t-sectionTitle">${esc(c.title[lang()] || c.title.en)}</div><div class="dhikr-list">${c.dhikrs.slice(0, c.key === "asma-ul-husna" ? 6 : 99).map((k) => catalog.byKey[k]).filter(Boolean).map(rowHTML).join("")}</div>`).join("");
 }
 const searchField = (d) => `<div class="search">${icon("search")}<input class="field t-input" data-input="query" placeholder="${esc(t("search_ph"))}" value="${esc(d.query)}" aria-label="${esc(t("search_ph"))}">
@@ -1097,110 +1108,741 @@ function renderWizard() {
     <footer class="create-foot"><button class="btn main pressable" data-action="create-next" data-validate ${def.valid(d) ? "" : "disabled"}>${last ? saveLabel(d) : t("continue")}</button></footer>` };
 }
 
-/* --- B. Editable sentence (a bottom sheet) --- */
-function schedText(d) {
-  if (d.when === "every_day") return t("tok_every_day");
-  if (d.when === "weekdays") return d.weekdays.length ? t("tok_weekdays", WEEKDAYS.filter((w) => d.weekdays.includes(w)).map((w) => weekdayName(w, d.weekdays.length > 2 ? "short" : "long")).join(lang() === "ar" ? " و" : ", ")) : t("tok_pick_days");
-  if (d.when === "ramadan") return t("tok_ramadan")[d.ramadanPart];
-  if (d.when === "white") return t("tok_white");
-  if (d.when === "once") return t("tok_total");
-  return t("tok_custom");
+/* --- B. Editable sentence (a bottom sheet) ---
+ * B covers the whole goal language, so it has its own richer draft (sdNew) rather than the A/C draft:
+ * every schedule kind, every requirement, sessions with timings, the active period, the finish rule,
+ * the streak, a name and shared counts. sdToGoal turns it into the same goal shape A and C produce.
+ *
+ *   main sentence   verb · [dhikr] · [amount] · [rhythm]       the amount and rhythm choose the requirement
+ *   details         optional clauses under it, each removable  "at least [70]", "[100] after [Fajr] and …"
+ *   read-back       the whole goal as one plain sentence
+ *
+ * All wording comes from SENTENCE_L10N: one template set per language with slots, so each language
+ * orders its clauses itself (Malayalam puts the verb last). Pickers open as a second level inside
+ * the sheet, so the sheet keeps one height.
+ */
+const PRAYERS = ["fajr", "dhuhr", "asr", "maghrib", "isha"];
+const OCCASIONS = {
+  ramadan_whole: { preset: "ramadan", ranges: [[9, 1, 9, 30]] },
+  ramadan_first10: { preset: null, ranges: [[9, 1, 9, 10]] },
+  ramadan_middle10: { preset: null, ranges: [[9, 11, 9, 20]] },
+  ramadan_last10: { preset: "ramadan_last_ten", ranges: [[9, 21, 9, 30]] },
+  ramadan_odd: { preset: "ramadan_odd_nights", ranges: [[9, 21, 9, 21], [9, 23, 9, 23], [9, 25, 9, 25], [9, 27, 9, 27], [9, 29, 9, 29]] },
+  shawwal_six: { preset: "shawwal_six_days", ranges: [[10, 2, 10, 30]], req: { rhythmReq: "days_per_period", period: "hijri_month", days: "6" } },
+  dhul_hijjah_first10: { preset: "dhul_hijjah_first_ten", ranges: [[12, 1, 12, 10]] },
+  arafah: { preset: "day_of_arafah", ranges: [[12, 9, 12, 9]] },
+  ashura: { preset: "ashura", ranges: [[1, 9, 1, 10]] },
+};
+const hijriRanges = (rs) => ({ kind: "yearly", calendar: "hijri", ranges: rs.map(([a, b, c, e]) => ({ start: { month: a, day: b }, end: { month: c, day: e } })) });
+function occasionOf(s) {
+  if (s.kind !== "yearly" || s.calendar !== "hijri") return null;
+  const key = JSON.stringify(s.ranges.map((r) => [r.start.month, r.start.day, r.end.month, r.end.day]));
+  return Object.keys(OCCASIONS).find((k) => JSON.stringify(OCCASIONS[k].ranges) === key) || null;
 }
-const token = (text, picker, fieldName, empty = false) => `<button class="token pressable ${empty ? "empty" : ""}" data-action="open-picker" data-picker="${picker}" data-field="${fieldName}">${esc(text)}</button>`;
-function sentenceHTML(d) {
-  const dh = token(d.dhikr ? dhikrName(d.dhikr) : t("tok_pick_dhikr"), "dhikr", "dhikr", !d.dhikr);
-  const n = token(groupedN(d.count), "number", "count", !(intOrNull(d.count) > 0));
-  const s = token(schedText(d), "schedule", "when");
-  const by = d.when === "once" ? token(d.end ? t("by_date", fmtDate(d.end)) : t("no_deadline"), "date", "end", !d.end) : "";
-  return t("sentence", dh, n, s, by);
+const gN = (n) => new Intl.NumberFormat("en-US").format(n);
+const verbKind = (key) => ({ dua: "read", quran: "recite" }[catalog.byKey[key]?.kind] || "say");
+
+/* Sessions. The goal-model session is { id, count_policy }, so the timing lives in the id. */
+const sessionBaseId = (s) => (s.kind === "prayer" ? `after_${s.prayer}` : s.kind === "time" ? `at_${(s.time || "00:00").replace(":", "")}` : s.kind === "between" ? `between_${(s.from || "00:00").replace(":", "")}_${(s.to || "00:00").replace(":", "")}` : s.kind === "named" ? s.id : "anytime");
+function parseSession(id) {
+  let m;
+  if ((m = id.match(/^after_(fajr|dhuhr|asr|maghrib|isha)(?:_\d+)?$/))) return { kind: "prayer", prayer: m[1] };
+  if ((m = id.match(/^at_(\d\d)(\d\d)/))) return { kind: "time", time: `${m[1]}:${m[2]}` };
+  if ((m = id.match(/^between_(\d\d)(\d\d)_(\d\d)(\d\d)/))) return { kind: "between", from: `${m[1]}:${m[2]}`, to: `${m[3]}:${m[4]}` };
+  if (id.startsWith("anytime")) return { kind: "anytime" };
+  return { kind: "named", id };
 }
-const SUGGESTIONS = [
-  { id: "every_day", label: () => t("sg_every_day"), apply: { when: "every_day" }, on: (d) => d.when === "every_day" },
-  { id: "ramadan", label: () => t("sg_ramadan"), apply: { when: "ramadan", ramadanPart: "whole" }, on: (d) => d.when === "ramadan" },
-  { id: "total", label: () => t("sg_total"), apply: { when: "once", count: "10000" }, on: (d) => d.when === "once" && d.count === "10000" },
-  { id: "friday", label: () => t("sg_friday"), apply: { when: "weekdays", weekdays: ["friday"] }, on: (d) => d.when === "weekdays" && String(d.weekdays) === "friday" },
-];
-function sentenceMore(d) {
-  const e = errorsOf(d), once = d.when === "once";
-  const err = (k) => (e[k] ? `<div class="field-msg error">${e[k]}</div>` : "");
-  const sessions = d.sessions.map((s) => t("session_names")[s]).join(", ");
-  return `<div class="srows t-body">
-    ${once ? "" : `<div class="srow">${t("row_min")} ${token(d.minimum ? groupedN(d.minimum) : t("none"), "number", "minimum", !d.minimum)}</div>${err("minimum")}`}
-    <div class="srow">${t("row_cap")} ${token(d.maximum ? groupedN(d.maximum) : t("none"), "number", "maximum", !d.maximum)}</div>${err("maximum")}
-    <div class="srow">${t("row_from")} ${token(d.start === today() ? t("today_word") : fmtDate(d.start), "date", "start")} ${once ? "" : `${t("row_until")} ${token(d.end ? fmtDate(d.end) : t("no_end"), "date", "end", !d.end)}`}</div>${err("end")}
-    ${once ? "" : `<div class="srow">${t("row_sessions")} ${token(sessions || t("none"), "sessions", "sessions", !sessions)}</div>`}
-    <div class="srow">${t("row_streak")} ${token(t("streak_opt")[d.streak], "streak", "streak")}</div>
-  </div>`;
+function dedupeIds(list) {
+  const seen = {};
+  return list.map((s) => { let id = sessionBaseId(s); seen[id] = (seen[id] || 0) + 1; if (seen[id] > 1) id += "_" + seen[id]; return { id, s }; });
 }
-function sentenceMain(d) {
-  return `<div class="sheet-head"><h2 class="t-cardTitle">${d.mode === "edit" ? t("edit") : t("new_goal_title")}</h2>
-      <button class="icon-btn pressable" data-action="close-create" aria-label="${esc(t("close"))}">${icon("close")}</button></div>
-    <div class="sheet-scroll">
-      <p class="sentence t-title">${sentenceHTML(d)}</p>
-      <div class="chip-row">${SUGGESTIONS.map((s) => `<button class="filter-chip pressable" aria-pressed="${s.on(d)}" data-action="suggest" data-s="${s.id}">${esc(s.label())}</button>`).join("")}</div>
-      <button class="expander t-sectionTitle" data-action="toggle-more" aria-expanded="${d.moreOpen}">${t("more_short")}${icon("expand")}</button>
-      ${d.moreOpen ? sentenceMore(d) : ""}
-      ${sharedQuestion(d)}
-    </div>
-    <div class="sheet-foot"><div data-slot="preview">${previewHTML(d)}</div>
-      <button class="btn main pressable" data-action="create-save" data-validate ${draftValid(d) ? "" : "disabled"}>${saveLabel(d)}</button></div>`;
+function sessionWhenText(s, L = SL()) {
+  if (s.kind === "prayer") return L.sessWhen.prayer(L.prayers[s.prayer]);
+  if (s.kind === "time") return L.sessWhen.time(s.time);
+  if (s.kind === "between") return L.sessWhen.between(s.from, s.to);
+  if (s.kind === "anytime") return L.sessWhen.anytime;
+  return t("session_names")[s.id] || s.id;
 }
-function pickerHead(title) {
-  return `<div class="sheet-head with-back"><button class="icon-btn pressable" data-action="close-picker" aria-label="${esc(t("back"))}">${icon("back", "mirror")}</button><h2 class="t-cardTitle">${esc(title)}</h2></div>`;
+function sessionLabel(id, short = false) {
+  const s = parseSession(id), L = SL();
+  if (!short) return sessionWhenText(s, L);
+  if (s.kind === "prayer") return L.prayers[s.prayer];
+  if (s.kind === "time") return s.time;
+  if (s.kind === "between") return `${s.from}–${s.to}`;
+  if (s.kind === "anytime") return L.anytimeShort;
+  return t("session_names")[id] || id;
 }
-const doneFoot = (extra = "") => `<div class="sheet-foot">${extra}<button class="btn main pressable" data-action="close-picker">${t("pad_done")}</button></div>`;
-function pickerView(d) {
-  const f = d.pickerField;
-  if (d.picker === "dhikr") return `${pickerHead(t("step_dhikr"))}<div class="sheet-scroll">${searchField(d)}</div>`;
-  if (d.picker === "number") {
-    const title = { count: d.when === "once" ? t("f_count_total") : t("step_count"), minimum: t("f_minimum"), maximum: t("f_cap") }[f];
-    const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "back"];
-    return `${pickerHead(title)}<div class="sheet-scroll">
-      <div class="pad-display t-counter">${d[f] ? groupedN(d[f]) : "–"}</div>
-      ${f === "count" ? `<div class="chip-row" style="justify-content:center;margin-bottom:var(--s-lg)">${quickCounts(d).map((n) => `<button class="filter-chip" aria-pressed="${String(n) === d.count}" data-action="quick-count" data-field="count" data-n="${n}">${fmtN(n)}</button>`).join("")}</div>` : ""}
-      <div class="pad" dir="ltr">${keys.map((k) => `<button class="pressable" data-action="pad" data-key="${k}" aria-label="${k}">${k === "back" ? icon("back") : k === "clear" ? `<span class="t-label">${t("clear")}</span>` : k}</button>`).join("")}</div>
-      ${errorsOf(d)[f] ? `<div class="field-msg error" style="text-align:center">${errorsOf(d)[f]}</div>` : ""}
-    </div>${doneFoot()}`;
+
+/* --- Wording: one template set per language --- */
+const SENTENCE_L10N = {
+  en: {
+    verb: { say: "Say", read: "Read", recite: "Recite" },
+    amount: (n, g) => (n === 1 ? "once" : `${g} times`), anyCount: "whenever I can", pickAmount: "how many?", pickDhikr: "pick a dhikr",
+    main: ({ req, verb, dhikr, amount, rhythm, days, sessions }) =>
+      sessions ? `${verb} ${dhikr} ${rhythm}` : req === "days_per_period" ? `${verb} ${dhikr} ${amount} a day, on ${days} days ${rhythm}` : `${verb} ${dhikr} ${amount} ${rhythm}`,
+    period: { week: "a week", month: "a month", hijri_month: "a Hijri month" },
+    and: (xs) => (xs.length < 2 ? xs.join("") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`),
+    ord: (n) => n + (n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th"),
+    weekdayPlural: (name) => name + "s",
+    rhythm: {
+      every_day: "every day", one_time: "every day until it's done",
+      weekdays1: (day) => `every ${day}`, weekdays: (days) => `on ${days}`,
+      every_n: (n, from) => (n === 1 ? "every day" : `every ${n} days`) + (from ? ` from ${from}` : ""),
+      month_days: (days) => `on the ${days} of every month`,
+      white: "on the white days", hijri_days: (days) => `on ${days} of every Hijri month`,
+      dates: (dates) => `on ${dates}`, yearly_on: (x) => `every year on ${x}`, yearly_range: (a, b) => `every year from ${a} to ${b}`,
+      total: "in total", shawwal_six: "of every Shawwal",
+      occasions: {
+        ramadan_whole: "every day of Ramadan", ramadan_first10: "in the first 10 days of every Ramadan", ramadan_middle10: "in the middle 10 days of every Ramadan",
+        ramadan_last10: "in the last 10 nights of every Ramadan", ramadan_odd: "on the odd nights of every Ramadan's last 10",
+        dhul_hijjah_first10: "in the first 10 days of every Dhul Hijjah", arafah: "on every Day of Arafah", ashura: "on every Ashura (9–10 Muharram)",
+      },
+    },
+    prayers: { fajr: "Fajr", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha" }, anytimeShort: "Anytime",
+    sessWhen: { anytime: "at any time", prayer: (p) => `after ${p}`, time: (x) => `at ${x}`, between: (a, b) => `between ${a} and ${b}` },
+    session: (amount, when) => `${amount} ${when}`,
+    min: (v) => `at least ${v}`, cap: (v) => `stop at ${v}`,
+    periodClause: (start, end) => `${start} ${end}`, from: (v) => `from ${v}`, until: (v) => `until ${v}`, by: (v) => `by ${v}`, forDays: (v) => `for ${v}`, daysN: (n) => `${n} days`, open: "until I stop", today: "today",
+    finishReach: "finish when I reach it", finishUntilWord: "keep going until", finishUntil: (w, dt) => `${w} ${dt}`,
+    streak: (v) => `my streak counts at ${v}`, streakVals: { minimum: "the minimum", target: "the target", any_count: "any count", maximum: "the cap" },
+    name: (v) => `call it ${v}`, quote: (v) => `“${v}”`,
+    shared: (dh) => `count ${dh} from my other goal too`,
+    readback: ({ main, sessions, clauses, streak, name, shared, dhikr }) => {
+      let s = main.charAt(0).toUpperCase() + main.slice(1);
+      if (sessions) s += `: ${sessions}`;
+      if (clauses.length) s += `, ${clauses.join(", ")}`;
+      s += `. Your streak counts at ${streak}.`;
+      if (name) s += ` It's called ${name}.`;
+      if (shared === true) s += ` Counts are shared with your other ${dhikr} goal.`;
+      if (shared === false) s += ` It keeps its own count, apart from your other ${dhikr} goal.`;
+      return s;
+    },
+    examples: ["100 Swalath daily, at least 70", "Istighfar after Fajr and Maghrib", "Tahleel 70,000 by 30 Dec", "Ya Latif 129 for 40 days", "Swalath 1,000 a week",
+      "Swalath on 5 days a week", "Ikhlas on the white days", "Dua Kumayl every Thursday", "Istighfar, last 10 of Ramadan"],
+  },
+  ar: {
+    verb: { say: "قل", read: "اقرأ", recite: "اتلُ" },
+    amount: (n, g) => (n === 1 ? "مرة واحدة" : `${g} مرة`), anyCount: "كلما استطعت", pickAmount: "كم مرة؟", pickDhikr: "اختر ذكرًا",
+    main: ({ req, verb, dhikr, amount, rhythm, days, sessions }) =>
+      sessions ? `${verb} ${dhikr} ${rhythm}` : req === "days_per_period" ? `${verb} ${dhikr} ${amount} في اليوم، في ${days} أيام ${rhythm}` : `${verb} ${dhikr} ${amount} ${rhythm}`,
+    period: { week: "في الأسبوع", month: "في الشهر", hijri_month: "في الشهر الهجري" },
+    and: (xs) => xs.join(" و"),
+    ord: (n) => String(n), weekdayPlural: (name) => name,
+    rhythm: {
+      every_day: "كل يوم", one_time: "كل يوم حتى يكتمل",
+      weekdays1: (day) => `كل ${day}`, weekdays: (days) => `أيام ${days}`,
+      every_n: (n, from) => (n === 1 ? "كل يوم" : `كل ${n} أيام`) + (from ? ` بدءًا من ${from}` : ""),
+      month_days: (days) => `في اليوم ${days} من كل شهر`,
+      white: "في الأيام البيض", hijri_days: (days) => `في ${days} من كل شهر هجري`,
+      dates: (dates) => `في ${dates}`, yearly_on: (x) => `كل سنة في ${x}`, yearly_range: (a, b) => `كل سنة من ${a} إلى ${b}`,
+      total: "إجمالًا", shawwal_six: "من كل شوال",
+      occasions: {
+        ramadan_whole: "كل يوم من رمضان", ramadan_first10: "في العشر الأوائل من كل رمضان", ramadan_middle10: "في العشر الأواسط من كل رمضان",
+        ramadan_last10: "في العشر الأواخر من كل رمضان", ramadan_odd: "في ليالي الوتر من العشر الأواخر",
+        dhul_hijjah_first10: "في العشر الأوائل من كل ذي الحجة", arafah: "في كل يوم عرفة", ashura: "في كل عاشوراء (٩–١٠ محرم)",
+      },
+    },
+    prayers: { fajr: "الفجر", dhuhr: "الظهر", asr: "العصر", maghrib: "المغرب", isha: "العشاء" }, anytimeShort: "أي وقت",
+    sessWhen: { anytime: "في أي وقت", prayer: (p) => `بعد ${p}`, time: (x) => `عند ${x}`, between: (a, b) => `بين ${a} و${b}` },
+    session: (amount, when) => `${amount} ${when}`,
+    min: (v) => `على الأقل ${v}`, cap: (v) => `توقف عند ${v}`,
+    periodClause: (start, end) => `${start} ${end}`, from: (v) => `من ${v}`, until: (v) => `حتى ${v}`, by: (v) => `قبل ${v}`, forDays: (v) => `لمدة ${v}`, daysN: (n) => `${n} يومًا`, open: "حتى أتوقف", today: "اليوم",
+    finishReach: "أنهِه عند بلوغه", finishUntilWord: "استمر حتى", finishUntil: (w, dt) => `${w} ${dt}`,
+    streak: (v) => `تُحسب سلسلتي عند ${v}`, streakVals: { minimum: "الحد الأدنى", target: "الهدف", any_count: "أي عدد", maximum: "الحد الأقصى" },
+    name: (v) => `سمِّه ${v}`, quote: (v) => `«${v}»`,
+    shared: (dh) => `احسب ${dh} من هدفي الآخر أيضًا`,
+    readback: ({ main, sessions, clauses, streak, name, shared, dhikr }) => {
+      let s = main;
+      if (sessions) s += `: ${sessions}`;
+      if (clauses.length) s += `، ${clauses.join("، ")}`;
+      s += `. تُحسب سلسلتك عند ${streak}.`;
+      if (name) s += ` اسمه ${name}.`;
+      if (shared === true) s += ` يُشارك العدّ مع هدفك الآخر لـ${dhikr}.`;
+      if (shared === false) s += ` له عدّه الخاص بعيدًا عن هدفك الآخر لـ${dhikr}.`;
+      return s;
+    },
+    examples: ["١٠٠ صلاة يوميًا، ٧٠ على الأقل", "استغفار بعد الفجر والمغرب", "تهليل ٧٠٬٠٠٠ قبل ٣٠ ديسمبر", "يا لطيف ١٢٩ لمدة ٤٠ يومًا", "صلاة ١٬٠٠٠ في الأسبوع",
+      "صلاة في ٥ أيام أسبوعيًا", "الإخلاص في الأيام البيض", "دعاء كميل كل خميس", "استغفار في العشر الأواخر"],
+  },
+  ml: {
+    verb: { say: "ചൊല്ലുക", read: "ചൊല്ലുക", recite: "ഓതുക" },
+    amount: (n, g) => (n === 1 ? "ഒരു തവണ" : `${g} തവണ`), anyCount: "കഴിയുമ്പോഴെല്ലാം", pickAmount: "എത്ര തവണ?", pickDhikr: "ദിക്ർ തിരഞ്ഞെടുക്കുക",
+    // Malayalam is verb-final: [dhikr] [rhythm] [amount] verb
+    main: ({ req, verb, dhikr, amount, rhythm, days, sessions }) =>
+      sessions ? `${dhikr} ${rhythm} ${verb}` : req === "days_per_period" ? `${dhikr} ${rhythm} ${days} ദിവസം, ദിവസവും ${amount} ${verb}` : `${dhikr} ${rhythm} ${amount} ${verb}`,
+    period: { week: "ആഴ്ചയിൽ", month: "മാസത്തിൽ", hijri_month: "ഹിജ്റ മാസത്തിൽ" },
+    and: (xs) => xs.join(", "),
+    ord: (n) => String(n), weekdayPlural: (name) => name,
+    rhythm: {
+      every_day: "എല്ലാ ദിവസവും", one_time: "പൂർത്തിയാകും വരെ ദിവസവും",
+      weekdays1: (day) => `എല്ലാ ആഴ്ചയും ${day}`, weekdays: (days) => `എല്ലാ ആഴ്ചയും ${days}`,
+      every_n: (n, from) => (n === 1 ? "എല്ലാ ദിവസവും" : `${n} ദിവസം കൂടുമ്പോൾ`) + (from ? ` (${from} മുതൽ)` : ""),
+      month_days: (days) => `എല്ലാ മാസവും ${days} തീയതികളിൽ`,
+      white: "അയ്യാമുൽ ബീളിൽ", hijri_days: (days) => `എല്ലാ ഹിജ്റ മാസവും ${days} തീയതികളിൽ`,
+      dates: (dates) => `${dates} തീയതികളിൽ`, yearly_on: (x) => `എല്ലാ വർഷവും ${x}ന്`, yearly_range: (a, b) => `എല്ലാ വർഷവും ${a} മുതൽ ${b} വരെ`,
+      total: "ആകെ", shawwal_six: "എല്ലാ ശവ്വാലിലും",
+      occasions: {
+        ramadan_whole: "റമദാനിലെ എല്ലാ ദിവസവും", ramadan_first10: "എല്ലാ റമദാനിലെയും ആദ്യ പത്തിൽ", ramadan_middle10: "എല്ലാ റമദാനിലെയും നടുവിലെ പത്തിൽ",
+        ramadan_last10: "എല്ലാ റമദാനിലെയും അവസാന പത്തിൽ", ramadan_odd: "റമദാനിലെ അവസാന പത്തിലെ ഒറ്റ രാവുകളിൽ",
+        dhul_hijjah_first10: "എല്ലാ ദുൽഹിജ്ജയിലെയും ആദ്യ പത്തിൽ", arafah: "എല്ലാ അറഫാ ദിനത്തിലും", ashura: "എല്ലാ ആശൂറാഇലും (മുഹർറം 9–10)",
+      },
+    },
+    prayers: { fajr: "സുബ്ഹ്", dhuhr: "ളുഹ്ർ", asr: "അസ്ർ", maghrib: "മഗ്‌രിബ്", isha: "ഇശാ" }, anytimeShort: "ഏത് സമയവും",
+    sessWhen: { anytime: "ഏത് സമയത്തും", prayer: (p) => `${p}ന് ശേഷം`, time: (x) => `${x}ന്`, between: (a, b) => `${a}നും ${b}നും ഇടയിൽ` },
+    session: (amount, when) => `${when} ${amount}`,
+    min: (v) => `കുറഞ്ഞത് ${v}`, cap: (v) => `${v}ൽ നിർത്തുക`,
+    periodClause: (start, end) => `${start} ${end}`, from: (v) => `${v} മുതൽ`, until: (v) => `${v} വരെ`, by: (v) => `${v}നകം`, forDays: (v) => v, daysN: (n) => `${n} ദിവസത്തേക്ക്`, open: "ഞാൻ നിർത്തുന്നത് വരെ", today: "ഇന്ന്",
+    finishReach: "എത്തുമ്പോൾ പൂർത്തിയാക്കുക", finishUntilWord: "തുടരുക", finishUntil: (w, dt) => `${dt} വരെ ${w}`,
+    streak: (v) => `സ്ട്രീക്ക് ${v} എത്തുമ്പോൾ എണ്ണുക`, streakVals: { minimum: "കുറഞ്ഞത്", target: "ലക്ഷ്യം", any_count: "ഏത് എണ്ണവും", maximum: "പരമാവധി" },
+    name: (v) => `പേര് ${v}`, quote: (v) => `“${v}”`,
+    shared: (dh) => `മറ്റേ ലക്ഷ്യത്തിലെ ${dh} എണ്ണവും കൂട്ടുക`,
+    // Clauses lead and the main sentence (with its verb) closes the read-back.
+    readback: ({ main, sessions, clauses, streak, name, shared, dhikr }) => {
+      let s = clauses.length ? clauses.join(", ") + ", " : "";
+      s += main + (sessions ? ` (${sessions})` : "") + `. സ്ട്രീക്ക്: ${streak}.`;
+      if (name) s += ` പേര്: ${name}.`;
+      if (shared === true) s += ` മറ്റേ ${dhikr} ലക്ഷ്യവുമായി എണ്ണം പങ്കിടുന്നു.`;
+      if (shared === false) s += ` ഇതിന് സ്വന്തം എണ്ണം.`;
+      return s;
+    },
+    examples: ["സ്വലാത്ത് ദിവസം 100, കുറഞ്ഞത് 70", "സുബ്ഹിനും മഗ്‌രിബിനും ശേഷം ഇസ്തിഗ്ഫാർ", "തഹ്‌ലീൽ 70,000, ഡിസം 30നകം", "യാ ലത്വീഫ് 129, 40 ദിവസം", "സ്വലാത്ത് ആഴ്ചയിൽ 1,000",
+      "ആഴ്ചയിൽ 5 ദിവസം സ്വലാത്ത്", "അയ്യാമുൽ ബീളിൽ ഇഖ്‌ലാസ്", "എല്ലാ വ്യാഴാഴ്ചയും ദുആ കുമൈൽ", "റമദാൻ അവസാന പത്തിൽ ഇസ്തിഗ്ഫാർ"],
+  },
+};
+const SL = () => SENTENCE_L10N[lang()] || SENTENCE_L10N.en;
+
+/* Sheet chrome strings (en, ar, ml), merged into STRINGS. */
+const SHEET_STRINGS = {
+  en: {
+    s_add_detail: "Add detail", s_remove: "Remove", s_examples: "Examples", s_add_session_short: "session",
+    pad_delete: "Delete", p_amount: "How many?", p_days: "On how many days?", p_min: "At least", p_cap: "Stop at", p_session_amount: "How many in this session?",
+    p_rhythm: "How often?", p_session: "When in the day?", p_start: "Starts", p_end: "Ends", p_finish: "Finishes", p_streak: "Streak counts at", p_name: "Name", p_shared: "Shared counts",
+    s_once: "Once", s_anycount: "Whenever I can", s_anycount_sub: "No number: any count is progress",
+    g_repeat: "Repeat", g_occasions: "Occasions", g_totals: "Totals",
+    r_every_day: "Every day", r_weekdays: "On chosen weekdays", r_every_n: "Every few days", r_month_days: "Days of the month", r_hijri_days: "Days of every Hijri month", r_dates: "Specific dates", r_yearly: "Every year",
+    o_ramadan_whole: "Ramadan, every day", o_ramadan_first10: "Ramadan, first 10", o_ramadan_middle10: "Ramadan, middle 10", o_ramadan_last10: "Ramadan, last 10 nights", o_ramadan_odd: "Ramadan, odd nights of the last 10",
+    o_shawwal_six: "Six days of Shawwal", o_dhul_hijjah_first10: "First 10 of Dhul Hijjah", o_arafah: "Day of Arafah", o_ashura: "Ashura (9–10 Muharram)",
+    tt_period_week: "A total each week", tt_period_month: "A total each month", tt_period_hijri_month: "A total each Hijri month",
+    tt_dpp_week: "On some days each week", tt_dpp_month: "On some days each month", tt_dpp_hijri_month: "On some days each Hijri month", tt_total: "One total",
+    every_lbl: "Every", days_lbl: "days", from_lbl: "starting", white_btn: "White days (13–15)", add_btn: "Add", range_lbl: "A range of days", cal_greg: "Gregorian", cal_hijri: "Hijri", from_day: "From", to_day: "To",
+    k_anytime: "Anytime", k_prayer: "After a prayer", k_time: "At a time", k_between: "Between two times", remove_session: "Remove this session",
+    e_until: "Until a date", e_for: "For a number of days", e_open: "Until I stop",
+    fr_reach: "Finish when I reach it", fr_until: "Keep going until a date", sh_share: "Share counts", sh_separate: "Count separately",
+    d_minimum: "At least…", d_cap: "Stop at…", d_sessions: "Split into sessions", d_period: "Start and end", d_finish: "When it finishes", d_streak: "What the streak counts", d_name: "Give it a name", d_shared: "Share counts with my other goal",
+    d_remind: "Remind me…", coming_soon: "Coming soon",
+    err_amount: "Add a number", err_days: (max) => `Pick 1 to ${max} days`, err_wd: "Pick at least one day", err_dates: "Add at least one date", err_every: "Pick 1 to 366 days", err_yearly: "Pick a real date",
+    err_min: "More than the target", err_cap: "Less than the target", err_sessions: "Each session needs a number", err_sess_dup: "Two sessions at the same time",
+    err_end: "Ends before it starts", err_need_end: "Pick an end date", err_for: "Add a number of days", err_streak_min: "No minimum is set", err_streak_target: "No target is set", err_streak_cap: "No cap is set", err_name: "Add a name or remove this",
+    chip_dpp: (t, d, p) => `${t} a day, ${d} days a ${p}`, your_dhikrs: "Your dhikrs",
+    sessions_done: (n, m) => `${n} of ${m} sessions done`, session_now: (x) => `now: ${x}`,
+    t_session_done: (x) => `${x}: done`, t_all_sessions: "All sessions done for today",
+  },
+  ar: {
+    s_add_detail: "أضف تفصيلًا", s_remove: "إزالة", s_examples: "أمثلة", s_add_session_short: "جلسة",
+    pad_delete: "حذف", p_amount: "كم مرة؟", p_days: "في كم يومًا؟", p_min: "على الأقل", p_cap: "توقف عند", p_session_amount: "كم مرة في هذه الجلسة؟",
+    p_rhythm: "كم مرة يتكرر؟", p_session: "متى في اليوم؟", p_start: "يبدأ", p_end: "ينتهي", p_finish: "يكتمل", p_streak: "تُحسب السلسلة عند", p_name: "الاسم", p_shared: "مشاركة العدّ",
+    s_once: "مرة واحدة", s_anycount: "كلما استطعت", s_anycount_sub: "بلا عدد: أي عدّ يُحسب تقدمًا",
+    g_repeat: "التكرار", g_occasions: "المناسبات", g_totals: "الإجماليات",
+    r_every_day: "كل يوم", r_weekdays: "أيام محددة من الأسبوع", r_every_n: "كل بضعة أيام", r_month_days: "أيام من الشهر", r_hijri_days: "أيام من كل شهر هجري", r_dates: "تواريخ محددة", r_yearly: "كل سنة",
+    o_ramadan_whole: "رمضان، كل يوم", o_ramadan_first10: "رمضان، العشر الأوائل", o_ramadan_middle10: "رمضان، العشر الأواسط", o_ramadan_last10: "رمضان، العشر الأواخر", o_ramadan_odd: "رمضان، ليالي الوتر",
+    o_shawwal_six: "ستة أيام من شوال", o_dhul_hijjah_first10: "العشر الأوائل من ذي الحجة", o_arafah: "يوم عرفة", o_ashura: "عاشوراء (٩–١٠ محرم)",
+    tt_period_week: "إجمالي كل أسبوع", tt_period_month: "إجمالي كل شهر", tt_period_hijri_month: "إجمالي كل شهر هجري",
+    tt_dpp_week: "في بعض أيام الأسبوع", tt_dpp_month: "في بعض أيام الشهر", tt_dpp_hijri_month: "في بعض أيام الشهر الهجري", tt_total: "إجمالي واحد",
+    every_lbl: "كل", days_lbl: "أيام", from_lbl: "بدءًا من", white_btn: "الأيام البيض (١٣–١٥)", add_btn: "إضافة", range_lbl: "مدى من الأيام", cal_greg: "ميلادي", cal_hijri: "هجري", from_day: "من", to_day: "إلى",
+    k_anytime: "أي وقت", k_prayer: "بعد صلاة", k_time: "في وقت محدد", k_between: "بين وقتين", remove_session: "إزالة هذه الجلسة",
+    e_until: "حتى تاريخ", e_for: "لعدد من الأيام", e_open: "حتى أتوقف",
+    fr_reach: "أنهِه عند بلوغه", fr_until: "استمر حتى تاريخ", sh_share: "شارك العدّ", sh_separate: "احسب كلًّا على حدة",
+    d_minimum: "على الأقل…", d_cap: "توقف عند…", d_sessions: "قسّمه إلى جلسات", d_period: "البداية والنهاية", d_finish: "متى يكتمل", d_streak: "ما تحسبه السلسلة", d_name: "سمِّه", d_shared: "شارك العدّ مع هدفي الآخر",
+    d_remind: "ذكّرني…", coming_soon: "قريبًا",
+    err_amount: "أضف عددًا", err_days: (max) => `اختر من ١ إلى ${max} أيام`, err_wd: "اختر يومًا واحدًا على الأقل", err_dates: "أضف تاريخًا واحدًا على الأقل", err_every: "اختر من ١ إلى ٣٦٦ يومًا", err_yearly: "اختر تاريخًا صحيحًا",
+    err_min: "أكثر من الهدف", err_cap: "أقل من الهدف", err_sessions: "كل جلسة تحتاج إلى عدد", err_sess_dup: "جلستان في الوقت نفسه",
+    err_end: "ينتهي قبل أن يبدأ", err_need_end: "اختر تاريخ الانتهاء", err_for: "أضف عدد الأيام", err_streak_min: "لم يُحدَّد حد أدنى", err_streak_target: "لم يُحدَّد هدف", err_streak_cap: "لم يُحدَّد حد أقصى", err_name: "أضف اسمًا أو أزل هذا",
+    chip_dpp: (t, d, p) => `${t} يوميًا، ${d} أيام في ${p}`, your_dhikrs: "أذكارك",
+    sessions_done: (n, m) => `${n} من ${m} جلسات مكتملة`, session_now: (x) => `الآن: ${x}`,
+    t_session_done: (x) => `${x}: اكتملت`, t_all_sessions: "اكتملت كل جلسات اليوم",
+  },
+  ml: {
+    new_goal_title: "പുതിയ ലക്ഷ്യം", edit: "ലക്ഷ്യം തിരുത്തുക", add_goal_btn: "ലക്ഷ്യം ചേർക്കുക", save_changes: "മാറ്റങ്ങൾ സേവ് ചെയ്യുക", close: "അടയ്ക്കുക", back: "തിരികെ",
+    step_dhikr: "ദിക്ർ തിരഞ്ഞെടുക്കുക", search_ph: "ദിക്റുകൾ തിരയുക", pad_done: "ശരി", clear: "മായ്ക്കുക", preview_goals: "പ്രിവ്യൂ",
+    s_add_detail: "വിശദാംശം ചേർക്കുക", s_remove: "നീക്കുക", s_examples: "ഉദാഹരണങ്ങൾ", s_add_session_short: "സെഷൻ",
+    pad_delete: "മായ്ക്കുക", p_amount: "എത്ര തവണ?", p_days: "എത്ര ദിവസം?", p_min: "കുറഞ്ഞത്", p_cap: "ഇവിടെ നിർത്തുക", p_session_amount: "ഈ സെഷനിൽ എത്ര?",
+    p_rhythm: "എത്ര ഇടവിട്ട്?", p_session: "ദിവസത്തിൽ എപ്പോൾ?", p_start: "തുടക്കം", p_end: "അവസാനം", p_finish: "പൂർത്തീകരണം", p_streak: "സ്ട്രീക്ക് എണ്ണുന്നത്", p_name: "പേര്", p_shared: "പങ്കിട്ട എണ്ണം",
+    s_once: "ഒരു തവണ", s_anycount: "കഴിയുമ്പോഴെല്ലാം", s_anycount_sub: "എണ്ണമില്ല: ഏത് എണ്ണവും പുരോഗതി",
+    g_repeat: "ആവർത്തനം", g_occasions: "സന്ദർഭങ്ങൾ", g_totals: "ആകെത്തുകകൾ",
+    r_every_day: "എല്ലാ ദിവസവും", r_weekdays: "തിരഞ്ഞെടുത്ത ആഴ്ചദിവസങ്ങൾ", r_every_n: "ഏതാനും ദിവസം കൂടുമ്പോൾ", r_month_days: "മാസത്തിലെ ദിവസങ്ങൾ", r_hijri_days: "ഹിജ്റ മാസത്തിലെ ദിവസങ്ങൾ", r_dates: "നിശ്ചിത തീയതികൾ", r_yearly: "എല്ലാ വർഷവും",
+    o_ramadan_whole: "റമദാൻ, എല്ലാ ദിവസവും", o_ramadan_first10: "റമദാൻ, ആദ്യ പത്ത്", o_ramadan_middle10: "റമദാൻ, നടുവിലെ പത്ത്", o_ramadan_last10: "റമദാൻ, അവസാന പത്ത്", o_ramadan_odd: "റമദാൻ, ഒറ്റ രാവുകൾ",
+    o_shawwal_six: "ശവ്വാലിലെ ആറ് ദിവസം", o_dhul_hijjah_first10: "ദുൽഹിജ്ജ ആദ്യ പത്ത്", o_arafah: "അറഫാ ദിനം", o_ashura: "ആശൂറാ (മുഹർറം 9–10)",
+    tt_period_week: "ആഴ്ചയിൽ ആകെ", tt_period_month: "മാസത്തിൽ ആകെ", tt_period_hijri_month: "ഹിജ്റ മാസത്തിൽ ആകെ",
+    tt_dpp_week: "ആഴ്ചയിൽ ചില ദിവസങ്ങൾ", tt_dpp_month: "മാസത്തിൽ ചില ദിവസങ്ങൾ", tt_dpp_hijri_month: "ഹിജ്റ മാസത്തിൽ ചില ദിവസങ്ങൾ", tt_total: "ഒരു ആകെത്തുക",
+    d_minimum: "കുറഞ്ഞത്…", d_cap: "ഇവിടെ നിർത്തുക…", d_sessions: "സെഷനുകളായി തിരിക്കുക", d_period: "തുടക്കവും അവസാനവും", d_finish: "എപ്പോൾ പൂർത്തിയാകും", d_streak: "സ്ട്രീക്ക് എന്ത് എണ്ണും", d_name: "പേര് നൽകുക", d_shared: "മറ്റേ ലക്ഷ്യവുമായി എണ്ണം പങ്കിടുക",
+    d_remind: "ഓർമ്മിപ്പിക്കുക…", coming_soon: "ഉടൻ വരുന്നു",
+    err_amount: "ഒരു എണ്ണം ചേർക്കുക", err_min: "ലക്ഷ്യത്തേക്കാൾ കൂടുതൽ", err_cap: "ലക്ഷ്യത്തേക്കാൾ കുറവ്", err_end: "തുടങ്ങും മുമ്പ് അവസാനിക്കുന്നു",
+    your_dhikrs: "നിങ്ങളുടെ ദിക്റുകൾ",
+    sessions_done: (n, m) => `${m} സെഷനിൽ ${n} പൂർത്തിയായി`, session_now: (x) => `ഇപ്പോൾ: ${x}`,
+  },
+};
+STRINGS.ml = STRINGS.ml || {};
+for (const l of ["en", "ar", "ml"]) Object.assign(STRINGS[l], SHEET_STRINGS[l]);
+
+/* --- The B draft --- */
+function sdNew(prefill = {}) {
+  return Object.assign({ flow: "sentence", mode: "create", goalId: null, dhikr: null, amount: "100", anyCount: false, rhythmReq: "per_due_date", period: "week", days: "5",
+    schedule: { kind: "every_day" }, preset: null, occasion: null, yearlySingle: true, details: {}, picker: null, query: "" }, structuredClone(prefill));
+}
+const sdReq = (d) => (d.anyCount ? "tracker" : d.rhythmReq);
+const autoStreak = (d) => (["tracker", "cumulative_total"].includes(sdReq(d)) ? "any_count" : d.details.minimum ? "minimum" : "target");
+/* Drop details that no longer apply after the amount or rhythm changed. */
+function sdNormalize(d) {
+  const D = d.details, req = sdReq(d);
+  if (req === "cumulative_total" || req === "tracker") delete D.minimum;
+  if (req === "cumulative_total") delete D.cap;
+  if (req !== "per_due_date") delete D.sessions;
+  if (req !== "cumulative_total") delete D.finish;
+  return d;
+}
+function sdFromGoal(g) {
+  const d = sdNew(), D = d.details, req = g.requirement.type;
+  const p0 = g.sessions[0]?.count_policy || g.count_policy;
+  Object.assign(d, { mode: "edit", goalId: g.id, dhikr: g.dhikr, anyCount: req === "tracker", rhythmReq: req === "tracker" ? "per_due_date" : req,
+    schedule: structuredClone(g.schedule), preset: g.preset || null, occasion: occasionOf(g.schedule), amount: String(p0.target ?? 100) });
+  if (g.requirement.period) d.period = g.requirement.period;
+  if (g.requirement.days) d.days = String(g.requirement.days);
+  if (d.rhythmReq === "cumulative_total") d.schedule = { kind: "one_time" };
+  if (g.schedule.kind === "yearly") d.yearlySingle = g.schedule.ranges.every((r) => r.start.month === r.end.month && r.start.day === r.end.day);
+  if (!g.sessions.length) {
+    if (g.count_policy.minimum != null) D.minimum = { value: String(g.count_policy.minimum) };
+    if (g.count_policy.maximum != null) D.cap = { value: String(g.count_policy.maximum) };
+  } else D.sessions = { list: g.sessions.map((s) => ({ ...parseSession(s.id), amount: String(s.count_policy.target ?? "") })) };
+  const ap = g.active_period;
+  if (ap.end_date || ap.duration_days || ap.start_date !== today()) D.period = { start: ap.start_date, mode: ap.duration_days ? "for" : ap.end_date ? "until" : "open", end: ap.end_date || "", days: String(ap.duration_days || 40) };
+  if (req === "cumulative_total" && g.completion === "when_duration_ended") D.finish = { mode: "until" };
+  if (p0.streak_threshold !== autoStreak(d)) D.streak = { value: p0.streak_threshold };
+  if (g.name) D.name = { value: g.name[lang()] || g.name.en };
+  if (g.counts === "dedicated") D.shared = false;
+  return d;
+}
+function sdToGoal(d, base = null) {
+  const D = d.details, req = sdReq(d);
+  const num = (v) => { const n = intOrNull(v); return n > 0 ? n : 0; };
+  const target = req === "tracker" ? null : num(d.amount);
+  const fix = (th, p) => ((th === "minimum" && p.minimum == null) || (th === "maximum" && p.maximum == null) || (th === "target" && p.target == null) ? (p.target == null ? "any_count" : "target") : th);
+  const threshold = D.streak?.value || autoStreak(d);
+  let schedule = structuredClone(d.schedule);
+  if (req === "period_total" || (req === "days_per_period" && d.occasion !== "shawwal_six")) schedule = { kind: "every_day" };
+  if (req === "cumulative_total") schedule = { kind: "one_time" };
+  if (schedule.kind === "every_n_days") { schedule.every = num(schedule.every) || 1; schedule.anchor_date = schedule.anchor_date || null; }
+  if (schedule.days) schedule.days = [...schedule.days].sort((a, b) => a - b);
+  if (schedule.dates) schedule.dates = [...schedule.dates].sort();
+  const requirement = req === "period_total" ? { type: req, period: d.period } : req === "days_per_period" ? { type: req, period: d.period, days: num(d.days) || 1 } : { type: req };
+  const cp = { minimum: D.minimum ? num(D.minimum.value) : null, target, maximum: D.cap ? num(D.cap.value) : null, streak_threshold: null };
+  cp.streak_threshold = fix(threshold, cp);
+  const sessions = D.sessions ? dedupeIds(D.sessions.list).map(({ id, s }) => {
+    const p = { minimum: null, target: req === "tracker" ? null : num(s.amount), maximum: null, streak_threshold: null };
+    p.streak_threshold = fix(threshold, p);
+    return { id, count_policy: p };
+  }) : [];
+  const p = D.period, end = p?.mode === "until" && p.end ? p.end : null, duration = p?.mode === "for" ? num(p.days) || null : null;
+  const nm = D.name?.value?.trim();
+  return {
+    id: base?.id || uuidv7(), dhikr: d.dhikr,
+    name: nm ? (base?.name && (base.name[lang()] || base.name.en) === nm ? base.name : { en: nm, ar: nm, ml: nm }) : null,
+    custom_arabic: base?.custom_arabic || null, preset: d.preset, schedule,
+    active_period: { start_date: p?.start || today(), end_date: end, duration_days: duration },
+    paused: base?.paused || [],
+    count_policy: sessions.length ? { minimum: null, target: null, maximum: null, streak_threshold: "any_count" } : cp,
+    sessions, requirement,
+    completion: req === "cumulative_total" ? (D.finish?.mode === "until" ? "when_duration_ended" : "when_target_reached") : end || duration ? "when_duration_ended" : "never",
+    counts: siblingsOf(d).length && D.shared === false ? "dedicated" : "shared",
+    count_entries: base?.count_entries || [], created: base?.created || today(),
+  };
+}
+const validMD = (cal, md) => Number.isInteger(md.month) && md.month >= 1 && md.month <= 12 && Number.isInteger(md.day) && md.day >= 1 && md.day <= (cal === "hijri" ? 30 : monthLen(2024, md.month));
+function sdErrors(d) {
+  const e = {}, D = d.details, s = d.schedule, req = sdReq(d), n = intOrNull(d.amount);
+  const target = req === "tracker" || D.sessions ? null : n;
+  if (!d.anyCount && !D.sessions && !(n > 0)) e.amount = t("err_amount");
+  if (req === "days_per_period") { const max = { week: 7, month: 31, hijri_month: 30 }[d.period], k = intOrNull(d.days); if (!(k >= 1 && k <= max)) e.days = t("err_days", max); }
+  if (["per_due_date", "tracker"].includes(req) || d.occasion === "shawwal_six") {
+    if (s.kind === "weekdays" && !s.weekdays.length) e.rhythm = t("err_wd");
+    if (["month_days", "hijri_month_days"].includes(s.kind) && !s.days.length) e.rhythm = t("err_wd");
+    if (s.kind === "specific_dates" && !s.dates.length) e.rhythm = t("err_dates");
+    if (s.kind === "every_n_days" && !(+s.every >= 1 && +s.every <= 366)) e.rhythm = t("err_every");
+    if (s.kind === "yearly" && !s.ranges.every((r) => validMD(s.calendar, r.start) && validMD(s.calendar, r.end))) e.rhythm = t("err_yearly");
   }
-  if (d.picker === "schedule") {
-    const fri = d.when === "weekdays" && String(d.weekdays) === "friday";
-    const row = (id, label, sub, on, extra) => optionRow(id, label, sub, on, "set-schedule", extra);
-    return `${pickerHead(t("step_when"))}<div class="sheet-scroll"><div class="options" role="radiogroup">
-      ${row("every_day", t("when_every_day"), "", d.when === "every_day")}
-      ${row("weekdays", t("some_weekdays"), "", d.when === "weekdays" && !fri, weekdayChips(d))}
-      ${row("friday", t("every_friday"), "", fri)}
-      ${row("ramadan", t("when_ramadan"), t("ramadan_sub"), d.when === "ramadan", ramadanChips(d))}
-      ${row("white", t("when_white"), t("when_white_sub"), d.when === "white")}
-      ${row("once", t("in_total"), t("in_total_sub"), d.when === "once")}
-    </div></div>${doneFoot()}`;
+  if (D.minimum) { const m = intOrNull(D.minimum.value); if (!(m > 0)) e.minimum = t("err_amount"); else if (target > 0 && m > target) e.minimum = t("err_min"); }
+  if (D.cap) { const x = intOrNull(D.cap.value); if (!(x > 0)) e.cap = t("err_amount"); else if (target > 0 && x < target) e.cap = t("err_cap"); }
+  if (D.sessions) {
+    const ids = new Set();
+    D.sessions.list.forEach((ss, i) => {
+      if (!d.anyCount && !(intOrNull(ss.amount) > 0)) { e["session" + i] = true; e.sessions = t("err_sessions"); }
+      const id = sessionBaseId(ss);
+      if (ids.has(id)) { e["sessdup" + i] = true; e.sessions ||= t("err_sess_dup"); }
+      ids.add(id);
+    });
   }
-  if (d.picker === "date") {
-    return `${pickerHead(f === "end" ? t("f_end") : t("f_start"))}<div class="sheet-scroll">${field(d, f, f === "end" ? t("f_end") : t("f_start"), f === "end" ? t("f_end_help") : "", "date")}</div>
-      ${doneFoot(f === "end" ? `<button class="btn secondary pressable" data-action="clear-date">${d.when === "once" ? t("no_deadline_btn") : t("no_end_btn")}</button>` : "")}`;
+  if (D.period) {
+    const p = D.period;
+    if (p.mode === "until") { if (!p.end) e.period = t("err_need_end"); else if (p.end < p.start) e.period = t("err_end"); }
+    if (p.mode === "for" && !(intOrNull(p.days) >= 1)) e.period = t("err_for");
   }
-  if (d.picker === "sessions") {
-    return `${pickerHead(t("f_sessions"))}<div class="sheet-scroll"><div class="chip-row">${SESSION_IDS.map((s) => `<button class="filter-chip" aria-pressed="${d.sessions.includes(s)}" data-action="toggle-session" data-session="${s}">${d.sessions.includes(s) ? icon("check", "small") : ""}${t("session_names")[s]}</button>`).join("")}</div>
-      <div class="field-msg">${t("f_sessions_help")}</div></div>${doneFoot()}`;
+  if (D.finish?.mode === "until" && !(D.period?.mode === "until" && D.period.end)) e.finish = t("err_need_end");
+  if (D.streak) {
+    const v = D.streak.value;
+    if (v === "minimum" && !D.minimum) e.streak = t("err_streak_min");
+    if (v === "maximum" && !D.cap) e.streak = t("err_streak_cap");
+    if (v === "target" && req === "tracker") e.streak = t("err_streak_target");
   }
-  if (d.picker === "streak") {
-    return `${pickerHead(t("f_streak"))}<div class="sheet-scroll"><div class="options" role="radiogroup">${["auto", "any_count", "minimum", "target", "maximum"].map((k) => optionRow(k, t("streak_opt")[k], "", d.streak === k, "streak-opt")).join("")}</div></div>`;
+  if (D.name && !D.name.value.trim()) e.name = t("err_name");
+  return e;
+}
+const sdValid = (d) => !!d.dhikr && !Object.keys(sdErrors(d)).length;
+
+/* --- The sentence, built once with tokens (UI) and once as plain text (read-back) --- */
+function runsText(days, L) {
+  const xs = [...days].sort((a, b) => a - b), runs = [];
+  for (const x of xs) { const r = runs.at(-1); if (r && x === r[1] + 1) r[1] = x; else runs.push([x, x]); }
+  return L.and(runs.map(([a, b]) => (a === b ? String(a) : `${a}–${b}`)));
+}
+const gMonthDay = (m, d) => new Intl.DateTimeFormat(LOCALE(), { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2024, m - 1, Math.min(d, 31))));
+function rhythmText(d, L = SL()) {
+  const EN = SENTENCE_L10N.en.rhythm, R = (k) => L.rhythm[k] ?? EN[k];
+  if (d.rhythmReq === "cumulative_total") return R("total");
+  if (d.rhythmReq === "period_total") return L.period[d.period];
+  if (d.rhythmReq === "days_per_period") return d.occasion === "shawwal_six" ? R("shawwal_six") : L.period[d.period];
+  if (d.occasion) return L.rhythm.occasions?.[d.occasion] ?? EN.occasions[d.occasion];
+  const s = d.schedule;
+  switch (s.kind) {
+    case "every_day": return R("every_day");
+    case "one_time": return R("one_time");
+    case "weekdays": {
+      const ws = WEEKDAYS.filter((w) => s.weekdays.includes(w));
+      if (!ws.length) return "?";
+      return ws.length === 1 ? R("weekdays1")(weekdayName(ws[0])) : R("weekdays")(L.and(ws.map((w) => L.weekdayPlural(weekdayName(w)))));
+    }
+    case "every_n_days": return R("every_n")(+s.every || "?", s.anchor_date ? fmtDate(s.anchor_date) : null);
+    case "month_days": return s.days.length ? R("month_days")(L.and([...s.days].sort((a, b) => a - b).map(L.ord))) : "?";
+    case "hijri_month_days": return String([...s.days].sort((a, b) => a - b)) === "13,14,15" ? R("white") : s.days.length ? R("hijri_days")(runsText(s.days, L)) : "?";
+    case "specific_dates": return s.dates.length ? R("dates")(L.and([...s.dates].sort().map((x) => fmtDate(x)))) : "?";
+    case "yearly": {
+      const r = s.ranges[0], f = (md) => (!validMD(s.calendar, md) ? "?" : s.calendar === "hijri" ? `${md.day} ${hMonths()[md.month - 1]}` : gMonthDay(md.month, md.day));
+      return r.start.month === r.end.month && r.start.day === r.end.day ? R("yearly_on")(f(r.start)) : R("yearly_range")(f(r.start), f(r.end));
+    }
   }
   return "";
 }
-function sentenceSheetInner(d) { return `<div class="handle"></div>${d.picker ? pickerView(d) : sentenceMain(d)}`; }
-function renderSentence() {
+const uiTok = (text, data, flags = {}) => `<button class="token pressable ${flags.bad ? "bad" : ""} ${flags.empty ? "empty" : ""}" data-action="s-open" ${Object.entries(data).map(([k, v]) => `data-${k}="${esc(v)}"`).join(" ")}><span>${esc(text)}</span></button>`;
+const plainTok = (text) => text;
+function sdParts(d, T) {
+  const L = SL(), E = sdErrors(d), D = d.details, n = intOrNull(d.amount), req = sdReq(d);
+  const fmtD = (x) => (x === today() ? L.today : x ? fmtDate(x) : "?");
+  const dhikr = T(d.dhikr ? dhikrName(d.dhikr) : L.pickDhikr, { picker: "dhikr" }, { empty: !d.dhikr });
+  const amount = T(d.anyCount ? L.anyCount : n > 0 ? L.amount(n, gN(n)) : L.pickAmount, { picker: "amount" }, { bad: !!E.amount, empty: !d.anyCount && !(n > 0) });
+  const rhythm = T(rhythmText(d, L), { picker: "rhythm" }, { bad: !!E.rhythm });
+  const days = T(d.days || "?", { picker: "number", field: "days" }, { bad: !!E.days });
+  const main = L.main({ req, verb: L.verb[verbKind(d.dhikr)], dhikr, amount, rhythm, days, sessions: !!D.sessions });
+  const cl = {};
+  const numTok = (v, field, bad) => T(intOrNull(v) > 0 ? gN(intOrNull(v)) : "?", { picker: "number", field }, { bad });
+  if (D.minimum) cl.minimum = L.min(numTok(D.minimum.value, "minimum", !!E.minimum));
+  if (D.cap) cl.cap = L.cap(numTok(D.cap.value, "cap", !!E.cap));
+  if (D.sessions) cl.sessions = L.and(D.sessions.list.map((s, i) => L.session(numTok(s.amount, `session:${i}`, !!E["session" + i]), T(sessionWhenText(s, L), { picker: "session", index: i }, { bad: !!E["sessdup" + i] }))));
+  if (D.period) {
+    const p = D.period, endTok = (x) => T(x, { picker: "end" }, { bad: !!E.period });
+    const end = p.mode === "for" ? L.forDays(endTok(L.daysN(p.days || "?"))) : p.mode === "open" ? endTok(L.open) : (req === "cumulative_total" ? L.by : L.until)(endTok(fmtD(p.end)));
+    cl.period = L.periodClause(L.from(T(fmtD(p.start), { picker: "start" })), end);
+  }
+  if (D.finish) cl.finish = D.finish.mode === "reach" ? T(L.finishReach, { picker: "finish" }) : L.finishUntil(T(L.finishUntilWord, { picker: "finish" }), T(fmtD(D.period?.end), { picker: "finish" }, { bad: !!E.finish }));
+  const streakVal = D.streak?.value || autoStreak(d);
+  if (D.streak) cl.streak = L.streak(T(L.streakVals[streakVal], { picker: "streak" }, { bad: !!E.streak }));
+  if (D.name) cl.name = L.name(T(D.name.value.trim() ? L.quote(D.name.value.trim()) : "?", { picker: "name" }, { bad: !!E.name }));
+  const sib = siblingsOf(d).length > 0;
+  if (sib && D.shared !== false) cl.shared = L.shared(T(dhikrName(d.dhikr), { picker: "shared" }));
+  return { main, cl, streakVal, sib, E };
+}
+function sdReadback(d) {
+  const L = SL(), P = sdParts(d, plainTok), D = d.details;
+  return L.readback({ main: P.main, sessions: P.cl.sessions, clauses: [P.cl.minimum, P.cl.cap, P.cl.period, P.cl.finish].filter(Boolean),
+    streak: L.streakVals[P.streakVal], name: D.name?.value?.trim() ? L.quote(D.name.value.trim()) : null, shared: P.sib ? D.shared !== false : undefined, dhikr: dhikrName(d.dhikr) });
+}
+function sdPreview(d) {
+  const g = sdToGoal(d, d.goalId ? goalById(d.goalId) : null);
+  if (!d.dhikr) g.name = { en: SL().pickDhikr, ar: SL().pickDhikr, ml: SL().pickDhikr };
+  return goalCard(g, "today", { preview: true, isNew: d.mode === "create" });
+}
+
+/* --- Examples (each returns a draft patch) --- */
+const nextDec30 = () => { const y = +today().slice(0, 4); return `${today() > `${y}-12-30` ? y + 1 : y}-12-30`; };
+const SD_EXAMPLES = [
+  () => ({ dhikr: "swalath", amount: "100", details: { minimum: { value: "70" }, cap: { value: "313" }, streak: { value: "minimum" } } }),
+  () => ({ dhikr: "isthighfar", amount: "100", details: { sessions: { list: [{ kind: "prayer", prayer: "fajr", amount: "100" }, { kind: "prayer", prayer: "maghrib", amount: "100" }] } } }),
+  () => ({ dhikr: "tahleel", amount: "70000", rhythmReq: "cumulative_total", schedule: { kind: "one_time" }, details: { period: { start: today(), mode: "until", end: nextDec30(), days: "40" } } }),
+  () => ({ dhikr: "asma-ul-husna-al-latif", amount: "129", details: { period: { start: today(), mode: "for", days: "40", end: "" } } }),
+  () => ({ dhikr: "swalath", amount: "1000", rhythmReq: "period_total", period: "week" }),
+  () => ({ dhikr: "swalath", amount: "100", rhythmReq: "days_per_period", period: "week", days: "5" }),
+  () => ({ dhikr: "surah-ikhlas", amount: "3", schedule: { kind: "hijri_month_days", days: [13, 14, 15] }, preset: "white_days" }),
+  () => ({ dhikr: "custom:dua-kumayl", amount: "1", schedule: { kind: "weekdays", weekdays: ["thursday"] } }),
+  () => ({ dhikr: "isthighfar", amount: "1000", schedule: hijriRanges(OCCASIONS.ramadan_last10.ranges), preset: "ramadan_last_ten", occasion: "ramadan_last10" }),
+];
+
+/* --- Level 1: the sentence, details, preview, read-back --- */
+const DETAIL_ORDER = ["minimum", "cap", "sessions", "period", "finish", "streak", "name", "shared"];
+function sdLevel1(d) {
+  const L = SL(), P = sdParts(d, uiTok), E = P.E;
+  const reason = (k) => (typeof E[k] === "string" ? `<div class="sreason" role="alert">${esc(E[k])}</div>` : "");
+  const line = (k) => `<div class="dline"><div class="dtext">${P.cl[k]}${k === "sessions" ? ` <button class="token add pressable" data-action="s-sess-add"><span>+ ${esc(t("s_add_session_short"))}</span></button>` : ""}</div>
+      <button class="icon-btn pressable" data-action="s-remove" data-val="${k}" aria-label="${esc(t("s_remove"))}">${icon("close")}</button></div>${reason(k)}`;
+  return `<div class="handle"></div>
+    <div class="sheet-head"><h2 class="t-cardTitle">${d.mode === "edit" ? t("edit") : t("new_goal_title")}</h2>
+      <button class="icon-btn pressable" data-action="close-create" aria-label="${esc(t("close"))}">${icon("close")}</button></div>
+    <div class="sheet-scroll">
+      <div class="examples" role="group" aria-label="${esc(t("s_examples"))}">${(L.examples || SENTENCE_L10N.en.examples).map((x, i) => `<button class="filter-chip pressable" data-action="s-example" data-i="${i}">${esc(x)}</button>`).join("")}</div>
+      <p class="sentence t-title">${P.main}</p>
+      ${reason("amount")}${reason("days")}${reason("rhythm")}
+      <div class="dlines t-body">${DETAIL_ORDER.filter((k) => P.cl[k]).map(line).join("")}</div>
+      <button class="add-detail pressable" data-action="s-open" data-picker="add">${icon("add", "small")}<span>${t("s_add_detail")}</span></button>
+    </div>
+    <div class="sheet-foot">
+      <div data-slot="preview">${sdPreview(d)}</div>
+      <p class="readback t-bodySmall" aria-live="polite">${esc(sdReadback(d))}</p>
+      <button class="btn main pressable" data-action="create-save" ${sdValid(d) ? "" : "disabled"}>${saveLabel(d)}</button>
+    </div>`;
+}
+
+/* --- Level 2: pickers --- */
+function rhythmSel(d) {
+  if (d.rhythmReq === "cumulative_total") return "total";
+  if (d.rhythmReq === "period_total") return "period_" + d.period;
+  if (d.rhythmReq === "days_per_period") return d.occasion === "shawwal_six" ? "shawwal_six" : "dpp_" + d.period;
+  return d.occasion || d.schedule.kind;
+}
+function padHTML(value) {
+  const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "del"];
+  return `<div class="pad-display t-counter">${intOrNull(value) > 0 ? gN(intOrNull(value)) : "–"}</div>
+    <div class="pad" dir="ltr">${keys.map((k) => `<button class="pressable" data-action="s-pad" data-key="${k}">${k === "del" ? `<span class="t-label">${t("pad_delete")}</span>` : k === "clear" ? `<span class="t-label">${t("clear")}</span>` : k}</button>`).join("")}</div>`;
+}
+const FIELD = {
+  amount: [(d) => d.amount, (d, v) => { d.amount = v; d.anyCount = false; }],
+  days: [(d) => d.days, (d, v) => (d.days = v)],
+  minimum: [(d) => d.details.minimum?.value, (d, v) => (d.details.minimum.value = v)],
+  cap: [(d) => d.details.cap?.value, (d, v) => (d.details.cap.value = v)],
+};
+const fieldGet = (d, f) => (f.startsWith("session:") ? d.details.sessions.list[+f.slice(8)].amount : FIELD[f][0](d)) ?? "";
+const fieldSet = (d, f, v) => (f.startsWith("session:") ? (d.details.sessions.list[+f.slice(8)].amount = v) : FIELD[f][1](d, v));
+function sdPicker(d) {
+  const p = d.picker, D = d.details, L = SL();
+  const head = (title) => `<div class="handle"></div><div class="sheet-head with-back"><button class="icon-btn pressable" data-action="s-close" aria-label="${esc(t("back"))}">${icon("back", "mirror")}</button><h2 class="t-cardTitle">${esc(title)}</h2></div>`;
+  const foot = `<div class="sheet-foot"><button class="btn main pressable" data-action="s-close">${t("pad_done")}</button></div>`;
+  const body = (html) => `<div class="sheet-scroll">${html}</div>`;
+  const chip = (on, action, attrs, label) => `<button class="filter-chip pressable" aria-pressed="${on}" data-action="${action}" ${attrs}>${on ? icon("check", "small") : ""}${esc(label)}</button>`;
+  const input = (path, value, type = "text", extra = "") => `<input class="field t-input ${type === "number" ? "small" : ""}" type="${type === "number" ? "text" : type}" ${type === "number" ? 'inputmode="numeric"' : ""} data-sinput="${path}" value="${esc(value ?? "")}" ${extra}>`;
+  switch (p.kind) {
+    case "dhikr": return head(t("step_dhikr")) + body(searchField(d));
+    case "amount": {
+      const quick = d.rhythmReq === "cumulative_total" ? [1000, 4444, 10000, 70000] : d.rhythmReq === "period_total" ? [100, 313, 1000, 7000] : [33, 100, 313, 1000];
+      return head(t("p_amount")) + body(`${padHTML(d.anyCount ? "" : d.amount)}
+        <div class="chip-row" style="justify-content:center;margin:var(--s-lg) 0">${chip(d.amount === "1" && !d.anyCount, "s-quick", 'data-n="1"', t("s_once"))}${quick.map((n) => chip(String(n) === d.amount && !d.anyCount, "s-quick", `data-n="${n}"`, gN(n))).join("")}</div>
+        <div class="options">${optionRow("any", t("s_anycount"), t("s_anycount_sub"), d.anyCount, "s-anycount")}</div>`) + foot;
+    }
+    case "number": {
+      const title = { days: t("p_days"), minimum: t("p_min"), cap: t("p_cap") }[p.field] || t("p_session_amount");
+      return head(title) + body(padHTML(fieldGet(d, p.field))) + foot;
+    }
+    case "rhythm": {
+      const sel = rhythmSel(d), s = d.schedule;
+      const row = (id, label, extra = "") => optionRow(id, label, "", sel === id, "s-rhythm", extra);
+      const grid = (n, list, op) => `<div class="daygrid">${Array.from({ length: n }, (_, i) => i + 1).map((x) => `<button class="filter-chip pressable" aria-pressed="${list.includes(x)}" data-action="s-sched" data-op="${op}" data-val="${x}">${x}</button>`).join("")}</div>`;
+      const monthOpts = (cal, v) => Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${v === i + 1 ? "selected" : ""}>${esc(cal === "hijri" ? hMonths()[i] : new Intl.DateTimeFormat(LOCALE(), { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2024, i, 1))))}</option>`).join("");
+      const extras = {
+        weekdays: s.kind === "weekdays" ? `<div class="chip-row">${WEEKDAYS.map((w) => chip(s.weekdays.includes(w), "s-sched", `data-op="wd" data-val="${w}"`, weekdayName(w, "short"))).join("")}</div>` : "",
+        every_n_days: s.kind === "every_n_days" ? `<div class="inline-fields"><span>${t("every_lbl")}</span>${input("schedule.every", s.every, "number")}<span>${t("days_lbl")}, ${t("from_lbl")}</span>${input("schedule.anchor_date", s.anchor_date || d.details.period?.start || today(), "date")}</div>` : "",
+        month_days: s.kind === "month_days" ? grid(31, s.days, "md") : "",
+        hijri_month_days: s.kind === "hijri_month_days" ? `<div class="chip-row" style="margin-bottom:var(--s-sm)">${chip(String([...s.days].sort((a, b) => a - b)) === "13,14,15", "s-sched", 'data-op="white"', t("white_btn"))}</div>${grid(30, s.days, "hd")}` : "",
+        specific_dates: s.kind === "specific_dates" ? `<div class="inline-fields"><input class="field t-input" type="date" data-new-date value="${addDays(today(), 7)}"><button class="btn secondary pressable" style="width:auto" data-action="s-sched" data-op="date-add">${t("add_btn")}</button></div>
+            <div class="chip-row" style="margin-top:var(--s-sm)">${[...s.dates].sort().map((x) => `<button class="filter-chip pressable" aria-pressed="true" data-action="s-sched" data-op="date-rm" data-val="${x}">${esc(fmtDate(x, { day: "numeric", month: "short", year: "numeric" }))} ${icon("close", "small")}</button>`).join("")}</div>` : "",
+        yearly: s.kind === "yearly" && !d.occasion ? `<div class="chip-row" style="margin-bottom:var(--s-sm)">${chip(s.calendar === "gregorian", "s-sched", 'data-op="cal" data-val="gregorian"', t("cal_greg"))}${chip(s.calendar === "hijri", "s-sched", 'data-op="cal" data-val="hijri"', t("cal_hijri"))}${chip(!d.yearlySingle, "s-sched", 'data-op="range"', t("range_lbl"))}</div>
+            <div class="inline-fields"><span>${d.yearlySingle ? "" : t("from_day")}</span>${input("schedule.ranges.0.start.day", s.ranges[0].start.day, "number")}<select class="field t-input" data-sinput="schedule.ranges.0.start.month">${monthOpts(s.calendar, s.ranges[0].start.month)}</select></div>
+            ${d.yearlySingle ? "" : `<div class="inline-fields" style="margin-top:var(--s-sm)"><span>${t("to_day")}</span>${input("schedule.ranges.0.end.day", s.ranges[0].end.day, "number")}<select class="field t-input" data-sinput="schedule.ranges.0.end.month">${monthOpts(s.calendar, s.ranges[0].end.month)}</select></div>`}` : "",
+      };
+      return head(t("p_rhythm")) + body(`
+        <div class="pgroup t-sectionTitle">${t("g_repeat")}</div><div class="options">
+          ${row("every_day", t("r_every_day"))}${row("weekdays", t("r_weekdays"), extras.weekdays)}${row("every_n_days", t("r_every_n"), extras.every_n_days)}
+          ${row("month_days", t("r_month_days"), extras.month_days)}${row("hijri_month_days", t("r_hijri_days"), extras.hijri_month_days)}
+          ${row("specific_dates", t("r_dates"), extras.specific_dates)}${row("yearly", t("r_yearly"), extras.yearly)}</div>
+        <div class="pgroup t-sectionTitle">${t("g_occasions")}</div><div class="options">${Object.keys(OCCASIONS).map((k) => row(k, t("o_" + k))).join("")}</div>
+        <div class="pgroup t-sectionTitle">${t("g_totals")}</div><div class="options">${["period_week", "period_month", "period_hijri_month", "dpp_week", "dpp_month", "dpp_hijri_month", "total"].map((k) => row(k, t("tt_" + k))).join("")}</div>`) + foot;
+    }
+    case "session": {
+      const i = p.index, s = D.sessions.list[i];
+      const row = (id, label, extra = "") => optionRow(id, label, "", s.kind === id, "s-sess-kind", extra);
+      return head(t("p_session")) + body(`<div class="options">
+        ${row("anytime", t("k_anytime"))}
+        ${row("prayer", t("k_prayer"), `<div class="chip-row">${PRAYERS.map((pr) => chip(s.prayer === pr, "s-sess-prayer", `data-val="${pr}"`, L.prayers[pr])).join("")}</div>`)}
+        ${row("time", t("k_time"), `<div class="inline-fields">${input(`details.sessions.list.${i}.time`, s.time, "time")}</div>`)}
+        ${row("between", t("k_between"), `<div class="inline-fields">${input(`details.sessions.list.${i}.from`, s.from, "time")}<span>–</span>${input(`details.sessions.list.${i}.to`, s.to, "time")}</div>`)}
+        </div>${D.sessions.list.length > 1 ? `<button class="btn text pressable" style="color:var(--c-error);margin-top:var(--s-md)" data-action="s-sess-rm" data-val="${i}">${t("remove_session")}</button>` : ""}`) + foot;
+    }
+    case "start": return head(t("p_start")) + body(input("details.period.start", D.period.start, "date")) + foot;
+    case "end": {
+      const P = D.period, row = (id, label, extra = "") => optionRow(id, label, "", P.mode === id, "s-end-mode", extra);
+      return head(t("p_end")) + body(`<div class="options">
+        ${row("until", t("e_until"), input("details.period.end", P.end, "date"))}
+        ${row("for", t("e_for"), `<div class="inline-fields">${input("details.period.days", P.days, "number")}<span>${t("days_lbl")}</span></div>`)}
+        ${row("open", t("e_open"))}</div>`) + foot;
+    }
+    case "finish": {
+      const row = (id, label, extra = "") => optionRow(id, label, "", D.finish.mode === id, "s-finish", extra);
+      return head(t("p_finish")) + body(`<div class="options">${row("reach", t("fr_reach"))}${row("until", t("fr_until"), D.period ? input("details.period.end", D.period.end, "date") : "")}</div>`) + foot;
+    }
+    case "streak": {
+      const req = sdReq(d), cur = D.streak?.value || autoStreak(d);
+      const vals = ["any_count", D.minimum && "minimum", !["tracker", "cumulative_total"].includes(req) && "target", D.cap && "maximum"].filter(Boolean);
+      return head(t("p_streak")) + body(`<div class="options">${vals.map((v) => optionRow(v, L.streakVals[v], "", cur === v, "s-streak")).join("")}</div>`);
+    }
+    case "name": return head(t("p_name")) + body(input("details.name.value", D.name.value, "text", 'maxlength="40" autofocus')) + foot;
+    case "shared": return head(t("p_shared")) + body(`<div class="options">${optionRow("share", t("sh_share"), t("shared_yes_sub"), D.shared !== false, "s-shared")}${optionRow("separate", t("sh_separate"), t("shared_no_sub"), D.shared === false, "s-shared")}</div>`);
+    case "add": {
+      const req = sdReq(d), sib = siblingsOf(d).length > 0;
+      const avail = {
+        minimum: !D.minimum && !D.sessions && !["tracker", "cumulative_total"].includes(req),
+        cap: !D.cap && !D.sessions && req !== "cumulative_total",
+        sessions: !D.sessions && !D.minimum && !D.cap && req === "per_due_date",
+        period: !D.period, finish: !D.finish && req === "cumulative_total", streak: !D.streak, name: !D.name, shared: sib && D.shared === false,
+      };
+      return head(t("s_add_detail")) + body(`<div class="options">${Object.keys(avail).filter((k) => avail[k]).map((k) => optionRow(k, t("d_" + k), "", false, "s-add")).join("")}
+        <div><button class="option-row" disabled aria-disabled="true" style="opacity:var(--disabled-opacity)"><div class="body"><div class="t-rowTitle">${t("d_remind")}</div><div class="sub">${t("coming_soon")}</div></div></button></div></div>`);
+    }
+  }
+  return "";
+}
+
+/* --- Rendering the sheet (two levels, one height) --- */
+function renderSentence(opts = {}) {
   const d = state.draft, host = document.getElementById("overlay-host");
-  const sheet = host.querySelector(".create-sheet");
-  if (sheet) {
-    const scroll = sheet.querySelector(".sheet-scroll")?.scrollTop || 0, samePage = sheet.dataset.page === (d.picker || "main");
-    sheet.innerHTML = sentenceSheetInner(d);
-    sheet.dataset.page = d.picker || "main";
-    if (samePage) { const s = sheet.querySelector(".sheet-scroll"); if (s) s.scrollTop = scroll; }
-    else sheet.animate([{ opacity: 0.6 }, { opacity: 1 }], { duration: MOTION.duration.color, easing: "linear" });
+  let sheet = host.querySelector(".overlay:not([data-closing]) .create-sheet");
+  if (!sheet) {
+    renderOverlay(`<div class="overlay" data-overlay><div class="scrim" data-action="close-create"></div>
+      <div class="bsheet create-sheet" role="dialog" aria-label="${esc(t("new_goal_title"))}"><div class="level1">${sdLevel1(d)}</div><div class="level2-host"></div></div></div>`, "sheet");
+    sheet = host.querySelector(".overlay:not([data-closing]) .create-sheet");
+  } else {
+    const l1 = sheet.querySelector(".level1"), sc = l1.querySelector(".sheet-scroll")?.scrollTop || 0;
+    l1.innerHTML = sdLevel1(d);
+    l1.querySelector(".sheet-scroll").scrollTop = sc;
+  }
+  if (opts.mainOnly) return;
+  const l2 = sheet.querySelector(".level2-host"), was = l2.dataset.key || "";
+  const now = d.picker ? `${d.picker.kind}:${d.picker.field || ""}:${d.picker.index ?? ""}` : "";
+  const rtl = lang() === "ar" ? -1 : 1;
+  if (!d.picker) {
+    const panel = l2.firstElementChild;
+    l2.dataset.key = "";
+    if (!panel) return;
+    if (reduced()) { panel.remove(); return; }
+    panel.animate([{ transform: "none" }, { transform: `translateX(${100 * rtl}%)` }], { duration: MOTION.duration.short, easing: MOTION.easing.accelerate, fill: "forwards" }).onfinish = () => panel.remove();
     return;
   }
-  renderOverlay(`<div class="overlay" data-overlay><div class="scrim" data-action="close-create"></div>
-    <div class="bsheet create-sheet" role="dialog" aria-label="${esc(t("new_goal_title"))}" data-page="${d.picker || "main"}">${sentenceSheetInner(d)}</div></div>`, "sheet");
+  const sc2 = l2.querySelector(".sheet-scroll")?.scrollTop || 0;
+  l2.innerHTML = `<div class="level2">${sdPicker(d)}</div>`;
+  l2.dataset.key = now;
+  if (was === now) { l2.querySelector(".sheet-scroll") && (l2.querySelector(".sheet-scroll").scrollTop = sc2); return; }
+  const panel = l2.firstElementChild, s = spring("spatial");
+  if (reduced()) panel.animate([{ opacity: 0 }, { opacity: 1 }], { duration: MOTION.duration.color, easing: "linear" });
+  else panel.animate([{ transform: `translateX(${100 * rtl}%)` }, { transform: "none" }], { duration: s.duration, easing: s.easing });
+  panel.querySelector("[autofocus]")?.focus();
+}
+function setPath(obj, path, value) {
+  const keys = path.split(".");
+  let o = obj;
+  for (const k of keys.slice(0, -1)) o = o[/^\d+$/.test(k) ? +k : k];
+  const last = keys.at(-1);
+  if (["month", "day", "every"].includes(last)) value = value === "" ? "" : +value;
+  if (last === "anchor_date" && value === "") value = null;
+  o[last] = value;
+}
+function applyRhythm(d, val) {
+  const set = (o) => Object.assign(d, { rhythmReq: "per_due_date", preset: null, occasion: null }, o);
+  const td = today(), [, mm, dd] = td.split("-").map(Number);
+  let close = true;
+  if (val === "every_day") set({ schedule: { kind: "every_day" } });
+  else if (val === "weekdays") { close = false; if (d.schedule.kind !== "weekdays" || d.rhythmReq !== "per_due_date") set({ schedule: { kind: "weekdays", weekdays: [weekday(td)] } }); else set({}); }
+  else if (val === "every_n_days") { close = false; if (d.schedule.kind !== "every_n_days") set({ schedule: { kind: "every_n_days", every: 2, anchor_date: null } }); else set({}); }
+  else if (val === "month_days") { close = false; if (d.schedule.kind !== "month_days") set({ schedule: { kind: "month_days", days: [1] } }); else set({}); }
+  else if (val === "hijri_month_days") { close = false; if (d.schedule.kind !== "hijri_month_days") set({ schedule: { kind: "hijri_month_days", days: [13, 14, 15] }, preset: "white_days" }); else set({ preset: d.preset }); }
+  else if (val === "specific_dates") { close = false; if (d.schedule.kind !== "specific_dates") set({ schedule: { kind: "specific_dates", dates: [addDays(td, 7)] } }); else set({}); }
+  else if (val === "yearly") { close = false; if (d.schedule.kind !== "yearly" || d.occasion) { set({ schedule: { kind: "yearly", calendar: "gregorian", ranges: [{ start: { month: mm, day: dd }, end: { month: mm, day: dd } }] } }); d.yearlySingle = true; } else set({}); }
+  else if (OCCASIONS[val]) { const o = OCCASIONS[val]; set({ schedule: hijriRanges(o.ranges), preset: o.preset, occasion: val, ...(o.req || {}) }); }
+  else if (val.startsWith("period_")) set({ rhythmReq: "period_total", period: val.slice(7), schedule: { kind: "every_day" } });
+  else if (val.startsWith("dpp_")) set({ rhythmReq: "days_per_period", period: val.slice(4), schedule: { kind: "every_day" }, days: d.days || "5" });
+  else if (val === "total") set({ rhythmReq: "cumulative_total", schedule: { kind: "one_time" } });
+  if (d.rhythmReq !== "per_due_date") d.anyCount = false;
+  sdNormalize(d);
+  if (close) d.picker = null;
+}
+function sentenceAction(a, el) {
+  const d = state.draft, ds = el.dataset, D = d.details, v = ds.val;
+  const done = () => { sdNormalize(d); renderSentence(); return true; };
+  switch (a) {
+    case "close-create": closeOverlay(); return true;
+    case "create-save": saveDraft(); return true;
+    case "s-open": d.picker = { kind: ds.picker, field: ds.field, index: ds.index != null ? +ds.index : undefined }; if (ds.picker === "dhikr") d.query = ""; return done();
+    case "s-close": d.picker = null; return done();
+    case "pick-dhikr": d.dhikr = ds.key; d.query = ""; d.picker = null; return done();
+    case "clear-query": d.query = ""; return done();
+    case "s-pad": {
+      const f = d.picker.field || "amount", k = ds.key;
+      let s = String(fieldGet(d, f));
+      if (k === "del") s = s.slice(0, -1); else if (k === "clear") s = ""; else if (s.length < 7) s = (s === "0" ? "" : s) + k;
+      fieldSet(d, f, s); haptic("tick"); return done();
+    }
+    case "s-quick": fieldSet(d, d.picker.field || "amount", ds.n); return done();
+    case "s-anycount": d.anyCount = true; if (d.rhythmReq !== "per_due_date") { d.rhythmReq = "per_due_date"; d.schedule = { kind: "every_day" }; d.occasion = null; d.preset = null; } d.picker = null; return done();
+    case "s-rhythm": applyRhythm(d, v); return done();
+    case "s-sched": {
+      const s = d.schedule, op = ds.op, toggle = (arr, x) => { const i = arr.indexOf(x); i >= 0 ? arr.splice(i, 1) : arr.push(x); };
+      if (op === "wd") toggle(s.weekdays, v);
+      if (op === "md") toggle(s.days, +v);
+      if (op === "hd") { toggle(s.days, +v); d.preset = String([...s.days].sort((x, y) => x - y)) === "13,14,15" ? "white_days" : null; }
+      if (op === "white") { s.days = [13, 14, 15]; d.preset = "white_days"; }
+      if (op === "date-add") { const x = el.closest(".level2").querySelector("[data-new-date]").value; if (x && !s.dates.includes(x)) s.dates.push(x); }
+      if (op === "date-rm") s.dates = s.dates.filter((x) => x !== v);
+      if (op === "cal") s.calendar = v;
+      if (op === "range") {
+        d.yearlySingle = !d.yearlySingle; const r = s.ranges[0], max = s.calendar === "hijri" ? 30 : monthLen(2024, r.start.month);
+        if (d.yearlySingle) r.end = { ...r.start };
+        else { if (r.start.day + 9 > max) r.start.day = max - 9; r.end = { month: r.start.month, day: r.start.day + 9 }; }
+      }
+      return done();
+    }
+    case "s-sess-add": {
+      const list = D.sessions.list, used = list.filter((s) => s.kind === "prayer").map((s) => s.prayer);
+      list.push({ kind: "prayer", prayer: PRAYERS.find((x) => !used.includes(x)) || "isha", amount: list.at(-1)?.amount || d.amount });
+      return done();
+    }
+    case "s-sess-kind": Object.assign(D.sessions.list[d.picker.index], { kind: v }, { prayer: D.sessions.list[d.picker.index].prayer || "fajr", time: D.sessions.list[d.picker.index].time || "07:00", from: D.sessions.list[d.picker.index].from || "18:00", to: D.sessions.list[d.picker.index].to || "20:00" }); return done();
+    case "s-sess-prayer": D.sessions.list[d.picker.index].prayer = v; return done();
+    case "s-sess-rm": D.sessions.list.splice(+v, 1); d.picker = null; return done();
+    case "s-end-mode": D.period.mode = v; if (v === "until" && !D.period.end) D.period.end = addDays(D.period.start, 30); return done();
+    case "s-finish": D.finish.mode = v; if (v === "until") { D.period ||= { start: today(), mode: "until", end: "", days: "40" }; D.period.mode = "until"; if (!D.period.end) D.period.end = addDays(D.period.start, 60); } return done();
+    case "s-streak": D.streak = { value: v }; d.picker = null; return done();
+    case "s-shared": D.shared = v === "share"; d.picker = null; return done();
+    case "s-add": {
+      const target = intOrNull(d.amount) || 100;
+      if (v === "minimum") { D.minimum = { value: String(Math.max(1, Math.round(target * 0.7))) }; d.picker = { kind: "number", field: "minimum" }; }
+      if (v === "cap") { D.cap = { value: String(target * 3) }; d.picker = { kind: "number", field: "cap" }; }
+      if (v === "sessions") { D.sessions = { list: [{ kind: "prayer", prayer: "fajr", amount: d.amount || "100" }] }; d.picker = null; }
+      if (v === "period") { D.period = { start: today(), mode: "until", end: addDays(today(), 30), days: "40" }; d.picker = { kind: "end" }; }
+      if (v === "finish") { D.finish = { mode: "reach" }; d.picker = { kind: "finish" }; }
+      if (v === "streak") { D.streak = { value: autoStreak(d) }; d.picker = { kind: "streak" }; }
+      if (v === "name") { D.name = { value: "" }; d.picker = { kind: "name" }; }
+      if (v === "shared") { D.shared = true; d.picker = null; }
+      return done();
+    }
+    case "s-remove": if (v === "shared") D.shared = false; else delete D[v]; if (v === "period" && D.finish?.mode === "until") D.finish.mode = "reach"; return done();
+    case "s-example": {
+      const keep = { mode: d.mode, goalId: d.goalId };
+      state.draft = Object.assign(sdNew(SD_EXAMPLES[+ds.i]()), keep);
+      haptic("tick"); sdNormalize(state.draft); renderSentence(); return true;
+    }
+  }
+  return false;
 }
 
 /* --- C. Templates first --- */
@@ -1254,10 +1896,10 @@ function renderTemplates() {
 function renderCreate() { return state.draft?.flow === "templates" ? renderTemplates() : renderWizard(); }
 function openCreate(prefill = {}, flow = v("createFlow")) {
   stopAudio();
-  state.draft = newDraft(flow, prefill);
+  state.draft = flow === "sentence" ? sdNew(prefill) : newDraft(flow, prefill);
   showDraft();
 }
-function openEdit(g) { stopAudio(); state.draft = goalToDraft(g); showDraft(); }
+function openEdit(g) { stopAudio(); state.draft = v("createFlow") === "sentence" ? sdFromGoal(g) : goalToDraft(g); showDraft(); }
 function showDraft() {
   if (state.draft.flow === "sentence") { state.overlay = { kind: "create" }; renderSentence(); }
   else navigate({ name: "create" });
@@ -1266,7 +1908,7 @@ function refreshCreate(transition = null) {
   if (!state.draft) return;
   if (state.draft.flow === "sentence") renderSentence(); else render(transition);
 }
-const createRoot = () => (state.draft?.flow === "sentence" ? document.querySelector("#overlay-host .create-sheet") : currentScreen);
+const createRoot = () => (state.draft?.flow === "sentence" ? document.querySelector("#overlay-host .overlay:not([data-closing]) .create-sheet") : currentScreen);
 function refreshCreateValidation() {
   const host = createRoot(), d = state.draft;
   if (!host || !d) return;
@@ -1284,10 +1926,10 @@ function refreshCreateValidation() {
   if (pv) pv.innerHTML = previewHTML(d);
 }
 function saveDraft() {
-  const d = state.draft;
-  if (!draftValid(d)) return;
+  const d = state.draft, isB = d.flow === "sentence";
+  if (isB ? !sdValid(d) : !draftValid(d)) return;
   const base = d.goalId ? goalById(d.goalId) : null;
-  const g = draftToGoal(d, base);
+  const g = isB ? sdToGoal(d, base) : draftToGoal(d, base);
   if (base) state.goals[state.goals.indexOf(base)] = g; else state.goals.push(g);
   save();
   if (d.flow === "sentence") closeOverlay();
@@ -1300,6 +1942,7 @@ function saveDraft() {
 function createAction(a, el) {
   const d = state.draft;
   if (!d) return false;
+  if (d.flow === "sentence") return sentenceAction(a, el);
   switch (a) {
     case "create-back":
       if (d.picker) { d.picker = null; refreshCreate(); return true; }
@@ -1322,24 +1965,7 @@ function createAction(a, el) {
       return true;
     case "open-picker": d.picker = el.dataset.picker; d.pickerField = el.dataset.field; refreshCreate(d.flow === "templates" ? "push" : null); return true;
     case "close-picker": d.picker = null; refreshCreate(d.flow === "templates" ? "pop" : null); return true;
-    case "pad": {
-      const f = d.pickerField; let s = String(d[f] || "");
-      const k = el.dataset.key;
-      if (k === "back") s = s.slice(0, -1); else if (k === "clear") s = ""; else if (s.length < 7) s = (s === "0" ? "" : s) + k;
-      d[f] = s; haptic("tick"); refreshCreate(); return true;
-    }
     case "quick-count": d[el.dataset.field || "count"] = el.dataset.n; refreshCreate(); return true;
-    case "set-schedule": {
-      const val = el.dataset.val;
-      if (val === "friday") Object.assign(d, { when: "weekdays", weekdays: ["friday"] });
-      else if (val === "weekdays") { d.when = "weekdays"; if (String(d.weekdays) === "friday") d.weekdays = [weekday(today())]; }
-      else d.when = val;
-      if (d.when === "once" && intOrNull(d.count) < 1000) d.count = "10000";
-      if (!["weekdays", "ramadan"].includes(val)) d.picker = null;
-      refreshCreate(); return true;
-    }
-    case "suggest": Object.assign(d, structuredClone(SUGGESTIONS.find((s) => s.id === el.dataset.s).apply)); refreshCreate(); return true;
-    case "clear-date": d[d.pickerField] = ""; d.picker = null; refreshCreate(); return true;
     case "counts-mode": d.countsMode = el.dataset.val; refreshCreate(); return true;
     case "pick-template": {
       const tp = TEMPLATES[el.dataset.tpl];
@@ -1398,6 +2024,7 @@ function renderOverlay(html, kind) {
 }
 function closeOverlay() {
   const host = document.getElementById("overlay-host"), el = host.firstElementChild;
+  if (el) el.dataset.closing = "1";
   if (state.overlay?.kind === "create") state.draft = null;
   state.overlay = null;
   if (!el) return;
@@ -1548,11 +2175,49 @@ function increment(by = 1) {
   shareDelta(g, by);
   const after = before + by;
   save();
-  if (p.target && before < p.target && after >= p.target) { haptic("success"); toast(t("t_target")); }
+  if (p.target && before < p.target && after >= p.target) {
+    haptic("success");
+    if (!g.sessions.length) toast(t("t_target"));
+    else toast(g.sessions.every((x) => countOn(g, td, x.id) >= (x.count_policy.target ?? 1)) ? t("t_all_sessions") : t("t_session_done", capFirst(sessionLabel(session))));
+  }
   else if (p.minimum && before < p.minimum && after >= p.minimum) { haptic("threshold"); toast(t("t_min")); }
   else haptic("tick");
   updateCounting(before, after);
   popCircle();
+}
+/* Sessions on the counter (decision B): manual pills. The current (or next) session is
+   pre-selected by time; any session can be picked at any time; windows only guide. */
+const PRAYER_TIMES = { fajr: "05:10", dhuhr: "12:25", asr: "15:42", maghrib: "18:05", isha: "19:20" }; // stand-in times for today
+const NAMED_SESSION_TIMES = { morning: "06:00", evening: "17:00", before_sleep: "21:00" };
+const nowHM = () => state.settings.now || new Date().toTimeString().slice(0, 5);
+function sessionWindow(id) {
+  const s = parseSession(id);
+  if (s.kind === "prayer") return [PRAYER_TIMES[s.prayer], null];
+  if (s.kind === "time") return [s.time, null];
+  if (s.kind === "between") return [s.from, s.to];
+  if (s.kind === "named") return [NAMED_SESSION_TIMES[s.id] || "00:00", null];
+  return ["00:00", null];
+}
+function currentSessionId(g) {
+  const now = nowHM();
+  const list = g.sessions.map((x) => ({ id: x.id, w: sessionWindow(x.id) })).sort((a, b) => (a.w[0] < b.w[0] ? -1 : 1));
+  // a session's window runs from its start to its own end (between) or the next session's start
+  const ends = list.map((x, i) => x.w[1] || list[i + 1]?.w[0] || "24:00");
+  const cur = list.find((x, i) => x.w[0] <= now && now < ends[i]);
+  return (cur || list.find((x) => x.w[0] > now) || list.at(-1)).id;
+}
+const capFirst = (x) => x.charAt(0).toLocaleUpperCase() + x.slice(1);
+function sessionPills(g, selected, td) {
+  const done = g.sessions.filter((x) => countOn(g, td, x.id) >= (x.count_policy.target ?? 1)).length;
+  const cur = currentSessionId(g);
+  return `<div class="session-bar" data-slot="sessions">
+    <div class="seg counter-seg" role="tablist" aria-label="${esc(t("f_sessions"))}">${g.sessions.map((x) => {
+      const n = progressOf(g, td, x.id), tg = x.count_policy.target, met = tg != null && n >= tg;
+      return `<div class="pill-wrap"><button class="pressable ${met ? "met" : ""}" role="tab" aria-selected="${x.id === selected}" data-action="session" data-session="${x.id}">
+        <span class="pill-label">${esc(capFirst(sessionLabel(x.id)))}</span><span class="pill-count">${met ? icon("check", "small") : ""}${tg != null ? `${fmtN(n)}/${fmtN(tg)}` : fmtN(n)}</span></button><span class="bar"></span></div>`;
+    }).join("")}</div>
+    <div class="session-state t-caption">${esc(t("sessions_done", done, g.sessions.length))}${cur !== selected ? ` · ${esc(t("session_now", sessionLabel(cur)))}` : ""}</div>
+  </div>`;
 }
 function updateCounting(before, after) {
   const g = goalById(state.route.goalId), root = currentScreen;
@@ -1592,8 +2257,9 @@ function updateCounting(before, after) {
   const chip = root.querySelector('[data-slot="cchip"]'), next = counterChip(g, after, p, td);
   if (chip.textContent !== next) { chip.textContent = next; chip.animate([{ opacity: 0 }, { opacity: 1 }], { duration: MOTION.duration.color, easing: "linear" }); }
   root.querySelector('[data-slot="streak"]').innerHTML = streakHTML(g, td);
+  const pills = root.querySelector('[data-slot="sessions"]');
+  if (pills) { const sc = pills.querySelector(".seg")?.scrollLeft || 0; pills.outerHTML = sessionPills(g, session, td); root.querySelector('[data-slot="sessions"] .seg').scrollLeft = sc; }
   root.querySelector('[data-counter="circle"]').setAttribute("aria-label", `${t("tap_circle")}: ${after}`);
-  root.querySelectorAll('[data-action="session"]').forEach((b) => (b.textContent = `${t("session_names")[b.dataset.session] || b.dataset.session} · ${progressOf(g, td, b.dataset.session)}`));
 }
 function popCircle(blocked = false) {
   const c = currentScreen?.querySelector('[data-counter="circle"]');
@@ -1665,10 +2331,30 @@ const NOTES = `
   <ul>
     <li>All three edit one draft and save through the same <code>draftToGoal</code>, so the saved goal is identical whichever flow made it. Edit opens the goal in the current flow.</li>
     <li>Entry points: My Goals +, "Set a goal" on the counting page's ⋮ menu, and "Set a goal" on each dhikr of the Library stub (both pre-fill the dhikr; the wizard then starts at How many?).</li>
-    <li>B's tokens are 40 tall inside 48-tall lines, so they're a little under the 48 touch target. The sentence is one localized string with slots, so word order can change per language.</li>
-    <li>B's "Ramadan (whole or a third)" adds "Middle 10" as a custom range; only the whole month and the last ten are presets.</li>
+    <li>B was reworked for advanced goals (below). Its tokens have a 48 touch target, and pickers open as a second level so the sheet keeps one height.</li>
     <li>C's Ramadan and White days cards use a text avatar ("R", "13"): <code>icons.json</code> has no moon or calendar icon.</li>
     <li>"In total" in B and C defaults to 10,000 / 70,000 when the number was a daily-sized one.</li>
+  </ul>
+
+  <h3>B, the sentence: what doesn't fit</h3>
+  <ul>
+    <li>Session timing (after a prayer, at a time, between two times) isn't in the goal-model session (<code>{ id, count_policy }</code>), so it's encoded in the id: <code>after_fajr</code>, <code>at_0730</code>, <code>between_1800_2000</code>. A real schema needs a session kind.</li>
+    <li>A minimum or cap per session has no room in "[100] after [Fajr]", so minimum and cap are offered only without sessions (and sessions only without them).</li>
+    <li>"Days per period" with a narrower schedule (3 of my Mon–Fri) has no sentence; only the Shawwal occasion combines the two. A period total also resets the schedule to every day.</li>
+    <li>The active period is "until a date" or "for N days", not both, though the schema allows both (the earlier wins).</li>
+    <li>Yearly schedules edit one date or one range; several ranges come only from occasions (Ramadan odd nights).</li>
+    <li>A cumulative goal saved from B uses <code>one_time</code>; the seeded 70000/4444 goals use <code>every_day</code>, so editing them in B changes that.</li>
+    <li>For cumulative goals the streak offers "any count" only; "the target" would compare one day with the whole total.</li>
+    <li>"Read" (dua) and "Say" are the same verb in Malayalam here. Malayalam covers the sentence sheet only; the rest of the UI falls back to English. Arabic and Malayalam wording need a native review.</li>
+    <li>Not in the sentence: pausing (a menu action), Hijri corrections and the day reset (account settings), reminders (a disabled "coming soon" row).</li>
+    <li>The day grids are 48 tall but about 45 wide, under the 48 touch target width.</li>
+  </ul>
+
+  <h3>Sessions on the counter (decision B)</h3>
+  <ul>
+    <li>Manual pills under the header, each with its own progress. The session whose window holds the current time (or the next one) is pre-selected; the Lab's "Time of day" moves the clock. Any session can be picked at any time, including a missed one; windows only guide.</li>
+    <li>A session's window runs from its start to its own end ("between") or to the next session's start. Prayer times are fixed stand-ins (Fajr 05:10, Dhuhr 12:25, Asr 15:42, Maghrib 18:05, Isha 19:20).</li>
+    <li>The day is met only when every session meets its own number, so the streak needs all of them. Home and My Goals rings show the day's combined progress.</li>
   </ul>
 
   <h3>Shared counts (decision C)</h3>
@@ -1679,7 +2365,7 @@ const NOTES = `
 
   <h3>Design gaps</h3>
   <ul>
-    <li>No timer icon in <code>icons.json</code> (placeholder drawn); no edit/pencil icon (<code>tune</code> used). The list button uses the <code>goals</code> icon. What the timer and list buttons do isn't designed (toasts).</li>
+    <li>No timer icon in <code>icons.json</code>, so the timer button is a text label; no edit/pencil icon (<code>tune</code> used); no backspace icon (the pad's key says "Delete"). The list button uses the <code>goals</code> icon. What the timer and list buttons do isn't designed (toasts).</li>
     <li>"Start audio count" is simulated: +1 every 1.2 s until stopped.</li>
     <li>"Aa" cycles three Arabic sizes (24, 28, 32); only 24 (<code>quran</code>) is a token.</li>
     <li>Ring sizes: My Goals uses 48 (no token; <code>ringSmall</code> is 36, used on Home). The counter circle (228), ring (264) and its stroke (10) have no tokens.</li>
@@ -1693,7 +2379,7 @@ const NOTES = `
 </div>`;
 function renderLab() {
   const s = state.settings;
-  const seg = (key, opts) => `<span class="seg-mini">${Object.entries(opts).map(([val, label]) => `<button data-lab="${key}" data-val="${val}" aria-pressed="${String(s[key]) === val}">${label}</button>`).join("")}</span>`;
+  const seg = (key, opts) => `<span class="seg-mini">${Object.entries(opts).map(([val, label]) => `<button data-lab="${key}" data-val="${val}" aria-pressed="${String(key === "lang" ? lang() : s[key]) === val}">${label}</button>`).join("")}</span>`;
   const fath = state.goals.find((g) => g.dhikr === "swalath-al-fathimiyya");
   const ram = gregorianOfHijri(hijri(s.today).m < 9 ? hijri(s.today).y : hijri(s.today).y + 1, 9, 1, s.today);
   const white = findDate((d) => hijri(d).d === 13, addDays(s.today, 1), 40);
@@ -1701,10 +2387,11 @@ function renderLab() {
   document.getElementById("lab-controls").innerHTML = `
     <h2>Look</h2>
     <div class="row"><label>Theme</label>${seg("theme", { light: "Light", dark: "Dark" })}</div>
-    <div class="row"><label>Direction</label>${seg("dir", { ltr: "LTR (English)", rtl: "RTL (Arabic)" })}</div>
+    <div class="row"><label>Language</label>${seg("lang", { en: "English", ar: "العربية (RTL)", ml: "മലയാളം" })}</div>
     <div class="row"><label>Reduced motion</label>${seg("reducedMotion", { false: "Off", true: "On" })}</div>
     <h2>Today</h2>
     <div class="row"><label for="lab-today">Effective practice day</label><input id="lab-today" type="date" value="${s.today}"></div>
+    <div class="row"><label for="lab-now">Time of day (picks the current session)</label><input id="lab-now" type="time" value="${s.now || ""}"></div>
     <div class="msg">Hijri: ${esc(fmtHijriEn(s.today))} · ${weekday(s.today)}</div>
     <div class="btns" style="margin-top:8px">
       <button data-today="${addDays(s.today, -1)}">− 1 day</button><button data-today="${addDays(s.today, 1)}">+ 1 day</button>
@@ -1754,8 +2441,8 @@ function applyJSON() {
 function applySettings() {
   const phone = document.getElementById("phone"), s = state.settings;
   phone.dataset.theme = s.theme;
-  phone.dir = s.dir;
-  phone.lang = s.dir === "rtl" ? "ar" : "en";
+  phone.dir = lang() === "ar" ? "rtl" : "ltr";
+  phone.lang = lang();
   phone.classList.toggle("reduced", !!s.reducedMotion);
 }
 
@@ -1770,7 +2457,7 @@ function handleAction(el, e) {
       haptic("tick"); state.stack = []; state.route = { name: tab }; stopAudio(); render("tab"); return;
     }
     case "goals-tab": if (state.goalsTab !== el.dataset.tab) { state.goalsTab = el.dataset.tab; render(); listAppear(currentScreen); } return;
-    case "open-goal": navigate({ name: "counting", goalId: id }); return;
+    case "open-goal": state.session = null; navigate({ name: "counting", goalId: id }); return;
     case "back": goBack(); return;
     case "add-goal": openCreate(); return;
     case "set-goal-from": { const dhikr = el.dataset.dhikr; if (state.overlay) closeOverlay(); openCreate({ dhikr }); return; }
@@ -1842,6 +2529,16 @@ function boot() {
   window.addEventListener("pointercancel", (e) => release(e, true));
   // Inputs in the create flow update the draft without re-rendering (keeps focus)
   phone.addEventListener("input", (e) => {
+    const d = state.draft;
+    if (d?.flow === "sentence") {
+      if (e.target.dataset.input === "query") { d.query = e.target.value; createRoot().querySelector('[data-slot="dhikr-list"]').innerHTML = dhikrList(d); return; }
+      const path = e.target.dataset.sinput;
+      if (!path) return;
+      setPath(d, path, e.target.value);
+      if (d.yearlySingle && path.startsWith("schedule.ranges.0.start")) d.schedule.ranges[0].end = { ...d.schedule.ranges[0].start };
+      renderSentence({ mainOnly: true });
+      return;
+    }
     const k = e.target.dataset.input;
     if (!k || !state.draft) return;
     state.draft[k] = e.target.value;
@@ -1862,7 +2559,11 @@ function boot() {
       if (state.labTab === "data") renderLabData();
       return;
     }
-    if (b.dataset.lab) { const k = b.dataset.lab; state.settings[k] = k === "reducedMotion" ? b.dataset.val === "true" : b.dataset.val; save(); applySettings(); render(); renderLab(); return; }
+    if (b.dataset.lab) {
+      const k = b.dataset.lab; state.settings[k] = k === "reducedMotion" ? b.dataset.val === "true" : b.dataset.val;
+      if (k === "lang") state.settings.dir = b.dataset.val === "ar" ? "rtl" : "ltr";
+      save(); applySettings(); render(); if (state.draft?.flow === "sentence") renderSentence(); renderLab(); return;
+    }
     if (b.dataset.variant) {
       state.variants[b.dataset.variant] = b.dataset.val; save();
       if (state.draft && ["createOrder", "createFlow"].includes(b.dataset.variant)) { closeOverlay(); state.draft = null; if (state.route.name === "create") { state.route = { name: "goals" }; state.stack = []; } }
@@ -1877,7 +2578,10 @@ function boot() {
     if (la === "reset") { state.goals = seedGoals(state.settings.today); save(); state.stack = []; state.route = { name: state.route.name === "counting" || state.route.name === "create" ? "goals" : state.route.name }; render(); renderLab(); renderLabData(); }
     if (la === "reset-all") { localStorage.removeItem(STORE_KEY); location.reload(); }
   });
-  lab.addEventListener("change", (e) => { if (e.target.id === "lab-today" && e.target.value) setToday(e.target.value); });
+  lab.addEventListener("change", (e) => {
+    if (e.target.id === "lab-today" && e.target.value) setToday(e.target.value);
+    if (e.target.id === "lab-now") { state.settings.now = e.target.value; save(); state.session = null; render(); }
+  });
 
   render();
   renderLab();
@@ -1896,7 +2600,7 @@ function jump(where, n) {
   if (where === "menu") { if (state.route.name !== "goals") { state.stack = []; state.route = { name: "goals" }; render("tab"); } openMenu(g.id); return; }
   if (where === "count") {
     setCount(g, g.sessions.length ? g.sessions[0].id : null, n); save();
-    state.stack = [{ name: "goals" }]; state.route = { name: "counting", goalId: g.id }; render("push");
+    state.session = null; state.stack = [{ name: "goals" }]; state.route = { name: "counting", goalId: g.id }; render("push");
   }
 }
 async function loadCatalog() {
@@ -1904,7 +2608,7 @@ async function loadCatalog() {
     const res = await fetch("../../contracts/dhikr-catalog/v1/catalog.json");
     if (!res.ok) throw new Error(res.status);
     const c = await res.json();
-    catalog.dhikrs = c.dhikrs; catalog.collections = c.collections; indexCatalog();
+    catalog.dhikrs = [...c.dhikrs, ...CUSTOM_DHIKRS]; catalog.collections = c.collections; indexCatalog();
     render();
   } catch (e) {
     console.warn("Catalog not loaded (serve from the repo root); using the embedded subset.", e);
@@ -1914,9 +2618,26 @@ async function loadCatalog() {
 /* Scripting hook for screenshots and quick experiments in the console. */
 window.proto = {
   state, VARIANTS, CREATE_STEPS, STEP_DEFS, render, renderLab, jump, setToday,
-  set(settings) { Object.assign(state.settings, settings); save(); applySettings(); render(); renderLab(); },
+  set(settings) {
+    if ("dir" in settings && !("lang" in settings)) settings.lang = settings.dir === "rtl" ? "ar" : "en";
+    if ("lang" in settings && !("dir" in settings)) settings.dir = settings.lang === "ar" ? "rtl" : "ltr";
+    Object.assign(state.settings, settings); save(); applySettings(); render(); if (state.draft?.flow === "sentence") renderSentence(); renderLab();
+  },
+  /* Open the sentence sheet (B), optionally filled with example i. */
+  sentence(i) {
+    if (state.overlay) closeOverlay();
+    state.variants.createFlow = "sentence"; save(); state.stack = []; state.route = { name: "goals" }; render();
+    openCreate({}, "sentence");
+    if (i != null) { state.draft = sdNew(SD_EXAMPLES[i]()); sdNormalize(state.draft); renderSentence(); }
+    renderLab();
+  },
+  saveDraft: () => saveDraft(),
+  sentenceGoal: () => sdToGoal(state.draft),
+  sentenceValid: () => sdValid(state.draft),
+  sentenceErrors: () => sdErrors(state.draft),
   variant(key, value) { state.variants[key] = value; save(); render(); renderLab(); },
   count(n) { jump("count", n); },
-  rules: { isDue, classify, streakOf, chipText, progressOf, draftToGoal, goalToDraft, hijri },
+  rules: { isDue, classify, streakOf, chipText, progressOf, draftToGoal, goalToDraft, hijri, sdFromGoal, sdToGoal,
+    project: (g) => (({ schedule, active_period, paused, count_policy, sessions, requirement, completion, name, preset, counts }) => ({ schedule, active_period, paused, count_policy, sessions, requirement, completion, name, preset, counts }))(g) },
 };
 boot();
