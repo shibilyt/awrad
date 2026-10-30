@@ -487,6 +487,7 @@ function paceOf(g, ds) {
 function dayThreshold(g, ds) {
   const S = snapAt(g, ds);
   if (g.requirement.type === "cumulative_total") { const pc = paceOf(g, ds); return S.count_policy.streak_amount || (pc ? pc.share : 1) || 1; }
+  if (g.requirement.type === "tracker" && S.count_policy.streak_amount) return S.count_policy.streak_amount; // decision 36
   return thresholdValue(S.count_policy);
 }
 /* The amount a list ring fills toward today, for total goals: the daily number, else today's share, else any count (decisions 29, 33). */
@@ -834,7 +835,7 @@ function seedGoals(today) {
 /* ============================================================== 7. State */
 const STORE_KEY = "awrad-goals-proto-v3";
 const state = {
-  settings: { theme: "light", dir: "ltr", reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches, today: localToday(), arabicSize: 0 },
+  settings: { theme: "light", dir: "ltr", reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches, today: localToday(), arabicSize: 0, sound: true },
   variants: {},
   goals: [],
   route: { name: "home" },
@@ -845,7 +846,6 @@ const state = {
   overlay: null,
   labTab: "controls",
   reorder: false,
-  targetCard: null,
   lastRemoved: null,
 };
 function save() {
@@ -1029,7 +1029,6 @@ const screens = {
         <button class="icon-btn pressable" data-action="goal-menu" data-id="${g.id}" data-context="counting" aria-label="${esc(t("more_label"))}">${icon("more")}</button>
       </header>
       ${day !== td ? `<div class="day-banner t-label"><span>${esc(t("counting_for", fmtDate(day, { weekday: "short", day: "numeric", month: "short" })))}</span><button class="btn text pressable" data-action="count-today">${t("back_to_today")}</button></div>` : ""}
-      ${sessions}
       <div class="count-body">
         ${ar ? `<div class="arabic-card" data-size="${state.settings.arabicSize}"><div class="t-quran" lang="ar">${esc(ar)}</div></div>` : ""}
         <div class="count-actions">
@@ -1038,15 +1037,16 @@ const screens = {
           <button class="btn square pressable" data-action="stats" aria-label="${esc(t("stats"))}">${icon("goals")}</button>
         </div>
         <div class="counter-zone ${whole ? "whole" : ""}" ${whole ? 'data-counter="zone"' : ""}>
-          <div class="counter-ring" data-slot="ring">
+          ${sessions}
+          <span class="chip goal" data-slot="cchip">${esc(V.chip)}</span>
+          <div class="slot" data-slot="slot">${V.slot}</div>
+          <div class="counter-ring ${V.ringOff ? "ring-off" : ""}" data-slot="ring">
             ${ringSVG(264, 10, count, p)}
             <button class="counter-circle ${V.capped ? "capped" : ""}" data-counter="circle" aria-label="${esc(t("tap_circle"))}: ${count}">
               <span class="counter-num t-counter" data-slot="num"><span>${count}</span></span>
               ${v("circleSubLabel") === "target" && p.target ? `<span class="counter-sub" data-slot="sub">${esc(t("of_n", fmtN(p.target)))}</span>` : ""}
             </button>
           </div>
-          <div class="slot" data-slot="slot">${V.slot}</div>
-          <span class="chip goal" data-slot="cchip">${esc(V.chip)}</span>
         </div>
       </div>` };
   },
@@ -1075,13 +1075,20 @@ function counterModel(g, session, day) {
     if (pc) return { kind: "pace", count: pc.today, p: { minimum: null, target: pc.share, maximum: null, streak_threshold: "target" }, pc, total, today: pc.today };
     return { kind: "total", count: total, p: policyOf(g, null, day), total, today: countOn(g, day, null) };
   }
+  if (g.requirement.type === "tracker") {
+    // Decision 36: with a daily streak number, a ring toward it until it's reached, then a plain running total for the rest of the day (no ring).
+    const tn = snapAt(g, day).count_policy.streak_amount || null, tod = countOn(g, day, null), total = countIn(g, "0000", "9999");
+    const rp = tn ? { minimum: null, target: tn, maximum: null, streak_threshold: "target" } : null;
+    if (tn && tod < tn) return { kind: "tracker", phase: "ring", count: tod, p: rp, rp, tn, today: tod, total };
+    return { kind: "tracker", phase: tn ? "total" : "plain", count: tn ? total : progressOf(g, day, session), p: policyOf(g, session, day), rp, tn, today: tod, total };
+  }
   return { kind: "std", count: progressOf(g, day, session), p: policyOf(g, session, day) };
 }
 function counterChip(g, M, day, mu) {
   const { p, count } = M;
   if (M.kind === "pace") return p.target ? t("pace_today", fmtN(count), fmtN(p.target)) : t("target_reached");
   if (M.kind === "total") return g.count_policy.streak_amount ? t("today_of", fmtN(M.today), fmtN(g.count_policy.streak_amount)) : t("today_n", fmtN(M.today));
-  if (g.requirement.type === "tracker") return t("total_n", fmtN(countIn(g, "0000", "9999")));
+  if (M.kind === "tracker") return M.phase === "ring" ? t("today_of", fmtN(M.today), fmtN(M.tn)) : M.phase === "total" ? t("tracker_line", fmtN(M.total), fmtN(M.today)) : t("total_n", fmtN(M.total));
   if (!isDue(g, day)) return t("not_due");
   if (!p.target) return t("any_count");
   if (mu) return t("making_up", weekdayName(weekday(mu.date), "short"), fmtN(mu.count), fmtN(mu.need));
@@ -1091,12 +1098,6 @@ function counterChip(g, M, day, mu) {
   if (count === p.target) return t("target_reached");
   return t("over_n", fmtN(count - p.target));
 }
-function targetCardHTML(g) {
-  const next = orderedToday().find((x) => x.id !== g.id && !doneToday(x));
-  return next
-    ? `<button class="target-card pressable" data-action="goto-goal" data-id="${next.id}"><span class="tc-text"><strong>${t("target_reached_card")}</strong> · ${esc(t("next_goal", goalTitle(next)))}</span>${icon("forward", "mirror")}</button>`
-    : `<div class="target-card" role="status"><span class="tc-text"><strong>${t("all_goals_done")}</strong></span>${icon("check")}</div>`;
-}
 /* Everything the counter shows below the Arabic card, in one place so the first render and every count agree. */
 function counterView(g) {
   const td = today(), day = countDay();
@@ -1104,13 +1105,11 @@ function counterView(g) {
   const session = g.sessions.length ? state.session : null, M = counterModel(g, session, day), { p, count } = M;
   const capped = p.maximum != null && count >= p.maximum;
   const mu = day === td && M.kind === "std" && p.target && count >= p.target ? makeupInfo(g, td) : null;
-  const tc = state.targetCard, showCard = tc && tc.goalId === g.id && tc.day === day && p.target && count >= p.target && !capped && !g.sessions.length;
   let slot;
   if (capped) slot = `<div class="limit-msg t-label" role="status">${esc(t("cap_reached", fmtN(p.maximum)))}</div>`;
-  else if (showCard) slot = targetCardHTML(g);
-  else if (M.kind !== "std") slot = `<div class="hint t-bodySmall">${esc(t("total_line", fmtN(M.total), fmtN(policyOf(g).target)))}</div>`;
+  else if (M.kind !== "std" && M.kind !== "tracker") slot = `<div class="hint t-bodySmall">${esc(t("total_line", fmtN(M.total), fmtN(policyOf(g).target)))}</div>`;
   else slot = `<div class="hint t-bodySmall">${v("tapArea") === "screen" ? t("tap_anywhere") : t("tap_circle")}</div>`;
-  return { M, session, day, capped, mu, chip: counterChip(g, M, day, mu), slot };
+  return { M, session, day, capped, mu, ringOff: M.kind === "tracker" && M.phase !== "ring" && !!M.tn, chip: counterChip(g, M, day, mu), slot };
 }
 
 /* ============================================================== 10. Create flows
@@ -1636,7 +1635,7 @@ const V3_STRINGS = {
     tracking: "Tracking", tracker_row: (today, total) => `Today ${today} · Total ${total}`, total_row: (n, total) => `${n} of ${total}`, total_n: (n) => `Total ${n}`,
     today_n: (n) => `Today ${n}`, today_of: (n, a) => `Today ${n} of ${a}`, total_line: (n, target) => `Total ${n} of ${target}`,
     making_up: (day, n, need) => `Making up ${day}: ${n}/${need}`, t_madeup: (day) => `${day} made up`,
-    target_reached_card: "Target reached", next_goal: (name) => `Next: ${name}`, all_goals_done: "All of today's goals are done",
+    goal_done_banner: "Today's goal is done", tracker_line: (total, today) => `Total ${total} · today ${today}`,
     cap_reached: (n) => `Reached your limit of ${n}`,
     counting_for: (d) => `Counting for ${d}`, back_to_today: "Back to today", count_yesterday: "Count for yesterday", count_today: "Count for today",
     stats: "Stats", undo_btn: "Undo", end_goal: "End goal", delete_goal: "Delete goal", start_again: "Start again",
@@ -1661,7 +1660,7 @@ const V3_STRINGS = {
     tracking: "التتبّع", tracker_row: (today, total) => `اليوم ${today} · المجموع ${total}`, total_row: (n, total) => `${n} من ${total}`, total_n: (n) => `المجموع ${n}`,
     today_n: (n) => `اليوم ${n}`, today_of: (n, a) => `اليوم ${n} من ${a}`, total_line: (n, target) => `المجموع ${n} من ${target}`,
     making_up: (day, n, need) => `تعويض ${day}: ${n}/${need}`, t_madeup: (day) => `تم تعويض ${day}`,
-    target_reached_card: "تم بلوغ الهدف", next_goal: (name) => `التالي: ${name}`, all_goals_done: "اكتملت كل أهداف اليوم",
+    goal_done_banner: "تم إنجاز هدف اليوم", tracker_line: (total, today) => `المجموع ${total} · اليوم ${today}`,
     cap_reached: (n) => `بلغت حدّك وهو ${n}`,
     counting_for: (d) => `العدّ ليوم ${d}`, back_to_today: "العودة إلى اليوم", count_yesterday: "عُدَّ لأمس", count_today: "عُدَّ لليوم",
     stats: "الإحصاءات", undo_btn: "تراجع", end_goal: "إنهاء الهدف", delete_goal: "حذف الهدف", start_again: "ابدأ من جديد",
@@ -1678,8 +1677,8 @@ const V3_STRINGS = {
   },
   ml: {
     total_row: (n, total) => `${total}-ൽ ${n}`, tag_steady: (m, n) => `സ്ഥിരം · ${m}/${n}`, tag_devoted: (m, n) => `നിഷ്ഠയോടെ · ${m}/${n}`,
-    all_done_today: "ഇന്നത്തേത് എല്ലാം പൂർത്തിയായി", target_reached_card: "ലക്ഷ്യം എത്തി", all_goals_done: "ഇന്നത്തെ എല്ലാ ലക്ഷ്യങ്ങളും പൂർത്തിയായി",
-    next_goal: (name) => `അടുത്തത്: ${name}`, cap_reached: (n) => `നിങ്ങളുടെ പരിധി ${n} എത്തി`, count_yesterday: "ഇന്നലത്തേക്ക് എണ്ണുക", undo_btn: "തിരിച്ചാക്കുക",
+    all_done_today: "ഇന്നത്തേത് എല്ലാം പൂർത്തിയായി", goal_done_banner: "ഇന്നത്തെ ലക്ഷ്യം പൂർത്തിയായി", tracker_line: (total, today) => `ആകെ ${total} · ഇന്ന് ${today}`,
+    cap_reached: (n) => `നിങ്ങളുടെ പരിധി ${n} എത്തി`, count_yesterday: "ഇന്നലത്തേക്ക് എണ്ണുക", undo_btn: "തിരിച്ചാക്കുക",
     end_goal: "ലക്ഷ്യം അവസാനിപ്പിക്കുക", start_again: "വീണ്ടും തുടങ്ങുക", edit_note: "മാറ്റങ്ങൾ ഇന്ന് മുതൽ; കഴിഞ്ഞ ദിവസങ്ങൾ അതേപടി തുടരും.",
     edit_warn: "ഇത് നിലവിലെ ലക്ഷ്യം അവസാനിപ്പിച്ച് പുതിയത് തുടങ്ങും.", makeup_fill_head: "ദിവസം നിറയ്ക്കുന്നത്", p_makeup: "ഒരു ദിവസം വിട്ടുപോയാൽ", d_makeup: "വിട്ടുപോയ ദിവസം നികത്തുക",
     makeup_help: "ഇന്നത്തെ ലക്ഷ്യത്തിന് ശേഷമുള്ള അധിക എണ്ണം വിട്ടുപോയ ദിവസം നിറയ്ക്കും.", sv_daily: "ദിവസം ഒരു എണ്ണം", sv_daily_sub: "ഇതിലെത്തിയാൽ ദിവസം കണക്കാകും", a_day: "ദിവസം", p_streak_amount: "ദിവസേന സ്ട്രീക്ക് എണ്ണുന്നത്",
@@ -1703,7 +1702,7 @@ function sdNormalize(d) {
   if (req === "cumulative_total") delete D.cap;
   if (req !== "per_due_date") { delete D.sessions; delete D.makeup; }
   if (D.sessions) delete D.makeup;
-  if (req !== "cumulative_total" && D.streak?.value === "daily") delete D.streak;
+  if (!["cumulative_total", "tracker"].includes(req) && D.streak?.value === "daily") delete D.streak;
   if (req !== "cumulative_total") delete D.finish;
   return d;
 }
@@ -1735,7 +1734,7 @@ function sdToGoal(d, base = null) {
   const num = (v) => { const n = intOrNull(v); return n > 0 ? n : 0; };
   const target = req === "tracker" ? null : num(d.amount);
   const fix = (th, p) => ((th === "minimum" && p.minimum == null) || (th === "maximum" && p.maximum == null) || (th === "target" && p.target == null) ? (p.target == null ? "any_count" : "target") : th);
-  const daily = D.streak?.value === "daily" && req === "cumulative_total";
+  const daily = D.streak?.value === "daily" && ["cumulative_total", "tracker"].includes(req);
   const threshold = daily ? "any_count" : D.streak?.value || autoStreak(d);
   let schedule = structuredClone(d.schedule);
   if (req === "period_total" || (req === "days_per_period" && d.occasion !== "shawwal_six")) schedule = { kind: "every_day" };
@@ -2013,7 +2012,7 @@ function sdPicker(d) {
     case "streak": {
       const req = sdReq(d), cur = D.streak?.value || autoStreak(d);
       const vals = ["any_count", D.minimum && "minimum", !["tracker", "cumulative_total"].includes(req) && "target", D.cap && "maximum"].filter(Boolean);
-      const daily = req === "cumulative_total" ? optionRow("daily", t("sv_daily"), t("sv_daily_sub"), cur === "daily", "s-streak", `<div class="inline-fields">${input("details.streak.amount", D.streak?.amount || "", "number")}<span>${t("a_day")}</span></div>`) : "";
+      const daily = ["cumulative_total", "tracker"].includes(req) ? optionRow("daily", t("sv_daily"), t("sv_daily_sub"), cur === "daily", "s-streak", `<div class="inline-fields">${input("details.streak.amount", D.streak?.amount || "", "number")}<span>${t("a_day")}</span></div>`) : "";
       return head(t("p_streak")) + body(`<div class="options">${vals.map((v) => optionRow(v, L.streakVals[v], "", cur === v, "s-streak")).join("")}${daily}</div>`) + (cur === "daily" ? foot : "");
     }
     case "makeup": return head(t("p_makeup")) + body(`<p class="t-bodySmall dim" style="margin:0 0 var(--s-md)">${t("makeup_help")}</p><div class="options">${["off", "next", "three"].map((k) => optionRow(k, L.makeupVals[k], "", (D.makeup?.value || "off") === k, "s-makeup")).join("")}</div>${D.makeup?.value && D.makeup.value !== "off" ? `<p class="t-bodySmall dim" style="margin:var(--s-lg) 0 var(--s-md)">${t("makeup_fill_head")}</p><div class="options">${["streak", "full"].map((k) => optionRow(k, L.makeupFill[k], "", (D.makeup.fill || "streak") === k, "s-makeup-fill")).join("")}</div>` : ""}`);
@@ -2473,14 +2472,14 @@ function toast(msg, undo = null) {
 const reduced = () => state.settings.reducedMotion;
 let currentScreen = null;
 function navigate(route, kind = "push") {
-  stopAudio(); state.targetCard = null;
+  stopAudio();
   if (kind === "push") state.stack.push(state.route);
   state.route = route;
   render(kind);
 }
 function goBack() {
   const prev = state.stack.pop() || { name: "home" };
-  stopAudio(); state.targetCard = null;
+  stopAudio();
   state.route = prev;
   render("pop");
 }
@@ -2566,10 +2565,59 @@ function pressUp(el) {
 /* --- Counting --- */
 function haptic(kind) {
   // soft: the minimum; threshold: kept for the pad; success: the target; strong: the cap (decision 15)
-  const pattern = { tick: 8, soft: 12, threshold: 20, success: [20, 60, 40], strong: [40, 50, 40, 50, 80] }[kind];
+  const pattern = { tick: 8, soft: 12, threshold: 20, success: [20, 60, 40], strong: [40, 50, 40, 50, 80], goalDone: [30, 50, 30, 50, 90] }[kind];
   const ok = typeof navigator.vibrate === "function" && navigator.vibrate(pattern);
+  labEvent(`haptic: ${kind}${ok ? "" : " (no vibrate API here)"}`, kind === "goalDone");
+}
+/* The Lab's event log: the latest haptic plus the goal-done alerts, newest last (kept to 4 lines). */
+const labEvents = [];
+function labEvent(text, keep = false) {
+  const line = `${new Date().toLocaleTimeString()} ${text}`;
+  if (labEvents.length && !labEvents.at(-1).keep) labEvents.pop();
+  labEvents.push({ line, keep });
+  while (labEvents.length > 4) labEvents.shift();
   const log = document.getElementById("haptic-log");
-  if (log) log.textContent = `${new Date().toLocaleTimeString()} haptic: ${kind}${ok ? "" : " (no vibrate API here)"}`;
+  if (log) log.innerHTML = labEvents.map((e) => esc(e.line)).join("<br>");
+}
+/* Decision 34: a soft two-note chime (Web Audio). Muted when the Lab's Sound toggle is off. */
+let audioCtx = null;
+function chime() {
+  if (state.settings.sound === false) return false;
+  try {
+    audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const t0 = audioCtx.currentTime + 0.02;
+    [[880, 0], [1318.5, 0.16]].forEach(([f, dt]) => {
+      const o = audioCtx.createOscillator(), gn = audioCtx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      gn.gain.setValueAtTime(0.0001, t0 + dt);
+      gn.gain.exponentialRampToValueAtTime(0.09, t0 + dt + 0.02);
+      gn.gain.exponentialRampToValueAtTime(0.0001, t0 + dt + 0.55);
+      o.connect(gn).connect(audioCtx.destination);
+      o.start(t0 + dt); o.stop(t0 + dt + 0.6);
+    });
+    return true;
+  } catch { return false; }
+}
+function goalDoneAlert() {
+  haptic("goalDone");
+  const played = chime();
+  labEvent(`goal done: strong haptic, ${played ? "chime" : "sound off"}, ring pulse, banner`, true);
+  showGoalBanner();
+}
+/* A non-tappable banner above the tap zone; fades out after about 2.5 s. */
+function showGoalBanner() {
+  const host = currentScreen;
+  if (!host) return;
+  host.querySelector(".goal-banner")?.remove();
+  const b = document.createElement("div");
+  b.className = "goal-banner t-label"; b.setAttribute("role", "status"); b.textContent = t("goal_done_banner");
+  host.appendChild(b);
+  const act = host.querySelector(".count-actions");
+  if (act) b.style.top = `${act.getBoundingClientRect().bottom - host.getBoundingClientRect().top + 8}px`; // just under the buttons, above the circle
+  const rm = reduced(), hold = 2500;
+  b.animate(rm ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: "translateY(-8px)" }, { opacity: 1, transform: "none" }], { duration: MOTION.duration.short, easing: MOTION.easing.decelerate, fill: "forwards" });
+  setTimeout(() => b.animate([{ opacity: 1 }, { opacity: 0 }], { duration: MOTION.duration.medium || 300, easing: "linear", fill: "forwards" }).finished.then(() => b.remove()).catch(() => b.remove()), hold - 300);
 }
 /* Set today's absolute count for a goal (window-aware). Used by the Lab's "Counter at N". */
 function setCount(g, session, value) {
@@ -2612,14 +2660,17 @@ function increment(by = 1) {
   }
   if (p.maximum != null && before >= p.maximum) { haptic("strong"); popCircle(true); return; }
   addCount(g, session, day, by); shareDelta(g, by, day);
-  const after = counterModel(g, session, day).count;
+  const M2 = counterModel(g, session, day), after = M2.count;
   save();
   let pulse = false;
+  const hit = M.kind === "tracker" ? !!M.tn && M.today < M.tn && M2.today >= M.tn : !!p.target && before < p.target && after >= p.target;
   if (p.maximum != null && after >= p.maximum) haptic("strong");
-  else if (p.target && before < p.target && after >= p.target) {
-    haptic("success"); pulse = true;
-    if (!g.sessions.length) { if (day === td) state.targetCard = { goalId: g.id, day }; }
-    else toast(g.sessions.every((x) => countOn(g, day, x.id) >= (x.count_policy.target ?? 1)) ? t("t_all_sessions") : t("t_session_done", capFirst(sessionLabel(session))));
+  else if (hit) {
+    // Decision 34: an alert only (haptic, sound, ring pulse, banner). Nothing navigates; counting continues.
+    pulse = true;
+    if (g.sessions.length && !g.sessions.every((x) => countOn(g, day, x.id) >= (x.count_policy.target ?? 1))) { haptic("success"); toast(t("t_session_done", capFirst(sessionLabel(session)))); }
+    else if (day === td) goalDoneAlert();
+    else haptic("success");
   }
   else if (p.minimum && before < p.minimum && after >= p.minimum) haptic("soft");
   else haptic("tick");
@@ -2664,7 +2715,8 @@ function updateCounting(before, opts = {}) {
   const g = goalById(state.route.goalId), root = currentScreen;
   if (!g || !root) return;
   const V = counterView(g), { M, session } = V, p = M.p, after = M.count, td = today();
-  if (state.targetCard && !(p.target && after >= p.target)) state.targetCard = null;
+  const holding = !!opts.pulse && M.kind === "tracker" && V.ringOff; // keep the full ring for the pulse, then drop it (decision 36)
+  const rp = holding ? M.rp : p, rc = holding ? M.today : after;
   // number roll (countTap: numberTransition roll)
   const num = root.querySelector('[data-slot="num"]');
   if (after !== before || num.textContent.trim() !== String(after)) {
@@ -2686,11 +2738,11 @@ function updateCounting(before, opts = {}) {
   const ringHost = root.querySelector('[data-slot="ring"]');
   const olds = Object.fromEntries([...ringHost.querySelectorAll(".r-arc")].map((a) => [a.classList.contains("r-arc-l") ? "l" : "s", parseFloat(a.dataset.len)]));
   const svg = ringHost.querySelector("svg");
-  const tmp = document.createElement("div"); tmp.innerHTML = ringSVG(264, 10, after, p);
+  const tmp = document.createElement("div"); tmp.innerHTML = ringSVG(264, 10, rc, rp);
   ringHost.replaceChild(tmp.firstElementChild, svg);
-  const crossedLap = p.target && (before <= p.target) !== (after <= p.target);
+  const crossedLap = rp.target && (before <= rp.target) !== (rc <= rp.target);
   if (!reduced() && !crossedLap) {
-    const s = spring(p.target && after === p.target ? "spatialSlow" : "spatial");
+    const s = spring(rp.target && rc === rp.target ? "spatialSlow" : "spatial");
     for (const [k, cls] of [["l", ".r-arc-l"], ["s", ".r-arc-s"]]) {
       const arc = ringHost.querySelector(cls), n = parseFloat(arc.dataset.len);
       if (olds[k] !== n && n > 0) { arc.setAttribute("opacity", k === "l" ? 0.4 : 1); arc.animate([{ strokeDasharray: `${olds[k] || 0} 100` }, { strokeDasharray: `${n} 100` }], { duration: s.duration, easing: s.easing }); }
@@ -2698,6 +2750,8 @@ function updateCounting(before, opts = {}) {
   } else if (crossedLap && !reduced()) {
     ringHost.querySelector(".r-lap").animate([{ opacity: 0 }, { opacity: 1 }], { duration: MOTION.duration.color, easing: "linear" });
   }
+  ringHost.classList.toggle("ring-off", V.ringOff && !holding);
+  if (holding) setTimeout(() => currentScreen?.querySelector('[data-slot="ring"]')?.classList.add("ring-off"), MOTION.duration.long + 80);
   if (opts.pulse) pulseRing();
   // chip + slot + streak + label (contentSwap)
   const swap = (el, html, isText) => {
@@ -2750,18 +2804,20 @@ function stopAudio() {
 /* ============================================================== 13. Lab */
 const NOTES = `
 <div class="notes">
-  <p class="sub" style="margin-top:0">Decisions 14 to 30 of <code>docs/slices/04-goals-decisions.md</code> are in. Each decision has a preset or a Jump button to see it (Controls and Data tabs). What's left below is open, assumed or not designed.</p>
+  <p class="sub" style="margin-top:0">Decisions 14 to 36 of <code>docs/slices/04-goals-decisions.md</code> are in. Each decision has a preset or a Jump button to see it (Controls and Data tabs). What's left below is open, assumed or not designed.</p>
 
   <h3>Counter</h3>
   <ul>
     <li>The ring is the green <code>progress</code> token: <code>progress</code> at 40% below the minimum, full from the minimum to the target. In dark mode <code>progress</code> is light grey, so the "green" is grey there. The gold arc is off (Variants).</li>
     <li>The minimum tick, the ring pulse and the dimmed circle at the cap have no motion or colour tokens. The pulse is a stroke that grows 14% and fades over <code>long</code> (450 ms). The dim reuses the disabled opacity.</li>
     <li>Haptics are web <code>navigator.vibrate</code> patterns: soft 12 ms (minimum), success (target), strong (cap). The real patterns are a platform choice.</li>
-    <li>The target card stays while you keep counting and goes when you leave the counter or undo below the target. It is not shown when the cap equals the target (the limit message wins), or for session goals (they keep a toast).</li>
+    <li>Target reached (34): no card. A strong haptic, a soft two-note Web Audio chime (Lab → Controls → Sound), a ring pulse and a non-tappable "Today's goal is done" banner (<code>pointer-events: none</code>, fades after about 2.5 s) under the buttons. Counting continues into the overflow and nothing navigates. Not fired when the cap equals the target (the cap haptic wins). A session goal fires it when its last session is met; earlier sessions keep a toast. The Lab log (Controls → Haptics and alerts) shows each alert. The banner position and the chime notes are guesses; the silent-mode rule can't be shown on the web.</li>
+    <li>Layout (35): the circle sits at the bottom, above the home indicator. The make-up line (chip), the hint and the session pills stack just above it; the space between the buttons and these is tap area. Circle-only still works.</li>
+    <li>Tracker with a daily number (36): a ring toward it with "Today N of 100", the goal-done alert at the number, then the circle shows the running total with no ring and "Total 12,450 · today 130" until the day ends. The sentence flow offers "streak counts at N a day" for trackers. Preset "Tracker with a daily number" (Data). Numbers aren't grouped with commas here.</li>
     <li>"Next: ..." takes the first unfinished due goal in the user's order. A goal with sessions keeps its place in that order; following its next session's time (decision 24) isn't modelled.</li>
     <li>Tap area: the whole lower zone counts, except the card and buttons inside it. A "circle only" variant remains (decision 16 says it may be revisited).</li>
     <li>Pace goals (28): the circle shows today's count against today's share, the chip "Today 40 of about 150", the line below the overall total. Open-ended total goals show the total in the circle and "Today N" in the chip.</li>
-    <li>Trackers (30): a plain count, no ring fill, no card; the chip shows the total.</li>
+    <li>Trackers without a number (30): a plain count, no ring fill; the chip shows the total.</li>
   </ul>
 
   <h3>Late counting, make-up, excused days</h3>
@@ -2833,6 +2889,7 @@ function renderLab() {
     <div class="row"><label>Theme</label>${seg("theme", { light: "Light", dark: "Dark" })}</div>
     <div class="row"><label>Language</label>${seg("lang", { en: "English", ar: "العربية (RTL)", ml: "മലയാളം" })}</div>
     <div class="row"><label>Reduced motion</label>${seg("reducedMotion", { false: "Off", true: "On" })}</div>
+    <div class="row"><label>Sound (goal-done chime)</label>${seg("sound", { true: "On", false: "Off" })}</div>
     <h2>Today</h2>
     <div class="row"><label for="lab-today">Effective practice day</label><input id="lab-today" type="date" value="${s.today}"></div>
     <div class="row"><label for="lab-now">Time of day (picks the current session)</label><input id="lab-now" type="time" value="${s.now || ""}"></div>
@@ -2853,8 +2910,8 @@ function renderLab() {
     ${fath ? `<div class="btns" style="margin-top:6px">${[0, 13, 70, 99, 100, 110].map((n) => `<button data-jump="count" data-n="${n}">Counter at ${n}</button>`).join("")}</div>` : ""}
     <div class="msg">Counts a goal with 100 / minimum 70. The cap and make-up demos need a preset first (Data tab).</div>
     <div class="btns" style="margin-top:6px"><button data-open="swalath-al-nariyya">Counter: pace goal</button><button data-open="tahleel" data-tracker="1">Counter: tracker</button><button data-open="isthighfar">Counter: total goal</button></div>
-    <h2>Haptics</h2>
-    <div class="haptic-log" id="haptic-log">Each count fires navigator.vibrate when available; logged here.</div>
+    <h2>Haptics and alerts</h2>
+    <div class="haptic-log" id="haptic-log">Each count fires navigator.vibrate when available; the goal-done alert (haptic, chime, banner) is logged here.</div>
     <h2>Data</h2>
     <div class="btns"><button data-labaction="reset">Reset goals to the seed</button><button data-labaction="reset-all">Reset everything</button></div>`;
   document.getElementById("lab-variants").innerHTML = `<p class="sub" style="margin-top:0">From <code>VARIANTS</code> in prototype.js: add an entry there to get a switch here.</p>` +
@@ -2933,6 +2990,15 @@ const PRESETS = {
       g.count_entries = [{ date: addDays(td, -12), session: null, count: 12067 }, ...[5, 4, 3, 2, 1].map((o) => ({ date: addDays(td, -o), session: null, count: 50 })), { date: td, session: null, count: 33 }];
       state.goals.push(g);
     } },
+  trackerNumber: { label: "Tracker with a daily number", note: "A \"whenever I can\" Tahleel tracker whose streak counts at 100 a day, at 97 today: the counter rings toward 100, fires the goal-done alert at 100, then shows \"Total 12,450 · today 103\" with no ring (decision 36).",
+    run() {
+      const td = today();
+      state.goals = state.goals.filter((g) => g.preset !== "lab-tracker");
+      const g = makeGoal({ dhikr: "tahleel", start: addDays(td, -30), policy: policy(null, null, null, "any_count"), requirement: { type: "tracker" }, preset: "lab-tracker" });
+      g.count_policy = { ...g.count_policy, streak_amount: 100 };
+      g.count_entries = [{ date: addDays(td, -12), session: null, count: 12067 }, ...[5, 4, 3, 2, 1].map((o) => ({ date: addDays(td, -o), session: null, count: 100 })), { date: td, session: null, count: 97 }];
+      state.goals.push(g);
+    } },
 };
 function applyPreset(name) {
   PRESETS[name].run(); save(); state.reorder = false; render(); renderLab();
@@ -2959,9 +3025,9 @@ function handleAction(el, e) {
     case "open-goal": {
       if (state.reorder) return;
       if (["completed", "ended"].includes(el.dataset.kind)) { openStats(id, true); return; }
-      state.session = null; state.targetCard = null; navigate({ name: "counting", goalId: id }); return;
+      state.session = null; navigate({ name: "counting", goalId: id }); return;
     }
-    case "goto-goal": state.session = null; state.targetCard = null; stopAudio(); state.route = { name: "counting", goalId: id }; render("push"); return;
+    case "goto-goal": state.session = null; stopAudio(); state.route = { name: "counting", goalId: id }; render("push"); return;
     case "back": goBack(); return;
     case "add-goal": openCreate(); return;
     case "set-goal-from": { const dhikr = el.dataset.dhikr; if (state.overlay) closeOverlay(); openCreate({ dhikr }); return; }
@@ -2995,8 +3061,8 @@ function handleAction(el, e) {
     }
     case "toast-undo": { const f = toastUndo; toastUndo = null; clearTimeout(toastTimer); document.getElementById("toast-host").innerHTML = ""; if (f) f(); return; }
     // Late counting (17)
-    case "count-yesterday": { if (state.overlay) closeOverlay(); state.targetCard = null; state.route = { ...state.route, day: addDays(today(), -1) }; render(); return; }
-    case "count-today": { if (state.overlay) closeOverlay(); state.targetCard = null; state.route = { ...state.route, day: undefined }; render(); return; }
+    case "count-yesterday": { if (state.overlay) closeOverlay(); state.route = { ...state.route, day: addDays(today(), -1) }; render(); return; }
+    case "count-today": { if (state.overlay) closeOverlay(); state.route = { ...state.route, day: undefined }; render(); return; }
     case "stats": openStats(state.route.goalId); return;
     case "cal-prev": case "cal-next": { const o = state.overlay; o.month = shiftMonth(o.month, a === "cal-next" ? 1 : -1); o.sel = null; renderStats(); return; }
     case "cal-pick": state.overlay.sel = el.dataset.date; renderStats(); return;
@@ -3092,7 +3158,7 @@ function boot() {
       return;
     }
     if (b.dataset.lab) {
-      const k = b.dataset.lab; state.settings[k] = k === "reducedMotion" ? b.dataset.val === "true" : b.dataset.val;
+      const k = b.dataset.lab; state.settings[k] = k === "reducedMotion" || k === "sound" ? b.dataset.val === "true" : b.dataset.val;
       if (k === "lang") state.settings.dir = b.dataset.val === "ar" ? "rtl" : "ltr";
       save(); applySettings(); render(); if (state.draft?.flow === "sentence") renderSentence(); renderLab(); return;
     }
@@ -3156,7 +3222,7 @@ function openByDhikr(dhikr, tracker) {
   if (state.overlay) closeOverlay(); stopAudio(); state.draft = null;
   const g = state.goals.find((x) => x.dhikr === dhikr && !x.ended && (tracker ? x.requirement.type === "tracker" : x.requirement.type !== "tracker"));
   if (!g) return;
-  state.session = null; state.targetCard = null; state.stack = [{ name: "goals" }]; state.route = { name: "counting", goalId: g.id }; render("push");
+  state.session = null; state.stack = [{ name: "goals" }]; state.route = { name: "counting", goalId: g.id }; render("push");
 }
 function setToday(ds) { state.settings.today = ds; save(); render(); renderLab(); }
 function jump(where, n) {

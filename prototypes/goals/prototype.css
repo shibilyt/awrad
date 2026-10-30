@@ -418,7 +418,12 @@ button { cursor: pointer; }
 .arabic-card[data-size="2"] .t-quran { font-size: 32px; line-height: 56px; }
 .count-actions { display: flex; gap: var(--s-sm); flex: none; }
 .count-actions .btn.square { background: var(--c-surface); color: var(--c-onSurface); }
-.counter-zone { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--s-md); padding-bottom: calc(34px + var(--s-lg)); min-height: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+/* Decision 35: the zone fills the space under the buttons (all tap area) and anchors its content, the circle last, to the bottom above the home indicator. */
+.counter-zone { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: var(--s-sm); padding-bottom: calc(34px + var(--s-lg)); min-height: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+.counter-zone > .session-bar { align-self: stretch; margin-inline: calc(-1 * var(--pageMargin)); padding-top: 0; text-align: center; }
+.counter-zone .session-state { text-align: center; }
+.counter-zone > .chip { margin-top: var(--s-xs); }
+.counter-ring.ring-off svg { opacity: 0; transition: opacity var(--d-long) linear; }
 .counter-zone.whole { cursor: pointer; }
 .counter-ring { position: relative; width: 264px; height: 264px; display: grid; place-items: center; flex: none; }
 .counter-ring svg { position: absolute; inset: 0; overflow: visible; }
@@ -613,12 +618,11 @@ button { cursor: pointer; }
 .drag-handle { touch-action: none; cursor: grab; color: var(--c-onSurfaceVariant); }
 .goal-card.dragging { box-shadow: var(--elevation-floating); position: relative; z-index: 2; }
 
-/* Counter: late day banner, status slot, target card, cap */
+/* Counter: late day banner, status slot, goal-done banner, cap */
 .day-banner { display: flex; align-items: center; justify-content: space-between; gap: var(--s-sm); margin: var(--s-xs) var(--pageMargin) 0; padding: var(--s-xs) var(--s-md); border-radius: var(--r-tile); background: var(--c-primaryContainer); color: var(--c-onPrimaryContainer); }
 .day-banner .btn.text { color: var(--c-onPrimaryContainer); height: var(--touchTarget); margin-block: calc(-1 * var(--s-sm)); }
-.counter-zone .slot { display: flex; justify-content: center; width: 100%; min-height: 20px; }
-.target-card { display: flex; align-items: center; justify-content: space-between; gap: var(--s-md); width: 100%; min-height: var(--touchTarget); border: 0; border-radius: var(--r-tile); padding: var(--s-xs) var(--s-md) var(--s-xs) var(--s-lg); background: var(--c-primary); color: var(--c-onPrimary); text-align: start; font: 500 14px/20px var(--font-ui); }
-.target-card strong { font-weight: 700; }
+.counter-zone .slot { display: flex; justify-content: center; width: 100%; min-height: 20px; margin-bottom: var(--s-xs); }
+.goal-banner { position: absolute; z-index: 30; top: 96px; left: 50%; translate: -50% 0; max-width: calc(100% - 2 * var(--pageMargin)); padding: var(--s-xs) var(--s-lg); border-radius: var(--r-tile); background: var(--c-primary); color: var(--c-onPrimary); text-align: center; pointer-events: none; opacity: 0; }
 .limit-msg { color: var(--c-error); text-align: center; }
 .counter-circle.capped { opacity: var(--disabled-opacity); }
 .toast.with-action { display: flex; align-items: center; justify-content: space-between; gap: var(--s-md); pointer-events: auto; padding-block: var(--s-xs); }

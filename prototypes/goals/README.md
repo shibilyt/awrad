@@ -38,6 +38,12 @@ Add `?reset` to the URL to drop the saved state (goals, settings and variants pe
 
 From the browser console, `proto` exposes the state and helpers: `proto.count(99)`, `proto.set({ theme: "dark" })`, `proto.variant("ringStyle", "green")`, `proto.jump("create")`.
 
+## Decisions 34 to 36 (v4)
+
+- No "next goal" card (34): reaching today's target plays an alert only (strong haptic, chime, ring pulse, a banner that fades after about 2.5 s). Lab → Controls has a Sound toggle (on by default) and an event log.
+- The circle is anchored to the bottom of the counter (35); the Arabic card and buttons stay at the top and the gap is tap area. Session pills and the make-up line sit just above the circle.
+- A tracker can have "streak counts at N a day" (36): ring toward N, the alert at N, then a plain running total. Preset: Data → "Tracker with a daily number".
+
 ## Decisions 14 to 30 (v3)
 
 The counter, rows, stats sheet, editing, History, pace, total-goal streaks and trackers follow `docs/slices/04-goals-decisions.md`. The saved state key is now `awrad-goals-proto-v3`, so older saved goals are dropped on first load. Open-ended total goals fill their list ring toward the daily streak amount (any count by default) and show "12,050 of 70,000" on the row (decision 33). Make-up fills a missed day with either enough to keep the streak (default) or the full target, chosen in the sentence flow (decision 31). Defaults: create flow B, green ring with a minimum tick, lower-half tap area.
@@ -60,4 +66,6 @@ Console: `proto.open(dhikr)`, `proto.tap(n)`, `proto.stats()`, `proto.edit(goalI
 | Pace and the daily streak number | `paceOf`, `dayThreshold`, `dailyAmount`, `counterModel` |
 | Make-up, late counting | `makeupInfo`, `increment`, `countDay` |
 | Edit as dated versions, structural edits | `snapAt`, `isStructural`, `saveDraft` |
-| Counter's moments (card, cap, haptics) | `increment`, `counterView`, `targetCardHTML`, `haptic` |
+| Counter's moments (goal-done alert, cap, haptics) | `increment`, `counterView`, `goalDoneAlert`, `chime`, `showGoalBanner`, `haptic` |
+| Counter layout (circle at the bottom) | `screens.counting`, `.counter-zone` in `prototype.css` |
+| Tracker with a daily number | `counterModel` (tracker branch), `dayThreshold`, the `trackerNumber` preset |
