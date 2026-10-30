@@ -24,6 +24,12 @@
  * Read with v('ringStyle'). The Lab renders every entry automatically.
  */
 const VARIANTS = {
+  createFlow: {
+    label: "Create flow",
+    note: "Three ways to create the same goal. A: one question per screen. B: an editable sentence in one sheet. C: templates, then a short form. The Controls tab has Try A / B / C buttons.",
+    options: { wizard: "A. Wizard", sentence: "B. Sentence", templates: "C. Templates" },
+    value: "wizard",
+  },
   ringStyle: {
     label: "Counter ring colour",
     note: "Design: amber/gold arc (not a token). Green uses the `progress` token. Threshold switches gold → green once the minimum is reached.",
@@ -91,7 +97,7 @@ const VARIANTS = {
     value: "largeTitle",
   },
   createOrder: {
-    label: "Create flow order",
+    label: "Wizard order (A only)",
     note: "Draft v0 asks how many before when. \"Once with a total\" changes what the number means, so when-first may read better.",
     options: { countFirst: "Dhikr → How many → When", whenFirst: "Dhikr → When → How many" },
     value: "countFirst",
@@ -212,6 +218,31 @@ const STRINGS = {
     err_count: "Enter a whole number above 0", err_min: "Must be below the target", err_cap: "Must be at least the target",
     err_weekdays: "Pick at least one day", err_end: "Must be on or after the start date",
     placeholder: "Not part of this prototype.",
+    // Create flows A, B, C
+    ramadan_middle10: "Middle 10", ramadan_sub: "The whole month, or a third of it",
+    new_goal_title: "New goal", set_goal: "Set a goal", skip: "Skip", add_goal_btn: "Add goal",
+    step_more: "More options", step_more_lede: "Optional. Skip if you don't need these.",
+    sentence: (dh, n, s, by) => `Say ${dh} ${n} times ${s}${by ? " " + by : ""}`,
+    tok_pick_dhikr: "pick a dhikr", tok_every_day: "every day", tok_weekdays: (days) => `every ${days}`, tok_pick_days: "on some days",
+    tok_ramadan: { whole: "every day of Ramadan", first10: "in Ramadan's first 10 days", middle10: "in Ramadan's middle 10 days", last10: "in Ramadan's last 10 nights", odd: "on Ramadan's odd nights" },
+    tok_white: "on the white days", tok_total: "in total", tok_custom: "on a custom schedule",
+    by_date: (d) => `by ${d}`, no_deadline: "no deadline", no_deadline_btn: "No deadline", no_end_btn: "No end date",
+    sg_every_day: "Every day", sg_ramadan: "During Ramadan", sg_total: "10,000 in total", sg_friday: "Every Friday",
+    more_short: "More", row_min: "At least", row_cap: "Stop at", row_from: "From", row_until: "until", row_sessions: "Sessions:", row_streak: "Streak counts at",
+    none: "none", no_end: "no end", today_word: "today", pad_done: "Done", clear: "Clear",
+    some_weekdays: "Some weekdays", every_friday: "Every Friday", in_total: "In total", in_total_sub: "One total, with an optional deadline",
+    shared_q: (name) => `Count ${name} from your other goal too?`,
+    shared_yes: "Yes, share counts", shared_yes_sub: "Each count adds to both goals",
+    shared_no: "No, count separately", shared_no_sub: "This goal keeps its own count",
+    templates_lede: "Start from a template.", for_dhikr: (n) => `For ${n}`,
+    tpl_daily: "Daily habit", tpl_daily_ex: "100 every day",
+    tpl_ramadan: "Ramadan", tpl_ramadan_ex: "Every day of Ramadan · Last 10 nights", tpl_ramadan_avatar: "R",
+    tpl_white: "White days", tpl_white_ex: "13–15 of every Hijri month", tpl_white_avatar: "13",
+    tpl_weekly: "Weekly", tpl_weekly_ex: "Every Friday",
+    tpl_total: "One-time total", tpl_total_ex: "70,000 in total",
+    tpl_custom: "Custom", tpl_custom_ex: "Choose every detail",
+    f_dhikr: "Dhikr", f_count: "How many", f_count_total: "How many in total", f_when: "When", f_by: "Finish by",
+    library_stub: "A stub: just enough to start a goal from a dhikr.",
     prayer_name: "Asr", prayer_in: "in 1 h 12 min", prayer_place: "Kozhikode",
   },
   ar: {
@@ -284,6 +315,30 @@ const STRINGS = {
     err_count: "أدخل عددًا صحيحًا أكبر من ٠", err_min: "يجب أن يكون أقل من الهدف", err_cap: "يجب ألا يقل عن الهدف",
     err_weekdays: "اختر يومًا واحدًا على الأقل", err_end: "يجب أن يكون في تاريخ البدء أو بعده",
     placeholder: "ليس جزءًا من هذا النموذج.",
+    ramadan_middle10: "العشر الأواسط", ramadan_sub: "الشهر كله أو ثلث منه",
+    new_goal_title: "هدف جديد", set_goal: "ضع هدفًا", skip: "تخطَّ", add_goal_btn: "أضف الهدف",
+    step_more: "خيارات أخرى", step_more_lede: "اختياري. تخطَّه إن لم تحتجه.",
+    sentence: (dh, n, s, by) => `قل ${dh} ${n} مرة ${s}${by ? " " + by : ""}`,
+    tok_pick_dhikr: "اختر ذكرًا", tok_every_day: "كل يوم", tok_weekdays: (days) => `كل ${days}`, tok_pick_days: "في بعض الأيام",
+    tok_ramadan: { whole: "كل يوم من رمضان", first10: "في العشر الأوائل من رمضان", middle10: "في العشر الأواسط من رمضان", last10: "في العشر الأواخر من رمضان", odd: "في ليالي الوتر من رمضان" },
+    tok_white: "في الأيام البيض", tok_total: "إجمالًا", tok_custom: "وفق جدول مخصص",
+    by_date: (d) => `قبل ${d}`, no_deadline: "بلا موعد نهائي", no_deadline_btn: "بلا موعد نهائي", no_end_btn: "بلا تاريخ انتهاء",
+    sg_every_day: "كل يوم", sg_ramadan: "في رمضان", sg_total: "10,000 إجمالًا", sg_friday: "كل جمعة",
+    more_short: "المزيد", row_min: "على الأقل", row_cap: "توقف عند", row_from: "من", row_until: "حتى", row_sessions: "الجلسات:", row_streak: "تُحسب السلسلة عند",
+    none: "لا شيء", no_end: "بلا نهاية", today_word: "اليوم", pad_done: "تم", clear: "مسح",
+    some_weekdays: "بعض أيام الأسبوع", every_friday: "كل جمعة", in_total: "إجمالًا", in_total_sub: "إجمالي واحد مع موعد نهائي اختياري",
+    shared_q: (name) => `احتساب ${name} من هدفك الآخر أيضًا؟`,
+    shared_yes: "نعم، شارك العدّ", shared_yes_sub: "كل عدّة تُضاف إلى الهدفين",
+    shared_no: "لا، احسب كلًّا على حدة", shared_no_sub: "لهذا الهدف عدّه الخاص",
+    templates_lede: "ابدأ من قالب.", for_dhikr: (n) => `لـ ${n}`,
+    tpl_daily: "عادة يومية", tpl_daily_ex: "100 كل يوم",
+    tpl_ramadan: "رمضان", tpl_ramadan_ex: "كل يوم من رمضان · العشر الأواخر", tpl_ramadan_avatar: "ر",
+    tpl_white: "الأيام البيض", tpl_white_ex: "١٣–١٥ من كل شهر هجري", tpl_white_avatar: "13",
+    tpl_weekly: "أسبوعي", tpl_weekly_ex: "كل جمعة",
+    tpl_total: "إجمالي لمرة واحدة", tpl_total_ex: "70,000 إجمالًا",
+    tpl_custom: "مخصص", tpl_custom_ex: "اختر كل التفاصيل",
+    f_dhikr: "الذكر", f_count: "كم مرة", f_count_total: "كم مرة إجمالًا", f_when: "متى", f_by: "أنهِ قبل",
+    library_stub: "نموذج مبسّط: يكفي لبدء هدف من ذكر.",
     prayer_name: "العصر", prayer_in: "بعد ١ س ١٢ د", prayer_place: "كوزيكود",
   },
 };
@@ -336,7 +391,9 @@ const weekdayName = (wd, style = "long") => new Intl.DateTimeFormat(lang() === "
 
 /* ============================================================== 5. Goal rules (simplified)
  * Shapes follow contracts/goal-model/v1/goal-model.schema.json (goal_shape), plus prototype-only
- * fields: id, dhikr, name (optional override), preset, counts [{date, session, count}].
+ * fields: id, dhikr, name (optional override), preset, count_entries [{date, session, count}]
+ * (the fixtures' `counts`), and counts: "shared" | "dedicated" (whether counts are shared with
+ * other goals on the same dhikr).
  */
 const activeEnd = (g) => {
   const ap = g.active_period;
@@ -383,7 +440,7 @@ function displayPolicy(g) {
 const thresholdValue = (p) => ({ any_count: 1, minimum: p.minimum, target: p.target, maximum: p.maximum }[p.streak_threshold] ?? 1);
 function countIn(g, from, to, session) {
   let n = 0;
-  for (const c of g.counts) if (c.date >= from && c.date <= to && (session === undefined || c.session === session)) n += c.count;
+  for (const c of g.count_entries) if (c.date >= from && c.date <= to && (session === undefined || c.session === session)) n += c.count;
   return n;
 }
 const countOn = (g, ds, session) => countIn(g, ds, ds, session);
@@ -442,7 +499,7 @@ function streakOf(g, today) {
 function completedOn(g, today) {
   if (g.completion === "when_target_reached" && g.requirement.type === "cumulative_total") {
     const target = policyOf(g).target; let sum = 0;
-    const sorted = [...g.counts].filter((c) => c.date <= today && inActive(g, c.date)).sort((a, b) => (a.date < b.date ? -1 : 1));
+    const sorted = [...g.count_entries].filter((c) => c.date <= today && inActive(g, c.date)).sort((a, b) => (a.date < b.date ? -1 : 1));
     for (const c of sorted) { sum += c.count; if (sum >= target) return c.date; }
     return null;
   }
@@ -550,22 +607,22 @@ function makeGoal(o) {
     active_period: { start_date: o.start, end_date: o.end || null, duration_days: null },
     paused: [], count_policy: o.policy, sessions: o.sessions || [],
     requirement: o.requirement || { type: "per_due_date" }, completion: o.completion || "never",
-    counts: [], created: o.start,
+    count_entries: [], counts: "shared", created: o.start,
   };
 }
 /* Fill counts so the goal has `streak` met due days before today, then a miss, then older history. */
 function seedCounts(g, today, { streak, perDay, todayCount = 0, older = 0, olderDays = 0, until = today }) {
   let d = addDays(until, -1), placed = 0;
-  if (until === today && todayCount) g.counts.push({ date: today, session: null, count: todayCount });
+  if (until === today && todayCount) g.count_entries.push({ date: today, session: null, count: todayCount });
   while (placed < streak && d >= g.active_period.start_date) {
-    if (isDue(g, d)) { g.counts.push({ date: d, session: null, count: typeof perDay === "function" ? perDay(placed) : perDay }); placed++; }
+    if (isDue(g, d)) { g.count_entries.push({ date: d, session: null, count: typeof perDay === "function" ? perDay(placed) : perDay }); placed++; }
     d = addDays(d, -1);
   }
   d = addDays(d, -2);
   for (let i = 0; i < olderDays && d >= g.active_period.start_date; d = addDays(d, -1)) {
-    if (isDue(g, d)) { g.counts.push({ date: d, session: null, count: Math.round(older / olderDays) }); i++; }
+    if (isDue(g, d)) { g.count_entries.push({ date: d, session: null, count: Math.round(older / olderDays) }); i++; }
   }
-  g.counts.sort((a, b) => (a.date < b.date ? -1 : 1));
+  g.count_entries.sort((a, b) => (a.date < b.date ? -1 : 1));
   return g;
 }
 function seedGoals(today) {
@@ -600,7 +657,7 @@ function seedGoals(today) {
 }
 
 /* ============================================================== 7. State */
-const STORE_KEY = "awrad-goals-proto-v1";
+const STORE_KEY = "awrad-goals-proto-v2";
 const state = {
   settings: { theme: "light", dir: "ltr", reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches, today: localToday(), arabicSize: 0 },
   variants: {},
@@ -782,7 +839,15 @@ const screens = {
   },
 
   create() { return renderCreate(); },
-  library() { return placeholder("nav_library"); },
+  library() {
+    const c = catalog.collections[0] || { title: { en: "Dhikrs" }, dhikrs: catalog.dhikrs.slice(0, 6).map((x) => x.key) };
+    const rows = c.dhikrs.map((k) => catalog.byKey[k]).filter(Boolean).map((x) => `<div class="dhikr-row lib-row">
+        <div class="body"><div class="t-rowTitle">${esc(x.title[lang()] || x.title.en)}</div><div class="ar t-quranLine" lang="ar">${esc(x.arabic.split("\n")[0])}</div></div>
+        <button class="btn text pressable" data-action="set-goal-from" data-dhikr="${x.key}">${t("set_goal")}</button></div>`).join("");
+    return { cls: "with-nav", html: `<header class="lt-header"><h1 class="t-largeTitle" style="margin:0">${t("nav_library")}</h1></header>
+      <p class="t-bodySmall" style="padding:var(--s-xs) var(--pageMargin) 0;margin:0;color:var(--c-onSurfaceVariant)">${t("library_stub")}</p>
+      <section style="padding:var(--sectionGap) var(--pageMargin) 0"><h2 class="t-sectionTitle" style="margin:0 0 var(--rowGap)">${esc(c.title[lang()] || c.title.en)}</h2><div class="dhikr-list">${rows}</div></section>` };
+  },
   community() { return placeholder("nav_community"); },
 };
 function placeholder(key) {
@@ -800,53 +865,39 @@ function counterChip(g, count, p, td) {
   return t("over_n", fmtN(count - p.target));
 }
 
-/* ============================================================== 10. Create flow (draft v0)
- * CREATE_STEPS is the whole flow. A step: { id, title(draft), lede(draft), body(draft), valid(draft) }.
- * Reorder, remove or add entries to change the flow; the step indicator follows.
+/* ============================================================== 10. Create flows
+ * Three ways to create a goal, switched with VARIANTS.createFlow:
+ *   A  wizard     one question per screen (CREATE_STEPS + STEP_DEFS)
+ *   B  sentence   one bottom sheet: "Say [Tahleel] [100] times [every day]", each part a token
+ *   C  templates  template cards, then a short pre-filled form (TEMPLATES)
+ * All three edit the same draft (newDraft) and save through draftToGoal → saveDraft, so they
+ * produce the same goal data. Shared pieces: dhikrList, whenOptions, morePanel, sharedQuestion,
+ * previewHTML.
  */
 const SESSION_IDS = ["after_fajr", "morning", "after_maghrib", "evening", "before_sleep"];
 const RAMADAN_PARTS = {
   whole: { preset: "ramadan", ranges: [[9, 1, 9, 30]] },
   first10: { preset: null, ranges: [[9, 1, 9, 10]] },
+  middle10: { preset: null, ranges: [[9, 11, 9, 20]] },
   last10: { preset: "ramadan_last_ten", ranges: [[9, 21, 9, 30]] },
   odd: { preset: "ramadan_odd_nights", ranges: [[9, 21, 9, 21], [9, 23, 9, 23], [9, 25, 9, 25], [9, 27, 9, 27], [9, 29, 9, 29]] },
 };
-const STEP_DEFS = {
-  dhikr: {
-    title: () => t("step_dhikr"), lede: () => t("step_dhikr_lede"),
-    body: (d) => `<div class="search">${icon("search")}<input class="field t-input" data-input="query" placeholder="${esc(t("search_ph"))}" value="${esc(d.query)}" aria-label="${esc(t("search_ph"))}">
-      ${d.query ? `<button class="icon-btn" data-action="clear-query" aria-label="${esc(t("close"))}">${icon("close")}</button>` : ""}</div>
-      <div data-slot="dhikr-list">${dhikrList(d)}</div>`,
-    valid: (d) => !!d.dhikr,
-  },
-  count: {
-    title: () => t("step_count"), lede: (d) => (d.when === "once" ? t("step_count_total") : t("step_count_daily")),
-    body: (d) => `<input class="big-number" inputmode="numeric" data-input="count" value="${esc(d.count)}" aria-label="${esc(t("step_count"))}">
-      <div class="field-msg error" data-err="count"></div>
-      <div class="chip-row" style="margin-top:var(--s-lg);justify-content:center">${(d.when === "once" ? [1000, 4444, 10000, 70000] : [3, 33, 100, 313, 1000]).map((n) => `<button class="filter-chip" aria-pressed="${String(n) === d.count}" data-action="quick-count" data-n="${n}">${fmtN(n)}</button>`).join("")}</div>`,
-    valid: (d) => !errorsOf(d).count,
-  },
-  when: {
-    title: () => t("step_when"), lede: () => t("step_when_lede"),
-    body: (d) => whenBody(d),
-    valid: (d) => { const e = errorsOf(d); return !e.weekdays && !e.minimum && !e.maximum && !e.end; },
-  },
-  review: {
-    title: () => t("step_review"), lede: () => t("step_review_lede"),
-    body: (d) => reviewBody(d), valid: () => true,
-  },
-};
-const CREATE_STEPS = () => (v("createOrder") === "whenFirst" ? ["dhikr", "when", "count", "review"] : ["dhikr", "count", "when", "review"]);
 
-function newDraft() {
-  return { mode: "create", goalId: null, step: 0, dhikr: null, query: "", count: "100", when: "every_day", weekdays: [weekday(today())], ramadanPart: "first10",
-    minimum: "", maximum: "", start: today(), end: "", sessions: [], streak: "auto", moreOpen: false, showJson: false, customSchedule: null };
+/* --- The draft (shared by every flow) --- */
+function newDraft(flow = v("createFlow"), prefill = {}) {
+  const d = {
+    flow, mode: "create", goalId: null, step: 0, dhikr: null, query: "", count: "100", when: "every_day", weekdays: [weekday(today())], ramadanPart: "whole",
+    minimum: "", maximum: "", start: today(), end: "", sessions: [], streak: "auto", moreOpen: false, showJson: false, customSchedule: null,
+    countsMode: "shared", picker: null, pickerField: null, template: null, ...prefill,
+  };
+  if (flow === "wizard" && d.dhikr) d.step = 1;
+  return d;
 }
-function goalToDraft(g) {
-  const d = newDraft();
+function goalToDraft(g, flow = v("createFlow")) {
+  const d = newDraft(flow);
   const p = policyOf(g);
   Object.assign(d, { mode: "edit", goalId: g.id, dhikr: g.dhikr, count: String(p.target ?? ""), minimum: p.minimum != null ? String(p.minimum) : "", maximum: p.maximum != null ? String(p.maximum) : "",
-    start: g.active_period.start_date, end: g.active_period.end_date || "", sessions: g.sessions.map((s) => s.id), streak: p.streak_threshold });
+    start: g.active_period.start_date, end: g.active_period.end_date || "", sessions: g.sessions.map((s) => s.id), streak: p.streak_threshold, countsMode: g.counts === "dedicated" ? "dedicated" : "shared" });
   const s = g.schedule;
   if (g.requirement.type === "cumulative_total" && (s.kind === "one_time" || s.kind === "every_day")) d.when = "once";
   else if (g.requirement.type !== "per_due_date") { d.when = "custom"; d.customSchedule = s; }
@@ -854,11 +905,12 @@ function goalToDraft(g) {
   else if (s.kind === "weekdays") { d.when = "weekdays"; d.weekdays = [...s.weekdays]; }
   else if (s.kind === "hijri_month_days" && String(s.days) === "13,14,15") d.when = "white";
   else {
-    const part = s.kind === "yearly" && s.calendar === "hijri" && Object.entries(RAMADAN_PARTS).find(([, v]) => JSON.stringify(v.ranges) === JSON.stringify(s.ranges.map((r) => [r.start.month, r.start.day, r.end.month, r.end.day])));
+    const part = s.kind === "yearly" && s.calendar === "hijri" && Object.entries(RAMADAN_PARTS).find(([, x]) => JSON.stringify(x.ranges) === JSON.stringify(s.ranges.map((r) => [r.start.month, r.start.day, r.end.month, r.end.day])));
     if (part) { d.when = "ramadan"; d.ramadanPart = part[0]; } else { d.when = "custom"; d.customSchedule = s; }
   }
-  d.moreOpen = !!(d.minimum || d.maximum || d.end || d.sessions.length);
+  d.moreOpen = !!(d.minimum || d.maximum || (d.end && d.when !== "once") || d.sessions.length);
   d.step = CREATE_STEPS().indexOf("review");
+  d.template = "custom";
   return d;
 }
 const intOrNull = (s) => (String(s).trim() === "" ? null : /^\d+$/.test(String(s).trim()) ? parseInt(s, 10) : NaN);
@@ -866,15 +918,16 @@ function errorsOf(d) {
   const e = {}, c = intOrNull(d.count), m = intOrNull(d.minimum), x = intOrNull(d.maximum);
   if (!(c > 0)) e.count = t("err_count");
   if (d.when === "weekdays" && !d.weekdays.length) e.weekdays = t("err_weekdays");
-  if (Number.isNaN(m) || (m != null && c > 0 && m >= c)) e.minimum = Number.isNaN(m) ? t("err_count") : t("err_min");
+  if (d.when !== "once" && (Number.isNaN(m) || (m != null && c > 0 && m >= c))) e.minimum = Number.isNaN(m) ? t("err_count") : t("err_min");
   if (Number.isNaN(x) || (x != null && c > 0 && x < c)) e.maximum = Number.isNaN(x) ? t("err_count") : t("err_cap");
   if (d.end && d.end < d.start) e.end = t("err_end");
   return e;
 }
+const draftValid = (d) => !!d.dhikr && !Object.keys(errorsOf(d)).length;
 /* The draft → a goal in the contract's shape (plus prototype fields). */
 function draftToGoal(d, base = null) {
-  const target = intOrNull(d.count) || 1, minimum = intOrNull(d.minimum) || null, maximum = intOrNull(d.maximum) || null;
-  const once = d.when === "once";
+  const target = intOrNull(d.count) || 1, once = d.when === "once";
+  const minimum = once ? null : intOrNull(d.minimum) || null, maximum = intOrNull(d.maximum) || null;
   let schedule, preset = null;
   if (d.when === "every_day") schedule = { kind: "every_day" };
   else if (d.when === "weekdays") schedule = { kind: "weekdays", weekdays: WEEKDAYS.filter((w) => d.weekdays.includes(w)) };
@@ -884,9 +937,9 @@ function draftToGoal(d, base = null) {
   else schedule = d.customSchedule || { kind: "every_day" };
   const threshold = d.streak !== "auto" ? d.streak : once ? "any_count" : minimum ? "minimum" : "target";
   const cp = { minimum, target, maximum, streak_threshold: threshold === "minimum" && !minimum ? "target" : threshold === "maximum" && !maximum ? "target" : threshold };
-  const sessions = d.sessions.map((id) => ({ id, count_policy: { ...cp } }));
+  const sessions = once ? [] : d.sessions.map((id) => ({ id, count_policy: { ...cp } }));
   return {
-    id: base?.id || uuidv7(), dhikr: d.dhikr, name: base?.name || null, custom_arabic: base?.custom_arabic || null, preset,
+    id: base?.id || uuidv7(), dhikr: d.dhikr, name: base && base.dhikr === d.dhikr ? base.name : null, custom_arabic: base?.custom_arabic || null, preset,
     schedule,
     active_period: { start_date: d.start, end_date: d.end || null, duration_days: null },
     paused: base?.paused || [],
@@ -894,10 +947,16 @@ function draftToGoal(d, base = null) {
     sessions,
     requirement: base && d.when === "custom" ? base.requirement : { type: once ? "cumulative_total" : "per_due_date" },
     completion: once ? "when_target_reached" : d.end ? "when_duration_ended" : "never",
-    counts: base?.counts || [], created: base?.created || today(),
+    counts: d.countsMode,
+    count_entries: base?.count_entries || [], created: base?.created || today(),
   };
 }
-const normalise = (s) => s.toLowerCase().normalize("NFD").replace(/[ً-ٰٟۖ-ۭـ]/g, "").replace(/[̀-ͯ'’-]/g, "");
+const dhikrName = (key) => { const x = catalog.byKey[key]; return x ? x.title[lang()] || x.title.en : key || ""; };
+const siblingsOf = (d) => (d.dhikr ? state.goals.filter((g) => g.id !== d.goalId && g.dhikr === d.dhikr && !["completed", "ended"].includes(classify(g, today()))) : []);
+const groupedN = (s) => (intOrNull(s) > 0 ? new Intl.NumberFormat("en-US").format(intOrNull(s)) : "?");
+
+/* --- Shared pieces --- */
+const normalise = (s) => s.toLowerCase().normalize("NFD").replace(/[ً-ٰٟۖ-ۭـ]/g, "").replace(/[̀-ͯ'’-]/g, "");
 function dhikrList(d) {
   const q = normalise(d.query.trim());
   const rowHTML = (x) => `<button class="dhikr-row pressable ${d.dhikr === x.key ? "selected" : ""}" data-action="pick-dhikr" data-key="${x.key}">
@@ -910,52 +969,105 @@ function dhikrList(d) {
   const groups = catalog.collections.length ? catalog.collections : [{ key: "all", title: { en: "All" }, dhikrs: catalog.dhikrs.map((x) => x.key) }];
   return groups.map((c) => `<div class="dhikr-group-title t-sectionTitle">${esc(c.title[lang()] || c.title.en)}</div><div class="dhikr-list">${c.dhikrs.slice(0, c.key === "asma-ul-husna" ? 6 : 99).map((k) => catalog.byKey[k]).filter(Boolean).map(rowHTML).join("")}</div>`).join("");
 }
-function optionRow(id, label, sub, d, extra = "") {
-  const on = d.when === id;
-  return `<div><button class="option-row pressable" role="radio" aria-checked="${on}" data-action="pick-when" data-when="${id}">
+const searchField = (d) => `<div class="search">${icon("search")}<input class="field t-input" data-input="query" placeholder="${esc(t("search_ph"))}" value="${esc(d.query)}" aria-label="${esc(t("search_ph"))}">
+  ${d.query ? `<button class="icon-btn" data-action="clear-query" aria-label="${esc(t("close"))}">${icon("close")}</button>` : ""}</div>
+  <div data-slot="dhikr-list">${dhikrList(d)}</div>`;
+function optionRow(id, label, sub, on, action, extra = "") {
+  return `<div><button class="option-row pressable" role="radio" aria-checked="${on}" data-action="${action}" data-val="${id}">
     <div class="body"><div class="t-rowTitle">${esc(label)}</div>${sub ? `<div class="sub">${esc(sub)}</div>` : ""}</div>
     <span class="tick">${icon("check")}</span></button>${on && extra ? `<div class="option-extra">${extra}</div>` : ""}</div>`;
 }
-function whenBody(d) {
-  const e = errorsOf(d);
-  const weekdayChips = `<div class="chip-row">${WEEKDAYS.map((w) => `<button class="filter-chip" aria-pressed="${d.weekdays.includes(w)}" data-action="toggle-weekday" data-wd="${w}">${d.weekdays.includes(w) ? icon("check", "small") : ""}${esc(weekdayName(w, "short"))}</button>`).join("")}</div>
-    <div class="field-msg error" data-err="weekdays">${e.weekdays || ""}</div>`;
-  const ramadanChips = `<div class="chip-row">${Object.keys(RAMADAN_PARTS).map((k) => `<button class="filter-chip" aria-pressed="${d.ramadanPart === k}" data-action="ramadan-part" data-part="${k}">${t("ramadan_" + k)}</button>`).join("")}</div>`;
-  const field = (key, label, help, type = "number") => `<div class="field-group"><label class="field-label t-label" for="f-${key}">${label}</label>
-      <input id="f-${key}" class="field t-input ${e[key] ? "error" : ""}" type="${type === "number" ? "text" : type}" ${type === "number" ? 'inputmode="numeric"' : ""} data-input="${key}" value="${esc(d[key])}" ${type === "number" ? 'placeholder="–"' : ""}>
-      <div class="field-msg ${e[key] ? "error" : ""}" data-err="${key}" data-help="${esc(help || "")}">${e[key] || help || ""}</div></div>`;
-  const streakOpts = ["auto", "any_count", "minimum", "target", "maximum"].map((k) => `<button class="filter-chip" aria-pressed="${d.streak === k}" data-action="streak-opt" data-opt="${k}">${t("streak_opt")[k]}</button>`).join("");
+const weekdayChips = (d) => `<div class="chip-row">${WEEKDAYS.map((w) => `<button class="filter-chip" aria-pressed="${d.weekdays.includes(w)}" data-action="toggle-weekday" data-wd="${w}">${d.weekdays.includes(w) ? icon("check", "small") : ""}${esc(weekdayName(w, "short"))}</button>`).join("")}</div>
+    <div class="field-msg error" data-err="weekdays">${errorsOf(d).weekdays || ""}</div>`;
+const ramadanChips = (d) => `<div class="chip-row">${Object.keys(RAMADAN_PARTS).map((k) => `<button class="filter-chip" aria-pressed="${d.ramadanPart === k}" data-action="ramadan-part" data-part="${k}">${t("ramadan_" + k)}</button>`).join("")}</div>`;
+function whenOptions(d) {
+  const row = (id, label, sub, extra) => optionRow(id, label, sub, d.when === id, "pick-when", extra);
   return `<div class="options" role="radiogroup">
-      ${optionRow("every_day", t("when_every_day"), "", d)}
-      ${optionRow("weekdays", t("when_weekdays"), "", d, weekdayChips)}
-      ${optionRow("ramadan", t("when_ramadan"), "", d, ramadanChips)}
-      ${optionRow("white", t("when_white"), t("when_white_sub"), d)}
-      ${optionRow("once", t("when_once"), t("when_once_sub"), d)}
-      ${d.when === "custom" ? optionRow("custom", t("when_custom"), t("when_custom_sub"), d) : ""}
-    </div>
-    <button class="expander t-sectionTitle" data-action="toggle-more" aria-expanded="${d.moreOpen}">${t("more_options")}${icon("expand")}</button>
-    ${d.moreOpen ? `<div class="more-panel">
-      <div class="field-pair">${d.when === "once" ? "" : field("minimum", t("f_minimum"), t("f_minimum_help"))}${field("maximum", t("f_cap"), t("f_cap_help"))}</div>
-      <div class="field-pair">${field("start", t("f_start"), "", "date")}${field("end", t("f_end"), t("f_end_help"), "date")}</div>
-      ${d.when === "once" ? "" : `<div class="field-group"><div class="field-label t-label">${t("f_sessions")}</div>
+      ${row("every_day", t("when_every_day"), "")}
+      ${row("weekdays", t("when_weekdays"), "", weekdayChips(d))}
+      ${row("ramadan", t("when_ramadan"), "", ramadanChips(d))}
+      ${row("white", t("when_white"), t("when_white_sub"))}
+      ${row("once", t("when_once"), t("when_once_sub"))}
+      ${d.when === "custom" ? row("custom", t("when_custom"), t("when_custom_sub")) : ""}
+    </div>`;
+}
+function field(d, key, label, help, type = "number") {
+  const e = errorsOf(d)[key];
+  return `<div class="field-group"><label class="field-label t-label" for="f-${key}">${label}</label>
+      <input id="f-${key}" class="field t-input ${e ? "error" : ""}" type="${type === "number" ? "text" : type}" ${type === "number" ? 'inputmode="numeric" placeholder="–"' : ""} data-input="${key}" value="${esc(d[key])}">
+      <div class="field-msg ${e ? "error" : ""}" data-err="${key}" data-help="${esc(help || "")}">${e || help || ""}</div></div>`;
+}
+function morePanel(d, { skipEnd = false } = {}) {
+  const once = d.when === "once";
+  const streakOpts = ["auto", "any_count", "minimum", "target", "maximum"].map((k) => `<button class="filter-chip" aria-pressed="${d.streak === k}" data-action="streak-opt" data-opt="${k}">${t("streak_opt")[k]}</button>`).join("");
+  return `<div class="more-panel">
+      <div class="field-pair">${once ? "" : field(d, "minimum", t("f_minimum"), t("f_minimum_help"))}${field(d, "maximum", t("f_cap"), t("f_cap_help"))}</div>
+      <div class="field-pair">${field(d, "start", t("f_start"), "", "date")}${skipEnd ? "" : field(d, "end", t("f_end"), t("f_end_help"), "date")}</div>
+      ${once ? "" : `<div class="field-group"><div class="field-label t-label">${t("f_sessions")}</div>
         <div class="chip-row">${SESSION_IDS.map((s) => `<button class="filter-chip" aria-pressed="${d.sessions.includes(s)}" data-action="toggle-session" data-session="${s}">${d.sessions.includes(s) ? icon("check", "small") : ""}${t("session_names")[s]}</button>`).join("")}</div>
         <div class="field-msg">${t("f_sessions_help")}</div></div>`}
       <div class="field-group"><div class="field-label t-label">${t("f_streak")}</div><div class="chip-row">${streakOpts}</div></div>
-    </div>` : ""}`;
+    </div>`;
 }
+/* The agreed "shared counts" question (decision C): shown when another live goal uses the same dhikr. */
+function sharedQuestion(d) {
+  if (!siblingsOf(d).length) return "";
+  const row = (id, label, sub) => optionRow(id, label, sub, d.countsMode === id, "counts-mode");
+  return `<div class="shared-q"><div class="t-rowTitle">${esc(t("shared_q", dhikrName(d.dhikr)))}</div>
+    <div class="options" role="radiogroup">${row("shared", t("shared_yes"), t("shared_yes_sub"))}${row("dedicated", t("shared_no"), t("shared_no_sub"))}</div></div>`;
+}
+function previewHTML(d) {
+  const g = draftToGoal(d, d.goalId ? goalById(d.goalId) : null);
+  if (!d.dhikr) g.name = { en: t("tok_pick_dhikr"), ar: t("tok_pick_dhikr") };
+  return goalCard(g, "today", { preview: true, isNew: d.mode === "create" });
+}
+const saveLabel = (d) => (d.mode === "edit" ? t("save_changes") : t("add_goal_btn"));
+
+/* --- A. Wizard --- */
+const STEP_DEFS = {
+  dhikr: {
+    title: () => t("step_dhikr"), lede: () => t("step_dhikr_lede"),
+    body: (d) => searchField(d),
+    valid: (d) => !!d.dhikr,
+  },
+  count: {
+    title: () => t("step_count"), lede: (d) => (d.when === "once" ? t("step_count_total") : t("step_count_daily")),
+    body: (d) => `<input class="big-number" inputmode="numeric" data-input="count" value="${esc(d.count)}" aria-label="${esc(t("step_count"))}">
+      <div class="field-msg error" data-err="count"></div>
+      <div class="chip-row" style="margin-top:var(--s-lg);justify-content:center">${quickCounts(d).map((n) => `<button class="filter-chip" aria-pressed="${String(n) === d.count}" data-action="quick-count" data-n="${n}">${fmtN(n)}</button>`).join("")}</div>`,
+    valid: (d) => !errorsOf(d).count,
+  },
+  when: {
+    title: () => t("step_when"), lede: () => t("step_when_lede"),
+    body: (d) => whenOptions(d),
+    valid: (d) => !errorsOf(d).weekdays,
+  },
+  more: {
+    title: () => t("step_more"), lede: () => t("step_more_lede"), skippable: true,
+    body: (d) => morePanel(d),
+    valid: (d) => { const e = errorsOf(d); return !e.minimum && !e.maximum && !e.end; },
+  },
+  review: {
+    title: () => t("step_review"), lede: () => t("step_review_lede"),
+    body: (d) => reviewBody(d), valid: (d) => draftValid(d),
+  },
+};
+const CREATE_STEPS = () => (v("createOrder") === "whenFirst" ? ["dhikr", "when", "count", "more", "review"] : ["dhikr", "count", "when", "more", "review"]);
+const quickCounts = (d) => (d.when === "once" ? [1000, 4444, 10000, 70000] : [33, 100, 313, 1000]);
 function reviewBody(d) {
   const g = draftToGoal(d, d.goalId ? goalById(d.goalId) : null);
-  const p = policyOf(g), x = catalog.byKey[g.dhikr];
+  const p = policyOf(g);
   const scheduleText = { every_day: t("when_every_day"), weekdays: t("when_weekdays"), yearly: seasonLabel(g) || "yearly", hijri_month_days: t("when_white"), one_time: t("when_once") }[g.schedule.kind] || g.schedule.kind;
   const row = (k, val) => `<div class="row t-body"><span class="k">${k}</span><span class="v">${esc(val)}</span></div>`;
   return `<div class="review-preview">
       <div class="label t-label">${t("preview_goals")}</div>
-      ${goalCard(g, "today", { preview: true, isNew: d.mode === "create" })}
+      ${previewHTML(d)}
       <div class="label t-label">${t("preview_home")}</div>
       ${homeRow(g, { preview: true, isNew: d.mode === "create" })}
     </div>
-    <div class="summary">
-      ${row(t("s_dhikr"), x ? x.title[lang()] || x.title.en : goalTitle(g))}
+    ${sharedQuestion(d)}
+    <div class="summary" style="margin-top:var(--sectionGap)">
+      ${row(t("s_dhikr"), dhikrName(g.dhikr))}
       ${row(t("s_chip"), chipText(g))}
       ${row(t("s_when"), scheduleText + (g.preset ? ` (${g.preset})` : ""))}
       ${row(t("s_req"), t("req")[g.requirement.type])}
@@ -966,27 +1078,197 @@ function reviewBody(d) {
       ${row(t("s_completion"), t("completion")[g.completion])}
     </div>
     <div class="json-peek"><button class="btn text" data-action="toggle-json" style="margin-inline-start:-8px">${t("show_json")}</button>
-      ${d.showJson ? `<pre>${esc(JSON.stringify((({ counts, ...rest }) => rest)(g), null, 2))}</pre>` : ""}</div>`;
+      ${d.showJson ? `<pre>${esc(JSON.stringify((({ count_entries, ...rest }) => rest)(g), null, 2))}</pre>` : ""}</div>`;
 }
-function renderCreate() {
+function renderWizard() {
   const d = state.draft, steps = CREATE_STEPS(), id = steps[d.step], def = STEP_DEFS[id];
   const last = d.step === steps.length - 1;
-  const label = last ? (d.mode === "edit" ? t("save_changes") : t("save")) : t("continue");
   return { cls: "fixed no-nav", html: `
     <header class="topbar">
       <button class="icon-btn pressable" data-action="create-back" aria-label="${esc(d.step === 0 ? t("close") : t("back"))}">${d.step === 0 ? icon("close") : icon("back", "mirror")}</button>
       <div class="steps" role="img" aria-label="Step ${d.step + 1} of ${steps.length}">${steps.map((_, i) => `<i class="${i <= d.step ? "on" : ""}"></i>`).join("")}</div>
-      <span style="width:var(--touchTarget)"></span>
+      ${def.skippable ? `<button class="btn text" data-action="wizard-skip">${t("skip")}</button>` : `<span style="width:var(--touchTarget)"></span>`}
     </header>
     <div class="create-body" data-step="${id}">
       <h1 class="t-title">${esc(def.title(d))}</h1>
-      <p class="lede t-bodySmall" data-slot="lede">${esc(def.lede(d))}</p>
+      <p class="lede t-bodySmall">${esc(def.lede(d))}</p>
       ${def.body(d)}
     </div>
-    <footer class="create-foot"><button class="btn main pressable" data-action="create-next" ${def.valid(d) ? "" : "disabled"}>${label}</button></footer>` };
+    <footer class="create-foot"><button class="btn main pressable" data-action="create-next" data-validate ${def.valid(d) ? "" : "disabled"}>${last ? saveLabel(d) : t("continue")}</button></footer>` };
 }
+
+/* --- B. Editable sentence (a bottom sheet) --- */
+function schedText(d) {
+  if (d.when === "every_day") return t("tok_every_day");
+  if (d.when === "weekdays") return d.weekdays.length ? t("tok_weekdays", WEEKDAYS.filter((w) => d.weekdays.includes(w)).map((w) => weekdayName(w, d.weekdays.length > 2 ? "short" : "long")).join(lang() === "ar" ? " و" : ", ")) : t("tok_pick_days");
+  if (d.when === "ramadan") return t("tok_ramadan")[d.ramadanPart];
+  if (d.when === "white") return t("tok_white");
+  if (d.when === "once") return t("tok_total");
+  return t("tok_custom");
+}
+const token = (text, picker, fieldName, empty = false) => `<button class="token pressable ${empty ? "empty" : ""}" data-action="open-picker" data-picker="${picker}" data-field="${fieldName}">${esc(text)}</button>`;
+function sentenceHTML(d) {
+  const dh = token(d.dhikr ? dhikrName(d.dhikr) : t("tok_pick_dhikr"), "dhikr", "dhikr", !d.dhikr);
+  const n = token(groupedN(d.count), "number", "count", !(intOrNull(d.count) > 0));
+  const s = token(schedText(d), "schedule", "when");
+  const by = d.when === "once" ? token(d.end ? t("by_date", fmtDate(d.end)) : t("no_deadline"), "date", "end", !d.end) : "";
+  return t("sentence", dh, n, s, by);
+}
+const SUGGESTIONS = [
+  { id: "every_day", label: () => t("sg_every_day"), apply: { when: "every_day" }, on: (d) => d.when === "every_day" },
+  { id: "ramadan", label: () => t("sg_ramadan"), apply: { when: "ramadan", ramadanPart: "whole" }, on: (d) => d.when === "ramadan" },
+  { id: "total", label: () => t("sg_total"), apply: { when: "once", count: "10000" }, on: (d) => d.when === "once" && d.count === "10000" },
+  { id: "friday", label: () => t("sg_friday"), apply: { when: "weekdays", weekdays: ["friday"] }, on: (d) => d.when === "weekdays" && String(d.weekdays) === "friday" },
+];
+function sentenceMore(d) {
+  const e = errorsOf(d), once = d.when === "once";
+  const err = (k) => (e[k] ? `<div class="field-msg error">${e[k]}</div>` : "");
+  const sessions = d.sessions.map((s) => t("session_names")[s]).join(", ");
+  return `<div class="srows t-body">
+    ${once ? "" : `<div class="srow">${t("row_min")} ${token(d.minimum ? groupedN(d.minimum) : t("none"), "number", "minimum", !d.minimum)}</div>${err("minimum")}`}
+    <div class="srow">${t("row_cap")} ${token(d.maximum ? groupedN(d.maximum) : t("none"), "number", "maximum", !d.maximum)}</div>${err("maximum")}
+    <div class="srow">${t("row_from")} ${token(d.start === today() ? t("today_word") : fmtDate(d.start), "date", "start")} ${once ? "" : `${t("row_until")} ${token(d.end ? fmtDate(d.end) : t("no_end"), "date", "end", !d.end)}`}</div>${err("end")}
+    ${once ? "" : `<div class="srow">${t("row_sessions")} ${token(sessions || t("none"), "sessions", "sessions", !sessions)}</div>`}
+    <div class="srow">${t("row_streak")} ${token(t("streak_opt")[d.streak], "streak", "streak")}</div>
+  </div>`;
+}
+function sentenceMain(d) {
+  return `<div class="sheet-head"><h2 class="t-cardTitle">${d.mode === "edit" ? t("edit") : t("new_goal_title")}</h2>
+      <button class="icon-btn pressable" data-action="close-create" aria-label="${esc(t("close"))}">${icon("close")}</button></div>
+    <div class="sheet-scroll">
+      <p class="sentence t-title">${sentenceHTML(d)}</p>
+      <div class="chip-row">${SUGGESTIONS.map((s) => `<button class="filter-chip pressable" aria-pressed="${s.on(d)}" data-action="suggest" data-s="${s.id}">${esc(s.label())}</button>`).join("")}</div>
+      <button class="expander t-sectionTitle" data-action="toggle-more" aria-expanded="${d.moreOpen}">${t("more_short")}${icon("expand")}</button>
+      ${d.moreOpen ? sentenceMore(d) : ""}
+      ${sharedQuestion(d)}
+    </div>
+    <div class="sheet-foot"><div data-slot="preview">${previewHTML(d)}</div>
+      <button class="btn main pressable" data-action="create-save" data-validate ${draftValid(d) ? "" : "disabled"}>${saveLabel(d)}</button></div>`;
+}
+function pickerHead(title) {
+  return `<div class="sheet-head with-back"><button class="icon-btn pressable" data-action="close-picker" aria-label="${esc(t("back"))}">${icon("back", "mirror")}</button><h2 class="t-cardTitle">${esc(title)}</h2></div>`;
+}
+const doneFoot = (extra = "") => `<div class="sheet-foot">${extra}<button class="btn main pressable" data-action="close-picker">${t("pad_done")}</button></div>`;
+function pickerView(d) {
+  const f = d.pickerField;
+  if (d.picker === "dhikr") return `${pickerHead(t("step_dhikr"))}<div class="sheet-scroll">${searchField(d)}</div>`;
+  if (d.picker === "number") {
+    const title = { count: d.when === "once" ? t("f_count_total") : t("step_count"), minimum: t("f_minimum"), maximum: t("f_cap") }[f];
+    const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "clear", "0", "back"];
+    return `${pickerHead(title)}<div class="sheet-scroll">
+      <div class="pad-display t-counter">${d[f] ? groupedN(d[f]) : "–"}</div>
+      ${f === "count" ? `<div class="chip-row" style="justify-content:center;margin-bottom:var(--s-lg)">${quickCounts(d).map((n) => `<button class="filter-chip" aria-pressed="${String(n) === d.count}" data-action="quick-count" data-field="count" data-n="${n}">${fmtN(n)}</button>`).join("")}</div>` : ""}
+      <div class="pad" dir="ltr">${keys.map((k) => `<button class="pressable" data-action="pad" data-key="${k}" aria-label="${k}">${k === "back" ? icon("back") : k === "clear" ? `<span class="t-label">${t("clear")}</span>` : k}</button>`).join("")}</div>
+      ${errorsOf(d)[f] ? `<div class="field-msg error" style="text-align:center">${errorsOf(d)[f]}</div>` : ""}
+    </div>${doneFoot()}`;
+  }
+  if (d.picker === "schedule") {
+    const fri = d.when === "weekdays" && String(d.weekdays) === "friday";
+    const row = (id, label, sub, on, extra) => optionRow(id, label, sub, on, "set-schedule", extra);
+    return `${pickerHead(t("step_when"))}<div class="sheet-scroll"><div class="options" role="radiogroup">
+      ${row("every_day", t("when_every_day"), "", d.when === "every_day")}
+      ${row("weekdays", t("some_weekdays"), "", d.when === "weekdays" && !fri, weekdayChips(d))}
+      ${row("friday", t("every_friday"), "", fri)}
+      ${row("ramadan", t("when_ramadan"), t("ramadan_sub"), d.when === "ramadan", ramadanChips(d))}
+      ${row("white", t("when_white"), t("when_white_sub"), d.when === "white")}
+      ${row("once", t("in_total"), t("in_total_sub"), d.when === "once")}
+    </div></div>${doneFoot()}`;
+  }
+  if (d.picker === "date") {
+    return `${pickerHead(f === "end" ? t("f_end") : t("f_start"))}<div class="sheet-scroll">${field(d, f, f === "end" ? t("f_end") : t("f_start"), f === "end" ? t("f_end_help") : "", "date")}</div>
+      ${doneFoot(f === "end" ? `<button class="btn secondary pressable" data-action="clear-date">${d.when === "once" ? t("no_deadline_btn") : t("no_end_btn")}</button>` : "")}`;
+  }
+  if (d.picker === "sessions") {
+    return `${pickerHead(t("f_sessions"))}<div class="sheet-scroll"><div class="chip-row">${SESSION_IDS.map((s) => `<button class="filter-chip" aria-pressed="${d.sessions.includes(s)}" data-action="toggle-session" data-session="${s}">${d.sessions.includes(s) ? icon("check", "small") : ""}${t("session_names")[s]}</button>`).join("")}</div>
+      <div class="field-msg">${t("f_sessions_help")}</div></div>${doneFoot()}`;
+  }
+  if (d.picker === "streak") {
+    return `${pickerHead(t("f_streak"))}<div class="sheet-scroll"><div class="options" role="radiogroup">${["auto", "any_count", "minimum", "target", "maximum"].map((k) => optionRow(k, t("streak_opt")[k], "", d.streak === k, "streak-opt")).join("")}</div></div>`;
+  }
+  return "";
+}
+function sentenceSheetInner(d) { return `<div class="handle"></div>${d.picker ? pickerView(d) : sentenceMain(d)}`; }
+function renderSentence() {
+  const d = state.draft, host = document.getElementById("overlay-host");
+  const sheet = host.querySelector(".create-sheet");
+  if (sheet) {
+    const scroll = sheet.querySelector(".sheet-scroll")?.scrollTop || 0, samePage = sheet.dataset.page === (d.picker || "main");
+    sheet.innerHTML = sentenceSheetInner(d);
+    sheet.dataset.page = d.picker || "main";
+    if (samePage) { const s = sheet.querySelector(".sheet-scroll"); if (s) s.scrollTop = scroll; }
+    else sheet.animate([{ opacity: 0.6 }, { opacity: 1 }], { duration: MOTION.duration.color, easing: "linear" });
+    return;
+  }
+  renderOverlay(`<div class="overlay" data-overlay><div class="scrim" data-action="close-create"></div>
+    <div class="bsheet create-sheet" role="dialog" aria-label="${esc(t("new_goal_title"))}" data-page="${d.picker || "main"}">${sentenceSheetInner(d)}</div></div>`, "sheet");
+}
+
+/* --- C. Templates first --- */
+const TEMPLATES = {
+  daily: { icon: "streak", apply: { when: "every_day", count: "100" } },
+  ramadan: { avatar: "tpl_ramadan_avatar", apply: { when: "ramadan", ramadanPart: "whole", count: "100" }, extra: (d) => ramadanChips(d) },
+  white: { avatar: "tpl_white_avatar", apply: { when: "white", count: "100" } },
+  weekly: { icon: "goals", apply: { when: "weekdays", weekdays: ["friday"], count: "100" }, extra: (d) => weekdayChips(d) },
+  total: { icon: "check", apply: { when: "once", count: "70000" }, extra: (d) => field(d, "end", t("f_by"), t("f_end_help"), "date"), skipEnd: true },
+  custom: { icon: "tune", apply: { moreOpen: true }, extra: (d) => whenOptions(d) },
+};
+function renderTemplates() {
+  const d = state.draft;
+  if (d.picker === "dhikr") return { cls: "fixed no-nav", html: `
+    <header class="topbar"><button class="icon-btn pressable" data-action="close-picker" aria-label="${esc(t("back"))}">${icon("back", "mirror")}</button></header>
+    <div class="create-body"><h1 class="t-title">${t("step_dhikr")}</h1><p class="lede t-bodySmall">${t("step_dhikr_lede")}</p>${searchField(d)}</div>` };
+  if (!d.template) return { cls: "fixed no-nav", html: `
+    <header class="topbar"><button class="icon-btn pressable" data-action="create-back" aria-label="${esc(t("close"))}">${icon("close")}</button></header>
+    <div class="create-body">
+      <h1 class="t-title">${t("new_goal_title")}</h1><p class="lede t-bodySmall">${t("templates_lede")}</p>
+      ${d.dhikr ? `<p class="t-label" style="margin:calc(-1 * var(--s-md)) 0 var(--s-lg);color:var(--c-accent)">${esc(t("for_dhikr", dhikrName(d.dhikr)))}</p>` : ""}
+      <div class="templates">${Object.entries(TEMPLATES).map(([id, tp]) => `<button class="tpl-card pressable" data-action="pick-template" data-tpl="${id}">
+        <span class="tpl-icon" aria-hidden="true">${tp.icon ? icon(tp.icon) : esc(t(tp.avatar))}</span>
+        <span class="body"><span class="t-rowTitle">${t("tpl_" + id)}</span><span class="t-bodySmall sub">${t("tpl_" + id + "_ex")}</span></span>
+        ${icon("chevron", "mirror")}</button>`).join("")}</div>
+    </div>` };
+  const tp = TEMPLATES[d.template];
+  const dh = d.dhikr ? catalog.byKey[d.dhikr] : null;
+  return { cls: "fixed no-nav", html: `
+    <header class="topbar"><button class="icon-btn pressable" data-action="create-back" aria-label="${esc(t("back"))}">${icon("back", "mirror")}</button></header>
+    <div class="create-body">
+      <h1 class="t-title">${d.mode === "edit" ? t("edit") : t("tpl_" + d.template)}</h1>
+      <p class="lede t-bodySmall">${d.mode === "edit" ? "" : t("tpl_" + d.template + "_ex")}</p>
+      <div class="field-group"><div class="field-label t-label">${t("f_dhikr")}</div>
+        <button class="field field-button pressable" data-action="open-picker" data-picker="dhikr" data-field="dhikr">
+          <span class="${dh ? "" : "ph"}">${esc(dh ? dhikrName(d.dhikr) : t("tok_pick_dhikr"))}</span>${icon("chevron", "mirror")}</button></div>
+      <div class="field-group"><label class="field-label t-label" for="f-count">${d.when === "once" ? t("f_count_total") : t("f_count")}</label>
+        <input id="f-count" class="field t-input" inputmode="numeric" data-input="count" value="${esc(d.count)}">
+        <div class="field-msg error" data-err="count"></div>
+        <div class="chip-row" style="margin-top:var(--s-sm)">${quickCounts(d).map((n) => `<button class="filter-chip" aria-pressed="${String(n) === d.count}" data-action="quick-count" data-n="${n}">${fmtN(n)}</button>`).join("")}</div></div>
+      ${tp.extra ? `<div class="field-group">${d.template === "total" ? "" : `<div class="field-label t-label">${t("f_when")}</div>`}${tp.extra(d)}</div>` : ""}
+      <button class="expander t-sectionTitle" data-action="toggle-more" aria-expanded="${d.moreOpen}" style="margin-top:0">${t("more_options")}${icon("expand")}</button>
+      ${d.moreOpen ? morePanel(d, { skipEnd: !!tp.skipEnd }) : ""}
+      ${sharedQuestion(d)}
+    </div>
+    <footer class="create-foot with-preview"><div data-slot="preview">${previewHTML(d)}</div>
+      <button class="btn main pressable" data-action="create-save" data-validate ${draftValid(d) ? "" : "disabled"}>${saveLabel(d)}</button></footer>` };
+}
+
+/* --- Dispatch --- */
+function renderCreate() { return state.draft?.flow === "templates" ? renderTemplates() : renderWizard(); }
+function openCreate(prefill = {}, flow = v("createFlow")) {
+  stopAudio();
+  state.draft = newDraft(flow, prefill);
+  showDraft();
+}
+function openEdit(g) { stopAudio(); state.draft = goalToDraft(g); showDraft(); }
+function showDraft() {
+  if (state.draft.flow === "sentence") { state.overlay = { kind: "create" }; renderSentence(); }
+  else navigate({ name: "create" });
+}
+function refreshCreate(transition = null) {
+  if (!state.draft) return;
+  if (state.draft.flow === "sentence") renderSentence(); else render(transition);
+}
+const createRoot = () => (state.draft?.flow === "sentence" ? document.querySelector("#overlay-host .create-sheet") : currentScreen);
 function refreshCreateValidation() {
-  const host = document.querySelector(".screen.current"), d = state.draft;
+  const host = createRoot(), d = state.draft;
   if (!host || !d) return;
   const e = errorsOf(d);
   host.querySelectorAll("[data-err]").forEach((el) => {
@@ -996,18 +1278,91 @@ function refreshCreateValidation() {
     el.classList.toggle("error", !!msg);
     host.querySelector(`[data-input="${k}"]`)?.classList.toggle("error", !!msg);
   });
-  const def = STEP_DEFS[CREATE_STEPS()[d.step]];
-  host.querySelector('[data-action="create-next"]').disabled = !def.valid(d);
+  const valid = d.flow === "wizard" ? STEP_DEFS[CREATE_STEPS()[d.step]].valid(d) : draftValid(d);
+  host.querySelectorAll("[data-validate]").forEach((b) => (b.disabled = !valid));
+  const pv = host.querySelector('[data-slot="preview"]');
+  if (pv) pv.innerHTML = previewHTML(d);
 }
 function saveDraft() {
   const d = state.draft;
+  if (!draftValid(d)) return;
   const base = d.goalId ? goalById(d.goalId) : null;
   const g = draftToGoal(d, base);
   if (base) state.goals[state.goals.indexOf(base)] = g; else state.goals.push(g);
   save();
+  if (d.flow === "sentence") closeOverlay();
   state.draft = null;
-  if (d.mode === "edit") { goBack(); toast(t("t_updated")); }
-  else { state.goalsTab = "active"; state.stack = []; navigate({ name: "goals" }, "pop"); toast(t("t_saved")); flashGoal(g.id); }
+  if (d.mode === "edit") { if (d.flow === "sentence") render(); else goBack(); toast(t("t_updated")); return; }
+  state.goalsTab = "active"; state.stack = [];
+  navigate({ name: "goals" }, d.flow === "sentence" && state.route.name === "goals" ? null : "pop");
+  toast(t("t_saved")); flashGoal(g.id);
+}
+function createAction(a, el) {
+  const d = state.draft;
+  if (!d) return false;
+  switch (a) {
+    case "create-back":
+      if (d.picker) { d.picker = null; refreshCreate(); return true; }
+      if (d.flow === "templates" && d.template && d.mode === "create") { d.template = null; refreshCreate("pop"); return true; }
+      if (d.flow !== "wizard" || d.step === 0 || d.mode === "edit") { state.draft = null; goBack(); return true; }
+      d.step--; refreshCreate("pop"); return true;
+    case "create-next": {
+      if (d.step === CREATE_STEPS().length - 1) { saveDraft(); return true; }
+      d.step++; haptic("tick"); refreshCreate("push"); return true;
+    }
+    case "wizard-skip": d.step = CREATE_STEPS().indexOf("review"); refreshCreate("push"); return true;
+    case "create-save": saveDraft(); return true;
+    case "close-create": closeOverlay(); return true;
+    case "pick-dhikr":
+      d.dhikr = el.dataset.key; d.query = "";
+      if (d.flow === "wizard" && CREATE_STEPS()[d.step] === "dhikr") {
+        refreshCreate();
+        setTimeout(() => { if (state.draft === d && CREATE_STEPS()[d.step] === "dhikr") { d.step++; refreshCreate("push"); } }, 180);
+      } else { d.picker = null; refreshCreate(); }
+      return true;
+    case "open-picker": d.picker = el.dataset.picker; d.pickerField = el.dataset.field; refreshCreate(d.flow === "templates" ? "push" : null); return true;
+    case "close-picker": d.picker = null; refreshCreate(d.flow === "templates" ? "pop" : null); return true;
+    case "pad": {
+      const f = d.pickerField; let s = String(d[f] || "");
+      const k = el.dataset.key;
+      if (k === "back") s = s.slice(0, -1); else if (k === "clear") s = ""; else if (s.length < 7) s = (s === "0" ? "" : s) + k;
+      d[f] = s; haptic("tick"); refreshCreate(); return true;
+    }
+    case "quick-count": d[el.dataset.field || "count"] = el.dataset.n; refreshCreate(); return true;
+    case "set-schedule": {
+      const val = el.dataset.val;
+      if (val === "friday") Object.assign(d, { when: "weekdays", weekdays: ["friday"] });
+      else if (val === "weekdays") { d.when = "weekdays"; if (String(d.weekdays) === "friday") d.weekdays = [weekday(today())]; }
+      else d.when = val;
+      if (d.when === "once" && intOrNull(d.count) < 1000) d.count = "10000";
+      if (!["weekdays", "ramadan"].includes(val)) d.picker = null;
+      refreshCreate(); return true;
+    }
+    case "suggest": Object.assign(d, structuredClone(SUGGESTIONS.find((s) => s.id === el.dataset.s).apply)); refreshCreate(); return true;
+    case "clear-date": d[d.pickerField] = ""; d.picker = null; refreshCreate(); return true;
+    case "counts-mode": d.countsMode = el.dataset.val; refreshCreate(); return true;
+    case "pick-template": {
+      const tp = TEMPLATES[el.dataset.tpl];
+      const fresh = newDraft(d.flow);
+      const reset = Object.fromEntries(["when", "count", "weekdays", "ramadanPart", "minimum", "maximum", "end", "sessions", "streak", "moreOpen"].map((k) => [k, fresh[k]]));
+      Object.assign(d, reset, structuredClone(tp.apply), { template: el.dataset.tpl });
+      refreshCreate("push"); return true;
+    }
+    case "clear-query": d.query = ""; refreshCreate(); return true;
+    case "pick-when": d.when = el.dataset.val; if (d.when === "once" && intOrNull(d.count) < 1000 && d.flow !== "wizard") d.count = "10000"; refreshCreate(); return true;
+    case "toggle-weekday": { const w = d.weekdays, i = w.indexOf(el.dataset.wd); i >= 0 ? w.splice(i, 1) : w.push(el.dataset.wd); refreshCreate(); return true; }
+    case "ramadan-part": d.ramadanPart = el.dataset.part; refreshCreate(); return true;
+    case "toggle-more": {
+      d.moreOpen = !d.moreOpen; refreshCreate();
+      const p = d.moreOpen && !reduced() && createRoot()?.querySelector(".more-panel, .srows");
+      if (p) { const s = spring("spatial"); p.animate([{ opacity: 0, transform: "translateY(-8px)" }, { opacity: 1, transform: "none" }], { duration: s.duration, easing: s.easing }); }
+      return true;
+    }
+    case "toggle-session": { const s = d.sessions, i = s.indexOf(el.dataset.session); i >= 0 ? s.splice(i, 1) : s.push(el.dataset.session); refreshCreate(); return true; }
+    case "streak-opt": d.streak = el.dataset.opt || el.dataset.val; if (d.picker === "streak") d.picker = null; refreshCreate(); return true;
+    case "toggle-json": d.showJson = !d.showJson; refreshCreate(); return true;
+  }
+  return false;
 }
 
 /* ============================================================== 11. Overlays */
@@ -1019,6 +1374,7 @@ function openMenu(goalId, context) {
   renderOverlay(`<div class="overlay" data-overlay><div class="scrim" data-action="close-overlay"></div>
     <div class="bsheet" role="dialog" aria-label="${esc(goalTitle(g))}"><div class="handle"></div>
       <div class="sheet-title t-cardTitle">${esc(goalTitle(g))}</div><div class="sheet-sub t-caption">${esc(chipText(g))}</div>
+      ${counting ? `<button class="menu-row pressable" data-action="set-goal-from" data-dhikr="${esc(g.dhikr)}">${icon("add")}${t("set_goal")}</button>` : ""}
       ${counting ? `<button class="menu-row pressable" data-action="undo">${icon("back", "mirror")}${t("undo")}</button><button class="menu-row pressable" data-action="reset-today">${icon("close")}${t("reset_today")}</button>` : ""}
       <button class="menu-row pressable" data-action="edit-goal">${icon("tune")}${t("edit")}</button>
       <button class="menu-row pressable" data-action="toggle-pause">${icon(paused ? "play" : "pause")}${paused ? t("resume") : t("pause")}</button>
@@ -1042,6 +1398,7 @@ function renderOverlay(html, kind) {
 }
 function closeOverlay() {
   const host = document.getElementById("overlay-host"), el = host.firstElementChild;
+  if (state.overlay?.kind === "create") state.draft = null;
   state.overlay = null;
   if (!el) return;
   const panel = el.querySelector(".bsheet");
@@ -1166,9 +1523,20 @@ function setCount(g, session, value) {
   const [from] = windowOf(g, td);
   const before = countIn(g, from, addDays(td, -1), session === undefined ? null : session);
   const todayValue = Math.max(0, value - before);
-  const entry = g.counts.find((c) => c.date === td && c.session === session);
-  if (entry) entry.count = todayValue; else if (todayValue) g.counts.push({ date: td, session, count: todayValue });
-  if (entry && !entry.count) g.counts.splice(g.counts.indexOf(entry), 1);
+  const entry = g.count_entries.find((c) => c.date === td && c.session === session);
+  if (entry) entry.count = todayValue; else if (todayValue) g.count_entries.push({ date: td, session, count: todayValue });
+  if (entry && !entry.count) g.count_entries.splice(g.count_entries.indexOf(entry), 1);
+}
+/* counts: "shared" — a count on one goal also counts for the other shared goals on the same
+   dhikr (prototype model: mirrored entries, goals without sessions, while both are active). */
+function shareDelta(g, delta) {
+  if (!delta || g.counts !== "shared" || g.sessions.length) return;
+  const td = today();
+  for (const o of state.goals) {
+    if (o === g || o.dhikr !== g.dhikr || o.counts !== "shared" || o.sessions.length || !inActive(o, td)) continue;
+    const entry = o.count_entries.find((c) => c.date === td && c.session === null);
+    if (entry) entry.count = Math.max(0, entry.count + delta); else if (delta > 0) o.count_entries.push({ date: td, session: null, count: delta });
+  }
 }
 function increment(by = 1) {
   const g = goalById(state.route.goalId);
@@ -1177,6 +1545,7 @@ function increment(by = 1) {
   const before = progressOf(g, td, session);
   if (p.maximum != null && before >= p.maximum) { haptic("threshold"); toast(t("t_cap", fmtN(p.maximum))); popCircle(true); return; }
   setCount(g, session, before + by);
+  shareDelta(g, by);
   const after = before + by;
   save();
   if (p.target && before < p.target && after >= p.target) { haptic("success"); toast(t("t_target")); }
@@ -1292,6 +1661,22 @@ const NOTES = `
     <li>"Ramadan → First 10" isn't a preset (presets have whole month, last ten and odd nights), so it saves as a custom yearly Hijri range.</li>
   </ul>
 
+  <h3>Create flows (A / B / C)</h3>
+  <ul>
+    <li>All three edit one draft and save through the same <code>draftToGoal</code>, so the saved goal is identical whichever flow made it. Edit opens the goal in the current flow.</li>
+    <li>Entry points: My Goals +, "Set a goal" on the counting page's ⋮ menu, and "Set a goal" on each dhikr of the Library stub (both pre-fill the dhikr; the wizard then starts at How many?).</li>
+    <li>B's tokens are 40 tall inside 48-tall lines, so they're a little under the 48 touch target. The sentence is one localized string with slots, so word order can change per language.</li>
+    <li>B's "Ramadan (whole or a third)" adds "Middle 10" as a custom range; only the whole month and the last ten are presets.</li>
+    <li>C's Ramadan and White days cards use a text avatar ("R", "13"): <code>icons.json</code> has no moon or calendar icon.</li>
+    <li>"In total" in B and C defaults to 10,000 / 70,000 when the number was a daily-sized one.</li>
+  </ul>
+
+  <h3>Shared counts (decision C)</h3>
+  <ul>
+    <li>When another live goal uses the same dhikr, every flow asks "Count X from your other goal too?" with shared pre-selected. Stored as <code>counts: "shared" | "dedicated"</code> on the goal; the count history moved to <code>count_entries</code> (state key bumped to v2, so saved prototype state reset).</li>
+    <li>Prototype model: a count on a shared goal is mirrored into the other shared goals on that dhikr for today (goals without sessions, while active). How the real model stores this, and whether history before the new goal counts, is open.</li>
+  </ul>
+
   <h3>Design gaps</h3>
   <ul>
     <li>No timer icon in <code>icons.json</code> (placeholder drawn); no edit/pencil icon (<code>tune</code> used). The list button uses the <code>goals</code> icon. What the timer and list buttons do isn't designed (toasts).</li>
@@ -1329,8 +1714,11 @@ function renderLab() {
     <h2>Jump to</h2>
     <div class="btns">
       <button data-jump="home">Home</button><button data-jump="goals">My Goals</button><button data-jump="history">History</button>
-      <button data-jump="create">Create</button><button data-jump="menu">⋮ menu</button>
+      <button data-jump="create">Create</button><button data-jump="menu">⋮ menu</button><button data-jump="library">Library</button>
     </div>
+    <h2>Create flow</h2>
+    <div class="btns">${Object.entries(VARIANTS.createFlow.options).map(([k, label]) => `<button data-try="${k}" class="${v("createFlow") === k ? "primary" : ""}">Try ${esc(label)}</button>`).join("")}</div>
+    <div class="msg">Opens the create flow from My Goals in that variant (and sets <code>createFlow</code>).</div>
     ${fath ? `<div class="btns" style="margin-top:6px">${[0, 13, 70, 99, 100, 110].map((n) => `<button data-jump="count" data-n="${n}">Counter at ${n}</button>`).join("")}</div>` : ""}
     <h2>Haptics</h2>
     <div class="haptic-log" id="haptic-log">Each count fires navigator.vibrate when available; logged here.</div>
@@ -1345,7 +1733,7 @@ function renderLab() {
 const fmtHijriEn = (ds) => { const h = hijri(ds); return `${h.d} ${HIJRI_MONTHS.en[h.m - 1]} ${h.y}`; };
 function renderLabData() {
   document.getElementById("lab-data").innerHTML = `
-    <p class="sub" style="margin-top:0">The goals, in the goal-model shape plus prototype fields (<code>id</code>, <code>dhikr</code>, <code>name</code>, <code>preset</code>, <code>counts</code>). Edit and apply.</p>
+    <p class="sub" style="margin-top:0">The goals, in the goal-model shape plus prototype fields (<code>id</code>, <code>dhikr</code>, <code>name</code>, <code>preset</code>, <code>count_entries</code>, <code>counts</code>: shared | dedicated). Edit and apply.</p>
     <textarea id="lab-json" spellcheck="false">${esc(JSON.stringify(state.goals, null, 1))}</textarea>
     <div class="btns" style="margin-top:8px"><button class="primary" data-labaction="apply-json">Apply</button><button data-labaction="refresh-json">Reload from state</button><button data-labaction="reset">Reset to seed</button></div>
     <div class="msg" id="lab-json-msg"></div>`;
@@ -1356,8 +1744,9 @@ function applyJSON() {
     const goals = JSON.parse(document.getElementById("lab-json").value);
     if (!Array.isArray(goals)) throw new Error("Expected an array of goals");
     goals.forEach((g, i) => {
-      for (const k of ["id", "dhikr", "schedule", "active_period", "count_policy", "sessions", "requirement", "completion", "counts"]) if (!(k in g)) throw new Error(`Goal ${i}: missing "${k}"`);
+      for (const k of ["id", "dhikr", "schedule", "active_period", "count_policy", "sessions", "requirement", "completion", "count_entries"]) if (!(k in g)) throw new Error(`Goal ${i}: missing "${k}"`);
       g.paused ||= [];
+      g.counts ||= "shared";
     });
     state.goals = goals; save(); render(); msg.className = "msg"; msg.textContent = `Applied ${goals.length} goals.`;
   } catch (e) { msg.className = "msg err"; msg.textContent = e.message; }
@@ -1373,6 +1762,7 @@ function applySettings() {
 /* ============================================================== 14. Events + boot */
 function handleAction(el, e) {
   const a = el.dataset.action, id = el.dataset.id;
+  if (createAction(a, el)) return;
   switch (a) {
     case "tab": {
       const tab = el.dataset.tab;
@@ -1382,10 +1772,11 @@ function handleAction(el, e) {
     case "goals-tab": if (state.goalsTab !== el.dataset.tab) { state.goalsTab = el.dataset.tab; render(); listAppear(currentScreen); } return;
     case "open-goal": navigate({ name: "counting", goalId: id }); return;
     case "back": goBack(); return;
-    case "add-goal": state.draft = newDraft(); navigate({ name: "create" }); return;
+    case "add-goal": openCreate(); return;
+    case "set-goal-from": { const dhikr = el.dataset.dhikr; if (state.overlay) closeOverlay(); openCreate({ dhikr }); return; }
     case "goal-menu": e.stopPropagation(); openMenu(id, el.dataset.context); return;
     case "close-overlay": closeOverlay(); return;
-    case "edit-goal": { const gid = state.overlay.goalId; closeOverlay(); state.draft = goalToDraft(goalById(gid)); navigate({ name: "create" }); return; }
+    case "edit-goal": { const gid = state.overlay.goalId; closeOverlay(); openEdit(goalById(gid)); return; }
     case "toggle-pause": {
       const g = goalById(state.overlay.goalId), td = today(), open = g.paused.find((p) => td >= p.from && (p.to == null || td <= p.to));
       if (open) { if (open.from >= td) g.paused.splice(g.paused.indexOf(open), 1); else open.to = addDays(td, -1); toast(t("t_resumed")); }
@@ -1403,7 +1794,7 @@ function handleAction(el, e) {
       const g = goalById(state.overlay.goalId), session = g.sessions.length ? state.session : null, before = progressOf(g, today(), session);
       const todayCount = countOn(g, today(), session);
       const after = a === "undo" ? Math.max(before - (todayCount > 0 ? 1 : 0), 0) : before - todayCount;
-      setCount(g, session, after); save(); closeOverlay(); updateCounting(before, after); toast(a === "undo" ? t("t_undo") : t("t_reset")); return;
+      setCount(g, session, after); shareDelta(g, after - before); save(); closeOverlay(); updateCounting(before, after); toast(a === "undo" ? t("t_undo") : t("t_reset")); return;
     }
     case "text-size": state.settings.arabicSize = (state.settings.arabicSize + 1) % 3; save(); currentScreen.querySelector(".arabic-card")?.setAttribute("data-size", state.settings.arabicSize); return;
     case "audio": toggleAudio(); return;
@@ -1411,23 +1802,6 @@ function handleAction(el, e) {
     case "count-list": toast(t("t_list")); return;
     case "toast-placeholder": toast(t("placeholder")); return;
     case "session": state.session = el.dataset.session; render(); return;
-    // Create flow
-    case "create-back": if (state.draft.step === 0) { state.draft = null; goBack(); } else { state.draft.step--; render("pop"); } return;
-    case "create-next": {
-      const steps = CREATE_STEPS();
-      if (state.draft.step === steps.length - 1) return saveDraft();
-      state.draft.step++; haptic("tick"); render("push"); return;
-    }
-    case "pick-dhikr": state.draft.dhikr = el.dataset.key; render(); setTimeout(() => { if (state.route.name === "create" && STEP_DEFS[CREATE_STEPS()[state.draft.step]] === STEP_DEFS.dhikr) { state.draft.step++; render("push"); } }, 180); return;
-    case "clear-query": state.draft.query = ""; render(); return;
-    case "quick-count": state.draft.count = el.dataset.n; render(); return;
-    case "pick-when": state.draft.when = el.dataset.when; render(); return;
-    case "toggle-weekday": { const w = state.draft.weekdays, i = w.indexOf(el.dataset.wd); i >= 0 ? w.splice(i, 1) : w.push(el.dataset.wd); render(); return; }
-    case "ramadan-part": state.draft.ramadanPart = el.dataset.part; render(); return;
-    case "toggle-more": state.draft.moreOpen = !state.draft.moreOpen; render(); if (state.draft.moreOpen && !reduced()) { const p = currentScreen.querySelector(".more-panel"); const s = spring("spatial"); p.animate([{ opacity: 0, transform: "translateY(-8px)" }, { opacity: 1, transform: "none" }], { duration: s.duration, easing: s.easing }); } return;
-    case "toggle-session": { const s = state.draft.sessions, i = s.indexOf(el.dataset.session); i >= 0 ? s.splice(i, 1) : s.push(el.dataset.session); render(); return; }
-    case "streak-opt": state.draft.streak = el.dataset.opt; render(); return;
-    case "toggle-json": state.draft.showJson = !state.draft.showJson; render(); return;
   }
 }
 function boot() {
@@ -1471,9 +1845,10 @@ function boot() {
     const k = e.target.dataset.input;
     if (!k || !state.draft) return;
     state.draft[k] = e.target.value;
-    if (k === "query") { currentScreen.querySelector('[data-slot="dhikr-list"]').innerHTML = dhikrList(state.draft); return; }
+    const root = createRoot();
+    if (k === "query") { root.querySelector('[data-slot="dhikr-list"]').innerHTML = dhikrList(state.draft); return; }
     refreshCreateValidation();
-    if (k === "count") currentScreen.querySelectorAll('[data-action="quick-count"]').forEach((b) => b.setAttribute("aria-pressed", b.dataset.n === e.target.value));
+    if (k === "count") root.querySelectorAll('[data-action="quick-count"]').forEach((b) => b.setAttribute("aria-pressed", b.dataset.n === e.target.value));
   });
   // Lab
   const lab = document.getElementById("lab");
@@ -1488,9 +1863,14 @@ function boot() {
       return;
     }
     if (b.dataset.lab) { const k = b.dataset.lab; state.settings[k] = k === "reducedMotion" ? b.dataset.val === "true" : b.dataset.val; save(); applySettings(); render(); renderLab(); return; }
-    if (b.dataset.variant) { state.variants[b.dataset.variant] = b.dataset.val; save(); if (state.draft && b.dataset.variant === "createOrder") state.draft.step = Math.min(state.draft.step, 3); render(); renderLab(); return; }
+    if (b.dataset.variant) {
+      state.variants[b.dataset.variant] = b.dataset.val; save();
+      if (state.draft && ["createOrder", "createFlow"].includes(b.dataset.variant)) { closeOverlay(); state.draft = null; if (state.route.name === "create") { state.route = { name: "goals" }; state.stack = []; } }
+      render(); renderLab(); return;
+    }
     if (b.dataset.today) { setToday(b.dataset.today); return; }
     if (b.dataset.jump) { jump(b.dataset.jump, +b.dataset.n); return; }
+    if (b.dataset.try) { state.variants.createFlow = b.dataset.try; save(); jump("create"); renderLab(); return; }
     const la = b.dataset.labaction;
     if (la === "apply-json") applyJSON();
     if (la === "refresh-json") renderLabData();
@@ -1505,12 +1885,13 @@ function boot() {
 }
 function setToday(ds) { state.settings.today = ds; save(); render(); renderLab(); }
 function jump(where, n) {
-  closeOverlay(); stopAudio(); state.draft = null;
+  if (state.overlay) closeOverlay(); stopAudio(); state.draft = null;
   if (where === "home" || where === "goals" || where === "history") {
     state.stack = []; state.goalsTab = where === "history" ? "history" : "active";
     state.route = { name: where === "history" ? "goals" : where }; render("tab"); return;
   }
-  if (where === "create") { state.stack = [{ name: "goals" }]; state.draft = newDraft(); state.route = { name: "create" }; render("push"); return; }
+  if (where === "create") { state.stack = []; state.route = { name: "goals" }; render("tab"); openCreate(); return; }
+  if (where === "library") { state.stack = []; state.route = { name: "library" }; render("tab"); return; }
   const g = state.goals.find((x) => x.dhikr === "swalath-al-fathimiyya") || state.goals[0];
   if (where === "menu") { if (state.route.name !== "goals") { state.stack = []; state.route = { name: "goals" }; render("tab"); } openMenu(g.id); return; }
   if (where === "count") {

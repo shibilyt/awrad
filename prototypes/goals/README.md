@@ -28,7 +28,8 @@ Add `?reset` to the URL to drop the saved state (goals, settings and variants pe
 | To | Edit |
 |---|---|
 | Add an A/B switch | An entry in `VARIANTS` (`prototype.js`), then read it with `v('key')` |
-| Change the create flow | `STEP_DEFS` (each step's title, body and validity) and `CREATE_STEPS` (the order) |
+| Compare create flows | `VARIANTS.createFlow` (A wizard, B sentence sheet, C templates), or Lab → Controls → Try A / B / C |
+| Change a create flow | A: `STEP_DEFS` + `CREATE_STEPS`. B: `sentenceHTML`, `SUGGESTIONS`, `pickerView`. C: `TEMPLATES`. All share `newDraft` → `draftToGoal` |
 | Change chip or streak copy | `STRINGS` (`chip_*`, `streak_unit`) and `chipText()` |
 | Change the seed goals | `seedGoals()` |
 | Change a token | Don't, here: tokens are copied from `contracts/design-tokens/v1/` into the top of `prototype.css` |

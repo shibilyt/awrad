@@ -520,6 +520,45 @@ button { cursor: pointer; }
 .json-peek { margin-top: var(--s-lg); }
 .json-peek pre { font: 11px/1.45 ui-monospace, Menlo, monospace; background: var(--c-surface); border-radius: var(--r-tile); padding: var(--s-md); overflow-x: auto; white-space: pre-wrap; direction: ltr; text-align: left; }
 
+/* Create flows: shared */
+.shared-q { margin-top: var(--sectionGap); display: flex; flex-direction: column; gap: var(--s-md); }
+.bsheet .goal-card, .create-foot .goal-card { background: var(--c-surface); } /* sheets and pages: cards fill `surface` */
+.create-foot.with-preview { flex-direction: column; gap: var(--s-md); padding-top: var(--s-sm); }
+
+/* B. Sentence sheet */
+.create-sheet { max-height: calc(100% - 56px); display: flex; flex-direction: column; padding-bottom: 0; }
+.create-sheet .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-xs); padding: 0 calc(var(--pageMargin) - 12px) 0 var(--pageMargin); flex: none; }
+.create-sheet .sheet-head h2 { margin: 0; }
+.create-sheet .sheet-head.with-back { justify-content: flex-start; padding-inline-start: calc(var(--pageMargin) - 12px); }
+.create-sheet .sheet-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--s-sm) var(--pageMargin) var(--s-lg); scrollbar-width: none; }
+.create-sheet .sheet-scroll::-webkit-scrollbar { display: none; }
+.create-sheet .sheet-foot { flex: none; display: flex; flex-direction: column; gap: var(--s-md); padding: var(--s-sm) var(--pageMargin) calc(34px + var(--s-sm)); }
+.sentence { margin: var(--s-xs) 0 var(--s-lg); line-height: 48px; color: var(--c-onSurface); }
+.token {
+  display: inline-flex; align-items: center; min-height: 40px; /* GAP: below touchTarget; the 48 line keeps rows apart */
+  padding: 0 var(--s-md); margin: 0 1px; border: 0; border-radius: var(--r-chip);
+  background: var(--c-primaryContainer); color: var(--c-onPrimaryContainer);
+  font: inherit; vertical-align: middle; line-height: 1.2; text-align: start;
+}
+.token.empty { background: var(--c-secondaryContainer); color: var(--c-onSecondaryContainer); }
+.srows { display: flex; flex-direction: column; gap: var(--s-xs); padding-top: var(--s-xs); }
+.srow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-sm); min-height: var(--touchTarget); }
+.srow .token { font: 500 15px/20px var(--font-ui); }
+.pad-display { text-align: center; margin: var(--s-sm) 0 var(--s-lg); color: var(--c-onSurface); }
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-sm); }
+.pad button { height: var(--control); border: 0; border-radius: var(--r-button); background: var(--c-secondaryContainer); color: var(--c-onSecondaryContainer); font: 600 22px/28px var(--font-ui); display: grid; place-items: center; }
+
+/* C. Templates */
+.templates { display: flex; flex-direction: column; gap: var(--rowGap); }
+.tpl-card { display: flex; align-items: center; gap: var(--s-md); width: 100%; min-height: 72px; border: 0; border-radius: var(--r-tile); background: var(--c-surface); color: var(--c-onSurface); padding: var(--s-md) var(--s-sm) var(--s-md) var(--cardPadding); text-align: start; }
+.tpl-card .body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--s-xxs); }
+.tpl-card .sub { color: var(--c-onSurfaceVariant); }
+.tpl-icon { width: var(--avatar); height: var(--avatar); flex: none; border-radius: 50%; background: var(--c-primaryContainer); color: var(--c-onPrimaryContainer); display: grid; place-items: center; font: 600 14px/1 var(--font-ui); }
+.tpl-icon .icon { width: var(--iconSmall); height: var(--iconSmall); }
+.field-button { display: flex; align-items: center; justify-content: space-between; gap: var(--s-md); text-align: start; cursor: pointer; }
+.field-button .ph { color: var(--c-onSurfaceVariant); }
+.lib-row { padding-inline-end: var(--s-xs); }
+
 /* Placeholder tabs */
 .placeholder-body { padding: var(--sectionGap) var(--pageMargin); color: var(--c-onSurfaceVariant); }
 
