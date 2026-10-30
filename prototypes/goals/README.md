@@ -40,7 +40,7 @@ From the browser console, `proto` exposes the state and helpers: `proto.count(99
 
 ## Decisions 14 to 30 (v3)
 
-The counter, rows, stats sheet, editing, History, pace, total-goal streaks and trackers follow `docs/slices/04-goals-decisions.md`. The saved state key is now `awrad-goals-proto-v3`, so older saved goals are dropped on first load. Defaults: create flow B, green ring with a minimum tick, lower-half tap area.
+The counter, rows, stats sheet, editing, History, pace, total-goal streaks and trackers follow `docs/slices/04-goals-decisions.md`. The saved state key is now `awrad-goals-proto-v3`, so older saved goals are dropped on first load. Open-ended total goals fill their list ring toward the daily streak amount (any count by default) and show "12,050 of 70,000" on the row (decision 33). Make-up fills a missed day with either enough to keep the streak (default) or the full target, chosen in the sentence flow (decision 31). Defaults: create flow B, green ring with a minimum tick, lower-half tap area.
 
 Presets (Lab → Data, or `proto.preset(name)`):
 

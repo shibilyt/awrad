@@ -489,8 +489,8 @@ function dayThreshold(g, ds) {
   if (g.requirement.type === "cumulative_total") { const pc = paceOf(g, ds); return S.count_policy.streak_amount || (pc ? pc.share : 1) || 1; }
   return thresholdValue(S.count_policy);
 }
-/* The amount a list ring fills toward today, for total goals (null = the overall total). */
-function dailyAmount(g, ds) { const pc = paceOf(g, ds); return pc ? pc.share : g.count_policy.streak_amount || null; }
+/* The amount a list ring fills toward today, for total goals: the daily number, else today's share, else any count (decisions 29, 33). */
+function dailyAmount(g, ds) { return dayThreshold(g, ds); }
 function dayMet(g, ds) {
   const S = snapAt(g, ds);
   if (S.sessions.length) return S.sessions.every((s) => countOn(g, ds, s.id) >= thresholdValue(s.count_policy));
@@ -619,8 +619,12 @@ function makeupInfo(g, td) {
   if (!g.makeup || g.makeup === "off" || g.requirement.type !== "per_due_date" || g.sessions.length) return null;
   for (let i = g.makeup === "three" ? 3 : 1; i >= 1; i--) {
     const d = addDays(td, -i);
-    if (d < g.active_period.start_date || !isDue(g, d) || dayMet(g, d)) continue;
-    return { date: d, count: countOn(g, d, null), need: dayThreshold(g, d) };
+    const full = g.makeup_fill === "full", S = snapAt(g, d), count = countOn(g, d, null);
+    const need = full ? S.count_policy.target || dayThreshold(g, d) : dayThreshold(g, d);
+    // A day already being filled to the full target stays open until it gets there (the streak amount alone met it)
+    const open = full && g.makeup_open === d && !(g.makeup_days || []).includes(d) && count < need;
+    if (d < g.active_period.start_date || !isDue(g, d) || (dayMet(g, d) && !open)) continue;
+    return { date: d, count, need };
   }
   return null;
 }
@@ -756,12 +760,12 @@ function makeGoal(o) {
     paused: [], count_policy: o.policy, sessions: o.sessions || [],
     requirement: o.requirement || { type: "per_due_date" }, completion: o.completion || "never",
     count_entries: [], counts: "shared", created: o.start,
-    makeup: o.makeup || "off", excused: [], makeup_days: [], versions: [], ended: null,
+    makeup: o.makeup || "off", makeup_fill: o.makeup_fill || "streak", excused: [], makeup_days: [], versions: [], ended: null,
   };
 }
 /* Older saved goals and hand-edited JSON may lack the newer fields. */
 function normalizeGoal(g) {
-  g.paused ||= []; g.counts ||= "shared"; g.makeup ||= "off"; g.excused ||= []; g.makeup_days ||= []; g.versions ||= []; g.ended ||= null;
+  g.paused ||= []; g.counts ||= "shared"; g.makeup ||= "off"; g.makeup_fill ||= "streak"; g.excused ||= []; g.makeup_days ||= []; g.versions ||= []; g.ended ||= null;
   return g;
 }
 /* Fill counts so the goal has `streak` met due days before today, then a miss, then older history. */
@@ -896,7 +900,7 @@ function ring(size, stroke, count, p, label = abbr(count)) {
 /* What a list ring shows today. Total goals fill toward today's share (with an end date) or their daily number (decisions 28, 29). */
 function listRingModel(g, td) {
   const p = displayPolicy(g);
-  if (g.requirement.type === "cumulative_total") { const da = dailyAmount(g, td); if (da) return { count: countOn(g, td, null), p: { minimum: null, target: da, maximum: null } }; }
+  if (g.requirement.type === "cumulative_total") return { count: countOn(g, td, null), p: { minimum: null, target: dailyAmount(g, td), maximum: null } };
   return { count: progressOf(g, td), p };
 }
 function goalCard(g, kind = "today", opts = {}) {
@@ -911,6 +915,7 @@ function goalCard(g, kind = "today", opts = {}) {
   else if (history) line2 = `<span class="result">${esc(goalResult(g, td))}</span><span class="meta">${esc(kind === "completed" ? t("completed_on", fmtDate(completedOn(g, td))) : t("ended_on", fmtDate(activeEnd(g) || td)))}</span>`;
   else if (kind === "paused") line2 = `<span class="meta">${esc(t("paused_since", fmtDate(g.paused.find((x) => x.to == null || x.to >= td)?.from || td)))}</span>`;
   else if (opts.isNew) line2 = `<span class="streak none">${t("new_goal")}</span>`;
+  else if (kind === "today" && g.requirement.type === "cumulative_total" && !plannedEnd(g)) line2 = `<span class="meta">${esc(t("total_row", fmtN(countIn(g, "0000", "9999")), fmtN(policyOf(g).target)))}</span>${streakHTML(g, td)}`;
   else if (tracker) line2 = `<span class="meta">${esc(t("tracker_row", fmtN(countOn(g, td, undefined)), fmtN(countIn(g, "0000", "9999"))))}</span>${streakHTML(g, td)}`;
   else line2 = streakHTML(g, td);
   const histCount = history ? countIn(g, "0000", "9999") : count;
@@ -1192,7 +1197,7 @@ function draftToGoal(d, base = null) {
     completion: once ? "when_target_reached" : d.end ? "when_duration_ended" : "never",
     counts: d.countsMode,
     count_entries: base?.count_entries || [], created: base?.created || today(),
-    makeup: base?.makeup || "off", excused: base?.excused || [], makeup_days: base?.makeup_days || [], versions: base?.versions || [], ended: base?.ended || null,
+    makeup: base?.makeup || "off", makeup_fill: base?.makeup_fill || "streak", excused: base?.excused || [], makeup_days: base?.makeup_days || [], versions: base?.versions || [], ended: base?.ended || null,
   };
 }
 const dhikrName = (key) => { const x = catalog.byKey[key]; return x ? x.title[lang()] || x.title.en : key || ""; };
@@ -1440,7 +1445,7 @@ const SENTENCE_L10N = {
     periodClause: (start, end) => `${start} ${end}`, from: (v) => `from ${v}`, until: (v) => `until ${v}`, by: (v) => `by ${v}`, forDays: (v) => `for ${v}`, daysN: (n) => `${n} days`, open: "until I stop", today: "today",
     finishReach: "finish when I reach it", finishUntilWord: "keep going until", finishUntil: (w, dt) => `${w} ${dt}`,
     streak: (v) => `my streak counts at ${v}`, streakVals: { minimum: "the minimum", target: "the target", any_count: "any count", maximum: "the cap" }, perDay: (x) => `${x} a day`,
-    makeup: (v) => `if I miss a day, let me make it up ${v}`, makeupVals: { off: "not at all", next: "the next day", three: "within 3 days" },
+    makeup: (v, f) => `if I miss a day, let me make it up ${v} with ${f}`, makeupVals: { off: "not at all", next: "the next day", three: "within 3 days" }, makeupFill: { streak: "enough to keep my streak", full: "the full target" },
     name: (v) => `call it ${v}`, quote: (v) => `“${v}”`,
     shared: (dh) => `count ${dh} from my other goal too`,
     readback: ({ main, sessions, clauses, streak, name, shared, dhikr }) => {
@@ -1485,7 +1490,7 @@ const SENTENCE_L10N = {
     periodClause: (start, end) => `${start} ${end}`, from: (v) => `من ${v}`, until: (v) => `حتى ${v}`, by: (v) => `قبل ${v}`, forDays: (v) => `لمدة ${v}`, daysN: (n) => `${n} يومًا`, open: "حتى أتوقف", today: "اليوم",
     finishReach: "أنهِه عند بلوغه", finishUntilWord: "استمر حتى", finishUntil: (w, dt) => `${w} ${dt}`,
     streak: (v) => `تُحسب سلسلتي عند ${v}`, streakVals: { minimum: "الحد الأدنى", target: "الهدف", any_count: "أي عدد", maximum: "الحد الأقصى" }, perDay: (x) => `${x} في اليوم`,
-    makeup: (v) => `إن فاتني يوم، أتيح لي تعويضه ${v}`, makeupVals: { off: "إطلاقًا", next: "في اليوم التالي", three: "خلال ٣ أيام" },
+    makeup: (v, f) => `إن فاتني يوم، أتيح لي تعويضه ${v} بـ${f}`, makeupVals: { off: "إطلاقًا", next: "في اليوم التالي", three: "خلال ٣ أيام" }, makeupFill: { streak: "ما يكفي لإبقاء سلسلتي", full: "الهدف كاملًا" },
     name: (v) => `سمِّه ${v}`, quote: (v) => `«${v}»`,
     shared: (dh) => `احسب ${dh} من هدفي الآخر أيضًا`,
     readback: ({ main, sessions, clauses, streak, name, shared, dhikr }) => {
@@ -1531,7 +1536,7 @@ const SENTENCE_L10N = {
     periodClause: (start, end) => `${start} ${end}`, from: (v) => `${v} മുതൽ`, until: (v) => `${v} വരെ`, by: (v) => `${v}നകം`, forDays: (v) => v, daysN: (n) => `${n} ദിവസത്തേക്ക്`, open: "ഞാൻ നിർത്തുന്നത് വരെ", today: "ഇന്ന്",
     finishReach: "എത്തുമ്പോൾ പൂർത്തിയാക്കുക", finishUntilWord: "തുടരുക", finishUntil: (w, dt) => `${dt} വരെ ${w}`,
     streak: (v) => `സ്ട്രീക്ക് ${v} എത്തുമ്പോൾ എണ്ണുക`, streakVals: { minimum: "കുറഞ്ഞത്", target: "ലക്ഷ്യം", any_count: "ഏത് എണ്ണവും", maximum: "പരമാവധി" }, perDay: (x) => `ദിവസം ${x}`,
-    makeup: (v) => `ഒരു ദിവസം വിട്ടുപോയാൽ അത് ${v} നികത്താൻ അനുവദിക്കുക`, makeupVals: { off: "ഒട്ടും ഇല്ല", next: "അടുത്ത ദിവസം", three: "3 ദിവസത്തിനകം" },
+    makeup: (v, f) => `ഒരു ദിവസം വിട്ടുപോയാൽ അത് ${v} ${f} കൊണ്ട് നികത്താൻ അനുവദിക്കുക`, makeupVals: { off: "ഒട്ടും ഇല്ല", next: "അടുത്ത ദിവസം", three: "3 ദിവസത്തിനകം" }, makeupFill: { streak: "സ്ട്രീക്ക് നിലനിർത്താൻ വേണ്ടത്", full: "മുഴുവൻ ലക്ഷ്യം" },
     name: (v) => `പേര് ${v}`, quote: (v) => `“${v}”`,
     shared: (dh) => `മറ്റേ ലക്ഷ്യത്തിലെ ${dh} എണ്ണവും കൂട്ടുക`,
     // Clauses lead and the main sentence (with its verb) closes the read-back.
@@ -1628,7 +1633,7 @@ const V3_STRINGS = {
     move_up: "Move up", move_down: "Move down", drag_handle: "Drag to reorder",
     year_summary: (n, c, total) => `${n} goals · ${c} completed · ${total} counted`,
     res_done_in: (total, days) => `${total} ✓ in ${days} days`, res_counted_of: (n, total) => `${n} of ${total} counted`, res_met: (m, n) => `Met ${m} of ${n} days`,
-    tracking: "Tracking", tracker_row: (today, total) => `Today ${today} · Total ${total}`, total_n: (n) => `Total ${n}`,
+    tracking: "Tracking", tracker_row: (today, total) => `Today ${today} · Total ${total}`, total_row: (n, total) => `${n} of ${total}`, total_n: (n) => `Total ${n}`,
     today_n: (n) => `Today ${n}`, today_of: (n, a) => `Today ${n} of ${a}`, total_line: (n, target) => `Total ${n} of ${target}`,
     making_up: (day, n, need) => `Making up ${day}: ${n}/${need}`, t_madeup: (day) => `${day} made up`,
     target_reached_card: "Target reached", next_goal: (name) => `Next: ${name}`, all_goals_done: "All of today's goals are done",
@@ -1644,7 +1649,7 @@ const V3_STRINGS = {
     read_only: "Read-only", prev_month: "Previous month", next_month: "Next month",
     edit_note: "Changes apply from today; your past stays as it was.", edit_warn: "This ends the current goal and starts a new one.", save_new: "End this goal and start a new one",
     sv_daily: "A number each day", sv_daily_sub: "A day counts when it reaches this", a_day: "a day", p_streak_amount: "Streak counts at, a day",
-    p_makeup: "If I miss a day", makeup_help: "After today's target, extra counts fill the missed day. A filled day is marked made up and the streak continues.", d_makeup: "Make up missed days",
+    makeup_fill_head: "Fill the day with", p_makeup: "If I miss a day", makeup_help: "After today's target, extra counts fill the missed day. A filled day is marked made up and the streak continues.", d_makeup: "Make up missed days",
   },
   ar: {
     tag_steady: (m, n) => `ثابت · ${m}/${n}`, tag_devoted: (m, n) => `مواظب · ${m}/${n}`,
@@ -1653,7 +1658,7 @@ const V3_STRINGS = {
     move_up: "نقل للأعلى", move_down: "نقل للأسفل", drag_handle: "اسحب لإعادة الترتيب",
     year_summary: (n, c, total) => `${n} أهداف · ${c} مكتملة · ${total} مرة`,
     res_done_in: (total, days) => `${total} ✓ خلال ${days} يومًا`, res_counted_of: (n, total) => `${n} من ${total}`, res_met: (m, n) => `تحقق ${m} من ${n} يومًا`,
-    tracking: "التتبّع", tracker_row: (today, total) => `اليوم ${today} · المجموع ${total}`, total_n: (n) => `المجموع ${n}`,
+    tracking: "التتبّع", tracker_row: (today, total) => `اليوم ${today} · المجموع ${total}`, total_row: (n, total) => `${n} من ${total}`, total_n: (n) => `المجموع ${n}`,
     today_n: (n) => `اليوم ${n}`, today_of: (n, a) => `اليوم ${n} من ${a}`, total_line: (n, target) => `المجموع ${n} من ${target}`,
     making_up: (day, n, need) => `تعويض ${day}: ${n}/${need}`, t_madeup: (day) => `تم تعويض ${day}`,
     target_reached_card: "تم بلوغ الهدف", next_goal: (name) => `التالي: ${name}`, all_goals_done: "اكتملت كل أهداف اليوم",
@@ -1669,14 +1674,14 @@ const V3_STRINGS = {
     read_only: "للقراءة فقط", prev_month: "الشهر السابق", next_month: "الشهر التالي",
     edit_note: "تسري التغييرات من اليوم؛ يبقى ماضيك كما كان.", edit_warn: "هذا ينهي الهدف الحالي ويبدأ هدفًا جديدًا.", save_new: "أنهِ هذا الهدف وابدأ جديدًا",
     sv_daily: "عدد في كل يوم", sv_daily_sub: "يُحسب اليوم إذا بلغه", a_day: "في اليوم", p_streak_amount: "تُحسب السلسلة عند، يوميًا",
-    p_makeup: "إن فاتني يوم", makeup_help: "بعد هدف اليوم، تملأ العدّات الزائدة اليوم الفائت. يُعلَّم اليوم المكتمل «تم تعويضه» وتستمر السلسلة.", d_makeup: "تعويض الأيام الفائتة",
+    makeup_fill_head: "املأ اليوم بـ", p_makeup: "إن فاتني يوم", makeup_help: "بعد هدف اليوم، تملأ العدّات الزائدة اليوم الفائت. يُعلَّم اليوم المكتمل «تم تعويضه» وتستمر السلسلة.", d_makeup: "تعويض الأيام الفائتة",
   },
   ml: {
-    tag_steady: (m, n) => `സ്ഥിരം · ${m}/${n}`, tag_devoted: (m, n) => `നിഷ്ഠയോടെ · ${m}/${n}`,
+    total_row: (n, total) => `${total}-ൽ ${n}`, tag_steady: (m, n) => `സ്ഥിരം · ${m}/${n}`, tag_devoted: (m, n) => `നിഷ്ഠയോടെ · ${m}/${n}`,
     all_done_today: "ഇന്നത്തേത് എല്ലാം പൂർത്തിയായി", target_reached_card: "ലക്ഷ്യം എത്തി", all_goals_done: "ഇന്നത്തെ എല്ലാ ലക്ഷ്യങ്ങളും പൂർത്തിയായി",
     next_goal: (name) => `അടുത്തത്: ${name}`, cap_reached: (n) => `നിങ്ങളുടെ പരിധി ${n} എത്തി`, count_yesterday: "ഇന്നലത്തേക്ക് എണ്ണുക", undo_btn: "തിരിച്ചാക്കുക",
     end_goal: "ലക്ഷ്യം അവസാനിപ്പിക്കുക", start_again: "വീണ്ടും തുടങ്ങുക", edit_note: "മാറ്റങ്ങൾ ഇന്ന് മുതൽ; കഴിഞ്ഞ ദിവസങ്ങൾ അതേപടി തുടരും.",
-    edit_warn: "ഇത് നിലവിലെ ലക്ഷ്യം അവസാനിപ്പിച്ച് പുതിയത് തുടങ്ങും.", p_makeup: "ഒരു ദിവസം വിട്ടുപോയാൽ", d_makeup: "വിട്ടുപോയ ദിവസം നികത്തുക",
+    edit_warn: "ഇത് നിലവിലെ ലക്ഷ്യം അവസാനിപ്പിച്ച് പുതിയത് തുടങ്ങും.", makeup_fill_head: "ദിവസം നിറയ്ക്കുന്നത്", p_makeup: "ഒരു ദിവസം വിട്ടുപോയാൽ", d_makeup: "വിട്ടുപോയ ദിവസം നികത്തുക",
     makeup_help: "ഇന്നത്തെ ലക്ഷ്യത്തിന് ശേഷമുള്ള അധിക എണ്ണം വിട്ടുപോയ ദിവസം നിറയ്ക്കും.", sv_daily: "ദിവസം ഒരു എണ്ണം", sv_daily_sub: "ഇതിലെത്തിയാൽ ദിവസം കണക്കാകും", a_day: "ദിവസം", p_streak_amount: "ദിവസേന സ്ട്രീക്ക് എണ്ണുന്നത്",
     stats: "കണക്കുകൾ", st_met: "പൂർത്തി", st_min: "കുറഞ്ഞത് മാത്രം", st_madeup: "നികത്തി", st_excused: "ഒഴിവാക്കി", st_paused: "നിർത്തിവെച്ചത്", st_missed: "വിട്ടുപോയി",
   },
@@ -1720,7 +1725,7 @@ function sdFromGoal(g) {
   if (req === "cumulative_total" && g.completion === "when_duration_ended") D.finish = { mode: "until" };
   if (g.count_policy.streak_amount) D.streak = { value: "daily", amount: String(g.count_policy.streak_amount) };
   else if (p0.streak_threshold !== autoStreak(d)) D.streak = { value: p0.streak_threshold };
-  if (g.makeup && g.makeup !== "off") D.makeup = { value: g.makeup };
+  if (g.makeup && g.makeup !== "off") D.makeup = { value: g.makeup, fill: g.makeup_fill || "streak" };
   if (g.name) D.name = { value: g.name[lang()] || g.name.en };
   if (g.counts === "dedicated") D.shared = false;
   return d;
@@ -1761,6 +1766,7 @@ function sdToGoal(d, base = null) {
     counts: siblingsOf(d).length && D.shared === false ? "dedicated" : "shared",
     count_entries: base?.count_entries || [], created: base?.created || today(),
     makeup: req === "per_due_date" && !D.sessions ? D.makeup?.value || "off" : "off",
+    makeup_fill: D.makeup?.fill || "streak",
     excused: base?.excused || [], makeup_days: base?.makeup_days || [], versions: base?.versions || [], ended: base?.ended || null,
   };
 }
@@ -1862,7 +1868,7 @@ function sdParts(d, T) {
   if (D.finish) cl.finish = D.finish.mode === "reach" ? T(L.finishReach, { picker: "finish" }) : L.finishUntil(T(L.finishUntilWord, { picker: "finish" }), T(fmtD(D.period?.end), { picker: "finish" }, { bad: !!E.finish }));
   const streakVal = D.streak?.value || autoStreak(d);
   if (D.streak) cl.streak = L.streak(streakVal === "daily" ? L.perDay(numTok(D.streak.amount, "streakAmount", !!E.streak)) : T(L.streakVals[streakVal], { picker: "streak" }, { bad: !!E.streak }));
-  if (D.makeup) cl.makeup = L.makeup(T(L.makeupVals[D.makeup.value], { picker: "makeup" }));
+  if (D.makeup) cl.makeup = L.makeup(T(L.makeupVals[D.makeup.value], { picker: "makeup" }), T(L.makeupFill[D.makeup.fill || "streak"], { picker: "makeup" }));
   if (D.name) cl.name = L.name(T(D.name.value.trim() ? L.quote(D.name.value.trim()) : "?", { picker: "name" }, { bad: !!E.name }));
   const sib = siblingsOf(d).length > 0;
   if (sib && D.shared !== false) cl.shared = L.shared(T(dhikrName(d.dhikr), { picker: "shared" }));
@@ -2010,7 +2016,7 @@ function sdPicker(d) {
       const daily = req === "cumulative_total" ? optionRow("daily", t("sv_daily"), t("sv_daily_sub"), cur === "daily", "s-streak", `<div class="inline-fields">${input("details.streak.amount", D.streak?.amount || "", "number")}<span>${t("a_day")}</span></div>`) : "";
       return head(t("p_streak")) + body(`<div class="options">${vals.map((v) => optionRow(v, L.streakVals[v], "", cur === v, "s-streak")).join("")}${daily}</div>`) + (cur === "daily" ? foot : "");
     }
-    case "makeup": return head(t("p_makeup")) + body(`<p class="t-bodySmall dim" style="margin:0 0 var(--s-md)">${t("makeup_help")}</p><div class="options">${["off", "next", "three"].map((k) => optionRow(k, L.makeupVals[k], "", (D.makeup?.value || "off") === k, "s-makeup")).join("")}</div>`);
+    case "makeup": return head(t("p_makeup")) + body(`<p class="t-bodySmall dim" style="margin:0 0 var(--s-md)">${t("makeup_help")}</p><div class="options">${["off", "next", "three"].map((k) => optionRow(k, L.makeupVals[k], "", (D.makeup?.value || "off") === k, "s-makeup")).join("")}</div>${D.makeup?.value && D.makeup.value !== "off" ? `<p class="t-bodySmall dim" style="margin:var(--s-lg) 0 var(--s-md)">${t("makeup_fill_head")}</p><div class="options">${["streak", "full"].map((k) => optionRow(k, L.makeupFill[k], "", (D.makeup.fill || "streak") === k, "s-makeup-fill")).join("")}</div>` : ""}`);
     case "name": return head(t("p_name")) + body(input("details.name.value", D.name.value, "text", 'maxlength="40" autofocus')) + foot;
     case "shared": return head(t("p_shared")) + body(`<div class="options">${optionRow("share", t("sh_share"), t("shared_yes_sub"), D.shared !== false, "s-shared")}${optionRow("separate", t("sh_separate"), t("shared_no_sub"), D.shared === false, "s-shared")}</div>`);
     case "add": {
@@ -2136,7 +2142,8 @@ function sentenceAction(a, el) {
     case "s-end-mode": D.period.mode = v; if (v === "until" && !D.period.end) D.period.end = addDays(D.period.start, 30); return done();
     case "s-finish": D.finish.mode = v; if (v === "until") { D.period ||= { start: today(), mode: "until", end: "", days: "40" }; D.period.mode = "until"; if (!D.period.end) D.period.end = addDays(D.period.start, 60); } return done();
     case "s-streak": if (v === "daily") { D.streak = { value: "daily", amount: D.streak?.amount || "100" }; return done(); } D.streak = { value: v }; d.picker = null; return done();
-    case "s-makeup": D.makeup = { value: v }; d.picker = null; return done();
+    case "s-makeup": D.makeup = { value: v, fill: D.makeup?.fill || "streak" }; if (v === "off") d.picker = null; return done();
+    case "s-makeup-fill": D.makeup.fill = v; d.picker = null; return done();
     case "s-shared": D.shared = v === "share"; d.picker = null; return done();
     case "s-add": {
       const target = intOrNull(d.amount) || 100;
@@ -2146,7 +2153,7 @@ function sentenceAction(a, el) {
       if (v === "period") { D.period = { start: today(), mode: "until", end: addDays(today(), 30), days: "40" }; d.picker = { kind: "end" }; }
       if (v === "finish") { D.finish = { mode: "reach" }; d.picker = { kind: "finish" }; }
       if (v === "streak") { D.streak = { value: autoStreak(d) }; d.picker = { kind: "streak" }; }
-      if (v === "makeup") { D.makeup = { value: "next" }; d.picker = { kind: "makeup" }; }
+      if (v === "makeup") { D.makeup = { value: "next", fill: "streak" }; d.picker = { kind: "makeup" }; }
       if (v === "name") { D.name = { value: "" }; d.picker = { kind: "name" }; }
       if (v === "shared") { D.shared = true; d.picker = null; }
       return done();
@@ -2265,7 +2272,7 @@ function saveDraft() {
       msg = t("t_new_goal_started");
     } else {
       // In place, as a dated version: past days keep the settings they had
-      const changed = JSON.stringify([base.count_policy, base.sessions, base.makeup]) !== JSON.stringify([g.count_policy, g.sessions, g.makeup]);
+      const changed = JSON.stringify([base.count_policy, base.sessions, base.makeup, base.makeup_fill]) !== JSON.stringify([g.count_policy, g.sessions, g.makeup, g.makeup_fill]);
       g.versions = [...(base.versions || [])];
       if (changed && base.active_period.start_date <= yday && !g.versions.some((x) => x.until === yday)) g.versions.push({ until: yday, count_policy: base.count_policy, sessions: base.sessions, makeup: base.makeup });
       state.goals[idx] = g;
@@ -2599,7 +2606,7 @@ function increment(by = 1) {
   if (mu) {
     addCount(g, null, mu.date, by); shareDelta(g, by, mu.date);
     const filled = mu.count + by >= mu.need;
-    if (filled) { g.makeup_days.push(mu.date); haptic("success"); toast(t("t_madeup", weekdayName(weekday(mu.date)))); } else haptic("tick");
+    if (filled) { g.makeup_days.push(mu.date); g.makeup_open = null; haptic("success"); toast(t("t_madeup", weekdayName(weekday(mu.date)))); } else { g.makeup_open = mu.date; haptic("tick"); }
     save(); updateCounting(before, { pulse: filled }); popCircle();
     return;
   }
@@ -2760,7 +2767,7 @@ const NOTES = `
   <h3>Late counting, make-up, excused days</h3>
   <ul>
     <li>Late counting is yesterday only, from the ⋮ menu or the calendar; after midnight plus a day it's final. Counts carry no marker and are mirrored to goals that share counts.</li>
-    <li>Make-up windows (next day, within 3 days) are still assumed. Extra counts fill the oldest missed day in the window to the amount that keeps the streak (for 100 / minimum 70 that is 70, not 100) rather than to the target. The user may expect the target.</li>
+    <li>Make-up windows (next day, within 3 days) are still assumed. Extra counts fill the oldest missed day in the window. The sentence flow chooses the amount (decision 31): enough to keep the streak (the default; for 100 / minimum 70 that is 70) or the full target (100).</li>
     <li>Make-up exists for daily goals without sessions only. The sentence flow has the setting; A and C don't. While counting for yesterday, make-up isn't offered.</li>
     <li>Excused days are limited per goal per calendar month of the excused day. They can't be set for today, or for a paused day. A weekly or monthly goal has no excused-period concept.</li>
     <li>The "yesterday was missed" message that decision 20 mentions isn't built; excusing happens in the calendar only.</li>
