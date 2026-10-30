@@ -30,6 +30,12 @@ extension SyncDocument {
                 throw SyncDocumentError(type: type, errors: [SyncFieldError(field: "/tag_ids", code: "invalid")])
             }
             self = .dhikrPersonal(DhikrPersonalDocument(tagIDs: ids))
+        case .practicePolicy:
+            do {
+                self = .practicePolicy(try PracticePolicy(json: json))
+            } catch {
+                throw SyncDocumentError(type: type, errors: error.errors)
+            }
         }
     }
 
@@ -42,6 +48,8 @@ extension SyncDocument {
             .object(["name": .string(tag.name), "normalized_name": .string(tag.normalizedName)])
         case .dhikrPersonal(let personal):
             .object(["tag_ids": .array(personal.tagIDs.map { .string($0.description) })])
+        case .practicePolicy(let policy):
+            policy.json
         }
     }
 }

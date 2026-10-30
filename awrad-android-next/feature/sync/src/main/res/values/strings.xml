@@ -80,4 +80,8 @@
     </plurals>
     <string name="sync_upload_mismatch">The uploaded file didn’t match the recording, after several tries.</string>
     <string name="sync_ok">OK</string>
+    <string name="sync_conflict_practice">Your practice settings were changed on another device after you changed them here.</string>
+    <string name="sync_reason_entity_id_invalid">These practice settings belong to another account.</string>
+    <string name="sync_hijri_replaced_title">Hijri corrections replaced</string>
+    <string name="sync_reason_hijri_corrections_replaced">Another device changed your Hijri corrections at the same time, and the two couldn’t be combined. Its corrections were kept; your other practice settings were saved.</string>
 </resources>

@@ -353,8 +353,10 @@ components:
 
     SyncEntityType:
       type: string
-      enum: [custom_dhikr, user_tag, dhikr_personal]
-      description: What a sync entity is (contracts/sync/v1/README.md).
+      enum: [custom_dhikr, user_tag, dhikr_personal, practice_policy]
+      description: >-
+        What a sync entity is (contracts/sync/v1/README.md). practice_policy is one per account, with the account ID
+        as its entity_id.
     SyncVersion:
       type: integer
       minimum: 0
@@ -481,12 +483,64 @@ components:
           uniqueItems: true
           items:
             $ref: "#/components/schemas/Uuid"
+    PracticePolicyDocument:
+      type: object
+      additionalProperties: false
+      required: [day_reset, calculation_method, madhab, week_start, hijri_corrections]
+      description: >-
+        The account practice policy (practice-settings.schema.json `practice_policy_document`, slice 3d). Device
+        context (time zone, location) is never part of it. Corrections must also be one per month and keep every
+        month 29 or 30 days (practice_policy_validity.json).
+      properties:
+        day_reset:
+          type: string
+          enum: [midnight, maghrib]
+        calculation_method:
+          type: string
+          enum:
+            - karachi
+            - north_america
+            - muslim_world_league
+            - egyptian
+            - umm_al_qura
+            - moonsighting_committee
+            - dubai
+            - kuwait
+            - qatar
+            - singapore
+        madhab:
+          type: string
+          enum: [shafi, hanafi]
+        week_start:
+          type: string
+          enum: [saturday, sunday, monday]
+        hijri_corrections:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [year, month, offset_days]
+            description: Moves a Hijri month's start, and every later month's until the next correction.
+            properties:
+              year:
+                type: integer
+                minimum: 1400
+                maximum: 1500
+              month:
+                type: integer
+                minimum: 1
+                maximum: 12
+              offset_days:
+                type: integer
+                minimum: -2
+                maximum: 2
     SyncDocument:
       description: The entity's whole document; which one depends on entity_type.
       oneOf:
         - $ref: "#/components/schemas/CustomDhikrDocument"
         - $ref: "#/components/schemas/UserTagDocument"
         - $ref: "#/components/schemas/DhikrPersonalDocument"
+        - $ref: "#/components/schemas/PracticePolicyDocument"
     SyncCommand:
       description: >-
         One change. `put` creates (base_version 0) or replaces the whole document; `delete` makes a final tombstone.
@@ -658,6 +712,7 @@ components:
             - command_id_reused
             - audio_not_found
             - audio_mismatch
+            - entity_id_invalid
         fields:
           type: array
           items:

@@ -896,6 +896,45 @@ Slice 3b keeps a custom dhikr's recording on the phone that imported it (`{"loca
 
 None. Extends ADR-2026-10-28 (the change queue): audio bytes travel beside it, and documents only name them.
 
+## ADR-2026-10-29: Practice settings travel in the change queue; location stays on the device
+
+Status: Accepted
+
+### Context
+
+The frozen apps keep an account practice policy (day reset, method, madhab) behind its own API with `expected_revision`, and upload each installation's time zone and coordinates, which no client reads back (ADR-2026-09-09 ×2). A stale phone write adopts the server's policy and loses the edit; the web form skips the check. Week start is hard-coded to Monday, there are no Hijri corrections, and iOS computes Maghrib with its own calculator. ADR-2026-10-28 (the change queue) left open how practice settings merge at the first sign-in under local profiles. Slice 3d (`docs/slices/03d-practice-settings.md`) settles it.
+
+### Decision
+
+- **Account practice policy:** `day_reset`, `calculation_method` (adhan's names for the frozen ten), `madhab`, `week_start` and `hijri_corrections`. It's one change-queue entity per account, `practice_policy`, whose ID is the account's. It's never deleted, and there's no separate settings API. Defaults stay the frozen ones: midnight, Karachi, Shafi'i, Monday, no corrections.
+- **Device context:** time zone (always the system's) and location (GPS, a bundled city, or the platform's place search on phones when online).
+  - It **never leaves the device**, and no endpoint receives it.
+  - Phones keep it per installation; the web keeps it in the browser, per account.
+- **Conflicts merge by setting,** without a prompt. A setting the device changed from its base keeps its value; the rest is the server's. Hijri corrections merge month by month, and fall back to the server's when the merge would be invalid, with a notice.
+- **First sign-in:** an account that has a policy keeps it, whatever the user chose for their data. An account without one takes the phone's only if the user chose it; untouched defaults are never uploaded.
+- **Maghrib:** computed on each client with the adhan library, pinned by the shared `maghrib_time` fixture to within a minute. The server never computes it.
+- **Bundled city list:** from GeoNames (CC BY 4.0), with attribution: 15,000 people or more in Kerala and the Gulf states, 50,000 or more elsewhere. All four apps share one search rule.
+
+### Consequences
+
+- Location is never stored on the server. A future feature that needs it there, such as server-sent reminders, needs its own ADR.
+- Without a location the web falls back to midnight, and Settings says so.
+- Phones store `base_document` beside the policy so they can merge.
+- The sync contract gains an entity type, a rejection code (`entity_id_invalid`) and a notice code (`hijri_corrections_replaced`), and `sync_receipts` states now name the account.
+- Apps bundle about 2.6 MB of city data (680 KB gzipped). Display names are English only until GeoNames' alternate names are added.
+
+### Evidence
+
+- `contracts/practice-settings/v1/` (README, schema, fixtures)
+- `contracts/places/v1/` (README, schema, `cities.json`, fixtures)
+- `contracts/sync/v1/` (README, schema, `sync_receipts` and `apply_changes` cases)
+- `contracts/tools/practice-settings-rules.mjs`, `check-practice-settings.mjs`, `build-cities.mjs`
+- `docs/slices/03d-practice-settings.md`
+
+### Supersedes
+
+ADR-2026-09-09 "Separate account practice policy from device context" and ADR-2026-09-09 "Merge local and remote practice settings at account binding", for the rebuild. They stay accepted for the frozen apps. The account/device split they made is kept; their API, device-context upload and binding rules are replaced.
+
 ## Root ADR template
 
 Copy this section, replace the placeholders, and keep it concise.

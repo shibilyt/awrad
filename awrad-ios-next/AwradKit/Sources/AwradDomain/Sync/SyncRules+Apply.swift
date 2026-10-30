@@ -33,6 +33,8 @@ extension SyncRules {
             guard change.version >= known else { continue }
             state.setDocument(change.document, for: key)
             state.setKnownVersion(change.version, for: key)
+            // With nothing queued, the policy's base is the server's copy (slice 3d).
+            if key.type == .practicePolicy { state.setBaseDocument(change.document, for: key) }
         }
         state.after = page.nextAfter
     }
@@ -48,7 +50,7 @@ extension SyncRules {
     /// | `conflict` | Keeps the local document, drops later unsent commands for the entity, opens a conflict |
     /// | `merged` | Moves every local use of the tag ID to the surviving tag |
     /// | `gone` | Removes the entity |
-    /// | `rejected` | Restores the server's copy, or removes the entity when there is none |
+    /// | `rejected` | Restores the server's copy, or removes the entity when there is none (not the practice policy) |
     /// | `rejected` `audio_not_found`/`audio_mismatch` of a custom dhikr put | Keeps the edit (`keepAfterAudioRejection`) |
     ///
     /// - Parameters:
@@ -79,18 +81,11 @@ extension SyncRules {
             }
             switch receipt.outcome {
             case .applied(_, let version, _, let cascaded):
-                if state.document(key) == nil, state.commands(for: key).isEmpty {
-                    state.setKnownVersion(nil, for: key)
-                } else {
-                    state.setKnownVersion(version, for: key)
-                }
-                state.setConflict(nil, for: key)
-                for cascade in cascaded ?? [] { apply(cascade, to: &state) }
+                applied(command, version: version, cascaded: cascaded, in: &state)
             case .conflict(_, let current):
-                dropUnsentCommands(for: key, in: &state)
-                state.setKnownVersion(current.version, for: key)
-                let localOp: SyncOp = state.document(key) == nil ? .delete : .put
-                state.setConflict(SyncConflict(key: key, localOp: localOp, server: current), for: key)
+                if conflict(key, current: current, newCommandID: newCommandID, in: &state) {
+                    notices.append(SyncNotice(code: .hijriCorrectionsReplaced, key: key))
+                }
             case .merged(_, let survivor, let current):
                 merge(tag: key.id, into: survivor, current: current, in: &state)
             case .gone:
@@ -129,6 +124,40 @@ extension SyncRules {
 
     // MARK: - Steps
 
+    /// Records the version, closes any conflict and applies the cascades. The sent policy is now the
+    /// server's copy: the base later edits merge against.
+    private static func applied(
+        _ command: OutboxCommand, version: Int, cascaded: [SyncCascade]?, in state: inout some SyncLocalState
+    ) {
+        let key = command.key
+        if state.document(key) == nil, state.commands(for: key).isEmpty {
+            state.setKnownVersion(nil, for: key)
+        } else {
+            state.setKnownVersion(version, for: key)
+        }
+        state.setConflict(nil, for: key)
+        for cascade in cascaded ?? [] { apply(cascade, to: &state) }
+        if key.type == .practicePolicy, command.op == .put {
+            state.setBaseDocument(command.document, for: key)
+        }
+    }
+
+    /// Keeps the local document, drops later unsent commands and opens a conflict; the practice
+    /// policy merges instead (`mergePolicy`). Returns whether a policy merge dropped this phone's
+    /// Hijri corrections.
+    private static func conflict(
+        _ key: SyncEntityKey, current: ServerCopy, newCommandID: () -> AwradID, in state: inout some SyncLocalState
+    ) -> Bool {
+        if key.type == .practicePolicy {
+            return mergePolicy(key, current: current, newCommandID: newCommandID(), in: &state)
+        }
+        dropUnsentCommands(for: key, in: &state)
+        state.setKnownVersion(current.version, for: key)
+        let localOp: SyncOp = state.document(key) == nil ? .delete : .put
+        state.setConflict(SyncConflict(key: key, localOp: localOp, server: current), for: key)
+        return false
+    }
+
     /// A delete's cascade, applied as a page change would be to an entity the phone has: an active
     /// one moves its known version (never back), a deleted one is removed. A command already queued
     /// for it keeps its `base_version` and conflicts as normal.
@@ -144,15 +173,51 @@ extension SyncRules {
 
     /// Puts the server's copy back, or removes the entity when the server has none (or deleted it).
     /// Later unsent commands for the entity are dropped: they were made on the undone version.
+    ///
+    /// The practice policy is never removed: with no server copy the phone keeps its document, its known
+    /// version goes back to 0 and its base to the default policy (practice-settings/v1 "Syncing the policy").
     private static func restore(_ key: SyncEntityKey, to copy: ServerCopy?, in state: inout some SyncLocalState) {
         guard let copy, copy.state == .active, let document = copy.document else {
-            remove(key, in: &state)
+            if key.type == .practicePolicy {
+                dropUnsentCommands(for: key, in: &state)
+                state.setConflict(nil, for: key)
+                state.setKnownVersion(nil, for: key)
+                state.setBaseDocument(nil, for: key)
+            } else {
+                remove(key, in: &state)
+            }
             return
         }
         dropUnsentCommands(for: key, in: &state)
         state.setDocument(document, for: key)
         state.setKnownVersion(copy.version, for: key)
         state.setConflict(nil, for: key)
+        if key.type == .practicePolicy { state.setBaseDocument(document, for: key) }
+    }
+
+    /// A conflict on the practice policy opens no conflict: the local document merges by setting
+    /// with the server's copy against its base (`PracticePolicy.merge`), the server's copy becomes
+    /// the base and known version, and the result is queued on that version unless the server
+    /// already has it. Later unsent commands go: the local document holds them. Returns whether the
+    /// merge dropped this phone's Hijri corrections.
+    private static func mergePolicy(
+        _ key: SyncEntityKey, current: ServerCopy, newCommandID: AwradID, in state: inout some SyncLocalState
+    ) -> Bool {
+        dropUnsentCommands(for: key, in: &state)
+        state.setKnownVersion(current.version, for: key)
+        guard let theirs = current.document?.practicePolicy else { return false }
+        let mine = state.document(key)?.practicePolicy ?? .default
+        let base = state.baseDocument(key)?.practicePolicy ?? .default
+        let merge = PracticePolicy.merge(base: base, mine: mine, theirs: theirs)
+        state.setDocument(.practicePolicy(merge.policy), for: key)
+        state.setBaseDocument(.practicePolicy(theirs), for: key)
+        if merge.requeue {
+            state.appendCommand(
+                OutboxCommand(
+                    commandID: newCommandID, key: key, op: .put, baseVersion: current.version,
+                    document: .practicePolicy(merge.policy)))
+        }
+        return merge.correctionsReplaced
     }
 
     /// A tag create the server merged into an existing tag: the local tag goes (with its unsent

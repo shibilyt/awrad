@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "sync_receipts",
-  "description": "The server side of post_sync_commands: given an account's sync state and a batch, the receipts and the resulting state. State: `entities` (one row per entity, in the changes-feed shape: version, state, the revision of its last change, and document, null when deleted), `head_revision`, stored `receipts` (each original command with its first receipt), `tag_aliases` (merged tag ID to surviving tag ID) and `audio_assets` (the account's audio uploads: asset_id, `pending` or `ready`, byte_size and content_type; contracts/audio/v1). Commands apply in order, each checked in this order: (1) a stored command_id replays as `duplicate` with the same payload, else `rejected` `command_id_reused` (not stored); (2) a dhikr_personal delete is `delete_not_allowed`; (3) a put's document must be valid (`document_invalid`, `document_too_large`); (4) a user_tag ID that is an alias, or a deleted entity, is `gone`; an entity the server doesn't have needs a put with base_version 0 (`entity_not_found`); otherwise base_version must equal its version (`conflict`); (5) entity rules: a user_tag create whose normalized name an active tag has is `merged`, a rename onto one is `tag_name_taken`, more than 100 active tags or 1,000 active custom dhikrs is `*_limit_reached`, a dhikr_personal needs a built-in or active custom dhikr (`dhikr_not_found`) and known tags (`tag_not_found`), with aliases rewritten to their tag, deleted tags dropped and repeats removed; and a custom_dhikr put whose audio names an asset_id that isn't a ready asset of the account (unknown, pending, or another account's) is `audio_not_found`, with a `not_found` field error on /document/audio/asset_id; one naming a ready asset but with a different byte_size or content_type is `audio_mismatch`, with a `mismatch` field error on each disagreeing member under /document/audio. Each applied command takes head_revision + 1 and adds one to the entity's version; its cascades (a deleted tag removed from dhikr_personal documents, a deleted custom dhikr's dhikr_personal deleted) share that revision, and the applied receipt of a user_tag or custom_dhikr delete lists them in `cascaded` ({entity_type, entity_id, state, version, revision}, ordered by entity_type, entity_id; empty when nothing cascaded; null on every other applied receipt) so phones can update their known versions at once. Every receipt except command_id_reused is stored. Expect: the receipts in batch order; the new head_revision; `changes`, the entities whose revision is now above the given head_revision, ordered by revision, entity_type, entity_id (what list_sync_changes returns after it); every tag alias, ordered by alias_id; and every stored command_id, sorted.",
+  "description": "The server side of post_sync_commands: given an account's sync state and a batch, the receipts and the resulting state. State: `account_id`, `entities` (one row per entity, in the changes-feed shape: version, state, the revision of its last change, and document, null when deleted), `head_revision`, stored `receipts` (each original command with its first receipt), `tag_aliases` (merged tag ID to surviving tag ID) and `audio_assets` (the account's audio uploads: asset_id, `pending` or `ready`, byte_size and content_type; contracts/audio/v1). Commands apply in order, each checked in this order: (1) a stored command_id replays as `duplicate` with the same payload, else `rejected` `command_id_reused` (not stored); (2) a dhikr_personal or practice_policy delete is `delete_not_allowed`, and a practice_policy whose entity_id isn't the state's `account_id` is `entity_id_invalid`, with a `mismatch` field error on /entity_id; (3) a put's document must be valid (`document_invalid`, `document_too_large`); (4) a user_tag ID that is an alias, or a deleted entity, is `gone`; an entity the server doesn't have needs a put with base_version 0 (`entity_not_found`); otherwise base_version must equal its version (`conflict`); (5) entity rules: a user_tag create whose normalized name an active tag has is `merged`, a rename onto one is `tag_name_taken`, more than 100 active tags or 1,000 active custom dhikrs is `*_limit_reached`, a dhikr_personal needs a built-in or active custom dhikr (`dhikr_not_found`) and known tags (`tag_not_found`), with aliases rewritten to their tag, deleted tags dropped and repeats removed; and a custom_dhikr put whose audio names an asset_id that isn't a ready asset of the account (unknown, pending, or another account's) is `audio_not_found`, with a `not_found` field error on /document/audio/asset_id; one naming a ready asset but with a different byte_size or content_type is `audio_mismatch`, with a `mismatch` field error on each disagreeing member under /document/audio. Each applied command takes head_revision + 1 and adds one to the entity's version; its cascades (a deleted tag removed from dhikr_personal documents, a deleted custom dhikr's dhikr_personal deleted) share that revision, and the applied receipt of a user_tag or custom_dhikr delete lists them in `cascaded` ({entity_type, entity_id, state, version, revision}, ordered by entity_type, entity_id; empty when nothing cascaded; null on every other applied receipt) so phones can update their known versions at once. Every receipt except command_id_reused is stored. Expect: the receipts in batch order; the new head_revision; `changes`, the entities whose revision is now above the given head_revision, ordered by revision, entity_type, entity_id (what list_sync_changes returns after it); every tag alias, ordered by alias_id; and every stored command_id, sorted.",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#the-change-queue",
     "contracts/sync/v1/README.md",
@@ -9,7 +9,8 @@
     "DECISIONS.md ADR-2026-07-24 (merged tags; frozen coalescing design)",
     "awrad_server/test/awrad_server/progress_sync_dhikr_tags_test.exs",
     "docs/slices/03c-audio-upload.md#the-recording-in-the-custom-dhikr-document",
-    "contracts/audio/v1/README.md"
+    "contracts/audio/v1/README.md",
+    "contracts/practice-settings/v1/README.md"
   ],
   "given_schema": {
     "type": "object",
@@ -23,6 +24,7 @@
         "type": "object",
         "additionalProperties": false,
         "required": [
+          "account_id",
           "head_revision",
           "entities",
           "receipts",
@@ -30,6 +32,10 @@
           "audio_assets"
         ],
         "properties": {
+          "account_id": {
+            "$ref": "urn:awrad:sync:1#/$defs/uuid",
+            "description": "The account's ID: a practice_policy entity_id must equal it."
+          },
           "head_revision": {
             "$ref": "urn:awrad:sync:1#/$defs/revision"
           },
@@ -181,6 +187,7 @@
       "description": "A put with base_version 0 creates the entity at version 1 and takes the next revision.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -367,6 +374,7 @@
       "description": "A put on the current version replaces the whole document and adds one to the version.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -541,6 +549,7 @@
       "description": "A put made on an older version is a conflict carrying the server's current entity; nothing changes and no revision is used.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -706,6 +715,7 @@
       "description": "base_version 0 on an entity that already exists is a conflict, like any other stale version.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -869,6 +879,7 @@
       "description": "A delete made on an older version is a conflict too.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -996,6 +1007,7 @@
       "description": "A put with base_version above 0 for an entity the server has never had is rejected: there is nothing to update.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -1138,6 +1150,7 @@
       "description": "Deleting an entity the server has never had is rejected.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -1260,6 +1273,7 @@
       "description": "Deleting a custom dhikr deletes its dhikr_personal at the same revision; both versions go up by one and their documents become null.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -1407,6 +1421,7 @@
       "description": "A delete is final: a put on a deleted entity is gone, with no revision.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -1530,6 +1545,7 @@
       "description": "Deleting a deleted entity is gone too.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -1649,6 +1665,7 @@
       "description": "Creating with a deleted entity's ID is gone: tombstones are never restored.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -1772,6 +1789,7 @@
       "description": "Commands apply in order: a put after a delete of the same entity in one batch is gone.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -1953,6 +1971,7 @@
       "description": "Clients never delete a dhikr_personal (they put an empty tag list); only the server does, when its custom dhikr is deleted.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -2083,6 +2102,7 @@
       "description": "Resending a command with the same command_id and payload returns its original receipt, even though the entity has moved on; nothing changes.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 12,
           "entities": [
             {
@@ -2317,6 +2337,7 @@
       "description": "The same command_id with a different payload is rejected, and that rejection isn't stored: the original receipt stays.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 12,
           "entities": [
             {
@@ -2570,6 +2591,7 @@
       "description": "A command repeated within one batch is applied once; the repeat is a duplicate.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -2802,6 +2824,7 @@
       "description": "Every first outcome is stored, not only applied ones: resending a command that conflicted replays the same conflict.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -3031,6 +3054,7 @@
       "description": "A tag delete sent again replays its original receipt, cascaded included, and changes nothing.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 11,
           "entities": [
             {
@@ -3198,6 +3222,7 @@
       "description": "Creating a tag whose normalized name an active tag already has is merged: the new ID becomes an alias of the existing tag, nothing else changes, and no revision is used.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -3335,6 +3360,7 @@
       "description": "A tag create that merges, followed in the same batch by a dhikr_personal naming the new tag ID: the server rewrites the ID to the surviving tag.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -3507,6 +3533,7 @@
       "description": "A later dhikr_personal naming both an alias and its surviving tag keeps the surviving tag once, in first-occurrence order.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -3660,6 +3687,7 @@
       "description": "A merged tag ID no longer names a tag: a user_tag command on it is gone.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -3793,6 +3821,7 @@
       "description": "Renaming a tag is a put on its current version.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -3931,6 +3960,7 @@
       "description": "Changing only the case keeps the tag's own normalized name, which isn't a collision.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -4069,6 +4099,7 @@
       "description": "Renaming a tag to another active tag's name is rejected; existing tags are never merged.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -4207,6 +4238,7 @@
       "description": "Only active tags count: a new tag may take a deleted tag's name, under a new ID.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -4345,6 +4377,7 @@
       "description": "The server recomputes normalized_name and rejects a document whose value differs.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -4476,6 +4509,7 @@
       "description": "The name must already be trimmed and collapsed (tag_name_normalization).",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -4607,6 +4641,7 @@
       "description": "Deleting a tag removes it from every dhikr_personal at the same revision; each changed record's version goes up by one. A record left with no tags stays, with an empty list.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -4775,6 +4810,7 @@
       "description": "A dhikr_personal naming a deleted tag is applied without it, as if the delete had come after.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -4916,6 +4952,7 @@
       "description": "An alias of a deleted tag is dropped too: the alias resolves to the deleted tag.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -5127,6 +5164,7 @@
       "description": "Deleting a tag no dhikr_personal uses changes nothing else: the applied receipt carries an empty cascaded.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -5269,6 +5307,7 @@
       "description": "A tag ID the account has never had is rejected, pointing at its position.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -5410,6 +5449,7 @@
       "description": "A dhikr_personal must belong to a built-in dhikr or an active custom dhikr of the account.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -5542,6 +5582,7 @@
       "description": "Built-in dhikrs are tagged through a dhikr_personal with the built-in ID.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -5682,6 +5723,7 @@
       "description": "A custom dhikr created earlier in the same batch can be tagged; each applied command takes its own revision.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -5900,6 +5942,7 @@
       "description": "Two changes to one entity in a batch take two revisions; the changes feed shows only its latest state.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -6057,6 +6100,7 @@
       "description": "A document listing the same tag twice is invalid (rewriting aliases may merge entries; the client's list may not repeat).",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -6198,6 +6242,7 @@
       "description": "A rejected command doesn't stop or undo the others.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -6454,6 +6499,7 @@
       "description": "Only applied commands take revisions, one each and with no gaps; conflict, gone, merged, rejected and duplicate take none.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -6841,6 +6887,7 @@
       "description": "An account has at most 100 active tags (deleted ones don't count). With 99, one more is applied; the next is rejected; a create that merges into an existing name is still fine because it adds no tag.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 107,
           "entities": [
             {
@@ -8095,6 +8142,7 @@
       "description": "A dhikr has at most 20 tags: 20 is applied, 21 is an invalid document.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 28,
           "entities": [
             {
@@ -8516,6 +8564,7 @@
       "description": "A custom dhikr create naming an asset_id the account has no upload for (never uploaded, cleaned up, or another account's) is rejected with audio_not_found, pointing at the asset_id; with nothing on the server, current is null.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -8691,6 +8740,7 @@
       "description": "An upload that was reserved but never completed isn't an asset yet: swapping the local marker for it is rejected with audio_not_found, carrying the server's copy to undo to. Phones complete the upload before queuing the put.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -8883,6 +8933,7 @@
       "description": "Once its upload is complete, the phone swaps {\"local_only\": true} for the ready asset: the put applies like any other.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -9078,6 +9129,7 @@
       "description": "A dhikr created after its recording was uploaded (on the web, or on a phone that is online) names the ready asset from the start.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -9289,6 +9341,7 @@
       "description": "A ready asset named with a byte_size other than the asset's is rejected with audio_mismatch, pointing at byte_size; the server's copy comes back to undo to.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -9481,6 +9534,7 @@
       "description": "A ready asset named with a content_type other than the asset's is rejected with audio_mismatch, pointing at content_type.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -9673,6 +9727,7 @@
       "description": "Every disagreeing member is reported, sorted by field.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -9869,6 +9924,7 @@
       "description": "duration_ms is the client's measurement, which the asset doesn't record: any value, or null, applies.",
       "given": {
         "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
           "head_revision": 10,
           "entities": [
             {
@@ -10056,6 +10112,602 @@
         "tag_aliases": [],
         "stored_receipts": [
           "0192f0c0-0000-7000-8000-000000000077"
+        ]
+      }
+    },
+    {
+      "id": "create_practice_policy",
+      "description": "The account's first practice policy: a put with base_version 0 on the account's ID.",
+      "given": {
+        "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
+          "head_revision": 10,
+          "entities": [],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": []
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000301",
+            "entity_type": "practice_policy",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "day_reset": "maghrib",
+              "calculation_method": "karachi",
+              "madhab": "shafi",
+              "week_start": "monday",
+              "hijri_corrections": [
+                {
+                  "year": 1448,
+                  "month": 5,
+                  "offset_days": -1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000301",
+            "status": "applied",
+            "version": 1,
+            "revision": 11,
+            "cascaded": null
+          }
+        ],
+        "head_revision": 11,
+        "changes": [
+          {
+            "entity_type": "practice_policy",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 1,
+            "revision": 11,
+            "document": {
+              "day_reset": "maghrib",
+              "calculation_method": "karachi",
+              "madhab": "shafi",
+              "week_start": "monday",
+              "hijri_corrections": [
+                {
+                  "year": 1448,
+                  "month": 5,
+                  "offset_days": -1
+                }
+              ]
+            }
+          }
+        ],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000301"
+        ]
+      }
+    },
+    {
+      "id": "update_practice_policy",
+      "description": "A put on the current version replaces the whole policy.",
+      "given": {
+        "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 7,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": []
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000302",
+            "entity_type": "practice_policy",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 2,
+            "document": {
+              "day_reset": "maghrib",
+              "calculation_method": "dubai",
+              "madhab": "shafi",
+              "week_start": "monday",
+              "hijri_corrections": [
+                {
+                  "year": 1448,
+                  "month": 5,
+                  "offset_days": -1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000302",
+            "status": "applied",
+            "version": 3,
+            "revision": 11,
+            "cascaded": null
+          }
+        ],
+        "head_revision": 11,
+        "changes": [
+          {
+            "entity_type": "practice_policy",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "state": "active",
+            "version": 3,
+            "revision": 11,
+            "document": {
+              "day_reset": "maghrib",
+              "calculation_method": "dubai",
+              "madhab": "shafi",
+              "week_start": "monday",
+              "hijri_corrections": [
+                {
+                  "year": 1448,
+                  "month": 5,
+                  "offset_days": -1
+                }
+              ]
+            }
+          }
+        ],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000302"
+        ]
+      }
+    },
+    {
+      "id": "practice_policy_stale_conflicts",
+      "description": "A stale base_version conflicts and carries the server's policy, which the phone merges by setting (practice_policy_merge).",
+      "given": {
+        "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 7,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": []
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000303",
+            "entity_type": "practice_policy",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "day_reset": "maghrib",
+              "calculation_method": "dubai",
+              "madhab": "shafi",
+              "week_start": "monday",
+              "hijri_corrections": [
+                {
+                  "year": 1448,
+                  "month": 5,
+                  "offset_days": -1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000303",
+            "status": "conflict",
+            "current": {
+              "version": 2,
+              "state": "active",
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "head_revision": 10,
+        "changes": [],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000303"
+        ]
+      }
+    },
+    {
+      "id": "practice_policy_second_seed_conflicts",
+      "description": "Two phones seed an unset account: the second create conflicts with the first.",
+      "given": {
+        "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 7,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": []
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000304",
+            "entity_type": "practice_policy",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "day_reset": "maghrib",
+              "calculation_method": "dubai",
+              "madhab": "shafi",
+              "week_start": "monday",
+              "hijri_corrections": [
+                {
+                  "year": 1448,
+                  "month": 5,
+                  "offset_days": -1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000304",
+            "status": "conflict",
+            "current": {
+              "version": 2,
+              "state": "active",
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "head_revision": 10,
+        "changes": [],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000304"
+        ]
+      }
+    },
+    {
+      "id": "practice_policy_other_id_rejected",
+      "description": "A practice_policy entity_id must be the account's ID.",
+      "given": {
+        "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 7,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": []
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000305",
+            "entity_type": "practice_policy",
+            "entity_id": "0192f000-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "day_reset": "maghrib",
+              "calculation_method": "karachi",
+              "madhab": "shafi",
+              "week_start": "monday",
+              "hijri_corrections": [
+                {
+                  "year": 1448,
+                  "month": 5,
+                  "offset_days": -1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000305",
+            "status": "rejected",
+            "code": "entity_id_invalid",
+            "fields": [
+              {
+                "field": "/entity_id",
+                "code": "mismatch"
+              }
+            ],
+            "current": null
+          }
+        ],
+        "head_revision": 10,
+        "changes": [],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000305"
+        ]
+      }
+    },
+    {
+      "id": "practice_policy_delete_not_allowed",
+      "description": "The practice policy is never deleted; clients put the default policy instead.",
+      "given": {
+        "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 7,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": []
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000306",
+            "entity_type": "practice_policy",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "op": "delete",
+            "base_version": 2
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000306",
+            "status": "rejected",
+            "code": "delete_not_allowed",
+            "fields": [],
+            "current": {
+              "version": 2,
+              "state": "active",
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "head_revision": 10,
+        "changes": [],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000306"
+        ]
+      }
+    },
+    {
+      "id": "practice_policy_invalid_corrections_rejected",
+      "description": "Corrections that make 1447/9 31 days long: document_invalid with a range error (practice_policy_validity).",
+      "given": {
+        "state": {
+          "account_id": "0192f000-0000-7000-8000-000000000001",
+          "head_revision": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "state": "active",
+              "version": 2,
+              "revision": 7,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          ],
+          "receipts": [],
+          "tag_aliases": [],
+          "audio_assets": []
+        },
+        "batch": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000307",
+            "entity_type": "practice_policy",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 2,
+            "document": {
+              "day_reset": "midnight",
+              "calculation_method": "karachi",
+              "madhab": "shafi",
+              "week_start": "monday",
+              "hijri_corrections": [
+                {
+                  "year": 1447,
+                  "month": 10,
+                  "offset_days": 1
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "expect": {
+        "receipts": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000307",
+            "status": "rejected",
+            "code": "document_invalid",
+            "fields": [
+              {
+                "field": "/document/hijri_corrections",
+                "code": "range"
+              }
+            ],
+            "current": {
+              "version": 2,
+              "state": "active",
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "head_revision": 10,
+        "changes": [],
+        "tag_aliases": [],
+        "stored_receipts": [
+          "0192f0c0-0000-7000-8000-000000000307"
         ]
       }
     }

@@ -81,12 +81,20 @@ _Avoid_: A separate goal target
 ## Practice settings language
 
 **Account practice policy**:
-The account-shared choices that shape practice interpretation across devices: day-end rule, prayer calculation method, madhab, **week start** (Saturday, Sunday or Monday; default Monday), and **Hijri corrections**. It has one canonical revision per account.
+The account-shared choices that shape practice interpretation across devices: **day reset** (midnight or Maghrib; default midnight), **calculation method** (default Karachi), **madhab** (Shafi'i or Hanafi; only Asr), **week start** (Saturday, Sunday or Monday; default Monday), and **Hijri corrections**. It syncs as one change-queue entity per account. Signed out, each local profile has its own.
 _Avoid_: Device settings, location profile
 
+**Hijri correction**:
+A move of one Hijri month's start, by up to 2 days from the Umm al-Qura table, that carries forward to later months; it follows local moon sighting. Every month stays 29 or 30 days, so a month usually moves only one day from the month before.
+_Avoid_: Hijri offset (a fixed shift for every month)
+
 **Device context**:
-The settings owned by one authenticated installation, including browser timezone, latitude, longitude, accuracy, and location source. A device context is keyed by the account and installation, so another device or another account in the same browser cannot inherit it.
+What only this device knows: its time zone (always the system's) and its **location**. It never leaves the device. A phone keeps one per installation, shared by its profiles; the web keeps one per account in that browser, so another account there doesn't inherit it.
 _Avoid_: Account location, global location
+
+**Location**:
+Where the device is, for Maghrib: coordinates from GPS, a **bundled city** (from `contracts/places/v1/`), or a phone's online place search.
+_Avoid_: Home, address
 
 **Effective practice day**:
 The day used to evaluate a goal, from the current instant, the device's timezone and the day-end rule:

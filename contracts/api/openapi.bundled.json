@@ -1473,7 +1473,7 @@
           "sync"
         ],
         "summary": "Apply a batch of commands",
-        "description": "Applies 1 to 100 commands in order and returns one receipt per command, in the same order. A command's outcome never undoes the others. The account's batches are serialized; every applied command takes the next revision.\n\n**Batch versus command problems.** The batch is refused as a whole (`422 validation_failed`, nothing applied) only when it has 0 or more than 100 commands, or a command's envelope is wrong: `command_id` or `entity_id` not a UUID, an unknown `entity_type` or `op`, `base_version` not an integer in range, `document` missing on a put, present on a delete or not an object, or an unknown member (sync.schema.json `command_envelope`). Everything else is a per-command `rejected` receipt, including a document that doesn't match its schema below: the server checks each document itself, so one bad command never blocks a phone's queue.\n\nReceipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's, contracts/audio/v1). Receipts are kept for 90 days.\n\n`Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts the header and ignores it. Responses are `Cache-Control: no-store`.",
+        "description": "Applies 1 to 100 commands in order and returns one receipt per command, in the same order. A command's outcome never undoes the others. The account's batches are serialized; every applied command takes the next revision.\n\n**Batch versus command problems.** The batch is refused as a whole (`422 validation_failed`, nothing applied) only when it has 0 or more than 100 commands, or a command's envelope is wrong: `command_id` or `entity_id` not a UUID, an unknown `entity_type` or `op`, `base_version` not an integer in range, `document` missing on a put, present on a delete or not an object, or an unknown member (sync.schema.json `command_envelope`). Everything else is a per-command `rejected` receipt, including a document that doesn't match its schema below: the server checks each document itself, so one bad command never blocks a phone's queue.\n\nReceipts: `applied` (`version`, `revision`, and `cascaded`: for a `user_tag` or `custom_dhikr` delete, every other entity the server changed at the same revision, whose known versions phones update straight away; null for other commands), `duplicate` (same `command_id` and payload as before; carries the original receipt), `conflict` (stale `base_version`; carries the server's copy), `merged` (a tag create whose name an active tag already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected` (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's, contracts/audio/v1; `entity_id_invalid` when a `practice_policy` entity_id isn't the account's ID; `delete_not_allowed` for a `dhikr_personal` or `practice_policy` delete). Receipts are kept for 90 days.\n\n`Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts the header and ignores it. Responses are `Cache-Control: no-store`.",
         "security": [
           {
             "bearerAuth": []
@@ -1615,6 +1615,26 @@
                     "entity_id": "0192f0a0-0000-7000-8000-000000000002",
                     "op": "delete",
                     "base_version": 2
+                  },
+                  {
+                    "command_id": "0192f0c0-0000-7000-8000-000000000008",
+                    "entity_type": "practice_policy",
+                    "entity_id": "0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90",
+                    "op": "put",
+                    "base_version": 0,
+                    "document": {
+                      "day_reset": "maghrib",
+                      "calculation_method": "karachi",
+                      "madhab": "shafi",
+                      "week_start": "monday",
+                      "hijri_corrections": [
+                        {
+                          "year": 1448,
+                          "month": 5,
+                          "offset_days": -1
+                        }
+                      ]
+                    }
                   },
                   {
                     "command_id": "0192f0c0-0000-7000-8000-000000000001",
@@ -1786,6 +1806,13 @@
                       ]
                     },
                     {
+                      "command_id": "0192f0c0-0000-7000-8000-000000000008",
+                      "status": "applied",
+                      "version": 1,
+                      "revision": 14,
+                      "cascaded": null
+                    },
+                    {
                       "command_id": "0192f0c0-0000-7000-8000-000000000001",
                       "status": "duplicate",
                       "original": {
@@ -1797,7 +1824,7 @@
                       }
                     }
                   ],
-                  "head_revision": 13
+                  "head_revision": 14
                 }
               }
             }
@@ -2002,11 +2029,31 @@
                       "version": 3,
                       "revision": 13,
                       "document": null
+                    },
+                    {
+                      "entity_type": "practice_policy",
+                      "entity_id": "0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90",
+                      "state": "active",
+                      "version": 1,
+                      "revision": 14,
+                      "document": {
+                        "day_reset": "maghrib",
+                        "calculation_method": "karachi",
+                        "madhab": "shafi",
+                        "week_start": "monday",
+                        "hijri_corrections": [
+                          {
+                            "year": 1448,
+                            "month": 5,
+                            "offset_days": -1
+                          }
+                        ]
+                      }
                     }
                   ],
-                  "next_after": 13,
+                  "next_after": 14,
                   "has_more": false,
-                  "head_revision": 13
+                  "head_revision": 14
                 }
               }
             }
@@ -3098,9 +3145,10 @@
         "enum": [
           "custom_dhikr",
           "user_tag",
-          "dhikr_personal"
+          "dhikr_personal",
+          "practice_policy"
         ],
-        "description": "What a sync entity is (contracts/sync/v1/README.md)."
+        "description": "What a sync entity is (contracts/sync/v1/README.md). practice_policy is one per account, with the account ID as its entity_id."
       },
       "SyncVersion": {
         "type": "integer",
@@ -3301,6 +3349,87 @@
           }
         }
       },
+      "PracticePolicyDocument": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "day_reset",
+          "calculation_method",
+          "madhab",
+          "week_start",
+          "hijri_corrections"
+        ],
+        "description": "The account practice policy (practice-settings.schema.json `practice_policy_document`, slice 3d). Device context (time zone, location) is never part of it. Corrections must also be one per month and keep every month 29 or 30 days (practice_policy_validity.json).",
+        "properties": {
+          "day_reset": {
+            "type": "string",
+            "enum": [
+              "midnight",
+              "maghrib"
+            ]
+          },
+          "calculation_method": {
+            "type": "string",
+            "enum": [
+              "karachi",
+              "north_america",
+              "muslim_world_league",
+              "egyptian",
+              "umm_al_qura",
+              "moonsighting_committee",
+              "dubai",
+              "kuwait",
+              "qatar",
+              "singapore"
+            ]
+          },
+          "madhab": {
+            "type": "string",
+            "enum": [
+              "shafi",
+              "hanafi"
+            ]
+          },
+          "week_start": {
+            "type": "string",
+            "enum": [
+              "saturday",
+              "sunday",
+              "monday"
+            ]
+          },
+          "hijri_corrections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "year",
+                "month",
+                "offset_days"
+              ],
+              "description": "Moves a Hijri month's start, and every later month's until the next correction.",
+              "properties": {
+                "year": {
+                  "type": "integer",
+                  "minimum": 1400,
+                  "maximum": 1500
+                },
+                "month": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 12
+                },
+                "offset_days": {
+                  "type": "integer",
+                  "minimum": -2,
+                  "maximum": 2
+                }
+              }
+            }
+          }
+        }
+      },
       "SyncDocument": {
         "description": "The entity's whole document; which one depends on entity_type.",
         "oneOf": [
@@ -3312,6 +3441,9 @@
           },
           {
             "$ref": "#/components/schemas/DhikrPersonalDocument"
+          },
+          {
+            "$ref": "#/components/schemas/PracticePolicyDocument"
           }
         ]
       },
@@ -3612,7 +3744,8 @@
               "delete_not_allowed",
               "command_id_reused",
               "audio_not_found",
-              "audio_mismatch"
+              "audio_mismatch",
+              "entity_id_invalid"
             ]
           },
           "fields": {

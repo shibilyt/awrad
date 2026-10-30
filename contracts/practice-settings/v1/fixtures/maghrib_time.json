@@ -1,0 +1,372 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "maghrib_time",
+  "description": "Maghrib on a local date at a place, with a calculation method: sunset, plus the method's Maghrib adjustment (3 minutes for dubai and moonsighting_committee). Platforms compute it with the adhan library and must agree within 60 seconds; the expected instants are rounded to the minute, as adhan rounds. null when the sun doesn't set or rise that day, and then the Maghrib reset falls back to midnight. The madhab doesn't affect Maghrib.",
+  "references": [
+    "CONTEXT.md#practice-settings-language (Effective practice day)",
+    "contracts/goal-model/v1/fixtures/effective_practice_day.json",
+    "awrad_server/assets/js/practice_day.js:24-76",
+    "awrad-ios/awrad/awrad/Core/AppServices.swift:995-1115"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "date",
+      "latitude",
+      "longitude",
+      "calculation_method"
+    ],
+    "properties": {
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      },
+      "latitude": {
+        "type": "number",
+        "minimum": -90,
+        "maximum": 90
+      },
+      "longitude": {
+        "type": "number",
+        "minimum": -180,
+        "maximum": 180
+      },
+      "calculation_method": {
+        "$ref": "urn:awrad:practice-settings:1#/$defs/calculation_method"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "maghrib"
+    ],
+    "properties": {
+      "maghrib": {
+        "oneOf": [
+          {
+            "$ref": "urn:awrad:goal-model:1#/$defs/instant"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "kozhikode_karachi",
+      "description": "Kozhikode with the default method: plain sunset.",
+      "given": {
+        "date": "2026-10-29",
+        "latitude": 11.2588,
+        "longitude": 75.7804,
+        "calculation_method": "karachi"
+      },
+      "expect": {
+        "maghrib": "2026-10-29T12:33Z"
+      }
+    },
+    {
+      "id": "kozhikode_moonsighting_committee",
+      "description": "Moonsighting Committee adds 3 minutes to sunset.",
+      "given": {
+        "date": "2026-10-29",
+        "latitude": 11.2588,
+        "longitude": 75.7804,
+        "calculation_method": "moonsighting_committee"
+      },
+      "expect": {
+        "maghrib": "2026-10-29T12:36Z"
+      }
+    },
+    {
+      "id": "dubai_dubai",
+      "description": "The Dubai method adds 3 minutes.",
+      "given": {
+        "date": "2026-10-29",
+        "latitude": 25.2048,
+        "longitude": 55.2708,
+        "calculation_method": "dubai"
+      },
+      "expect": {
+        "maghrib": "2026-10-29T13:43Z"
+      }
+    },
+    {
+      "id": "dubai_karachi",
+      "description": "The same day in Dubai with Karachi: 3 minutes earlier.",
+      "given": {
+        "date": "2026-10-29",
+        "latitude": 25.2048,
+        "longitude": 55.2708,
+        "calculation_method": "karachi"
+      },
+      "expect": {
+        "maghrib": "2026-10-29T13:40Z"
+      }
+    },
+    {
+      "id": "makkah_umm_al_qura",
+      "description": "Makkah, Umm al-Qura.",
+      "given": {
+        "date": "2026-03-19",
+        "latitude": 21.4225,
+        "longitude": 39.8262,
+        "calculation_method": "umm_al_qura"
+      },
+      "expect": {
+        "maghrib": "2026-03-19T15:31Z"
+      }
+    },
+    {
+      "id": "riyadh_umm_al_qura_summer",
+      "description": "Riyadh in June.",
+      "given": {
+        "date": "2026-06-21",
+        "latitude": 24.7136,
+        "longitude": 46.6753,
+        "calculation_method": "umm_al_qura"
+      },
+      "expect": {
+        "maghrib": "2026-06-21T15:45Z"
+      }
+    },
+    {
+      "id": "kuwait_kuwait",
+      "description": "Kuwait.",
+      "given": {
+        "date": "2026-12-21",
+        "latitude": 29.3759,
+        "longitude": 47.9774,
+        "calculation_method": "kuwait"
+      },
+      "expect": {
+        "maghrib": "2026-12-21T13:54Z"
+      }
+    },
+    {
+      "id": "doha_qatar",
+      "description": "Doha.",
+      "given": {
+        "date": "2026-09-01",
+        "latitude": 25.2854,
+        "longitude": 51.531,
+        "calculation_method": "qatar"
+      },
+      "expect": {
+        "maghrib": "2026-09-01T14:53Z"
+      }
+    },
+    {
+      "id": "muscat_umm_al_qura",
+      "description": "Muscat.",
+      "given": {
+        "date": "2026-02-17",
+        "latitude": 23.588,
+        "longitude": 58.3829,
+        "calculation_method": "umm_al_qura"
+      },
+      "expect": {
+        "maghrib": "2026-02-17T14:03Z"
+      }
+    },
+    {
+      "id": "cairo_egyptian",
+      "description": "Cairo.",
+      "given": {
+        "date": "2026-04-30",
+        "latitude": 30.0444,
+        "longitude": 31.2357,
+        "calculation_method": "egyptian"
+      },
+      "expect": {
+        "maghrib": "2026-04-30T16:32Z"
+      }
+    },
+    {
+      "id": "london_summer_mwl",
+      "description": "London at midsummer.",
+      "given": {
+        "date": "2026-06-21",
+        "latitude": 51.5074,
+        "longitude": -0.1278,
+        "calculation_method": "muslim_world_league"
+      },
+      "expect": {
+        "maghrib": "2026-06-21T20:22Z"
+      }
+    },
+    {
+      "id": "london_winter_mwl",
+      "description": "London at midwinter.",
+      "given": {
+        "date": "2026-12-21",
+        "latitude": 51.5074,
+        "longitude": -0.1278,
+        "calculation_method": "muslim_world_league"
+      },
+      "expect": {
+        "maghrib": "2026-12-21T15:53Z"
+      }
+    },
+    {
+      "id": "new_york_dst_ends",
+      "description": "New York on the day clocks fall back: Maghrib is an instant, unaffected.",
+      "given": {
+        "date": "2026-11-01",
+        "latitude": 40.7128,
+        "longitude": -74.006,
+        "calculation_method": "north_america"
+      },
+      "expect": {
+        "maghrib": "2026-11-01T21:52Z"
+      }
+    },
+    {
+      "id": "sydney_southern_summer",
+      "description": "Sydney in December.",
+      "given": {
+        "date": "2026-12-21",
+        "latitude": -33.8688,
+        "longitude": 151.2093,
+        "calculation_method": "muslim_world_league"
+      },
+      "expect": {
+        "maghrib": "2026-12-21T09:05Z"
+      }
+    },
+    {
+      "id": "singapore_singapore",
+      "description": "Singapore.",
+      "given": {
+        "date": "2026-10-29",
+        "latitude": 1.3521,
+        "longitude": 103.8198,
+        "calculation_method": "singapore"
+      },
+      "expect": {
+        "maghrib": "2026-10-29T10:51Z"
+      }
+    },
+    {
+      "id": "quito_equator",
+      "description": "On the equator.",
+      "given": {
+        "date": "2026-10-29",
+        "latitude": -0.1807,
+        "longitude": -78.4678,
+        "calculation_method": "north_america"
+      },
+      "expect": {
+        "maghrib": "2026-10-29T23:01Z"
+      }
+    },
+    {
+      "id": "honolulu_west_longitude",
+      "description": "Far west: Maghrib is on the next UTC date.",
+      "given": {
+        "date": "2026-10-29",
+        "latitude": 21.3069,
+        "longitude": -157.8583,
+        "calculation_method": "north_america"
+      },
+      "expect": {
+        "maghrib": "2026-10-30T03:57Z"
+      }
+    },
+    {
+      "id": "auckland_east_longitude",
+      "description": "Far east, in daylight saving time.",
+      "given": {
+        "date": "2026-10-29",
+        "latitude": -36.8485,
+        "longitude": 174.7633,
+        "calculation_method": "muslim_world_league"
+      },
+      "expect": {
+        "maghrib": "2026-10-29T06:50Z"
+      }
+    },
+    {
+      "id": "reykjavik_midsummer_after_midnight",
+      "description": "Reykjavik at midsummer: the sun sets just after local midnight.",
+      "given": {
+        "date": "2026-06-21",
+        "latitude": 64.1466,
+        "longitude": -21.9426,
+        "calculation_method": "muslim_world_league"
+      },
+      "expect": {
+        "maghrib": "2026-06-22T00:04Z"
+      }
+    },
+    {
+      "id": "tromso_spring",
+      "description": "Tromsø at the equinox has a sunset.",
+      "given": {
+        "date": "2026-03-20",
+        "latitude": 69.6496,
+        "longitude": 18.956,
+        "calculation_method": "muslim_world_league"
+      },
+      "expect": {
+        "maghrib": "2026-03-20T17:02Z"
+      }
+    },
+    {
+      "id": "tromso_midnight_sun",
+      "description": "The sun doesn't set: no Maghrib, so the Maghrib reset uses midnight.",
+      "given": {
+        "date": "2026-06-21",
+        "latitude": 69.6496,
+        "longitude": 18.956,
+        "calculation_method": "muslim_world_league"
+      },
+      "expect": {
+        "maghrib": null
+      }
+    },
+    {
+      "id": "tromso_polar_night",
+      "description": "The sun doesn't rise: no Maghrib.",
+      "given": {
+        "date": "2026-12-21",
+        "latitude": 69.6496,
+        "longitude": 18.956,
+        "calculation_method": "muslim_world_league"
+      },
+      "expect": {
+        "maghrib": null
+      }
+    },
+    {
+      "id": "longyearbyen_midnight_sun",
+      "description": "Svalbard in May.",
+      "given": {
+        "date": "2026-05-15",
+        "latitude": 78.2232,
+        "longitude": 15.6267,
+        "calculation_method": "muslim_world_league"
+      },
+      "expect": {
+        "maghrib": null
+      }
+    },
+    {
+      "id": "ushuaia_southern_far",
+      "description": "Far south in December still has a sunset.",
+      "given": {
+        "date": "2026-12-21",
+        "latitude": -54.8019,
+        "longitude": -68.303,
+        "calculation_method": "muslim_world_league"
+      },
+      "expect": {
+        "maghrib": "2026-12-22T01:11Z"
+      }
+    }
+  ]
+}

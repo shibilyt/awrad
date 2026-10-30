@@ -61,6 +61,7 @@ enum Strings {
     static let signOut = text("account.sign_out")
 
     static let devicesRow = text("account.overview.devices")
+    static let practiceSettingsRow = text("account.overview.practice_settings")
     static let changePasswordRow = text("account.overview.change_password")
     static let changeEmailRow = text("account.overview.change_email")
     static let deleteAccountRow = text("account.overview.delete")

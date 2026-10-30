@@ -60,3 +60,27 @@ val verifyDhikrCatalog = tasks.register<DhikrCatalogTask>("verifyDhikrCatalog") 
 tasks.named("check") { dependsOn(verifyDhikrCatalog) }
 tasks.withType<Test>().configureEach { dependsOn(verifyDhikrCatalog) }
 tasks.matching { it.name.startsWith("lint") || it.name == "detekt" }.configureEach { dependsOn(verifyDhikrCatalog) }
+
+// The shared city list ships as a committed asset too (ARCHITECTURE.md, "Practice settings"), generated, never copied.
+fun CityListTask.configureCities(verify: Boolean) {
+    contract.set(rootDir.resolve("../contracts/places/v1/cities.json"))
+    asset.set(file("src/main/assets/cities.json"))
+    verifyOnly.set(verify)
+    regenerateCommand.set("./gradlew :core:data:generateCityList")
+}
+
+tasks.register<CityListTask>("generateCityList") {
+    description = "Regenerates the bundled city list from contracts/places."
+    configureCities(verify = false)
+}
+
+val verifyCityList = tasks.register<CityListTask>("verifyCityList") {
+    description = "Fails when the bundled city list differs from contracts/places or has unknown keys."
+    group = "verification"
+    configureCities(verify = true)
+    dependsOn(gradle.includedBuild("build-logic").task(":convention:test"))
+}
+
+tasks.named("check") { dependsOn(verifyCityList) }
+tasks.withType<Test>().configureEach { dependsOn(verifyCityList) }
+tasks.matching { it.name.startsWith("lint") || it.name == "detekt" }.configureEach { dependsOn(verifyCityList) }

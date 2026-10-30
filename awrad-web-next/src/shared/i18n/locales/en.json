@@ -82,6 +82,7 @@
       "audioStorageFailed": "Couldn't load your audio storage.",
       "signOut": "Sign out",
       "settings": "Account settings",
+      "practiceSettings": "Practice settings",
       "devices": "Devices",
       "changePassword": "Change password",
       "changeEmail": "Change email",
@@ -412,6 +413,107 @@
         "title": "Change refused",
         "ok": "OK"
       }
+    }
+  },
+  "practice": {
+    "title": "Practice settings",
+    "intro": "How your days, weeks and Hijri months are counted on every device signed in to this account.",
+    "loading": "Loading your practice settings…",
+    "retry": "Try again",
+    "close": "Close",
+    "hijriDate": "{{day}} {{month}} {{year}}",
+    "monthYear": "{{month}} {{year}}",
+    "dayReset": {
+      "title": "New day starts at",
+      "midnight": "Midnight",
+      "maghrib": "Maghrib",
+      "noLocation": "This browser has no location yet, so here the day starts at midnight. Choose a location below.",
+      "noMaghribToday": "The sun doesn't set here today, so the day starts at midnight."
+    },
+    "location": {
+      "title": "Location",
+      "intro": "For Maghrib. It stays in this browser and is never sent to Awrad.",
+      "place": "Place",
+      "none": "No location yet",
+      "current": "Your location ({{place}})",
+      "coordinates": "{{latitude}}°, {{longitude}}°",
+      "maghrib": "Maghrib today",
+      "maghribNeedsPlace": "Choose a location to see it",
+      "noMaghrib": "The sun doesn't set here today",
+      "useMine": "Use my location",
+      "chooseCity": "Choose a city",
+      "remove": "Remove location",
+      "denied": "This site isn't allowed to use your location. Allow it in your browser, or choose a city.",
+      "unavailable": "Couldn't find your location. Try again, or choose a city.",
+      "searchTitle": "Choose a city",
+      "searchLabel": "Search cities",
+      "searchLoading": "Loading cities…",
+      "searchFailed": "Couldn't load the city list.",
+      "noResults": "No city matches “{{query}}”.",
+      "results": "Cities"
+    },
+    "method": {
+      "title": "Calculation method",
+      "intro": "Dubai and Moonsighting Committee put Maghrib 3 minutes after sunset; the others change only other prayers.",
+      "karachi": "University of Islamic Sciences, Karachi",
+      "north_america": "Islamic Society of North America",
+      "muslim_world_league": "Muslim World League",
+      "egyptian": "Egyptian General Authority of Survey",
+      "umm_al_qura": "Umm al-Qura University, Makkah",
+      "moonsighting_committee": "Moonsighting Committee",
+      "dubai": "Dubai",
+      "kuwait": "Kuwait",
+      "qatar": "Qatar",
+      "singapore": "Singapore"
+    },
+    "madhab": {
+      "title": "Madhab for Asr",
+      "intro": "Changes only the time of Asr.",
+      "shafi": "Standard (Shafi'i, Maliki, Hanbali)",
+      "hanafi": "Hanafi"
+    },
+    "weekStart": {
+      "title": "Week starts on"
+    },
+    "hijri": {
+      "title": "Hijri calendar",
+      "intro": "If a month began on another day where you are, adjust it. Every device signed in to this account uses the change.",
+      "today": "Today",
+      "outsideTable": "Outside the Hijri calendar's range",
+      "adjustThis": "Adjust this month",
+      "adjustNext": "Adjust {{month}}",
+      "sheetTitle": "When did {{month}} start?",
+      "option": "{{offset}}: {{date}}",
+      "asCalculated": "As calculated (Umm al-Qura)",
+      "later_one": "1 day later",
+      "later_other": "{{count}} days later",
+      "earlier_one": "1 day earlier",
+      "earlier_other": "{{count}} days earlier",
+      "corrections": "Your corrections",
+      "noCorrections": "No corrections yet.",
+      "remove": "Remove",
+      "removeNamed": "Remove the correction for {{month}}"
+    },
+    "notice": {
+      "hijri_corrections_replaced": "Your Hijri corrections clashed with ones made on another device, so that device's were kept."
+    },
+    "failure": {
+      "rejected": "Awrad didn't accept this change. Reload the page and try again.",
+      "invalid": "This change no longer fits your Hijri corrections. Reload the page and try again."
+    },
+    "months": {
+      "1": "Muharram",
+      "2": "Safar",
+      "3": "Rabi' al-Awwal",
+      "4": "Rabi' al-Thani",
+      "5": "Jumada al-Ula",
+      "6": "Jumada al-Akhirah",
+      "7": "Rajab",
+      "8": "Sha'ban",
+      "9": "Ramadan",
+      "10": "Shawwal",
+      "11": "Dhu al-Qi'dah",
+      "12": "Dhu al-Hijjah"
     }
   }
 }

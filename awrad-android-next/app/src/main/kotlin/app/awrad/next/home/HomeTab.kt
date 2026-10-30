@@ -16,19 +16,22 @@ import app.awrad.core.designsystem.component.AwradButton
 import app.awrad.core.designsystem.component.AwradButtonVariant
 import app.awrad.core.designsystem.component.AwradTextButton
 import app.awrad.core.designsystem.component.awradBottomBarPadding
+import app.awrad.core.designsystem.icon.AwradIcons
 import app.awrad.core.designsystem.theme.AwradTheme
 import app.awrad.feature.library.FeaturedCollections
 import app.awrad.feature.library.LibraryDestination
 import app.awrad.next.R
 
 /**
- * The Home tab, a stand-in until the real home feature exists: the scaffold's note and its account and onboarding
- * links, then "Featured dhikr collections" from the library. It scrolls under the floating bottom bar.
+ * The Home tab, a stand-in until the real home feature exists: the scaffold's note and its account, data and sync,
+ * practice settings and onboarding links (the settings live here until a Settings tab exists), then "Featured dhikr
+ * collections" from the library. It scrolls under the floating bottom bar.
  */
 @Composable
 fun HomeTab(
     onOpenAccount: () -> Unit,
     onOpenDataSync: () -> Unit,
+    onOpenPracticeSettings: () -> Unit,
     onRestartOnboarding: () -> Unit,
     onNavigate: (LibraryDestination) -> Unit,
     onViewLibrary: () -> Unit,
@@ -64,6 +67,12 @@ fun HomeTab(
                 text = stringResource(R.string.home_placeholder_data_sync),
                 onClick = onOpenDataSync,
                 variant = AwradButtonVariant.Secondary,
+            )
+            AwradButton(
+                text = stringResource(R.string.home_placeholder_practice),
+                onClick = onOpenPracticeSettings,
+                variant = AwradButtonVariant.Secondary,
+                leadingIcon = AwradIcons.Practice,
             )
             AwradTextButton(
                 text = stringResource(R.string.home_placeholder_restart),

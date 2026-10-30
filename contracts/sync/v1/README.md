@@ -17,6 +17,7 @@ Everything synced is an **entity**: an `entity_type`, an `entity_id` (a UUID), a
 | `custom_dhikr` | a new UUIDv7 | `$defs/custom_dhikr_document` |
 | `user_tag` | a new UUIDv7 | `$defs/user_tag_document`: `{name, normalized_name}` |
 | `dhikr_personal` | the dhikr's ID, built-in or custom | `$defs/dhikr_personal_document`: `{tag_ids}` |
+| `practice_policy` | the account's ID | `urn:awrad:practice-settings:1#/$defs/practice_policy_document` (slice 3d, [`../../practice-settings/v1/`](../../practice-settings/v1/)) |
 
 - **Custom dhikr.** The catalog dhikr shape (`urn:awrad:dhikr-catalog:1#/$defs/dhikr`), reusing its `kind`, text and `reference` definitions, but:
   - no `id` (the `entity_id` is the ID), `key`, `aliases`, `virtues` or catalog `tags` (user tags live in `dhikr_personal`);
@@ -29,6 +30,7 @@ Everything synced is an **entity**: an `entity_type`, an `entity_id` (a UUID), a
   - a Qur'an reference's `ayah_end` is at least its `ayah_start` (equal for one ayah). The schema can't compare two members, so a reversed range is a field error `range` on `/references/N/ayah_end`; the built-in catalog has the same check in `tools/check-dhikr-catalog.mjs`.
 - **Tag.** `name` is the display form and `normalized_name` its case fold, both defined by [`fixtures/tag_name_normalization.json`](fixtures/tag_name_normalization.json). Two active tags never share a `normalized_name`.
 - **Personal record** (`dhikr_personal`): a user's own data about one dhikr. For now only its tags, in the user's order. Clients never delete one; they put `{"tag_ids": []}`.
+- **Practice policy** (`practice_policy`, slice 3d): the account's day reset, method, madhab, week start and Hijri corrections. One per account, its ID the account's; never deleted. Phones merge a conflict on it by setting instead of asking ([`../../practice-settings/v1/`](../../practice-settings/v1/)).
 
 **Versions.** 0 means "doesn't exist yet". Every applied change adds one, including a delete and a server-side cascade.
 
@@ -56,7 +58,7 @@ Everything else, including a document that breaks its schema, is a `rejected` re
 **Rules, in the order the server checks them** (the spec is [`fixtures/sync_receipts.json`](fixtures/sync_receipts.json)):
 
 1. **Receipt store.** A `command_id` it has seen with the same payload (entity_type, entity_id, op, base_version, document) is a `duplicate` carrying the original receipt. With a different payload it's `rejected` with `command_id_reused`, and that rejection isn't stored.
-2. A `dhikr_personal` delete is `rejected` with `delete_not_allowed`.
+2. A `dhikr_personal` or `practice_policy` delete is `rejected` with `delete_not_allowed`. A `practice_policy` whose `entity_id` isn't the account's ID is `rejected` with `entity_id_invalid`, with a `mismatch` error on `/entity_id`.
 3. **Document.** A put's document must match its schema and the limits below. Otherwise it's `rejected` with `document_invalid` (with `fields`) or `document_too_large`.
 4. **Entity state.**
    - A `user_tag` ID that is a merged alias, or a deleted entity, is `gone`.
@@ -163,7 +165,7 @@ The rules are in [`fixtures/apply_changes.json`](fixtures/apply_changes.json).
    |---|---|
    | `applied` | Records the version, and sets the known version of each `cascaded` entity it has (removing a deleted one) |
    | `duplicate` | Acts as its original |
-   | `conflict` | Keeps the local edit and opens a conflict ("Changed on another device": **Keep mine** re-queues it on the server's version, **Use theirs** takes the server's copy). Later unsent commands for the entity are dropped |
+   | `conflict` | Keeps the local edit and opens a conflict ("Changed on another device": **Keep mine** re-queues it on the server's version, **Use theirs** takes the server's copy). Later unsent commands for the entity are dropped. A `practice_policy` opens no conflict: it merges by setting and re-queues the result ([`../../practice-settings/v1/README.md`](../../practice-settings/v1/README.md)) |
    | `merged` | Rewrites the tag ID everywhere locally, in documents and unsent commands |
    | `gone` | Removes the entity |
    | `rejected` | Restores the server's copy, or removes the entity, and tells the user. Except `audio_not_found` and `audio_mismatch` on a custom dhikr put (below) |
@@ -194,7 +196,7 @@ Each account's data lives in its own **profile**, a separate local database. A r
   - **Add to my account** adopts it and queues every entity as a put;
   - **Erase** replaces it with a fresh download.
 
-  An empty anonymous profile is adopted silently.
+  An empty anonymous profile is adopted silently. The practice policy isn't one of the profile's entities until then, and doesn't count as data here: it follows its own first-sign-in rule ([`../../practice-settings/v1/README.md`](../../practice-settings/v1/README.md)).
 - **Signing out** keeps the active profile. Its edits are queued but not sent.
 - **Signing in again** as the same account sends its queue without asking.
 - **Signing in as another account** switches to that account's profile, creating it if needed. The other profiles, unsent commands included, stay untouched.
@@ -216,10 +218,10 @@ Each account's data lives in its own **profile**, a separate local database. A r
 |---|---|---|
 | `tag_name_normalization.json` | All four | Display and normalized tag names, limits |
 | `custom_dhikr_validity.json` | All four | Which custom dhikr documents are valid, with `{field, code}` errors |
-| `sync_receipts.json` | Server | A state (entities, receipts, tag aliases, audio assets) and a batch: receipts, head, changes, aliases, stored receipts |
+| `sync_receipts.json` | Server | A state (account ID, entities, receipts, tag aliases, audio assets) and a batch: receipts, head, changes, aliases, stored receipts |
 | `sync_changes_feed.json` | Server | Entities, `after`, `limit`: the page |
 | `outbox_enqueue.json` | Android, iOS | Known versions, queue and an edit: the queue |
-| `apply_changes.json` | Android, iOS | Local state, which recording files are on the phone, and a page, receipts or a resolution: local state, uploads queued again and notices |
+| `apply_changes.json` | Android, iOS | Local state, which recording files are on the phone, and a page, receipts or a resolution: local state, uploads queued again and notices. A `practice_policy` carries its `base_document` |
 | `profile_switch.json` | Android, iOS | Registry, event and choice: the prompt, the registry, what's queued, merged, synced and erased |
 
 `npm test` in `contracts/` validates the fixtures and runs `tools/check-sync-contract.mjs`. That script checks that:

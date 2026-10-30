@@ -1,0 +1,749 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "practice_policy_merge",
+  "description": "Merge by setting, when a practice_policy put conflicts (phones) or is refused as stale (web): every setting where mine differs from the base keeps mine, the rest is theirs, and Hijri corrections merge month by month. Corrections that aren't valid after the merge fall back to theirs, with the notice hijri_corrections_replaced. requeue says whether the merged document differs from theirs and must be sent.",
+  "references": [
+    "docs/slices/03d-practice-settings.md (Design: On phones, Conflict)",
+    "awrad-android/app/src/main/java/app/awrad/awrad_dhikrgoalstracker/data/sync/PracticeSettingsRepository.kt:96-99"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "base",
+      "mine",
+      "theirs"
+    ],
+    "properties": {
+      "base": {
+        "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document",
+        "description": "The server copy mine was edited from; the default policy when the phone knew none."
+      },
+      "mine": {
+        "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document"
+      },
+      "theirs": {
+        "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document",
+        "description": "The server's current copy (the conflict receipt's current.document)."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "document",
+      "requeue",
+      "notice"
+    ],
+    "properties": {
+      "document": {
+        "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document"
+      },
+      "requeue": {
+        "type": "boolean"
+      },
+      "notice": {
+        "oneOf": [
+          {
+            "const": "hijri_corrections_replaced"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "nothing_changed_takes_theirs",
+      "description": "Mine equals the base: the phone takes theirs and queues nothing.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "theirs": {
+          "day_reset": "maghrib",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "sunday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "maghrib",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "sunday",
+          "hijri_corrections": []
+        },
+        "requeue": false,
+        "notice": null
+      }
+    },
+    {
+      "id": "my_setting_and_their_setting",
+      "description": "Each side changed a different setting: both survive.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "maghrib",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "sunday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "maghrib",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "sunday",
+          "hijri_corrections": []
+        },
+        "requeue": true,
+        "notice": null
+      }
+    },
+    {
+      "id": "same_setting_mine_wins",
+      "description": "Both changed the method: mine, the later send, wins.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "midnight",
+          "calculation_method": "dubai",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "muslim_world_league",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "dubai",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "requeue": true,
+        "notice": null
+      }
+    },
+    {
+      "id": "same_change_on_both",
+      "description": "Both made the same change: theirs already has it, so nothing is queued.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "midnight",
+          "calculation_method": "dubai",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "dubai",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "dubai",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "requeue": false,
+        "notice": null
+      }
+    },
+    {
+      "id": "unchanged_setting_follows_theirs",
+      "description": "A setting mine left as the base follows theirs, even back to a default.",
+      "given": {
+        "base": {
+          "day_reset": "maghrib",
+          "calculation_method": "karachi",
+          "madhab": "hanafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "maghrib",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "hanafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "requeue": true,
+        "notice": null
+      }
+    },
+    {
+      "id": "corrections_different_months_combine",
+      "description": "Corrections for different months combine.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            }
+          ]
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 3,
+              "offset_days": 1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 3,
+              "offset_days": 1
+            },
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            }
+          ]
+        },
+        "requeue": true,
+        "notice": null
+      }
+    },
+    {
+      "id": "correction_same_month_mine_wins",
+      "description": "Both corrected one month: mine wins.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": -1
+            }
+          ]
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": 0
+            }
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": -1
+            }
+          ]
+        },
+        "requeue": true,
+        "notice": null
+      }
+    },
+    {
+      "id": "correction_removed_by_me",
+      "description": "A month mine removed stays removed; theirs' other months stay.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            }
+          ]
+        },
+        "mine": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 3,
+              "offset_days": 1
+            },
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 3,
+              "offset_days": 1
+            }
+          ]
+        },
+        "requeue": true,
+        "notice": null
+      }
+    },
+    {
+      "id": "removal_beats_their_change",
+      "description": "Mine removed a month theirs changed: the removal wins.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            }
+          ]
+        },
+        "mine": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 0
+            }
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "requeue": true,
+        "notice": null
+      }
+    },
+    {
+      "id": "their_removal_kept",
+      "description": "Theirs removed a month mine left alone: it stays removed, and nothing is queued.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            }
+          ]
+        },
+        "mine": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            }
+          ]
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "requeue": false,
+        "notice": null
+      }
+    },
+    {
+      "id": "merged_corrections_invalid_keep_theirs",
+      "description": "1448/4 later on mine and 1448/5 earlier on theirs would make 1448/4 two days short: theirs' corrections stay, with a notice; mine's other change still wins.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "maghrib",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 4,
+              "offset_days": 1
+            }
+          ]
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": -1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "maghrib",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": -1
+            }
+          ]
+        },
+        "requeue": true,
+        "notice": "hijri_corrections_replaced"
+      }
+    },
+    {
+      "id": "merged_corrections_invalid_nothing_else",
+      "description": "The same clash with no other change: theirs as it is, nothing queued, and the notice.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 4,
+              "offset_days": 1
+            }
+          ]
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": -1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 5,
+              "offset_days": -1
+            }
+          ]
+        },
+        "requeue": false,
+        "notice": "hijri_corrections_replaced"
+      }
+    },
+    {
+      "id": "first_seed_race",
+      "description": "Two phones seeded an unset account; the second merges against the default policy.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "maghrib",
+          "calculation_method": "dubai",
+          "madhab": "shafi",
+          "week_start": "saturday",
+          "hijri_corrections": []
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "umm_al_qura",
+          "madhab": "hanafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "maghrib",
+          "calculation_method": "dubai",
+          "madhab": "hanafi",
+          "week_start": "saturday",
+          "hijri_corrections": []
+        },
+        "requeue": true,
+        "notice": null
+      }
+    },
+    {
+      "id": "result_sorted",
+      "description": "Merged corrections are sorted by year, then month, whatever order theirs used.",
+      "given": {
+        "base": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": []
+        },
+        "mine": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1448,
+              "month": 7,
+              "offset_days": 1
+            }
+          ]
+        },
+        "theirs": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            },
+            {
+              "year": 1447,
+              "month": 3,
+              "offset_days": 1
+            }
+          ]
+        }
+      },
+      "expect": {
+        "document": {
+          "day_reset": "midnight",
+          "calculation_method": "karachi",
+          "madhab": "shafi",
+          "week_start": "monday",
+          "hijri_corrections": [
+            {
+              "year": 1447,
+              "month": 3,
+              "offset_days": 1
+            },
+            {
+              "year": 1447,
+              "month": 9,
+              "offset_days": 1
+            },
+            {
+              "year": 1448,
+              "month": 7,
+              "offset_days": 1
+            }
+          ]
+        },
+        "requeue": true,
+        "notice": null
+      }
+    }
+  ]
+}

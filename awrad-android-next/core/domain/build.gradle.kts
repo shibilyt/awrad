@@ -9,6 +9,8 @@ dependencies {
     // DhikrCatalog.parse reads the bundled catalog.json; the change queue's documents are JSON objects
     // (contracts/sync/v1), so the sync types expose kotlinx.serialization's JsonObject.
     api(libs.kotlinx.serialization.json)
+    // Maghrib for the day reset (contracts/practice-settings/v1, maghrib_time): adhan-kotlin, plain JVM.
+    implementation(libs.adhan)
     testImplementation(project(":core:testing"))
 }
 
@@ -55,6 +57,13 @@ tasks.test {
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(fileTree(rootDir.resolve("../contracts/sync")))
         .withPropertyName("syncFixtures")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.files(fileTree(rootDir.resolve("../contracts/practice-settings")))
+        .withPropertyName("practiceSettingsFixtures")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    // The city search fixtures run over the contract's cities.json.
+    inputs.files(fileTree(rootDir.resolve("../contracts/places")))
+        .withPropertyName("places")
         .withPathSensitivity(PathSensitivity.RELATIVE)
     // The dhikr search fixtures run over the contract's catalog.json, which the catalog tests parse too.
     inputs.files(fileTree(rootDir.resolve("../contracts/dhikr-catalog")))

@@ -133,7 +133,7 @@ Each slice goes contract → server → Android → iOS → web and is done only
 | 3a | Dhikr catalog and library: one shared built-in catalog (`contracts/dhikr-catalog/v1/`), collections as data, search, dhikr detail by kind, built-in audio ([brief](slices/03a-dhikr-catalog.md)) | [x] 2026-10-27 |
 | 3b | Custom dhikrs, tags and the change queue: create, edit, delete offline on phones and online on the web; sync when signed in ([brief](slices/03b-custom-dhikrs-sync.md)) | [x] 2026-10-28 |
 | 3c | Private audio upload for custom dhikrs (R2 bucket `awrad-private-dhikr`, signed in): 10 MB per file, 500 MB per account, MP3 and M4A/AAC ([brief](slices/03c-audio-upload.md)) | [x] 2026-10-29 |
-| 3d | Practice settings (proposed): day reset, week start, Hijri corrections, location and device context, the account policy API | [ ] |
+| 3d | Practice settings: day reset, method and madhab, week start, Hijri corrections in the change queue; location on the device only, with a bundled city list ([brief](slices/03d-practice-settings.md)) | [x] 2026-10-30 |
 | 4 | Goals: create, edit, evaluate; offline-first on mobile; synced through the change queue from 3b | [ ] |
 | 5 | Counting and progress sync | [ ] |
 | 6 | Onboarding: the full first-run flow (intro, language, and the steps that set up practice settings, reminders and a first goal), built after 3d and 4 (decided 2026-10-29). Optional sign-in only, never a gate (ADR-2026-10-28) | [ ] |

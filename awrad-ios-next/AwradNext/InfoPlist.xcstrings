@@ -1,0 +1,14 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSLocationWhenInUseUsageDescription" : {
+      "comment" : "The location permission prompt's explanation (Practice settings, Use my location).",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "يستخدم أوراد موقعك فقط لمعرفة وقت المغرب الذي يبدأ عنده يومك، ويبقى موقعك على هذا الهاتف." } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Awrad uses your location only to find Maghrib, for when your day starts. It stays on this phone." } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "നിങ്ങളുടെ ദിവസം തുടങ്ങുന്ന മഗ്‌രിബ് സമയം കണ്ടെത്താൻ മാത്രമാണ് അവ്‌റാദ് നിങ്ങളുടെ സ്ഥലം ഉപയോഗിക്കുന്നത്. അത് ഈ ഫോണിൽ മാത്രം നിലനിൽക്കും." } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

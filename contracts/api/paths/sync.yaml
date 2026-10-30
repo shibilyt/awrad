@@ -28,7 +28,8 @@ commands:
       already has; the new ID becomes an alias), `gone` (the entity is deleted, or is a merged tag ID) and `rejected`
       (`code`, `fields`, and the server's copy or null; `audio_not_found` when a custom dhikr names an audio asset
       that isn't a ready asset of the account, `audio_mismatch` when its size or type isn't the asset's,
-      contracts/audio/v1). Receipts are kept for 90 days.
+      contracts/audio/v1; `entity_id_invalid` when a `practice_policy` entity_id isn't the account's ID;
+      `delete_not_allowed` for a `dhikr_personal` or `practice_policy` delete). Receipts are kept for 90 days.
 
 
       `Idempotency-Key` isn't needed: each command is idempotent by its `command_id` (STYLE §10). The server accepts
@@ -126,6 +127,20 @@ commands:
                 entity_id: 0192f0a0-0000-7000-8000-000000000002
                 op: delete
                 base_version: 2
+              - command_id: 0192f0c0-0000-7000-8000-000000000008
+                entity_type: practice_policy
+                entity_id: 0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90
+                op: put
+                base_version: 0
+                document:
+                  day_reset: maghrib
+                  calculation_method: karachi
+                  madhab: shafi
+                  week_start: monday
+                  hijri_corrections:
+                    - year: 1448
+                      month: 5
+                      offset_days: -1
               - command_id: 0192f0c0-0000-7000-8000-000000000001
                 entity_type: custom_dhikr
                 entity_id: 0192f0d0-0000-7000-8000-000000000002
@@ -241,6 +256,11 @@ commands:
                       state: active
                       version: 3
                       revision: 13
+                - command_id: 0192f0c0-0000-7000-8000-000000000008
+                  status: applied
+                  version: 1
+                  revision: 14
+                  cascaded: null
                 - command_id: 0192f0c0-0000-7000-8000-000000000001
                   status: duplicate
                   original:
@@ -249,7 +269,7 @@ commands:
                     version: 1
                     revision: 11
                     cascaded: null
-              head_revision: 13
+              head_revision: 14
       "400":
         $ref: "../openapi.yaml#/components/responses/BadRequest"
       "401":
@@ -394,9 +414,23 @@ changes:
                   version: 3
                   revision: 13
                   document: null
-              next_after: 13
+                - entity_type: practice_policy
+                  entity_id: 0b6f6a1e-6c1f-4b8e-9a51-2f3d7c1e8a90
+                  state: active
+                  version: 1
+                  revision: 14
+                  document:
+                    day_reset: maghrib
+                    calculation_method: karachi
+                    madhab: shafi
+                    week_start: monday
+                    hijri_corrections:
+                      - year: 1448
+                        month: 5
+                        offset_days: -1
+              next_after: 14
               has_more: false
-              head_revision: 13
+              head_revision: 14
       "400":
         $ref: "../openapi.yaml#/components/responses/BadRequest"
       "401":

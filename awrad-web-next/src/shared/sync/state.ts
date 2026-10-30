@@ -18,7 +18,13 @@ import type {
  * to protect: the server's word always wins here, and the changes feed is reread after each edit.
  */
 
-export const EMPTY_STATE: SyncState = { custom_dhikr: {}, user_tag: {}, dhikr_personal: {}, headRevision: 0 };
+export const EMPTY_STATE: SyncState = {
+  custom_dhikr: {},
+  user_tag: {},
+  dhikr_personal: {},
+  practice_policy: {},
+  headRevision: 0,
+};
 
 /** A copy of the state being changed. */
 type Draft = { -readonly [T in EntityType]: Record<string, Entity<DocumentOf[T]>> } & { headRevision: number };
@@ -28,6 +34,7 @@ function copy(state: SyncState): Draft {
     custom_dhikr: { ...state.custom_dhikr },
     user_tag: { ...state.user_tag },
     dhikr_personal: { ...state.dhikr_personal },
+    practice_policy: { ...state.practice_policy },
     headRevision: state.headRevision,
   };
 }

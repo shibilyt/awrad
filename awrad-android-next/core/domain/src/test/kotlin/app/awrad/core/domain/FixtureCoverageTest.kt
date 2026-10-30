@@ -96,6 +96,29 @@ class FixtureCoverageTest {
         )
     }
 
+    @Test
+    fun `every practice-settings rule file has a runner`() {
+        assertEquals(
+            setOf(
+                "practice_policy_validity", // practice.PracticePolicyValidityFixtureTest
+                "practice_policy_merge", // practice.PracticePolicyMergeFixtureTest
+                "practice_policy_first_sign_in", // practice.PracticePolicyFirstSignInFixtureTest
+                "maghrib_time", // practice.MaghribTimeFixtureTest
+            ),
+            FixtureRunner.rules(FixtureModel.PRACTICE_SETTINGS),
+        )
+    }
+
+    @Test
+    fun `every places rule file has a runner`() {
+        assertEquals(
+            setOf(
+                "city_search", // places.CitySearchFixtureTest
+            ),
+            FixtureRunner.rules(FixtureModel.PLACES),
+        )
+    }
+
     private companion object {
         /** The server's protocol spec (contracts/sync/v1/README.md, "Fixtures"): phones don't run these. */
         val SERVER_ONLY_SYNC_RULES = setOf("sync_receipts", "sync_changes_feed")

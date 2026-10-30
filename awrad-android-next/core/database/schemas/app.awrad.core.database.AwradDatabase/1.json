@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "6fc6e0bb4b130506612453ca43386122",
+    "identityHash": "d30a84fe312a989176707ffadfa46a71",
     "entities": [
       {
         "tableName": "goals",
@@ -466,12 +466,68 @@
           }
         ],
         "foreignKeys": []
+      },
+      {
+        "tableName": "practice_policy",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `entity_id` TEXT, `known_version` INTEGER NOT NULL, `document` TEXT NOT NULL, `base_document` TEXT, `chosen` INTEGER NOT NULL, `seed_pending` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entityId",
+            "columnName": "entity_id",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "knownVersion",
+            "columnName": "known_version",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "document",
+            "columnName": "document",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseDocument",
+            "columnName": "base_document",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "chosen",
+            "columnName": "chosen",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "seedPending",
+            "columnName": "seed_pending",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [],
+        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6fc6e0bb4b130506612453ca43386122')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd30a84fe312a989176707ffadfa46a71')"
     ]
   }
 }

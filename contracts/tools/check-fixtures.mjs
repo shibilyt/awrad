@@ -49,7 +49,10 @@ const fileSchema = JSON.parse(readFileSync(join(root, "fixture.schema.json"), "u
 const validateFile = newAjv().compile(fileSchema);
 const format = (errors) => errors.map((e) => `${e.instancePath || "/"} ${e.message}`).join("; ");
 
-/** Returns the problems in one fixture file, or null if it isn't an awrad-fixture/1 file. */
+/**
+ * Returns the problems in one fixture file, or null if it isn't one: no `format`, or a format of another family
+ * (such as the city list's awrad-cities/1). Any awrad-fixture format is checked, so awrad-fixture/2 is an error.
+ */
 export function checkFixtureFile(path) {
   let doc;
   try {
@@ -57,7 +60,7 @@ export function checkFixtureFile(path) {
   } catch (error) {
     return [`invalid JSON: ${error.message}`];
   }
-  if (doc?.format === undefined) return null;
+  if (!String(doc?.format ?? "").startsWith("awrad-fixture")) return null;
   if (!validateFile(doc)) return [format(validateFile.errors)];
 
   const problems = [];

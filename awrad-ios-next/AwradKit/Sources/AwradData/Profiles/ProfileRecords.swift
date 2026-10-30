@@ -192,11 +192,36 @@ final class AudioNoticeRecord {
     }
 }
 
+/// The profile's practice policy (slice 3d): one row, or none for the default policy. Every
+/// profile has its own, the anonymous one included; in an account's profile it's the
+/// `practice_policy` entity, whose ID is the account's.
+@Model
+final class PracticePolicyRecord {
+    /// The local policy's wire JSON.
+    var document: Data
+    /// The server copy it was edited from, which a conflict merges against; `nil` for none known
+    /// (the default policy).
+    var baseDocument: Data?
+    /// The user changed a setting since the profile was created (the first-sign-in rule).
+    var chosen: Bool
+    /// The anonymous policy at the first sign-in, kept until the account's first full read of the
+    /// changes feed decides whose policy wins (`PracticePolicy.afterSignIn`); `nil` otherwise.
+    var signInDocument: Data?
+    var signInChosen: Bool
+
+    init(document: Data, baseDocument: Data? = nil, chosen: Bool = false) {
+        self.document = document
+        self.baseDocument = baseDocument
+        self.chosen = chosen
+        signInChosen = false
+    }
+}
+
 /// The schema of a profile's database.
 enum ProfileSchema {
     static let schema = Schema([
         CustomDhikrRecord.self, UserTagRecord.self, DhikrPersonalRecord.self, KnownVersionRecord.self,
         OutboxCommandRecord.self, SyncConflictRecord.self, SyncNoticeRecord.self, SyncPositionRecord.self,
-        AudioUploadRecord.self, AudioNoticeRecord.self,
+        AudioUploadRecord.self, AudioNoticeRecord.self, PracticePolicyRecord.self,
     ])
 }

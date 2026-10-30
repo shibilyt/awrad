@@ -20,6 +20,7 @@ import { Route as AccountIndexRouteImport } from './routes/account/index'
 import { Route as AccountDeleteRouteImport } from './routes/account/delete'
 import { Route as AccountDevicesRouteImport } from './routes/account/devices'
 import { Route as AccountPasswordRouteImport } from './routes/account/password'
+import { Route as AccountPracticeRouteImport } from './routes/account/practice'
 import { Route as LibraryIndexRouteImport } from './routes/library/index'
 import { Route as LibraryTagsRouteImport } from './routes/library/tags'
 import { Route as LibraryYoursRouteImport } from './routes/library/yours'
@@ -85,6 +86,11 @@ const AccountPasswordRoute = AccountPasswordRouteImport.update({
   path: '/password',
   getParentRoute: () => AccountRoute,
 } as any)
+const AccountPracticeRoute = AccountPracticeRouteImport.update({
+  id: '/practice',
+  path: '/practice',
+  getParentRoute: () => AccountRoute,
+} as any)
 const LibraryIndexRoute = LibraryIndexRouteImport.update({
   id: '/library/',
   path: '/library/',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/account/delete': typeof AccountDeleteRoute
   '/account/devices': typeof AccountDevicesRoute
   '/account/password': typeof AccountPasswordRoute
+  '/account/practice': typeof AccountPracticeRoute
   '/library/tags': typeof LibraryTagsRoute
   '/library/yours': typeof LibraryYoursRoute
   '/account/': typeof AccountIndexRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/account/delete': typeof AccountDeleteRoute
   '/account/devices': typeof AccountDevicesRoute
   '/account/password': typeof AccountPasswordRoute
+  '/account/practice': typeof AccountPracticeRoute
   '/library/tags': typeof LibraryTagsRoute
   '/library/yours': typeof LibraryYoursRoute
   '/account': typeof AccountIndexRoute
@@ -186,6 +194,7 @@ export interface FileRoutesById {
   '/account/delete': typeof AccountDeleteRoute
   '/account/devices': typeof AccountDevicesRoute
   '/account/password': typeof AccountPasswordRoute
+  '/account/practice': typeof AccountPracticeRoute
   '/library/tags': typeof LibraryTagsRoute
   '/library/yours': typeof LibraryYoursRoute
   '/account/': typeof AccountIndexRoute
@@ -210,6 +219,7 @@ export interface FileRouteTypes {
     | '/account/delete'
     | '/account/devices'
     | '/account/password'
+    | '/account/practice'
     | '/library/tags'
     | '/library/yours'
     | '/account/'
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
     | '/account/delete'
     | '/account/devices'
     | '/account/password'
+    | '/account/practice'
     | '/library/tags'
     | '/library/yours'
     | '/account'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/account/delete'
     | '/account/devices'
     | '/account/password'
+    | '/account/practice'
     | '/library/tags'
     | '/library/yours'
     | '/account/'
@@ -361,6 +373,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountPasswordRouteImport
       parentRoute: typeof AccountRoute
     }
+    '/account/practice': {
+      id: '/account/practice'
+      path: '/practice'
+      fullPath: '/account/practice'
+      preLoaderRoute: typeof AccountPracticeRouteImport
+      parentRoute: typeof AccountRoute
+    }
     '/library/': {
       id: '/library/'
       path: '/library'
@@ -431,6 +450,7 @@ interface AccountRouteChildren {
   AccountDeleteRoute: typeof AccountDeleteRoute
   AccountDevicesRoute: typeof AccountDevicesRoute
   AccountPasswordRoute: typeof AccountPasswordRoute
+  AccountPracticeRoute: typeof AccountPracticeRoute
   AccountIndexRoute: typeof AccountIndexRoute
   AccountEmailConfirmRoute: typeof AccountEmailConfirmRoute
   AccountEmailIndexRoute: typeof AccountEmailIndexRoute
@@ -440,6 +460,7 @@ const AccountRouteChildren: AccountRouteChildren = {
   AccountDeleteRoute: AccountDeleteRoute,
   AccountDevicesRoute: AccountDevicesRoute,
   AccountPasswordRoute: AccountPasswordRoute,
+  AccountPracticeRoute: AccountPracticeRoute,
   AccountIndexRoute: AccountIndexRoute,
   AccountEmailConfirmRoute: AccountEmailConfirmRoute,
   AccountEmailIndexRoute: AccountEmailIndexRoute,

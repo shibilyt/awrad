@@ -20,6 +20,11 @@ public protocol SyncLocalState {
     /// Records the version, or forgets it for `nil`.
     mutating func setKnownVersion(_ version: Int?, for key: SyncEntityKey)
 
+    /// A `practice_policy`'s base: the server document its local document was edited from, which
+    /// a conflict merges against (slice 3d). `nil` when the phone knows none (the default policy).
+    func baseDocument(_ key: SyncEntityKey) -> SyncDocument?
+    mutating func setBaseDocument(_ document: SyncDocument?, for key: SyncEntityKey)
+
     mutating func appendCommand(_ command: OutboxCommand)
     /// Inserts a command at `index` of the outbox (at the end when `index` is past it); the
     /// commands from there on move back one.
@@ -57,16 +62,20 @@ public struct InMemorySyncState: SyncLocalState, Hashable, Sendable {
     public var after: Int
     public var documents: [SyncEntityKey: SyncDocument]
     public var knownVersions: [SyncEntityKey: Int]
+    /// `practice_policy` bases.
+    public var baseDocuments: [SyncEntityKey: SyncDocument]
     public private(set) var outbox: [OutboxCommand]
     public var conflicts: [SyncEntityKey: SyncConflict]
 
     public init(
         after: Int = 0, documents: [SyncEntityKey: SyncDocument] = [:], knownVersions: [SyncEntityKey: Int] = [:],
-        outbox: [OutboxCommand] = [], conflicts: [SyncEntityKey: SyncConflict] = [:]
+        baseDocuments: [SyncEntityKey: SyncDocument] = [:], outbox: [OutboxCommand] = [],
+        conflicts: [SyncEntityKey: SyncConflict] = [:]
     ) {
         self.after = after
         self.documents = documents
         self.knownVersions = knownVersions
+        self.baseDocuments = baseDocuments
         self.outbox = outbox
         self.conflicts = conflicts
     }
@@ -75,6 +84,11 @@ public struct InMemorySyncState: SyncLocalState, Hashable, Sendable {
     public mutating func setDocument(_ document: SyncDocument?, for key: SyncEntityKey) { documents[key] = document }
     public func knownVersion(_ key: SyncEntityKey) -> Int { knownVersions[key] ?? 0 }
     public mutating func setKnownVersion(_ version: Int?, for key: SyncEntityKey) { knownVersions[key] = version }
+    public func baseDocument(_ key: SyncEntityKey) -> SyncDocument? { baseDocuments[key] }
+
+    public mutating func setBaseDocument(_ document: SyncDocument?, for key: SyncEntityKey) {
+        baseDocuments[key] = document
+    }
 
     public mutating func appendCommand(_ command: OutboxCommand) { outbox.append(command) }
 

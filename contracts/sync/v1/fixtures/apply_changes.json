@@ -1,13 +1,14 @@
 {
   "format": "awrad-fixture/1",
   "rule": "apply_changes",
-  "description": "How a phone applies what comes back from the server (Android and iOS). Given its local state (feed position `after`, entities with their known server versions, the queue, open conflicts) and one step (a changes page, the receipts for the queue's sent commands, or the user resolving a conflict), the local state afterwards and any notices for the user. Page: a delete removes the entity and cleans up exactly as a `gone` receipt does, even when the entity has queued commands or an open conflict: its unsent commands are dropped (sent ones wait for their receipts) and its conflict is closed; a delete of something the phone doesn't have is ignored. Any other change to an entity with a queued command or an open conflict updates only its known version (and the conflict's server copy); otherwise an active change is stored (unless older than the known version); then after = next_after. The page is applied in one transaction. Receipts, matched in order to the sent commands, each remove its command: applied records the version and closes any conflict, and applies each `cascaded` entry (a user_tag or custom_dhikr delete's cascades) to an entity the phone has as a page change would: an active one sets its known version unless older, a deleted one removes it; duplicate acts as its original; conflict keeps the local document, drops later unsent commands for the entity and opens a conflict; merged moves every local use of the tag ID to the surviving tag; gone removes the entity; rejected restores the server's copy (or removes the entity when there is none) and adds a notice, except for a custom_dhikr put rejected with audio_not_found or audio_mismatch, which loses nothing: the phone keeps its local document, with audio {\"local_only\": true} and the recording queued for upload again if its file is still on the phone (local_audio_files), or audio null otherwise; its known version becomes the server's (0 when current is null); the entity's unsent commands are replaced by one put of that document on that version, queued where the first unsent command was (or, if the phone has deleted the entity since, a delete on the server's version, or nothing when the server has none); and a notice with the code is added. New commands take new_command_ids in order. Removing a custom dhikr, by a page or a receipt, removes its dhikr_personal and that record's unsent commands; removing a tag removes it from local dhikr_personal documents and unsent commands. Resolve keep_mine queues the local version (or delete) on the server's version; use_theirs takes the server's copy.",
+  "description": "How a phone applies what comes back from the server (Android and iOS). Given its local state (feed position `after`, entities with their known server versions, the queue, open conflicts) and one step (a changes page, the receipts for the queue's sent commands, or the user resolving a conflict), the local state afterwards and any notices for the user. Page: a delete removes the entity and cleans up exactly as a `gone` receipt does, even when the entity has queued commands or an open conflict: its unsent commands are dropped (sent ones wait for their receipts) and its conflict is closed; a delete of something the phone doesn't have is ignored. Any other change to an entity with a queued command or an open conflict updates only its known version (and the conflict's server copy); otherwise an active change is stored (unless older than the known version); then after = next_after. The page is applied in one transaction. Receipts, matched in order to the sent commands, each remove its command: applied records the version and closes any conflict, and applies each `cascaded` entry (a user_tag or custom_dhikr delete's cascades) to an entity the phone has as a page change would: an active one sets its known version unless older, a deleted one removes it; duplicate acts as its original; conflict keeps the local document, drops later unsent commands for the entity and opens a conflict; merged moves every local use of the tag ID to the surviving tag; gone removes the entity; rejected restores the server's copy (or removes the entity when there is none) and adds a notice, except for a custom_dhikr put rejected with audio_not_found or audio_mismatch, which loses nothing: the phone keeps its local document, with audio {\"local_only\": true} and the recording queued for upload again if its file is still on the phone (local_audio_files), or audio null otherwise; its known version becomes the server's (0 when current is null); the entity's unsent commands are replaced by one put of that document on that version, queued where the first unsent command was (or, if the phone has deleted the entity since, a delete on the server's version, or nothing when the server has none); and a notice with the code is added. New commands take new_command_ids in order. Removing a custom dhikr, by a page or a receipt, removes its dhikr_personal and that record's unsent commands; removing a tag removes it from local dhikr_personal documents and unsent commands. Resolve keep_mine queues the local version (or delete) on the server's version; use_theirs takes the server's copy. A practice_policy keeps base_document, the server copy its local document was edited from: a conflict on it opens no conflict but merges by setting (practice-settings/v1 practice_policy_merge), takes the server copy as base and version, and queues the merged policy unless the server already has it (with a hijri_corrections_replaced notice when the phone's corrections were dropped); an applied put or a page with nothing queued sets base_document to the server document.",
   "references": [
     "docs/slices/03b-custom-dhikrs-sync.md#clients-android-and-ios",
     "contracts/sync/v1/README.md",
     "DECISIONS.md ADR-2026-10-28 (The change queue)",
     "docs/slices/03c-audio-upload.md#phones",
-    "contracts/audio/v1/README.md (Phones)"
+    "contracts/audio/v1/README.md (Phones)",
+    "contracts/practice-settings/v1/README.md"
   ],
   "given_schema": {
     "type": "object",
@@ -55,6 +56,35 @@
                 },
                 "document": {
                   "$ref": "urn:awrad:sync:1#/$defs/document"
+                },
+                "base_document": {
+                  "description": "practice_policy only: the server document the local one was edited from, which a conflict merges against (practice-settings/v1 practice_policy_merge). The default policy when the phone knows no server copy.",
+                  "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document"
+                }
+              },
+              "if": {
+                "properties": {
+                  "entity_type": {
+                    "const": "practice_policy"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "base_document": true
+                },
+                "required": [
+                  "base_document"
+                ]
+              },
+              "else": {
+                "not": {
+                  "properties": {
+                    "base_document": true
+                  },
+                  "required": [
+                    "base_document"
+                  ]
                 }
               }
             }
@@ -288,6 +318,35 @@
                 },
                 "document": {
                   "$ref": "urn:awrad:sync:1#/$defs/document"
+                },
+                "base_document": {
+                  "description": "practice_policy only: the server document the local one was edited from, which a conflict merges against (practice-settings/v1 practice_policy_merge). The default policy when the phone knows no server copy.",
+                  "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document"
+                }
+              },
+              "if": {
+                "properties": {
+                  "entity_type": {
+                    "const": "practice_policy"
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "base_document": true
+                },
+                "required": [
+                  "base_document"
+                ]
+              },
+              "else": {
+                "not": {
+                  "properties": {
+                    "base_document": true
+                  },
+                  "required": [
+                    "base_document"
+                  ]
                 }
               }
             }
@@ -381,7 +440,7 @@
           ],
           "properties": {
             "code": {
-              "$ref": "urn:awrad:sync:1#/$defs/rejection_code"
+              "$ref": "urn:awrad:sync:1#/$defs/notice_code"
             },
             "entity_type": {
               "$ref": "urn:awrad:sync:1#/$defs/entity_type"
@@ -7263,6 +7322,817 @@
         },
         "uploads_queued": [],
         "notices": []
+      }
+    },
+    {
+      "id": "receipt_conflict_practice_policy_merges",
+      "description": "conflict on the practice policy opens no conflict: the phone merges by setting against base_document, takes theirs as its new base and queues the merged policy on the server's version.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "sent": true
+            }
+          ],
+          "conflicts": []
+        },
+        "local_audio_files": [],
+        "step": {
+          "kind": "receipts",
+          "receipts": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "status": "conflict",
+              "current": {
+                "version": 3,
+                "state": "active",
+                "document": {
+                  "day_reset": "midnight",
+                  "calculation_method": "karachi",
+                  "madhab": "shafi",
+                  "week_start": "sunday",
+                  "hijri_corrections": []
+                }
+              }
+            }
+          ],
+          "new_command_ids": [
+            "0192f0c0-0000-7000-8000-000000000402"
+          ]
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "sunday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "sunday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000402",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 3,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "sunday",
+                "hijri_corrections": []
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "notices": [],
+        "uploads_queued": []
+      }
+    },
+    {
+      "id": "receipt_conflict_practice_policy_nothing_to_send",
+      "description": "When theirs already has every change of mine, the phone takes theirs and queues nothing.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "day_reset": "midnight",
+                "calculation_method": "dubai",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 2,
+              "document": {
+                "day_reset": "midnight",
+                "calculation_method": "dubai",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "sent": true
+            }
+          ],
+          "conflicts": []
+        },
+        "local_audio_files": [],
+        "step": {
+          "kind": "receipts",
+          "receipts": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "status": "conflict",
+              "current": {
+                "version": 3,
+                "state": "active",
+                "document": {
+                  "day_reset": "midnight",
+                  "calculation_method": "dubai",
+                  "madhab": "hanafi",
+                  "week_start": "monday",
+                  "hijri_corrections": []
+                }
+              }
+            }
+          ],
+          "new_command_ids": [
+            "0192f0c0-0000-7000-8000-000000000402"
+          ]
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "day_reset": "midnight",
+                "calculation_method": "dubai",
+                "madhab": "hanafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "dubai",
+                "madhab": "hanafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": []
+        },
+        "notices": [],
+        "uploads_queued": []
+      }
+    },
+    {
+      "id": "receipt_conflict_practice_policy_corrections_replaced",
+      "description": "Merged corrections that aren't valid: theirs are kept, the rest of mine is queued, and the user is told.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 4,
+                    "offset_days": 1
+                  }
+                ]
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 4,
+                    "offset_days": 1
+                  }
+                ]
+              },
+              "sent": true
+            }
+          ],
+          "conflicts": []
+        },
+        "local_audio_files": [],
+        "step": {
+          "kind": "receipts",
+          "receipts": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "status": "conflict",
+              "current": {
+                "version": 3,
+                "state": "active",
+                "document": {
+                  "day_reset": "midnight",
+                  "calculation_method": "karachi",
+                  "madhab": "shafi",
+                  "week_start": "monday",
+                  "hijri_corrections": [
+                    {
+                      "year": 1448,
+                      "month": 5,
+                      "offset_days": -1
+                    }
+                  ]
+                }
+              }
+            }
+          ],
+          "new_command_ids": [
+            "0192f0c0-0000-7000-8000-000000000402"
+          ]
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000402",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 3,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": [
+                  {
+                    "year": 1448,
+                    "month": 5,
+                    "offset_days": -1
+                  }
+                ]
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "notices": [
+          {
+            "code": "hijri_corrections_replaced",
+            "entity_type": "practice_policy",
+            "entity_id": "0192f000-0000-7000-8000-000000000001"
+          }
+        ],
+        "uploads_queued": []
+      }
+    },
+    {
+      "id": "receipt_conflict_practice_policy_drops_followups",
+      "description": "Later unsent commands for the policy are dropped on a conflict, as for any entity: the local document already holds them, and the merge sends it.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "saturday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "sent": true
+            },
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000403",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 3,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "saturday",
+                "hijri_corrections": []
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "local_audio_files": [],
+        "step": {
+          "kind": "receipts",
+          "receipts": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "status": "conflict",
+              "current": {
+                "version": 3,
+                "state": "active",
+                "document": {
+                  "day_reset": "midnight",
+                  "calculation_method": "karachi",
+                  "madhab": "hanafi",
+                  "week_start": "monday",
+                  "hijri_corrections": []
+                }
+              }
+            }
+          ],
+          "new_command_ids": [
+            "0192f0c0-0000-7000-8000-000000000402"
+          ]
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "hanafi",
+                "week_start": "saturday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "hanafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000402",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 3,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "hanafi",
+                "week_start": "saturday",
+                "hijri_corrections": []
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "notices": [],
+        "uploads_queued": []
+      }
+    },
+    {
+      "id": "receipt_applied_practice_policy_sets_base",
+      "description": "applied: the sent document becomes the base.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "sent": true
+            }
+          ],
+          "conflicts": []
+        },
+        "local_audio_files": [],
+        "step": {
+          "kind": "receipts",
+          "receipts": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "status": "applied",
+              "version": 3,
+              "revision": 11,
+              "cascaded": null
+            }
+          ],
+          "new_command_ids": []
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": []
+        },
+        "notices": [],
+        "uploads_queued": []
+      }
+    },
+    {
+      "id": "page_practice_policy_sets_document_and_base",
+      "description": "A newer policy with nothing queued replaces the document and the base.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": []
+        },
+        "local_audio_files": [],
+        "step": {
+          "kind": "page",
+          "page": {
+            "changes": [
+              {
+                "entity_type": "practice_policy",
+                "entity_id": "0192f000-0000-7000-8000-000000000001",
+                "state": "active",
+                "version": 3,
+                "revision": 12,
+                "document": {
+                  "day_reset": "midnight",
+                  "calculation_method": "karachi",
+                  "madhab": "shafi",
+                  "week_start": "sunday",
+                  "hijri_corrections": []
+                }
+              }
+            ],
+            "next_after": 12,
+            "has_more": false,
+            "head_revision": 12
+          }
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 12,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "sunday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "sunday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [],
+          "conflicts": []
+        },
+        "notices": [],
+        "uploads_queued": []
+      }
+    },
+    {
+      "id": "page_practice_policy_with_pending_edit_keeps_base",
+      "description": "With an edit queued, a page updates only the known version: the base stays the document the edit was made on, so the coming conflict merges correctly.",
+      "given": {
+        "local": {
+          "after": 10,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "local_audio_files": [],
+        "step": {
+          "kind": "page",
+          "page": {
+            "changes": [
+              {
+                "entity_type": "practice_policy",
+                "entity_id": "0192f000-0000-7000-8000-000000000001",
+                "state": "active",
+                "version": 3,
+                "revision": 12,
+                "document": {
+                  "day_reset": "midnight",
+                  "calculation_method": "karachi",
+                  "madhab": "shafi",
+                  "week_start": "sunday",
+                  "hijri_corrections": []
+                }
+              }
+            ],
+            "next_after": 12,
+            "has_more": false,
+            "head_revision": 12
+          }
+        }
+      },
+      "expect": {
+        "local": {
+          "after": 12,
+          "entities": [
+            {
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "known_version": 3,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "base_document": {
+                "day_reset": "midnight",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              }
+            }
+          ],
+          "outbox": [
+            {
+              "command_id": "0192f0c0-0000-7000-8000-000000000401",
+              "entity_type": "practice_policy",
+              "entity_id": "0192f000-0000-7000-8000-000000000001",
+              "op": "put",
+              "base_version": 2,
+              "document": {
+                "day_reset": "maghrib",
+                "calculation_method": "karachi",
+                "madhab": "shafi",
+                "week_start": "monday",
+                "hijri_corrections": []
+              },
+              "sent": false
+            }
+          ],
+          "conflicts": []
+        },
+        "notices": [],
+        "uploads_queued": []
       }
     }
   ]

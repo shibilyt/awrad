@@ -8,6 +8,8 @@ public enum SyncEntityType: String, CaseIterable, Sendable, Hashable, Comparable
     case customDhikr = "custom_dhikr"
     case userTag = "user_tag"
     case dhikrPersonal = "dhikr_personal"
+    /// The account practice policy (slice 3d): one per account, its ID the account's.
+    case practicePolicy = "practice_policy"
 
     /// Wire order (`entity_type` as a string), as the feed and fixtures sort.
     public static func < (lhs: Self, rhs: Self) -> Bool { lhs.rawValue < rhs.rawValue }
@@ -70,18 +72,25 @@ public struct DhikrPersonalDocument: Hashable, Sendable {
     }
 }
 
-/// One of the three entity documents.
+/// One of the four entity documents.
 public enum SyncDocument: Hashable, Sendable {
     case customDhikr(CustomDhikrDocument)
     case userTag(UserTagDocument)
     case dhikrPersonal(DhikrPersonalDocument)
+    case practicePolicy(PracticePolicy)
 
     public var entityType: SyncEntityType {
         switch self {
         case .customDhikr: .customDhikr
         case .userTag: .userTag
         case .dhikrPersonal: .dhikrPersonal
+        case .practicePolicy: .practicePolicy
         }
+    }
+
+    public var practicePolicy: PracticePolicy? {
+        if case .practicePolicy(let policy) = self { return policy }
+        return nil
     }
 
     public var tagIDs: [AwradID]? {
@@ -220,6 +229,10 @@ public enum RejectionCode: Hashable, Sendable {
     case audioNotFound
     /// A custom dhikr put whose `byte_size` or `content_type` isn't its asset's (slice 3c).
     case audioMismatch
+    /// A `practice_policy` whose ID isn't the account's (slice 3d).
+    case entityIDInvalid
+    /// Not a rejection: a policy merge dropped this phone's Hijri corrections (slice 3d).
+    case hijriCorrectionsReplaced
     case other(String)
 
     private static let byCode: [String: RejectionCode] = [
@@ -228,6 +241,7 @@ public enum RejectionCode: Hashable, Sendable {
         "tag_name_taken": .tagNameTaken, "tag_not_found": .tagNotFound, "dhikr_not_found": .dhikrNotFound,
         "entity_not_found": .entityNotFound, "delete_not_allowed": .deleteNotAllowed,
         "command_id_reused": .commandIDReused, "audio_not_found": .audioNotFound, "audio_mismatch": .audioMismatch,
+        "entity_id_invalid": .entityIDInvalid, "hijri_corrections_replaced": .hijriCorrectionsReplaced,
     ]
 
     public init(code: String) {

@@ -119,6 +119,14 @@ public object AwradIcons {
     public val Search: ImageVector
         @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_search)
 
+    /** Settings: Practice settings. */
+    public val Practice: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_practice)
+
+    /** Practice settings: Use my location. */
+    public val Location: ImageVector
+        @Composable get() = ImageVector.vectorResource(R.drawable.awrad_ic_location)
+
     /** Every icon by its name in icons.json, in the contract's order (the component gallery). */
     public val all: List<Pair<String, ImageVector>>
         @Composable get() = listOf(
@@ -148,5 +156,7 @@ public object AwradIcons {
             "play" to Play,
             "pause" to Pause,
             "search" to Search,
+            "practice" to Practice,
+            "location" to Location,
         )
 }

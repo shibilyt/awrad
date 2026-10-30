@@ -625,6 +625,14 @@
         "ml" : { "stringUnit" : { "state" : "translated", "value" : "ഉപകരണങ്ങൾ" } }
       }
     },
+    "account.overview.practice_settings" : {
+      "comment" : "Row (signed in) or button (signed out) on the account screen that opens Practice settings: day reset, location, calculation method, week start, Hijri corrections.",
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "إعدادات العبادة" } },
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Practice settings" } },
+        "ml" : { "stringUnit" : { "state" : "translated", "value" : "ആരാധനാ ക്രമീകരണങ്ങൾ" } }
+      }
+    },
     "account.password.rule %lld" : {
       "comment" : "The password rule, under a new-password field. The number is the minimum length (12).",
       "localizations" : {

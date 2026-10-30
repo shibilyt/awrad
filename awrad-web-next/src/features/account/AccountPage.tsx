@@ -13,6 +13,7 @@ import {
   DevicesIcon,
   EmailIcon,
   PasswordIcon,
+  PracticeIcon,
   type Icon as IconComponent,
 } from "@/shared/ui/icons.gen";
 import { TextLink } from "@/shared/ui/TextLink";
@@ -72,15 +73,18 @@ function AccountDetails({ account }: { account: Account }): ReactElement {
   );
 }
 
-/** A settings row: a leading icon, the label (the link's accessible name), then a trailing chevron. */
+/**
+ * A settings row: a leading icon, the label (the link's accessible name), then a trailing chevron.
+ * A row the shared icon set has no icon for keeps the icon's space, so the labels line up.
+ */
 function SettingsLink({
   to,
   icon: LeadingIcon,
   label,
   destructive = false,
 }: {
-  to: "/account/devices" | "/account/password" | "/account/email" | "/account/delete";
-  icon: IconComponent;
+  to: "/account/practice" | "/account/devices" | "/account/password" | "/account/email" | "/account/delete";
+  icon: IconComponent | null;
   label: string;
   destructive?: boolean;
 }): ReactElement {
@@ -93,7 +97,7 @@ function SettingsLink({
           destructive && "text-error!",
         )}
       >
-        <LeadingIcon />
+        {LeadingIcon === null ? <span aria-hidden="true" className="size-icon shrink-0" /> : <LeadingIcon />}
         <span className="min-w-0 flex-1">{label}</span>
         <ChevronIcon />
       </TextLink>
@@ -137,6 +141,7 @@ function Settings(): ReactElement {
     <nav aria-label={t("account.page.settings")}>
       <Card padded={false}>
         <ul className="flex flex-col">
+          <SettingsLink to="/account/practice" icon={PracticeIcon} label={t("account.page.practiceSettings")} />
           <SettingsLink to="/account/devices" icon={DevicesIcon} label={t("account.page.devices")} />
           <SettingsLink to="/account/password" icon={PasswordIcon} label={t("account.page.changePassword")} />
           <SettingsLink to="/account/email" icon={EmailIcon} label={t("account.page.changeEmail")} />

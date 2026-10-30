@@ -156,7 +156,7 @@ private fun ChangeRefusedDialog(
 ) {
     AwradDialog(
         onDismissRequest = { onAction(SyncPromptsAction.Dismiss(notice)) },
-        title = stringResource(R.string.sync_rejected_title),
+        title = stringResource(noticeTitle(notice.code)),
         text = stringResource(refusedReason(notice.code)),
         modifier = modifier,
         confirmButton = {
@@ -243,4 +243,13 @@ internal fun refusedReason(code: RejectionCode): Int = when (code) {
     RejectionCode.COMMAND_ID_REUSED -> R.string.sync_reason_command_id_reused
     RejectionCode.AUDIO_NOT_FOUND -> R.string.sync_reason_audio_not_found
     RejectionCode.AUDIO_MISMATCH -> R.string.sync_reason_audio_mismatch
+    RejectionCode.ENTITY_ID_INVALID -> R.string.sync_reason_entity_id_invalid
+    RejectionCode.HIJRI_CORRECTIONS_REPLACED -> R.string.sync_reason_hijri_corrections_replaced
+}
+
+/** The notice's title: "Change refused", or for a practice-policy merge that dropped corrections, its own. */
+@StringRes
+internal fun noticeTitle(code: RejectionCode): Int = when (code) {
+    RejectionCode.HIJRI_CORRECTIONS_REPLACED -> R.string.sync_hijri_replaced_title
+    else -> R.string.sync_rejected_title
 }
