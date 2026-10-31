@@ -67,7 +67,7 @@ defmodule Awrad.Goals.Rules.Versions do
     {earlier, [%Version{} = last]} = Enum.split(versions, -1)
 
     cond do
-      last.settings == settings ->
+      same?(last.settings, settings) ->
         versions
 
       Date.after?(today, last.from) ->
@@ -81,8 +81,33 @@ defmodule Awrad.Goals.Rules.Versions do
     end
   end
 
-  defp back_to_previous?([_ | _] = earlier, settings), do: List.last(earlier).settings == settings
+  defp back_to_previous?([_ | _] = earlier, settings),
+    do: same?(List.last(earlier).settings, settings)
+
   defp back_to_previous?([], _settings), do: false
+
+  # Weekdays, month days and dates are sets: compared regardless of order.
+  defp same?(%Settings{} = settings, %Settings{} = other),
+    do: canonical(settings) == canonical(other)
+
+  defp canonical(%Settings{schedule: {:weekdays, days}} = settings),
+    do: %{settings | schedule: {:weekdays, Enum.sort_by(days, &weekday_number/1)}}
+
+  defp canonical(%Settings{schedule: {kind, days}} = settings)
+       when kind in [:month_days, :hijri_month_days],
+       do: %{settings | schedule: {kind, Enum.sort(days)}}
+
+  defp canonical(%Settings{schedule: {:specific_dates, dates}} = settings),
+    do: %{settings | schedule: {:specific_dates, Enum.sort(dates, Date)}}
+
+  defp canonical(%Settings{} = settings), do: settings
+
+  defp weekday_number(weekday),
+    do:
+      Enum.find_index(
+        ~w(monday tuesday wednesday thursday friday saturday sunday)a,
+        &(&1 == weekday)
+      )
 
   defp fold([%Version{from: from}, %Version{} = next | rest] = versions)
        when length(versions) > @max_versions,
