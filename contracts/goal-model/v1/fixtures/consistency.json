@@ -1,0 +1,2541 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "consistency",
+  "description": "The consistency tag and what a goal's row shows (decisions 19, 21 and 32). Daily-rhythm goals (days, weekdays, occasions) count kept due days among the last 30; period goals count met periods among the last 12. Today, or the current period, counts only once kept or met. No tag before 7 due days or 4 periods. Devoted at 90% or more, Steady at 80% or more. The row shows the streak when it's 3 or more; otherwise the tag if there is one; otherwise a streak of 1 or 2; otherwise nothing.",
+  "references": [
+    "CONTEXT.md#goal-language (Consistency)",
+    "docs/slices/04-goals-decisions.md decisions 19, 21, 32 and 43"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goal",
+      "counts",
+      "date",
+      "week_start"
+    ],
+    "properties": {
+      "goal": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_input"
+      },
+      "counts": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/count_entry"
+        }
+      },
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      },
+      "week_start": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/week_start"
+      },
+      "hijri_corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections",
+        "description": "The account's Hijri month-start corrections. Absent means none."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "basis",
+      "met",
+      "out_of",
+      "tag",
+      "show"
+    ],
+    "properties": {
+      "basis": {
+        "enum": [
+          "due_days",
+          "periods"
+        ]
+      },
+      "met": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 30
+      },
+      "out_of": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 30
+      },
+      "tag": {
+        "enum": [
+          null,
+          "steady",
+          "devoted"
+        ]
+      },
+      "show": {
+        "enum": [
+          "streak",
+          "consistency",
+          "none"
+        ],
+        "description": "What the goal's row shows: 🔥 and the streak, the tag (\"Steady · 25/30\"), or neither."
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "no_tag_before_7_due_days",
+      "description": "Six due days, all met: too early for a tag, so the row shows the streak.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-25",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-30",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 6,
+        "out_of": 6,
+        "tag": null,
+        "show": "streak"
+      }
+    },
+    {
+      "id": "seventh_due_day_brings_a_tag",
+      "description": "Seven due days, all met: Devoted, but the streak of 7 is shown first.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-24",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-30",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 7,
+        "out_of": 7,
+        "tag": "devoted",
+        "show": "streak"
+      }
+    },
+    {
+      "id": "broken_streak_shows_the_tag",
+      "description": "25 of the last 30 due days, and yesterday missed: \"Steady · 25/30\" replaces the 🔥.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 25,
+        "out_of": 30,
+        "tag": "steady",
+        "show": "consistency"
+      }
+    },
+    {
+      "id": "below_80_percent_no_tag",
+      "description": "23 of 30 is below 80%: no tag, and no streak to show.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 23,
+        "out_of": 30,
+        "tag": null,
+        "show": "none"
+      }
+    },
+    {
+      "id": "exactly_80_percent_steady",
+      "description": "24 of 30 is exactly 80%: Steady.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 24,
+        "out_of": 30,
+        "tag": "steady",
+        "show": "consistency"
+      }
+    },
+    {
+      "id": "exactly_90_percent_devoted_over_a_short_streak",
+      "description": "27 of 30 is exactly 90%: Devoted. A new streak of 2 days isn't enough to replace the tag.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-30",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 27,
+        "out_of": 30,
+        "tag": "devoted",
+        "show": "consistency"
+      }
+    },
+    {
+      "id": "new_streak_of_3_brings_back_the_flame",
+      "description": "A new streak reaches 3 days: the row shows 🔥 again.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-30",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 27,
+        "out_of": 30,
+        "tag": "devoted",
+        "show": "streak"
+      }
+    },
+    {
+      "id": "only_the_last_30_due_days",
+      "description": "September was all missed, but only the last 30 due days count.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-09-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-30",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 30,
+        "out_of": 30,
+        "tag": "devoted",
+        "show": "streak"
+      }
+    },
+    {
+      "id": "today_counts_once_met",
+      "description": "Today is already met, so the window is the 30 days up to today, leaving out the missed 1 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-30",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-31",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 30,
+        "out_of": 30,
+        "tag": "devoted",
+        "show": "streak"
+      }
+    },
+    {
+      "id": "today_left_out_until_met",
+      "description": "Today isn't met yet: the window is the 30 days before it.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-30",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-31",
+            "session": null,
+            "count": 50
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 29,
+        "out_of": 30,
+        "tag": "devoted",
+        "show": "streak"
+      }
+    },
+    {
+      "id": "paused_and_excused_days_left_out",
+      "description": "Paused and excused days aren't due, so they aren't counted.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-20",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-22",
+              "to": "2026-10-23"
+            }
+          ],
+          "excused": [
+            "2026-10-25"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-30",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 8,
+        "out_of": 8,
+        "tag": "devoted",
+        "show": "streak"
+      }
+    },
+    {
+      "id": "made_up_day_counts_as_met",
+      "description": "A day made up the next day counts as met.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-23",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 200
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-30",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 8,
+        "out_of": 8,
+        "tag": "devoted",
+        "show": "streak"
+      }
+    },
+    {
+      "id": "minimum_only_counts_as_met",
+      "description": "Days at the minimum kept the streak, so they count.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-24",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 70,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 80
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 80
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 80
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 80
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 80
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 80
+          },
+          {
+            "date": "2026-10-30",
+            "session": null,
+            "count": 80
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 7,
+        "out_of": 7,
+        "tag": "devoted",
+        "show": "streak"
+      }
+    },
+    {
+      "id": "weekly_schedule_counts_due_days",
+      "description": "Every Friday since 5 June: 20 of 22 met, last Friday missed.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "friday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-06-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-06-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-06-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-06-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-06-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-07-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-07-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-07-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-07-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-07-31",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-08-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-08-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-08-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-08-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-09-04",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-09-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-09-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-09-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 20,
+        "out_of": 22,
+        "tag": "devoted",
+        "show": "consistency"
+      }
+    },
+    {
+      "id": "weekly_totals_count_periods",
+      "description": "A weekly total: 10 of the last 12 finished weeks met, and last week missed. This week is in progress and not met, so it's left out.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-07-06",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-07-06",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-07-13",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-07-20",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-07-27",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-08-03",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-08-10",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-08-17",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-08-24",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-08-31",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-09-07",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-09-21",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-09-28",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 1000
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "periods",
+        "met": 10,
+        "out_of": 12,
+        "tag": "steady",
+        "show": "consistency"
+      }
+    },
+    {
+      "id": "met_current_week_counts",
+      "description": "This week is already met, so it counts, and the oldest of the 12 drops out.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-07-06",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-07-06",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-07-13",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-07-20",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-08-03",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-08-10",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-08-17",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-08-24",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-08-31",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-09-07",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-09-21",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-09-28",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 1000
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "periods",
+        "met": 11,
+        "out_of": 12,
+        "tag": "devoted",
+        "show": "streak"
+      }
+    },
+    {
+      "id": "no_tag_before_4_periods",
+      "description": "Three weeks met: too early for a tag.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-05",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 1000
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 1000
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "periods",
+        "met": 3,
+        "out_of": 3,
+        "tag": null,
+        "show": "streak"
+      }
+    },
+    {
+      "id": "tracker_days",
+      "description": "A tracker counts days with any count.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-01",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-02",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-03",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-05",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-06",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-07",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-08",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-09",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-16",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-17",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-18",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-19",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-20",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-21",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-22",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 27,
+        "out_of": 30,
+        "tag": "devoted",
+        "show": "consistency"
+      }
+    }
+  ]
+}

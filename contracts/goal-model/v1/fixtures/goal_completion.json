@@ -58,6 +58,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -68,7 +69,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -97,6 +102,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -107,7 +113,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "when_target_reached"
+          "completion": "when_target_reached",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -141,6 +151,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -151,7 +162,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "when_target_reached"
+          "completion": "when_target_reached",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -185,6 +200,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -195,7 +211,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "when_target_reached"
+          "completion": "when_target_reached",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -229,6 +249,7 @@
             "duration_days": 7
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -239,7 +260,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "when_duration_ended"
+          "completion": "when_duration_ended",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [],
         "date": "2026-10-08"
@@ -262,6 +287,7 @@
             "duration_days": 7
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -272,7 +298,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "when_duration_ended"
+          "completion": "when_duration_ended",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [],
         "date": "2026-10-07"
@@ -295,6 +325,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -305,7 +336,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "when_duration_ended"
+          "completion": "when_duration_ended",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [],
         "date": "2026-10-11"
@@ -328,6 +363,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -338,7 +374,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "when_duration_ended"
+          "completion": "when_duration_ended",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [],
         "date": "2027-01-01"
@@ -361,6 +401,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -371,7 +412,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "when_target_reached"
+          "completion": "when_target_reached",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -400,6 +445,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 1000,
@@ -410,7 +456,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "when_target_reached"
+          "completion": "when_target_reached",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {
@@ -444,6 +494,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -454,7 +505,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "when_target_reached"
+          "completion": "when_target_reached",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         },
         "counts": [
           {

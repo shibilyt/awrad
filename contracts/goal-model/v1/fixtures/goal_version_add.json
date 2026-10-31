@@ -1,0 +1,6105 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "goal_version_add",
+  "description": "Saving a detail edit (decision 23): the new settings apply from today as a dated version. Same-day edits replace today's version, an edit back to the previous settings removes it, unchanged settings add nothing, and more than 100 versions fold the oldest into the next. Structural edits never come here: they end the goal and start a new one.",
+  "references": [
+    "CONTEXT.md#goal-language (Dated version)",
+    "docs/slices/04-goals-decisions.md decision 23",
+    "docs/slices/04-goals.md question 5"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "versions",
+      "today",
+      "settings"
+    ],
+    "properties": {
+      "versions": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 100,
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/version"
+        }
+      },
+      "today": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date",
+        "description": "The effective practice day of the edit."
+      },
+      "settings": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_settings"
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "versions"
+    ],
+    "properties": {
+      "versions": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 100,
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/version"
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "edit_adds_version_from_today",
+      "description": "Changing the target on 12 October adds a version from that day; the past keeps its target.",
+      "given": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ],
+        "today": "2026-10-12",
+        "settings": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "count_policy": {
+            "minimum": null,
+            "target": 70,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-10-12",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 70,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "second_edit_same_day_replaces",
+      "description": "A second edit on the same day replaces that day's version instead of adding another.",
+      "given": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-10-12",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 70,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ],
+        "today": "2026-10-12",
+        "settings": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "count_policy": {
+            "minimum": null,
+            "target": 50,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-10-12",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 50,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "same_day_edit_back_removes_version",
+      "description": "Editing back to the previous version's settings on the same day removes today's version.",
+      "given": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-10-12",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 70,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ],
+        "today": "2026-10-12",
+        "settings": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "no_change_adds_nothing",
+      "description": "Saving the settings unchanged (for example only the name or a pause changed) adds no version.",
+      "given": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ],
+        "today": "2026-10-12",
+        "settings": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "edit_on_creation_day_replaces_first",
+      "description": "An edit on the day the goal was created replaces its first version, keeping its from.",
+      "given": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ],
+        "today": "2026-10-01",
+        "settings": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "count_policy": {
+            "minimum": null,
+            "target": 33,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 33,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "later_version_from_other_device_replaced",
+      "description": "When the last version starts after today (written by a device whose day is ahead), the edit replaces it and keeps its from.",
+      "given": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-10-13",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 70,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ],
+        "today": "2026-10-12",
+        "settings": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "count_policy": {
+            "minimum": null,
+            "target": 50,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-10-13",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 50,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "end_edit_is_a_version",
+      "description": "Changing the end (until 31 December) is a detail edit like any other: a version from today.",
+      "given": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ],
+        "today": "2026-10-20",
+        "settings": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-12-31",
+            "duration_days": null
+          },
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "versions": [
+          {
+            "from": "2026-10-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-10-20",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": "2026-12-31",
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "past_100_versions_folds_oldest",
+      "description": "The 101st version folds the oldest into the next: the first version goes and the second takes its from, so the cap of 100 holds.",
+      "given": {
+        "versions": [
+          {
+            "from": "2026-01-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 1,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-02",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 2,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-03",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 3,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-04",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 4,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-05",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 5,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-06",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 6,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-07",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 7,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-08",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 8,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-09",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 9,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-10",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 10,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-11",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 11,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-12",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 12,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-13",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 13,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-14",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 14,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-15",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 15,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-16",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 16,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-17",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 17,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-18",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 18,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-19",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 19,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-20",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 20,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-21",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 21,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-22",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 22,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-23",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 23,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-24",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 24,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-25",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 25,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-26",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 26,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-27",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 27,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-28",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 28,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-29",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 29,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-30",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 30,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-31",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 31,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 32,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-02",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 33,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-03",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 34,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-04",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 35,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-05",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 36,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-06",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 37,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-07",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 38,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-08",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 39,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-09",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 40,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-10",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 41,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-11",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 42,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-12",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 43,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-13",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 44,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-14",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 45,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-15",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 46,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-16",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 47,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-17",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 48,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-18",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 49,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-19",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 50,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-20",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 51,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-21",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 52,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-22",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 53,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-23",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 54,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-24",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 55,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-25",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 56,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-26",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 57,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-27",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 58,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-28",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 59,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 60,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-02",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 61,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-03",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 62,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-04",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 63,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-05",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 64,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-06",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 65,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-07",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 66,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-08",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 67,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-09",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 68,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-10",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 69,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-11",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 70,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-12",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 71,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-13",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 72,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-14",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 73,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-15",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 74,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-16",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 75,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-17",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 76,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-18",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 77,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-19",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 78,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-20",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 79,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-21",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 80,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-22",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 81,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-23",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 82,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-24",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 83,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-25",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 84,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-26",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 85,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-27",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 86,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-28",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 87,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-29",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 88,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-30",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 89,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-31",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 90,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 91,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-02",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 92,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-03",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 93,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-04",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 94,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-05",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 95,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-06",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 96,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-07",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 97,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-08",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 98,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-09",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 99,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-10",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ],
+        "today": "2026-12-01",
+        "settings": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "count_policy": {
+            "minimum": null,
+            "target": 500,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "versions": [
+          {
+            "from": "2026-01-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 2,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-03",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 3,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-04",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 4,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-05",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 5,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-06",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 6,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-07",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 7,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-08",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 8,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-09",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 9,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-10",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 10,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-11",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 11,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-12",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 12,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-13",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 13,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-14",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 14,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-15",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 15,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-16",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 16,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-17",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 17,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-18",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 18,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-19",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 19,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-20",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 20,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-21",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 21,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-22",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 22,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-23",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 23,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-24",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 24,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-25",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 25,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-26",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 26,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-27",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 27,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-28",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 28,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-29",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 29,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-30",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 30,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-01-31",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 31,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 32,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-02",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 33,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-03",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 34,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-04",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 35,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-05",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 36,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-06",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 37,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-07",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 38,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-08",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 39,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-09",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 40,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-10",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 41,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-11",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 42,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-12",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 43,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-13",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 44,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-14",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 45,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-15",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 46,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-16",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 47,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-17",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 48,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-18",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 49,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-19",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 50,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-20",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 51,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-21",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 52,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-22",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 53,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-23",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 54,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-24",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 55,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-25",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 56,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-26",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 57,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-27",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 58,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-02-28",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 59,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 60,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-02",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 61,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-03",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 62,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-04",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 63,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-05",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 64,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-06",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 65,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-07",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 66,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-08",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 67,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-09",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 68,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-10",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 69,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-11",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 70,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-12",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 71,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-13",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 72,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-14",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 73,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-15",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 74,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-16",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 75,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-17",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 76,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-18",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 77,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-19",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 78,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-20",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 79,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-21",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 80,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-22",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 81,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-23",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 82,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-24",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 83,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-25",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 84,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-26",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 85,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-27",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 86,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-28",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 87,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-29",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 88,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-30",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 89,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-03-31",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 90,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 91,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-02",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 92,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-03",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 93,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-04",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 94,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-05",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 95,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-06",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 96,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-07",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 97,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-08",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 98,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-09",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 99,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-04-10",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 100,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          },
+          {
+            "from": "2026-12-01",
+            "schedule": {
+              "kind": "every_day"
+            },
+            "active_period": {
+              "start_date": "2026-10-01",
+              "end_date": null,
+              "duration_days": null
+            },
+            "count_policy": {
+              "minimum": null,
+              "target": 500,
+              "maximum": null,
+              "streak_threshold": "target"
+            },
+            "sessions": [],
+            "requirement": {
+              "type": "per_due_date"
+            },
+            "completion": "never",
+            "make_up": {
+              "window": "off",
+              "fill": "streak"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

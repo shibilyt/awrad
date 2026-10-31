@@ -1,0 +1,1419 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "excused_days",
+  "description": "Whether a day can be excused or un-excused (decision 20). Excusing needs, in this order: a goal still running (goal_finished), a day before today (not_past), not already excused, a goal judged by day (not_available for period totals), a due day (not_due: off-schedule, paused, outside the active period), a missed day (not_missed: met, minimum only or made up; for days per period, a day that didn't qualify), and fewer than 2 excused days in that day's Gregorian month (limit_reached). Un-excusing needs a running goal and an excused day.",
+  "references": [
+    "CONTEXT.md#goal-language (Excused day)",
+    "docs/slices/04-goals-decisions.md decisions 20, 22, 29, 30 and 43",
+    "docs/slices/04-goals.md question 12"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goal",
+      "counts",
+      "date",
+      "day",
+      "action",
+      "week_start"
+    ],
+    "properties": {
+      "goal": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_input"
+      },
+      "counts": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/count_entry"
+        }
+      },
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date",
+        "description": "Today."
+      },
+      "day": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date",
+        "description": "The day to excuse or un-excuse."
+      },
+      "action": {
+        "enum": [
+          "excuse",
+          "unexcuse"
+        ]
+      },
+      "week_start": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/week_start"
+      },
+      "hijri_corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections",
+        "description": "The account's Hijri month-start corrections. Absent means none."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "allowed",
+      "reason"
+    ],
+    "properties": {
+      "allowed": {
+        "type": "boolean"
+      },
+      "reason": {
+        "enum": [
+          null,
+          "goal_finished",
+          "not_past",
+          "already_excused",
+          "not_available",
+          "not_due",
+          "not_missed",
+          "limit_reached",
+          "not_excused"
+        ],
+        "description": "null when allowed; otherwise the first check that failed."
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "missed_day_can_be_excused",
+      "description": "Nothing on Monday: it can be excused.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "met_day_not_missed",
+      "description": "Monday met its target: nothing to excuse.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_missed"
+      }
+    },
+    {
+      "id": "minimum_only_day_not_missed",
+      "description": "Monday reached the minimum, which kept the streak.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 70,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 80
+          }
+        ],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_missed"
+      }
+    },
+    {
+      "id": "made_up_day_not_missed",
+      "description": "Monday was made up on Tuesday.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_missed"
+      }
+    },
+    {
+      "id": "partly_made_up_day_can_be_excused",
+      "description": "Monday was only partly made up, so it's still missed.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 150
+          }
+        ],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "today_cant_be_excused",
+      "description": "Today is still in progress.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-14",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_past"
+      }
+    },
+    {
+      "id": "future_cant_be_excused",
+      "description": "A future day can't be excused (pause the goal instead).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-20",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_past"
+      }
+    },
+    {
+      "id": "off_schedule_day_not_due",
+      "description": "Tuesday isn't on a Monday, Wednesday and Friday schedule.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "monday",
+              "wednesday",
+              "friday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-13",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_due"
+      }
+    },
+    {
+      "id": "paused_day_not_due",
+      "description": "A paused day isn't due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-12",
+              "to": "2026-10-12"
+            }
+          ],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_due"
+      }
+    },
+    {
+      "id": "day_before_start_not_due",
+      "description": "Before the start date nothing is due.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-09-30",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_due"
+      }
+    },
+    {
+      "id": "already_excused",
+      "description": "Monday is already excused.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-12"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "already_excused"
+      }
+    },
+    {
+      "id": "second_in_month_allowed",
+      "description": "One day excused in October so far: a second is allowed.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-02"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "third_in_month_limit_reached",
+      "description": "Two days of October are excused already: the limit is 2 per goal per month.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-02",
+            "2026-10-05"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "limit_reached"
+      }
+    },
+    {
+      "id": "limit_is_the_days_own_month",
+      "description": "September's two excused days don't count against 1 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-09-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-09-28",
+            "2026-09-29"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-01",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "limit_checked_last",
+      "description": "An already met day reports not_missed, even with the month full.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-02",
+            "2026-10-05"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_missed"
+      }
+    },
+    {
+      "id": "unexcuse_allowed",
+      "description": "An excused day can be un-excused, which frees its place in the month.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-02",
+            "2026-10-05"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-05",
+        "action": "unexcuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "unexcuse_a_day_not_excused",
+      "description": "Only an excused day can be un-excused.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-02"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-06",
+        "action": "unexcuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_excused"
+      }
+    },
+    {
+      "id": "ended_goal_is_read_only",
+      "description": "An ended goal is in History, read-only.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": {
+            "on": "2026-10-13",
+            "reason": "user"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "goal_finished"
+      }
+    },
+    {
+      "id": "ended_goal_no_unexcuse",
+      "description": "Un-excusing is also closed once the goal has ended.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [
+            "2026-10-12"
+          ],
+          "ended": {
+            "on": "2026-10-13",
+            "reason": "user"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "unexcuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "goal_finished"
+      }
+    },
+    {
+      "id": "past_end_date_is_read_only",
+      "description": "The goal ran until 13 October.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-13",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "goal_finished"
+      }
+    },
+    {
+      "id": "last_day_of_goal_still_open",
+      "description": "Today is the goal's last day: it's still running, and Monday can be excused.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-14",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "paused_goal_can_excuse_earlier_days",
+      "description": "Paused from today on: earlier missed days can still be excused.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-14",
+              "to": null
+            }
+          ],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "weekly_total_not_available",
+      "description": "A weekly total isn't judged by day, so it has no excused days.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_available"
+      }
+    },
+    {
+      "id": "days_per_week_missed_day",
+      "description": "3 days a week: Monday didn't qualify, so it can be excused (lowering that week's number).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 3
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "days_per_week_qualifying_day",
+      "description": "Monday qualified.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "days_per_period",
+            "period": "week",
+            "days": 3
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_missed"
+      }
+    },
+    {
+      "id": "tracker_day_without_counts",
+      "description": "A tracker day without any count broke the streak: it can be excused.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "tracker_day_with_a_count",
+      "description": "Any count kept a tracker's streak.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 1
+          }
+        ],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_missed"
+      }
+    },
+    {
+      "id": "total_below_streak_amount",
+      "description": "A total goal whose streak counts at 100 a day: 50 on Monday missed it.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 50
+          }
+        ],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
+      "id": "total_at_streak_amount",
+      "description": "100 on Monday kept the streak.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "day": "2026-10-12",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": false,
+        "reason": "not_missed"
+      }
+    }
+  ]
+}

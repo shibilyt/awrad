@@ -1,0 +1,1615 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "make_up",
+  "description": "Each due day's status, with make-up (decisions 18 and 31): on a later day inside the missed day's window (the next day, or within 3 days), counts past what that day needs for itself (its target, or its streak amount if higher; all of a day's counts when it isn't due) fill missed days, oldest first, up to the fill amount (the streak amount, or the target and at least the streak amount). Paused and excused days neither fill nor are filled; days after the end don't fill. With sessions, each session fills only itself. Status: met, minimum_only (the streak amount but not the target), made_up, missed, or in_progress (today, below the streak amount).",
+  "references": [
+    "CONTEXT.md#goal-language (Make-up)",
+    "docs/slices/04-goals-decisions.md decisions 17, 18, 22, 31 and 43"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goal",
+      "counts",
+      "date",
+      "from"
+    ],
+    "properties": {
+      "goal": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/goal_input"
+      },
+      "counts": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/count_entry"
+        }
+      },
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date",
+        "description": "Today: the effective practice day evaluated."
+      },
+      "from": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date",
+        "description": "The first day to list (the expectation lists due days from here to today, or to the goal's last day)."
+      },
+      "hijri_corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections",
+        "description": "The account's Hijri month-start corrections. Absent means none."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "days"
+    ],
+    "properties": {
+      "days": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "date",
+            "count",
+            "filled",
+            "status"
+          ],
+          "properties": {
+            "date": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/date"
+            },
+            "count": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/count",
+              "description": "The day's own count (with sessions, all of them)."
+            },
+            "filled": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/count",
+              "description": "Made up from later days."
+            },
+            "status": {
+              "enum": [
+                "met",
+                "minimum_only",
+                "made_up",
+                "missed",
+                "in_progress"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "off_fills_nothing",
+      "description": "Make-up off: Tuesday's extra 100 doesn't touch Monday.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 0,
+            "status": "missed"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 200,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "next_day_fills_yesterday",
+      "description": "The next day's counts past its own 100 fill the missed day first: Monday is made up.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 100,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 200,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "next_day_window_closes",
+      "description": "Two days later is too late for the next-day window.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-11",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-11"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-11",
+            "count": 0,
+            "filled": 0,
+            "status": "missed"
+          },
+          {
+            "date": "2026-10-12",
+            "count": 100,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 200,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "within_3_days_third_day_fills",
+      "description": "Within 3 days: the third day after can still make it up.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-10",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-10"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-10",
+            "count": 0,
+            "filled": 100,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-11",
+            "count": 100,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-12",
+            "count": 100,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 200,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "within_3_days_fourth_day_too_late",
+      "description": "The fourth day after is outside the window.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-09",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-09"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-09",
+            "count": 0,
+            "filled": 0,
+            "status": "missed"
+          },
+          {
+            "date": "2026-10-10",
+            "count": 100,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-11",
+            "count": 100,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-12",
+            "count": 100,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 200,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "oldest_missed_day_first",
+      "description": "150 extra fills Sunday's 100 first, then 50 of Monday's: a partly filled day is still missed.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-11",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 250
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-11"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-11",
+            "count": 0,
+            "filled": 100,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 50,
+            "status": "missed"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 250,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "partial_fill_completed_later",
+      "description": "Wednesday's extra 50 completes Monday, still inside its window.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-11",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 250
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 150
+          }
+        ],
+        "date": "2026-10-14",
+        "from": "2026-10-11"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-11",
+            "count": 0,
+            "filled": 100,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 100,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 250,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-14",
+            "count": 150,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "extra_from_two_days_adds_up",
+      "description": "50 extra on Tuesday and 50 on Wednesday make up Monday together.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 150
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 150
+          }
+        ],
+        "date": "2026-10-14",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 100,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 150,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-14",
+            "count": 150,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fill_streak_up_to_the_minimum",
+      "description": "Fill \"enough to keep the streak\" with a minimum of 70: Tuesday's extra 70 (past its own 100) fills Monday to 70.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 70,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 170
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 70,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 170,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fill_streak_leaves_a_minimum_day",
+      "description": "Fill to the streak amount: a day that reached the minimum needs nothing, and stays minimum only.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 70,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 80
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 80,
+            "filled": 0,
+            "status": "minimum_only"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 200,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "fill_target_completes_a_minimum_day",
+      "description": "Fill to the full target: a minimum-only day is filled up to 100 and counts as made up.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 70,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 80
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 120
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 80,
+            "filled": 20,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 120,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "only_counts_past_own_target",
+      "description": "Tuesday keeps its own 100; only the 50 past it go to Monday.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 150
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 50,
+            "status": "missed"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 150,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "today_below_streak_in_progress",
+      "description": "Today below the streak amount is in progress, not missed.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 20
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 100,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 20,
+            "filled": 0,
+            "status": "in_progress"
+          }
+        ]
+      }
+    },
+    {
+      "id": "today_minimum_only",
+      "description": "Today at the minimum already keeps the streak.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 70,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "minimum"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 80
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-13"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-13",
+            "count": 80,
+            "filled": 0,
+            "status": "minimum_only"
+          }
+        ]
+      }
+    },
+    {
+      "id": "off_schedule_day_counts_all_fill",
+      "description": "Monday, Wednesday and Friday: every count on Tuesday (not due) can make up Monday.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "weekdays",
+            "weekdays": [
+              "monday",
+              "wednesday",
+              "friday"
+            ]
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 100,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-14",
+            "count": 0,
+            "filled": 0,
+            "status": "in_progress"
+          }
+        ]
+      }
+    },
+    {
+      "id": "paused_day_counts_dont_fill",
+      "description": "Counts on a paused day don't make up anything.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [
+            {
+              "from": "2026-10-13",
+              "to": "2026-10-13"
+            }
+          ],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-14",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 0,
+            "status": "missed"
+          },
+          {
+            "date": "2026-10-14",
+            "count": 0,
+            "filled": 0,
+            "status": "in_progress"
+          }
+        ]
+      }
+    },
+    {
+      "id": "excused_day_is_not_filled",
+      "description": "An excused day isn't due, so nothing fills it and it isn't listed.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [
+            "2026-10-12"
+          ],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-13",
+            "count": 200,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "sessions_fill_the_same_session",
+      "description": "With sessions, each session makes up its own: Tuesday's extra Maghrib count fills Monday's Maghrib.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "after_maghrib",
+              "kind": "after_prayer",
+              "prayer": "maghrib",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": "after_fajr",
+            "count": 33
+          },
+          {
+            "date": "2026-10-13",
+            "session": "after_fajr",
+            "count": 33
+          },
+          {
+            "date": "2026-10-13",
+            "session": "after_maghrib",
+            "count": 66
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 33,
+            "filled": 33,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 99,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "other_session_extra_doesnt_fill",
+      "description": "Extra Fajr counts don't fill a missed Maghrib.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "after_maghrib",
+              "kind": "after_prayer",
+              "prayer": "maghrib",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-12",
+            "session": "after_fajr",
+            "count": 33
+          },
+          {
+            "date": "2026-10-13",
+            "session": "after_fajr",
+            "count": 66
+          },
+          {
+            "date": "2026-10-13",
+            "session": "after_maghrib",
+            "count": 33
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 33,
+            "filled": 0,
+            "status": "missed"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 99,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "missed_days_version_decides",
+      "description": "Make-up was turned off from Tuesday; Monday was missed under a version with next-day make-up, so it can still be made up.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-12",
+          "versions": [
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-12",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "target"
+              }
+            },
+            {
+              "from": "2026-10-13",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-12",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 100,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 200,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "turned_on_later_doesnt_reach_back",
+      "description": "Make-up turned on from Tuesday doesn't apply to Monday, missed while it was off.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-12",
+          "versions": [
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-12",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-13",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-12",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "target"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 0,
+            "status": "missed"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 200,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "after_the_end_nothing_fills",
+      "description": "The goal ended on Monday: Tuesday's counts aren't the goal's, and Monday is final.",
+      "given": {
+        "goal": {
+          "created_on": "2026-10-12",
+          "versions": [
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-12",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "target"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": {
+            "on": "2026-10-12",
+            "reason": "user"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-14",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 0,
+            "status": "missed"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:awrad:goal-model:1",
-  "title": "Awrad goal model v1: rule inputs",
-  "description": "The language-neutral goal shape the rule fixtures use (CONTEXT.md). Fixture files reference these definitions from their given_schema and expect_schema.",
+  "title": "Awrad goal model v1: rule inputs and the goal document",
+  "description": "The language-neutral goal shapes (CONTEXT.md, README.md). `goal` is what a rule evaluates on one day: one version's settings plus the goal's pauses and excused days. `goal_timeline` and `goal_document` hold every dated version; README.md says how a version resolves into a `goal` for a day. Fixture files reference these definitions from their given_schema and expect_schema.",
   "$defs": {
     "date": {
       "type": "string",
@@ -18,6 +18,17 @@
       "type": "string",
       "minLength": 1,
       "description": "IANA timezone name."
+    },
+    "uuid": {
+      "description": "Lowercase, hyphenated UUID, any version except nil and max (contracts/identity/v1). IDs we generate are UUIDv7.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "not": {
+        "enum": [
+          "00000000-0000-0000-0000-000000000000",
+          "ffffffff-ffff-ffff-ffff-ffffffffffff"
+        ]
+      }
     },
     "count": {
       "type": "integer",
@@ -41,6 +52,20 @@
         "sunday",
         "monday"
       ]
+    },
+    "prayer": {
+      "enum": [
+        "fajr",
+        "dhuhr",
+        "asr",
+        "maghrib",
+        "isha"
+      ]
+    },
+    "time_of_day": {
+      "type": "string",
+      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$",
+      "description": "Local wall-clock time, HH:MM, 24-hour."
     },
     "schedule": {
       "description": "Which days the goal is due. Hijri kinds read the Hijri date of the day (urn:awrad:hijri-calendar:1, with the account's corrections); they're never due outside the table's range.",
@@ -420,6 +445,14 @@
         }
       }
     },
+    "excused": {
+      "description": "Excused days (decision 20): past missed due days the user excused, at most 2 per Gregorian month (excused_days.json). Each is skipped like a paused day. Clients write them sorted.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/date"
+      }
+    },
     "count_policy": {
       "type": "object",
       "additionalProperties": false,
@@ -461,188 +494,37 @@
           ]
         },
         "streak_threshold": {
+          "$ref": "#/$defs/streak_threshold"
+        }
+      }
+    },
+    "streak_threshold": {
+      "description": "Which number a day must reach to keep the streak: any count (1), the policy's minimum, target or maximum, a number of its own (`{\"amount\": N}`, decisions 29 and 36), or `daily_pace`: that day's pace share (cumulative totals with an end only; daily_pace.json).",
+      "oneOf": [
+        {
           "enum": [
             "any_count",
             "minimum",
             "target",
-            "maximum"
+            "maximum",
+            "daily_pace"
           ]
-        }
-      }
-    },
-    "session": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "count_policy"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "pattern": "^[a-z][a-z0-9_]*$"
-        },
-        "count_policy": {
-          "$ref": "#/$defs/count_policy"
-        }
-      }
-    },
-    "requirement": {
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "type"
-          ],
-          "properties": {
-            "type": {
-              "enum": [
-                "per_due_date",
-                "cumulative_total",
-                "tracker"
-              ]
-            }
-          }
         },
         {
           "type": "object",
           "additionalProperties": false,
           "required": [
-            "type",
-            "period"
+            "amount"
           ],
           "properties": {
-            "type": {
-              "const": "period_total"
-            },
-            "period": {
-              "enum": [
-                "week",
-                "month",
-                "hijri_month"
-              ]
-            }
-          }
-        },
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "type",
-            "period",
-            "days"
-          ],
-          "properties": {
-            "type": {
-              "const": "days_per_period"
-            },
-            "period": {
-              "enum": [
-                "week",
-                "month",
-                "hijri_month"
-              ]
-            },
-            "days": {
+            "amount": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 31
+              "maximum": 9007199254740991
             }
           }
         }
       ]
-    },
-    "count_entry": {
-      "description": "A day's total for the goal (session null) or for one session, on an effective practice day.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "date",
-        "session",
-        "count"
-      ],
-      "properties": {
-        "date": {
-          "$ref": "#/$defs/date"
-        },
-        "session": {
-          "oneOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "count": {
-          "$ref": "#/$defs/count"
-        }
-      }
-    },
-    "window": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "from",
-        "to"
-      ],
-      "properties": {
-        "from": {
-          "$ref": "#/$defs/date"
-        },
-        "to": {
-          "$ref": "#/$defs/date"
-        }
-      }
-    },
-    "goal_shape": {
-      "description": "The goal's structure only. Rule fixtures use `goal`, which adds the validity rules; goal_validity uses this shape to describe invalid goals.",
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "schedule",
-        "active_period",
-        "paused",
-        "count_policy",
-        "sessions",
-        "requirement",
-        "completion"
-      ],
-      "properties": {
-        "schedule": {
-          "$ref": "#/$defs/schedule"
-        },
-        "active_period": {
-          "$ref": "#/$defs/active_period"
-        },
-        "paused": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/paused_range"
-          }
-        },
-        "count_policy": {
-          "$ref": "#/$defs/count_policy"
-        },
-        "sessions": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/session"
-          }
-        },
-        "requirement": {
-          "$ref": "#/$defs/requirement"
-        },
-        "completion": {
-          "enum": [
-            "never",
-            "when_target_reached",
-            "when_duration_ended"
-          ]
-        }
-      }
     },
     "count_policy_valid": {
       "description": "A count policy whose streak threshold points at a value that is set (minimum, target or maximum).",
@@ -721,12 +603,483 @@
         }
       ]
     },
-    "goal": {
-      "description": "A valid goal (CONTEXT.md; slice 1 decision on row 1): every requirement except tracker needs a target (on the goal, or on every session when it has sessions), and a streak threshold must point at a value that is set. Invalid goals can't be constructed on any platform; goal_validity specifies the errors.",
-      "allOf": [
+    "session": {
+      "description": "A time-of-day opportunity with its own count policy (decision 10). The kind only guides (decision 11): any session can be counted any time of its day. `between` may run past midnight (from > to); from = to is invalid.",
+      "oneOf": [
         {
-          "$ref": "#/$defs/goal_shape"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "kind",
+            "count_policy"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "Derived from the kind (README.md, Sessions): anytime, before_<prayer>, after_<prayer>, at_HHMM, between_HHMM_HHMM."
+            },
+            "kind": {
+              "const": "anytime"
+            },
+            "count_policy": {
+              "$ref": "#/$defs/count_policy"
+            }
+          }
         },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "kind",
+            "prayer",
+            "count_policy"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "Derived from the kind (README.md, Sessions): anytime, before_<prayer>, after_<prayer>, at_HHMM, between_HHMM_HHMM."
+            },
+            "kind": {
+              "const": "before_prayer"
+            },
+            "prayer": {
+              "$ref": "#/$defs/prayer"
+            },
+            "count_policy": {
+              "$ref": "#/$defs/count_policy"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "kind",
+            "prayer",
+            "count_policy"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "Derived from the kind (README.md, Sessions): anytime, before_<prayer>, after_<prayer>, at_HHMM, between_HHMM_HHMM."
+            },
+            "kind": {
+              "const": "after_prayer"
+            },
+            "prayer": {
+              "$ref": "#/$defs/prayer"
+            },
+            "count_policy": {
+              "$ref": "#/$defs/count_policy"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "kind",
+            "time",
+            "count_policy"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "Derived from the kind (README.md, Sessions): anytime, before_<prayer>, after_<prayer>, at_HHMM, between_HHMM_HHMM."
+            },
+            "kind": {
+              "const": "at_time"
+            },
+            "time": {
+              "$ref": "#/$defs/time_of_day"
+            },
+            "count_policy": {
+              "$ref": "#/$defs/count_policy"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "kind",
+            "from",
+            "to",
+            "count_policy"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "Derived from the kind (README.md, Sessions): anytime, before_<prayer>, after_<prayer>, at_HHMM, between_HHMM_HHMM."
+            },
+            "kind": {
+              "const": "between"
+            },
+            "from": {
+              "$ref": "#/$defs/time_of_day"
+            },
+            "to": {
+              "$ref": "#/$defs/time_of_day"
+            },
+            "count_policy": {
+              "$ref": "#/$defs/count_policy"
+            }
+          }
+        }
+      ]
+    },
+    "requirement": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "enum": [
+                "per_due_date",
+                "cumulative_total",
+                "tracker"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "period"
+          ],
+          "properties": {
+            "type": {
+              "const": "period_total"
+            },
+            "period": {
+              "enum": [
+                "week",
+                "month",
+                "hijri_month"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "period",
+            "days"
+          ],
+          "properties": {
+            "type": {
+              "const": "days_per_period"
+            },
+            "period": {
+              "enum": [
+                "week",
+                "month",
+                "hijri_month"
+              ]
+            },
+            "days": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 31
+            }
+          }
+        }
+      ]
+    },
+    "make_up": {
+      "description": "Make-up (qada, decisions 18 and 31): counts past a later day's own needs fill a missed due day inside the window, up to the fill amount. Only per-due-date goals may have a window other than off. `fill` is kept when off.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "window",
+        "fill"
+      ],
+      "properties": {
+        "window": {
+          "enum": [
+            "off",
+            "next_day",
+            "within_3_days"
+          ]
+        },
+        "fill": {
+          "enum": [
+            "streak",
+            "target"
+          ]
+        }
+      }
+    },
+    "count_entry": {
+      "description": "A day's total for the goal (session null) or for one session, on an effective practice day. count_attribution.json makes them from the count log.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "date",
+        "session",
+        "count"
+      ],
+      "properties": {
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "session": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "count": {
+          "$ref": "#/$defs/count"
+        }
+      }
+    },
+    "count_log_entry": {
+      "description": "One entry of a profile's count log (decisions 1, 2, 5 and 38; synced from slice 5). Counts belong to the dhikr: goal_id is set only for a count made in a dedicated goal. amount is never 0; it's negative for an adjustment or an undo.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "dhikr_id",
+        "practice_day",
+        "session_id",
+        "goal_id",
+        "amount",
+        "counted_at"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/uuid",
+          "description": "A UUIDv7 made where the count was made."
+        },
+        "dhikr_id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "practice_day": {
+          "$ref": "#/$defs/date"
+        },
+        "session_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "goal_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "amount": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991,
+          "not": {
+            "const": 0
+          }
+        },
+        "counted_at": {
+          "$ref": "#/$defs/instant"
+        }
+      }
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/date"
+        },
+        "to": {
+          "$ref": "#/$defs/date"
+        }
+      }
+    },
+    "goal_shape": {
+      "description": "What a rule evaluates on one day: one version's settings plus the goal's pauses and excused days. Structure only; `goal` adds the validity rules, and goal_validity uses this shape to describe invalid goals.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schedule",
+        "active_period",
+        "paused",
+        "excused",
+        "count_policy",
+        "sessions",
+        "requirement",
+        "completion",
+        "make_up"
+      ],
+      "properties": {
+        "schedule": {
+          "$ref": "#/$defs/schedule"
+        },
+        "active_period": {
+          "$ref": "#/$defs/active_period"
+        },
+        "paused": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/paused_range"
+          }
+        },
+        "excused": {
+          "$ref": "#/$defs/excused"
+        },
+        "count_policy": {
+          "$ref": "#/$defs/count_policy"
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/session"
+          }
+        },
+        "requirement": {
+          "$ref": "#/$defs/requirement"
+        },
+        "completion": {
+          "enum": [
+            "never",
+            "when_target_reached",
+            "when_duration_ended"
+          ]
+        },
+        "make_up": {
+          "$ref": "#/$defs/make_up"
+        }
+      }
+    },
+    "goal_settings_shape": {
+      "description": "The settings a dated version holds: everything in goal_shape except paused and excused. Structure only.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schedule",
+        "active_period",
+        "count_policy",
+        "sessions",
+        "requirement",
+        "completion",
+        "make_up"
+      ],
+      "properties": {
+        "schedule": {
+          "$ref": "#/$defs/schedule"
+        },
+        "active_period": {
+          "$ref": "#/$defs/active_period"
+        },
+        "count_policy": {
+          "$ref": "#/$defs/count_policy"
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/session"
+          }
+        },
+        "requirement": {
+          "$ref": "#/$defs/requirement"
+        },
+        "completion": {
+          "enum": [
+            "never",
+            "when_target_reached",
+            "when_duration_ended"
+          ]
+        },
+        "make_up": {
+          "$ref": "#/$defs/make_up"
+        }
+      }
+    },
+    "version_shape": {
+      "description": "A dated version: settings in force from `from` (an effective practice day) until the next version's from. Structure only.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "schedule",
+        "active_period",
+        "count_policy",
+        "sessions",
+        "requirement",
+        "completion",
+        "make_up"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/date"
+        },
+        "schedule": {
+          "$ref": "#/$defs/schedule"
+        },
+        "active_period": {
+          "$ref": "#/$defs/active_period"
+        },
+        "count_policy": {
+          "$ref": "#/$defs/count_policy"
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/session"
+          }
+        },
+        "requirement": {
+          "$ref": "#/$defs/requirement"
+        },
+        "completion": {
+          "enum": [
+            "never",
+            "when_target_reached",
+            "when_duration_ended"
+          ]
+        },
+        "make_up": {
+          "$ref": "#/$defs/make_up"
+        }
+      }
+    },
+    "goal_rules": {
+      "description": "The validity rules a schema can express (goal_validity.json has them all, with error codes): a target unless tracker (on every session when there are sessions); a streak threshold pointing at a value that is set; an end date or a number of days, not both; make-up only on per-due-date goals; sessions XOR a minimum or cap; daily_pace only on a cumulative total with an end, never on a session. Session IDs and kinds, and the document rules, are checked by tools/check-goal-model.mjs.",
+      "allOf": [
         {
           "if": {
             "type": "object",
@@ -874,8 +1227,594 @@
               }
             }
           }
+        },
+        {
+          "type": "object",
+          "not": {
+            "type": "object",
+            "required": [
+              "active_period"
+            ],
+            "properties": {
+              "active_period": {
+                "type": "object",
+                "required": [
+                  "end_date",
+                  "duration_days"
+                ],
+                "properties": {
+                  "end_date": {
+                    "type": "string"
+                  },
+                  "duration_days": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "required": [
+              "make_up"
+            ],
+            "properties": {
+              "make_up": {
+                "type": "object",
+                "required": [
+                  "window"
+                ],
+                "properties": {
+                  "window": {
+                    "not": {
+                      "const": "off"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "requirement"
+            ],
+            "properties": {
+              "requirement": {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "per_due_date"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "required": [
+              "sessions"
+            ],
+            "properties": {
+              "sessions": {
+                "type": "array",
+                "minItems": 1
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "count_policy": {
+                "type": "object",
+                "properties": {
+                  "minimum": {
+                    "type": "null"
+                  },
+                  "maximum": {
+                    "type": "null"
+                  }
+                }
+              },
+              "sessions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "count_policy": {
+                      "type": "object",
+                      "properties": {
+                        "minimum": {
+                          "type": "null"
+                        },
+                        "maximum": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "required": [
+              "count_policy"
+            ],
+            "properties": {
+              "count_policy": {
+                "type": "object",
+                "required": [
+                  "streak_threshold"
+                ],
+                "properties": {
+                  "streak_threshold": {
+                    "const": "daily_pace"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "required": [
+              "requirement",
+              "active_period"
+            ],
+            "properties": {
+              "requirement": {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "properties": {
+                  "type": {
+                    "const": "cumulative_total"
+                  }
+                }
+              },
+              "active_period": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "end_date"
+                    ],
+                    "properties": {
+                      "end_date": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "duration_days"
+                    ],
+                    "properties": {
+                      "duration_days": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "sessions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "count_policy": {
+                    "type": "object",
+                    "properties": {
+                      "streak_threshold": {
+                        "not": {
+                          "const": "daily_pace"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       ]
+    },
+    "goal": {
+      "description": "A valid goal: goal_shape plus goal_rules. Invalid goals can't be constructed on any platform; goal_validity specifies the errors.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/goal_shape"
+        },
+        {
+          "$ref": "#/$defs/goal_rules"
+        }
+      ]
+    },
+    "goal_settings": {
+      "description": "Valid settings for a new version (goal_version_add.json).",
+      "allOf": [
+        {
+          "$ref": "#/$defs/goal_settings_shape"
+        },
+        {
+          "$ref": "#/$defs/goal_rules"
+        }
+      ]
+    },
+    "version": {
+      "description": "A valid dated version.",
+      "allOf": [
+        {
+          "$ref": "#/$defs/version_shape"
+        },
+        {
+          "$ref": "#/$defs/goal_rules"
+        }
+      ]
+    },
+    "ended": {
+      "description": "When and why a goal finished. `on` is the effective practice day it ended: its last day, inclusive. Reasons: user (End goal), completed (a cumulative total reached), date (its active period ran out, or it has no due day left), structural_edit (a different schedule or requirement type started a new goal), dhikr_deleted (its custom dhikr was deleted).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "on",
+        "reason"
+      ],
+      "properties": {
+        "on": {
+          "$ref": "#/$defs/date"
+        },
+        "reason": {
+          "enum": [
+            "user",
+            "completed",
+            "date",
+            "structural_edit",
+            "dhikr_deleted"
+          ]
+        }
+      }
+    },
+    "goal_timeline": {
+      "description": "Everything about a goal's days: the goal document without its dhikr_id, dhikr_snapshot, name and counts. Rules that look across days accept it, and judge each day by the version in force that day (README.md, Dated versions).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "created_on",
+        "versions",
+        "paused",
+        "excused",
+        "ended"
+      ],
+      "properties": {
+        "created_on": {
+          "$ref": "#/$defs/date",
+          "description": "The effective practice day the goal was created: the first version's from."
+        },
+        "versions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/version"
+          },
+          "description": "Oldest first, `from` strictly increasing, the first on created_on. Structural fields are equal in every version: the schedule kind (and a yearly schedule's calendar), the requirement type (and period), and the start date."
+        },
+        "paused": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/paused_range"
+          }
+        },
+        "excused": {
+          "$ref": "#/$defs/excused",
+          "type": "array",
+          "maxItems": 1000
+        },
+        "ended": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ended"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "goal_input": {
+      "description": "A rule input: a single-version goal, or a whole timeline. A `goal` stands for a timeline with one version from its start date, never ended.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/goal"
+        },
+        {
+          "$ref": "#/$defs/goal_timeline"
+        }
+      ]
+    },
+    "label_text": {
+      "$ref": "urn:awrad:dhikr-catalog:1#/$defs/text",
+      "type": "string",
+      "maxLength": 120
+    },
+    "dhikr_snapshot": {
+      "description": "The dhikr's label when the goal was last saved (decision 37), so History and stats read correctly after a custom dhikr is gone. Every title key present, null when empty, at least one text.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "arabic",
+        "kind"
+      ],
+      "properties": {
+        "title": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "en",
+            "ar",
+            "ml"
+          ],
+          "properties": {
+            "en": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/label_text"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "ar": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/label_text"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "ml": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/label_text"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "anyOf": [
+            {
+              "properties": {
+                "en": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "properties": {
+                "ar": {
+                  "type": "string"
+                }
+              }
+            },
+            {
+              "properties": {
+                "ml": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        },
+        "arabic": {
+          "$ref": "urn:awrad:dhikr-catalog:1#/$defs/text",
+          "type": "string",
+          "maxLength": 5000
+        },
+        "kind": {
+          "$ref": "urn:awrad:dhikr-catalog:1#/$defs/dhikr/properties/kind"
+        }
+      }
+    },
+    "goal_document_shape": {
+      "description": "The goal document's structure only; goal_validity describes invalid documents with it.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dhikr_id",
+        "dhikr_snapshot",
+        "name",
+        "counts",
+        "created_on",
+        "versions",
+        "paused",
+        "excused",
+        "ended"
+      ],
+      "properties": {
+        "dhikr_id": {
+          "$ref": "#/$defs/uuid",
+          "description": "A built-in dhikr's catalog ID or a custom dhikr's entity ID. Never changes: another dhikr is another goal."
+        },
+        "dhikr_snapshot": {
+          "$ref": "#/$defs/dhikr_snapshot"
+        },
+        "name": {
+          "description": "The user's own name for the goal, or null to show the dhikr's title.",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/label_text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "counts": {
+          "enum": [
+            "shared",
+            "dedicated"
+          ],
+          "description": "Which count-log entries fill the goal (count_attribution.json). Set at creation and never changed."
+        },
+        "created_on": {
+          "$ref": "#/$defs/date",
+          "description": "The effective practice day the goal was created: the first version's from."
+        },
+        "versions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/version_shape"
+          },
+          "description": "Oldest first, `from` strictly increasing, the first on created_on. Structural fields are equal in every version: the schedule kind (and a yearly schedule's calendar), the requirement type (and period), and the start date."
+        },
+        "paused": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/paused_range"
+          }
+        },
+        "excused": {
+          "$ref": "#/$defs/excused",
+          "type": "array",
+          "maxItems": 1000
+        },
+        "ended": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ended"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "goal_document": {
+      "description": "The `goal` sync entity's document (sync/v1; its entity ID is a UUIDv7). Every version is valid. The rules a schema can't express (session IDs, versions in order from created_on, structural fields equal) are in goal_validity.json; the server rejects a document that breaks them with document_invalid.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dhikr_id",
+        "dhikr_snapshot",
+        "name",
+        "counts",
+        "created_on",
+        "versions",
+        "paused",
+        "excused",
+        "ended"
+      ],
+      "properties": {
+        "dhikr_id": {
+          "$ref": "#/$defs/uuid",
+          "description": "A built-in dhikr's catalog ID or a custom dhikr's entity ID. Never changes: another dhikr is another goal."
+        },
+        "dhikr_snapshot": {
+          "$ref": "#/$defs/dhikr_snapshot"
+        },
+        "name": {
+          "description": "The user's own name for the goal, or null to show the dhikr's title.",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/label_text"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "counts": {
+          "enum": [
+            "shared",
+            "dedicated"
+          ],
+          "description": "Which count-log entries fill the goal (count_attribution.json). Set at creation and never changed."
+        },
+        "created_on": {
+          "$ref": "#/$defs/date",
+          "description": "The effective practice day the goal was created: the first version's from."
+        },
+        "versions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/version"
+          },
+          "description": "Oldest first, `from` strictly increasing, the first on created_on. Structural fields are equal in every version: the schedule kind (and a yearly schedule's calendar), the requirement type (and period), and the start date."
+        },
+        "paused": {
+          "type": "array",
+          "maxItems": 500,
+          "items": {
+            "$ref": "#/$defs/paused_range"
+          }
+        },
+        "excused": {
+          "$ref": "#/$defs/excused",
+          "type": "array",
+          "maxItems": 1000
+        },
+        "ended": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/ended"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "goal_order_document": {
+      "description": "The `goal_order` sync entity's document: the user's order of My Goals (decision 25). One per account; its entity ID is the account's. Goals it doesn't name follow, by created_on then ID. The server drops IDs that aren't a non-deleted goal of the account.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "goal_ids"
+      ],
+      "properties": {
+        "goal_ids": {
+          "type": "array",
+          "maxItems": 2000,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/uuid"
+          }
+        }
+      }
     }
   }
 }

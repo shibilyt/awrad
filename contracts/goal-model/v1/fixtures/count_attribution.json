@@ -1,0 +1,1209 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "count_attribution",
+  "description": "Which count-log entries fill which goal, as the per-day, per-session counts every other rule consumes (decisions 1 and 2). An entry fills the goals of its dhikr: a shared goal takes entries without a goal_id, a dedicated goal only entries with its own ID. With sessions in the day's version, an entry goes to the session with its session_id (others are dropped); without, to the day. Entries sum per day and session; a sum of 0 or less is no count.",
+  "references": [
+    "CONTEXT.md#goal-language (Shared and dedicated counts)",
+    "docs/slices/04-goals-decisions.md decisions 1, 2, 5, 38 and 39",
+    "DECISIONS.md ADR-2026-10-31 (Counts belong to the dhikr)"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "log",
+      "goals"
+    ],
+    "properties": {
+      "log": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/count_log_entry"
+        }
+      },
+      "goals": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "dhikr_id",
+            "counts",
+            "goal"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/uuid"
+            },
+            "dhikr_id": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/uuid"
+            },
+            "counts": {
+              "enum": [
+                "shared",
+                "dedicated"
+              ]
+            },
+            "goal": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/goal_timeline"
+            }
+          }
+        }
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goals"
+    ],
+    "properties": {
+      "goals": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "counts"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/uuid"
+            },
+            "counts": {
+              "type": "array",
+              "items": {
+                "$ref": "urn:awrad:goal-model:1#/$defs/count_entry"
+              },
+              "description": "Ordered by date, then session (null first, then by ID)."
+            }
+          }
+        },
+        "description": "One per given goal, in the same order."
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "shared_count_fills_every_shared_goal",
+      "description": "Counts belong to the dhikr: one shared count fills both shared Isthighfar goals.",
+      "given": {
+        "log": [
+          {
+            "id": "0192f200-0000-7000-8000-000000000001",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 33,
+            "counted_at": "2026-10-12T06:01:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000002",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 67,
+            "counted_at": "2026-10-12T06:02:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000003",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-13",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 10,
+            "counted_at": "2026-10-13T06:03:00Z"
+          }
+        ],
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          }
+        ]
+      },
+      "expect": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": null,
+                "count": 100
+              },
+              {
+                "date": "2026-10-13",
+                "session": null,
+                "count": 10
+              }
+            ]
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": null,
+                "count": 100
+              },
+              {
+                "date": "2026-10-13",
+                "session": null,
+                "count": 10
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "dedicated_counts_stay_in_their_goal",
+      "description": "Goal 2 is dedicated: it gets only the 40 made inside it, and those 40 don't spill into shared goal 1. An entry naming another goal (3) fills neither.",
+      "given": {
+        "log": [
+          {
+            "id": "0192f200-0000-7000-8000-000000000011",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 100,
+            "counted_at": "2026-10-12T06:11:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000012",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": "0192f100-0000-7000-8000-000000000002",
+            "amount": 40,
+            "counted_at": "2026-10-12T06:12:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000013",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": "0192f100-0000-7000-8000-000000000003",
+            "amount": 5,
+            "counted_at": "2026-10-12T06:13:00Z"
+          }
+        ],
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "dedicated",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          }
+        ]
+      },
+      "expect": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": null,
+                "count": 100
+              }
+            ]
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": null,
+                "count": 40
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "other_dhikr_ignored",
+      "description": "A goal only takes counts of its own dhikr.",
+      "given": {
+        "log": [
+          {
+            "id": "0192f200-0000-7000-8000-000000000021",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 100,
+            "counted_at": "2026-10-12T06:21:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000022",
+            "dhikr_id": "f2337cb6-6d46-45fb-a193-b9e231c97bbd",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 100,
+            "counted_at": "2026-10-12T06:22:00Z"
+          }
+        ],
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "dhikr_id": "f2337cb6-6d46-45fb-a193-b9e231c97bbd",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          }
+        ]
+      },
+      "expect": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": null,
+                "count": 100
+              }
+            ]
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": null,
+                "count": 100
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "negative_entries_correct_the_day",
+      "description": "Undo and adjustments are negative entries: 100 − 3 is 97. A day that sums to 0, or below 0 (two devices subtracting at once), has no count.",
+      "given": {
+        "log": [
+          {
+            "id": "0192f200-0000-7000-8000-000000000031",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 100,
+            "counted_at": "2026-10-12T06:31:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000032",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": null,
+            "amount": -3,
+            "counted_at": "2026-10-12T06:32:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000033",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-13",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 20,
+            "counted_at": "2026-10-13T06:33:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000034",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-13",
+            "session_id": null,
+            "goal_id": null,
+            "amount": -20,
+            "counted_at": "2026-10-13T06:34:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000035",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-14",
+            "session_id": null,
+            "goal_id": null,
+            "amount": -5,
+            "counted_at": "2026-10-14T06:35:00Z"
+          }
+        ],
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          }
+        ]
+      },
+      "expect": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": null,
+                "count": 97
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "sessions_by_id",
+      "description": "A goal with sessions takes an entry into the session with the same ID (sessions match across goals by kind). An entry without a session, or with a session this goal doesn't have, isn't counted in it. A goal without sessions takes all of them as its day's count.",
+      "given": {
+        "log": [
+          {
+            "id": "0192f200-0000-7000-8000-000000000041",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": "after_fajr",
+            "goal_id": null,
+            "amount": 33,
+            "counted_at": "2026-10-12T06:41:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000042",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": "after_maghrib",
+            "goal_id": null,
+            "amount": 10,
+            "counted_at": "2026-10-12T06:42:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000043",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 5,
+            "counted_at": "2026-10-12T06:43:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000044",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": "after_isha",
+            "goal_id": null,
+            "amount": 7,
+            "counted_at": "2026-10-12T06:44:00Z"
+          }
+        ],
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": null,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [
+                    {
+                      "id": "after_fajr",
+                      "kind": "after_prayer",
+                      "prayer": "fajr",
+                      "count_policy": {
+                        "minimum": null,
+                        "target": 33,
+                        "maximum": null,
+                        "streak_threshold": "target"
+                      }
+                    },
+                    {
+                      "id": "after_maghrib",
+                      "kind": "after_prayer",
+                      "prayer": "maghrib",
+                      "count_policy": {
+                        "minimum": null,
+                        "target": 33,
+                        "maximum": null,
+                        "streak_threshold": "target"
+                      }
+                    }
+                  ],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          }
+        ]
+      },
+      "expect": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": "after_fajr",
+                "count": 33
+              },
+              {
+                "date": "2026-10-12",
+                "session": "after_maghrib",
+                "count": 10
+              }
+            ]
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": null,
+                "count": 55
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "sessions_follow_the_version_of_the_day",
+      "description": "Sessions were added from 10 October: on the 9th the count goes to the day as a whole, from the 10th into the session.",
+      "given": {
+        "log": [
+          {
+            "id": "0192f200-0000-7000-8000-000000000051",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-09",
+            "session_id": "after_fajr",
+            "goal_id": null,
+            "amount": 30,
+            "counted_at": "2026-10-09T06:51:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000052",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-10",
+            "session_id": "after_fajr",
+            "goal_id": null,
+            "amount": 40,
+            "counted_at": "2026-10-10T06:52:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000053",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-10",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 2,
+            "counted_at": "2026-10-10T06:53:00Z"
+          }
+        ],
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                },
+                {
+                  "from": "2026-10-10",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": null,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [
+                    {
+                      "id": "after_fajr",
+                      "kind": "after_prayer",
+                      "prayer": "fajr",
+                      "count_policy": {
+                        "minimum": null,
+                        "target": 100,
+                        "maximum": null,
+                        "streak_threshold": "target"
+                      }
+                    }
+                  ],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          }
+        ]
+      },
+      "expect": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "counts": [
+              {
+                "date": "2026-10-09",
+                "session": null,
+                "count": 30
+              },
+              {
+                "date": "2026-10-10",
+                "session": "after_fajr",
+                "count": 40
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "late_count_belongs_to_its_practice_day",
+      "description": "An entry made on the 13th for the 12th (late counting) counts on its practice day, not the day it was made. Output is ordered by date.",
+      "given": {
+        "log": [
+          {
+            "id": "0192f200-0000-7000-8000-000000000061",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-13",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 5,
+            "counted_at": "2026-10-13T06:01:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000062",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 50,
+            "counted_at": "2026-10-13T05:00:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000063",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-12",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 50,
+            "counted_at": "2026-10-12T06:03:00Z"
+          }
+        ],
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          }
+        ]
+      },
+      "expect": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": null,
+                "count": 100
+              },
+              {
+                "date": "2026-10-13",
+                "session": null,
+                "count": 5
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "dates_outside_the_goal_are_kept",
+      "description": "Attribution doesn't filter by date: the rules ignore counts outside the active period, and a shared goal's History still shows the dhikr's days.",
+      "given": {
+        "log": [
+          {
+            "id": "0192f200-0000-7000-8000-000000000071",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-09-30",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 7,
+            "counted_at": "2026-09-30T06:11:00Z"
+          },
+          {
+            "id": "0192f200-0000-7000-8000-000000000072",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "practice_day": "2026-10-14",
+            "session_id": null,
+            "goal_id": null,
+            "amount": 8,
+            "counted_at": "2026-10-14T06:12:00Z"
+          }
+        ],
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": {
+                "on": "2026-10-12",
+                "reason": "user"
+              }
+            }
+          }
+        ]
+      },
+      "expect": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "counts": [
+              {
+                "date": "2026-09-30",
+                "session": null,
+                "count": 7
+              },
+              {
+                "date": "2026-10-14",
+                "session": null,
+                "count": 8
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "empty_log",
+      "description": "No entries: no counts.",
+      "given": {
+        "log": [],
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "shared",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+            "counts": "dedicated",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            }
+          }
+        ]
+      },
+      "expect": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "counts": []
+          }
+        ]
+      }
+    }
+  ]
+}

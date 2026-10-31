@@ -1,0 +1,2121 @@
+{
+  "format": "awrad-fixture/1",
+  "rule": "goal_list_placement",
+  "description": "Where each goal shows in My Goals on a day (decisions 12, 25, 26 and 30), first match wins: History (ended in its document; completed by its completion policy; past its last day; or no scheduled day left), Paused (paused today), Tracking (trackers), Today (due today), Upcoming (with its next due day). Today, Tracking and Paused follow the user's goal_order, then goals it doesn't name by created_on and ID; Upcoming is by next due day, then that order; History is newest first, then that order.",
+  "references": [
+    "CONTEXT.md#goal-language (Tracking, Ended and completed goals)",
+    "docs/slices/04-goals-decisions.md decisions 12, 24, 25, 26 and 30"
+  ],
+  "given_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "goals",
+      "order",
+      "date",
+      "week_start"
+    ],
+    "properties": {
+      "goals": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "goal",
+            "counts"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/uuid"
+            },
+            "goal": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/goal_timeline"
+            },
+            "counts": {
+              "type": "array",
+              "items": {
+                "$ref": "urn:awrad:goal-model:1#/$defs/count_entry"
+              }
+            }
+          }
+        }
+      },
+      "order": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/uuid"
+        },
+        "description": "The account's goal_order goal_ids."
+      },
+      "date": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/date"
+      },
+      "week_start": {
+        "$ref": "urn:awrad:goal-model:1#/$defs/week_start"
+      },
+      "hijri_corrections": {
+        "$ref": "urn:awrad:hijri-calendar:1#/$defs/corrections",
+        "description": "The account's Hijri month-start corrections. Absent means none."
+      }
+    }
+  },
+  "expect_schema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "today",
+      "upcoming",
+      "tracking",
+      "paused",
+      "history"
+    ],
+    "properties": {
+      "today": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/uuid"
+        }
+      },
+      "upcoming": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "next_due"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/uuid"
+            },
+            "next_due": {
+              "oneOf": [
+                {
+                  "$ref": "urn:awrad:goal-model:1#/$defs/date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The next due day within 400 days, or null if pauses cover them all."
+            }
+          }
+        }
+      },
+      "tracking": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/uuid"
+        }
+      },
+      "paused": {
+        "type": "array",
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/uuid"
+        }
+      },
+      "history": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "finished",
+            "on"
+          ],
+          "properties": {
+            "id": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/uuid"
+            },
+            "finished": {
+              "enum": [
+                "completed",
+                "ended"
+              ]
+            },
+            "on": {
+              "$ref": "urn:awrad:goal-model:1#/$defs/date",
+              "description": "Its ended.on, or the day it was completed, or its last (scheduled) day."
+            }
+          }
+        }
+      }
+    }
+  },
+  "cases": [
+    {
+      "id": "every_section",
+      "description": "Due today; due Friday; a tracker; paused; ended by the user; a total reached on 11 October; past its end date.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "weekdays",
+                    "weekdays": [
+                      "friday"
+                    ]
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000003",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": null,
+                    "maximum": null,
+                    "streak_threshold": "any_count"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "tracker"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000004",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [
+                {
+                  "from": "2026-10-10",
+                  "to": null
+                }
+              ],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000005",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": {
+                "on": "2026-10-12",
+                "reason": "user"
+              }
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000006",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 1000,
+                    "maximum": null,
+                    "streak_threshold": "any_count"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "cumulative_total"
+                  },
+                  "completion": "when_target_reached",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": [
+              {
+                "date": "2026-10-01",
+                "session": null,
+                "count": 500
+              },
+              {
+                "date": "2026-10-11",
+                "session": null,
+                "count": 500
+              }
+            ]
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000007",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": "2026-10-10",
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [
+          "0192f100-0000-7000-8000-000000000001",
+          "0192f100-0000-7000-8000-000000000002",
+          "0192f100-0000-7000-8000-000000000003",
+          "0192f100-0000-7000-8000-000000000004",
+          "0192f100-0000-7000-8000-000000000005",
+          "0192f100-0000-7000-8000-000000000006",
+          "0192f100-0000-7000-8000-000000000007"
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [
+          "0192f100-0000-7000-8000-000000000001"
+        ],
+        "upcoming": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "next_due": "2026-10-16"
+          }
+        ],
+        "tracking": [
+          "0192f100-0000-7000-8000-000000000003"
+        ],
+        "paused": [
+          "0192f100-0000-7000-8000-000000000004"
+        ],
+        "history": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000005",
+            "finished": "ended",
+            "on": "2026-10-12"
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000006",
+            "finished": "completed",
+            "on": "2026-10-11"
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000007",
+            "finished": "ended",
+            "on": "2026-10-10"
+          }
+        ]
+      }
+    },
+    {
+      "id": "user_order_then_creation",
+      "description": "Today follows the user's order; goals the order doesn't name follow, oldest first.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "goal": {
+              "created_on": "2026-10-02",
+              "versions": [
+                {
+                  "from": "2026-10-02",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000003",
+            "goal": {
+              "created_on": "2026-10-03",
+              "versions": [
+                {
+                  "from": "2026-10-03",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000004",
+            "goal": {
+              "created_on": "2026-10-05",
+              "versions": [
+                {
+                  "from": "2026-10-05",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000005",
+            "goal": {
+              "created_on": "2026-10-04",
+              "versions": [
+                {
+                  "from": "2026-10-04",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [
+          "0192f100-0000-7000-8000-000000000003",
+          "0192f100-0000-7000-8000-000000000001",
+          "0192f100-0000-7000-8000-000000000002"
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [
+          "0192f100-0000-7000-8000-000000000003",
+          "0192f100-0000-7000-8000-000000000001",
+          "0192f100-0000-7000-8000-000000000002",
+          "0192f100-0000-7000-8000-000000000005",
+          "0192f100-0000-7000-8000-000000000004"
+        ],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "same_creation_day_by_id",
+      "description": "Unordered goals created the same day go by ID.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000009",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000008",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [
+          "0192f100-0000-7000-8000-000000000008",
+          "0192f100-0000-7000-8000-000000000009"
+        ],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "upcoming_by_next_due_then_order",
+      "description": "Upcoming is soonest first; the user's order breaks ties.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "weekdays",
+                    "weekdays": [
+                      "friday"
+                    ]
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "weekdays",
+                    "weekdays": [
+                      "thursday"
+                    ]
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000003",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "weekdays",
+                    "weekdays": [
+                      "friday"
+                    ]
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [
+          "0192f100-0000-7000-8000-000000000003",
+          "0192f100-0000-7000-8000-000000000001",
+          "0192f100-0000-7000-8000-000000000002"
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "next_due": "2026-10-15"
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000003",
+            "next_due": "2026-10-16"
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "next_due": "2026-10-16"
+          }
+        ],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "occasion_waits_in_upcoming",
+      "description": "A Ramadan goal stays in Upcoming after Ramadan, with next Ramadan's first day.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-01-01",
+              "versions": [
+                {
+                  "from": "2026-01-01",
+                  "schedule": {
+                    "kind": "yearly",
+                    "calendar": "hijri",
+                    "ranges": [
+                      {
+                        "start": {
+                          "month": 9,
+                          "day": 1
+                        },
+                        "end": {
+                          "month": 9,
+                          "day": 30
+                        }
+                      }
+                    ]
+                  },
+                  "active_period": {
+                    "start_date": "2026-01-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "next_due": "2027-02-08"
+          }
+        ],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "future_start_upcoming",
+      "description": "A goal starting on 20 October waits in Upcoming.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-14",
+              "versions": [
+                {
+                  "from": "2026-10-14",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-20",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "next_due": "2026-10-20"
+          }
+        ],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "pause_from_tomorrow_still_today",
+      "description": "A pause that starts tomorrow doesn't move it yet.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [
+                {
+                  "from": "2026-10-15",
+                  "to": null
+                }
+              ],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [
+          "0192f100-0000-7000-8000-000000000001"
+        ],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "pause_ended_yesterday_back_today",
+      "description": "A pause that ended yesterday is over.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [
+                {
+                  "from": "2026-10-10",
+                  "to": "2026-10-13"
+                }
+              ],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [
+          "0192f100-0000-7000-8000-000000000001"
+        ],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "paused_tracker_in_paused",
+      "description": "A paused tracker sits in Paused, not Tracking.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": null,
+                    "maximum": null,
+                    "streak_threshold": "any_count"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "tracker"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [
+                {
+                  "from": "2026-10-14",
+                  "to": null
+                }
+              ],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [
+          "0192f100-0000-7000-8000-000000000001"
+        ],
+        "history": []
+      }
+    },
+    {
+      "id": "tracker_off_schedule_still_tracking",
+      "description": "A Friday tracker is in Tracking on a Wednesday too.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "weekdays",
+                    "weekdays": [
+                      "friday"
+                    ]
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": null,
+                    "maximum": null,
+                    "streak_threshold": "any_count"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "tracker"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [],
+        "tracking": [
+          "0192f100-0000-7000-8000-000000000001"
+        ],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "weekly_total_today",
+      "description": "A weekly total due every day is in Today's goals all week.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 1000,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "period_total",
+                    "period": "week"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [
+          "0192f100-0000-7000-8000-000000000001"
+        ],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "ended_reasons",
+      "description": "The document's ended decides: completed reads as completed, every other reason as ended.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 1000,
+                    "maximum": null,
+                    "streak_threshold": "any_count"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "cumulative_total"
+                  },
+                  "completion": "when_target_reached",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": {
+                "on": "2026-10-12",
+                "reason": "completed"
+              }
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": {
+                "on": "2026-10-14",
+                "reason": "structural_edit"
+              }
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000003",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": {
+                "on": "2026-10-13",
+                "reason": "dhikr_deleted"
+              }
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "finished": "ended",
+            "on": "2026-10-14"
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000003",
+            "finished": "ended",
+            "on": "2026-10-13"
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "finished": "completed",
+            "on": "2026-10-12"
+          }
+        ]
+      }
+    },
+    {
+      "id": "completed_stays_completed",
+      "description": "A completed goal stays in History even if an adjustment took its total back below the target.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 1000,
+                    "maximum": null,
+                    "streak_threshold": "any_count"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "cumulative_total"
+                  },
+                  "completion": "when_target_reached",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": {
+                "on": "2026-10-12",
+                "reason": "completed"
+              }
+            },
+            "counts": [
+              {
+                "date": "2026-10-12",
+                "session": null,
+                "count": 900
+              }
+            ]
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "finished": "completed",
+            "on": "2026-10-12"
+          }
+        ]
+      }
+    },
+    {
+      "id": "total_reached_today",
+      "description": "Reaching the total today moves it to History at once.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 1000,
+                    "maximum": null,
+                    "streak_threshold": "any_count"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "cumulative_total"
+                  },
+                  "completion": "when_target_reached",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": [
+              {
+                "date": "2026-10-01",
+                "session": null,
+                "count": 600
+              },
+              {
+                "date": "2026-10-14",
+                "session": null,
+                "count": 400
+              }
+            ]
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "finished": "completed",
+            "on": "2026-10-14"
+          }
+        ]
+      }
+    },
+    {
+      "id": "last_day_today_still_today",
+      "description": "Today is the last day: still in Today's goals.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": "2026-10-14",
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [
+          "0192f100-0000-7000-8000-000000000001"
+        ],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "duration_ended_completes",
+      "description": "\"For 10 days\" with completion when the duration ends: completed on its last day.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": 10
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "when_duration_ended",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "finished": "completed",
+            "on": "2026-10-10"
+          }
+        ]
+      }
+    },
+    {
+      "id": "specific_dates_all_past",
+      "description": "Its dates are all past: finished on the last one.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "specific_dates",
+                    "dates": [
+                      "2026-10-02",
+                      "2026-10-09"
+                    ]
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "finished": "ended",
+            "on": "2026-10-09"
+          }
+        ]
+      }
+    },
+    {
+      "id": "open_pause_isnt_finished",
+      "description": "Paused with no end: it stays in Paused.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [
+                {
+                  "from": "2026-10-02",
+                  "to": null
+                }
+              ],
+              "excused": [],
+              "ended": null
+            },
+            "counts": []
+          }
+        ],
+        "order": [],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [
+          "0192f100-0000-7000-8000-000000000001"
+        ],
+        "history": []
+      }
+    },
+    {
+      "id": "history_newest_first_then_order",
+      "description": "History is newest first; the user's order breaks ties.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": {
+                "on": "2026-10-10",
+                "reason": "user"
+              }
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": {
+                "on": "2026-10-12",
+                "reason": "user"
+              }
+            },
+            "counts": []
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000003",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": {
+                "on": "2026-10-12",
+                "reason": "user"
+              }
+            },
+            "counts": []
+          }
+        ],
+        "order": [
+          "0192f100-0000-7000-8000-000000000003",
+          "0192f100-0000-7000-8000-000000000002",
+          "0192f100-0000-7000-8000-000000000001"
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000003",
+            "finished": "ended",
+            "on": "2026-10-12"
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000002",
+            "finished": "ended",
+            "on": "2026-10-12"
+          },
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "finished": "ended",
+            "on": "2026-10-10"
+          }
+        ]
+      }
+    }
+  ]
+}

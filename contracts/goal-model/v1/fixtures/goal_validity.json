@@ -1,22 +1,39 @@
 {
   "format": "awrad-fixture/1",
   "rule": "goal_validity",
-  "description": "Which goals are invalid, and why. Every platform rejects these at construction, sync and import, so no rule ever sees them. Error codes are listed alphabetically.",
+  "description": "Which goals and goal documents are invalid, and why. Every platform rejects them at construction, sync and import, so no rule ever sees them; the server answers a goal put with document_invalid. A document has every version's errors (each version with the document's pauses and excused days) plus its own. Error codes are listed alphabetically.",
   "references": [
     "CONTEXT.md#goal-language (Count policy, Requirement)",
-    "docs/slices/01-domain-foundation.md (reconciliation, row 1: option C)"
+    "docs/slices/01-domain-foundation.md (reconciliation, row 1: option C)",
+    "docs/slices/04-goals-decisions.md decisions 9, 10, 23, 29, 36 and 43"
   ],
   "given_schema": {
-    "type": "object",
-    "additionalProperties": false,
-    "required": [
-      "goal"
-    ],
-    "properties": {
-      "goal": {
-        "$ref": "urn:awrad:goal-model:1#/$defs/goal_shape"
+    "oneOf": [
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "goal"
+        ],
+        "properties": {
+          "goal": {
+            "$ref": "urn:awrad:goal-model:1#/$defs/goal_shape"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "document"
+        ],
+        "properties": {
+          "document": {
+            "$ref": "urn:awrad:goal-model:1#/$defs/goal_document_shape"
+          }
+        }
       }
-    }
+    ]
   },
   "expect_schema": {
     "type": "object",
@@ -34,9 +51,19 @@
         "uniqueItems": true,
         "items": {
           "enum": [
-            "target_required",
+            "end_date_and_duration",
+            "first_version_not_created_on",
+            "make_up_not_daily",
+            "session_duplicate",
+            "session_id_mismatch",
             "session_target_required",
-            "streak_threshold_value_required"
+            "session_window_empty",
+            "sessions_with_minimum_or_cap",
+            "streak_pace_not_allowed",
+            "streak_threshold_value_required",
+            "structural_change",
+            "target_required",
+            "versions_out_of_order"
           ]
         }
       }
@@ -57,6 +84,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -67,7 +95,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -89,6 +121,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -99,7 +132,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -123,6 +160,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -133,7 +171,11 @@
           "requirement": {
             "type": "cumulative_total"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -157,6 +199,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -168,7 +211,11 @@
             "type": "period_total",
             "period": "week"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -192,6 +239,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -204,7 +252,11 @@
             "period": "week",
             "days": 5
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -228,6 +280,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -238,7 +291,11 @@
           "requirement": {
             "type": "tracker"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -260,6 +317,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -268,7 +326,9 @@
           },
           "sessions": [
             {
-              "id": "fajr",
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
               "count_policy": {
                 "minimum": null,
                 "target": 33,
@@ -277,7 +337,9 @@
               }
             },
             {
-              "id": "isha",
+              "id": "after_isha",
+              "kind": "after_prayer",
+              "prayer": "isha",
               "count_policy": {
                 "minimum": null,
                 "target": 33,
@@ -289,7 +351,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -311,6 +377,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -319,7 +386,9 @@
           },
           "sessions": [
             {
-              "id": "fajr",
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
               "count_policy": {
                 "minimum": null,
                 "target": 33,
@@ -328,7 +397,9 @@
               }
             },
             {
-              "id": "isha",
+              "id": "after_isha",
+              "kind": "after_prayer",
+              "prayer": "isha",
               "count_policy": {
                 "minimum": null,
                 "target": null,
@@ -340,7 +411,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -364,6 +439,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -374,7 +450,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -398,6 +478,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -408,7 +489,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -432,6 +517,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -442,7 +528,11 @@
           "requirement": {
             "type": "tracker"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -466,6 +556,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": 313,
@@ -474,7 +565,9 @@
           },
           "sessions": [
             {
-              "id": "fajr",
+              "id": "after_fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
               "count_policy": {
                 "minimum": null,
                 "target": 33,
@@ -486,7 +579,11 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
         }
       },
       "expect": {
@@ -510,6 +607,7 @@
             "duration_days": null
           },
           "paused": [],
+          "excused": [],
           "count_policy": {
             "minimum": null,
             "target": null,
@@ -520,7 +618,1801 @@
           "requirement": {
             "type": "per_due_date"
           },
-          "completion": "never"
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "streak_threshold_value_required",
+          "target_required"
+        ]
+      }
+    },
+    {
+      "id": "tracker_streak_amount",
+      "description": "A tracker may count its streak at a number of its own (decision 36).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "every_session_kind",
+      "description": "Every session kind is valid with its derived ID.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "anytime",
+              "kind": "anytime",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "before_fajr",
+              "kind": "before_prayer",
+              "prayer": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "after_maghrib",
+              "kind": "after_prayer",
+              "prayer": "maghrib",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "at_0630",
+              "kind": "at_time",
+              "time": "06:30",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "between_2100_2330",
+              "kind": "between",
+              "from": "21:00",
+              "to": "23:30",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "between_over_midnight",
+      "description": "A window may run past midnight.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "between_2200_0400",
+              "kind": "between",
+              "from": "22:00",
+              "to": "04:00",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "session_window_empty",
+      "description": "A window from 06:00 to 06:00 is empty.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "between_0600_0600",
+              "kind": "between",
+              "from": "06:00",
+              "to": "06:00",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "session_window_empty"
+        ]
+      }
+    },
+    {
+      "id": "session_id_not_derived",
+      "description": "A session's ID is derived from its kind (after_fajr), so shared counts match sessions across goals.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "fajr",
+              "kind": "after_prayer",
+              "prayer": "fajr",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "session_id_mismatch"
+        ]
+      }
+    },
+    {
+      "id": "session_twice",
+      "description": "Two sessions of the same kind would share an ID.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "anytime",
+              "kind": "anytime",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            },
+            {
+              "id": "anytime",
+              "kind": "anytime",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "session_duplicate"
+        ]
+      }
+    },
+    {
+      "id": "sessions_with_goal_minimum",
+      "description": "Sessions XOR a minimum or cap (decision 9): a minimum on the goal.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": 70,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "anytime",
+              "kind": "anytime",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "sessions_with_minimum_or_cap"
+        ]
+      }
+    },
+    {
+      "id": "session_with_cap",
+      "description": "Sessions XOR a minimum or cap: a cap on a session.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "anytime",
+              "kind": "anytime",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": 100,
+                "streak_threshold": "target"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "sessions_with_minimum_or_cap"
+        ]
+      }
+    },
+    {
+      "id": "end_date_and_number_of_days",
+      "description": "An end date or a number of days, not both (decision 9).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-10-31",
+            "duration_days": 30
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "end_date_and_duration"
+        ]
+      }
+    },
+    {
+      "id": "number_of_days_only",
+      "description": "A number of days alone is fine.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 40
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "make_up_on_daily_goal",
+      "description": "Make-up on a daily goal.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "make_up_on_weekly_total",
+      "description": "Make-up is only for daily goals (decision 43).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 1000,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "period_total",
+            "period": "week"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "make_up_not_daily"
+        ]
+      }
+    },
+    {
+      "id": "make_up_on_total",
+      "description": "Not on a total goal either.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "make_up_not_daily"
+        ]
+      }
+    },
+    {
+      "id": "make_up_on_tracker",
+      "description": "Nor on a tracker, which has no daily target to fill.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "make_up_not_daily"
+        ]
+      }
+    },
+    {
+      "id": "make_up_off_anywhere",
+      "description": "Make-up off is valid on any goal.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "tracker"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "target"
+          }
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "pace_on_total_with_end",
+      "description": "A total with an end date counts its streak at the daily pace by default.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-12-30",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "pace_on_total_for_days",
+      "description": "Or with a number of days.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": 90
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "pace_without_end",
+      "description": "An open-ended total has no pace.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "streak_pace_not_allowed"
+        ]
+      }
+    },
+    {
+      "id": "pace_on_daily_goal",
+      "description": "Only totals have a pace.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": "2026-12-30",
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "daily_pace"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "streak_pace_not_allowed"
+        ]
+      }
+    },
+    {
+      "id": "pace_on_session",
+      "description": "Never on a session.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [
+            {
+              "id": "anytime",
+              "kind": "anytime",
+              "count_policy": {
+                "minimum": null,
+                "target": 33,
+                "maximum": null,
+                "streak_threshold": "daily_pace"
+              }
+            }
+          ],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "streak_pace_not_allowed"
+        ]
+      }
+    },
+    {
+      "id": "document_valid",
+      "description": "A goal document with two versions and the same structure.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": "2026-12-31",
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 70,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "document_schedule_kind_changed",
+      "description": "A different schedule kind is a structural edit: a new goal, not a version.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "weekdays",
+                "weekdays": [
+                  "friday"
+                ]
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "structural_change"
+        ]
+      }
+    },
+    {
+      "id": "document_weekdays_changed",
+      "description": "Different weekdays are a detail edit.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "weekdays",
+                "weekdays": [
+                  "monday"
+                ]
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "weekdays",
+                "weekdays": [
+                  "monday",
+                  "friday"
+                ]
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "document_calendar_changed",
+      "description": "A yearly schedule can't change calendar.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "yearly",
+                "calendar": "gregorian",
+                "ranges": [
+                  {
+                    "start": {
+                      "month": 3,
+                      "day": 1
+                    },
+                    "end": {
+                      "month": 3,
+                      "day": 30
+                    }
+                  }
+                ]
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "yearly",
+                "calendar": "hijri",
+                "ranges": [
+                  {
+                    "start": {
+                      "month": 9,
+                      "day": 1
+                    },
+                    "end": {
+                      "month": 9,
+                      "day": 30
+                    }
+                  }
+                ]
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "structural_change"
+        ]
+      }
+    },
+    {
+      "id": "document_requirement_changed",
+      "description": "A different requirement type is structural.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 1000,
+                "maximum": null,
+                "streak_threshold": "any_count"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "cumulative_total"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "structural_change"
+        ]
+      }
+    },
+    {
+      "id": "document_period_changed",
+      "description": "Weekly to monthly is structural.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 1000,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "period_total",
+                "period": "week"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 1000,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "period_total",
+                "period": "month"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "structural_change"
+        ]
+      }
+    },
+    {
+      "id": "document_start_changed",
+      "description": "The start date never changes.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-05",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "structural_change"
+        ]
+      }
+    },
+    {
+      "id": "document_versions_out_of_order",
+      "description": "Versions are oldest first, each from a later day.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 50,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "versions_out_of_order"
+        ]
+      }
+    },
+    {
+      "id": "document_first_version_not_created_on",
+      "description": "The first version starts on the day the goal was created.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-02",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "first_version_not_created_on"
+        ]
+      }
+    },
+    {
+      "id": "document_version_errors",
+      "description": "Each version is checked like a goal.",
+      "given": {
+        "document": {
+          "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+          "dhikr_snapshot": {
+            "title": {
+              "en": "Isthighfar",
+              "ar": "الاستغفار",
+              "ml": "ഇസ്തിഗ്ഫാർ"
+            },
+            "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+            "kind": "dhikr"
+          },
+          "name": null,
+          "counts": "shared",
+          "created_on": "2026-10-01",
+          "versions": [
+            {
+              "from": "2026-10-01",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": 100,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "off",
+                "fill": "streak"
+              }
+            },
+            {
+              "from": "2026-10-12",
+              "schedule": {
+                "kind": "every_day"
+              },
+              "active_period": {
+                "start_date": "2026-10-01",
+                "end_date": null,
+                "duration_days": null
+              },
+              "count_policy": {
+                "minimum": null,
+                "target": null,
+                "maximum": null,
+                "streak_threshold": "target"
+              },
+              "sessions": [],
+              "requirement": {
+                "type": "per_due_date"
+              },
+              "completion": "never",
+              "make_up": {
+                "window": "next_day",
+                "fill": "streak"
+              }
+            }
+          ],
+          "paused": [],
+          "excused": [],
+          "ended": null
         }
       },
       "expect": {
