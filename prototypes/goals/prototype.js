@@ -492,25 +492,53 @@ function dayMet(g, ds) {
   if (S.sessions.length) return S.sessions.every((s) => countOn(g, ds, s.id) >= thresholdValue(s.count_policy));
   return countOn(g, ds, null) >= dayThreshold(g, ds);
 }
+/* Decision 43: a streak counts in the goal's own rhythm. unit: day | weekday (a single weekday: "12 Fridays") | week | month | occasion
+   (a yearly schedule: "3 Ramadans"). The current period never breaks the streak until it ends unmet. */
+const occKey = (g, ds) => (g.schedule.calendar === "hijri" ? String(hijri(ds).y) : ds.slice(0, 4));
+const isOccasion = (g) => g.schedule.kind === "yearly" && g.requirement.type === "per_due_date";
+/* How many due days a "N days a week" window needs: N, one fewer for each excused day on the schedule (decision 43), at least 1. */
+function daysNeeded(g, r, from, to, dueCount) {
+  let exc = 0; for (let d = from; d <= to; d = addDays(d, 1)) if (excusedOn(g, d) && inActive(g, d) && onSchedule(g, d)) exc++;
+  return Math.max(1, Math.min(r.days - exc, dueCount));
+}
 function streakOf(g, today) {
   const r = g.requirement;
   const running = !activeEnd(g) || today <= activeEnd(g);
   if (r.type === "period_total" || r.type === "days_per_period") {
-    let n = 0, ds = today, broken = false;
+    let n = 0, ds = today, broken = false, progress = null;
     for (let i = 0; i < 120; i++) {
       const [from, to] = periodWindow(r.period, ds);
       if (to < g.active_period.start_date) break;
       const due = []; for (let d = from; d <= to; d = addDays(d, 1)) if (isDue(g, d)) due.push(d);
       if (due.length) {
-        const met = r.type === "period_total"
-          ? countIn(g, from, to, g.sessions.length ? undefined : null) >= policyOf(g).target
-          : due.filter((d) => d <= today && dayMet(g, d)).length >= Math.min(r.days, due.length);
+        const need = r.type === "days_per_period" ? daysNeeded(g, r, from, to, due.length) : 0;
+        const have = r.type === "days_per_period" ? due.filter((d) => d <= today && dayMet(g, d)).length : 0;
+        const met = r.type === "period_total" ? countIn(g, from, to, g.sessions.length ? undefined : null) >= policyOf(g).target : have >= need;
         const current = from <= today && today <= to;
+        if (current && r.type === "days_per_period") progress = { have: Math.min(have, need), need };
         if (met) n++; else if (!(current && running)) { broken = true; break; }
       }
       ds = addDays(from, -1);
     }
-    return { n, unit: r.period === "week" ? "week" : "month", broken };
+    return { n, unit: r.period === "week" ? "week" : "month", broken, progress };
+  }
+  if (isOccasion(g)) {
+    const groups = [];
+    for (let ds = today; ds >= g.active_period.start_date && groups.length < 40; ds = addDays(ds, -1)) {
+      if (!isDue(g, ds)) continue;
+      const k = occKey(g, ds);
+      if (!groups.length || groups.at(-1).key !== k) groups.push({ key: k, days: [] });
+      groups.at(-1).days.push(ds);
+    }
+    const next = nextDue(g, addDays(today, 1));
+    let n = 0, broken = false;
+    groups.forEach((gr, i) => {
+      if (broken) return;
+      const open = i === 0 && running && ((next && occKey(g, next) === gr.key) || (isDue(g, today) && !dayMet(g, today)));
+      const missed = gr.days.some((d) => !dayMet(g, d) && !(d === today && running));
+      if (missed) broken = true; else if (!open) n++;
+    });
+    return { n, unit: "occasion", occ: g.preset && g.preset.startsWith("ramadan") ? "ramadan" : "times", broken };
   }
   let n = 0, broken = false;
   for (let i = 0, ds = today; i < 1500 && ds >= g.active_period.start_date; i++, ds = addDays(ds, -1)) {
@@ -519,8 +547,10 @@ function streakOf(g, today) {
     else if (ds === today && running) continue;
     else { broken = true; break; }
   }
-  return { n, unit: "day", broken };
+  const wd = g.schedule.kind === "weekdays" && g.schedule.weekdays.length === 1 ? g.schedule.weekdays[0] : null;
+  return { n, unit: wd ? "weekday" : "day", wd, broken };
 }
+const streakLabel = (sk, n = sk.n) => t("streak_unit")[sk.unit](n, sk.wd || sk.occ);
 /* Best streak: the longest run so far (days; for weekly and monthly goals, periods). */
 function bestStreakOf(g, today) {
   const r = g.requirement;
@@ -532,6 +562,15 @@ function bestStreakOf(g, today) {
       best = Math.max(best, streakOf(g, to < today ? to : today).n);
     }
     return best;
+  }
+  if (isOccasion(g)) {
+    let last = null;
+    for (let ds = g.active_period.start_date; ds <= today; ds = addDays(ds, 1)) {
+      if (!isDue(g, ds)) continue;
+      if (last && occKey(g, last) !== occKey(g, ds)) best = Math.max(best, streakOf(g, last).n);
+      last = ds;
+    }
+    return Math.max(best, streakOf(g, today).n);
   }
   let run = 0;
   for (let ds = g.active_period.start_date; ds <= today; ds = addDays(ds, 1)) {
@@ -550,7 +589,7 @@ function consistencyOf(g, today) {
       const [from, to] = periodWindow(r.period, ds), cur = from <= today && today <= to;
       const due = []; for (let d = from; d <= to; d = addDays(d, 1)) if (isDue(g, d)) due.push(d);
       if (due.length) {
-        const ok = r.type === "period_total" ? countIn(g, from, to, g.sessions.length ? undefined : null) >= policyOf(g).target : due.filter((d) => d <= today && dayMet(g, d)).length >= Math.min(r.days, due.length);
+        const ok = r.type === "period_total" ? countIn(g, from, to, g.sessions.length ? undefined : null) >= policyOf(g).target : due.filter((d) => d <= today && dayMet(g, d)).length >= daysNeeded(g, r, from, to, due.length);
         if (ok) { met++; of++; } else if (!cur) of++;
       }
       ds = addDays(from, -1);
@@ -699,9 +738,9 @@ function chipText(g) {
 /* Rows (decisions 19, 21): 🔥 N days while a streak runs; once it breaks, the consistency tag (Steady >= 80%,
    Devoted >= 90%, nothing below) until a new streak reaches 3 days. */
 function streakHTML(g, today) {
-  const { n, unit, broken } = streakOf(g, today);
+  const sk = streakOf(g, today), { n, broken } = sk;
   const glyph = v("streakGlyph") === "emoji" ? `<span aria-hidden="true">🔥</span>` : `<span class="icon i-streak" aria-hidden="true"></span>`;
-  if (n >= 3 || (n >= 1 && !broken)) return `<span class="streak">${glyph} ${esc(t("streak_unit")[unit](n))}</span>`;
+  if (n >= 3 || (n >= 1 && !broken)) return `<span class="streak">${glyph} ${esc(streakLabel(sk) + (sk.progress ? " · " + t("week_progress", sk.progress.have, sk.progress.need) : ""))}</span>`;
   if (broken) {
     const c = consistencyOf(g, today), tag = consistencyTag(c);
     return tag ? `<span class="streak tag">${esc(t("tag_" + tag, c.met, c.of))}</span>` : "";
@@ -834,7 +873,7 @@ function seedGoals(today) {
 /* ============================================================== 7. State */
 const STORE_KEY = "awrad-goals-proto-v3";
 const state = {
-  settings: { theme: "light", dir: "ltr", reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches, today: localToday(), arabicSize: 0, sound: true },
+  settings: { theme: "light", dir: "ltr", reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches, today: localToday(), arabicSize: 0, sound: true, vibration: true },
   variants: {},
   goals: [],
   route: { name: "home" },
@@ -952,7 +991,7 @@ const icon = (name, extra = "") => `<span class="icon i-${name} ${extra}" aria-h
 
 /* ============================================================== 9. Screens */
 const TABS = ["home", "goals", "library", "community"];
-/* Decision 40: with no active goals, one suggestion (Istighfar, at least 70, aiming for 100 a day). */
+/* Decision 40: with no active goals, one suggestion (Isthighfar, at least 70, aiming for 100 a day). */
 const hasActiveGoals = () => state.goals.some((g) => !["completed", "ended"].includes(classify(g, today())));
 function suggestionHTML(card = false) {
   return `<div class="suggest ${card ? "card" : ""}" data-suggest>
@@ -974,8 +1013,11 @@ const screens = {
     const tiles = catalog.collections.map((c) => `<button class="tile pressable" data-action="toast-placeholder"><span class="t-rowTitle">${esc(c.title[lang()] || c.title.en)}</span><span class="meta">${esc(t("dhikrs_count", c.dhikrs.length))}</span><span class="arrow">${icon("forward", "mirror small")}</span></button>`).join("");
     return { cls: "with-nav", html: `
       <header class="home-head">
-        <h1 class="${dateCls}" style="margin:0">${esc(fmtHijri(td, true))}</h1>
-        <div class="greg t-bodySmall">${esc(fmtDate(td, { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
+        <div class="home-title">
+          <h1 class="${dateCls}" style="margin:0">${esc(fmtHijri(td, true))}</h1>
+          <div class="greg t-bodySmall">${esc(fmtDate(td, { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</div>
+        </div>
+        <button class="icon-btn pressable" data-action="open-settings" aria-label="${esc(t("open_settings"))}">${icon("tune")}</button>
       </header>
       <div class="home-body">
         <section class="card">
@@ -1079,6 +1121,15 @@ const screens = {
       <section style="padding:var(--sectionGap) var(--pageMargin) 0"><h2 class="t-sectionTitle" style="margin:0 0 var(--rowGap)">${esc(c.title[lang()] || c.title.en)}</h2><div class="dhikr-list">${rows}</div></section>${mineSec}` };
   },
   community() { return placeholder("nav_community"); },
+  /* Decisions 18 and 34: app-wide Goal sound and Vibration, both on by default. */
+  settings() {
+    const sw = (key, label, sub) => `<div class="set-row"><div class="body"><div class="t-rowTitle">${esc(t(label))}</div><div class="t-bodySmall dim">${esc(t(sub))}</div></div>
+      <button class="switch pressable" role="switch" aria-checked="${state.settings[key] !== false}" aria-label="${esc(t(label))}" data-action="set-switch" data-key="${key}"><span class="thumb"></span></button></div>`;
+    return { cls: "no-nav", html: `
+      <header class="lt-header set-head"><button class="icon-btn pressable" data-action="back" aria-label="${esc(t("back"))}">${icon("back", "mirror")}</button>
+        <h1 class="t-largeTitle" style="margin:0;flex:1">${t("settings_title")}</h1></header>
+      <div class="set-list">${sw("sound", "set_sound", "set_sound_sub")}${sw("vibration", "set_vibration", "set_vibration_sub")}</div>` };
+  },
 };
 function placeholder(key) {
   return { cls: "with-nav", html: `<header class="lt-header"><h1 class="t-largeTitle" style="margin:0">${t(key)}</h1></header><p class="placeholder-body t-body">${t("placeholder")}</p>` };
@@ -1474,8 +1525,8 @@ const SENTENCE_L10N = {
       if (shared === false) s += ` It keeps its own count, apart from your other ${dhikr} goal.`;
       return s;
     },
-    examples: ["100 Swalath daily, at least 70", "Istighfar after Fajr and Maghrib", "Tahleel 70,000 by 30 Dec", "Ya Latif 129 for 40 days", "Swalath 1,000 a week",
-      "Swalath on 5 days a week", "Ikhlas on the white days", "Dua Kumayl every Thursday", "Istighfar, last 10 of Ramadan"],
+    examples: ["100 Swalath daily, at least 70", "Isthighfar after Fajr and Maghrib", "Tahleel 70,000 by 30 Dec", "Ya Latif 129 for 40 days", "Swalath 1,000 a week",
+      "Swalath on 5 days a week", "Ikhlas on the white days", "Dua Kumayl every Thursday", "Isthighfar, last 10 of Ramadan"],
   },
   ar: {
     verb: { say: "قل", read: "اقرأ", recite: "اتلُ" },
@@ -1716,8 +1767,8 @@ const V5_STRINGS = {
     dd_delete: (name) => `Delete ${name}`, dd_title: (name) => `Delete ${name}?`,
     dd_body_goals: (n) => (n === 1 ? "This ends 1 active or paused goal; it will move to History as Ended." : `This ends ${n} active or paused goals; they'll move to History as Ended.`),
     dd_body_none: "No active or paused goals use it.", dd_note: "Past counts stay.", t_dhikr_deleted: "Dhikr deleted",
-    sugg_name: "Istighfar", sugg_title: (name, n, min) => `Say ${name} ${n} times a day, at least ${min}`,
-    sugg_virtue: "A little istighfar each day keeps the heart light.", sugg_start: "Start this goal", sugg_other: "Choose another goal", t_sugg_started: "Goal started",
+    sugg_name: "Isthighfar", sugg_title: (name, n, min) => `Say ${name} ${n} times a day, at least ${min}`,
+    sugg_virtue: "A little Isthighfar each day keeps the heart light.", sugg_start: "Start this goal", sugg_other: "Choose another goal", t_sugg_started: "Goal started",
   },
   ar: {
     tap_anywhere: "اضغط في أي مكان للعدّ", tap_circle: "اضغط على الدائرة للعدّ",
@@ -1750,8 +1801,48 @@ const V5_STRINGS = {
     sugg_virtue: "ദിവസവും അൽപ്പം ഇസ്തിഗ്ഫാർ ഹൃദയത്തെ ലഘുവാക്കുന്നു.", sugg_start: "ഈ ലക്ഷ്യം തുടങ്ങുക", sugg_other: "മറ്റൊരു ലക്ഷ്യം തിരഞ്ഞെടുക്കുക", t_sugg_started: "ലക്ഷ്യം തുടങ്ങി",
   },
 };
+/* Strings added with decisions 18, 34, 42, 43 and 44 (en, ar, ml). streak_unit has one entry per rhythm (decision 43). The gentle-note wording is a placeholder ([needs source]: Lab notes). */
+const AR_WEEKDAY_PLURAL = { monday: "اثنينات", tuesday: "ثلاثاءات", wednesday: "أربعاءات", thursday: "خميسات", friday: "جمعات", saturday: "سبوت", sunday: "آحاد" };
+const V6_STRINGS = {
+  en: {
+    streak_unit: {
+      day: (n) => (n === 1 ? "1 day" : `${n} days`), week: (n) => (n === 1 ? "1 week" : `${n} weeks`), month: (n) => (n === 1 ? "1 month" : `${n} months`),
+      weekday: (n, wd) => `${n} ${weekdayName(wd)}${n === 1 ? "" : "s"}`,
+      occasion: (n, kind) => (kind === "ramadan" ? (n === 1 ? "1 Ramadan" : `${n} Ramadans`) : n === 1 ? "1 time" : `${n} times`),
+    },
+    week_progress: (have, need) => `${have} of ${need} days this week`,
+    gentle_many: (n) => `That's ${n} goals a day. Small and steady is beloved: consider starting with fewer.`,
+    conflict_msg: (name) => `${name} was updated on another device; your pause wasn't applied. Pause again?`, pause_again: "Pause again", dismiss: "Dismiss",
+    open_settings: "Settings", settings_title: "Settings", set_sound: "Goal sound", set_sound_sub: "A soft chime when you reach a goal's target.",
+    set_vibration: "Vibration", set_vibration_sub: "A short buzz as you count.",
+  },
+  ar: {
+    streak_unit: {
+      day: (n) => (n === 1 ? "يوم واحد" : `${n} أيام`), week: (n) => (n === 1 ? "أسبوع واحد" : `${n} أسابيع`), month: (n) => (n === 1 ? "شهر واحد" : `${n} أشهر`),
+      weekday: (n, wd) => (n === 1 ? `1 ${weekdayName(wd)}` : `${n} ${AR_WEEKDAY_PLURAL[wd]}`),
+      occasion: (n, kind) => (kind === "ramadan" ? (n === 1 ? "رمضان واحد" : `${n} رمضانات`) : n === 1 ? "مرة واحدة" : `${n} مرات`),
+    },
+    week_progress: (have, need) => `${have} من ${need} أيام هذا الأسبوع`,
+    gentle_many: (n) => `هذه ${n} أهداف في اليوم. القليل الدائم محبوب: فكّر في البدء بعدد أقل.`,
+    conflict_msg: (name) => `تم تحديث ${name} على جهاز آخر؛ لم يُطبَّق إيقافك المؤقت. أتوقفه مجددًا؟`, pause_again: "أوقِف مجددًا", dismiss: "إغلاق",
+    open_settings: "الإعدادات", settings_title: "الإعدادات", set_sound: "صوت الهدف", set_sound_sub: "نغمة هادئة عند بلوغ هدف اليوم.",
+    set_vibration: "الاهتزاز", set_vibration_sub: "اهتزاز قصير أثناء العدّ.",
+  },
+  ml: {
+    streak_unit: {
+      day: (n) => `${n} ദിവസം`, week: (n) => `${n} ആഴ്ച`, month: (n) => `${n} മാസം`,
+      weekday: (n, wd) => (n === 1 ? `1 ${weekdayName(wd)}` : `${n} ${weekdayName(wd)}കൾ`),
+      occasion: (n, kind) => (kind === "ramadan" ? `${n} റമദാൻ` : `${n} തവണ`),
+    },
+    week_progress: (have, need) => `ഈ ആഴ്ച ${need} ദിവസത്തിൽ ${have}`,
+    gentle_many: (n) => `ഇത് ദിവസം ${n} ലക്ഷ്യങ്ങളാണ്. ചെറുതും സ്ഥിരവുമായത് പ്രിയപ്പെട്ടതാണ്: കുറച്ചെണ്ണത്തിൽ തുടങ്ങാം.`,
+    conflict_msg: (name) => `${name} മറ്റൊരു ഉപകരണത്തിൽ മാറ്റി; നിങ്ങളുടെ നിർത്തിവയ്ക്കൽ ബാധകമായില്ല. വീണ്ടും നിർത്തിവയ്ക്കണോ?`, pause_again: "വീണ്ടും നിർത്തിവയ്ക്കുക", dismiss: "അടയ്ക്കുക",
+    open_settings: "ക്രമീകരണങ്ങൾ", settings_title: "ക്രമീകരണങ്ങൾ", set_sound: "ലക്ഷ്യത്തിന്റെ ശബ്ദം", set_sound_sub: "ലക്ഷ്യം എത്തുമ്പോൾ മൃദുവായ ഒരു ശബ്ദം.",
+    set_vibration: "വൈബ്രേഷൻ", set_vibration_sub: "എണ്ണുമ്പോൾ ഒരു ചെറിയ വൈബ്രേഷൻ.",
+  },
+};
 STRINGS.ml = STRINGS.ml || {};
-for (const l of ["en", "ar", "ml"]) Object.assign(STRINGS[l], SHEET_STRINGS[l], V3_STRINGS[l], V5_STRINGS[l]);
+for (const l of ["en", "ar", "ml"]) Object.assign(STRINGS[l], SHEET_STRINGS[l], V3_STRINGS[l], V5_STRINGS[l], V6_STRINGS[l]);
 
 /* --- The B draft --- */
 function sdNew(prefill = {}) {
@@ -1943,6 +2034,17 @@ function sdReadback(d) {
   return L.readback({ main: P.main, sessions: P.cl.sessions, clauses: [P.cl.minimum, P.cl.cap, P.cl.period, P.cl.finish, P.cl.makeup].filter(Boolean),
     streak: P.streakVal === "daily" ? L.perDay(gN(intOrNull(D.streak.amount) || 0)) : L.streakVals[P.streakVal], name: D.name?.value?.trim() ? L.quote(D.name.value.trim()) : null, shared: P.sib ? D.shared !== false : undefined, dhikr: dhikrName(d.dhikr) });
 }
+/* Decision 42: more than 7 daily goals gets a quiet line in the preview. Saving is never blocked. */
+const GENTLE_DAILY_LIMIT = 7;
+function dailyGoalCount(d) {
+  const td = today();
+  const others = state.goals.filter((g) => g.id !== d.goalId && !["completed", "ended"].includes(classify(g, td)) && g.schedule.kind === "every_day").length;
+  return others + (d.schedule?.kind === "every_day" ? 1 : 0);
+}
+function gentleNoteHTML(d) {
+  const n = dailyGoalCount(d);
+  return n > GENTLE_DAILY_LIMIT ? `<p class="gentle-note t-bodySmall" role="status">${esc(t("gentle_many", n))}</p>` : "";
+}
 function sdPreview(d) {
   const g = sdToGoal(d, d.goalId ? goalById(d.goalId) : null);
   if (!d.dhikr) g.name = { en: SL().pickDhikr, ar: SL().pickDhikr, ml: SL().pickDhikr };
@@ -1983,6 +2085,7 @@ function sdLevel1(d) {
     </div>
     <div class="sheet-foot">
       <div data-slot="preview">${sdPreview(d)}</div>
+      ${gentleNoteHTML(d)}
       <p class="readback t-bodySmall" aria-live="polite">${esc(sdReadback(d))}</p>
       <button class="btn main pressable" data-action="create-save" ${sdValid(d) ? "" : "disabled"}>${d.mode === "edit" && isStructural(goalById(d.goalId), sdToGoal(d, goalById(d.goalId))) ? t("save_new") : saveLabel(d)}</button>
     </div>`;
@@ -2217,7 +2320,7 @@ function sentenceAction(a, el) {
       if (v === "period") { D.period = { start: today(), mode: "until", end: addDays(today(), 30), days: "40" }; d.picker = { kind: "end" }; }
       if (v === "finish") { D.finish = { mode: "reach" }; d.picker = { kind: "finish" }; }
       if (v === "streak") { D.streak = { value: autoStreak(d) }; d.picker = { kind: "streak" }; }
-      if (v === "makeup") { D.makeup = { value: "next", fill: "streak" }; d.picker = { kind: "makeup" }; }
+      if (v === "makeup") { D.makeup = { value: "three", fill: "streak" }; d.picker = { kind: "makeup" }; }
       if (v === "name") { D.name = { value: "" }; d.picker = { kind: "name" }; }
       if (v === "shared") { D.shared = true; d.picker = null; }
       return done();
@@ -2592,8 +2695,8 @@ function statsBody() {
   const sk = streakOf(g, td), cons = consistencyOf(g, td);
   const tile = (k, val, sub = "") => `<div class="stat"><div class="t-caption dim">${esc(k)}</div><div class="t-cardTitle">${esc(val)}</div>${sub ? `<div class="t-caption dim">${esc(sub)}</div>` : ""}</div>`;
   const stats = `<div class="stats-grid">
-    ${tile(t("stat_streak"), sk.n ? t("streak_unit")[sk.unit](sk.n) : "0")}
-    ${tile(t("stat_best"), t("streak_unit")[sk.unit](bestStreakOf(g, td)))}
+    ${tile(t("stat_streak"), sk.n ? streakLabel(sk) : "0")}
+    ${tile(t("stat_best"), streakLabel(sk, bestStreakOf(g, td)))}
     ${tile(t("stat_consistency"), cons ? `${cons.met}/${cons.of}` : "–", cons ? `${Math.round((cons.met / cons.of) * 100)}%` : t("stat_not_enough"))}
     ${tile(t("stat_lifetime"), fmtN(lifetimeTotal(g)), dhikrName(g.dhikr))}
   </div>`;
@@ -2654,11 +2757,25 @@ function toast(msg, undo = null) {
   toastUndo = undo;
   host.innerHTML = `<div class="toast ${undo ? "with-action" : ""}" role="status"><span>${esc(msg)}</span>${undo ? `<button class="btn text pressable" data-action="toast-undo">${t("undo_btn")}</button>` : ""}</div>`;
   const el = host.firstElementChild;
-  if (["counting", "create"].includes(state.route.name)) el.style.bottom = "calc(34px + var(--s-lg))";
+  if (["counting", "create", "settings"].includes(state.route.name)) el.style.bottom = "calc(34px + var(--s-lg))";
   el.animate([{ opacity: 0, transform: reduced() ? "none" : "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: MOTION.duration.short, easing: MOTION.easing.decelerate });
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { toastUndo = null; const a = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: MOTION.duration.color, fill: "forwards" }); a.onfinish = () => el.remove(); }, undo ? 5000 : 2200);
 }
+
+/* Decision 44: the losing device keeps the server's version and shows a quiet notice with a one-tap retry. Stays until acted on or dismissed. */
+function showConflictNotice() {
+  const g = goalFor("isthighfar", "today") || goalFor("isthighfar");
+  const host = document.getElementById("toast-host");
+  host.innerHTML = `<div class="toast notice" role="status"><span>${esc(t("conflict_msg", g ? goalTitle(g) : catalog.byKey.isthighfar.title[lang()] || "Isthighfar"))}</span>
+    <div class="notice-actions"><button class="btn text pressable" data-action="pause-again">${esc(t("pause_again"))}</button>
+    <button class="btn text pressable" data-action="dismiss-notice">${esc(t("dismiss"))}</button></div></div>`;
+  clearTimeout(toastTimer);
+  const el = host.firstElementChild;
+  if (["counting", "create", "settings"].includes(state.route.name)) el.style.bottom = "calc(34px + var(--s-lg))";
+  el.animate([{ opacity: 0, transform: reduced() ? "none" : "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: MOTION.duration.short, easing: MOTION.easing.decelerate });
+}
+function dismissNotice() { document.getElementById("toast-host").innerHTML = ""; }
 
 /* ============================================================== 12. Motion */
 const reduced = () => state.settings.reducedMotion;
@@ -2759,8 +2876,10 @@ function pressUp(el) {
 function haptic(kind) {
   // soft: the minimum; threshold: kept for the pad; success: the target; strong: the cap (decision 15)
   const pattern = { tick: 8, soft: 12, threshold: 20, success: [20, 60, 40], strong: [40, 50, 40, 50, 80], goalDone: [30, 50, 30, 50, 90] }[kind];
-  const ok = typeof navigator.vibrate === "function" && navigator.vibrate(pattern);
-  labEvent(`haptic: ${kind}${ok ? "" : " (no vibrate API here)"}`, kind === "goalDone");
+  // Settings → Vibration (decision 34): off silences navigator.vibrate everywhere
+  const off = state.settings.vibration === false;
+  const ok = !off && typeof navigator.vibrate === "function" && navigator.vibrate(pattern);
+  labEvent(`haptic: ${kind}${off ? " (vibration off)" : ok ? "" : " (no vibrate API here)"}`, kind === "goalDone");
 }
 /* The Lab's event log: the latest haptic plus the goal-done alerts, newest last (kept to 4 lines). */
 const labEvents = [];
@@ -2772,7 +2891,7 @@ function labEvent(text, keep = false) {
   const log = document.getElementById("haptic-log");
   if (log) log.innerHTML = labEvents.map((e) => esc(e.line)).join("<br>");
 }
-/* Decision 34: a soft two-note chime (Web Audio). Muted when the Lab's Sound toggle is off. */
+/* Decision 34: a soft two-note chime (Web Audio). Muted when Settings → Goal sound is off. */
 let audioCtx = null;
 function chime() {
   if (state.settings.sound === false) return false;
@@ -3001,14 +3120,14 @@ function stopAudio() {
 /* ============================================================== 13. Lab */
 const NOTES = `
 <div class="notes">
-  <p class="sub" style="margin-top:0">Decisions 14 to 40 of <code>docs/slices/04-goals-decisions.md</code> are in. Each decision has a preset or a Jump button to see it (Controls and Data tabs). What's left below is open, assumed or not designed.</p>
+  <p class="sub" style="margin-top:0">Decisions 14 to 44 of <code>docs/slices/04-goals-decisions.md</code> are in. Each decision has a preset or a Jump button to see it (Controls and Data tabs). What's left below is open, assumed or not designed.</p>
 
   <h3>Counter</h3>
   <ul>
     <li>The ring is the green <code>progress</code> token: <code>progress</code> at 40% below the minimum, full from the minimum to the target. In dark mode <code>progress</code> is light grey, so the "green" is grey there. The gold arc is off (Variants).</li>
     <li>The minimum tick, the ring pulse and the dimmed circle at the cap have no motion or colour tokens. The pulse is a stroke that grows 14% and fades over <code>long</code> (450 ms). The dim reuses the disabled opacity.</li>
     <li>Haptics are web <code>navigator.vibrate</code> patterns: soft 12 ms (minimum), success (target), strong (cap). The real patterns are a platform choice.</li>
-    <li>Target reached (34): no card. A strong haptic, a soft two-note Web Audio chime (Lab → Controls → Sound), a ring pulse and a non-tappable "Today's goal is done" banner (<code>pointer-events: none</code>, fades after about 2.5 s) under the buttons. Counting continues into the overflow and nothing navigates. Not fired when the cap equals the target (the cap haptic wins). A session goal fires it when its last session is met; earlier sessions keep a toast. The Lab log (Controls → Haptics and alerts) shows each alert. The banner position and the chime notes are guesses; the silent-mode rule can't be shown on the web.</li>
+    <li>Target reached (34): no card. A strong haptic, a soft two-note Web Audio chime (Settings → Goal sound; Vibration is there too), a ring pulse and a non-tappable "Today's goal is done" banner (<code>pointer-events: none</code>, fades after about 2.5 s) under the buttons. Counting continues into the overflow and nothing navigates. Not fired when the cap equals the target (the cap haptic wins). A session goal fires it when its last session is met; earlier sessions keep a toast. The Lab log (Controls → Haptics and alerts) shows each alert. The banner position and the chime notes are guesses; the silent-mode rule can't be shown on the web.</li>
     <li>Layout (35): the circle sits at the bottom, above the home indicator. The hint reads \"Tap anywhere to count\" (\"Tap the circle to count\" in circle-only mode). The make-up line (chip), the hint and the session pills stack just above it; the space between the buttons and these is tap area. Circle-only still works.</li>
     <li>Tracker with a daily number (36): a ring toward it with "Today N of 100", the goal-done alert at the number, then the circle shows the running total with no ring and "Total 12,450 · today 130" until the day ends. The sentence flow offers "streak counts at N a day" for trackers. Preset "Tracker with a daily number" (Data). Numbers aren't grouped with commas here.</li>
     <li>"Next: ..." takes the first unfinished due goal in the user's order. A goal with sessions keeps its place in that order; following its next session's time (decision 24) isn't modelled.</li>
@@ -3025,15 +3144,15 @@ const NOTES = `
     <li>Reset today (39) always asks. The dialog names the other goals it changes with the change, e.g. "This also changes Isthighfar 70,000 (−120)". Counting for yesterday says "Reset yesterday's ...". The prototype resets what is stored on the device (decision 5's "entries this device has seen" isn't modelled).</li>
     <li>Goal names in "Also changes" and the reset dialog read "name + target" (an assumption from the "Lifetime 70,000" example); a goal without a target shows the name only.</li>
     <li>Deleting a custom dhikr (37): the Library has no delete in the design, so this adds a minimal one: a "Your dhikrs" section with a trash button per custom dhikr (only Dua Kumayl here). The warning names how many active or paused (or upcoming) goals end. Confirming deletes it, moves those goals to History as Ended (<code>ended_reason: "dhikr_deleted"</code>) and keeps their counts. Every goal stores <code>dhikr_snapshot</code> (key, kind, title, Arabic) so History, stats and the counter header still read; ended goals open the read-only stats sheet and can't be counted into. No Undo. "Reset goals to the seed" brings Dua Kumayl back.</li>
-    <li>Empty state (40): with no active goals (none today, upcoming, tracking or paused), Home's Today's goals card and My Goals (Active) show "Say Istighfar 100 times a day, at least 70" with a primary "Start this goal" (saves at once: built-in Isthighfar, target 100, minimum 70, daily; no sheet) and a "Choose another goal" link (blank sentence flow). Preset Data → "No goals".</li>
-    <li><b>[needs source]</b> The virtue line under the suggestion ("A little istighfar each day keeps the heart light.") is placeholder wording, not a sourced virtue. It needs a source that passes content review (SOURCES.md) before it ships. Arabic and Malayalam are unreviewed.</li>
-    <li>The suggestion's dhikr is called "Istighfar" (the decision's spelling); the catalog title is "Isthighfar", so the goal row says "Isthighfar".</li>
+    <li>Empty state (40): with no active goals (none today, upcoming, tracking or paused), Home's Today's goals card and My Goals (Active) show "Say Isthighfar 100 times a day, at least 70" with a primary "Start this goal" (saves at once: built-in Isthighfar, target 100, minimum 70, daily; no sheet) and a "Choose another goal" link (blank sentence flow). Preset Data → "No goals".</li>
+    <li><b>[needs source]</b> The virtue line under the suggestion ("A little Isthighfar each day keeps the heart light.") is placeholder wording, not a sourced virtue. It needs a source that passes content review (SOURCES.md) before it ships. Arabic and Malayalam are unreviewed.</li>
+    <li>Spelling (41): "Isthighfar" everywhere in the UI, the empty-state suggestion included. Searching the dhikr picker (the Library has no search here) for "Istighfar", "Astaghfirullah" (and the Arabic/Malayalam aliases) still finds it: the catalog's aliases are searched.</li>
   </ul>
 
   <h3>Late counting, make-up, excused days</h3>
   <ul>
     <li>Late counting is yesterday only, from the ⋮ menu or the calendar; after midnight plus a day it's final. Counts carry no marker and are mirrored to goals that share counts.</li>
-    <li>Make-up windows (next day, within 3 days) are still assumed. Extra counts fill the oldest missed day in the window. The sentence flow chooses the amount (decision 31): enough to keep the streak (the default; for 100 / minimum 70 that is 70) or the full target (100).</li>
+    <li>Make-up windows (off, next day, within 3 days) are confirmed (18); turning make-up on in the sentence flow defaults to "within 3 days". Extra counts fill the oldest missed day in the window. The sentence flow chooses the amount (decision 31): enough to keep the streak (the default; for 100 / minimum 70 that is 70) or the full target (100).</li>
     <li>Make-up exists for daily goals without sessions only. The sentence flow has the setting; A and C don't. While counting for yesterday, make-up isn't offered.</li>
     <li>Excused days are limited per goal per calendar month of the excused day. They can't be set for today, or for a paused day. A weekly or monthly goal has no excused-period concept.</li>
     <li>The "yesterday was missed" message that decision 20 mentions isn't built; excusing happens in the calendar only.</li>
@@ -3072,6 +3191,14 @@ const NOTES = `
     <li>Trackers are off Home (30). With no due goals left on Home but a tracker, Home reads "Nothing due today".</li>
   </ul>
 
+  <h3>Gentle note, streak units, conflicts, settings (41 to 44, 18, 34)</h3>
+  <ul>
+    <li><b>[needs source]</b> Gentle note (42): in the sentence flow's preview, a quiet line when saving would make more than 7 daily goals: "That's 8 goals a day. Small and steady is beloved: consider starting with fewer." Saving is never blocked. The wording and the hadith it echoes need a source in SOURCES.md; the threshold of 7 (<code>GENTLE_DAILY_LIMIT</code>) is tunable. It counts goals with an every-day schedule that aren't finished (paused ones count). Data → "7 daily goals" sets this up. Arabic and Malayalam are unreviewed.</li>
+    <li>Streak units (43): 🔥 N days (daily); N Fridays (a goal with a single weekday; several weekdays still read "days"); N weeks (weekly totals and "N days a week", with "· 2 of 3 days this week" on the row); N months (monthly and Hijri-month); N Ramadans for Ramadan goals, "N times" for other occasions. The current period never breaks the streak until it ends; an occasion counts only finished occasions. An excused day lowers an "N days a week" goal's number by one for that week. Presets: Data → "Weekly streak", "Friday streak". The Arabic weekday plurals (جمعات, ...) and the Malayalam "-കൾ" plurals are unreviewed. Weekly totals don't show a period progress on the row; only "N days a week" does.</li>
+    <li>Conflict notice (44): Lab → Controls → Sync → "Simulate a conflict" shows "Isthighfar was updated on another device; your pause wasn't applied. Pause again?" with "Pause again" (pauses the goal at once) and "Dismiss". It stays until acted on. Placement and look (a dark snackbar with two text actions) are a guess. The prototype doesn't model versions, so nothing really conflicts.</li>
+    <li>Settings (18, 34): Home → the tune icon (top right) opens a Settings screen with app-wide "Goal sound" and "Vibration" switches, both on by default. Vibration off silences <code>navigator.vibrate</code> for every haptic; sound off silences the goal-done chime. There is no settings icon in <code>icons.json</code>, so <code>tune</code> stands in. The Lab's own Sound toggle is gone.</li>
+  </ul>
+
   <h3>Still open from earlier</h3>
   <ul>
     <li>Chip copy isn't systematic ("Daily 100" vs "minimum 70, target 100 daily"); capitalisation differs. Reproduced as designed.</li>
@@ -3099,7 +3226,6 @@ function renderLab() {
     <div class="row"><label>Theme</label>${seg("theme", { light: "Light", dark: "Dark" })}</div>
     <div class="row"><label>Language</label>${seg("lang", { en: "English", ar: "العربية (RTL)", ml: "മലയാളം" })}</div>
     <div class="row"><label>Reduced motion</label>${seg("reducedMotion", { false: "Off", true: "On" })}</div>
-    <div class="row"><label>Sound (goal-done chime)</label>${seg("sound", { true: "On", false: "Off" })}</div>
     <h2>Today</h2>
     <div class="row"><label for="lab-today">Effective practice day</label><input id="lab-today" type="date" value="${s.today}"></div>
     <div class="row"><label for="lab-now">Time of day (picks the current session)</label><input id="lab-now" type="time" value="${s.now || ""}"></div>
@@ -3120,6 +3246,9 @@ function renderLab() {
     ${fath ? `<div class="btns" style="margin-top:6px">${[0, 13, 70, 99, 100, 110].map((n) => `<button data-jump="count" data-n="${n}">Counter at ${n}</button>`).join("")}</div>` : ""}
     <div class="msg">Counts a goal with 100 / minimum 70. The cap and make-up demos need a preset first (Data tab).</div>
     <div class="btns" style="margin-top:6px"><button data-open="swalath-al-nariyya">Counter: pace goal</button><button data-open="tahleel" data-tracker="1">Counter: tracker</button><button data-open="isthighfar">Counter: total goal</button></div>
+    <h2>Sync</h2>
+    <div class="btns"><button data-labaction="conflict">Simulate a conflict</button></div>
+    <div class="msg">Decision 44: Isthighfar "was updated on another device"; a one-tap Pause again, or dismiss. Sound and Vibration are in the app's Settings (Home, top right).</div>
     <h2>Haptics and alerts</h2>
     <div class="haptic-log" id="haptic-log">Each count fires navigator.vibrate when available; the goal-done alert (haptic, chime, banner) is logged here.</div>
     <h2>Data</h2>
@@ -3169,9 +3298,9 @@ function refill(g, fn, days = 45) {
   g.count_entries.sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 const PRESETS = {
-  noGoals: { label: "No goals", note: "No goals at all: Home's Today's goals card and My Goals show the Istighfar suggestion (decision 40). \"Reset goals to the seed\" brings the goals back.",
+  noGoals: { label: "No goals", note: "No goals at all: Home's Today's goals card and My Goals show the Isthighfar suggestion (decision 40). \"Reset goals to the seed\" brings the goals back.",
     run() { state.goals = []; } },
-  tags: { label: "Consistency tags", note: "Tags: Swalath breaks with 50% (no tag); Fathimiyya breaks with 28/30 (Devoted); Istighfar has a 2-day streak after a break with 27/30 (tag shows); Nariyya (pace) is back on a 3-day streak (🔥).",
+  tags: { label: "Consistency tags", note: "Tags: Swalath breaks with 50% (no tag); Fathimiyya breaks with 28/30 (Devoted); Isthighfar has a 2-day streak after a break with 27/30 (tag shows); Nariyya (pace) is back on a 3-day streak (🔥).",
     run() {
       const td = today();
       refill(goalFor("swalath"), (off) => (off === 1 ? 0 : off % 2 === 0 ? 100 : 0));
@@ -3192,8 +3321,35 @@ const PRESETS = {
     } },
   cap: { label: "Cap at 110", note: "Fathimiyya gets a cap of 110. Count past 110: the circle dims, \"Reached your limit of 110\" shows, nothing counts.",
     run() { const g = goalFor("swalath-al-fathimiyya"); g.count_policy = { ...g.count_policy, maximum: 110 }; setCount(g, null, 105); } },
-  totalStreak: { label: "Total goal on a streak", note: "Istighfar (70,000, no end date) gets a streak that counts at 1,000 a day: the list ring fills toward 1,000 and the counter shows the total.",
+  totalStreak: { label: "Total goal on a streak", note: "Isthighfar (70,000, no end date) gets a streak that counts at 1,000 a day: the list ring fills toward 1,000 and the counter shows the total.",
     run() { const g = goalFor("isthighfar"); g.count_policy = { ...g.count_policy, streak_amount: 1000 }; refill(g, (off) => (off <= 9 ? 1000 + off : off === 10 ? 0 : 1000)); } },
+  weeklyStreak: { label: "Weekly streak", note: "Swalath \"3 days a week\" on 🔥 5 weeks · 2 of 3 days this week (decision 43). Excuse a day this week in the stats sheet: the week then needs 2 days.",
+    run() {
+      const td = today();
+      state.goals = state.goals.filter((g) => g.preset !== "lab-weekly");
+      const g = makeGoal({ dhikr: "swalath", start: addDays(td, -70), policy: policy(100), requirement: { type: "days_per_period", period: "week", days: 3 }, preset: "lab-weekly" });
+      const [ws] = periodWindow("week", td);
+      for (let w = 1; w <= 5; w++) for (let k = 0; k < 3; k++) g.count_entries.push({ date: addDays(ws, -7 * w + k), session: null, count: 100 });
+      for (let k = 0; k < 7 && addDays(ws, k) <= addDays(td, -1) && k < 2; k++) g.count_entries.push({ date: addDays(ws, k), session: null, count: 100 });
+      g.count_entries.sort((a, b) => (a.date < b.date ? -1 : 1));
+      state.goals.push(g);
+    } },
+  fridayStreak: { label: "Friday streak", note: "Surah Ikhlas every Friday on 🔥 12 Fridays (decision 43). This Friday is still open, so the streak holds until Friday ends.",
+    run() {
+      const td = today();
+      state.goals = state.goals.filter((g) => g.preset !== "lab-friday");
+      const g = makeGoal({ dhikr: "surah-ikhlas", start: addDays(td, -100), policy: policy(3), schedule: { kind: "weekdays", weekdays: ["friday"] }, preset: "lab-friday" });
+      for (let d = addDays(td, -1), n = 0; n < 12; d = addDays(d, -1)) if (weekday(d) === "friday") { g.count_entries.push({ date: d, session: null, count: 3 }); n++; }
+      g.count_entries.sort((a, b) => (a.date < b.date ? -1 : 1));
+      state.goals.push(g);
+    } },
+  sevenDaily: { label: "7 daily goals", note: "Seven goals due every day. Creating one more in the sentence flow shows the gentle note \"That's 8 goals a day ...\" under the preview; saving still works (decision 42).",
+    run() {
+      const td = today();
+      state.goals = state.goals.filter((g) => g.preset !== "lab-daily");
+      const have = state.goals.filter((g) => g.schedule.kind === "every_day" && !["completed", "ended"].includes(classify(g, td))).length;
+      ["tahleel", "surah-ikhlas", "ya-wahhabu", "swalath-al-nariyya", "ramadan-dhikr", "isthighfar"].slice(0, Math.max(0, 7 - have)).forEach((k) => state.goals.push(makeGoal({ dhikr: k, start: addDays(td, -5), policy: policy(33), preset: "lab-daily" })));
+    } },
   tracker: { label: "Tracker on a streak", note: "A \"whenever I can\" Tahleel tracker: Today 33 · Total 12,400 · 🔥 6 days, in the Tracking section.",
     run() {
       const td = today();
@@ -3241,6 +3397,14 @@ function handleAction(el, e) {
     }
     case "goto-goal": state.session = null; stopAudio(); state.route = { name: "counting", goalId: id }; render("push"); return;
     case "back": goBack(); return;
+    case "open-settings": navigate({ name: "settings" }); return;
+    case "set-switch": { const k = el.dataset.key; state.settings[k] = state.settings[k] === false; save(); render(); renderLab(); if (state.settings[k]) { if (k === "sound") chime(); else haptic("soft"); } return; }
+    case "pause-again": {
+      const g = goalFor("isthighfar", "today") || goalFor("isthighfar"), td = today();
+      if (g && !g.paused.some((p) => td >= p.from && (p.to == null || td <= p.to))) g.paused.push({ from: td, to: null });
+      dismissNotice(); save(); render(); toast(t("t_paused")); return;
+    }
+    case "dismiss-notice": dismissNotice(); return;
     case "add-goal": openCreate(); return;
     case "set-goal-from": { const dhikr = el.dataset.dhikr; if (state.overlay) closeOverlay(); openCreate({ dhikr }); return; }
     case "goal-menu": e.stopPropagation(); openMenu(id, el.dataset.context); return;
@@ -3393,7 +3557,7 @@ function boot() {
       return;
     }
     if (b.dataset.lab) {
-      const k = b.dataset.lab; state.settings[k] = k === "reducedMotion" || k === "sound" ? b.dataset.val === "true" : b.dataset.val;
+      const k = b.dataset.lab; state.settings[k] = k === "reducedMotion" ? b.dataset.val === "true" : b.dataset.val;
       if (k === "lang") state.settings.dir = b.dataset.val === "ar" ? "rtl" : "ltr";
       save(); applySettings(); render(); if (state.draft?.flow === "sentence") renderSentence(); renderLab(); return;
     }
@@ -3408,6 +3572,7 @@ function boot() {
     if (b.dataset.open) { openByDhikr(b.dataset.open, b.dataset.tracker); return; }
     if (b.dataset.try) { state.variants.createFlow = b.dataset.try; save(); jump("create"); renderLab(); return; }
     const la = b.dataset.labaction;
+    if (la === "conflict") { showConflictNotice(); return; }
     if (la === "apply-json") applyJSON();
     if (la === "refresh-json") renderLabData();
     if (la === "reset") { restoreCustomDhikrs(); state.goals = seedGoals(state.settings.today); save(); state.stack = []; state.route = { name: state.route.name === "counting" || state.route.name === "create" ? "goals" : state.route.name }; render(); renderLab(); renderLabData(); }

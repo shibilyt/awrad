@@ -38,17 +38,26 @@ Add `?reset` to the URL to drop the saved state (goals, settings and variants pe
 
 From the browser console, `proto` exposes the state and helpers: `proto.count(99)`, `proto.set({ theme: "dark" })`, `proto.variant("ringStyle", "green")`, `proto.jump("create")`.
 
+## Decisions 18, 34 and 41 to 44 (v6)
+
+- Spelling (41): "Isthighfar" everywhere in the UI, the empty-state suggestion included. The dhikr picker searches the catalog's aliases, so "Isthighfar" and "Astaghfirullah" still find it.
+- Gentle note (42): the sentence flow's preview shows "That's N goals a day. Small and steady is beloved: consider starting with fewer." when saving would make more than 7 daily goals (`GENTLE_DAILY_LIMIT`, `gentleNoteHTML`). Saving is never blocked. The wording is `[needs source]` (Lab notes). Preset: Data → "7 daily goals".
+- Streak units (43): `streakOf` returns a unit per rhythm: days, a weekday ("12 Fridays"), weeks, months, or an occasion ("2 Ramadans", else "times"). "N days a week" rows add "· 2 of 3 days this week"; an excused day lowers that week's number (`daysNeeded`). Strings: `streak_unit` in `V6_STRINGS`. Presets: Data → "Weekly streak", "Friday streak".
+- Conflict (44): Lab → Controls → Sync → "Simulate a conflict" shows the notice with "Pause again" and "Dismiss" (`showConflictNotice`).
+- Make-up (18): turning it on defaults to "within 3 days".
+- Settings (34): Home → the tune icon opens Settings with app-wide "Goal sound" and "Vibration" (both on by default). Vibration off silences `navigator.vibrate` (`haptic`); sound off silences the chime (`chime`). The Lab's Sound toggle moved here.
+
 ## Decisions 37 to 40 and number grouping (v5)
 
 - Counter hint: "Tap anywhere to count" (the circle is at the bottom now); "Tap the circle to count" in circle-only mode. Numbers are grouped by locale everywhere ("12,667"), with Western digits in Arabic and Malayalam as before. The "Big numbers" variant is gone.
 - Adjust count (38): ⋮ → "Adjust count", or a 500 ms long press on the counter number (it doesn't count a tap). A sheet with a number field, − / +, Today / Yesterday and a save button; no going below 0 (inline reason), additions stop at the cap, shared goals are named ("Also changes ..."), and additions past the target fill the make-up day first. Code: `adjustModel`, `openAdjust`, `saveAdjust`, the long press in `boot`.
 - Undo and Reset (39): Undo removes only this counter session's own taps (`tapLog`), with no warning, and is disabled in ⋮ when there are none. "Reset today" always confirms and names the other goals it changes with the change (`openResetDialog`).
 - Deleting a custom dhikr (37): Library → "Your dhikrs" → trash button → warning with the number of goals that end → goals move to History as Ended and keep their name and Arabic text from `dhikr_snapshot` (`openDhikrDeleteDialog`, `deleteDhikr`, `ensureSnapshots`). Deleted dhikrs persist in the saved state; "Reset goals to the seed" restores them.
-- Empty state (40): no active goals shows the Istighfar suggestion on Home and in My Goals (`suggestionHTML`). Start this goal saves at once; Choose another goal opens a blank sentence. Preset: Data → "No goals". The virtue line is a placeholder marked `[needs source]` in the Lab notes.
+- Empty state (40): no active goals shows the Isthighfar suggestion on Home and in My Goals (`suggestionHTML`). Start this goal saves at once; Choose another goal opens a blank sentence. Preset: Data → "No goals". The virtue line is a placeholder marked `[needs source]` in the Lab notes.
 
 ## Decisions 34 to 36 (v4)
 
-- No "next goal" card (34): reaching today's target plays an alert only (strong haptic, chime, ring pulse, a banner that fades after about 2.5 s). Lab → Controls has a Sound toggle (on by default) and an event log.
+- No "next goal" card (34): reaching today's target plays an alert only (strong haptic, chime, ring pulse, a banner that fades after about 2.5 s). Settings has a Goal sound switch (on by default); Lab → Controls has an event log.
 - The circle is anchored to the bottom of the counter (35); the Arabic card and buttons stay at the top and the gap is tap area. Session pills and the make-up line sit just above the circle.
 - A tracker can have "streak counts at N a day" (36): ring toward N, the alert at N, then a plain running total. Preset: Data → "Tracker with a daily number".
 
@@ -60,12 +69,15 @@ Presets (Lab → Data, or `proto.preset(name)`):
 
 | Preset | Shows |
 |---|---|
-| `tags` | Swalath broken with no tag, Fathimiyya "Devoted", Istighfar a 2-day streak with a tag, Nariyya (pace) on 🔥 3 days |
+| `tags` | Swalath broken with no tag, Fathimiyya "Devoted", Isthighfar a 2-day streak with a tag, Nariyya (pace) on 🔥 3 days |
 | `calendar` | Fathimiyya with make-up on: every calendar state, 2 excused days used, yesterday missed (count past 100 to fill it) |
 | `cap` | Cap of 110 on Fathimiyya, counter at 105 |
-| `totalStreak` | Istighfar (no end date) with a streak at 1,000 a day |
+| `totalStreak` | Isthighfar (no end date) with a streak at 1,000 a day |
 | `tracker` | A "whenever I can" tracker on a streak, in the Tracking section |
-| `noGoals` | No goals at all: the Istighfar suggestion on Home and My Goals |
+| `weeklyStreak` | Swalath "3 days a week" on 5 weeks, 2 of 3 days this week |
+| `fridayStreak` | Surah Ikhlas every Friday on 12 Fridays |
+| `sevenDaily` | 7 daily goals: a new daily goal in the sentence flow shows the gentle note |
+| `noGoals` | No goals at all: the Isthighfar suggestion on Home and My Goals |
 
 Console: `proto.open(dhikr)`, `proto.tap(n)`, `proto.stats()`, `proto.edit(goalId)`.
 

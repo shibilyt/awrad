@@ -730,3 +730,22 @@ button { cursor: pointer; }
 .suggest p { margin: 0; }
 .suggest .btn.text { align-self: center; }
 .content-pad { padding: 0 var(--pageMargin); }
+
+/* ================================================================== v6: settings, gentle note, notice */
+.home-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--s-sm); }
+.home-head .home-title { flex: 1; min-width: 0; }
+.home-head .icon-btn { margin-inline-end: calc(var(--s-md) * -1); }
+.set-head { gap: var(--s-xs); padding-inline-start: calc(var(--pageMargin) - 12px); }
+.set-list { padding: var(--sectionGap) var(--pageMargin) 0; display: flex; flex-direction: column; gap: var(--rowGap); }
+.set-row { display: flex; align-items: center; gap: var(--s-lg); min-height: var(--listRow); padding: var(--s-sm) var(--s-lg); background: var(--c-surface); border-radius: var(--r-card); }
+.set-row .body { flex: 1; min-width: 0; }
+.set-row .dim { color: var(--c-onSurfaceVariant); }
+.switch { position: relative; flex: none; width: calc(var(--s-5xl) + var(--s-xs)); height: var(--s-3xl); padding: 0; border: 0; border-radius: var(--r-chip); background: var(--c-outlineStrong); }
+.switch .thumb { position: absolute; top: var(--s-xs); inset-inline-start: var(--s-xs); width: var(--s-2xl); height: var(--s-2xl); border-radius: 50%; background: var(--c-background); transition: inset-inline-start var(--d-fade) var(--ease-emphasized); }
+.switch[aria-checked="true"] { background: var(--c-primary); }
+.switch[aria-checked="true"] .thumb { inset-inline-start: calc(100% - var(--s-2xl) - var(--s-xs)); background: var(--c-onPrimary); }
+.reduced .switch .thumb { transition: none; }
+.gentle-note { margin: 0 0 var(--s-sm); color: var(--c-onSurfaceVariant); }
+.toast.notice { display: flex; flex-direction: column; align-items: stretch; gap: var(--s-xs); pointer-events: auto; padding-block: var(--s-md) var(--s-xs); }
+.toast.notice .notice-actions { display: flex; justify-content: flex-end; gap: var(--s-sm); }
+.toast.notice .btn.text { color: var(--c-background); font-weight: 600; }
