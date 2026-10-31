@@ -1,6 +1,6 @@
 # Slice 4: Goals
 
-Status: Agreed 2026-10-31 (scope and questions 1–15, all as recommended); 4a in progress (steps 3 and 4 done)
+Status: Agreed 2026-10-31 (scope and questions 1–15, all as recommended); 4a done 2026-10-31; 4b next (steps 3 and 4 done)
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 4
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
 Decisions: [`04-goals-decisions.md`](04-goals-decisions.md) (49 decisions, 2026-10-30 and 2026-10-31). Prototype: branch `prototype/goals`, `prototypes/goals/`.
@@ -200,10 +200,19 @@ Done 2026-10-31: [`contracts/sync/v1/README.md`](../../contracts/sync/v1/README.
 
 | Project | 4a | 4b | Validation | Status |
 |---|---|---|---|---|
-| awrad-server-next | Rule runner updates (`Awrad.Goals.Rules`) | Goal entities in sync, cascade, limits | `mix validate` | ☐ |
-| awrad-android-next | `:core:domain` rules and the fixture runner | `:feature:goals`: sentence, lists, History, edit, stats sheet; local count log | Gradle validation | ☐ |
-| awrad-ios-next | `AwradDomain` rules and the fixture runner | The same in `AwradKit` | `scripts/validate` | ☐ |
-| awrad-web-next | TypeScript rules in `src/shared/goals` and the fixture runner | `src/features/goals` | `npm run validate` | ☐ |
+| awrad-server-next | Rule runner updates (`Awrad.Goals.Rules`) | Goal entities in sync, cascade, limits | `mix validate` | 4a ☑ · 4b ☐ |
+| awrad-android-next | `:core:domain` rules and the fixture runner | `:feature:goals`: sentence, lists, History, edit, stats sheet; local count log | Gradle validation | 4a ☑ · 4b ☐ |
+| awrad-ios-next | `AwradDomain` rules and the fixture runner | The same in `AwradKit` | `scripts/validate` | 4a ☑ · 4b ☐ |
+| awrad-web-next | TypeScript rules in `src/shared/goals` and the fixture runner | `src/features/goals` | `npm run validate` | 4a ☑ · 4b ☐ |
+
+**4a evidence (2026-10-31).** The phones' sync layer for goals moved into 4a, so the shared sync fixtures pass everywhere: entity types and codecs, outbox ordering, the custom dhikr drop, goal conflicts, goal order merging, and local storage. 4b keeps the screens, the goal repository and ending goals locally when their dhikr is deleted. On the combined branch:
+- contracts: 826 goal-model and 413 sync checks;
+- server: `mix validate`, 1,128 tests, nothing skipped;
+- Android: Gradle validation, 416 unit tests;
+- iOS: `scripts/validate`, 460 tests and the app build;
+- web: `npm run validate`, 1,244 tests.
+
+Every platform runs all goal-model fixtures and `goal_document_validity`. `goal_order_merge` runs on the phones and the web only (the server never merges).
 
 ## Integration evidence (step 6)
 
