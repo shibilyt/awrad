@@ -13,11 +13,13 @@ defmodule Awrad.Sync.Documents do
       `normalized_name` equal to the server's fold of it (`mismatch`).
     * `dhikr_personal`: `{tag_ids}`, at most 20 distinct UUIDs.
     * `practice_policy`: `Awrad.Sync.PracticePolicyDocument` (slice 3d).
+    * `goal` and `goal_order`: `Awrad.Sync.GoalDocument` (slice 4), the goal
+      rules included.
 
-  Which tags and dhikrs exist is the entity rules' job, not this module's.
+  Which tags, dhikrs and goals exist is the entity rules' job, not this module's.
   """
 
-  alias Awrad.Sync.{CustomDhikrDocument, PracticePolicyDocument, TagName}
+  alias Awrad.Sync.{CustomDhikrDocument, GoalDocument, PracticePolicyDocument, TagName}
 
   @max_bytes 64 * 1024
   @max_tags 20
@@ -44,6 +46,8 @@ defmodule Awrad.Sync.Documents do
   def errors("user_tag", document), do: document |> tag_errors() |> sorted()
   def errors("dhikr_personal", document), do: document |> personal_errors() |> sorted()
   def errors("practice_policy", document), do: PracticePolicyDocument.errors(document)
+  def errors("goal", document), do: GoalDocument.goal_errors(document)
+  def errors("goal_order", document), do: GoalDocument.goal_order_errors(document)
 
   defp tag_errors(document) do
     unknown(document, ~w(name normalized_name)) ++

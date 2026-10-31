@@ -1,116 +1,151 @@
 defmodule Awrad.Goals.Rules.Streak do
   @moduledoc false
-  # Rule: the current streak (fixtures/goal_streak.json).
+  # Rule: the current streak and its unit (fixtures/goal_streak.json, README
+  # "Streaks"), from the version in force on the evaluated date.
   #
-  # Walks back from the evaluated date over due units: due days, or weeks,
-  # months and Hijri months with at least one due day. A met unit adds one;
-  # the unit still in progress never breaks the streak; any other unmet unit
-  # ends it. Days that aren't due (unscheduled, paused, outside the active
-  # period, outside the Hijri table for a Hijri schedule) are skipped.
+  # Walks back over the unit: due days (by status, with make-up), weeks or
+  # months (PeriodWalk), or occasions. A kept unit adds one; an open one
+  # (today, a day pending make-up, the current period or occasion) neither
+  # breaks nor adds; anything else ends it.
 
+  alias Awrad.Goals.DayStatus
   alias Awrad.Goals.Goal
   alias Awrad.Goals.Rules.Counts
-  alias Awrad.Goals.Rules.DaysPerPeriod
+  alias Awrad.Goals.Rules.DayStatuses
   alias Awrad.Goals.Rules.Periods
-  alias Awrad.Goals.Rules.Requirement
+  alias Awrad.Goals.Rules.PeriodWalk
   alias Awrad.Goals.Rules.Schedule
-  alias Awrad.Hijri
+  alias Awrad.Goals.Rules.Versions
+  alias Awrad.Goals.Streak
+  alias Awrad.Goals.Timeline
   alias Awrad.Hijri.Corrections
 
-  @spec current(Goal.t(), Counts.index(), Date.t(), Goal.week_start(), Corrections.t()) ::
-          non_neg_integer()
-  def current(
-        %Goal{requirement: {:period_total, unit}} = goal,
-        index,
-        date,
-        week_start,
-        corrections
-      ) do
-    periods(
-      goal,
-      date,
-      {unit, week_start, corrections},
-      &Requirement.window_met?(goal, index, &1, date)
-    )
+  # How far ahead the current occasion looks for a due day still to come.
+  @horizon 400
+
+  @spec evaluate(Timeline.t(), Counts.index(), Date.t(), Goal.week_start(), Corrections.t()) ::
+          Streak.t()
+  def evaluate(%Timeline{} = timeline, index, date, week_start, corrections) do
+    statuses = DayStatuses.statuses(timeline, index, date, corrections)
+    {unit, weekday} = unit(Versions.resolve(timeline, date))
+
+    %Streak{
+      current: current(timeline, {index, statuses}, date, week_start, corrections),
+      unit: unit,
+      weekday: weekday,
+      pending_make_up: for(%DayStatus{status: :pending, date: day} <- statuses, do: day)
+    }
   end
 
-  def current(
-        %Goal{requirement: {:days_per_period, unit, days}} = goal,
-        index,
-        date,
-        week_start,
-        corrections
-      ) do
-    periods(goal, date, {unit, week_start, corrections}, fn window ->
-      {qualifying, required} = DaysPerPeriod.tally(goal, index, window, date, days, corrections)
-      qualifying >= required
+  @doc "The streak unit of the goal in force (README \"Streak units\")."
+  @spec unit(Goal.t()) :: {Streak.unit(), Goal.weekday() | nil}
+  def unit(%Goal{requirement: {:period_total, period}}), do: {period_unit(period), nil}
+  def unit(%Goal{requirement: {:days_per_period, period, _}}), do: {period_unit(period), nil}
+  def unit(%Goal{schedule: {:yearly, _calendar, _ranges}}), do: {:occasion, nil}
+  def unit(%Goal{schedule: {:weekdays, [weekday]}}), do: {:weekday, weekday}
+  def unit(%Goal{}), do: {:day, nil}
+
+  defp period_unit(:week), do: :week
+  defp period_unit(_month), do: :month
+
+  @doc """
+  The current streak, given the day statuses up to `date`
+  (`DayStatuses.statuses/4`).
+  """
+  @spec current(
+          Timeline.t(),
+          {Counts.index(), [DayStatus.t()]},
+          Date.t(),
+          Goal.week_start(),
+          Corrections.t()
+        ) :: non_neg_integer()
+  def current(timeline, {index, statuses}, date, week_start, corrections) do
+    units =
+      case unit(Versions.resolve(timeline, date)) do
+        {period, nil} when period in [:week, :month] ->
+          timeline
+          |> PeriodWalk.back(index, date, week_start, corrections)
+          |> Stream.map(&{&1.met?, &1.in_progress?})
+
+        {:occasion, nil} ->
+          occasions(timeline, statuses, date, corrections)
+
+        {_day, _weekday} ->
+          statuses
+          |> Enum.reverse()
+          |> Enum.map(&{DayStatus.kept?(&1.status), DayStatus.open?(&1.status)})
+      end
+
+    count_kept(units)
+  end
+
+  # Newest first, `{kept?, open?}` per unit. An open unit is skipped, except a
+  # kept period still in progress, which already adds.
+  defp count_kept(units) do
+    Enum.reduce_while(units, 0, fn
+      {true, _open?}, streak -> {:cont, streak + 1}
+      {false, true}, streak -> {:cont, streak}
+      {false, false}, streak -> {:halt, streak}
     end)
   end
 
-  def current(%Goal{} = goal, index, date, _week_start, corrections) do
-    case last_unit_day(goal, date) do
-      nil ->
-        0
+  @doc """
+  A yearly goal's occasions, newest first, as `{kept?, open?}`: kept when
+  every due day kept the streak. The newest is open (in progress) while the
+  goal runs and it has a due day after `date`, or a day not settled yet; an
+  open occasion adds only once complete.
+  """
+  @spec occasions(Timeline.t(), [DayStatus.t()], Date.t(), Corrections.t()) :: [
+          {boolean(), boolean()}
+        ]
+  def occasions(timeline, statuses, date, corrections) do
+    statuses
+    |> Enum.reverse()
+    |> Enum.chunk_by(&occasion(timeline, &1.date, corrections))
+    |> Enum.with_index()
+    |> Enum.map(fn {days, i} ->
+      open? =
+        i == 0 and running?(timeline, date) and in_progress?(timeline, days, date, corrections)
 
-      last ->
-        last
-        |> Date.range(goal.active_period.start_date, -1)
-        |> Stream.filter(&Schedule.due?(goal, &1, corrections))
-        |> Enum.reduce_while(0, fn day, streak ->
-          met? = Counts.day_met?(goal, Counts.day(index, day), :streak)
-          step(streak, met?, Date.compare(day, date) == :eq)
-        end)
-    end
+      kept? = Enum.all?(days, &DayStatus.kept?(&1.status))
+      {kept? and not open?, open?}
+    end)
   end
 
-  defp periods(goal, date, {unit, week_start, corrections} = calendar, met?) do
-    case last_unit_day(goal, date) do
-      nil ->
-        0
+  defp occasion(timeline, day, corrections),
+    do: Schedule.occasion(Versions.resolve(timeline, day), day, corrections)
 
-      last ->
-        last = last_period_day(unit, last, corrections)
-        walk(goal, Periods.period(last, unit, week_start, corrections), {date, calendar, met?}, 0)
-    end
+  defp running?(timeline, date) do
+    last = Periods.last_day(Versions.resolve(timeline, date).active_period)
+    is_nil(last) or not Date.after?(date, last)
   end
 
-  # Days after the Hijri table have no Hijri month, so they're never due: the
-  # walk starts from the table's last month instead.
-  defp last_period_day(:hijri_month, last, corrections),
-    do: Periods.earliest(last, Hijri.days(corrections).last)
-
-  defp last_period_day(_unit, last, _corrections), do: last
-
-  # Periods before the start date don't overlap the active period, and days
-  # before the Hijri table have no Hijri month: stop there.
-  defp walk(_goal, nil = _full_period, _context, streak), do: streak
-
-  defp walk(goal, full_period, {_date, {unit, week_start, corrections}, _met?} = context, streak) do
-    with %Date.Range{} = window <- Periods.clip(full_period, goal.active_period),
-         {:cont, streak} <- visit(goal, window, context, streak) do
-      previous = Periods.period(Date.add(full_period.first, -1), unit, week_start, corrections)
-      walk(goal, previous, context, streak)
-    else
-      nil -> streak
-      {:halt, streak} -> streak
-    end
+  defp in_progress?(timeline, [%DayStatus{date: newest} | _] = days, date, corrections) do
+    Enum.any?(days, &DayStatus.open?(&1.status)) or
+      next_scheduled_in?(timeline, occasion(timeline, newest, corrections), date, corrections)
   end
 
-  # A period without a due day (fully paused or unscheduled) is skipped.
-  defp visit(goal, window, {date, {_unit, _week_start, corrections}, met?}, streak) do
-    if Enum.any?(window, &Schedule.due?(goal, &1, corrections)),
-      do: step(streak, met?.(window), not Date.before?(window.last, date)),
-      else: {:cont, streak}
+  # Whether the next scheduled, unpaused day after `date` belongs to `key`.
+  defp next_scheduled_in?(timeline, key, date, corrections) do
+    date
+    |> Date.add(1)
+    |> Date.range(Date.add(date, @horizon), 1)
+    |> Enum.reduce_while(false, fn day, false ->
+      cond do
+        not running?(timeline, day) ->
+          {:halt, false}
+
+        scheduled?(timeline, day, corrections) ->
+          {:halt, occasion(timeline, day, corrections) == key}
+
+        true ->
+          {:cont, false}
+      end
+    end)
   end
 
-  defp step(streak, true = _met?, _in_progress?), do: {:cont, streak + 1}
-  defp step(streak, false, true = _in_progress?), do: {:cont, streak}
-  defp step(streak, false, false), do: {:halt, streak}
-
-  # The latest day a unit can end on: the evaluated date, or the active
-  # period's last day once it's over. `nil` before the start date.
-  defp last_unit_day(%Goal{active_period: period}, date) do
-    last = Periods.earliest(date, Periods.last_day(period))
-    if Date.before?(last, period.start_date), do: nil, else: last
+  defp scheduled?(timeline, day, corrections) do
+    goal = Versions.resolve(timeline, day)
+    Schedule.in_schedule?(goal, day, corrections) and not Schedule.paused?(goal, day)
   end
 end

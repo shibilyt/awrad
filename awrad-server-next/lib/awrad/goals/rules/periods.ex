@@ -57,8 +57,8 @@ defmodule Awrad.Goals.Rules.Periods do
     if Date.after?(from, to), do: nil, else: Date.range(from, to, 1)
   end
 
-  @doc "The days of `range` up to and including `date`."
-  @spec through(Date.Range.t(), Date.t()) :: [Date.t()]
+  @doc "The days of `days` (in order) up to and including `date`."
+  @spec through(Enumerable.t(Date.t()), Date.t()) :: [Date.t()]
   def through(range, date), do: Enum.take_while(range, &(not Date.after?(&1, date)))
 
   @doc "The day as a one-day window."
@@ -71,7 +71,8 @@ defmodule Awrad.Goals.Rules.Periods do
   def earliest(date, nil), do: date
   def earliest(date, other), do: if(Date.before?(other, date), do: other, else: date)
 
-  defp latest(date, other), do: if(Date.after?(other, date), do: other, else: date)
+  @spec latest(Date.t(), Date.t()) :: Date.t()
+  def latest(date, other), do: if(Date.after?(other, date), do: other, else: date)
 
   defp after_last_day?(period, date) do
     case last_day(period) do

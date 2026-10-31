@@ -15,6 +15,11 @@ defmodule Awrad.Fixtures.Sync do
   alias Awrad.Repo
   alias Awrad.Sync.{Entity, Head, Receipt, TagAlias}
 
+  @doc "A `sync_receipts` state's `utc_date`, the date the server ends goals on (`nil` if absent)."
+  @spec utc_date(map()) :: Date.t() | nil
+  def utc_date(%{"utc_date" => date}), do: Date.from_iso8601!(date)
+  def utc_date(%{}), do: nil
+
   @doc "Inserts a `sync_receipts` given `state` (or a feed's entities and head) for `user_id`."
   @spec put_state!(Ecto.UUID.t(), map()) :: :ok
   def put_state!(user_id, state) do

@@ -1,6 +1,7 @@
 defmodule Awrad.Goals do
   @moduledoc """
-  Goal rules (slice 1): where a goal stands on an effective practice day.
+  Goal rules (slices 1 and 4a): where a goal stands on an effective practice
+  day, across its dated versions.
 
   Pure functions over plain structs. No database, no HTTP. The public entry
   point is `Awrad.Goals.Rules`; the structs are the goal model of
@@ -15,14 +16,26 @@ defmodule Awrad.Goals do
     deps: [Awrad.Hijri],
     exports: [
       ActivePeriod,
+      Consistency,
       CountEntry,
+      CountLogEntry,
       CountPolicy,
+      DailyPace,
+      DayStatus,
       DaysPerPeriodStanding,
+      Ended,
       Goal,
+      MakeUp,
       PausedRange,
+      Placement,
+      Ring,
       Rules,
       Session,
       SessionStanding,
-      Standing
+      Settings,
+      Standing,
+      Streak,
+      Timeline,
+      Version
     ]
 end

@@ -28,6 +28,11 @@ defmodule Awrad.SharedFixturesTest do
       # fullwidth digits) before sending, so there's nothing for the server to run.
       "email_code_input" => "the server accepts ASCII digits only; clients normalise"
     },
+    # The phones merge a conflicting goal order (goal-model/v1 README, "The
+    # goal order"); the server keeps the first write and conflicts the rest.
+    "goal-model/v1" => %{
+      "goal_order_merge" => "the phones merge a conflicting goal order; the server only conflicts"
+    },
     # The server only stores and validates the practice policy (slice 3d); the
     # clients merge it, choose it at the first sign-in and compute Maghrib.
     "practice-settings/v1" => %{
