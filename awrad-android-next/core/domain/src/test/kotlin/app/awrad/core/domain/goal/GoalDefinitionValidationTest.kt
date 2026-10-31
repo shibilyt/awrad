@@ -1,6 +1,9 @@
 package app.awrad.core.domain.goal
 
+import app.awrad.core.domain.AwradId
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -39,18 +42,40 @@ class GoalDefinitionValidationTest {
     }
 
     @Test
-    fun `negative counts and duplicate session ids are invalid`() {
+    fun `negative counts, zero log amounts and zero streak amounts are invalid`() {
         assertFailsWith<IllegalArgumentException> { CountEntry(start, sessionId = null, count = -1) }
-        val policy = CountPolicy(target = 33, streakThreshold = StreakThreshold.TARGET)
+        assertFailsWith<IllegalArgumentException> { Session.of(SessionKind.Anytime, target = -1) }
+        assertFailsWith<IllegalArgumentException> { StreakThreshold.Amount(0) }
+        val id = AwradId("0192f200-0000-7000-8000-000000000001")
         assertFailsWith<IllegalArgumentException> {
-            GoalDefinition.create(
-                schedule = Schedule.EveryDay,
-                activePeriod = ActivePeriod(start),
-                countPolicy = policy,
-                sessions = listOf(Session("fajr", policy), Session("fajr", policy)),
-                requirement = Requirement.PerDueDate,
-            )
+            CountLogEntry(id, id, start, sessionId = null, goalId = null, amount = 0, countedAt = Instant.EPOCH)
         }
+    }
+
+    @Test
+    fun `session ids derive from their kind`() {
+        assertEquals("anytime", SessionKind.Anytime.derivedId)
+        assertEquals("before_isha", SessionKind.BeforePrayer(Prayer.ISHA).derivedId)
+        assertEquals("after_fajr", SessionKind.AfterPrayer(Prayer.FAJR).derivedId)
+        assertEquals("at_0630", SessionKind.AtTime(LocalTime.of(6, 30)).derivedId)
+        assertEquals("between_2100_0030", SessionKind.Between(LocalTime.of(21, 0), LocalTime.of(0, 30)).derivedId)
+    }
+
+    @Test
+    fun `an edit is validated with the rest of the timeline`() {
+        val settings = GoalSettings(
+            schedule = Schedule.EveryDay,
+            activePeriod = ActivePeriod(start),
+            countPolicy = CountPolicy(target = 100, streakThreshold = StreakThreshold.Target),
+            requirement = Requirement.PerDueDate,
+        )
+        val timeline = (GoalTimeline.create(start, listOf(GoalVersion(start, settings))) as GoalTimelineResult.Valid)
+            .timeline
+        val noTarget = settings.copy(
+            countPolicy = CountPolicy(target = null, streakThreshold = StreakThreshold.AnyCount),
+        )
+        val edited = timeline.withEdit(noTarget, start.plusDays(3))
+        assertEquals(GoalTimelineResult.Invalid(setOf(GoalDefinitionError.TARGET_REQUIRED)), edited)
     }
 
     @Test

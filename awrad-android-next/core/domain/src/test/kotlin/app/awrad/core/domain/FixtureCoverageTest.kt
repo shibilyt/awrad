@@ -22,6 +22,17 @@ class FixtureCoverageTest {
                 "goal_completion", // goal.rules.GoalCompletionFixtureTest
                 "goal_streak", // goal.rules.GoalStreakFixtureTest
                 "goal_validity", // goal.GoalValidityFixtureTest
+                // goal.rules.GoalRuleFixtureTests:
+                "goal_version_on_day",
+                "goal_version_add",
+                "count_attribution",
+                "make_up",
+                "excused_days",
+                "consistency",
+                "daily_pace",
+                "today_ring",
+                "goal_list_placement",
+                "goal_order_merge",
             ),
             FixtureRunner.rules(FixtureModel.GOAL_MODEL),
         )
