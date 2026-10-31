@@ -100,7 +100,8 @@ Everything else, including a document that breaks its schema, is a `rejected` re
   - a wrong type, an unknown enum value, a session kind that doesn't exist, a non-UUID ID, or an impossible month-day (31 April, on the range's `start` or `end`) is `invalid`;
   - an empty string is `blank`;
   - text over its limit is `too_long`;
-  - a list over its limit is `too_many`, except an empty `versions` list, which is `required`;
+  - a list over its limit is `too_many`;
+  - an empty list that needs at least one item (`versions`, `weekdays`, month `days`, specific `dates`, yearly `ranges`) is `required` on that list's own pointer. An empty `sessions` list is valid: the goal has no sessions;
   - repeated excused days are `duplicate`;
   - a snapshot title without any text is `required` on `/dhikr_snapshot/title`;
 - **then, only for a structurally valid document, the goal rules** (`goal_validity`): each error is reported on the version (`N`) and session (`M`) it's in. Errors are sorted by field, then code:

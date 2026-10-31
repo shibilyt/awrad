@@ -192,7 +192,7 @@ Done 2026-10-31: [`contracts/sync/v1/README.md`](../../contracts/sync/v1/README.
   - deleting a custom dhikr ends its active and paused goals at the same revision, listed in `cascaded`, on the server's UTC date.
 - **Conflicts:** goals use the existing conflict receipt. Phones take the server's goal (or remove it when the server's copy is deleted) and show decision 44's notice (`goal_edit_not_applied`) with a retry, instead of 3b's Keep mine / Use theirs.
 - **Phones:** a goal references its custom dhikr, and a goal order its goals, for outbox ordering. Deleting a custom dhikr ends its goals locally without queuing them. Goals count as profile data at the first sign-in.
-- **Fixtures:** `goal_document_validity.json` (31 cases), and cases added to `sync_receipts` (21), `apply_changes` (13), `outbox_enqueue` (5) and `profile_switch` (1). `tools/check-sync-contract.mjs` checks the goal rules, the cascade, the goal order rewrite and goal conflicts.
+- **Fixtures:** `goal_document_validity.json` (37 cases), and cases added to `sync_receipts` (21), `apply_changes` (13), `outbox_enqueue` (5) and `profile_switch` (1). `tools/check-sync-contract.mjs` checks the goal rules, the cascade, the goal order rewrite and goal conflicts.
 - **No new HTTP operations:** everything goes through `/api/v1/sync/commands` and `/api/v1/sync/changes`, whose schemas and examples now include both entities.
 - **ADR:** root `DECISIONS.md` ADR-2026-10-31, "Counts belong to the dhikr; goals choose shared or dedicated".
 
