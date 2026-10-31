@@ -61,7 +61,7 @@ A missed due day the user excused after the fact (illness, travel). It's skipped
 _Avoid_: Freeze, skip day
 
 **Session**:
-A time-of-day opportunity for completing a goal: **anytime**, **before** or **after a prayer**, **at a time**, or **between two times**. Sessions only guide: any session can be counted any time that day. Each session has its own count policy, and its ID comes from its kind (`after_fajr`), so a shared count fills the same session in every goal on that dhikr. When a goal has sessions, **each session must meet its own target** for the day to be met.
+A time-of-day opportunity for completing a goal: **anytime**, **before** or **after a prayer**, **at a time**, or **between two times**. Sessions only guide: any session can be counted any time that day. Each session has a target only (no minimum or cap), which is also its streak amount, and its ID comes from its kind (`after_fajr`), so a shared count fills the same session in every goal on that dhikr. When a goal has sessions, **each session must meet its own target** for the day to be met.
 _Avoid_: Recurrence, slot
 
 **Count policy**:
@@ -103,7 +103,7 @@ _Avoid_: A separate goal target
 What a streak counts, in the goal's own rhythm: **days** (due days; "12 Fridays" for a one-weekday schedule), **weeks** or **months** for period totals and "N days a period", and **occasions** for yearly schedules ("3 Ramadans", met when every due day of that year's occasion kept the streak).
 
 **Make-up**:
-A per-goal setting for daily (per-due-date) goals: counts past a later day's own target fill a missed day, which then counts as **made up** and keeps the streak. The **make-up window** is off, the next day, or within 3 days; the **make-up fill** is enough to keep the streak, or the full target. Missed days are filled oldest first.
+A per-goal setting for daily (per-due-date) goals, and for totals whose streak counts at a daily number: counts past a later day's own needs fill a missed day, which then counts as **made up** and keeps the streak. The **make-up window** is off, the next day, or within 3 days; the **make-up fill** is enough to keep the streak, or the full target (a total always fills to its daily number). Missed days are filled oldest first. While its window is open, a missed day is **pending make-up**: it doesn't break the streak yet, and the goal shows in Today's goals so it can be made up. With make-up off, a missed day breaks the streak at once.
 _Avoid_: Carry-over (moving an amount forward), qada (in product text, unless reviewed)
 
 **Consistency**:

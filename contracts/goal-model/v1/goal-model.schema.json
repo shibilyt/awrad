@@ -604,7 +604,7 @@
       ]
     },
     "session": {
-      "description": "A time-of-day opportunity with its own count policy (decision 10). The kind only guides (decision 11): any session can be counted any time of its day. `between` may run past midnight (from > to); from = to is invalid.",
+      "description": "A time-of-day opportunity with its own target (decisions 10 and 47). The kind only guides (decision 11): any session can be counted any time of its day. `between` may run past midnight (from > to); from = to is invalid.",
       "oneOf": [
         {
           "type": "object",
@@ -612,7 +612,7 @@
           "required": [
             "id",
             "kind",
-            "count_policy"
+            "target"
           ],
           "properties": {
             "id": {
@@ -623,8 +623,16 @@
             "kind": {
               "const": "anytime"
             },
-            "count_policy": {
-              "$ref": "#/$defs/count_policy"
+            "target": {
+              "description": "The session's number. It's also the session's streak amount: sessions have no minimum, cap or streak threshold of their own (decision 47). null only on a tracker's session (any count).",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/count"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           }
         },
@@ -635,7 +643,7 @@
             "id",
             "kind",
             "prayer",
-            "count_policy"
+            "target"
           ],
           "properties": {
             "id": {
@@ -649,8 +657,16 @@
             "prayer": {
               "$ref": "#/$defs/prayer"
             },
-            "count_policy": {
-              "$ref": "#/$defs/count_policy"
+            "target": {
+              "description": "The session's number. It's also the session's streak amount: sessions have no minimum, cap or streak threshold of their own (decision 47). null only on a tracker's session (any count).",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/count"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           }
         },
@@ -661,7 +677,7 @@
             "id",
             "kind",
             "prayer",
-            "count_policy"
+            "target"
           ],
           "properties": {
             "id": {
@@ -675,8 +691,16 @@
             "prayer": {
               "$ref": "#/$defs/prayer"
             },
-            "count_policy": {
-              "$ref": "#/$defs/count_policy"
+            "target": {
+              "description": "The session's number. It's also the session's streak amount: sessions have no minimum, cap or streak threshold of their own (decision 47). null only on a tracker's session (any count).",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/count"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           }
         },
@@ -687,7 +711,7 @@
             "id",
             "kind",
             "time",
-            "count_policy"
+            "target"
           ],
           "properties": {
             "id": {
@@ -701,8 +725,16 @@
             "time": {
               "$ref": "#/$defs/time_of_day"
             },
-            "count_policy": {
-              "$ref": "#/$defs/count_policy"
+            "target": {
+              "description": "The session's number. It's also the session's streak amount: sessions have no minimum, cap or streak threshold of their own (decision 47). null only on a tracker's session (any count).",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/count"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           }
         },
@@ -714,7 +746,7 @@
             "kind",
             "from",
             "to",
-            "count_policy"
+            "target"
           ],
           "properties": {
             "id": {
@@ -731,8 +763,16 @@
             "to": {
               "$ref": "#/$defs/time_of_day"
             },
-            "count_policy": {
-              "$ref": "#/$defs/count_policy"
+            "target": {
+              "description": "The session's number. It's also the session's streak amount: sessions have no minimum, cap or streak threshold of their own (decision 47). null only on a tracker's session (any count).",
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/count"
+                },
+                {
+                  "type": "null"
+                }
+              ]
             }
           }
         }
@@ -805,7 +845,7 @@
       ]
     },
     "make_up": {
-      "description": "Make-up (qada, decisions 18 and 31): counts past a later day's own needs fill a missed due day inside the window, up to the fill amount. Only per-due-date goals may have a window other than off. `fill` is kept when off.",
+      "description": "Make-up (qada, decisions 18, 31 and 48): counts past a later day's own needs fill a missed due day inside the window, up to the fill amount. Only per-due-date goals, and totals whose streak counts at {\"amount\": N} (always filled to N, so fill is streak), may have a window other than off. `fill` is kept when off.",
       "type": "object",
       "additionalProperties": false,
       "required": [
@@ -1078,7 +1118,7 @@
       }
     },
     "goal_rules": {
-      "description": "The validity rules a schema can express (goal_validity.json has them all, with error codes): a target unless tracker (on every session when there are sessions); a streak threshold pointing at a value that is set; an end date or a number of days, not both; make-up only on per-due-date goals; sessions XOR a minimum or cap; daily_pace only on a cumulative total with an end, never on a session. Session IDs and kinds, and the document rules, are checked by tools/check-goal-model.mjs.",
+      "description": "The validity rules a schema can express (goal_validity.json has them all, with error codes): a target unless tracker (on every session when there are sessions); a streak threshold pointing at a value that is set; an end date or a number of days, not both; make-up only on per-due-date goals, or on totals whose streak counts at an amount, filled to it; sessions XOR a minimum or cap; daily_pace only on a cumulative total with an end. Session IDs and kinds, and the document rules, are checked by tools/check-goal-model.mjs.",
       "allOf": [
         {
           "if": {
@@ -1150,36 +1190,6 @@
           "if": {
             "type": "object",
             "required": [
-              "sessions"
-            ],
-            "properties": {
-              "sessions": {
-                "type": "array",
-                "minItems": 1
-              }
-            }
-          },
-          "then": {
-            "type": "object",
-            "properties": {
-              "sessions": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "count_policy": {
-                      "$ref": "#/$defs/count_policy_valid"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "type": "object",
-            "required": [
               "sessions",
               "requirement"
             ],
@@ -1210,17 +1220,12 @@
                 "type": "array",
                 "items": {
                   "type": "object",
+                  "required": [
+                    "target"
+                  ],
                   "properties": {
-                    "count_policy": {
-                      "type": "object",
-                      "required": [
-                        "target"
-                      ],
-                      "properties": {
-                        "target": {
-                          "$ref": "#/$defs/count"
-                        }
-                      }
+                    "target": {
+                      "$ref": "#/$defs/count"
                     }
                   }
                 }
@@ -1277,23 +1282,70 @@
             }
           },
           "then": {
-            "type": "object",
-            "required": [
-              "requirement"
-            ],
-            "properties": {
-              "requirement": {
+            "anyOf": [
+              {
                 "type": "object",
                 "required": [
-                  "type"
+                  "requirement"
                 ],
                 "properties": {
-                  "type": {
-                    "const": "per_due_date"
+                  "requirement": {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "per_due_date"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "required": [
+                  "requirement",
+                  "count_policy",
+                  "make_up"
+                ],
+                "properties": {
+                  "requirement": {
+                    "type": "object",
+                    "required": [
+                      "type"
+                    ],
+                    "properties": {
+                      "type": {
+                        "const": "cumulative_total"
+                      }
+                    }
+                  },
+                  "count_policy": {
+                    "type": "object",
+                    "required": [
+                      "streak_threshold"
+                    ],
+                    "properties": {
+                      "streak_threshold": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "make_up": {
+                    "type": "object",
+                    "required": [
+                      "fill"
+                    ],
+                    "properties": {
+                      "fill": {
+                        "const": "streak"
+                      }
+                    }
                   }
                 }
               }
-            }
+            ]
           }
         },
         {
@@ -1320,25 +1372,6 @@
                   },
                   "maximum": {
                     "type": "null"
-                  }
-                }
-              },
-              "sessions": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "count_policy": {
-                      "type": "object",
-                      "properties": {
-                        "minimum": {
-                          "type": "null"
-                        },
-                        "maximum": {
-                          "type": "null"
-                        }
-                      }
-                    }
                   }
                 }
               }
@@ -1408,29 +1441,6 @@
                     }
                   }
                 ]
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "properties": {
-            "sessions": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "properties": {
-                  "count_policy": {
-                    "type": "object",
-                    "properties": {
-                      "streak_threshold": {
-                        "not": {
-                          "const": "daily_pace"
-                        }
-                      }
-                    }
-                  }
-                }
               }
             }
           }

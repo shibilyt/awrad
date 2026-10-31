@@ -15483,12 +15483,7 @@
                       "id": "fajr",
                       "kind": "after_prayer",
                       "prayer": "fajr",
-                      "count_policy": {
-                        "minimum": null,
-                        "target": 33,
-                        "maximum": null,
-                        "streak_threshold": "target"
-                      }
+                      "target": 33
                     }
                   ],
                   "requirement": {

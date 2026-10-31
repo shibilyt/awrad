@@ -314,6 +314,48 @@
       }
     },
     {
+      "id": "pending_day_can_be_excused",
+      "description": "A missed day still inside its make-up window isn't kept, so it can be excused (instead of made up).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [],
+        "date": "2026-10-14",
+        "day": "2026-10-13",
+        "action": "excuse",
+        "week_start": "monday"
+      },
+      "expect": {
+        "allowed": true,
+        "reason": null
+      }
+    },
+    {
       "id": "today_cant_be_excused",
       "description": "Today is still in progress.",
       "given": {

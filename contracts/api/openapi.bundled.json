@@ -2198,12 +2198,7 @@
                                 "kind": "between",
                                 "from": "21:00",
                                 "to": "23:30",
-                                "count_policy": {
-                                  "minimum": null,
-                                  "target": 7,
-                                  "maximum": null,
-                                  "streak_threshold": "target"
-                                }
+                                "target": 7
                               }
                             ],
                             "requirement": {

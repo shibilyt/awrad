@@ -190,7 +190,9 @@ function goalTotal(goal, dm) {
   return goal.sessions.reduce((a, s) => a + (dm.get(s.id) ?? 0), 0);
 }
 const units = (goal) =>
-  goal.sessions.length === 0 ? [{ id: null, policy: goal.count_policy }] : goal.sessions.map((s) => ({ id: s.id, policy: s.count_policy }));
+  goal.sessions.length === 0 ? [{ id: null, policy: goal.count_policy }] : goal.sessions.map((s) => ({ id: s.id, policy: sessionPolicy(s) }));
+/** A session has a target only: its streak amount is that target (any count for a tracker's session without one). */
+const sessionPolicy = (s) => ({ minimum: null, target: s.target, maximum: null, streak_threshold: s.target === null ? "any_count" : "target" });
 const unitCount = (goal, dm, id) => (id === null ? goalTotal(goal, dm) : dm.get(id) ?? 0);
 const dailyTarget = (goal, policy) => (["per_due_date", "days_per_period"].includes(goal.requirement.type) ? policy.target : null);
 
@@ -206,6 +208,8 @@ function streakAmount(input, idx, policy, n, c) {
 // ---------------------------------------------------------------- day status and make-up (make_up.json)
 
 const KEPT = new Set(["met", "minimum_only", "made_up"]);
+/** Not settled yet: today, or a missed day whose make-up window is still open. Neither breaks nor adds. */
+const OPEN = new Set(["in_progress", "pending"]);
 const WINDOW_DAYS = { off: 0, next_day: 1, within_3_days: 3 };
 
 /** Status of every due day from the start date up to D (or the goal's last day). */
@@ -213,6 +217,7 @@ export function dayStatuses(input, idx, D, c) {
   const g0 = resolve(input, D);
   const start = day(g0.active_period.start_date);
   const last = min(D, lastDay(g0.active_period));
+  const running = lastDay(g0.active_period) === null || D <= lastDay(g0.active_period);
   const days = [];
   for (let n = start; n <= last; n += 1) {
     const g = resolve(input, n);
@@ -266,9 +271,11 @@ export function dayStatuses(input, idx, D, c) {
       if (u.count >= u.S && (u.T === null || u.count >= u.T)) return "met";
       if (u.filled > 0 && u.count + u.filled >= u.fillAmount) return "made_up";
       if (u.count >= u.S) return "minimum_only";
-      return x.n === D ? "in_progress" : "missed";
+      if (x.n === D) return "in_progress";
+      // Still inside its make-up window (the goal running, today on or before its last window day): pending.
+      return x.window > 0 && D <= x.n + x.window && running ? "pending" : "missed";
     });
-    const worst = ["in_progress", "missed", "made_up", "minimum_only", "met"].find((s) => statuses.includes(s));
+    const worst = ["in_progress", "missed", "pending", "made_up", "minimum_only", "met"].find((s) => statuses.includes(s));
     result.set(x.n, {
       status: worst,
       count: x.units.reduce((a, u) => a + u.count, 0),
@@ -320,7 +327,7 @@ function periodProgress(goal, idx, days) {
   }
   const sessions = goal.sessions.map((s) => {
     const p = days.reduce((a, n) => a + (dayMap(idx, n).get(s.id) ?? 0), 0);
-    return { id: s.id, progress: p, target: s.count_policy.target, status: meetsTarget(p, s.count_policy) ? "met" : "not_met" };
+    return { id: s.id, progress: p, target: s.target, status: meetsTarget(p, sessionPolicy(s)) ? "met" : "not_met" };
   });
   return { progress: days.reduce((a, n) => a + goalTotal(goal, dayMap(idx, n)), 0), sessions };
 }
@@ -406,7 +413,7 @@ function occurrencesBack(input, idx, D, c) {
   return groups.map((group, i) => {
     let inProgress = false;
     if (i === 0 && running) {
-      inProgress = group.days.some((n) => statuses.get(n).status === "in_progress");
+      inProgress = group.days.some((n) => OPEN.has(statuses.get(n).status));
       for (let n = D + 1; !inProgress && n <= D + 400; n += 1) {
         const g = resolve(input, n);
         if (lastDay(g.active_period) !== null && n > lastDay(g.active_period)) break;
@@ -439,7 +446,7 @@ export function streakCurrent(input, idx, D, c, weekStart) {
     for (const n of [...statuses.keys()].sort((a, b) => b - a)) {
       const s = statuses.get(n).status;
       if (KEPT.has(s)) current += 1;
-      else if (s !== "in_progress") break;
+      else if (!OPEN.has(s)) break;
     }
   }
   return current;
@@ -449,7 +456,8 @@ export function goalStreak(given) {
   const c = given.hijri_corrections ?? [];
   const D = day(given.date);
   const idx = index(given.counts);
-  return { current: streakCurrent(given.goal, idx, D, c, given.week_start), ...streakUnit(resolve(given.goal, D)) };
+  const pending = [...dayStatuses(given.goal, idx, D, c).entries()].filter(([, s]) => s.status === "pending").map(([n]) => iso(n));
+  return { current: streakCurrent(given.goal, idx, D, c, given.week_start), ...streakUnit(resolve(given.goal, D)), pending_make_up: pending };
 }
 
 // ---------------------------------------------------------------- consistency (consistency.json)
@@ -477,7 +485,7 @@ export function consistency(given) {
     for (const n of [...statuses.keys()].sort((a, b) => b - a)) {
       if (outOf === 30) break;
       const s = statuses.get(n).status;
-      if (s === "in_progress") continue;
+      if (OPEN.has(s)) continue;
       outOf += 1;
       if (KEPT.has(s)) met += 1;
     }
@@ -535,8 +543,8 @@ export function todayRing(given) {
     if (g.sessions.length === 0) return { ring: "target", progress: total, goal: g.count_policy.target };
     return {
       ring: "target",
-      progress: g.sessions.reduce((a, s) => a + Math.min(dm.get(s.id) ?? 0, s.count_policy.target), 0),
-      goal: g.sessions.reduce((a, s) => a + s.count_policy.target, 0),
+      progress: g.sessions.reduce((a, s) => a + Math.min(dm.get(s.id) ?? 0, s.target), 0),
+      goal: g.sessions.reduce((a, s) => a + s.target, 0),
     };
   }
   const threshold = g.count_policy.streak_threshold;
@@ -597,7 +605,7 @@ export function listPlacement(given) {
     if (finished) out.history.push({ ...entry, ...finished });
     else if (isPaused(g, D)) out.paused.push(entry);
     else if (g.requirement.type === "tracker") out.tracking.push(entry);
-    else if (isDue(g, D, c)) out.today.push(entry);
+    else if (isDue(g, D, c) || [...dayStatuses(item.goal, idx, D, c).values()].some((x) => x.status === "pending")) out.today.push(entry);
     else {
       let next = null;
       const last = lastDay(g.active_period);
@@ -732,6 +740,11 @@ export function sessionId(s) {
 
 const thresholdUnset = (p) => ["minimum", "target", "maximum"].includes(p.streak_threshold) && p[p.streak_threshold] === null;
 
+/** Make-up is for daily goals, and for totals whose streak counts at a daily amount, filled to that amount. */
+const makeUpAllowed = (goal) =>
+  goal.requirement.type === "per_due_date" ||
+  (goal.requirement.type === "cumulative_total" && typeof goal.count_policy.streak_threshold === "object" && goal.make_up.fill === "streak");
+
 export function goalErrors(goal) {
   const errors = new Set();
   const tracker = goal.requirement.type === "tracker";
@@ -741,10 +754,7 @@ export function goalErrors(goal) {
     if (!tracker && p.target === null) errors.add("target_required");
   } else {
     for (const s of goal.sessions) {
-      if (thresholdUnset(s.count_policy)) errors.add("streak_threshold_value_required");
-      if (!tracker && s.count_policy.target === null) errors.add("session_target_required");
-      if (s.count_policy.minimum !== null || s.count_policy.maximum !== null) errors.add("sessions_with_minimum_or_cap");
-      if (s.count_policy.streak_threshold === "daily_pace") errors.add("streak_pace_not_allowed");
+      if (!tracker && s.target === null) errors.add("session_target_required");
       if (s.id !== sessionId(s)) errors.add("session_id_mismatch");
       if (s.kind === "between" && s.from === s.to) errors.add("session_window_empty");
     }
@@ -754,7 +764,7 @@ export function goalErrors(goal) {
   }
   const ap = goal.active_period;
   if (ap.end_date !== null && ap.duration_days !== null) errors.add("end_date_and_duration");
-  if (goal.make_up.window !== "off" && goal.requirement.type !== "per_due_date") errors.add("make_up_not_daily");
+  if (goal.make_up.window !== "off" && !makeUpAllowed(goal)) errors.add("make_up_not_allowed");
   if (p.streak_threshold === "daily_pace" && !(goal.requirement.type === "cumulative_total" && (ap.end_date !== null || ap.duration_days !== null))) {
     errors.add("streak_pace_not_allowed");
   }

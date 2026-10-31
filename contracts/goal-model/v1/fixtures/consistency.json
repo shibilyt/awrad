@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "consistency",
-  "description": "The consistency tag and what a goal's row shows (decisions 19, 21 and 32). Daily-rhythm goals (days, weekdays, occasions) count kept due days among the last 30; period goals count met periods among the last 12. Today, or the current period, counts only once kept or met. No tag before 7 due days or 4 periods. Devoted at 90% or more, Steady at 80% or more. The row shows the streak when it's 3 or more; otherwise the tag if there is one; otherwise a streak of 1 or 2; otherwise nothing.",
+  "description": "The consistency tag and what a goal's row shows (decisions 19, 21 and 32). Daily-rhythm goals (days, weekdays, occasions) count kept due days among the last 30; period goals count met periods among the last 12. Today, or the current period, counts only once kept or met, and a day pending make-up only once its window closes. No tag before 7 due days or 4 periods. Devoted at 90% or more, Steady at 80% or more. The row shows the streak when it's 3 or more; otherwise the tag if there is one; otherwise a streak of 1 or 2; otherwise nothing.",
   "references": [
     "CONTEXT.md#goal-language (Consistency)",
     "docs/slices/04-goals-decisions.md decisions 19, 21, 32 and 43"
@@ -1833,6 +1833,85 @@
         "basis": "due_days",
         "met": 8,
         "out_of": 8,
+        "tag": "devoted",
+        "show": "streak"
+      }
+    },
+    {
+      "id": "pending_day_not_counted_yet",
+      "description": "Yesterday was missed but can still be made up today: it isn't counted until its window closes.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-23",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-23",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-24",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-25",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-26",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-27",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-28",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-29",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-31",
+        "week_start": "monday"
+      },
+      "expect": {
+        "basis": "due_days",
+        "met": 7,
+        "out_of": 7,
         "tag": "devoted",
         "show": "streak"
       }

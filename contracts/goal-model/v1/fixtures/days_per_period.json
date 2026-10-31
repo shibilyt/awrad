@@ -928,23 +928,13 @@
               "id": "after_fajr",
               "kind": "after_prayer",
               "prayer": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "after_isha",
               "kind": "after_prayer",
               "prayer": "isha",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {

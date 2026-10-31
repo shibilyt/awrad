@@ -97,11 +97,11 @@ Everything else, including a document that breaks its schema, is a `rejected` re
 | Goal rule | Field | Code |
 |---|---|---|
 | `target_required` | `/document/versions/N/count_policy/target` | `required` |
-| `session_target_required` | `/document/versions/N/sessions/M/count_policy/target` | `required` |
-| `streak_threshold_value_required`, `streak_pace_not_allowed` | `…/count_policy/streak_threshold` (the goal's or the session's) | `invalid` |
+| `session_target_required` | `/document/versions/N/sessions/M/target` | `required` |
+| `streak_threshold_value_required`, `streak_pace_not_allowed` | `/document/versions/N/count_policy/streak_threshold` | `invalid` |
 | `end_date_and_duration` | `/document/versions/N/active_period/duration_days` | `not_allowed` |
-| `make_up_not_daily` | `/document/versions/N/make_up/window` | `not_allowed` |
-| `sessions_with_minimum_or_cap` | each `…/count_policy/minimum` or `…/maximum` that is set | `not_allowed` |
+| `make_up_not_allowed` | `/document/versions/N/make_up/window` | `not_allowed` |
+| `sessions_with_minimum_or_cap` | `/document/versions/N/count_policy/minimum` or `…/maximum`, each that is set | `not_allowed` |
 | `session_id_mismatch` | `/document/versions/N/sessions/M/id` | `mismatch` |
 | `session_duplicate` | `/document/versions/N/sessions/M/id`, on each later one | `duplicate` |
 | `session_window_empty` | `/document/versions/N/sessions/M/to` | `range` |

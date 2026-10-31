@@ -1,7 +1,7 @@
 {
   "format": "awrad-fixture/1",
   "rule": "goal_list_placement",
-  "description": "Where each goal shows in My Goals on a day (decisions 12, 25, 26 and 30), first match wins: History (ended in its document; completed by its completion policy; past its last day; or no scheduled day left), Paused (paused today), Tracking (trackers), Today (due today), Upcoming (with its next due day). Today, Tracking and Paused follow the user's goal_order, then goals it doesn't name by created_on and ID; Upcoming is by next due day, then that order; History is newest first, then that order.",
+  "description": "Where each goal shows in My Goals on a day (decisions 12, 25, 26, 30 and 46), first match wins: History (ended in its document; completed by its completion policy; past its last day; or no scheduled day left), Paused (paused today), Tracking (trackers), Today (due today, or a missed day still pending make-up), Upcoming (with its next due day). Today, Tracking and Paused follow the user's goal_order, then goals it doesn't name by created_on and ID; Upcoming is by next due day, then that order; History is newest first, then that order.",
   "references": [
     "CONTEXT.md#goal-language (Tracking, Ended and completed goals)",
     "docs/slices/04-goals-decisions.md decisions 12, 24, 25, 26 and 30"
@@ -1090,6 +1090,143 @@
           {
             "id": "0192f100-0000-7000-8000-000000000001",
             "next_due": "2026-10-20"
+          }
+        ],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "pending_make_up_in_today",
+      "description": "A Friday goal with make-up within 3 days, Friday missed: on Sunday it isn't due, but it's in Today's goals so Friday can be made up (decision 46).",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "weekdays",
+                    "weekdays": [
+                      "friday"
+                    ]
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "within_3_days",
+                    "fill": "target"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": [
+              {
+                "date": "2026-10-02",
+                "session": null,
+                "count": 100
+              }
+            ]
+          }
+        ],
+        "order": [],
+        "date": "2026-10-11",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [
+          "0192f100-0000-7000-8000-000000000001"
+        ],
+        "upcoming": [],
+        "tracking": [],
+        "paused": [],
+        "history": []
+      }
+    },
+    {
+      "id": "closed_window_back_to_upcoming",
+      "description": "On Tuesday Friday's window has closed: the goal waits for next Friday.",
+      "given": {
+        "goals": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "goal": {
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "weekdays",
+                    "weekdays": [
+                      "friday"
+                    ]
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "within_3_days",
+                    "fill": "target"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "counts": [
+              {
+                "date": "2026-10-02",
+                "session": null,
+                "count": 100
+              }
+            ]
+          }
+        ],
+        "order": [],
+        "date": "2026-10-13",
+        "week_start": "monday"
+      },
+      "expect": {
+        "today": [],
+        "upcoming": [
+          {
+            "id": "0192f100-0000-7000-8000-000000000001",
+            "next_due": "2026-10-16"
           }
         ],
         "tracking": [],

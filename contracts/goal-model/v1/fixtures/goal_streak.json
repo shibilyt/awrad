@@ -46,7 +46,8 @@
     "required": [
       "current",
       "unit",
-      "weekday"
+      "weekday",
+      "pending_make_up"
     ],
     "properties": {
       "current": {
@@ -73,6 +74,14 @@
           }
         ],
         "description": "The weekday when unit is weekday; null otherwise."
+      },
+      "pending_make_up": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "$ref": "urn:awrad:goal-model:1#/$defs/date"
+        },
+        "description": "Missed days still inside their make-up window, oldest first (decision 46): they don't break the streak yet. Rows show them (\"🔥 15 · make up Mon\")."
       }
     }
   },
@@ -131,7 +140,8 @@
       "expect": {
         "current": 3,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -193,7 +203,8 @@
       "expect": {
         "current": 3,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -255,7 +266,8 @@
       "expect": {
         "current": 4,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -312,7 +324,8 @@
       "expect": {
         "current": 2,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -369,7 +382,8 @@
       "expect": {
         "current": 0,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -431,7 +445,8 @@
       "expect": {
         "current": 3,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -488,7 +503,8 @@
       "expect": {
         "current": 2,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -545,7 +561,8 @@
       "expect": {
         "current": 2,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -597,7 +614,8 @@
       "expect": {
         "current": 2,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -649,7 +667,8 @@
       "expect": {
         "current": 2,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -701,7 +720,8 @@
       "expect": {
         "current": 0,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -753,7 +773,8 @@
       "expect": {
         "current": 1,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -782,23 +803,13 @@
               "id": "after_fajr",
               "kind": "after_prayer",
               "prayer": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "after_isha",
               "kind": "after_prayer",
               "prayer": "isha",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {
@@ -833,7 +844,8 @@
       "expect": {
         "current": 1,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -891,7 +903,8 @@
       "expect": {
         "current": 2,
         "unit": "week",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -949,7 +962,8 @@
       "expect": {
         "current": 3,
         "unit": "week",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -997,7 +1011,8 @@
       "expect": {
         "current": 1,
         "unit": "week",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1055,7 +1070,8 @@
       "expect": {
         "current": 1,
         "unit": "week",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1108,7 +1124,8 @@
       "expect": {
         "current": 2,
         "unit": "week",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1161,7 +1178,8 @@
       "expect": {
         "current": 0,
         "unit": "week",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1218,7 +1236,8 @@
       "expect": {
         "current": 0,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1292,7 +1311,8 @@
       "expect": {
         "current": 1,
         "unit": "week",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1344,7 +1364,8 @@
       "expect": {
         "current": 2,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1391,7 +1412,8 @@
       "expect": {
         "current": 1,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1448,7 +1470,8 @@
       "expect": {
         "current": 3,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1663,7 +1686,8 @@
       "expect": {
         "current": 1,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1873,7 +1897,8 @@
       "expect": {
         "current": 0,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -1950,7 +1975,8 @@
       "expect": {
         "current": 6,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2008,7 +2034,8 @@
       "expect": {
         "current": 2,
         "unit": "month",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2066,7 +2093,8 @@
       "expect": {
         "current": 3,
         "unit": "month",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2183,7 +2211,8 @@
       "expect": {
         "current": 2,
         "unit": "month",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2243,7 +2272,8 @@
       "expect": {
         "current": 3,
         "unit": "weekday",
-        "weekday": "friday"
+        "weekday": "friday",
+        "pending_make_up": []
       }
     },
     {
@@ -2304,7 +2334,8 @@
       "expect": {
         "current": 3,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2362,7 +2393,8 @@
       "expect": {
         "current": 2,
         "unit": "month",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2424,7 +2456,8 @@
       "expect": {
         "current": 5,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2486,7 +2519,8 @@
       "expect": {
         "current": 2,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2538,7 +2572,357 @@
       "expect": {
         "current": 3,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "pending_make_up_keeps_streak",
+      "description": "Next-day make-up: Monday was missed, but Tuesday (today) can still make it up, so the streak stays at 2 and lists Monday (decision 46).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 50
+          }
+        ],
+        "date": "2026-10-13",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": [
+          "2026-10-12"
+        ]
+      }
+    },
+    {
+      "id": "pending_made_up_adds",
+      "description": "Tuesday makes Monday up: the streak runs through both.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-13",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 4,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
+      }
+    },
+    {
+      "id": "pending_window_closed_breaks",
+      "description": "Wednesday: Monday's window closed unfilled, so it breaks the streak; Tuesday (50) is now pending.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 50
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 1,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": [
+          "2026-10-13"
+        ]
+      }
+    },
+    {
+      "id": "partial_yesterday_pending_with_make_up",
+      "description": "The slice 1 case partial_yesterday_breaks, with next-day make-up on: yesterday's 200 of 313 is pending, so the streak holds at 2.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 313,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 313
+          },
+          {
+            "date": "2026-10-12",
+            "session": null,
+            "count": 313
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 2,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": [
+          "2026-10-13"
+        ]
+      }
+    },
+    {
+      "id": "within_3_days_two_pending",
+      "description": "Within 3 days: Sunday and Monday are both pending; the streak keeps Saturday's 1.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-10",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-13",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 1,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": [
+          "2026-10-11",
+          "2026-10-12"
+        ]
+      }
+    },
+    {
+      "id": "total_amount_make_up_keeps_streak",
+      "description": "A total at 100 a day with next-day make-up: Monday made up from Tuesday.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-11",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 200
+          }
+        ],
+        "date": "2026-10-14",
+        "week_start": "monday"
+      },
+      "expect": {
+        "current": 3,
+        "unit": "day",
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2602,7 +2986,8 @@
       "expect": {
         "current": 4,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2678,7 +3063,8 @@
       "expect": {
         "current": 2,
         "unit": "week",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2737,7 +3123,8 @@
       "expect": {
         "current": 2,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2801,7 +3188,8 @@
       "expect": {
         "current": 3,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2858,7 +3246,8 @@
       "expect": {
         "current": 3,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -2920,7 +3309,8 @@
       "expect": {
         "current": 1,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -3015,7 +3405,8 @@
       "expect": {
         "current": 4,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -3110,7 +3501,8 @@
       "expect": {
         "current": 1,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -3187,7 +3579,8 @@
       "expect": {
         "current": 3,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -3254,7 +3647,8 @@
       "expect": {
         "current": 0,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -3326,7 +3720,8 @@
       "expect": {
         "current": 3,
         "unit": "day",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -3676,7 +4071,8 @@
       "expect": {
         "current": 2,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -3916,7 +4312,8 @@
       "expect": {
         "current": 1,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -4261,7 +4658,8 @@
       "expect": {
         "current": 0,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -4608,7 +5006,8 @@
       "expect": {
         "current": 2,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -4958,7 +5357,8 @@
       "expect": {
         "current": 2,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -5028,7 +5428,8 @@
       "expect": {
         "current": 3,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -5098,7 +5499,8 @@
       "expect": {
         "current": 2,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -5213,7 +5615,8 @@
       "expect": {
         "current": 1,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     },
     {
@@ -5313,7 +5716,8 @@
       "expect": {
         "current": 0,
         "unit": "occasion",
-        "weekday": null
+        "weekday": null,
+        "pending_make_up": []
       }
     }
   ]

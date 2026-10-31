@@ -684,23 +684,13 @@
                       "id": "after_fajr",
                       "kind": "after_prayer",
                       "prayer": "fajr",
-                      "count_policy": {
-                        "minimum": null,
-                        "target": 33,
-                        "maximum": null,
-                        "streak_threshold": "target"
-                      }
+                      "target": 33
                     },
                     {
                       "id": "after_maghrib",
                       "kind": "after_prayer",
                       "prayer": "maghrib",
-                      "count_policy": {
-                        "minimum": null,
-                        "target": 33,
-                        "maximum": null,
-                        "streak_threshold": "target"
-                      }
+                      "target": 33
                     }
                   ],
                   "requirement": {
@@ -877,12 +867,7 @@
                       "id": "after_fajr",
                       "kind": "after_prayer",
                       "prayer": "fajr",
-                      "count_policy": {
-                        "minimum": null,
-                        "target": 100,
-                        "maximum": null,
-                        "streak_threshold": "target"
-                      }
+                      "target": 100
                     }
                   ],
                   "requirement": {

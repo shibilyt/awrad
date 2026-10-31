@@ -3,7 +3,7 @@
 Status: Agreed 2026-10-31 (scope and questions 1–15, all as recommended); 4a in progress (steps 3 and 4 done)
 Plan entry: [`docs/rebuild-plan.md`](../rebuild-plan.md), slice 4
 Playbook: [`docs/slice-playbook.md`](../slice-playbook.md)
-Decisions: [`04-goals-decisions.md`](04-goals-decisions.md) (45 decisions, 2026-10-30 and 2026-10-31). Prototype: branch `prototype/goals`, `prototypes/goals/`.
+Decisions: [`04-goals-decisions.md`](04-goals-decisions.md) (49 decisions, 2026-10-30 and 2026-10-31). Prototype: branch `prototype/goals`, `prototypes/goals/`.
 
 ## Goal
 
@@ -119,7 +119,7 @@ Android and iOS are almost identical (iOS mirrors Android), and the rows note wh
 
 ## Domain and fixtures (step 3, slice 4a)
 
-Done 2026-10-31. The rules, conventions and every judgment call the decisions left open are in [`contracts/goal-model/v1/README.md`](../../contracts/goal-model/v1/README.md) (section "Judgment calls", for review).
+Done 2026-10-31. The rules, conventions and every judgment call the decisions left open are in [`contracts/goal-model/v1/README.md`](../../contracts/goal-model/v1/README.md) (section "Judgment calls"). The user reviewed them on 2026-10-31: decisions 46–49.
 
 **New and changed terms in `CONTEXT.md`:**
 - dhikr snapshot;
@@ -137,9 +137,9 @@ Done 2026-10-31. The rules, conventions and every judgment call the decisions le
 - conflicts on goals.
 
 **Goal model changes (`goal-model/v1`, edited in place):**
-- **Sessions** gain a `kind`: `anytime`, `before_prayer {prayer}`, `after_prayer {prayer}`, `at_time {time}`, `between {from, to}`. Their ID is derived from the kind (`after_fajr`), so shared counts match sessions across goals.
+- **Sessions** gain a `kind`: `anytime`, `before_prayer {prayer}`, `after_prayer {prayer}`, `at_time {time}`, `between {from, to}`. Their ID is derived from the kind (`after_fajr`), so shared counts match sessions across goals. A session carries a `target` only, which is its streak amount (47).
 - **The streak threshold** gains `{"amount": N}` (29, 36) and `daily_pace` (a total with an end, 28–29). A tracker may now have a streak amount.
-- **Make-up:** `{window: off | next_day | within_3_days, fill: streak | target}` (18, 31). Only valid for daily (`per_due_date`) goals.
+- **Make-up:** `{window: off | next_day | within_3_days, fill: streak | target}` (18, 31). Valid for daily (`per_due_date`) goals, and for totals whose streak counts at `{"amount": N}`, filled to N (48). A missed day inside its window is pending and doesn't break the streak (46).
 - **Excused days:** a list of dates on every goal.
 - **The goal document** (`$defs/goal_document`): `dhikr_id`, `dhikr_snapshot`, `name`, `counts`, `created_on`, `versions` (1–100), `paused`, `excused`, `ended`. Its rule-facing part is `$defs/goal_timeline`, and `$defs/goal` stays what a rule evaluates on one day.
 - **Rules evaluate a goal on a day by the version in force that day.**
@@ -153,13 +153,13 @@ Done 2026-10-31. The rules, conventions and every judgment call the decisions le
 | `goal_version_on_day.json` | Which version applies on a date, and the `goal` it resolves into (an ended goal's end caps it) | 12 |
 | `goal_version_add.json` | A detail edit adds a version from today; same-day edits replace it; the 100-version fold | 8 |
 | `count_attribution.json` | Count-log entries plus goals (shared or dedicated, sessions) → each goal's counts per day and session | 9 |
-| `make_up.json` | Counts past a later day's needs fill missed days inside the window, oldest first; each due day's status: met, minimum only, made up, missed, in progress | 22 |
-| `excused_days.json` | Whether a day can be excused or un-excused, with the reason | 29 |
-| `goal_streak.json` (extended) | Units (days, one weekday, weeks, months, occasions), make-up, excused days, amount and pace thresholds, versions, ended goals | 56 |
-| `consistency.json` | Kept due days out of the last 30 (or periods out of the last 12) → `devoted`, `steady` or none; no tag before 7 due days (4 periods); whether the row shows 🔥, the tag or nothing | 18 |
+| `make_up.json` | Counts past a later day's needs fill missed days inside the window, oldest first; each due day's status: met, minimum only, made up, pending, missed, in progress | 26 |
+| `excused_days.json` | Whether a day can be excused or un-excused, with the reason | 30 |
+| `goal_streak.json` (extended) | Units (days, one weekday, weeks, months, occasions), make-up and days pending it, excused days, amount and pace thresholds, versions, ended goals | 62 |
+| `consistency.json` | Kept due days out of the last 30 (or periods out of the last 12) → `devoted`, `steady` or none; no tag before 7 due days (4 periods); whether the row shows 🔥, the tag or nothing | 19 |
 | `daily_pace.json` | What's left ÷ due days left, rounded up, for total goals with an end; recalculated per day | 17 |
 | `today_ring.json` | What a list ring fills toward today, per requirement | 20 |
-| `goal_list_placement.json` | Today, Upcoming (with when), Tracking, Paused or History, and the order in each | 19 |
+| `goal_list_placement.json` | Today (including goals with a day pending make-up), Upcoming (with when), Tracking, Paused or History, and the order in each | 21 |
 | `goal_order_merge.json` | Merging a conflicting `goal_order` without asking | 8 |
 | `goal_validity.json` (extended) | Sessions XOR minimum/cap, session IDs and windows, an end date XOR a number of days, make-up only on daily goals, pace only on totals with an end; for documents, versions in order and structural fields equal | 43 |
 | `goal_is_due.json`, `days_per_period.json` (extended) | Excused days aren't due, and lower an "N days a period" number | 63, 18 |
@@ -169,11 +169,11 @@ Done 2026-10-31. The rules, conventions and every judgment call the decisions le
 **Count log entry** (shape fixed now, synced in 5): `$defs/count_log_entry`, `{id, dhikr_id, practice_day, session_id, goal_id, amount, counted_at}`. `goal_id` is set only for dedicated goals, `amount` is never 0 and may be negative (adjust, undo), and `id` is a UUIDv7.
 
 **Slice 1 cases whose meaning changed** (the platform runners from slice 1 fail on them until step 5):
-- every goal gains `excused` and `make_up`, and sessions gain `kind` and derived IDs (`fajr` became `after_fajr`), in every goal-model file;
-- `goal_streak` expects `{current, unit, weekday}`, and accepts a `goal_timeline`;
+- every goal gains `excused` and `make_up`, and sessions gain `kind` and derived IDs (`fajr` became `after_fajr`) and carry a `target` instead of a `count_policy`, in every goal-model file;
+- `goal_streak` expects `{current, unit, weekday, pending_make_up}`, and accepts a `goal_timeline`;
 - `goal_streak` `ramadan_streak_spans_years` (32 → 1) and `ramadan_streak_broken_last_year` (3 → 0) now count Ramadans;
 - `goal_is_due` `end_date_earlier_than_duration` and `duration_earlier_than_end_date` were removed: a goal with both an end date and a number of days is now invalid;
-- `goal_validity` accepts `{document}` as well as `{goal}`, with new error codes.
+- `goal_validity` accepts `{document}` as well as `{goal}`, with new error codes. `session_streak_minimum_without_minimum` was removed: sessions have no streak threshold any more (47).
 
 ## Contract (step 4)
 

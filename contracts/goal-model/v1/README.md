@@ -10,17 +10,17 @@ The goal rules as executable cases, shared by Android, iOS, the server and the w
 | `fixtures/requirement_standing.json` | Window, progress, target and status, per requirement type (for days per period: that day against the daily target) | 30 |
 | `fixtures/days_per_period.json` | Qualifying days against required days per week, month or Hijri month; excused days lower the number | 18 |
 | `fixtures/goal_completion.json` | Derived completion per completion policy | 11 |
-| `fixtures/goal_streak.json` | The current streak and its unit: days, one weekday, weeks, months or occasions; make-up, excused days, amount and pace thresholds, versions, ended goals | 56 |
+| `fixtures/goal_streak.json` | The current streak and its unit: days, one weekday, weeks, months or occasions; make-up and days pending it, excused days, amount and pace thresholds, versions, ended goals | 62 |
 | `fixtures/goal_validity.json` | Which goals and goal documents are invalid, with error codes; platforms reject them at construction, sync and import | 43 |
 | `fixtures/goal_version_on_day.json` | Which dated version a document is judged by on a day, and the `goal` it resolves into | 12 |
 | `fixtures/goal_version_add.json` | Saving a detail edit as a version from today; same-day edits; the 100-version cap | 8 |
 | `fixtures/count_attribution.json` | Count-log entries + goals (shared or dedicated, sessions) → each goal's counts per day and session | 9 |
-| `fixtures/make_up.json` | Each due day's status (met, minimum only, made up, missed, in progress) with make-up | 22 |
-| `fixtures/excused_days.json` | Whether a day can be excused or un-excused | 29 |
-| `fixtures/consistency.json` | The consistency tag, and whether a row shows the streak, the tag or nothing | 18 |
+| `fixtures/make_up.json` | Each due day's status (met, minimum only, made up, pending, missed, in progress) with make-up | 26 |
+| `fixtures/excused_days.json` | Whether a day can be excused or un-excused | 30 |
+| `fixtures/consistency.json` | The consistency tag, and whether a row shows the streak, the tag or nothing | 19 |
 | `fixtures/daily_pace.json` | Today's share of a total goal with an end | 17 |
 | `fixtures/today_ring.json` | What a list ring fills toward today | 20 |
-| `fixtures/goal_list_placement.json` | Today, Upcoming (with when), Tracking, Paused or History, and the order in each | 19 |
+| `fixtures/goal_list_placement.json` | Today, Upcoming (with when), Tracking, Paused or History, and the order in each | 21 |
 | `fixtures/goal_order_merge.json` | Merging a conflicting `goal_order` without asking | 8 |
 
 ## Conventions
@@ -74,7 +74,7 @@ A goal syncs as one `goal` entity ([`../../sync/v1/`](../../sync/v1/)) whose doc
 
 ## Sessions
 
-A session is `{id, kind, …, count_policy}` with one of five kinds (decision 10): `anytime`, `before_prayer {prayer}`, `after_prayer {prayer}`, `at_time {time}` and `between {from, to}`. Prayers are `fajr`, `dhuhr`, `asr`, `maghrib` and `isha`; times are local `HH:MM`. A `between` window may run past midnight, but can't be empty. Kinds only guide: any session can be counted at any time of its day, and windows never block (decision 11).
+A session is `{id, kind, …, target}` with one of five kinds (decision 10): `anytime`, `before_prayer {prayer}`, `after_prayer {prayer}`, `at_time {time}` and `between {from, to}`. Prayers are `fajr`, `dhuhr`, `asr`, `maghrib` and `isha`; times are local `HH:MM`. A `between` window may run past midnight, but can't be empty. Kinds only guide: any session can be counted at any time of its day, and windows never block (decision 11).
 
 **The ID is derived from the kind**, so a shared count made in one goal's "after Fajr" fills the same session of another goal on that dhikr:
 
@@ -85,7 +85,7 @@ A session is `{id, kind, …, count_policy}` with one of five kinds (decision 10
 | `at_time` | `at_HHMM` (`at_0630`) |
 | `between` | `between_HHMM_HHMM` (`between_2100_2330`) |
 
-Two sessions of one goal can't share an ID, and a goal with sessions has no minimum or cap, on the goal or on a session (decision 9).
+**A session carries a target only** (decision 47): no minimum, cap or streak threshold of its own, and its streak amount is its target. A tracker's session may have no target (`null`, any count). Two sessions of one goal can't share an ID, and a goal with sessions has no minimum or cap (decision 9).
 
 ## Counts: shared and dedicated
 
@@ -99,15 +99,16 @@ Counts belong to the dhikr (root `DECISIONS.md` ADR-2026-10-31). Each profile ke
 
 ## Streaks
 
-**The streak amount** is what a day needs to keep the streak: `any_count` is 1; `minimum`, `target` and `maximum` are the count policy's values; `{"amount": N}` is N (decisions 29 and 36); `daily_pace` is that day's pace share, and at least 1. `daily_pace` is only for a total with an end date or a number of days, and the sentence makes it their default; an open-ended total defaults to `any_count`.
+**The streak amount** is what a day needs to keep the streak (a session's is its target): `any_count` is 1; `minimum`, `target` and `maximum` are the count policy's values; `{"amount": N}` is N (decisions 29 and 36); `daily_pace` is that day's pace share, and at least 1. `daily_pace` is only for a total with an end date or a number of days, and the sentence makes it their default; an open-ended total defaults to `any_count`.
 
 **A day's status** (`make_up.json`), for each unit (the day, or each session):
 - `met`: at least its target (if it has a daily target: per due date, days per period) and its streak amount;
 - `made_up`: filled by make-up to its fill amount;
 - `minimum_only`: at least the streak amount, below the target;
+- `pending`: not kept, but its make-up window is still open (decision 46): today is on or before its last window day, and the goal is still running;
 - `missed`; or, for today, `in_progress`.
 
-With sessions, the day takes the worst session status: in progress, then missed, made up, minimum only, met. A day **keeps the streak** when it's met, minimum only or made up.
+With sessions, the day takes the worst session status: in progress, then missed, pending, made up, minimum only, met. A day **keeps the streak** when it's met, minimum only or made up. **Today and pending days are open:** they neither break the streak nor add to it, so a missed day with make-up on breaks the streak only once its window closes unfilled. With make-up off, a missed day breaks it at once. `goal_streak` also lists the pending days (`pending_make_up`), so a row can read "🔥 15 · make up Mon".
 
 **Streak units** (`goal_streak.json`, decision 43), from the version in force today:
 
@@ -119,15 +120,17 @@ With sessions, the day takes the worst session status: in progress, then missed,
 | Weekdays with exactly one weekday | `weekday` (with `weekday`) | Due days | 🔥 12 Fridays |
 | Anything else | `day` | Due days | 🔥 15 days |
 
-**An occasion** is one year's due days of a yearly schedule, in its own calendar (the Hijri year for Hijri ranges). A range that runs over the year end belongs to the year it starts in. The current occasion is in progress while it has due days after today, or today isn't kept yet; it doesn't break the streak while in progress, and adds only once complete.
+**An occasion** is one year's due days of a yearly schedule, in its own calendar (the Hijri year for Hijri ranges). A range that runs over the year end belongs to the year it starts in. The current occasion is in progress while it has due days after today, or today or a pending day isn't settled yet; it doesn't break the streak while in progress, and adds only once complete.
 
 ## Make-up
 
-`make_up` is `{window, fill}` (decisions 18 and 31). `window` is `off`, `next_day` or `within_3_days`, and only a per-due-date goal may have a window other than `off`. `fill` is `streak` (fill to the streak amount, the sentence's default) or `target` (fill to the target, or the streak amount if higher).
+`make_up` is `{window, fill}` (decisions 18, 31 and 48). `window` is `off`, `next_day` or `within_3_days`. `fill` is `streak` (fill to the streak amount, the sentence's default) or `target` (fill to the target, or the streak amount if higher). A window other than `off` is allowed on:
+- per-due-date goals;
+- totals whose streak counts at `{"amount": N}`, filled to N, so `fill` must be `streak` there. A total without an amount has no daily number to fill, so no make-up.
 
 - A **missed day's** window is its own version's, and counted in practice days: the next day, or the next 3.
 - **Every later day** in the window gives what it has past its own needs: its target, or its streak amount if higher. A day that isn't due gives all its counts. Paused days, excused days and days after the goal's end give nothing.
-- Missed days are filled **oldest first**, each up to its fill amount, and a day can be filled across several days. A partly filled day is still missed.
+- Missed days are filled **oldest first**, each up to its fill amount, and a day can be filled across several days. A partly filled day is pending while its window is open, and missed after.
 - **With sessions**, each session is made up from the same session only.
 - Make-up is derived from the counts, never stored, so an adjustment that lowers a later day also lowers what it made up.
 
@@ -142,7 +145,7 @@ Excusing a day needs, checked in this order (the reason is the first that fails)
 3. it isn't excused already (`already_excused`);
 4. the goal is judged by day (`not_available` for period totals);
 5. the day is due (`not_due`: off-schedule, paused or outside the active period);
-6. it was missed (`not_missed`: met, minimum only or made up; for days per period, a day that didn't qualify);
+6. it wasn't kept (`not_missed`: met, minimum only or made up; for days per period, a day that didn't qualify). A day pending make-up can be excused;
 7. fewer than 2 days are already excused in that day's Gregorian month (`limit_reached`).
 
 Un-excusing needs a running goal and an excused day (`not_excused`), and frees the place in that month.
@@ -152,7 +155,7 @@ Un-excusing needs a running goal and an excused day (`not_excused`), and frees t
 `consistency.json` (decisions 19, 21 and 32):
 - **Daily-rhythm goals** (units day, weekday, occasion) count the due days that kept the streak among the last 30 due days.
 - **Period goals** count the met periods among the last 12.
-- Today, or the current period, is included only once kept or met.
+- Today, or the current period, is included only once kept or met, and a day pending make-up only once its window closes.
 - **No tag before 7 due days or 4 periods.** After that, **Devoted** at 90% or more, **Steady** at 80% or more, and no tag below.
 
 **What a row shows:**
@@ -173,11 +176,11 @@ Un-excusing needs a running goal and an excused day (`not_excused`), and frees t
   - totals: their streak amount, which is the pace with `daily_pace`;
   - trackers: their number until it's reached, and never with any count;
   - nothing when today isn't due.
-- **Placement** (`goal_list_placement.json`, decisions 12, 25, 26 and 30). The first match wins:
+- **Placement** (`goal_list_placement.json`, decisions 12, 25, 26, 30 and 46). The first match wins:
   1. **History:** ended in the document, completed by its policy, past its last day, or no scheduled day left in the next 400 days;
   2. **Paused:** paused today;
   3. **Tracking:** trackers;
-  4. **Today:** due today;
+  4. **Today:** due today, or with a day pending make-up (so it can be made up);
   5. **Upcoming:** with its next due day.
 
   **Order:**
@@ -201,10 +204,10 @@ Un-excusing needs a running goal and an excused day (`not_excused`), and frees t
 | `target_required` | No target on a goal that isn't a tracker |
 | `session_target_required` | A session without a target, when the goal isn't a tracker |
 | `streak_threshold_value_required` | The streak threshold names a minimum, target or maximum that isn't set |
-| `streak_pace_not_allowed` | `daily_pace` on anything but a total with an end, or on a session |
+| `streak_pace_not_allowed` | `daily_pace` on anything but a total with an end |
 | `end_date_and_duration` | Both an end date and a number of days |
-| `make_up_not_daily` | A make-up window on a goal that isn't per due date |
-| `sessions_with_minimum_or_cap` | Sessions together with a minimum or cap, on the goal or a session |
+| `make_up_not_allowed` | A make-up window on a goal that isn't per due date, or a total counting at an amount with `fill: streak` |
+| `sessions_with_minimum_or_cap` | Sessions together with a minimum or cap on the goal (sessions have no place for one) |
 | `session_id_mismatch` | A session ID that isn't derived from its kind |
 | `session_duplicate` | Two sessions with one ID |
 | `session_window_empty` | A `between` window from a time to the same time |
@@ -216,14 +219,14 @@ A document has every version's errors (each version with the document's pauses a
 
 ## Judgment calls
 
-The decisions don't settle these; slice 4a settled them as follows, for review.
+The decisions don't settle these; slice 4a settled them as follows. The user reviewed them on 2026-10-31: 1, 5, 6 and 17 (the server's date) were accepted (decision 49); 9 and 10 were replaced by decisions 48 and 46; 24–27 came from applying decisions 46–48.
 
-1. **Session IDs are derived from the kind** (`after_fajr`, `at_0630`, …), so shared counts match sessions across goals. Two sessions of one kind in one goal are therefore invalid.
+1. **Accepted.** **Session IDs are derived from the kind** (`after_fajr`, `at_0630`, …), so shared counts match sessions across goals. Two sessions of one kind in one goal are therefore invalid.
 2. **Attribution drops an entry whose session the goal doesn't have** (when the goal has sessions that day). A goal without sessions takes all its dhikr's entries as the day's count.
 3. **A day's count summing below 0** (two devices subtracting at once) counts as 0.
 4. **`counts` (shared or dedicated) can't change** after creation, because it decides which past entries are the goal's.
-5. **`daily_pace` is a streak threshold value.** It's the default for a total with an end, and the sentence's "streak counts at N a day" replaces it with `{"amount": N}`. A pace share of 0 (nothing left) needs 1.
-6. **Pace rounds up**, so the goal finishes on time. It excludes today's own counts, so it doesn't shrink while counting. Totals with sessions have no pace.
+5. **Accepted.** **`daily_pace` is a streak threshold value.** It's the default for a total with an end, and the sentence's "streak counts at N a day" replaces it with `{"amount": N}`. A pace share of 0 (nothing left) needs 1.
+6. **Accepted.** **Pace rounds up**, so the goal finishes on time. It excludes today's own counts, so it doesn't shrink while counting. Totals with sessions have no pace.
 7. **Make-up:**
    - windows count in practice days, not due days, so a Friday-only goal missed on Friday can be made up Saturday to Monday;
    - a day that isn't due gives all its counts;
@@ -233,8 +236,8 @@ The decisions don't settle these; slice 4a settled them as follows, for review.
    - with sessions, each session only fills itself;
    - the window is the missed day's version's.
 8. **`fill: target` fills to the target, or the streak amount if higher**, and also fills a minimum-only day up to its target, turning it into made up.
-9. **Make-up only on per-due-date goals**, as the brief says (decisions 18 and 43), though decision 29 mentions make-up for open-ended totals.
-10. **The streak reflects the current state.** A missed day breaks the streak as soon as it's over, even while its make-up window is open, and making it up restores the streak. This keeps the slice 1 case `partial_yesterday_breaks`.
+9. **Replaced by decision 48:** make-up is also for totals whose streak counts at `{"amount": N}`, filled to N (`fill: streak` only).
+10. **Replaced by decision 46:** a missed day inside its open make-up window is pending and doesn't break the streak; with make-up off it breaks at once, as in the slice 1 case `partial_yesterday_breaks`.
 11. **Excused days:**
     - only before today; today can't be excused;
     - not on period totals (no day-level judgment);
@@ -256,7 +259,7 @@ The decisions don't settle these; slice 4a settled them as follows, for review.
 17. **Ended goals:**
     - `ended.on` is the last day, inclusive;
     - an ended goal's last day is in progress while it's today, and final after;
-    - the server's cascade writes the UTC date it applies the delete on (sync/v1), which can differ by a day from the user's practice day.
+    - the server's cascade writes the UTC date it applies the delete on (sync/v1), which can differ by a day from the user's practice day. **Accepted.**
 18. **The same-day edit rules** in `goal_version_add`: replace today's version, and remove it when edited back. A last version starting after today is replaced in place. The 100-version fold drops the oldest version and gives its `from` to the next.
 19. **The start date can't change** between versions: it's a structural field.
 20. **Placement:**
@@ -267,6 +270,10 @@ The decisions don't settle these; slice 4a settled them as follows, for review.
 21. **`goal_order` merge:** the phone's order wins, the server's additions are appended, and the server's removals are applied.
 22. **The goal-level target of a goal with sessions** is ignored, as in slice 1.
 23. **`one_time` is kept** and evaluated like `every_day`. The sentence writes `every_day` for a total with no rhythm.
+24. **Pending days** (decision 46) are in `goal_streak`'s `pending_make_up`, not in a separate rule. A day is pending only while the goal is still running; after its end, an unfilled day is missed.
+25. **A day pending make-up can be excused,** since it isn't kept: the user may excuse it instead of making it up.
+26. **A goal with a day pending make-up is in Today's goals** even when today isn't due (a Friday goal on Saturday), so it can be made up; once the window closes it goes back to Upcoming.
+27. **Session targets:** a session's `target` is `null` only on a tracker's session, which then keeps the streak with any count. The goal-level target of a goal with sessions is still ignored (22).
 
 ## Running
 

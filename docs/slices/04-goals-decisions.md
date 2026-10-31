@@ -172,3 +172,17 @@ A working log of what the user decided while designing goals (2026-10-30). It be
 45. **Counting input: screen taps only for now** (the user, 2026-10-31), plus the existing audio count and timer.
     - Screen-reader support is in scope: the tap area is a single "Count, 45 of 100" button, and every tenth count, the minimum and the target are announced.
     - **Later:** volume buttons as counters (up adds 1, down undoes within the session, off by default) and a dark "pocket mode". Needs an iOS feasibility check first.
+
+## Reviewing slice 4a's judgment calls
+
+46. **A missed day inside its make-up window doesn't break the streak** (the user, 2026-10-31; replaces slice 4a's judgment call that it breaks at once).
+    - The day is **pending** while its window is open, and the streak keeps running. It breaks only when the window closes unfilled; a made-up day keeps the streak as before.
+    - Rows show it, like "🔥 15 · make up Mon" (`goal_streak`'s `pending_make_up`). The goal stays in Today's goals while a day is pending, even on a day it isn't due.
+    - Consistency doesn't count a pending day until its window closes.
+    - With make-up off, a missed day still breaks the streak at once.
+47. **Sessions carry a target only** (the user, 2026-10-31): no minimum or cap per session, and a session's streak amount is its target.
+48. **Make-up also applies to total goals whose streak counts at a daily number** (the user, 2026-10-31; decision 29), such as "streak counts at 100 a day". It fills a missed day up to that number, always. A total without a daily number has no make-up.
+49. **Accepted as slice 4a wrote them** (the user, 2026-10-31):
+    - session IDs are derived from the session's kind, so a goal can't have two sessions of one kind;
+    - a goal the server ends itself (its custom dhikr deleted) gets the server's UTC date;
+    - the daily pace rules: rounded up, fixed for the day, and the default streak amount of a total with an end.

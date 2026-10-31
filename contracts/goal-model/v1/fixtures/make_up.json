@@ -1,10 +1,10 @@
 {
   "format": "awrad-fixture/1",
   "rule": "make_up",
-  "description": "Each due day's status, with make-up (decisions 18 and 31): on a later day inside the missed day's window (the next day, or within 3 days), counts past what that day needs for itself (its target, or its streak amount if higher; all of a day's counts when it isn't due) fill missed days, oldest first, up to the fill amount (the streak amount, or the target and at least the streak amount). Paused and excused days neither fill nor are filled; days after the end don't fill. With sessions, each session fills only itself. Status: met, minimum_only (the streak amount but not the target), made_up, missed, or in_progress (today, below the streak amount).",
+  "description": "Each due day's status, with make-up (decisions 18 and 31): on a later day inside the missed day's window (the next day, or within 3 days), counts past what that day needs for itself (its target, or its streak amount if higher; all of a day's counts when it isn't due) fill missed days, oldest first, up to the fill amount (the streak amount, or the target and at least the streak amount). Paused and excused days neither fill nor are filled; days after the end don't fill. With sessions, each session fills only itself. Totals whose streak counts at an amount fill to it (decision 48). Status: met, minimum_only (the streak amount but not the target), made_up, pending (missed, but its window is still open and the goal running: decision 46), missed, or in_progress (today, below the streak amount).",
   "references": [
     "CONTEXT.md#goal-language (Make-up)",
-    "docs/slices/04-goals-decisions.md decisions 17, 18, 22, 31 and 43"
+    "docs/slices/04-goals-decisions.md decisions 17, 18, 22, 31, 43, 46 and 48"
   ],
   "given_schema": {
     "type": "object",
@@ -74,9 +74,11 @@
                 "met",
                 "minimum_only",
                 "made_up",
+                "pending",
                 "missed",
                 "in_progress"
-              ]
+              ],
+              "description": "pending: missed, but its make-up window is still open (decision 46)."
             }
           }
         }
@@ -442,7 +444,7 @@
     },
     {
       "id": "oldest_missed_day_first",
-      "description": "150 extra fills Sunday's 100 first, then 50 of Monday's: a partly filled day is still missed.",
+      "description": "150 extra fills Sunday's 100 first, then 50 of Monday's: partly filled, Monday is pending while its window is open.",
       "given": {
         "goal": {
           "schedule": {
@@ -493,7 +495,7 @@
             "date": "2026-10-12",
             "count": 0,
             "filled": 50,
-            "status": "missed"
+            "status": "pending"
           },
           {
             "date": "2026-10-13",
@@ -879,7 +881,7 @@
             "date": "2026-10-12",
             "count": 0,
             "filled": 50,
-            "status": "missed"
+            "status": "pending"
           },
           {
             "date": "2026-10-13",
@@ -1120,7 +1122,7 @@
             "date": "2026-10-12",
             "count": 0,
             "filled": 0,
-            "status": "missed"
+            "status": "pending"
           },
           {
             "date": "2026-10-14",
@@ -1211,23 +1213,13 @@
               "id": "after_fajr",
               "kind": "after_prayer",
               "prayer": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "after_maghrib",
               "kind": "after_prayer",
               "prayer": "maghrib",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {
@@ -1302,23 +1294,13 @@
               "id": "after_fajr",
               "kind": "after_prayer",
               "prayer": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "after_maghrib",
               "kind": "after_prayer",
               "prayer": "maghrib",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {
@@ -1356,7 +1338,7 @@
             "date": "2026-10-12",
             "count": 33,
             "filled": 0,
-            "status": "missed"
+            "status": "pending"
           },
           {
             "date": "2026-10-13",
@@ -1607,6 +1589,270 @@
             "count": 0,
             "filled": 0,
             "status": "missed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pending_while_window_open",
+      "description": "Missed Monday, next-day make-up, Tuesday not done yet: Monday is pending, not missed (decision 46).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 50
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 0,
+            "status": "pending"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 50,
+            "filled": 0,
+            "status": "in_progress"
+          }
+        ]
+      }
+    },
+    {
+      "id": "missed_once_window_closes",
+      "description": "Within 3 days: on the fourth day after, an unfilled Monday is missed.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 100,
+            "maximum": null,
+            "streak_threshold": "target"
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "target"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-14",
+            "session": null,
+            "count": 100
+          },
+          {
+            "date": "2026-10-15",
+            "session": null,
+            "count": 100
+          }
+        ],
+        "date": "2026-10-16",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 0,
+            "status": "missed"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 100,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-14",
+            "count": 100,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-15",
+            "count": 100,
+            "filled": 0,
+            "status": "met"
+          },
+          {
+            "date": "2026-10-16",
+            "count": 0,
+            "filled": 0,
+            "status": "in_progress"
+          }
+        ]
+      }
+    },
+    {
+      "id": "total_with_amount_fills_to_amount",
+      "description": "A total whose streak counts at 100 a day (decision 48): Tuesday's counts past 100 fill Monday up to 100.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 250
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 100,
+            "status": "made_up"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 250,
+            "filled": 0,
+            "status": "met"
+          }
+        ]
+      }
+    },
+    {
+      "id": "total_with_amount_partial_pending",
+      "description": "Only 30 past Tuesday's 100: Monday has 30 of 100 and stays pending until its window closes.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-12",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "streak"
+          }
+        },
+        "counts": [
+          {
+            "date": "2026-10-13",
+            "session": null,
+            "count": 130
+          }
+        ],
+        "date": "2026-10-13",
+        "from": "2026-10-12"
+      },
+      "expect": {
+        "days": [
+          {
+            "date": "2026-10-12",
+            "count": 0,
+            "filled": 30,
+            "status": "pending"
+          },
+          {
+            "date": "2026-10-13",
+            "count": 130,
+            "filled": 0,
+            "status": "met"
           }
         ]
       }

@@ -24,7 +24,7 @@ let checks = 0;
 // Codes the `goal_rules` schema definition expresses; the others are checked only here and by the platforms.
 const SCHEMA_CODES = new Set([
   "end_date_and_duration",
-  "make_up_not_daily",
+  "make_up_not_allowed",
   "session_target_required",
   "sessions_with_minimum_or_cap",
   "streak_pace_not_allowed",

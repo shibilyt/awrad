@@ -53,7 +53,7 @@
           "enum": [
             "end_date_and_duration",
             "first_version_not_created_on",
-            "make_up_not_daily",
+            "make_up_not_allowed",
             "session_duplicate",
             "session_id_mismatch",
             "session_target_required",
@@ -329,23 +329,13 @@
               "id": "after_fajr",
               "kind": "after_prayer",
               "prayer": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "after_isha",
               "kind": "after_prayer",
               "prayer": "isha",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {
@@ -389,23 +379,13 @@
               "id": "after_fajr",
               "kind": "after_prayer",
               "prayer": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "after_isha",
               "kind": "after_prayer",
               "prayer": "isha",
-              "count_policy": {
-                "minimum": null,
-                "target": null,
-                "maximum": null,
-                "streak_threshold": "any_count"
-              }
+              "target": null
             }
           ],
           "requirement": {
@@ -543,57 +523,6 @@
       }
     },
     {
-      "id": "session_streak_minimum_without_minimum",
-      "description": "The rule applies to each session's own count policy.",
-      "given": {
-        "goal": {
-          "schedule": {
-            "kind": "every_day"
-          },
-          "active_period": {
-            "start_date": "2026-10-01",
-            "end_date": null,
-            "duration_days": null
-          },
-          "paused": [],
-          "excused": [],
-          "count_policy": {
-            "minimum": null,
-            "target": 313,
-            "maximum": null,
-            "streak_threshold": "target"
-          },
-          "sessions": [
-            {
-              "id": "after_fajr",
-              "kind": "after_prayer",
-              "prayer": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "minimum"
-              }
-            }
-          ],
-          "requirement": {
-            "type": "per_due_date"
-          },
-          "completion": "never",
-          "make_up": {
-            "window": "off",
-            "fill": "streak"
-          }
-        }
-      },
-      "expect": {
-        "valid": false,
-        "errors": [
-          "streak_threshold_value_required"
-        ]
-      }
-    },
-    {
       "id": "several_errors",
       "description": "All errors are reported, alphabetically.",
       "given": {
@@ -697,61 +626,79 @@
             {
               "id": "anytime",
               "kind": "anytime",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "before_fajr",
               "kind": "before_prayer",
               "prayer": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "after_maghrib",
               "kind": "after_prayer",
               "prayer": "maghrib",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "at_0630",
               "kind": "at_time",
               "time": "06:30",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "between_2100_2330",
               "kind": "between",
               "from": "21:00",
               "to": "23:30",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {
             "type": "per_due_date"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "off",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "tracker_session_without_target",
+      "description": "A tracker's session may have no target: any count.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": null,
+            "maximum": null,
+            "streak_threshold": "any_count"
+          },
+          "sessions": [
+            {
+              "id": "anytime",
+              "kind": "anytime",
+              "target": null
+            }
+          ],
+          "requirement": {
+            "type": "tracker"
           },
           "completion": "never",
           "make_up": {
@@ -792,12 +739,7 @@
               "kind": "between",
               "from": "22:00",
               "to": "04:00",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {
@@ -842,12 +784,7 @@
               "kind": "between",
               "from": "06:00",
               "to": "06:00",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {
@@ -893,12 +830,7 @@
               "id": "fajr",
               "kind": "after_prayer",
               "prayer": "fajr",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {
@@ -943,22 +875,12 @@
             {
               "id": "anytime",
               "kind": "anytime",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             },
             {
               "id": "anytime",
               "kind": "anytime",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {
@@ -1003,62 +925,7 @@
             {
               "id": "anytime",
               "kind": "anytime",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "target"
-              }
-            }
-          ],
-          "requirement": {
-            "type": "per_due_date"
-          },
-          "completion": "never",
-          "make_up": {
-            "window": "off",
-            "fill": "streak"
-          }
-        }
-      },
-      "expect": {
-        "valid": false,
-        "errors": [
-          "sessions_with_minimum_or_cap"
-        ]
-      }
-    },
-    {
-      "id": "session_with_cap",
-      "description": "Sessions XOR a minimum or cap: a cap on a session.",
-      "given": {
-        "goal": {
-          "schedule": {
-            "kind": "every_day"
-          },
-          "active_period": {
-            "start_date": "2026-10-01",
-            "end_date": null,
-            "duration_days": null
-          },
-          "paused": [],
-          "excused": [],
-          "count_policy": {
-            "minimum": null,
-            "target": null,
-            "maximum": null,
-            "streak_threshold": "target"
-          },
-          "sessions": [
-            {
-              "id": "anytime",
-              "kind": "anytime",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": 100,
-                "streak_threshold": "target"
-              }
+              "target": 33
             }
           ],
           "requirement": {
@@ -1193,7 +1060,7 @@
     },
     {
       "id": "make_up_on_weekly_total",
-      "description": "Make-up is only for daily goals (decision 43).",
+      "description": "Make-up is only for daily goals, and totals counting at an amount (decisions 43 and 48).",
       "given": {
         "goal": {
           "schedule": {
@@ -1227,13 +1094,13 @@
       "expect": {
         "valid": false,
         "errors": [
-          "make_up_not_daily"
+          "make_up_not_allowed"
         ]
       }
     },
     {
       "id": "make_up_on_total",
-      "description": "Not on a total goal either.",
+      "description": "Not on a total whose streak counts at any count: there is no daily amount to fill.",
       "given": {
         "goal": {
           "schedule": {
@@ -1266,7 +1133,87 @@
       "expect": {
         "valid": false,
         "errors": [
-          "make_up_not_daily"
+          "make_up_not_allowed"
+        ]
+      }
+    },
+    {
+      "id": "make_up_on_total_with_amount",
+      "description": "A total whose streak counts at 100 a day may have make-up (decision 48).",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "within_3_days",
+            "fill": "streak"
+          }
+        }
+      },
+      "expect": {
+        "valid": true,
+        "errors": []
+      }
+    },
+    {
+      "id": "make_up_on_total_fill_target",
+      "description": "On a total, make-up always fills to the streak amount: fill target is invalid.",
+      "given": {
+        "goal": {
+          "schedule": {
+            "kind": "every_day"
+          },
+          "active_period": {
+            "start_date": "2026-10-01",
+            "end_date": null,
+            "duration_days": null
+          },
+          "paused": [],
+          "excused": [],
+          "count_policy": {
+            "minimum": null,
+            "target": 70000,
+            "maximum": null,
+            "streak_threshold": {
+              "amount": 100
+            }
+          },
+          "sessions": [],
+          "requirement": {
+            "type": "cumulative_total"
+          },
+          "completion": "never",
+          "make_up": {
+            "window": "next_day",
+            "fill": "target"
+          }
+        }
+      },
+      "expect": {
+        "valid": false,
+        "errors": [
+          "make_up_not_allowed"
         ]
       }
     },
@@ -1305,7 +1252,7 @@
       "expect": {
         "valid": false,
         "errors": [
-          "make_up_not_daily"
+          "make_up_not_allowed"
         ]
       }
     },
@@ -1481,56 +1428,6 @@
             "streak_threshold": "daily_pace"
           },
           "sessions": [],
-          "requirement": {
-            "type": "per_due_date"
-          },
-          "completion": "never",
-          "make_up": {
-            "window": "off",
-            "fill": "streak"
-          }
-        }
-      },
-      "expect": {
-        "valid": false,
-        "errors": [
-          "streak_pace_not_allowed"
-        ]
-      }
-    },
-    {
-      "id": "pace_on_session",
-      "description": "Never on a session.",
-      "given": {
-        "goal": {
-          "schedule": {
-            "kind": "every_day"
-          },
-          "active_period": {
-            "start_date": "2026-10-01",
-            "end_date": null,
-            "duration_days": null
-          },
-          "paused": [],
-          "excused": [],
-          "count_policy": {
-            "minimum": null,
-            "target": null,
-            "maximum": null,
-            "streak_threshold": "target"
-          },
-          "sessions": [
-            {
-              "id": "anytime",
-              "kind": "anytime",
-              "count_policy": {
-                "minimum": null,
-                "target": 33,
-                "maximum": null,
-                "streak_threshold": "daily_pace"
-              }
-            }
-          ],
           "requirement": {
             "type": "per_due_date"
           },
