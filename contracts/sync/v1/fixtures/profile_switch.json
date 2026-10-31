@@ -73,7 +73,7 @@
                 },
                 "has_data": {
                   "type": "boolean",
-                  "description": "Holds at least one custom dhikr, tag or personal record."
+                  "description": "Holds at least one custom dhikr, tag, personal record or goal (the practice policy and the goal order don't count)."
                 },
                 "has_unsent": {
                   "type": "boolean",
@@ -396,7 +396,7 @@
                 },
                 "has_data": {
                   "type": "boolean",
-                  "description": "Holds at least one custom dhikr, tag or personal record."
+                  "description": "Holds at least one custom dhikr, tag, personal record or goal (the practice policy and the goal order don't count)."
                 },
                 "has_unsent": {
                   "type": "boolean",
@@ -2201,6 +2201,58 @@
         "erased": [
           "0192f0e0-0000-7000-8000-000000000001"
         ],
+        "merged_data": null
+      }
+    },
+    {
+      "id": "first_sign_in_goals_are_data",
+      "description": "A profile whose only data is goals still asks at the first sign-in: goals are data. The goal order, like the practice policy, isn't.",
+      "given": {
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": null,
+              "email": null,
+              "after": 0,
+              "has_data": true,
+              "has_unsent": false,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": null
+        },
+        "event": {
+          "type": "sign_in",
+          "account_id": "0192f0b0-0000-7000-8000-000000000001",
+          "email": "amina@example.com"
+        },
+        "choice": "add_to_account",
+        "new_profile_id": "0192f0e0-0000-7000-8000-000000000003",
+        "merge_data": null
+      },
+      "expect": {
+        "prompt": "anonymous_data",
+        "registry": {
+          "profiles": [
+            {
+              "profile_id": "0192f0e0-0000-7000-8000-000000000001",
+              "account_id": "0192f0b0-0000-7000-8000-000000000001",
+              "email": "amina@example.com",
+              "after": 0,
+              "has_data": true,
+              "has_unsent": true,
+              "account_deleted": false
+            }
+          ],
+          "active_profile_id": "0192f0e0-0000-7000-8000-000000000001",
+          "signed_in_account_id": "0192f0b0-0000-7000-8000-000000000001"
+        },
+        "queue_all": "0192f0e0-0000-7000-8000-000000000001",
+        "merge": null,
+        "sync": "0192f0e0-0000-7000-8000-000000000001",
+        "erased": [],
         "merged_data": null
       }
     }

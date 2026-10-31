@@ -1,6 +1,6 @@
 // Keeps the change-queue contract consistent with itself (contracts/sync/v1/README.md):
 //   1. every example of the sync operations in api/openapi.bundled.json matches sync/v1/sync.schema.json, which
-//      the OpenAPI restates (its bundler can't follow urn: references);
+//      the OpenAPI restates (its bundler can't follow urn: references), and their goals follow the goal rules;
 //   2. custom_dhikr_validity.json says "valid" exactly when the document matches $defs/custom_dhikr_document and
 //      every Qur'an reference has ayah_end >= ayah_start (the one rule the schema can't express), and lists a
 //      `range` error for each reversed reference;
@@ -17,12 +17,24 @@
 //      phone keeps its document with audio {"local_only": true} (file still on the phone: the upload is queued again)
 //      or null, takes the server's version, replaces the entity's unsent commands with one put of that document (or
 //      a delete if the phone deleted it since) ahead of every other unsent command, and adds a notice; no other step
-//      queues an upload.
+//      queues an upload;
+//   8. in sync_receipts.json, goals (slice 4): a goal put is `dhikr_not_found` exactly when its dhikr_id is neither a
+//      built-in dhikr nor a custom dhikr the account has had; an applied one is valid by the goal rules
+//      (goal-model/v1 goal_validity) and is stored as sent, except that one naming a deleted custom dhikr without an
+//      `ended` is stored ended (dhikr_deleted); a `document_invalid` one breaks the schema or the goal rules; an
+//      applied goal_order keeps only the non-deleted goals of the account, in order; an applied custom_dhikr delete
+//      ends every goal of that dhikr that hadn't ended, at its revision, with version + 1, and changes no other goal.
+//      A goal the server ends itself gets ended.on = the state's utc_date, or the goal's created_on or last version's
+//      from if later;
+//   9. in apply_changes.json, a conflict on a goal takes the server's goal and version, opens no conflict, drops the
+//      goal's unsent commands, and adds a goal_edit_not_applied notice unless the local document already equalled the
+//      server's; a conflict on the goal_order merges by goal-model goal_order_merge, like the practice policy.
 // Usage: node tools/check-sync-contract.mjs
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { newAjv } from "./check-fixtures.mjs";
+import { documentErrors, goalOrderMerge, sameJson as sameCanonical } from "./goal-rules.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const read = (path) => JSON.parse(readFileSync(join(root, path), "utf8"));
@@ -48,6 +60,17 @@ expectValid("command_batch", request, "post_sync_commands request example");
 request.commands.forEach((command, i) => expectValid("command", command, `post_sync_commands request example /commands/${i}`));
 expectValid("receipt_batch", post.responses["200"].content["application/json"].example, "post_sync_commands 200 example");
 expectValid("changes_page", get.responses["200"].content["application/json"].example, "list_sync_changes 200 example");
+// ...and their goals follow the goal rules a schema can't express (session IDs, versions).
+for (const [where, entries] of [
+  ["post_sync_commands request example", request.commands],
+  ["list_sync_changes 200 example", get.responses["200"].content["application/json"].example.changes],
+]) {
+  for (const e of entries.filter((x) => x.entity_type === "goal" && x.document)) {
+    checks += 1;
+    const errors = documentErrors(e.document);
+    if (errors.size > 0) problems.push(`${where}: goal ${e.entity_id} breaks the goal rules: ${[...errors].join(", ")}`);
+  }
+}
 
 // Qur'an references whose ayah_end is below their ayah_start: `range` errors on ayah_end.
 function rangeErrors(document) {
@@ -216,6 +239,105 @@ for (const c of read("sync/v1/fixtures/apply_changes.json").cases) {
   }
 }
 
+// 8. sync_receipts: goals, the goal order and the custom dhikr cascade
+const builtins = new Set(read("dhikr-catalog/v1/catalog.json").dhikrs.map((d) => d.id));
+const goalSchema = ajv.getSchema("urn:awrad:goal-model:1#/$defs/goal_document");
+const latest = (a, b) => (a > b ? a : b);
+const serverEnded = (document, utcDate) => ({
+  ...document,
+  ended: { on: [utcDate, document.created_on, document.versions.at(-1).from].reduce(latest), reason: "dhikr_deleted" },
+});
+for (const c of read("sync/v1/fixtures/sync_receipts.json").cases) {
+  const known = new Map(c.given.state.entities.map((e) => [entityKey(e), e]));
+  const utcDate = c.given.state.utc_date;
+  c.given.batch.forEach((command, i) => {
+    const where = `sync_receipts "${c.id}" /expect/receipts/${i}`;
+    const receipt = c.expect.receipts[i];
+    if (receipt.status === "duplicate") return;
+    const changesNow = receipt.status === "applied" ? c.expect.changes.filter((e) => e.revision === receipt.revision) : [];
+    const changeOf = (entity_type, entity_id) => changesNow.find((e) => e.entity_type === entity_type && e.entity_id === entity_id);
+    if (command.entity_type === "goal" && command.op === "put" && typeof command.document?.dhikr_id === "string") {
+      checks += 1;
+      const dhikr = command.document.dhikr_id;
+      const custom = known.get(`custom_dhikr ${dhikr}`);
+      const exists = builtins.has(dhikr) || custom !== undefined;
+      if ((receipt.status === "rejected" && receipt.code === "dhikr_not_found") === exists) {
+        problems.push(`${where}: dhikr_not_found exactly when ${dhikr} is neither built-in nor a custom dhikr of the account`);
+      }
+      if (receipt.status === "applied") {
+        const errors = documentErrors(command.document);
+        if (errors.size > 0) problems.push(`${where}: applied a goal that breaks the goal rules: ${[...errors].join(", ")}`);
+        const endIt = custom?.state === "deleted" && command.document.ended === null;
+        if (endIt && !utcDate) problems.push(`${where}: the server ends this goal, so given.state needs utc_date`);
+        const want = endIt ? serverEnded(command.document, utcDate) : command.document;
+        if (!sameJson(changeOf("goal", command.entity_id)?.document, want)) {
+          problems.push(`${where}: the stored goal should be ${endIt ? "the sent one, ended dhikr_deleted" : "the sent one"}`);
+        }
+      }
+      if (receipt.status === "rejected" && receipt.code === "document_invalid" && goalSchema(command.document) && documentErrors(command.document).size === 0) {
+        problems.push(`${where}: document_invalid, but the goal is valid`);
+      }
+    }
+    if (command.entity_type === "goal_order" && command.op === "put" && receipt.status === "applied") {
+      checks += 1;
+      const ids = command.document.goal_ids.filter((id) => known.get(`goal ${id}`)?.state === "active");
+      if (!sameJson(changeOf("goal_order", command.entity_id)?.document, { goal_ids: ids })) {
+        problems.push(`${where}: the stored goal order should keep only the account's non-deleted goals: ${JSON.stringify(ids)}`);
+      }
+    }
+    if (command.entity_type === "custom_dhikr" && command.op === "delete" && receipt.status === "applied") {
+      checks += 1;
+      const ending = [...known.values()].filter((e) => e.entity_type === "goal" && e.state === "active" && e.document.dhikr_id === command.entity_id && e.document.ended === null);
+      for (const goal of ending) {
+        const change = changeOf("goal", goal.entity_id);
+        if (!change || change.version !== goal.version + 1 || !sameJson(change.document, serverEnded(goal.document, utcDate))) {
+          problems.push(`${where}: goal ${goal.entity_id} should end (dhikr_deleted) at revision ${receipt.revision}, version ${goal.version + 1}`);
+        }
+      }
+      for (const change of changesNow.filter((e) => e.entity_type === "goal" && !ending.some((g) => g.entity_id === e.entity_id))) {
+        problems.push(`${where}: goal ${change.entity_id} isn't a goal of the deleted dhikr that was still running`);
+      }
+    }
+    for (const change of changesNow) known.set(entityKey(change), change);
+  });
+}
+
+// 9. apply_changes: goal conflicts take the server's copy with a notice; goal order conflicts merge
+for (const c of read("sync/v1/fixtures/apply_changes.json").cases) {
+  if (c.given.step.kind !== "receipts") continue;
+  const where = `apply_changes "${c.id}"`;
+  const sent = c.given.local.outbox.filter((command) => command.sent);
+  c.given.step.receipts.forEach((receipt, i) => {
+    const command = sent[i];
+    if (receipt.status !== "conflict" || !["goal", "goal_order"].includes(command?.entity_type)) return;
+    checks += 1;
+    const mine = (e) => e.entity_type === command.entity_type && e.entity_id === command.entity_id;
+    const before = c.given.local.entities.find(mine);
+    const after = c.expect.local.entities.find(mine);
+    const queued = c.expect.local.outbox.filter(mine);
+    const notices = c.expect.notices.filter(mine).map((n) => n.code);
+    if (c.expect.local.conflicts.some(mine)) problems.push(`${where}: a ${command.entity_type} conflict never opens a conflict`);
+    if (command.entity_type === "goal") {
+      if (!after || after.known_version !== receipt.current.version || !sameJson(after.document, receipt.current.document)) {
+        problems.push(`${where}: the goal takes the server's document and version`);
+      }
+      if (queued.length > 0) problems.push(`${where}: the goal's unsent commands are dropped`);
+      const lost = !before || !sameCanonical(before.document, receipt.current.document);
+      if (!sameJson(notices, lost ? ["goal_edit_not_applied"] : [])) problems.push(`${where}: notices should be ${lost ? "[goal_edit_not_applied]" : "[]"}`);
+      return;
+    }
+    const merged = goalOrderMerge({ base: before.base_document, mine: before.document, theirs: receipt.current.document });
+    if (!after || !sameJson(after.document, merged.document) || !sameJson(after.base_document, receipt.current.document) || after.known_version !== receipt.current.version) {
+      problems.push(`${where}: the goal order becomes the merge, with the server's copy as base and version`);
+    }
+    const want = merged.requeue ? [{ op: "put", base_version: receipt.current.version, document: merged.document, sent: false }] : [];
+    if (!sameJson(queued.map(({ op, base_version, document, sent: s }) => ({ op, base_version, document, sent: s })), want)) {
+      problems.push(`${where}: queued should be ${JSON.stringify(want)}`);
+    }
+    if (notices.length > 0) problems.push(`${where}: a goal order merge shows no notice`);
+  });
+}
+
 // 4. tag_name_normalization
 for (const c of read("sync/v1/fixtures/tag_name_normalization.json").cases) {
   if (c.expect.accepted) {
@@ -227,4 +349,4 @@ if (problems.length > 0) {
   for (const p of problems) console.error(p);
   process.exit(1);
 }
-console.log(`sync contract: ${checks} checks pass (OpenAPI examples, validity and Qur'an ranges, receipts, cascades and audio checks, phones keeping audio-rejected edits, tag names agree with sync.schema.json)`);
+console.log(`sync contract: ${checks} checks pass (OpenAPI examples, validity and Qur'an ranges, receipts, cascades and audio checks, phones keeping audio-rejected edits, goals, the goal order and the dhikr cascade, goal conflicts, tag names agree with sync.schema.json)`);

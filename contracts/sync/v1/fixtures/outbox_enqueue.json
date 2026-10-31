@@ -2640,6 +2640,1075 @@
           }
         ]
       }
+    },
+    {
+      "id": "goal_create_after_its_custom_dhikr_create",
+      "description": "A goal for a custom dhikr not sent yet is queued after the dhikr's create, as every new command is.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000681",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000682",
+          "entity_type": "goal",
+          "entity_id": "0192f300-0000-7000-8000-000000000001",
+          "op": "put",
+          "document": {
+            "dhikr_id": "0192f0d0-0000-7000-8000-000000000002",
+            "dhikr_snapshot": {
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "kind": "dhikr"
+            },
+            "name": null,
+            "counts": "shared",
+            "created_on": "2026-10-14",
+            "versions": [
+              {
+                "from": "2026-10-14",
+                "schedule": {
+                  "kind": "every_day"
+                },
+                "active_period": {
+                  "start_date": "2026-10-01",
+                  "end_date": null,
+                  "duration_days": null
+                },
+                "count_policy": {
+                  "minimum": null,
+                  "target": 100,
+                  "maximum": null,
+                  "streak_threshold": "target"
+                },
+                "sessions": [],
+                "requirement": {
+                  "type": "per_due_date"
+                },
+                "completion": "never",
+                "make_up": {
+                  "window": "off",
+                  "fill": "streak"
+                }
+              }
+            ],
+            "paused": [],
+            "excused": [],
+            "ended": null
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000681",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000682",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "dhikr_id": "0192f0d0-0000-7000-8000-000000000002",
+              "dhikr_snapshot": {
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "kind": "dhikr"
+              },
+              "name": null,
+              "counts": "shared",
+              "created_on": "2026-10-14",
+              "versions": [
+                {
+                  "from": "2026-10-14",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "replaced_goal_order_moves_after_new_goal_create",
+      "description": "A goal order references its goals: reordered to include a goal whose create is queued later, the replaced order moves to just after that create, so the server doesn't drop the new goal.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          },
+          {
+            "entity_type": "goal_order",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "version": 1
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000683",
+            "entity_type": "goal_order",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "goal_ids": [
+                "0192f300-0000-7000-8000-000000000002",
+                "0192f300-0000-7000-8000-000000000003"
+              ]
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000684",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+              "dhikr_snapshot": {
+                "title": {
+                  "en": "Isthighfar",
+                  "ar": "الاستغفار",
+                  "ml": "ഇസ്തിഗ്ഫാർ"
+                },
+                "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                "kind": "dhikr"
+              },
+              "name": null,
+              "counts": "shared",
+              "created_on": "2026-10-14",
+              "versions": [
+                {
+                  "from": "2026-10-14",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000685",
+          "entity_type": "goal_order",
+          "entity_id": "0192f000-0000-7000-8000-000000000001",
+          "op": "put",
+          "document": {
+            "goal_ids": [
+              "0192f300-0000-7000-8000-000000000001",
+              "0192f300-0000-7000-8000-000000000002",
+              "0192f300-0000-7000-8000-000000000003"
+            ]
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000684",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+              "dhikr_snapshot": {
+                "title": {
+                  "en": "Isthighfar",
+                  "ar": "الاستغفار",
+                  "ml": "ഇസ്തിഗ്ഫാർ"
+                },
+                "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                "kind": "dhikr"
+              },
+              "name": null,
+              "counts": "shared",
+              "created_on": "2026-10-14",
+              "versions": [
+                {
+                  "from": "2026-10-14",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000683",
+            "entity_type": "goal_order",
+            "entity_id": "0192f000-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "goal_ids": [
+                "0192f300-0000-7000-8000-000000000001",
+                "0192f300-0000-7000-8000-000000000002",
+                "0192f300-0000-7000-8000-000000000003"
+              ]
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "replaced_goal_stays_after_its_custom_dhikr_put",
+      "description": "A goal references its custom dhikr; its dhikr never changes, so a replaced goal put is already after any put of that dhikr and stays in place.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000686",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000687",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "dhikr_id": "0192f0d0-0000-7000-8000-000000000002",
+              "dhikr_snapshot": {
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "kind": "dhikr"
+              },
+              "name": null,
+              "counts": "shared",
+              "created_on": "2026-10-14",
+              "versions": [
+                {
+                  "from": "2026-10-14",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000688",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-000000000689",
+          "entity_type": "goal",
+          "entity_id": "0192f300-0000-7000-8000-000000000001",
+          "op": "put",
+          "document": {
+            "dhikr_id": "0192f0d0-0000-7000-8000-000000000002",
+            "dhikr_snapshot": {
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "kind": "dhikr"
+            },
+            "name": null,
+            "counts": "shared",
+            "created_on": "2026-10-14",
+            "versions": [
+              {
+                "from": "2026-10-14",
+                "schedule": {
+                  "kind": "every_day"
+                },
+                "active_period": {
+                  "start_date": "2026-10-01",
+                  "end_date": null,
+                  "duration_days": null
+                },
+                "count_policy": {
+                  "minimum": null,
+                  "target": 100,
+                  "maximum": null,
+                  "streak_threshold": "target"
+                },
+                "sessions": [],
+                "requirement": {
+                  "type": "per_due_date"
+                },
+                "completion": "never",
+                "make_up": {
+                  "window": "off",
+                  "fill": "streak"
+                }
+              }
+            ],
+            "paused": [],
+            "excused": [],
+            "ended": {
+              "on": "2026-10-14",
+              "reason": "user"
+            }
+          }
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000686",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000687",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "dhikr_id": "0192f0d0-0000-7000-8000-000000000002",
+              "dhikr_snapshot": {
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "kind": "dhikr"
+              },
+              "name": null,
+              "counts": "shared",
+              "created_on": "2026-10-14",
+              "versions": [
+                {
+                  "from": "2026-10-14",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": {
+                "on": "2026-10-14",
+                "reason": "user"
+              }
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-000000000688",
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000005",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "name": "Evening",
+              "normalized_name": "evening"
+            },
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "delete_custom_dhikr_queues_no_goal_commands",
+      "description": "Deleting a custom dhikr queues only its delete: its goals end locally, and the server ends them itself (cascaded). An unsent goal put stays as it is.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          },
+          {
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001",
+            "version": 1
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000068a",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "dhikr_id": "0192f0d0-0000-7000-8000-000000000001",
+              "dhikr_snapshot": {
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "kind": "dhikr"
+              },
+              "name": null,
+              "counts": "shared",
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [
+                {
+                  "from": "2026-10-13",
+                  "to": null
+                }
+              ],
+              "excused": [],
+              "ended": null
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-00000000068b",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+          "op": "delete",
+          "document": null
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000068a",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 1,
+            "document": {
+              "dhikr_id": "0192f0d0-0000-7000-8000-000000000001",
+              "dhikr_snapshot": {
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "kind": "dhikr"
+              },
+              "name": null,
+              "counts": "shared",
+              "created_on": "2026-10-01",
+              "versions": [
+                {
+                  "from": "2026-10-01",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [
+                {
+                  "from": "2026-10-13",
+                  "to": null
+                }
+              ],
+              "excused": [],
+              "ended": null
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000068b",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "op": "delete",
+            "base_version": 3,
+            "document": null,
+            "sent": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "delete_never_sent_custom_dhikr_drops_its_goal_commands",
+      "description": "A custom dhikr that never left the phone takes its goals' unsent commands with it: the server has never had it, so they could only be rejected. The goals stay on this phone, ended.",
+      "given": {
+        "known_versions": [
+          {
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 3
+          },
+          {
+            "entity_type": "user_tag",
+            "entity_id": "0192f0a0-0000-7000-8000-000000000001",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "6f04f77e-dcb6-4a29-9dc5-fcd3649c2961",
+            "version": 1
+          },
+          {
+            "entity_type": "dhikr_personal",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000001",
+            "version": 2
+          }
+        ],
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000068c",
+            "entity_type": "custom_dhikr",
+            "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "kind": "dhikr",
+              "arabic": "سُبْحَانَ ٱللَّهِ",
+              "title": {
+                "en": "Subhanallah",
+                "ar": null,
+                "ml": null
+              },
+              "transliteration": {
+                "en": "Subhanallah",
+                "ml": null
+              },
+              "translation": {
+                "en": "Glory be to Allah",
+                "ar": null,
+                "ml": null
+              },
+              "audio": null,
+              "references": []
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000068d",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000001",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "dhikr_id": "0192f0d0-0000-7000-8000-000000000002",
+              "dhikr_snapshot": {
+                "title": {
+                  "en": "Subhanallah",
+                  "ar": null,
+                  "ml": null
+                },
+                "arabic": "سُبْحَانَ ٱللَّهِ",
+                "kind": "dhikr"
+              },
+              "name": null,
+              "counts": "shared",
+              "created_on": "2026-10-14",
+              "versions": [
+                {
+                  "from": "2026-10-14",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "sent": false
+          },
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000068e",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000004",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+              "dhikr_snapshot": {
+                "title": {
+                  "en": "Isthighfar",
+                  "ar": "الاستغفار",
+                  "ml": "ഇസ്തിഗ്ഫാർ"
+                },
+                "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                "kind": "dhikr"
+              },
+              "name": null,
+              "counts": "shared",
+              "created_on": "2026-10-14",
+              "versions": [
+                {
+                  "from": "2026-10-14",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "sent": false
+          }
+        ],
+        "edit": {
+          "command_id": "0192f0c0-0000-7000-8000-00000000068f",
+          "entity_type": "custom_dhikr",
+          "entity_id": "0192f0d0-0000-7000-8000-000000000002",
+          "op": "delete",
+          "document": null
+        }
+      },
+      "expect": {
+        "outbox": [
+          {
+            "command_id": "0192f0c0-0000-7000-8000-00000000068e",
+            "entity_type": "goal",
+            "entity_id": "0192f300-0000-7000-8000-000000000004",
+            "op": "put",
+            "base_version": 0,
+            "document": {
+              "dhikr_id": "3285e014-551b-46a4-aedc-8b6664b59bc7",
+              "dhikr_snapshot": {
+                "title": {
+                  "en": "Isthighfar",
+                  "ar": "الاستغفار",
+                  "ml": "ഇസ്തിഗ്ഫാർ"
+                },
+                "arabic": "أَسْتَغْفِرُ ٱللَّٰهَ ٱلْعَظِيمَ",
+                "kind": "dhikr"
+              },
+              "name": null,
+              "counts": "shared",
+              "created_on": "2026-10-14",
+              "versions": [
+                {
+                  "from": "2026-10-14",
+                  "schedule": {
+                    "kind": "every_day"
+                  },
+                  "active_period": {
+                    "start_date": "2026-10-01",
+                    "end_date": null,
+                    "duration_days": null
+                  },
+                  "count_policy": {
+                    "minimum": null,
+                    "target": 100,
+                    "maximum": null,
+                    "streak_threshold": "target"
+                  },
+                  "sessions": [],
+                  "requirement": {
+                    "type": "per_due_date"
+                  },
+                  "completion": "never",
+                  "make_up": {
+                    "window": "off",
+                    "fill": "streak"
+                  }
+                }
+              ],
+              "paused": [],
+              "excused": [],
+              "ended": null
+            },
+            "sent": false
+          }
+        ]
+      }
     }
   ]
 }

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "urn:awrad:sync:1",
   "title": "Awrad change queue (sync v1)",
-  "description": "Wire shapes of the change queue: commands, receipts, changes and the entity documents: three of slice 3b, with the uploaded recordings of slice 3c, and the practice policy of slice 3d (urn:awrad:practice-settings:1). Protocol rules, and the limits a schema can't express (64 KB per document, tag-name graphemes and bytes, normalized_name recomputation, account limits, audio assets being ready and matching): README.md. A batch whose envelope breaks this schema is a 422; a command whose document breaks it is a `rejected` receipt.",
+  "description": "Wire shapes of the change queue: commands, receipts, changes and the entity documents: three of slice 3b, with the uploaded recordings of slice 3c, the practice policy of slice 3d (urn:awrad:practice-settings:1), and the goal and goal order of slice 4 (urn:awrad:goal-model:1). Protocol rules, and the limits a schema can't express (64 KB per document, tag-name graphemes and bytes, normalized_name recomputation, account limits, audio assets being ready and matching, a goal's dhikr existing, the goal rules a schema can't express): README.md. A batch whose envelope breaks this schema is a 422; a command whose document breaks it is a `rejected` receipt.",
   "$defs": {
     "uuid": {
       "description": "Lowercase, hyphenated UUID, any version except nil and max (contracts/identity/v1/fixtures/uuid_format.json). IDs we generate are UUIDv7.",
@@ -19,8 +19,8 @@
       "maximum": 9007199254740991
     },
     "entity_type": {
-      "description": "practice_policy (slice 3d) is one per account, with the account ID as its entity_id.",
-      "enum": ["custom_dhikr", "user_tag", "dhikr_personal", "practice_policy"]
+      "description": "practice_policy (slice 3d) and goal_order (slice 4) are one per account, with the account ID as their entity_id. A goal (slice 4) has a new UUIDv7.",
+      "enum": ["custom_dhikr", "user_tag", "dhikr_personal", "practice_policy", "goal", "goal_order"]
     },
     "op": {
       "description": "`put` creates (base_version 0) or replaces the whole document; `delete` makes a final tombstone.",
@@ -178,12 +178,14 @@
       }
     },
     "document": {
-      "description": "Any of the four entity documents.",
+      "description": "Any of the six entity documents.",
       "oneOf": [
         { "$ref": "#/$defs/custom_dhikr_document" },
         { "$ref": "#/$defs/user_tag_document" },
         { "$ref": "#/$defs/dhikr_personal_document" },
-        { "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document" }
+        { "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document" },
+        { "$ref": "urn:awrad:goal-model:1#/$defs/goal_document" },
+        { "$ref": "urn:awrad:goal-model:1#/$defs/goal_order_document" }
       ]
     },
     "command_envelope": {
@@ -232,6 +234,14 @@
         {
           "if": { "properties": { "entity_type": { "const": "practice_policy" } } },
           "then": { "properties": { "document": { "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document" } } }
+        },
+        {
+          "if": { "properties": { "entity_type": { "const": "goal" } } },
+          "then": { "properties": { "document": { "$ref": "urn:awrad:goal-model:1#/$defs/goal_document" } } }
+        },
+        {
+          "if": { "properties": { "entity_type": { "const": "goal_order" } } },
+          "then": { "properties": { "document": { "$ref": "urn:awrad:goal-model:1#/$defs/goal_order_document" } } }
         }
       ]
     },
@@ -291,15 +301,16 @@
         "command_id_reused",
         "audio_not_found",
         "audio_mismatch",
-        "entity_id_invalid"
+        "entity_id_invalid",
+        "goal_limit_reached"
       ]
     },
     "notice_code": {
-      "description": "Why a phone tells the user something changed: a rejection code, or hijri_corrections_replaced when merging a conflicting practice_policy dropped this phone's Hijri corrections (practice-settings/v1 practice_policy_merge).",
-      "oneOf": [{ "$ref": "#/$defs/rejection_code" }, { "const": "hijri_corrections_replaced" }]
+      "description": "Why a phone tells the user something changed: a rejection code; hijri_corrections_replaced when merging a conflicting practice_policy dropped this phone's Hijri corrections (practice-settings/v1 practice_policy_merge); or goal_edit_not_applied when a goal edit lost to another device's, so the phone took the server's goal and offers to retry (decision 44).",
+      "oneOf": [{ "$ref": "#/$defs/rejection_code" }, { "enum": ["hijri_corrections_replaced", "goal_edit_not_applied"] }]
     },
     "cascaded_change": {
-      "description": "An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal that a user_tag delete removed the tag from (active), or the dhikr_personal of a deleted custom_dhikr (deleted). The phone sets its known version from it; the document is in the changes feed.",
+      "description": "An entity the server changed as a cascade of the receipt's command, at the same revision: a dhikr_personal that a user_tag delete removed the tag from (active); or, for a deleted custom_dhikr, its dhikr_personal (deleted) and each of its goals that hadn't ended, now ended with reason dhikr_deleted (active). The phone sets its known version from it; the document is in the changes feed.",
       "type": "object",
       "additionalProperties": false,
       "required": ["entity_type", "entity_id", "state", "version", "revision"],
@@ -457,6 +468,18 @@
             "properties": { "state": { "const": "active" }, "entity_type": { "const": "practice_policy" } }
           },
           "then": { "properties": { "document": { "$ref": "urn:awrad:practice-settings:1#/$defs/practice_policy_document" } } }
+        },
+        {
+          "if": {
+            "properties": { "state": { "const": "active" }, "entity_type": { "const": "goal" } }
+          },
+          "then": { "properties": { "document": { "$ref": "urn:awrad:goal-model:1#/$defs/goal_document" } } }
+        },
+        {
+          "if": {
+            "properties": { "state": { "const": "active" }, "entity_type": { "const": "goal_order" } }
+          },
+          "then": { "properties": { "document": { "$ref": "urn:awrad:goal-model:1#/$defs/goal_order_document" } } }
         }
       ]
     },
